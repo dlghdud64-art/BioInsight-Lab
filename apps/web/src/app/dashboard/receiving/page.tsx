@@ -1,315 +1,392 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
+import { useOpsStore } from "@/lib/ops-console/ops-store";
 import {
-  Search,
+  buildModuleHeaderStats,
+  buildModulePriorityQueue,
+  buildModuleLandingItems,
+  buildModuleBuckets,
+  buildModuleDownstream,
+  MODULE_ORIENTATION,
+  MODULE_HEADER_STAT_META,
+  BUCKET_COLORS,
+  type ModuleBucketKey,
+  type ModuleLandingItem,
+} from "@/lib/ops-console/module-landing-adapter";
+import {
   ChevronRight,
-  Truck,
-  PackageCheck,
-  ClipboardCheck,
-  AlertTriangle,
+  ArrowRight,
+  AlertCircle,
   Clock,
-  Database,
+  Zap,
+  Shield,
 } from "lucide-react";
 
-// ── Types ──────────────────────────────────────────────────────────
-type BatchStatus =
-  | "expected"
-  | "arrived"
-  | "inspecting"
-  | "posting_ready"
-  | "posted"
-  | "issue_flagged"
-  | "closed";
-
-interface ReceivingBatchListItemVM {
-  id: string;
-  receivingNumber: string;
-  vendorName: string;
-  batchStatus: BatchStatus;
-  batchStatusLabel: string;
-  poReference: string;
-  lineProgressText: string;
-  inspectionSummary: string;
-  postingSummary: string;
-  riskBadges: string[];
-  receivedAt: string | null;
-}
-
-// ── Status config ──────────────────────────────────────────────────
-const BATCH_STATUS_BADGE: Record<BatchStatus, { label: string; className: string }> = {
-  expected: { label: "입고 예정", className: "bg-slate-700/60 text-slate-300 border-slate-600" },
-  arrived: { label: "도착", className: "bg-blue-900/40 text-blue-300 border-blue-700" },
-  inspecting: { label: "검수 중", className: "bg-amber-900/40 text-amber-300 border-amber-700" },
-  posting_ready: { label: "반영 준비", className: "bg-teal-900/40 text-teal-300 border-teal-700" },
-  posted: { label: "반영 완료", className: "bg-green-900/40 text-green-300 border-green-700" },
-  issue_flagged: { label: "이슈 발생", className: "bg-red-900/40 text-red-300 border-red-700" },
-  closed: { label: "종료", className: "bg-slate-700/60 text-slate-300 border-slate-600" },
-};
-
-const RISK_BADGE_STYLE: Record<string, string> = {
-  damaged: "bg-red-900/30 text-red-300 border-red-700",
-  temperature_excursion: "bg-red-900/30 text-red-300 border-red-700",
-  coa_missing: "bg-orange-900/30 text-orange-300 border-orange-700",
-  quarantine: "bg-amber-900/30 text-amber-300 border-amber-700",
-  short_shipment: "bg-orange-900/30 text-orange-300 border-orange-700",
-};
-
-const RISK_LABEL: Record<string, string> = {
-  damaged: "파손",
-  temperature_excursion: "온도 이탈",
-  coa_missing: "COA 미수",
-  quarantine: "격리",
-  short_shipment: "수량 부족",
-};
-
-// ── Summary pills ──────────────────────────────────────────────────
-const PILL_DEFS: { key: string; label: string; statuses: BatchStatus[]; icon: typeof Clock }[] = [
-  { key: "expected", label: "입고 예정", statuses: ["expected"], icon: Clock },
-  { key: "arrived", label: "도착", statuses: ["arrived"], icon: Truck },
-  { key: "inspecting", label: "검수 중", statuses: ["inspecting"], icon: ClipboardCheck },
-  { key: "posting", label: "반영 준비", statuses: ["posting_ready"], icon: Database },
-  { key: "issue", label: "이슈 발생", statuses: ["issue_flagged"], icon: AlertTriangle },
+// ── Bucket tab config (Receiving-specific labels) ─────────────────
+const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
+  { key: "ready", label: "반영 가능" },
+  { key: "needs_review", label: "검수/문서" },
+  { key: "blocked", label: "차단" },
+  { key: "waiting_external", label: "격리/후속" },
 ];
 
-// ── Mock data ──────────────────────────────────────────────────────
-const MOCK_BATCHES: ReceivingBatchListItemVM[] = [
-  {
-    id: "rcv-001",
-    receivingNumber: "RCV-2026-0018",
-    vendorName: "Sigma-Aldrich Korea",
-    batchStatus: "inspecting",
-    batchStatusLabel: "검수 중",
-    poReference: "PO-2026-0038",
-    lineProgressText: "3/4 수령",
-    inspectionSummary: "2/3 완료",
-    postingSummary: "미반영",
-    riskBadges: ["coa_missing"],
-    receivedAt: "2026-03-19",
-  },
-  {
-    id: "rcv-002",
-    receivingNumber: "RCV-2026-0017",
-    vendorName: "Thermo Fisher Scientific",
-    batchStatus: "arrived",
-    batchStatusLabel: "도착",
-    poReference: "PO-2026-0040",
-    lineProgressText: "5/5 수령",
-    inspectionSummary: "미시작",
-    postingSummary: "미반영",
-    riskBadges: [],
-    receivedAt: "2026-03-19",
-  },
-  {
-    id: "rcv-003",
-    receivingNumber: "RCV-2026-0016",
-    vendorName: "Bio-Rad Laboratories",
-    batchStatus: "issue_flagged",
-    batchStatusLabel: "이슈 발생",
-    poReference: "PO-2026-0035",
-    lineProgressText: "2/2 수령",
-    inspectionSummary: "1/2 완료",
-    postingSummary: "미반영",
-    riskBadges: ["damaged", "temperature_excursion"],
-    receivedAt: "2026-03-17",
-  },
-  {
-    id: "rcv-004",
-    receivingNumber: "RCV-2026-0015",
-    vendorName: "Merck Millipore",
-    batchStatus: "posting_ready",
-    batchStatusLabel: "반영 준비",
-    poReference: "PO-2026-0037",
-    lineProgressText: "4/4 수령",
-    inspectionSummary: "4/4 완료",
-    postingSummary: "준비 완료",
-    riskBadges: [],
-    receivedAt: "2026-03-16",
-  },
-  {
-    id: "rcv-005",
-    receivingNumber: "RCV-2026-0014",
-    vendorName: "VWR International",
-    batchStatus: "expected",
-    batchStatusLabel: "입고 예정",
-    poReference: "PO-2026-0039",
-    lineProgressText: "0/2 수령",
-    inspectionSummary: "—",
-    postingSummary: "—",
-    riskBadges: [],
-    receivedAt: null,
-  },
-  {
-    id: "rcv-006",
-    receivingNumber: "RCV-2026-0013",
-    vendorName: "Agilent Technologies",
-    batchStatus: "posted",
-    batchStatusLabel: "반영 완료",
-    poReference: "PO-2026-0036",
-    lineProgressText: "8/8 수령",
-    inspectionSummary: "8/8 완료",
-    postingSummary: "반영 완료",
-    riskBadges: [],
-    receivedAt: "2026-03-14",
-  },
-];
+// ── Priority badge color ──────────────────────────────────────────
+const PRIORITY_DOT: Record<string, string> = {
+  p0: "bg-red-500",
+  p1: "bg-amber-500",
+  p2: "bg-blue-500",
+  p3: "bg-slate-500",
+};
 
-// ── Component ──────────────────────────────────────────────────────
-export default function ReceivingListPage() {
+// ── Stat key → filter mapping ─────────────────────────────────────
+const STAT_FILTER_MAP: Record<string, string> = {
+  openActionable: "all",
+  blocked: "blocked",
+  overdue: "overdue",
+  waitingExternal: "waiting_external",
+  readyToExecute: "ready",
+};
+
+// ── Component ─────────────────────────────────────────────────────
+export default function ReceivingLandingPage() {
   const router = useRouter();
-  const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const { unifiedInboxItems } = useOpsStore();
+  const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
 
-  // TODO: Replace with useOpsStore().receivingBatches + adapters
-  const batches = MOCK_BATCHES;
+  // Header stats
+  const headerStats = useMemo(
+    () => buildModuleHeaderStats(unifiedInboxItems, "receiving"),
+    [unifiedInboxItems],
+  );
 
-  const filtered = useMemo(() => {
-    let list = batches;
-    if (statusFilter) {
-      const pill = PILL_DEFS.find((p) => p.key === statusFilter);
-      if (pill) list = list.filter((b) => pill.statuses.includes(b.batchStatus));
-    }
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter(
-        (b) =>
-          b.receivingNumber.toLowerCase().includes(q) ||
-          b.vendorName.toLowerCase().includes(q) ||
-          b.poReference.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [batches, statusFilter, search]);
+  // Priority queue (top 6)
+  const priorityQueue = useMemo(
+    () => buildModulePriorityQueue(unifiedInboxItems, "receiving", 6),
+    [unifiedInboxItems],
+  );
 
-  const pillCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const pill of PILL_DEFS) {
-      counts[pill.key] = batches.filter((b) => pill.statuses.includes(b.batchStatus)).length;
+  // All landing items → buckets
+  const allItems = useMemo(
+    () => buildModuleLandingItems(unifiedInboxItems, "receiving"),
+    [unifiedInboxItems],
+  );
+
+  const buckets = useMemo(() => buildModuleBuckets(allItems), [allItems]);
+
+  // Downstream handoff
+  const downstream = useMemo(
+    () => buildModuleDownstream("receiving", unifiedInboxItems),
+    [unifiedInboxItems],
+  );
+
+  // Active bucket items
+  const activeBucketItems = buckets[activeTab] ?? [];
+
+  // Bucket counts for tab badges
+  const bucketCounts = useMemo(() => {
+    const counts: Record<ModuleBucketKey, number> = {
+      ready: 0,
+      blocked: 0,
+      needs_review: 0,
+      waiting_external: 0,
+      handoff: 0,
+    };
+    for (const item of allItems) {
+      counts[item.bucketKey]++;
     }
     return counts;
-  }, [batches]);
+  }, [allItems]);
+
+  const orientation = MODULE_ORIENTATION.receiving;
+  const isEmpty = allItems.length === 0;
 
   return (
-    <div className="p-4 md:p-8 space-y-5">
-      {/* Header */}
-      <div>
-        <h1 className="text-xl font-bold text-slate-100">입고 관리</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          입고 기록, 검수, lot 관리, 재고 반영을 처리합니다
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-950 p-4 md:p-6 space-y-5">
+      {/* ── 1. Header ──────────────────────────────────────────────── */}
+      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-lg font-bold text-slate-100">입고 관리</h1>
+            <p className="text-xs text-slate-500 mt-0.5">{orientation.role}</p>
+          </div>
+          <p className="text-xs text-slate-400 max-w-xs text-right">
+            {headerStats.nextActionSummary}
+          </p>
+        </div>
 
-      {/* Status pills */}
-      <div className="flex flex-wrap gap-2">
-        {PILL_DEFS.map((pill) => {
-          const Icon = pill.icon;
-          const active = statusFilter === pill.key;
-          return (
-            <button
-              key={pill.key}
-              onClick={() => setStatusFilter(active ? null : pill.key)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
-                active
-                  ? "bg-blue-900/40 text-blue-300 border-blue-700"
-                  : "bg-el text-slate-400 border-bd hover:border-slate-500"
-              }`}
+        {/* Stat pills */}
+        <div className="flex flex-wrap gap-2 mt-3">
+          {(
+            Object.keys(MODULE_HEADER_STAT_META) as Array<
+              keyof typeof MODULE_HEADER_STAT_META
             >
-              <Icon className="h-3.5 w-3.5" />
-              {pill.label}
-              <span className="ml-1 tabular-nums">{pillCounts[pill.key]}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-        <Input
-          placeholder="입고번호, 공급사, PO번호 검색..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-9 bg-el border-bd text-sm"
-        />
-      </div>
-
-      {/* Table */}
-      <div className="border border-bd rounded-xl overflow-hidden bg-pn">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-bd bg-el/50">
-                <th className="text-left px-4 py-3 font-medium text-slate-400">입고번호</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">공급사</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">상태</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">PO</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">수령현황</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">검수</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">반영</th>
-                <th className="text-left px-4 py-3 font-medium text-slate-400">이슈</th>
-                <th className="text-center px-4 py-3 font-medium text-slate-400 w-10" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={9} className="text-center py-12 text-slate-500">
-                    조건에 맞는 입고 건이 없습니다
-                  </td>
-                </tr>
-              )}
-              {filtered.map((batch) => {
-                const badge = BATCH_STATUS_BADGE[batch.batchStatus];
-                return (
-                  <tr
-                    key={batch.id}
-                    onClick={() => router.push(`/dashboard/receiving/${batch.id}`)}
-                    className="border-b border-bd last:border-b-0 hover:bg-el/40 cursor-pointer transition-colors"
-                  >
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-slate-200">{batch.receivingNumber}</span>
-                    </td>
-                    <td className="px-4 py-3 text-slate-300">{batch.vendorName}</td>
-                    <td className="px-4 py-3">
-                      <Badge variant="outline" className={`text-xs ${badge.className}`}>
-                        {badge.label}
-                      </Badge>
-                    </td>
-                    <td className="px-4 py-3 font-mono text-slate-400">{batch.poReference}</td>
-                    <td className="px-4 py-3 text-slate-400">{batch.lineProgressText}</td>
-                    <td className="px-4 py-3 text-slate-400">{batch.inspectionSummary}</td>
-                    <td className="px-4 py-3 text-slate-400">{batch.postingSummary}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {batch.riskBadges.length === 0 && (
-                          <span className="text-slate-600">—</span>
-                        )}
-                        {batch.riskBadges.map((risk) => (
-                          <Badge
-                            key={risk}
-                            variant="outline"
-                            className={`text-xs ${RISK_BADGE_STYLE[risk] || "bg-slate-700/60 text-slate-300 border-slate-600"}`}
-                          >
-                            {RISK_LABEL[risk] || risk}
-                          </Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <ChevronRight className="h-4 w-4 text-slate-500 mx-auto" />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          ).map((key) => {
+            const value = headerStats[key];
+            const meta = MODULE_HEADER_STAT_META[key];
+            const filterKey = STAT_FILTER_MAP[key] ?? key;
+            return (
+              <Link
+                key={key}
+                href={`/dashboard/inbox?module=receiving&filter=${filterKey}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/60 border border-slate-700/50 text-xs hover:border-slate-600 transition-colors"
+              >
+                <span className="text-slate-500">{meta.label}</span>
+                <span className="font-mono font-medium text-slate-200 tabular-nums">
+                  {value}
+                </span>
+              </Link>
+            );
+          })}
         </div>
       </div>
+
+      {/* ── Fallback: Empty ────────────────────────────────────────── */}
+      {isEmpty && (
+        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center">
+          <p className="text-sm text-slate-400">
+            현재 처리 중인 입고가 없습니다 — 발주에서 입고 예정을 확인하세요
+          </p>
+          <Link
+            href="/dashboard/purchase-orders"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-blue-400 hover:text-blue-300"
+          >
+            발주 관리로 이동 <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+      )}
+
+      {!isEmpty && (
+        <>
+          {/* ── 2. Priority Queue ───────────────────────────────────── */}
+          {priorityQueue.length > 0 && (
+            <div>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+                우선 처리
+              </h2>
+              <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                {priorityQueue.map((item) => (
+                  <PriorityCard
+                    key={item.entityId}
+                    item={item}
+                    onClick={() => router.push(item.targetRoute)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 3. State-Split Tabs ────────────────────────────────── */}
+          <div>
+            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+              상태별 분류
+            </h2>
+            <div className="flex gap-1 border-b border-slate-800 mb-3">
+              {RCV_BUCKET_TABS.map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                    activeTab === tab.key
+                      ? "border-blue-500 text-blue-300"
+                      : "border-transparent text-slate-500 hover:text-slate-300"
+                  }`}
+                >
+                  {tab.label}
+                  {bucketCounts[tab.key] > 0 && (
+                    <span className="ml-1.5 tabular-nums text-slate-600">
+                      {bucketCounts[tab.key]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* ── 4. Actionable Queue (bucket items) ───────────────── */}
+            <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+              {activeBucketItems.length === 0 ? (
+                <div className="px-4 py-8 text-center text-sm text-slate-600">
+                  이 분류에 해당하는 항목이 없습니다
+                </div>
+              ) : (
+                <div className="divide-y divide-slate-800">
+                  {activeBucketItems.map((item) => (
+                    <ActionableRow
+                      key={item.entityId}
+                      item={item}
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/receiving/${item.entityId}`,
+                        )
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ── 5. Downstream ──────────────────────────────────────── */}
+          {downstream.length > 0 && (
+            <div>
+              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+                다운스트림 인계
+              </h2>
+              <div className="grid gap-2 md:grid-cols-2">
+                {downstream.map((ds) => (
+                  <Link
+                    key={ds.label}
+                    href={ds.targetRoute}
+                    className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-slate-200">
+                        {ds.label}
+                      </span>
+                      <span className="text-xs font-mono text-teal-400 tabular-nums">
+                        {ds.count}건
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {ds.description}
+                    </p>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-400 transition-colors">
+                      이동 <ArrowRight className="h-3 w-3" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
+  );
+}
+
+// ── Priority Card ─────────────────────────────────────────────────
+function PriorityCard({
+  item,
+  onClick,
+}: {
+  item: ModuleLandingItem;
+  onClick: () => void;
+}) {
+  const borderClass = item.dueState.isOverdue
+    ? "border-l-red-500"
+    : item.blockerSummary
+      ? "border-l-amber-500"
+      : "border-l-slate-700";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`text-left bg-slate-900 border border-slate-800 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-800/60 transition-colors w-full`}
+    >
+      <div className="flex items-center gap-2 mb-1">
+        <span
+          className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
+        />
+        <span className="text-xs font-mono text-slate-300 truncate">
+          {item.title}
+        </span>
+      </div>
+      <p className="text-xs text-slate-500 line-clamp-1">{item.summary}</p>
+      <div className="flex items-center justify-between mt-2">
+        <div className="flex items-center gap-2">
+          {item.currentOwnerName && (
+            <span className="text-xs text-slate-600">
+              {item.currentOwnerName}
+            </span>
+          )}
+          <DueStateBadge dueState={item.dueState} />
+        </div>
+        {item.blockerSummary && (
+          <span className="text-xs text-red-400 flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            차단
+          </span>
+        )}
+        {item.readySummary && !item.blockerSummary && (
+          <span className="text-xs text-emerald-400 flex items-center gap-1">
+            <Zap className="h-3 w-3" />
+            실행 가능
+          </span>
+        )}
+      </div>
+    </button>
+  );
+}
+
+// ── Actionable Row ────────────────────────────────────────────────
+function ActionableRow({
+  item,
+  onClick,
+}: {
+  item: ModuleLandingItem;
+  onClick: () => void;
+}) {
+  const borderClass = item.dueState.isOverdue
+    ? "border-l-2 border-l-red-500"
+    : item.blockerSummary
+      ? "border-l-2 border-l-amber-500"
+      : "";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-2.5 hover:bg-slate-800/40 transition-colors flex items-center gap-3 ${borderClass}`}
+    >
+      <span
+        className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-200 font-mono truncate">
+            {item.title}
+          </span>
+          <span
+            className={`text-xs px-1.5 py-0.5 rounded ${BUCKET_COLORS[item.bucketKey]}`}
+          >
+            {item.nextAction}
+          </span>
+        </div>
+        <p className="text-xs text-slate-500 truncate mt-0.5">
+          {item.summary}
+        </p>
+      </div>
+      <div className="flex items-center gap-3 flex-shrink-0">
+        {item.currentOwnerName && (
+          <span className="text-xs text-slate-600">
+            {item.currentOwnerName}
+          </span>
+        )}
+        <DueStateBadge dueState={item.dueState} />
+        <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+      </div>
+    </button>
+  );
+}
+
+// ── Due State Badge ───────────────────────────────────────────────
+function DueStateBadge({
+  dueState,
+}: {
+  dueState: ModuleLandingItem["dueState"];
+}) {
+  if (dueState.tone === "normal") return null;
+
+  const cls =
+    dueState.tone === "overdue"
+      ? "text-red-400"
+      : "text-amber-400";
+
+  return (
+    <span className={`text-xs flex items-center gap-0.5 ${cls}`}>
+      <Clock className="h-3 w-3" />
+      {dueState.label}
+    </span>
   );
 }
