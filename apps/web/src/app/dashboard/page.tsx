@@ -257,16 +257,18 @@ export default function DashboardPage() {
   // -- KPI 판단 카드 렌더 (공통) --
   const renderKpiCard = (config: {
     href: string; icon: React.ReactNode; label: string; value: React.ReactNode;
-    insight: string; risk: string; className?: string;
+    insight: string; risk: string; iconBg?: string; className?: string;
   }) => (
     <Link href={config.href}>
-      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
-        <CardContent className="p-3 md:p-4 flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
-            {config.icon}
+      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-blue-800/40 bg-pn border-bd shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
+        <CardContent className="p-3 md:p-4 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <span className={`inline-flex items-center justify-center h-6 w-6 md:h-7 md:w-7 rounded-lg ${config.iconBg ?? "bg-blue-500/10"}`}>
+              {config.icon}
+            </span>
             <span className="text-[10px] md:text-xs font-semibold text-slate-400 uppercase tracking-wider">{config.label}</span>
           </div>
-          <div className="text-2xl font-bold text-slate-200 leading-tight">{config.value}</div>
+          <div className="text-2xl font-bold text-slate-100 leading-tight">{config.value}</div>
           <p className="text-[10px] md:text-[11px] text-slate-400 leading-tight truncate">{config.insight}</p>
         </CardContent>
       </Card>
@@ -277,13 +279,15 @@ export default function DashboardPage() {
     <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-3 md:space-y-4 overflow-x-hidden">
 
       {/* --- 페이지 헤더 --- */}
-      <div className="flex flex-col space-y-0.5 min-w-0">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-100">
+      <div className="flex flex-col space-y-1 min-w-0">
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
           대시보드
         </h2>
         <p className="text-sm text-slate-400">
           {session?.user?.name ? `${session.user.name}님, ` : ""}
-          {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
+          {hasActionItems
+            ? <><span className="text-blue-400 font-medium">처리가 필요한 항목 {actionCount}건</span>이 있습니다.</>
+            : "현재 운영 상태가 양호합니다."}
         </p>
       </div>
 
@@ -311,8 +315,8 @@ export default function DashboardPage() {
       )}
 
       {/* --- 1순위: 오늘의 우선 작업 --- */}
-      <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
-        <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between">
+      <div className="rounded-xl border border-blue-900/30 bg-pn shadow-sm shadow-blue-950/20 overflow-hidden">
+        <div className="px-4 py-2.5 border-b border-blue-900/20 bg-blue-950/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {hasActionItems ? (
               <>
@@ -325,7 +329,7 @@ export default function DashboardPage() {
             ) : (
               <>
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <h3 className="text-xs font-semibold text-slate-400">운영 상태 정상</h3>
+                <h3 className="text-xs font-semibold text-emerald-400/80">운영 상태 정상</h3>
               </>
             )}
           </div>
@@ -352,7 +356,9 @@ export default function DashboardPage() {
           <div className="divide-y divide-bd/50 sm:divide-y-0 sm:grid sm:divide-x sm:divide-bd/50" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
             {stats.lowStockAlerts > 0 && (
               <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
-                <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-red-500/10 flex-shrink-0">
+                  <AlertTriangle className="h-4 w-4 text-red-400" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-100">{stats.lowStockAlerts}건 재고 부족</p>
                   <p className="text-xs text-slate-400">즉시 발주 검토 필요</p>
@@ -362,7 +368,9 @@ export default function DashboardPage() {
             )}
             {stats.activeQuotes > 0 && (
               <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
-                <FileText className="h-4 w-4 text-blue-400 flex-shrink-0" />
+                <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10 flex-shrink-0">
+                  <FileText className="h-4 w-4 text-blue-400" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-100">{stats.activeQuotes}건 견적 대기</p>
                   <p className="text-xs text-slate-400">
@@ -374,7 +382,9 @@ export default function DashboardPage() {
             )}
             {stats.expiringCount > 0 && (
               <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
-                <Calendar className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                <span className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-amber-500/10 flex-shrink-0">
+                  <Calendar className="h-4 w-4 text-amber-400" />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-100">{stats.expiringCount}건 유통기한 임박</p>
                   <p className="text-xs text-slate-400">30일 이내 만료 예정</p>
@@ -384,7 +394,9 @@ export default function DashboardPage() {
             )}
             {stats.undecidedCompareCount > 0 && (
               <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
-                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-400" : "text-purple-400"}`} />
+                <span className={`inline-flex items-center justify-center h-8 w-8 rounded-lg flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "bg-red-500/10" : "bg-purple-500/10"}`}>
+                  <GitCompare className={`h-4 w-4 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-400" : "text-purple-400"}`} />
+                </span>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-100">{stats.undecidedCompareCount}건 비교 판정 대기</p>
                   <p className="text-xs text-slate-400">
@@ -452,7 +464,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
-            icon: <Package className="h-3 w-3 text-blue-400" />,
+            icon: <Package className="h-3.5 w-3.5 text-blue-400" />,
+            iconBg: "bg-blue-500/10",
             label: "등록 품목",
             value: stats.totalInventory.toLocaleString("ko-KR"),
             insight: getInventoryInsight(),
@@ -460,7 +473,8 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/inventory?filter=low",
-            icon: <AlertTriangle className="h-3 w-3 text-red-400" />,
+            icon: <AlertTriangle className="h-3.5 w-3.5 text-red-400" />,
+            iconBg: "bg-red-500/10",
             label: "재고 부족",
             value: stats.lowStockAlerts,
             insight: getStockInsight(),
@@ -468,7 +482,8 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/purchases",
-            icon: <DollarSign className="h-3 w-3 text-emerald-400" />,
+            icon: <DollarSign className="h-3.5 w-3.5 text-emerald-400" />,
+            iconBg: "bg-emerald-500/10",
             label: "이번 달 지출",
             value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
             insight: getSpendingInsight(),
@@ -476,7 +491,8 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/quotes?status=PENDING",
-            icon: <FileText className="h-3 w-3 text-violet-400" />,
+            icon: <FileText className="h-3.5 w-3.5 text-violet-400" />,
+            iconBg: "bg-violet-500/10",
             label: "진행 중 견적",
             value: stats.activeQuotes,
             insight: getQuoteInsight(),
@@ -490,10 +506,12 @@ export default function DashboardPage() {
             {/* 즉시 처리 */}
             {urgentItems.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">즉시 처리</p>
+                <p className="text-[10px] font-semibold text-amber-400/70 uppercase tracking-wider">즉시 처리</p>
                 {urgentItems.map((item) => (
-                  <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-el transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
-                    {item.icon}
+                  <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-el transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500 bg-red-950/10" : "border-l-2 border-l-amber-500 bg-amber-950/10"}`}>
+                    <span className={`inline-flex items-center justify-center h-7 w-7 rounded-md flex-shrink-0 ${item.severity === "red" ? "bg-red-500/10" : "bg-amber-500/10"}`}>
+                      {item.icon}
+                    </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-slate-200">{item.label}</p>
                       <p className="text-[10px] text-slate-400">{item.desc}</p>
@@ -510,8 +528,10 @@ export default function DashboardPage() {
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">추천 작업</p>
               <div className="grid grid-cols-2 gap-2">
                 {recommendedActions.map((action) => (
-                  <Link key={action.id} href={action.href} className="flex items-center gap-2 p-2 rounded-lg bg-el hover:bg-st transition-colors">
-                    {action.icon}
+                  <Link key={action.id} href={action.href} className="flex items-center gap-2.5 p-2.5 rounded-lg bg-el hover:bg-st border border-bd/50 hover:border-blue-800/30 transition-colors">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-md bg-pn flex-shrink-0">
+                      {action.icon}
+                    </span>
                     <span className="text-xs font-medium text-slate-200">{action.label}</span>
                   </Link>
                 ))}
@@ -582,7 +602,8 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {renderKpiCard({
               href: "/dashboard/inventory",
-              icon: <Package className="h-3.5 w-3.5 text-blue-400" />,
+              icon: <Package className="h-4 w-4 text-blue-400" />,
+              iconBg: "bg-blue-500/10",
               label: "등록 품목",
               value: stats.totalInventory.toLocaleString("ko-KR"),
               insight: getInventoryInsight(),
@@ -590,20 +611,23 @@ export default function DashboardPage() {
             })}
             {renderKpiCard({
               href: "/dashboard/inventory?filter=low",
-              icon: <AlertTriangle className="h-3.5 w-3.5 text-red-400" />,
+              icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
+              iconBg: "bg-red-500/10",
               label: "재고 부족",
               value: stats.lowStockAlerts,
               insight: getStockInsight(),
               risk: stockRisk,
             })}
             <Link href="/dashboard/purchases">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-blue-800/40 bg-pn border-bd shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
+                <CardContent className="p-4 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-emerald-500/10">
+                      <DollarSign className="h-4 w-4 text-emerald-400" />
+                    </span>
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">이번 달 지출</span>
                   </div>
-                  <div className="text-xl font-bold text-slate-200 leading-tight">
+                  <div className="text-xl font-bold text-slate-100 leading-tight">
                     {stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—"}
                   </div>
                   {stats.monthlySpending > 0 ? (
@@ -621,13 +645,15 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes?status=PENDING">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
-                <CardContent className="p-4 flex flex-col gap-1">
-                  <div className="flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-violet-400" />
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md hover:border-blue-800/40 bg-pn border-bd shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
+                <CardContent className="p-4 flex flex-col gap-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-violet-500/10">
+                      <FileText className="h-4 w-4 text-violet-400" />
+                    </span>
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">진행 중 견적</span>
                   </div>
-                  <div className="text-2xl font-bold text-slate-200">{stats.activeQuotes}</div>
+                  <div className="text-2xl font-bold text-slate-100">{stats.activeQuotes}</div>
                   <p className="text-[11px] text-slate-400 leading-tight">{getQuoteInsight()}</p>
                   {stats.opsFunnel.totalQuotes > 0 && (
                     <p className="text-[10px] text-slate-500 mt-0.5">
@@ -692,11 +718,13 @@ export default function DashboardPage() {
               {/* 즉시 처리 */}
               {urgentItems.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">즉시 처리</p>
+                  <p className="text-[10px] font-semibold text-amber-400/70 uppercase tracking-wider">즉시 처리</p>
                   <div className="space-y-1">
                     {urgentItems.map((item) => (
-                      <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-el transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
-                        {item.icon}
+                      <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-el transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500 bg-red-950/10" : "border-l-2 border-l-amber-500 bg-amber-950/10"}`}>
+                        <span className={`inline-flex items-center justify-center h-7 w-7 rounded-md flex-shrink-0 ${item.severity === "red" ? "bg-red-500/10" : "bg-amber-500/10"}`}>
+                          {item.icon}
+                        </span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-slate-200">{item.label}</p>
                           <p className="text-[10px] text-slate-400">{item.desc}</p>
@@ -711,16 +739,18 @@ export default function DashboardPage() {
               {/* 추천 작업 */}
               <div className="space-y-2">
                 {urgentItems.length > 0 && <div className="border-t border-bd" />}
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">추천 작업</p>
+                <p className="text-[10px] font-semibold text-blue-400/70 uppercase tracking-wider">추천 작업</p>
                 <div className="space-y-0.5">
                   {recommendedActions.map((action) => (
-                    <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-el transition-colors group">
-                      {action.icon}
+                    <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-el border border-transparent hover:border-blue-800/20 transition-colors group">
+                      <span className="inline-flex items-center justify-center h-7 w-7 rounded-md bg-el flex-shrink-0">
+                        {action.icon}
+                      </span>
                       <div className="flex-1 min-w-0">
                         <span className="block text-sm font-semibold text-slate-200">{action.label}</span>
                         <span className="block text-[11px] text-slate-500">{action.desc}</span>
                       </div>
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-blue-400 transition-colors" />
                     </Link>
                   ))}
                 </div>
@@ -728,12 +758,16 @@ export default function DashboardPage() {
                 <div className="pt-2 border-t border-bd space-y-0.5">
                   <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2 pb-1">보조 기능</p>
                   <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-el transition-colors group">
-                    <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="inline-flex items-center justify-center h-6 w-6 rounded bg-el flex-shrink-0">
+                      <Package className="h-3.5 w-3.5 text-slate-400" />
+                    </span>
                     <span className="text-sm text-slate-400 group-hover:text-slate-200">재고 관리</span>
                     <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-300 transition-colors" />
                   </Link>
                   <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-el transition-colors group">
-                    <TrendingDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                    <span className="inline-flex items-center justify-center h-6 w-6 rounded bg-el flex-shrink-0">
+                      <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
+                    </span>
                     <span className="text-sm text-slate-400 group-hover:text-slate-200">재고 차감</span>
                     <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-300 transition-colors" />
                   </Link>
@@ -777,7 +811,9 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-2">
               <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 p-2.5 rounded-lg border border-green-900/40 bg-green-950/20 hover:bg-green-950/40 transition-colors group">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+                <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-green-500/10 flex-shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-green-400" />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-200">응답 수신</p>
                   <p className="text-[10px] text-slate-400">
@@ -790,7 +826,9 @@ export default function DashboardPage() {
               </Link>
 
               <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-bd hover:bg-el transition-colors group">
-                <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
+                <span className="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-amber-500/10 flex-shrink-0">
+                  <Clock className="h-4 w-4 text-amber-400" />
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-slate-200">응답 대기</p>
                   <p className="text-[10px] text-slate-400">
