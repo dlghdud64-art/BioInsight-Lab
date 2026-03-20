@@ -18,6 +18,7 @@ import {
 import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
+import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -172,6 +173,11 @@ export default function ReceivingDetailPage() {
     [rb],
   );
 
+  const blockerView = useMemo(
+    () => buildReceivingBlockers(rb),
+    [rb],
+  );
+
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(rb.receivedAt).toLocaleDateString("ko-KR"),
     linkedEntities: [
@@ -187,6 +193,7 @@ export default function ReceivingDetailPage() {
         header={header}
         ownership={ownership}
         blockerStrip={blockerStrip}
+        blockerView={blockerView}
         commandSurface={commandSurface}
         metaRail={metaRail}
       >

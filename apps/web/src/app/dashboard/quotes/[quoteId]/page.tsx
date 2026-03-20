@@ -24,6 +24,7 @@ import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
 import { buildQuoteCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
 import { buildQuoteOwnership } from "@/lib/ops-console/ownership-adapter";
+import { buildQuoteBlockers } from "@/lib/ops-console/blocker-adapter";
 
 // ── 상태 라벨 ──
 const STATUS_LABELS: Record<string, string> = {
@@ -229,6 +230,11 @@ export default function QuoteDetailPage() {
     [quoteRequest, responses],
   );
 
+  const blockerView = useMemo(
+    () => buildQuoteBlockers(quoteRequest, responses, comparison),
+    [quoteRequest, responses, comparison],
+  );
+
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(quoteRequest.createdAt).toLocaleDateString("ko-KR"),
     sourceLinks: quoteRequest.sourceType ? [{ label: "출처", value: quoteRequest.sourceType }] : undefined,
@@ -244,6 +250,7 @@ export default function QuoteDetailPage() {
         header={header}
         ownership={ownership}
         blockerStrip={blockerStrip}
+        blockerView={blockerView}
         commandSurface={commandSurface}
         metaRail={metaRail}
       >

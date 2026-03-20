@@ -22,6 +22,8 @@ import { buildStockRiskCommandSurface } from "@/lib/ops-console/command-adapters
 import { OperationalCommandBar } from "../_components/operational-command-bar";
 import { buildStockRiskOwnership } from "@/lib/ops-console/ownership-adapter";
 import { OwnershipStrip } from "../_components/ownership-display";
+import { buildStockRiskBlockers } from "@/lib/ops-console/blocker-adapter";
+import { AggregatedBlockerStrip } from "../_components/blocker-display";
 
 // ── Status config ──────────────────────────────────────────────────
 type RiskStatus = "healthy" | "watch" | "reorder_due" | "critical_shortage" | "expiry_risk" | "quarantine_constrained" | "blocked";
@@ -164,6 +166,12 @@ export default function StockRiskPage() {
     [stockPositions, reorderRecommendations],
   );
 
+  // Blocker view
+  const blockerView = useMemo(
+    () => buildStockRiskBlockers(stockPositions, reorderRecommendations, expiryActions),
+    [stockPositions, reorderRecommendations, expiryActions],
+  );
+
   return (
     <div className="p-4 md:p-8 space-y-5">
       {/* Header */}
@@ -232,6 +240,11 @@ export default function StockRiskPage() {
       <div className="rounded border border-slate-800 bg-slate-900/50 px-4 py-2">
         <OwnershipStrip ownership={ownership} />
       </div>
+
+      {/* Blocker strip */}
+      {blockerView.totalCount > 0 && (
+        <AggregatedBlockerStrip blockerView={blockerView} />
+      )}
 
       {/* Main layout: content + command bar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
@@ -505,7 +518,7 @@ export default function StockRiskPage() {
 
         {/* Command Bar Sidebar */}
         <div className="lg:sticky lg:top-4 lg:self-start">
-          <OperationalCommandBar surface={commandSurface} ownership={ownership} />
+          <OperationalCommandBar surface={commandSurface} ownership={ownership} blockerView={blockerView} />
         </div>
       </div>
     </div>

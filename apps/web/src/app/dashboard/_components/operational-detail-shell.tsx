@@ -3,8 +3,10 @@
 import type { ReactNode } from 'react';
 import type { CommandSurface } from '@/lib/ops-console/action-model';
 import type { OwnershipSummary } from '@/lib/ops-console/ownership-adapter';
+import type { AggregatedBlockerView } from '@/lib/ops-console/blocker-adapter';
 import { OperationalCommandBar } from './operational-command-bar';
 import { OwnershipStrip, DecisionOwnerContext } from './ownership-display';
+import { AggregatedBlockerStrip } from './blocker-display';
 
 // ---------------------------------------------------------------------------
 // Sub-component types
@@ -535,8 +537,10 @@ export interface OperationalDetailShellProps {
   header: OperationalHeaderProps;
   /** B'. Ownership summary (header 하단에 표시) */
   ownership?: OwnershipSummary;
-  /** C. Blockers/review */
+  /** C. Blockers/review (legacy) */
   blockerStrip?: BlockerReviewStripProps;
+  /** C'. Aggregated blocker view (new — takes precedence over blockerStrip) */
+  blockerView?: AggregatedBlockerView;
   /** D. Primary work area — domain-specific content */
   children: ReactNode;
   /** E. Decision panel (legacy) */
@@ -552,6 +556,7 @@ export function OperationalDetailShell({
   header,
   ownership,
   blockerStrip,
+  blockerView,
   children,
   decisionPanel,
   commandSurface,
@@ -572,8 +577,10 @@ export function OperationalDetailShell({
         </div>
       )}
 
-      {/* C. Blocker/Review Strip */}
-      {blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
+      {/* C. Blocker/Review Strip — AggregatedBlockerView takes precedence */}
+      {blockerView && blockerView.totalCount > 0
+        ? <AggregatedBlockerStrip blockerView={blockerView} />
+        : blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
 
       {/* D+E+F: Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3">
@@ -583,7 +590,7 @@ export function OperationalDetailShell({
         {/* E+F. Sidebar: CommandBar (preferred) or legacy DecisionPanel + Meta */}
         <div className="space-y-3 lg:sticky lg:top-4 lg:self-start">
           {commandSurface
-            ? <OperationalCommandBar surface={commandSurface} ownership={ownership} />
+            ? <OperationalCommandBar surface={commandSurface} ownership={ownership} blockerView={blockerView} />
             : decisionPanel && <DecisionPanelShell {...decisionPanel} />}
           {metaRail && <LinkedEntityMetaRail {...metaRail} />}
         </div>

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import type { CommandSurface, OperationalCommand } from '@/lib/ops-console/action-model';
 import { COMMAND_PRIORITY_STYLES, COMMAND_TYPE_HINTS } from '@/lib/ops-console/action-model';
 import type { OwnershipSummary } from '@/lib/ops-console/ownership-adapter';
+import type { AggregatedBlockerView } from '@/lib/ops-console/blocker-adapter';
 import { DecisionOwnerContext } from './ownership-display';
+import { BlockerCommandHints } from './blocker-display';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -13,6 +15,7 @@ import { DecisionOwnerContext } from './ownership-display';
 export interface OperationalCommandBarProps {
   surface: CommandSurface;
   ownership?: OwnershipSummary;
+  blockerView?: AggregatedBlockerView;
 }
 
 // ---------------------------------------------------------------------------
@@ -172,7 +175,7 @@ function CommandButton({
 // OperationalCommandBar
 // ---------------------------------------------------------------------------
 
-export function OperationalCommandBar({ surface, ownership }: OperationalCommandBarProps) {
+export function OperationalCommandBar({ surface, ownership, blockerView }: OperationalCommandBarProps) {
   return (
     <div className="rounded border border-slate-800 bg-slate-900 p-4 space-y-3">
       <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -203,6 +206,13 @@ export function OperationalCommandBar({ surface, ownership }: OperationalCommand
               <span className="text-red-300">{reason}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Blocker resolution hints */}
+      {blockerView && blockerView.totalCount > 0 && (
+        <div className="border-t border-slate-800 pt-2">
+          <BlockerCommandHints blockerView={blockerView} />
         </div>
       )}
 
