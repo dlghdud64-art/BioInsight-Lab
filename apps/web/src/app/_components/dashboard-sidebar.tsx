@@ -131,58 +131,50 @@ export function DashboardSidebar({
   // Badge counts from ops store
   // ---------------------------------------------------------------------------
 
-  let badges: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};
+  const { unifiedInboxItems } = useOpsStore();
 
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { unifiedInboxItems } = useOpsStore();
+  const badges = useMemo(() => {
+    const result: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};
 
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    badges = useMemo(() => {
-      const result: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};
+    // inbox: total items
+    const inboxCount = unifiedInboxItems.length;
+    if (inboxCount > 0) {
+      const hasOverdue = unifiedInboxItems.some((i) => i.dueState.isOverdue);
+      const hasBlocked = unifiedInboxItems.some((i) => !!i.blockedReason);
+      result.inbox = {
+        count: inboxCount,
+        severity: hasOverdue ? "critical" : hasBlocked ? "warning" : "normal",
+      };
+    }
 
-      // inbox: total items
-      const inboxCount = unifiedInboxItems.length;
-      if (inboxCount > 0) {
-        const hasOverdue = unifiedInboxItems.some((i) => i.dueState.isOverdue);
-        const hasBlocked = unifiedInboxItems.some((i) => !!i.blockedReason);
-        result.inbox = {
-          count: inboxCount,
-          severity: hasOverdue ? "critical" : hasBlocked ? "warning" : "normal",
-        };
-      }
+    // quotes: items where sourceModule='quote' and triageGroup is needs_review or now
+    const quoteReview = unifiedInboxItems.filter(
+      (i) =>
+        i.sourceModule === "quote" &&
+        (i.triageGroup === "needs_review" || i.triageGroup === "now"),
+    );
+    if (quoteReview.length > 0) {
+      result.quotes = { count: quoteReview.length, severity: "normal" };
+    }
 
-      // quotes: items where sourceModule='quote' and triageGroup is needs_review or now
-      const quoteReview = unifiedInboxItems.filter(
-        (i) =>
-          i.sourceModule === "quote" &&
-          (i.triageGroup === "needs_review" || i.triageGroup === "now"),
-      );
-      if (quoteReview.length > 0) {
-        result.quotes = { count: quoteReview.length, severity: "normal" };
-      }
+    // receiving: items where sourceModule='receiving' and blockedReason exists
+    const receivingBlocked = unifiedInboxItems.filter(
+      (i) => i.sourceModule === "receiving" && !!i.blockedReason,
+    );
+    if (receivingBlocked.length > 0) {
+      result.receiving = { count: receivingBlocked.length, severity: "warning" };
+    }
 
-      // receiving: items where sourceModule='receiving' and blockedReason exists
-      const receivingBlocked = unifiedInboxItems.filter(
-        (i) => i.sourceModule === "receiving" && !!i.blockedReason,
-      );
-      if (receivingBlocked.length > 0) {
-        result.receiving = { count: receivingBlocked.length, severity: "warning" };
-      }
+    // stock_risk: items where sourceModule='stock_risk' and priority='p0'
+    const stockCritical = unifiedInboxItems.filter(
+      (i) => i.sourceModule === "stock_risk" && i.priority === "p0",
+    );
+    if (stockCritical.length > 0) {
+      result.stock_risk = { count: stockCritical.length, severity: "critical" };
+    }
 
-      // stock_risk: items where sourceModule='stock_risk' and priority='p0'
-      const stockCritical = unifiedInboxItems.filter(
-        (i) => i.sourceModule === "stock_risk" && i.priority === "p0",
-      );
-      if (stockCritical.length > 0) {
-        result.stock_risk = { count: stockCritical.length, severity: "critical" };
-      }
-
-      return result;
-    }, [unifiedInboxItems]);
-  } catch {
-    // OpsStoreProvider not mounted — badges stay empty
-  }
+    return result;
+  }, [unifiedInboxItems]);
 
   // ---------------------------------------------------------------------------
   // Sidebar content

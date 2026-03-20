@@ -31,29 +31,18 @@ export function BottomNav() {
 
   const activeModule = resolveTopLevelModule(pathname);
 
-  // Badge counts
-  let badgeCounts: Record<string, number> = {};
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { unifiedInboxItems } = useOpsStore();
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    badgeCounts = useMemo(() => {
-      const result: Record<string, number> = {};
-      const inboxCount = unifiedInboxItems.length;
-      if (inboxCount > 0) result.inbox = inboxCount;
-
-      const quoteReview = unifiedInboxItems.filter(
-        (i) =>
-          i.sourceModule === "quote" &&
-          (i.triageGroup === "needs_review" || i.triageGroup === "now"),
-      ).length;
-      if (quoteReview > 0) result.quotes = quoteReview;
-
-      return result;
-    }, [unifiedInboxItems]);
-  } catch {
-    // OpsStoreProvider not mounted
-  }
+  // Badge counts from ops store (BottomNav is inside OpsStoreProvider via DashboardShell)
+  const { unifiedInboxItems } = useOpsStore();
+  const badgeCounts = useMemo(() => {
+    const result: Record<string, number> = {};
+    const inboxCount = unifiedInboxItems.length;
+    if (inboxCount > 0) result.inbox = inboxCount;
+    const quoteReview = unifiedInboxItems.filter(
+      (i) => i.sourceModule === "quote" && (i.triageGroup === "needs_review" || i.triageGroup === "now"),
+    ).length;
+    if (quoteReview > 0) result.quotes = quoteReview;
+    return result;
+  }, [unifiedInboxItems]);
 
   const isMoreActive = (MORE_MODULES as readonly string[]).includes(activeModule);
 
