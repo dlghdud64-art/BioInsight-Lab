@@ -24,6 +24,7 @@ import {
   Shield,
   Zap,
 } from "lucide-react";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -183,7 +184,7 @@ export default function PurchaseOrderLandingPage() {
                   <PriorityCard
                     key={item.entityId}
                     item={item}
-                    onClick={() => router.push(item.targetRoute)}
+                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/purchase-orders', summary: item.title, returnLabel: '발주 목록으로' }))}
                   />
                 ))}
               </div>

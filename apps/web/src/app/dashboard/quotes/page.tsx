@@ -27,6 +27,7 @@ import {
   type ModuleBucketKey,
 } from "@/lib/ops-console/module-landing-adapter";
 import { cn } from "@/lib/utils";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ── bucket tab 설정 ──
 const BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -201,7 +202,7 @@ export default function QuotesPage() {
             {priorityQueue.map((item) => (
               <div
                 key={item.entityId}
-                onClick={() => router.push(item.targetRoute)}
+                onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/quotes', summary: item.title, returnLabel: '견적 목록으로' }))}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800/60 cursor-pointer transition-colors",
                   riskBorder(item),
@@ -321,7 +322,7 @@ export default function QuotesPage() {
               {buckets[activeTab].map((item) => (
                 <div
                   key={item.entityId}
-                  onClick={() => router.push(item.targetRoute)}
+                  onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/quotes', summary: item.title, returnLabel: '견적 목록으로' }))}
                   className={cn(
                     "grid grid-cols-1 md:grid-cols-[1fr_120px_90px_100px_160px] gap-2 px-3 py-2 hover:bg-slate-800/40 cursor-pointer transition-colors items-center",
                     riskBorder(item),

@@ -24,6 +24,7 @@ import {
   Zap,
   Shield,
 } from "lucide-react";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ── Bucket tab config (Receiving-specific labels) ─────────────────
 const RCV_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -171,7 +172,7 @@ export default function ReceivingLandingPage() {
                   <PriorityCard
                     key={item.entityId}
                     item={item}
-                    onClick={() => router.push(item.targetRoute)}
+                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/receiving', summary: item.title, returnLabel: '입고 목록으로' }))}
                   />
                 ))}
               </div>

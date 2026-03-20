@@ -28,6 +28,7 @@ import {
   buildStockRiskReentryContext,
   buildExpiryReentryContext,
 } from "@/lib/ops-console/reentry-context";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { ReentryActionButton } from "../_components/reentry-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -302,7 +303,7 @@ export default function StockRiskPage() {
                   <PriorityCard
                     key={item.entityId}
                     item={item}
-                    onClick={() => router.push(item.targetRoute)}
+                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/stock-risk', summary: item.title, returnLabel: '재고 위험으로' }))}
                   />
                 ))}
               </div>
@@ -347,7 +348,7 @@ export default function StockRiskPage() {
                     <ActionableRow
                       key={item.entityId}
                       item={item}
-                      onClick={() => router.push(item.targetRoute)}
+                      onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/stock-risk', summary: item.title, returnLabel: '재고 위험으로' }))}
                     />
                   ))}
                 </div>
