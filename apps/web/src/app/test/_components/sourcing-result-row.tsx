@@ -21,33 +21,34 @@ interface SourcingResultRowProps {
   isInRequest: boolean;
   isSelected: boolean;
   onToggleCompare: () => void;
-  onAddToQuote: () => void;
+  onToggleRequest: () => void;
   onSelect: () => void;
-  onRequestQuote?: () => void;
   compareSessionCount?: number;
 }
 
 /** 핵심 스펙 추출 */
 function getKeySpecs(product: any) {
-  const specs: { icon: any; label: string; value: string }[] = [];
+  const specs: { label: string; value: string }[] = [];
   if (product.specification) {
-    specs.push({ icon: Box, label: "용량", value: product.specification.substring(0, 24) });
+    specs.push({ label: "용량", value: product.specification.substring(0, 24) });
   }
   if (product.storageCondition) {
-    specs.push({ icon: Thermometer, label: "보관", value: product.storageCondition });
+    specs.push({ label: "보관", value: product.storageCondition });
   } else if (product.grade) {
-    specs.push({ icon: Package, label: "Grade", value: product.grade });
+    specs.push({ label: "Grade", value: product.grade });
   }
-  return specs.slice(0, 2);
+  return specs.slice(0, 3);
 }
 
 /**
  * SourcingResultRow — 소싱 워크벤치용 dense row.
  *
- * 쇼핑 카드가 아닌 운영 워크벤치 행:
- * - 클릭 → right rail open (onSelect)
- * - Primary CTA → center work window (onRequestQuote)
- * - Secondary → compare toggle
+ * 3-line info hierarchy:
+ * - Line 1: 제품명 (max 2줄) + 가격 (우측)
+ * - Line 2: 공급사 · Cat. 번호
+ * - Line 3: spec/pack tags (controlled wrap)
+ *
+ * 모든 토글은 reversible (add-only 금지)
  */
 export function SourcingResultRow({
   product,
@@ -55,9 +56,8 @@ export function SourcingResultRow({
   isInRequest,
   isSelected,
   onToggleCompare,
-  onAddToQuote,
+  onToggleRequest,
   onSelect,
-  onRequestQuote,
   compareSessionCount,
 }: SourcingResultRowProps) {
   const [imgError, setImgError] = useState(false);
@@ -92,43 +92,46 @@ export function SourcingResultRow({
         )}
       </div>
 
-      {/* 2. 정보 블록 — flex-1 */}
+      {/* 2. 정보 블록 — 3-line hierarchy */}
       <div className="flex-1 min-w-0">
-        {/* 제품명 + 벤더/카탈로그 */}
-        <div className="flex items-baseline gap-2 min-w-0">
-          <span className="text-sm font-semibold text-slate-100 truncate leading-tight">
-            {product.name}
-          </span>
-        </div>
+        {/* Line 1: 제품명 (max 2줄) */}
+        <p className="text-sm font-semibold text-slate-100 line-clamp-2 leading-tight">
+          {product.name}
+        </p>
+        {/* Line 2: 공급사 · Cat. 번호 */}
         <div className="flex items-center gap-1.5 mt-0.5 text-xs text-slate-400 min-w-0">
-          {vendorName && <span className="truncate max-w-[120px]">{vendorName}</span>}
+          {vendorName && <span className="truncate max-w-[140px]">{vendorName}</span>}
           {vendorName && product.catalogNumber && <span className="text-slate-600">·</span>}
           {product.catalogNumber && (
-            <span className="font-mono text-slate-500 shrink-0">Cat. {product.catalogNumber}</span>
-          )}
-          {/* 스펙 뱃지 */}
-          {keySpecs.map((spec, idx) => (
-            <Badge
-              key={idx}
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 h-4 bg-el text-slate-500 border-bd font-normal hidden sm:inline-flex"
-            >
-              {spec.value}
-            </Badge>
-          ))}
-          {product.category && (
-            <Badge
-              variant="outline"
-              className="text-[10px] px-1.5 py-0 h-4 border-bd text-slate-500 font-normal hidden md:inline-flex"
-            >
-              {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
-            </Badge>
+            <span className="font-mono text-slate-500 truncate max-w-[120px]">Cat. {product.catalogNumber}</span>
           )}
         </div>
+        {/* Line 3: spec/pack tags (controlled wrap) */}
+        {keySpecs.length > 0 && (
+          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+            {keySpecs.map((spec, idx) => (
+              <Badge
+                key={idx}
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-4 bg-el text-slate-500 border-bd font-normal"
+              >
+                {spec.value}
+              </Badge>
+            ))}
+            {product.category && (
+              <Badge
+                variant="outline"
+                className="text-[10px] px-1.5 py-0 h-4 border-bd text-slate-500 font-normal hidden sm:inline-flex"
+              >
+                {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
+              </Badge>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 3. Status markers */}
-      <div className="shrink-0 flex items-center gap-1 hidden sm:flex">
+      <div className="shrink-0 hidden sm:flex items-center gap-1">
         {isInCompare && (
           <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 font-medium">
             <GitCompare className="h-2.5 w-2.5" />비교
@@ -152,9 +155,9 @@ export function SourcingResultRow({
         )}
       </div>
 
-      {/* 5. Primary CTA — single action, stop propagation */}
+      {/* 5. CTA — reversible toggles, stop propagation */}
       <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        {/* 비교 토글 — secondary (icon only) */}
+        {/* 비교 토글 — reversible */}
         <Button
           variant="ghost"
           size="sm"
@@ -169,20 +172,21 @@ export function SourcingResultRow({
           <GitCompare className="h-3.5 w-3.5" />
         </Button>
 
-        {/* 견적 담기 — primary CTA (single) */}
-        {!isInRequest ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 rounded text-xs font-medium bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
-            onClick={onAddToQuote}
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            견적
-          </Button>
-        ) : (
-          <span className="text-[10px] text-emerald-400 px-1.5">담김</span>
-        )}
+        {/* 견적 토글 — reversible (담기 ↔ 해제) */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={`h-7 px-2 rounded text-xs font-medium ${
+            isInRequest
+              ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25"
+              : "bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
+          }`}
+          onClick={onToggleRequest}
+          title={isInRequest ? "견적 해제" : "견적 담기"}
+        >
+          <FileText className="h-3 w-3 mr-1" />
+          {isInRequest ? "담김" : "견적"}
+        </Button>
       </div>
 
       {/* 6. Rail indicator */}

@@ -187,7 +187,10 @@ export default function SearchPage() {
                     isSelected={railProduct?.id === product.id}
                     compareSessionCount={compareStatuses[product.id]?.activeCount}
                     onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
-                    onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
+                    onToggleRequest={() => handleProtectedAction(() => {
+                      const existing = quoteItems.find((q: any) => q.productId === product.id);
+                      if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
+                    })}
                     onSelect={() => handleProtectedAction(() => setRailProduct(product))}
                   />
                 ))
@@ -209,7 +212,10 @@ export default function SearchPage() {
                 isInCompare={compareIds.includes(railProduct.id)}
                 isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
                 onToggleCompare={() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand })}
-                onAddToQuote={() => handleProtectedAction(() => addProductToQuote(railProduct))}
+                onToggleRequest={() => handleProtectedAction(() => {
+                  const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
+                  if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(railProduct); }
+                })}
                 onClose={() => setRailProduct(null)}
                 onOpenCompareWindow={() => setWorkWindowMode("compare")}
                 onOpenRequestWindow={() => setWorkWindowMode("request")}
@@ -260,57 +266,64 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* ═══ D. Workbench Tray — active compare/request ═══ */}
-      {hasSearched && (compareIds.length > 0 || quoteItems.length > 0) && (
+      {/* ═══ D. Workbench Tray — always visible when hasSearched ═══ */}
+      {hasSearched && (
         <div className="border-t border-bd bg-el px-4 py-2 flex items-center gap-3 shrink-0">
           {/* Compare segment */}
-          {compareIds.length > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <GitCompare className="h-3.5 w-3.5 text-blue-400" />
-                <span className="text-xs font-medium text-slate-300">비교</span>
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-blue-600/10 text-blue-400">{compareIds.length}</Badge>
-              </div>
-              <div className="flex items-center gap-1 max-w-[180px] overflow-x-auto">
-                {compareIds.slice(0, 3).map((id: string) => {
-                  const p = products.find((pp: any) => pp.id === id);
-                  const name = p?.name || getStoredName(id) || "—";
-                  return (
-                    <span key={id} className="text-[10px] text-slate-400 bg-pn border border-bd rounded px-1.5 py-0.5 truncate max-w-[60px]" title={name}>{name}</span>
-                  );
-                })}
-                {compareIds.length > 3 && <span className="text-[10px] text-slate-500">+{compareIds.length - 3}</span>}
-              </div>
-              {compareReady ? (
-                <Button size="sm" className="h-6 px-2.5 text-[10px] bg-blue-600 hover:bg-blue-500 text-white" onClick={() => setWorkWindowMode("compare")}>
-                  비교 검토 →
-                </Button>
-              ) : (
-                <span className="text-[10px] text-amber-400">2개 이상 필요</span>
-              )}
-              <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
-                <Trash2 className="h-3 w-3" />
-              </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <GitCompare className={`h-3.5 w-3.5 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
+              <span className={`text-xs font-medium ${compareIds.length > 0 ? "text-slate-300" : "text-slate-500"}`}>비교</span>
+              <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${compareIds.length > 0 ? "bg-blue-600/10 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
             </div>
-          )}
+            {compareIds.length > 0 && (
+              <>
+                <div className="flex items-center gap-1 max-w-[180px] overflow-x-auto">
+                  {compareIds.slice(0, 3).map((id: string) => {
+                    const p = products.find((pp: any) => pp.id === id);
+                    const name = p?.name || getStoredName(id) || "—";
+                    return (
+                      <span key={id} className="text-[10px] text-slate-400 bg-pn border border-bd rounded px-1.5 py-0.5 truncate max-w-[60px]" title={name}>{name}</span>
+                    );
+                  })}
+                  {compareIds.length > 3 && <span className="text-[10px] text-slate-500">+{compareIds.length - 3}</span>}
+                </div>
+                {compareReady ? (
+                  <Button size="sm" className="h-6 px-2.5 text-[10px] bg-blue-600 hover:bg-blue-500 text-white" onClick={() => setWorkWindowMode("compare")}>
+                    비교 검토 →
+                  </Button>
+                ) : (
+                  <span className="text-[10px] text-amber-400">2개 이상 필요</span>
+                )}
+                <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </>
+            )}
+          </div>
 
           {/* Divider */}
-          {compareIds.length > 0 && quoteItems.length > 0 && <div className="w-px h-5 bg-bd" />}
+          <div className="w-px h-5 bg-bd" />
 
           {/* Request segment */}
-          {quoteItems.length > 0 && (
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="text-xs font-medium text-slate-300">견적</span>
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-emerald-600/10 text-emerald-400">{quoteItems.length}</Badge>
-              </div>
-              <span className="text-[10px] text-slate-500 tabular-nums">₩{totalAmount.toLocaleString("ko-KR")}</span>
-              <Button size="sm" className="h-6 px-2.5 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => setWorkWindowMode("request")}>
-                견적 검토 →
-              </Button>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
+              <FileText className={`h-3.5 w-3.5 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
+              <span className={`text-xs font-medium ${quoteItems.length > 0 ? "text-slate-300" : "text-slate-500"}`}>견적</span>
+              <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${quoteItems.length > 0 ? "bg-emerald-600/10 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
             </div>
-          )}
+            {quoteItems.length > 0 && (
+              <>
+                <span className="text-[10px] text-slate-500 tabular-nums">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                <Button size="sm" className="h-6 px-2.5 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => setWorkWindowMode("request")}>
+                  견적 검토 →
+                </Button>
+                <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </>
+            )}
+          </div>
         </div>
       )}
 

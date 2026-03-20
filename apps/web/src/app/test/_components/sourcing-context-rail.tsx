@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import {
@@ -25,7 +24,7 @@ interface SourcingContextRailProps {
   isInCompare: boolean;
   isInRequest: boolean;
   onToggleCompare: () => void;
-  onAddToQuote: () => void;
+  onToggleRequest: () => void;
   onClose: () => void;
   onOpenCompareWindow?: () => void;
   onOpenRequestWindow?: () => void;
@@ -41,13 +40,14 @@ interface SourcingContextRailProps {
  * - quick inspect + low-risk single action만 허용
  * - 복잡한 비교/검토 → work window 승격
  * - 긴 multi-step form 금지
+ * - 모든 토글은 reversible (add-only 금지)
  */
 export function SourcingContextRail({
   product,
   isInCompare,
   isInRequest,
   onToggleCompare,
-  onAddToQuote,
+  onToggleRequest,
   onClose,
   onOpenCompareWindow,
   onOpenRequestWindow,
@@ -268,30 +268,23 @@ export function SourcingContextRail({
         </div>
       </div>
 
-      {/* Rail 하단 액션 — 고정 */}
+      {/* Rail 하단 액션 — 고정, reversible toggles */}
       <div className="border-t border-bd bg-el px-4 py-3 space-y-2">
-        {/* Primary: 견적 담기 or 이미 담김 */}
-        {!isInRequest ? (
-          <Button
-            size="sm"
-            className="w-full h-8 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
-            onClick={onAddToQuote}
-          >
-            <FileText className="h-3.5 w-3.5 mr-1.5" />
-            견적 리스트에 담기
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            className="w-full h-8 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium"
-            onClick={onOpenRequestWindow}
-          >
-            <FileText className="h-3.5 w-3.5 mr-1.5" />
-            견적 검토로 이동
-          </Button>
-        )}
+        {/* Primary: 견적 토글 — reversible (담기 ↔ 해제) */}
+        <Button
+          size="sm"
+          className={`w-full h-8 text-xs font-medium ${
+            isInRequest
+              ? "bg-emerald-600/15 text-emerald-400 border border-emerald-600/30 hover:bg-red-600/10 hover:text-red-400 hover:border-red-600/30"
+              : "bg-blue-600 hover:bg-blue-500 text-white"
+          }`}
+          onClick={onToggleRequest}
+        >
+          <FileText className="h-3.5 w-3.5 mr-1.5" />
+          {isInRequest ? "견적에서 해제" : "견적 리스트에 담기"}
+        </Button>
 
-        {/* Secondary: 비교 토글 */}
+        {/* Secondary: 비교 토글 — reversible */}
         <Button
           variant="outline"
           size="sm"
