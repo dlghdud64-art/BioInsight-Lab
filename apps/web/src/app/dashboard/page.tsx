@@ -296,7 +296,7 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      {/* --- Section 1: Today Operating Hub (compact strip) --- */}
+      {/* --- Today Operating Hub (compact strip) --- */}
       <TodayHubStrip />
 
       {/* --- AI 작업함 --- */}
