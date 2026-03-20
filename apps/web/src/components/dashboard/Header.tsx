@@ -124,21 +124,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       return isLastSegment ? "상세 정보" : "상세 관리";
     }
     const pathLabelMap: Record<string, string> = {
-      dashboard: "오늘",
-      inbox: "작업함",
-      quotes: "견적",
-      "purchase-orders": "발주",
-      receiving: "입고",
-      "stock-risk": "재고 위험",
-      settings: "설정",
-      test: "검색",
-      search: "검색",
-      compare: "비교",
+      dashboard: "대시보드",
       analytics: "지출 분석",
       inventory: "재고 관리",
       purchases: "구매 운영",
+      quotes: "견적 관리",
       organizations: "조직 관리",
       safety: "안전 관리",
+      settings: "설정",
       budget: "예산 관리",
       reports: "구매 리포트",
       notifications: "알림 센터",
@@ -148,6 +141,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       orders: "견적 및 구매 내역",
       admin: "관리자",
       my: "내 정보",
+      test: "테스트",
     };
     const mapped = pathLabelMap[path];
     if (mapped) return mapped;
