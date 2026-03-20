@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BottomNavMoreSheet } from "./bottom-nav-more-sheet";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { useOpsStoreSafe } from "@/lib/ops-console/ops-store";
 import { resolveTopLevelModule } from "@/lib/ops-console/navigation-context";
 
 const tabs = [
@@ -32,7 +32,8 @@ export function BottomNav() {
   const activeModule = resolveTopLevelModule(pathname);
 
   // Badge counts from ops store (BottomNav is inside OpsStoreProvider via DashboardShell)
-  const { unifiedInboxItems } = useOpsStore();
+  const store = useOpsStoreSafe();
+  const unifiedInboxItems = store?.unifiedInboxItems ?? [];
   const badgeCounts = useMemo(() => {
     const result: Record<string, number> = {};
     const inboxCount = unifiedInboxItems.length;

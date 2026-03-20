@@ -406,3 +406,117 @@ export function buildReturnPath(
   }
   return { href: '/dashboard', label: '오늘로' };
 }
+
+// ---------------------------------------------------------------------------
+// 10. URL SearchParams ↔ Navigation Context
+// ---------------------------------------------------------------------------
+
+/**
+ * URL searchParams에서 navigation context 관련 파라미터를 읽는다.
+ * React hook이 아닌 pure function — useSearchParams() 결과를 전달.
+ */
+export function readNavigationParams(searchParams: URLSearchParams): {
+  originType?: NavigationContext['originType'];
+  originRoute?: string;
+  originSummary?: string;
+  returnRoute?: string;
+  returnLabel?: string;
+  activeQueueFilter?: string;
+} {
+  return {
+    originType: (searchParams.get('nav_origin') as NavigationContext['originType']) || undefined,
+    originRoute: searchParams.get('nav_origin_route') || undefined,
+    originSummary: searchParams.get('nav_origin_summary') || undefined,
+    returnRoute: searchParams.get('nav_return') || undefined,
+    returnLabel: searchParams.get('nav_return_label') || undefined,
+    activeQueueFilter: searchParams.get('nav_filter') || undefined,
+  };
+}
+
+/**
+ * Navigation context를 URL searchParams 문자열로 변환한다.
+ * Link href에 append하여 사용.
+ */
+export function buildNavigationSearchParams(ctx: {
+  originType?: NavigationContext['originType'];
+  originRoute?: string;
+  originSummary?: string;
+  returnRoute?: string;
+  returnLabel?: string;
+  activeQueueFilter?: string;
+}): string {
+  const params = new URLSearchParams();
+  if (ctx.originType) params.set('nav_origin', ctx.originType);
+  if (ctx.originRoute) params.set('nav_origin_route', ctx.originRoute);
+  if (ctx.originSummary) params.set('nav_origin_summary', ctx.originSummary);
+  if (ctx.returnRoute) params.set('nav_return', ctx.returnRoute);
+  if (ctx.returnLabel) params.set('nav_return_label', ctx.returnLabel);
+  if (ctx.activeQueueFilter) params.set('nav_filter', ctx.activeQueueFilter);
+  const str = params.toString();
+  return str ? `?${str}` : '';
+}
+
+/**
+ * 대상 entity route에 navigation context를 붙인 full URL을 생성한다.
+ * inbox/dashboard/landing에서 detail로 이동할 때 사용.
+ */
+export function buildDetailHref(
+  entityRoute: string,
+  origin: {
+    type: NavigationContext['originType'];
+    route: string;
+    summary?: string;
+    returnLabel?: string;
+    filter?: string;
+  },
+): string {
+  const navParams = buildNavigationSearchParams({
+    originType: origin.type,
+    originRoute: origin.route,
+    originSummary: origin.summary,
+    returnRoute: origin.route,
+    returnLabel: origin.returnLabel,
+    activeQueueFilter: origin.filter,
+  });
+  // If entityRoute already has query params, merge
+  if (entityRoute.includes('?')) {
+    return `${entityRoute}&${navParams.slice(1)}`;
+  }
+  return `${entityRoute}${navParams}`;
+}
+
+// ---------------------------------------------------------------------------
+// 11. Orientation Data Builder
+// ---------------------------------------------------------------------------
+
+export interface OrientationData {
+  /** 현재 top-level 모듈 라벨 */
+  moduleLabel: string;
+  /** 현재 화면 역할 */
+  roleLabel: string;
+  /** entity context (있으면) */
+  entityLabel?: string;
+  /** origin context (있으면) */
+  originSummary?: string;
+  /** return action */
+  returnAction: { href: string; label: string } | null;
+  /** breadcrumbs */
+  breadcrumbs: BreadcrumbItem[];
+}
+
+/**
+ * NavigationContext에서 OrientationStrip이 필요로 하는 데이터를 빌드한다.
+ */
+export function buildOrientationData(ctx: NavigationContext, pathname: string): OrientationData {
+  const moduleConfig = MODULE_CONFIGS.find((m) => m.module === ctx.topLevelModule);
+  const returnPath = buildReturnPath(ctx.topLevelModule, ctx.originType, ctx.returnRoute || ctx.originRoute);
+
+  return {
+    moduleLabel: moduleConfig?.label || '오늘',
+    roleLabel: SCREEN_ROLE_LABELS[ctx.screenRole],
+    entityLabel: ctx.entityLabel,
+    originSummary: ctx.originSummary,
+    returnAction: ctx.screenRole !== 'hub' ? returnPath : null,
+    breadcrumbs: buildBreadcrumbs(pathname, ctx.entityLabel),
+  };
+}
