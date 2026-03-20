@@ -56,3 +56,35 @@ export {
   DEFAULT_QUEUE_ROW_SLOTS,
   DEFAULT_SUMMARY_PILL_SLOTS,
 } from './layout-shells';
+
+export {
+  type InteractionSurface,
+  type SurfaceDefinition,
+  type ReturnBehavior,
+  type ParentRefreshMode,
+  SURFACE_DEFINITIONS,
+  RIGHT_RAIL_RULES,
+  WORK_WINDOW_RULES,
+  FULL_DETAIL_RULES,
+} from './interaction-surfaces';
+
+export {
+  type WorkWindowSlots,
+  type WorkWindowPhase,
+  type WorkWindowState,
+  type ParentContext,
+  type LaunchTrigger,
+  type LaunchRule,
+  type ActionComplexity,
+  type TaskSurfaceMapping,
+  type PriorityTarget,
+  DEFAULT_WORK_WINDOW_SLOTS,
+  INITIAL_WORK_WINDOW_STATE,
+  LAUNCH_RULES,
+  COMPLEXITY_SURFACE_MAP,
+  TASK_SURFACE_MAPPINGS,
+  RETURN_RULES,
+  REFRESH_RULES,
+  WORK_WINDOW_LAYOUT,
+  PRIORITY_TARGETS,
+} from './work-window-system';
