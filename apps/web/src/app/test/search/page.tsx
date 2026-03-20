@@ -12,6 +12,8 @@ import { PriceDisplay } from "@/components/products/price-display";
 import { Loader2, ShoppingCart, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal, Clock, Upload, CheckCircle2, AlertTriangle, XCircle, Edit3 } from "lucide-react";
 import Link from "next/link";
 import { SearchResultItem } from "../_components/search-result-item";
+import { SourcingResultRow } from "../_components/sourcing-result-row";
+import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { PageHeader } from "@/app/_components/page-header";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -62,6 +64,7 @@ export default function SearchPage() {
   const { data: session } = useSession();
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [railProduct, setRailProduct] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isQuoteSheetOpen, setIsQuoteSheetOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
@@ -162,215 +165,168 @@ export default function SearchPage() {
           </SheetContent>
         </Sheet>
 
-        {/* 2컬럼 레이아웃 — 좌측 필터는 검색 후에만 노출 */}
-        <div className={`flex flex-col gap-4 ${hasSearched ? "md:grid md:gap-8 md:grid-cols-[260px_1fr]" : ""}`}>
+        {/* 워크벤치 레이아웃 — 좌측 필터 + 중앙 결과 + 우측 rail */}
+        <div className={`flex flex-col gap-4 ${hasSearched ? "md:grid md:gap-4 md:grid-cols-[220px_1fr]" : ""} ${hasSearched && railProduct ? "lg:grid-cols-[220px_1fr_340px]" : ""}`}>
         {/* 좌측: 검색 패널 (데스크탑 + 검색 후만) */}
         {hasSearched && (
         <aside className="hidden md:block">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 sticky top-4">
             <SearchPanel />
           </div>
         </aside>
         )}
 
-        {/* 검색 결과 */}
-        <section className="space-y-4 max-w-4xl mx-auto w-full">
-          {/* 비교 중인 제품 바 */}
+        {/* 중앙: 검색 결과 리스트 */}
+        <section className="space-y-3 w-full min-w-0">
+          {/* 비교 트레이 — compact strip */}
           {compareIds.length > 0 && (
-            <Card className="border border-bd bg-pn">
-              <CardContent className="py-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <GitCompare className="h-4 w-4 text-indigo-600 flex-shrink-0" />
-                    <span className="text-sm font-medium text-slate-100">
-                      비교 중인 제품: {compareIds.length}개
-                    </span>
-                    <div className="flex items-center gap-1 flex-wrap">
-                      {compareIds.map((id) => {
-                        // products 배열에서 찾기
-                        let product = products.find((p) => p.id === id);
-                        // products에서 못 찾으면 quoteItems에서 찾기
-                        if (!product) {
-                          const quoteItem = quoteItems.find((item) => item.productId === id);
-                          if (quoteItem) {
-                            product = {
-                              id: quoteItem.productId,
-                              name: quoteItem.productName,
-                              brand: quoteItem.brand,
-                            };
-                          }
-                        }
-                        // store에 저장된 메타 정보를 fallback으로 사용
-                        const storedName = getStoredName(id);
-                        const displayName = product?.name || product?.brand || storedName || "비교 대상";
-                        return (
-                          <Badge
-                            key={id}
-                            variant="secondary"
-                            className="text-xs pr-1 cursor-pointer hover:bg-st transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleCompare(id);
-                            }}
-                          >
-                            <span className="text-xs font-medium leading-snug whitespace-nowrap max-w-[120px] truncate block" title={displayName}>
-                              {displayName}
-                            </span>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleCompare(id);
-                              }}
-                              className="ml-1 hover:bg-st rounded-full p-0.5"
-                              aria-label="제거"
-                            >
-                              <X className="h-2.5 w-2.5" />
-                            </button>
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="text-xs text-slate-500 hover:text-red-400 hover:bg-red-600/10"
-                      onClick={() => clearCompare()}
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-bd bg-el">
+              <GitCompare className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+              <span className="text-xs font-medium text-slate-300 shrink-0">
+                비교 {compareIds.length}건
+              </span>
+              <div className="flex items-center gap-1 flex-1 overflow-x-auto min-w-0">
+                {compareIds.map((id) => {
+                  let product = products.find((p: any) => p.id === id);
+                  if (!product) {
+                    const quoteItem = quoteItems.find((item: any) => item.productId === id);
+                    if (quoteItem) {
+                      product = { id: quoteItem.productId, name: quoteItem.productName, brand: quoteItem.brand };
+                    }
+                  }
+                  const storedName = getStoredName(id);
+                  const displayName = product?.name || product?.brand || storedName || "비교 대상";
+                  return (
+                    <Badge
+                      key={id}
+                      variant="secondary"
+                      className="text-[10px] pr-1 cursor-pointer hover:bg-st transition-colors shrink-0 bg-pn"
+                      onClick={(e: React.MouseEvent) => { e.stopPropagation(); toggleCompare(id); }}
                     >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      전체 비우기
-                    </Button>
-                    <Link href="/test/compare" className="flex-1 sm:flex-none">
-                      <Button size="sm" variant="default" className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700">
-                        비교 보기 →
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                      <span className="max-w-[80px] truncate">{displayName}</span>
+                      <X className="h-2.5 w-2.5 ml-1 opacity-60" />
+                    </Badge>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-red-400"
+                  onClick={() => clearCompare()}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+                <Link href="/test/compare">
+                  <Button size="sm" className="h-6 px-2.5 text-[10px] bg-blue-600 hover:bg-blue-500 text-white">
+                    비교 보기 →
+                  </Button>
+                </Link>
+              </div>
+            </div>
           )}
 
-          {/* 검색 결과 */}
-          <div className="space-y-4">
-            {/* 헤더: 검색 결과 개수 */}
-            {products.length > 0 && (
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-100">검색 결과</h2>
-                  <p className="text-sm text-slate-400 mt-1">
-                    {products.length}개 제품 · 비교 후 견적 리스트에 담을 수 있습니다.
-                  </p>
+          {/* 검색 결과 헤더 */}
+          {products.length > 0 && (
+            <div className="flex items-center justify-between px-1">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold text-slate-100">소싱 후보</h2>
+                <span className="text-xs text-slate-500">{products.length}건</span>
+              </div>
+              {session?.user && searchQuery && (
+                <div className="flex items-center gap-1.5">
+                  <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+                    <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd bg-el text-slate-400 hover:bg-st transition-colors">
+                      <TrendingDown className="h-3 w-3" />
+                      재고 확인
+                    </button>
+                  </Link>
+                  <Link href="/test/quote">
+                    <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-blue-600/30 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-colors">
+                      <FileText className="h-3 w-3" />
+                      견적 요청
+                    </button>
+                  </Link>
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* AI 인사이트 — compact */}
+          {hasSearched && searchQuery && products.length > 0 && (
+            <AIInsightCard
+              query={searchQuery}
+              productCount={products.length}
+              isLoading={analysisLoading}
+              queryAnalysis={queryAnalysis}
+            />
+          )}
+
+          {/* 결과 리스트 */}
+          {isSearchLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 className="h-5 w-5 animate-spin text-slate-400 mb-2" />
+              <p className="text-xs text-slate-400">검색 중...</p>
+            </div>
+          ) : products.length > 0 ? (
+            <div className="space-y-1">
+              {products.map((product: any) => {
+                const isInCompare = compareIds.includes(product.id);
+                return (
+                  <SourcingResultRow
+                    key={product.id}
+                    product={product}
+                    isInCompare={isInCompare}
+                    isSelected={railProduct?.id === product.id}
+                    compareSessionCount={compareStatuses[product.id]?.activeCount}
+                    onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
+                    onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
+                    onSelect={() => handleProtectedAction(() => setRailProduct(product))}
+                  />
+                );
+              })}
+            </div>
+          ) : hasSearched ? (
+            <div className="flex flex-col items-center text-center rounded-lg border border-dashed border-bd bg-el px-6 py-8">
+              <Package className="h-7 w-7 text-slate-500 mb-2" strokeWidth={1.5} />
+              <p className="text-sm text-slate-300 mb-1">검색 결과가 없습니다</p>
+              <p className="text-xs text-slate-500 mb-3">다른 키워드로 검색해보세요</p>
+              <div className="flex items-center gap-1.5 flex-wrap justify-center mb-4">
+                {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => { setSearchQuery(term); runSearch(); }}
+                    className="text-xs px-2.5 py-1 rounded-md bg-pn border border-bd text-slate-400 hover:bg-st hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
               </div>
-            )}
-
-            {isSearchLoading ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-slate-400 mb-3" />
-                <p className="text-sm text-slate-400">검색 중...</p>
-              </div>
-            ) : products.length > 0 ? (
-              <div className="space-y-3">
-                  {/* AI 인사이트 카드 */}
-                  {hasSearched && searchQuery && (
-                    <AIInsightCard
-                      query={searchQuery}
-                      productCount={products.length}
-                      isLoading={analysisLoading}
-                      queryAnalysis={queryAnalysis}
-                    />
-                  )}
-
-                  {/* 재고 운영 인사이트 — 로그인 사용자 + 검색 결과 존재 시 보조 레이어 */}
-                  {session?.user && hasSearched && searchQuery && (
-                    <div className="rounded-lg border border-bd bg-pn px-4 py-3">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <ClipboardList className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                        <span className="text-xs font-semibold text-slate-400">재고 운영 연결</span>
-                        <span className="text-[10px] text-slate-400">— 검색 품목을 운영 흐름과 연결하세요</span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-bs bg-el text-slate-300 hover:bg-st hover:border-bs transition-colors">
-                            <TrendingDown className="h-3 w-3 text-slate-500" />
-                            재고 현황 확인
-                          </button>
-                        </Link>
-                        <Link href="/test/quote">
-                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-blue-500/30 bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-colors">
-                            <FileText className="h-3 w-3" />
-                            견적 요청하기
-                          </button>
-                        </Link>
-                        <Link href="/dashboard">
-                          <button className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md border border-bs bg-el text-slate-400 hover:bg-st transition-colors">
-                            <LayoutDashboard className="h-3 w-3 text-slate-500" />
-                            운영 허브
-                          </button>
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-
-                  {products.map((product) => {
-                    const isInCompare = compareIds.includes(product.id);
-
-                    return (
-                      <SearchResultItem
-                        key={product.id}
-                        product={product}
-                        isInCompare={isInCompare}
-                        compareSessionCount={compareStatuses[product.id]?.activeCount}
-                        onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
-                        onAddToQuote={() => handleProtectedAction(() => addProductToQuote(product))}
-                        onClick={() => handleProtectedAction(() => {
-                          setSelectedProduct(product);
-                          setIsDetailOpen(true);
-                        })}
-                      />
-                    );
-                  })}
-              </div>
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center py-6 md:py-16 w-full max-w-3xl mx-auto px-4">
-                  {!hasSearched ? (
-                    <div className="hidden" />
-                  ) : (
-                    <div className="flex flex-col items-center text-center rounded-lg border border-dashed border-bd bg-el px-8 py-10">
-                      <Package className="h-8 w-8 text-slate-500 mb-3" strokeWidth={1.5} />
-                      <p className="text-sm text-slate-300 mb-1">검색 결과가 없습니다</p>
-                      <p className="text-xs text-slate-500 mb-4">다른 키워드로 검색해보세요</p>
-
-                      {/* 추천 키워드 칩 */}
-                      <div className="flex items-center gap-1.5 flex-wrap justify-center mb-5">
-                        {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
-                          <button
-                            key={term}
-                            type="button"
-                            onClick={() => {
-                              setSearchQuery(term);
-                              runSearch();
-                            }}
-                            className="text-xs px-2.5 py-1 rounded-md bg-pn border border-bd text-slate-400 hover:bg-st hover:text-slate-300 active:scale-95 transition-all cursor-pointer"
-                          >
-                            {term}
-                          </button>
-                        ))}
-                      </div>
-
-                      {/* PDF/BOM 대체 경로 */}
-                      <Link href="/protocol/bom" className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
-                        <FileText className="h-3.5 w-3.5" />
-                        텍스트 붙여넣기로 BOM 등록하기
-                      </Link>
-                    </div>
-                  )}
-              </div>
-            )}
-          </div>
+              <Link href="/protocol/bom" className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                <FileText className="h-3.5 w-3.5" />
+                텍스트 붙여넣기로 BOM 등록하기
+              </Link>
+            </div>
+          ) : null}
         </section>
+
+        {/* 우측: Context Rail — 제품 선택 시 데스크탑만 */}
+        {hasSearched && railProduct && (
+          <aside className="hidden lg:block">
+            <div className="sticky top-4 bg-pn border border-bd rounded-lg overflow-hidden max-h-[calc(100vh-8rem)]">
+              <SourcingContextRail
+                product={railProduct}
+                isInCompare={compareIds.includes(railProduct.id)}
+                onToggleCompare={() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand })}
+                onAddToQuote={() => handleProtectedAction(() => addProductToQuote(railProduct))}
+                onClose={() => setRailProduct(null)}
+                searchQuery={searchQuery}
+              />
+            </div>
+          </aside>
+        )}
       </div>
 
       {/* 제품 상세 다이얼로그 */}
