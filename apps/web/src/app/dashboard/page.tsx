@@ -198,27 +198,16 @@ export default function DashboardPage() {
     return "";
   };
 
-  // -- Today Priority Stack (P0 긴급 / P1 오늘 처리 / P2 주의) --
-  const urgentItems: Array<{ id: string; icon: React.ReactNode; label: string; desc: string; href: string; severity: "red" | "amber"; priority: "P0" | "P1" | "P2" }> = [];
-  if (stats.lowStockAlerts >= 3) {
-    urgentItems.push({
-      id: "u-low-critical",
-      icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
-      label: `재고 부족 ${stats.lowStockAlerts}건`,
-      desc: "즉시 발주 검토가 필요합니다",
-      href: "/dashboard/inventory?filter=low",
-      severity: "red",
-      priority: "P0",
-    });
-  } else if (stats.lowStockAlerts > 0) {
+  // -- 즉시 처리 항목 생성 --
+  const urgentItems: Array<{ id: string; icon: React.ReactNode; label: string; desc: string; href: string; severity: "red" | "amber" }> = [];
+  if (stats.lowStockAlerts > 0) {
     urgentItems.push({
       id: "u-low",
-      icon: <AlertTriangle className="h-4 w-4 text-amber-400" />,
+      icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
       label: `재고 부족 ${stats.lowStockAlerts}건`,
-      desc: "안전재고 이하 품목 — 발주 검토",
+      desc: "안전재고 이하 품목 -- 발주 검토",
       href: "/dashboard/inventory?filter=low",
-      severity: "amber",
-      priority: "P1",
+      severity: stats.lowStockAlerts >= 3 ? "red" : "amber",
     });
   }
   if (stats.respondedQuotes > 0) {
@@ -226,10 +215,9 @@ export default function DashboardPage() {
       id: "u-responded",
       icon: <CheckCircle2 className="h-4 w-4 text-green-400" />,
       label: `견적 응답 ${stats.respondedQuotes}건`,
-      desc: "공급사 응답 수신 — 검토 후 확정",
+      desc: "공급사 응답 수신 -- 검토 후 확정",
       href: "/dashboard/quotes?status=RESPONDED",
       severity: "amber",
-      priority: "P1",
     });
   }
   if (stats.expiringCount > 0) {
@@ -240,7 +228,6 @@ export default function DashboardPage() {
       desc: "30일 이내 만료 예정",
       href: "/dashboard/inventory",
       severity: "amber",
-      priority: "P2",
     });
   }
   if (stats.undecidedCompareCount > 0) {
@@ -251,7 +238,6 @@ export default function DashboardPage() {
       desc: stats.compareStats.slaBreachedCount > 0 ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 포함` : "비교 결과 검토 필요",
       href: "/compare",
       severity: stats.compareStats.slaBreachedCount > 0 ? "red" : "amber",
-      priority: stats.compareStats.slaBreachedCount > 0 ? "P0" : "P1",
     });
   }
   if (stats.activeQuotes > 0 && stats.respondedQuotes === 0) {
@@ -262,14 +248,8 @@ export default function DashboardPage() {
       desc: "공급사 응답 대기 중",
       href: "/dashboard/quotes?status=PENDING",
       severity: "amber",
-      priority: "P2",
     });
   }
-  // P0 → P1 → P2 순서 정렬
-  urgentItems.sort((a, b) => {
-    const order = { P0: 0, P1: 1, P2: 2 };
-    return order[a.priority] - order[b.priority];
-  });
 
   // -- 추천 작업 (항상 표시) --
   const recommendedActions = [
@@ -531,11 +511,8 @@ export default function DashboardPage() {
                   <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-el transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${item.priority === "P0" ? "bg-red-500/15 text-red-400" : item.priority === "P1" ? "bg-amber-500/15 text-amber-400" : "bg-slate-500/15 text-slate-400"}`}>{item.priority}</span>
-                        <p className="text-xs font-semibold text-slate-200">{item.label}</p>
-                      </div>
-                      <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                      <p className="text-xs font-semibold text-slate-200">{item.label}</p>
+                      <p className="text-[10px] text-slate-400">{item.desc}</p>
                     </div>
                     <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
                   </Link>
@@ -739,11 +716,8 @@ export default function DashboardPage() {
                       <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-el transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                         {item.icon}
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className={`text-[9px] font-bold px-1 py-0.5 rounded ${item.priority === "P0" ? "bg-red-500/15 text-red-400" : item.priority === "P1" ? "bg-amber-500/15 text-amber-400" : "bg-slate-500/15 text-slate-400"}`}>{item.priority}</span>
-                            <p className="text-xs font-semibold text-slate-200">{item.label}</p>
-                          </div>
-                          <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                          <p className="text-xs font-semibold text-slate-200">{item.label}</p>
+                          <p className="text-[10px] text-slate-400">{item.desc}</p>
                         </div>
                         <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
                       </Link>
