@@ -1,8 +1,8 @@
 /**
- * ops-console/ops-store.ts
+ * ops-console/ops-store.tsx
  *
  * P0 데모용 클라이언트 사이드 상태 저장소.
- * React Context + useState 패턴으로 외부 라이브러리 없이 구현.
+ * EntityGraph + TransitionRunner 기반으로 deterministic 상태 관리.
  *
  * @module ops-console/ops-store
  */
@@ -31,7 +31,15 @@ import type {
   ExpiryActionContract,
 } from '../review-queue/reorder-expiry-stock-risk-contract';
 import type { OperatorInboxItem } from '../review-queue/operator-console-contract';
-import { buildFullInbox, type UnifiedInboxItem } from './inbox-adapter';
+import type { UnifiedInboxItem } from './inbox-adapter';
+import {
+  type EntityGraph,
+  buildInitialGraph,
+  applyTransition,
+  recalculateInbox,
+  type TransitionAction,
+} from './scenario-transition-runner';
+import { resetDemoClock } from './demo-clock';
 
 import {
   ALL_QUOTE_REQUESTS,
@@ -44,16 +52,37 @@ import {
   ALL_STOCK_POSITIONS,
   ALL_REORDER_RECOMMENDATIONS,
   ALL_EXPIRY_ACTIONS,
+  ALL_LOT_RISKS,
   INBOX_ITEMS,
   VENDOR_MAP,
 } from './seed-data';
+
+// ---------------------------------------------------------------------------
+// Initial graph builder
+// ---------------------------------------------------------------------------
+
+function createInitialGraph(): EntityGraph {
+  return buildInitialGraph({
+    quoteRequests: ALL_QUOTE_REQUESTS,
+    quoteResponses: ALL_QUOTE_RESPONSES,
+    quoteComparisons: ALL_QUOTE_COMPARISONS,
+    purchaseOrders: ALL_PURCHASE_ORDERS,
+    approvalExecutions: ALL_APPROVAL_EXECUTIONS,
+    acknowledgements: ALL_ACKNOWLEDGEMENTS,
+    receivingBatches: ALL_RECEIVING_BATCHES,
+    stockPositions: ALL_STOCK_POSITIONS,
+    reorderRecommendations: ALL_REORDER_RECOMMENDATIONS,
+    expiryActions: ALL_EXPIRY_ACTIONS,
+    lotRisks: ALL_LOT_RISKS,
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Store interface
 // ---------------------------------------------------------------------------
 
 export interface OpsStore {
-  // Data
+  // Data — derived from EntityGraph
   quoteRequests: QuoteRequestContract[];
   quoteResponses: QuoteResponseContract[];
   quoteComparisons: QuoteComparisonContract[];
@@ -66,6 +95,9 @@ export interface OpsStore {
   expiryActions: ExpiryActionContract[];
   inboxItems: OperatorInboxItem[];
   unifiedInboxItems: UnifiedInboxItem[];
+
+  // Entity graph (for direct access)
+  graph: EntityGraph;
 
   // Actions - Quote
   selectVendor: (quoteRequestId: string, vendorId: string) => void;
@@ -83,9 +115,14 @@ export interface OpsStore {
   // Actions - Stock Risk
   createQuoteFromReorder: (recommendationId: string) => void;
   completeExpiryAction: (actionId: string) => void;
+  resolveReorderBlocker: (recommendationId: string) => void;
 
-  // Refresh
+  // Refresh & Reset
   refreshInbox: () => void;
+  resetToInitial: () => void;
+
+  // Transition dispatch (generic)
+  dispatch: (action: TransitionAction) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -95,10 +132,10 @@ export interface OpsStore {
 const OpsStoreContext = createContext<OpsStore | null>(null);
 
 // ---------------------------------------------------------------------------
-// Inbox regeneration
+// Legacy inbox generation (for OperatorInboxItem compatibility)
 // ---------------------------------------------------------------------------
 
-function generateInboxItems(
+function generateLegacyInboxItems(
   quoteRequests: QuoteRequestContract[],
   _quoteResponses: QuoteResponseContract[],
   purchaseOrders: PurchaseOrderContract[],
@@ -115,7 +152,6 @@ function generateInboxItems(
     return Math.max(0, (now.getTime() - new Date(iso).getTime()) / (1000 * 60 * 60));
   }
 
-  // Quote requests with pending responses
   for (const qr of quoteRequests) {
     if (qr.status === 'partially_responded' || qr.status === 'sent') {
       items.push({
@@ -143,7 +179,6 @@ function generateInboxItems(
     }
   }
 
-  // POs: approved -> ready to issue
   for (const po of purchaseOrders) {
     if (po.status === 'approved' || po.status === 'ready_to_issue') {
       items.push({
@@ -170,7 +205,6 @@ function generateInboxItems(
       });
     }
 
-    // POs: issued, ack pending
     if (po.status === 'issued') {
       const ack = acknowledgements.find((a) => a.poId === po.id);
       if (!ack || ack.status === 'sent' || ack.status === 'not_sent') {
@@ -199,18 +233,12 @@ function generateInboxItems(
     }
   }
 
-  // Receiving: doc issues + quarantine + posting
   for (const rb of receivingBatches) {
     const hasDocMissing = rb.lineReceipts.some(
       (l) => l.documentStatus === 'partial' || l.documentStatus === 'missing',
     );
     const hasQuarantine = rb.lineReceipts.some((l) =>
       l.lotRecords.some((lot) => lot.quarantineStatus === 'quarantined'),
-    );
-    const hasInspectionPending = rb.lineReceipts.some(
-      (l) =>
-        l.inspectionRequired &&
-        (l.inspectionStatus === 'pending' || l.inspectionStatus === 'in_progress'),
     );
 
     if (hasDocMissing) {
@@ -263,6 +291,12 @@ function generateInboxItems(
       });
     }
 
+    const hasInspectionPending = rb.lineReceipts.some(
+      (l) =>
+        l.inspectionRequired &&
+        (l.inspectionStatus === 'pending' || l.inspectionStatus === 'in_progress'),
+    );
+
     if ((hasDocMissing || hasQuarantine || hasInspectionPending) && rb.status !== 'posted' && rb.status !== 'closed') {
       items.push({
         id: `gen-rb-post-${rb.id}`,
@@ -289,7 +323,6 @@ function generateInboxItems(
     }
   }
 
-  // Stock positions: reorder due / expiry risk
   for (const sp of stockPositions) {
     if (sp.riskStatus === 'reorder_due' || sp.riskStatus === 'critical_shortage') {
       items.push({
@@ -309,7 +342,7 @@ function generateInboxItems(
           type: 'stock_position',
           entityId: sp.id,
           label: `${sp.inventoryItemId} 재고`,
-          href: `/dashboard/inventory/${sp.id}`,
+          href: `/dashboard/stock-risk`,
         },
         workspaceId: sp.workspaceId,
       });
@@ -333,14 +366,13 @@ function generateInboxItems(
           type: 'stock_position',
           entityId: sp.id,
           label: `${sp.inventoryItemId} 재고`,
-          href: `/dashboard/inventory/${sp.id}`,
+          href: `/dashboard/stock-risk`,
         },
         workspaceId: sp.workspaceId,
       });
     }
   }
 
-  // Blocked reorder recommendations
   for (const rr of reorderRecommendations) {
     if (rr.status === 'blocked') {
       items.push({
@@ -361,7 +393,7 @@ function generateInboxItems(
           type: 'reorder_recommendation',
           entityId: rr.id,
           label: `재주문 추천 ${rr.id.toUpperCase()}`,
-          href: `/dashboard/inventory/reorder/${rr.id}`,
+          href: `/dashboard/stock-risk`,
         },
         workspaceId: rr.workspaceId,
       });
@@ -380,244 +412,118 @@ interface OpsStoreProviderProps {
 }
 
 export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
-  const [quoteRequests, setQuoteRequests] = useState<QuoteRequestContract[]>(
-    () => [...ALL_QUOTE_REQUESTS],
-  );
-  const [quoteResponses, setQuoteResponses] = useState<QuoteResponseContract[]>(
-    () => [...ALL_QUOTE_RESPONSES],
-  );
-  const [quoteComparisons, setQuoteComparisons] = useState<QuoteComparisonContract[]>(
-    () => [...ALL_QUOTE_COMPARISONS],
-  );
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrderContract[]>(
-    () => [...ALL_PURCHASE_ORDERS],
-  );
-  const [approvalExecutions, setApprovalExecutions] = useState<ApprovalExecutionContract[]>(
-    () => [...ALL_APPROVAL_EXECUTIONS],
-  );
-  const [acknowledgements, setAcknowledgements] = useState<PurchaseOrderAcknowledgementContract[]>(
-    () => [...ALL_ACKNOWLEDGEMENTS],
-  );
-  const [receivingBatches, setReceivingBatches] = useState<ReceivingBatchContract[]>(
-    () => [...ALL_RECEIVING_BATCHES],
-  );
-  const [stockPositions, setStockPositions] = useState<InventoryStockPositionContract[]>(
-    () => [...ALL_STOCK_POSITIONS],
-  );
-  const [reorderRecommendations, setReorderRecommendations] = useState<ReorderRecommendationContract[]>(
-    () => [...ALL_REORDER_RECOMMENDATIONS],
-  );
-  const [expiryActions, setExpiryActions] = useState<ExpiryActionContract[]>(
-    () => [...ALL_EXPIRY_ACTIONS],
-  );
-  const [inboxItems, setInboxItems] = useState<OperatorInboxItem[]>(
+  const [graph, setGraph] = useState<EntityGraph>(() => createInitialGraph());
+  const [inboxItems, setInboxItems] = useState<OperatorInboxItem>(
     () => [...INBOX_ITEMS],
   );
-  const [unifiedInboxItems, setUnifiedInboxItems] = useState<UnifiedInboxItem[]>(
-    () =>
-      buildFullInbox(
-        [...ALL_QUOTE_REQUESTS],
-        [...ALL_QUOTE_RESPONSES],
-        [...ALL_QUOTE_COMPARISONS],
-        [...ALL_PURCHASE_ORDERS],
-        [...ALL_APPROVAL_EXECUTIONS],
-        [...ALL_ACKNOWLEDGEMENTS],
-        [...ALL_RECEIVING_BATCHES],
-        [...ALL_STOCK_POSITIONS],
-        [...ALL_REORDER_RECOMMENDATIONS],
-        [...ALL_EXPIRY_ACTIONS],
-      ),
+
+  // Derived unified inbox
+  const unifiedInboxItems = useMemo(() => recalculateInbox(graph), [graph]);
+
+  // -----------------------------------------------------------------------
+  // Core dispatch — all mutations go through here
+  // -----------------------------------------------------------------------
+
+  const dispatch = useCallback((action: TransitionAction) => {
+    setGraph((prev) => {
+      const next = applyTransition(prev, action);
+      // Also update legacy inbox
+      setInboxItems(
+        generateLegacyInboxItems(
+          next.quoteRequests,
+          next.quoteResponses,
+          next.purchaseOrders,
+          next.acknowledgements,
+          next.receivingBatches,
+          next.stockPositions,
+          next.reorderRecommendations,
+          next.expiryActions,
+        ) as unknown as OperatorInboxItem,
+      );
+      return next;
+    });
+  }, []);
+
+  // -----------------------------------------------------------------------
+  // Typed action wrappers
+  // -----------------------------------------------------------------------
+
+  const selectVendor = useCallback(
+    (quoteRequestId: string, vendorId: string) =>
+      dispatch({ type: 'select_vendor', quoteRequestId, vendorId }),
+    [dispatch],
   );
 
-  // -----------------------------------------------------------------------
-  // refreshInbox
-  // -----------------------------------------------------------------------
+  const convertQuoteToPO = useCallback(
+    (quoteRequestId: string) =>
+      dispatch({ type: 'convert_quote_to_po', quoteRequestId }),
+    [dispatch],
+  );
 
-  const doRefreshInbox = useCallback(
-    (
-      qr: QuoteRequestContract[],
-      qresp: QuoteResponseContract[],
-      pos: PurchaseOrderContract[],
-      acks: PurchaseOrderAcknowledgementContract[],
-      rbs: ReceivingBatchContract[],
-      sps: InventoryStockPositionContract[],
-      rrs: ReorderRecommendationContract[],
-      eas: ExpiryActionContract[],
-      qcs: QuoteComparisonContract[],
-      aes: ApprovalExecutionContract[],
-    ) => {
-      setInboxItems(generateInboxItems(qr, qresp, pos, acks, rbs, sps, rrs, eas));
-      setUnifiedInboxItems(buildFullInbox(qr, qresp, qcs, pos, aes, acks, rbs, sps, rrs, eas));
+  const issuePO = useCallback(
+    (poId: string) => dispatch({ type: 'issue_po', poId }),
+    [dispatch],
+  );
+
+  const acknowledgePO = useCallback(
+    (poId: string) => dispatch({ type: 'acknowledge_po', poId }),
+    [dispatch],
+  );
+
+  const recordArrival = useCallback(
+    (receivingBatchId: string) => {
+      setGraph((prev) => {
+        const next = { ...prev };
+        next.receivingBatches = prev.receivingBatches.map((rb) =>
+          rb.id === receivingBatchId
+            ? { ...rb, status: 'arrived' as const, receivedAt: new Date().toISOString() }
+            : rb,
+        );
+        return next;
+      });
     },
     [],
+  );
+
+  const completeInspection = useCallback(
+    (receivingBatchId: string, lineId: string, passed: boolean) =>
+      dispatch({ type: 'complete_inspection', receivingBatchId, lineId, passed }),
+    [dispatch],
+  );
+
+  const postToInventory = useCallback(
+    (receivingBatchId: string) =>
+      dispatch({ type: 'post_to_inventory', receivingBatchId }),
+    [dispatch],
+  );
+
+  const createQuoteFromReorder = useCallback(
+    (recommendationId: string) =>
+      dispatch({ type: 'create_quote_from_reorder', recommendationId }),
+    [dispatch],
+  );
+
+  const completeExpiryAction = useCallback(
+    (actionId: string) =>
+      dispatch({ type: 'complete_expiry_action', actionId }),
+    [dispatch],
+  );
+
+  const resolveReorderBlocker = useCallback(
+    (recommendationId: string) =>
+      dispatch({ type: 'resolve_reorder_blocker', recommendationId }),
+    [dispatch],
   );
 
   const refreshInbox = useCallback(() => {
-    doRefreshInbox(
-      quoteRequests,
-      quoteResponses,
-      purchaseOrders,
-      acknowledgements,
-      receivingBatches,
-      stockPositions,
-      reorderRecommendations,
-      expiryActions,
-      quoteComparisons,
-      approvalExecutions,
-    );
-  }, [
-    quoteRequests, quoteResponses, purchaseOrders, acknowledgements,
-    receivingBatches, stockPositions, reorderRecommendations, expiryActions,
-    quoteComparisons, approvalExecutions,
-    doRefreshInbox,
-  ]);
-
-  // -----------------------------------------------------------------------
-  // Quote actions
-  // -----------------------------------------------------------------------
-
-  const selectVendor = useCallback((quoteRequestId: string, vendorId: string) => {
-    setQuoteRequests((prev) =>
-      prev.map((qr) =>
-        qr.id === quoteRequestId
-          ? { ...qr, status: 'vendor_selected' as const, summary: { ...qr.summary, selectedVendorId: vendorId } }
-          : qr,
-      ),
-    );
-    setQuoteComparisons((prev) =>
-      prev.map((qc) =>
-        qc.quoteRequestId === quoteRequestId
-          ? { ...qc, comparisonStatus: 'selected' as const, recommendedVendorId: vendorId }
-          : qc,
-      ),
-    );
+    // Force recalculation by triggering graph identity change
+    setGraph((prev) => ({ ...prev }));
   }, []);
 
-  const convertQuoteToPO = useCallback((quoteRequestId: string) => {
-    setQuoteRequests((prev) =>
-      prev.map((qr) =>
-        qr.id === quoteRequestId
-          ? { ...qr, status: 'converted_to_po' as const }
-          : qr,
-      ),
-    );
-    setQuoteComparisons((prev) =>
-      prev.map((qc) =>
-        qc.quoteRequestId === quoteRequestId
-          ? { ...qc, comparisonStatus: 'converted' as const }
-          : qc,
-      ),
-    );
-  }, []);
-
-  // -----------------------------------------------------------------------
-  // PO actions
-  // -----------------------------------------------------------------------
-
-  const issuePO = useCallback((poId: string) => {
-    setPurchaseOrders((prev) =>
-      prev.map((po) =>
-        po.id === poId
-          ? { ...po, status: 'issued' as const, issuedAt: new Date().toISOString() }
-          : po,
-      ),
-    );
-  }, []);
-
-  const acknowledgePO = useCallback((poId: string) => {
-    setPurchaseOrders((prev) =>
-      prev.map((po) =>
-        po.id === poId
-          ? { ...po, status: 'acknowledged' as const, acknowledgedAt: new Date().toISOString() }
-          : po,
-      ),
-    );
-    setAcknowledgements((prev) =>
-      prev.map((ack) =>
-        ack.poId === poId
-          ? {
-              ...ack,
-              status: 'acknowledged' as const,
-              acknowledgedAt: new Date().toISOString(),
-              promisedDeliveryAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-            }
-          : ack,
-      ),
-    );
-  }, []);
-
-  // -----------------------------------------------------------------------
-  // Receiving actions
-  // -----------------------------------------------------------------------
-
-  const recordArrival = useCallback((receivingBatchId: string) => {
-    setReceivingBatches((prev) =>
-      prev.map((rb) =>
-        rb.id === receivingBatchId
-          ? { ...rb, status: 'arrived' as const, receivedAt: new Date().toISOString() }
-          : rb,
-      ),
-    );
-  }, []);
-
-  const completeInspection = useCallback(
-    (receivingBatchId: string, lineId: string, passed: boolean) => {
-      setReceivingBatches((prev) =>
-        prev.map((rb) => {
-          if (rb.id !== receivingBatchId) return rb;
-          const updatedLines = rb.lineReceipts.map((line) => {
-            if (line.id !== lineId) return line;
-            return {
-              ...line,
-              inspectionStatus: passed ? ('passed' as const) : ('failed' as const),
-            };
-          });
-          const allInspected = updatedLines.every(
-            (l) => !l.inspectionRequired || l.inspectionStatus === 'passed' || l.inspectionStatus === 'failed',
-          );
-          return {
-            ...rb,
-            lineReceipts: updatedLines,
-            status: allInspected ? ('ready_to_post' as const) : rb.status,
-          };
-        }),
-      );
-    },
-    [],
-  );
-
-  const postToInventory = useCallback((receivingBatchId: string) => {
-    setReceivingBatches((prev) =>
-      prev.map((rb) =>
-        rb.id === receivingBatchId
-          ? { ...rb, status: 'posted' as const }
-          : rb,
-      ),
-    );
-  }, []);
-
-  // -----------------------------------------------------------------------
-  // Stock Risk actions
-  // -----------------------------------------------------------------------
-
-  const createQuoteFromReorder = useCallback((recommendationId: string) => {
-    setReorderRecommendations((prev) =>
-      prev.map((rr) =>
-        rr.id === recommendationId
-          ? { ...rr, status: 'converted_to_quote' as const }
-          : rr,
-      ),
-    );
-  }, []);
-
-  const completeExpiryAction = useCallback((actionId: string) => {
-    setExpiryActions((prev) =>
-      prev.map((ea) =>
-        ea.id === actionId
-          ? { ...ea, status: 'completed' as const, completedAt: new Date().toISOString() }
-          : ea,
-      ),
-    );
+  const resetToInitial = useCallback(() => {
+    resetDemoClock();
+    setGraph(createInitialGraph());
+    setInboxItems([...INBOX_ITEMS] as unknown as OperatorInboxItem);
   }, []);
 
   // -----------------------------------------------------------------------
@@ -626,18 +532,19 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
 
   const store = useMemo<OpsStore>(
     () => ({
-      quoteRequests,
-      quoteResponses,
-      quoteComparisons,
-      purchaseOrders,
-      approvalExecutions,
-      acknowledgements,
-      receivingBatches,
-      stockPositions,
-      reorderRecommendations,
-      expiryActions,
-      inboxItems,
+      quoteRequests: graph.quoteRequests,
+      quoteResponses: graph.quoteResponses,
+      quoteComparisons: graph.quoteComparisons,
+      purchaseOrders: graph.purchaseOrders,
+      approvalExecutions: graph.approvalExecutions,
+      acknowledgements: graph.acknowledgements,
+      receivingBatches: graph.receivingBatches,
+      stockPositions: graph.stockPositions,
+      reorderRecommendations: graph.reorderRecommendations,
+      expiryActions: graph.expiryActions,
+      inboxItems: Array.isArray(inboxItems) ? inboxItems : [],
       unifiedInboxItems,
+      graph,
       selectVendor,
       convertQuoteToPO,
       issuePO,
@@ -647,16 +554,17 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
       postToInventory,
       createQuoteFromReorder,
       completeExpiryAction,
+      resolveReorderBlocker,
       refreshInbox,
+      resetToInitial,
+      dispatch,
     }),
     [
-      quoteRequests, quoteResponses, quoteComparisons,
-      purchaseOrders, approvalExecutions, acknowledgements,
-      receivingBatches, stockPositions, reorderRecommendations,
-      expiryActions, inboxItems, unifiedInboxItems,
+      graph, inboxItems, unifiedInboxItems,
       selectVendor, convertQuoteToPO, issuePO, acknowledgePO,
       recordArrival, completeInspection, postToInventory,
-      createQuoteFromReorder, completeExpiryAction, refreshInbox,
+      createQuoteFromReorder, completeExpiryAction, resolveReorderBlocker,
+      refreshInbox, resetToInitial, dispatch,
     ],
   );
 

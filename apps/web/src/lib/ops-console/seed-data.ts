@@ -32,26 +32,13 @@ import type {
 
 import type { OperatorInboxItem } from '../review-queue/operator-console-contract';
 
+import { isoNow, isoFromNow, isoAgo } from './demo-clock';
+
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const WORKSPACE_ID = 'ws-demo-001';
-const NOW = new Date();
-
-function isoNow(): string {
-  return NOW.toISOString();
-}
-
-function isoFromNow(days: number): string {
-  const d = new Date(NOW);
-  d.setDate(d.getDate() + days);
-  return d.toISOString();
-}
-
-function isoAgo(days: number): string {
-  return isoFromNow(-days);
-}
 
 // ---------------------------------------------------------------------------
 // Vendors
