@@ -12,9 +12,10 @@ import {
   type InboxContextStripProps,
   type OperationalHeaderProps,
   type BlockerReviewStripProps,
-  type DecisionPanelProps,
   type MetaRailProps,
 } from "../../_components/operational-detail-shell";
+import { buildPOCommandSurface } from "@/lib/ops-console/command-adapters";
+import type { CommandSurface } from "@/lib/ops-console/action-model";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -170,50 +171,19 @@ export default function PurchaseOrderDetailPage() {
     return { blockers, reviewPoints, warnings: [] };
   })();
 
-  const decisionPanel: DecisionPanelProps = {
-    readinessSummary: isApproved
-      ? "발행 가능"
-      : isIssued
-        ? ackPending
-          ? "공급사 확인 대기 중"
-          : "입고 핸드오프 가능"
-        : "승인 완료 후 발행 가능",
-    readinessReady: isApproved || isAcknowledged,
-    blockedReasons: !isApproved && !isIssued ? ["승인 프로세스 미완료"] : [],
-    recommendedAction: isApproved
-      ? "발주서 발행 실행"
-      : ackPending
-        ? "공급사 확인 독촉"
-        : isAcknowledged
-          ? "입고 준비"
-          : undefined,
-    handoffTarget: isAcknowledged
-      ? { label: "입고 관리", href: "/dashboard/receiving" }
-      : undefined,
-    actions: [
-      {
-        label: "발주 발행",
-        onClick: () => { store.issuePO(po.id); },
-        variant: "primary",
-        disabled: !isApproved,
-        disabledReason: !isApproved ? "승인 완료 후 발행 가능" : undefined,
-      },
-      {
-        label: "공급사 확인 수신",
-        onClick: () => { store.acknowledgePO(po.id); },
-        variant: "secondary",
-        disabled: po.status !== "issued",
-        disabledReason: po.status !== "issued" ? "발행 후 확인 가능" : undefined,
-      },
-      {
-        label: "입고 시작",
-        onClick: () => router.push("/dashboard/receiving"),
-        variant: "secondary",
-        disabled: !isAcknowledged,
-        disabledReason: !isAcknowledged ? "확인 완료 후 진행 가능" : undefined,
-      },
-    ],
-  };
+  const commandSurface: CommandSurface = useMemo(
+    () =>
+      buildPOCommandSurface({
+        po,
+        approval,
+        ack,
+        vendorName,
+        onIssuePO: () => store.issuePO(po.id),
+        onAcknowledgePO: () => store.acknowledgePO(po.id),
+        onGoToReceiving: () => router.push("/dashboard/receiving"),
+      }),
+    [po, approval, ack, vendorName, store, router],
+  );
 
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(po.createdAt).toLocaleDateString("ko-KR"),
@@ -229,7 +199,7 @@ export default function PurchaseOrderDetailPage() {
         contextStrip={contextStrip}
         header={header}
         blockerStrip={blockerStrip}
-        decisionPanel={decisionPanel}
+        commandSurface={commandSurface}
         metaRail={metaRail}
       >
         {/* ── 승인 타임라인 ── */}

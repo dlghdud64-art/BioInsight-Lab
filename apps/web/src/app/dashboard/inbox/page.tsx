@@ -29,6 +29,8 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { buildInboxQuickAction } from "@/lib/ops-console/command-adapters";
+import type { InboxQuickAction } from "@/lib/ops-console/action-model";
 
 // ── Priority badge 색상 ──
 const PRIORITY_BADGE: Record<string, string> = {
@@ -173,25 +175,16 @@ export default function InboxPage() {
     setStateFilter("all");
   }, []);
 
-  // Execute action on selected item
+  // Execute action on selected item via quick action adapter
   const handleAction = useCallback(
     (item: UnifiedInboxItem) => {
-      if (item.workType === "po_ready_to_issue") {
-        store.issuePO(item.entityId);
+      const quickAction = buildInboxQuickAction(item, store);
+      if (quickAction && !quickAction.requiresDetail && quickAction.onExecute) {
+        quickAction.onExecute();
         store.refreshInbox();
         setSelectedItemId(null);
-      } else if (item.workType === "po_ack_pending") {
-        store.acknowledgePO(item.entityId);
-        store.refreshInbox();
-        setSelectedItemId(null);
-      } else if (item.workType === "reorder_due") {
-        store.createQuoteFromReorder(item.entityId);
-        store.refreshInbox();
-        setSelectedItemId(null);
-      } else if (item.workType === "expiry_action_due") {
-        store.completeExpiryAction(item.entityId);
-        store.refreshInbox();
-        setSelectedItemId(null);
+      } else if (quickAction?.requiresDetail && quickAction.detailRoute) {
+        router.push(quickAction.detailRoute);
       } else {
         router.push(item.entityRoute);
       }
@@ -397,6 +390,7 @@ export default function InboxPage() {
             onClose={() => setSelectedItemId(null)}
             onAction={() => handleAction(selectedItem)}
             onNavigate={() => router.push(selectedItem.entityRoute)}
+            quickAction={buildInboxQuickAction(selectedItem, store)}
           />
         )}
       </div>
@@ -535,13 +529,16 @@ function ContextPanel({
   onClose,
   onAction,
   onNavigate,
+  quickAction,
 }: {
   item: UnifiedInboxItem;
   onClose: () => void;
   onAction: () => void;
   onNavigate: () => void;
+  quickAction: InboxQuickAction | null;
 }) {
-  const actionLabel = getActionLabel(item);
+  const actionLabel = quickAction?.label ?? null;
+  const canExecuteAction = quickAction ? quickAction.canExecute && !quickAction.requiresDetail : false;
 
   return (
     <div className="hidden lg:block w-[320px] flex-shrink-0 bg-pn border-l border-bd sticky top-0 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
@@ -639,11 +636,27 @@ function ContextPanel({
 
         {/* Action buttons */}
         <div className="space-y-2 pt-2">
-          {actionLabel && (
+          {actionLabel && canExecuteAction && (
             <Button
               size="sm"
               className="w-full text-xs"
               onClick={onAction}
+            >
+              {actionLabel}
+            </Button>
+          )}
+          {actionLabel && !canExecuteAction && quickAction?.requiresDetail && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full text-xs gap-1.5"
+              onClick={() => {
+                if (quickAction.detailRoute) {
+                  window.location.href = quickAction.detailRoute;
+                } else {
+                  onNavigate();
+                }
+              }}
             >
               {actionLabel}
             </Button>
@@ -663,21 +676,4 @@ function ContextPanel({
   );
 }
 
-// ── Action label helper ──
-
-function getActionLabel(item: UnifiedInboxItem): string | null {
-  switch (item.workType) {
-    case "po_ready_to_issue":
-      return "발주서 발행";
-    case "po_ack_pending":
-      return "확인 완료 처리";
-    case "reorder_due":
-      return item.blockedReason ? null : "견적 요청 생성";
-    case "expiry_action_due":
-      return "조치 완료 처리";
-    case "posting_blocked":
-      return null; // blocked items can't be directly actioned
-    default:
-      return null;
-  }
-}
+// Quick action labels now provided by buildInboxQuickAction adapter

@@ -18,10 +18,11 @@ import {
   type InboxContextStripProps,
   type OperationalHeaderProps,
   type BlockerReviewStripProps,
-  type DecisionPanelProps,
   type MetaRailProps,
 } from "../../_components/operational-detail-shell";
 import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
+import { buildQuoteCommandSurface } from "@/lib/ops-console/command-adapters";
+import type { CommandSurface } from "@/lib/ops-console/action-model";
 
 // ── 상태 라벨 ──
 const STATUS_LABELS: Record<string, string> = {
@@ -209,37 +210,18 @@ export default function QuoteDetailPage() {
     return { blockers, reviewPoints, warnings };
   })();
 
-  const decisionPanel: DecisionPanelProps = {
-    readinessSummary: isConverted
-      ? "발주 전환 완료"
-      : isVendorSelected
-        ? "발주 전환 가능"
-        : decisionSummary
-          ? decisionSummary.conversionReadiness === "ready" ? "전환 준비 완료" : "검토 필요"
-          : "비교 데이터 생성 대기",
-    readinessReady: isVendorSelected || decisionSummary?.conversionReadiness === "ready",
-    blockedReasons: decisionSummary?.conversionBlockers ?? [],
-    recommendedAction: isConverted ? undefined : "비교 검토 후 최적 공급사 선정",
-    handoffTarget: isConverted
-      ? { label: "발주 관리", href: "/dashboard/purchase-orders" }
-      : undefined,
-    actions: [
-      ...(!isVendorSelected && comparison?.recommendedVendorId
-        ? [{
-            label: `추천 공급사 선정 (${vendorMap[comparison.recommendedVendorId] ?? "추천"})`,
-            onClick: () => handleSelectVendor(comparison.recommendedVendorId!),
-            variant: "secondary" as const,
-          }]
-        : []),
-      {
-        label: isConverted ? "✓ 발주 전환 완료" : "발주 전환",
-        onClick: handleConvertToPO,
-        variant: "primary" as const,
-        disabled: !isVendorSelected || isConverted,
-        disabledReason: !isVendorSelected ? "먼저 공급사를 선택하세요" : isConverted ? "이미 전환됨" : undefined,
-      },
-    ],
-  };
+  const commandSurface: CommandSurface = useMemo(
+    () =>
+      buildQuoteCommandSurface({
+        quoteRequest,
+        responses,
+        comparison,
+        vendorMap,
+        onSelectVendor: handleSelectVendor,
+        onConvertToPO: handleConvertToPO,
+      }),
+    [quoteRequest, responses, comparison, vendorMap],
+  );
 
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(quoteRequest.createdAt).toLocaleDateString("ko-KR"),
@@ -255,7 +237,7 @@ export default function QuoteDetailPage() {
         contextStrip={contextStrip}
         header={header}
         blockerStrip={blockerStrip}
-        decisionPanel={decisionPanel}
+        commandSurface={commandSurface}
         metaRail={metaRail}
       >
         {/* ── 공급사 응답 카드 ── */}

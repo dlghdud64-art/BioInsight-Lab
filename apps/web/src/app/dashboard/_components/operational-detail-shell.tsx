@@ -1,6 +1,8 @@
 'use client';
 
 import type { ReactNode } from 'react';
+import type { CommandSurface } from '@/lib/ops-console/action-model';
+import { OperationalCommandBar } from './operational-command-bar';
 
 // ---------------------------------------------------------------------------
 // Sub-component types
@@ -533,8 +535,10 @@ export interface OperationalDetailShellProps {
   blockerStrip?: BlockerReviewStripProps;
   /** D. Primary work area — domain-specific content */
   children: ReactNode;
-  /** E. Decision panel */
+  /** E. Decision panel (legacy) */
   decisionPanel?: DecisionPanelProps;
+  /** E'. Command surface (new — takes precedence over decisionPanel) */
+  commandSurface?: CommandSurface;
   /** F. Meta rail */
   metaRail?: MetaRailProps;
 }
@@ -545,6 +549,7 @@ export function OperationalDetailShell({
   blockerStrip,
   children,
   decisionPanel,
+  commandSurface,
   metaRail,
 }: OperationalDetailShellProps) {
   return (
@@ -563,9 +568,11 @@ export function OperationalDetailShell({
         {/* D. Primary Work Area */}
         <div className="min-w-0 space-y-3">{children}</div>
 
-        {/* E+F. Sidebar: Decision + Meta */}
+        {/* E+F. Sidebar: CommandBar (preferred) or legacy DecisionPanel + Meta */}
         <div className="space-y-3 lg:sticky lg:top-4 lg:self-start">
-          {decisionPanel && <DecisionPanelShell {...decisionPanel} />}
+          {commandSurface
+            ? <OperationalCommandBar surface={commandSurface} />
+            : decisionPanel && <DecisionPanelShell {...decisionPanel} />}
           {metaRail && <LinkedEntityMetaRail {...metaRail} />}
         </div>
       </div>

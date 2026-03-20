@@ -13,9 +13,10 @@ import {
   type InboxContextStripProps,
   type OperationalHeaderProps,
   type BlockerReviewStripProps,
-  type DecisionPanelProps,
   type MetaRailProps,
 } from "../../_components/operational-detail-shell";
+import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters";
+import type { CommandSurface } from "@/lib/ops-console/action-model";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -155,47 +156,15 @@ export default function ReceivingDetailPage() {
     return { blockers, reviewPoints, warnings };
   })();
 
-  const decisionPanel: DecisionPanelProps = {
-    readinessSummary: isPosted
-      ? "재고 반영 완료"
-      : canPost
-        ? "재고 반영 가능"
-        : "차단 요인 해소 필요",
-    readinessReady: canPost,
-    blockedReasons: [
-      ...(hasDocMissing ? ["문서 미첨부 라인 존재"] : []),
-      ...(hasQuarantine ? ["격리 품목 미해결"] : []),
-      ...(hasInspectionPending ? ["검수 미완료"] : []),
-    ],
-    recommendedAction: isPosted
-      ? undefined
-      : hasDocMissing
-        ? "공급사에 문서 재요청"
-        : hasQuarantine
-          ? "격리 검사 실행 후 판정"
-          : canPost
-            ? "재고 반영 실행"
-            : "검수 완료 후 반영",
-    handoffTarget: isPosted
-      ? { label: "재고 위험 관리", href: "/dashboard/stock-risk" }
-      : undefined,
-    actions: [
-      ...rb.lineReceipts
-        .filter((l) => l.inspectionRequired && l.inspectionStatus !== "passed" && l.inspectionStatus !== "failed")
-        .map((l) => ({
-          label: `라인 ${l.lineNumber} 검수 완료`,
-          onClick: () => store.completeInspection(rb.id, l.id, true),
-          variant: "secondary" as const,
-        })),
-      {
-        label: isPosted ? "✓ 반영 완료" : "재고 반영",
-        onClick: () => store.postToInventory(rb.id),
-        variant: "primary" as const,
-        disabled: !canPost || isPosted,
-        disabledReason: isPosted ? "이미 반영됨" : !canPost ? "차단 요인 해소 필요" : undefined,
-      },
-    ],
-  };
+  const commandSurface: CommandSurface = useMemo(
+    () =>
+      buildReceivingCommandSurface({
+        rb,
+        onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
+        onPostToInventory: () => store.postToInventory(rb.id),
+      }),
+    [rb, store],
+  );
 
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(rb.receivedAt).toLocaleDateString("ko-KR"),
@@ -211,7 +180,7 @@ export default function ReceivingDetailPage() {
         contextStrip={contextStrip}
         header={header}
         blockerStrip={blockerStrip}
-        decisionPanel={decisionPanel}
+        commandSurface={commandSurface}
         metaRail={metaRail}
       >
         {/* ── 수령 라인 테이블 ── */}
