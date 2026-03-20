@@ -2,7 +2,9 @@
 
 import type { ReactNode } from 'react';
 import type { CommandSurface } from '@/lib/ops-console/action-model';
+import type { OwnershipSummary } from '@/lib/ops-console/ownership-adapter';
 import { OperationalCommandBar } from './operational-command-bar';
+import { OwnershipStrip, DecisionOwnerContext } from './ownership-display';
 
 // ---------------------------------------------------------------------------
 // Sub-component types
@@ -531,6 +533,8 @@ export interface OperationalDetailShellProps {
   contextStrip?: InboxContextStripProps;
   /** B. Operational header */
   header: OperationalHeaderProps;
+  /** B'. Ownership summary (header 하단에 표시) */
+  ownership?: OwnershipSummary;
   /** C. Blockers/review */
   blockerStrip?: BlockerReviewStripProps;
   /** D. Primary work area — domain-specific content */
@@ -546,6 +550,7 @@ export interface OperationalDetailShellProps {
 export function OperationalDetailShell({
   contextStrip,
   header,
+  ownership,
   blockerStrip,
   children,
   decisionPanel,
@@ -560,6 +565,13 @@ export function OperationalDetailShell({
       {/* B. Operational Header */}
       <OperationalHeader {...header} />
 
+      {/* B'. Ownership Strip */}
+      {ownership && (
+        <div className="rounded border border-slate-800 bg-slate-900/50 px-4 py-2">
+          <OwnershipStrip ownership={ownership} />
+        </div>
+      )}
+
       {/* C. Blocker/Review Strip */}
       {blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
 
@@ -571,7 +583,7 @@ export function OperationalDetailShell({
         {/* E+F. Sidebar: CommandBar (preferred) or legacy DecisionPanel + Meta */}
         <div className="space-y-3 lg:sticky lg:top-4 lg:self-start">
           {commandSurface
-            ? <OperationalCommandBar surface={commandSurface} />
+            ? <OperationalCommandBar surface={commandSurface} ownership={ownership} />
             : decisionPanel && <DecisionPanelShell {...decisionPanel} />}
           {metaRail && <LinkedEntityMetaRail {...metaRail} />}
         </div>

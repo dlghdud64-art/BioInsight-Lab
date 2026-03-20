@@ -16,6 +16,7 @@ import {
 } from "../../_components/operational-detail-shell";
 import { buildPOCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
+import { buildPOOwnership } from "@/lib/ops-console/ownership-adapter";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -185,6 +186,11 @@ export default function PurchaseOrderDetailPage() {
     [po, approval, ack, vendorName, store, router],
   );
 
+  const ownership = useMemo(
+    () => buildPOOwnership(po, approval, ack),
+    [po, approval, ack],
+  );
+
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(po.createdAt).toLocaleDateString("ko-KR"),
     linkedEntities: [
@@ -198,6 +204,7 @@ export default function PurchaseOrderDetailPage() {
       <OperationalDetailShell
         contextStrip={contextStrip}
         header={header}
+        ownership={ownership}
         blockerStrip={blockerStrip}
         commandSurface={commandSurface}
         metaRail={metaRail}

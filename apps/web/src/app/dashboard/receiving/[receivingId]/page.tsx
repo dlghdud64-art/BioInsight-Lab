@@ -17,6 +17,7 @@ import {
 } from "../../_components/operational-detail-shell";
 import { buildReceivingCommandSurface } from "@/lib/ops-console/command-adapters";
 import type { CommandSurface } from "@/lib/ops-console/action-model";
+import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
 
 // ── Status config ──
 const STATUS_LABELS: Record<string, string> = {
@@ -166,6 +167,11 @@ export default function ReceivingDetailPage() {
     [rb, store],
   );
 
+  const ownership = useMemo(
+    () => buildReceivingOwnership(rb),
+    [rb],
+  );
+
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(rb.receivedAt).toLocaleDateString("ko-KR"),
     linkedEntities: [
@@ -179,6 +185,7 @@ export default function ReceivingDetailPage() {
       <OperationalDetailShell
         contextStrip={contextStrip}
         header={header}
+        ownership={ownership}
         blockerStrip={blockerStrip}
         commandSurface={commandSurface}
         metaRail={metaRail}

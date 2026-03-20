@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { CommandSurface, OperationalCommand } from '@/lib/ops-console/action-model';
 import { COMMAND_PRIORITY_STYLES, COMMAND_TYPE_HINTS } from '@/lib/ops-console/action-model';
+import type { OwnershipSummary } from '@/lib/ops-console/ownership-adapter';
+import { DecisionOwnerContext } from './ownership-display';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -10,6 +12,7 @@ import { COMMAND_PRIORITY_STYLES, COMMAND_TYPE_HINTS } from '@/lib/ops-console/a
 
 export interface OperationalCommandBarProps {
   surface: CommandSurface;
+  ownership?: OwnershipSummary;
 }
 
 // ---------------------------------------------------------------------------
@@ -169,7 +172,7 @@ function CommandButton({
 // OperationalCommandBar
 // ---------------------------------------------------------------------------
 
-export function OperationalCommandBar({ surface }: OperationalCommandBarProps) {
+export function OperationalCommandBar({ surface, ownership }: OperationalCommandBarProps) {
   return (
     <div className="rounded border border-slate-800 bg-slate-900 p-4 space-y-3">
       <div className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -183,6 +186,13 @@ export function OperationalCommandBar({ surface }: OperationalCommandBarProps) {
         />
         <span className="text-slate-300">{surface.readinessSummary}</span>
       </div>
+
+      {/* Owner context in decision panel */}
+      {ownership && (
+        <div className="border-t border-slate-800 pt-2">
+          <DecisionOwnerContext ownership={ownership} />
+        </div>
+      )}
 
       {/* Aggregated blockers */}
       {surface.aggregatedBlockers.length > 0 && (

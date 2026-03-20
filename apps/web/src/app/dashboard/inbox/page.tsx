@@ -31,6 +31,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { buildInboxQuickAction } from "@/lib/ops-console/command-adapters";
 import type { InboxQuickAction } from "@/lib/ops-console/action-model";
+import {
+  buildInboxItemOwnership,
+  OWNER_FILTER_OPTIONS,
+  ASSIGNMENT_STATE_LABELS,
+  ASSIGNMENT_STATE_TONES,
+  type OwnerFilterKey,
+} from "@/lib/ops-console/ownership-adapter";
+import { OwnershipBadge } from "../_components/ownership-display";
 
 // ── Priority badge 색상 ──
 const PRIORITY_BADGE: Record<string, string> = {
@@ -63,6 +71,7 @@ export default function InboxPage() {
   // State
   const [moduleFilter, setModuleFilter] = useState<string>("all");
   const [stateFilter, setStateFilter] = useState<string>("all");
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilterKey>("all");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     new Set(),
@@ -103,12 +112,39 @@ export default function InboxPage() {
     [allItems],
   );
 
+  // Compute ownership for all items
+  const itemsWithOwnership = useMemo(
+    () =>
+      allItems.map((item) => ({
+        ...item,
+        ownershipSummary: buildInboxItemOwnership(item),
+      })),
+    [allItems],
+  );
+
   // Filtered items
   const filteredItems = useMemo(() => {
-    let result = filterByModule(allItems, moduleFilter);
+    let result = filterByModule(itemsWithOwnership, moduleFilter);
     result = filterByState(result, stateFilter);
+    // Owner filter
+    if (ownerFilter !== "all") {
+      const stateMap: Record<string, string[]> = {
+        my_work: ["owned_by_me"],
+        team_work: ["owned_by_team"],
+        unassigned: ["unassigned"],
+        waiting_external: ["waiting_external"],
+        escalated: ["escalated", "blocked_by_role"],
+        approval_owned: ["awaiting_approval", "awaiting_internal_review"],
+      };
+      const states = stateMap[ownerFilter];
+      if (states) {
+        result = result.filter((i) =>
+          states.includes(i.ownershipSummary.assignmentState),
+        );
+      }
+    }
     return sortInboxItems(result);
-  }, [allItems, moduleFilter, stateFilter]);
+  }, [itemsWithOwnership, moduleFilter, stateFilter, ownerFilter]);
 
   // Group items by triageGroup
   const groupedItems = useMemo(() => {
@@ -173,6 +209,7 @@ export default function InboxPage() {
   const resetFilters = useCallback(() => {
     setModuleFilter("all");
     setStateFilter("all");
+    setOwnerFilter("all");
   }, []);
 
   // Execute action on selected item via quick action adapter
@@ -192,7 +229,7 @@ export default function InboxPage() {
     [store, router],
   );
 
-  const hasActiveFilters = moduleFilter !== "all" || stateFilter !== "all";
+  const hasActiveFilters = moduleFilter !== "all" || stateFilter !== "all" || ownerFilter !== "all";
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 max-w-[1400px] mx-auto w-full">
@@ -292,6 +329,26 @@ export default function InboxPage() {
                 "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
                 stateFilter === opt.key
                   ? "bg-blue-500/20 text-blue-400"
+                  : "bg-el text-slate-400 hover:text-slate-300",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="w-px h-5 bg-bd mx-1 hidden md:block" />
+
+        {/* Owner pills */}
+        <div className="flex items-center gap-1">
+          {OWNER_FILTER_OPTIONS.map((opt) => (
+            <button
+              key={opt.key}
+              onClick={() => setOwnerFilter(opt.key)}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
+                ownerFilter === opt.key
+                  ? "bg-teal-500/20 text-teal-400"
                   : "bg-el text-slate-400 hover:text-slate-300",
               )}
             >
@@ -406,7 +463,7 @@ function InboxRow({
   onClick,
   onNavigate,
 }: {
-  item: UnifiedInboxItem;
+  item: UnifiedInboxItem & { ownershipSummary?: ReturnType<typeof buildInboxItemOwnership> };
   isSelected: boolean;
   onClick: () => void;
   onNavigate: () => void;
@@ -415,7 +472,7 @@ function InboxRow({
     <div
       onClick={onClick}
       className={cn(
-        "grid grid-cols-1 md:grid-cols-[auto_1fr_auto_auto_auto_auto] gap-2 px-4 py-3 border-b border-bs last:border-b-0 cursor-pointer transition-colors items-center",
+        "grid grid-cols-1 md:grid-cols-[auto_1fr_auto_auto_auto_auto_auto_auto] gap-2 px-4 py-3 border-b border-bs last:border-b-0 cursor-pointer transition-colors items-center",
         isSelected ? "bg-el ring-1 ring-blue-500/30" : "bg-pn hover:bg-el",
       )}
     >
@@ -499,6 +556,13 @@ function InboxRow({
           <span className="text-[10px] text-slate-500">
             +{item.riskBadges.length - 2}
           </span>
+        )}
+      </div>
+
+      {/* Owner badge */}
+      <div className="hidden md:flex items-center">
+        {item.ownershipSummary && (
+          <OwnershipBadge ownership={item.ownershipSummary} />
         )}
       </div>
 
@@ -591,13 +655,31 @@ function ContextPanel({
           </span>
         </div>
 
-        {/* Owner */}
-        {item.owner && (
-          <div className="text-xs">
-            <span className="text-slate-500">담당자: </span>
-            <span className="text-slate-300">{item.owner}</span>
-          </div>
-        )}
+        {/* Owner + Assignment State */}
+        <div className="text-xs space-y-1">
+          {item.owner && (
+            <div>
+              <span className="text-slate-500">담당자: </span>
+              <span className="text-slate-300">{item.owner}</span>
+            </div>
+          )}
+          {(() => {
+            const ownerSummary = buildInboxItemOwnership(item);
+            return (
+              <div className="flex items-center gap-2">
+                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium bg-slate-800 ${ASSIGNMENT_STATE_TONES[ownerSummary.assignmentState]}`}>
+                  {ASSIGNMENT_STATE_LABELS[ownerSummary.assignmentState]}
+                </span>
+                {ownerSummary.waitingExternalLabel && (
+                  <span className="text-[10px] text-purple-400">⏳ {ownerSummary.waitingExternalLabel}</span>
+                )}
+                {ownerSummary.slaState === 'escalation_required' && ownerSummary.escalationOwnerName && (
+                  <span className="text-[10px] text-red-400">에스컬레이션 → {ownerSummary.escalationOwnerName}</span>
+                )}
+              </div>
+            );
+          })()}
+        </div>
 
         {/* Blocker details */}
         {item.blockedReason && (

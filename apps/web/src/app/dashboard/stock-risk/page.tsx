@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { buildStockRiskCommandSurface } from "@/lib/ops-console/command-adapters";
 import { OperationalCommandBar } from "../_components/operational-command-bar";
+import { buildStockRiskOwnership } from "@/lib/ops-console/ownership-adapter";
+import { OwnershipStrip } from "../_components/ownership-display";
 
 // ── Status config ──────────────────────────────────────────────────
 type RiskStatus = "healthy" | "watch" | "reorder_due" | "critical_shortage" | "expiry_risk" | "quarantine_constrained" | "blocked";
@@ -156,6 +158,12 @@ export default function StockRiskPage() {
     [stockPositions, reorderRecommendations, expiryActions],
   );
 
+  // Ownership
+  const ownership = useMemo(
+    () => buildStockRiskOwnership(stockPositions, reorderRecommendations),
+    [stockPositions, reorderRecommendations],
+  );
+
   return (
     <div className="p-4 md:p-8 space-y-5">
       {/* Header */}
@@ -218,6 +226,11 @@ export default function StockRiskPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9 bg-slate-800 border-slate-700 text-sm"
         />
+      </div>
+
+      {/* Ownership strip */}
+      <div className="rounded border border-slate-800 bg-slate-900/50 px-4 py-2">
+        <OwnershipStrip ownership={ownership} />
       </div>
 
       {/* Main layout: content + command bar */}
@@ -492,7 +505,7 @@ export default function StockRiskPage() {
 
         {/* Command Bar Sidebar */}
         <div className="lg:sticky lg:top-4 lg:self-start">
-          <OperationalCommandBar surface={commandSurface} />
+          <OperationalCommandBar surface={commandSurface} ownership={ownership} />
         </div>
       </div>
     </div>
