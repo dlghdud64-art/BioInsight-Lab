@@ -18,6 +18,7 @@ import {
 interface SourcingResultRowProps {
   product: any;
   isInCompare: boolean;
+  isInRequest: boolean;
   isSelected: boolean;
   onToggleCompare: () => void;
   onAddToQuote: () => void;
@@ -51,6 +52,7 @@ function getKeySpecs(product: any) {
 export function SourcingResultRow({
   product,
   isInCompare,
+  isInRequest,
   isSelected,
   onToggleCompare,
   onAddToQuote,
@@ -125,7 +127,21 @@ export function SourcingResultRow({
         </div>
       </div>
 
-      {/* 3. 가격 */}
+      {/* 3. Status markers */}
+      <div className="shrink-0 flex items-center gap-1 hidden sm:flex">
+        {isInCompare && (
+          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 font-medium">
+            <GitCompare className="h-2.5 w-2.5" />비교
+          </span>
+        )}
+        {isInRequest && (
+          <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400 font-medium">
+            <FileText className="h-2.5 w-2.5" />견적
+          </span>
+        )}
+      </div>
+
+      {/* 4. 가격 */}
       <div className="shrink-0 text-right mr-1 hidden sm:block">
         {unitPrice ? (
           <span className="text-sm font-semibold tabular-nums text-slate-100 whitespace-nowrap">
@@ -136,9 +152,9 @@ export function SourcingResultRow({
         )}
       </div>
 
-      {/* 4. 액션 버튼 — stop propagation */}
+      {/* 5. Primary CTA — single action, stop propagation */}
       <div className="shrink-0 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-        {/* 비교 토글 */}
+        {/* 비교 토글 — secondary (icon only) */}
         <Button
           variant="ghost"
           size="sm"
@@ -153,32 +169,28 @@ export function SourcingResultRow({
           <GitCompare className="h-3.5 w-3.5" />
         </Button>
 
-        {/* 견적 담기 — primary CTA */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 rounded text-xs font-medium bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
-          onClick={onAddToQuote}
-          title="견적 담기"
-        >
-          <FileText className="h-3 w-3 mr-1" />
-          견적
-        </Button>
+        {/* 견적 담기 — primary CTA (single) */}
+        {!isInRequest ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 rounded text-xs font-medium bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
+            onClick={onAddToQuote}
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            견적
+          </Button>
+        ) : (
+          <span className="text-[10px] text-emerald-400 px-1.5">담김</span>
+        )}
       </div>
 
-      {/* 5. Rail indicator */}
+      {/* 6. Rail indicator */}
       <ChevronRight
         className={`h-3.5 w-3.5 shrink-0 transition-colors ${
           isSelected ? "text-blue-400" : "text-slate-600 group-hover:text-slate-400"
         }`}
       />
-
-      {/* 비교 세션 수 표시 */}
-      {compareSessionCount != null && compareSessionCount > 0 && (
-        <span className="absolute top-1 right-1 text-[9px] text-blue-400 bg-blue-600/10 rounded px-1">
-          비교 {compareSessionCount}건
-        </span>
-      )}
     </div>
   );
 }

@@ -23,11 +23,14 @@ import { useState } from "react";
 interface SourcingContextRailProps {
   product: any;
   isInCompare: boolean;
+  isInRequest: boolean;
   onToggleCompare: () => void;
   onAddToQuote: () => void;
   onClose: () => void;
-  /** 견적 요청 work window 열기 */
-  onOpenWorkWindow?: () => void;
+  onOpenCompareWindow?: () => void;
+  onOpenRequestWindow?: () => void;
+  compareCount?: number;
+  requestCount?: number;
   searchQuery?: string;
 }
 
@@ -42,10 +45,14 @@ interface SourcingContextRailProps {
 export function SourcingContextRail({
   product,
   isInCompare,
+  isInRequest,
   onToggleCompare,
   onAddToQuote,
   onClose,
-  onOpenWorkWindow,
+  onOpenCompareWindow,
+  onOpenRequestWindow,
+  compareCount = 0,
+  requestCount = 0,
   searchQuery,
 }: SourcingContextRailProps) {
   const [imgError, setImgError] = useState(false);
@@ -175,10 +182,70 @@ export function SourcingContextRail({
           </div>
         </div>
 
+        {/* 소싱 상태 — compare / request */}
+        <div className="px-4 py-3 border-b border-bd/50">
+          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+            소싱 상태
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <GitCompare className="h-3 w-3 text-blue-400" />
+                <span className="text-slate-400">비교 목록</span>
+              </div>
+              <span className={isInCompare ? "text-blue-400 font-medium" : "text-slate-500"}>
+                {isInCompare ? "포함됨" : "미포함"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-3 w-3 text-emerald-400" />
+                <span className="text-slate-400">견적 요청</span>
+              </div>
+              <span className={isInRequest ? "text-emerald-400 font-medium" : "text-slate-500"}>
+                {isInRequest ? "포함됨" : "미포함"}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* 다음 액션 제안 */}
+        <div className="px-4 py-3 border-b border-bd/50">
+          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+            다음 단계
+          </div>
+          <div className="space-y-1.5 text-xs text-slate-400">
+            {!isInCompare && !isInRequest && (
+              <p>비교 목록에 추가하거나 견적을 요청하세요.</p>
+            )}
+            {isInCompare && compareCount >= 2 && onOpenCompareWindow && (
+              <button
+                onClick={onOpenCompareWindow}
+                className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                <GitCompare className="h-3 w-3" />
+                비교 검토 시작 ({compareCount}개)
+              </button>
+            )}
+            {isInCompare && compareCount < 2 && (
+              <p className="text-amber-400">비교하려면 2개 이상 필요합니다.</p>
+            )}
+            {isInRequest && onOpenRequestWindow && (
+              <button
+                onClick={onOpenRequestWindow}
+                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors"
+              >
+                <FileText className="h-3 w-3" />
+                견적 요청 검토 ({requestCount}건)
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* 운영 연결 */}
         <div className="px-4 py-3">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
-            운영 연결
+            연결
           </div>
           <div className="space-y-1.5">
             <Link
@@ -203,15 +270,26 @@ export function SourcingContextRail({
 
       {/* Rail 하단 액션 — 고정 */}
       <div className="border-t border-bd bg-el px-4 py-3 space-y-2">
-        {/* Primary: 견적 담기 */}
-        <Button
-          size="sm"
-          className="w-full h-8 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
-          onClick={onAddToQuote}
-        >
-          <FileText className="h-3.5 w-3.5 mr-1.5" />
-          견적 리스트에 담기
-        </Button>
+        {/* Primary: 견적 담기 or 이미 담김 */}
+        {!isInRequest ? (
+          <Button
+            size="sm"
+            className="w-full h-8 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
+            onClick={onAddToQuote}
+          >
+            <FileText className="h-3.5 w-3.5 mr-1.5" />
+            견적 리스트에 담기
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            className="w-full h-8 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium"
+            onClick={onOpenRequestWindow}
+          >
+            <FileText className="h-3.5 w-3.5 mr-1.5" />
+            견적 검토로 이동
+          </Button>
+        )}
 
         {/* Secondary: 비교 토글 */}
         <Button
@@ -225,7 +303,7 @@ export function SourcingContextRail({
           onClick={onToggleCompare}
         >
           <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-          {isInCompare ? "비교 목록에서 제거" : "비교 목록에 추가"}
+          {isInCompare ? "비교에서 제거" : "비교에 추가"}
         </Button>
       </div>
     </div>
