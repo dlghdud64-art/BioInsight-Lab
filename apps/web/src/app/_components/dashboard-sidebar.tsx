@@ -22,6 +22,9 @@ import {
   CreditCard,
   PieChart,
   Home,
+  Inbox,
+  AlertTriangle,
+  ClipboardList,
 } from "lucide-react";
 
 interface NavItem {
@@ -38,6 +41,36 @@ interface SidebarGroup {
 
 // 메뉴 그룹 정의
 const sidebarGroups: SidebarGroup[] = [
+  {
+    label: "운영 (OPERATIONS)",
+    items: [
+      {
+        title: "운영 작업함",
+        href: "/dashboard/inbox",
+        icon: Inbox,
+      },
+      {
+        title: "견적 운영",
+        href: "/dashboard/quotes",
+        icon: FileText,
+      },
+      {
+        title: "발주 관리",
+        href: "/dashboard/purchase-orders",
+        icon: ClipboardList,
+      },
+      {
+        title: "입고 관리",
+        href: "/dashboard/receiving",
+        icon: Package,
+      },
+      {
+        title: "재고 위험",
+        href: "/dashboard/stock-risk",
+        icon: AlertTriangle,
+      },
+    ],
+  },
   {
     label: "구매 및 예산 (PURCHASE)",
     items: [
@@ -119,7 +152,11 @@ const dashboardLinks = [
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard":              { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
   "/dashboard/analytics":    { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
-  "/dashboard/quotes":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/inbox":        { active: "text-teal-400",   inactive: "text-teal-500/60" },
+  "/dashboard/quotes":       { active: "text-teal-400",   inactive: "text-teal-500/60" },
+  "/dashboard/purchase-orders": { active: "text-cyan-400", inactive: "text-cyan-500/60" },
+  "/dashboard/receiving":    { active: "text-cyan-400",   inactive: "text-cyan-500/60" },
+  "/dashboard/stock-risk":   { active: "text-teal-400",   inactive: "text-teal-500/60" },
   "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-blue-500/60" },
   "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-blue-500/60" },
   "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-blue-500/60" },

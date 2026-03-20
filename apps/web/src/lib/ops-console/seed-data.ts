@@ -1,0 +1,1421 @@
+/**
+ * ops-console/seed-data.ts
+ *
+ * P0 7대 시나리오 데모 데이터.
+ * 모든 엔티티는 cross-reference ID가 일관되도록 설계됨.
+ *
+ * @module ops-console/seed-data
+ */
+
+import type {
+  QuoteRequestContract,
+  QuoteResponseContract,
+  QuoteComparisonContract,
+  QuoteComparisonRowContract,
+} from '../review-queue/quote-rfq-contract';
+
+import type {
+  PurchaseOrderContract,
+  ApprovalExecutionContract,
+  PurchaseOrderAcknowledgementContract,
+} from '../review-queue/po-approval-contract';
+
+import type { ReceivingBatchContract } from '../review-queue/receiving-inbound-contract';
+
+import type {
+  InventoryStockPositionContract,
+  ReorderRecommendationContract,
+  ExpiryActionContract,
+  InventoryLotRiskContract,
+  StockRiskSnapshotContract,
+} from '../review-queue/reorder-expiry-stock-risk-contract';
+
+import type { OperatorInboxItem } from '../review-queue/operator-console-contract';
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const WORKSPACE_ID = 'ws-demo-001';
+const NOW = new Date();
+
+function isoNow(): string {
+  return NOW.toISOString();
+}
+
+function isoFromNow(days: number): string {
+  const d = new Date(NOW);
+  d.setDate(d.getDate() + days);
+  return d.toISOString();
+}
+
+function isoAgo(days: number): string {
+  return isoFromNow(-days);
+}
+
+// ---------------------------------------------------------------------------
+// Vendors
+// ---------------------------------------------------------------------------
+
+export const VENDOR_THERMO = { id: 'v-thermo', name: 'Thermo Fisher Scientific' } as const;
+export const VENDOR_SIGMA = { id: 'v-sigma', name: 'Sigma-Aldrich (Merck)' } as const;
+export const VENDOR_CORNING = { id: 'v-corning', name: 'Corning Life Sciences' } as const;
+
+export const VENDORS = [VENDOR_THERMO, VENDOR_SIGMA, VENDOR_CORNING] as const;
+
+export type VendorMap = Record<string, string>;
+
+export const VENDOR_MAP: VendorMap = {
+  [VENDOR_THERMO.id]: VENDOR_THERMO.name,
+  [VENDOR_SIGMA.id]: VENDOR_SIGMA.name,
+  [VENDOR_CORNING.id]: VENDOR_CORNING.name,
+};
+
+// ===========================================================================
+// Scenario 1: QUOTE_PARTIALLY_RESPONDED
+// ===========================================================================
+
+export const QUOTE_REQUEST_001: QuoteRequestContract = {
+  id: 'qr-001',
+  workspaceId: WORKSPACE_ID,
+  requestNumber: 'RFQ-2026-0041',
+  title: 'DMEM 배지 및 FBS 견적 요청',
+  status: 'partially_responded',
+  sourceType: 'search',
+  createdAt: isoAgo(5),
+  createdBy: 'user-lab-001',
+  dueAt: isoFromNow(3),
+  priority: 'high',
+  currency: 'KRW',
+  shippingRegion: 'KR-Seoul',
+  requesterTeam: '세포생물학팀',
+  budgetContextId: 'budget-2026-q1',
+  vendorIds: [VENDOR_THERMO.id, VENDOR_SIGMA.id, VENDOR_CORNING.id],
+  items: [
+    {
+      id: 'qri-001',
+      requestedName: 'DMEM, high glucose',
+      manufacturer: 'Gibco',
+      catalogNumber: '11965092',
+      quantity: 10,
+      unit: 'bottle',
+      packSizeRequested: '500mL',
+      specRequirements: ['GMP grade', 'Phenol red'],
+      substituteAllowed: false,
+      targetLeadTimeDays: 7,
+      targetUnitPrice: 25000,
+      requiredDocuments: ['coa', 'msds'],
+    },
+    {
+      id: 'qri-002',
+      requestedName: 'Fetal Bovine Serum (FBS)',
+      manufacturer: 'Gibco',
+      catalogNumber: '10099141',
+      quantity: 5,
+      unit: 'bottle',
+      packSizeRequested: '500mL',
+      specRequirements: ['Heat Inactivated', 'US Origin'],
+      substituteAllowed: true,
+      targetLeadTimeDays: 10,
+      targetUnitPrice: 350000,
+      requiredDocuments: ['coa', 'msds', 'validation'],
+    },
+    {
+      id: 'qri-003',
+      requestedName: 'Trypsin-EDTA (0.25%)',
+      manufacturer: 'Gibco',
+      catalogNumber: '25200056',
+      quantity: 10,
+      unit: 'bottle',
+      packSizeRequested: '100mL',
+      specRequirements: ['Phenol red'],
+      substituteAllowed: false,
+      targetLeadTimeDays: 5,
+      targetUnitPrice: 18000,
+      requiredDocuments: ['coa', 'msds'],
+    },
+  ],
+  summary: {
+    totalItems: 3,
+    totalVendors: 3,
+    respondedVendors: 2,
+  },
+};
+
+export const QUOTE_RESPONSE_THERMO: QuoteResponseContract = {
+  id: 'qresp-thermo-001',
+  quoteRequestId: 'qr-001',
+  vendorId: VENDOR_THERMO.id,
+  responseStatus: 'responded',
+  respondedAt: isoAgo(2),
+  validUntil: isoFromNow(30),
+  currency: 'KRW',
+  paymentTerms: 'Net 30',
+  incoterms: 'DDP',
+  shippingFee: 0,
+  minimumOrderAmount: 100000,
+  responseItems: [
+    {
+      id: 'qrespi-t-001',
+      requestItemId: 'qri-001',
+      offeredProductName: 'DMEM, high glucose, GlutaMAX',
+      manufacturer: 'Gibco',
+      catalogNumber: '10566016',
+      packSize: '500mL',
+      quantityOffered: 10,
+      unitPrice: 27500,
+      totalPrice: 275000,
+      leadTimeDays: 5,
+      stockStatus: 'in_stock',
+      complianceDocs: ['coa', 'msds'],
+      substituteOffered: false,
+      matchConfidence: 'exact',
+    },
+    {
+      id: 'qrespi-t-002',
+      requestItemId: 'qri-002',
+      offeredProductName: 'Fetal Bovine Serum, qualified, heat inactivated',
+      manufacturer: 'Gibco',
+      catalogNumber: '10082147',
+      packSize: '500mL',
+      quantityOffered: 5,
+      unitPrice: 380000,
+      totalPrice: 1900000,
+      leadTimeDays: 7,
+      stockStatus: 'in_stock',
+      complianceDocs: ['coa', 'msds', 'validation'],
+      substituteOffered: false,
+      matchConfidence: 'exact',
+    },
+    {
+      id: 'qrespi-t-003',
+      requestItemId: 'qri-003',
+      offeredProductName: 'Trypsin-EDTA (0.25%), phenol red',
+      manufacturer: 'Gibco',
+      catalogNumber: '25200056',
+      packSize: '100mL',
+      quantityOffered: 10,
+      unitPrice: 19000,
+      totalPrice: 190000,
+      leadTimeDays: 3,
+      stockStatus: 'in_stock',
+      complianceDocs: ['coa', 'msds'],
+      substituteOffered: false,
+      matchConfidence: 'exact',
+    },
+  ],
+  salesContact: { name: '김영호', email: 'yhkim@thermofisher.kr', phone: '02-2023-0001' },
+};
+
+export const QUOTE_RESPONSE_SIGMA: QuoteResponseContract = {
+  id: 'qresp-sigma-001',
+  quoteRequestId: 'qr-001',
+  vendorId: VENDOR_SIGMA.id,
+  responseStatus: 'responded',
+  respondedAt: isoAgo(1),
+  validUntil: isoFromNow(21),
+  currency: 'KRW',
+  paymentTerms: 'Net 45',
+  incoterms: 'DDP',
+  shippingFee: 15000,
+  minimumOrderAmount: 200000,
+  responseItems: [
+    {
+      id: 'qrespi-s-001',
+      requestItemId: 'qri-001',
+      offeredProductName: 'DMEM, high glucose',
+      manufacturer: 'Sigma-Aldrich',
+      catalogNumber: 'D5796',
+      packSize: '500mL',
+      quantityOffered: 10,
+      unitPrice: 23000,
+      totalPrice: 230000,
+      leadTimeDays: 7,
+      stockStatus: 'in_stock',
+      complianceDocs: ['coa', 'msds'],
+      substituteOffered: false,
+      matchConfidence: 'exact',
+    },
+    {
+      id: 'qrespi-s-002',
+      requestItemId: 'qri-002',
+      offeredProductName: 'Fetal Bovine Serum, heat inactivated, South America Origin',
+      manufacturer: 'Sigma-Aldrich',
+      catalogNumber: 'F9665',
+      packSize: '500mL',
+      quantityOffered: 5,
+      unitPrice: 320000,
+      totalPrice: 1600000,
+      leadTimeDays: 10,
+      stockStatus: 'limited',
+      complianceDocs: ['coa', 'msds'],
+      deviations: ['US Origin이 아닌 South America Origin'],
+      substituteOffered: true,
+      substituteReason: '동등 등급 FBS 대체 제안',
+      matchConfidence: 'compatible',
+    },
+    {
+      id: 'qrespi-s-003',
+      requestItemId: 'qri-003',
+      offeredProductName: 'Trypsin-EDTA Solution',
+      manufacturer: 'Sigma-Aldrich',
+      catalogNumber: 'T4049',
+      packSize: '100mL',
+      quantityOffered: 10,
+      unitPrice: 16500,
+      totalPrice: 165000,
+      leadTimeDays: 5,
+      stockStatus: 'in_stock',
+      complianceDocs: ['coa'],
+      substituteOffered: false,
+      matchConfidence: 'partial',
+    },
+  ],
+  salesContact: { name: '박소연', email: 'sypark@sigmaaldrich.kr' },
+};
+
+export const QUOTE_RESPONSE_CORNING: QuoteResponseContract = {
+  id: 'qresp-corning-001',
+  quoteRequestId: 'qr-001',
+  vendorId: VENDOR_CORNING.id,
+  responseStatus: 'sent',
+  currency: 'KRW',
+  responseItems: [],
+};
+
+export const QUOTE_COMPARISON_001: QuoteComparisonContract = {
+  id: 'qc-001',
+  quoteRequestId: 'qr-001',
+  comparisonStatus: 'partial',
+  normalizedCurrency: 'KRW',
+  vendorsInScope: [VENDOR_THERMO.id, VENDOR_SIGMA.id, VENDOR_CORNING.id],
+  comparableItemRows: [
+    {
+      requestItemId: 'qri-001',
+      itemLabel: 'DMEM, high glucose',
+      vendorOptions: [
+        {
+          vendorId: VENDOR_THERMO.id,
+          responseItemId: 'qrespi-t-001',
+          normalizedUnitPrice: 27500,
+          normalizedTotalPrice: 275000,
+          leadTimeDays: 5,
+          isExactMatch: true,
+          isSubstitute: false,
+          hasRequiredDocs: true,
+          score: 88,
+          warningBadges: [],
+        },
+        {
+          vendorId: VENDOR_SIGMA.id,
+          responseItemId: 'qrespi-s-001',
+          normalizedUnitPrice: 23000,
+          normalizedTotalPrice: 230000,
+          leadTimeDays: 7,
+          isExactMatch: true,
+          isSubstitute: false,
+          hasRequiredDocs: true,
+          score: 90,
+          warningBadges: [],
+        },
+      ],
+      bestPriceVendorId: VENDOR_SIGMA.id,
+      fastestLeadVendorId: VENDOR_THERMO.id,
+      exactMatchVendorId: VENDOR_THERMO.id,
+      hasCoverageGap: true,
+      hasSpecMismatch: false,
+      requiresReview: false,
+    },
+    {
+      requestItemId: 'qri-002',
+      itemLabel: 'Fetal Bovine Serum (FBS)',
+      vendorOptions: [
+        {
+          vendorId: VENDOR_THERMO.id,
+          responseItemId: 'qrespi-t-002',
+          normalizedUnitPrice: 380000,
+          normalizedTotalPrice: 1900000,
+          leadTimeDays: 7,
+          isExactMatch: true,
+          isSubstitute: false,
+          hasRequiredDocs: true,
+          score: 92,
+          warningBadges: [],
+        },
+        {
+          vendorId: VENDOR_SIGMA.id,
+          responseItemId: 'qrespi-s-002',
+          normalizedUnitPrice: 320000,
+          normalizedTotalPrice: 1600000,
+          leadTimeDays: 10,
+          isExactMatch: false,
+          isSubstitute: true,
+          hasRequiredDocs: false,
+          score: 72,
+          warningBadges: ['대체품', 'Validation 문서 누락'],
+        },
+      ],
+      bestPriceVendorId: VENDOR_SIGMA.id,
+      fastestLeadVendorId: VENDOR_THERMO.id,
+      exactMatchVendorId: VENDOR_THERMO.id,
+      hasCoverageGap: true,
+      hasSpecMismatch: true,
+      requiresReview: true,
+    },
+    {
+      requestItemId: 'qri-003',
+      itemLabel: 'Trypsin-EDTA (0.25%)',
+      vendorOptions: [
+        {
+          vendorId: VENDOR_THERMO.id,
+          responseItemId: 'qrespi-t-003',
+          normalizedUnitPrice: 19000,
+          normalizedTotalPrice: 190000,
+          leadTimeDays: 3,
+          isExactMatch: true,
+          isSubstitute: false,
+          hasRequiredDocs: true,
+          score: 95,
+          warningBadges: [],
+        },
+        {
+          vendorId: VENDOR_SIGMA.id,
+          responseItemId: 'qrespi-s-003',
+          normalizedUnitPrice: 16500,
+          normalizedTotalPrice: 165000,
+          leadTimeDays: 5,
+          isExactMatch: false,
+          isSubstitute: false,
+          hasRequiredDocs: false,
+          score: 68,
+          warningBadges: ['MSDS 누락'],
+        },
+      ],
+      bestPriceVendorId: VENDOR_SIGMA.id,
+      fastestLeadVendorId: VENDOR_THERMO.id,
+      exactMatchVendorId: VENDOR_THERMO.id,
+      hasCoverageGap: true,
+      hasSpecMismatch: false,
+      requiresReview: false,
+    },
+  ] satisfies QuoteComparisonRowContract[],
+  missingResponses: [VENDOR_CORNING.id],
+  riskFlags: ['미응답 공급사 1곳', 'FBS 대체품 검토 필요'],
+  recommendedVendorId: VENDOR_THERMO.id,
+  recommendedScenario: 'best_match',
+};
+
+// ===========================================================================
+// Scenario 2: PO_APPROVED_NOT_ISSUED
+// ===========================================================================
+
+export const PURCHASE_ORDER_001: PurchaseOrderContract = {
+  id: 'po-001',
+  workspaceId: WORKSPACE_ID,
+  poNumber: 'PO-2026-0087',
+  status: 'approved',
+  sourceType: 'quote',
+  quoteRequestId: 'qr-001',
+  quoteComparisonId: 'qc-001',
+  selectedResponseIds: ['qresp-thermo-001'],
+  vendorId: VENDOR_THERMO.id,
+  currency: 'KRW',
+  paymentTerms: 'Net 30',
+  incoterms: 'DDP',
+  shippingRegion: 'KR-Seoul',
+  billToEntity: 'BioInsight Lab Inc.',
+  shipToLocation: '서울시 관악구 연구동 B2-301',
+  requestedBy: 'user-lab-001',
+  ownerId: 'user-proc-001',
+  createdAt: isoAgo(3),
+  createdBy: 'user-proc-001',
+  requiredByAt: isoFromNow(14),
+  budgetContextId: 'budget-2026-q1',
+  approvalExecutionId: 'ae-001',
+  subtotalAmount: 2365000,
+  shippingAmount: 0,
+  taxAmount: 85000,
+  totalAmount: 2450000,
+  lines: [
+    {
+      id: 'pol-001',
+      poId: 'po-001',
+      sourceRequestItemId: 'qri-001',
+      sourceResponseItemId: 'qrespi-t-001',
+      lineNumber: 1,
+      itemName: 'DMEM, high glucose, GlutaMAX',
+      manufacturer: 'Gibco',
+      catalogNumber: '10566016',
+      orderedQuantity: 10,
+      orderedUnit: 'bottle',
+      packSize: '500mL',
+      unitPrice: 27500,
+      lineTotal: 275000,
+      requiredDocuments: ['coa', 'msds'],
+      expectedLeadTimeDays: 5,
+      fulfillmentStatus: 'open',
+      receivedQuantity: 0,
+      remainingQuantity: 10,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+    {
+      id: 'pol-002',
+      poId: 'po-001',
+      sourceRequestItemId: 'qri-002',
+      sourceResponseItemId: 'qrespi-t-002',
+      lineNumber: 2,
+      itemName: 'Fetal Bovine Serum, qualified, heat inactivated',
+      manufacturer: 'Gibco',
+      catalogNumber: '10082147',
+      orderedQuantity: 5,
+      orderedUnit: 'bottle',
+      packSize: '500mL',
+      unitPrice: 380000,
+      lineTotal: 1900000,
+      requiredDocuments: ['coa', 'msds', 'validation'],
+      expectedLeadTimeDays: 7,
+      fulfillmentStatus: 'open',
+      receivedQuantity: 0,
+      remainingQuantity: 5,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+    {
+      id: 'pol-003',
+      poId: 'po-001',
+      sourceRequestItemId: 'qri-003',
+      sourceResponseItemId: 'qrespi-t-003',
+      lineNumber: 3,
+      itemName: 'Trypsin-EDTA (0.25%), phenol red',
+      manufacturer: 'Gibco',
+      catalogNumber: '25200056',
+      orderedQuantity: 10,
+      orderedUnit: 'bottle',
+      packSize: '100mL',
+      unitPrice: 19000,
+      lineTotal: 190000,
+      requiredDocuments: ['coa', 'msds'],
+      expectedLeadTimeDays: 3,
+      fulfillmentStatus: 'open',
+      receivedQuantity: 0,
+      remainingQuantity: 10,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+  ],
+};
+
+export const APPROVAL_EXECUTION_001: ApprovalExecutionContract = {
+  id: 'ae-001',
+  workspaceId: WORKSPACE_ID,
+  entityType: 'purchase_order',
+  entityId: 'po-001',
+  policyId: 'policy-standard',
+  status: 'approved',
+  initiatedAt: isoAgo(3),
+  initiatedBy: 'user-proc-001',
+  currentStepOrder: 2,
+  steps: [
+    {
+      id: 'as-001',
+      executionId: 'ae-001',
+      stepOrder: 1,
+      stepType: 'budget',
+      status: 'approved',
+      assigneeIds: ['user-finance-001'],
+      minimumApprovalsRequired: 1,
+      decisions: [
+        {
+          id: 'ad-001',
+          stepId: 'as-001',
+          decision: 'approved',
+          decidedAt: isoAgo(2),
+          decidedBy: 'user-finance-001',
+          comment: '예산 범위 내 확인',
+        },
+      ],
+      startedAt: isoAgo(3),
+      completedAt: isoAgo(2),
+      slaDueAt: isoAgo(2),
+    },
+    {
+      id: 'as-002',
+      executionId: 'ae-001',
+      stepOrder: 2,
+      stepType: 'manager',
+      status: 'approved',
+      assigneeIds: ['user-mgr-001'],
+      minimumApprovalsRequired: 1,
+      decisions: [
+        {
+          id: 'ad-002',
+          stepId: 'as-002',
+          decision: 'approved',
+          decidedAt: isoAgo(1),
+          decidedBy: 'user-mgr-001',
+          comment: '승인 완료',
+        },
+      ],
+      startedAt: isoAgo(2),
+      completedAt: isoAgo(1),
+      slaDueAt: isoAgo(1),
+    },
+  ],
+  finalDecisionAt: isoAgo(1),
+  finalDecisionBy: 'user-mgr-001',
+  blockers: [],
+};
+
+// ===========================================================================
+// Scenario 3: PO_ISSUED_ACK_PENDING
+// ===========================================================================
+
+export const PURCHASE_ORDER_002: PurchaseOrderContract = {
+  id: 'po-002',
+  workspaceId: WORKSPACE_ID,
+  poNumber: 'PO-2026-0088',
+  status: 'issued',
+  sourceType: 'quote',
+  vendorId: VENDOR_SIGMA.id,
+  currency: 'KRW',
+  paymentTerms: 'Net 45',
+  incoterms: 'DDP',
+  shippingRegion: 'KR-Seoul',
+  billToEntity: 'BioInsight Lab Inc.',
+  shipToLocation: '서울시 관악구 연구동 B2-301',
+  requestedBy: 'user-lab-002',
+  ownerId: 'user-proc-001',
+  createdAt: isoAgo(5),
+  createdBy: 'user-proc-001',
+  issuedAt: isoAgo(2),
+  requiredByAt: isoFromNow(10),
+  approvalExecutionId: 'ae-002',
+  subtotalAmount: 980000,
+  shippingAmount: 15000,
+  taxAmount: 50000,
+  totalAmount: 1045000,
+  lines: [
+    {
+      id: 'pol-004',
+      poId: 'po-002',
+      lineNumber: 1,
+      itemName: 'PBS (Phosphate Buffered Saline)',
+      manufacturer: 'Sigma-Aldrich',
+      catalogNumber: 'P4417',
+      orderedQuantity: 20,
+      orderedUnit: 'pack',
+      packSize: '100 tablets',
+      unitPrice: 32000,
+      lineTotal: 640000,
+      requiredDocuments: ['coa', 'msds'],
+      expectedLeadTimeDays: 5,
+      fulfillmentStatus: 'open',
+      receivedQuantity: 0,
+      remainingQuantity: 20,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+    {
+      id: 'pol-005',
+      poId: 'po-002',
+      lineNumber: 2,
+      itemName: 'RIPA Lysis Buffer',
+      manufacturer: 'Sigma-Aldrich',
+      catalogNumber: 'R0278',
+      orderedQuantity: 5,
+      orderedUnit: 'bottle',
+      packSize: '100mL',
+      unitPrice: 68000,
+      lineTotal: 340000,
+      requiredDocuments: ['coa', 'msds'],
+      expectedLeadTimeDays: 7,
+      fulfillmentStatus: 'open',
+      receivedQuantity: 0,
+      remainingQuantity: 5,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+  ],
+};
+
+export const APPROVAL_EXECUTION_002: ApprovalExecutionContract = {
+  id: 'ae-002',
+  workspaceId: WORKSPACE_ID,
+  entityType: 'purchase_order',
+  entityId: 'po-002',
+  policyId: 'policy-standard',
+  status: 'approved',
+  initiatedAt: isoAgo(5),
+  initiatedBy: 'user-proc-001',
+  currentStepOrder: 2,
+  steps: [
+    {
+      id: 'as-003',
+      executionId: 'ae-002',
+      stepOrder: 1,
+      stepType: 'budget',
+      status: 'approved',
+      assigneeIds: ['user-finance-001'],
+      minimumApprovalsRequired: 1,
+      decisions: [
+        {
+          id: 'ad-003',
+          stepId: 'as-003',
+          decision: 'approved',
+          decidedAt: isoAgo(4),
+          decidedBy: 'user-finance-001',
+        },
+      ],
+      startedAt: isoAgo(5),
+      completedAt: isoAgo(4),
+    },
+    {
+      id: 'as-004',
+      executionId: 'ae-002',
+      stepOrder: 2,
+      stepType: 'manager',
+      status: 'approved',
+      assigneeIds: ['user-mgr-001'],
+      minimumApprovalsRequired: 1,
+      decisions: [
+        {
+          id: 'ad-004',
+          stepId: 'as-004',
+          decision: 'approved',
+          decidedAt: isoAgo(3),
+          decidedBy: 'user-mgr-001',
+        },
+      ],
+      startedAt: isoAgo(4),
+      completedAt: isoAgo(3),
+    },
+  ],
+  finalDecisionAt: isoAgo(3),
+  finalDecisionBy: 'user-mgr-001',
+  blockers: [],
+};
+
+export const ACKNOWLEDGEMENT_002: PurchaseOrderAcknowledgementContract = {
+  id: 'ack-002',
+  poId: 'po-002',
+  vendorId: VENDOR_SIGMA.id,
+  status: 'sent',
+  lineConfirmations: [],
+};
+
+// ===========================================================================
+// Scenario 4: RECEIVING_DOC_MISSING_QUARANTINE
+// ===========================================================================
+
+/** PO-003 is a separate PO that was already issued + acknowledged */
+export const PURCHASE_ORDER_003: PurchaseOrderContract = {
+  id: 'po-003',
+  workspaceId: WORKSPACE_ID,
+  poNumber: 'PO-2026-0085',
+  status: 'acknowledged',
+  sourceType: 'quote',
+  vendorId: VENDOR_THERMO.id,
+  currency: 'KRW',
+  paymentTerms: 'Net 30',
+  incoterms: 'DDP',
+  shippingRegion: 'KR-Seoul',
+  billToEntity: 'BioInsight Lab Inc.',
+  shipToLocation: '서울시 관악구 연구동 B2-301',
+  requestedBy: 'user-lab-001',
+  ownerId: 'user-proc-001',
+  createdAt: isoAgo(14),
+  createdBy: 'user-proc-001',
+  issuedAt: isoAgo(10),
+  acknowledgedAt: isoAgo(8),
+  requiredByAt: isoAgo(1),
+  subtotalAmount: 1250000,
+  totalAmount: 1320000,
+  taxAmount: 70000,
+  lines: [
+    {
+      id: 'pol-006',
+      poId: 'po-003',
+      lineNumber: 1,
+      itemName: 'Penicillin-Streptomycin (10,000 U/mL)',
+      manufacturer: 'Gibco',
+      catalogNumber: '15140122',
+      orderedQuantity: 10,
+      orderedUnit: 'bottle',
+      packSize: '100mL',
+      unitPrice: 45000,
+      lineTotal: 450000,
+      requiredDocuments: ['coa', 'msds'],
+      fulfillmentStatus: 'partially_received',
+      receivedQuantity: 10,
+      remainingQuantity: 0,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+    {
+      id: 'pol-007',
+      poId: 'po-003',
+      lineNumber: 2,
+      itemName: 'L-Glutamine (200 mM)',
+      manufacturer: 'Gibco',
+      catalogNumber: '25030081',
+      orderedQuantity: 10,
+      orderedUnit: 'bottle',
+      packSize: '100mL',
+      unitPrice: 35000,
+      lineTotal: 350000,
+      requiredDocuments: ['coa', 'msds'],
+      fulfillmentStatus: 'partially_received',
+      receivedQuantity: 10,
+      remainingQuantity: 0,
+      substituteApproved: false,
+      riskFlags: [],
+    },
+    {
+      id: 'pol-008',
+      poId: 'po-003',
+      lineNumber: 3,
+      itemName: 'HEPES Buffer (1M)',
+      manufacturer: 'Gibco',
+      catalogNumber: '15630080',
+      orderedQuantity: 5,
+      orderedUnit: 'bottle',
+      packSize: '100mL',
+      unitPrice: 90000,
+      lineTotal: 450000,
+      requiredDocuments: ['coa', 'msds'],
+      fulfillmentStatus: 'partially_received',
+      receivedQuantity: 3,
+      remainingQuantity: 2,
+      substituteApproved: false,
+      riskFlags: ['부분 수령'],
+    },
+  ],
+};
+
+export const RECEIVING_BATCH_001: ReceivingBatchContract = {
+  id: 'rb-001',
+  workspaceId: WORKSPACE_ID,
+  receivingNumber: 'RCV-2026-0031',
+  status: 'inspection_in_progress',
+  sourceType: 'purchase_order',
+  poId: 'po-003',
+  vendorId: VENDOR_THERMO.id,
+  shipToLocation: '서울시 관악구 연구동 B2-301',
+  receivedAt: isoAgo(1),
+  receivedBy: 'user-inv-001',
+  carrierName: 'CJ Logistics',
+  trackingNumber: 'CJ123456789',
+  lineReceipts: [
+    {
+      id: 'rlr-001',
+      receivingBatchId: 'rb-001',
+      poLineId: 'pol-006',
+      lineNumber: 1,
+      itemName: 'Penicillin-Streptomycin (10,000 U/mL)',
+      manufacturer: 'Gibco',
+      catalogNumber: '15140122',
+      orderedQuantity: 10,
+      receivedQuantity: 10,
+      receivedUnit: 'bottle',
+      packSize: '100mL',
+      receiptStatus: 'received',
+      conditionStatus: 'ok',
+      documentStatus: 'complete',
+      inspectionRequired: true,
+      inspectionStatus: 'passed',
+      lotRecords: [
+        {
+          id: 'lot-001',
+          receivingLineReceiptId: 'rlr-001',
+          lotNumber: 'LOT-PS-2026A',
+          expiryDate: isoFromNow(365),
+          quantity: 10,
+          unit: 'bottle',
+          storageCondition: '-20C',
+          coaAttached: true,
+          msdsAttached: true,
+          validationAttached: false,
+          warrantyAttached: false,
+          labelStatus: 'ok',
+          quarantineStatus: 'released',
+        },
+      ],
+      riskFlags: [],
+    },
+    {
+      id: 'rlr-002',
+      receivingBatchId: 'rb-001',
+      poLineId: 'pol-007',
+      lineNumber: 2,
+      itemName: 'L-Glutamine (200 mM)',
+      manufacturer: 'Gibco',
+      catalogNumber: '25030081',
+      orderedQuantity: 10,
+      receivedQuantity: 10,
+      receivedUnit: 'bottle',
+      packSize: '100mL',
+      receiptStatus: 'received',
+      conditionStatus: 'ok',
+      documentStatus: 'partial',
+      inspectionRequired: true,
+      inspectionStatus: 'pending',
+      lotRecords: [
+        {
+          id: 'lot-002',
+          receivingLineReceiptId: 'rlr-002',
+          lotNumber: 'LOT-GLU-2026B',
+          expiryDate: isoFromNow(270),
+          quantity: 10,
+          unit: 'bottle',
+          storageCondition: '-20C',
+          coaAttached: false,
+          msdsAttached: true,
+          validationAttached: false,
+          warrantyAttached: false,
+          labelStatus: 'ok',
+          quarantineStatus: 'pending',
+        },
+      ],
+      deviationNotes: ['COA 미첨부 - 공급사 추가 제출 요청 중'],
+      riskFlags: ['COA 누락'],
+    },
+    {
+      id: 'rlr-003',
+      receivingBatchId: 'rb-001',
+      poLineId: 'pol-008',
+      lineNumber: 3,
+      itemName: 'HEPES Buffer (1M)',
+      manufacturer: 'Gibco',
+      catalogNumber: '15630080',
+      orderedQuantity: 5,
+      receivedQuantity: 3,
+      receivedUnit: 'bottle',
+      packSize: '100mL',
+      receiptStatus: 'partially_received',
+      conditionStatus: 'temperature_excursion',
+      temperatureStatus: 'excursion_major',
+      documentStatus: 'complete',
+      inspectionRequired: true,
+      inspectionStatus: 'in_progress',
+      lotRecords: [
+        {
+          id: 'lot-003',
+          receivingLineReceiptId: 'rlr-003',
+          lotNumber: 'LOT-HEP-2026C',
+          expiryDate: isoFromNow(180),
+          quantity: 3,
+          unit: 'bottle',
+          storageCondition: '2-8C',
+          coaAttached: true,
+          msdsAttached: true,
+          validationAttached: false,
+          warrantyAttached: false,
+          labelStatus: 'ok',
+          quarantineStatus: 'quarantined',
+          notes: '배송 중 온도 이탈 감지 - 격리 보관 중',
+        },
+      ],
+      deviationNotes: ['배송 중 온도 이탈 감지', '5병 중 3병만 수령, 2병 미도착'],
+      riskFlags: ['온도 이탈', '부분 수령', '격리 보관'],
+    },
+  ],
+};
+
+// ===========================================================================
+// Scenario 5: POSTED_STOCK_STILL_CONSTRAINED
+// ===========================================================================
+
+export const STOCK_POSITION_001: InventoryStockPositionContract = {
+  id: 'sp-001',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-dmem',
+  catalogItemId: 'cat-dmem-001',
+  locationId: 'loc-b2-301',
+  snapshotAt: isoNow(),
+  onHandQuantity: 15,
+  availableQuantity: 5,
+  reservedQuantity: 0,
+  quarantinedQuantity: 10,
+  expiredQuantity: 0,
+  damagedQuantity: 0,
+  unit: 'bottle',
+  coverageDays: 3,
+  averageConsumptionRate: 1.5,
+  incomingQuantity: 0,
+  riskStatus: 'reorder_due',
+  riskFlags: ['가용 재고 부족', '재주문 기준 미달', '격리 수량 과다'],
+};
+
+export const REORDER_RECOMMENDATION_001: ReorderRecommendationContract = {
+  id: 'rr-001',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-dmem',
+  locationId: 'loc-b2-301',
+  generatedAt: isoAgo(1),
+  recommendationType: 'below_reorder_point',
+  status: 'open',
+  currentAvailableQuantity: 5,
+  recommendedOrderQuantity: 30,
+  recommendedUnit: 'bottle',
+  recommendedBy: 'system',
+  reasonCodes: ['below_reorder_point', 'quarantine_constrained'],
+  supportingStockPositionId: 'sp-001',
+  preferredVendorId: VENDOR_THERMO.id,
+  preferredSourceType: 'last_po',
+  budgetImpactEstimate: {
+    amount: 825000,
+    currency: 'KRW',
+    budgetRemainingPercent: 45,
+  },
+  urgency: 'high',
+  blockedReasons: [],
+};
+
+// ===========================================================================
+// Scenario 6: EXPIRING_LOT_REPLACEMENT
+// ===========================================================================
+
+export const STOCK_POSITION_002: InventoryStockPositionContract = {
+  id: 'sp-002',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-fbs',
+  catalogItemId: 'cat-fbs-001',
+  locationId: 'loc-b2-301',
+  snapshotAt: isoNow(),
+  onHandQuantity: 40,
+  availableQuantity: 40,
+  reservedQuantity: 0,
+  quarantinedQuantity: 0,
+  expiredQuantity: 0,
+  damagedQuantity: 0,
+  unit: 'bottle',
+  coverageDays: 60,
+  averageConsumptionRate: 0.7,
+  riskStatus: 'expiry_risk',
+  riskFlags: ['만료 임박 30병 (45일 이내)'],
+};
+
+export const LOT_RISK_FBS_EXPIRING: InventoryLotRiskContract = {
+  id: 'lr-fbs-exp',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-fbs',
+  locationId: 'loc-b2-301',
+  lotNumber: 'LOT-FBS-2025X',
+  expiryDate: isoFromNow(45),
+  quantityOnHand: 30,
+  quantityAvailable: 30,
+  quantityQuarantined: 0,
+  quantityReserved: 0,
+  quantityExpired: 0,
+  unit: 'bottle',
+  quarantineStatus: 'not_applicable',
+  usabilityStatus: 'usable',
+  riskFlags: ['45일 이내 만료'],
+  daysToExpiry: 45,
+};
+
+export const EXPIRY_ACTION_001: ExpiryActionContract = {
+  id: 'ea-001',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-fbs',
+  locationId: 'loc-b2-301',
+  lotNumber: 'LOT-FBS-2025X',
+  actionType: 'replace_order',
+  status: 'open',
+  triggeredAt: isoAgo(2),
+  triggerReasonCodes: ['expiry_within_90_days', 'high_consumption_rate'],
+  daysToExpiry: 45,
+  affectedQuantity: 30,
+  unit: 'bottle',
+  ownerId: 'user-inv-001',
+  dueAt: isoFromNow(14),
+  linkedReorderRecommendationId: 'rr-002',
+  notes: '만료 45일 전 교체 발주 필요. 현재 소비율로 만료 전 소진 불가.',
+};
+
+export const REORDER_RECOMMENDATION_002: ReorderRecommendationContract = {
+  id: 'rr-002',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-fbs',
+  locationId: 'loc-b2-301',
+  generatedAt: isoAgo(2),
+  recommendationType: 'expiry_replacement',
+  status: 'open',
+  currentAvailableQuantity: 40,
+  recommendedOrderQuantity: 20,
+  recommendedUnit: 'bottle',
+  recommendedBy: 'system',
+  reasonCodes: ['expiry_replacement', 'consumption_rate_insufficient_before_expiry'],
+  supportingLotRiskIds: ['lr-fbs-exp'],
+  supportingStockPositionId: 'sp-002',
+  preferredVendorId: VENDOR_THERMO.id,
+  preferredSourceType: 'last_po',
+  budgetImpactEstimate: {
+    amount: 7600000,
+    currency: 'KRW',
+    budgetRemainingPercent: 38,
+  },
+  urgency: 'normal',
+  blockedReasons: [],
+};
+
+// ===========================================================================
+// Scenario 7: BLOCKED_REORDER
+// ===========================================================================
+
+export const REORDER_RECOMMENDATION_003: ReorderRecommendationContract = {
+  id: 'rr-003',
+  workspaceId: WORKSPACE_ID,
+  inventoryItemId: 'inv-item-trypsin',
+  locationId: 'loc-b2-301',
+  generatedAt: isoAgo(3),
+  recommendationType: 'below_reorder_point',
+  status: 'blocked',
+  currentAvailableQuantity: 2,
+  recommendedOrderQuantity: 20,
+  recommendedUnit: 'bottle',
+  recommendedBy: 'system',
+  reasonCodes: ['below_reorder_point', 'critical_shortage'],
+  supportingStockPositionId: 'sp-003',
+  preferredVendorId: VENDOR_THERMO.id,
+  preferredSourceType: 'vendor',
+  budgetImpactEstimate: {
+    amount: 380000,
+    currency: 'KRW',
+    budgetRemainingPercent: 8,
+  },
+  urgency: 'urgent',
+  blockedReasons: [
+    '동일 품목 견적 요청 진행 중 (RFQ-2026-0041)',
+    '월 예산 한도 92% 도달',
+  ],
+};
+
+// ===========================================================================
+// INBOX_ITEMS
+// ===========================================================================
+
+export const INBOX_ITEMS: OperatorInboxItem[] = [
+  // Scenario 1 — quote response pending
+  {
+    id: 'inbox-001',
+    itemType: 'request',
+    title: 'RFQ-2026-0041 공급사 응답 미완료',
+    description: 'Corning Life Sciences 견적 응답 대기 중 (마감 3일)',
+    status: 'quote_response_pending',
+    priority: 'p1',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-proc-001', name: '이현우', role: '구매 운영' },
+    createdAt: isoAgo(5),
+    dueAt: isoFromNow(3),
+    slaHours: 72,
+    elapsedHours: 120,
+    isOverdue: false,
+    isBlocked: false,
+    sourceContext: {
+      type: 'quote_request',
+      entityId: 'qr-001',
+      label: 'RFQ-2026-0041',
+      href: '/dashboard/quotes/qr-001',
+    },
+    impactLabel: '세포생물학팀 배지 수급',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 2 — ready to issue PO
+  {
+    id: 'inbox-002',
+    itemType: 'request',
+    title: 'PO-2026-0087 발행 대기',
+    description: '승인 완료, 공급사 발행 가능 상태',
+    status: 'ready_to_issue',
+    priority: 'p1',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-proc-001', name: '이현우', role: '구매 운영' },
+    createdAt: isoAgo(1),
+    slaHours: 8,
+    elapsedHours: 24,
+    isOverdue: true,
+    isBlocked: false,
+    sourceContext: {
+      type: 'purchase_order',
+      entityId: 'po-001',
+      label: 'PO-2026-0087',
+      href: '/dashboard/purchase-orders/po-001',
+    },
+    impactLabel: 'Thermo Fisher 발주 ₩2,450,000',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 3 — acknowledgement pending
+  {
+    id: 'inbox-003',
+    itemType: 'request',
+    title: 'PO-2026-0088 공급사 확인 대기',
+    description: 'Sigma-Aldrich 발주 확인 미응답 (발행 2일 경과)',
+    status: 'acknowledgement_pending',
+    priority: 'p2',
+    ownershipState: 'assigned_to_team',
+    owner: { userId: 'user-proc-001', name: '이현우', role: '구매 운영' },
+    createdAt: isoAgo(2),
+    slaHours: 72,
+    elapsedHours: 48,
+    isOverdue: false,
+    isBlocked: false,
+    sourceContext: {
+      type: 'purchase_order',
+      entityId: 'po-002',
+      label: 'PO-2026-0088',
+      href: '/dashboard/purchase-orders/po-002',
+    },
+    impactLabel: 'Sigma-Aldrich ₩1,045,000',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 4 — receiving doc missing (P0)
+  {
+    id: 'inbox-004',
+    itemType: 'document_issue',
+    title: 'RCV-2026-0031 COA 누락',
+    description: 'L-Glutamine (LOT-GLU-2026B) COA 미첨부 — 검수 진행 불가',
+    status: 'receiving_doc_missing',
+    priority: 'p0',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-inv-001', name: '정민수', role: '재고 관리' },
+    createdAt: isoAgo(1),
+    slaHours: 24,
+    elapsedHours: 24,
+    isOverdue: true,
+    isBlocked: true,
+    blockedReason: 'COA 없이 검수 진행 불가',
+    sourceContext: {
+      type: 'receiving_batch',
+      entityId: 'rb-001',
+      label: 'RCV-2026-0031',
+      href: '/dashboard/receiving/rb-001',
+    },
+    linkedContexts: [
+      { type: 'purchase_order', label: 'PO-2026-0085', href: '/dashboard/purchase-orders/po-003' },
+    ],
+    impactLabel: 'L-Glutamine 재고 반영 차단',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 4 — receiving quarantine (P0)
+  {
+    id: 'inbox-005',
+    itemType: 'inventory_action',
+    title: 'RCV-2026-0031 온도 이탈 격리',
+    description: 'HEPES Buffer (LOT-HEP-2026C) 배송 중 온도 이탈 — 3병 격리 보관 중',
+    status: 'receiving_quarantine',
+    priority: 'p0',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-inv-001', name: '정민수', role: '재고 관리' },
+    createdAt: isoAgo(1),
+    slaHours: 24,
+    elapsedHours: 24,
+    isOverdue: true,
+    isBlocked: true,
+    blockedReason: '온도 이탈 검사 완료 전 출고 불가',
+    sourceContext: {
+      type: 'receiving_batch',
+      entityId: 'rb-001',
+      label: 'RCV-2026-0031',
+      href: '/dashboard/receiving/rb-001',
+    },
+    impactLabel: 'HEPES Buffer 격리 3병 — 실험 일정 지연 가능',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 4 — posting blocked (P1)
+  {
+    id: 'inbox-006',
+    itemType: 'inventory_action',
+    title: 'RCV-2026-0031 재고 반영 차단',
+    description: 'COA 누락 + 격리 품목으로 부분 반영만 가능',
+    status: 'posting_blocked',
+    priority: 'p1',
+    ownershipState: 'assigned_to_team',
+    createdAt: isoAgo(1),
+    slaHours: 8,
+    elapsedHours: 20,
+    isOverdue: true,
+    isBlocked: true,
+    blockedReason: 'COA 누락 라인 + 격리 라인 미해결',
+    sourceContext: {
+      type: 'receiving_batch',
+      entityId: 'rb-001',
+      label: 'RCV-2026-0031',
+      href: '/dashboard/receiving/rb-001',
+    },
+    impactLabel: '3개 라인 중 1개만 반영 가능',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 5 — reorder due (P1)
+  {
+    id: 'inbox-007',
+    itemType: 'inventory_action',
+    title: 'DMEM 재주문 필요',
+    description: '가용 재고 5병 (기준: 20) — 격리 10병 사용 불가',
+    status: 'reorder_due',
+    priority: 'p1',
+    ownershipState: 'assigned_to_team',
+    createdAt: isoAgo(1),
+    slaHours: 48,
+    elapsedHours: 24,
+    isOverdue: false,
+    isBlocked: false,
+    sourceContext: {
+      type: 'stock_position',
+      entityId: 'sp-001',
+      label: 'DMEM 재고 현황',
+      href: '/dashboard/inventory/sp-001',
+    },
+    linkedContexts: [
+      { type: 'reorder_recommendation', label: '재주문 추천 RR-001', href: '/dashboard/inventory/reorder/rr-001' },
+    ],
+    impactLabel: '세포 배양 실험 3일분 잔량',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 6 — expiry risk (P2)
+  {
+    id: 'inbox-008',
+    itemType: 'inventory_action',
+    title: 'FBS 유효기간 위험 (45일)',
+    description: 'LOT-FBS-2025X 30병 만료 임박 — 현재 소비율로 소진 불가',
+    status: 'expiry_risk',
+    priority: 'p2',
+    ownershipState: 'assigned_to_team',
+    createdAt: isoAgo(2),
+    slaHours: 168,
+    elapsedHours: 48,
+    isOverdue: false,
+    isBlocked: false,
+    sourceContext: {
+      type: 'stock_position',
+      entityId: 'sp-002',
+      label: 'FBS 재고 현황',
+      href: '/dashboard/inventory/sp-002',
+    },
+    linkedContexts: [
+      { type: 'expiry_action', label: '교체 발주 조치 EA-001', href: '/dashboard/inventory/expiry/ea-001' },
+    ],
+    impactLabel: 'FBS 30병 (₩11,400,000 상당) 만료 위험',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Scenario 7 — blocked reorder (P0)
+  {
+    id: 'inbox-009',
+    itemType: 'budget_risk',
+    title: 'Trypsin-EDTA 재주문 차단',
+    description: '견적 진행 중 + 월 예산 92% 도달로 재주문 차단됨',
+    status: 'blocked_reorder',
+    priority: 'p0',
+    ownershipState: 'unassigned',
+    createdAt: isoAgo(3),
+    slaHours: 24,
+    elapsedHours: 72,
+    isOverdue: true,
+    isBlocked: true,
+    blockedReason: '동일 품목 견적 요청 진행 중 (RFQ-2026-0041) + 월 예산 한도 92% 도달',
+    sourceContext: {
+      type: 'reorder_recommendation',
+      entityId: 'rr-003',
+      label: '재주문 추천 RR-003',
+      href: '/dashboard/inventory/reorder/rr-003',
+    },
+    linkedContexts: [
+      { type: 'quote_request', label: 'RFQ-2026-0041', href: '/dashboard/quotes/qr-001' },
+    ],
+    impactLabel: 'Trypsin-EDTA 긴급 부족 — 가용 2병',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Generic — approval pending (P1)
+  {
+    id: 'inbox-010',
+    itemType: 'approval',
+    title: 'PO-2026-0089 승인 대기',
+    description: '시약 추가 발주건 — 예산 검토 단계',
+    status: 'approval_pending',
+    priority: 'p1',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-finance-001', name: '최지영', role: '재무팀' },
+    createdAt: isoAgo(1),
+    slaHours: 24,
+    elapsedHours: 18,
+    isOverdue: false,
+    isBlocked: false,
+    sourceContext: {
+      type: 'purchase_order',
+      entityId: 'po-004',
+      label: 'PO-2026-0089',
+      href: '/dashboard/purchase-orders/po-004',
+    },
+    impactLabel: '추가 시약 발주 ₩680,000',
+    workspaceId: WORKSPACE_ID,
+  },
+  // Extra — escalation followup (P2)
+  {
+    id: 'inbox-011',
+    itemType: 'escalation_followup',
+    title: 'Corning 견적 독촉 필요',
+    description: 'RFQ-2026-0041에 대한 Corning 미응답 5일 경과',
+    status: 'escalation_followup',
+    priority: 'p2',
+    ownershipState: 'assigned_to_me',
+    owner: { userId: 'user-proc-001', name: '이현우', role: '구매 운영' },
+    createdAt: isoAgo(5),
+    slaHours: 120,
+    elapsedHours: 120,
+    isOverdue: true,
+    isBlocked: false,
+    sourceContext: {
+      type: 'quote_request',
+      entityId: 'qr-001',
+      label: 'RFQ-2026-0041',
+      href: '/dashboard/quotes/qr-001',
+    },
+    impactLabel: 'Corning 견적 미수신',
+    workspaceId: WORKSPACE_ID,
+  },
+];
+
+// ===========================================================================
+// Aggregate exports
+// ===========================================================================
+
+export const ALL_QUOTE_REQUESTS = [QUOTE_REQUEST_001] as const;
+
+export const ALL_QUOTE_RESPONSES = [
+  QUOTE_RESPONSE_THERMO,
+  QUOTE_RESPONSE_SIGMA,
+  QUOTE_RESPONSE_CORNING,
+] as const;
+
+export const ALL_QUOTE_COMPARISONS = [QUOTE_COMPARISON_001] as const;
+
+export const ALL_PURCHASE_ORDERS = [
+  PURCHASE_ORDER_001,
+  PURCHASE_ORDER_002,
+  PURCHASE_ORDER_003,
+] as const;
+
+export const ALL_APPROVAL_EXECUTIONS = [
+  APPROVAL_EXECUTION_001,
+  APPROVAL_EXECUTION_002,
+] as const;
+
+export const ALL_ACKNOWLEDGEMENTS = [ACKNOWLEDGEMENT_002] as const;
+
+export const ALL_RECEIVING_BATCHES = [RECEIVING_BATCH_001] as const;
+
+export const ALL_STOCK_POSITIONS = [
+  STOCK_POSITION_001,
+  STOCK_POSITION_002,
+] as const;
+
+export const ALL_REORDER_RECOMMENDATIONS = [
+  REORDER_RECOMMENDATION_001,
+  REORDER_RECOMMENDATION_002,
+  REORDER_RECOMMENDATION_003,
+] as const;
+
+export const ALL_EXPIRY_ACTIONS = [EXPIRY_ACTION_001] as const;
+
+export const ALL_LOT_RISKS = [LOT_RISK_FBS_EXPIRING] as const;

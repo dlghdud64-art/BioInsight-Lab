@@ -2,10 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter as useNavRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -38,6 +38,84 @@ import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { FileText } from "lucide-react";
+import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { toQuoteRequestListItemVM } from "@/lib/ops-console/ops-adapters";
+import type { QuoteRequestListItemVM } from "@/lib/review-queue/quote-rfq-view-models";
+import { cn } from "@/lib/utils";
+
+// ── Ops RFQ 운영 섹션 ──
+
+const RFQ_STATUS_TONE_CLASSES: Record<string, string> = {
+  neutral: "bg-zinc-500/10 text-zinc-400",
+  info: "bg-blue-500/10 text-blue-400",
+  warning: "bg-amber-500/10 text-amber-400",
+  danger: "bg-red-500/10 text-red-400",
+  success: "bg-emerald-500/10 text-emerald-400",
+};
+
+const RFQ_DUE_TONE_CLASSES: Record<string, string> = {
+  normal: "text-slate-400",
+  due_soon: "text-amber-400",
+  overdue: "text-red-400",
+};
+
+function OpsRFQSection() {
+  const navRouter = useNavRouter();
+  const store = useOpsStore();
+  const vendorMap: Record<string, string> = {};
+
+  const items: QuoteRequestListItemVM[] = useMemo(
+    () =>
+      store.quoteRequests.map((qr) =>
+        toQuoteRequestListItemVM(qr, store.quoteResponses, vendorMap),
+      ),
+    [store.quoteRequests, store.quoteResponses],
+  );
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="mb-6 space-y-3">
+      <h2 className="text-sm font-semibold text-slate-300">견적 운영</h2>
+      <div className="border border-bd rounded-lg overflow-hidden">
+        {/* 헤더 */}
+        <div className="hidden md:grid grid-cols-[100px_1fr_90px_60px_120px_80px_70px] gap-2 px-4 py-2 bg-el text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-bd">
+          <span>요청번호</span>
+          <span>제목</span>
+          <span>상태</span>
+          <span>공급사</span>
+          <span>응답 현황</span>
+          <span>마감</span>
+          <span>긴급</span>
+        </div>
+        {/* 행 */}
+        {items.map((item) => (
+          <div
+            key={item.id}
+            onClick={() => navRouter.push(item.href)}
+            className="grid grid-cols-1 md:grid-cols-[100px_1fr_90px_60px_120px_80px_70px] gap-2 px-4 py-2.5 border-b border-bd last:border-b-0 hover:bg-el cursor-pointer transition-colors items-center"
+          >
+            <span className="text-xs font-mono text-slate-400">{item.requestNumber}</span>
+            <span className="text-sm text-st font-medium truncate">{item.title}</span>
+            <span className={cn("inline-flex px-2 py-0.5 rounded text-[11px] font-medium w-fit", RFQ_STATUS_TONE_CLASSES[item.statusTone])}>
+              {item.currentStatusLabel}
+            </span>
+            <span className="text-xs text-slate-400">{item.vendorCount}곳</span>
+            <span className="text-xs text-slate-400">{item.responseProgressText}</span>
+            <span className={cn("text-xs", RFQ_DUE_TONE_CLASSES[item.dueState.tone])}>{item.dueState.label}</span>
+            <span>
+              {item.urgencyBadge && (
+                <span className="inline-flex px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] font-medium">
+                  {item.urgencyBadge}
+                </span>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -316,6 +394,9 @@ function QuotesPageContent() {
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+
+      {/* ── Ops RFQ 운영 섹션 (계약 기반) ── */}
+      <OpsRFQSection />
 
       {/* ── 헤더 ── */}
       <div className="flex items-start justify-between gap-3">
