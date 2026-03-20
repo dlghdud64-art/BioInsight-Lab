@@ -2,10 +2,23 @@
 
 import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  ChevronRight,
+  AlertCircle,
+  Clock,
+  CheckCircle2,
+  ShieldAlert,
+  FileWarning,
+  Package,
+  Truck,
+  ArrowRight,
+  Zap,
+} from "lucide-react";
 import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
 import {
   OperationalDetailShell,
@@ -21,49 +34,68 @@ import { buildReceivingOwnership } from "@/lib/ops-console/ownership-adapter";
 import { buildReceivingBlockers } from "@/lib/ops-console/blocker-adapter";
 import { buildReceivingExceptionReentryContext } from "@/lib/ops-console/reentry-context";
 import { injectReentryCommand } from "@/lib/ops-console/command-adapters";
-import { ReentryActionButton } from "../../_components/reentry-display";
+import {
+  buildReceivingExecutionModel,
+  type ReceivingExecutionModel,
+  type ReceivingExecutionPhase,
+  type LotDetailRow,
+  type ReceivingLineExecution,
+} from "@/lib/ops-console/receiving-detail-adapter";
 
-// ── Status config ──
-const STATUS_LABELS: Record<string, string> = {
-  expected: "입고 예정",
-  arrived: "도착",
-  inspection_in_progress: "검수 중",
-  ready_to_post: "반영 준비",
-  partially_posted: "부분 반영",
-  posted: "반영 완료",
-  closed: "종료",
-  cancelled: "취소",
+// ── Phase step config for execution strip ──────────────────────────
+const PHASE_STEPS: { key: string; label: string; matchPhases: ReceivingExecutionPhase[] }[] = [
+  { key: "arrival", label: "도착 확인", matchPhases: ["expected", "arrived"] },
+  { key: "inspection", label: "검수/문서", matchPhases: ["inspection_pending", "inspection_in_progress", "docs_missing"] },
+  { key: "lot_capture", label: "Lot/격리", matchPhases: ["quarantine_active"] },
+  { key: "posting", label: "재고 반영", matchPhases: ["ready_to_post", "partial_posting"] },
+  { key: "handoff", label: "재고 위험", matchPhases: ["posted", "closed"] },
+];
+
+// ── Tone → color utilities ─────────────────────────────────────────
+const TONE_TEXT: Record<string, string> = {
+  neutral: "text-slate-400",
+  info: "text-blue-400",
+  warning: "text-amber-400",
+  danger: "text-red-400",
+  success: "text-emerald-400",
 };
 
-const STATUS_TONES: Record<string, OperationalHeaderProps["statusTone"]> = {
-  expected: "neutral",
-  arrived: "info",
-  inspection_in_progress: "warning",
-  ready_to_post: "info",
-  partially_posted: "warning",
-  posted: "success",
-  closed: "neutral",
-  cancelled: "danger",
+const TONE_BG: Record<string, string> = {
+  neutral: "bg-slate-800/50",
+  info: "bg-blue-900/30",
+  warning: "bg-amber-900/30",
+  danger: "bg-red-900/30",
+  success: "bg-emerald-900/30",
 };
 
-const INSPECTION_BADGE: Record<string, { label: string; className: string }> = {
-  pending: { label: "대기", className: "bg-slate-700 text-slate-300 border-slate-600" },
-  in_progress: { label: "진행", className: "bg-amber-900/40 text-amber-300 border-amber-700" },
-  passed: { label: "합격", className: "bg-green-900/40 text-green-300 border-green-700" },
-  failed: { label: "불합격", className: "bg-red-900/40 text-red-300 border-red-700" },
+const TONE_BORDER: Record<string, string> = {
+  neutral: "border-slate-700",
+  info: "border-blue-800",
+  warning: "border-amber-800",
+  danger: "border-red-800",
+  success: "border-emerald-800",
 };
 
-const QUARANTINE_BADGE: Record<string, { label: string; className: string }> = {
-  quarantined: { label: "격리", className: "bg-amber-900/30 text-amber-300 border-amber-700" },
-  released: { label: "해제", className: "bg-green-900/30 text-green-300 border-green-700" },
-  pending: { label: "대기", className: "bg-slate-700 text-slate-300 border-slate-600" },
+const EXPIRY_TONE_COLOR: Record<string, string> = {
+  safe: "text-emerald-400",
+  expiring_soon: "text-amber-400",
+  expired: "text-red-400",
+  missing: "text-slate-500",
 };
 
+const QUARANTINE_TONE_COLOR: Record<string, string> = {
+  neutral: "text-slate-400",
+  warning: "text-amber-400",
+  danger: "text-red-400",
+  success: "text-emerald-400",
+};
+
+// ── Component ──────────────────────────────────────────────────────
 export default function ReceivingDetailPage() {
   const params = useParams();
   const receivingId = params.receivingId as string;
   const store = useOpsStore();
-  const [expandedLines, setExpandedLines] = useState<Record<string, boolean>>({});
+  const [expandedLots, setExpandedLots] = useState(false);
 
   const rb = useMemo(
     () => store.receivingBatches.find((r) => r.id === receivingId),
@@ -71,7 +103,7 @@ export default function ReceivingDetailPage() {
   );
 
   const linkedPO = useMemo(
-    () => rb?.poId ? store.purchaseOrders.find((p) => p.id === rb.poId) : undefined,
+    () => (rb?.poId ? store.purchaseOrders.find((p) => p.id === rb.poId) : undefined),
     [store.purchaseOrders, rb],
   );
 
@@ -93,22 +125,24 @@ export default function ReceivingDetailPage() {
   }
 
   const vendorName = VENDOR_MAP[rb.vendorId] ?? rb.vendorId;
-  const hasDocMissing = rb.lineReceipts.some((l) => l.documentStatus === "partial" || l.documentStatus === "missing");
-  const hasQuarantine = rb.lineReceipts.some((l) => l.lotRecords.some((lot) => lot.quarantineStatus === "quarantined"));
-  const hasInspectionPending = rb.lineReceipts.some((l) => l.inspectionRequired && (l.inspectionStatus === "pending" || l.inspectionStatus === "in_progress"));
-  const passedCount = rb.lineReceipts.filter((l) => l.inspectionStatus === "passed").length;
-  const totalReceived = rb.lineReceipts.reduce((sum, l) => sum + l.receivedQuantity, 0);
-  const totalOrdered = rb.lineReceipts.reduce((sum, l) => sum + l.orderedQuantity, 0);
 
-  const isPosted = rb.status === "posted" || rb.status === "closed";
-  const canPost = !hasDocMissing && !hasQuarantine && !hasInspectionPending && !isPosted;
+  // ── Build unified execution model ──────────────────────────────
+  const model: ReceivingExecutionModel = useMemo(
+    () => buildReceivingExecutionModel(rb, linkedPO, vendorName),
+    [rb, linkedPO, vendorName],
+  );
 
-  // Primary inbox item
+  // ── Shell props ────────────────────────────────────────────────
   const primaryInbox = inboxItems[0];
 
   const contextStrip: InboxContextStripProps | undefined = primaryInbox
     ? {
-        workTypeLabel: primaryInbox.workType === "quarantine_constrained" ? "격리" : primaryInbox.workType === "receiving_issue" ? "입고 이슈" : "반영 차단",
+        workTypeLabel:
+          primaryInbox.workType === "quarantine_constrained"
+            ? "격리"
+            : primaryInbox.workType === "receiving_issue"
+              ? "입고 이슈"
+              : "반영 차단",
         whyNow: primaryInbox.summary,
         dueLabel: primaryInbox.dueState.label,
         dueTone: primaryInbox.dueState.tone,
@@ -119,9 +153,9 @@ export default function ReceivingDetailPage() {
   const header: OperationalHeaderProps = {
     title: `${rb.receivingNumber} — ${vendorName}`,
     reference: rb.id,
-    statusLabel: STATUS_LABELS[rb.status] ?? rb.status,
-    statusTone: STATUS_TONES[rb.status] ?? "neutral",
-    subStatus: `${totalReceived}/${totalOrdered} 수령 · 검수 ${passedCount}/${rb.lineReceipts.length}`,
+    statusLabel: model.receivingExecutionState.phaseLabel,
+    statusTone: model.receivingExecutionState.phaseTone,
+    subStatus: model.receiptProgress.label,
     keyDates: [
       { label: "입고일", value: new Date(rb.receivedAt).toLocaleDateString("ko-KR") },
     ],
@@ -131,20 +165,13 @@ export default function ReceivingDetailPage() {
       ...(rb.carrierName ? [{ label: "운송", value: rb.carrierName }] : []),
     ],
     riskBadges: [
-      ...(hasDocMissing ? ["문서 누락"] : []),
-      ...(hasQuarantine ? ["격리 품목"] : []),
-      ...(hasInspectionPending ? ["검수 미완료"] : []),
-      ...(totalReceived < totalOrdered ? ["부분 수령"] : []),
+      ...(model.document.tone === "danger" ? ["문서 누락"] : []),
+      ...(model.lotCapture.quarantinedLots > 0 ? ["격리 품목"] : []),
+      ...(model.inspection.blockerLabel ? ["검수 미완료"] : []),
+      ...(model.receiptProgress.missingLines > 0 ? ["미도착 라인"] : []),
+      ...(model.lotCapture.expiredLots > 0 ? ["만료 lot"] : []),
     ],
-    nextActionSummary: isPosted
-      ? "반영 완료"
-      : canPost
-        ? "재고 반영 가능"
-        : hasDocMissing
-          ? "문서 확보 후 검수"
-          : hasQuarantine
-            ? "격리 검사 실행"
-            : "검수 완료 후 반영",
+    nextActionSummary: model.nextActionSummary,
   };
 
   const blockerStrip: BlockerReviewStripProps | undefined = (() => {
@@ -152,51 +179,68 @@ export default function ReceivingDetailPage() {
     const reviewPoints: BlockerReviewStripProps["reviewPoints"] = [];
     const warnings: BlockerReviewStripProps["warnings"] = [];
 
-    if (hasDocMissing) blockers.push({ label: "필수 문서 미첨부 — 검수 진행 불가", actionable: true });
-    if (hasQuarantine) blockers.push({ label: "온도 이탈/손상 품목 격리 중", actionable: true });
-    if (hasInspectionPending) reviewPoints.push({ label: `검수 대기 ${rb.lineReceipts.filter((l) => l.inspectionRequired && l.inspectionStatus !== "passed" && l.inspectionStatus !== "failed").length}건` });
-    if (totalReceived < totalOrdered) warnings.push({ label: `${totalOrdered - totalReceived}건 미도착` });
+    if (model.document.missingLines > 0)
+      blockers.push({ label: `${model.document.missingLines}건 필수 문서 미첨부 — 검수 진행 불가`, actionable: true });
+    if (model.lotCapture.blockedLots > 0)
+      blockers.push({ label: `${model.lotCapture.blockedLots}건 차단 lot — 재고 반영 불가`, actionable: true });
+    if (model.lotCapture.quarantinedLots > 0)
+      blockers.push({ label: `${model.lotCapture.quarantinedLots}건 격리 중 — 판정 필요`, actionable: true });
+    if (model.inspection.failed > 0)
+      blockers.push({ label: `${model.inspection.failed}건 불합격 — 재검수 또는 반품`, actionable: true });
+
+    if (model.inspection.pending > 0)
+      reviewPoints.push({ label: `검수 대기 ${model.inspection.pending}건` });
+    if (model.document.needsReviewLines > 0)
+      reviewPoints.push({ label: `문서 검토 대기 ${model.document.needsReviewLines}건` });
+
+    if (model.receiptProgress.missingLines > 0)
+      warnings.push({ label: `${model.receiptProgress.missingLines}건 미도착` });
+    if (model.receiptProgress.overReceivedLines > 0)
+      warnings.push({ label: `${model.receiptProgress.overReceivedLines}건 초과 수령` });
+    if (model.lotCapture.expiredLots > 0)
+      warnings.push({ label: `${model.lotCapture.expiredLots}건 만료 lot` });
+    if (model.lotCapture.missingExpiryLots > 0)
+      warnings.push({ label: `${model.lotCapture.missingExpiryLots}건 유효기한 미입력` });
 
     if (blockers.length + reviewPoints.length + warnings.length === 0) return undefined;
     return { blockers, reviewPoints, warnings };
   })();
 
-  const ownership = useMemo(
-    () => buildReceivingOwnership(rb),
-    [rb],
-  );
+  const ownership = useMemo(() => buildReceivingOwnership(rb), [rb]);
+  const blockerView = useMemo(() => buildReceivingBlockers(rb), [rb]);
 
-  const blockerView = useMemo(
-    () => buildReceivingBlockers(rb),
-    [rb],
-  );
-
-  // Re-entry context for replacement sourcing (when exception exists)
-  const hasException = hasDocMissing || hasQuarantine || totalReceived < totalOrdered;
+  const hasException =
+    model.document.tone === "danger" ||
+    model.lotCapture.quarantinedLots > 0 ||
+    model.receiptProgress.missingLines > 0;
   const reentryCtx = useMemo(
-    () => hasException ? buildReceivingExceptionReentryContext(rb) : undefined,
+    () => (hasException ? buildReceivingExceptionReentryContext(rb) : undefined),
     [rb, hasException],
   );
 
-  const commandSurface: CommandSurface = useMemo(
-    () => {
-      const base = buildReceivingCommandSurface({
-        rb,
-        onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
-        onPostToInventory: () => store.postToInventory(rb.id),
-      });
-      return injectReentryCommand(base, reentryCtx);
-    },
-    [rb, store, reentryCtx],
-  );
+  const commandSurface: CommandSurface = useMemo(() => {
+    const base = buildReceivingCommandSurface({
+      rb,
+      onCompleteInspection: (lineId: string) => store.completeInspection(rb.id, lineId, true),
+      onPostToInventory: () => store.postToInventory(rb.id),
+    });
+    return injectReentryCommand(base, reentryCtx);
+  }, [rb, store, reentryCtx]);
 
   const metaRail: MetaRailProps = {
     lastUpdated: new Date(rb.receivedAt).toLocaleDateString("ko-KR"),
     linkedEntities: [
-      ...(linkedPO ? [{ label: "발주", value: linkedPO.poNumber, href: `/dashboard/purchase-orders/${linkedPO.id}` }] : []),
+      ...(linkedPO
+        ? [{ label: "발주", value: linkedPO.poNumber, href: `/dashboard/purchase-orders/${linkedPO.id}` }]
+        : []),
       ...(rb.trackingNumber ? [{ label: "운송장", value: rb.trackingNumber }] : []),
     ],
   };
+
+  // ── Execution Phase ────────────────────────────────────────────
+  const currentPhase = model.receivingExecutionState.phase;
+  const terminalPhases: ReceivingExecutionPhase[] = ["cancelled", "issue_flagged"];
+  const isTerminal = terminalPhases.includes(currentPhase);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -209,129 +253,492 @@ export default function ReceivingDetailPage() {
         commandSurface={commandSurface}
         metaRail={metaRail}
       >
-        {/* ── 수령 라인 테이블 ── */}
-        <div className="rounded border border-slate-800 bg-slate-900 overflow-hidden">
-          <div className="px-4 py-3 border-b border-slate-800">
-            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-              수령 라인 ({rb.lineReceipts.length}건)
-            </span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-slate-800 bg-slate-800/30">
-                  <th className="text-left px-3 py-2 font-medium text-slate-500 w-8">#</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">품목</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">주문</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">수령</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">상태</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">검수</th>
-                  <th className="text-left px-3 py-2 font-medium text-slate-500">Lot</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rb.lineReceipts.map((line) => {
-                  const insBadge = INSPECTION_BADGE[line.inspectionStatus] ?? INSPECTION_BADGE.pending;
-                  const isExpanded = expandedLines[line.id];
-                  const docTone = line.documentStatus === "complete" ? "text-emerald-400" : "text-amber-400";
-                  const condTone = line.conditionStatus === "ok" ? "text-emerald-400" : line.conditionStatus === "temperature_excursion" ? "text-red-400" : "text-amber-400";
+        {/* ── A. Upstream Context Strip ─────────────────────────── */}
+        <UpstreamContextStrip origin={model.origin} />
 
-                  return (
-                    <tbody key={line.id}>
-                      <tr className="border-b border-slate-800">
-                        <td className="px-3 py-2 text-slate-500 font-mono">{line.lineNumber}</td>
-                        <td className="px-3 py-2 text-slate-200">{line.itemName}</td>
-                        <td className="px-3 py-2 text-slate-400">{line.orderedQuantity}</td>
-                        <td className="px-3 py-2 text-slate-300">{line.receivedQuantity}</td>
-                        <td className="px-3 py-2">
-                          <span className={condTone}>
-                            {line.conditionStatus === "ok" ? "양호" : line.conditionStatus === "temperature_excursion" ? "온도이탈" : line.conditionStatus}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <span className={docTone}>
-                            {line.documentStatus === "complete" ? "완료" : line.documentStatus === "partial" ? "부분" : "누락"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-2">
-                          <Badge variant="outline" className={`text-[10px] ${insBadge.className}`}>
-                            {insBadge.label}
-                          </Badge>
-                        </td>
-                        <td className="px-3 py-2">
-                          <button
-                            onClick={() => setExpandedLines((prev) => ({ ...prev, [line.id]: !prev[line.id] }))}
-                            className="text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1"
-                          >
-                            {line.lotRecords.length}건
-                            {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                          </button>
-                        </td>
-                      </tr>
-                      {isExpanded && (
-                        <tr className="border-b border-slate-800">
-                          <td colSpan={8} className="px-3 py-0">
-                            <div className="py-2 pl-6 space-y-1">
-                              {line.lotRecords.map((lot) => {
-                                const qBadge = QUARANTINE_BADGE[lot.quarantineStatus];
-                                return (
-                                  <div key={lot.id} className="flex items-center gap-4 text-[11px] text-slate-400">
-                                    <span className="font-mono text-slate-300">{lot.lotNumber}</span>
-                                    <span>{lot.quantity} {lot.unit}</span>
-                                    <span className="font-mono">{lot.expiryDate ? new Date(lot.expiryDate).toLocaleDateString("ko-KR") : "—"}</span>
-                                    <span>{lot.storageCondition}</span>
-                                    {qBadge && lot.quarantineStatus !== "released" && lot.quarantineStatus !== "not_applicable" && (
-                                      <Badge variant="outline" className={`text-[10px] ${qBadge.className}`}>
-                                        {qBadge.label}
-                                      </Badge>
-                                    )}
-                                    <span className={lot.coaAttached ? "text-emerald-400" : "text-amber-400"}>
-                                      COA: {lot.coaAttached ? "✓" : "✗"}
-                                    </span>
-                                    {lot.notes && <span className="text-slate-500 italic">{lot.notes}</span>}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        {/* ── B. Execution Phase Strip ─────────────────────────── */}
+        {!isTerminal && <ExecutionPhaseStrip currentPhase={currentPhase} />}
 
-        {/* ── 검수 요약 ── */}
-        <div className="rounded border border-slate-800 bg-slate-900 p-4">
-          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">검수 요약</div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div>
-              <div className="text-slate-500">전체</div>
-              <div className="text-slate-200 font-medium">{rb.lineReceipts.length}건</div>
-            </div>
-            <div>
-              <div className="text-slate-500">합격</div>
-              <div className="text-emerald-400 font-medium">{passedCount}건</div>
-            </div>
-            <div>
-              <div className="text-slate-500">대기</div>
-              <div className="text-amber-400 font-medium">
-                {rb.lineReceipts.filter((l) => l.inspectionRequired && (l.inspectionStatus === "pending" || l.inspectionStatus === "in_progress")).length}건
-              </div>
-            </div>
-            <div>
-              <div className="text-slate-500">불합격</div>
-              <div className="text-red-400 font-medium">
-                {rb.lineReceipts.filter((l) => l.inspectionStatus === "failed").length}건
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* ── C. Receipt + Inspection Summary ──────────────────── */}
+        <ReceiptInspectionSurface model={model} />
+
+        {/* ── D. Document Summary ──────────────────────────────── */}
+        <DocumentSurface model={model} />
+
+        {/* ── E. Line Execution Table ──────────────────────────── */}
+        <LineExecutionTable lines={model.lineExecutions} />
+
+        {/* ── F. Lot Detail Grid ───────────────────────────────── */}
+        <LotDetailSurface
+          lots={model.lotDetails}
+          lotCapture={model.lotCapture}
+          expanded={expandedLots}
+          onToggle={() => setExpandedLots((p) => !p)}
+        />
+
+        {/* ── G. Posting Readiness ─────────────────────────────── */}
+        <PostingReadinessStrip model={model} />
+
+        {/* ── H. Inventory Release + Stock Risk Handoff ────────── */}
+        {(model.receivingExecutionState.phase === "posted" ||
+          model.receivingExecutionState.phase === "closed" ||
+          model.postingReadiness.readiness === "ready") && (
+          <InventoryReleaseHandoffPanel model={model} />
+        )}
       </OperationalDetailShell>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// A. Upstream Context Strip
+// ══════════════════════════════════════════════════════════════════════
+
+function UpstreamContextStrip({ origin }: { origin: ReceivingExecutionModel["origin"] }) {
+  return (
+    <div className="flex items-center gap-3 text-xs text-slate-500 bg-slate-900/50 border border-slate-800 rounded px-3 py-2">
+      <Truck className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
+      <span className="text-slate-400">{origin.sourceLabel}</span>
+      {origin.poRef && origin.poRoute && (
+        <>
+          <span className="text-slate-700">·</span>
+          <Link href={origin.poRoute} className="text-blue-400 hover:text-blue-300 font-mono">
+            {origin.poRef}
+          </Link>
+        </>
+      )}
+      <span className="text-slate-700">·</span>
+      <span>{origin.vendorSummary}</span>
+      <span className="text-slate-700">·</span>
+      <span>도착 {origin.arrivalLabel}</span>
+      {origin.trackingLabel && (
+        <>
+          <span className="text-slate-700">·</span>
+          <span className="font-mono">{origin.trackingLabel}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// B. Execution Phase Strip
+// ══════════════════════════════════════════════════════════════════════
+
+function ExecutionPhaseStrip({ currentPhase }: { currentPhase: ReceivingExecutionPhase }) {
+  const currentIdx = PHASE_STEPS.findIndex((s) => s.matchPhases.includes(currentPhase));
+
+  return (
+    <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded px-3 py-2.5">
+      {PHASE_STEPS.map((step, idx) => {
+        const isCurrent = idx === currentIdx;
+        const isDone = idx < currentIdx;
+        const dotCls = isCurrent
+          ? "bg-blue-500"
+          : isDone
+            ? "bg-emerald-500"
+            : "bg-slate-700";
+        const textCls = isCurrent
+          ? "text-blue-300 font-medium"
+          : isDone
+            ? "text-emerald-400"
+            : "text-slate-600";
+
+        return (
+          <div key={step.key} className="flex items-center gap-1">
+            {idx > 0 && (
+              <div className={`w-6 h-px ${isDone ? "bg-emerald-700" : "bg-slate-800"}`} />
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${dotCls}`} />
+              <span className={`text-xs ${textCls}`}>{step.label}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// C. Receipt + Inspection Summary
+// ══════════════════════════════════════════════════════════════════════
+
+function ReceiptInspectionSurface({ model }: { model: ReceivingExecutionModel }) {
+  const rp = model.receiptProgress;
+  const ins = model.inspection;
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Receipt Progress */}
+      <div className="bg-slate-900 border border-slate-800 rounded p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Package className="h-3.5 w-3.5 text-slate-500" />
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">수령 현황</span>
+        </div>
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <StatCell label="전체 라인" value={rp.totalLines} />
+          <StatCell label="수령 완료" value={rp.receivedLines} tone="success" />
+          <StatCell label="부분 수령" value={rp.partialLines} tone={rp.partialLines > 0 ? "warning" : undefined} />
+          <StatCell label="미도착" value={rp.missingLines} tone={rp.missingLines > 0 ? "danger" : undefined} />
+          <StatCell label="초과 수령" value={rp.overReceivedLines} tone={rp.overReceivedLines > 0 ? "warning" : undefined} />
+          <StatCell label="거부" value={rp.rejectedLines} tone={rp.rejectedLines > 0 ? "danger" : undefined} />
+        </div>
+        <div className="mt-2 text-xs text-slate-400">{rp.label}</div>
+      </div>
+
+      {/* Inspection Summary */}
+      <div className={`bg-slate-900 border rounded p-3 ${TONE_BORDER[ins.tone]}`}>
+        <div className="flex items-center gap-2 mb-2">
+          <ShieldAlert className="h-3.5 w-3.5 text-slate-500" />
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">검수</span>
+          <span className={`text-xs ${TONE_TEXT[ins.tone]}`}>{ins.label}</span>
+        </div>
+        {ins.totalRequired === 0 ? (
+          <div className="text-xs text-slate-500">검수 불요</div>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              <StatCell label="필수" value={ins.totalRequired} />
+              <StatCell label="합격" value={ins.passed} tone="success" />
+              <StatCell label="불합격" value={ins.failed} tone={ins.failed > 0 ? "danger" : undefined} />
+              <StatCell label="대기" value={ins.pending} tone={ins.pending > 0 ? "warning" : undefined} />
+              <StatCell label="조건부" value={ins.conditionalPass} tone={ins.conditionalPass > 0 ? "warning" : undefined} />
+              <StatCell label="재검수" value={ins.reinspectRequired} tone={ins.reinspectRequired > 0 ? "danger" : undefined} />
+            </div>
+            {ins.blockerLabel && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
+                <AlertCircle className="h-3 w-3" />
+                {ins.blockerLabel}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// D. Document Summary
+// ══════════════════════════════════════════════════════════════════════
+
+function DocumentSurface({ model }: { model: ReceivingExecutionModel }) {
+  const doc = model.document;
+  return (
+    <div className={`bg-slate-900 border rounded p-3 ${TONE_BORDER[doc.tone]}`}>
+      <div className="flex items-center gap-2 mb-2">
+        <FileWarning className="h-3.5 w-3.5 text-slate-500" />
+        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">문서 현황</span>
+        <span className={`text-xs ${TONE_TEXT[doc.tone]}`}>{doc.label}</span>
+      </div>
+      <div className="grid grid-cols-4 gap-2 text-xs">
+        <StatCell label="완료" value={doc.completeLines} tone="success" />
+        <StatCell label="부분" value={doc.partialLines} tone={doc.partialLines > 0 ? "warning" : undefined} />
+        <StatCell label="누락" value={doc.missingLines} tone={doc.missingLines > 0 ? "danger" : undefined} />
+        <StatCell label="검토" value={doc.needsReviewLines} tone={doc.needsReviewLines > 0 ? "warning" : undefined} />
+      </div>
+      {doc.missingTypes.length > 0 && (
+        <div className="mt-2 text-xs text-amber-400">
+          미첨부: {doc.missingTypes.join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// E. Line Execution Table
+// ══════════════════════════════════════════════════════════════════════
+
+function LineExecutionTable({ lines }: { lines: ReceivingLineExecution[] }) {
+  return (
+    <div className="rounded border border-slate-800 bg-slate-900 overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-800">
+        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+          수령 라인 ({lines.length}건)
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-800 bg-slate-800/30">
+              <th className="text-left px-3 py-2 font-medium text-slate-500 w-8">#</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">품목</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">수량</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">상태</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">검수</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">Lot</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">반영</th>
+              <th className="text-left px-3 py-2 font-medium text-slate-500">액션</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lines.map((line) => {
+              const condCls = TONE_TEXT[line.conditionTone] ?? "text-slate-400";
+              const docCls = TONE_TEXT[line.documentTone] ?? "text-slate-400";
+              const insCls = TONE_TEXT[line.inspectionTone] ?? "text-slate-400";
+
+              return (
+                <tr key={line.id} className="border-b border-slate-800 hover:bg-slate-800/20">
+                  <td className="px-3 py-2 text-slate-500 font-mono">{line.lineNumber}</td>
+                  <td className="px-3 py-2 text-slate-200 max-w-[200px] truncate">{line.itemLabel}</td>
+                  <td className="px-3 py-2 text-slate-300 font-mono">{line.orderedVsReceived}</td>
+                  <td className={`px-3 py-2 ${condCls}`}>{line.conditionLabel}</td>
+                  <td className={`px-3 py-2 ${docCls}`}>{line.documentLabel}</td>
+                  <td className={`px-3 py-2 ${insCls}`}>{line.inspectionLabel}</td>
+                  <td className="px-3 py-2 text-slate-400">{line.lotSummary}</td>
+                  <td className="px-3 py-2 text-slate-400">{line.postingRelevance}</td>
+                  <td className="px-3 py-2">
+                    {line.nextAction && (
+                      <span className="text-xs text-amber-400">{line.nextAction}</span>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// F. Lot Detail Surface
+// ══════════════════════════════════════════════════════════════════════
+
+function LotDetailSurface({
+  lots,
+  lotCapture,
+  expanded,
+  onToggle,
+}: {
+  lots: LotDetailRow[];
+  lotCapture: ReceivingExecutionModel["lotCapture"];
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className={`rounded border bg-slate-900 ${TONE_BORDER[lotCapture.tone]} overflow-hidden`}>
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-3 flex items-center justify-between border-b border-slate-800 hover:bg-slate-800/30 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            Lot 상세 ({lots.length}건)
+          </span>
+          <span className={`text-xs ${TONE_TEXT[lotCapture.tone]}`}>{lotCapture.label}</span>
+        </div>
+        {expanded ? (
+          <ChevronUp className="h-3.5 w-3.5 text-slate-500" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 text-slate-500" />
+        )}
+      </button>
+
+      {expanded && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-slate-800 bg-slate-800/30">
+                <th className="text-left px-3 py-2 font-medium text-slate-500">라인</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">품목</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">Lot#</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">수량</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">유효기한</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">격리</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">문서</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">반영</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">리스크</th>
+                <th className="text-left px-3 py-2 font-medium text-slate-500">액션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lots.map((lot) => (
+                <tr key={lot.id} className="border-b border-slate-800 hover:bg-slate-800/20">
+                  <td className="px-3 py-2 text-slate-500 font-mono">{lot.lineNumber}</td>
+                  <td className="px-3 py-2 text-slate-300 max-w-[140px] truncate">{lot.itemName}</td>
+                  <td className="px-3 py-2 text-slate-200 font-mono">{lot.lotNumber}</td>
+                  <td className="px-3 py-2 text-slate-300 font-mono">
+                    {lot.quantity} {lot.unit}
+                  </td>
+                  <td className={`px-3 py-2 ${EXPIRY_TONE_COLOR[lot.expiryTone]}`}>{lot.expiryLabel}</td>
+                  <td className={`px-3 py-2 ${QUARANTINE_TONE_COLOR[lot.quarantineTone]}`}>
+                    {lot.quarantineLabel}
+                  </td>
+                  <td className="px-3 py-2 text-slate-400">{lot.documentCoverage}</td>
+                  <td className="px-3 py-2 text-slate-400">{lot.postingState}</td>
+                  <td className="px-3 py-2">
+                    {lot.riskBadges.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {lot.riskBadges.map((badge) => (
+                          <Badge
+                            key={badge}
+                            variant="outline"
+                            className="text-[10px] border-amber-700 text-amber-300 bg-amber-900/20"
+                          >
+                            {badge}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </td>
+                  <td className="px-3 py-2">
+                    {lot.nextAction && (
+                      <span className="text-xs text-amber-400">{lot.nextAction}</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// G. Posting Readiness Strip
+// ══════════════════════════════════════════════════════════════════════
+
+function PostingReadinessStrip({ model }: { model: ReceivingExecutionModel }) {
+  const pr = model.postingReadiness;
+  const toneCls =
+    pr.readiness === "ready"
+      ? "border-emerald-800 bg-emerald-900/20"
+      : pr.readiness === "partial"
+        ? "border-amber-800 bg-amber-900/20"
+        : "border-red-800 bg-red-900/20";
+  const textCls =
+    pr.readiness === "ready"
+      ? "text-emerald-400"
+      : pr.readiness === "partial"
+        ? "text-amber-400"
+        : "text-red-400";
+  const iconCls =
+    pr.readiness === "ready"
+      ? "text-emerald-500"
+      : pr.readiness === "partial"
+        ? "text-amber-500"
+        : "text-red-500";
+
+  return (
+    <div className={`rounded border p-3 ${toneCls}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {pr.readiness === "ready" ? (
+            <Zap className={`h-4 w-4 ${iconCls}`} />
+          ) : (
+            <AlertCircle className={`h-4 w-4 ${iconCls}`} />
+          )}
+          <span className={`text-sm font-medium ${textCls}`}>{pr.label}</span>
+        </div>
+        <span className="text-xs text-slate-400 font-mono">
+          {pr.postableLineCount}/{pr.totalLineCount} 라인
+        </span>
+      </div>
+
+      {pr.blockers.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {pr.blockers.map((b) => (
+            <div key={b} className="flex items-center gap-1.5 text-xs text-red-400">
+              <span className="h-1 w-1 rounded-full bg-red-500 flex-shrink-0" />
+              {b}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// H. Inventory Release + Stock Risk Handoff
+// ══════════════════════════════════════════════════════════════════════
+
+function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionModel }) {
+  const rel = model.inventoryRelease;
+  const handoff = model.stockRiskHandoff;
+
+  return (
+    <div className="space-y-3">
+      {/* Inventory Release Summary */}
+      <div className="bg-slate-900 border border-slate-800 rounded p-3">
+        <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+          재고 반영 결과
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <StatCell label="반영 lot" value={rel.postedLots} tone="success" />
+          <StatCell label="격리 lot" value={rel.quarantinedLots} tone={rel.quarantinedLots > 0 ? "danger" : undefined} />
+          <StatCell label="가용 수량" value={rel.availableAfterPosting} tone="success" />
+          <StatCell label="격리 수량" value={rel.quarantinedAfterPosting} tone={rel.quarantinedAfterPosting > 0 ? "warning" : undefined} />
+        </div>
+        <div className="mt-2 text-xs text-slate-400">{rel.label}</div>
+      </div>
+
+      {/* Stock Risk Handoff */}
+      {handoff.needed && (
+        <Link
+          href={handoff.targetRoute}
+          className="block bg-slate-900 border border-teal-800/50 rounded p-3 hover:border-teal-700/60 transition-colors group"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+              다운스트림 인계 — 재고 위험
+            </span>
+            <div className="flex items-center gap-1 text-xs text-teal-400 group-hover:text-teal-300">
+              이동 <ArrowRight className="h-3 w-3" />
+            </div>
+          </div>
+          <div className="text-sm text-slate-200 mb-1">{handoff.label}</div>
+          {handoff.nextOwner && (
+            <div className="text-xs text-slate-500">인수: {handoff.nextOwner}</div>
+          )}
+          {handoff.followUpReasons.length > 0 && (
+            <div className="mt-2 space-y-0.5">
+              {handoff.followUpReasons.map((r) => (
+                <div key={r} className="flex items-center gap-1.5 text-xs text-slate-400">
+                  <ChevronRight className="h-3 w-3 text-slate-600" />
+                  {r}
+                </div>
+              ))}
+            </div>
+          )}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// Utility: Stat Cell
+// ══════════════════════════════════════════════════════════════════════
+
+function StatCell({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number | string;
+  tone?: "success" | "warning" | "danger";
+}) {
+  const valueCls = tone
+    ? tone === "success"
+      ? "text-emerald-400"
+      : tone === "warning"
+        ? "text-amber-400"
+        : "text-red-400"
+    : "text-slate-200";
+
+  return (
+    <div>
+      <div className="text-slate-500">{label}</div>
+      <div className={`font-medium tabular-nums ${valueCls}`}>{value}</div>
     </div>
   );
 }

@@ -20,7 +20,7 @@ import {
   Home,
   X,
 } from "lucide-react";
-import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { useOpsStoreSafe } from "@/lib/ops-console/ops-store";
 import {
   resolveTopLevelModule,
   type TopLevelModule,
@@ -131,7 +131,8 @@ export function DashboardSidebar({
   // Badge counts from ops store
   // ---------------------------------------------------------------------------
 
-  const { unifiedInboxItems } = useOpsStore();
+  const store = useOpsStoreSafe();
+  const unifiedInboxItems = store?.unifiedInboxItems ?? [];
 
   const badges = useMemo(() => {
     const result: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};

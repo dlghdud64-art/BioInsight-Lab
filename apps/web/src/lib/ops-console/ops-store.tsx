@@ -586,3 +586,12 @@ export function useOpsStore(): OpsStore {
   }
   return store;
 }
+
+/**
+ * Safe variant — returns null when rendered outside OpsStoreProvider.
+ * Use in shared components (e.g. DashboardSidebar) that may appear on
+ * pages outside the dashboard layout.
+ */
+export function useOpsStoreSafe(): OpsStore | null {
+  return useContext(OpsStoreContext);
+}
