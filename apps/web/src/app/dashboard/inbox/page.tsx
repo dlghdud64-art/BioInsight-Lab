@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useMemo, useCallback, useEffect } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import {
   buildFullInbox,
@@ -52,6 +52,9 @@ import {
   SOURCE_TYPE_LABELS,
   type ReentrySourceType,
 } from "@/lib/ops-console/reentry-context";
+import {
+  buildDetailHref,
+} from "@/lib/ops-console/navigation-context";
 
 // ── Priority badge 색상 ──
 const PRIORITY_BADGE: Record<string, string> = {
@@ -79,16 +82,35 @@ const DUE_BADGE: Record<string, string> = {
 
 export default function InboxPage() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const store = useOpsStore();
 
-  // State
-  const [moduleFilter, setModuleFilter] = useState<string>("all");
-  const [stateFilter, setStateFilter] = useState<string>("all");
-  const [ownerFilter, setOwnerFilter] = useState<OwnerFilterKey>("all");
+  // Initialize state from URL searchParams
+  const [moduleFilter, setModuleFilter] = useState<string>(
+    searchParams.get("filter_module") || "all",
+  );
+  const [stateFilter, setStateFilter] = useState<string>(
+    searchParams.get("filter_state") || "all",
+  );
+  const [ownerFilter, setOwnerFilter] = useState<OwnerFilterKey>(
+    (searchParams.get("filter_owner") as OwnerFilterKey) || "all",
+  );
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(
     new Set(),
   );
+
+  // Sync filter state → URL searchParams
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (moduleFilter !== "all") params.set("filter_module", moduleFilter);
+    if (stateFilter !== "all") params.set("filter_state", stateFilter);
+    if (ownerFilter !== "all") params.set("filter_owner", ownerFilter);
+    const qs = params.toString();
+    const newUrl = qs ? `${pathname}?${qs}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  }, [moduleFilter, stateFilter, ownerFilter, pathname, router]);
 
   // Build unified inbox from store data
   const allItems = useMemo(
@@ -437,15 +459,23 @@ export default function InboxPage() {
 
                     {/* Items */}
                     {!isCollapsed &&
-                      items.map((item) => (
-                        <InboxRow
-                          key={item.id}
-                          item={item}
-                          isSelected={selectedItemId === item.id}
-                          onClick={() => setSelectedItemId(item.id)}
-                          onNavigate={() => router.push(item.entityRoute)}
-                        />
-                      ))}
+                      items.map((item) => {
+                        const detailHref = buildDetailHref(item.entityRoute, {
+                          type: 'inbox',
+                          route: `${pathname}${searchParams.toString() ? '?' + searchParams.toString() : ''}`,
+                          summary: item.title,
+                          returnLabel: '작업함으로',
+                        });
+                        return (
+                          <InboxRow
+                            key={item.id}
+                            item={item}
+                            isSelected={selectedItemId === item.id}
+                            onClick={() => setSelectedItemId(item.id)}
+                            onNavigate={() => router.push(detailHref)}
+                          />
+                        );
+                      })}
                   </div>
                 );
               })}

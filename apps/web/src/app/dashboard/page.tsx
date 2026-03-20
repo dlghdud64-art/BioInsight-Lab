@@ -15,6 +15,7 @@ import {
   type DashboardItem,
   type TodayHeaderStats,
 } from "@/lib/ops-console/dashboard-adapter";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ---------------------------------------------------------------------------
 // Priority badge color
@@ -211,7 +212,12 @@ export default function DashboardPage() {
             {topQueue.map((item) => (
               <Link
                 key={item.entityId}
-                href={item.nextRoute}
+                href={buildDetailHref(item.nextRoute, {
+                  type: 'dashboard',
+                  route: '/dashboard',
+                  summary: item.title,
+                  returnLabel: '오늘로',
+                })}
                 className={`block bg-slate-900 border border-slate-800 rounded px-3 py-2 hover:bg-slate-800/70 transition-colors ${riskBorder(item)}`}
               >
                 <div className="flex items-center gap-2 flex-wrap">

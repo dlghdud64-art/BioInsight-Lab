@@ -605,11 +605,11 @@ export const HEADER_STAT_META: Record<
   keyof TodayHeaderStats,
   { label: string; route: string }
 > = {
-  totalActionable: { label: '전체 작업', route: '/dashboard/inbox?filter=all' },
-  blockedCount: { label: '차단', route: '/dashboard/inbox?filter=blocked' },
-  overdueCount: { label: '기한 초과', route: '/dashboard/inbox?filter=overdue' },
-  waitingExternalCount: { label: '외부 대기', route: '/dashboard/inbox?filter=waiting_external' },
-  readyToExecuteCount: { label: '실행 가능', route: '/dashboard/inbox?filter=now' },
-  myWorkCount: { label: '내 작업', route: '/dashboard/inbox?filter=my' },
-  teamWorkCount: { label: '팀 작업', route: '/dashboard/inbox?filter=team' },
+  totalActionable: { label: '전체 작업', route: '/dashboard/inbox' },
+  blockedCount: { label: '차단', route: '/dashboard/inbox?filter_state=blocked' },
+  overdueCount: { label: '기한 초과', route: '/dashboard/inbox?filter_state=overdue' },
+  waitingExternalCount: { label: '외부 대기', route: '/dashboard/inbox?filter_state=waiting_external' },
+  readyToExecuteCount: { label: '실행 가능', route: '/dashboard/inbox?filter_state=now' },
+  myWorkCount: { label: '내 작업', route: '/dashboard/inbox?filter_owner=my_work' },
+  teamWorkCount: { label: '팀 작업', route: '/dashboard/inbox?filter_owner=team_work' },
 };
