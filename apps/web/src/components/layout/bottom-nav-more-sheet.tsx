@@ -9,12 +9,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  BarChart3,
-  CreditCard,
-  Building2,
-  Shield,
+  ClipboardList,
+  Package,
+  AlertTriangle,
   Settings,
-  PieChart,
   Activity,
   ShieldCheck,
 } from "lucide-react";
@@ -33,23 +31,16 @@ interface MoreMenuItem {
 
 const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
   {
-    title: "구매 및 예산",
+    title: "운영",
     items: [
-      { label: "구매 리포트", href: "/dashboard/reports", icon: BarChart3 },
-      { label: "예산 관리", href: "/dashboard/budget", icon: CreditCard },
-    ],
-  },
-  {
-    title: "랩 운영",
-    items: [
-      { label: "조직 관리", href: "/dashboard/organizations", icon: Building2 },
-      { label: "안전 관리", href: "/dashboard/safety", icon: Shield },
+      { label: "발주", href: "/dashboard/purchase-orders", icon: ClipboardList },
+      { label: "입고", href: "/dashboard/receiving", icon: Package },
+      { label: "재고 위험", href: "/dashboard/stock-risk", icon: AlertTriangle },
     ],
   },
   {
     title: "시스템",
     items: [
-      { label: "지출 분석", href: "/dashboard/analytics", icon: PieChart },
       { label: "설정", href: "/dashboard/settings", icon: Settings },
     ],
   },
@@ -84,7 +75,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
           "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation",
           active
             ? "bg-blue-950/30 text-blue-400"
-            : "text-slate-300 hover:bg-el/50"
+            : "text-slate-300 hover:bg-slate-800/50",
         )}
       >
         <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -95,7 +86,10 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-pn border-t border-bd">
+      <SheetContent
+        side="bottom"
+        className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-slate-900 border-t border-slate-800"
+      >
         <SheetHeader className="pb-2">
           <SheetTitle className="text-base font-bold text-slate-100">
             전체 메뉴

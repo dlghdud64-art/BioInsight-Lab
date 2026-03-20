@@ -1,188 +1,102 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
 import {
   LayoutDashboard,
-  ShoppingCart,
-  Building2,
-  Package,
+  Inbox,
+  Search,
   FileText,
-  BarChart3,
+  ClipboardList,
+  Package,
+  AlertTriangle,
   Settings,
   Activity,
-  Shield,
   ShieldCheck,
-  X,
-  CreditCard,
-  PieChart,
   Home,
-  Inbox,
-  AlertTriangle,
-  ClipboardList,
+  X,
 } from "lucide-react";
+import { useOpsStore } from "@/lib/ops-console/ops-store";
+import {
+  resolveTopLevelModule,
+  type TopLevelModule,
+} from "@/lib/ops-console/navigation-context";
+
+// ---------------------------------------------------------------------------
+// Primary nav items
+// ---------------------------------------------------------------------------
 
 interface NavItem {
-  title: string;
+  module: TopLevelModule;
+  label: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  badge?: string;
+  badgeKey?: "inbox" | "quotes" | "receiving" | "stock_risk";
 }
 
-interface SidebarGroup {
-  label: string;
-  items: NavItem[];
-}
-
-// 메뉴 그룹 정의
-const sidebarGroups: SidebarGroup[] = [
-  {
-    label: "운영 (OPERATIONS)",
-    items: [
-      {
-        title: "운영 작업함",
-        href: "/dashboard/inbox",
-        icon: Inbox,
-      },
-      {
-        title: "견적 운영",
-        href: "/dashboard/quotes",
-        icon: FileText,
-      },
-      {
-        title: "발주 관리",
-        href: "/dashboard/purchase-orders",
-        icon: ClipboardList,
-      },
-      {
-        title: "입고 관리",
-        href: "/dashboard/receiving",
-        icon: Package,
-      },
-      {
-        title: "재고 위험",
-        href: "/dashboard/stock-risk",
-        icon: AlertTriangle,
-      },
-    ],
-  },
-  {
-    label: "구매 및 예산 (PURCHASE)",
-    items: [
-      {
-        title: "견적 관리",
-        href: "/dashboard/quotes",
-        icon: FileText,
-      },
-      {
-        title: "구매 운영",
-        href: "/dashboard/purchases",
-        icon: ShoppingCart,
-      },
-      {
-        title: "구매 리포트",
-        href: "/dashboard/reports",
-        icon: BarChart3,
-      },
-      {
-        title: "예산 관리",
-        href: "/dashboard/budget",
-        icon: CreditCard,
-      },
-    ],
-  },
-  {
-    label: "랩 운영 (LAB MANAGEMENT)",
-    items: [
-      {
-        title: "재고 관리",
-        href: "/dashboard/inventory",
-        icon: Package,
-      },
-      {
-        title: "조직 관리",
-        href: "/dashboard/organizations",
-        icon: Building2,
-      },
-      {
-        title: "안전 관리",
-        href: "/dashboard/safety",
-        icon: Shield,
-      },
-    ],
-  },
-  {
-    label: "시스템 (SYSTEM)",
-    items: [
-      {
-        title: "설정",
-        href: "/dashboard/settings",
-        icon: Settings,
-      },
-    ],
-  },
+const PRIMARY_NAV: NavItem[] = [
+  { module: "today", label: "오늘", href: "/dashboard", icon: LayoutDashboard },
+  { module: "inbox", label: "작업함", href: "/dashboard/inbox", icon: Inbox, badgeKey: "inbox" },
+  { module: "search", label: "검색", href: "/test/search", icon: Search },
+  { module: "quotes", label: "견적", href: "/dashboard/quotes", icon: FileText, badgeKey: "quotes" },
+  { module: "purchase_orders", label: "발주", href: "/dashboard/purchase-orders", icon: ClipboardList },
+  { module: "receiving", label: "입고", href: "/dashboard/receiving", icon: Package, badgeKey: "receiving" },
+  { module: "stock_risk", label: "재고 위험", href: "/dashboard/stock-risk", icon: AlertTriangle, badgeKey: "stock_risk" },
 ];
 
-// 관리자 전용 메뉴 (role === ADMIN || OWNER 시에만 표시)
-const adminMenuItems: NavItem[] = [
-  { title: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
-  { title: "감사 증적 (Audit Trail)", href: "/dashboard/audit", icon: ShieldCheck },
-];
-
-// 대시보드 링크 (상단에 별도 배치)
-const dashboardLinks = [
-  {
-    title: "대시보드",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "지출 분석",
-    href: "/dashboard/analytics",
-    icon: PieChart,
-  },
-];
-
-// 사이드바 아이콘 색상 매핑 (active = 밝은 tint, inactive = 약한 tint)
-const ICON_TINT: Record<string, { active: string; inactive: string }> = {
-  "/dashboard":              { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
-  "/dashboard/analytics":    { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
-  "/dashboard/inbox":        { active: "text-teal-400",   inactive: "text-teal-500/60" },
-  "/dashboard/quotes":       { active: "text-teal-400",   inactive: "text-teal-500/60" },
-  "/dashboard/purchase-orders": { active: "text-cyan-400", inactive: "text-cyan-500/60" },
-  "/dashboard/receiving":    { active: "text-cyan-400",   inactive: "text-cyan-500/60" },
-  "/dashboard/stock-risk":   { active: "text-teal-400",   inactive: "text-teal-500/60" },
-  "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/inventory":    { active: "text-teal-400",   inactive: "text-teal-500/60" },
-  "/dashboard/organizations":{ active: "text-violet-400", inactive: "text-violet-500/60" },
-  "/dashboard/safety":       { active: "text-amber-400",  inactive: "text-amber-500/60" },
-  "/dashboard/settings":     { active: "text-slate-300",  inactive: "text-slate-500" },
-  "/dashboard/activity-logs":{ active: "text-slate-300",  inactive: "text-slate-500" },
-  "/dashboard/audit":        { active: "text-slate-300",  inactive: "text-slate-500" },
+const SETTINGS_NAV: NavItem = {
+  module: "settings",
+  label: "설정",
+  href: "/dashboard/settings",
+  icon: Settings,
 };
+
+const ADMIN_NAV: NavItem[] = [
+  { module: "admin", label: "활동 로그", href: "/dashboard/activity-logs", icon: Activity },
+  { module: "admin", label: "감사 증적", href: "/dashboard/audit", icon: ShieldCheck },
+];
+
+// ---------------------------------------------------------------------------
+// Badge severity → color
+// ---------------------------------------------------------------------------
+
+function badgeClasses(severity: "normal" | "warning" | "critical"): string {
+  switch (severity) {
+    case "critical":
+      return "bg-red-500/20 text-red-400 ring-1 ring-red-500/30";
+    case "warning":
+      return "bg-amber-500/20 text-amber-400 ring-1 ring-amber-500/30";
+    default:
+      return "bg-blue-500/20 text-blue-400 ring-1 ring-blue-500/30";
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 interface DashboardSidebarProps {
   isMobileOpen?: boolean;
   onMobileOpenChange?: (open: boolean) => void;
 }
 
-export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileOpenChange }: DashboardSidebarProps = {}) {
+export function DashboardSidebar({
+  isMobileOpen: externalIsMobileOpen,
+  onMobileOpenChange,
+}: DashboardSidebarProps = {}) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [internalIsMobileOpen, setInternalIsMobileOpen] = useState(false);
 
   const userRole = (session?.user?.role as string) || "";
   const isAdminOrOwner = userRole === "ADMIN" || userRole === "OWNER";
-  
-  // 외부에서 제어하는 경우와 내부에서 제어하는 경우를 모두 지원
-  const isMobileOpen = externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen;
+
+  const isMobileOpen =
+    externalIsMobileOpen !== undefined ? externalIsMobileOpen : internalIsMobileOpen;
   const setIsMobileOpen = (open: boolean) => {
     if (onMobileOpenChange) {
       onMobileOpenChange(open);
@@ -191,43 +105,109 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
     }
   };
 
-  // 모바일에서 링크 클릭 시 사이드바 닫기
+  // Close on route change
   useEffect(() => {
     setIsMobileOpen(false);
   }, [pathname]);
 
-  // 모바일에서 외부 클릭 시 사이드바 닫기
+  // Close on outside click (mobile)
   useEffect(() => {
     if (isMobileOpen) {
       const handleClickOutside = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
-        if (!target.closest('.mobile-sidebar') && !target.closest('.mobile-menu-button')) {
+        if (!target.closest(".mobile-sidebar") && !target.closest(".mobile-menu-button")) {
           setIsMobileOpen(false);
         }
       };
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
     }
   }, [isMobileOpen]);
 
+  // Active module from pathname
+  const activeModule = resolveTopLevelModule(pathname);
+
+  // ---------------------------------------------------------------------------
+  // Badge counts from ops store
+  // ---------------------------------------------------------------------------
+
+  let badges: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};
+
+  try {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { unifiedInboxItems } = useOpsStore();
+
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    badges = useMemo(() => {
+      const result: Record<string, { count: number; severity: "normal" | "warning" | "critical" }> = {};
+
+      // inbox: total items
+      const inboxCount = unifiedInboxItems.length;
+      if (inboxCount > 0) {
+        const hasOverdue = unifiedInboxItems.some((i) => i.dueState.isOverdue);
+        const hasBlocked = unifiedInboxItems.some((i) => !!i.blockedReason);
+        result.inbox = {
+          count: inboxCount,
+          severity: hasOverdue ? "critical" : hasBlocked ? "warning" : "normal",
+        };
+      }
+
+      // quotes: items where sourceModule='quote' and triageGroup is needs_review or now
+      const quoteReview = unifiedInboxItems.filter(
+        (i) =>
+          i.sourceModule === "quote" &&
+          (i.triageGroup === "needs_review" || i.triageGroup === "now"),
+      );
+      if (quoteReview.length > 0) {
+        result.quotes = { count: quoteReview.length, severity: "normal" };
+      }
+
+      // receiving: items where sourceModule='receiving' and blockedReason exists
+      const receivingBlocked = unifiedInboxItems.filter(
+        (i) => i.sourceModule === "receiving" && !!i.blockedReason,
+      );
+      if (receivingBlocked.length > 0) {
+        result.receiving = { count: receivingBlocked.length, severity: "warning" };
+      }
+
+      // stock_risk: items where sourceModule='stock_risk' and priority='p0'
+      const stockCritical = unifiedInboxItems.filter(
+        (i) => i.sourceModule === "stock_risk" && i.priority === "p0",
+      );
+      if (stockCritical.length > 0) {
+        result.stock_risk = { count: stockCritical.length, severity: "critical" };
+      }
+
+      return result;
+    }, [unifiedInboxItems]);
+  } catch {
+    // OpsStoreProvider not mounted — badges stay empty
+  }
+
+  // ---------------------------------------------------------------------------
+  // Sidebar content
+  // ---------------------------------------------------------------------------
+
   const SidebarContent = () => (
-    <div className="h-full flex flex-col">
-      {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-bd flex-shrink-0">
+    <div className="h-full flex flex-col bg-slate-900">
+      {/* Logo — desktop */}
+      <div className="h-14 hidden lg:flex items-center px-5 border-b border-slate-800 flex-shrink-0">
         <Link
-          href="/"
-          className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
+          href="/dashboard"
+          className="text-lg font-bold tracking-tight text-slate-100 hover:opacity-80 transition-opacity"
         >
-          <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
+          LabAxis
         </Link>
       </div>
 
-      {/* 메뉴 영역 (스크롤 가능) */}
-      <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-16 lg:pt-8">
-        {/* 모바일/태블릿 헤더 */}
-        <div className="flex items-center justify-between mb-6 lg:hidden">
-          <h2 className="text-xs font-semibold text-slate-100">메뉴</h2>
-            <Button
+      {/* Scrollable nav */}
+      <div className="flex-1 overflow-y-auto px-3 pt-14 lg:pt-5 pb-4">
+        {/* Mobile header */}
+        <div className="flex items-center justify-between mb-4 lg:hidden">
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+            메뉴
+          </span>
+          <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileOpen(false)}
@@ -236,144 +216,110 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
             <X className="h-4 w-4" />
           </Button>
         </div>
-        
-        {/* 데스크톱 헤더 */}
-        <h2 className="hidden lg:block text-xs lg:text-sm font-semibold text-slate-100 mb-6">메뉴</h2>
 
-        {/* 대시보드 링크 (상단) */}
-        <div className="mb-6">
-          <nav className="space-y-1">
-            {dashboardLinks.map((item) => {
-              const Icon = item.icon;
-              const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
+        {/* Primary nav */}
+        <nav className="space-y-0.5">
+          {PRIMARY_NAV.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeModule === item.module;
+            const badge = item.badgeKey ? badges[item.badgeKey] : undefined;
 
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-slate-800 text-white border-l-2 border-l-blue-500 pl-[10px]"
+                    : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-300",
+                )}
+              >
+                <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "")} />
+                <span className="truncate">{item.label}</span>
+                {badge && badge.count > 0 && (
+                  <span
+                    className={cn(
+                      "ml-auto text-[10px] font-semibold tabular-nums min-w-[20px] text-center px-1.5 py-0.5 rounded-full",
+                      badgeClasses(badge.severity),
+                    )}
+                  >
+                    {badge.count}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Separator + Settings */}
+        <div className="mt-6 pt-4 border-t border-slate-800">
+          <nav className="space-y-0.5">
+            {(() => {
+              const Icon = SETTINGS_NAV.icon;
+              const isActive = activeModule === SETTINGS_NAV.module;
               return (
                 <Link
-                  key={item.href}
-                  href={item.href}
+                  href={SETTINGS_NAV.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                    "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-el text-white"
-                      : "text-slate-400 hover:bg-el hover:text-slate-300"
+                      ? "bg-slate-800 text-white border-l-2 border-l-blue-500 pl-[10px]"
+                      : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-300",
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-cyan-400" : "text-slate-400")} />
-                  <span className="truncate whitespace-nowrap">{item.title}</span>
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "")} />
+                  <span className="truncate">{SETTINGS_NAV.label}</span>
                 </Link>
               );
-            })}
+            })()}
           </nav>
         </div>
 
-        {/* 메뉴 그룹 */}
-        <div className="space-y-6">
-          {sidebarGroups.map((group, groupIndex) => (
-            <div key={groupIndex}>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
-                {group.label}
-              </h3>
-              <nav className="space-y-1">
-                {group.items.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
-                  const tint = ICON_TINT[item.href] || { active: "text-blue-400", inactive: "text-slate-500" };
-
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setIsMobileOpen(false)}
-                      className={cn(
-                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-el text-white"
-                          : "text-slate-400 hover:bg-el hover:text-slate-200"
-                      )}
-                    >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
-                      <span className="truncate whitespace-nowrap">{item.title}</span>
-                      {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </nav>
-            </div>
-          ))}
-        </div>
-
-        {/* 관리자 전용 메뉴 (시스템 관리) */}
+        {/* Admin section */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-bd">
-            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+          <div className="mt-4 pt-4 border-t border-slate-800">
+            <p className="mb-2 px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
               시스템 관리
             </p>
-            <nav className="space-y-1">
-              {adminMenuItems.map((item) => {
+            <nav className="space-y-0.5">
+              {ADMIN_NAV.map((item) => {
                 const Icon = item.icon;
-                const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
-                const tint = ICON_TINT[item.href] || { active: "text-slate-300", inactive: "text-slate-500" };
+                const isActive =
+                  pathname === item.href || pathname?.startsWith(item.href + "/");
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-el text-white"
-                        : "text-slate-400 hover:bg-el hover:text-slate-200"
+                        ? "bg-slate-800 text-white border-l-2 border-l-blue-500 pl-[10px]"
+                        : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-300",
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
-                    <span className="truncate whitespace-nowrap">{item.title}</span>
+                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "")} />
+                    <span className="truncate">{item.label}</span>
                   </Link>
                 );
               })}
             </nav>
           </div>
         )}
-
-        {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-bd">
-          <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-            LabAxis
-          </p>
-          <nav className="space-y-1">
-            {[
-              { title: "서비스 소개", href: "/intro" },
-              { title: "요금 & 도입", href: "/pricing" },
-              { title: "고객 지원 및 문의", href: "/support" },
-            ].map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-el hover:text-slate-300 transition-colors"
-              >
-                <span className="truncate whitespace-nowrap">{item.title}</span>
-              </Link>
-            ))}
-          </nav>
-        </div>
       </div>
 
-      {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
-      <div className="mt-auto p-4 border-t border-bd flex-shrink-0">
+      {/* Bottom: service home link */}
+      <div className="mt-auto p-3 border-t border-slate-800 flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-el/50 border border-bs/50 hover:bg-el hover:border-bd transition-all duration-300 group"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-400 hover:bg-slate-800/30 transition-colors"
         >
-          <Home className="h-4 w-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
-          <span className="text-xs font-bold tracking-wider text-slate-400 group-hover:text-blue-400 truncate whitespace-nowrap">
-            서비스 홈으로
-          </span>
+          <Home className="h-3.5 w-3.5" />
+          <span>서비스 홈으로</span>
         </Link>
       </div>
     </div>
@@ -381,22 +327,24 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
   return (
     <>
-      {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-sh border-r border-bd z-30">
+      {/* Desktop sidebar (lg+) */}
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-slate-900 border-r border-slate-800 z-30">
         <SidebarContent />
       </aside>
 
-      {/* ── 모바일/태블릿 오버레이 + 슬라이드 사이드바 (lg 미만) ── */}
+      {/* Mobile overlay */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
+
+      {/* Mobile slide-in sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-sh border-r border-bd z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full"
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-slate-900 border-r border-slate-800 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          isMobileOpen ? "translate-x-0" : "-translate-x-full",
         )}
       >
         <SidebarContent />
