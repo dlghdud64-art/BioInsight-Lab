@@ -1,575 +1,410 @@
 "use client";
 
-export const dynamic = 'force-dynamic';
-
-import { useState, useEffect, Suspense, useMemo } from "react";
-import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
-import { useSearchParams, useRouter as useNavRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ShoppingCart,
-  Search,
-  Filter,
-  Calendar,
-  Package,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Send,
-  FileCheck2,
-  ArrowRight,
-  Plus,
-  RefreshCw,
-  Truck,
-} from "lucide-react";
+import { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { usePermission } from "@/hooks/use-permission";
-import { PermissionGate } from "@/components/permission-gate";
-import { AiActionButton } from "@/components/ai/ai-action-button";
-import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
-import { FileText } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Clock,
+  ShieldAlert,
+  Zap,
+  Hourglass,
+  CheckCircle2,
+  ExternalLink,
+} from "lucide-react";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
-import { toQuoteRequestListItemVM } from "@/lib/ops-console/ops-adapters";
-import type { QuoteRequestListItemVM } from "@/lib/review-queue/quote-rfq-view-models";
+import {
+  buildModuleHeaderStats,
+  buildModulePriorityQueue,
+  buildModuleLandingItems,
+  buildModuleBuckets,
+  buildModuleDownstream,
+  MODULE_ORIENTATION,
+  BUCKET_COLORS,
+  MODULE_HEADER_STAT_META,
+  type ModuleLandingItem,
+  type ModuleBucketKey,
+} from "@/lib/ops-console/module-landing-adapter";
 import { cn } from "@/lib/utils";
 
-// ── Ops RFQ 운영 섹션 ──
+// ── bucket tab 설정 ──
+const BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
+  { key: "ready", label: "선택 가능" },
+  { key: "needs_review", label: "검토 필요" },
+  { key: "waiting_external", label: "공급사 대기" },
+  { key: "handoff", label: "PO 전환" },
+];
 
-const RFQ_STATUS_TONE_CLASSES: Record<string, string> = {
-  neutral: "bg-zinc-500/10 text-zinc-400",
-  info: "bg-blue-500/10 text-blue-400",
-  warning: "bg-amber-500/10 text-amber-400",
-  danger: "bg-red-500/10 text-red-400",
-  success: "bg-emerald-500/10 text-emerald-400",
+// ── priority badge ──
+const PRIORITY_CLASSES: Record<string, string> = {
+  p0: "bg-red-500/20 text-red-300 ring-1 ring-red-500/30",
+  p1: "bg-amber-500/20 text-amber-300 ring-1 ring-amber-500/30",
+  p2: "bg-blue-500/20 text-blue-300 ring-1 ring-blue-500/30",
+  p3: "bg-slate-500/20 text-slate-400 ring-1 ring-slate-500/30",
 };
 
-const RFQ_DUE_TONE_CLASSES: Record<string, string> = {
-  normal: "text-slate-400",
-  due_soon: "text-amber-400",
+// ── due state border ──
+function riskBorder(item: ModuleLandingItem): string {
+  if (item.dueState.isOverdue) return "border-l-2 border-l-red-500";
+  if (item.blockerSummary) return "border-l-2 border-l-amber-500";
+  return "border-l-2 border-l-transparent";
+}
+
+// ── stat filter keys ──
+const STAT_FILTER_KEYS: (keyof Omit<
+  ReturnType<typeof buildModuleHeaderStats>,
+  "nextActionSummary"
+>)[] = ["openActionable", "blocked", "overdue", "waitingExternal", "readyToExecute"];
+
+const STAT_ICONS: Record<string, React.ReactNode> = {
+  openActionable: <Zap className="h-3.5 w-3.5" />,
+  blocked: <ShieldAlert className="h-3.5 w-3.5" />,
+  overdue: <AlertTriangle className="h-3.5 w-3.5" />,
+  waitingExternal: <Hourglass className="h-3.5 w-3.5" />,
+  readyToExecute: <CheckCircle2 className="h-3.5 w-3.5" />,
+};
+
+const STAT_TONE: Record<string, string> = {
+  openActionable: "text-slate-300",
+  blocked: "text-red-400",
   overdue: "text-red-400",
+  waitingExternal: "text-blue-400",
+  readyToExecute: "text-emerald-400",
 };
 
-function OpsRFQSection() {
-  const navRouter = useNavRouter();
-  const store = useOpsStore();
-  const vendorMap: Record<string, string> = {};
-
-  const items: QuoteRequestListItemVM[] = useMemo(
-    () =>
-      store.quoteRequests.map((qr) =>
-        toQuoteRequestListItemVM(qr, store.quoteResponses, vendorMap),
-      ),
-    [store.quoteRequests, store.quoteResponses],
-  );
-
-  if (items.length === 0) return null;
-
-  return (
-    <div className="mb-6 space-y-3">
-      <h2 className="text-sm font-semibold text-slate-300">견적 운영</h2>
-      <div className="border border-bd rounded-lg overflow-hidden">
-        {/* 헤더 */}
-        <div className="hidden md:grid grid-cols-[100px_1fr_90px_60px_120px_80px_70px] gap-2 px-4 py-2 bg-el text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-bd">
-          <span>요청번호</span>
-          <span>제목</span>
-          <span>상태</span>
-          <span>공급사</span>
-          <span>응답 현황</span>
-          <span>마감</span>
-          <span>긴급</span>
-        </div>
-        {/* 행 */}
-        {items.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => navRouter.push(item.href)}
-            className="grid grid-cols-1 md:grid-cols-[100px_1fr_90px_60px_120px_80px_70px] gap-2 px-4 py-2.5 border-b border-bd last:border-b-0 hover:bg-el cursor-pointer transition-colors items-center"
-          >
-            <span className="text-xs font-mono text-slate-400">{item.requestNumber}</span>
-            <span className="text-sm text-st font-medium truncate">{item.title}</span>
-            <span className={cn("inline-flex px-2 py-0.5 rounded text-[11px] font-medium w-fit", RFQ_STATUS_TONE_CLASSES[item.statusTone])}>
-              {item.currentStatusLabel}
-            </span>
-            <span className="text-xs text-slate-400">{item.vendorCount}곳</span>
-            <span className="text-xs text-slate-400">{item.responseProgressText}</span>
-            <span className={cn("text-xs", RFQ_DUE_TONE_CLASSES[item.dueState.tone])}>{item.dueState.label}</span>
-            <span>
-              {item.urgencyBadge && (
-                <span className="inline-flex px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 text-[10px] font-medium">
-                  {item.urgencyBadge}
-                </span>
-              )}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
-
-interface Quote {
-  id: string;
-  title: string;
-  status: QuoteStatus;
-  createdAt: string;
-  deliveryDate?: string;
-  deliveryLocation?: string;
-  items: Array<{
-    id: string;
-    product: {
-      id: string;
-      name: string;
-    };
-    quantity: number;
-  }>;
-  responses?: Array<{
-    id: string;
-    vendor: {
-      name: string;
-    };
-    totalPrice?: number;
-    createdAt: string;
-  }>;
-}
-
-// ── 운영 상태 파생 ──────────────────────────────────────────
-function isDelayed(q: Quote): boolean {
-  if (!q.deliveryDate) return false;
-  if (q.status === "COMPLETED" || q.status === "CANCELLED") return false;
-  return new Date(q.deliveryDate) < new Date();
-}
-
-const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-100",     text: "text-red-800",     border: "border-red-300" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100",  text: "text-purple-800",  border: "border-purple-300" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",   text: "text-amber-800",   border: "border-amber-300" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",   text: "text-slate-700",   border: "border-bs" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-50",      text: "text-red-600",     border: "border-red-200" },
+const STAT_FILTER_MAP: Record<string, string> = {
+  openActionable: "all",
+  blocked: "blocked",
+  overdue: "overdue",
+  waitingExternal: "waiting",
+  readyToExecute: "ready",
 };
 
-function getOpStatus(q: Quote) {
-  if (isDelayed(q)) return OP_STATUS.지연;
-  switch (q.status) {
-    case "RESPONDED": return OP_STATUS.비교_검토;
-    case "SENT":
-      return (q.responses?.length ?? 0) > 0 ? OP_STATUS.일부_회신 : OP_STATUS.회신_대기;
-    case "PENDING":   return OP_STATUS.요청_접수;
-    case "COMPLETED": return OP_STATUS.발주_완료;
-    case "CANCELLED": return OP_STATUS.취소됨;
-    default:          return OP_STATUS.요청_접수;
-  }
-}
+export default function QuotesPage() {
+  const router = useRouter();
+  const { unifiedInboxItems, quoteRequests, quoteResponses } = useOpsStore();
+  const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
 
-function getPriority(q: Quote): number {
-  if (isDelayed(q)) return 0;
-  const map: Record<QuoteStatus, number> = {
-    RESPONDED: 1, SENT: 2, PENDING: 3, COMPLETED: 4, CANCELLED: 5,
-  };
-  return map[q.status] ?? 9;
-}
-
-// ── 견적 카드 ──────────────────────────────────────────────
-function QuoteCard({ quote }: { quote: Quote }) {
-  const opStatus = getOpStatus(quote);
-  const itemCount = quote.items.length;
-  const responseCount = quote.responses?.length ?? 0;
-  const prices = (quote.responses ?? [])
-    .map((r) => r.totalPrice)
-    .filter((p): p is number => typeof p === "number" && p > 0);
-  const minPrice = prices.length ? Math.min(...prices) : null;
-  const maxPrice = prices.length ? Math.max(...prices) : null;
-  const delayed = isDelayed(quote);
-  const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
-
-  return (
-    <div className={`bg-pn rounded-xl border shadow-sm hover:shadow-md transition-shadow p-4 ${delayed ? "border-red-200" : "border-bd/80"}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          {/* 상태 뱃지 + 참조번호 */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
-              {opStatus.label}
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">{quoteRef}</span>
-            {delayed && (
-              <span className="text-[10px] font-semibold text-red-600 flex items-center gap-0.5">
-                <AlertCircle className="h-3 w-3" /> 마감 초과
-              </span>
-            )}
-          </div>
-
-          {/* 제목 */}
-          <h3 className="font-semibold text-slate-100 text-sm leading-snug truncate mb-2">{quote.title}</h3>
-
-          {/* 메타 정보 */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              {itemCount}개 품목
-            </span>
-            <span className={`text-xs flex items-center gap-1 ${responseCount > 0 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
-              <Send className="h-3 w-3" />
-              {responseCount > 0 ? `회신 ${responseCount}건` : "회신 없음"}
-            </span>
-            {minPrice !== null && (
-              <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
-                <Truck className="h-3 w-3 text-slate-400" />
-                {minPrice === maxPrice
-                  ? `₩${minPrice.toLocaleString()}`
-                  : `₩${minPrice.toLocaleString()} ~ ₩${maxPrice!.toLocaleString()}`}
-              </span>
-            )}
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
-            </span>
-            {quote.deliveryDate && (
-              <span className={`text-xs flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
-                <Clock className="h-3 w-3" />
-                납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 빠른 액션 */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[88px]">
-          <Link href={`/quotes/${quote.id}`}>
-            <Button
-              size="sm"
-              variant={quote.status === "RESPONDED" ? "default" : "outline"}
-              className={`h-7 text-xs w-full ${quote.status === "RESPONDED" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-            >
-              {quote.status === "RESPONDED" ? "비교표 보기" : "상세보기"}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </Link>
-          {quote.status === "PENDING" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-amber-500 hover:bg-amber-600 text-white">
-                발송하기
-              </Button>
-            </Link>
-          )}
-          {quote.status === "RESPONDED" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50">
-                발주 전환
-              </Button>
-            </Link>
-          )}
-          {quote.status === "SENT" && responseCount > 0 && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full text-slate-600">
-                회신 확인
-              </Button>
-            </Link>
-          )}
-          {quote.status === "COMPLETED" && (
-            <Link href={`/dashboard/purchases?quoteId=${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                <ShoppingCart className="h-3 w-3 mr-1" />
-                구매 요청
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* 운영 실행 현황 */}
-      <OpsExecutionContext
-        entityType="QUOTE"
-        entityId={quote.id}
-        compact
-        className="mt-3 pt-3 border-t border-slate-100"
-      />
-    </div>
+  // ── A. Header Stats ──
+  const headerStats = useMemo(
+    () => buildModuleHeaderStats(unifiedInboxItems, "quote"),
+    [unifiedInboxItems],
   );
-}
 
-function QuotesPageContent() {
-  const { data: session, status } = useSession();
-  const searchParams = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  // URL ?status= 파라미터가 있으면 초기 필터로 세팅 (대시보드 카드 원클릭 진입)
-  const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get("status") ?? "all"
+  // ── B. Priority Queue ──
+  const priorityQueue = useMemo(
+    () => buildModulePriorityQueue(unifiedInboxItems, "quote", 6),
+    [unifiedInboxItems],
   );
-  const [sortBy, setSortBy] = useState<string>("newest");
 
-  // URL 파라미터 변경 시 필터 동기화 (뒤로가기 후 재진입 등)
-  useEffect(() => {
-    const s = searchParams.get("status");
-    if (s) setStatusFilter(s);
-  }, [searchParams]);
+  // ── C/D. Landing Items + Buckets ──
+  const landingItems = useMemo(
+    () => buildModuleLandingItems(unifiedInboxItems, "quote"),
+    [unifiedInboxItems],
+  );
+  const buckets = useMemo(() => buildModuleBuckets(landingItems), [landingItems]);
 
-  // Deep-link: work_item + entity_id → 해당 견적으로 스크롤
-  const entityIdParam = searchParams.get("entity_id");
-  useEffect(() => {
-    if (entityIdParam) {
-      const el = document.getElementById("ops-execution-context");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [entityIdParam]);
+  // ── E. Downstream ──
+  const downstream = useMemo(
+    () => buildModuleDownstream("quote", unifiedInboxItems),
+    [unifiedInboxItems],
+  );
 
-  // 견적 목록 조회
-  // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)
-  // refetchOnMount: "always" - 페이지 재방문 시 항상 재요청 (Next.js 라우터 캐시 우회)
-  const { data: quotesData, isLoading } = useQuery({
-    queryKey: ["quotes", statusFilter, sortBy],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (statusFilter !== "all" && statusFilter !== "DEADLINE_TODAY") params.append("status", statusFilter);
-      if (sortBy) params.append("sortBy", sortBy);
-      const response = await fetch(`/api/quotes?${params.toString()}`);
-      if (!response.ok) throw new Error("Failed to fetch quotes");
-      return response.json();
-    },
-    enabled: status === "authenticated",
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-  });
+  const orientation = MODULE_ORIENTATION.quote;
+  const totalItems = landingItems.length;
+  const allWaiting =
+    totalItems > 0 &&
+    landingItems.every((i) => i.bucketKey === "waiting_external");
 
-  if (status === "loading") {
+  // ── Fallback: empty ──
+  if (totalItems === 0) {
     return (
-      <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-el rounded-xl animate-pulse" />)}
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 px-4">
+        <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
+          <Clock className="h-6 w-6 text-slate-500" />
         </div>
+        <p className="text-sm text-slate-400 text-center">
+          현재 진행 중인 견적이 없습니다 — 검색에서 새 견적 요청을 시작하세요
+        </p>
+        <Link
+          href="/test/search"
+          className="text-xs text-blue-400 hover:text-blue-300 underline underline-offset-2"
+        >
+          검색으로 이동
+        </Link>
       </div>
     );
   }
 
-  const quotes: Quote[] = quotesData?.quotes || [];
-
-  // 검색 필터링
-  const filteredQuotes = quotes
-    .filter((quote) => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        quote.title.toLowerCase().includes(q) ||
-        quote.id.toLowerCase().includes(q) ||
-        quote.items.some((item) => item.product.name.toLowerCase().includes(q))
-      );
-    })
-    .filter((quote) => {
-      if (statusFilter === "all") return true;
-      if (statusFilter === "DEADLINE_TODAY") {
-        return quote.deliveryDate && new Date(quote.deliveryDate).toDateString() === new Date().toDateString() && quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
-      }
-      return quote.status === statusFilter;
-    })
-    .sort((a, b) => getPriority(a) - getPriority(b));
-
-  // 운영 요약 카운트
-  const today = new Date().toDateString();
-  const summaryStats = {
-    pendingResponse: quotes.filter((q) => q.status === "SENT").length,
-    needsReview:     quotes.filter((q) => q.status === "RESPONDED").length,
-    todayDeadline:   quotes.filter((q) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED").length,
-    readyToOrder:    quotes.filter((q) => q.status === "RESPONDED" && (q.responses?.length ?? 0) > 0).length,
-  };
-
-  // 섹션 분류 (검색/필터 결과 기준)
-  const urgentQuotes     = filteredQuotes.filter((q) => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
-  const inProgressQuotes = filteredQuotes.filter((q) => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
-  const completedQuotes  = filteredQuotes.filter((q) => q.status === "COMPLETED" || q.status === "CANCELLED");
-
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
-
-      {/* ── Ops RFQ 운영 섹션 (계약 기반) ── */}
-      <OpsRFQSection />
-
-      {/* ── 헤더 ── */}
-      <div className="flex items-start justify-between gap-3">
+    <div className="p-4 md:p-6 space-y-5 max-w-7xl mx-auto w-full">
+      {/* ═══════════════════════════════════════════════════════════
+          A. Module Operating Header
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="space-y-3">
+        {/* Title + Orientation */}
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-100">견적 운영 워크큐</h1>
-          <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <AiActionButton
-            label="견적 요청 초안 만들기"
-            icon={FileText}
-            generateEndpoint="/api/ai-actions/generate/quote-draft"
-            generatePayload={{
-              items: quotes?.slice(0, 3).flatMap((q: Quote) =>
-                q.items?.map((item) => ({
-                  productName: item.product?.name || "품목",
-                  quantity: item.quantity || 1,
-                })) || []
-              ) || [],
-            }}
-            variant="outline"
-            size="sm"
-            className="h-9 text-sm hidden sm:flex"
-          />
-          <PermissionGate permission="quotes.create">
-            <Link href="/compare/quote" className="flex-shrink-0">
-              <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">새 견적 요청</span>
-                <span className="sm:hidden">새 요청</span>
-              </Button>
-            </Link>
-          </PermissionGate>
-        </div>
-      </div>
-
-      {/* ── 운영 요약 스트립 ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-500" />,      filter: "SENT",           hover: "hover:border-amber-300",   active: "border-amber-300 bg-amber-50/30 ring-2 ring-amber-400/50" },
-          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-500" />,  filter: "RESPONDED",      hover: "hover:border-purple-300",  active: "border-purple-300 bg-purple-50/30 ring-2 ring-purple-400/50" },
-          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-500" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-300",     active: "border-red-300 bg-red-50/30 ring-2 ring-red-400/50" },
-          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-500" />, filter: "RESPONDED",      hover: "hover:border-emerald-300", active: "border-emerald-300 bg-emerald-50/30 ring-2 ring-emerald-400/50" },
-        ].map(({ label, count, icon, filter, hover, active }) => {
-          const isActive = statusFilter === filter;
-          return (
-          <button
-            key={label}
-            onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-            className={`text-left rounded-xl border bg-pn p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {icon}
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
-            </div>
-            <div className="text-2xl font-bold text-slate-100">{isLoading ? "—" : count}</div>
-          </button>
-          );
-        })}
-      </div>
-
-      {/* ── 검색 + 필터 ── */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          <Input
-            placeholder="견적명 / 품목명 / 요청 번호 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm">
-            <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" />
-            <SelectValue placeholder="상태 필터" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 상태</SelectItem>
-            <SelectItem value="DEADLINE_TODAY">오늘 마감</SelectItem>
-            <SelectItem value="PENDING">요청 접수</SelectItem>
-            <SelectItem value="SENT">회신 대기 중</SelectItem>
-            <SelectItem value="RESPONDED">비교 검토 필요</SelectItem>
-            <SelectItem value="COMPLETED">발주 완료</SelectItem>
-            <SelectItem value="CANCELLED">취소됨</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* ── 로딩 스켈레톤 ── */}
-      {isLoading && (
-        <div className="space-y-2">
-          {[0,1,2].map((i) => (
-            <div key={i} className="h-28 bg-el rounded-xl animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {/* ── 섹션: 즉시 처리 필요 ── */}
-      {!isLoading && urgentQuotes.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">{urgentQuotes.length}</span>
-          </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-        </div>
-      )}
-
-      {/* ── 섹션: 진행 중 ── */}
-      {!isLoading && inProgressQuotes.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{inProgressQuotes.length}</span>
-          </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-        </div>
-      )}
-
-      {/* ── 섹션: 완료 (접을 수 있는) ── */}
-      {!isLoading && completedQuotes.length > 0 && (
-        <details className="group">
-          <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold text-slate-700">완료 / 취소</span>
-            <span className="text-xs text-slate-400">({completedQuotes.length}건)</span>
-            <span className="ml-1 text-xs text-slate-400 group-open:hidden">▶ 펼치기</span>
-            <span className="ml-1 text-xs text-slate-400 hidden group-open:inline">▼ 접기</span>
-          </summary>
-          <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-          </div>
-        </details>
-      )}
-
-      {/* ── 빈 상태 ── */}
-      {!isLoading && filteredQuotes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-          <ShoppingCart className="h-10 w-10 opacity-25" />
-          <p className="text-sm">
-            {searchQuery || statusFilter !== "all" ? "조건에 맞는 견적이 없습니다" : "아직 견적 요청이 없습니다"}
+          <h1 className="text-lg font-semibold text-slate-100">견적 운영 허브</h1>
+          <p className="text-xs text-slate-500 mt-0.5">
+            {orientation.role} &middot; {orientation.stages}
           </p>
-          {!searchQuery && statusFilter === "all" && (
-            <Link href="/compare/quote">
-              <Button size="sm" className="mt-1 h-8 text-xs bg-blue-600 hover:bg-blue-700">
-                첫 견적 요청하기
-              </Button>
-            </Link>
-          )}
-          {(searchQuery || statusFilter !== "all") && (
-            <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="text-xs text-blue-600 hover:underline">
-              필터 초기화
-            </button>
-          )}
+        </div>
+
+        {/* Next Action Summary */}
+        {headerStats.nextActionSummary && (
+          <div className="px-3 py-2 rounded border border-slate-700 bg-slate-900/60">
+            <span className="text-xs text-slate-500 uppercase tracking-wider font-medium">
+              다음 조치
+            </span>
+            <p className="text-sm text-slate-200 mt-0.5 font-medium">
+              {headerStats.nextActionSummary}
+            </p>
+          </div>
+        )}
+
+        {/* Stat Strip */}
+        <div className="grid grid-cols-5 gap-2">
+          {STAT_FILTER_KEYS.map((key) => {
+            const value = headerStats[key];
+            const meta = MODULE_HEADER_STAT_META[key];
+            return (
+              <Link
+                key={key}
+                href={`/dashboard/inbox?module=quote&filter=${STAT_FILTER_MAP[key]}`}
+                className="flex flex-col gap-1 px-3 py-2 rounded border border-slate-800 bg-slate-900/50 hover:border-slate-600 transition-colors"
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className={STAT_TONE[key]}>{STAT_ICONS[key]}</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    {meta.label}
+                  </span>
+                </div>
+                <span className={cn("text-xl font-bold", STAT_TONE[key])}>
+                  {value}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          B. Priority Queue
+          ═══════════════════════════════════════════════════════════ */}
+      {priorityQueue.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            우선 처리 큐
+          </h2>
+          <div className="border border-slate-800 rounded-lg overflow-hidden divide-y divide-slate-800">
+            {priorityQueue.map((item) => (
+              <div
+                key={item.entityId}
+                onClick={() => router.push(item.targetRoute)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800/60 cursor-pointer transition-colors",
+                  riskBorder(item),
+                )}
+              >
+                {/* Priority badge */}
+                <span
+                  className={cn(
+                    "text-[10px] font-bold uppercase px-1.5 py-0.5 rounded",
+                    PRIORITY_CLASSES[item.priority],
+                  )}
+                >
+                  {item.priority}
+                </span>
+
+                {/* Title + summary */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-slate-200 font-medium truncate">
+                    {item.title}
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {item.blockerSummary || item.readySummary || item.nextAction}
+                  </p>
+                </div>
+
+                {/* Owner */}
+                {item.currentOwnerName && (
+                  <span className="text-[10px] text-slate-500 hidden md:block whitespace-nowrap">
+                    {item.currentOwnerName}
+                  </span>
+                )}
+
+                {/* Due state */}
+                <span
+                  className={cn(
+                    "text-[10px] whitespace-nowrap",
+                    item.dueState.tone === "overdue"
+                      ? "text-red-400"
+                      : item.dueState.tone === "due_soon"
+                        ? "text-amber-400"
+                        : "text-slate-500",
+                  )}
+                >
+                  {item.dueState.label}
+                </span>
+
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          C. State-Split Work Surface (tabs)
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="space-y-2">
+        <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500">
+          작업 구분
+        </h2>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b border-slate-800">
+          {BUCKET_TABS.map(({ key, label }) => {
+            const count = buckets[key].length;
+            const isActive = activeTab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-t transition-colors",
+                  isActive
+                    ? "bg-slate-800 text-slate-200 border border-slate-700 border-b-0"
+                    : "text-slate-500 hover:text-slate-300",
+                )}
+              >
+                {label}
+                <span
+                  className={cn(
+                    "ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] text-[10px] font-bold rounded-full",
+                    isActive ? BUCKET_COLORS[key] : "bg-slate-800 text-slate-500",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ═══════════════════════════════════════════════════════════
+            D. Actionable Queue (selected bucket items)
+            ═══════════════════════════════════════════════════════════ */}
+        {allWaiting && activeTab !== "waiting_external" ? (
+          <div className="flex flex-col items-center py-10 gap-2 text-slate-500">
+            <Hourglass className="h-6 w-6 opacity-40" />
+            <p className="text-xs">공급사 응답 대기 중 — 응답 도착 시 알림</p>
+          </div>
+        ) : buckets[activeTab].length === 0 ? (
+          <div className="flex flex-col items-center py-10 gap-2 text-slate-500">
+            <CheckCircle2 className="h-5 w-5 opacity-40" />
+            <p className="text-xs">이 구간에 항목이 없습니다</p>
+          </div>
+        ) : (
+          <div className="border border-slate-800 rounded-lg overflow-hidden">
+            {/* Table header */}
+            <div className="hidden md:grid grid-cols-[1fr_120px_90px_100px_160px] gap-2 px-3 py-1.5 bg-slate-900/80 text-[10px] font-medium uppercase tracking-wider text-slate-600 border-b border-slate-800">
+              <span>제목</span>
+              <span>담당자</span>
+              <span>마감</span>
+              <span>다음 조치</span>
+              <span>상세</span>
+            </div>
+            {/* Rows */}
+            <div className="divide-y divide-slate-800/60">
+              {buckets[activeTab].map((item) => (
+                <div
+                  key={item.entityId}
+                  onClick={() => router.push(item.targetRoute)}
+                  className={cn(
+                    "grid grid-cols-1 md:grid-cols-[1fr_120px_90px_100px_160px] gap-2 px-3 py-2 hover:bg-slate-800/40 cursor-pointer transition-colors items-center",
+                    riskBorder(item),
+                  )}
+                >
+                  {/* Title + summary */}
+                  <div className="min-w-0">
+                    <p className="text-sm text-slate-200 font-medium truncate">
+                      {item.title}
+                    </p>
+                    <p className="text-xs text-slate-500 truncate">{item.summary}</p>
+                  </div>
+
+                  {/* Owner */}
+                  <span className="text-xs text-slate-400 truncate">
+                    {item.currentOwnerName || "미배정"}
+                  </span>
+
+                  {/* Due */}
+                  <span
+                    className={cn(
+                      "text-xs",
+                      item.dueState.tone === "overdue"
+                        ? "text-red-400"
+                        : item.dueState.tone === "due_soon"
+                          ? "text-amber-400"
+                          : "text-slate-500",
+                    )}
+                  >
+                    {item.dueState.label}
+                  </span>
+
+                  {/* Next action */}
+                  <span className="text-xs text-slate-400 truncate">
+                    {item.nextAction}
+                  </span>
+
+                  {/* Bucket-specific info */}
+                  <span className="text-xs text-slate-500 truncate">
+                    {activeTab === "ready" && item.readySummary}
+                    {activeTab === "needs_review" && item.reviewSummary}
+                    {activeTab === "waiting_external" &&
+                      item.waitingExternalLabel}
+                    {activeTab === "handoff" && item.nextHandoffLabel}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
+          E. Downstream / Recovery
+          ═══════════════════════════════════════════════════════════ */}
+      {downstream.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            다운스트림 전환
+          </h2>
+          <div className="flex gap-3">
+            {downstream.map((ds) => (
+              <Link
+                key={ds.label}
+                href={ds.targetRoute}
+                className="flex items-center gap-3 px-4 py-3 rounded border border-slate-800 bg-slate-900/50 hover:border-slate-600 transition-colors flex-1"
+              >
+                <ExternalLink className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-200 font-medium">
+                    {ds.label}{" "}
+                    <span className="text-teal-400 font-bold">{ds.count}건</span>
+                  </p>
+                  <p className="text-xs text-slate-500 truncate">
+                    {ds.description}
+                  </p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-slate-600 flex-shrink-0 ml-auto" />
+              </Link>
+            ))}
+          </div>
         </div>
       )}
     </div>
-  );
-}
-
-export default function QuotesPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        </div>
-      }
-    >
-      <QuotesPageContent />
-    </Suspense>
   );
 }
