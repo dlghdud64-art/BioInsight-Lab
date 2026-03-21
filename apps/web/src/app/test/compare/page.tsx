@@ -689,7 +689,75 @@ export default function TestComparePage() {
         </div>
       )}
 
-      {/* 비교 제품 관리 리스트 */}
+      {/* ═══ Layer 3: Insight — 핵심 차이 요약 (차트보다 위, 판단 우선) ═══ */}
+      {products.length >= 2 && (
+        <div className="rounded-xl border border-bd bg-pn px-4 py-3">
+          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">핵심 차이 요약</div>
+          <div className="space-y-1.5 text-xs text-slate-300">
+            {hasPriceDiff && cheapestProduct && (
+              <div className="flex items-start gap-2">
+                <span className="text-emerald-400 shrink-0">●</span>
+                <span>
+                  <strong>{cheapestProduct.name.substring(0, 20)}</strong>이 최저가 (₩{cheapestPrice.toLocaleString("ko-KR")}),
+                  최고가 대비 <strong className="text-amber-400">{Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%</strong> 저렴
+                </span>
+              </div>
+            )}
+            {hasLeadTimeData && fastestProduct && (
+              <div className="flex items-start gap-2">
+                <span className="text-blue-400 shrink-0">●</span>
+                <span>
+                  <strong>{fastestProduct.name.substring(0, 20)}</strong>의 납기가 가장 빠름 ({getAverageLeadTime(fastestProduct)}일)
+                </span>
+              </div>
+            )}
+            {uniqueCategories.length > 1 && (
+              <div className="flex items-start gap-2">
+                <span className="text-amber-400 shrink-0">●</span>
+                <span>서로 다른 카테고리 ({uniqueCategories.length}개) — 직접 사양 비교에 주의 필요</span>
+              </div>
+            )}
+            {uniqueCategories.length === 1 && (
+              <div className="flex items-start gap-2">
+                <span className="text-emerald-400 shrink-0">●</span>
+                <span>동일 카테고리 — 직접 비교에 적합</span>
+              </div>
+            )}
+            {!hasPriceDiff && !hasLeadTimeData && (
+              <div className="flex items-start gap-2">
+                <span className="text-slate-500 shrink-0">●</span>
+                <span className="text-slate-400">가격·납기 데이터가 충분히 등록되면 차이 요약이 표시됩니다</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ═══ 1-item 안내 ═══ */}
+      {products.length === 1 && (
+        <div className="rounded-xl border border-blue-600/20 bg-blue-600/5 px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+          <div className="text-xs text-blue-300">
+            비교를 시작하려면 항목을 <strong>하나 더 추가</strong>하세요. 현재 1개 제품만 선택되었습니다.
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="sm" variant="outline" className="h-7 text-[10px] text-blue-400 border-blue-600/30" asChild>
+              <Link href="/test/search">유사 제품 찾기</Link>
+            </Button>
+            <Button
+              size="sm"
+              className="h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+              onClick={() => {
+                addProductToQuote(products[0]);
+                toast({ title: "견적 리스트에 추가됨", description: products[0].name });
+              }}
+            >
+              이 항목만 견적 담기
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ Layer 2: Review Surface — 비교 제품 검토 카드 ═══ */}
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
@@ -856,20 +924,37 @@ export default function TestComparePage() {
                     </div>
                   </div>
                   <div className="flex gap-1.5 sm:gap-2 w-full sm:w-auto sm:ml-4 justify-center sm:justify-end">
+                    {/* 견적 담기/담김 토글 */}
+                    <Button
+                      size="sm"
+                      variant={quoteItems.some((q: any) => q.productId === product.id) ? "default" : "outline"}
+                      onClick={() => {
+                        if (!quoteItems.some((q: any) => q.productId === product.id)) {
+                          addProductToQuote(product);
+                          toast({ title: "견적 리스트에 추가됨", description: product.name });
+                        }
+                      }}
+                      className={`text-[10px] sm:text-xs flex-1 sm:flex-none h-7 sm:h-8 ${
+                        quoteItems.some((q: any) => q.productId === product.id)
+                          ? "bg-emerald-600/15 text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/25"
+                          : ""
+                      }`}
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      {quoteItems.some((q: any) => q.productId === product.id) ? "담김" : "견적 담기"}
+                    </Button>
+                    {/* 비교 제외 */}
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        // Analytics: compare_remove_item 이벤트 추적
-                        trackEvent("compare_remove_item", {
-                          product_id: product.id,
-                        });
+                        trackEvent("compare_remove_item", { product_id: product.id });
                         toggleCompare(product.id);
                       }}
                       className="text-[10px] sm:text-xs hover:bg-red-600/10 hover:text-red-400 hover:border-red-700 flex-1 sm:flex-none h-7 sm:h-8"
                     >
                       <X className="h-3 w-3 mr-1" />
-                      제거
+                      제외
                     </Button>
                   </div>
                 </div>
