@@ -1533,11 +1533,13 @@ export interface QuoteRequestPanelRef {
 interface QuoteRequestPanelProps {
   vendorNotes?: Record<string, string>;
   onVendorNoteChange?: (vendorId: string, note: string) => void;
+  onSubmitSuccess?: (result: { sentCount: number; vendorCount: number; totalAmount: number }) => void;
 }
 
-export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPanelProps>(function QuoteRequestPanel({ 
+export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPanelProps>(function QuoteRequestPanel({
   vendorNotes = {},
-  onVendorNoteChange
+  onVendorNoteChange,
+  onSubmitSuccess
 }, ref) {
   const { quoteItems, products } = useTestFlow();
   const { toast } = useToast();
@@ -1949,8 +1951,12 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       router.refresh();
 
-      // completion bridge — 구매 검토 큐로 이동
-      router.push("/dashboard/purchases");
+      // completion bridge — callback 또는 구매 검토 큐로 이동
+      if (onSubmitSuccess) {
+        onSubmitSuccess({ sentCount: vendorGroupsForSubmit.size, vendorCount: vendorGroupsForSubmit.size, totalAmount: quoteItems.reduce((s, i) => s + (i.lineTotal || 0), 0) });
+      } else {
+        router.push("/dashboard/purchases");
+      }
     } catch (error: any) {
       toast({
         title: "견적 요청 실패",

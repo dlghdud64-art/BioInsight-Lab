@@ -38,6 +38,14 @@ function QuoteRequestPageContent() {
   const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
   const [holdUnits, setHoldUnits] = useState<Set<string>>(new Set());
+  const [submissionOutcome, setSubmissionOutcome] = useState<{
+    sentCount: number;
+    heldCount: number;
+    vendorCount: number;
+    totalAmount: number;
+    heldVendors: string[];
+    sentAt: string;
+  } | null>(null);
   const requestPanelRef = useRef<QuoteRequestPanelRef>(null);
 
   const { quoteItems, products, compareIds } = useTestFlow();
@@ -193,8 +201,111 @@ function QuoteRequestPageContent() {
         </div>
       )}
 
+      {/* ═══ Submission Outcome View ═══ */}
+      {submissionOutcome && (
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 space-y-5">
+            {/* Outcome Header */}
+            <div className="text-center mb-6">
+              <CheckCircle2 className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
+              <h2 className="text-xl font-bold text-slate-100 mb-1">견적 요청이 전송되었습니다</h2>
+              <p className="text-sm text-slate-400">{submissionOutcome.sentAt}</p>
+            </div>
+
+            {/* Outcome Summary */}
+            <div className="rounded-lg border border-bd bg-pn px-5 py-4">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">전송 결과</div>
+              <div className="grid grid-cols-4 gap-3 text-center">
+                <div>
+                  <p className="text-2xl font-bold tabular-nums text-emerald-400">{submissionOutcome.sentCount}</p>
+                  <p className="text-xs text-slate-500">전송 완료</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums text-amber-400">{submissionOutcome.heldCount}</p>
+                  <p className="text-xs text-slate-500">보류</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold tabular-nums text-slate-100">{submissionOutcome.vendorCount}</p>
+                  <p className="text-xs text-slate-500">공급사</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold tabular-nums text-slate-100">₩{submissionOutcome.totalAmount.toLocaleString("ko-KR")}</p>
+                  <p className="text-xs text-slate-500">전송 금액</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Queue Handoff Summary */}
+            <div className="rounded-lg border border-bd bg-pn px-5 py-4 space-y-3">
+              <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">다음 운영 단계</div>
+              {submissionOutcome.sentCount > 0 && (
+                <div className="flex items-center justify-between py-2 border-b border-bd/50">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                    <div>
+                      <p className="text-sm text-slate-200 font-medium">공급사 회신 대기</p>
+                      <p className="text-[10px] text-slate-400">{submissionOutcome.sentCount}건 전송됨 — 구매 검토 큐에서 추적</p>
+                    </div>
+                  </div>
+                  <Link href="/dashboard/purchases">
+                    <Button size="sm" variant="outline" className="h-7 text-[10px] text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/10">
+                      구매 검토 큐 열기
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              {submissionOutcome.heldCount > 0 && (
+                <div className="flex items-center justify-between py-2 border-b border-bd/50">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-amber-400" />
+                    <div>
+                      <p className="text-sm text-slate-200 font-medium">보류 항목</p>
+                      <p className="text-[10px] text-slate-400">{submissionOutcome.heldVendors.join(", ")} — {submissionOutcome.heldCount}건 보류</p>
+                    </div>
+                  </div>
+                  <Link href="/test/quote">
+                    <Button size="sm" variant="outline" className="h-7 text-[10px] text-amber-400 border-amber-600/30 hover:bg-amber-600/10">
+                      요청 조립으로
+                    </Button>
+                  </Link>
+                </div>
+              )}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-slate-400" />
+                  <div>
+                    <p className="text-sm text-slate-200 font-medium">추가 요청 계속</p>
+                    <p className="text-[10px] text-slate-400">다른 제품 검색 및 견적 요청</p>
+                  </div>
+                </div>
+                <Link href="/test/search">
+                  <Button size="sm" variant="outline" className="h-7 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10">
+                    소싱 워크벤치
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Primary CTA */}
+            <div className="flex items-center justify-center gap-3 pt-4">
+              <Link href="/dashboard/purchases">
+                <Button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6">
+                  구매 검토 큐에서 확인
+                  <ArrowRight className="h-3.5 w-3.5 ml-2" />
+                </Button>
+              </Link>
+              <Link href="/test/search">
+                <Button variant="outline" className="text-slate-300 border-bd">
+                  추가 소싱 계속
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ═══ Layer 3+4+5+6: Main Content — 3-panel layout ═══ */}
-      <div className="flex-1 overflow-hidden flex">
+      {!submissionOutcome && <div className="flex-1 overflow-hidden flex">
 
         {/* ── Left: Review Surface + Completion Form ── */}
         <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-4">
@@ -311,7 +422,22 @@ function QuoteRequestPageContent() {
           {/* Completion Form Surface — after review, positioned as "보완" not "작성" */}
           <div>
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 px-1">공급사 전달 정보 보완</div>
-            <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
+            <QuoteRequestPanel
+              ref={requestPanelRef}
+              vendorNotes={vendorNotes}
+              onVendorNoteChange={handleVendorNoteChange}
+              onSubmitSuccess={(result) => {
+                const heldVendors = Array.from(holdUnits);
+                setSubmissionOutcome({
+                  sentCount: result.sentCount,
+                  heldCount: heldVendors.length,
+                  vendorCount: result.vendorCount,
+                  totalAmount: result.totalAmount,
+                  heldVendors,
+                  sentAt: new Date().toLocaleString("ko-KR"),
+                });
+              }}
+            />
           </div>
         </div>
 
@@ -427,10 +553,10 @@ function QuoteRequestPageContent() {
             </Link>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* ═══ Layer 7: Sticky Action Layer — always visible ═══ */}
-      {quoteItems.length > 0 && (
+      {!submissionOutcome && quoteItems.length > 0 && (
         <div className="shrink-0 border-t-2 border-bd px-4 md:px-6 py-3" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center justify-between">
             {/* Left: readiness + summary */}
