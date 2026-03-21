@@ -112,7 +112,7 @@ export default function SearchPage() {
   );
 
   return (
-    <div className="h-screen flex flex-col bg-pg overflow-hidden">
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} />
 
