@@ -479,20 +479,13 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCou
 
   return (
     <div className="shrink-0">
-      {/* 상단: 워드마크 */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd bg-el">
-        <Link href="/" className="text-sm md:text-base font-bold text-slate-200 tracking-tight">
-          LabAxis
+      {/* 워드마크 + 소싱 + 검색창 — 한 줄 */}
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
+        <Link href="/" className="flex items-center gap-1.5 shrink-0">
+          <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+          <span className="text-xs md:text-sm font-semibold text-slate-400">소싱</span>
         </Link>
-        {hasSearched && searchQuery && (
-          <span className="text-[10px] md:text-xs text-slate-500 truncate max-w-[150px]">
-            &ldquo;{searchQuery}&rdquo;
-          </span>
-        )}
-      </div>
-      {/* 하단: 소싱 + 검색창 */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border-b border-bd">
-        <span className="text-xs md:text-sm font-semibold text-slate-400 shrink-0">소싱</span>
+        <div className="w-px h-5 bg-bd hidden sm:block" />
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 max-w-3xl">
           <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
