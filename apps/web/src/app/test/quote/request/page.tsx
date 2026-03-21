@@ -81,69 +81,86 @@ function QuoteRequestPageContent() {
           </Link>
         </div>
 
-        {/* Session status strip — KPI + readiness + position */}
-        <div className="flex items-center gap-3 px-4 md:px-6 py-2.5 border-b border-bd flex-wrap" style={{ backgroundColor: '#393b3f' }}>
-          {/* Readiness */}
-          <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${config.color}`}>
-            <ReadinessIcon className="h-3 w-3" />
-            {config.label}
-          </span>
-
-          {/* KPI */}
-          <div className="flex items-center gap-2 text-[10px] md:text-xs text-slate-400">
-            <span>{summary.totalItems}건</span>
-            <span className="text-slate-600">·</span>
-            <span>{summary.vendorCount}곳</span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-200 font-medium tabular-nums">₩{summary.totalAmount.toLocaleString("ko-KR")}</span>
+        {/* Session context — operational header, not thin strip */}
+        <div className="px-4 md:px-6 py-3 border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            {/* Left: session description */}
+            <div className="min-w-0">
+              <p className="text-xs text-slate-300 mb-1.5">
+                조립된 요청 단위를 검토하고 공급사 전달 전 마지막 보완을 진행하세요.
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${config.color}`}>
+                  <ReadinessIcon className="h-3 w-3" />
+                  {config.label}
+                </span>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <span>{summary.totalItems}건</span>
+                  <span className="text-slate-600">·</span>
+                  <span>{summary.vendorCount}곳</span>
+                  <span className="text-slate-600">·</span>
+                  <span>요청 {summary.requestCount}건</span>
+                </div>
+                <Badge variant="secondary" className="text-[9px] bg-pn text-slate-300 border-bd">
+                  {vendorGroups.length > 1
+                    ? `요청서 ${activeGroupIdx + 1} / ${vendorGroups.length} 검토 중`
+                    : `1건 요청서 검토 중`
+                  }
+                </Badge>
+              </div>
+            </div>
+            {/* Right: amount + status pills */}
+            <div className="flex flex-col items-end gap-1 shrink-0">
+              <span className="text-lg font-bold tabular-nums text-slate-100">₩{summary.totalAmount.toLocaleString("ko-KR")}</span>
+              <div className="flex items-center gap-1.5">
+                {blockers.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
+                    <AlertCircle className="h-2.5 w-2.5" />차단 {blockers.length}
+                  </span>
+                )}
+                {warnings.length > 0 && (
+                  <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
+                    <AlertTriangle className="h-2.5 w-2.5" />확인 {warnings.length}
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-
-          {/* Position indicator */}
-          {vendorGroups.length > 1 && (
-            <Badge variant="secondary" className="text-[9px] bg-blue-600/10 text-blue-400 border-blue-600/20">
-              요청서 {activeGroupIdx + 1} / {vendorGroups.length}
-            </Badge>
-          )}
-
-          {/* Blockers/Warnings count */}
-          {blockers.length > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
-              <AlertCircle className="h-2.5 w-2.5" />차단 {blockers.length}
-            </span>
-          )}
-          {warnings.length > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
-              <AlertTriangle className="h-2.5 w-2.5" />확인 {warnings.length}
-            </span>
-          )}
         </div>
       </div>
 
-      {/* ═══ Layer 2: Split Workband — request unit selector ═══ */}
+      {/* ═══ Layer 2: Request Context / Split Workband ═══ */}
       {vendorGroups.length > 0 && (
-        <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#353739' }}>
-          <div className="flex items-center gap-2">
+        <div className="shrink-0 px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#353739' }}>
+          {/* Context text */}
+          <p className="text-[10px] text-slate-500 mb-2">
+            {vendorGroups.length > 1
+              ? `총 ${summary.totalItems}개 품목이 ${vendorGroups.length}개 공급사 기준으로 ${vendorGroups.length}건의 요청서로 분리 전송됩니다`
+              : `${activeGroup?.vendorName || "공급사"} 대상 ${summary.totalItems}건 품목 요청서를 검토 중입니다`
+            }
+          </p>
+          {/* Unit selector tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto">
             {vendorGroups.map((g, idx) => (
               <button
                 key={g.vendorName}
                 onClick={() => setActiveGroupIdx(idx)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap transition-colors border ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors border ${
                   idx === activeGroupIdx
                     ? "bg-blue-600/10 text-blue-400 border-blue-600/30"
                     : "text-slate-400 border-bd hover:bg-el hover:text-slate-200"
                 }`}
               >
-                <FileText className="h-3 w-3 shrink-0" />
-                <span>{g.vendorName}</span>
-                <span className="text-[10px] text-slate-500">{g.itemCount}건</span>
-                <span className="text-[10px] tabular-nums">₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                <FileText className="h-3.5 w-3.5 shrink-0" />
+                <div className="text-left">
+                  <span className="block">{g.vendorName}</span>
+                  <span className="block text-[10px] opacity-70">{g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                </div>
+                {idx === activeGroupIdx && (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300">검토 중</span>
+                )}
               </button>
             ))}
-            {vendorGroups.length > 1 && (
-              <span className="text-[10px] text-slate-500 shrink-0 ml-1">
-                {vendorGroups.length}건 분리 전송
-              </span>
-            )}
           </div>
         </div>
       )}
@@ -154,22 +171,51 @@ function QuoteRequestPageContent() {
         {/* ── Left: Review Surface + Completion Form ── */}
         <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-4">
 
-          {/* Readiness Gate */}
-          {(blockers.length > 0 || warnings.length > 0) && (
-            <div className="rounded-lg border border-bd bg-pn px-4 py-3 space-y-1.5">
-              <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">요청 전 확인 사항</div>
-              {blockers.map((msg, i) => (
-                <div key={`b${i}`} className="flex items-center gap-2 text-xs text-red-300">
-                  <AlertCircle className="h-3 w-3 shrink-0 text-red-400" />{msg}
-                </div>
-              ))}
-              {warnings.map((msg, i) => (
-                <div key={`w${i}`} className="flex items-center gap-2 text-xs text-amber-300">
-                  <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" />{msg}
-                </div>
-              ))}
+          {/* ═══ Readiness Gate — decision driver, not decoration ═══ */}
+          <div className={`rounded-lg border px-4 py-3 ${
+            level === "blocked" ? "border-red-600/20 bg-red-600/5"
+            : level === "review_first" ? "border-amber-600/20 bg-amber-600/5"
+            : level === "split_required" ? "border-blue-600/20 bg-blue-600/5"
+            : "border-emerald-600/20 bg-emerald-600/5"
+          }`}>
+            <div className="flex items-start justify-between gap-3 mb-2">
+              <div className="flex items-center gap-2">
+                <ReadinessIcon className={`h-4 w-4 shrink-0 ${
+                  level === "blocked" ? "text-red-400"
+                  : level === "review_first" ? "text-amber-400"
+                  : level === "split_required" ? "text-blue-400"
+                  : "text-emerald-400"
+                }`} />
+                <span className="text-xs font-medium text-slate-200">{config.label}</span>
+              </div>
+              <span className="text-[10px] text-slate-400">
+                {canSend
+                  ? `${summary.requestCount}건 요청 전송 가능`
+                  : "전송 불가 — 아래 항목을 확인하세요"
+                }
+              </span>
             </div>
-          )}
+            <p className="text-xs text-slate-300 mb-2">
+              {level === "ready_to_write_request" && "모든 항목이 준비되었습니다. 보완 사항이 있으면 아래에서 추가하세요."}
+              {level === "split_required" && `공급사별 분리 요청이 적용되어 ${vendorGroups.length}건으로 전송됩니다. 각 요청서를 검토하세요.`}
+              {level === "review_first" && "일부 항목에 추가 확인이 필요합니다. 아래 내용을 검토하세요."}
+              {level === "blocked" && "필수 정보가 부족합니다. 차단 사유를 해결한 뒤 전송하세요."}
+            </p>
+            {(blockers.length > 0 || warnings.length > 0) && (
+              <div className="space-y-1 pt-1 border-t border-bd/30">
+                {blockers.map((msg, i) => (
+                  <div key={`b${i}`} className="flex items-center gap-2 text-[10px] text-red-300">
+                    <AlertCircle className="h-3 w-3 shrink-0 text-red-400" />{msg}
+                  </div>
+                ))}
+                {warnings.map((msg, i) => (
+                  <div key={`w${i}`} className="flex items-center gap-2 text-[10px] text-amber-300">
+                    <AlertTriangle className="h-3 w-3 shrink-0 text-amber-400" />{msg}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Request Unit Review Surface — BEFORE form */}
           {activeGroup && (
@@ -300,18 +346,29 @@ function QuoteRequestPageContent() {
             <QuoteItemsSummaryPanel vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} />
           </div>
 
-          {/* Panel CTA */}
+          {/* Panel CTA — active unit 판단 */}
           <div className="px-4 py-3 border-t border-bd space-y-2">
-            <Button
-              size="sm"
-              className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
-              disabled={!canSend}
-              form="quote-request-form"
-              type="submit"
-            >
-              견적 요청 보내기
-              <ArrowRight className="h-3 w-3 ml-1.5" />
-            </Button>
+            {vendorGroups.length > 1 && activeGroupIdx < vendorGroups.length - 1 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                onClick={() => setActiveGroupIdx(activeGroupIdx + 1)}
+              >
+                다음 요청서 검토
+                <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+            )}
+            {vendorGroups.length > 1 && activeGroupIdx > 0 && (
+              <Button
+                size="sm"
+                variant="ghost"
+                className="w-full h-7 text-[10px] text-slate-400"
+                onClick={() => setActiveGroupIdx(activeGroupIdx - 1)}
+              >
+                이전 요청서로
+              </Button>
+            )}
             <Link href="/test/quote" className="block">
               <Button size="sm" variant="ghost" className="w-full h-7 text-[10px] text-slate-500 hover:text-slate-300">
                 요청 조립으로 돌아가기
