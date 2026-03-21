@@ -110,68 +110,138 @@ export default function RequestAssemblyPage() {
             </span>
           )}
           {summary.inCompareCount > 0 && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400">
-              <GitCompare className="h-2.5 w-2.5" />비교중 {summary.inCompareCount}
-            </span>
+            <button
+              onClick={() => router.push("/test/compare")}
+              className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-colors cursor-pointer"
+            >
+              <GitCompare className="h-2.5 w-2.5" />비교중 {summary.inCompareCount} →
+            </button>
           )}
         </div>
       </div>
 
-      {/* ═══ Grouped Request Work Surface ═══ */}
-      <div className="flex-1 overflow-y-auto">
+      {/* ═══ Grouped Request Work Surface — 2-panel desktop ═══ */}
+      <div className="flex-1 overflow-hidden flex">
         {vendorGroups.length > 0 ? (
-          <div className="px-3 py-3 space-y-3 max-w-4xl mx-auto">
-            {vendorGroups.map((group) => (
-              <VendorGroupCard
-                key={group.vendorName}
-                group={group}
-                totalGroups={vendorGroups.length}
-                onUpdateQty={(itemId, qty) => updateQuoteItem(itemId, { quantity: qty })}
-                onRemove={(itemId) => removeQuoteItem(itemId)}
-              />
-            ))}
+          <>
+            {/* Main panel: vendor groups */}
+            <div className="flex-1 overflow-y-auto px-3 md:px-6 py-3 space-y-3">
+              {vendorGroups.map((group) => (
+                <VendorGroupCard
+                  key={group.vendorName}
+                  group={group}
+                  totalGroups={vendorGroups.length}
+                  onUpdateQty={(itemId, qty) => updateQuoteItem(itemId, { quantity: qty })}
+                  onRemove={(itemId) => removeQuoteItem(itemId)}
+                />
+              ))}
 
-            {/* ═══ Vendor / Request Split Summary ═══ */}
-            {vendorGroups.length > 1 && (
-              <div className="rounded-lg border border-blue-600/20 bg-blue-600/5 px-4 py-3">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <Info className="h-3.5 w-3.5 text-blue-400" />
-                  <span className="text-xs font-medium text-blue-300">요청 분리 안내</span>
-                </div>
-                <p className="text-xs text-blue-300/80 mb-2">
-                  공급사가 {vendorGroups.length}곳이므로 요청서가 {vendorGroups.length}건 생성됩니다.
-                </p>
-                <div className="space-y-1">
-                  {vendorGroups.map((g) => (
-                    <div key={g.vendorName} className="flex items-center justify-between text-xs">
-                      <span className="text-blue-300">{g.vendorName}</span>
-                      <span className="text-blue-400 font-medium tabular-nums">
-                        {g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}
-                      </span>
+              {/* Blockers & Warnings — inline */}
+              {(blockers.length > 0 || warnings.length > 0) && (
+                <div className="space-y-2">
+                  {blockers.map((msg, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-red-600/20 bg-red-600/5 text-xs text-red-300">
+                      <AlertCircle className="h-3 w-3 shrink-0" />{msg}
+                    </div>
+                  ))}
+                  {warnings.map((msg, i) => (
+                    <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5 text-xs text-amber-300">
+                      <AlertTriangle className="h-3 w-3 shrink-0" />{msg}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Blockers & Warnings */}
-            {(blockers.length > 0 || warnings.length > 0) && (
-              <div className="space-y-2">
-                {blockers.map((msg, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-red-600/20 bg-red-600/5 text-xs text-red-300">
-                    <AlertCircle className="h-3 w-3 shrink-0" />{msg}
-                  </div>
-                ))}
-                {warnings.map((msg, i) => (
-                  <div key={i} className="flex items-center gap-2 px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5 text-xs text-amber-300">
-                    <AlertTriangle className="h-3 w-3 shrink-0" />{msg}
-                  </div>
-                ))}
+            {/* Side rail — desktop only */}
+            <div className="hidden lg:flex w-[320px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#393b3f' }}>
+              {/* Readiness */}
+              <div className="px-4 py-3 border-b border-bd">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">요청 준비 상태</div>
+                <span className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded border font-medium ${config.color}`}>
+                  <ReadinessIcon className="h-3.5 w-3.5" />
+                  {label}
+                </span>
+                <p className="text-[10px] text-slate-400 mt-1.5">{detail}</p>
               </div>
-            )}
-          </div>
+
+              {/* Request Split */}
+              <div className="px-4 py-3 border-b border-bd">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">요청 분리</div>
+                <div className="space-y-1.5">
+                  {vendorGroups.map((g) => (
+                    <div key={g.vendorName} className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300 truncate max-w-[120px]">{g.vendorName}</span>
+                      <span className="text-slate-400 tabular-nums">{g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-baseline justify-between mt-2 pt-2 border-t border-bd/50">
+                  <span className="text-xs font-medium text-slate-300">합계</span>
+                  <span className="text-sm font-bold tabular-nums text-slate-100">₩{summary.totalAmount.toLocaleString("ko-KR")}</span>
+                </div>
+              </div>
+
+              {/* Compare State — actionable */}
+              {allCompareIds.length > 0 && (
+                <div className="px-4 py-3 border-b border-bd">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 상태</div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-slate-300">비교 후보</span>
+                    <span className="text-xs text-blue-400 font-medium">{allCompareIds.length}개</span>
+                  </div>
+                  {summary.inCompareCount > 0 && (
+                    <p className="text-[10px] text-amber-400 mb-2">
+                      {summary.inCompareCount}건이 비교 목록과 견적 목록에 모두 포함됨
+                    </p>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                    onClick={() => router.push("/test/compare")}
+                  >
+                    <GitCompare className="h-3.5 w-3.5 mr-1.5" />
+                    비교 열기
+                  </Button>
+                </div>
+              )}
+
+              {/* Side rail actions */}
+              <div className="px-4 py-3 space-y-2">
+                <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">다음 단계</div>
+                {allCompareIds.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                    onClick={() => router.push("/test/compare")}
+                  >
+                    <GitCompare className="h-3.5 w-3.5 mr-1.5" />
+                    비교 판단 먼저
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
+                  disabled={!canProceed}
+                  onClick={() => router.push("/test/quote/request")}
+                >
+                  요청서 작성
+                  <ArrowRight className="h-3 w-3 ml-1.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="w-full h-7 text-[10px] text-slate-500 hover:text-red-400"
+                  onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+                >
+                  전체 해제
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
-          /* Empty state */
           <div className="flex-1 flex flex-col items-center justify-center py-20 text-center px-6">
             <Package className="h-8 w-8 text-slate-600 mb-3" />
             <p className="text-sm text-slate-300 mb-1">견적 요청 후보가 없습니다</p>
@@ -186,32 +256,45 @@ export default function RequestAssemblyPage() {
         )}
       </div>
 
-      {/* ═══ Sticky Next-Step Action Area ═══ */}
+      {/* ═══ Sticky Action Dock — dual CTA ═══ */}
       {quoteItems.length > 0 && (
-        <div className="shrink-0 border-t border-bd px-4 py-2.5" style={{ backgroundColor: '#434548' }}>
-          <div className="flex items-center justify-between max-w-4xl mx-auto">
-            {/* Left: readiness summary */}
-            <div className="flex items-center gap-2 min-w-0">
+        <div className="shrink-0 border-t-2 border-bd px-4 md:px-6 py-3" style={{ backgroundColor: '#434548' }}>
+          <div className="flex items-center justify-between">
+            {/* Left: readiness + summary */}
+            <div className="flex items-center gap-2.5 min-w-0">
               <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium shrink-0 ${config.color}`}>
                 <ReadinessIcon className="h-3 w-3" />
                 {label}
               </span>
-              <span className="text-[10px] text-slate-400 truncate hidden sm:block">{detail}</span>
+              <span className="text-xs text-slate-400 tabular-nums font-medium hidden sm:block">
+                {summary.totalItems}건 · ₩{summary.totalAmount.toLocaleString("ko-KR")}
+              </span>
             </div>
 
-            {/* Right: CTAs */}
+            {/* Right: dual CTAs */}
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
                 variant="ghost"
-                className="h-7 px-2.5 text-[10px] text-slate-400 hover:text-red-400"
+                className="h-8 px-2.5 text-xs text-slate-400 hover:text-red-400 lg:hidden"
                 onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
               >
                 전체 해제
               </Button>
+              {allCompareIds.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                  onClick={() => router.push("/test/compare")}
+                >
+                  <GitCompare className="h-3.5 w-3.5 mr-1" />
+                  비교 열기
+                </Button>
+              )}
               <Button
                 size="sm"
-                className="h-7 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
+                className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
                 disabled={!canProceed}
                 onClick={() => router.push("/test/quote/request")}
               >
