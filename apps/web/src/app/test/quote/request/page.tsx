@@ -307,17 +307,69 @@ function QuoteRequestPageContent() {
       {/* ═══ Layer 3+4+5+6: Main Content — 3-panel layout ═══ */}
       {!submissionOutcome && <div className="flex-1 overflow-hidden flex">
 
-        {/* ── Left: Review Surface + Completion Form ── */}
+        {/* ── Left: Unit Board + Focused Edit ── */}
         <div className="flex-1 overflow-y-auto px-3 md:px-6 py-4 space-y-4">
 
-          {/* ═══ Readiness Gate — decision driver, not decoration ═══ */}
+          {/* ═══ A. Vendor Request Unit Board — 전송 단위 카드 그리드 ═══ */}
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 px-1">전송 단위 ({vendorGroups.length}건)</div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {vendorGroups.map((g, idx) => {
+                const isHeld = holdUnits.has(g.vendorName);
+                const isActive = idx === activeGroupIdx;
+                const hasMsg = !!vendorNotes[g.vendorId];
+                return (
+                  <button
+                    key={g.vendorName}
+                    onClick={() => setActiveGroupIdx(idx)}
+                    className={`text-left rounded-lg border p-3 transition-all ${
+                      isActive
+                        ? "border-blue-600/40 bg-blue-600/5 ring-1 ring-blue-600/20"
+                        : isHeld
+                        ? "border-amber-600/30 bg-amber-600/5 opacity-60"
+                        : "border-bd bg-pn hover:bg-el"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                        <span className="text-sm font-medium text-slate-100 truncate">{g.vendorName}</span>
+                      </div>
+                      {isHeld ? (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600/15 text-amber-400 border border-amber-600/20 shrink-0">보류</span>
+                      ) : (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-400 border border-emerald-600/20 shrink-0">전송</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-400">
+                      <span>{g.itemCount}건</span>
+                      <span className="text-slate-600">·</span>
+                      <span className="tabular-nums font-medium text-slate-200">₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-2">
+                      {hasMsg ? (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-pn border border-bd text-slate-400">메시지 ✓</span>
+                      ) : (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-pn border border-bd text-slate-500">메시지 없음</span>
+                      )}
+                      {g.items.some(i => !i.hasPrice) && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">가격 미확인</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ═══ B. Preflight Gate ═══ */}
           <div className={`rounded-lg border px-4 py-3 ${
             level === "blocked" ? "border-red-600/20 bg-red-600/5"
             : level === "review_first" ? "border-amber-600/20 bg-amber-600/5"
             : level === "split_required" ? "border-blue-600/20 bg-blue-600/5"
             : "border-emerald-600/20 bg-emerald-600/5"
           }`}>
-            <div className="flex items-start justify-between gap-3 mb-2">
+            <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <ReadinessIcon className={`h-4 w-4 shrink-0 ${
                   level === "blocked" ? "text-red-400"
@@ -328,20 +380,11 @@ function QuoteRequestPageContent() {
                 <span className="text-xs font-medium text-slate-200">{config.label}</span>
               </div>
               <span className="text-[10px] text-slate-400">
-                {canSend
-                  ? `${summary.requestCount}건 요청 전송 가능`
-                  : "전송 불가 — 아래 항목을 확인하세요"
-                }
+                {canSend ? `전송 ${readyCount}건 · 보류 ${holdCount}건` : "전송 불가"}
               </span>
             </div>
-            <p className="text-xs text-slate-300 mb-2">
-              {level === "ready_to_write_request" && "모든 항목이 준비되었습니다. 보완 사항이 있으면 아래에서 추가하세요."}
-              {level === "split_required" && `공급사별 분리 요청이 적용되어 ${vendorGroups.length}건으로 전송됩니다. 각 요청서를 검토하세요.`}
-              {level === "review_first" && "일부 항목에 추가 확인이 필요합니다. 아래 내용을 검토하세요."}
-              {level === "blocked" && "필수 정보가 부족합니다. 차단 사유를 해결한 뒤 전송하세요."}
-            </p>
             {(blockers.length > 0 || warnings.length > 0) && (
-              <div className="space-y-1 pt-1 border-t border-bd/30">
+              <div className="space-y-1 mt-2">
                 {blockers.map((msg, i) => (
                   <div key={`b${i}`} className="flex items-center gap-2 text-[10px] text-red-300">
                     <AlertCircle className="h-3 w-3 shrink-0 text-red-400" />{msg}
@@ -356,89 +399,61 @@ function QuoteRequestPageContent() {
             )}
           </div>
 
-          {/* Request Unit Review Surface — BEFORE form */}
+          {/* ═══ C. Focused Edit Surface — active unit 기준 ═══ */}
           {activeGroup && (
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="flex items-center justify-between px-4 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
                 <div className="flex items-center gap-2">
-                  <FileText className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-xs font-medium text-slate-200">{activeGroup.vendorName}</span>
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-400">{activeGroup.itemCount}건</Badge>
+                  <span className="text-xs font-medium text-slate-200">{activeGroup.vendorName} 요청서 편집</span>
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-400">{activeGroup.itemCount}건 · ₩{activeGroup.subtotal.toLocaleString("ko-KR")}</Badge>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold tabular-nums text-slate-100">₩{activeGroup.subtotal.toLocaleString("ko-KR")}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className={`h-6 px-2 text-[10px] ${
-                      holdUnits.has(activeGroup.vendorName)
-                        ? "text-amber-400 hover:text-emerald-400"
-                        : "text-slate-500 hover:text-amber-400"
-                    }`}
-                    onClick={() => toggleHold(activeGroup.vendorName)}
-                  >
-                    {holdUnits.has(activeGroup.vendorName) ? "전송으로 복원" : "보류"}
-                  </Button>
-                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className={`h-6 px-2 text-[10px] ${holdUnits.has(activeGroup.vendorName) ? "text-amber-400" : "text-slate-500 hover:text-amber-400"}`}
+                  onClick={() => toggleHold(activeGroup.vendorName)}
+                >
+                  {holdUnits.has(activeGroup.vendorName) ? "전송으로 복원" : "보류 처리"}
+                </Button>
               </div>
               {holdUnits.has(activeGroup.vendorName) && (
                 <div className="px-4 py-1.5 bg-amber-600/5 border-b border-amber-600/20">
                   <span className="text-[10px] text-amber-400">이 요청서는 보류 상태입니다. 전송 대상에서 제외됩니다.</span>
                 </div>
               )}
-              <div className="divide-y divide-bd/50">
-                {activeGroup.items.map((item) => (
-                  <div key={item.id} className="flex items-center gap-3 px-4 py-2">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-100 truncate">{item.productName}</p>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 mt-0.5">
-                        {item.catalogNumber && (
-                          <span className="font-mono text-slate-500 truncate max-w-[100px]">Cat. {item.catalogNumber}</span>
-                        )}
-                        {item.isInCompare && (
-                          <span className="text-[9px] px-1 py-0 rounded bg-blue-600/10 text-blue-400">비교중</span>
-                        )}
-                        {!item.hasPrice && (
-                          <span className="text-[9px] px-1 py-0 rounded bg-amber-600/10 text-amber-400">가격 미확인</span>
-                        )}
-                      </div>
+              {/* 품목 요약 (dense) */}
+              <div className="px-4 py-2 border-b border-bd/50">
+                <div className="text-[10px] text-slate-500 mb-1">포함 품목</div>
+                <div className="space-y-1">
+                  {activeGroup.items.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between text-xs">
+                      <span className="text-slate-300 truncate max-w-[200px]">{item.productName}</span>
+                      <span className="text-slate-400 tabular-nums shrink-0">×{item.quantity} {item.hasPrice ? `₩${item.lineTotal.toLocaleString("ko-KR")}` : "문의"}</span>
                     </div>
-                    <span className="text-xs text-slate-400 tabular-nums shrink-0">×{item.quantity}</span>
-                    <div className="shrink-0 text-right w-20">
-                      {item.hasPrice ? (
-                        <span className="text-sm font-semibold tabular-nums text-slate-100">
-                          <PriceDisplay price={item.lineTotal} currency="KRW" />
-                        </span>
-                      ) : (
-                        <span className="text-xs text-slate-500">문의</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              </div>
+              {/* Form — 이 unit의 보완 */}
+              <div className="p-4">
+                <QuoteRequestPanel
+                  ref={requestPanelRef}
+                  vendorNotes={vendorNotes}
+                  onVendorNoteChange={handleVendorNoteChange}
+                  onSubmitSuccess={(result) => {
+                    const heldVendors = Array.from(holdUnits);
+                    setSubmissionOutcome({
+                      sentCount: result.sentCount,
+                      heldCount: heldVendors.length,
+                      vendorCount: result.vendorCount,
+                      totalAmount: result.totalAmount,
+                      heldVendors,
+                      sentAt: new Date().toLocaleString("ko-KR"),
+                    });
+                  }}
+                />
               </div>
             </div>
           )}
-
-          {/* Completion Form Surface — after review, positioned as "보완" not "작성" */}
-          <div>
-            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2 px-1">공급사 전달 정보 보완</div>
-            <QuoteRequestPanel
-              ref={requestPanelRef}
-              vendorNotes={vendorNotes}
-              onVendorNoteChange={handleVendorNoteChange}
-              onSubmitSuccess={(result) => {
-                const heldVendors = Array.from(holdUnits);
-                setSubmissionOutcome({
-                  sentCount: result.sentCount,
-                  heldCount: heldVendors.length,
-                  vendorCount: result.vendorCount,
-                  totalAmount: result.totalAmount,
-                  heldVendors,
-                  sentAt: new Date().toLocaleString("ko-KR"),
-                });
-              }}
-            />
-          </div>
         </div>
 
         {/* ── Right: Active Decision Panel ── */}
