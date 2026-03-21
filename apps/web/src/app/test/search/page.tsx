@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown } from "lucide-react";
+import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { RequestReviewWindow } from "../_components/request-review-window";
+import { calculateRequestReadiness } from "../_components/request-readiness";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -103,6 +104,12 @@ export default function SearchPage() {
   // Compare 2+ 자동 work window hint
   const compareReady = compareIds.length >= 2;
   const requestReady = quoteItems.length > 0;
+
+  // Request readiness for dock indicators
+  const requestReadiness = useMemo(
+    () => calculateRequestReadiness(quoteItems, compareIds, products),
+    [quoteItems, compareIds, products],
+  );
 
   return (
     <div className="h-screen flex flex-col bg-pg overflow-hidden">
@@ -267,60 +274,86 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* ═══ D. Workbench Tray — always visible when hasSearched ═══ */}
+      {/* ═══ D. Viewport-Anchored Action Dock — always visible, never scroll-hidden ═══ */}
       {hasSearched && (
-        <div className="border-t border-bd bg-el px-4 py-2 flex items-center gap-3 shrink-0">
-          {/* Compare segment */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <GitCompare className={`h-3.5 w-3.5 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
-              <span className={`text-xs font-medium ${compareIds.length > 0 ? "text-slate-300" : "text-slate-500"}`}>비교</span>
-              <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${compareIds.length > 0 ? "bg-blue-600/10 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
-            </div>
-            {compareIds.length > 0 && (
-              <>
-                <div className="flex items-center gap-1 max-w-[180px] overflow-x-auto">
-                  {compareIds.slice(0, 3).map((id: string) => {
-                    const p = products.find((pp: any) => pp.id === id);
-                    const name = p?.name || getStoredName(id) || "—";
-                    return (
-                      <span key={id} className="text-[10px] text-slate-400 bg-pn border border-bd rounded px-1.5 py-0.5 truncate max-w-[60px]" title={name}>{name}</span>
-                    );
-                  })}
-                  {compareIds.length > 3 && <span className="text-[10px] text-slate-500">+{compareIds.length - 3}</span>}
-                </div>
-                {compareReady ? (
-                  <Button size="sm" className="h-6 px-2.5 text-[10px] bg-blue-600 hover:bg-blue-500 text-white" onClick={() => setWorkWindowMode("compare")}>
-                    비교 검토 →
+        <div className="border-t border-bd bg-el shrink-0">
+          <div className="px-4 py-2 flex items-center gap-3">
+            {/* Compare segment — count + CTA */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <GitCompare className={`h-3.5 w-3.5 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
+                <span className={`text-xs font-medium ${compareIds.length > 0 ? "text-slate-300" : "text-slate-500"}`}>비교</span>
+                <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${compareIds.length > 0 ? "bg-blue-600/10 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
+              </div>
+              {/* CTA always visible — disabled state shows reason */}
+              {compareIds.length > 0 ? (
+                <>
+                  {compareReady ? (
+                    <Button size="sm" className="h-6 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
+                      비교 열기
+                    </Button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-400">
+                      <AlertTriangle className="h-2.5 w-2.5" />2개 이상 필요
+                    </span>
+                  )}
+                  <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
+                    <Trash2 className="h-3 w-3" />
                   </Button>
-                ) : (
-                  <span className="text-[10px] text-amber-400">2개 이상 필요</span>
-                )}
-                <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div className="w-px h-5 bg-bd" />
-
-          {/* Request segment */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5">
-              <FileText className={`h-3.5 w-3.5 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
-              <span className={`text-xs font-medium ${quoteItems.length > 0 ? "text-slate-300" : "text-slate-500"}`}>견적</span>
-              <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${quoteItems.length > 0 ? "bg-emerald-600/10 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
+                </>
+              ) : (
+                <span className="text-[10px] text-slate-500">후보 없음</span>
+              )}
             </div>
-            {quoteItems.length > 0 && (
+
+            {/* Divider */}
+            <div className="w-px h-5 bg-bd" />
+
+            {/* Request segment — count + readiness + CTA */}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
+                <FileText className={`h-3.5 w-3.5 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
+                <span className={`text-xs font-medium ${quoteItems.length > 0 ? "text-slate-300" : "text-slate-500"}`}>견적</span>
+                <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${quoteItems.length > 0 ? "bg-emerald-600/10 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
+              </div>
+              {/* CTA always visible — shows readiness reason */}
+              {quoteItems.length > 0 ? (
+                <>
+                  {/* Readiness indicator */}
+                  {requestReadiness.summary.review > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
+                      <AlertTriangle className="h-2.5 w-2.5" />검토 {requestReadiness.summary.review}
+                    </span>
+                  )}
+                  {requestReadiness.summary.blocked > 0 && (
+                    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
+                      <AlertCircle className="h-2.5 w-2.5" />차단 {requestReadiness.summary.blocked}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-slate-500 tabular-nums">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                  <Button size="sm" className="h-6 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
+                    견적 검토
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </>
+              ) : (
+                <span className="text-[10px] text-slate-500">후보 없음</span>
+              )}
+            </div>
+
+            {/* Spacer + clear all */}
+            {(compareIds.length > 0 || quoteItems.length > 0) && (
               <>
-                <span className="text-[10px] text-slate-500 tabular-nums">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                <Button size="sm" className="h-6 px-2.5 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white" onClick={() => setWorkWindowMode("request")}>
-                  견적 검토 →
-                </Button>
-                <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
-                  <Trash2 className="h-3 w-3" />
+                <div className="flex-1" />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-5 px-2 text-[10px] text-slate-500 hover:text-red-400"
+                  onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+                >
+                  전체 해제
                 </Button>
               </>
             )}
