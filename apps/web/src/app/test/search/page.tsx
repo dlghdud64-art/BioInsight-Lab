@@ -274,72 +274,71 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* ═══ D. Viewport-Anchored Action Dock — always visible, never scroll-hidden ═══ */}
+      {/* ═══ D. Sticky Action Dock — scaled, readable, action-first ═══ */}
       {hasSearched && (
-        <div className="border-t border-bd bg-el shrink-0">
-          <div className="px-4 py-2 flex items-center gap-3">
-            {/* Compare segment — count + CTA */}
-            <div className="flex items-center gap-2">
+        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
+          <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
+            {/* Compare segment */}
+            <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <GitCompare className={`h-3.5 w-3.5 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
-                <span className={`text-xs font-medium ${compareIds.length > 0 ? "text-slate-300" : "text-slate-500"}`}>비교</span>
-                <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${compareIds.length > 0 ? "bg-blue-600/10 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
+                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
+                <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-200" : "text-slate-500"}`}>비교</span>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600/15 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
               </div>
-              {/* CTA always visible — disabled state shows reason */}
               {compareIds.length > 0 ? (
                 <>
                   {compareReady ? (
-                    <Button size="sm" className="h-6 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
+                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
+                      <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                       비교 열기
                     </Button>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[10px] text-amber-400">
-                      <AlertTriangle className="h-2.5 w-2.5" />2개 이상 필요
+                    <span className="inline-flex items-center gap-1 text-xs text-amber-400">
+                      <AlertTriangle className="h-3 w-3" />2개 이상 필요
                     </span>
                   )}
-                  <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
-                    <Trash2 className="h-3 w-3" />
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
               ) : (
-                <span className="text-[10px] text-slate-500">후보 없음</span>
+                <span className="text-xs text-slate-500">후보 없음</span>
               )}
             </div>
 
             {/* Divider */}
-            <div className="w-px h-5 bg-bd" />
+            <div className="w-px h-6 bg-bd" />
 
-            {/* Request segment — count + readiness + CTA */}
-            <div className="flex items-center gap-2">
+            {/* Request segment */}
+            <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <FileText className={`h-3.5 w-3.5 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
-                <span className={`text-xs font-medium ${quoteItems.length > 0 ? "text-slate-300" : "text-slate-500"}`}>견적</span>
-                <Badge variant="secondary" className={`h-5 px-1.5 text-[10px] ${quoteItems.length > 0 ? "bg-emerald-600/10 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
+                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
+                <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-200" : "text-slate-500"}`}>견적</span>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
               </div>
-              {/* CTA always visible — shows readiness reason */}
               {quoteItems.length > 0 ? (
                 <>
-                  {/* Readiness indicator */}
                   {requestReadiness.summary.review > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
-                      <AlertTriangle className="h-2.5 w-2.5" />검토 {requestReadiness.summary.review}
+                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
+                      <AlertTriangle className="h-3 w-3" />검토 {requestReadiness.summary.review}
                     </span>
                   )}
                   {requestReadiness.summary.blocked > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
-                      <AlertCircle className="h-2.5 w-2.5" />차단 {requestReadiness.summary.blocked}
+                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
+                      <AlertCircle className="h-3 w-3" />차단 {requestReadiness.summary.blocked}
                     </span>
                   )}
-                  <span className="text-[10px] text-slate-500 tabular-nums">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                  <Button size="sm" className="h-6 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
+                  <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
+                    <FileText className="h-3.5 w-3.5 mr-1.5" />
                     견적 검토
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-5 w-5 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
-                    <Trash2 className="h-3 w-3" />
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
               ) : (
-                <span className="text-[10px] text-slate-500">후보 없음</span>
+                <span className="text-xs text-slate-500">후보 없음</span>
               )}
             </div>
 
@@ -350,7 +349,7 @@ export default function SearchPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-5 px-2 text-[10px] text-slate-500 hover:text-red-400"
+                  className="h-7 px-3 text-xs text-slate-500 hover:text-red-400"
                   onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
                 >
                   전체 해제

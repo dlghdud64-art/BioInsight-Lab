@@ -129,44 +129,35 @@ export function SourcingResultRow({
           )}
         </div>
 
-        {/* Desktop CTA + status */}
-        <div className="shrink-0 hidden sm:flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-          {isInCompare && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 font-medium">
-              <GitCompare className="h-2.5 w-2.5" />비교
-            </span>
-          )}
-          {isInRequest && (
-            <span className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400 font-medium">
-              <FileText className="h-2.5 w-2.5" />견적
-            </span>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 w-7 p-0 rounded ${
-              isInCompare
-                ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25"
-                : "text-slate-500 hover:text-slate-300 hover:bg-el"
-            }`}
-            onClick={onToggleCompare}
-            title={isInCompare ? "비교 해제" : "비교 담기"}
-          >
-            <GitCompare className="h-3.5 w-3.5" />
-          </Button>
+        {/* Desktop CTA — hierarchy: primary=견적, secondary=비교 */}
+        <div className="shrink-0 hidden sm:flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {/* Secondary: 비교 — text label, not icon-only */}
           <Button
             variant="ghost"
             size="sm"
             className={`h-7 px-2 rounded text-xs font-medium ${
+              isInCompare
+                ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25"
+                : "text-slate-500 hover:text-slate-300 hover:bg-el border border-transparent hover:border-bd"
+            }`}
+            onClick={onToggleCompare}
+          >
+            <GitCompare className="h-3 w-3 mr-1" />
+            {isInCompare ? "비교 담김" : "비교 추가"}
+          </Button>
+          {/* Primary: 견적 — stronger visual weight */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`h-7 px-2.5 rounded text-xs font-medium ${
               isInRequest
                 ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25"
                 : "bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
             }`}
             onClick={onToggleRequest}
-            title={isInRequest ? "견적 해제" : "견적 담기"}
           >
             <FileText className="h-3 w-3 mr-1" />
-            {isInRequest ? "담김" : "견적"}
+            {isInRequest ? "견적 담김" : "견적 담기"}
           </Button>
         </div>
 
@@ -204,7 +195,7 @@ export function SourcingResultRow({
             onClick={onToggleCompare}
           >
             <GitCompare className="h-3 w-3 mr-1" />
-            {isInCompare ? "비교중" : "비교"}
+            {isInCompare ? "비교 담김" : "비교 추가"}
           </Button>
           <Button
             variant="ghost"
@@ -217,7 +208,7 @@ export function SourcingResultRow({
             onClick={onToggleRequest}
           >
             <FileText className="h-3 w-3 mr-1" />
-            {isInRequest ? "담김" : "견적"}
+            {isInRequest ? "견적 담김" : "견적 담기"}
           </Button>
         </div>
       </div>
