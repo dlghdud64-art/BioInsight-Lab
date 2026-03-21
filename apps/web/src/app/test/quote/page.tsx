@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useTestFlow } from "../_components/test-flow-provider";
 import { useCompareStore } from "@/lib/store/compare-store";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,15 @@ export default function RequestAssemblyPage() {
     compareIds,
   } = useTestFlow();
   const { productIds: compareStoreIds } = useCompareStore();
+  const { data: session, status: authStatus } = useSession();
   const router = useRouter();
+
+  // Auth gate — request 계열 route는 로그인 필요
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      router.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/test/quote")}`);
+    }
+  }, [authStatus, router]);
 
   const allCompareIds = useMemo(
     () => [...new Set([...compareIds, ...compareStoreIds])],

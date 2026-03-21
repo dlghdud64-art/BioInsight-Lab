@@ -85,7 +85,16 @@ export default function SearchPage() {
     + (minPrice !== undefined ? 1 : 0)
     + (maxPrice !== undefined ? 1 : 0);
 
-  const callbackUrl = searchQuery ? `/test/search?q=${encodeURIComponent(searchQuery)}` : "/test/search";
+  // Auth return context — search query + filters를 URL에 보존
+  const callbackUrl = (() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set("q", searchQuery);
+    if (searchCategory) params.set("category", searchCategory);
+    if (searchBrand) params.set("brand", searchBrand);
+    if (sortBy !== "relevance") params.set("sort", sortBy);
+    const qs = params.toString();
+    return qs ? `/test/search?${qs}` : "/test/search";
+  })();
 
   const handleProtectedAction = (action: () => void) => {
     if (!session?.user) {
@@ -343,6 +352,13 @@ export default function SearchPage() {
               )}
             </div>
 
+            {/* Auth hint for guests */}
+            {!session?.user && (
+              <span className="text-[10px] text-slate-500 hidden sm:inline-flex items-center gap-1">
+                로그인 후 요청 작성 가능
+              </span>
+            )}
+
             {/* Spacer + clear all */}
             {(compareIds.length > 0 || quoteItems.length > 0) && (
               <>
@@ -443,12 +459,18 @@ export default function SearchPage() {
       <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>로그인이 필요합니다</DialogTitle>
-            <DialogDescription>상세보기와 견적 담기 기능을 이용하려면 로그인해 주세요.</DialogDescription>
+            <DialogTitle>로그인 후 견적 요청을 이어가세요</DialogTitle>
+            <DialogDescription>
+              견적 요청·저장 기능은 로그인 후 사용할 수 있습니다.
+              현재 검색 결과와 선택 상태는 로그인 후 그대로 이어집니다.
+            </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
             <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLoginRedirect}>로그인하기</Button>
-            <Button variant="ghost" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>취소</Button>
+            <Link href={`/test/search?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
+              <Button variant="outline" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>무료로 시작하기</Button>
+            </Link>
+            <Button variant="ghost" className="w-full text-slate-500" onClick={() => setIsLoginPromptOpen(false)}>계속 둘러보기</Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -2,9 +2,11 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useState, useRef, useMemo } from "react";
+import { Suspense, useState, useRef, useMemo, useEffect } from "react";
 import { QuoteRequestPanel, QuoteItemsSummaryPanel, type QuoteRequestPanelRef } from "../../_components/quote-panel";
 import { useTestFlow } from "../../_components/test-flow-provider";
+import { useSession } from "next-auth/react";
+import { useRouter as useNavRouter } from "next/navigation";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { calculateAssembly, type VendorGroup } from "../../_components/request-assembly";
 import { PriceDisplay } from "@/components/products/price-display";
@@ -38,7 +40,16 @@ function QuoteRequestPageContent() {
   const requestPanelRef = useRef<QuoteRequestPanelRef>(null);
 
   const { quoteItems, products, compareIds } = useTestFlow();
+  const { data: session, status: authStatus } = useSession();
+  const navRouter = useNavRouter();
   const { productIds: compareStoreIds } = useCompareStore();
+
+  // Auth gate — request 확정 route는 로그인 필요
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      navRouter.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/test/quote/request")}`);
+    }
+  }, [authStatus, navRouter]);
 
   const allCompareIds = useMemo(
     () => [...new Set([...compareIds, ...compareStoreIds])],
