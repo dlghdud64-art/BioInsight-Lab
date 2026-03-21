@@ -903,10 +903,10 @@ export default function PurchasesPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-100">
-            구매 운영
+            구매 승인 및 발주 전환
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
-            구매 이력을 확인하고, 재구매·재고·공급사·리포트로 이어지는 후속 조치를 바로 처리하세요.
+            구매 검토 항목을 확인하고, 승인·발주 전환·후속 조치를 바로 처리하세요.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -986,16 +986,38 @@ export default function PurchasesPage() {
                 </div>
               </button>
 
-              <div className="flex items-start gap-3 rounded-md border border-bd bg-el/50 p-3">
-                <DollarSign className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+              <button
+                type="button"
+                onClick={() => { setQueueTab("completed"); setSelectedStatus("all"); }}
+                className="flex items-start gap-3 rounded-md border border-bd bg-el/50 p-3 text-left hover:bg-el transition-colors"
+              >
+                <CircleCheck className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
                 <div className="min-w-0">
-                  <p className="text-xs text-slate-500 font-medium">이번 달 구매</p>
+                  <p className="text-xs text-slate-500 font-medium">발주 완료</p>
                   <p className="text-lg font-bold text-slate-100 mt-0.5">
-                    {summaryLoading ? "..." : formatCurrency(queueStats.thisMonthSpend)}
+                    {summaryLoading ? "..." : `${queueStats.completedCount}건`}
                   </p>
                 </div>
-              </div>
+              </button>
             </div>
+
+            {/* Approval Readiness Strip */}
+            {queueStats.pendingApproval > 0 && (
+              <div className="rounded-lg border border-amber-600/20 bg-amber-600/5 px-4 py-2.5 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-2 text-xs text-amber-300">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                  <span><strong>{queueStats.pendingApproval}건</strong>이 승인 대기 중입니다. 확인 후 발주 전환하세요.</span>
+                </div>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-[10px] text-amber-400 border-amber-600/30 hover:bg-amber-600/10"
+                  onClick={() => { setQueueTab("pending"); setSelectedStatus("all"); }}
+                >
+                  승인 대기 보기
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* ══ 1.6 큐 세분화 탭 ══ */}
