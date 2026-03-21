@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, GitCompare, X, Trash2, Plus, Minus, Search, FileText, Package, SlidersHorizontal, TrendingDown } from "lucide-react";
+import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
+import { RequestReviewWindow } from "../_components/request-review-window";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -366,53 +367,31 @@ export default function SearchPage() {
         </div>
       </CenterWorkWindow>
 
-      {/* ═══ E. Center Work Window — Request Review ═══ */}
-      <CenterWorkWindow
+      {/* ═══ E. Center Work Window — Request Review (6-area) ═══ */}
+      <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
-        title="견적 요청 검토"
-        subtitle={`${quoteItems.length}개 품목 · ₩${totalAmount.toLocaleString("ko-KR")}`}
-        phase="ready"
-        primaryAction={{
-          label: "견적서 작성",
-          onClick: () => { router.push("/test/quote"); setWorkWindowMode(null); },
+        quoteItems={quoteItems}
+        compareIds={compareIds}
+        products={products}
+        onRemoveItem={removeQuoteItem}
+        onUpdateItem={updateQuoteItem}
+        onClearAll={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+        onCreateRequest={() => { router.push("/test/quote"); setWorkWindowMode(null); }}
+        onSwitchToCompare={() => setWorkWindowMode("compare")}
+        onToggleCompare={(productId: string) => {
+          const p = products.find((pp: any) => pp.id === productId);
+          if (p) toggleCompare(productId, { name: p.name, brand: p.brand });
         }}
-        secondaryAction={{ label: "닫기", onClick: () => setWorkWindowMode(null) }}
-      >
-        <div className="space-y-2">
-          <p className="text-xs text-slate-400 mb-3">아래 품목으로 견적서를 작성합니다. 수량과 품목을 확인하세요.</p>
-          {quoteItems.map((item: any) => {
-            const p = products.find((pp: any) => pp.id === item.productId);
-            const v = p?.vendors?.[0];
-            const unitPrice = v?.priceInKRW || 0;
-            return (
-              <div key={item.id} className="flex items-center gap-3 px-3 py-2 rounded border border-bd bg-el">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-100 truncate">{p?.name || item.productName || "제품"}</p>
-                  <p className="text-xs text-slate-400">{v?.vendor?.name || "—"}</p>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <Button variant="outline" size="sm" className="h-6 w-6 p-0" onClick={() => updateQuoteItem(item.id, { quantity: Math.max(1, (item.quantity || 1) - 1) })} disabled={(item.quantity || 1) <= 1}>
-                    <Minus className="h-3 w-3" />
-                  </Button>
-                  <span className="text-xs font-medium text-slate-200 w-6 text-center tabular-nums">{item.quantity || 1}</span>
-                  <Button variant="outline" size="sm" className="h-6 w-6 p-0" onClick={() => updateQuoteItem(item.id, { quantity: (item.quantity || 1) + 1 })}>
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </div>
-                {unitPrice > 0 && (
-                  <span className="text-sm font-semibold tabular-nums text-slate-100 shrink-0">
-                    <PriceDisplay price={item.lineTotal || 0} currency="KRW" />
-                  </span>
-                )}
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => setItemToDelete(item.id)}>
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </CenterWorkWindow>
+        onToggleRequest={(productId: string) => {
+          const existing = quoteItems.find((q: any) => q.productId === productId);
+          if (existing) { removeQuoteItem(existing.id); } else {
+            const p = products.find((pp: any) => pp.id === productId);
+            if (p) addProductToQuote(p);
+          }
+        }}
+        totalAmount={totalAmount}
+      />
 
       {/* Utility dialogs */}
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
