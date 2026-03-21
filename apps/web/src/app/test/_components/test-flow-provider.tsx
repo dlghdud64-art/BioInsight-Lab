@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect, useRef, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -70,6 +71,8 @@ const TestFlowContext = createContext<TestFlowContextType | undefined>(undefined
 
 function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
+  const { data: session, status: authStatus } = useSession();
+  const prevAuthStatusRef = useRef(authStatus);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
   const [searchBrand, setSearchBrand] = useState<string>("");
@@ -124,6 +127,17 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
       // 무시
     }
   }, [quoteItems, isCartHydrated]);
+
+  // Auth boundary: 로그아웃 시 auth-bound state clear
+  useEffect(() => {
+    if (prevAuthStatusRef.current === "authenticated" && authStatus === "unauthenticated") {
+      // logout detected — clear quote/request state
+      setQuoteItems([]);
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
+    }
+    prevAuthStatusRef.current = authStatus;
+  }, [authStatus]);
+
   const [gptEnabled, setGptEnabled] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [queryParamInitialized, setQueryParamInitialized] = useState(false);
