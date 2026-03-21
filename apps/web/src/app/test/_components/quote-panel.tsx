@@ -1929,9 +1929,10 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       }
 
       await response.json();
+      const vendorCount = vendorGroupsForSubmit.size;
       toast({
-        title: "견적 요청 완료",
-        description: "견적 요청이 성공적으로 전송되었습니다.",
+        title: "견적 요청 전송 완료",
+        description: `${quoteItems.length}건 품목이 ${vendorCount}개 공급사에 ${vendorCount}건 요청으로 전송되었습니다. 구매 검토 큐에서 후속 조치를 확인하세요.`,
       });
 
       // 장바구니/임시저장 초기화
@@ -1948,8 +1949,8 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       router.refresh();
 
-      // 다중 견적 생성 시 목록 페이지로 이동
-      router.push("/dashboard/quotes");
+      // completion bridge — 구매 검토 큐로 이동
+      router.push("/dashboard/purchases");
     } catch (error: any) {
       toast({
         title: "견적 요청 실패",
