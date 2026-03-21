@@ -37,6 +37,7 @@ const READINESS_CONFIG: Record<string, { color: string; icon: any; label: string
 function QuoteRequestPageContent() {
   const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
   const [activeGroupIdx, setActiveGroupIdx] = useState(0);
+  const [holdUnits, setHoldUnits] = useState<Set<string>>(new Set());
   const requestPanelRef = useRef<QuoteRequestPanelRef>(null);
 
   const { quoteItems, products, compareIds } = useTestFlow();
@@ -66,6 +67,18 @@ function QuoteRequestPageContent() {
   const ReadinessIcon = config.icon;
   const canSend = level === "ready_to_write_request" || level === "split_required" || level === "review_first";
   const activeGroup: VendorGroup | undefined = vendorGroups[activeGroupIdx];
+
+  // Per-unit status
+  const readyCount = vendorGroups.filter(g => !holdUnits.has(g.vendorName)).length;
+  const holdCount = holdUnits.size;
+  const toggleHold = (vendorName: string) => {
+    setHoldUnits(prev => {
+      const next = new Set(prev);
+      if (next.has(vendorName)) next.delete(vendorName);
+      else next.add(vendorName);
+      return next;
+    });
+  };
 
   const handleVendorNoteChange = (vendorId: string, note: string) => {
     setVendorNotes((prev) => ({ ...prev, [vendorId]: note }));
@@ -167,8 +180,12 @@ function QuoteRequestPageContent() {
                   <span className="block">{g.vendorName}</span>
                   <span className="block text-[10px] opacity-70">{g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}</span>
                 </div>
-                {idx === activeGroupIdx && (
+                {holdUnits.has(g.vendorName) ? (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-600/20 text-slate-400">보류</span>
+                ) : idx === activeGroupIdx ? (
                   <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300">검토 중</span>
+                ) : (
+                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300">전송</span>
                 )}
               </button>
             ))}
@@ -237,8 +254,27 @@ function QuoteRequestPageContent() {
                   <span className="text-xs font-medium text-slate-200">{activeGroup.vendorName}</span>
                   <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-400">{activeGroup.itemCount}건</Badge>
                 </div>
-                <span className="text-sm font-semibold tabular-nums text-slate-100">₩{activeGroup.subtotal.toLocaleString("ko-KR")}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold tabular-nums text-slate-100">₩{activeGroup.subtotal.toLocaleString("ko-KR")}</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className={`h-6 px-2 text-[10px] ${
+                      holdUnits.has(activeGroup.vendorName)
+                        ? "text-amber-400 hover:text-emerald-400"
+                        : "text-slate-500 hover:text-amber-400"
+                    }`}
+                    onClick={() => toggleHold(activeGroup.vendorName)}
+                  >
+                    {holdUnits.has(activeGroup.vendorName) ? "전송으로 복원" : "보류"}
+                  </Button>
+                </div>
               </div>
+              {holdUnits.has(activeGroup.vendorName) && (
+                <div className="px-4 py-1.5 bg-amber-600/5 border-b border-amber-600/20">
+                  <span className="text-[10px] text-amber-400">이 요청서는 보류 상태입니다. 전송 대상에서 제외됩니다.</span>
+                </div>
+              )}
               <div className="divide-y divide-bd/50">
                 {activeGroup.items.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 px-4 py-2">
@@ -290,14 +326,18 @@ function QuoteRequestPageContent() {
                 {config.label}
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-center">
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <p className="text-lg font-bold tabular-nums text-emerald-400">{readyCount}</p>
+                <p className="text-[10px] text-slate-500">전송</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold tabular-nums text-amber-400">{holdCount}</p>
+                <p className="text-[10px] text-slate-500">보류</p>
+              </div>
               <div>
                 <p className="text-lg font-bold tabular-nums text-slate-100">{summary.totalItems}</p>
                 <p className="text-[10px] text-slate-500">품목</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold tabular-nums text-slate-100">{summary.requestCount}</p>
-                <p className="text-[10px] text-slate-500">요청서</p>
               </div>
               <div>
                 <p className="text-lg font-bold tabular-nums text-slate-100">{summary.vendorCount}</p>
@@ -399,14 +439,12 @@ function QuoteRequestPageContent() {
                 <ReadinessIcon className="h-3 w-3" />
                 {config.label}
               </span>
-              <span className="text-xs text-slate-400 tabular-nums font-medium hidden sm:block">
-                {summary.totalItems}건 · ₩{summary.totalAmount.toLocaleString("ko-KR")}
-              </span>
-              {vendorGroups.length > 1 && (
-                <span className="text-[10px] text-blue-400 hidden md:block">
-                  {vendorGroups.length}건 분리 전송
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 hidden sm:flex">
+                <span className="text-[10px] text-emerald-400">전송 {readyCount}</span>
+                {holdCount > 0 && <span className="text-[10px] text-amber-400">보류 {holdCount}</span>}
+                <span className="text-slate-600">·</span>
+                <span className="text-xs text-slate-400 tabular-nums font-medium">₩{summary.totalAmount.toLocaleString("ko-KR")}</span>
+              </div>
             </div>
 
             {/* Right: CTAs */}
@@ -425,11 +463,11 @@ function QuoteRequestPageContent() {
               <Button
                 size="sm"
                 className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
-                disabled={!canSend}
+                disabled={!canSend || readyCount === 0}
                 form="quote-request-form"
                 type="submit"
               >
-                견적 요청 보내기
+                {readyCount > 0 ? `${readyCount}건 전송` : "견적 요청 보내기"}
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
             </div>
