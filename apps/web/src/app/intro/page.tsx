@@ -39,8 +39,8 @@ export default function IntroPage() {
             {/* Left copy */}
             <div className="flex-1 min-w-0">
               {/* Eyebrow */}
-              <div className="inline-flex items-center gap-2 text-xs font-semibold text-teal-400 bg-pn border border-bd rounded-full px-3 py-1.5 mb-5">
-                <span className="w-1.5 h-1.5 rounded-full bg-teal-400 flex-shrink-0" />
+              <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-400 bg-pn border border-bd rounded-full px-3 py-1.5 mb-5">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
                 연구실 구매 운영 플랫폼
               </div>
 
@@ -61,10 +61,10 @@ export default function IntroPage() {
               <div className="hidden md:flex flex-wrap items-center gap-1.5">
                 {[
                   { label: "통합 검색", icon: Search, color: "text-blue-400" },
-                  { label: "제품 비교", icon: GitCompare, color: "text-violet-400" },
-                  { label: "견적 요청", icon: FileText, color: "text-teal-400" },
-                  { label: "발주·입고", icon: ShoppingCart, color: "text-amber-400" },
-                  { label: "재고 운영", icon: Package, color: "text-slate-300" },
+                  { label: "제품 비교", icon: GitCompare, color: "text-slate-400" },
+                  { label: "견적 요청", icon: FileText, color: "text-slate-400" },
+                  { label: "발주·입고", icon: ShoppingCart, color: "text-slate-400" },
+                  { label: "재고 운영", icon: Package, color: "text-slate-400" },
                 ].map((step, i) => (
                   <div key={i} className="flex items-center gap-1.5">
                     <div className="flex items-center gap-1.5 text-xs font-medium text-slate-300 bg-pn border border-bd rounded-lg px-3 py-1.5">
@@ -100,7 +100,7 @@ export default function IntroPage() {
                     <div className="text-right flex-shrink-0">
                       <p className="text-xs font-bold text-slate-100">{item.price}</p>
                       {item.badge && (
-                        <span className="text-[9px] font-semibold text-teal-400 bg-pn border border-bd px-1.5 py-0.5 rounded-full">{item.badge}</span>
+                        <span className="text-[9px] font-semibold text-blue-400 bg-pn border border-bd px-1.5 py-0.5 rounded-full">{item.badge}</span>
                       )}
                     </div>
                   </div>
@@ -124,7 +124,7 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pn border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider mb-1 md:mb-2">운영 병목</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">운영 병목</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
                 현재 연구실 구매 운영의 병목
               </h2>
@@ -137,21 +137,21 @@ export default function IntroPage() {
               {[
                 {
                   icon: Clock,
-                  iconColor: "text-amber-400",
+                  iconColor: "text-slate-400",
                   title: "반복 검색",
                   desc: "벤더 사이트 10개 이상을 일일이 방문해 같은 시약을 검색합니다. 건당 30분 이상 소요.",
                   stat: "건당 30분+",
                 },
                 {
                   icon: AlertTriangle,
-                  iconColor: "text-red-400",
+                  iconColor: "text-slate-400",
                   title: "수기 견적",
                   desc: "이메일·전화로 견적을 수집하고, 엑셀에 수기로 정리합니다. 버전 관리와 비교가 불가능.",
                   stat: "건당 45분+",
                 },
                 {
                   icon: PackageX,
-                  iconColor: "text-red-400",
+                  iconColor: "text-slate-400",
                   title: "재고 공백",
                   desc: "구매 완료 후 재고 반영이 누락됩니다. 유효기간 만료·안전재고 부족을 뒤늦게 발견.",
                   stat: "연간 15%+ 손실",
@@ -178,7 +178,7 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pg border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-teal-400 uppercase tracking-wider mb-1 md:mb-2">운영 흐름</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">운영 흐름</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
                 검색 → 비교 → 견적 → 발주 → 입고 → 재고
               </h2>
@@ -190,12 +190,12 @@ export default function IntroPage() {
             {/* Mobile: vertical list */}
             <div className="md:hidden space-y-2">
               {[
-                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에 검색", color: "text-blue-400", dot: "bg-blue-500" },
-                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 자동 생성", color: "text-violet-400", dot: "bg-violet-500" },
-                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 수집 → 클릭 한 번으로 전송", color: "text-teal-400", dot: "bg-teal-500" },
-                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 자동 발주", color: "text-amber-400", dot: "bg-amber-500" },
-                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 입고 스캔으로 자동 반영", color: "text-emerald-400", dot: "bg-emerald-500" },
-                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 자동 추적", color: "text-slate-300", dot: "bg-slate-500" },
+                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에 검색", color: "text-blue-400", dot: "bg-blue-600" },
+                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 자동 생성", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 수집 → 클릭 한 번으로 전송", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 자동 발주", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 입고 스캔으로 자동 반영", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 자동 추적", color: "text-slate-300", dot: "bg-slate-600" },
               ].map((step) => (
                 <div key={step.num} className="flex items-start gap-2.5 px-3 py-2.5 bg-pn rounded-lg border border-bd">
                   <div className={`shrink-0 w-5 h-5 rounded-full ${step.dot} text-slate-100 text-[10px] font-bold flex items-center justify-center mt-0.5`}>{step.num}</div>
@@ -210,12 +210,12 @@ export default function IntroPage() {
             {/* Desktop: 6-column pipeline */}
             <div className="hidden md:grid md:grid-cols-6 gap-3">
               {[
-                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에", color: "text-blue-400", dot: "bg-blue-500" },
-                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 자동", color: "text-violet-400", dot: "bg-violet-500" },
-                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 → 클릭 한 번", color: "text-teal-400", dot: "bg-teal-500" },
-                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 → 승인 후 발주", color: "text-amber-400", dot: "bg-amber-500" },
-                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 → 스캔 반영", color: "text-emerald-400", dot: "bg-emerald-500" },
-                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 자동 추적", color: "text-slate-300", dot: "bg-slate-500" },
+                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에", color: "text-blue-400", dot: "bg-blue-600" },
+                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 자동", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 → 클릭 한 번", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 → 승인 후 발주", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 → 스캔 반영", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 자동 추적", color: "text-slate-300", dot: "bg-slate-600" },
               ].map((step, i) => (
                 <div key={step.num} className="relative">
                   <div className="bg-pn border border-bd rounded-xl p-4 h-full flex flex-col items-center text-center">
@@ -246,7 +246,7 @@ export default function IntroPage() {
         <section className="py-10 md:py-16 bg-pn border-b border-bd">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-violet-400 uppercase tracking-wider mb-1 md:mb-2">역할별 변화</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">역할별 변화</p>
               <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
                 LabAxis 도입 후, 각 역할은 이렇게 달라집니다
               </h2>
@@ -260,10 +260,10 @@ export default function IntroPage() {
               <div className="bg-pg border border-bd rounded-xl p-4 md:p-6 flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-el flex items-center justify-center flex-shrink-0">
-                    <Microscope className="h-5 w-5 text-amber-400" strokeWidth={1.5} />
+                    <Microscope className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">연구원</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">연구원</p>
                     <h3 className="text-sm font-bold text-slate-100">실험 준비 시간 단축</h3>
                   </div>
                 </div>
@@ -278,11 +278,11 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
+                  <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
                     {["통합 검색으로 후보 한 번에 확인", "프로토콜 붙여넣기 → 필요 시약 자동 추출"].map((t, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
-                        <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
+                        <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
                     ))}
                   </ul>
@@ -293,10 +293,10 @@ export default function IntroPage() {
               <div className="bg-pg border border-bd rounded-xl p-4 md:p-6 flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-el flex items-center justify-center flex-shrink-0">
-                    <ShoppingCart className="h-5 w-5 text-violet-400" strokeWidth={1.5} />
+                    <ShoppingCart className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-violet-400 uppercase tracking-wider">구매 담당자</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">구매 담당자</p>
                     <h3 className="text-sm font-bold text-slate-100">견적 수집·비교 자동화</h3>
                   </div>
                 </div>
@@ -311,11 +311,11 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
+                  <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
                     {["통합 견적 요청 — 가격 비교표 자동 생성", "구매 이력·공급사 응답 통합 관리"].map((t, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
-                        <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
+                        <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
                     ))}
                   </ul>
@@ -326,10 +326,10 @@ export default function IntroPage() {
               <div className="bg-pg border border-bd rounded-xl p-4 md:p-6 flex flex-col gap-3">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-el flex items-center justify-center flex-shrink-0">
-                    <Users className="h-5 w-5 text-teal-400" strokeWidth={1.5} />
+                    <Users className="h-5 w-5 text-slate-400" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider">관리자</p>
+                    <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">관리자</p>
                     <h3 className="text-sm font-bold text-slate-100">예산·권한·이력 통제</h3>
                   </div>
                 </div>
@@ -344,11 +344,11 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="rounded-lg bg-pn border border-bd p-3">
-                  <p className="text-[10px] font-semibold text-teal-400 uppercase tracking-wider mb-1.5">LabAxis</p>
+                  <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
                     {["실시간 예산 소진 현황 + 승인 라인 자동화", "Audit Trail로 구매 이력 전건 추적"].map((t, i) => (
-                      <li key={i} className="flex items-start gap-1.5 text-xs text-teal-300 font-medium">
-                        <CheckCircle2 className="h-3 w-3 text-teal-400 mt-0.5 flex-shrink-0" />{t}
+                      <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
+                        <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
                     ))}
                   </ul>
@@ -375,25 +375,25 @@ export default function IntroPage() {
               {[
                 {
                   icon: KeyRound,
-                  iconColor: "text-amber-400",
+                  iconColor: "text-slate-400",
                   title: "역할 기반 권한 제어",
                   desc: "조직원별 권한을 세밀하게 설정합니다. 견적 요청·승인·관리자 역할을 분리하여 내부 구매 프로세스에 맞게 운영할 수 있습니다.",
                 },
                 {
                   icon: CheckSquare,
-                  iconColor: "text-violet-400",
+                  iconColor: "text-slate-400",
                   title: "승인 라인",
                   desc: "견적 요청·발주 전 승인 단계를 설정합니다. 금액 기준 자동 라우팅, 승인자 지정 및 에스컬레이션을 지원합니다.",
                 },
                 {
                   icon: ScrollText,
-                  iconColor: "text-teal-400",
+                  iconColor: "text-slate-400",
                   title: "Audit Trail",
                   desc: "모든 구매 활동이 자동으로 기록됩니다. 누가, 언제, 무엇을 요청·승인·발주했는지 전건 추적합니다. GMP/GLP 감사 대비에 활용할 수 있습니다.",
                 },
                 {
                   icon: Wallet,
-                  iconColor: "text-emerald-400",
+                  iconColor: "text-slate-400",
                   title: "예산 통합",
                   desc: "부서·프로젝트별 예산을 설정하고 실시간 소진 현황을 파악합니다. 예산 초과 시 자동 알림과 발주 차단을 지원합니다.",
                 },
