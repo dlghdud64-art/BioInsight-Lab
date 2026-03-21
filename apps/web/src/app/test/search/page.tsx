@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
 import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
@@ -478,8 +479,19 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCou
 
   return (
     <div className="shrink-0">
-      {/* Search bar — 소싱 label + input (로고 제거, 워크벤치 전용) */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border-b border-bd bg-el">
+      {/* 상단: 워드마크 */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd bg-el">
+        <Link href="/" className="text-sm md:text-base font-bold text-slate-200 tracking-tight">
+          LabAxis
+        </Link>
+        {hasSearched && searchQuery && (
+          <span className="text-[10px] md:text-xs text-slate-500 truncate max-w-[150px]">
+            &ldquo;{searchQuery}&rdquo;
+          </span>
+        )}
+      </div>
+      {/* 하단: 소싱 + 검색창 */}
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border-b border-bd">
         <span className="text-xs md:text-sm font-semibold text-slate-400 shrink-0">소싱</span>
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 max-w-3xl">
           <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">

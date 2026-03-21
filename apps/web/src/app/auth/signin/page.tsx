@@ -30,8 +30,8 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 브랜딩 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex w-[55%] bg-sh relative min-h-screen flex-col overflow-hidden">
-        {/* 상단: 로고 */}
+      <div className="hidden lg:flex w-[55%] bg-pg relative min-h-screen flex-col overflow-hidden">
+        {/* 상단: 회사명 텍스트 */}
         <div className="pt-12 pl-12">
           <Link href="/" className="inline-block">
             <span className="text-2xl font-bold tracking-tight text-slate-100">LabAxis</span>
@@ -78,8 +78,8 @@ function SignInContent() {
       </div>
 
       {/* 우측 auth 영역 */}
-      <div className="w-full lg:w-[45%] flex flex-col min-h-screen bg-pg">
-        {/* 모바일: 상단 로고 중앙 */}
+      <div className="w-full lg:w-[45%] flex flex-col min-h-screen bg-sh">
+        {/* 모바일: 상단 회사명 텍스트 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="text-xl font-bold tracking-tight text-slate-100">
             LabAxis
@@ -182,7 +182,7 @@ function SignInContent() {
             </Link>
           </p>
           <p className="text-center text-xs text-slate-500 leading-relaxed">
-            LabAxis는 데이터 무결성과 ISMS 가이드를 준수합니다.
+            데이터 무결성과 ISMS 가이드를 준수합니다.
           </p>
         </div>
       </div>
@@ -193,7 +193,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-sh">
+      <div className="flex min-h-screen items-center justify-center bg-pg">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
