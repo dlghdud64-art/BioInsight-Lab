@@ -23,13 +23,13 @@ const config: Config = {
       },
       colors: {
         // ── 전역 surface hierarchy (dark-only, 직접 hex) ──
-        sh: "#2a2c2f",       // shell — neutral graphite (~18%)
-        pg: "#303236",       // page — work area (~21%)
-        pn: "#393b3f",       // panel — card/section (~24%)
-        el: "#434548",       // elevated — input/search/empty (~27%)
-        st: "#4d4f53",       // strong — hover/active surface (~31%)
-        bd: "#4d4f53",       // border default
-        bs: "#5a5c60",       // border strong (~36%)
+        sh: "#32343a",       // shell — neutral graphite (~22%)
+        pg: "#383a40",       // page — work area (~25%)
+        pn: "#424448",       // panel — card/section (~28%)
+        el: "#4c4e54",       // elevated — input/search/empty (~32%)
+        st: "#56585e",       // strong — hover/active surface (~36%)
+        bd: "#56585e",       // border default
+        bs: "#63656b",       // border strong (~40%)
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

@@ -106,18 +106,18 @@ function POConversionContent() {
 
   if (status === "loading") {
     return (
-      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#383a40' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     );
   }
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#383a40' }}>
 
       {/* ═══ PO Decision Header ═══ */}
       <div className="shrink-0">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
           <div className="flex items-center gap-2">
             <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
             <div className="w-px h-5 bg-bd" />
@@ -135,7 +135,7 @@ function POConversionContent() {
           </div>
         </div>
         {/* Candidate selector strip */}
-        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#353739' }}>
+        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#3e4044' }}>
           {candidates.map(c => (
             <button key={c.id} onClick={() => setSelectedId(c.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${
@@ -156,8 +156,8 @@ function POConversionContent() {
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
 
           {/* Block A: Line Item 확정 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424448' }}>
+            <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between" style={{ backgroundColor: '#4c4e54' }}>
               <span className="text-xs font-medium text-slate-200">발주 대상 품목 ({activeItems.length}/{selected.items.length}건)</span>
               <span className="text-xs tabular-nums text-slate-100 font-semibold">₩{activeTotal.toLocaleString("ko-KR")}</span>
             </div>
@@ -200,8 +200,8 @@ function POConversionContent() {
           </div>
 
           {/* Block B: 발주 조건 확정 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424448' }}>
+            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
               <span className="text-xs font-medium text-slate-200">발주 조건</span>
             </div>
             <div className="p-4 space-y-3">
@@ -223,8 +223,8 @@ function POConversionContent() {
           </div>
 
           {/* Block C: 정책/문서/예산 가드 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424448' }}>
+            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
               <span className="text-xs font-medium text-slate-200">전환 가드</span>
             </div>
             <div className="p-4 space-y-2">
@@ -294,7 +294,7 @@ function POConversionContent() {
         </div>
 
         {/* ═══ PO Evidence Rail (400px) ═══ */}
-        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#353739' }}>
+        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#3e4044' }}>
           <div className="px-5 py-4 border-b border-bd">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">선택 근거</div>
             <p className="text-xs text-slate-300">{selected.selectionReason}</p>
@@ -324,7 +324,7 @@ function POConversionContent() {
           </div>
           <div className="flex-1" />
           {/* Rail footer CTA */}
-          <div className="px-5 py-4 border-t border-bd shrink-0 space-y-2" style={{ backgroundColor: '#434548' }}>
+          <div className="px-5 py-4 border-t border-bd shrink-0 space-y-2" style={{ backgroundColor: '#4c4e54' }}>
             <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40" disabled={!canCreate}>
               <Truck className="h-3 w-3 mr-1.5" />PO 생성
             </Button>
@@ -342,7 +342,7 @@ function POConversionContent() {
 
       {/* ═══ Sticky Action Dock (mobile) ═══ */}
       {selected && (
-        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
+        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#4c4e54' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className={`text-[10px] ${canCreate ? "text-emerald-400" : "text-amber-400"}`}>
@@ -363,7 +363,7 @@ function POConversionContent() {
 export default function OrdersPage() {
   return (
     <Suspense fallback={
-      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#383a40' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
