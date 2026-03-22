@@ -34,7 +34,7 @@ export default function QuoteDetailError({
 
         <Card>
           <CardContent className="pt-8 pb-8 text-center space-y-4">
-            <div className="mx-auto w-fit rounded-full bg-red-50 p-3">
+            <div className="mx-auto w-fit rounded-full bg-red-600/10 p-3">
               <AlertTriangle className="h-8 w-8 text-red-400" />
             </div>
             <div>

@@ -596,11 +596,11 @@ export default function QuoteDetailPage() {
 
   // 운영 상태 구성
   const statusConfig: Record<QuoteStatus, { label: string; cls: string; icon: React.ReactNode }> = {
-    PENDING:   { label: "접수",        cls: "bg-amber-100 text-amber-800 border-amber-300",     icon: <Clock className="h-3.5 w-3.5" /> },
-    SENT:      { label: "발송 완료",   cls: "bg-blue-100 text-blue-800 border-blue-300",         icon: <Send className="h-3.5 w-3.5" /> },
-    RESPONDED: { label: "비교 가능",   cls: "bg-green-100 text-green-800 border-green-300",      icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    COMPLETED: { label: "구매 완료",   cls: "bg-emerald-100 text-emerald-800 border-emerald-300", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
-    CANCELLED: { label: "취소됨",      cls: "bg-red-100 text-red-800 border-red-300",             icon: <XCircle className="h-3.5 w-3.5" /> },
+    PENDING:   { label: "접수",        cls: "bg-amber-600/10 text-amber-400 border-amber-600/30",     icon: <Clock className="h-3.5 w-3.5" /> },
+    SENT:      { label: "발송 완료",   cls: "bg-blue-600/10 text-blue-400 border-blue-600/30",     icon: <Send className="h-3.5 w-3.5" /> },
+    RESPONDED: { label: "비교 가능",   cls: "bg-emerald-600/10 text-emerald-400 border-emerald-600/30", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    COMPLETED: { label: "구매 완료",   cls: "bg-emerald-600/10 text-emerald-400 border-emerald-600/30", icon: <CheckCircle2 className="h-3.5 w-3.5" /> },
+    CANCELLED: { label: "취소됨",      cls: "bg-red-600/10 text-red-400 border-red-600/30",         icon: <XCircle className="h-3.5 w-3.5" /> },
   };
   const sc = statusConfig[quoteStatus] ?? statusConfig.PENDING;
 
