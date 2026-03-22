@@ -348,7 +348,7 @@ export function InventoryContextPanel({
 
   return (
     <div
-      className={`w-[420px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
+      className={`w-[420px] shrink-0 border-l border-bd bg-el overflow-y-auto sticky top-0 h-screen max-h-screen ${className}`}
     >
       {/* Header */}
       <div className="sticky top-0 z-10 bg-el border-b border-bd px-5 py-4">
