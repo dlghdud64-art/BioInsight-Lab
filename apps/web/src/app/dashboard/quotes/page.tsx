@@ -49,7 +49,7 @@ const STAGE_TABS: { value: string; label: string; stages: ProcurementStage[] }[]
   { value: "waiting",         label: "응답 대기",  stages: ["quote_queue", "quote_waiting"] },
   { value: "partial",         label: "부분 응답",  stages: ["quote_partial"] },
   { value: "review",          label: "비교 필요",  stages: ["quote_received", "quote_compare_review"] },
-  { value: "approval_ready",  label: "승인 준비",  stages: ["approval_ready"] },
+  { value: "po_conversion",  label: "발주 전환",  stages: ["po_conversion_candidate"] },
   { value: "blocked",         label: "차단",       stages: ["blocked"] },
   { value: "hold",            label: "보류",       stages: ["hold"] },
 ];
@@ -124,7 +124,7 @@ function QuotesPageContent() {
   const kpis = useMemo(() => ({
     waiting: stageCounts.waiting ?? 0,
     review: stageCounts.review ?? 0 + (stageCounts.partial ?? 0),
-    approvalReady: stageCounts.approval_ready ?? 0,
+    approvalReady: stageCounts.po_conversion ?? 0,
     blocked: stageCounts.blocked ?? 0,
     total: quotesWithStage.length,
   }), [stageCounts, quotesWithStage]);
@@ -156,7 +156,7 @@ function QuotesPageContent() {
             <span className="text-slate-600">·</span>
             <span className="text-[10px] text-purple-400">{kpis.review} 비교</span>
             <span className="text-slate-600">·</span>
-            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 승인</span>
+            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 발주 후보</span>
             {kpis.blocked > 0 && <><span className="text-slate-600">·</span><span className="text-[10px] text-red-400">{kpis.blocked} 차단</span></>}
           </div>
           <PermissionGate permission="quotes.create">
@@ -359,9 +359,9 @@ function QuotesPageContent() {
                   </Button>
                 </Link>
                 <div className="flex gap-2">
-                  {selectedQuote._stage === "approval_ready" && (
+                  {selectedQuote._stage === "po_conversion_candidate" && (
                     <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/10">
-                      <CheckCircle2 className="h-3 w-3 mr-1" />승인으로 넘기기
+                      <CheckCircle2 className="h-3 w-3 mr-1" />발주 전환 준비
                     </Button>
                   )}
                   {(selectedQuote._stage === "quote_waiting" || selectedQuote._stage === "quote_partial") && (
@@ -396,7 +396,7 @@ function QuotesPageContent() {
             <span className="text-slate-600">·</span>
             <span className="text-[10px] text-amber-400">{kpis.waiting} 대기</span>
             <span className="text-[10px] text-purple-400">{kpis.review} 비교</span>
-            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 승인</span>
+            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 발주 후보</span>
             {kpis.blocked > 0 && <span className="text-[10px] text-red-400">{kpis.blocked} 차단</span>}
           </div>
           <div className="flex-1" />
@@ -411,8 +411,8 @@ function QuotesPageContent() {
           </Button>
           {kpis.approvalReady > 0 && (
             <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white"
-              onClick={() => setStageFilter("approval_ready")}>
-              <CheckCircle2 className="h-3 w-3 mr-1" />승인 준비 {kpis.approvalReady}건
+              onClick={() => setStageFilter("po_conversion")}>
+              <CheckCircle2 className="h-3 w-3 mr-1" />발주 전환 {kpis.approvalReady}건
             </Button>
           )}
         </div>

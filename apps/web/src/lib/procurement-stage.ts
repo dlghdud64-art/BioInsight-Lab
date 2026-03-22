@@ -1,58 +1,85 @@
 /**
  * Procurement Stage Mapping
  *
- * Quote 모델의 기존 QuoteStatus + QuoteVendorRequest 상태를
- * 운영형 stage pipeline으로 매핑합니다.
- *
- * 파이프라인:
- * search_selected → request_draft → request_submitted
+ * Core stage pipeline (approval-free by default):
+ * search → compare → request_assembly → request_submitted
  * → quote_queue → quote_waiting → quote_partial → quote_received → quote_compare_review
- * → approval_ready → approval_review → approved
- * → po_ready → po_created → receiving → stocked
+ * → po_conversion_candidate → po_ready → po_created → receiving → stocked
+ *
+ * Approval은 core stage가 아닌 optional policy layer로 분리:
+ * - approval_policy: "none" | "external_manual" | "in_app_light"
+ * - approval_status: "not_required" | "external_approval_required" | ...
  *
  * DB 스키마 변경 없이 기존 QuoteStatus enum을 활용합니다.
  */
 
+// ── Core Procurement Stage ──────────────────────────────────────
+
 export type ProcurementStage =
-  | "quote_queue"           // 요청 접수, 아직 미발송
-  | "quote_waiting"         // 발송 완료, 응답 대기
-  | "quote_partial"         // 일부 응답 도착
-  | "quote_received"        // 전체 응답 도착
-  | "quote_compare_review"  // 비교 검토 필요
-  | "approval_ready"        // 승인 준비 (견적 정리 완료)
-  | "approval_review"       // 승인 검토 중
-  | "approved"              // 승인 완료
-  | "po_ready"              // 발주 전환 가능
-  | "po_created"            // 발주 생성 완료
-  | "cancelled"             // 취소
-  | "blocked"               // 차단
-  | "hold";                 // 보류
+  | "quote_queue"              // 요청 접수, 아직 미발송
+  | "quote_waiting"            // 발송 완료, 응답 대기
+  | "quote_partial"            // 일부 응답 도착
+  | "quote_received"           // 전체 응답 도착
+  | "quote_compare_review"     // 비교 검토 필요
+  | "po_conversion_candidate"  // 발주 전환 후보 (승인 정책에 따라 바로 또는 승인 후)
+  | "po_ready"                 // 발주 전환 가능
+  | "po_created"               // 발주 생성 완료
+  | "cancelled"                // 취소
+  | "blocked"                  // 차단
+  | "hold";                    // 보류
+
+// ── Approval Policy (optional layer) ────────────────────────────
+
+export type ApprovalPolicy = "none" | "external_manual" | "in_app_light";
+
+export type ApprovalStatus =
+  | "not_required"
+  | "external_approval_required"
+  | "external_approval_pending"
+  | "externally_approved"
+  | "externally_rejected"
+  | "in_app_approval_pending"
+  | "in_app_approved"
+  | "in_app_rejected";
+
+export interface ApprovalReadyPackage {
+  selectedQuoteId: string;
+  selectionReasonSummary: string;
+  blockerStatus: "clear" | "has_exceptions";
+  exceptionFlags: string[];
+  reviewerNote: string;
+  vendorSummary: string;
+  amountSummary: number;
+  leadTimeSummary: string;
+  attachedDocsSummary: string[];
+  budgetImpact: string;
+}
+
+// ── Stage Info ──────────────────────────────────────────────────
 
 export interface StageInfo {
   stage: ProcurementStage;
   label: string;
-  color: string;        // tailwind text color
-  bgColor: string;      // tailwind bg color
-  borderColor: string;  // tailwind border color
-  priority: number;     // 낮을수록 긴급
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  priority: number;
   nextAction: string;
-  queueTarget: "quote" | "approval" | "po" | "done" | "cancelled";
+  queueTarget: "quote" | "po" | "done" | "cancelled";
 }
 
 const STAGE_MAP: Record<ProcurementStage, Omit<StageInfo, "stage">> = {
-  quote_queue:          { label: "요청 접수",      color: "text-slate-400",   bgColor: "bg-el",              borderColor: "border-bd",             priority: 5, nextAction: "발송 대기",     queueTarget: "quote" },
-  quote_waiting:        { label: "회신 대기",      color: "text-amber-400",   bgColor: "bg-amber-600/10",    borderColor: "border-amber-600/30",   priority: 3, nextAction: "응답 확인",     queueTarget: "quote" },
-  quote_partial:        { label: "일부 회신",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "추가 응답 대기", queueTarget: "quote" },
-  quote_received:       { label: "응답 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "비교 검토",     queueTarget: "quote" },
-  quote_compare_review: { label: "비교 검토 필요", color: "text-purple-400",  bgColor: "bg-purple-600/10",   borderColor: "border-purple-600/30",  priority: 0, nextAction: "비교 검토",     queueTarget: "quote" },
-  approval_ready:       { label: "승인 준비",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "승인 요청",     queueTarget: "approval" },
-  approval_review:      { label: "승인 검토 중",   color: "text-amber-400",   bgColor: "bg-amber-600/10",    borderColor: "border-amber-600/30",   priority: 1, nextAction: "승인 판단",     queueTarget: "approval" },
-  approved:             { label: "승인 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 3, nextAction: "발주 전환",     queueTarget: "po" },
-  po_ready:             { label: "발주 가능",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 1, nextAction: "발주 생성",     queueTarget: "po" },
-  po_created:           { label: "발주 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 5, nextAction: "입고 대기",     queueTarget: "done" },
-  cancelled:            { label: "취소됨",         color: "text-red-400",     bgColor: "bg-red-600/5",       borderColor: "border-red-600/20",     priority: 9, nextAction: "—",             queueTarget: "cancelled" },
-  blocked:              { label: "차단",           color: "text-red-400",     bgColor: "bg-red-600/10",      borderColor: "border-red-600/30",     priority: 0, nextAction: "차단 해제",     queueTarget: "quote" },
-  hold:                 { label: "보류",           color: "text-slate-400",   bgColor: "bg-slate-600/10",    borderColor: "border-slate-600/30",   priority: 7, nextAction: "재개",          queueTarget: "quote" },
+  quote_queue:             { label: "요청 접수",      color: "text-slate-400",   bgColor: "bg-el",              borderColor: "border-bd",             priority: 5, nextAction: "발송 대기",     queueTarget: "quote" },
+  quote_waiting:           { label: "회신 대기",      color: "text-amber-400",   bgColor: "bg-amber-600/10",    borderColor: "border-amber-600/30",   priority: 3, nextAction: "응답 확인",     queueTarget: "quote" },
+  quote_partial:           { label: "일부 회신",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "추가 응답 대기", queueTarget: "quote" },
+  quote_received:          { label: "응답 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "비교 검토",     queueTarget: "quote" },
+  quote_compare_review:    { label: "비교 검토 필요", color: "text-purple-400",  bgColor: "bg-purple-600/10",   borderColor: "border-purple-600/30",  priority: 0, nextAction: "비교 검토",     queueTarget: "quote" },
+  po_conversion_candidate: { label: "발주 전환 후보", color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "발주 전환 준비", queueTarget: "po" },
+  po_ready:                { label: "발주 가능",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "발주 생성",     queueTarget: "po" },
+  po_created:              { label: "발주 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 5, nextAction: "입고 대기",     queueTarget: "done" },
+  cancelled:               { label: "취소됨",         color: "text-red-400",     bgColor: "bg-red-600/5",       borderColor: "border-red-600/20",     priority: 9, nextAction: "—",             queueTarget: "cancelled" },
+  blocked:                 { label: "차단",           color: "text-red-400",     bgColor: "bg-red-600/10",      borderColor: "border-red-600/30",     priority: 0, nextAction: "차단 해제",     queueTarget: "quote" },
+  hold:                    { label: "보류",           color: "text-slate-400",   bgColor: "bg-slate-600/10",    borderColor: "border-slate-600/30",   priority: 7, nextAction: "재개",          queueTarget: "quote" },
 };
 
 export function getStageInfo(stage: ProcurementStage): StageInfo {
@@ -61,13 +88,33 @@ export function getStageInfo(stage: ProcurementStage): StageInfo {
 }
 
 /**
- * QuoteStatus + VendorRequest 상태 조합으로 operational stage를 결정합니다.
- *
- * @param quoteStatus - Prisma QuoteStatus enum 값
- * @param vendorRequestCount - 총 vendor request 수
- * @param respondedCount - 응답 도착한 vendor request 수
- * @param isOverdue - 납기 초과 여부
+ * Policy-aware next action label을 반환합니다.
+ * approval_policy에 따라 동일 stage에서 다른 CTA 문구를 줘야 할 때 사용합니다.
  */
+export function getNextActionLabel(stage: ProcurementStage, policy: ApprovalPolicy = "none"): string {
+  if (stage === "po_conversion_candidate") {
+    switch (policy) {
+      case "none": return "발주 전환 준비";
+      case "external_manual": return "승인 패키지 준비";
+      case "in_app_light": return "간이 승인 요청";
+    }
+  }
+  return getStageInfo(stage).nextAction;
+}
+
+/**
+ * Approval policy 기준으로 PO 전환이 가능한지 판단합니다.
+ */
+export function canConvertToPO(policy: ApprovalPolicy, approvalStatus: ApprovalStatus): boolean {
+  switch (policy) {
+    case "none": return true;
+    case "external_manual": return approvalStatus === "externally_approved";
+    case "in_app_light": return approvalStatus === "in_app_approved";
+  }
+}
+
+// ── Stage Derivation ────────────────────────────────────────────
+
 export function deriveStage(
   quoteStatus: string,
   vendorRequestCount: number = 0,
@@ -78,12 +125,11 @@ export function deriveStage(
   if (quoteStatus === "PURCHASED") return "po_created";
 
   if (quoteStatus === "COMPLETED") {
-    // COMPLETED = 견적 비교/정리 완료 → 승인 단계로
-    return "approval_ready";
+    // COMPLETED = 견적 비교/정리 완료 → 발주 전환 후보
+    return "po_conversion_candidate";
   }
 
   if (quoteStatus === "RESPONDED") {
-    // 전체 응답 도착 → 비교 검토 필요
     return "quote_compare_review";
   }
 
@@ -97,9 +143,10 @@ export function deriveStage(
     return "quote_waiting";
   }
 
-  // PENDING = 아직 vendor에게 발송 안 됨
   return "quote_queue";
 }
+
+// ── Queue Stage Groups ──────────────────────────────────────────
 
 /** 견적관리 워크큐에 보여야 할 stage 목록 */
 export const QUOTE_QUEUE_STAGES: ProcurementStage[] = [
@@ -108,14 +155,8 @@ export const QUOTE_QUEUE_STAGES: ProcurementStage[] = [
   "blocked", "hold",
 ];
 
-/** 구매 승인 큐에 보여야 할 stage 목록 */
-export const APPROVAL_QUEUE_STAGES: ProcurementStage[] = [
-  "approval_ready", "approval_review", "approved",
-  "blocked", "hold",
-];
-
 /** 발주전환 큐에 보여야 할 stage 목록 */
 export const PO_QUEUE_STAGES: ProcurementStage[] = [
-  "approved", "po_ready",
+  "po_conversion_candidate", "po_ready",
   "blocked", "hold",
 ];
