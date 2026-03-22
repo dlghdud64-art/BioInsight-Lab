@@ -326,6 +326,15 @@ function QuotesPageContent() {
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
 
+  // Rail open/close handler — single action key
+  const openQuoteContextRail = (caseId: string, source: string = "row") => {
+    const next = selectedQuoteId === caseId ? null : caseId;
+    if (typeof window !== "undefined") {
+      console.log("[QuoteQueue]", next ? "quote_queue_open_rail" : "quote_queue_close_rail", { caseId, source, pathname: window.location.pathname, selectedQuery: next });
+    }
+    setSelectedQuoteId(next);
+  };
+
   // ESC로 rail 닫기
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedQuoteId(null); };
@@ -538,7 +547,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-200">즉시 처리 필요</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-400 text-[10px] font-bold">{urgentQuotes.length}</span>
           </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => setSelectedQuoteId(selectedQuoteId === quote.id ? null : quote.id)} />)}
+          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
         </div>
       )}
 
@@ -550,7 +559,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-200">진행 중</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-400 text-[10px] font-bold">{inProgressQuotes.length}</span>
           </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => setSelectedQuoteId(selectedQuoteId === quote.id ? null : quote.id)} />)}
+          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
         </div>
       )}
 
@@ -565,7 +574,7 @@ function QuotesPageContent() {
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
           </summary>
           <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => setSelectedQuoteId(selectedQuoteId === quote.id ? null : quote.id)} />)}
+            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
           </div>
         </details>
       )}
