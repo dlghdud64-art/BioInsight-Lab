@@ -13,10 +13,10 @@ const PIPELINE_STEPS = [
   { icon: GitCompare, label: "비교", sub: "벤더별 스펙 가격 비교" },
   { icon: FileText, label: "견적", sub: "견적 요청 및 자동 문서" },
   { icon: ShoppingCart, label: "발주", sub: "승인 라인 및 연동" },
-  { icon: PackageCheck, label: "입고", sub: "수령 확인·검수" },
-  { icon: Warehouse, label: "입고/재고", sub: "재고 연동 추적" },
+  { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
 ];
 
+/** Plexus Network — white-accent sharp nodes */
 function PlexusCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
@@ -39,12 +39,13 @@ function PlexusCanvas() {
           y: Math.random() * canvas.height,
           vx: (Math.random() - 0.5) * 0.4,
           vy: (Math.random() - 0.5) * 0.4,
-          r: Math.random() * 1.2 + 0.5,
+          r: Math.random() * 1.5 + 0.8,
         });
       }
     };
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      // White lines
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -53,18 +54,20 @@ function PlexusCanvas() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 150) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(148,163,184,${0.2 - (dist / 150) * 0.2})`;
-            ctx.lineWidth = 0.6; ctx.stroke();
+            ctx.strokeStyle = `rgba(255,255,255,${0.3 - (dist / 150) * 0.3})`;
+            ctx.lineWidth = 0.8; ctx.stroke();
           }
         }
+        // Mouse lines — bright white
         const dxm = p.x - mouse.x, dym = p.y - mouse.y;
         const distm = Math.sqrt(dxm * dxm + dym * dym);
         if (distm < 180) {
           ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y);
-          ctx.strokeStyle = `rgba(59,130,246,${0.3 - (distm / 180) * 0.3})`;
-          ctx.lineWidth = 0.8; ctx.stroke();
+          ctx.strokeStyle = `rgba(255,255,255,${0.4 - (distm / 180) * 0.4})`;
+          ctx.lineWidth = 1.0; ctx.stroke();
         }
       }
+      // White nodes
       for (const p of particles) {
         const dxm = p.x - mouse.x, dym = p.y - mouse.y;
         const distm = Math.sqrt(dxm * dxm + dym * dym);
@@ -73,7 +76,7 @@ function PlexusCanvas() {
         if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(203,213,225,0.8)"; ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,1)"; ctx.fill();
       }
       animId = requestAnimationFrame(draw);
     };
@@ -95,12 +98,12 @@ export function BioInsightHeroSection() {
 
       {/* Background layers */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* Blue glow behind text */}
+        {/* Blue glow */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
         {/* Radial mask */}
         <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at center, transparent 10%, #24252a 90%)" }} />
-        {/* Network — lower opacity for text readability */}
-        <div className="absolute inset-0 z-0 pointer-events-auto opacity-30">
+        {/* Network — 50% opacity for white-accent visibility */}
+        <div className="absolute inset-0 z-0 pointer-events-auto opacity-50">
           <PlexusCanvas />
         </div>
       </div>
@@ -152,7 +155,7 @@ export function BioInsightHeroSection() {
           </Link>
         </div>
 
-        {/* Pipeline */}
+        {/* Pipeline — white-accent icons */}
         <div className="mt-24 w-full max-w-4xl mx-auto border-t border-zinc-700/50 pt-12">
           <p className="text-zinc-400 font-bold text-[10px] tracking-widest uppercase mb-8 text-center">End-to-End Operations Pipeline</p>
           {/* Desktop */}
@@ -162,10 +165,10 @@ export function BioInsightHeroSection() {
               return (
                 <div key={step.label} className="flex items-center">
                   <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
-                    <div className="w-14 h-14 rounded-xl bg-[#2d2e34] border border-zinc-600/50 flex items-center justify-center shadow-xl hover:border-blue-500/50 transition-colors">
-                      <Icon className="h-6 w-6 text-blue-400" strokeWidth={1.8} />
+                    <div className="w-14 h-14 rounded-xl bg-[#2d2e34] border border-zinc-600/50 flex items-center justify-center shadow-xl hover:border-zinc-400 transition-colors">
+                      <Icon className="h-6 w-6 text-white drop-shadow-md" strokeWidth={1.8} />
                     </div>
-                    <span className="text-sm font-bold text-zinc-100">{step.label}</span>
+                    <span className="text-sm font-bold text-white drop-shadow-sm">{step.label}</span>
                     <span className="text-[10px] text-zinc-400 whitespace-nowrap">{step.sub}</span>
                   </div>
                   {idx < PIPELINE_STEPS.length - 1 && (
@@ -181,7 +184,7 @@ export function BioInsightHeroSection() {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md bg-[#2d2e34] border border-zinc-600/50">
-                  <Icon className="h-4 w-4 text-blue-400" strokeWidth={1.8} />
+                  <Icon className="h-4 w-4 text-white" strokeWidth={1.8} />
                   <span className="text-[11px] font-semibold text-zinc-200">{step.label}</span>
                 </div>
               );
