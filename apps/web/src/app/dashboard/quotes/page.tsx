@@ -324,11 +324,16 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
 }
 
 // ── Operating mode chips ──
+// Mode chips — canonical state 기반 operator lens
+const RESPONSE_TRACK_STATES = new Set(["request_not_sent", "awaiting_responses", "response_delayed"]);
+const BLOCKED_STATES = new Set(["condition_check_required", "external_approval_required", "compare_not_ready"]);
+const COMPARE_STATES = new Set(["compare_not_ready", "compare_review_required", "condition_check_required"]);
+
 const MODE_CHIPS = [
-  { key: "urgent",     label: "우선 처리",  filter: (q: Quote) => isDelayed(q) || (q.deliveryDate && new Date(q.deliveryDate).toDateString() === new Date().toDateString()) },
-  { key: "blocked",    label: "차단 있음",  filter: (q: Quote) => q.status === "SENT" && (q.responses?.length ?? 0) === 0 },
-  { key: "reviewable", label: "비교 가능",  filter: (q: Quote) => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) },
-  { key: "convertible",label: "전환 가능",  filter: (q: Quote) => q.status === "COMPLETED" },
+  { key: "urgent",      label: "우선 처리",  filter: (q: Quote) => { const s = deriveRailState(q); return s === "response_delayed" || s === "condition_check_required" || s === "external_approval_required" || (q.deliveryDate && new Date(q.deliveryDate).toDateString() === new Date().toDateString()); } },
+  { key: "blocked",     label: "차단 있음",  filter: (q: Quote) => BLOCKED_STATES.has(deriveRailState(q)) },
+  { key: "today",       label: "오늘 처리",  filter: (q: Quote) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === new Date().toDateString() && q.status !== "COMPLETED" && q.status !== "CANCELLED" },
+  { key: "convertible", label: "전환 가능",  filter: (q: Quote) => deriveRailState(q) === "ready_for_po_conversion" },
 ];
 
 function QuotesPageContent() {
@@ -396,17 +401,39 @@ function QuotesPageContent() {
   // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
   const quotesWithState = useMemo(() => quotes.map(q => ({ quote: q, state: deriveRailState(q) })), [quotes]);
   const summaryStats = useMemo(() => {
-    const waiting = quotesWithState.filter(({ state }) => state === "awaiting_responses" || state === "response_delayed");
-    const review = quotesWithState.filter(({ state }) => state === "compare_not_ready" || state === "compare_review_required" || state === "condition_check_required");
-    const deadlineToday = quotes.filter(q => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED");
+    const tracking = quotesWithState.filter(({ state }) => RESPONSE_TRACK_STATES.has(state));
+    const delayedCount = tracking.filter(({ state }) => state === "response_delayed").length;
+    const review = quotesWithState.filter(({ state }) => COMPARE_STATES.has(state));
+    const condCount = review.filter(({ state }) => state === "condition_check_required").length;
+    const approval = quotesWithState.filter(({ state }) => state === "external_approval_required" || state === "condition_check_required");
     const convertible = quotesWithState.filter(({ state }) => state === "ready_for_po_conversion");
     return {
-      pendingResponse: { count: waiting.length, insight: waiting.length > 0 ? `${waiting.filter(({ state }) => state === "response_delayed").length}건 회신 지연` : "대기 건 없음" },
-      needsReview: { count: review.length, insight: review.length > 0 ? "비교 결과 정리 후 전환 가능" : "검토 대상 없음" },
-      todayDeadline: { count: deadlineToday.length, insight: deadlineToday.length > 0 ? "납기 영향으로 우선 처리 필요" : "오늘 마감 없음" },
-      readyToOrder: { count: convertible.length, insight: convertible.length > 0 ? "차단 없이 다음 단계 이동 가능" : "전환 대상 없음" },
+      responseTracking: {
+        count: tracking.length,
+        insight: tracking.length > 0
+          ? (delayedCount > 0 ? `${delayedCount}건 회신 지연 — 오늘 재요청 판단 필요` : "응답 수집 중 — 비교 가능 여부 대기")
+          : "미응답 또는 미전송 케이스 없음",
+      },
+      compareReview: {
+        count: review.length,
+        insight: review.length > 0
+          ? (condCount > 0 ? `${condCount}건 조건 확인 필요 — 선택안 확정 전` : "선택안 확정 또는 비교 준비 단계")
+          : "검토 대상 없음",
+      },
+      approvalException: {
+        count: approval.length,
+        insight: approval.length > 0
+          ? "승인 패키지 준비 또는 조건 해소 필요"
+          : "승인/예외 처리 대상 없음",
+      },
+      readyToConvert: {
+        count: convertible.length,
+        insight: convertible.length > 0
+          ? "차단 없이 PO 전환 준비 가능"
+          : "전환 대상 없음 — 비교/조건 정리 먼저",
+      },
     };
-  }, [quotesWithState, quotes, today]);
+  }, [quotesWithState]);
 
   // 필터링 + 운영 우선순위 정렬
   const filteredQuotes = useMemo(() => {
@@ -462,10 +489,10 @@ function QuotesPageContent() {
       {/* ── KPI Control Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "회신 대기", ...summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-400" />, filter: "SENT", color: "amber" },
-          { label: "비교 검토 필요", ...summaryStats.needsReview, icon: <RefreshCw className="h-4 w-4 text-purple-400" />, filter: "RESPONDED", color: "purple" },
-          { label: "오늘 마감", ...summaryStats.todayDeadline, icon: <AlertCircle className="h-4 w-4 text-red-400" />, filter: "DEADLINE_TODAY", color: "red" },
-          { label: "전환 가능", ...summaryStats.readyToOrder, icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "COMPLETED", color: "emerald" },
+          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: <Clock className="h-4 w-4 text-amber-400" />, filter: "SENT", color: "amber" },
+          { label: "비교 검토 필요", ...summaryStats.compareReview, icon: <RefreshCw className="h-4 w-4 text-purple-400" />, filter: "RESPONDED", color: "purple" },
+          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: <AlertCircle className="h-4 w-4 text-red-400" />, filter: "DEADLINE_TODAY", color: "red" },
+          { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "COMPLETED", color: "emerald" },
         ].map(({ label, count, insight, icon, filter, color }) => {
           const isActive = statusFilter === filter;
           return (
