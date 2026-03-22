@@ -367,10 +367,13 @@ export async function GET(request: NextRequest) {
           },
           orderBy: { createdAt: "desc" },
         },
+        vendorRequests: {
+          select: { id: true, status: true },
+        },
       },
     });
 
-    const mapped = quotes.map((q: { id: string; title: string; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }> }) => ({
+    const mapped = quotes.map((q: { id: string; title: string; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }>; vendorRequests?: Array<{ id: string; status: string }> }) => ({
       id: q.id,
       title: q.title,
       status: q.status,
@@ -389,6 +392,10 @@ export async function GET(request: NextRequest) {
         vendor: { name: r.vendor?.name || "" },
         totalPrice: r.totalPrice ?? undefined,
         createdAt: r.createdAt.toISOString(),
+      })),
+      vendorRequests: (q.vendorRequests || []).map((vr: { id: string; status: string }) => ({
+        id: vr.id,
+        status: vr.status,
       })),
     }));
 

@@ -38,6 +38,7 @@ import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { FileText } from "lucide-react";
+import { deriveStage, getStageInfo, QUOTE_QUEUE_STAGES, type ProcurementStage } from "@/lib/procurement-stage";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -64,44 +65,37 @@ interface Quote {
     totalPrice?: number;
     createdAt: string;
   }>;
+  vendorRequests?: Array<{
+    id: string;
+    status: string;
+  }>;
 }
 
-// ── 운영 상태 파생 ──────────────────────────────────────────
+// ── 운영 상태 파생 (procurement-stage 기반) ──
 function isDelayed(q: Quote): boolean {
   if (!q.deliveryDate) return false;
   if (q.status === "COMPLETED" || q.status === "CANCELLED") return false;
   return new Date(q.deliveryDate) < new Date();
 }
 
-const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-400",     border: "border-red-600/30" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-600/10",  text: "text-purple-400",  border: "border-purple-600/30" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-400",    border: "border-blue-600/30" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-400",   border: "border-amber-600/30" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/30" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-400",     border: "border-red-600/20" },
-};
+function getQuoteStage(q: Quote): ProcurementStage {
+  const totalVR = q.vendorRequests?.length ?? 0;
+  const respondedVR = q.vendorRequests?.filter(vr => vr.status === "RESPONDED").length ?? 0;
+  return deriveStage(q.status, totalVR, respondedVR, isDelayed(q));
+}
 
 function getOpStatus(q: Quote) {
-  if (isDelayed(q)) return OP_STATUS.지연;
-  switch (q.status) {
-    case "RESPONDED": return OP_STATUS.비교_검토;
-    case "SENT":
-      return (q.responses?.length ?? 0) > 0 ? OP_STATUS.일부_회신 : OP_STATUS.회신_대기;
-    case "PENDING":   return OP_STATUS.요청_접수;
-    case "COMPLETED": return OP_STATUS.발주_완료;
-    case "CANCELLED": return OP_STATUS.취소됨;
-    default:          return OP_STATUS.요청_접수;
+  if (isDelayed(q)) {
+    return { label: "지연", bg: "bg-red-600/10", text: "text-red-400", border: "border-red-600/30" };
   }
+  const stageInfo = getStageInfo(getQuoteStage(q));
+  return { label: stageInfo.label, bg: stageInfo.bgColor, text: stageInfo.color, border: stageInfo.borderColor };
 }
 
 function getPriority(q: Quote): number {
   if (isDelayed(q)) return 0;
-  const map: Record<QuoteStatus, number> = {
-    RESPONDED: 1, SENT: 2, PENDING: 3, COMPLETED: 4, CANCELLED: 5,
-  };
-  return map[q.status] ?? 9;
+  const stageInfo = getStageInfo(getQuoteStage(q));
+  return stageInfo.priority;
 }
 
 // ── 견적 카드 ──────────────────────────────────────────────
@@ -300,19 +294,29 @@ function QuotesPageContent() {
     })
     .sort((a, b) => getPriority(a) - getPriority(b));
 
-  // 운영 요약 카운트
+  // 운영 요약 카운트 — stage 기반
   const today = new Date().toDateString();
+  const quotesWithStage = quotes.map((q) => ({ ...q, _stage: getQuoteStage(q) }));
   const summaryStats = {
-    pendingResponse: quotes.filter((q) => q.status === "SENT").length,
-    needsReview:     quotes.filter((q) => q.status === "RESPONDED").length,
+    pendingResponse: quotesWithStage.filter((q) => q._stage === "quote_waiting" || q._stage === "quote_queue").length,
+    needsReview:     quotesWithStage.filter((q) => q._stage === "quote_compare_review" || q._stage === "quote_received" || q._stage === "quote_partial").length,
     todayDeadline:   quotes.filter((q) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED").length,
-    readyToOrder:    quotes.filter((q) => q.status === "RESPONDED" && (q.responses?.length ?? 0) > 0).length,
+    readyToOrder:    quotesWithStage.filter((q) => q._stage === "approval_ready").length,
   };
 
-  // 섹션 분류 (검색/필터 결과 기준)
-  const urgentQuotes     = filteredQuotes.filter((q) => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
-  const inProgressQuotes = filteredQuotes.filter((q) => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
-  const completedQuotes  = filteredQuotes.filter((q) => q.status === "COMPLETED" || q.status === "CANCELLED");
+  // 섹션 분류 (stage 기반)
+  const urgentQuotes     = filteredQuotes.filter((q) => {
+    const s = getQuoteStage(q);
+    return s === "quote_compare_review" || s === "quote_received" || s === "quote_partial" || isDelayed(q);
+  });
+  const inProgressQuotes = filteredQuotes.filter((q) => {
+    const s = getQuoteStage(q);
+    return !urgentQuotes.includes(q) && s !== "po_created" && s !== "cancelled";
+  });
+  const completedQuotes  = filteredQuotes.filter((q) => {
+    const s = getQuoteStage(q);
+    return s === "po_created" || s === "cancelled";
+  });
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">

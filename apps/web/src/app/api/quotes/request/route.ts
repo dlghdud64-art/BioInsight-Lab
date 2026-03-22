@@ -357,6 +357,12 @@ export async function POST(request: NextRequest) {
             select: { id: true, vendorEmail: true },
           });
 
+          // Quote status를 SENT로 승격 (기본 PENDING에서 전환)
+          await tx.quote.update({
+            where: { id: quote.id },
+            data: { status: "SENT" },
+          });
+
           records.push({
             vendorKey,
             quoteId: quote.id,
