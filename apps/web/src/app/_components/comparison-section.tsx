@@ -60,7 +60,7 @@ export function ComparisonSection() {
   const [activeView, setActiveView] = useState<"before" | "after">("before");
 
   return (
-    <section className="py-6 md:py-10 border-b border-bd bg-gradient-to-b from-white via-slate-50/30 to-white">
+    <section className="py-6 md:py-10 border-b border-bd">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         {/* 헤더 */}
         <div className="text-center mb-4 md:mb-8">
@@ -90,7 +90,7 @@ export function ComparisonSection() {
               className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "after"
                   ? "bg-blue-600 text-white shadow-sm"
-                  : "text-blue-600 bg-blue-50 border border-blue-200 animate-pulse"
+                  : "text-blue-400 bg-blue-600/10 border border-blue-600/30"
               }`}
             >
               LabAxis
@@ -110,7 +110,7 @@ export function ComparisonSection() {
                 기존 방식
               </span>
               <span className="w-8" />
-              <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider">
                 LabAxis 도입 후
               </span>
             </div>
@@ -124,7 +124,7 @@ export function ComparisonSection() {
                 >
                   {/* 단계 라벨 */}
                   <div className="flex items-center gap-2 pr-4">
-                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600">
+                    <span className="flex-shrink-0 w-5 h-5 rounded-full bg-el flex items-center justify-center text-[11px] font-bold text-slate-400">
                       {idx + 1}
                     </span>
                     <span className="text-sm font-semibold text-slate-200 leading-tight">
@@ -135,7 +135,7 @@ export function ComparisonSection() {
                   {/* 기존 방식 */}
                   <div className="flex items-start gap-2 pr-4">
                     <CircleDot className="flex-shrink-0 w-4 h-4 text-slate-400 mt-0.5" />
-                    <p className="text-sm text-slate-600 leading-relaxed">
+                    <p className="text-sm text-slate-400 leading-relaxed">
                       {step.before}
                     </p>
                   </div>
@@ -147,7 +147,7 @@ export function ComparisonSection() {
 
                   {/* BioInsight 도입 후 */}
                   <div className="flex items-start gap-2">
-                    <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-500 mt-0.5" />
+                    <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-400 mt-0.5" />
                     <p className="text-sm text-slate-200 leading-relaxed font-medium">
                       {step.after}
                     </p>
@@ -166,7 +166,7 @@ export function ComparisonSection() {
                 key={idx}
                 className={`border rounded-lg p-3 transition-all ${
                   activeView === "after"
-                    ? "border-blue-200 bg-blue-50/30"
+                    ? "border-blue-600/30 bg-blue-600/5"
                     : "border-bd bg-pn"
                 }`}
               >
@@ -174,8 +174,8 @@ export function ComparisonSection() {
                   <span
                     className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold ${
                       activeView === "after"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-slate-200 text-slate-600"
+                        ? "bg-blue-600/20 text-blue-300"
+                        : "bg-el text-slate-400"
                     }`}
                   >
                     {idx + 1}
@@ -188,7 +188,7 @@ export function ComparisonSection() {
                   className={`text-xs leading-relaxed pl-7 ${
                     activeView === "after"
                       ? "text-slate-200 font-medium"
-                      : "text-slate-600"
+                      : "text-slate-400"
                   }`}
                 >
                   {activeView === "after" ? step.after : step.before}
