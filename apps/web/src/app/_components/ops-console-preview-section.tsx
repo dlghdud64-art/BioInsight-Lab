@@ -39,7 +39,7 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#060a14" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#0a0b0e" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-10">
@@ -59,7 +59,7 @@ export function OpsConsolePreviewSection() {
           {CONSOLE_LAYERS.map((layer) => {
             const Icon = layer.icon;
             return (
-              <div key={layer.title} className="border border-slate-800/60 rounded-lg px-5 py-4 hover:border-slate-700 transition-colors" style={{ backgroundColor: "#0c1221" }}>
+              <div key={layer.title} className="border border-[#1e1f24] rounded-lg px-5 py-4 hover:border-[#2a2b30] transition-colors" style={{ backgroundColor: "#18191e" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="h-4 w-4 text-slate-500" strokeWidth={1.8} />
                   <span className="text-sm font-bold text-slate-200">{layer.title}</span>
@@ -72,7 +72,7 @@ export function OpsConsolePreviewSection() {
         </div>
 
         {/* System Proof Panel */}
-        <div className="border border-slate-800/60 rounded-lg px-5 py-4" style={{ backgroundColor: "#080d19" }}>
+        <div className="border border-[#1e1f24] rounded-lg px-5 py-4" style={{ backgroundColor: "#141518" }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-3">
             System Evidence
           </p>

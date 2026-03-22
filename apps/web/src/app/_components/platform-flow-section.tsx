@@ -38,7 +38,7 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24 border-b border-slate-800/60" style={{ backgroundColor: "#060a14" }}>
+    <section className="py-16 md:py-24 border-b border-[#1e1f24]" style={{ backgroundColor: "#0a0b0e" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-12">
@@ -60,8 +60,8 @@ export function PlatformFlowSection() {
             return (
               <div
                 key={item.title}
-                className="rounded-lg p-4 md:p-5 border border-slate-800/60 hover:border-slate-700 transition-colors"
-                style={{ backgroundColor: "#0c1221" }}
+                className="rounded-lg p-4 md:p-5 border border-[#1e1f24] hover:border-[#2a2b30] transition-colors"
+                style={{ backgroundColor: "#18191e" }}
               >
                 <div className="flex items-start gap-4">
                   <Icon className="h-4 w-4 text-slate-600 flex-shrink-0 mt-1" strokeWidth={1.8} />
