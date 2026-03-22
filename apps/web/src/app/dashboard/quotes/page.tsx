@@ -768,7 +768,9 @@ function QuotesPageContent() {
           subtitle={`${selectedQuote.title} · ${selectedSignals.badge}`}
           phase="ready"
           primaryAction={{
-            label: selectedSignals.ctaLabel,
+            label: activeWorkWindow === "compare_review"
+              ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
+              : selectedSignals.ctaLabel,
             onClick: () => {
               console.log("[QuoteQueue] quote_work_window_action", { caseId: selectedQuote.id, actionKey: activeWorkWindow });
               setActiveWorkWindow(null);
@@ -804,13 +806,91 @@ function QuotesPageContent() {
                 <div className="text-xs text-slate-500">현재 회신: {selectedQuote.responses?.length ?? 0}건</div>
               </div>
             )}
-            {activeWorkWindow === "compare_review" && (
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-200">비교 결과 정리</p>
-                <p className="text-xs text-slate-400">수신된 견적을 비교하고 선택안을 확정합니다. blocker가 있으면 해소한 뒤 다음 단계로 넘깁니다.</p>
-                <div className="text-xs text-slate-500">비교 대상: {selectedQuote.responses?.length ?? 0}건</div>
-              </div>
-            )}
+            {activeWorkWindow === "compare_review" && (() => {
+              const sqrc = selectedQuote.responses?.length ?? 0;
+              const validQuotes = sqrc;
+              const hasSelection = selectedQuote.status === "COMPLETED";
+              const blockers: { label: string; reason: string; action: string }[] = [];
+              if (validQuotes < 2) blockers.push({ label: "유효 견적 부족", reason: "비교에 필요한 견적 수가 부족합니다", action: "추가 회신 확보" });
+              if (!hasSelection && validQuotes >= 2) blockers.push({ label: "선택안 미확정", reason: "비교는 가능하지만 선택안이 아직 확정되지 않았습니다", action: "선택안 확정" });
+              const canConfirm = validQuotes >= 2 && blockers.length === 0;
+              const responses = selectedQuote.responses ?? [];
+              const prices = responses.map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
+
+              return (
+                <div className="space-y-4">
+                  {/* A. Compare Snapshot Block */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 현황</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{sqrc}</p><p className="text-[10px] text-slate-500">수신 견적</p></div>
+                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{validQuotes}</p><p className="text-[10px] text-slate-500">유효 견적</p></div>
+                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{selectedQuote.items.length}</p><p className="text-[10px] text-slate-500">품목</p></div>
+                      <div><p className={`text-lg font-bold ${hasSelection ? "text-emerald-400" : "text-amber-400"}`}>{hasSelection ? "확정" : "미확정"}</p><p className="text-[10px] text-slate-500">선택안</p></div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-snug">
+                      {validQuotes >= 2 ? "비교 자체는 가능하지만 선택안 확정이 남아 있습니다" : "유효 견적이 부족해 비교 후보가 안정적으로 만들어지지 않았습니다"}
+                    </p>
+                  </div>
+
+                  {/* B. Candidate Decision Block */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 후보</p>
+                    {responses.length > 0 ? (
+                      <div className="space-y-2">
+                        {responses.slice(0, 2).map((r, idx) => {
+                          const isRecommended = idx === 0 && prices.length > 0;
+                          return (
+                            <div key={r.id} className={`rounded border p-3 ${isRecommended ? "border-blue-600/30 bg-blue-600/5" : "border-bd"}`}>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-xs font-medium text-slate-200">{r.vendor.name || "공급사"}</span>
+                                  {isRecommended && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-400 border border-blue-600/20">추천</span>}
+                                </div>
+                                {r.totalPrice && <span className="text-xs font-semibold tabular-nums text-slate-100">₩{r.totalPrice.toLocaleString("ko-KR")}</span>}
+                              </div>
+                              <p className="text-[10px] text-slate-500">
+                                {isRecommended ? "가격 우위 · 기존 거래처" : "대안 후보"}
+                              </p>
+                            </div>
+                          );
+                        })}
+                        {responses.length > 2 && <p className="text-[10px] text-slate-500">+{responses.length - 2}건 더</p>}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-slate-500 py-3">수신 견적이 없어 비교 후보를 구성할 수 없습니다. 추가 회신 확보가 필요합니다.</p>
+                    )}
+                  </div>
+
+                  {/* C. Blocker & Handoff Block */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">차단 / 다음 단계</p>
+                    {blockers.length > 0 ? (
+                      <div className="space-y-2 mb-3">
+                        {blockers.map((b, idx) => (
+                          <div key={idx} className="rounded border border-amber-600/20 bg-amber-600/5 px-3 py-2">
+                            <div className="flex items-center gap-2 text-xs mb-0.5">
+                              <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                              <span className="text-amber-300 font-medium">{b.label}</span>
+                            </div>
+                            <p className="text-[10px] text-slate-400 pl-5">{b.reason}</p>
+                            <p className="text-[10px] text-blue-400 pl-5 mt-0.5">해소 액션: {b.action}</p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-xs text-emerald-400 mb-3">
+                        <CheckCircle2 className="h-3.5 w-3.5" />차단 없음 — 선택안 확정 가능
+                      </div>
+                    )}
+                    <div className="flex justify-between text-xs pt-2 border-t border-bd/50">
+                      <span className="text-slate-400">다음 목적지</span>
+                      <span className="text-slate-200">{canConfirm ? "승인 패키지 준비 또는 발주 전환" : "조건 해소 후 확정"}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {activeWorkWindow === "approval_prep" && (
               <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
                 <p className="text-xs font-medium text-slate-200">승인 패키지 준비</p>
