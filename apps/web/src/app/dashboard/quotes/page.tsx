@@ -22,6 +22,7 @@ import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
+import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { FileText } from "lucide-react";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
@@ -95,12 +96,15 @@ function deriveRailState(q: Quote): RailState {
 }
 
 // ── 상태별 exact 매핑 테이블 ──
+type WorkWindowKey = "request_send" | "followup_send" | "compare_review" | "approval_prep" | "po_conversion" | null;
+
 const RAIL_STATE_MAP: Record<RailState, {
   badge: string; headerSummary: string; urgency: string;
   status: string; blocker: string; nextAction: string; compareReady: string; poReady: string;
   snapshotNote: string; handoffTarget: string; handoffStatus: string;
   aiRecommendation: string;
   ctaLabel: string; ctaVariant: "default" | "outline"; secondaryCta: string; tertiaryCta: string;
+  actionKey: WorkWindowKey;
 }> = {
   request_not_sent: {
     badge: "요청 발송 전", headerSummary: "아직 공급사에 견적 요청이 발송되지 않았습니다", urgency: "첫 액션이 필요합니다",
@@ -109,6 +113,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "견적 요청 발송 흐름", handoffStatus: "아직 다음 단계 이동 전",
     aiRecommendation: "AI 추천: 현재는 비교나 검토보다 견적 요청 발송이 우선입니다",
     ctaLabel: "견적 요청 발송", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    actionKey: "request_send",
   },
   awaiting_responses: {
     badge: "회신 대기", headerSummary: "일부 공급사 응답을 기다리는 중입니다", urgency: "회신 수집 후 비교 가능 여부가 결정됩니다",
@@ -117,6 +122,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "회신 수집 유지", handoffStatus: "유효 견적 확보 후 비교 검토",
     aiRecommendation: "AI 추천: 회신 수집이 끝날 때까지 비교 확정보다 응답 추적이 더 중요합니다",
     ctaLabel: "회신 확인", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    actionKey: null,
   },
   response_delayed: {
     badge: "회신 지연", headerSummary: "기대 응답 시점을 넘긴 공급사가 있습니다", urgency: "오늘 재요청 여부 판단이 필요합니다",
@@ -125,6 +131,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "재요청 / 공급사 재확인", handoffStatus: "회신 확보 전 비교 보류",
     aiRecommendation: "AI 추천: 기존 거래 이력이 있다면 신규 탐색보다 재요청이 우선일 수 있습니다",
     ctaLabel: "재요청 보내기", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    actionKey: "followup_send",
   },
   compare_not_ready: {
     badge: "비교 준비 부족", headerSummary: "비교에 필요한 유효 견적 수가 부족합니다", urgency: "추가 회신 확보가 우선입니다",
@@ -133,6 +140,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "추가 회신 확보", handoffStatus: "비교 준비 중",
     aiRecommendation: "AI 추천: 유효 견적 수를 먼저 확보해야 비교 결과의 신뢰도가 올라갑니다",
     ctaLabel: "추가 회신 확보", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    actionKey: "followup_send",
   },
   compare_review_required: {
     badge: "비교 검토 필요", headerSummary: "비교는 가능하지만 선택안 확정이 남아 있습니다", urgency: "비교 검토 후 다음 단계로 넘길 수 있습니다",
@@ -141,6 +149,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "Compare Review Center", handoffStatus: "선택안 확정 필요",
     aiRecommendation: "AI 추천: 현재는 추가 수집보다 비교 결과 정리와 선택안 확정이 우선입니다",
     ctaLabel: "비교 결과 정리", ctaVariant: "default", secondaryCta: "비교 열기", tertiaryCta: "닫기",
+    actionKey: "compare_review",
   },
   condition_check_required: {
     badge: "조건 확인 필요", headerSummary: "문서 또는 조건 이슈가 남아 있어 확정이 불가합니다", urgency: "확인 완료 전에는 다음 단계 진행이 제한됩니다",
@@ -149,6 +158,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 발주 전환 검토 가능",
     aiRecommendation: "AI 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
     ctaLabel: "조건 확인", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    actionKey: "compare_review",
   },
   external_approval_required: {
     badge: "외부 승인 필요", headerSummary: "승인 패키지 준비 또는 승인 결과 반영이 필요합니다", urgency: "외부 승인 완료 전에는 발주 전환 불가",
@@ -157,6 +167,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "승인 패키지 준비", handoffStatus: "외부 승인 완료 후 PO 전환",
     aiRecommendation: "AI 추천: 승인 패키지 정리 후 외부 승인 상태만 반영하면 발주 전환으로 이어질 수 있습니다",
     ctaLabel: "승인 패키지 준비", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+    actionKey: "approval_prep",
   },
   ready_for_po_conversion: {
     badge: "전환 가능", headerSummary: "차단 없이 발주 전환 준비가 가능한 상태입니다", urgency: "지금 전환하면 다음 처리로 바로 이어집니다",
@@ -165,6 +176,7 @@ const RAIL_STATE_MAP: Record<RailState, {
     handoffTarget: "PO Conversion Workbench", handoffStatus: "즉시 전환 가능",
     aiRecommendation: "AI 추천: 현재 케이스는 추가 검토보다 발주 전환 준비를 우선해도 됩니다",
     ctaLabel: "발주 전환 준비", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+    actionKey: "po_conversion",
   },
 };
 
@@ -200,6 +212,7 @@ function getOpSignals(q: Quote) {
     handoffStatus: m.handoffStatus,
     secondaryCta: m.secondaryCta,
     tertiaryCta: m.tertiaryCta,
+    actionKey: m.actionKey,
   };
 }
 
@@ -325,6 +338,7 @@ function QuotesPageContent() {
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
+  const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
 
   // Rail open/close handler — single action key
   const openQuoteContextRail = (caseId: string, source: string = "row") => {
@@ -723,7 +737,13 @@ function QuotesPageContent() {
           {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
             <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}
-              onClick={() => { /* rail 내 action — 향후 workbench entry 연결 */ }}>
+              onClick={() => {
+                if (selectedSignals.actionKey) {
+                  console.log("[QuoteQueue] quote_rail_cta_clicked", { caseId: selectedQuote.id, actionKey: selectedSignals.actionKey, uiState: selectedSignals.railState });
+                  setActiveWorkWindow(selectedSignals.actionKey);
+                }
+              }}
+              disabled={!selectedSignals.actionKey}>
               {selectedSignals.ctaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
             </Button>
             <div className="flex gap-1.5">
@@ -738,6 +758,82 @@ function QuotesPageContent() {
       })()}
 
       </div>{/* end flex container */}
+
+      {/* ═══ Center Work Window — rail CTA에서 열리는 task surface ═══ */}
+      {activeWorkWindow && selectedQuote && selectedSignals && (
+        <CenterWorkWindow
+          open={true}
+          onClose={() => setActiveWorkWindow(null)}
+          title={selectedSignals.ctaLabel}
+          subtitle={`${selectedQuote.title} · ${selectedSignals.badge}`}
+          phase="ready"
+          primaryAction={{
+            label: selectedSignals.ctaLabel,
+            onClick: () => {
+              console.log("[QuoteQueue] quote_work_window_action", { caseId: selectedQuote.id, actionKey: activeWorkWindow });
+              setActiveWorkWindow(null);
+            },
+          }}
+          secondaryAction={{ label: "닫기", onClick: () => setActiveWorkWindow(null) }}
+        >
+          <div className="space-y-4">
+            {/* Work window header context */}
+            <div className="rounded-lg border border-bd bg-pn p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus?.bg} ${selectedOpStatus?.text} ${selectedOpStatus?.border}`}>
+                  {selectedSignals.badge}
+                </span>
+                <span className="text-xs text-slate-400">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
+              </div>
+              <h3 className="text-sm font-semibold text-slate-100 mb-1">{selectedQuote.title}</h3>
+              <p className="text-xs text-slate-400">{selectedSignals.summary}</p>
+            </div>
+
+            {/* Action-specific content */}
+            {activeWorkWindow === "request_send" && (
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-200">견적 요청 발송</p>
+                <p className="text-xs text-slate-400">선택한 공급사에 견적 요청을 발송합니다. 발송 후 회신 수집이 시작됩니다.</p>
+                <div className="text-xs text-slate-500">품목: {selectedQuote.items.length}건</div>
+              </div>
+            )}
+            {activeWorkWindow === "followup_send" && (
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-200">재요청 / 추가 회신 확보</p>
+                <p className="text-xs text-slate-400">미응답 공급사에 재요청하거나 추가 공급사를 탐색합니다.</p>
+                <div className="text-xs text-slate-500">현재 회신: {selectedQuote.responses?.length ?? 0}건</div>
+              </div>
+            )}
+            {activeWorkWindow === "compare_review" && (
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-200">비교 결과 정리</p>
+                <p className="text-xs text-slate-400">수신된 견적을 비교하고 선택안을 확정합니다. blocker가 있으면 해소한 뒤 다음 단계로 넘깁니다.</p>
+                <div className="text-xs text-slate-500">비교 대상: {selectedQuote.responses?.length ?? 0}건</div>
+              </div>
+            )}
+            {activeWorkWindow === "approval_prep" && (
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-200">승인 패키지 준비</p>
+                <p className="text-xs text-slate-400">외부 승인에 필요한 정보를 정리하고 전달 상태를 기록합니다.</p>
+              </div>
+            )}
+            {activeWorkWindow === "po_conversion" && (
+              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                <p className="text-xs font-medium text-slate-200">발주 전환 준비</p>
+                <p className="text-xs text-slate-400">line item을 확정하고 발주 조건을 검토한 뒤 PO를 생성합니다.</p>
+                <div className="text-xs text-slate-500">품목: {selectedQuote.items.length}건</div>
+              </div>
+            )}
+
+            {/* AI recommendation */}
+            {selectedSignals.aiRecommendation && (
+              <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />{selectedSignals.aiRecommendation}
+              </p>
+            )}
+          </div>
+        </CenterWorkWindow>
+      )}
     </div>
   );
 }
