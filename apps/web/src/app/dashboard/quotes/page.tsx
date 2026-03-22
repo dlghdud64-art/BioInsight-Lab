@@ -274,18 +274,17 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           </div>
         </div>
 
-        {/* State-aware CTA */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[100px]">
-          <Link href={`/quotes/${quote.id}`}>
-            <Button
-              size="sm"
-              variant={signals.ctaVariant}
-              className={`h-7 text-xs w-full ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-            >
-              {signals.ctaLabel}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </Link>
+        {/* State-aware CTA — rail open only, no page navigation */}
+        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="sm"
+            variant={signals.ctaVariant}
+            className={`h-7 text-xs w-full ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+            onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+          >
+            {signals.ctaLabel}
+            <ArrowRight className="h-3 w-3 ml-1" />
+          </Button>
           {/* 다음 액션 힌트 */}
           <span className="text-[9px] text-slate-500 text-center">다음: {signals.nextAction}</span>
         </div>
@@ -371,19 +370,20 @@ function QuotesPageContent() {
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
   const selectedOpStatus = selectedQuote ? getOpStatus(selectedQuote) : null;
 
-  // 운영 요약 — control card 데이터
+  // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
+  const quotesWithState = useMemo(() => quotes.map(q => ({ quote: q, state: deriveRailState(q) })), [quotes]);
   const summaryStats = useMemo(() => {
-    const sent = quotes.filter(q => q.status === "SENT");
-    const responded = quotes.filter(q => q.status === "RESPONDED");
+    const waiting = quotesWithState.filter(({ state }) => state === "awaiting_responses" || state === "response_delayed");
+    const review = quotesWithState.filter(({ state }) => state === "compare_not_ready" || state === "compare_review_required" || state === "condition_check_required");
     const deadlineToday = quotes.filter(q => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED");
-    const readyToConvert = quotes.filter(q => q.status === "COMPLETED" || (q.status === "RESPONDED" && (q.responses?.length ?? 0) > 0));
+    const convertible = quotesWithState.filter(({ state }) => state === "ready_for_po_conversion");
     return {
-      pendingResponse: { count: sent.length, insight: sent.length > 0 ? `${sent.filter(q => (q.responses?.length ?? 0) === 0).length}건은 아직 회신 없음` : "대기 건 없음" },
-      needsReview: { count: responded.length, insight: responded.length > 0 ? "비교 결과 정리 후 전환 가능" : "검토 대상 없음" },
+      pendingResponse: { count: waiting.length, insight: waiting.length > 0 ? `${waiting.filter(({ state }) => state === "response_delayed").length}건 회신 지연` : "대기 건 없음" },
+      needsReview: { count: review.length, insight: review.length > 0 ? "비교 결과 정리 후 전환 가능" : "검토 대상 없음" },
       todayDeadline: { count: deadlineToday.length, insight: deadlineToday.length > 0 ? "납기 영향으로 우선 처리 필요" : "오늘 마감 없음" },
-      readyToOrder: { count: readyToConvert.length, insight: readyToConvert.length > 0 ? "차단 없이 다음 단계 이동 가능" : "전환 대상 없음" },
+      readyToOrder: { count: convertible.length, insight: convertible.length > 0 ? "차단 없이 다음 단계 이동 가능" : "전환 대상 없음" },
     };
-  }, [quotes, today]);
+  }, [quotesWithState, quotes, today]);
 
   // 필터링 + 운영 우선순위 정렬
   const filteredQuotes = useMemo(() => {
@@ -711,16 +711,15 @@ function QuotesPageContent() {
 
           </div>{/* end scrollable body */}
 
-          {/* G. Bottom sticky action — 3 canonical CTA */}
+          {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
-            <Link href={`/quotes/${selectedQuote.id}`} className="block">
-              <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}>
-                {selectedSignals.ctaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
-              </Button>
-            </Link>
+            <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}
+              onClick={() => { /* rail 내 action — 향후 workbench entry 연결 */ }}>
+              {selectedSignals.ctaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
+            </Button>
             <div className="flex gap-1.5">
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
-                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">{selectedSignals.secondaryCta}</Button>
+                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">전체 상세 열기</Button>
               </Link>
               <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={() => setSelectedQuoteId(null)}>{selectedSignals.tertiaryCta}</Button>
             </div>
