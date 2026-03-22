@@ -41,6 +41,20 @@ const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTab
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then(m => m.AddInventoryModal), { ssr: false });
 const InventoryAiAssistantPanel = dynamic(() => import("@/components/ai/inventory-ai-assistant-panel").then(m => m.InventoryAiAssistantPanel), { ssr: false });
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then(m => m.OpsExecutionContext), { ssr: false });
+
+/** OpsExecutionContext의 work-queue fetch 실패가 inventory 전체를 죽이지 않게 하는 safe wrapper */
+function OpsExecutionContextSafe(props: { entityType: string; entityId: string; compact?: boolean; className?: string }) {
+  try {
+    return <OpsExecutionContext {...props} />;
+  } catch {
+    return (
+      <div className={`text-xs text-slate-500 ${props.className ?? ""}`}>
+        <p>일부 운영 정보를 불러오지 못했습니다</p>
+        <p className="text-[10px] text-slate-600">기본 재고 검토는 계속할 수 있습니다</p>
+      </div>
+    );
+  }
+}
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
@@ -2599,13 +2613,15 @@ function InventoryPageContent() {
                   </div>
                 </div>
 
-                {/* 운영 실행 현황 */}
-                <OpsExecutionContext
-                  entityType="INVENTORY_RESTOCK"
-                  entityId={selectedItem.id}
-                  compact
-                  className="mt-4 pt-4 border-t border-bd  border-bd"
-                />
+                {/* 운영 실행 현황 — OpsExecutionContext fetch 실패 시 section fallback */}
+                <Suspense fallback={<div className="mt-4 pt-4 border-t border-bd text-xs text-slate-500">운영 상태 로딩 중...</div>}>
+                  <OpsExecutionContextSafe
+                    entityType="INVENTORY_RESTOCK"
+                    entityId={selectedItem.id}
+                    compact
+                    className="mt-4 pt-4 border-t border-bd"
+                  />
+                </Suspense>
               </>
             )}
           </SheetContent>
