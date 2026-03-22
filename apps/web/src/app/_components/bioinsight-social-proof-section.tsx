@@ -29,7 +29,7 @@ const metrics = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section className="border-b border-[#1e1f24]" style={{ backgroundColor: "#111216" }}>
+    <section className="border-b border-[#1e1f24]" style={{ backgroundColor: "#16181d" }}>
       <div className="max-w-5xl mx-auto px-4">
         <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-800/50">
           {metrics.map((metric) => {
@@ -42,7 +42,7 @@ export function BioInsightSocialProofSection() {
                     <span className="text-sm font-bold text-slate-200 leading-none">{metric.value}</span>
                     <span className="text-[11px] font-medium text-slate-400 leading-none">{metric.label}</span>
                   </div>
-                  <div className="text-[10px] text-slate-600 font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
                 </div>
               </div>
             );

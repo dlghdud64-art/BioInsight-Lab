@@ -39,17 +39,17 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#0a0b0e" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#111318" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
             Operations Console
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-slate-100 tracking-tight mb-2">
             4개 운영 계층으로 구매 운영을 통제합니다
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 max-w-lg">
+          <p className="text-xs md:text-sm text-slate-400 max-w-lg">
             작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 계층이 운영 단계에 맞는 통제를 제공합니다.
           </p>
         </div>
@@ -59,21 +59,21 @@ export function OpsConsolePreviewSection() {
           {CONSOLE_LAYERS.map((layer) => {
             const Icon = layer.icon;
             return (
-              <div key={layer.title} className="border border-[#1e1f24] rounded-lg px-5 py-4 hover:border-[#2a2b30] transition-colors" style={{ backgroundColor: "#18191e" }}>
+              <div key={layer.title} className="border border-[#1e1f24] rounded-lg px-5 py-4 hover:border-[#2a2b30] transition-colors" style={{ backgroundColor: "#1e2026" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="h-4 w-4 text-slate-500" strokeWidth={1.8} />
                   <span className="text-sm font-bold text-slate-200">{layer.title}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 leading-relaxed mb-1.5">{layer.purpose}</p>
-                <p className="text-[10px] text-slate-600 font-medium">{layer.items}</p>
+                <p className="text-[10px] text-slate-500 font-medium">{layer.items}</p>
               </div>
             );
           })}
         </div>
 
         {/* System Proof Panel */}
-        <div className="border border-[#1e1f24] rounded-lg px-5 py-4" style={{ backgroundColor: "#141518" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-3">
+        <div className="border border-[#1e1f24] rounded-lg px-5 py-4" style={{ backgroundColor: "#1a1c21" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
             System Evidence
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -81,8 +81,8 @@ export function OpsConsolePreviewSection() {
               const Icon = proof.icon;
               return (
                 <div key={proof.text} className="flex items-center gap-2.5 py-1">
-                  <Icon className="h-3.5 w-3.5 text-slate-600 flex-shrink-0" strokeWidth={1.8} />
-                  <span className="text-xs text-slate-500">{proof.text}</span>
+                  <Icon className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" strokeWidth={1.8} />
+                  <span className="text-xs text-slate-400">{proof.text}</span>
                 </div>
               );
             })}

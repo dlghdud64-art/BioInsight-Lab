@@ -38,17 +38,17 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24 border-b border-[#1e1f24]" style={{ backgroundColor: "#0a0b0e" }}>
+    <section className="py-16 md:py-24 border-b border-[#1e1f24]" style={{ backgroundColor: "#111318" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-12">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-600 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
             Operational Value
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-slate-100 tracking-tight mb-2">
             각 단계에서 무엇이 달라지는가
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 max-w-lg">
+          <p className="text-xs md:text-sm text-slate-400 max-w-lg">
             기존 방식의 병목을 LabAxis 운영 파이프라인이 어떻게 해소하는지 보여드립니다.
           </p>
         </div>
@@ -61,15 +61,15 @@ export function PlatformFlowSection() {
               <div
                 key={item.title}
                 className="rounded-lg p-4 md:p-5 border border-[#1e1f24] hover:border-[#2a2b30] transition-colors"
-                style={{ backgroundColor: "#18191e" }}
+                style={{ backgroundColor: "#1e2026" }}
               >
                 <div className="flex items-start gap-4">
-                  <Icon className="h-4 w-4 text-slate-600 flex-shrink-0 mt-1" strokeWidth={1.8} />
+                  <Icon className="h-4 w-4 text-slate-500 flex-shrink-0 mt-1" strokeWidth={1.8} />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-semibold text-slate-200 mb-2">{item.title}</h3>
                     <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                       <div className="flex-1">
-                        <p className="text-xs text-slate-600 leading-relaxed">
+                        <p className="text-xs text-slate-500 leading-relaxed">
                           <span className="font-medium">기존</span> {item.before}
                         </p>
                       </div>
