@@ -406,7 +406,11 @@ export default function AnalyticsPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 py-4">카테고리 데이터가 아직 없습니다.</p>
+                  <div className="py-4 space-y-2">
+                    <p className="text-sm text-slate-500">카테고리 데이터가 아직 없습니다</p>
+                    <p className="text-[10px] text-slate-600">견적 관리와 구매 기록이 쌓이면 카테고리별 초과 위험을 보여줍니다</p>
+                    <Link href="/dashboard/quotes" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">견적 운영 워크큐 열기 <ArrowRight className="h-3 w-3" /></Link>
+                  </div>
                 )}
 
                 <div className="mt-4 pt-3 border-t border-bd">
@@ -468,7 +472,11 @@ export default function AnalyticsPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 py-4">공급사 데이터가 아직 없습니다.</p>
+                  <div className="py-4 space-y-2">
+                    <p className="text-sm text-slate-500">공급사 데이터가 아직 없습니다</p>
+                    <p className="text-[10px] text-slate-600">구매 이력이 쌓이면 공급사 집중도와 협상 리스크를 보여줍니다</p>
+                    <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">구매 내역 보기 <ArrowRight className="h-3 w-3" /></Link>
+                  </div>
                 )}
 
                 <div className="mt-4 pt-3 border-t border-bd">
@@ -513,7 +521,12 @@ export default function AnalyticsPage() {
                   }
 
                   if (anomalies.length === 0) {
-                    return <p className="text-sm text-slate-500 py-4">현재 이상 패턴이 감지되지 않았습니다.</p>;
+                    return (
+                      <div className="py-4 space-y-2">
+                        <p className="text-sm text-slate-500">현재 이상 패턴이 감지되지 않았습니다</p>
+                        <p className="text-[10px] text-slate-600">반복 구매와 고액 단건 지출이 쌓이면 비정상 패턴을 자동 탐지합니다</p>
+                      </div>
+                    );
                   }
 
                   return (
@@ -580,7 +593,13 @@ export default function AnalyticsPage() {
                   }
 
                   if (reorderCandidates.length === 0) {
-                    return <p className="text-sm text-slate-500 py-4">반복 구매 데이터가 쌓이면 예측이 시작됩니다.</p>;
+                    return (
+                      <div className="py-4 space-y-2">
+                        <p className="text-sm text-slate-500">반복 구매 데이터가 쌓이면 재주문 예측이 시작됩니다</p>
+                        <p className="text-[10px] text-slate-600">구매 이력과 재고 소비 패턴이 축적되면 재주문 시점을 자동 제안합니다</p>
+                        <Link href="/test/search" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">소싱 시작하기 <ArrowRight className="h-3 w-3" /></Link>
+                      </div>
+                    );
                   }
 
                   return (
@@ -750,32 +769,32 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* ══ 빠른 이동 ══ */}
+        {/* ══ 조치 바로가기 ══ */}
         <div className="rounded-md border border-bd bg-pn p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">빠른 이동</p>
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">조치 바로가기</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Link href="/dashboard/purchases">
-              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
-                <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
-                구매내역 보기
-              </button>
-            </Link>
             <Link href="/dashboard/budget">
               <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
-                <CreditCard className="h-3.5 w-3.5 text-slate-500" />
-                예산 검토
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                예산 위험 검토
               </button>
             </Link>
-            <Link href="/dashboard/analytics">
+            <Link href="/dashboard/purchases">
               <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
                 <Store className="h-3.5 w-3.5 text-slate-500" />
-                공급사 분석
+                공급사 의존 점검
               </button>
             </Link>
-            <Link href="/test/compare">
+            <Link href="/dashboard/stock-risk">
               <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
                 <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
-                비교 재진입
+                재주문 후보 열기
+              </button>
+            </Link>
+            <Link href="/dashboard/quotes">
+              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
+                <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
+                견적 워크큐 열기
               </button>
             </Link>
           </div>
