@@ -122,7 +122,7 @@ export default function SearchPage() {
   );
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#383a40' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} />
 
@@ -286,7 +286,7 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — scaled, readable, action-first ═══ */}
       {hasSearched && (
-        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4c4e54' }}>
+        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">

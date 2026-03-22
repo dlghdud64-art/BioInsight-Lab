@@ -75,11 +75,11 @@ export default function RequestAssemblyPage() {
   const canProceed = level !== "blocked";
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#383a40' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ Assembly Header ═══ */}
       <div className="shrink-0">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-2.5 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center gap-2">
             <Link href="/" className="shrink-0">
               <span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span>
@@ -94,7 +94,7 @@ export default function RequestAssemblyPage() {
         </div>
 
         {/* Assembly status strip */}
-        <div className="flex items-center gap-3 px-4 py-2 border-b border-bd flex-wrap" style={{ backgroundColor: '#424448' }}>
+        <div className="flex items-center gap-3 px-4 py-2 border-b border-bd flex-wrap" style={{ backgroundColor: '#393b3f' }}>
           {/* Readiness badge */}
           <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${config.color}`}>
             <ReadinessIcon className="h-3 w-3" />
@@ -163,7 +163,7 @@ export default function RequestAssemblyPage() {
             </div>
 
             {/* Side rail — desktop only */}
-            <div className="hidden lg:flex w-[320px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#424448' }}>
+            <div className="hidden lg:flex w-[320px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#393b3f' }}>
               {/* Readiness */}
               <div className="px-4 py-3 border-b border-bd">
                 <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">요청 준비 상태</div>
@@ -267,7 +267,7 @@ export default function RequestAssemblyPage() {
 
       {/* ═══ Sticky Action Dock — dual CTA ═══ */}
       {quoteItems.length > 0 && (
-        <div className="shrink-0 border-t-2 border-bd px-4 md:px-6 py-3" style={{ backgroundColor: '#4c4e54' }}>
+        <div className="shrink-0 border-t-2 border-bd px-4 md:px-6 py-3" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center justify-between">
             {/* Left: readiness + summary */}
             <div className="flex items-center gap-2.5 min-w-0">
@@ -332,9 +332,9 @@ function VendorGroupCard({
   onRemove: (itemId: string) => void;
 }) {
   return (
-    <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424448' }}>
+    <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
       {/* Group header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
         <div className="flex items-center gap-2">
           <FileText className="h-3.5 w-3.5 text-slate-400" />
           <span className="text-xs font-medium text-slate-200">{group.vendorName}</span>

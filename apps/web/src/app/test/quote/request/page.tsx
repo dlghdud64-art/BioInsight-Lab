@@ -67,11 +67,11 @@ function QuoteRequestPageContent() {
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#383a40' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
 
       {/* ═══ Session Header ═══ */}
       <div className="shrink-0">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-2.5 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center gap-2">
             <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
             <div className="w-px h-4 md:h-5 bg-bd" />
@@ -91,7 +91,7 @@ function QuoteRequestPageContent() {
 
       {/* ═══ Queue Selector Strip ═══ */}
       {vendorGroups.length > 0 && !submissionOutcome && (
-        <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto flex items-center gap-2" style={{ backgroundColor: '#3e4044' }}>
+        <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto flex items-center gap-2" style={{ backgroundColor: '#353739' }}>
           {vendorGroups.map((g, idx) => {
             const isHeld = holdUnits.has(g.vendorName);
             const isActive = idx === activeGroupIdx;
@@ -178,9 +178,9 @@ function QuoteRequestPageContent() {
 
           {/* Request Context Header + Focused Edit */}
           {activeGroup && (
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424448' }}>
+            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               {/* Context header */}
-              <div className="px-4 py-3 border-b border-bd" style={{ backgroundColor: '#4c4e54' }}>
+              <div className="px-4 py-3 border-b border-bd" style={{ backgroundColor: '#434548' }}>
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-blue-400 shrink-0" />
@@ -235,7 +235,7 @@ function QuoteRequestPageContent() {
         </div>
 
         {/* ── Send Queue Rail (400px, sticky) ── */}
-        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#3e4044' }}>
+        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#353739' }}>
 
           {/* Rail 1: 전송 준비 상태 */}
           <div className="px-5 py-4 border-b border-bd">
@@ -312,7 +312,7 @@ function QuoteRequestPageContent() {
           )}
 
           {/* Rail 4: Sticky Footer — total + CTA */}
-          <div className="px-5 py-4 border-t border-bd shrink-0" style={{ backgroundColor: '#4c4e54' }}>
+          <div className="px-5 py-4 border-t border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
             <div className="flex items-baseline justify-between mb-3">
               <span className="text-xs text-slate-400">전송 예상 합계</span>
               <span className="text-xl font-bold tabular-nums text-slate-100">₩{summary.totalAmount.toLocaleString("ko-KR")}</span>
@@ -335,7 +335,7 @@ function QuoteRequestPageContent() {
 
       {/* ═══ Sticky Send Dock (mobile/tablet) ═══ */}
       {!submissionOutcome && quoteItems.length > 0 && (
-        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#4c4e54' }}>
+        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
               <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium shrink-0 ${config.color}`}>
@@ -364,7 +364,7 @@ function QuoteRequestPageContent() {
 export default function QuoteRequestPage() {
   return (
     <Suspense fallback={
-      <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#383a40' }}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
