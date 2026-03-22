@@ -131,7 +131,7 @@ function PlexusCanvas() {
 
 export function BioInsightHeroSection() {
   return (
-    <section className="relative w-full pt-32 md:pt-40 pb-20 md:pb-28 overflow-hidden" style={{ backgroundColor: "#24252a" }}>
+    <section className="relative w-full min-h-screen flex flex-col overflow-hidden" style={{ backgroundColor: "#24252a" }}>
 
       {/* Plexus background */}
       <div className="absolute inset-0 z-0 opacity-60">
@@ -140,9 +140,23 @@ export function BioInsightHeroSection() {
       {/* Radial mask */}
       <div className="absolute inset-0 z-[1] pointer-events-none" style={{ background: "radial-gradient(circle at center, transparent 10%, #24252a 100%)" }} />
 
-      <div className="container px-4 md:px-6 mx-auto relative z-10">
+      {/* Self-contained Nav */}
+      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/5">
+        <Link href="/" className="flex items-center gap-2 cursor-pointer">
+          <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
+        </Link>
+        <div className="flex items-center gap-6">
+          <Link href="/pricing" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors hidden md:block">요금 & 도입</Link>
+          <Link href="/auth/signin" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors hidden md:block">로그인</Link>
+          <Link href="/test/search">
+            <Button className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-md">무료로 시작하기</Button>
+          </Link>
+        </div>
+      </nav>
+
+      <div className="flex-1 flex flex-col items-center justify-center px-4 md:px-6 py-16 md:py-20 relative z-10">
         {/* Value Proposition */}
-        <div className="max-w-3xl mx-auto text-center mb-14 md:mb-20">
+        <div className="max-w-3xl mx-auto text-center">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-500 mb-6 md:mb-8">
             Biotech Procurement Operations Platform
           </p>

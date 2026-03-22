@@ -1,5 +1,3 @@
-import { MainLayout } from "./_components/main-layout";
-import { MainHeader } from "./_components/main-header";
 import { MainFooter } from "./_components/main-footer";
 import { BioInsightHeroSection } from "./_components/bioinsight-hero-section";
 import { BioInsightSocialProofSection } from "./_components/bioinsight-social-proof-section";
@@ -22,25 +20,24 @@ const FinalCTASection = dynamic(
 
 export default function HomePage() {
   return (
-    <MainLayout>
-      <MainHeader />
-      <div className="w-full">
-        {/* 1. Hero: 운영 가치 제안 + 6단계 파이프라인 */}
-        <BioInsightHeroSection />
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#24252a" }}>
+      {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
+      <BioInsightHeroSection />
 
-        {/* 2. Trust Strip: 운영 메트릭 */}
-        <BioInsightSocialProofSection />
+      {/* 2. Trust Strip */}
+      <BioInsightSocialProofSection />
 
-        {/* 3. Platform Flow: 6단계 운영 파이프라인 상세 */}
-        <PlatformFlowSection />
+      {/* 3. Platform Flow */}
+      <PlatformFlowSection />
 
-        {/* 4. Ops Console Preview: 4-mode 콘솔 소개 */}
-        <OpsConsolePreviewSection />
+      {/* 4. Ops Console Preview */}
+      <OpsConsolePreviewSection />
 
-        {/* 5. Final CTA: Enterprise 톤 */}
-        <FinalCTASection />
-      </div>
+      {/* 5. Final CTA */}
+      <FinalCTASection />
+
+      {/* Footer */}
       <MainFooter />
-    </MainLayout>
+    </div>
   );
 }
