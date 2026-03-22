@@ -509,7 +509,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCou
         </Link>
         <div className="w-px h-5 bg-bd hidden sm:block" />
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 max-w-3xl">
-          <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
+          <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#35373b] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"

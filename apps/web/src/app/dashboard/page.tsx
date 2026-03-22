@@ -345,7 +345,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               {stats.activeQuotes > 0 && (
                 <Link href="/dashboard/quotes?status=PENDING">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-900/50 text-blue-400 hover:bg-blue-950/30">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-900/50 text-blue-400 hover:bg-el/50">
                     견적 검토하기
                   </Button>
                 </Link>
@@ -546,7 +546,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 space-y-1">
             {notifications.map((n) => (
-              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-950/30" : "hover:bg-el"}`}>
+              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-el/50" : "hover:bg-el"}`}>
                 {renderNotificationIcon(n.type)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
@@ -770,7 +770,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-1.5 pt-0">
               {notifications.map((n) => (
-                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-blue-950/30 hover:bg-blue-950/50" : "hover:bg-el"}`}>
+                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-el/50 hover:bg-el/70" : "hover:bg-el"}`}>
                   {renderNotificationIcon(n.type)}
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-1.5 mb-0.5">

@@ -30,7 +30,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen">
       {/* 좌측 브랜딩 영역 (데스크톱 전용) */}
-      <div className="hidden lg:flex w-[55%] bg-pg relative min-h-screen flex-col overflow-hidden">
+      <div className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden" style={{ backgroundColor: '#2d2f33' }}>
         {/* 상단: 회사명 텍스트 */}
         <div className="pt-12 pl-12">
           <Link href="/" className="inline-block">
@@ -89,7 +89,7 @@ function SignInContent() {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="w-full max-w-sm">
             {/* Elevated auth panel */}
-            <div className="bg-pn border border-bd rounded-xl p-8 space-y-6">
+            <div className="border rounded-xl p-8 space-y-6" style={{ backgroundColor: '#3a3c40', borderColor: '#505258' }}>
               {/* 홈으로 돌아가기 */}
               <Link
                 href="/"
