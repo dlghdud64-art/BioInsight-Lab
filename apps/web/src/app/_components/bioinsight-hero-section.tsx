@@ -23,13 +23,15 @@ function PlexusCanvas() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
     let animId: number;
     let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
     let mouse = { x: -9999, y: -9999 };
 
     const init = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
+      canvas.width = parent.clientWidth;
+      canvas.height = parent.clientHeight;
       const count = Math.floor((canvas.width * canvas.height) / 15000);
       particles = [];
       for (let i = 0; i < count; i++) {
@@ -44,6 +46,8 @@ function PlexusCanvas() {
     };
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rect = canvas.getBoundingClientRect();
+      const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
@@ -56,19 +60,23 @@ function PlexusCanvas() {
             ctx.lineWidth = 1.2; ctx.stroke();
           }
         }
-        const dxm = p.x - mouse.x, dym = p.y - mouse.y;
-        const distm = Math.sqrt(dxm * dxm + dym * dym);
-        if (distm < 200) {
-          ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, mouse.y);
-          ctx.strokeStyle = `rgba(96,165,250,${0.6 - (distm / 200) * 0.6})`;
-          ctx.lineWidth = 1.5; ctx.stroke();
+        if (adjMouseY !== -9999) {
+          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const distm = Math.sqrt(dxm * dxm + dym * dym);
+          if (distm < 200) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
+            ctx.strokeStyle = `rgba(96,165,250,${0.6 - (distm / 200) * 0.6})`;
+            ctx.lineWidth = 1.5; ctx.stroke();
+          }
         }
       }
       for (const p of particles) {
-        const dxm = p.x - mouse.x, dym = p.y - mouse.y;
-        const distm = Math.sqrt(dxm * dxm + dym * dym);
-        if (distm < 120 && mouse.x !== -9999) { p.x += dxm * 0.015; p.y += dym * 0.015; }
-        else { p.x += p.vx; p.y += p.vy; }
+        if (adjMouseY !== -9999) {
+          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const distm = Math.sqrt(dxm * dxm + dym * dym);
+          if (distm < 120) { p.x += dxm * 0.015; p.y += dym * 0.015; }
+          else { p.x += p.vx; p.y += p.vy; }
+        } else { p.x += p.vx; p.y += p.vy; }
         if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
@@ -78,21 +86,21 @@ function PlexusCanvas() {
     };
     init(); draw();
     const onResize = () => init();
-    const onMove = (e: MouseEvent) => { const r = canvas.getBoundingClientRect(); mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top; };
+    const onMove = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
     const onLeave = () => { mouse.x = -9999; mouse.y = -9999; };
     window.addEventListener("resize", onResize);
-    canvas.addEventListener("mousemove", onMove);
-    canvas.addEventListener("mouseleave", onLeave);
-    return () => { window.removeEventListener("resize", onResize); canvas.removeEventListener("mousemove", onMove); canvas.removeEventListener("mouseleave", onLeave); cancelAnimationFrame(animId); };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseleave", onLeave);
+    return () => { window.removeEventListener("resize", onResize); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseleave", onLeave); cancelAnimationFrame(animId); };
   }, []);
   return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
 }
 
 export function BioInsightHeroSection() {
   return (
-    <section className="relative w-full min-h-screen flex flex-col overflow-hidden" style={{ backgroundColor: "#0f172a" }}>
+    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-slate-700/50" style={{ backgroundColor: "#0f172a" }}>
 
-      {/* Background layers */}
+      {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[70vw] h-[70vh] bg-blue-500/20 rounded-full blur-[120px] z-10" />
         <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at center, transparent 0%, #0f172a 90%)" }} />
@@ -101,8 +109,8 @@ export function BioInsightHeroSection() {
         </div>
       </div>
 
-      {/* Nav — backdrop blur */}
-      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-slate-700/50" style={{ backgroundColor: "rgba(15,23,42,0.5)", backdropFilter: "blur(12px)" }}>
+      {/* Nav */}
+      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/5">
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
         </Link>
@@ -115,42 +123,30 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 md:py-20 relative z-20">
-
-        <p className="text-blue-400 font-extrabold text-[11px] tracking-[0.25em] mb-6 uppercase">
-          Biotech Procurement Operations Platform
-        </p>
-
-        <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-6 text-center max-w-[680px]" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
-          구매 요청부터 입고·재고까지,<br />
-          연구 구매 운영을<br />
+      {/* Hero */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 pt-16 pb-20 text-center w-full">
+        <p className="text-blue-400 font-extrabold text-[11px] tracking-[0.25em] mb-6 uppercase">Biotech Procurement Operations Platform</p>
+        <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
+          구매 요청부터 입고·재고까지,<br />연구 구매 운영을<br />
           <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>한곳에서</span> 연결합니다
         </h1>
-
-        <p className="text-base md:text-lg text-slate-300 mb-10 font-medium leading-relaxed max-w-2xl text-center" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-          시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />
-          흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
+        <p className="text-base md:text-lg text-slate-300 mb-10 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+          시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
         </p>
-
-        {/* CTAs */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Link href="/test/search">
             <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
-              시약·장비 검색 시작하기
-              <Search className="ml-2 h-4 w-4" />
+              시약·장비 검색 시작하기<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           <Link href="/support">
-            <Button variant="outline" className="h-12 px-8 bg-[#1e293b] hover:bg-[#334155] text-white border-slate-500/80 font-bold text-[15px] rounded-lg shadow-lg">
-              도입 문의하기
-            </Button>
+            <Button variant="outline" className="h-12 px-8 bg-[#1e293b] hover:bg-[#334155] text-white border-slate-500/80 font-bold text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
           </Link>
         </div>
 
         {/* Pipeline */}
-        <div className="mt-24 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-12">
-          <p className="text-slate-400 font-bold text-[11px] tracking-widest uppercase mb-8 text-center">End-to-End Operations Pipeline</p>
+        <div className="mt-16 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-10">
+          <p className="text-slate-400 font-bold text-[11px] tracking-widest uppercase mb-6">End-to-End Operations Pipeline</p>
           <div className="hidden md:flex items-center justify-center gap-0">
             {PIPELINE_STEPS.map((step, idx) => {
               const Icon = step.icon;
@@ -163,9 +159,7 @@ export function BioInsightHeroSection() {
                     <span className="text-sm font-bold text-white drop-shadow-md">{step.label}</span>
                     <span className="text-[10px] text-slate-300 font-medium whitespace-nowrap">{step.sub}</span>
                   </div>
-                  {idx < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="h-5 w-5 text-slate-500 flex-shrink-0 mx-0.5" />
-                  )}
+                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-5 w-5 text-slate-500 flex-shrink-0 mx-2 md:mx-6" />}
                 </div>
               );
             })}
