@@ -345,21 +345,44 @@ function QuotesPageContent() {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
 
-  // Rail open/close handler — single action key
+  // ── Rail open/close — single source of truth ──
   const openQuoteContextRail = (caseId: string, source: string = "row") => {
     const next = selectedQuoteId === caseId ? null : caseId;
     if (typeof window !== "undefined") {
-      console.log("[QuoteQueue]", next ? "quote_queue_open_rail" : "quote_queue_close_rail", { caseId, source, pathname: window.location.pathname, selectedQuery: next });
+      console.log("[QuoteQueue]", next ? "quote_queue_open_rail" : "quote_queue_close_rail", { caseId, source, pathname: window.location.pathname });
     }
-    setSelectedQuoteId(next);
+    if (next) {
+      setSelectedQuoteId(next);
+      // URL query에 selected 반영
+      const url = new URL(window.location.href);
+      url.searchParams.set("selected", next);
+      window.history.replaceState({}, "", url.toString());
+    } else {
+      closeQuoteContextRail("toggle");
+    }
+  };
+
+  const closeQuoteContextRail = (source: string = "x_button") => {
+    if (typeof window !== "undefined") {
+      console.log("[QuoteQueue] quote_context_rail_closed", { selectedRecordId: selectedQuoteId, activeWorkWindow, source, path: window.location.pathname });
+    }
+    setSelectedQuoteId(null);
+    setActiveWorkWindow(null);
+    // URL query 정리 — path 유지, selected/task 제거
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("selected");
+      url.searchParams.delete("task");
+      window.history.replaceState({}, "", url.toString());
+    }
   };
 
   // ESC로 rail 닫기
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedQuoteId(null); };
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") closeQuoteContextRail("esc"); };
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
-  }, []);
+  }, [selectedQuoteId]);
 
   useEffect(() => {
     const s = searchParams.get("status");
@@ -709,7 +732,7 @@ function QuotesPageContent() {
                 <Link href={`/quotes/${selectedQuote.id}`}>
                   <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" title="전체 상세 열기"><ExternalLink className="h-3 w-3" /></Button>
                 </Link>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={() => setSelectedQuoteId(null)}><X className="h-3.5 w-3.5" /></Button>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}><X className="h-3.5 w-3.5" /></Button>
               </div>
             </div>
             <h3 className="text-sm font-semibold text-slate-100 truncate mb-1">{selectedQuote.title}</h3>
@@ -827,7 +850,7 @@ function QuotesPageContent() {
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
                 <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">전체 상세 열기</Button>
               </Link>
-              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={() => setSelectedQuoteId(null)}>{selectedSignals.tertiaryCta}</Button>
+              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}>{selectedSignals.tertiaryCta}</Button>
             </div>
           </div>
         </div>
