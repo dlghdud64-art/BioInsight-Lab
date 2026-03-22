@@ -770,6 +770,8 @@ function QuotesPageContent() {
           primaryAction={{
             label: activeWorkWindow === "compare_review"
               ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
+              : activeWorkWindow === "approval_prep"
+              ? "승인 패키지 준비 완료"
               : selectedSignals.ctaLabel,
             onClick: () => {
               console.log("[QuoteQueue] quote_work_window_action", { caseId: selectedQuote.id, actionKey: activeWorkWindow });
@@ -891,12 +893,82 @@ function QuotesPageContent() {
                 </div>
               );
             })()}
-            {activeWorkWindow === "approval_prep" && (
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-200">승인 패키지 준비</p>
-                <p className="text-xs text-slate-400">외부 승인에 필요한 정보를 정리하고 전달 상태를 기록합니다.</p>
-              </div>
-            )}
+            {activeWorkWindow === "approval_prep" && (() => {
+              const sqrc = selectedQuote.responses?.length ?? 0;
+              const prices = (selectedQuote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
+              const bestPrice = prices.length > 0 ? Math.min(...prices) : null;
+              const bestVendor = selectedQuote.responses?.find(r => r.totalPrice === bestPrice);
+
+              return (
+                <div className="space-y-4">
+                  {/* A. Approval Package Summary */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">승인 패키지 요약</p>
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div>
+                        <p className="text-[10px] text-slate-500">선택안</p>
+                        <p className="text-xs text-slate-200 font-medium">{bestVendor?.vendor.name ?? "미확정"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">예상 금액</p>
+                        <p className="text-xs text-slate-200 font-medium tabular-nums">{bestPrice ? `₩${bestPrice.toLocaleString("ko-KR")}` : "미정"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">품목</p>
+                        <p className="text-xs text-slate-200">{selectedQuote.items.length}건</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-500">공급사</p>
+                        <p className="text-xs text-slate-200">{sqrc}곳 회신</p>
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-snug">현재 선택안은 확정되었고 외부 승인 패키지 전달 준비 단계입니다</p>
+                  </div>
+
+                  {/* B. Approval Readiness & Exception */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">승인 준비 상태</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">선택안 확정</span>
+                        <span className={bestPrice ? "text-emerald-400" : "text-amber-400"}>{bestPrice ? "준비 완료" : "확인 필요"}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">문서 상태</span>
+                        <span className="text-emerald-400">준비 완료</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">예산 차단</span>
+                        <span className="text-emerald-400">차단 없음</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">승인 정책</span>
+                        <span className="text-slate-200">외부 승인 필요</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* C. Handoff Recording */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">승인 전달 기록</p>
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">전달 채널</span>
+                        <span className="text-slate-200">외부 전자결재</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">현재 상태</span>
+                        <span className="text-amber-400">승인 준비 중</span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-400">승인 완료 후</span>
+                        <span className="text-slate-200">발주 전환 준비</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
             {activeWorkWindow === "po_conversion" && (
               <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
                 <p className="text-xs font-medium text-slate-200">발주 전환 준비</p>
