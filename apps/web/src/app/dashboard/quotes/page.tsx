@@ -267,7 +267,7 @@ function QuotesPageContent() {
     }
   }, [entityIdParam]);
 
-  const { data: quotesData, isLoading } = useQuery({
+  const { data: quotesData, isLoading, isFetching } = useQuery({
     queryKey: ["quotes", statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -277,21 +277,13 @@ function QuotesPageContent() {
       return response.json();
     },
     enabled: status === "authenticated",
-    staleTime: 0,
-    refetchOnMount: "always",
+    staleTime: 15_000, // 15초 short cache — 재방문 시 즉시 표시
+    placeholderData: (prev) => prev, // 필터 변경 시 기존 데이터 유지
     refetchOnWindowFocus: true,
   });
 
-  if (status === "loading") {
-    return (
-      <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-el rounded animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-el rounded-xl animate-pulse" />)}
-        </div>
-      </div>
-    );
-  }
+  // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
+  const isFilterChanging = isFetching && !isLoading;
 
   const quotes: Quote[] = quotesData?.quotes || [];
   const today = new Date().toDateString();
@@ -427,10 +419,27 @@ function QuotesPageContent() {
         </div>
       </div>
 
-      {/* ── 로딩 스켈레톤 ── */}
+      {/* ── 로딩: progressive skeleton (list만, header/search는 이미 보임) ── */}
       {isLoading && (
         <div className="space-y-2">
-          {[0,1,2].map((i) => <div key={i} className="h-32 bg-el rounded-xl animate-pulse" />)}
+          {[0,1,2,3,4].map((i) => (
+            <div key={i} className="bg-pn rounded-xl border border-bd/80 p-4 space-y-2" style={{ opacity: 1 - i * 0.15 }}>
+              <div className="flex items-center gap-2">
+                <div className="h-5 w-20 bg-el rounded animate-pulse" />
+                <div className="h-4 w-32 bg-el/50 rounded animate-pulse" />
+              </div>
+              <div className="h-4 w-3/4 bg-el rounded animate-pulse" />
+              <div className="h-3 w-1/2 bg-el/30 rounded animate-pulse" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* 필터 변경 중 indicator (기존 list 유지) */}
+      {isFilterChanging && (
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <div className="h-3 w-3 animate-spin rounded-full border border-blue-600 border-t-transparent" />
+          필터 적용 중...
         </div>
       )}
 
