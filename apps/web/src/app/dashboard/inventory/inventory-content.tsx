@@ -120,8 +120,8 @@ function InventoryPageContent() {
           if (res.ok) return res.json();
           throw new Error("구매 데이터를 찾을 수 없습니다.");
         })
-        .then((purchaseRes) => {
-          const purchase = purchaseRes.purchase || purchaseRes;
+        .then((data) => {
+          const purchase = data.purchase || data;
           setPurchaseContext(purchase);
           setReceivingForm((prev) => ({
             ...prev,
@@ -190,7 +190,17 @@ function InventoryPageContent() {
     });
   };
 
+  // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
+  useEffect(() => {
+    if (entityIdParam && data?.inventories) {
+      const target = data.inventories.find((item: ProductInventory) => item.id === entityIdParam);
+      if (target) {
+        setSelectedItem(target);
+        setIsSheetOpen(true);
+      }
+    }
+  }, [entityIdParam, data?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
@@ -239,7 +249,7 @@ function InventoryPageContent() {
   const selectedTeam = teamsData?.teams?.[0];
 
   // 내 인벤토리 조회
-  const { data: inventoryResponse, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
+  const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
     queryKey: ["inventories"],
     queryFn: async () => {
       const response = await fetch("/api/inventory");
@@ -248,17 +258,6 @@ function InventoryPageContent() {
     },
     enabled: status === "authenticated" && inventoryView === "my",
   });
-
-  // Deep-link: entity_id → 해당 아이템 시트 열기 (inventoryResponse 선언 이후)
-  useEffect(() => {
-    if (entityIdParam && inventoryResponse?.inventories) {
-      const target = inventoryResponse.inventories.find((item: ProductInventory) => item.id === entityIdParam);
-      if (target) {
-        setSelectedItem(target);
-        setIsSheetOpen(true);
-      }
-    }
-  }, [entityIdParam, inventoryResponse?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 팀 인벤토리 조회
   const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{ inventories: any[] }>({
@@ -272,7 +271,7 @@ function InventoryPageContent() {
     enabled: status === "authenticated" && !!selectedTeam?.id && inventoryView === "team",
   });
 
-  const myInventories = inventoryResponse?.inventories || [];
+  const myInventories = data?.inventories || [];
   const teamInventories = teamInventoryData?.inventories || [];
   const inventories = inventoryView === "my" ? myInventories : teamInventories;
 
@@ -432,8 +431,8 @@ function InventoryPageContent() {
           try {
             const response = await fetch(`/api/inventory/${inv.id}/restock-request`);
             if (response.ok) {
-              const restockRes = await response.json();
-              statuses[inv.id] = restockRes.hasRequest || false;
+              const data = await response.json();
+              statuses[inv.id] = data.hasRequest || false;
             }
           } catch (error) {
             // 에러는 무시하고 계속 진행
@@ -485,7 +484,7 @@ function InventoryPageContent() {
       }
       return response.json();
     },
-    onSuccess: (_result, inventoryId) => {
+    onSuccess: (data, inventoryId) => {
       setRestockRequestedIds((prev) => new Set(prev).add(inventoryId));
       queryClient.invalidateQueries({ queryKey: ["restock-status"] });
       toast({
@@ -556,7 +555,7 @@ function InventoryPageContent() {
   });
 
   const createOrUpdateMutation = useMutation({
-    mutationFn: async (formPayload: {
+    mutationFn: async (data: {
       id?: string;
       productId: string;
       currentQuantity: number;
@@ -572,27 +571,27 @@ function InventoryPageContent() {
       storageCondition?: string;
       testPurpose?: string;
     }) => {
-      const isEdit = Boolean(formPayload.id);
-      const isMockItem = isEdit && formPayload.id?.startsWith("mock-");
+      const isEdit = Boolean(data.id);
+      const isMockItem = isEdit && data.id?.startsWith("mock-");
 
       // Mock 데이터 수정: API 대신 로컬 상태 업데이트 (1초 딜레이 시뮬레이션)
-      if (isMockItem && formPayload.id) {
+      if (isMockItem && data.id) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
         setMockInventories((prev) =>
           prev.map((item) =>
-            item.id === formPayload.id
+            item.id === data.id
               ? {
                   ...item,
-                  currentQuantity: formPayload.currentQuantity,
-                  unit: formPayload.unit,
-                  safetyStock: formPayload.safetyStock ?? item.safetyStock,
-                  minOrderQty: formPayload.minOrderQty ?? item.minOrderQty,
-                  location: formPayload.location ?? item.location,
-                  expiryDate: formPayload.expiryDate ?? item.expiryDate,
-                  notes: formPayload.notes ?? item.notes,
-                  lotNumber: formPayload.lotNumber ?? item.lotNumber,
-                  storageCondition: formPayload.storageCondition ?? item.storageCondition,
-                  testPurpose: formPayload.testPurpose ?? item.testPurpose,
+                  currentQuantity: data.currentQuantity,
+                  unit: data.unit,
+                  safetyStock: data.safetyStock ?? item.safetyStock,
+                  minOrderQty: data.minOrderQty ?? item.minOrderQty,
+                  location: data.location ?? item.location,
+                  expiryDate: data.expiryDate ?? item.expiryDate,
+                  notes: data.notes ?? item.notes,
+                  lotNumber: data.lotNumber ?? item.lotNumber,
+                  storageCondition: data.storageCondition ?? item.storageCondition,
+                  testPurpose: data.testPurpose ?? item.testPurpose,
                 }
               : item
           )
@@ -600,20 +599,20 @@ function InventoryPageContent() {
         return { success: true };
       }
 
-      const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
+      const url = isEdit ? `/api/inventory/${data.id}` : "/api/inventory";
       const body = isEdit
         ? {
-            quantity: formPayload.currentQuantity,
-            location: formPayload.location ?? undefined,
-            notes: formPayload.notes ?? undefined,
-            expiryDate: formPayload.expiryDate ?? undefined,
-            minOrderQty: formPayload.minOrderQty ?? undefined,
-            safetyStock: formPayload.safetyStock ?? undefined,
-            lotNumber: formPayload.lotNumber ?? undefined,
-            storageCondition: formPayload.storageCondition ?? undefined,
-            testPurpose: formPayload.testPurpose ?? undefined,
+            quantity: data.currentQuantity,
+            location: data.location ?? undefined,
+            notes: data.notes ?? undefined,
+            expiryDate: data.expiryDate ?? undefined,
+            minOrderQty: data.minOrderQty ?? undefined,
+            safetyStock: data.safetyStock ?? undefined,
+            lotNumber: data.lotNumber ?? undefined,
+            storageCondition: data.storageCondition ?? undefined,
+            testPurpose: data.testPurpose ?? undefined,
           }
-        : formPayload;
+        : data;
 
       const response = await fetch(url, {
         method: isEdit ? "PATCH" : "POST",
@@ -648,11 +647,11 @@ function InventoryPageContent() {
   });
 
   const recordUsageMutation = useMutation({
-    mutationFn: async (usagePayload: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
+    mutationFn: async (data: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
       const response = await fetch("/api/inventory/usage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usagePayload),
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to record usage");
       return response.json();
@@ -817,12 +816,12 @@ function InventoryPageContent() {
     return "low_stock"; // fallback
   };
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
-    expired:       { label: "만료됨",     cls: "bg-red-500/10 text-red-400",       priority: 0 },
-    out_of_stock:  { label: "품절",       cls: "bg-red-500/10 text-red-400",       priority: 1 },
-    expiring:      { label: "만료 임박",  cls: "bg-amber-500/10 text-amber-400",   priority: 2 },
-    low_stock:     { label: "부족",       cls: "bg-amber-500/10 text-amber-400",   priority: 3 },
-    reorder_lead:  { label: "재발주 필요", cls: "bg-blue-500/10 text-blue-400",    priority: 4 },
-    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",            priority: 5 },
+    expired:       { label: "만료됨",     cls: "bg-red-900/50 text-red-400",       priority: 0 },
+    out_of_stock:  { label: "품절",       cls: "bg-red-900/50 text-red-400",       priority: 1 },
+    expiring:      { label: "임박",       cls: "bg-amber-900/50 text-amber-400", priority: 2 },
+    low_stock:     { label: "재고 부족",  cls: "bg-orange-900/50 text-orange-400", priority: 3 },
+    reorder_lead:  { label: "재주문 권장", cls: "bg-amber-900/50 text-amber-400", priority: 4 },
+    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",  priority: 5 },
   };
 
   if (status === "loading") {
@@ -1068,9 +1067,9 @@ function InventoryPageContent() {
                 setIsDialogOpen(open);
                 if (!open) setEditingInventory(null);
               }}
-              onSubmit={(submitValues) => {
+              onSubmit={(data) => {
                 createOrUpdateMutation.mutate({
-                  ...submitValues,
+                  ...data,
                   id: editingInventory?.id,
                 });
               }}
@@ -1501,14 +1500,14 @@ function InventoryPageContent() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
+              <div className="rounded-xl border border-red-500/20 bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-amber-400/80">부족/품절</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
-                    <AlertTriangle className="h-3 w-3 text-amber-400" />
+                  <span className="text-[11px] font-medium text-red-400/80">부족/품절</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-950/300/10">
+                    <AlertTriangle className="h-3 w-3 text-red-400" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-amber-400">
+                <div className="text-2xl font-bold tracking-tight text-red-400">
                   {lowOrOutOfStockCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
@@ -1556,8 +1555,8 @@ function InventoryPageContent() {
             {/* 조치 필요 항목 */}
             <Card className="shadow-sm border-bd bg-pn">
               <CardHeader>
-                <CardTitle className="flex items-center text-lg text-slate-100">
-                  <Zap className="mr-2 h-5 w-5 text-amber-400" />
+                <CardTitle className="flex items-center text-lg text-red-400">
+                  <Zap className="mr-2 h-5 w-5" />
                   조치 필요 항목
                 </CardTitle>
                 <CardDescription className="text-slate-500">
@@ -1617,12 +1616,12 @@ function InventoryPageContent() {
                     switch (issueType) {
                       case "expired":
                       case "out_of_stock":
-                        return "bg-red-500/5 border-red-500/10";
+                        return "bg-red-950/10  bg-red-950/10 border-red-900/30  border-red-900/30";
                       case "expiring":
-                        return "bg-amber-500/5 border-amber-500/10";
+                        return "bg-amber-950/10  bg-amber-950/10 border-amber-900/30  border-amber-900/30";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-amber-500/5 border-amber-500/10";
+                        return "bg-orange-950/10  bg-orange-950/10 border-orange-900/30  border-orange-900/30";
                       case "no_location":
                         return "bg-pn/30 border-bs";
                     }
@@ -1659,8 +1658,8 @@ function InventoryPageContent() {
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
                                 <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
                                   issueType === "expired"
-                                    ? "bg-red-500/10 text-red-400"
-                                    : "bg-amber-500/10 text-amber-400"
+                                    ? "bg-red-900/50 text-red-400"
+                                    : "bg-amber-900/50 text-amber-400"
                                 }`}>{daysLeft}</Badge>
                               )}
                             </div>
@@ -1681,8 +1680,8 @@ function InventoryPageContent() {
                               <span className="text-slate-300  text-slate-400">·</span>
                               <span className="whitespace-nowrap">
                                 <span className={`font-semibold ${
-                                  inv.currentQuantity === 0 ? "text-red-400" :
-                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
+                                  inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
+                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-400  text-orange-400" :
                                   "text-slate-300"
                                 }`}>{inv.currentQuantity}</span> {inv.unit}
                                 {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
@@ -1705,8 +1704,8 @@ function InventoryPageContent() {
                                 variant="outline"
                                 className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
                                   issueType === "out_of_stock"
-                                    ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-                                    : "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                                    ? "text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
+                                    : "text-orange-400 border-orange-800 hover:bg-orange-950/30  text-orange-400  border-orange-800  hover:bg-orange-950/30"
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1746,7 +1745,7 @@ function InventoryPageContent() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
@@ -1813,7 +1812,7 @@ function InventoryPageContent() {
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      className="gap-2 text-xs text-red-400"
+                                      className="gap-2 text-xs text-red-400  text-red-400"
                                       onClick={() => {
                                         toast({
                                           title: "폐기 검토",
