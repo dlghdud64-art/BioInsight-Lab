@@ -137,8 +137,8 @@ function QuoteRequestPageContent() {
               <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">다음 운영 단계</div>
               {submissionOutcome.sentCount > 0 && (
                 <div className="flex items-center justify-between py-2 border-b border-bd/50">
-                  <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /><div><p className="text-sm text-slate-200 font-medium">공급사 회신 대기</p><p className="text-[10px] text-slate-400">{submissionOutcome.sentCount}건 — 구매 검토 큐에서 추적</p></div></div>
-                  <Link href="/dashboard/purchases"><Button size="sm" variant="outline" className="h-7 text-[10px] text-emerald-400 border-emerald-600/30">구매 검토 큐</Button></Link>
+                  <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-400" /><div><p className="text-sm text-slate-200 font-medium">공급사 회신 대기</p><p className="text-[10px] text-slate-400">{submissionOutcome.sentCount}건 — 견적관리 워크큐에서 추적</p></div></div>
+                  <Link href="/dashboard/quotes"><Button size="sm" variant="outline" className="h-7 text-[10px] text-emerald-400 border-emerald-600/30">견적관리 큐</Button></Link>
                 </div>
               )}
               {submissionOutcome.heldCount > 0 && (
@@ -149,7 +149,7 @@ function QuoteRequestPageContent() {
               )}
             </div>
             <div className="flex items-center justify-center gap-3 pt-4">
-              <Link href="/dashboard/purchases"><Button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6">구매 검토 큐<ArrowRight className="h-3.5 w-3.5 ml-2" /></Button></Link>
+              <Link href="/dashboard/quotes"><Button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6">견적관리 워크큐<ArrowRight className="h-3.5 w-3.5 ml-2" /></Button></Link>
               <Link href="/test/search"><Button variant="outline" className="text-slate-300 border-bd">추가 소싱</Button></Link>
             </div>
           </div>

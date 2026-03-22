@@ -74,13 +74,13 @@ function isDelayed(q: Quote): boolean {
 }
 
 const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-100",     text: "text-red-800",     border: "border-red-300" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100",  text: "text-purple-800",  border: "border-purple-300" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",    text: "text-blue-800",    border: "border-blue-300" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",   text: "text-amber-800",   border: "border-amber-300" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",   text: "text-slate-700",   border: "border-bs" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-100", text: "text-emerald-800", border: "border-emerald-300" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-50",      text: "text-red-600",     border: "border-red-200" },
+  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-400",     border: "border-red-600/30" },
+  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-600/10",  text: "text-purple-400",  border: "border-purple-600/30" },
+  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-400",    border: "border-blue-600/30" },
+  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-400",   border: "border-amber-600/30" },
+  요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd" },
+  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/30" },
+  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-400",     border: "border-red-600/20" },
 };
 
 function getOpStatus(q: Quote) {
@@ -118,7 +118,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div className={`bg-pn rounded-xl border shadow-sm hover:shadow-md transition-shadow p-4 ${delayed ? "border-red-200" : "border-bd/80"}`}>
+    <div className={`bg-pn rounded-xl border transition-colors p-4 ${delayed ? "border-red-600/30" : "border-bd hover:border-bd/80"}`}>
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           {/* 상태 뱃지 + 참조번호 */}
@@ -128,7 +128,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
             </span>
             <span className="text-[10px] text-slate-400 font-mono">{quoteRef}</span>
             {delayed && (
-              <span className="text-[10px] font-semibold text-red-600 flex items-center gap-0.5">
+              <span className="text-[10px] font-semibold text-red-400 flex items-center gap-0.5">
                 <AlertCircle className="h-3 w-3" /> 마감 초과
               </span>
             )}
@@ -143,12 +143,12 @@ function QuoteCard({ quote }: { quote: Quote }) {
               <Package className="h-3 w-3" />
               {itemCount}개 품목
             </span>
-            <span className={`text-xs flex items-center gap-1 ${responseCount > 0 ? "text-blue-700 font-medium" : "text-slate-400"}`}>
+            <span className={`text-xs flex items-center gap-1 ${responseCount > 0 ? "text-blue-400 font-medium" : "text-slate-500"}`}>
               <Send className="h-3 w-3" />
               {responseCount > 0 ? `회신 ${responseCount}건` : "회신 없음"}
             </span>
             {minPrice !== null && (
-              <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
+              <span className="text-xs text-slate-200 font-medium flex items-center gap-1">
                 <Truck className="h-3 w-3 text-slate-400" />
                 {minPrice === maxPrice
                   ? `₩${minPrice.toLocaleString()}`
@@ -160,7 +160,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
               {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
             </span>
             {quote.deliveryDate && (
-              <span className={`text-xs flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
+              <span className={`text-xs flex items-center gap-1 ${delayed ? "text-red-400 font-semibold" : "text-slate-500"}`}>
                 <Clock className="h-3 w-3" />
                 납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
               </span>
@@ -189,14 +189,14 @@ function QuoteCard({ quote }: { quote: Quote }) {
           )}
           {quote.status === "RESPONDED" && (
             <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+              <Button size="sm" variant="outline" className="h-7 text-xs w-full border-emerald-600/30 text-emerald-400 hover:bg-emerald-600/10">
                 발주 전환
               </Button>
             </Link>
           )}
           {quote.status === "SENT" && responseCount > 0 && (
             <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full text-slate-600">
+              <Button size="sm" variant="outline" className="h-7 text-xs w-full text-slate-400 border-bd hover:bg-el">
                 회신 확인
               </Button>
             </Link>
@@ -217,7 +217,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
         entityType="QUOTE"
         entityId={quote.id}
         compact
-        className="mt-3 pt-3 border-t border-slate-100"
+        className="mt-3 pt-3 border-t border-bd"
       />
     </div>
   );
@@ -270,7 +270,7 @@ function QuotesPageContent() {
   if (status === "loading") {
     return (
       <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-slate-200 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-el rounded animate-pulse" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-el rounded-xl animate-pulse" />)}
         </div>
@@ -355,10 +355,10 @@ function QuotesPageContent() {
       {/* ── 운영 요약 스트립 ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-500" />,      filter: "SENT",           hover: "hover:border-amber-300",   active: "border-amber-300 bg-amber-50/30 ring-2 ring-amber-400/50" },
-          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-500" />,  filter: "RESPONDED",      hover: "hover:border-purple-300",  active: "border-purple-300 bg-purple-50/30 ring-2 ring-purple-400/50" },
-          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-500" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-300",     active: "border-red-300 bg-red-50/30 ring-2 ring-red-400/50" },
-          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-500" />, filter: "RESPONDED",      hover: "hover:border-emerald-300", active: "border-emerald-300 bg-emerald-50/30 ring-2 ring-emerald-400/50" },
+          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-400" />,      filter: "SENT",           hover: "hover:border-amber-600/30",   active: "border-amber-600/40 bg-amber-600/10 ring-1 ring-amber-600/20" },
+          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-400" />,  filter: "RESPONDED",      hover: "hover:border-purple-600/30",  active: "border-purple-600/40 bg-purple-600/10 ring-1 ring-purple-600/20" },
+          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-400" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-600/30",     active: "border-red-600/40 bg-red-600/10 ring-1 ring-red-600/20" },
+          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "RESPONDED",      hover: "hover:border-emerald-600/30", active: "border-emerald-600/40 bg-emerald-600/10 ring-1 ring-emerald-600/20" },
         ].map(({ label, count, icon, filter, hover, active }) => {
           const isActive = statusFilter === filter;
           return (
@@ -419,8 +419,8 @@ function QuotesPageContent() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-500" />
-            <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">{urgentQuotes.length}</span>
+            <h2 className="text-sm font-semibold text-slate-200">즉시 처리 필요</h2>
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-400 text-[10px] font-bold">{urgentQuotes.length}</span>
           </div>
           {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
         </div>
@@ -431,8 +431,8 @@ function QuotesPageContent() {
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-bold">{inProgressQuotes.length}</span>
+            <h2 className="text-sm font-semibold text-slate-200">진행 중</h2>
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-400 text-[10px] font-bold">{inProgressQuotes.length}</span>
           </div>
           {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
         </div>
@@ -443,7 +443,7 @@ function QuotesPageContent() {
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold text-slate-700">완료 / 취소</span>
+            <span className="text-sm font-semibold text-slate-200">완료 / 취소</span>
             <span className="text-xs text-slate-400">({completedQuotes.length}건)</span>
             <span className="ml-1 text-xs text-slate-400 group-open:hidden">▶ 펼치기</span>
             <span className="ml-1 text-xs text-slate-400 hidden group-open:inline">▼ 접기</span>
