@@ -33,7 +33,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
           />
 
-          <main className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-8 pb-20 lg:pb-8">
+          <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-20 lg:pb-8">
             {children}
           </main>
         </div>
