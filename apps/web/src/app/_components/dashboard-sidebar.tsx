@@ -117,15 +117,15 @@ const dashboardLinks = [
 
 // 사이드바 아이콘 색상 매핑 (active = 밝은 tint, inactive = 약한 tint)
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
-  "/dashboard":              { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/analytics":    { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/quotes":       { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/inventory":    { active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/organizations":{ active: "text-blue-400",   inactive: "text-slate-500" },
-  "/dashboard/safety":       { active: "text-blue-400",   inactive: "text-slate-500" },
+  "/dashboard":              { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
+  "/dashboard/analytics":    { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
+  "/dashboard/quotes":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
+  "/dashboard/inventory":    { active: "text-teal-400",   inactive: "text-teal-500/60" },
+  "/dashboard/organizations":{ active: "text-violet-400", inactive: "text-violet-500/60" },
+  "/dashboard/safety":       { active: "text-amber-400",  inactive: "text-amber-500/60" },
   "/dashboard/settings":     { active: "text-slate-300",  inactive: "text-slate-500" },
   "/dashboard/activity-logs":{ active: "text-slate-300",  inactive: "text-slate-500" },
   "/dashboard/audit":        { active: "text-slate-300",  inactive: "text-slate-500" },
@@ -222,7 +222,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       : "text-slate-400 hover:bg-el hover:text-slate-300"
                   )}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-cyan-400" : "text-slate-400")} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
