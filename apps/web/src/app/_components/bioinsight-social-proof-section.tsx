@@ -29,9 +29,9 @@ const metrics = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section className="py-0 border-b border-slate-800" style={{ backgroundColor: "#020617" }}>
+    <section className="py-0 bg-el border-b border-bd">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-800">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-bd/60">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (

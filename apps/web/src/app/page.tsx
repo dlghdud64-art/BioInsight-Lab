@@ -20,7 +20,7 @@ const FinalCTASection = dynamic(
 
 export default function HomePage() {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#020617" }}>
+    <div className="w-full min-h-screen bg-pg">
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
