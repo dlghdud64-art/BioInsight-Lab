@@ -35,7 +35,7 @@ const KEY_FEATURES = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-14 md:py-20 bg-el border-b border-bd">
+    <section className="py-14 md:py-20 border-y border-slate-800/80" style={{ backgroundColor: "#0f172a" }}>
       <div className="max-w-5xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-8 md:mb-12">
@@ -55,7 +55,7 @@ export function OpsConsolePreviewSection() {
           {CONSOLE_MODES.map((mode) => {
             const Icon = mode.icon;
             return (
-              <div key={mode.title} className="border border-bd rounded-md bg-pn px-4 py-3 hover:bg-el/40 transition-colors">
+              <div key={mode.title} className="border border-slate-700/60 rounded-lg bg-[#1e293b] px-5 py-4 shadow-lg hover:border-blue-500/50 transition-colors">
                 <div className="flex items-center gap-2 mb-1.5">
                   <Icon className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
                   <span className="text-sm font-semibold text-slate-200">{mode.title}</span>
@@ -67,7 +67,7 @@ export function OpsConsolePreviewSection() {
         </div>
 
         {/* Key Features */}
-        <div className="border border-bd rounded-md bg-pn px-4 py-3 hover:bg-el/40 transition-colors">
+        <div className="border border-slate-700/60 rounded-lg bg-[#1e293b] px-5 py-4 shadow-lg hover:border-blue-500/50 transition-colors">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2.5">
             Key Capabilities
           </p>
