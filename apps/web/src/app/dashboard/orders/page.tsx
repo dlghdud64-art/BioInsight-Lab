@@ -15,6 +15,7 @@ import {
   X, ArrowLeft, ArrowRight, Truck, Clock, Send, Pause,
 } from "lucide-react";
 import { getStageInfo, getNextActionLabel, canConvertToPO, type ProcurementStage, type ApprovalPolicy, type ApprovalStatus } from "@/lib/procurement-stage";
+import { evaluateGuardrails, hasBlocker, getGuardrailSummary, SEVERITY_CONFIG, type GuardrailResult } from "@/lib/guardrail";
 
 // ── PO Conversion Item (mock-compatible) ──
 interface POCandidate {
@@ -79,12 +80,29 @@ function POConversionContent() {
   const candidates = MOCK_CANDIDATES;
   const selected = candidates.find(c => c.id === selectedId) ?? candidates[0];
 
-  // Guard check
+  // Guard check — guardrail layer 기반
   const unresolvedBlockers = selected ? selected.blockers.filter(b => !resolvedBlockers.has(b)) : [];
   const approvalCleared = selected ? canConvertToPO(selected.approvalPolicy, selected.approvalStatus) : false;
   const activeItems = selected ? selected.items.filter((_, idx) => !excludedItems.has(`${selected.id}-${idx}`)) : [];
   const activeTotal = activeItems.reduce((sum, i) => sum + i.lineTotal, 0);
-  const canCreate = unresolvedBlockers.length === 0 && approvalCleared && activeItems.length > 0;
+
+  // Guardrail evaluation
+  const guardrailResults: GuardrailResult[] = useMemo(() => {
+    if (!selected) return [];
+    return evaluateGuardrails({
+      stage: "po_conversion_candidate",
+      totalAmount: activeTotal,
+      budgetLimit: 5000000, // TODO: org policy에서 가져오기
+      vendorApproved: true, // TODO: vendor approval 상태 연결
+      approvalPolicy: selected.approvalPolicy,
+      approvalStatus: selected.approvalStatus,
+      isHazardous: selected.blockers.some(b => b.includes("위험물")),
+      hazardousDocsReady: !selected.blockers.some(b => b.includes("위험물")),
+    });
+  }, [selected, activeTotal]);
+
+  const guardrailBlocked = hasBlocker(guardrailResults);
+  const canCreate = unresolvedBlockers.length === 0 && approvalCleared && activeItems.length > 0 && !guardrailBlocked;
 
   if (status === "loading") {
     return (
@@ -243,9 +261,21 @@ function POConversionContent() {
                   </div>
                 );
               })}
-              {selected.blockers.length === 0 && (
+              {/* Guardrail layer results */}
+              {guardrailResults.map((gr, idx) => (
+                <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${SEVERITY_CONFIG[gr.severity].bgColor} ${SEVERITY_CONFIG[gr.severity].borderColor}`}>
+                  <div className="flex items-center gap-2 text-xs">
+                    {gr.severity === "blocked" ? <AlertCircle className="h-3.5 w-3.5 text-red-400" />
+                    : gr.severity === "conditional" ? <AlertTriangle className="h-3.5 w-3.5 text-blue-400" />
+                    : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}
+                    <span className={SEVERITY_CONFIG[gr.severity].color}>{gr.message}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">{gr.recommendedAction}</span>
+                </div>
+              ))}
+              {selected.blockers.length === 0 && guardrailResults.length === 0 && (
                 <div className="flex items-center gap-2 text-xs text-emerald-400 px-3 py-2">
-                  <CheckCircle2 className="h-3.5 w-3.5" />차단 항목 없음
+                  <CheckCircle2 className="h-3.5 w-3.5" />모든 조건 충족
                 </div>
               )}
             </div>
