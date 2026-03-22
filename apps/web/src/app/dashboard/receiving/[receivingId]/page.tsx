@@ -666,6 +666,12 @@ function PostingReadinessStrip({ model }: { model: ReceivingExecutionModel }) {
 function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionModel }) {
   const rel = model.inventoryRelease;
   const handoff = model.stockRiskHandoff;
+  const lots = model.lotDetails;
+
+  // Inventory risk signals from lots
+  const expiringLots = lots.filter(l => l.expiryTone === "expiring_soon");
+  const expiredLots = lots.filter(l => l.expiryTone === "expired");
+  const quarantinedLots = lots.filter(l => l.quarantineTone === "danger" || l.quarantineTone === "warning");
 
   return (
     <div className="space-y-3">
@@ -681,6 +687,67 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
           <StatCell label="격리 수량" value={rel.quarantinedAfterPosting} tone={rel.quarantinedAfterPosting > 0 ? "warning" : undefined} />
         </div>
         <div className="mt-2 text-xs text-slate-400">{rel.label}</div>
+      </div>
+
+      {/* Inventory Risk Assessment */}
+      {(expiringLots.length > 0 || expiredLots.length > 0 || quarantinedLots.length > 0) && (
+        <div className="bg-slate-900 border border-amber-800/40 rounded p-3">
+          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+            재고 리스크 평가
+          </div>
+          <div className="space-y-1.5">
+            {expiredLots.length > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-3 w-3 text-red-400" />
+                  <span className="text-red-300">만료 lot {expiredLots.length}건 — 폐기/격리 필요</span>
+                </div>
+                <Link href="/dashboard/stock-risk" className="text-[10px] text-red-400 hover:text-red-300">검토 →</Link>
+              </div>
+            )}
+            {expiringLots.length > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3 text-amber-400" />
+                  <span className="text-amber-300">만료 임박 lot {expiringLots.length}건 — 우선 사용 권장</span>
+                </div>
+                <Link href="/dashboard/inventory" className="text-[10px] text-amber-400 hover:text-amber-300">확인 →</Link>
+              </div>
+            )}
+            {quarantinedLots.length > 0 && (
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-3 w-3 text-red-400" />
+                  <span className="text-red-300">격리 lot {quarantinedLots.length}건 — 판정 필요</span>
+                </div>
+                <span className="text-[10px] text-slate-500">격리 유지</span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Post-Stock Next Actions */}
+      <div className="bg-slate-900 border border-slate-800 rounded p-3">
+        <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+          후속 운영 액션
+        </div>
+        <div className="space-y-1.5">
+          <Link href="/dashboard/inventory" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
+            <div className="flex items-center gap-2"><Package className="h-3 w-3 text-slate-500" /><span className="text-slate-300">재고 위치 관리</span></div>
+            <ChevronRight className="h-3 w-3 text-slate-600" />
+          </Link>
+          <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
+            <div className="flex items-center gap-2"><AlertCircle className="h-3 w-3 text-slate-500" /><span className="text-slate-300">재주문 후보 확인</span></div>
+            <ChevronRight className="h-3 w-3 text-slate-600" />
+          </Link>
+          {expiringLots.length > 0 && (
+            <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
+              <div className="flex items-center gap-2"><Clock className="h-3 w-3 text-amber-400" /><span className="text-amber-300">Expiry 주의 항목 {expiringLots.length}건</span></div>
+              <ChevronRight className="h-3 w-3 text-slate-600" />
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Stock Risk Handoff */}
