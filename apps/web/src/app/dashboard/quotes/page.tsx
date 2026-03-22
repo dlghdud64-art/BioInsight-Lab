@@ -502,8 +502,8 @@ function QuotesPageContent() {
                 {icon}
                 <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
               </div>
-              <div className="text-2xl font-bold text-slate-100 mb-1">{isLoading ? "—" : count}</div>
-              <p className="text-[10px] text-slate-500 leading-snug line-clamp-1">{insight}</p>
+              <div className="text-2xl font-bold text-slate-100 mb-1">{isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}</div>
+              <p className="text-[10px] text-slate-500 leading-snug line-clamp-2">{isLoading ? "집계 확인 중" : insight}</p>
             </button>
           );
         })}
@@ -572,11 +572,11 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* 필터 변경 중 indicator (기존 list 유지) */}
+      {/* 필터 변경 / background revalidation indicator (기존 list 유지) */}
       {isFilterChanging && (
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <div className="h-3 w-3 animate-spin rounded-full border border-blue-600 border-t-transparent" />
-          필터 적용 중...
+          {statusFilter !== "all" || modeChip ? "필터 적용 중..." : "최신 상태를 확인 중"}
         </div>
       )}
 
@@ -620,21 +620,43 @@ function QuotesPageContent() {
         </details>
       )}
 
-      {/* ── 빈 상태 ── */}
+      {/* ── 빈 상태: filter empty vs queue empty 분리 ── */}
       {!isLoading && filteredQuotes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-500 gap-3">
-          <Package className="h-10 w-10 opacity-25" />
-          <p className="text-sm">{searchQuery || statusFilter !== "all" || modeChip ? "조건에 맞는 견적이 없습니다" : "아직 견적 요청이 없습니다"}</p>
-          {!searchQuery && statusFilter === "all" && !modeChip && (
-            <Link href="/test/search"><Button size="sm" className="mt-1 h-8 text-xs bg-blue-600 hover:bg-blue-700">첫 견적 요청하기</Button></Link>
-          )}
-          {(searchQuery || statusFilter !== "all" || modeChip) && (
-            <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); setModeChip(null); }} className="text-xs text-blue-400 hover:underline">필터 초기화</button>
+        <div className="flex flex-col items-center justify-center py-16 gap-3">
+          {(searchQuery || statusFilter !== "all" || modeChip) ? (
+            <>
+              <Filter className="h-8 w-8 text-slate-600" />
+              <p className="text-sm text-slate-300">현재 조건에 맞는 견적 케이스가 없습니다</p>
+              <p className="text-xs text-slate-500">필터를 완화하거나 다른 상태군을 선택해 보세요</p>
+              <div className="flex gap-2 mt-2">
+                <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); setModeChip(null); }} className="text-xs text-blue-400 hover:underline">필터 초기화</button>
+                <button onClick={() => setStatusFilter("all")} className="text-xs text-slate-400 hover:underline">전체 보기</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Package className="h-8 w-8 text-slate-600" />
+              <p className="text-sm text-slate-300">현재 처리 중인 견적 케이스가 없습니다</p>
+              <p className="text-xs text-slate-500">새 견적 요청을 만들거나, 소싱 워크벤치에서 시작할 수 있습니다</p>
+              <div className="flex gap-2 mt-2">
+                <Link href="/test/search"><Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">새 요청 만들기</Button></Link>
+                <Link href="/dashboard/inventory"><Button size="sm" variant="outline" className="h-8 text-xs text-slate-400 border-bd">재고 확인</Button></Link>
+              </div>
+            </>
           )}
         </div>
       )}
 
       </div>{/* end list column */}
+
+      {/* ═══ Rail unselected placeholder (lg+) ═══ */}
+      {!selectedQuote && !isLoading && filteredQuotes.length > 0 && (
+        <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col items-center justify-center text-center px-6" style={{ backgroundColor: '#353739' }}>
+          <Package className="h-8 w-8 text-slate-600 mb-3" />
+          <p className="text-xs text-slate-400 mb-1">케이스를 선택하세요</p>
+          <p className="text-[10px] text-slate-500 leading-snug">행을 클릭하면 상태와 다음 액션을<br />여기서 바로 확인할 수 있습니다</p>
+        </div>
+      )}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {
