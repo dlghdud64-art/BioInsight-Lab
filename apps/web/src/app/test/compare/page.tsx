@@ -24,8 +24,16 @@ import {
   ExternalLink,
   Sparkles,
   ChevronRight,
+  ArrowLeft,
+  AlertCircle,
+  AlertTriangle,
+  CheckCircle2,
+  Send,
+  Pause,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PriceDisplay } from "@/components/products/price-display";
@@ -51,6 +59,7 @@ import {
 export default function TestComparePage() {
   const { compareIds, toggleCompare, clearCompare, addProductToQuote, quoteItems } = useTestFlow();
   const { toast } = useToast();
+  const router = useRouter();
 
   // ── State ──────────────────────────────────────────────────────────────────
   const [showHighlightDifferences, setShowHighlightDifferences] = useState(false);
@@ -74,6 +83,9 @@ export default function TestComparePage() {
   const [tempLeadTime, setTempLeadTime] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [scenario, setScenario] = useState<string>("cost");
+  const [reviewMode, setReviewMode] = useState(false);
+  const [reviewNote, setReviewNote] = useState("");
+  const [resolvedBlockers, setResolvedBlockers] = useState<Set<number>>(new Set());
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const { data: compareProductsData, isLoading, error } = useQuery({
@@ -1079,18 +1091,32 @@ export default function TestComparePage() {
               CSV
             </Button>
 
-            {/* Primary: add to quote */}
-            <Button
-              size="sm"
-              className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
-              onClick={() => {
-                products.forEach((product: any) => addProductToQuote(product));
-                toast({ title: "견적 리스트에 추가됨", description: `${products.length}개 제품을 담았습니다.` });
-              }}
-            >
-              <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-              견적 담기 ({products.length}개 선택)
-            </Button>
+            {/* Primary: enter review mode */}
+            {products.length >= 2 ? (
+              <Button
+                size="sm"
+                className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
+                onClick={() => {
+                  trackEvent("compare_review_enter", { product_count: products.length, scenario });
+                  setReviewMode(true);
+                }}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                선택안 검토
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                onClick={() => {
+                  products.forEach((product: any) => addProductToQuote(product));
+                  toast({ title: "견적 리스트에 추가됨", description: `${products.length}개 제품을 담았습니다.` });
+                }}
+              >
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                견적 담기
+              </Button>
+            )}
 
             {quoteItemsCount > 0 && (
               <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" asChild>
@@ -1100,6 +1126,225 @@ export default function TestComparePage() {
           </div>
         </div>
       </div>
+
+      {/* ═══ Review Center Work Window ═══ */}
+      {reviewMode && products.length >= 2 && (() => {
+        const recommended = products[0]; // scenario-sorted first = recommended
+        const recVendor = recommended?.vendors?.[0];
+        const recPrice = recVendor?.priceInKRW || 0;
+        const rejected = products.slice(1);
+        const blockerItems: string[] = [];
+        if (uniqueCategories.length > 1) blockerItems.push("서로 다른 카테고리 항목 포함 — 직접 비교 주의");
+        if (products.some((p: any) => !p.vendors?.[0]?.priceInKRW)) blockerItems.push("일부 제품 가격 미등록");
+        if (products.some((p: any) => !p.specification)) blockerItems.push("일부 제품 규격 미입력");
+        const allResolved = blockerItems.length === 0 || blockerItems.every((_, i) => resolvedBlockers.has(i));
+
+        return (
+          <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+            {/* Review Header — sticky */}
+            <div className="shrink-0 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+              <div className="flex items-center justify-between px-4 md:px-6 py-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-bold text-slate-200">LabAxis</span>
+                  <div className="w-px h-5 bg-bd" />
+                  <span className="text-xs font-medium text-slate-400">선택안 검토 및 전달 준비</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => setReviewMode(false)}>
+                    <ArrowLeft className="h-3 w-3 mr-1" />비교로 돌아가기
+                  </Button>
+                </div>
+              </div>
+              {/* Final review summary strip */}
+              <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-t border-bd/50 flex-wrap" style={{ backgroundColor: '#393b3f' }}>
+                <Badge variant="secondary" className="text-[10px] bg-emerald-600/10 text-emerald-400 border-emerald-600/20">추천안</Badge>
+                <span className="text-xs font-medium text-slate-200">{recommended?.name?.substring(0, 30)}</span>
+                {recPrice > 0 && <span className="text-xs tabular-nums text-slate-100 font-semibold">₩{recPrice.toLocaleString("ko-KR")}</span>}
+                <span className="text-slate-600">·</span>
+                <span className="text-[10px] text-slate-400">{products.length}개 비교 · {rejected.length}개 대안</span>
+                {blockerItems.length > 0 && (
+                  <span className="text-[10px] text-amber-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length}건 확인</span>
+                )}
+                {allResolved && <span className="text-[10px] text-emerald-400"><CheckCircle2 className="h-3 w-3 inline mr-0.5" />전달 가능</span>}
+              </div>
+            </div>
+
+            {/* Review body */}
+            <div className="flex-1 overflow-hidden flex">
+              {/* Center: 3 review blocks */}
+              <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+
+                {/* Block A: 선택안 요약 */}
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                    <span className="text-xs font-medium text-slate-200">선택안 요약</span>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-el border border-bd flex items-center justify-center shrink-0">
+                        <Sparkles className="h-5 w-5 text-emerald-400" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-100">{recommended?.name}</p>
+                        <p className="text-xs text-slate-400">{recVendor?.vendor?.name || "공급사"} · {recommended?.catalogNumber || "—"}</p>
+                      </div>
+                      {recPrice > 0 && <span className="text-lg font-bold tabular-nums text-slate-100">₩{recPrice.toLocaleString("ko-KR")}</span>}
+                    </div>
+                    <div className="mt-3 text-xs text-slate-300 space-y-1">
+                      {hasPriceDiff && <p>• 비교 대상 중 <strong className="text-emerald-400">최저가</strong> (가격차 {Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%)</p>}
+                      {hasLeadTimeData && fastestProduct?.id === recommended?.id && <p>• <strong className="text-blue-400">최단 납기</strong> ({getAverageLeadTime(recommended)}일)</p>}
+                      {uniqueCategories.length <= 1 && <p>• 동일 카테고리 — 규격 직접 비교 적합</p>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Block B: Blocker / Exception Checklist */}
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                    <span className="text-xs font-medium text-slate-200">확인 항목 ({blockerItems.length}건)</span>
+                  </div>
+                  <div className="p-4">
+                    {blockerItems.length === 0 ? (
+                      <div className="flex items-center gap-2 text-xs text-emerald-400">
+                        <CheckCircle2 className="h-4 w-4" />확인 필요 항목 없음 — 바로 전달 가능합니다
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {blockerItems.map((item, idx) => {
+                          const resolved = resolvedBlockers.has(idx);
+                          return (
+                            <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${resolved ? "border-emerald-600/20 bg-emerald-600/5" : "border-amber-600/20 bg-amber-600/5"}`}>
+                              <div className="flex items-center gap-2 text-xs">
+                                {resolved ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}
+                                <span className={resolved ? "text-slate-400 line-through" : "text-amber-300"}>{item}</span>
+                              </div>
+                              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]"
+                                onClick={() => setResolvedBlockers(prev => {
+                                  const next = new Set(prev);
+                                  next.has(idx) ? next.delete(idx) : next.add(idx);
+                                  return next;
+                                })}>
+                                {resolved ? "되돌리기" : "해결됨"}
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Block C: Handoff memo */}
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                    <span className="text-xs font-medium text-slate-200">전달 메모</span>
+                    <span className="text-[10px] text-slate-500 ml-2">견적관리 워크큐에 함께 전달됩니다</span>
+                  </div>
+                  <div className="p-4 space-y-3">
+                    <Textarea
+                      value={reviewNote}
+                      onChange={(e) => setReviewNote(e.target.value)}
+                      placeholder="선택 배경, 공급사 협의 필요사항, 조건부 확인 항목, 긴급도 등"
+                      className="min-h-[80px] text-xs bg-pn border-bd resize-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Rejected candidates — collapsed */}
+                {rejected.length > 0 && (
+                  <details className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+                    <summary className="px-4 py-2.5 cursor-pointer text-xs font-medium text-slate-400 hover:text-slate-200" style={{ backgroundColor: '#434548' }}>
+                      대안 후보 ({rejected.length}건) — 펼치기
+                    </summary>
+                    <div className="p-4 space-y-1.5">
+                      {rejected.map((p: any) => {
+                        const v = p.vendors?.[0];
+                        const price = v?.priceInKRW || 0;
+                        return (
+                          <div key={p.id} className="flex items-center justify-between text-xs px-3 py-2 rounded border border-bd bg-pn">
+                            <div className="flex-1 min-w-0">
+                              <span className="text-slate-300 truncate block">{p.name}</span>
+                              <span className="text-[10px] text-slate-500">{v?.vendor?.name || "—"}</span>
+                            </div>
+                            {price > 0 && <span className="text-slate-400 tabular-nums shrink-0">₩{price.toLocaleString("ko-KR")}</span>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </details>
+                )}
+              </div>
+
+              {/* Review Evidence Rail */}
+              <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#353739' }}>
+                <div className="px-5 py-4 border-b border-bd">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 근거 요약</div>
+                  <div className="space-y-2 text-xs text-slate-300">
+                    {hasPriceDiff && cheapestProduct && (
+                      <div className="flex items-start gap-2"><span className="text-emerald-400 shrink-0">●</span><span>최저가 {cheapestProduct.name.substring(0, 20)} (₩{cheapestPrice.toLocaleString("ko-KR")})</span></div>
+                    )}
+                    {hasLeadTimeData && fastestProduct && (
+                      <div className="flex items-start gap-2"><span className="text-blue-400 shrink-0">●</span><span>최단납기 {fastestProduct.name.substring(0, 20)} ({getAverageLeadTime(fastestProduct)}일)</span></div>
+                    )}
+                    {uniqueCategories.length > 1 && (
+                      <div className="flex items-start gap-2"><span className="text-amber-400 shrink-0">●</span><span>카테고리 혼합 ({uniqueCategories.length}개)</span></div>
+                    )}
+                  </div>
+                </div>
+                <div className="px-5 py-4 border-b border-bd">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">전달 상태</div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">추천안</span><span className="text-slate-200">{recommended?.name?.substring(0, 15)}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">확인 필요</span><span className={allResolved ? "text-emerald-400" : "text-amber-400"}>{allResolved ? "모두 해결" : `${blockerItems.length - resolvedBlockers.size}건 미해결`}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">메모</span><span className="text-slate-200">{reviewNote ? "작성됨" : "없음"}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">전달 가능</span><span className={allResolved ? "text-emerald-400 font-medium" : "text-amber-400"}>{allResolved ? "예" : "아니오"}</span></div>
+                  </div>
+                </div>
+                <div className="flex-1" />
+                <div className="px-5 py-4 border-t border-bd space-y-2" style={{ backgroundColor: '#434548' }}>
+                  <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
+                    disabled={!allResolved}
+                    onClick={() => {
+                      products.forEach((p: any) => addProductToQuote(p));
+                      trackEvent("compare_review_handoff", { product_count: products.length, note: !!reviewNote });
+                      toast({ title: "견적관리 워크큐로 전달 준비 완료", description: `${products.length}개 제품이 견적 리스트에 추가되었습니다` });
+                      setReviewMode(false);
+                      router.push("/test/quote");
+                    }}>
+                    <Send className="h-3 w-3 mr-1.5" />
+                    검토 완료 후 Workqueue로 보내기
+                  </Button>
+                  <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd" onClick={() => setReviewMode(false)}>
+                    비교로 돌아가기
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile sticky dock for review */}
+            <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {allResolved
+                    ? <span className="text-[10px] text-emerald-400"><CheckCircle2 className="h-3 w-3 inline mr-0.5" />전달 가능</span>
+                    : <span className="text-[10px] text-amber-400"><AlertTriangle className="h-3 w-3 inline mr-0.5" />{blockerItems.length - resolvedBlockers.size}건 미해결</span>
+                  }
+                </div>
+                <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40"
+                  disabled={!allResolved}
+                  onClick={() => {
+                    products.forEach((p: any) => addProductToQuote(p));
+                    toast({ title: "전달 준비 완료", description: `${products.length}개 제품 추가됨` });
+                    setReviewMode(false);
+                    router.push("/test/quote");
+                  }}>
+                  Workqueue로 보내기
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* ── Lead time edit dialog ──────────────────────────────────────────── */}
       <Dialog open={!!editingLeadTime} onOpenChange={(open) => !open && setEditingLeadTime(null)}>
