@@ -1655,11 +1655,14 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={() => {
-                              setSelectedItem(inv);
-                              setSheetSafetyStock(
-                                String(inv.safetyStock ?? inv.minOrderQty ?? 1)
-                              );
-                              setIsSheetOpen(true);
+                              if (typeof window !== "undefined" && window.innerWidth >= 1280) {
+                                openContextPanel(inv);
+                                setSelectedItem(inv);
+                              } else {
+                                setSelectedItem(inv);
+                                setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
+                                setIsSheetOpen(true);
+                              }
                             }}
                             className="flex-1 min-w-0 text-left"
                           >
@@ -1803,9 +1806,8 @@ function InventoryPageContent() {
                                 <DropdownMenuItem
                                   className="gap-2 text-xs"
                                   onClick={() => {
+                                    openContextPanel(inv);
                                     setSelectedItem(inv);
-                                    setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
-                                    setIsSheetOpen(true);
                                   }}
                                 >
                                   <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
