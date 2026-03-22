@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
@@ -10,35 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  ShoppingCart,
-  Search,
-  Filter,
-  Calendar,
-  Package,
-  CheckCircle2,
-  Clock,
-  AlertCircle,
-  Send,
-  FileCheck2,
-  ArrowRight,
-  Plus,
-  RefreshCw,
-  Truck,
+  Search, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw,
+  Package, X, FileText, ChevronRight, AlertTriangle, CheckCircle2, Pause,
+  RotateCcw, GitCompare, ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
-import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
-import { AiActionButton } from "@/components/ai/ai-action-button";
-import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
-import { FileText } from "lucide-react";
-import { deriveStage, getStageInfo, QUOTE_QUEUE_STAGES, type ProcurementStage } from "@/lib/procurement-stage";
+import { deriveStage, getStageInfo, type ProcurementStage } from "@/lib/procurement-stage";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -49,32 +27,13 @@ interface Quote {
   createdAt: string;
   deliveryDate?: string;
   deliveryLocation?: string;
-  items: Array<{
-    id: string;
-    product: {
-      id: string;
-      name: string;
-    };
-    quantity: number;
-  }>;
-  responses?: Array<{
-    id: string;
-    vendor: {
-      name: string;
-    };
-    totalPrice?: number;
-    createdAt: string;
-  }>;
-  vendorRequests?: Array<{
-    id: string;
-    status: string;
-  }>;
+  items: Array<{ id: string; product: { id: string; name: string }; quantity: number }>;
+  responses?: Array<{ id: string; vendor: { name: string }; totalPrice?: number; createdAt: string }>;
+  vendorRequests?: Array<{ id: string; status: string }>;
 }
 
-// ── 운영 상태 파생 (procurement-stage 기반) ──
 function isDelayed(q: Quote): boolean {
-  if (!q.deliveryDate) return false;
-  if (q.status === "COMPLETED" || q.status === "CANCELLED") return false;
+  if (!q.deliveryDate || q.status === "COMPLETED" || q.status === "CANCELLED") return false;
   return new Date(q.deliveryDate) < new Date();
 }
 
@@ -84,174 +43,33 @@ function getQuoteStage(q: Quote): ProcurementStage {
   return deriveStage(q.status, totalVR, respondedVR, isDelayed(q));
 }
 
-function getOpStatus(q: Quote) {
-  if (isDelayed(q)) {
-    return { label: "지연", bg: "bg-red-600/10", text: "text-red-400", border: "border-red-600/30" };
-  }
-  const stageInfo = getStageInfo(getQuoteStage(q));
-  return { label: stageInfo.label, bg: stageInfo.bgColor, text: stageInfo.color, border: stageInfo.borderColor };
-}
-
-function getPriority(q: Quote): number {
-  if (isDelayed(q)) return 0;
-  const stageInfo = getStageInfo(getQuoteStage(q));
-  return stageInfo.priority;
-}
-
-// ── 견적 카드 ──────────────────────────────────────────────
-function QuoteCard({ quote }: { quote: Quote }) {
-  const opStatus = getOpStatus(quote);
-  const itemCount = quote.items.length;
-  const responseCount = quote.responses?.length ?? 0;
-  const prices = (quote.responses ?? [])
-    .map((r) => r.totalPrice)
-    .filter((p): p is number => typeof p === "number" && p > 0);
-  const minPrice = prices.length ? Math.min(...prices) : null;
-  const maxPrice = prices.length ? Math.max(...prices) : null;
-  const delayed = isDelayed(quote);
-  const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
-
-  return (
-    <div className={`bg-pn rounded-xl border transition-colors p-4 ${delayed ? "border-red-600/30" : "border-bd hover:border-bd/80"}`}>
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
-          {/* 상태 뱃지 + 참조번호 */}
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
-              {opStatus.label}
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono">{quoteRef}</span>
-            {delayed && (
-              <span className="text-[10px] font-semibold text-red-400 flex items-center gap-0.5">
-                <AlertCircle className="h-3 w-3" /> 마감 초과
-              </span>
-            )}
-          </div>
-
-          {/* 제목 */}
-          <h3 className="font-semibold text-slate-100 text-sm leading-snug truncate mb-2">{quote.title}</h3>
-
-          {/* 메타 정보 */}
-          <div className="flex flex-wrap gap-x-4 gap-y-1">
-            <span className="text-xs text-slate-500 flex items-center gap-1">
-              <Package className="h-3 w-3" />
-              {itemCount}개 품목
-            </span>
-            <span className={`text-xs flex items-center gap-1 ${responseCount > 0 ? "text-blue-400 font-medium" : "text-slate-500"}`}>
-              <Send className="h-3 w-3" />
-              {responseCount > 0 ? `회신 ${responseCount}건` : "회신 없음"}
-            </span>
-            {minPrice !== null && (
-              <span className="text-xs text-slate-200 font-medium flex items-center gap-1">
-                <Truck className="h-3 w-3 text-slate-400" />
-                {minPrice === maxPrice
-                  ? `₩${minPrice.toLocaleString()}`
-                  : `₩${minPrice.toLocaleString()} ~ ₩${maxPrice!.toLocaleString()}`}
-              </span>
-            )}
-            <span className="text-xs text-slate-400 flex items-center gap-1">
-              <Calendar className="h-3 w-3" />
-              {new Date(quote.createdAt).toLocaleDateString("ko-KR")}
-            </span>
-            {quote.deliveryDate && (
-              <span className={`text-xs flex items-center gap-1 ${delayed ? "text-red-400 font-semibold" : "text-slate-500"}`}>
-                <Clock className="h-3 w-3" />
-                납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* 빠른 액션 */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[88px]">
-          <Link href={`/quotes/${quote.id}`}>
-            <Button
-              size="sm"
-              variant={quote.status === "RESPONDED" ? "default" : "outline"}
-              className={`h-7 text-xs w-full ${quote.status === "RESPONDED" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-            >
-              {quote.status === "RESPONDED" ? "비교표 보기" : "상세보기"}
-              <ArrowRight className="h-3 w-3 ml-1" />
-            </Button>
-          </Link>
-          {quote.status === "PENDING" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-amber-500 hover:bg-amber-600 text-white">
-                발송하기
-              </Button>
-            </Link>
-          )}
-          {quote.status === "RESPONDED" && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full border-emerald-600/30 text-emerald-400 hover:bg-emerald-600/10">
-                발주 전환
-              </Button>
-            </Link>
-          )}
-          {quote.status === "SENT" && responseCount > 0 && (
-            <Link href={`/quotes/${quote.id}`}>
-              <Button size="sm" variant="outline" className="h-7 text-xs w-full text-slate-400 border-bd hover:bg-el">
-                회신 확인
-              </Button>
-            </Link>
-          )}
-          {quote.status === "COMPLETED" && (
-            <Link href={`/dashboard/purchases?quoteId=${quote.id}`}>
-              <Button size="sm" className="h-7 text-xs w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                <ShoppingCart className="h-3 w-3 mr-1" />
-                구매 요청
-              </Button>
-            </Link>
-          )}
-        </div>
-      </div>
-
-      {/* 운영 실행 현황 */}
-      <OpsExecutionContext
-        entityType="QUOTE"
-        entityId={quote.id}
-        compact
-        className="mt-3 pt-3 border-t border-bd"
-      />
-    </div>
-  );
-}
+// Stage filter tabs
+const STAGE_TABS: { value: string; label: string; stages: ProcurementStage[] }[] = [
+  { value: "all",             label: "전체",       stages: [] },
+  { value: "waiting",         label: "응답 대기",  stages: ["quote_queue", "quote_waiting"] },
+  { value: "partial",         label: "부분 응답",  stages: ["quote_partial"] },
+  { value: "review",          label: "비교 필요",  stages: ["quote_received", "quote_compare_review"] },
+  { value: "approval_ready",  label: "승인 준비",  stages: ["approval_ready"] },
+  { value: "blocked",         label: "차단",       stages: ["blocked"] },
+  { value: "hold",            label: "보류",       stages: ["hold"] },
+];
 
 function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-  // URL ?status= 파라미터가 있으면 초기 필터로 세팅 (대시보드 카드 원클릭 진입)
-  const [statusFilter, setStatusFilter] = useState<string>(
-    searchParams.get("status") ?? "all"
-  );
-  const [sortBy, setSortBy] = useState<string>("newest");
+  const [stageFilter, setStageFilter] = useState<string>(searchParams.get("stage") ?? "all");
+  const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(null);
 
-  // URL 파라미터 변경 시 필터 동기화 (뒤로가기 후 재진입 등)
   useEffect(() => {
-    const s = searchParams.get("status");
-    if (s) setStatusFilter(s);
+    const s = searchParams.get("stage");
+    if (s) setStageFilter(s);
   }, [searchParams]);
 
-  // Deep-link: work_item + entity_id → 해당 견적으로 스크롤
-  const entityIdParam = searchParams.get("entity_id");
-  useEffect(() => {
-    if (entityIdParam) {
-      const el = document.getElementById("ops-execution-context");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
-  }, [entityIdParam]);
-
-  // 견적 목록 조회
-  // staleTime: 0 - 항상 최신 상태 확인 (견적 상태 변경 후 목록 복귀 시 즉시 반영)
-  // refetchOnMount: "always" - 페이지 재방문 시 항상 재요청 (Next.js 라우터 캐시 우회)
   const { data: quotesData, isLoading } = useQuery({
-    queryKey: ["quotes", statusFilter, sortBy],
+    queryKey: ["quotes"],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (statusFilter !== "all" && statusFilter !== "DEADLINE_TODAY") params.append("status", statusFilter);
-      if (sortBy) params.append("sortBy", sortBy);
-      const response = await fetch(`/api/quotes?${params.toString()}`);
+      const response = await fetch("/api/quotes");
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
     },
@@ -261,237 +79,355 @@ function QuotesPageContent() {
     refetchOnWindowFocus: true,
   });
 
-  if (status === "loading") {
+  const quotes: Quote[] = quotesData?.quotes || [];
+
+  // Add stage to each quote
+  const quotesWithStage = useMemo(() =>
+    quotes.map(q => ({ ...q, _stage: getQuoteStage(q), _stageInfo: getStageInfo(getQuoteStage(q)) })),
+    [quotes],
+  );
+
+  // Stage counts for tabs
+  const stageCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const tab of STAGE_TABS) {
+      if (tab.value === "all") { counts.all = quotesWithStage.length; continue; }
+      counts[tab.value] = quotesWithStage.filter(q => tab.stages.includes(q._stage)).length;
+    }
+    return counts;
+  }, [quotesWithStage]);
+
+  // Filter + search
+  const filteredQuotes = useMemo(() => {
+    let result = quotesWithStage;
+    // Stage filter
+    if (stageFilter !== "all") {
+      const tab = STAGE_TABS.find(t => t.value === stageFilter);
+      if (tab) result = result.filter(q => tab.stages.includes(q._stage));
+    }
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(quote =>
+        quote.title.toLowerCase().includes(q) ||
+        quote.id.toLowerCase().includes(q) ||
+        quote.items.some(item => item.product.name.toLowerCase().includes(q)),
+      );
+    }
+    // Sort by priority
+    return result.sort((a, b) => a._stageInfo.priority - b._stageInfo.priority);
+  }, [quotesWithStage, stageFilter, searchQuery]);
+
+  const selectedQuote = quotesWithStage.find(q => q.id === selectedQuoteId);
+
+  // Summary KPIs
+  const kpis = useMemo(() => ({
+    waiting: stageCounts.waiting ?? 0,
+    review: stageCounts.review ?? 0 + (stageCounts.partial ?? 0),
+    approvalReady: stageCounts.approval_ready ?? 0,
+    blocked: stageCounts.blocked ?? 0,
+    total: quotesWithStage.length,
+  }), [stageCounts, quotesWithStage]);
+
+  if (status === "loading" || isLoading) {
     return (
-      <div className="p-4 md:p-8 space-y-4 max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-el rounded animate-pulse" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[0,1,2,3].map((i) => <div key={i} className="h-24 bg-el rounded-xl animate-pulse" />)}
-        </div>
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     );
   }
 
-  const quotes: Quote[] = quotesData?.quotes || [];
-
-  // 검색 필터링
-  const filteredQuotes = quotes
-    .filter((quote) => {
-      if (!searchQuery) return true;
-      const q = searchQuery.toLowerCase();
-      return (
-        quote.title.toLowerCase().includes(q) ||
-        quote.id.toLowerCase().includes(q) ||
-        quote.items.some((item) => item.product.name.toLowerCase().includes(q))
-      );
-    })
-    .filter((quote) => {
-      if (statusFilter === "all") return true;
-      if (statusFilter === "DEADLINE_TODAY") {
-        return quote.deliveryDate && new Date(quote.deliveryDate).toDateString() === new Date().toDateString() && quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
-      }
-      return quote.status === statusFilter;
-    })
-    .sort((a, b) => getPriority(a) - getPriority(b));
-
-  // 운영 요약 카운트 — stage 기반
-  const today = new Date().toDateString();
-  const quotesWithStage = quotes.map((q) => ({ ...q, _stage: getQuoteStage(q) }));
-  const summaryStats = {
-    pendingResponse: quotesWithStage.filter((q) => q._stage === "quote_waiting" || q._stage === "quote_queue").length,
-    needsReview:     quotesWithStage.filter((q) => q._stage === "quote_compare_review" || q._stage === "quote_received" || q._stage === "quote_partial").length,
-    todayDeadline:   quotes.filter((q) => q.deliveryDate && new Date(q.deliveryDate).toDateString() === today && q.status !== "COMPLETED" && q.status !== "CANCELLED").length,
-    readyToOrder:    quotesWithStage.filter((q) => q._stage === "approval_ready").length,
-  };
-
-  // 섹션 분류 (stage 기반)
-  const urgentQuotes     = filteredQuotes.filter((q) => {
-    const s = getQuoteStage(q);
-    return s === "quote_compare_review" || s === "quote_received" || s === "quote_partial" || isDelayed(q);
-  });
-  const inProgressQuotes = filteredQuotes.filter((q) => {
-    const s = getQuoteStage(q);
-    return !urgentQuotes.includes(q) && s !== "po_created" && s !== "cancelled";
-  });
-  const completedQuotes  = filteredQuotes.filter((q) => {
-    const s = getQuoteStage(q);
-    return s === "po_created" || s === "cancelled";
-  });
-
   return (
-    <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
 
-      {/* ── 헤더 ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-100">견적 운영 워크큐</h1>
-          <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
+      {/* ═══ Task Mode Chrome ═══ */}
+      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="shrink-0">
+            <span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span>
+          </Link>
+          <div className="w-px h-5 bg-bd" />
+          <span className="text-xs md:text-sm font-medium text-slate-400">견적관리 워크큐</span>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <AiActionButton
-            label="견적 요청 초안 만들기"
-            icon={FileText}
-            generateEndpoint="/api/ai-actions/generate/quote-draft"
-            generatePayload={{
-              items: quotes?.slice(0, 3).flatMap((q: Quote) =>
-                q.items?.map((item) => ({
-                  productName: item.product?.name || "품목",
-                  quantity: item.quantity || 1,
-                })) || []
-              ) || [],
-            }}
-            variant="outline"
-            size="sm"
-            className="h-9 text-sm hidden sm:flex"
-          />
+        <div className="flex items-center gap-3">
+          {/* KPI pills */}
+          <div className="hidden md:flex items-center gap-2">
+            <span className="text-[10px] text-amber-400">{kpis.waiting} 대기</span>
+            <span className="text-slate-600">·</span>
+            <span className="text-[10px] text-purple-400">{kpis.review} 비교</span>
+            <span className="text-slate-600">·</span>
+            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 승인</span>
+            {kpis.blocked > 0 && <><span className="text-slate-600">·</span><span className="text-[10px] text-red-400">{kpis.blocked} 차단</span></>}
+          </div>
           <PermissionGate permission="quotes.create">
-            <Link href="/compare/quote" className="flex-shrink-0">
-              <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4" />
-                <span className="hidden sm:inline">새 견적 요청</span>
-                <span className="sm:hidden">새 요청</span>
+            <Link href="/test/search">
+              <Button size="sm" className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-500">
+                <Plus className="h-3.5 w-3.5" />새 요청
               </Button>
             </Link>
           </PermissionGate>
         </div>
       </div>
 
-      {/* ── 운영 요약 스트립 ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "회신 대기",       count: summaryStats.pendingResponse, icon: <Clock className="h-4 w-4 text-amber-400" />,      filter: "SENT",           hover: "hover:border-amber-600/30",   active: "border-amber-600/40 bg-amber-600/10 ring-1 ring-amber-600/20" },
-          { label: "비교 검토 필요",  count: summaryStats.needsReview,     icon: <RefreshCw className="h-4 w-4 text-purple-400" />,  filter: "RESPONDED",      hover: "hover:border-purple-600/30",  active: "border-purple-600/40 bg-purple-600/10 ring-1 ring-purple-600/20" },
-          { label: "오늘 마감",       count: summaryStats.todayDeadline,   icon: <AlertCircle className="h-4 w-4 text-red-400" />,   filter: "DEADLINE_TODAY", hover: "hover:border-red-600/30",     active: "border-red-600/40 bg-red-600/10 ring-1 ring-red-600/20" },
-          { label: "발주 전환 가능",  count: summaryStats.readyToOrder,    icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "RESPONDED",      hover: "hover:border-emerald-600/30", active: "border-emerald-600/40 bg-emerald-600/10 ring-1 ring-emerald-600/20" },
-        ].map(({ label, count, icon, filter, hover, active }) => {
-          const isActive = statusFilter === filter;
+      {/* ═══ Filter Utility Bar ═══ */}
+      <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd flex items-center gap-2 overflow-x-auto" style={{ backgroundColor: '#353739' }}>
+        {STAGE_TABS.map(tab => {
+          const count = stageCounts[tab.value] ?? 0;
+          const isActive = stageFilter === tab.value;
           return (
-          <button
-            key={label}
-            onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-            className={`text-left rounded-xl border bg-pn p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {icon}
-              <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
-            </div>
-            <div className="text-2xl font-bold text-slate-100">{isLoading ? "—" : count}</div>
-          </button>
+            <button key={tab.value} onClick={() => setStageFilter(isActive ? "all" : tab.value)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all border ${
+                isActive ? "bg-blue-600/10 text-blue-300 border-blue-600/30" : "text-slate-400 border-transparent hover:bg-el hover:border-bd"
+              }`}>
+              {tab.label}
+              <Badge variant="secondary" className={`h-4 min-w-4 px-1 text-[9px] ${isActive ? "bg-blue-600/20 text-blue-300" : "bg-pn text-slate-500"}`}>{count}</Badge>
+            </button>
           );
         })}
+        <div className="flex-1" />
+        <div className="relative shrink-0 w-48">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-slate-500" />
+          <Input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="검색..."
+            className="h-7 pl-7 text-[11px] bg-pn border-bd" />
+        </div>
       </div>
 
-      {/* ── 검색 + 필터 ── */}
-      <div className="flex flex-col sm:flex-row gap-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
-          <Input
-            placeholder="견적명 / 품목명 / 요청 번호 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9 h-9 text-sm"
-          />
+      {/* ═══ Main: Queue List + Ops Rail ═══ */}
+      <div className="flex-1 overflow-hidden flex">
+
+        {/* Queue List */}
+        <div className="flex-1 overflow-y-auto">
+          {filteredQuotes.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-slate-500 gap-3">
+              <Package className="h-8 w-8 opacity-30" />
+              <p className="text-sm">{searchQuery || stageFilter !== "all" ? "조건에 맞는 견적이 없습니다" : "아직 견적 요청이 없습니다"}</p>
+              {stageFilter !== "all" && (
+                <button onClick={() => setStageFilter("all")} className="text-xs text-blue-400 hover:underline">필터 초기화</button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-bd/50">
+              {filteredQuotes.map(quote => {
+                const si = quote._stageInfo;
+                const isSelected = selectedQuoteId === quote.id;
+                const responseCount = quote.responses?.length ?? 0;
+                const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
+                const minPrice = prices.length ? Math.min(...prices) : null;
+                const ref = `#${quote.id.slice(0, 8).toUpperCase()}`;
+                const delayed = isDelayed(quote);
+
+                return (
+                  <button key={quote.id} onClick={() => setSelectedQuoteId(quote.id)}
+                    className={`w-full text-left px-4 md:px-6 py-3 transition-all ${
+                      isSelected ? "bg-blue-600/5 border-l-2 border-l-blue-500" : "hover:bg-el border-l-2 border-l-transparent"
+                    }`}>
+                    {/* Line 1: identity + stage + amount */}
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${si.bgColor} ${si.color} ${si.borderColor}`}>
+                        {si.label}
+                      </span>
+                      {delayed && <span className="text-[9px] px-1 py-0.5 rounded bg-red-600/10 text-red-400 border border-red-600/20">지연</span>}
+                      <span className="text-[10px] text-slate-500 font-mono">{ref}</span>
+                      <span className="flex-1" />
+                      {minPrice !== null && <span className="text-xs font-semibold tabular-nums text-slate-100">₩{minPrice.toLocaleString("ko-KR")}</span>}
+                      <ChevronRight className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : "text-slate-600"}`} />
+                    </div>
+                    {/* Line 2: title + meta */}
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm font-medium text-slate-100 truncate flex-1">{quote.title}</span>
+                      <span className="text-[10px] text-slate-500 shrink-0">{quote.items.length}건</span>
+                      <span className="text-[10px] text-slate-500 shrink-0">{responseCount > 0 ? `회신 ${responseCount}` : "미회신"}</span>
+                    </div>
+                    {/* Line 3: next action + time */}
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={`text-[10px] ${si.color}`}>다음: {si.nextAction}</span>
+                      <span className="flex-1" />
+                      <span className="text-[10px] text-slate-500">{new Date(quote.createdAt).toLocaleDateString("ko-KR")}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm">
-            <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" />
-            <SelectValue placeholder="상태 필터" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">전체 상태</SelectItem>
-            <SelectItem value="DEADLINE_TODAY">오늘 마감</SelectItem>
-            <SelectItem value="PENDING">요청 접수</SelectItem>
-            <SelectItem value="SENT">회신 대기 중</SelectItem>
-            <SelectItem value="RESPONDED">비교 검토 필요</SelectItem>
-            <SelectItem value="COMPLETED">발주 완료</SelectItem>
-            <SelectItem value="CANCELLED">취소됨</SelectItem>
-          </SelectContent>
-        </Select>
+
+        {/* ═══ Quote Ops Rail (400px, sticky) ═══ */}
+        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col overflow-hidden" style={{ backgroundColor: '#353739' }}>
+          {selectedQuote ? (
+            <>
+              {/* Rail header */}
+              <div className="px-5 py-4 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${selectedQuote._stageInfo.bgColor} ${selectedQuote._stageInfo.color} ${selectedQuote._stageInfo.borderColor}`}>
+                    {selectedQuote._stageInfo.label}
+                  </span>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={() => setSelectedQuoteId(null)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <h3 className="text-sm font-semibold text-slate-100 leading-tight line-clamp-2 mb-1">{selectedQuote.title}</h3>
+                <div className="flex items-center gap-2 text-[10px] text-slate-400">
+                  <span>{selectedQuote.items.length}건</span>
+                  <span className="text-slate-600">·</span>
+                  <span>{selectedQuote.responses?.length ?? 0}회신</span>
+                  <span className="text-slate-600">·</span>
+                  <span>{new Date(selectedQuote.createdAt).toLocaleDateString("ko-KR")}</span>
+                </div>
+                {(() => {
+                  const prices = (selectedQuote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
+                  const minP = prices.length ? Math.min(...prices) : null;
+                  return minP !== null ? (
+                    <p className="text-lg font-bold tabular-nums text-slate-100 mt-2">₩{minP.toLocaleString("ko-KR")}</p>
+                  ) : null;
+                })()}
+              </div>
+
+              {/* Rail body — scrollable */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Next action */}
+                <div className="px-5 py-3 border-b border-bd/50">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 액션</div>
+                  <p className={`text-xs font-medium ${selectedQuote._stageInfo.color}`}>{selectedQuote._stageInfo.nextAction}</p>
+                </div>
+
+                {/* Items compact list */}
+                <div className="px-5 py-3 border-b border-bd/50">
+                  <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">품목 ({selectedQuote.items.length}건)</div>
+                  <div className="space-y-1">
+                    {selectedQuote.items.slice(0, 5).map(item => (
+                      <div key={item.id} className="flex items-center justify-between text-xs">
+                        <span className="text-slate-300 truncate max-w-[220px]">{item.product.name}</span>
+                        <span className="text-slate-500 tabular-nums shrink-0">×{item.quantity}</span>
+                      </div>
+                    ))}
+                    {selectedQuote.items.length > 5 && <p className="text-[10px] text-slate-500">+{selectedQuote.items.length - 5}건 더</p>}
+                  </div>
+                </div>
+
+                {/* Responses */}
+                {(selectedQuote.responses?.length ?? 0) > 0 && (
+                  <div className="px-5 py-3 border-b border-bd/50">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">공급사 응답</div>
+                    <div className="space-y-1.5">
+                      {selectedQuote.responses!.map(r => (
+                        <div key={r.id} className="flex items-center justify-between text-xs">
+                          <span className="text-slate-300">{r.vendor.name}</span>
+                          <span className="text-slate-200 tabular-nums font-medium">
+                            {r.totalPrice ? `₩${r.totalPrice.toLocaleString("ko-KR")}` : "금액 미정"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Vendor requests status */}
+                {(selectedQuote.vendorRequests?.length ?? 0) > 0 && (
+                  <div className="px-5 py-3 border-b border-bd/50">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">요청 상태</div>
+                    <div className="space-y-1">
+                      {selectedQuote.vendorRequests!.map(vr => (
+                        <div key={vr.id} className="flex items-center justify-between text-xs">
+                          <span className="text-slate-400 font-mono text-[10px]">#{vr.id.slice(0, 6)}</span>
+                          <span className={vr.status === "RESPONDED" ? "text-emerald-400" : vr.status === "SENT" ? "text-amber-400" : "text-slate-500"}>
+                            {vr.status === "RESPONDED" ? "응답 완료" : vr.status === "SENT" ? "발송됨" : vr.status}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Delivery info */}
+                {selectedQuote.deliveryDate && (
+                  <div className="px-5 py-3 border-b border-bd/50">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">납기</div>
+                    <p className={`text-xs ${isDelayed(selectedQuote) ? "text-red-400 font-semibold" : "text-slate-300"}`}>
+                      {new Date(selectedQuote.deliveryDate).toLocaleDateString("ko-KR")}
+                      {isDelayed(selectedQuote) && " — 마감 초과"}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Rail footer — actions */}
+              <div className="px-5 py-3 border-t border-bd space-y-2 shrink-0" style={{ backgroundColor: '#434548' }}>
+                <Link href={`/quotes/${selectedQuote.id}`} className="block">
+                  <Button size="sm" className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white">
+                    {selectedQuote._stage === "quote_compare_review" || selectedQuote._stage === "quote_received" ? "비교 검토 열기" : "검토 열기"}
+                    <ArrowRight className="h-3 w-3 ml-1.5" />
+                  </Button>
+                </Link>
+                <div className="flex gap-2">
+                  {selectedQuote._stage === "approval_ready" && (
+                    <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-emerald-400 border-emerald-600/30 hover:bg-emerald-600/10">
+                      <CheckCircle2 className="h-3 w-3 mr-1" />승인으로 넘기기
+                    </Button>
+                  )}
+                  {(selectedQuote._stage === "quote_waiting" || selectedQuote._stage === "quote_partial") && (
+                    <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-amber-400 border-amber-600/30 hover:bg-amber-600/10">
+                      <RotateCcw className="h-3 w-3 mr-1" />재요청
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-slate-400 border-bd">
+                    <Pause className="h-3 w-3 mr-1" />보류
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
+              <div className="w-10 h-10 rounded-lg bg-el border border-bd flex items-center justify-center mb-3">
+                <FileText className="h-5 w-5 text-slate-600" />
+              </div>
+              <p className="text-xs text-slate-400 mb-1">견적을 선택하세요</p>
+              <p className="text-[10px] text-slate-500">행을 클릭하면 상세 정보와<br />다음 액션을 확인할 수 있습니다</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* ── 로딩 스켈레톤 ── */}
-      {isLoading && (
-        <div className="space-y-2">
-          {[0,1,2].map((i) => (
-            <div key={i} className="h-28 bg-el rounded-xl animate-pulse" />
-          ))}
-        </div>
-      )}
-
-      {/* ── 섹션: 즉시 처리 필요 ── */}
-      {!isLoading && urgentQuotes.length > 0 && (
-        <div className="space-y-2">
+      {/* ═══ Sticky Action Dock ═══ */}
+      <div className="shrink-0 border-t-2 border-bd px-4 md:px-6 py-2.5" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* Stage counts */}
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-500" />
-            <h2 className="text-sm font-semibold text-slate-200">즉시 처리 필요</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-400 text-[10px] font-bold">{urgentQuotes.length}</span>
+            <span className="text-[10px] text-slate-500">{kpis.total}건</span>
+            <span className="text-slate-600">·</span>
+            <span className="text-[10px] text-amber-400">{kpis.waiting} 대기</span>
+            <span className="text-[10px] text-purple-400">{kpis.review} 비교</span>
+            <span className="text-[10px] text-emerald-400">{kpis.approvalReady} 승인</span>
+            {kpis.blocked > 0 && <span className="text-[10px] text-red-400">{kpis.blocked} 차단</span>}
           </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-        </div>
-      )}
-
-      {/* ── 섹션: 진행 중 ── */}
-      {!isLoading && inProgressQuotes.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-slate-200">진행 중</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-400 text-[10px] font-bold">{inProgressQuotes.length}</span>
-          </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-        </div>
-      )}
-
-      {/* ── 섹션: 완료 (접을 수 있는) ── */}
-      {!isLoading && completedQuotes.length > 0 && (
-        <details className="group">
-          <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-            <span className="text-sm font-semibold text-slate-200">완료 / 취소</span>
-            <span className="text-xs text-slate-400">({completedQuotes.length}건)</span>
-            <span className="ml-1 text-xs text-slate-400 group-open:hidden">▶ 펼치기</span>
-            <span className="ml-1 text-xs text-slate-400 hidden group-open:inline">▼ 접기</span>
-          </summary>
-          <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} />)}
-          </div>
-        </details>
-      )}
-
-      {/* ── 빈 상태 ── */}
-      {!isLoading && filteredQuotes.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
-          <ShoppingCart className="h-10 w-10 opacity-25" />
-          <p className="text-sm">
-            {searchQuery || statusFilter !== "all" ? "조건에 맞는 견적이 없습니다" : "아직 견적 요청이 없습니다"}
-          </p>
-          {!searchQuery && statusFilter === "all" && (
-            <Link href="/compare/quote">
-              <Button size="sm" className="mt-1 h-8 text-xs bg-blue-600 hover:bg-blue-700">
-                첫 견적 요청하기
-              </Button>
-            </Link>
-          )}
-          {(searchQuery || statusFilter !== "all") && (
-            <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); }} className="text-xs text-blue-600 hover:underline">
-              필터 초기화
-            </button>
+          <div className="flex-1" />
+          {/* Quick filters */}
+          <Button size="sm" variant="ghost" className="h-7 px-2.5 text-[10px] text-purple-400 hover:bg-purple-600/10"
+            onClick={() => setStageFilter(stageFilter === "review" ? "all" : "review")}>
+            <GitCompare className="h-3 w-3 mr-1" />비교 필요만
+          </Button>
+          <Button size="sm" variant="ghost" className="h-7 px-2.5 text-[10px] text-amber-400 hover:bg-amber-600/10"
+            onClick={() => setStageFilter(stageFilter === "waiting" ? "all" : "waiting")}>
+            <Clock className="h-3 w-3 mr-1" />대기만
+          </Button>
+          {kpis.approvalReady > 0 && (
+            <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white"
+              onClick={() => setStageFilter("approval_ready")}>
+              <CheckCircle2 className="h-3 w-3 mr-1" />승인 준비 {kpis.approvalReady}건
+            </Button>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 export default function QuotesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        </div>
-      }
-    >
+    <Suspense fallback={
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      </div>
+    }>
       <QuotesPageContent />
     </Suspense>
   );
