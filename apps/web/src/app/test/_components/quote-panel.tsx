@@ -2737,7 +2737,7 @@ export function QuoteItemsSummaryPanel({
                     setTimeout(() => setIsSubmitting(false), 3000);
                   }
                 }}
-                className="w-full h-14 text-lg font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all"
+                className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all"
                 disabled={isSubmitting || quoteItems.length === 0}
               >
                 {isSubmitting ? (

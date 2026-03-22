@@ -58,11 +58,11 @@ const CATEGORY_CONFIG: Record<
   NotificationCategory,
   { icon: React.ElementType; tint: string; unreadTint: string }
 > = {
-  stock_alert:       { icon: AlertTriangle, tint: "text-slate-500", unreadTint: "text-teal-400" },
+  stock_alert:       { icon: AlertTriangle, tint: "text-slate-500", unreadTint: "text-red-400" },
   quote_arrived:     { icon: FileText,      tint: "text-slate-500", unreadTint: "text-blue-400" },
   delivery_complete: { icon: Truck,         tint: "text-slate-500", unreadTint: "text-blue-400" },
   approval_pending:  { icon: ClipboardCheck,tint: "text-slate-500", unreadTint: "text-blue-400" },
-  expiry_warning:    { icon: Clock,         tint: "text-slate-500", unreadTint: "text-teal-400" },
+  expiry_warning:    { icon: Clock,         tint: "text-slate-500", unreadTint: "text-amber-400" },
   safety_alert:      { icon: ShieldAlert,   tint: "text-slate-500", unreadTint: "text-amber-400" },
   system:            { icon: Bell,          tint: "text-slate-500", unreadTint: "text-slate-300" },
 };

@@ -33,13 +33,13 @@ const DOMAIN_CONFIG: Record<string, {
   bgColor: string;
 }> = {
   QUOTE_DRAFT: { icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
-  VENDOR_EMAIL_DRAFT: { icon: FileText, color: "text-indigo-600", bgColor: "bg-indigo-50" },
-  FOLLOWUP_DRAFT: { icon: Clock, color: "text-orange-600", bgColor: "bg-orange-50" },
-  STATUS_CHANGE_SUGGEST: { icon: RotateCcw, color: "text-purple-600", bgColor: "bg-purple-50" },
+  VENDOR_EMAIL_DRAFT: { icon: FileText, color: "text-blue-600", bgColor: "bg-blue-50" },
+  FOLLOWUP_DRAFT: { icon: Clock, color: "text-amber-600", bgColor: "bg-amber-50" },
+  STATUS_CHANGE_SUGGEST: { icon: RotateCcw, color: "text-blue-600", bgColor: "bg-blue-50" },
   REORDER_SUGGESTION: { icon: Package, color: "text-emerald-600", bgColor: "bg-emerald-50" },
   EXPIRY_ALERT: { icon: AlertTriangle, color: "text-red-600", bgColor: "bg-red-50" },
-  VENDOR_RESPONSE_PARSED: { icon: ShoppingCart, color: "text-teal-600", bgColor: "bg-teal-50" },
-  COMPARE_DECISION: { icon: GitCompare, color: "text-purple-600", bgColor: "bg-purple-50" },
+  VENDOR_RESPONSE_PARSED: { icon: ShoppingCart, color: "text-blue-600", bgColor: "bg-blue-50" },
+  COMPARE_DECISION: { icon: GitCompare, color: "text-blue-600", bgColor: "bg-blue-50" },
 };
 
 const CTA_MAP: Record<string, { label: string; variant: "default" | "destructive" | "outline" }> = {

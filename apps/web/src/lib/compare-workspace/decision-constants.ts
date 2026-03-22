@@ -72,7 +72,7 @@ export const QUOTE_STATUS_CONFIG: Record<string, { label: string; className: str
   SENT: { label: "발송", className: "bg-blue-50 text-blue-700" },
   RESPONDED: { label: "회신", className: "bg-green-50 text-green-700" },
   COMPLETED: { label: "완료", className: "bg-emerald-50 text-emerald-700" },
-  PURCHASED: { label: "구매", className: "bg-teal-50 text-teal-700" },
+  PURCHASED: { label: "구매", className: "bg-blue-50 text-blue-700" },
   CANCELLED: { label: "취소", className: "bg-red-50 text-red-700" },
 };
 

@@ -76,8 +76,8 @@ export const PURCHASE_PHASE_LABELS: Record<PurchasePhase, string> = {
 export const PURCHASE_PHASE_BADGE_COLORS: Record<PurchasePhase, string> = {
   REQUEST: "bg-blue-100 text-blue-800",
   PENDING_APPROVAL: "bg-amber-100 text-amber-800",
-  ORDERED: "bg-indigo-100 text-indigo-800",
-  RECEIVING: "bg-purple-100 text-purple-800",
+  ORDERED: "bg-blue-100 text-blue-800",
+  RECEIVING: "bg-blue-100 text-blue-800",
   COMPLETED: "bg-green-100 text-green-800",
   CANCELLED: "bg-el text-gray-500",
 };

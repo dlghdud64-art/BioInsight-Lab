@@ -233,7 +233,7 @@ export default function DashboardPage() {
   if (stats.undecidedCompareCount > 0) {
     urgentItems.push({
       id: "u-compare",
-      icon: <GitCompare className="h-4 w-4 text-purple-400" />,
+      icon: <GitCompare className="h-4 w-4 text-slate-400" />,
       label: `비교 판정 대기 ${stats.undecidedCompareCount}건`,
       desc: stats.compareStats.slaBreachedCount > 0 ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 포함` : "비교 결과 검토 필요",
       href: "/compare",
@@ -254,9 +254,9 @@ export default function DashboardPage() {
   // -- 추천 작업 (항상 표시) --
   const recommendedActions = [
     { id: "r-search", icon: <Search className="h-3.5 w-3.5 text-blue-400" />, label: "시약·장비 검색", desc: "500만+ 품목 검색", href: "/test/search" },
-    { id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-indigo-400" />, label: "제품 비교", desc: "스펙·가격 비교", href: "/test/compare" },
-    { id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-violet-400" />, label: "견적 요청하기", desc: "공급사에 견적 발송", href: "/test/quote" },
-    { id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-emerald-400" />, label: "재고 등록", desc: "입고 품목 등록", href: "/dashboard/inventory" },
+    { id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-blue-400" />, label: "제품 비교", desc: "스펙·가격 비교", href: "/test/compare" },
+    { id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청하기", desc: "공급사에 견적 발송", href: "/test/quote" },
+    { id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-blue-400" />, label: "재고 등록", desc: "입고 품목 등록", href: "/dashboard/inventory" },
   ];
 
   // -- KPI 판단 카드 렌더 (공통) --
@@ -304,9 +304,9 @@ export default function DashboardPage() {
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">운영 시작 가이드</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
-              { step: "1", label: "품목 등록", desc: "시약·장비 데이터를 등록하세요", href: "/dashboard/inventory", icon: <Plus className="h-4 w-4 text-emerald-400" /> },
-              { step: "2", label: "비교 시작", desc: "벤더별 스펙·가격을 비교하세요", href: "/test/compare", icon: <GitCompare className="h-4 w-4 text-indigo-400" /> },
-              { step: "3", label: "견적 요청", desc: "공급사에 견적을 요청하세요", href: "/test/quote", icon: <FileText className="h-4 w-4 text-violet-400" /> },
+              { step: "1", label: "품목 등록", desc: "시약·장비 데이터를 등록하세요", href: "/dashboard/inventory", icon: <Plus className="h-4 w-4 text-blue-400" /> },
+              { step: "2", label: "비교 시작", desc: "벤더별 스펙·가격을 비교하세요", href: "/test/compare", icon: <GitCompare className="h-4 w-4 text-blue-400" /> },
+              { step: "3", label: "견적 요청", desc: "공급사에 견적을 요청하세요", href: "/test/quote", icon: <FileText className="h-4 w-4 text-slate-400" /> },
               { step: "4", label: "재고 연결", desc: "입고 후 재고를 자동 연결하세요", href: "/dashboard/inventory", icon: <Package className="h-4 w-4 text-blue-400" /> },
             ].map((item) => (
               <Link key={item.step} href={item.href} className="group bg-el border border-bd rounded-lg p-3 hover:bg-st transition-colors">
@@ -396,7 +396,7 @@ export default function DashboardPage() {
             )}
             {stats.undecidedCompareCount > 0 && (
               <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-el transition-colors group">
-                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-400" : "text-purple-400"}`} />
+                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-400" : "text-slate-400"}`} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-100">{stats.undecidedCompareCount}건 비교 판정 대기</p>
                   <p className="text-xs text-slate-400">
@@ -464,7 +464,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
-            icon: <Package className="h-3 w-3 text-blue-400" />,
+            icon: <Package className="h-3 w-3 text-slate-400" />,
             label: "등록 품목",
             value: stats.totalInventory.toLocaleString("ko-KR"),
             insight: getInventoryInsight(),
@@ -482,7 +482,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/purchases",
-            icon: <DollarSign className="h-3 w-3 text-emerald-400" />,
+            icon: <DollarSign className="h-3 w-3 text-slate-400" />,
             label: "이번 달 지출",
             value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
             insight: getSpendingInsight(),
@@ -491,7 +491,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/quotes?status=PENDING",
-            icon: <FileText className="h-3 w-3 text-violet-400" />,
+            icon: <FileText className="h-3 w-3 text-slate-400" />,
             label: "진행 중 견적",
             value: stats.activeQuotes,
             insight: getQuoteInsight(),
@@ -573,7 +573,7 @@ export default function DashboardPage() {
             <CardContent className="p-3 pt-0 space-y-2">
               {stats.recentPurchases.slice(0, 3).map((p, i) => (
                 <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-bd/30 last:border-0">
-                  <Beaker className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />
+                  <Beaker className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium text-slate-100 truncate">{p.itemName || "품목명 미등록"}</p>
                     <p className="text-[10px] text-slate-400">{formatPurchaseDate(p.purchasedAt)}</p>
@@ -598,7 +598,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {renderKpiCard({
               href: "/dashboard/inventory",
-              icon: <Package className="h-3.5 w-3.5 text-blue-400" />,
+              icon: <Package className="h-3.5 w-3.5 text-slate-400" />,
               label: "등록 품목",
               value: stats.totalInventory.toLocaleString("ko-KR"),
               insight: getInventoryInsight(),
@@ -618,7 +618,7 @@ export default function DashboardPage() {
               <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                    <DollarSign className="h-3.5 w-3.5 text-slate-400" />
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">이번 달 지출</span>
                   </div>
                   <div className="text-xl font-bold text-slate-200 leading-tight">
@@ -642,7 +642,7 @@ export default function DashboardPage() {
               <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-pn border-bd shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-violet-400" />
+                    <FileText className="h-3.5 w-3.5 text-slate-400" />
                     <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">진행 중 견적</span>
                   </div>
                   <div className="text-2xl font-bold text-slate-200">{stats.activeQuotes}</div>
