@@ -1655,14 +1655,9 @@ function InventoryPageContent() {
                           <button
                             type="button"
                             onClick={() => {
-                              if (typeof window !== "undefined" && window.innerWidth >= 1280) {
-                                openContextPanel(inv);
-                                setSelectedItem(inv);
-                              } else {
-                                setSelectedItem(inv);
-                                setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
-                                setIsSheetOpen(true);
-                              }
+                              setSelectedItem(inv);
+                              setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
+                              setIsSheetOpen(true);
                             }}
                             className="flex-1 min-w-0 text-left"
                           >
@@ -1806,8 +1801,9 @@ function InventoryPageContent() {
                                 <DropdownMenuItem
                                   className="gap-2 text-xs"
                                   onClick={() => {
-                                    openContextPanel(inv);
                                     setSelectedItem(inv);
+                                    setSheetSafetyStock(String(inv.safetyStock ?? inv.minOrderQty ?? 1));
+                                    setIsSheetOpen(true);
                                   }}
                                 >
                                   <Eye className="h-3.5 w-3.5 text-blue-500 shrink-0" />
@@ -1989,21 +1985,44 @@ function InventoryPageContent() {
           <InventoryContextPanel
             item={contextPanelItem}
             isOpen={contextPanelOpen}
-            onClose={() => closeInventoryContextRail("x_button")}
+            onClose={() => setContextPanelItem(null)}
             onReorder={(cpItem) => {
-              // Rail CTA → center work window (same-workbench continuation)
-              setActiveInventoryWorkWindow("reorder_candidate");
-              console.log("[Inventory] task_surface_opened", { itemId: cpItem.id, actionKey: "reorder_candidate" });
+              const match = displayInventories.find((inv) => inv.id === cpItem.id);
+              if (match) {
+                aiPanel.preparePanel({
+                  id: match.id,
+                  productId: match.productId,
+                  productName: match.product.name,
+                  brand: match.product.brand || undefined,
+                  catalogNumber: match.product.catalogNumber || undefined,
+                  currentQuantity: match.currentQuantity,
+                  unit: match.unit || undefined,
+                  safetyStock: match.safetyStock || undefined,
+                  minOrderQty: match.minOrderQty || undefined,
+                  location: match.location || undefined,
+                  expiryDate: match.expiryDate || undefined,
+                  lotNumber: match.lotNumber || undefined,
+                  autoReorderEnabled: match.autoReorderEnabled || false,
+                  averageDailyUsage: match.averageDailyUsage || undefined,
+                  leadTimeDays: match.leadTimeDays || undefined,
+                  lastInspectedAt: undefined,
+                });
+              }
+              setContextPanelItem(null);
             }}
             onEdit={(cpItem) => {
-              // Rail CTA → center work window
-              setActiveInventoryWorkWindow("stock_adjustment");
-              console.log("[Inventory] task_surface_opened", { itemId: cpItem.id, actionKey: "stock_adjustment" });
+              const match = displayInventories.find((inv) => inv.id === cpItem.id);
+              if (match) {
+                setEditingInventory(match);
+                setIsDialogOpen(true);
+              }
+              setContextPanelItem(null);
             }}
             onDispose={(cpItem) => {
-              // Rail CTA → center work window
-              setActiveInventoryWorkWindow("issue_disposal");
-              console.log("[Inventory] task_surface_opened", { itemId: cpItem.id, actionKey: "issue_disposal" });
+              toast({
+                title: "폐기 검토",
+                description: `${cpItem.productName} 폐기 절차를 확인하세요.`,
+              });
             }}
           />
         )}
