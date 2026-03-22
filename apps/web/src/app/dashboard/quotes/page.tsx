@@ -80,62 +80,127 @@ function getOpPriority(q: Quote): number {
   return map[q.status] ?? 9;
 }
 
-// ── 운영 신호 3종 파생 ──
+// ── Canonical State Enum ──
+type RailState = "request_not_sent" | "awaiting_responses" | "response_delayed" | "compare_not_ready" | "compare_review_required" | "condition_check_required" | "external_approval_required" | "ready_for_po_conversion";
+
+function deriveRailState(q: Quote): RailState {
+  const rc = q.responses?.length ?? 0;
+  if (q.status === "COMPLETED") return "ready_for_po_conversion";
+  if (q.status === "RESPONDED") return rc >= 2 ? "compare_review_required" : "compare_not_ready";
+  if (q.status === "SENT") {
+    if (rc === 0) return isDelayed(q) ? "response_delayed" : "awaiting_responses";
+    return rc >= 2 ? "compare_review_required" : "compare_not_ready";
+  }
+  return "request_not_sent";
+}
+
+// ── 상태별 exact 매핑 테이블 ──
+const RAIL_STATE_MAP: Record<RailState, {
+  badge: string; headerSummary: string; urgency: string;
+  status: string; blocker: string; nextAction: string; compareReady: string; poReady: string;
+  snapshotNote: string; handoffTarget: string; handoffStatus: string;
+  aiRecommendation: string;
+  ctaLabel: string; ctaVariant: "default" | "outline"; secondaryCta: string; tertiaryCta: string;
+}> = {
+  request_not_sent: {
+    badge: "요청 발송 전", headerSummary: "아직 공급사에 견적 요청이 발송되지 않았습니다", urgency: "첫 액션이 필요합니다",
+    status: "요청 생성 완료", blocker: "공급사 미전송", nextAction: "견적 요청 발송", compareReady: "불가 · 수신 견적 없음", poReady: "불가 · 비교 전 단계",
+    snapshotNote: "견적 요청이 아직 발송되지 않아 수신 견적이 없습니다",
+    handoffTarget: "견적 요청 발송 흐름", handoffStatus: "아직 다음 단계 이동 전",
+    aiRecommendation: "AI 추천: 현재는 비교나 검토보다 견적 요청 발송이 우선입니다",
+    ctaLabel: "견적 요청 발송", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+  },
+  awaiting_responses: {
+    badge: "회신 대기", headerSummary: "일부 공급사 응답을 기다리는 중입니다", urgency: "회신 수집 후 비교 가능 여부가 결정됩니다",
+    status: "회신 수집 중", blocker: "응답 대기 공급사 존재", nextAction: "회신 확인", compareReady: "불가 · 응답 대기", poReady: "불가 · 회신 수집 단계",
+    snapshotNote: "현재 회신 수를 기준으로 비교 가능 여부가 달라질 수 있습니다",
+    handoffTarget: "회신 수집 유지", handoffStatus: "유효 견적 확보 후 비교 검토",
+    aiRecommendation: "AI 추천: 회신 수집이 끝날 때까지 비교 확정보다 응답 추적이 더 중요합니다",
+    ctaLabel: "회신 확인", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+  },
+  response_delayed: {
+    badge: "회신 지연", headerSummary: "기대 응답 시점을 넘긴 공급사가 있습니다", urgency: "오늘 재요청 여부 판단이 필요합니다",
+    status: "회신 지연", blocker: "기대 응답 기한 경과", nextAction: "재요청 보내기", compareReady: "불안정 · 추가 회신 필요", poReady: "불가 · 응답 확보 전",
+    snapshotNote: "회신 지연 공급사를 정리하지 않으면 비교 일정이 밀릴 수 있습니다",
+    handoffTarget: "재요청 / 공급사 재확인", handoffStatus: "회신 확보 전 비교 보류",
+    aiRecommendation: "AI 추천: 기존 거래 이력이 있다면 신규 탐색보다 재요청이 우선일 수 있습니다",
+    ctaLabel: "재요청 보내기", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+  },
+  compare_not_ready: {
+    badge: "비교 준비 부족", headerSummary: "비교에 필요한 유효 견적 수가 부족합니다", urgency: "추가 회신 확보가 우선입니다",
+    status: "비교 준비 부족", blocker: "유효 견적 수 부족", nextAction: "추가 공급사 회신 확보", compareReady: "불가 또는 제한적", poReady: "불가 · 선택안 없음",
+    snapshotNote: "유효 견적 수가 부족해 비교 후보가 아직 안정적으로 만들어지지 않았습니다",
+    handoffTarget: "추가 회신 확보", handoffStatus: "비교 준비 중",
+    aiRecommendation: "AI 추천: 유효 견적 수를 먼저 확보해야 비교 결과의 신뢰도가 올라갑니다",
+    ctaLabel: "추가 회신 확보", ctaVariant: "outline", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+  },
+  compare_review_required: {
+    badge: "비교 검토 필요", headerSummary: "비교는 가능하지만 선택안 확정이 남아 있습니다", urgency: "비교 검토 후 다음 단계로 넘길 수 있습니다",
+    status: "비교 검토 가능", blocker: "선택안 미확정", nextAction: "비교 결과 정리", compareReady: "가능", poReady: "조건부 · 선택안 확정 필요",
+    snapshotNote: "비교는 가능하지만 선택안 확정과 예외 정리가 남아 있습니다",
+    handoffTarget: "Compare Review Center", handoffStatus: "선택안 확정 필요",
+    aiRecommendation: "AI 추천: 현재는 추가 수집보다 비교 결과 정리와 선택안 확정이 우선입니다",
+    ctaLabel: "비교 결과 정리", ctaVariant: "default", secondaryCta: "비교 열기", tertiaryCta: "닫기",
+  },
+  condition_check_required: {
+    badge: "조건 확인 필요", headerSummary: "문서 또는 조건 이슈가 남아 있어 확정이 불가합니다", urgency: "확인 완료 전에는 다음 단계 진행이 제한됩니다",
+    status: "확정 전 조건 확인", blocker: "SDS/CoA/MOQ/납기 조건 확인 필요", nextAction: "조건 확인", compareReady: "가능", poReady: "불가 · 조건 해소 전",
+    snapshotNote: "비교 결과는 있으나 문서 또는 조건 확인 전에는 확정할 수 없습니다",
+    handoffTarget: "조건 확인 / 문서 정리", handoffStatus: "해소 후 발주 전환 검토 가능",
+    aiRecommendation: "AI 추천: 문서나 조건 이슈를 해소하면 바로 다음 단계로 넘길 수 있습니다",
+    ctaLabel: "조건 확인", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+  },
+  external_approval_required: {
+    badge: "외부 승인 필요", headerSummary: "승인 패키지 준비 또는 승인 결과 반영이 필요합니다", urgency: "외부 승인 완료 전에는 발주 전환 불가",
+    status: "승인 대기 또는 승인 준비", blocker: "외부 승인 미완료", nextAction: "승인 패키지 준비", compareReady: "완료", poReady: "불가 · 승인 필요",
+    snapshotNote: "선택안은 정리되었고 외부 승인 결과만 반영되면 다음 단계로 이동할 수 있습니다",
+    handoffTarget: "승인 패키지 준비", handoffStatus: "외부 승인 완료 후 PO 전환",
+    aiRecommendation: "AI 추천: 승인 패키지 정리 후 외부 승인 상태만 반영하면 발주 전환으로 이어질 수 있습니다",
+    ctaLabel: "승인 패키지 준비", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "보류",
+  },
+  ready_for_po_conversion: {
+    badge: "전환 가능", headerSummary: "차단 없이 발주 전환 준비가 가능한 상태입니다", urgency: "지금 전환하면 다음 처리로 바로 이어집니다",
+    status: "전환 준비 완료", blocker: "차단 없음", nextAction: "발주 전환 준비", compareReady: "완료", poReady: "가능",
+    snapshotNote: "현재 케이스는 비교와 확인 단계를 통과해 발주 전환 준비가 가능합니다",
+    handoffTarget: "PO Conversion Workbench", handoffStatus: "즉시 전환 가능",
+    aiRecommendation: "AI 추천: 현재 케이스는 추가 검토보다 발주 전환 준비를 우선해도 됩니다",
+    ctaLabel: "발주 전환 준비", ctaVariant: "default", secondaryCta: "전체 상세 열기", tertiaryCta: "닫기",
+  },
+};
+
+// ── 운영 신호 파생 (canonical state 기반) ──
 function getOpSignals(q: Quote) {
+  const railState = deriveRailState(q);
+  const m = RAIL_STATE_MAP[railState];
   const responseCount = q.responses?.length ?? 0;
-  const delayed = isDelayed(q);
 
-  // 1. blocker / risk (지시문 3.C.8 매핑표 기준)
-  let blocker = "";
-  if (delayed) blocker = "납기 초과 — 우선 처리 필요";
-  else if (q.status === "PENDING") blocker = "발송 전 — 공급사 미전달";
-  else if (q.status === "SENT" && responseCount === 0) blocker = "공급사 응답 필요";
-  else if (q.status === "SENT" && responseCount > 0) blocker = "추가 회신 대기 중";
-  else if (q.status === "RESPONDED") blocker = "선택안 미확정";
-  else if (q.status === "COMPLETED") blocker = "차단 없음";
-
-  // 2. next action
-  let nextAction = "";
-  if (q.status === "PENDING") nextAction = "견적 요청 발송";
-  else if (q.status === "SENT" && responseCount === 0) nextAction = "회신 확인";
-  else if (q.status === "SENT" && responseCount > 0) nextAction = "비교 검토 시작";
-  else if (q.status === "RESPONDED") nextAction = "비교 결과 정리";
-  else if (q.status === "COMPLETED") nextAction = "발주 전환 준비";
-
-  // 3. decision summary
-  let summary = "";
-  if (q.status === "PENDING") summary = "요청이 접수되었으나 아직 공급사에 발송되지 않았습니다";
-  else if (q.status === "SENT" && responseCount === 0) summary = "공급사 회신을 기다리고 있습니다. 회신이 지연되면 재요청이 필요합니다";
-  else if (q.status === "SENT" && responseCount > 0) summary = `${responseCount}건 회신 도착 — 추가 회신 대기 또는 현재 결과로 비교 검토를 시작할 수 있습니다`;
-  else if (q.status === "RESPONDED") summary = "모든 회신이 도착했습니다. 비교 검토 후 발주 전환 대상을 확정하세요";
-  else if (q.status === "COMPLETED") summary = "비교/검토가 완료되어 발주 전환이 가능한 상태입니다";
-  else if (q.status === "CANCELLED") summary = "이 견적은 취소되었습니다";
-
-  // 4. state-aware CTA
-  let ctaLabel = "상세보기";
-  let ctaVariant: "default" | "outline" = "outline";
-  if (q.status === "PENDING") { ctaLabel = "견적 요청 발송"; ctaVariant = "default"; }
-  else if (q.status === "SENT" && responseCount > 0) { ctaLabel = "비교 검토 시작"; ctaVariant = "default"; }
-  else if (q.status === "SENT") ctaLabel = "회신 확인";
-  else if (q.status === "RESPONDED") { ctaLabel = "비교 결과 정리"; ctaVariant = "default"; }
-  else if (q.status === "COMPLETED") { ctaLabel = "발주 전환 준비"; ctaVariant = "default"; }
-
-  // 5. readiness stage (0-4)
   let readinessStage = 0;
   if (q.status === "SENT") readinessStage = 1;
   if (q.status === "SENT" && responseCount > 0) readinessStage = 2;
   if (q.status === "RESPONDED") readinessStage = 3;
   if (q.status === "COMPLETED") readinessStage = 4;
 
-  // 6. AI inline recommendation
-  let aiRecommendation = "";
-  if (q.status === "PENDING") aiRecommendation = "AI 추천: 요청 발송 후 회신 수집을 시작하세요";
-  else if (q.status === "SENT" && responseCount === 0) aiRecommendation = "AI 추천: 회신이 지연되면 재요청을 고려하세요";
-  else if (q.status === "SENT" && responseCount > 0) aiRecommendation = "AI 추천: 현재 회신만으로도 비교 검토를 시작할 수 있습니다";
-  else if (q.status === "RESPONDED") aiRecommendation = "AI 추천: 비교 결과 확정 후 발주 전환이 가능합니다";
-  else if (q.status === "COMPLETED") aiRecommendation = "AI 추천: 문서 확인 완료 시 바로 전환 가능한 상태입니다";
-
-  return { blocker, nextAction, summary, ctaLabel, ctaVariant, readinessStage, aiRecommendation };
+  return {
+    railState,
+    blocker: m.blocker,
+    nextAction: m.nextAction,
+    summary: m.headerSummary,
+    ctaLabel: m.ctaLabel,
+    ctaVariant: m.ctaVariant,
+    readinessStage,
+    aiRecommendation: m.aiRecommendation,
+    // Rail-specific fields
+    badge: m.badge,
+    urgency: m.urgency,
+    status: m.status,
+    compareReady: m.compareReady,
+    poReady: m.poReady,
+    snapshotNote: m.snapshotNote,
+    handoffTarget: m.handoffTarget,
+    handoffStatus: m.handoffStatus,
+    secondaryCta: m.secondaryCta,
+    tertiaryCta: m.tertiaryCta,
+  };
 }
 
 const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "전환 준비", "완료"];
@@ -536,7 +601,7 @@ function QuotesPageContent() {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
-                  {selectedOpStatus.label}
+                  {selectedSignals.badge}
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
               </div>
@@ -549,22 +614,21 @@ function QuotesPageContent() {
             </div>
             <h3 className="text-sm font-semibold text-slate-100 truncate mb-1">{selectedQuote.title}</h3>
             <p className="text-[10px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · {sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</p>
-            {sqDelayed && <p className="text-[10px] text-red-400 mt-0.5">납기 초과 — 우선 처리 필요</p>}
-            {!sqDelayed && sqDaysToDeadline !== null && sqDaysToDeadline <= 3 && <p className="text-[10px] text-amber-400 mt-0.5">마감 {sqDaysToDeadline}일 남음</p>}
+            <p className="text-[10px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
           </div>
 
           {/* Rail scrollable body */}
           <div className="flex-1 overflow-y-auto">
 
-          {/* B. Operating summary — 5 fields */}
+          {/* B. Operating summary — 5 canonical fields */}
           <div className="px-4 py-3 border-b border-bd/50">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">운영 요약</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-200 font-medium">{selectedOpStatus.label}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-200 font-medium">{selectedSignals.status}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-400"}>{selectedSignals.blocker}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-200">{selectedSignals.nextAction}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={sqResponseCount >= 2 ? "text-emerald-400" : "text-slate-500"}>{sqResponseCount >= 2 ? "예" : sqResponseCount === 0 ? "수신 견적 없음" : "유효 견적 1건 부족"}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 readiness</span><span className={selectedQuote.status === "COMPLETED" ? "text-emerald-400" : "text-slate-500"}>{selectedQuote.status === "COMPLETED" ? "전환 가능" : selectedQuote.status === "RESPONDED" ? "비교 검토 후 가능" : "아직 불가"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.compareReady}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 readiness</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
             </div>
           </div>
 
@@ -576,6 +640,7 @@ function QuotesPageContent() {
               <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-amber-400" : "text-slate-500"}>{selectedQuote.status === "SENT" ? `${selectedQuote.items.length - sqResponseCount}건` : "—"}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">선택안</span><span className="text-slate-500">{selectedQuote.status === "COMPLETED" ? "확정됨" : "미확정"}</span></div>
             </div>
+            <p className="text-[10px] text-slate-500 mt-2 leading-snug">{selectedSignals.snapshotNote}</p>
             <div className="mt-2 space-y-1">
               {selectedQuote.items.slice(0, 3).map(item => (
                 <div key={item.id} className="flex justify-between text-[11px]">
@@ -639,14 +704,14 @@ function QuotesPageContent() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인 정책</span><span className="text-slate-500">없음</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className="text-slate-500">불필요</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-200">{selectedSignals.nextAction}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">handoff</span><span className={selectedQuote.status === "COMPLETED" ? "text-emerald-400" : "text-amber-400"}>{selectedQuote.status === "COMPLETED" ? "가능" : sqResponseCount === 0 ? "유효 견적 부족" : "비교 검토 후 가능"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-200">{selectedSignals.handoffTarget}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">handoff</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-400"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </div>
 
           </div>{/* end scrollable body */}
 
-          {/* G. Bottom sticky action — 3 CTA */}
+          {/* G. Bottom sticky action — 3 canonical CTA */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
             <Link href={`/quotes/${selectedQuote.id}`} className="block">
               <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}>
@@ -655,9 +720,9 @@ function QuotesPageContent() {
             </Link>
             <div className="flex gap-1.5">
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
-                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">전체 상세</Button>
+                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">{selectedSignals.secondaryCta}</Button>
               </Link>
-              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={() => setSelectedQuoteId(null)}>닫기</Button>
+              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={() => setSelectedQuoteId(null)}>{selectedSignals.tertiaryCta}</Button>
             </div>
           </div>
         </div>
