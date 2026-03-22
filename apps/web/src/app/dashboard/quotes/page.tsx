@@ -24,6 +24,7 @@ interface Quote {
   id: string;
   title: string;
   status: QuoteStatus;
+  description?: string;
   createdAt: string;
   deliveryDate?: string;
   deliveryLocation?: string;
@@ -289,6 +290,14 @@ function QuotesPageContent() {
                   <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 액션</div>
                   <p className={`text-xs font-medium ${selectedQuote._stageInfo.color}`}>{selectedQuote._stageInfo.nextAction}</p>
                 </div>
+
+                {/* Handoff Context — review note / description */}
+                {selectedQuote.description && (
+                  <div className="px-5 py-3 border-b border-bd/50">
+                    <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">검토 메모</div>
+                    <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">{selectedQuote.description}</p>
+                  </div>
+                )}
 
                 {/* Items compact list */}
                 <div className="px-5 py-3 border-b border-bd/50">

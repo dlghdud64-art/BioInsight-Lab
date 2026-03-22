@@ -373,9 +373,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const mapped = quotes.map((q: { id: string; title: string; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }>; vendorRequests?: Array<{ id: string; status: string }> }) => ({
+    const mapped = quotes.map((q: { id: string; title: string; description?: string | null; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }>; vendorRequests?: Array<{ id: string; status: string }> }) => ({
       id: q.id,
       title: q.title,
+      description: q.description ?? null,
       status: q.status,
       createdAt: q.createdAt.toISOString(),
       deliveryDate: null,
