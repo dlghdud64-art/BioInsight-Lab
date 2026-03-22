@@ -374,7 +374,7 @@ function QuotesPageContent() {
     }
   }, [entityIdParam]);
 
-  const { data: quotesData, isLoading, isFetching } = useQuery({
+  const { data: quotesData, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["quotes", statusFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -458,6 +458,21 @@ function QuotesPageContent() {
     return result.sort((a, b) => getOpPriority(a) - getOpPriority(b));
   }, [quotes, searchQuery, statusFilter, modeChip, today]);
 
+  // ── Trace logging ──
+  useEffect(() => {
+    if (isLoading) console.log("[QuoteQueue] quote_queue_page_loading_started", { statusFilter, modeChip, searchQuery });
+  }, [isLoading]);
+  useEffect(() => {
+    if (!isLoading && quotes.length > 0) console.log("[QuoteQueue] quote_queue_list_ready", { count: quotes.length, statusFilter, modeChip });
+  }, [isLoading, quotes.length]);
+  useEffect(() => {
+    if (!isLoading && filteredQuotes.length === 0 && quotes.length === 0) console.log("[QuoteQueue] quote_queue_empty_shown");
+    if (!isLoading && filteredQuotes.length === 0 && quotes.length > 0) console.log("[QuoteQueue] quote_queue_filter_empty_shown", { statusFilter, modeChip, searchQuery });
+  }, [isLoading, filteredQuotes.length, quotes.length]);
+  useEffect(() => {
+    if (isError) console.log("[QuoteQueue] quote_queue_page_fatal_error", { statusFilter });
+  }, [isError]);
+
   // 섹션 분류
   const urgentQuotes = filteredQuotes.filter(q => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
   const inProgressQuotes = filteredQuotes.filter(q => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
@@ -485,6 +500,19 @@ function QuotesPageContent() {
           </PermissionGate>
         </div>
       </div>
+
+      {/* ── Page-level fatal error (primary fetch 실패 시만) ── */}
+      {isError && !quotesData && (
+        <div className="rounded-xl border border-red-600/20 bg-red-600/5 p-6 text-center space-y-3">
+          <AlertCircle className="h-8 w-8 text-red-400 mx-auto" />
+          <p className="text-sm text-slate-200 font-medium">견적 운영 워크큐를 불러오지 못했습니다</p>
+          <p className="text-xs text-slate-500">기본 목록 데이터를 확인하지 못했습니다. 일시적 문제일 수 있습니다.</p>
+          <div className="flex justify-center gap-2 pt-1">
+            <Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={() => refetch()}>다시 시도</Button>
+            <Link href="/dashboard"><Button size="sm" variant="outline" className="h-8 text-xs text-slate-400 border-bd">대시보드로 돌아가기</Button></Link>
+          </div>
+        </div>
+      )}
 
       {/* ── KPI Control Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
