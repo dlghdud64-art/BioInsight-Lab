@@ -262,6 +262,13 @@ function QuotesPageContent() {
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
 
+  // ESC로 rail 닫기
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === "Escape") setSelectedQuoteId(null); };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
   useEffect(() => {
     const s = searchParams.get("status");
     if (s) setStatusFilter(s);
@@ -515,50 +522,60 @@ function QuotesPageContent() {
       </div>{/* end list column */}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
-      {selectedQuote && selectedSignals && selectedOpStatus && (
+      {selectedQuote && selectedSignals && selectedOpStatus && (() => {
+        const sqResponseCount = selectedQuote.responses?.length ?? 0;
+        const sqDaysSince = Math.floor((Date.now() - new Date(selectedQuote.createdAt).getTime()) / 86400000);
+        const sqDelayed = isDelayed(selectedQuote);
+        const sqDeadline = selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate) : null;
+        const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
+
+        return (
         <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {/* A. Rail header */}
-          <div className="px-4 py-3 border-b border-bd bg-el/50 flex items-center justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+          <div className="px-4 py-3 border-b border-bd bg-el/50">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
                   {selectedOpStatus.label}
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
               </div>
-              <h3 className="text-sm font-semibold text-slate-100 truncate">{selectedQuote.title}</h3>
+              <div className="flex items-center gap-1 shrink-0">
+                <Link href={`/quotes/${selectedQuote.id}`}>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" title="전체 상세 열기"><ExternalLink className="h-3 w-3" /></Button>
+                </Link>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={() => setSelectedQuoteId(null)}><X className="h-3.5 w-3.5" /></Button>
+              </div>
             </div>
-            <div className="flex items-center gap-1 shrink-0">
-              <Link href={`/quotes/${selectedQuote.id}`}>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" title="전체 상세 열기">
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-              </Link>
-              <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={() => setSelectedQuoteId(null)}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <h3 className="text-sm font-semibold text-slate-100 truncate mb-1">{selectedQuote.title}</h3>
+            <p className="text-[10px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · {sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</p>
+            {sqDelayed && <p className="text-[10px] text-red-400 mt-0.5">납기 초과 — 우선 처리 필요</p>}
+            {!sqDelayed && sqDaysToDeadline !== null && sqDaysToDeadline <= 3 && <p className="text-[10px] text-amber-400 mt-0.5">마감 {sqDaysToDeadline}일 남음</p>}
           </div>
 
-          {/* B. Operating summary */}
-          <div className="px-4 py-3 border-b border-bd/50 space-y-2">
-            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">운영 요약</div>
+          {/* Rail scrollable body */}
+          <div className="flex-1 overflow-y-auto">
+
+          {/* B. Operating summary — 5 fields */}
+          <div className="px-4 py-3 border-b border-bd/50">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">운영 요약</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-200 font-medium">{selectedSignals.nextAction}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={`${selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-400"}`}>{selectedSignals.blocker}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 가능</span><span className={selectedQuote.status === "COMPLETED" ? "text-emerald-400" : "text-slate-500"}>{selectedQuote.status === "COMPLETED" ? "예" : "아니오"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-200 font-medium">{selectedOpStatus.label}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-400"}>{selectedSignals.blocker}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-200">{selectedSignals.nextAction}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={sqResponseCount >= 2 ? "text-emerald-400" : "text-slate-500"}>{sqResponseCount >= 2 ? "예" : sqResponseCount === 0 ? "수신 견적 없음" : "유효 견적 1건 부족"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 readiness</span><span className={selectedQuote.status === "COMPLETED" ? "text-emerald-400" : "text-slate-500"}>{selectedQuote.status === "COMPLETED" ? "전환 가능" : selectedQuote.status === "RESPONDED" ? "비교 검토 후 가능" : "아직 불가"}</span></div>
             </div>
           </div>
 
           {/* C. Response / Compare snapshot */}
-          <div className="px-4 py-3 border-b border-bd/50 space-y-2">
-            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500">회신 현황</div>
+          <div className="px-4 py-3 border-b border-bd/50">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 · 비교 현황</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">품목</span><span className="text-slate-200">{selectedQuote.items.length}건</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">수신 견적</span><span className="text-slate-200">{selectedQuote.responses?.length ?? 0}건</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={(selectedQuote.responses?.length ?? 0) >= 2 ? "text-emerald-400" : "text-slate-500"}>{(selectedQuote.responses?.length ?? 0) >= 2 ? "예" : "아니오"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">수신 견적</span><span className="text-slate-200">{sqResponseCount}건</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-amber-400" : "text-slate-500"}>{selectedQuote.status === "SENT" ? `${selectedQuote.items.length - sqResponseCount}건` : "—"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">선택안</span><span className="text-slate-500">{selectedQuote.status === "COMPLETED" ? "확정됨" : "미확정"}</span></div>
             </div>
-            {/* 품목 preview */}
             <div className="mt-2 space-y-1">
               {selectedQuote.items.slice(0, 3).map(item => (
                 <div key={item.id} className="flex justify-between text-[11px]">
@@ -570,7 +587,42 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* D. Decision summary */}
+          {/* D. Activity snapshot */}
+          <div className="px-4 py-3 border-b border-bd/50">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">최근 활동</div>
+            <div className="space-y-1.5">
+              <div className="flex items-start gap-2 text-[11px]">
+                <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                <div><span className="text-slate-300">요청 생성</span><span className="text-slate-500 ml-1.5">{sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</span></div>
+              </div>
+              {selectedQuote.status !== "PENDING" && (
+                <div className="flex items-start gap-2 text-[11px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
+                  <div><span className="text-slate-300">견적 요청 발송</span></div>
+                </div>
+              )}
+              {sqResponseCount > 0 && (
+                <div className="flex items-start gap-2 text-[11px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+                  <div><span className="text-slate-300">회신 {sqResponseCount}건 도착</span></div>
+                </div>
+              )}
+              {selectedQuote.status === "RESPONDED" && (
+                <div className="flex items-start gap-2 text-[11px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
+                  <div><span className="text-slate-300">비교 검토 필요</span></div>
+                </div>
+              )}
+              {selectedQuote.status === "PENDING" && (
+                <div className="flex items-start gap-2 text-[11px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-600 mt-1.5 shrink-0" />
+                  <div><span className="text-slate-500">첫 액션: 견적 요청 발송</span></div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* E. Decision summary + AI */}
           <div className="px-4 py-3 border-b border-bd/50">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">판단 요약</div>
             <p className="text-xs text-slate-300 leading-relaxed">{selectedSignals.summary}</p>
@@ -581,37 +633,36 @@ function QuotesPageContent() {
             )}
           </div>
 
-          {/* E. Linked handoff */}
-          <div className="px-4 py-3 border-b border-bd/50">
+          {/* F. Related handoff */}
+          <div className="px-4 py-3">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">연결 작업</div>
-            <div className="space-y-1">
-              {selectedQuote.status === "RESPONDED" && (
-                <Link href={`/quotes/${selectedQuote.id}`} className="flex items-center justify-between text-xs py-1 hover:bg-el/30 rounded px-1 -mx-1">
-                  <span className="text-slate-300">비교 검토 열기</span><ArrowRight className="h-3 w-3 text-slate-600" />
-                </Link>
-              )}
-              {selectedQuote.status === "COMPLETED" && (
-                <Link href="/dashboard/orders" className="flex items-center justify-between text-xs py-1 hover:bg-el/30 rounded px-1 -mx-1">
-                  <span className="text-slate-300">발주 전환 준비</span><ArrowRight className="h-3 w-3 text-slate-600" />
-                </Link>
-              )}
-              <Link href={`/quotes/${selectedQuote.id}`} className="flex items-center justify-between text-xs py-1 hover:bg-el/30 rounded px-1 -mx-1">
-                <span className="text-slate-400">전체 상세 열기</span><ExternalLink className="h-3 w-3 text-slate-600" />
-              </Link>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs"><span className="text-slate-400">승인 정책</span><span className="text-slate-500">없음</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className="text-slate-500">불필요</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-200">{selectedSignals.nextAction}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">handoff</span><span className={selectedQuote.status === "COMPLETED" ? "text-emerald-400" : "text-amber-400"}>{selectedQuote.status === "COMPLETED" ? "가능" : sqResponseCount === 0 ? "유효 견적 부족" : "비교 검토 후 가능"}</span></div>
             </div>
           </div>
 
-          {/* F. Bottom sticky action */}
-          <div className="mt-auto px-4 py-3 border-t border-bd bg-el/30">
+          </div>{/* end scrollable body */}
+
+          {/* G. Bottom sticky action — 3 CTA */}
+          <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
             <Link href={`/quotes/${selectedQuote.id}`} className="block">
               <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}>
-                {selectedSignals.ctaLabel}
-                <ArrowRight className="h-3 w-3 ml-1.5" />
+                {selectedSignals.ctaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
               </Button>
             </Link>
+            <div className="flex gap-1.5">
+              <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
+                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">전체 상세</Button>
+              </Link>
+              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-500" onClick={() => setSelectedQuoteId(null)}>닫기</Button>
+            </div>
           </div>
         </div>
-      )}
+        );
+      })()}
 
       </div>{/* end flex container */}
     </div>
