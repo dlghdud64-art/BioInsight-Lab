@@ -605,7 +605,7 @@ function QuotesPageContent() {
 
       {/* ═══ Main: List + Quote Context Rail ═══ */}
       <div className="flex gap-0">
-      <div className={`flex-1 min-w-0 space-y-4 ${selectedQuote ? "lg:pr-0" : ""}`}>
+      <div className="flex-1 min-w-0 space-y-4">
 
       {/* ── 로딩: progressive skeleton (list만, header/search는 이미 보임) ── */}
       {isLoading && (
@@ -700,14 +700,7 @@ function QuotesPageContent() {
 
       </div>{/* end list column */}
 
-      {/* ═══ Rail unselected placeholder (lg+) ═══ */}
-      {!selectedQuote && !isLoading && filteredQuotes.length > 0 && (
-        <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col items-center justify-center text-center px-6" style={{ backgroundColor: '#353739' }}>
-          <Package className="h-8 w-8 text-slate-600 mb-3" />
-          <p className="text-xs text-slate-400 mb-1">케이스를 선택하세요</p>
-          <p className="text-[10px] text-slate-500 leading-snug">행을 클릭하면 상태와 다음 액션을<br />여기서 바로 확인할 수 있습니다</p>
-        </div>
-      )}
+      {/* Rail unselected: no placeholder panel, list uses full width */}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {
