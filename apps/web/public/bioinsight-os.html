@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BioInsight OS - Lab Autonomous Operating System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+        }
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .ui-layer {
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            pointer-events: none;
+        }
+        .interactive {
+            pointer-events: auto;
+        }
+        .glass-panel {
+            background: rgba(10, 15, 25, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 255, 200, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glow-text {
+            text-shadow: 0 0 20px rgba(0, 255, 200, 0.5);
+        }
+        .btn-primary {
+            background: linear-gradient(90deg, rgba(0,212,255,1) 0%, rgba(0,255,170,1) 100%);
+            color: #000;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 25px rgba(0, 255, 170, 0.6);
+            transform: translateY(-2px);
+        }
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 255, 200, 0.3);
+            box-shadow: 0 0 10px rgba(0, 255, 200, 0.5);
+            animation: scan 8s linear infinite;
+            z-index: 5;
+            pointer-events: none;
+        }
+        @keyframes scan {
+            0% { top: -10%; }
+            100% { top: 110%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="canvas-container"></div>
+    <div class="scan-line"></div>
+    <main class="ui-layer justify-between p-6 md:p-12">
+        <header class="flex justify-between items-center interactive w-full max-w-7xl mx-auto">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-cyan-400 to-emerald-400 flex items-center justify-center font-bold text-black shadow-[0_0_15px_rgba(0,255,170,0.5)]">
+                    BI
+                </div>
+                <h1 class="text-xl md:text-2xl font-bold tracking-widest text-white">BioInsight <span class="text-cyan-400 font-light">OS</span></h1>
+            </div>
+            <div class="hidden md:flex items-center space-x-6 text-sm font-mono text-gray-400">
+                <div class="flex items-center space-x-2">
+                    <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+                <span>|</span>
+                <span>AUTH_REQUIRED</span>
+                <button class="px-5 py-2 border border-cyan-500/50 text-cyan-400 rounded hover:bg-cyan-500/10 transition-colors">
+                    LOGIN
+                </button>
+            </div>
+        </header>
+        <section class="flex flex-col items-center justify-center text-center interactive max-w-4xl mx-auto mt-20 md:mt-0">
+            <div class="inline-block mb-4 px-3 py-1 rounded-full border border-cyan-500/30 bg-cyan-500/10 text-cyan-400 font-mono text-xs tracking-wider">
+                PALANTIR-GRADE ONTOLOGY ENGINE
+            </div>
+            <h2 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight">
+                바이오 연구실을 위한 <br/>
+                <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400 glow-text">자율형 운영 체제</span>
+            </h2>
+            <p class="text-lg md:text-xl text-gray-400 mb-10 max-w-2xl font-light leading-relaxed">
+                파편화된 시약, 예산, 화관법 규제 데이터를 단일 온톨로지로 통합하십시오.
+                인간의 통제망 안에서 안전하게 작동하는 AI가 연구실의 모든 자산을 최적화합니다.
+            </p>
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-6">
+                <button class="btn-primary px-8 py-4 rounded font-bold text-sm tracking-wider uppercase">
+                    Initialize System
+                </button>
+                <button class="px-8 py-4 rounded font-bold text-sm tracking-wider uppercase border border-gray-600 text-gray-300 hover:border-white hover:text-white transition-colors glass-panel">
+                    View Architecture
+                </button>
+            </div>
+        </section>
+        <footer class="interactive w-full max-w-7xl mx-auto mt-auto flex flex-col md:flex-row justify-between items-end md:items-center text-xs font-mono text-gray-500 gap-4">
+            <div class="glass-panel px-4 py-3 rounded border-l-2 border-l-cyan-400 flex space-x-8 w-full md:w-auto overflow-x-auto">
+                <div>
+                    <span class="block text-gray-600 mb-1">ONTOLOGY NODES</span>
+                    <span class="text-white text-sm">1,204,492</span>
+                </div>
+                <div>
+                    <span class="block text-gray-600 mb-1">AI GUARDRAIL</span>
+                    <span class="text-emerald-400 text-sm">ACTIVE</span>
+                </div>
+                <div>
+                    <span class="block text-gray-600 mb-1">COMPLIANCE</span>
+                    <span class="text-white text-sm">100% (STRICT)</span>
+                </div>
+            </div>
+            <div class="text-right pb-2 hidden md:block">
+                v2.4.1 (Ontology-Adapter Enabled)<br/>
+                &copy; 2026 BioInsight Lab. All rights reserved.
+            </div>
+        </footer>
+    </main>
+    <script>
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x050505, 0.002);
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 300;
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setPixelRatio(window.devicePixelRatio);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        container.appendChild(renderer.domElement);
+        const particleCount = 250;
+        const particles = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+        const velocities = [];
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = (Math.random() - 0.5) * 800;
+            positions[i * 3 + 1] = (Math.random() - 0.5) * 800;
+            positions[i * 3 + 2] = (Math.random() - 0.5) * 400;
+            velocities.push({
+                x: (Math.random() - 0.5) * 0.5,
+                y: (Math.random() - 0.5) * 0.5,
+                z: (Math.random() - 0.5) * 0.5
+            });
+        }
+        particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            color: 0x00ffaa,
+            size: 3,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+        const particleSystem = new THREE.Points(particles, particleMaterial);
+        scene.add(particleSystem);
+        const lineMaterial = new THREE.LineBasicMaterial({
+            color: 0x00d4ff,
+            transparent: true,
+            opacity: 0.15,
+            blending: THREE.AdditiveBlending
+        });
+        const maxLines = particleCount * particleCount;
+        const linePositions = new Float32Array(maxLines * 6);
+        const lineGeometry = new THREE.BufferGeometry();
+        lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+        const lines = new THREE.LineSegments(lineGeometry, lineMaterial);
+        scene.add(lines);
+        let mouseX = 0;
+        let mouseY = 0;
+        let targetX = 0;
+        let targetY = 0;
+        const windowHalfX = window.innerWidth / 2;
+        const windowHalfY = window.innerHeight / 2;
+        document.addEventListener('mousemove', (event) => {
+            mouseX = (event.clientX - windowHalfX) * 0.1;
+            mouseY = (event.clientY - windowHalfY) * 0.1;
+        });
+        const connectionDistance = 90;
+        function animate() {
+            requestAnimationFrame(animate);
+            targetX = mouseX * 0.5;
+            targetY = mouseY * 0.5;
+            camera.position.x += (targetX - camera.position.x) * 0.05;
+            camera.position.y += (-targetY - camera.position.y) * 0.05;
+            camera.lookAt(scene.position);
+            const positions = particleSystem.geometry.attributes.position.array;
+            let lineIndex = 0;
+            for (let i = 0; i < particleCount; i++) {
+                positions[i * 3] += velocities[i].x;
+                positions[i * 3 + 1] += velocities[i].y;
+                positions[i * 3 + 2] += velocities[i].z;
+                if (Math.abs(positions[i * 3]) > 400) velocities[i].x *= -1;
+                if (Math.abs(positions[i * 3 + 1]) > 400) velocities[i].y *= -1;
+                if (Math.abs(positions[i * 3 + 2]) > 200) velocities[i].z *= -1;
+                for (let j = i + 1; j < particleCount; j++) {
+                    const dx = positions[i * 3] - positions[j * 3];
+                    const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
+                    const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
+                    const distSq = dx * dx + dy * dy + dz * dz;
+                    if (distSq < connectionDistance * connectionDistance) {
+                        linePositions[lineIndex++] = positions[i * 3];
+                        linePositions[lineIndex++] = positions[i * 3 + 1];
+                        linePositions[lineIndex++] = positions[i * 3 + 2];
+                        linePositions[lineIndex++] = positions[j * 3];
+                        linePositions[lineIndex++] = positions[j * 3 + 1];
+                        linePositions[lineIndex++] = positions[j * 3 + 2];
+                    }
+                }
+            }
+            particleSystem.geometry.attributes.position.needsUpdate = true;
+            lines.geometry.setDrawRange(0, lineIndex / 3);
+            lines.geometry.attributes.position.needsUpdate = true;
+            particleSystem.rotation.y += 0.001;
+            lines.rotation.y += 0.001;
+            renderer.render(scene, camera);
+        }
+        window.addEventListener('resize', onWindowResize, false);
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        window.onload = function() {
+            animate();
+        };
+    </script>
+</body>
+</html>
