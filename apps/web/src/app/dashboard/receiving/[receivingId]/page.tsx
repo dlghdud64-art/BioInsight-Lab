@@ -268,6 +268,9 @@ export default function ReceivingDetailPage() {
         {/* ── E. Line Execution Table ──────────────────────────── */}
         <LineExecutionTable lines={model.lineExecutions} />
 
+        {/* ── E-2. Receiving Input Panel (수량 입력 / Lot 생성 / Discrepancy) ── */}
+        <ReceivingInputPanel lines={model.lineExecutions} lots={model.lotDetails} />
+
         {/* ── F. Lot Detail Grid ───────────────────────────────── */}
         <LotDetailSurface
           lots={model.lotDetails}
@@ -739,6 +742,170 @@ function StatCell({
     <div>
       <div className="text-slate-500">{label}</div>
       <div className={`font-medium tabular-nums ${valueCls}`}>{value}</div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// E-2. Receiving Input Panel — 부분 입고 / Lot 생성 / Discrepancy
+// ══════════════════════════════════════════════════════════════════════
+
+function ReceivingInputPanel({
+  lines,
+  lots,
+}: {
+  lines: ReceivingLineExecution[];
+  lots: LotDetailRow[];
+}) {
+  const [activeLineId, setActiveLineId] = useState<string | null>(null);
+  const [receivedQty, setReceivedQty] = useState<Record<string, string>>({});
+  const [newLotNumber, setNewLotNumber] = useState("");
+  const [newLotExpiry, setNewLotExpiry] = useState("");
+  const [newLotLocation, setNewLotLocation] = useState("");
+  const [discrepancies, setDiscrepancies] = useState<Record<string, string>>({});
+
+  const activeLine = lines.find(l => l.id === activeLineId);
+  const pendingLines = lines.filter(l => l.conditionTone !== "success");
+
+  return (
+    <div className="rounded border border-blue-800/50 bg-blue-900/10 overflow-hidden">
+      <div className="px-4 py-3 border-b border-blue-800/30 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Package className="h-3.5 w-3.5 text-blue-400" />
+          <span className="text-xs font-medium text-blue-300">입고 수량 입력 / Lot 등록</span>
+        </div>
+        <span className="text-[10px] text-slate-500">{pendingLines.length}건 처리 대기</span>
+      </div>
+
+      <div className="p-4 space-y-3">
+        {/* Line selector */}
+        <div className="flex flex-wrap gap-1.5">
+          {lines.map(line => {
+            const isActive = activeLineId === line.id;
+            const isDone = line.conditionTone === "success";
+            return (
+              <button
+                key={line.id}
+                onClick={() => setActiveLineId(isActive ? null : line.id)}
+                className={`px-2.5 py-1.5 rounded text-[11px] font-medium border transition-all ${
+                  isActive ? "bg-blue-600/15 text-blue-300 border-blue-600/30"
+                  : isDone ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20 opacity-60"
+                  : "bg-slate-800/50 text-slate-400 border-slate-700 hover:border-slate-600"
+                }`}
+              >
+                #{line.lineNumber} {line.itemLabel.substring(0, 15)}{line.itemLabel.length > 15 ? "…" : ""}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Active line input */}
+        {activeLine && (
+          <div className="rounded border border-slate-700 bg-slate-900/60 p-3 space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium text-slate-200">{activeLine.itemLabel}</span>
+              <span className="text-[10px] text-slate-500">발주 {activeLine.orderedVsReceived}</span>
+            </div>
+
+            {/* 수량 입력 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">실제 도착 수량</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={receivedQty[activeLine.id] ?? ""}
+                  onChange={e => setReceivedQty(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
+                  placeholder="0"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">Lot/Batch 번호</label>
+                <input
+                  type="text"
+                  value={newLotNumber}
+                  onChange={e => setNewLotNumber(e.target.value)}
+                  placeholder="LOT-2026-001"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">유효기한</label>
+                <input
+                  type="date"
+                  value={newLotExpiry}
+                  onChange={e => setNewLotExpiry(e.target.value)}
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] text-slate-500 block mb-1">보관 위치</label>
+                <input
+                  type="text"
+                  value={newLotLocation}
+                  onChange={e => setNewLotLocation(e.target.value)}
+                  placeholder="연구동 B1 냉장고"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            {/* Discrepancy */}
+            <div>
+              <label className="text-[10px] text-slate-500 block mb-1">이슈 (수량 차이 / 파손 / 오배송)</label>
+              <select
+                value={discrepancies[activeLine.id] ?? ""}
+                onChange={e => setDiscrepancies(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
+                className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+              >
+                <option value="">이슈 없음</option>
+                <option value="shortage">수량 부족</option>
+                <option value="overage">초과 수령</option>
+                <option value="damaged">파손</option>
+                <option value="wrong_item">오배송</option>
+                <option value="doc_missing">문서 누락</option>
+                <option value="expiry_issue">유효기한 문제</option>
+              </select>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-2 pt-1">
+              <button className="h-7 px-3 text-[10px] font-medium rounded bg-blue-600 hover:bg-blue-500 text-white transition-colors">
+                수량 확인
+              </button>
+              {newLotNumber && (
+                <button className="h-7 px-3 text-[10px] font-medium rounded bg-emerald-600/15 text-emerald-400 border border-emerald-600/30 hover:bg-emerald-600/25 transition-colors">
+                  Lot 등록
+                </button>
+              )}
+              {discrepancies[activeLine.id] && (
+                <button className="h-7 px-3 text-[10px] font-medium rounded bg-amber-600/15 text-amber-400 border border-amber-600/30 hover:bg-amber-600/25 transition-colors">
+                  이슈 등록
+                </button>
+              )}
+              <button
+                onClick={() => setActiveLineId(null)}
+                className="h-7 px-2 text-[10px] text-slate-500 hover:text-slate-300"
+              >
+                닫기
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!activeLineId && pendingLines.length > 0 && (
+          <div className="text-xs text-slate-500 text-center py-2">
+            위 라인을 선택하면 수량 입력과 Lot 등록을 할 수 있습니다
+          </div>
+        )}
+        {pendingLines.length === 0 && (
+          <div className="flex items-center gap-2 text-xs text-emerald-400 justify-center py-2">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            모든 라인 입고 처리 완료
+          </div>
+        )}
+      </div>
     </div>
   );
 }
