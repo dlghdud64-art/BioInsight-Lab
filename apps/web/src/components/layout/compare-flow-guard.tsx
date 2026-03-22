@@ -11,13 +11,14 @@
  */
 
 import { useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCompareStore, isFlowPath } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
 import { ToastAction } from "@/components/ui/toast";
 
 export function CompareFlowGuard() {
   const pathname = usePathname();
+  const router = useRouter();
   const prevPathRef = useRef<string | null>(null);
   const { toast } = useToast();
 
@@ -51,26 +52,38 @@ export function CompareFlowGuard() {
 
     // 외부 → 플로우: stash 복원 제안
     if (!wasInFlow && nowInFlow) {
-      // 약간의 딜레이로 렌더 완료 후 토스트 표시
       const timer = setTimeout(() => {
         if (hasStash()) {
-          const stashedCount = useCompareStore.getState()._stashedIds.length;
+          const stashedIds = useCompareStore.getState()._stashedIds;
+          const stashedCount = stashedIds.length;
+          if (stashedCount === 0) return; // 빈 stash면 무시
+
           toast({
             title: "이전 비교 목록이 있습니다",
-            description: `${stashedCount}개 제품을 복원할까요?`,
-            duration: 8000,
+            description: `${stashedCount}개 제품을 복원할 수 있습니다`,
+            duration: 10000,
             action: (
-              <ToastAction altText="복원" onClick={() => restoreFromStash()}>
+              <ToastAction altText="복원" onClick={() => {
+                // 1. stash → productIds 복원
+                restoreFromStash();
+                // 2. 성공 피드백
+                toast({
+                  title: `${stashedCount}개 항목을 비교 목록으로 복원했습니다`,
+                  description: "비교 화면으로 이동합니다",
+                  duration: 3000,
+                });
+                // 3. compare 화면으로 이동
+                router.push("/test/compare");
+              }}>
                 복원
               </ToastAction>
             ),
           });
-          // 토스트를 무시하면 다음 이탈 시 stash 덮어씌워짐 (자연 폐기)
         }
       }, 300);
       return () => clearTimeout(timer);
     }
-  }, [pathname, productIds.length, stashAndClear, restoreFromStash, clearStash, hasStash, toast]);
+  }, [pathname, productIds.length, stashAndClear, restoreFromStash, clearStash, hasStash, toast, router]);
 
-  return null; // UI 없음 — 사이드이펙트 전용
+  return null;
 }
