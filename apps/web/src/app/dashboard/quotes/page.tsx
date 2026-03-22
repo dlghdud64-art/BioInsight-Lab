@@ -85,11 +85,14 @@ function getOpSignals(q: Quote) {
   const responseCount = q.responses?.length ?? 0;
   const delayed = isDelayed(q);
 
-  // 1. blocker / risk
+  // 1. blocker / risk (지시문 3.C.8 매핑표 기준)
   let blocker = "";
   if (delayed) blocker = "납기 초과 — 우선 처리 필요";
-  else if (q.status === "RESPONDED" && responseCount > 0) blocker = "비교 결과 정리 전 확정 불가";
-  else if (q.status === "SENT" && responseCount === 0) blocker = "공급사 회신 대기 중";
+  else if (q.status === "PENDING") blocker = "발송 전 — 공급사 미전달";
+  else if (q.status === "SENT" && responseCount === 0) blocker = "공급사 응답 필요";
+  else if (q.status === "SENT" && responseCount > 0) blocker = "추가 회신 대기 중";
+  else if (q.status === "RESPONDED") blocker = "선택안 미확정";
+  else if (q.status === "COMPLETED") blocker = "차단 없음";
 
   // 2. next action
   let nextAction = "";
@@ -124,7 +127,15 @@ function getOpSignals(q: Quote) {
   if (q.status === "RESPONDED") readinessStage = 3;
   if (q.status === "COMPLETED") readinessStage = 4;
 
-  return { blocker, nextAction, summary, ctaLabel, ctaVariant, readinessStage };
+  // 6. AI inline recommendation
+  let aiRecommendation = "";
+  if (q.status === "PENDING") aiRecommendation = "AI 추천: 요청 발송 후 회신 수집을 시작하세요";
+  else if (q.status === "SENT" && responseCount === 0) aiRecommendation = "AI 추천: 회신이 지연되면 재요청을 고려하세요";
+  else if (q.status === "SENT" && responseCount > 0) aiRecommendation = "AI 추천: 현재 회신만으로도 비교 검토를 시작할 수 있습니다";
+  else if (q.status === "RESPONDED") aiRecommendation = "AI 추천: 비교 결과 확정 후 발주 전환이 가능합니다";
+  else if (q.status === "COMPLETED") aiRecommendation = "AI 추천: 문서 확인 완료 시 바로 전환 가능한 상태입니다";
+
+  return { blocker, nextAction, summary, ctaLabel, ctaVariant, readinessStage, aiRecommendation };
 }
 
 const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "전환 준비", "완료"];
@@ -162,7 +173,14 @@ function QuoteCard({ quote }: { quote: Quote }) {
           <h3 className="font-semibold text-slate-100 text-sm leading-snug truncate mb-1">{quote.title}</h3>
 
           {/* Decision summary sentence */}
-          <p className="text-xs text-slate-400 leading-relaxed mb-2 line-clamp-2">{signals.summary}</p>
+          <p className="text-xs text-slate-400 leading-relaxed mb-1 line-clamp-2">{signals.summary}</p>
+          {/* AI inline recommendation */}
+          {signals.aiRecommendation && (
+            <p className="text-[10px] text-slate-500 flex items-center gap-1 mb-2">
+              <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />
+              <span className="line-clamp-1">{signals.aiRecommendation}</span>
+            </p>
+          )}
 
           {/* 운영형 메타 — triage 우선 */}
           <div className="flex flex-wrap gap-x-3 gap-y-1">
