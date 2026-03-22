@@ -621,9 +621,9 @@ export default function QuoteDetailPage() {
     const deadline = quote.deliveryDate || quote.validUntil;
     if (!deadline) return { label: "일반", cls: "bg-el text-slate-600" };
     const daysLeft = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-100 text-red-700" };
-    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-100 text-amber-700" };
-    return { label: "일반", cls: "bg-el text-slate-600" };
+    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-600/10 text-red-400" };
+    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-600/10 text-amber-400" };
+    return { label: "일반", cls: "bg-el text-slate-400" };
   };
   const urgency = getUrgency();
 
@@ -661,7 +661,7 @@ export default function QuoteDetailPage() {
           <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-5">
 
             {/* ── 1. 헤더 카드 ── */}
-            <Card className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-8 md:py-5">
+            <Card className="bg-pn rounded-xl border border-bd shadow-sm px-4 py-4 md:px-8 md:py-5">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                   {/* 브레드크럼 */}
@@ -690,9 +690,31 @@ export default function QuoteDetailPage() {
                     </Badge>
                   </div>
 
-                  <span className="text-xs text-muted-foreground ml-9">
+                  <span className="text-xs text-slate-500 ml-9">
                     {new Date(quote.createdAt).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </span>
+
+                  {/* 운영 신호 strip — Decision Header */}
+                  <div className="flex items-center gap-2 ml-9 mt-1 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-el text-slate-300 border border-bd">
+                      다음: {nextAction.label}
+                    </span>
+                    {respondedCount === 0 && quoteStatus !== "PENDING" && quoteStatus !== "CANCELLED" && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">
+                        <AlertTriangle className="h-2.5 w-2.5" />수신 견적 없음
+                      </span>
+                    )}
+                    {urgency.label !== "일반" && (
+                      <span className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded border ${urgency.cls}`}>
+                        {urgency.label}
+                      </span>
+                    )}
+                    {canConvert && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400 border border-emerald-600/20">
+                        <CheckCircle2 className="h-2.5 w-2.5" />전환 가능
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* 공유 버튼 */}
@@ -705,10 +727,10 @@ export default function QuoteDetailPage() {
             {/* ── 1-0.5 비교 분석 출처 배너 ── */}
             {quote.comparisonId && (
               <Link href={`/compare?sessionId=${quote.comparisonId}`}>
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors cursor-pointer">
-                  <GitCompare className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span className="text-xs font-medium text-purple-700">비교 분석에서 생성된 견적</span>
-                  <ChevronRight className="h-3.5 w-3.5 text-purple-400 ml-auto" />
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-purple-600/10 border border-purple-600/30 rounded-lg hover:bg-purple-600/15 transition-colors cursor-pointer">
+                  <GitCompare className="h-4 w-4 text-purple-400 shrink-0" />
+                  <span className="text-xs font-medium text-purple-300">비교 분석에서 생성된 견적</span>
+                  <ChevronRight className="h-3.5 w-3.5 text-purple-500 ml-auto" />
                 </div>
               </Link>
             )}
