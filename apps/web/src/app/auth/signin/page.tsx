@@ -96,25 +96,25 @@ function SignInContent() {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:pr-16 lg:pl-12">
           <div className="w-full max-w-[420px]">
             {/* Auth Entry Card — clean light panel */}
-            <div className="rounded-2xl p-10 space-y-8 bg-white border border-slate-200/80 shadow-[0_4px_24px_rgba(0,0,0,0.06)]">
+            <div className="rounded-2xl p-10 space-y-8 bg-white border border-slate-200 shadow-[0_8px_32px_rgba(0,0,0,0.08)]">
               {/* Back link */}
-              <Link href="/" className="inline-flex items-center text-xs text-slate-400 hover:text-slate-700 transition-colors">
+              <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" />
                 홈으로 돌아가기
               </Link>
 
               {/* Title */}
               <div className="space-y-2">
-                <h2 className="text-[22px] font-bold text-slate-900">로그인</h2>
-                <p className="text-slate-500 text-[15px] leading-relaxed">
+                <h2 className="text-[22px] font-bold text-slate-800">로그인</h2>
+                <p className="text-slate-600 text-[15px] leading-relaxed">
                   연구실의 검색-견적-구매-재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 
               {/* Google — primary action on light card */}
               <Button
-                className="w-full font-semibold text-[15px] rounded-xl transition-all hover:shadow-md bg-white text-slate-800 border border-slate-200 hover:border-slate-300"
-                style={{ height: 52, boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}
+                className="w-full font-semibold text-[15px] rounded-xl transition-all hover:shadow-lg bg-slate-900 text-white hover:bg-slate-800"
+                style={{ height: 52, boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -134,7 +134,7 @@ function SignInContent() {
                   <span className="w-full border-t border-slate-200" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-4 text-[11px] text-slate-400 bg-white">
+                  <span className="px-4 text-[11px] text-slate-500 bg-white">
                     또는 이메일로 계속하기
                   </span>
                 </div>
@@ -144,15 +144,15 @@ function SignInContent() {
               <div className="space-y-3">
                 <Input
                   type="email" placeholder="이메일" disabled
-                  className="border border-slate-200 bg-slate-50 text-base text-slate-400 placeholder:text-slate-300 opacity-60 cursor-not-allowed rounded-lg h-11"
+                  className="border border-slate-200 bg-slate-50 text-base text-slate-500 placeholder:text-slate-400 cursor-not-allowed rounded-lg h-11"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password" placeholder="비밀번호" disabled
-                  className="border border-slate-200 bg-slate-50 text-base text-slate-400 placeholder:text-slate-300 opacity-60 cursor-not-allowed rounded-lg h-11"
+                  className="border border-slate-200 bg-slate-50 text-base text-slate-500 placeholder:text-slate-400 cursor-not-allowed rounded-lg h-11"
                   style={{ fontSize: "16px" }}
                 />
-                <p className="text-[11px] text-slate-400 text-center pt-1">
+                <p className="text-[11px] text-slate-500 text-center pt-1">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
               </div>
@@ -162,13 +162,13 @@ function SignInContent() {
 
         {/* Footer */}
         <div className="p-6 sm:p-8 pt-0 space-y-3">
-          <p className="text-center text-sm text-slate-500">
+          <p className="text-center text-sm text-slate-600">
             계정이 없으신가요?{" "}
             <Link href="/test/search" className="font-semibold text-blue-600 hover:text-blue-500 underline underline-offset-2">
               무료로 시작하기
             </Link>
           </p>
-          <p className="text-center text-[11px] text-slate-400 leading-relaxed">
+          <p className="text-center text-[11px] text-slate-500 leading-relaxed">
             데이터 무결성과 ISMS 가이드를 준수합니다.
           </p>
         </div>
