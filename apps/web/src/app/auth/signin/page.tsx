@@ -28,84 +28,102 @@ function SignInContent() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#0b0f1a' }}>
-      {/* ── 좌측 브랜딩 — deep navy brand intro surface ── */}
-      <div className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden border-r" style={{ backgroundColor: '#141929', borderColor: 'rgba(255,255,255,0.06)' }}>
-        {/* 상단: 브랜드명 */}
-        <div className="pt-14 pl-14">
+    <div className="flex min-h-screen" style={{ backgroundColor: '#080c18' }}>
+
+      {/* ══════ LEFT: Brand Intro Surface ══════ */}
+      <div
+        className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden"
+        style={{ backgroundColor: '#131a2e' }}
+      >
+        {/* White alpha vertical divider on right edge */}
+        <div className="absolute right-0 top-0 bottom-0 w-px" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
+
+        {/* Brand logo */}
+        <div className="pt-14 pl-16">
           <Link href="/" className="inline-flex items-center gap-2">
             <span className="text-2xl font-bold tracking-tight text-white">LabAxis</span>
           </Link>
         </div>
 
-        {/* 중앙: 운영형 카피 */}
-        <div className="flex-1 flex flex-col justify-center pl-14 pr-14 space-y-10">
-          <div className="space-y-5">
-            <h1 className="text-[32px] font-extrabold leading-snug text-white tracking-tight">
+        {/* Center: Brand copy */}
+        <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-12">
+          <div className="space-y-6">
+            <h1 className="text-[34px] font-extrabold leading-[1.3] text-white tracking-tight">
               연구실의 검색-견적-구매-재고<br />
               업무를 한곳에서.
             </h1>
-            <p className="text-[#c8cdd5] text-base max-w-md leading-relaxed">
-              반복 검색, 수기 견적, 재고 공백을 <span className="text-blue-400 font-medium">운영 시스템</span>으로 전환합니다.
+            <p className="text-[#b8c0cc] text-[16px] max-w-md leading-relaxed">
+              반복 검색, 수기 견적, 재고 공백을 <span className="text-blue-400 font-semibold">운영 시스템</span>으로 전환합니다.
             </p>
           </div>
 
-          {/* 파이프라인 6단계 — brand signature strip */}
-          <div className="flex items-center gap-3 flex-wrap">
+          {/* Pipeline signature strip */}
+          <div className="flex items-center gap-3.5 flex-wrap">
             {pipelineSteps.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-3">
-                <div className="flex items-center gap-2.5 rounded-xl px-4 py-2.5 border" style={{ backgroundColor: '#1a2035', borderColor: 'rgba(255,255,255,0.07)' }}>
-                  <step.icon className="w-4 h-4 text-blue-400/80" />
-                  <span className="text-sm text-slate-200 font-semibold tracking-tight">{step.label}</span>
+              <div key={step.label} className="flex items-center gap-3.5">
+                <div
+                  className="flex items-center gap-2.5 rounded-xl px-5 py-3 border"
+                  style={{ backgroundColor: '#1a2340', borderColor: 'rgba(255,255,255,0.08)' }}
+                >
+                  <step.icon className="w-4 h-4 text-blue-400/70" />
+                  <span className="text-[13px] text-white font-semibold tracking-tight">{step.label}</span>
                 </div>
                 {i < pipelineSteps.length - 1 && (
-                  <span className="text-slate-600 text-xs select-none">→</span>
+                  <span className="text-[#3a4560] text-xs select-none">→</span>
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* 하단 신뢰 포인트 */}
-        <div className="pb-12 pl-14 pr-14 space-y-3.5">
+        {/* Bottom trust reassurance */}
+        <div className="pb-14 pl-16 pr-16 space-y-4">
           {trustItems.map((item) => (
             <div key={item.text} className="flex items-center gap-3">
-              <item.icon className="w-4 h-4 text-slate-500 shrink-0" />
-              <span className="text-sm text-slate-400 font-medium">{item.text}</span>
+              <item.icon className="w-4 h-4 text-[#4a5570] shrink-0" />
+              <span className="text-[13px] text-[#8892a8] font-medium">{item.text}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── 우측 auth — deep navy entry field ── */}
-      <div className="w-full lg:w-[45%] flex flex-col min-h-screen" style={{ backgroundColor: '#0b0f1a' }}>
-        {/* 모바일: 상단 브랜드 */}
+      {/* ══════ RIGHT: Auth Entry Field ══════ */}
+      <div className="w-full lg:w-[45%] flex flex-col min-h-screen" style={{ backgroundColor: '#080c18' }}>
+        {/* Mobile brand */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="text-xl font-bold tracking-tight text-white">LabAxis</Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-          <div className="w-full max-w-sm">
-            {/* Auth entry card — navy-gray elevated */}
-            <div className="rounded-2xl p-8 space-y-6 shadow-[0_8px_40px_rgba(0,0,0,0.6)]" style={{ backgroundColor: '#161b2a', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
-              {/* 홈으로 돌아가기 */}
-              <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-300 transition-colors">
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
+          <div className="w-full max-w-[380px]">
+            {/* ── Auth Entry Card ── */}
+            <div
+              className="rounded-2xl p-9 space-y-7"
+              style={{
+                backgroundColor: '#141b2e',
+                borderWidth: 1,
+                borderColor: 'rgba(255,255,255,0.10)',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+              }}
+            >
+              {/* Back link */}
+              <Link href="/" className="inline-flex items-center text-xs text-[#5a6580] hover:text-white transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" />
                 홈으로 돌아가기
               </Link>
 
-              {/* 타이틀 */}
+              {/* Title */}
               <div>
                 <h2 className="text-xl font-bold text-white">로그인</h2>
-                <p className="text-[#94a3b8] mt-1.5 text-sm leading-relaxed">
+                <p className="text-[#8892a8] mt-2 text-sm leading-relaxed">
                   연구실의 검색-견적-구매-재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 
-              {/* Google 로그인 = primary entry action */}
+              {/* Google — WHITE primary control */}
               <Button
-                className="w-full font-semibold text-[15px] shadow-lg transition-all hover:shadow-xl hover:opacity-90"
-                style={{ backgroundColor: '#ffffff', color: '#0b0f1a', height: 52 }}
+                className="w-full font-semibold text-[15px] rounded-xl transition-all hover:opacity-90"
+                style={{ backgroundColor: '#ffffff', color: '#0a0e1a', height: 52, boxShadow: '0 2px 12px rgba(255,255,255,0.10)' }}
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -117,35 +135,35 @@ function SignInContent() {
                 Google로 로그인
               </Button>
 
-              {/* divider */}
+              {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 text-xs text-slate-600" style={{ backgroundColor: '#161b2a' }}>
+                  <span className="px-3 text-[11px] text-[#4a5570]" style={{ backgroundColor: '#141b2e' }}>
                     또는 이메일로 계속하기
                   </span>
                 </div>
               </div>
 
-              {/* 이메일/비밀번호 (disabled — muted navy) */}
+              {/* Email/PW (disabled — structurally present, muted) */}
               <div className="space-y-3">
                 <Input
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="border text-base text-slate-100 placeholder:text-slate-700 opacity-30 cursor-not-allowed"
-                  style={{ backgroundColor: '#0e1220', borderColor: '#1a2035', fontSize: "16px" }}
+                  className="border text-base placeholder:text-[#3a4560] opacity-40 cursor-not-allowed rounded-lg"
+                  style={{ backgroundColor: '#0c1122', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#8892a8' }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="border text-base text-slate-100 placeholder:text-slate-700 opacity-30 cursor-not-allowed"
-                  style={{ backgroundColor: '#0e1220', borderColor: '#1a2035', fontSize: "16px" }}
+                  className="border text-base placeholder:text-[#3a4560] opacity-40 cursor-not-allowed rounded-lg"
+                  style={{ backgroundColor: '#0c1122', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#8892a8' }}
                 />
-                <p className="text-[11px] text-slate-600 text-center">
+                <p className="text-[11px] text-[#3a4560] text-center">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
               </div>
@@ -153,15 +171,15 @@ function SignInContent() {
           </div>
         </div>
 
-        {/* 하단 푸터 */}
+        {/* Footer */}
         <div className="p-6 sm:p-8 pt-0 space-y-3">
-          <p className="text-center text-sm text-slate-400">
+          <p className="text-center text-sm text-[#6a7590]">
             계정이 없으신가요?{" "}
             <Link href="/test/search" className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2">
               무료로 시작하기
             </Link>
           </p>
-          <p className="text-center text-[11px] text-slate-600 leading-relaxed">
+          <p className="text-center text-[11px] text-[#3a4560] leading-relaxed">
             데이터 무결성과 ISMS 가이드를 준수합니다.
           </p>
         </div>
@@ -173,7 +191,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#0b0f1a' }}>
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#080c18' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
