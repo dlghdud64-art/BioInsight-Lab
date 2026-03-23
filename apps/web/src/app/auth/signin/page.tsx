@@ -28,94 +28,105 @@ function SignInContent() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#080c18' }}>
+    <div className="flex min-h-screen" style={{ backgroundColor: '#070a14' }}>
 
-      {/* ══════ LEFT: Brand Intro Surface ══════ */}
+      {/* ══════ LEFT: Branded Intro Surface ══════ */}
       <div
-        className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden"
-        style={{ backgroundColor: '#131a2e' }}
+        className="hidden lg:flex w-[52%] relative min-h-screen flex-col overflow-hidden"
+        style={{ backgroundColor: '#0f1628' }}
       >
-        {/* White alpha vertical divider on right edge */}
+        {/* Subtle radial glow — deeptech texture, not decoration */}
+        <div
+          className="absolute pointer-events-none"
+          style={{
+            top: '30%', left: '20%', width: '60%', height: '50%',
+            background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.06) 0%, transparent 70%)',
+            filter: 'blur(60px)',
+          }}
+        />
+        {/* Right edge divider */}
         <div className="absolute right-0 top-0 bottom-0 w-px" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
 
         {/* Brand logo */}
-        <div className="pt-14 pl-16">
-          <Link href="/" className="inline-flex items-center gap-2">
-            <span className="text-2xl font-bold tracking-tight text-white">LabAxis</span>
+        <div className="relative z-10 pt-14 pl-16">
+          <Link href="/" className="inline-flex items-center gap-2.5">
+            <span className="text-[26px] font-bold tracking-tight text-white">LabAxis</span>
           </Link>
         </div>
 
-        {/* Center: Brand copy */}
-        <div className="flex-1 flex flex-col justify-center pl-16 pr-16 space-y-12">
+        {/* Brand copy */}
+        <div className="relative z-10 flex-1 flex flex-col justify-center pl-16 pr-12 space-y-12">
           <div className="space-y-6">
-            <h1 className="text-[34px] font-extrabold leading-[1.3] text-white tracking-tight">
+            <h1 className="text-[36px] font-extrabold leading-[1.25] text-white tracking-tight">
               연구실의 검색-견적-구매-재고<br />
               업무를 한곳에서.
             </h1>
-            <p className="text-[#b8c0cc] text-[16px] max-w-md leading-relaxed">
-              반복 검색, 수기 견적, 재고 공백을 <span className="text-blue-400 font-semibold">운영 시스템</span>으로 전환합니다.
+            <p className="text-[#a8b2c4] text-[16px] max-w-[420px] leading-[1.7]">
+              반복 검색, 수기 견적, 재고 공백을{" "}
+              <span className="text-blue-400 font-semibold">운영 시스템</span>으로 전환합니다.
             </p>
           </div>
 
-          {/* Pipeline signature strip */}
-          <div className="flex items-center gap-3.5 flex-wrap">
+          {/* Pipeline signature strip — BIG */}
+          <div className="flex items-center gap-4 flex-wrap">
             {pipelineSteps.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-3.5">
+              <div key={step.label} className="flex items-center gap-4">
                 <div
-                  className="flex items-center gap-2.5 rounded-xl px-5 py-3 border"
-                  style={{ backgroundColor: '#1a2340', borderColor: 'rgba(255,255,255,0.08)' }}
+                  className="flex items-center gap-3 rounded-xl px-5 py-3 border"
+                  style={{ backgroundColor: '#162040', borderColor: 'rgba(255,255,255,0.10)' }}
                 >
-                  <step.icon className="w-4 h-4 text-blue-400/70" />
-                  <span className="text-[13px] text-white font-semibold tracking-tight">{step.label}</span>
+                  <step.icon className="w-[18px] h-[18px] text-blue-400/80" />
+                  <span className="text-[14px] text-white font-semibold">{step.label}</span>
                 </div>
                 {i < pipelineSteps.length - 1 && (
-                  <span className="text-[#3a4560] text-xs select-none">→</span>
+                  <span className="text-[#2a3550] text-sm select-none font-light">→</span>
                 )}
               </div>
             ))}
           </div>
         </div>
 
-        {/* Bottom trust reassurance */}
-        <div className="pb-14 pl-16 pr-16 space-y-4">
+        {/* Trust reassurance */}
+        <div className="relative z-10 pb-14 pl-16 pr-12 space-y-4">
           {trustItems.map((item) => (
             <div key={item.text} className="flex items-center gap-3">
-              <item.icon className="w-4 h-4 text-[#4a5570] shrink-0" />
-              <span className="text-[13px] text-[#8892a8] font-medium">{item.text}</span>
+              <item.icon className="w-[18px] h-[18px] text-[#405070] shrink-0" />
+              <span className="text-[14px] text-[#7a889e] font-medium">{item.text}</span>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ══════ RIGHT: Auth Entry Field ══════ */}
-      <div className="w-full lg:w-[45%] flex flex-col min-h-screen" style={{ backgroundColor: '#080c18' }}>
+      {/* ══════ RIGHT: Auth Entry Field — card pulled center-ward ══════ */}
+      <div className="w-full lg:w-[48%] flex flex-col min-h-screen" style={{ backgroundColor: '#070a14' }}>
         {/* Mobile brand */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
           <Link href="/" className="text-xl font-bold tracking-tight text-white">LabAxis</Link>
         </div>
 
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-          <div className="w-full max-w-[380px]">
-            {/* ── Auth Entry Card ── */}
+        {/* Card area — justify-center + pl to pull card leftward */}
+        <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:pr-16 lg:pl-10">
+          <div className="w-full max-w-[420px]">
+            {/* ── Auth Entry Card — large checkpoint ── */}
             <div
-              className="rounded-2xl p-9 space-y-7"
+              className="rounded-2xl p-10 space-y-8"
               style={{
-                backgroundColor: '#141b2e',
+                backgroundColor: '#111828',
                 borderWidth: 1,
                 borderColor: 'rgba(255,255,255,0.10)',
-                boxShadow: '0 12px 48px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04)',
+                boxShadow: '0 16px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.03)',
               }}
             >
               {/* Back link */}
-              <Link href="/" className="inline-flex items-center text-xs text-[#5a6580] hover:text-white transition-colors">
+              <Link href="/" className="inline-flex items-center text-xs text-[#506080] hover:text-white transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" />
                 홈으로 돌아가기
               </Link>
 
-              {/* Title */}
-              <div>
-                <h2 className="text-xl font-bold text-white">로그인</h2>
-                <p className="text-[#8892a8] mt-2 text-sm leading-relaxed">
+              {/* Title block */}
+              <div className="space-y-2">
+                <h2 className="text-[22px] font-bold text-white">로그인</h2>
+                <p className="text-[#8090a8] text-[15px] leading-relaxed">
                   연구실의 검색-견적-구매-재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
@@ -123,7 +134,10 @@ function SignInContent() {
               {/* Google — WHITE primary control */}
               <Button
                 className="w-full font-semibold text-[15px] rounded-xl transition-all hover:opacity-90"
-                style={{ backgroundColor: '#ffffff', color: '#0a0e1a', height: 52, boxShadow: '0 2px 12px rgba(255,255,255,0.10)' }}
+                style={{
+                  backgroundColor: '#ffffff', color: '#0a0e1a', height: 54,
+                  boxShadow: '0 4px 16px rgba(255,255,255,0.08)',
+                }}
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -135,35 +149,34 @@ function SignInContent() {
                 Google로 로그인
               </Button>
 
+              {/* Spacer before divider */}
+              <div className="pt-1" />
+
               {/* Divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
                   <span className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="px-3 text-[11px] text-[#4a5570]" style={{ backgroundColor: '#141b2e' }}>
+                  <span className="px-4 text-[11px] text-[#3a4866]" style={{ backgroundColor: '#111828' }}>
                     또는 이메일로 계속하기
                   </span>
                 </div>
               </div>
 
-              {/* Email/PW (disabled — structurally present, muted) */}
+              {/* Email/PW (disabled) */}
               <div className="space-y-3">
                 <Input
-                  type="email"
-                  placeholder="이메일"
-                  disabled
-                  className="border text-base placeholder:text-[#3a4560] opacity-40 cursor-not-allowed rounded-lg"
-                  style={{ backgroundColor: '#0c1122', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#8892a8' }}
+                  type="email" placeholder="이메일" disabled
+                  className="border text-base placeholder:text-[#2a3858] opacity-50 cursor-not-allowed rounded-lg h-11"
+                  style={{ backgroundColor: '#0a0f1e', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#7080a0' }}
                 />
                 <Input
-                  type="password"
-                  placeholder="비밀번호"
-                  disabled
-                  className="border text-base placeholder:text-[#3a4560] opacity-40 cursor-not-allowed rounded-lg"
-                  style={{ backgroundColor: '#0c1122', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#8892a8' }}
+                  type="password" placeholder="비밀번호" disabled
+                  className="border text-base placeholder:text-[#2a3858] opacity-50 cursor-not-allowed rounded-lg h-11"
+                  style={{ backgroundColor: '#0a0f1e', borderColor: 'rgba(255,255,255,0.06)', fontSize: "16px", color: '#7080a0' }}
                 />
-                <p className="text-[11px] text-[#3a4560] text-center">
+                <p className="text-[11px] text-[#3a4866] text-center pt-1">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
               </div>
@@ -173,13 +186,13 @@ function SignInContent() {
 
         {/* Footer */}
         <div className="p-6 sm:p-8 pt-0 space-y-3">
-          <p className="text-center text-sm text-[#6a7590]">
+          <p className="text-center text-sm text-[#607090]">
             계정이 없으신가요?{" "}
             <Link href="/test/search" className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2">
               무료로 시작하기
             </Link>
           </p>
-          <p className="text-center text-[11px] text-[#3a4560] leading-relaxed">
+          <p className="text-center text-[11px] text-[#3a4866] leading-relaxed">
             데이터 무결성과 ISMS 가이드를 준수합니다.
           </p>
         </div>
@@ -191,7 +204,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#080c18' }}>
+      <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#070a14' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
