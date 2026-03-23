@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { ArrowRight, Activity, Shield, Database, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const Spline = dynamic(() => import('@splinetool/react-spline').then(m => m.default), {
+const Spline = dynamic(() => import('@splinetool/react-spline/next').then(m => m.default), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-[#0B1120]">
