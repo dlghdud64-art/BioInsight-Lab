@@ -1,21 +1,46 @@
 'use client';
 
-import React from 'react';
-import dynamic from 'next/dynamic';
+import React, { useEffect, useRef, useState } from 'react';
 import { ArrowRight, Activity, Shield, Database, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 
-const Spline = dynamic(() => import('@splinetool/react-spline').then(m => m.default), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full flex items-center justify-center bg-[#0B1120]">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        <p className="text-xs text-slate-400 font-mono tracking-wider">LOADING PIPELINE ENGINE...</p>
-      </div>
-    </div>
-  ),
-});
+function SplineViewer({ scene }: { scene: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    let app: any = null;
+
+    (async () => {
+      try {
+        const { Application } = await import('@splinetool/runtime');
+        app = new Application(canvasRef.current!);
+        await app.load(scene);
+        setLoading(false);
+      } catch (e) {
+        console.warn('[SplineViewer] Failed to load:', e);
+        setLoading(false);
+      }
+    })();
+
+    return () => { app?.dispose?.(); };
+  }, [scene]);
+
+  return (
+    <>
+      {loading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-[#0B1120] z-10">
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs text-slate-400 font-mono tracking-wider">LOADING PIPELINE ENGINE...</p>
+          </div>
+        </div>
+      )}
+      <canvas ref={canvasRef} className="w-full h-full" />
+    </>
+  );
+}
 
 export default function ArchitectureShowcase() {
   return (
@@ -23,10 +48,7 @@ export default function ArchitectureShowcase() {
 
       {/* [1] 3D PIPELINE CORE ENGINE */}
       <div className="absolute inset-0 z-0">
-        <Spline
-          scene="https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode"
-          className="w-full h-full object-cover pointer-events-auto"
-        />
+        <SplineViewer scene="https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode" />
       </div>
 
       {/* [2] FLOATING HUD */}
