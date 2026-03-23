@@ -30,7 +30,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#0b0f1a' }}>
       {/* ── 좌측 브랜딩 — deep navy brand intro surface ── */}
-      <div className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden border-r" style={{ backgroundColor: '#141929', borderColor: '#1e2640' }}>
+      <div className="hidden lg:flex w-[55%] relative min-h-screen flex-col overflow-hidden border-r" style={{ backgroundColor: '#141929', borderColor: 'rgba(255,255,255,0.06)' }}>
         {/* 상단: 브랜드명 */}
         <div className="pt-14 pl-14">
           <Link href="/" className="inline-flex items-center gap-2">
@@ -45,7 +45,7 @@ function SignInContent() {
               연구실의 검색-견적-구매-재고<br />
               업무를 한곳에서.
             </h1>
-            <p className="text-slate-300 text-base max-w-md leading-relaxed">
+            <p className="text-[#c8cdd5] text-base max-w-md leading-relaxed">
               반복 검색, 수기 견적, 재고 공백을 <span className="text-blue-400 font-medium">운영 시스템</span>으로 전환합니다.
             </p>
           </div>
@@ -54,7 +54,7 @@ function SignInContent() {
           <div className="flex items-center gap-3 flex-wrap">
             {pipelineSteps.map((step, i) => (
               <div key={step.label} className="flex items-center gap-3">
-                <div className="flex items-center gap-2.5 rounded-xl px-4 py-2.5 border" style={{ backgroundColor: '#1a2035', borderColor: '#253050' }}>
+                <div className="flex items-center gap-2.5 rounded-xl px-4 py-2.5 border" style={{ backgroundColor: '#1a2035', borderColor: 'rgba(255,255,255,0.07)' }}>
                   <step.icon className="w-4 h-4 text-blue-400/80" />
                   <span className="text-sm text-slate-200 font-semibold tracking-tight">{step.label}</span>
                 </div>
@@ -87,7 +87,7 @@ function SignInContent() {
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
           <div className="w-full max-w-sm">
             {/* Auth entry card — navy-gray elevated */}
-            <div className="rounded-2xl p-8 space-y-6 shadow-[0_8px_40px_rgba(0,0,0,0.6)]" style={{ backgroundColor: '#161b2a', borderWidth: 1, borderColor: '#253050' }}>
+            <div className="rounded-2xl p-8 space-y-6 shadow-[0_8px_40px_rgba(0,0,0,0.6)]" style={{ backgroundColor: '#161b2a', borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)' }}>
               {/* 홈으로 돌아가기 */}
               <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-300 transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" />
@@ -97,15 +97,15 @@ function SignInContent() {
               {/* 타이틀 */}
               <div>
                 <h2 className="text-xl font-bold text-white">로그인</h2>
-                <p className="text-slate-400 mt-1.5 text-sm leading-relaxed">
+                <p className="text-[#94a3b8] mt-1.5 text-sm leading-relaxed">
                   연구실의 검색-견적-구매-재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 
               {/* Google 로그인 = primary entry action */}
               <Button
-                className="w-full font-semibold text-[15px] text-white shadow-lg transition-all hover:shadow-xl hover:brightness-110"
-                style={{ backgroundColor: '#1e2640', borderWidth: 1, borderColor: '#304060', height: 52 }}
+                className="w-full font-semibold text-[15px] shadow-lg transition-all hover:shadow-xl hover:opacity-90"
+                style={{ backgroundColor: '#ffffff', color: '#0b0f1a', height: 52 }}
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -120,7 +120,7 @@ function SignInContent() {
               {/* divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" style={{ borderColor: '#1e2640' }} />
+                  <span className="w-full border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }} />
                 </div>
                 <div className="relative flex justify-center">
                   <span className="px-3 text-xs text-slate-600" style={{ backgroundColor: '#161b2a' }}>

@@ -38,17 +38,17 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24 border-b border-[#1e1f24]" style={{ backgroundColor: "#111318" }}>
+    <section className="py-16 md:py-24 border-b border-white/[0.04]" style={{ backgroundColor: "#111318" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-12">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#64748b] mb-2">
             Operational Value
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-slate-100 tracking-tight mb-2">
             각 단계에서 무엇이 달라지는가
           </h2>
-          <p className="text-xs md:text-sm text-slate-400 max-w-lg">
+          <p className="text-xs md:text-sm text-[#94a3b8] max-w-lg">
             기존 방식의 병목을 LabAxis 운영 파이프라인이 어떻게 해소하는지 보여드립니다.
           </p>
         </div>
@@ -60,7 +60,7 @@ export function PlatformFlowSection() {
             return (
               <div
                 key={item.title}
-                className="rounded-lg p-4 md:p-5 border border-[#1e1f24] hover:border-[#2a2b30] transition-colors"
+                className="rounded-lg p-4 md:p-5 border border-white/[0.06] hover:border-white/[0.12] transition-colors"
                 style={{ backgroundColor: "#1e2026" }}
               >
                 <div className="flex items-start gap-4">

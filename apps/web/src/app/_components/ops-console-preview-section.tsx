@@ -49,7 +49,7 @@ export function OpsConsolePreviewSection() {
           <h2 className="text-xl md:text-2xl font-bold text-slate-100 tracking-tight mb-2">
             4개 운영 계층으로 구매 운영을 통제합니다
           </h2>
-          <p className="text-xs md:text-sm text-slate-400 max-w-lg">
+          <p className="text-xs md:text-sm text-[#94a3b8] max-w-lg">
             작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 계층이 운영 단계에 맞는 통제를 제공합니다.
           </p>
         </div>
@@ -59,7 +59,7 @@ export function OpsConsolePreviewSection() {
           {CONSOLE_LAYERS.map((layer) => {
             const Icon = layer.icon;
             return (
-              <div key={layer.title} className="border border-[#1e1f24] rounded-lg px-5 py-4 hover:border-[#2a2b30] transition-colors" style={{ backgroundColor: "#1e2026" }}>
+              <div key={layer.title} className="border border-white/[0.06] rounded-lg px-5 py-4 hover:border-white/[0.12] transition-colors" style={{ backgroundColor: "#1e2026" }}>
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="h-4 w-4 text-slate-500" strokeWidth={1.8} />
                   <span className="text-sm font-bold text-slate-200">{layer.title}</span>
@@ -72,7 +72,7 @@ export function OpsConsolePreviewSection() {
         </div>
 
         {/* System Proof Panel */}
-        <div className="border border-[#1e1f24] rounded-lg px-5 py-4" style={{ backgroundColor: "#1a1c21" }}>
+        <div className="border border-white/[0.06] rounded-lg px-5 py-4" style={{ backgroundColor: "#1a1c21" }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
             System Evidence
           </p>
