@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCTASection() {
   return (
-    <section className="py-16 md:py-20" style={{ backgroundColor: "#0B1016", borderTop: "1px solid #1E2530" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#0E1319", borderTop: "1px solid #2A3442" }}>
       <div className="mx-auto max-w-2xl px-4 md:px-6 text-center">
         <div className="space-y-3 mb-8">
           <h2 className="text-lg md:text-2xl font-bold text-[#F4F7FF] tracking-tight leading-tight">
@@ -21,7 +21,7 @@ export function FinalCTASection() {
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
           <Link href="/dashboard" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-10 px-8 bg-[#3B6FE8] hover:bg-[#4D8DFF] text-white font-semibold text-sm flex items-center justify-center gap-2">
+            <Button className="w-full sm:w-auto h-11 px-8 bg-white hover:bg-slate-100 text-[#0B1016] font-bold text-sm flex items-center justify-center gap-2 shadow-lg">
               운영 콘솔 시작하기
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>

@@ -54,6 +54,13 @@ export function PlatformFlowSection() {
           </p>
         </div>
 
+        {/* Decision table header */}
+        <div className="hidden md:flex items-center px-5 py-2.5 mb-2 text-[10px] font-semibold uppercase tracking-wider text-[#8794AA]">
+          <div className="w-5 mr-4" />
+          <div className="flex-1">단계</div>
+          <div className="w-3 mx-4" />
+          <div className="flex-1">LabAxis 도입 후</div>
+        </div>
         <div className="space-y-3">
           {OPS_VALUES.map((item) => {
             const Icon = item.icon;
