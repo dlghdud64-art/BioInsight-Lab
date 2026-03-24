@@ -103,7 +103,7 @@ export function BioInsightHeroSection() {
       {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
-        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.20) 0%, rgba(78,138,255,0.10) 24%, rgba(78,138,255,0.00) 58%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
+        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.22) 0%, rgba(78,138,255,0.12) 24%, rgba(78,138,255,0.00) 56%), radial-gradient(circle at 50% 42%, rgba(37,99,235,0.14) 0%, rgba(37,99,235,0.00) 62%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
         <div className="absolute inset-0 z-0 pointer-events-auto opacity-40">
           <PlexusCanvas />
         </div>

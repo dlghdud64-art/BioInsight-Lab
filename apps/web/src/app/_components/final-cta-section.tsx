@@ -9,7 +9,7 @@ export function FinalCTASection() {
     <section className="py-16 md:py-20" style={{ backgroundColor: "#0A1321", borderTop: "1px solid rgba(120,160,230,0.10)" }}>
       <div className="mx-auto max-w-2xl px-4 md:px-6 text-center">
         <div className="space-y-3 mb-8">
-          <h2 className="text-lg md:text-2xl font-bold text-[#F3F7FF] tracking-tight leading-tight">
+          <h2 className="text-lg md:text-2xl font-bold text-[#F4F7FF] tracking-tight leading-tight">
             구매 운영을 체계화하세요
           </h2>
           <p className="text-xs md:text-sm text-[#AEBBD2] max-w-md mx-auto leading-relaxed">

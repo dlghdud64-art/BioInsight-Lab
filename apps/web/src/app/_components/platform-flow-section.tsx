@@ -38,10 +38,10 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#0A1321", borderBottom: "1px solid #1A2840" }}>
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#0A1321", borderBottom: "1px solid #1A2840" }}>
+      <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-12">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6A9CFF] mb-2">
             Operational Value
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
@@ -52,7 +52,7 @@ export function PlatformFlowSection() {
           </p>
         </div>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {OPS_VALUES.map((item) => {
             const Icon = item.icon;
             return (

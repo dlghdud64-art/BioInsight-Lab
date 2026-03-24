@@ -39,10 +39,10 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#0B1625", borderBottom: "1px solid #1A2840" }}>
-      <div className="max-w-4xl mx-auto px-4 md:px-6">
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#0B1625", borderBottom: "1px solid #1A2840" }}>
+      <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6A9CFF] mb-2">
             Operations Console
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
@@ -69,14 +69,14 @@ export function OpsConsolePreviewSection() {
                   <span className="text-sm font-bold text-[#F3F7FF]">{layer.title}</span>
                 </div>
                 <p className="text-[11px] text-[#B8C5DA] leading-relaxed mb-1.5">{layer.purpose}</p>
-                <p className="text-[10px] text-[#667389] font-medium">{layer.items}</p>
+                <p className="text-[10px] text-[#6A9CFF] font-medium">{layer.items}</p>
               </div>
             );
           })}
         </div>
 
         <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0E1926", border: "1px solid #1A2840" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6A9CFF] mb-3">
             System Evidence
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
