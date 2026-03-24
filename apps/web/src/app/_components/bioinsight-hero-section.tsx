@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
-  Warehouse, ChevronRight, Menu, X,
+  Warehouse, ChevronRight, Menu, X, LayoutDashboard,
 } from "lucide-react";
 
 function MobileMenu() {
@@ -126,6 +127,9 @@ function PlexusCanvas() {
 }
 
 export function BioInsightHeroSection() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+
   return (
     <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
 
@@ -144,21 +148,42 @@ export function BioInsightHeroSection() {
           <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
         </Link>
 
-        {/* Desktop nav links */}
+        {/* Desktop nav links — session-aware */}
         <div className="hidden md:flex items-center gap-6">
           <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
-          <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
-          <Link href="/test/search">
-            <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
-          </Link>
+          {isLoggedIn ? (
+            <>
+              <Link href="/test/search" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">검색</Link>
+              <Link href="/dashboard">
+                <Button className="text-sm font-semibold px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5">
+                  <LayoutDashboard className="h-3.5 w-3.5" />대시보드
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
+              <Link href="/test/search">
+                <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile: hamburger + CTA */}
         <div className="flex md:hidden items-center gap-3">
-          <Link href="/test/search">
-            <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
-          </Link>
+          {isLoggedIn ? (
+            <Link href="/dashboard">
+              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex items-center gap-1">
+                <LayoutDashboard className="h-3 w-3" />대시보드
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/test/search">
+              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
+            </Link>
+          )}
           <MobileMenu />
         </div>
       </nav>
