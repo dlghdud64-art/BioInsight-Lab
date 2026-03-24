@@ -16,14 +16,19 @@ const trustItems = [
   { icon: Zap, text: "구매-재고 운영 실시간 연결" },
 ];
 
-/* ── Restrained 3D Background (non-interactive, dimmed) ── */
+/* ── Restrained 3D Background — delayed, dimmed, non-interactive ── */
 function SplineBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
+    // Check reduced-motion preference
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) { setLoaded(true); return; }
+
     let app: any = null;
+    // Delayed mount — auth card renders first
     const timer = setTimeout(async () => {
       try {
         const { Application } = await import("@splinetool/runtime");
@@ -31,14 +36,14 @@ function SplineBg() {
         await app.load("https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode");
         setLoaded(true);
       } catch { setLoaded(true); }
-    }, 800); // delay mount — auth card renders first
+    }, 1000);
     return () => { clearTimeout(timer); app?.dispose?.(); };
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      className={`absolute inset-0 w-full h-full transition-opacity duration-[2000ms] ${loaded ? "opacity-25" : "opacity-0"}`}
+      className={`absolute w-[92%] h-[88%] right-[-8%] bottom-[-6%] transition-opacity duration-[2500ms] ${loaded ? "opacity-[0.22]" : "opacity-0"}`}
       style={{ pointerEvents: "none" }}
     />
   );
@@ -49,97 +54,114 @@ function SignInContent() {
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-[100dvh]">
 
-      {/* ══════ LEFT: Deep Navy Branded Intro + 3D Background ══════ */}
-      <div className="hidden lg:flex w-[50%] relative min-h-screen flex-col overflow-hidden" style={{ backgroundColor: "#0a0f1e" }}>
+      {/* ══════ LEFT 48%: Deep Navy Branded Intro + 3D ══════ */}
+      <div
+        className="hidden lg:flex relative overflow-hidden flex-col"
+        style={{
+          width: "48%",
+          background: "linear-gradient(165deg, #0A2142 0%, #07162D 50%, #050C18 100%)",
+        }}
+      >
+        {/* Grid texture — fallback when Spline not loaded */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundSize: "40px 40px",
+            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px)",
+            maskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
+            WebkitMaskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
+          }}
+        />
 
-        {/* 3D Scene — lowest layer, dimmed, non-interactive */}
-        <SplineBg />
+        {/* 3D Scene — offset to lower-right, behind copy */}
+        <div className="absolute inset-0 z-0">
+          <SplineBg />
+        </div>
 
-        {/* Dark overlay — ensures text readability */}
-        <div className="absolute inset-0 z-[1]" style={{
-          background: "linear-gradient(180deg, rgba(10,15,30,0.85) 0%, rgba(10,15,30,0.6) 40%, rgba(10,15,30,0.8) 100%)",
-        }} />
+        {/* Navy overlay — graded, not flat black */}
+        <div
+          className="absolute inset-0 z-[1] pointer-events-none"
+          style={{
+            background: [
+              "linear-gradient(180deg, rgba(4,12,24,0.20) 0%, rgba(4,12,24,0.38) 100%)",
+              "radial-gradient(circle at 22% 18%, rgba(16,50,98,0.22) 0%, rgba(16,50,98,0.00) 38%)",
+            ].join(", "),
+          }}
+        />
 
-        {/* Subtle blue glow — deeptech signal */}
-        <div className="absolute z-[1] pointer-events-none" style={{
-          top: "30%", left: "20%", width: "60%", height: "40%",
-          background: "radial-gradient(ellipse, rgba(59,130,246,0.06) 0%, transparent 70%)",
-          filter: "blur(60px)",
-        }} />
-
-        {/* Foreground: brand copy */}
-        <div className="relative z-[2] flex-1 flex flex-col">
+        {/* Foreground copy — z above scene+overlay */}
+        <div className="relative z-[2] flex-1 flex flex-col" style={{ paddingTop: 40, paddingLeft: 48, paddingRight: 40, paddingBottom: 40 }}>
 
           {/* Brand mark */}
-          <div className="pt-12 pl-14">
+          <div>
             <Link href="/" className="inline-flex items-center gap-2">
               <span className="text-[22px] font-bold tracking-tight text-white">LabAxis</span>
-              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/60 uppercase mt-0.5">OS</span>
+              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/50 uppercase mt-0.5">OS</span>
             </Link>
           </div>
 
-          {/* Headline */}
-          <div className="flex-1 flex flex-col justify-center pl-14 pr-10 space-y-8">
-            <div className="space-y-5">
-              <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/70 uppercase">
+          {/* Headline block — max-width 420px */}
+          <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 420 }}>
+            <div className="space-y-4" style={{ marginBottom: 22 }}>
+              <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/60 uppercase">
                 Research Procurement Operating System
               </p>
-              <h1 className="text-[32px] font-extrabold leading-[1.3] text-white tracking-tight">
+              <h1 className="text-[30px] font-extrabold leading-[1.35] text-white tracking-tight">
                 연구 구매 운영을<br />
-                한 화면의 흐름으로<br />
+                하나의 흐름으로<br />
                 연결합니다
               </h1>
-              <p className="text-[15px] text-[#8899b0] max-w-[380px] leading-[1.7]">
+              <p className="text-[14px] text-[#7b8da8] leading-[1.75] max-w-[380px]">
                 시약 검색, 비교, 요청, 발주, 입고, 재고 관리를 분절된 도구가 아닌 하나의 운영 흐름으로 정리합니다.
               </p>
             </div>
 
-            {/* Workflow caption — subtle, not interactive */}
+            {/* Workflow caption — subtle signal line */}
             <div className="flex items-center gap-2 flex-wrap">
               {PIPELINE.map((step, i) => (
                 <span key={step} className="flex items-center gap-2">
-                  <span className="text-[12px] font-medium text-white/40">{step}</span>
-                  {i < PIPELINE.length - 1 && <span className="text-white/15 text-[10px]">→</span>}
+                  <span className="text-[11px] font-medium text-white/30">{step}</span>
+                  {i < PIPELINE.length - 1 && <span className="text-white/12 text-[9px]">→</span>}
                 </span>
               ))}
             </div>
           </div>
 
           {/* Trust reassurance */}
-          <div className="pb-12 pl-14 pr-10 space-y-3">
+          <div className="space-y-3">
             {trustItems.map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <item.icon className="w-4 h-4 text-[#3a4a68] shrink-0" />
-                <span className="text-[13px] text-[#5a6a84]">{item.text}</span>
+                <item.icon className="w-4 h-4 text-[#2e4264] shrink-0" />
+                <span className="text-[12px] text-[#4d6380]">{item.text}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ══════ RIGHT: Clean Light Auth Surface ══════ */}
-      <div className="w-full lg:w-[50%] flex flex-col min-h-screen bg-[#F5F7FA]">
+      {/* ══════ RIGHT 52%: Clean Light Auth Surface ══════ */}
+      <div className="w-full lg:flex-1 flex flex-col min-h-[100dvh]" style={{ backgroundColor: "#F5F7FB" }}>
 
         {/* Mobile: dark brand header */}
-        <div className="lg:hidden flex justify-center pt-8 pb-4" style={{ backgroundColor: "#0a0f1e" }}>
+        <div className="lg:hidden flex justify-center pt-8 pb-4" style={{ backgroundColor: "#07162D" }}>
           <Link href="/" className="text-xl font-bold tracking-tight text-white">LabAxis</Link>
         </div>
 
-        {/* Auth card — pulled slightly above center */}
-        <div className="flex-1 flex items-center justify-center p-6 sm:p-10 lg:pr-16 lg:pl-12">
-          <div className="w-full max-w-[400px] -mt-8">
+        {/* Auth card — pulled left, slightly above center */}
+        <div className="flex-1 flex items-start justify-start p-6 sm:p-10" style={{ paddingTop: "clamp(72px, 12vh, 128px)", paddingLeft: "clamp(32px, 5vw, 72px)" }}>
+          <div className="w-full" style={{ maxWidth: 420 }}>
 
-            <div className="rounded-2xl p-9 space-y-7 bg-white border border-slate-200/80 shadow-[0_8px_30px_rgba(0,0,0,0.07)]">
+            <div className="bg-white rounded-[20px] border shadow-[0_6px_24px_rgba(0,0,0,0.06)]" style={{ borderColor: "rgba(12,24,44,0.08)", padding: 32 }}>
               {/* Back */}
-              <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors">
+              <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-7">
                 <ArrowLeft className="w-3.5 h-3.5 mr-1" />홈으로 돌아가기
               </Link>
 
               {/* Title */}
-              <div className="space-y-2">
-                <h2 className="text-[22px] font-bold text-slate-800">로그인</h2>
+              <div className="space-y-2 mb-7">
+                <h2 className="text-[21px] font-bold text-slate-800">로그인</h2>
                 <p className="text-slate-500 text-[14px] leading-relaxed">
                   연구실의 구매 운영을 한곳에서 처리하세요.
                 </p>
@@ -147,7 +169,7 @@ function SignInContent() {
 
               {/* Google — first action */}
               <Button
-                className="w-full font-semibold text-[15px] rounded-xl transition-all bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg"
+                className="w-full font-semibold text-[15px] rounded-xl transition-all bg-slate-900 text-white hover:bg-slate-800 hover:shadow-lg mb-6"
                 style={{ height: 50 }}
                 onClick={() => signIn("google", { callbackUrl })}
               >
@@ -161,7 +183,7 @@ function SignInContent() {
               </Button>
 
               {/* Divider */}
-              <div className="relative">
+              <div className="relative mb-6">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200" /></div>
                 <div className="relative flex justify-center">
                   <span className="px-4 text-[11px] text-slate-400 bg-white">또는 이메일로 계속하기</span>
@@ -172,10 +194,10 @@ function SignInContent() {
               <div className="space-y-3">
                 <Input type="email" placeholder="이메일" disabled
                   className="border-slate-200 bg-slate-50 text-slate-500 placeholder:text-slate-400 cursor-not-allowed rounded-lg h-11"
-                  style={{ fontSize: "16px" }} />
+                  style={{ fontSize: 16 }} />
                 <Input type="password" placeholder="비밀번호" disabled
                   className="border-slate-200 bg-slate-50 text-slate-500 placeholder:text-slate-400 cursor-not-allowed rounded-lg h-11"
-                  style={{ fontSize: "16px" }} />
+                  style={{ fontSize: 16 }} />
                 <p className="text-[11px] text-slate-400 text-center pt-1">
                   이메일 로그인은 곧 제공될 예정입니다.
                 </p>
@@ -200,7 +222,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F7FA]">
+      <div className="flex min-h-[100dvh] items-center justify-center" style={{ backgroundColor: "#F5F7FB" }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
