@@ -7,7 +7,7 @@ import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
   GitCompare, FlaskConical, FileText, ChevronRight,
-  Clock, CheckCircle2, AlertTriangle,
+  AlertTriangle,
 } from "lucide-react";
 
 interface SourcingResultRowProps {
@@ -136,7 +136,7 @@ export function SourcingResultRow({
           <p className="text-[10px] text-slate-500 mt-1 hidden sm:block leading-tight">{decisionSummary}</p>
         </div>
 
-        {/* Center: price + lead time — desktop */}
+        {/* Center: price + action status — desktop (리드타임은 좌측에만) */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
           {unitPrice ? (
             <span className="text-sm font-semibold tabular-nums text-slate-200 whitespace-nowrap">
@@ -147,8 +147,8 @@ export function SourcingResultRow({
               <AlertTriangle className="h-3 w-3" />견적 필요
             </span>
           )}
-          <span className={`text-[10px] flex items-center gap-0.5 ${formatLeadTime(vendor?.leadTime).color.split(" ")[0]}`}>
-            <Clock className="h-2.5 w-2.5" />{formatLeadTime(vendor?.leadTime).shortLabel}
+          <span className="text-[10px] text-slate-500">
+            {isInRequest ? "선택됨" : isInCompare ? "비교 후보" : unitPrice ? "VAT 별도" : "견적 후 확정"}
           </span>
         </div>
 
