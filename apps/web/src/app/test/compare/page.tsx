@@ -422,19 +422,18 @@ export default function TestComparePage() {
           className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-slate-700"
           style={{ backgroundColor: '#434548' }}
         >
-          <div className="flex items-center gap-2.5">
-            <Link href="/" className="shrink-0">
-              <span className="text-sm font-bold text-slate-200 tracking-tight">LabAxis</span>
+          <div className="flex items-center gap-1.5 md:gap-2">
+            <Link href="/" className="flex items-center gap-1.5 shrink-0">
+              <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+              <span className="text-xs md:text-sm font-semibold text-slate-400">비교 판단</span>
             </Link>
-            <div className="w-px h-4 bg-slate-700" />
-            <span className="text-xs font-medium text-slate-400">비교 판단</span>
           </div>
           <Link
             href="/test/search"
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            className="flex items-center gap-1 text-xs md:text-sm text-slate-300 hover:text-white transition-colors font-medium"
           >
             소싱으로
-            <ChevronRight className="h-3 w-3" />
+            <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </div>
 
