@@ -47,6 +47,7 @@ export function MainFooter() {
       links: [
         { label: "이용약관", href: "/terms", onClick: null },
         { label: "개인정보처리방침", href: "/privacy", onClick: null },
+        { label: "운영정책", href: "/operations-policy", onClick: null },
       ],
     },
   ];
@@ -149,6 +150,8 @@ export function MainFooter() {
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
             <span className="text-slate-600">|</span>
             <Link href="/privacy" className="hover:text-slate-300 transition-colors">개인정보처리방침</Link>
+            <span className="text-slate-600">|</span>
+            <Link href="/operations-policy" className="hover:text-slate-300 transition-colors">운영정책</Link>
           </div>
         </div>
       </div>
