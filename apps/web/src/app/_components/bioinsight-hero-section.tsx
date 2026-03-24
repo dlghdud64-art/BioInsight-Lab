@@ -1,15 +1,42 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
-  Warehouse, ChevronRight, Menu, X, LayoutDashboard,
+  Warehouse, ChevronRight, Menu, X, LayoutDashboard, User, LogOut, Settings,
 } from "lucide-react";
 
+function AccountMenu({ userName }: { userName?: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+        <User className="h-4 w-4" />
+        <span className="hidden xl:inline max-w-[80px] truncate">{userName || "계정"}</span>
+        <ChevronRight className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 w-48 z-50 rounded-lg border border-white/10 shadow-xl py-1" style={{ backgroundColor: "#1a1e26" }}>
+            <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />대시보드</Link>
+            <Link href="/test/search" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Search className="h-3.5 w-3.5 text-slate-400" />검색</Link>
+            <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Settings className="h-3.5 w-3.5 text-slate-400" />계정 설정</Link>
+            <div className="border-t border-white/10 my-1" />
+            <button onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }} className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-950/30 w-full text-left"><LogOut className="h-3.5 w-3.5" />로그아웃</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 function MobileMenu() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -27,10 +54,21 @@ function MobileMenu() {
           <nav className="flex-1 flex flex-col items-center justify-center gap-6">
             <Link href="/intro" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">서비스 소개</Link>
             <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 & 도입</Link>
-            <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
-            <Link href="/test/search" onClick={() => setOpen(false)}>
-              <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
-            </Link>
+            {isLoggedIn ? (
+              <>
+                <Link href="/dashboard" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">대시보드</Link>
+                <Link href="/test/search" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">검색</Link>
+                <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">계정 설정</Link>
+                <button onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }} className="text-lg font-medium text-red-400 hover:text-red-300 mt-4">로그아웃</button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
+                <Link href="/test/search" onClick={() => setOpen(false)}>
+                  <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       )}
@@ -163,6 +201,7 @@ export function BioInsightHeroSection() {
                   <LayoutDashboard className="h-3.5 w-3.5" />대시보드
                 </Button>
               </Link>
+              <AccountMenu userName={session?.user?.name} />
             </>
           ) : (
             <>
