@@ -41,16 +41,16 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#0B1625", borderBottom: "1px solid #1A2840" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#0C1520", borderBottom: "1px solid #1E2D40" }}>
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6A9CFF] mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
             Operations Console
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
             4개 운영 계층으로 구매 운영을 통제합니다
           </h2>
-          <p className="text-xs md:text-sm text-[#B8C5DA] max-w-lg">
+          <p className="text-xs md:text-sm text-[#BAC6D9] max-w-lg">
             작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 계층이 운영 단계에 맞는 통제를 제공합니다.
           </p>
         </div>
@@ -62,23 +62,23 @@ export function OpsConsolePreviewSection() {
               <div
                 key={layer.title}
                 className="rounded-lg px-5 py-4 transition-colors"
-                style={{ backgroundColor: "#131E2D", border: "1px solid #22344D" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172436"; e.currentTarget.style.borderColor = "#2D496A"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131E2D"; e.currentTarget.style.borderColor = "#22344D"; }}
+                style={{ backgroundColor: "#131C28", border: "1px solid #26364C" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172232"; e.currentTarget.style.borderColor = "#31506F"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131C28"; e.currentTarget.style.borderColor = "#26364C"; }}
               >
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className="h-4 w-4 text-[#7FB2FF]" strokeWidth={1.8} />
+                  <Icon className="h-4 w-4 text-[#8794AA]" strokeWidth={1.8} />
                   <span className="text-sm font-bold text-[#F3F7FF]">{layer.title}</span>
                 </div>
-                <p className="text-[11px] text-[#B8C5DA] leading-relaxed mb-1.5">{layer.purpose}</p>
-                <p className="text-[10px] text-[#6A9CFF] font-medium">{layer.items}</p>
+                <p className="text-[11px] text-[#BAC6D9] leading-relaxed mb-1.5">{layer.purpose}</p>
+                <p className="text-[10px] text-[#6FA2FF] font-medium">{layer.items}</p>
               </div>
             );
           })}
         </div>
 
-        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0E1926", border: "1px solid #1A2840" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6A9CFF] mb-3">
+        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0E1620", border: "1px solid #1E2D40" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-3">
             System Evidence
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -87,7 +87,7 @@ export function OpsConsolePreviewSection() {
               return (
                 <div key={proof.text} className="flex items-center gap-2.5 py-1">
                   <Icon className="h-3.5 w-3.5 text-[#5A94FF] flex-shrink-0" strokeWidth={1.8} />
-                  <span className="text-xs text-[#B8C5DA]">{proof.text}</span>
+                  <span className="text-xs text-[#BAC6D9]">{proof.text}</span>
                 </div>
               );
             })}

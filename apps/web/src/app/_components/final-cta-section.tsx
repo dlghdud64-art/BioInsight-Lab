@@ -6,13 +6,13 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCTASection() {
   return (
-    <section className="py-16 md:py-20" style={{ backgroundColor: "#0A1321", borderTop: "1px solid rgba(120,160,230,0.10)" }}>
+    <section className="py-16 md:py-20" style={{ backgroundColor: "#0B1520", borderTop: "1px solid #22344B" }}>
       <div className="mx-auto max-w-2xl px-4 md:px-6 text-center">
         <div className="space-y-3 mb-8">
           <h2 className="text-lg md:text-2xl font-bold text-[#F4F7FF] tracking-tight leading-tight">
             구매 운영을 체계화하세요
           </h2>
-          <p className="text-xs md:text-sm text-[#AEBBD2] max-w-md mx-auto leading-relaxed">
+          <p className="text-xs md:text-sm text-[#BAC6D9] max-w-md mx-auto leading-relaxed">
             비교·견적·발주·입고·재고까지 끊기지 않는 운영 파이프라인.
             <br />
             운영 콘솔에서 전 과정을 추적하고 통제합니다.
@@ -27,7 +27,7 @@ export function FinalCTASection() {
             </Button>
           </Link>
           <Link href="/support" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto h-10 px-6 border-[#22344D] text-[#AEBBD2] hover:text-[#F3F7FF] hover:border-[#2A4362] font-medium text-sm">
+            <Button variant="outline" className="w-full sm:w-auto h-10 px-6 border-[#26364C] text-[#BAC6D9] hover:text-[#F3F7FF] hover:border-[#2A4362] font-medium text-sm">
               도입 문의
             </Button>
           </Link>

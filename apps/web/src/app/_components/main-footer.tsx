@@ -52,7 +52,7 @@ export function MainFooter() {
   ];
 
   return (
-    <footer className="border-t" style={{ backgroundColor: "#08111D", borderColor: "rgba(120,160,230,0.10)" }}>
+    <footer className="border-t" style={{ backgroundColor: "#081019", borderColor: "#1E2D40" }}>
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">

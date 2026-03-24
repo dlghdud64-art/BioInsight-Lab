@@ -31,14 +31,13 @@ export function BioInsightSocialProofSection() {
   return (
     <section
       style={{
-        backgroundColor: "#0C1626",
-        borderTop: "1px solid rgba(118,164,255,0.10)",
-        borderBottom: "1px solid #1A2840",
-        boxShadow: "inset 0 1px 0 rgba(118,164,255,0.05)",
+        backgroundColor: "#0D1828",
+        borderTop: "1px solid #22344B",
+        borderBottom: "1px solid #22344B",
       }}
     >
       <div className="max-w-5xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#1A2840]">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#22344B]">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
@@ -47,7 +46,7 @@ export function BioInsightSocialProofSection() {
                 <div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold text-[#F3F7FF] leading-none">{metric.value}</span>
-                    <span className="text-[11px] font-medium text-[#B8C5DA] leading-none">{metric.label}</span>
+                    <span className="text-[11px] font-medium text-[#BAC6D9] leading-none">{metric.label}</span>
                   </div>
                   <div className="text-[10px] text-[#667389] font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
                 </div>
