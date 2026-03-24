@@ -106,7 +106,7 @@ export function SourcingResultRow({
         {/* Center: suitability signal — desktop */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
           {unitPrice ? (
-            <span className="text-sm font-bold tabular-nums text-white whitespace-nowrap">
+            <span className="text-sm font-semibold tabular-nums text-slate-200 whitespace-nowrap">
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
@@ -123,15 +123,17 @@ export function SourcingResultRow({
 
         {/* Desktop CTA */}
         <div className="shrink-0 hidden sm:flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+          {/* 1순위: 비교 추가 — primary row action */}
           <Button variant="ghost" size="sm"
-            className={`h-7 px-2 rounded text-xs font-medium ${isInCompare ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25" : "text-slate-500 hover:text-slate-300 hover:bg-el border border-transparent hover:border-bd"}`}
+            className={`h-7 px-2.5 rounded text-xs font-medium ${isInCompare ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25" : "text-slate-300 hover:text-blue-400 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"}`}
             onClick={onToggleCompare}>
             <GitCompare className="h-3 w-3 mr-1" />{isInCompare ? "비교 담김" : "비교 추가"}
           </Button>
+          {/* 2순위: 견적 담기 — secondary, 더 약하게 */}
           <Button variant="ghost" size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${isInRequest ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25" : "bg-blue-600/10 text-blue-400 hover:bg-blue-600/20"}`}
+            className={`h-7 px-2 rounded text-xs font-medium ${isInRequest ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25" : "text-slate-500 hover:text-slate-300 hover:bg-el"}`}
             onClick={onToggleRequest}>
-            <FileText className="h-3 w-3 mr-1" />{isInRequest ? "견적 담김" : "견적 담기"}
+            <FileText className="h-3 w-3 mr-1" />{isInRequest ? "견적 담김" : "견적"}
           </Button>
         </div>
 

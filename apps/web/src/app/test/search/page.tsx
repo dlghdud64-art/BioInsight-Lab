@@ -163,19 +163,27 @@ export default function SearchPage() {
                 </Button>
               </div>
             )}
-            {/* Result header strip — operating chrome */}
+            {/* Result header strip — operating command chrome */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-300">소싱 후보</span>
-                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-300">
-                  {isSearchLoading ? "검색 중..." : `${products.length}건`}
-                </Badge>
+              <div className="flex items-center gap-2 flex-wrap">
+                {/* Mode badge */}
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                  quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-400" :
+                  compareIds.length > 0 ? "bg-blue-600/15 text-blue-400" :
+                  "bg-pn text-slate-400"
+                }`}>
+                  {quoteItems.length > 0 ? "견적 준비" : compareIds.length > 0 ? "비교 준비" : "소싱"}
+                </span>
+                <span className="text-xs font-semibold text-slate-300">
+                  {isSearchLoading ? "검색 중..." : `결과 ${products.length}건`}
+                </span>
                 {compareIds.length > 0 && (
-                  <span className="text-[10px] text-blue-400 font-medium">비교 {compareIds.length}개</span>
+                  <span className="text-[10px] text-blue-400 font-medium">· 비교 {compareIds.length}</span>
                 )}
                 {quoteItems.length > 0 && (
-                  <span className="text-[10px] text-emerald-400 font-medium">견적 {quoteItems.length}개</span>
+                  <span className="text-[10px] text-emerald-400 font-medium">· 견적 {quoteItems.length}</span>
                 )}
+                <span className="text-[10px] text-slate-500 hidden md:inline">· 정렬: 관련도</span>
               </div>
               <div className="flex items-center gap-1.5">
                 {/* Desktop filter trigger */}
@@ -388,6 +396,15 @@ export default function SearchPage() {
               )}
             </div>
 
+            {/* Stage recommendation */}
+            {(compareIds.length > 0 || quoteItems.length > 0) && (
+              <div className="hidden md:flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span>다음 단계:</span>
+                {compareIds.length >= 2 && quoteItems.length === 0 && <span className="text-blue-400 font-medium">비교 후 견적 요청</span>}
+                {quoteItems.length > 0 && <span className="text-emerald-400 font-medium">견적 요청서 작성</span>}
+                {compareIds.length === 1 && quoteItems.length === 0 && <span className="text-amber-400 font-medium">비교 후보 1개 더 추가</span>}
+              </div>
+            )}
             {/* Auth hint for guests */}
             {!session?.user && (
               <span className="text-[10px] text-slate-500 hidden sm:inline-flex items-center gap-1">
