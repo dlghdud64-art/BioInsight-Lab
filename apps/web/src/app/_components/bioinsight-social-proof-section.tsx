@@ -47,7 +47,7 @@ export function BioInsightSocialProofSection() {
                 <div>
                   <div className="flex items-baseline gap-1.5">
                     <span className="text-sm font-bold text-[#F3F7FF] leading-none">{metric.value}</span>
-                    <span className="text-[11px] font-medium text-[#B3BFD3] leading-none">{metric.label}</span>
+                    <span className="text-[11px] font-medium text-[#B8C5DA] leading-none">{metric.label}</span>
                   </div>
                   <div className="text-[10px] text-[#667389] font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
                 </div>
