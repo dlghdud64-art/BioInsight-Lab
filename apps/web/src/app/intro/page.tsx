@@ -50,11 +50,11 @@ export default function IntroPage() {
                 <span className="text-blue-400">구매 운영</span>까지 한곳에서
               </h1>
               <p className="hidden md:block text-lg text-slate-300 mb-8 leading-relaxed max-w-xl break-keep">
-                반복 검색, 수기 견적, 재고 공백 — 연구실 구매 운영의 병목을 제거하고
-                검색에서 입고까지 하나의 흐름으로 연결합니다.
+                시약 검색, 비교, 요청, 발주, 입고, 재고 관리를 분절된 도구가 아닌
+                하나의 운영 흐름으로 정리합니다. 건당 30분 이상 소요되던 구매 사이클을 구조적으로 단축합니다.
               </p>
               <p className="md:hidden text-sm text-slate-300 mb-5 leading-relaxed break-keep">
-                반복 검색, 수기 견적, 재고 공백을 제거하고 구매 운영을 하나의 흐름으로 연결합니다.
+                검색·비교·견적·발주·입고·재고를 하나의 운영 흐름으로 연결하고 구매 사이클을 단축합니다.
               </p>
 
               {/* Flow chips */}
@@ -121,7 +121,7 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 2. 운영 문제 — 현재 연구실 구매 운영의 병목 ═════════════════ */}
-        <section className="py-10 md:py-16 bg-pn border-b border-bd">
+        <section className="py-10 md:py-16 border-b border-bd" style={{ backgroundColor: "#2a2c30" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">운영 병목</p>
@@ -164,7 +164,7 @@ export default function IntroPage() {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
-                      <span className="text-[10px] font-semibold text-amber-400">{item.stat}</span>
+                      <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">{item.stat}</span>
                     </div>
                   </div>
                   <p className="text-xs text-slate-300 leading-relaxed break-keep">{item.desc}</p>
@@ -242,8 +242,24 @@ export default function IntroPage() {
           <ComparisonSection />
         </div>
 
+        {/* ══ Mid CTA ═══════════════════════════════════════════════════ */}
+        <section className="py-8 md:py-12 bg-pg">
+          <div className="mx-auto max-w-6xl px-4 md:px-6 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link href="/test/search">
+              <button className="h-10 px-6 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors flex items-center gap-2">
+                시약·장비 검색 시작하기 <ArrowRight className="h-3.5 w-3.5" />
+              </button>
+            </Link>
+            <Link href="/support">
+              <button className="h-10 px-6 text-sm font-medium text-slate-300 border border-bd hover:bg-el rounded-lg transition-colors">
+                도입 상담 문의
+              </button>
+            </Link>
+          </div>
+        </section>
+
         {/* ══ 5. 역할별 변화 ══════════════════════════════════════════════ */}
-        <section className="py-10 md:py-16 bg-pn border-b border-bd">
+        <section className="py-10 md:py-16 border-b border-bd" style={{ backgroundColor: "#2e3034" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">역할별 변화</p>
@@ -267,6 +283,7 @@ export default function IntroPage() {
                     <h3 className="text-sm font-bold text-slate-100">실험 준비 시간 단축</h3>
                   </div>
                 </div>
+                <p className="text-[11px] font-semibold text-blue-400">시약 탐색 시간 70% 단축, 실험 준비에 집중</p>
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존</p>
                   <ul className="space-y-1">
@@ -300,6 +317,7 @@ export default function IntroPage() {
                     <h3 className="text-sm font-bold text-slate-100">견적 수집·비교 자동화</h3>
                   </div>
                 </div>
+                <p className="text-[11px] font-semibold text-blue-400">견적 수집 시간 80% 절감, 비교 판단 즉시 가능</p>
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존</p>
                   <ul className="space-y-1">
@@ -333,6 +351,7 @@ export default function IntroPage() {
                     <h3 className="text-sm font-bold text-slate-100">예산·권한·이력 통제</h3>
                   </div>
                 </div>
+                <p className="text-[11px] font-semibold text-blue-400">구매 이력 전건 추적, 예산 초과 사전 차단</p>
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존</p>
                   <ul className="space-y-1">
@@ -412,7 +431,7 @@ export default function IntroPage() {
 
             {/* 도입 적합성 체크 */}
             <div className="bg-pn rounded-xl border border-bd p-4 md:p-6">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 md:mb-4">도입 적합성 체크</p>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 md:mb-4">이런 조직이면 지금 필요합니다</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 {[
                   "연구팀과 구매팀이 분리된 조직 구조",
