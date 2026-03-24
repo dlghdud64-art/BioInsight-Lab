@@ -27,7 +27,7 @@ export function FinalCTASection() {
             </Button>
           </Link>
           <Link href="/support" className="w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto h-10 px-6 border-[#2A3442] text-[#BAC6D9] hover:text-[#F3F7FF] hover:border-[#2A4362] font-medium text-sm">
+            <Button variant="outline" className="w-full sm:w-auto h-10 px-6 border-[#2A3442] text-[#BAC6D9] hover:text-[#F3F7FF] hover:border-[#354459] font-medium text-sm">
               도입 문의
             </Button>
           </Link>
