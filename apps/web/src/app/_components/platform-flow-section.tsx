@@ -41,7 +41,7 @@ const OPS_VALUES = [
 export function PlatformFlowSection() {
   return (
     <section className="py-20 md:py-28" style={{ backgroundColor: "#0B1016", borderBottom: "1px solid #1E2530" }}>
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
+      <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-12">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
             Operational Value

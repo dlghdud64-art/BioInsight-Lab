@@ -42,7 +42,7 @@ const SYSTEM_PROOFS = [
 export function OpsConsolePreviewSection() {
   return (
     <section className="py-20 md:py-28" style={{ backgroundColor: "#0D121A", borderBottom: "1px solid #1E2530" }}>
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
+      <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
             Operations Console
