@@ -44,7 +44,12 @@ function SplineBg() {
     <canvas
       ref={canvasRef}
       className="absolute inset-0 w-full h-full"
-      style={{ pointerEvents: "none", opacity: loaded ? 0.45 : 0, transition: "opacity 2s ease" }}
+      style={{
+        pointerEvents: "none",
+        opacity: loaded ? 0.86 : 0,
+        filter: "brightness(1.17) contrast(1.06) saturate(1.08)",
+        transition: "opacity 2s ease",
+      }}
     />
   );
 }
@@ -69,7 +74,7 @@ function SignInContent() {
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundSize: "40px 40px",
-            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px)",
+            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.045) 1px, transparent 1px)",
             maskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
             WebkitMaskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
           }}
@@ -85,8 +90,8 @@ function SignInContent() {
           className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background: [
-              "linear-gradient(180deg, rgba(7,22,45,0.05) 0%, rgba(5,12,24,0.12) 100%)",
-              "radial-gradient(circle at 25% 20%, rgba(30,90,180,0.15) 0%, transparent 45%)",
+              "linear-gradient(180deg, rgba(7,22,45,0.04) 0%, rgba(5,12,24,0.10) 100%)",
+              "radial-gradient(circle at 25% 20%, rgba(30,90,180,0.12) 0%, transparent 45%)",
             ].join(", "),
           }}
         />
