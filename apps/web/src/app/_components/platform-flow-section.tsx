@@ -38,7 +38,7 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24 border-b border-white/[0.04]" style={{ backgroundColor: "#111318" }}>
+    <section className="py-16 md:py-24 border-b border-white/[0.04]" style={{ backgroundColor: "#141820" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         {/* Section Header */}
         <div className="mb-12">
@@ -61,7 +61,7 @@ export function PlatformFlowSection() {
               <div
                 key={item.title}
                 className="rounded-lg p-4 md:p-5 border border-white/[0.06] hover:border-white/[0.12] transition-colors"
-                style={{ backgroundColor: "#1e2026" }}
+                style={{ backgroundColor: "#1e242e" }}
               >
                 <div className="flex items-start gap-4">
                   <Icon className="h-4 w-4 text-slate-500 flex-shrink-0 mt-1" strokeWidth={1.8} />
@@ -69,7 +69,7 @@ export function PlatformFlowSection() {
                     <h3 className="text-sm font-semibold text-slate-200 mb-2">{item.title}</h3>
                     <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
                       <div className="flex-1">
-                        <p className="text-xs text-slate-500 leading-relaxed">
+                        <p className="text-xs text-[#7a8a9e] leading-relaxed">
                           <span className="font-medium">기존</span> {item.before}
                         </p>
                       </div>
