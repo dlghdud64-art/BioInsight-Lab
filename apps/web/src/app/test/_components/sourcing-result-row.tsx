@@ -21,29 +21,48 @@ interface SourcingResultRowProps {
   compareSessionCount?: number;
 }
 
+/** 납기 표기 — naked number 금지 */
+function formatLeadTime(raw: any): { label: string; color: string } {
+  if (!raw) return { label: "납기 미확인", color: "text-slate-500 bg-el" };
+  const num = parseInt(raw);
+  if (isNaN(num)) return { label: `납기 ${raw}`, color: "text-slate-400 bg-el" };
+  if (num <= 3) return { label: `리드타임 ${num}영업일 · 빠름`, color: "text-emerald-400 bg-emerald-400/10" };
+  if (num <= 7) return { label: `리드타임 ${num}영업일 · 보통`, color: "text-slate-300 bg-el" };
+  return { label: `리드타임 ${num}영업일 · 지연 가능`, color: "text-amber-400 bg-amber-400/10" };
+}
+
 /** 운영 신호 추출 */
 function getOpSignals(product: any, vendor: any) {
-  const signals: { label: string; color: string; icon?: any }[] = [];
-  // 납기
-  const leadTime = vendor?.leadTime;
-  if (leadTime && parseInt(leadTime) <= 3) {
-    signals.push({ label: `납기 ${leadTime}일`, color: "text-emerald-400 bg-emerald-400/10" });
-  } else if (leadTime) {
-    signals.push({ label: `납기 ${leadTime}`, color: "text-amber-400 bg-amber-400/10" });
-  }
-  // Grade
-  if (product.grade) {
-    signals.push({ label: product.grade, color: "text-slate-300 bg-el" });
-  }
-  // 규격
-  if (product.specification) {
-    signals.push({ label: product.specification.substring(0, 20), color: "text-slate-400 bg-el" });
-  }
-  // 보관
-  if (product.storageCondition) {
-    signals.push({ label: product.storageCondition, color: "text-slate-400 bg-el" });
-  }
+  const signals: { label: string; color: string }[] = [];
+  signals.push(formatLeadTime(vendor?.leadTime));
+  if (product.grade) signals.push({ label: product.grade, color: "text-slate-300 bg-el" });
+  if (product.specification) signals.push({ label: product.specification.substring(0, 20), color: "text-slate-400 bg-el" });
   return signals.slice(0, 3);
+}
+
+/** Decision layer — 판단 요약 1줄 */
+function getDecisionSummary(product: any, vendor: any, unitPrice: number | null): string {
+  const parts: string[] = [];
+  // 적합성
+  if (product.grade) parts.push("현재 조건 적합");
+  // 납기
+  const lt = vendor?.leadTime ? parseInt(vendor.leadTime) : null;
+  if (lt && lt <= 3) parts.push(`리드타임 ${lt}영업일`);
+  else if (lt && lt <= 7) parts.push(`리드타임 ${lt}영업일`);
+  else if (lt && lt > 7) parts.push(`납기 지연 가능`);
+  else parts.push("납기 확인 필요");
+  // 가격
+  if (unitPrice && unitPrice > 0) {
+    if (unitPrice < 50000) parts.push("가격 우수");
+    else if (unitPrice < 200000) parts.push("가격 보통");
+    else parts.push("가격 높음");
+  } else {
+    parts.push("견적 요청 권장");
+  }
+  // 추천
+  if (!unitPrice || (lt && lt > 7)) parts.push("비교 후 요청 권장");
+  else parts.push("비교 권장");
+  return parts.slice(0, 3).join(" · ");
 }
 
 export function SourcingResultRow({
@@ -56,6 +75,7 @@ export function SourcingResultRow({
   const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
   const vendorName = vendor?.vendor?.name;
   const opSignals = getOpSignals(product, vendor);
+  const decisionSummary = getDecisionSummary(product, vendor, unitPrice);
 
   return (
     <div
@@ -101,9 +121,11 @@ export function SourcingResultRow({
               ))}
             </div>
           )}
+          {/* Decision layer — 1줄 판단 요약 */}
+          <p className="text-[10px] text-slate-500 mt-1 hidden sm:block leading-tight">{decisionSummary}</p>
         </div>
 
-        {/* Center: suitability signal — desktop */}
+        {/* Center: price + lead time — desktop */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
           {unitPrice ? (
             <span className="text-sm font-semibold tabular-nums text-slate-200 whitespace-nowrap">
@@ -114,11 +136,9 @@ export function SourcingResultRow({
               <AlertTriangle className="h-3 w-3" />견적 필요
             </span>
           )}
-          {vendor?.leadTime && (
-            <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
-              <Clock className="h-2.5 w-2.5" />납기 {vendor.leadTime}
-            </span>
-          )}
+          <span className="text-[10px] text-slate-500 flex items-center gap-0.5">
+            <Clock className="h-2.5 w-2.5" />{formatLeadTime(vendor?.leadTime).label.split(" · ")[0]}
+          </span>
         </div>
 
         {/* Desktop CTA */}
