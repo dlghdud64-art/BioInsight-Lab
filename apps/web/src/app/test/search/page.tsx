@@ -111,6 +111,20 @@ export default function SearchPage() {
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
+  // Restore pending search after login
+  useEffect(() => {
+    if (session?.user && !hasSearched) {
+      try {
+        const pending = sessionStorage.getItem("labaxis-pending-search");
+        if (pending) {
+          sessionStorage.removeItem("labaxis-pending-search");
+          setSearchQuery(pending);
+          setTimeout(() => runSearch(), 100);
+        }
+      } catch {}
+    }
+  }, [session?.user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Compare 2+ 자동 work window hint
   const compareReady = compareIds.length >= 2;
   const requestReady = quoteItems.length > 0;
@@ -124,7 +138,7 @@ export default function SearchPage() {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
-      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} />
+      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} />
 
       {/* ═══ Mobile filter sheet ═══ */}
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
@@ -253,20 +267,29 @@ export default function SearchPage() {
           </div>
         </div>
       ) : (
-        /* Pre-search — compact landing, not hero */
+        /* Pre-search — product onboarding surface */
         <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-md px-6">
-            <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-4">
-              <Search className="h-6 w-6 text-slate-500" />
+          <div className="text-center max-w-lg px-6">
+            <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-5">
+              <Search className="h-7 w-7 text-blue-400" />
             </div>
-            <h2 className="text-base font-semibold text-slate-200 mb-1">소싱 워크벤치</h2>
-            <p className="text-xs text-slate-400 mb-4">시약명, CAS No., 제조사, 카탈로그 번호로 검색</p>
+            <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
+            <p className="text-sm text-slate-300 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
+            <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
             <div className="flex items-center gap-1.5 flex-wrap justify-center mb-4">
               {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
                 <button
                   key={term}
                   type="button"
-                  onClick={() => { setSearchQuery(term); runSearch(); }}
+                  onClick={() => {
+                    setSearchQuery(term);
+                    if (!session?.user) {
+                      try { sessionStorage.setItem("labaxis-pending-search", term); } catch {}
+                      setIsLoginPromptOpen(true);
+                      return;
+                    }
+                    runSearch();
+                  }}
                   className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
                 >
                   {term}
@@ -459,10 +482,10 @@ export default function SearchPage() {
       <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>로그인 후 견적 요청을 이어가세요</DialogTitle>
+            <DialogTitle>검색을 계속하려면 로그인하세요</DialogTitle>
             <DialogDescription>
-              견적 요청·저장 기능은 로그인 후 사용할 수 있습니다.
-              현재 검색 결과와 선택 상태는 로그인 후 그대로 이어집니다.
+              검색 결과 저장, 비교 목록 유지, 견적 요청 생성과 워크스페이스 협업은 계정이 필요합니다.
+              로그인 후 입력한 검색어로 바로 이어서 검색할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
@@ -479,7 +502,7 @@ export default function SearchPage() {
 }
 
 /** ═══ A. Search Utility Bar — compact, not hero ═══ */
-function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCount: number; onOpenFilter: () => void }) {
+function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
@@ -487,16 +510,21 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCou
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (localQuery.trim()) {
-      setSearchQuery(localQuery);
-      // save recent
-      try {
-        const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
-        const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
-        localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
-      } catch {}
-      runSearch();
+    if (!localQuery.trim()) return;
+    setSearchQuery(localQuery);
+    if (!isLoggedIn) {
+      // Save query for post-login restore, then show auth gate
+      try { sessionStorage.setItem("labaxis-pending-search", localQuery.trim()); } catch {}
+      onAuthRequired();
+      return;
     }
+    // save recent
+    try {
+      const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
+      const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
+      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+    } catch {}
+    runSearch();
   };
 
   return (
