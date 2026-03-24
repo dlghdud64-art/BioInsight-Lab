@@ -1,3 +1,5 @@
+"use client";
+
 import {
   ListChecks, LayoutDashboard, BarChart3, Wrench,
   UserCheck, AlertTriangle, ArrowRightLeft, Timer,

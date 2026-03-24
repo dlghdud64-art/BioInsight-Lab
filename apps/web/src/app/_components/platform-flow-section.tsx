@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Search, GitCompare, FileText, ShieldCheck, Package,
   ArrowRight,
