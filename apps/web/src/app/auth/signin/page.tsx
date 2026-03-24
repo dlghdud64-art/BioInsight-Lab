@@ -142,22 +142,24 @@ function SignInContent() {
       </div>
 
       {/* ══════ RIGHT 52%: Clean Light Auth Surface ══════ */}
-      <div className="w-full lg:flex-1 flex flex-col min-h-[100dvh]" style={{ backgroundColor: "#F5F7FB" }}>
+      <div className="w-full lg:flex-1 relative flex flex-col min-h-[100dvh]" style={{ backgroundColor: "#F3F5F9" }}>
 
         {/* Mobile: dark brand header */}
         <div className="lg:hidden flex justify-center pt-8 pb-4" style={{ backgroundColor: "#07162D" }}>
           <Link href="/" className="text-xl font-bold tracking-tight text-white">LabAxis</Link>
         </div>
 
-        {/* Auth card — pulled left, slightly above center */}
-        <div className="flex-1 flex items-start justify-start p-6 sm:p-10" style={{ paddingTop: "clamp(72px, 12vh, 128px)", paddingLeft: "clamp(32px, 5vw, 72px)" }}>
-          <div className="w-full" style={{ maxWidth: 420 }}>
+        {/* Auth Stack — centered, slightly above middle */}
+        <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16">
+          <div className="w-full max-w-[440px] -translate-y-6">
 
-            <div className="bg-white rounded-[20px] border shadow-[0_6px_24px_rgba(0,0,0,0.06)]" style={{ borderColor: "rgba(12,24,44,0.08)", padding: 32 }}>
-              {/* Back */}
-              <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-7">
-                <ArrowLeft className="w-3.5 h-3.5 mr-1" />홈으로 돌아가기
-              </Link>
+            {/* Back link — inside stack, above card */}
+            <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-5">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1" />홈으로 돌아가기
+            </Link>
+
+            {/* Auth Card */}
+            <div className="bg-white rounded-[24px] border border-slate-200/70 p-8 shadow-[0_10px_30px_rgba(15,23,42,0.06)]">
 
               {/* Title */}
               <div className="space-y-2 mb-7">
@@ -203,16 +205,17 @@ function SignInContent() {
                 </p>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Footer */}
-        <div className="p-6 sm:p-8 pt-0 space-y-2">
-          <p className="text-center text-sm text-slate-500">
-            계정이 없으신가요?{" "}
-            <Link href="/test/search" className="font-semibold text-blue-600 hover:text-blue-500 underline underline-offset-2">무료로 시작하기</Link>
-          </p>
-          <p className="text-center text-[11px] text-slate-400">데이터 무결성과 ISMS 가이드를 준수합니다.</p>
+            {/* Signup Block — inside stack, below card */}
+            <div className="mt-6 text-center space-y-1.5">
+              <p className="text-sm text-slate-500">
+                계정이 없으신가요?{" "}
+                <Link href="/test/search" className="font-semibold text-blue-600 hover:text-blue-500 underline underline-offset-2">무료로 시작하기</Link>
+              </p>
+              <p className="text-[11px] text-slate-400">데이터 무결성과 ISMS 가이드를 준수합니다.</p>
+            </div>
+
+          </div>
         </div>
       </div>
     </div>
