@@ -127,8 +127,9 @@ function PlexusCanvas() {
 }
 
 export function BioInsightHeroSection() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isLoggedIn = !!session?.user;
+  const isAuthLoading = status === "loading";
 
   return (
     <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
@@ -148,11 +149,13 @@ export function BioInsightHeroSection() {
           <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
         </Link>
 
-        {/* Desktop nav links — session-aware */}
+        {/* Desktop nav links — session-aware, loading-safe */}
         <div className="hidden md:flex items-center gap-6">
           <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
-          {isLoggedIn ? (
+          {isAuthLoading ? (
+            <div className="w-24 h-8 rounded-md bg-white/5 animate-pulse" />
+          ) : isLoggedIn ? (
             <>
               <Link href="/test/search" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">검색</Link>
               <Link href="/dashboard">
@@ -173,7 +176,9 @@ export function BioInsightHeroSection() {
 
         {/* Mobile: hamburger + CTA */}
         <div className="flex md:hidden items-center gap-3">
-          {isLoggedIn ? (
+          {isAuthLoading ? (
+            <div className="w-16 h-7 rounded-md bg-white/5 animate-pulse" />
+          ) : isLoggedIn ? (
             <Link href="/dashboard">
               <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex items-center gap-1">
                 <LayoutDashboard className="h-3 w-3" />대시보드

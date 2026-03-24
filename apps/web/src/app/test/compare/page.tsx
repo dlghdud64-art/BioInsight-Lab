@@ -425,8 +425,10 @@ export default function TestComparePage() {
           <div className="flex items-center gap-1.5 md:gap-2">
             <Link href="/" className="flex items-center gap-1.5 shrink-0">
               <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
-              <span className="text-xs md:text-sm font-semibold text-slate-400">비교 판단</span>
+              <span className="text-xs md:text-sm font-semibold text-slate-400">비교</span>
             </Link>
+            <div className="w-px h-5 bg-bd hidden sm:block" />
+            <span className="text-xs text-slate-400 hidden sm:block">비교 판단 워크벤치</span>
           </div>
           <Link
             href="/test/search"
@@ -486,7 +488,7 @@ export default function TestComparePage() {
 
         {/* Left: scrollable main area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-4 md:px-6 py-4 space-y-5">
+          <div className="max-w-[1240px] mx-auto px-4 md:px-6 py-4 space-y-5">
 
             {/* ── 1-item notice ────────────────────────────────────────────── */}
             {products.length === 1 && (
@@ -1040,7 +1042,7 @@ export default function TestComparePage() {
         className="shrink-0 border-t border-slate-700 px-4 md:px-6 py-2.5"
         style={{ backgroundColor: '#434548' }}
       >
-        <div className="flex items-center justify-between max-w-5xl mx-auto flex-wrap gap-2">
+        <div className="flex items-center justify-between max-w-[1240px] mx-auto flex-wrap gap-2">
           {/* Left: context info */}
           <div className="flex items-center gap-3 text-xs text-slate-400">
             <span className="font-medium text-slate-300">
