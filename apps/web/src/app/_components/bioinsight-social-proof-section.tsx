@@ -29,20 +29,27 @@ const metrics = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section className="border-b border-white/[0.06]" style={{ backgroundColor: "#171c25" }}>
+    <section
+      style={{
+        backgroundColor: "#0C1523",
+        borderTop: "1px solid #1A2840",
+        borderBottom: "1px solid #1A2840",
+        boxShadow: "inset 0 1px 0 rgba(127,178,255,0.06)",
+      }}
+    >
       <div className="max-w-5xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-800/50">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#1A2840]">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (
               <div key={metric.label} className="flex items-center justify-center gap-3 py-5 md:py-5 md:px-6">
-                <Icon className="h-4 w-4 text-slate-500 flex-shrink-0" strokeWidth={1.8} />
+                <Icon className="h-4 w-4 text-[#7FB2FF] flex-shrink-0" strokeWidth={1.8} />
                 <div>
                   <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-bold text-slate-200 leading-none">{metric.value}</span>
-                    <span className="text-[11px] font-medium text-slate-400 leading-none">{metric.label}</span>
+                    <span className="text-sm font-bold text-[#F3F7FF] leading-none">{metric.value}</span>
+                    <span className="text-[11px] font-medium text-[#B3BFD3] leading-none">{metric.label}</span>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
+                  <div className="text-[10px] text-[#667389] font-medium mt-0.5 whitespace-nowrap">{metric.sub}</div>
                 </div>
               </div>
             );

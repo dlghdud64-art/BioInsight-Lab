@@ -39,41 +39,44 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#141820" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#0B1422", borderBottom: "1px solid #1A2840" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
-        {/* Section Header */}
         <div className="mb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-2">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-2">
             Operations Console
           </p>
-          <h2 className="text-xl md:text-2xl font-bold text-slate-100 tracking-tight mb-2">
+          <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
             4개 운영 계층으로 구매 운영을 통제합니다
           </h2>
-          <p className="text-xs md:text-sm text-[#94a3b8] max-w-lg">
+          <p className="text-xs md:text-sm text-[#B3BFD3] max-w-lg">
             작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 계층이 운영 단계에 맞는 통제를 제공합니다.
           </p>
         </div>
 
-        {/* 4 Operating Layers */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
           {CONSOLE_LAYERS.map((layer) => {
             const Icon = layer.icon;
             return (
-              <div key={layer.title} className="border border-white/[0.06] rounded-lg px-5 py-4 hover:border-white/[0.12] transition-colors" style={{ backgroundColor: "#1e242e" }}>
+              <div
+                key={layer.title}
+                className="rounded-lg px-5 py-4 transition-colors"
+                style={{ backgroundColor: "#111A28", border: "1px solid #213149" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#152133"; e.currentTarget.style.borderColor = "#2A4362"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#111A28"; e.currentTarget.style.borderColor = "#213149"; }}
+              >
                 <div className="flex items-center gap-2 mb-2">
-                  <Icon className="h-4 w-4 text-slate-500" strokeWidth={1.8} />
-                  <span className="text-sm font-bold text-slate-200">{layer.title}</span>
+                  <Icon className="h-4 w-4 text-[#7FB2FF]" strokeWidth={1.8} />
+                  <span className="text-sm font-bold text-[#F3F7FF]">{layer.title}</span>
                 </div>
-                <p className="text-[11px] text-slate-400 leading-relaxed mb-1.5">{layer.purpose}</p>
-                <p className="text-[10px] text-slate-500 font-medium">{layer.items}</p>
+                <p className="text-[11px] text-[#B3BFD3] leading-relaxed mb-1.5">{layer.purpose}</p>
+                <p className="text-[10px] text-[#667389] font-medium">{layer.items}</p>
               </div>
             );
           })}
         </div>
 
-        {/* System Proof Panel */}
-        <div className="border border-white/[0.06] rounded-lg px-5 py-4" style={{ backgroundColor: "#1a2028" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-3">
+        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0E1825", border: "1px solid #1A2840" }}>
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-3">
             System Evidence
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -81,8 +84,8 @@ export function OpsConsolePreviewSection() {
               const Icon = proof.icon;
               return (
                 <div key={proof.text} className="flex items-center gap-2.5 py-1">
-                  <Icon className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" strokeWidth={1.8} />
-                  <span className="text-xs text-slate-400">{proof.text}</span>
+                  <Icon className="h-3.5 w-3.5 text-[#5A94FF] flex-shrink-0" strokeWidth={1.8} />
+                  <span className="text-xs text-[#B3BFD3]">{proof.text}</span>
                 </div>
               );
             })}
