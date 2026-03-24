@@ -6,7 +6,7 @@ import { ArrowRight } from "lucide-react";
 
 export function FinalCTASection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#0E1319", borderTop: "1px solid #2A3442" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#131920", borderTop: "1px solid #2A3442" }}>
       <div className="mx-auto max-w-2xl px-4 md:px-6 text-center">
         <div className="space-y-3 mb-8">
           <h2 className="text-lg md:text-2xl font-bold text-[#F4F7FF] tracking-tight leading-tight">
