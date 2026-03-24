@@ -65,7 +65,7 @@ function SignInContent() {
       <div
         className="hidden lg:flex relative overflow-hidden flex-col"
         style={{
-          width: "60%",
+          width: "64%",
           background: "linear-gradient(165deg, #0E2A52 0%, #091D3A 50%, #061224 100%)",
         }}
       >
@@ -84,7 +84,7 @@ function SignInContent() {
         <div
           className="absolute inset-0 z-0 origin-center"
           style={{
-            transform: "translateX(8%) translateY(2%) scale(0.92)",
+            transform: "translateX(14%) translateY(2%) scale(0.90)",
             maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 18%, black 40%, black 100%)",
             WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 18%, black 40%, black 100%)",
           }}
@@ -110,7 +110,6 @@ function SignInContent() {
           <div>
             <Link href="/" className="inline-flex items-center gap-2">
               <span className="text-[22px] font-bold tracking-tight text-white">LabAxis</span>
-              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/70 uppercase mt-0.5">OS</span>
             </Link>
           </div>
 
@@ -163,7 +162,7 @@ function SignInContent() {
 
         {/* Auth Stack — centered, slightly above middle */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16">
-          <div className="w-full max-w-[384px] -translate-y-4">
+          <div className="w-full max-w-[376px] -translate-y-4">
 
             {/* Back link — inside stack, above card */}
             <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-5">
