@@ -163,16 +163,19 @@ export default function SearchPage() {
                 </Button>
               </div>
             )}
-            {/* Result header strip */}
+            {/* Result header strip — operating chrome */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">소싱 후보</span>
-                {products.length > 0 && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-300">
-                    {products.length}건
-                  </Badge>
+                <span className="text-xs font-semibold text-slate-300">소싱 후보</span>
+                <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-300">
+                  {isSearchLoading ? "검색 중..." : `${products.length}건`}
+                </Badge>
+                {compareIds.length > 0 && (
+                  <span className="text-[10px] text-blue-400 font-medium">비교 {compareIds.length}개</span>
                 )}
-                {isSearchLoading && <Loader2 className="h-3 w-3 animate-spin text-slate-500" />}
+                {quoteItems.length > 0 && (
+                  <span className="text-[10px] text-emerald-400 font-medium">견적 {quoteItems.length}개</span>
+                )}
               </div>
               <div className="flex items-center gap-1.5">
                 {/* Desktop filter trigger */}
@@ -333,7 +336,7 @@ export default function SearchPage() {
                   {compareReady ? (
                     <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
                       <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                      비교 열기
+                      {compareIds.length}개 비교 시작
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-400">
@@ -374,7 +377,7 @@ export default function SearchPage() {
                   <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
                   <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
                     <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    견적 검토
+                    견적 요청서 만들기
                   </Button>
                   <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
                     <Trash2 className="h-3.5 w-3.5" />
