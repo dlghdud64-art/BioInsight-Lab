@@ -98,12 +98,12 @@ function PlexusCanvas() {
 
 export function BioInsightHeroSection() {
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-slate-700/50" style={{ backgroundColor: "#0f172a" }}>
+    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
 
       {/* Background */}
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
-        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at center, transparent 0%, #0f172a 90%)" }} />
+        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.20) 0%, rgba(78,138,255,0.10) 24%, rgba(78,138,255,0.00) 58%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
         <div className="absolute inset-0 z-0 pointer-events-auto opacity-40">
           <PlexusCanvas />
         </div>
@@ -118,7 +118,7 @@ export function BioInsightHeroSection() {
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">요금 & 도입</Link>
           <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">로그인</Link>
           <Link href="/test/search">
-            <Button variant="outline" className="text-slate-300 hover:text-white border-slate-600 hover:border-slate-400 text-sm font-medium px-5 py-2.5 rounded-md bg-transparent">무료로 시작하기</Button>
+            <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
           </Link>
         </div>
       </nav>
@@ -140,7 +140,7 @@ export function BioInsightHeroSection() {
             </Button>
           </Link>
           <Link href="/support">
-            <Button variant="outline" className="h-12 px-8 bg-[#1e293b] hover:bg-[#334155] text-white border-slate-500/80 font-bold text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
+            <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
           </Link>
         </div>
 
@@ -153,7 +153,7 @@ export function BioInsightHeroSection() {
               return (
                 <div key={step.label} className="flex items-center">
                   <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
-                    <div className="w-14 h-14 rounded-xl bg-[#1e293b] border border-slate-500/50 flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-slate-300 transition-colors">
+                    <div className="w-14 h-14 rounded-xl bg-[#0E1B30] border border-[#1E3455] flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-slate-300 transition-colors">
                       <Icon className="h-6 w-6 text-white drop-shadow-lg" strokeWidth={1.8} />
                     </div>
                     <span className="text-sm font-bold text-white drop-shadow-md">{step.label}</span>
@@ -168,7 +168,7 @@ export function BioInsightHeroSection() {
             {PIPELINE_STEPS.map((step) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md bg-[#1e293b] border border-slate-500/50">
+                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
                   <Icon className="h-4 w-4 text-white" strokeWidth={1.8} />
                   <span className="text-[11px] font-semibold text-slate-200">{step.label}</span>
                 </div>

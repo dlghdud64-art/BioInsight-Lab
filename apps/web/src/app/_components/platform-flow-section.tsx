@@ -38,7 +38,7 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-16 md:py-24" style={{ backgroundColor: "#09111D", borderBottom: "1px solid #1A2840" }}>
+    <section className="py-16 md:py-24" style={{ backgroundColor: "#0A1321", borderBottom: "1px solid #1A2840" }}>
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="mb-12">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#667389] mb-2">
@@ -47,7 +47,7 @@ export function PlatformFlowSection() {
           <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
             각 단계에서 무엇이 달라지는가
           </h2>
-          <p className="text-xs md:text-sm text-[#B3BFD3] max-w-lg">
+          <p className="text-xs md:text-sm text-[#B8C5DA] max-w-lg">
             기존 방식의 병목을 LabAxis 운영 파이프라인이 어떻게 해소하는지 보여드립니다.
           </p>
         </div>
@@ -59,9 +59,9 @@ export function PlatformFlowSection() {
               <div
                 key={item.title}
                 className="rounded-lg p-4 md:p-5 transition-colors"
-                style={{ backgroundColor: "#111A28", border: "1px solid #213149" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#152133"; e.currentTarget.style.borderColor = "#2A4362"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#111A28"; e.currentTarget.style.borderColor = "#213149"; }}
+                style={{ backgroundColor: "#131E2D", border: "1px solid #22344D" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172436"; e.currentTarget.style.borderColor = "#2D496A"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131E2D"; e.currentTarget.style.borderColor = "#22344D"; }}
               >
                 <div className="flex items-start gap-4">
                   <Icon className="h-4 w-4 text-[#7FB2FF] flex-shrink-0 mt-1" strokeWidth={1.8} />
@@ -73,9 +73,9 @@ export function PlatformFlowSection() {
                           <span className="font-medium">기존</span> {item.before}
                         </p>
                       </div>
-                      <ArrowRight className="hidden md:block h-3 w-3 text-[#213149] flex-shrink-0" />
+                      <ArrowRight className="hidden md:block h-3 w-3 text-[#22344D] flex-shrink-0" />
                       <div className="flex-1">
-                        <p className="text-xs text-[#B3BFD3] leading-relaxed">
+                        <p className="text-xs text-[#B8C5DA] leading-relaxed">
                           <span className="text-[#5A94FF] font-medium">LabAxis</span> {item.after}
                         </p>
                       </div>

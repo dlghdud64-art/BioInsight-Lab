@@ -31,10 +31,10 @@ export function BioInsightSocialProofSection() {
   return (
     <section
       style={{
-        backgroundColor: "#0C1523",
-        borderTop: "1px solid #1A2840",
+        backgroundColor: "#0C1626",
+        borderTop: "1px solid rgba(118,164,255,0.10)",
         borderBottom: "1px solid #1A2840",
-        boxShadow: "inset 0 1px 0 rgba(127,178,255,0.06)",
+        boxShadow: "inset 0 1px 0 rgba(118,164,255,0.05)",
       }}
     >
       <div className="max-w-5xl mx-auto px-4">
