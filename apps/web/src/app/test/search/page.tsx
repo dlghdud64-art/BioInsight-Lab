@@ -405,11 +405,16 @@ export default function SearchPage() {
                 {compareIds.length === 1 && quoteItems.length === 0 && <span className="text-amber-400 font-medium">비교 후보 1개 더 추가</span>}
               </div>
             )}
-            {/* Auth hint for guests */}
+            {/* Auth hint for guests — 강화 */}
             {!session?.user && (
-              <span className="text-[10px] text-slate-500 hidden sm:inline-flex items-center gap-1">
-                로그인 후 요청 작성 가능
-              </span>
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-[10px] text-slate-400 bg-pn border border-bd px-2 py-0.5 rounded">
+                  로그인 후 비교 목록 저장 및 견적 요청서 생성 가능
+                </span>
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400 hover:text-blue-300" onClick={() => setIsLoginPromptOpen(true)}>
+                  로그인
+                </Button>
+              </div>
             )}
 
             {/* Spacer + clear all */}

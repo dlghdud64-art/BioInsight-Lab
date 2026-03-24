@@ -8,6 +8,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ProductDetailSummary, toDetailData } from "./product-detail-summary";
 
 interface SourcingContextRailProps {
@@ -45,6 +46,8 @@ export function SourcingContextRail({
   requestCount = 0,
   searchQuery,
 }: SourcingContextRailProps) {
+  const { data: session } = useSession();
+  const isGuest = !session?.user;
   const detailData = toDetailData(product);
 
   return (
@@ -77,6 +80,13 @@ export function SourcingContextRail({
           variant="full"
           showDetailLink={true}
         />
+
+        {/* 비로그인 안내 */}
+        {isGuest && (
+          <div className="px-4 py-2 bg-blue-600/5 border-b border-blue-600/10">
+            <p className="text-[10px] text-blue-300">비교·견적 요청은 로그인 후 진행됩니다.</p>
+          </div>
+        )}
 
         {/* 다음 단계 제안 — inventory panel의 recommended actions 패턴 */}
         <div className="px-4 py-3 border-b border-bd/50">
