@@ -65,7 +65,7 @@ function SignInContent() {
       <div
         className="hidden lg:flex relative overflow-hidden flex-col"
         style={{
-          width: "56%",
+          width: "58%",
           background: "linear-gradient(165deg, #0E2A52 0%, #091D3A 50%, #061224 100%)",
         }}
       >
@@ -166,7 +166,7 @@ function SignInContent() {
 
         {/* Auth Stack — centered, slightly above middle */}
         <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16">
-          <div className="w-full max-w-[396px] -translate-y-6">
+          <div className="w-full max-w-[388px] -translate-y-4">
 
             {/* Back link — inside stack, above card */}
             <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-5">
