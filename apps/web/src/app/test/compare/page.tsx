@@ -1146,9 +1146,12 @@ export default function TestComparePage() {
             <div className="shrink-0 border-b border-bd" style={{ backgroundColor: '#434548' }}>
               <div className="flex items-center justify-between px-4 md:px-6 py-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold text-slate-200">LabAxis</span>
-                  <div className="w-px h-5 bg-bd" />
-                  <span className="text-xs font-medium text-slate-400">선택안 검토 및 전달 준비</span>
+                  <Link href="/" className="flex items-center gap-1.5 shrink-0">
+                    <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+                    <span className="text-xs md:text-sm font-semibold text-slate-400">검토</span>
+                  </Link>
+                  <div className="w-px h-5 bg-bd hidden sm:block" />
+                  <span className="text-xs text-slate-400 hidden sm:block">선택안 검토 및 전달 준비</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-400" onClick={() => setReviewMode(false)}>
