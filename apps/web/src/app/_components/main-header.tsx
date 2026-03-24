@@ -204,8 +204,14 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   </Link>
                 </>
               ) : (
-                /* ── 비로그인: [요금&도입] [로그인] [시작하기] ── */
+                /* ── 비로그인: [서비스소개] [요금&도입] [로그인] [시작하기] ── */
                 <>
+                  <Link
+                    href="/intro"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
+                  >
+                    서비스 소개
+                  </Link>
                   <Link
                     href="/pricing"
                     className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
