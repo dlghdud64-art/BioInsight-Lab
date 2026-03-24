@@ -135,8 +135,8 @@ export function WorkQueueInbox() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6">
-        <p className="text-sm text-red-700">작업함을 불러오는 데 실패했습니다.</p>
+      <div className="rounded-xl border border-red-900/30 bg-red-950/20 p-4">
+        <p className="text-xs text-red-400">작업함 일부를 불러오지 못했습니다. 기본 대시보드는 계속 사용할 수 있습니다.</p>
       </div>
     );
   }
