@@ -240,7 +240,7 @@ export default function SearchPage() {
                     isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
                     isSelected={railProduct?.id === product.id}
                     compareSessionCount={compareStatuses[product.id]?.activeCount}
-                    onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
+                    onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
                     onToggleRequest={() => handleProtectedAction(() => {
                       const existing = quoteItems.find((q: any) => q.productId === product.id);
                       if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
@@ -265,14 +265,14 @@ export default function SearchPage() {
                 product={railProduct}
                 isInCompare={compareIds.includes(railProduct.id)}
                 isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
-                onToggleCompare={() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand })}
+                onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
                 onToggleRequest={() => handleProtectedAction(() => {
                   const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
                   if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(railProduct); }
                 })}
                 onClose={() => setRailProduct(null)}
-                onOpenCompareWindow={() => setWorkWindowMode("compare")}
-                onOpenRequestWindow={() => setWorkWindowMode("request")}
+                onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
+                onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
                 compareCount={compareIds.length}
                 requestCount={quoteItems.length}
                 searchQuery={searchQuery}
@@ -342,7 +342,7 @@ export default function SearchPage() {
               {compareIds.length > 0 ? (
                 <>
                   {compareReady ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
+                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("compare"))}>
                       <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                       {compareIds.length}개 비교 시작
                     </Button>
@@ -383,7 +383,7 @@ export default function SearchPage() {
                     </span>
                   )}
                   <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
+                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request"))}>
                     <FileText className="h-3.5 w-3.5 mr-1.5" />
                     견적 요청서 만들기
                   </Button>
