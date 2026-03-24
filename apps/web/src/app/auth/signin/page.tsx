@@ -80,8 +80,18 @@ function SignInContent() {
           }}
         />
 
-        {/* 3D Scene — offset to lower-right, behind copy */}
-        <div className="absolute inset-0 z-0">
+        {/* 3D Scene — pushed right+down, left copy zone protected */}
+        <div
+          className="absolute z-0"
+          style={{
+            top: "6%",
+            left: "12%",
+            width: "96%",
+            height: "96%",
+            maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 20%, black 42%, black 100%)",
+            WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.15) 20%, black 42%, black 100%)",
+          }}
+        >
           <SplineBg />
         </div>
 
@@ -108,7 +118,7 @@ function SignInContent() {
           </div>
 
           {/* Headline block — max-width 420px */}
-          <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 420 }}>
+          <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 380 }}>
             <div className="space-y-4" style={{ marginBottom: 22 }}>
               <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/80 uppercase">
                 Research Procurement Operating System
