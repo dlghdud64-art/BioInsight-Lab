@@ -43,8 +43,8 @@ function SplineBg() {
   return (
     <canvas
       ref={canvasRef}
-      className={`absolute w-[92%] h-[88%] right-[-8%] bottom-[-6%] transition-opacity duration-[2500ms] ${loaded ? "opacity-[0.38]" : "opacity-0"}`}
-      style={{ pointerEvents: "none" }}
+      className="absolute inset-0 w-full h-full"
+      style={{ pointerEvents: "none", opacity: loaded ? 0.45 : 0, transition: "opacity 2s ease" }}
     />
   );
 }
@@ -61,7 +61,7 @@ function SignInContent() {
         className="hidden lg:flex relative overflow-hidden flex-col"
         style={{
           width: "48%",
-          background: "linear-gradient(165deg, #0A2142 0%, #07162D 50%, #050C18 100%)",
+          background: "linear-gradient(165deg, #0E2A52 0%, #091D3A 50%, #061224 100%)",
         }}
       >
         {/* Grid texture — fallback when Spline not loaded */}
@@ -85,8 +85,8 @@ function SignInContent() {
           className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background: [
-              "linear-gradient(180deg, rgba(4,12,24,0.10) 0%, rgba(4,12,24,0.20) 100%)",
-              "radial-gradient(circle at 22% 18%, rgba(26,88,180,0.18) 0%, rgba(26,88,180,0.00) 42%)",
+              "linear-gradient(180deg, rgba(7,22,45,0.05) 0%, rgba(5,12,24,0.12) 100%)",
+              "radial-gradient(circle at 25% 20%, rgba(30,90,180,0.15) 0%, transparent 45%)",
             ].join(", "),
           }}
         />
