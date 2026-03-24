@@ -148,21 +148,10 @@ export default function SearchPage() {
       </Sheet>
 
       {/* ═══ B + C. Workbench Body ═══ */}
-      {hasSearched ? (
+      {hasSearched && !!session?.user ? (
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
-            {/* Preview bar — 비로그인 안내 */}
-            {!session?.user && (
-              <div className="flex items-center justify-between px-4 py-2 bg-blue-600/8 border-b border-blue-600/15">
-                <p className="text-[11px] text-blue-300">
-                  <span className="font-medium">미리보기</span> · 결과 저장과 비교·견적 요청은 로그인 후 가능합니다
-                </p>
-                <Button size="sm" variant="ghost" className="h-6 px-2.5 text-[10px] text-blue-400 hover:text-blue-300" onClick={() => setIsLoginPromptOpen(true)}>
-                  로그인
-                </Button>
-              </div>
-            )}
             {/* Result header strip — operating command chrome */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
               <div className="flex items-center gap-2 flex-wrap">
@@ -201,7 +190,7 @@ export default function SearchPage() {
                     <SearchPanel />
                   </SheetContent>
                 </Sheet>
-                {session?.user && searchQuery && (
+                {searchQuery && (
                   <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
                     <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
                       <TrendingDown className="h-3 w-3" />
@@ -286,50 +275,124 @@ export default function SearchPage() {
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">
                   선택한 제품은 비교 목록에 모아<br />가격, 규격, 제조사를 함께 검토할 수 있습니다.
                 </p>
-                {!session?.user && (
-                  <Button size="sm" variant="outline" className="h-7 px-3 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => setIsLoginPromptOpen(true)}>
-                    로그인하고 비교 목록 저장
-                  </Button>
-                )}
               </div>
             )}
           </div>
         </div>
       ) : (
-        /* Pre-search — product onboarding surface */
-        <div className="flex-1 flex items-center justify-center">
-          <div className="text-center max-w-lg px-6">
-            <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-5">
-              <Search className="h-7 w-7 text-blue-400" />
-            </div>
-            <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
-            <p className="text-sm text-slate-300 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
-            <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
-            <div className="flex items-center gap-1.5 flex-wrap justify-center mb-4">
-              {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
-                <button
-                  key={term}
-                  type="button"
-                  onClick={() => { setSearchQuery(term); runSearch(); }}
-                  className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
+        /* ═══ Search Entry Surface — 비로그인 or 검색 전 ═══ */
+        <div className="flex-1 overflow-hidden flex">
+          {/* Center: search entry */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="text-center max-w-lg px-6">
+              <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-5">
+                <Search className="h-7 w-7 text-blue-400" />
+              </div>
+              <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
+              <p className="text-sm text-slate-300 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
+              <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
+
+              {/* 예시 검색어 chip */}
+              <div className="flex items-center gap-1.5 flex-wrap justify-center mb-6">
+                {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
+                  <button
+                    key={term}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(term);
+                      if (session?.user) {
+                        runSearch();
+                      } else {
+                        try { sessionStorage.setItem("labaxis-pending-search", term); } catch {}
+                        setIsLoginPromptOpen(true);
+                      }
+                    }}
+                    className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
+                  >
+                    {term}
+                  </button>
+                ))}
+              </div>
+
+              {/* 검색 가능한 키 설명 */}
+              <div className="mb-6 space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">검색 가능한 키</p>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  {["시약명", "CAS No.", "제조사", "카탈로그 번호", "규격"].map((key) => (
+                    <span key={key} className="text-[11px] px-2 py-0.5 rounded bg-el border border-bd text-slate-400">{key}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 로그인 후 가능한 작업 — 비로그인만 표시 */}
+              {!session?.user && (
+                <div className="mb-6">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">로그인 후 가능한 작업</p>
+                  <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                    {[
+                      { icon: GitCompare, label: "비교", desc: "후보 나란히 비교" },
+                      { icon: FileText, label: "견적 요청", desc: "요청서 생성·전송" },
+                      { icon: Package, label: "재고 연결", desc: "입고·Lot 추적" },
+                      { icon: Search, label: "운영 이력", desc: "검색·구매 이력 관리" },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.label} className="flex items-start gap-2 px-3 py-2 rounded-md bg-el/50 border border-bd text-left">
+                          <Icon className="h-3.5 w-3.5 text-blue-400/70 mt-0.5 shrink-0" />
+                          <div>
+                            <p className="text-[11px] font-medium text-slate-300">{item.label}</p>
+                            <p className="text-[10px] text-slate-500">{item.desc}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {session?.user ? (
+                <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+                  <Link href="/protocol/bom" className="hover:text-slate-300 transition-colors">BOM 등록</Link>
+                  <span>·</span>
+                  <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
+                  <span>·</span>
+                  <Link href="/test/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
+                </div>
+              ) : (
+                <Button
+                  className="h-9 px-6 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium"
+                  onClick={() => setIsLoginPromptOpen(true)}
                 >
-                  {term}
-                </button>
-              ))}
-            </div>
-            <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-              <Link href="/protocol/bom" className="hover:text-slate-300 transition-colors">BOM 등록</Link>
-              <span>·</span>
-              <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
-              <span>·</span>
-              <Link href="/test/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
+                  로그인하고 검색 시작하기
+                </Button>
+              )}
             </div>
           </div>
+
+          {/* Right guide rail — 비로그인 안내 */}
+          {!session?.user && (
+            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col items-center justify-center text-center px-6">
+              <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
+                <Search className="h-6 w-6 text-blue-400/60" />
+              </div>
+              <p className="text-sm font-semibold text-slate-200 mb-1.5">로그인 후 검색 결과를 확인하세요</p>
+              <p className="text-xs text-slate-400 leading-relaxed mb-5">
+                제품 비교, 견적 요청, 요청서 작성,<br />운영 이력 관리는 로그인 후 사용할 수 있습니다.
+              </p>
+              <Button
+                size="sm"
+                className="h-8 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
+                onClick={() => setIsLoginPromptOpen(true)}
+              >
+                로그인하고 검색 계속하기
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
-      {/* ═══ D. Sticky Action Dock — scaled, readable, action-first ═══ */}
-      {hasSearched && (
+      {/* ═══ D. Sticky Action Dock — logged-in only ═══ */}
+      {hasSearched && !!session?.user && (
         <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
@@ -405,18 +468,6 @@ export default function SearchPage() {
                 {compareIds.length === 1 && quoteItems.length === 0 && <span className="text-amber-400 font-medium">비교 후보 1개 더 추가</span>}
               </div>
             )}
-            {/* Auth hint for guests — 강화 */}
-            {!session?.user && (
-              <div className="hidden sm:flex items-center gap-2">
-                <span className="text-[10px] text-slate-400 bg-pn border border-bd px-2 py-0.5 rounded">
-                  로그인 후 비교 목록 저장 및 견적 요청서 생성 가능
-                </span>
-                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400 hover:text-blue-300" onClick={() => setIsLoginPromptOpen(true)}>
-                  로그인
-                </Button>
-              </div>
-            )}
-
             {/* Spacer + clear all */}
             {(compareIds.length > 0 || quoteItems.length > 0) && (
               <>
@@ -517,18 +568,16 @@ export default function SearchPage() {
       <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>검색을 계속하려면 로그인하세요</DialogTitle>
+            <DialogTitle>로그인 후 검색 결과를 확인하세요</DialogTitle>
             <DialogDescription>
-              검색 결과 저장, 비교 목록 유지, 견적 요청 생성과 워크스페이스 협업은 계정이 필요합니다.
+              검색 결과 확인과 비교·견적 요청은 로그인 후 사용할 수 있습니다.
               로그인 후 입력한 검색어로 바로 이어서 검색할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
             <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLoginRedirect}>로그인하기</Button>
-            <Link href={`/test/search?callbackUrl=${encodeURIComponent(callbackUrl)}`}>
-              <Button variant="outline" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>무료로 시작하기</Button>
-            </Link>
-            <Button variant="ghost" className="w-full text-slate-500" onClick={() => setIsLoginPromptOpen(false)}>계속 둘러보기</Button>
+            <Button variant="outline" className="w-full" onClick={handleLoginRedirect}>무료로 시작하기</Button>
+            <Button variant="ghost" className="w-full text-slate-500" onClick={() => setIsLoginPromptOpen(false)}>돌아가기</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -547,14 +596,20 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
     e.preventDefault();
     if (!localQuery.trim()) return;
     setSearchQuery(localQuery);
-    // save recent (logged-in only)
-    if (isLoggedIn) {
-      try {
-        const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
-        const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
-        localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
-      } catch {}
+
+    // 비로그인: 검색어 저장 → auth gate
+    if (!isLoggedIn) {
+      try { sessionStorage.setItem("labaxis-pending-search", localQuery.trim()); } catch {}
+      onAuthRequired();
+      return;
     }
+
+    // save recent (logged-in only)
+    try {
+      const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
+      const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
+      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+    } catch {}
     runSearch();
   };
 
