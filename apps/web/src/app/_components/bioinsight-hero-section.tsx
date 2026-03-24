@@ -118,7 +118,7 @@ export function BioInsightHeroSection() {
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">요금 & 도입</Link>
           <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">로그인</Link>
           <Link href="/test/search">
-            <Button className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold px-5 py-2.5 rounded-md shadow-lg shadow-blue-500/30">무료로 시작하기</Button>
+            <Button variant="outline" className="text-slate-300 hover:text-white border-slate-600 hover:border-slate-400 text-sm font-medium px-5 py-2.5 rounded-md bg-transparent">무료로 시작하기</Button>
           </Link>
         </div>
       </nav>
