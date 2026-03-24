@@ -419,8 +419,7 @@ export default function TestComparePage() {
       <div className="shrink-0">
         {/* Top bar */}
         <div
-          className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-slate-700"
-          style={{ backgroundColor: '#434548' }}
+          className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el"
         >
           <div className="flex items-center gap-1.5 md:gap-2">
             <Link href="/" className="flex items-center gap-1.5 shrink-0">

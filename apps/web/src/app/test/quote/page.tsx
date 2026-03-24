@@ -79,7 +79,7 @@ export default function RequestAssemblyPage() {
       {/* ═══ Assembly Header ═══ */}
       <div className="shrink-0">
         {/* Top bar */}
-        <div className="flex items-center justify-between px-4 md:px-6 py-2 md:py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
           <div className="flex items-center gap-2">
             <Link href="/" className="flex items-center gap-1.5 shrink-0">
               <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
