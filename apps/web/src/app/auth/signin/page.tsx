@@ -43,7 +43,7 @@ function SplineBg() {
   return (
     <canvas
       ref={canvasRef}
-      className={`absolute w-[92%] h-[88%] right-[-8%] bottom-[-6%] transition-opacity duration-[2500ms] ${loaded ? "opacity-[0.22]" : "opacity-0"}`}
+      className={`absolute w-[92%] h-[88%] right-[-8%] bottom-[-6%] transition-opacity duration-[2500ms] ${loaded ? "opacity-[0.38]" : "opacity-0"}`}
       style={{ pointerEvents: "none" }}
     />
   );
@@ -69,7 +69,7 @@ function SignInContent() {
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundSize: "40px 40px",
-            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.02) 1px, transparent 1px)",
+            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.035) 1px, transparent 1px)",
             maskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
             WebkitMaskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
           }}
@@ -85,8 +85,8 @@ function SignInContent() {
           className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background: [
-              "linear-gradient(180deg, rgba(4,12,24,0.20) 0%, rgba(4,12,24,0.38) 100%)",
-              "radial-gradient(circle at 22% 18%, rgba(16,50,98,0.22) 0%, rgba(16,50,98,0.00) 38%)",
+              "linear-gradient(180deg, rgba(4,12,24,0.10) 0%, rgba(4,12,24,0.20) 100%)",
+              "radial-gradient(circle at 22% 18%, rgba(26,88,180,0.18) 0%, rgba(26,88,180,0.00) 42%)",
             ].join(", "),
           }}
         />
@@ -98,14 +98,14 @@ function SignInContent() {
           <div>
             <Link href="/" className="inline-flex items-center gap-2">
               <span className="text-[22px] font-bold tracking-tight text-white">LabAxis</span>
-              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/50 uppercase mt-0.5">OS</span>
+              <span className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/70 uppercase mt-0.5">OS</span>
             </Link>
           </div>
 
           {/* Headline block — max-width 420px */}
           <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 420 }}>
             <div className="space-y-4" style={{ marginBottom: 22 }}>
-              <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/60 uppercase">
+              <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/80 uppercase">
                 Research Procurement Operating System
               </p>
               <h1 className="text-[30px] font-extrabold leading-[1.35] text-white tracking-tight">
@@ -113,7 +113,7 @@ function SignInContent() {
                 하나의 흐름으로<br />
                 연결합니다
               </h1>
-              <p className="text-[14px] text-[#7b8da8] leading-[1.75] max-w-[380px]">
+              <p className="text-[14px] text-[#a0b4cc] leading-[1.75] max-w-[380px]">
                 시약 검색, 비교, 요청, 발주, 입고, 재고 관리를 분절된 도구가 아닌 하나의 운영 흐름으로 정리합니다.
               </p>
             </div>
@@ -122,8 +122,8 @@ function SignInContent() {
             <div className="flex items-center gap-2 flex-wrap">
               {PIPELINE.map((step, i) => (
                 <span key={step} className="flex items-center gap-2">
-                  <span className="text-[11px] font-medium text-white/30">{step}</span>
-                  {i < PIPELINE.length - 1 && <span className="text-white/12 text-[9px]">→</span>}
+                  <span className="text-[11px] font-medium text-white/50">{step}</span>
+                  {i < PIPELINE.length - 1 && <span className="text-blue-400/40 text-[9px]">→</span>}
                 </span>
               ))}
             </div>
@@ -133,8 +133,8 @@ function SignInContent() {
           <div className="space-y-3">
             {trustItems.map((item) => (
               <div key={item.text} className="flex items-center gap-3">
-                <item.icon className="w-4 h-4 text-[#2e4264] shrink-0" />
-                <span className="text-[12px] text-[#4d6380]">{item.text}</span>
+                <item.icon className="w-4 h-4 text-[#4a6a90] shrink-0" />
+                <span className="text-[12px] text-[#6e89a8]">{item.text}</span>
               </div>
             ))}
           </div>
