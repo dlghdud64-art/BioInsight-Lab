@@ -1,12 +1,41 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
-  Warehouse, ChevronRight,
+  Warehouse, ChevronRight, Menu, X,
 } from "lucide-react";
+
+function MobileMenu() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={() => setOpen(true)} className="p-2 text-slate-300 hover:text-white" aria-label="메뉴">
+        <Menu className="h-5 w-5" />
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-[#06142E]/95 backdrop-blur-md flex flex-col">
+          <div className="flex justify-between items-center px-6 py-5">
+            <span className="font-bold text-xl text-white">LabAxis</span>
+            <button onClick={() => setOpen(false)} className="p-2 text-slate-300 hover:text-white" aria-label="닫기">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
+            <Link href="/intro" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">서비스 소개</Link>
+            <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 & 도입</Link>
+            <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
+            <Link href="/test/search" onClick={() => setOpen(false)}>
+              <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
+            </Link>
+          </nav>
+        </div>
+      )}
+    </>
+  );
+}
 
 const PIPELINE_STEPS = [
   { icon: Search, label: "검색", sub: "시약·장비 단일 검색" },
@@ -114,12 +143,23 @@ export function BioInsightHeroSection() {
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
         </Link>
-        <div className="flex items-center gap-6">
-          <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">요금 & 도입</Link>
-          <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors hidden md:block">로그인</Link>
+
+        {/* Desktop nav links */}
+        <div className="hidden md:flex items-center gap-6">
+          <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
+          <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
+          <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
           <Link href="/test/search">
             <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
           </Link>
+        </div>
+
+        {/* Mobile: hamburger + CTA */}
+        <div className="flex md:hidden items-center gap-3">
+          <Link href="/test/search">
+            <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
+          </Link>
+          <MobileMenu />
         </div>
       </nav>
 
@@ -164,13 +204,16 @@ export function BioInsightHeroSection() {
               );
             })}
           </div>
-          <div className="md:hidden grid grid-cols-3 gap-2 px-2">
-            {PIPELINE_STEPS.map((step) => {
+          <div className="md:hidden flex items-center justify-center gap-1.5 px-2 overflow-x-auto">
+            {PIPELINE_STEPS.map((step, idx) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
-                  <Icon className="h-4 w-4 text-white" strokeWidth={1.8} />
-                  <span className="text-[11px] font-semibold text-slate-200">{step.label}</span>
+                <div key={step.label} className="flex items-center shrink-0">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
+                    <Icon className="h-3.5 w-3.5 text-white" strokeWidth={1.8} />
+                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}</span>
+                  </div>
+                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600 mx-0.5 shrink-0" />}
                 </div>
               );
             })}
