@@ -106,11 +106,13 @@ function QuoteRequestPageContent() {
                   : isHeld ? "text-slate-500 border-bd opacity-50" : "text-slate-400 border-bd hover:bg-el"
                 }`}>
                 <FileText className="h-3.5 w-3.5 shrink-0" />
-                <span>{g.vendorName}</span>
-                <span className="text-[10px] tabular-nums opacity-70">₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                <div className="text-left">
+                  <span className="block">{g.vendorName}</span>
+                  <span className="block text-[10px] tabular-nums opacity-60">{g.itemCount}건 · ₩{g.subtotal.toLocaleString("ko-KR")}</span>
+                </div>
                 {isHeld ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-600/15 text-amber-400">보류</span>
                 : isActive ? <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/20 text-blue-300">편집 중</span>
-                : <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-300">전송</span>}
+                : <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-300">준비 완료</span>}
               </button>
             );
           })}
@@ -258,9 +260,18 @@ function QuoteRequestPageContent() {
                 <p className="text-[10px] text-slate-500 mt-0.5">품목</p>
               </div>
             </div>
-            {blockers.length > 0 && (
-              <div className="text-[10px] text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3" />차단 {blockers.length}건</div>
-            )}
+            {/* Readiness summary */}
+            <div className="space-y-1 mt-2">
+              {blockers.length > 0 && (
+                <div className="text-[10px] text-red-400 flex items-center gap-1"><AlertCircle className="h-3 w-3" />차단 {blockers.length}건</div>
+              )}
+              {warnings.length > 0 && (
+                <div className="text-[10px] text-amber-400 flex items-center gap-1"><AlertTriangle className="h-3 w-3" />확인 필요 {warnings.length}건</div>
+              )}
+              {blockers.length === 0 && warnings.length === 0 && readyCount > 0 && (
+                <div className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />전체 {readyCount}건 전송 준비 완료</div>
+              )}
+            </div>
           </div>
 
           {/* Rail 2: Split Navigator */}
