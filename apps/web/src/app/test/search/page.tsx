@@ -152,6 +152,17 @@ export default function SearchPage() {
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
+            {/* Preview bar — 비로그인 안내 */}
+            {!session?.user && (
+              <div className="flex items-center justify-between px-4 py-2 bg-blue-600/8 border-b border-blue-600/15">
+                <p className="text-[11px] text-blue-300">
+                  <span className="font-medium">미리보기</span> · 결과 저장과 비교·견적 요청은 로그인 후 가능합니다
+                </p>
+                <Button size="sm" variant="ghost" className="h-6 px-2.5 text-[10px] text-blue-400 hover:text-blue-300" onClick={() => setIsLoginPromptOpen(true)}>
+                  로그인
+                </Button>
+              </div>
+            )}
             {/* Result header strip */}
             <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
               <div className="flex items-center gap-2">
@@ -257,11 +268,18 @@ export default function SearchPage() {
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-10 h-10 rounded-lg bg-el border border-bd flex items-center justify-center mb-3">
-                  <Package className="h-5 w-5 text-slate-600" />
+                <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
+                  <GitCompare className="h-6 w-6 text-blue-400/60" />
                 </div>
-                <p className="text-xs text-slate-400 mb-1">제품을 선택하세요</p>
-                <p className="text-[10px] text-slate-500">행을 클릭하면 상세 정보와<br />다음 액션을 확인할 수 있습니다</p>
+                <p className="text-sm font-semibold text-slate-200 mb-1.5">제품을 선택해 비교를 시작하세요</p>
+                <p className="text-xs text-slate-400 leading-relaxed mb-4">
+                  선택한 제품은 비교 목록에 모아<br />가격, 규격, 제조사를 함께 검토할 수 있습니다.
+                </p>
+                {!session?.user && (
+                  <Button size="sm" variant="outline" className="h-7 px-3 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => setIsLoginPromptOpen(true)}>
+                    로그인하고 비교 목록 저장
+                  </Button>
+                )}
               </div>
             )}
           </div>
@@ -281,15 +299,7 @@ export default function SearchPage() {
                 <button
                   key={term}
                   type="button"
-                  onClick={() => {
-                    setSearchQuery(term);
-                    if (!session?.user) {
-                      try { sessionStorage.setItem("labaxis-pending-search", term); } catch {}
-                      setIsLoginPromptOpen(true);
-                      return;
-                    }
-                    runSearch();
-                  }}
+                  onClick={() => { setSearchQuery(term); runSearch(); }}
                   className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
                 >
                   {term}
@@ -512,18 +522,14 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
     e.preventDefault();
     if (!localQuery.trim()) return;
     setSearchQuery(localQuery);
-    if (!isLoggedIn) {
-      // Save query for post-login restore, then show auth gate
-      try { sessionStorage.setItem("labaxis-pending-search", localQuery.trim()); } catch {}
-      onAuthRequired();
-      return;
+    // save recent (logged-in only)
+    if (isLoggedIn) {
+      try {
+        const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
+        const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
+        localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+      } catch {}
     }
-    // save recent
-    try {
-      const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
-      const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
-      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
-    } catch {}
     runSearch();
   };
 
