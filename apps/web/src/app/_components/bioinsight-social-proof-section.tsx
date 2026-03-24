@@ -31,13 +31,13 @@ export function BioInsightSocialProofSection() {
   return (
     <section
       style={{
-        backgroundColor: "#0D1828",
-        borderTop: "1px solid #22344B",
-        borderBottom: "1px solid #22344B",
+        backgroundColor: "#0C1320",
+        borderTop: "1px solid #1E2530",
+        borderBottom: "1px solid #1E2530",
       }}
     >
       <div className="max-w-5xl mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#22344B]">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#1E2530]">
           {metrics.map((metric) => {
             const Icon = metric.icon;
             return (

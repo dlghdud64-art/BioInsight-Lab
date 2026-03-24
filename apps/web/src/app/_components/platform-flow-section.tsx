@@ -40,7 +40,7 @@ const OPS_VALUES = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#0A121C", borderBottom: "1px solid #1E2D40" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#0B1016", borderBottom: "1px solid #1E2530" }}>
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-12">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
@@ -61,9 +61,9 @@ export function PlatformFlowSection() {
               <div
                 key={item.title}
                 className="rounded-lg p-4 md:p-5 transition-colors"
-                style={{ backgroundColor: "#131C28", border: "1px solid #26364C" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172232"; e.currentTarget.style.borderColor = "#31506F"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131C28"; e.currentTarget.style.borderColor = "#26364C"; }}
+                style={{ backgroundColor: "#151A21", border: "1px solid #2A3442" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#1A2028"; e.currentTarget.style.borderColor = "#354459"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#151A21"; e.currentTarget.style.borderColor = "#2A3442"; }}
               >
                 <div className="flex items-start gap-4">
                   <Icon className="h-4 w-4 text-[#8794AA] flex-shrink-0 mt-1" strokeWidth={1.8} />
@@ -75,7 +75,7 @@ export function PlatformFlowSection() {
                           <span className="font-medium">기존</span> {item.before}
                         </p>
                       </div>
-                      <ArrowRight className="hidden md:block h-3 w-3 text-[#26364C] flex-shrink-0" />
+                      <ArrowRight className="hidden md:block h-3 w-3 text-[#2A3442] flex-shrink-0" />
                       <div className="flex-1">
                         <p className="text-xs text-[#BAC6D9] leading-relaxed">
                           <span className="text-[#5A94FF] font-medium">LabAxis</span> {item.after}

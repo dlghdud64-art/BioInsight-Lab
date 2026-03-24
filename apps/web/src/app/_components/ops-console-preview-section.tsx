@@ -41,7 +41,7 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#0C1520", borderBottom: "1px solid #1E2D40" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#0D121A", borderBottom: "1px solid #1E2530" }}>
       <div className="max-w-6xl mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
@@ -62,9 +62,9 @@ export function OpsConsolePreviewSection() {
               <div
                 key={layer.title}
                 className="rounded-lg px-5 py-4 transition-colors"
-                style={{ backgroundColor: "#131C28", border: "1px solid #26364C" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172232"; e.currentTarget.style.borderColor = "#31506F"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131C28"; e.currentTarget.style.borderColor = "#26364C"; }}
+                style={{ backgroundColor: "#151A21", border: "1px solid #2A3442" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#1A2028"; e.currentTarget.style.borderColor = "#354459"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#151A21"; e.currentTarget.style.borderColor = "#2A3442"; }}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <Icon className="h-4 w-4 text-[#8794AA]" strokeWidth={1.8} />
@@ -77,7 +77,7 @@ export function OpsConsolePreviewSection() {
           })}
         </div>
 
-        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0E1620", border: "1px solid #1E2D40" }}>
+        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#0F1318", border: "1px solid #1E2530" }}>
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-3">
             System Evidence
           </p>
