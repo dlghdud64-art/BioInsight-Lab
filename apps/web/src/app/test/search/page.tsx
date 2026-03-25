@@ -30,7 +30,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { AIInsightCard } from "@/components/ai-insight-card";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
 
@@ -201,19 +200,7 @@ export default function SearchPage() {
               </span>
             </div>
 
-            {/* AI Insight — compact, inline */}
-            {searchQuery && products.length > 0 && (
-              <div className="px-4 pt-2">
-                <AIInsightCard
-                  query={searchQuery}
-                  productCount={products.length}
-                  isLoading={analysisLoading}
-                  queryAnalysis={queryAnalysis}
-                />
-              </div>
-            )}
-
-            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 ═══ */}
+            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 (AIInsightCard 대체) ═══ */}
             {aiSearchSummary.length > 0 && !aiSuggestionDismissed && (
               <div className="px-4 pt-1.5">
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-600/20 bg-blue-600/5">

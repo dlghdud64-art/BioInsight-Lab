@@ -67,8 +67,9 @@ function QuoteRequestPageContent() {
     });
   };
 
-  // AI Request Draft
-  const [aiDraftStatus, setAiDraftStatus] = useState<Record<string, "idle" | "generated" | "edited" | "dismissed">>({});
+  // AI Request Draft — 2단계: 생성(suggestion만) → 적용(messageBody 반영)
+  const [aiDraftStatus, setAiDraftStatus] = useState<Record<string, "idle" | "generated" | "accepted" | "edited" | "dismissed">>({});
+  const [aiDraftSuggestion, setAiDraftSuggestion] = useState<Record<string, string>>({});
 
   const handleGenerateAiDraft = (group: VendorGroup) => {
     const draft = generateRequestDraft({
@@ -79,8 +80,16 @@ function QuoteRequestPageContent() {
         catalogNumber: (item as any).catalogNumber,
       })),
     });
-    handleVendorNoteChange(group.vendorId, draft.message);
+    // suggestion만 저장, messageBody는 아직 변경하지 않음
+    setAiDraftSuggestion((prev) => ({ ...prev, [group.vendorId]: draft.message }));
     setAiDraftStatus((prev) => ({ ...prev, [group.vendorId]: "generated" }));
+  };
+
+  const handleApplyAiDraft = (vendorId: string) => {
+    const suggestion = aiDraftSuggestion[vendorId];
+    if (!suggestion) return;
+    handleVendorNoteChange(vendorId, suggestion);
+    setAiDraftStatus((prev) => ({ ...prev, [vendorId]: "accepted" as any }));
   };
 
   return (
@@ -270,8 +279,9 @@ function QuoteRequestPageContent() {
                     </Button>
                   ) : aiDraftStatus[activeGroup.vendorId] === "generated" ? (
                     <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>무시</Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-400 hover:bg-emerald-600/10 border border-emerald-600/20" onClick={() => handleApplyAiDraft(activeGroup.vendorId)}>초안 적용</Button>
                       <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400" onClick={() => handleGenerateAiDraft(activeGroup)}>초안 업데이트</Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { setAiDraftSuggestion(prev => { const n = {...prev}; delete n[activeGroup.vendorId]; return n; }); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>무시</Button>
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
@@ -326,6 +336,25 @@ function QuoteRequestPageContent() {
               )}
               {blockers.length === 0 && warnings.length === 0 && readyCount > 0 && (
                 <div className="text-[10px] text-emerald-400 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />전체 {readyCount}건 전송 준비 완료</div>
+              )}
+            </div>
+          </div>
+
+          {/* ═══ AI 점검 compact block ═══ */}
+          <div className="px-5 py-3 border-b border-blue-600/10 bg-blue-600/[0.02]">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles className="h-3 w-3 text-blue-400" />
+              <span className="text-[10px] font-semibold text-blue-400">AI 점검</span>
+            </div>
+            <div className="space-y-1 text-[10px]">
+              {blockers.length === 0 && warnings.length === 0 ? (
+                <span className="text-emerald-400">준비 완료</span>
+              ) : (
+                <>
+                  {blockers.length > 0 && <span className="text-red-400 block">누락 항목 확인 · {blockers.length}건</span>}
+                  {warnings.length > 0 && <span className="text-amber-400 block">검토 필요 · {warnings.length}건</span>}
+                  {vendorGroups.some(g => !vendorNotes[g.vendorId]) && <span className="text-slate-400 block">메시지 미작성 공급사 있음</span>}
+                </>
               )}
             </div>
           </div>
