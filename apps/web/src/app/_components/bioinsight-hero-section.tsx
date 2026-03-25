@@ -236,8 +236,10 @@ export function BioInsightHeroSection() {
       <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 pt-16 pb-20 text-center w-full">
         <p className="text-blue-400 font-extrabold text-[11px] tracking-[0.25em] mb-6 uppercase">Biotech Procurement Operations Platform</p>
         <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
-          구매 요청부터 입고·재고까지,<br />연구 구매 운영을<br />
-          <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>한곳에서</span> 연결합니다
+          구매 요청부터 입고·재고까지,<br />
+          연구 구매 운영을{" "}
+          <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>한곳에서</span>{" "}
+          연결합니다
         </h1>
         <p className="text-base md:text-lg text-slate-300 mb-10 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
           시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
