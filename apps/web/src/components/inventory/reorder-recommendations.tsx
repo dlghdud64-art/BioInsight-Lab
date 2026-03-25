@@ -90,7 +90,7 @@ export function ReorderRecommendations({
           </p>
           <div className="mt-4 flex justify-center">
             <Button size="sm" asChild>
-              <Link href="/test/search">제품 검색하기</Link>
+              <Link href="/app/search">제품 검색하기</Link>
             </Button>
           </div>
         </CardContent>

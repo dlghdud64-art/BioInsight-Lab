@@ -15,7 +15,7 @@ export function MobileFloatingCTA() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden">
       <div className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#111114]/95 backdrop-blur-md border-t border-[#333338] shadow-[0_-4px_12px_rgba(0,0,0,0.3)]">
-        <Link href="/auth/signin?callbackUrl=/test/search" className="flex-1 max-w-[200px]">
+        <Link href="/auth/signin?callbackUrl=/search" className="flex-1 max-w-[200px]">
           <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm h-10 rounded-md">
             시작하기
             <ArrowRight className="h-4 w-4 ml-1.5" />

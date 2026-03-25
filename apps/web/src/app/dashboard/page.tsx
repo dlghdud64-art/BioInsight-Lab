@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
   // -- 추천 작업 (항상 표시) --
   const recommendedActions = [
-    { id: "r-search", icon: <Search className="h-3.5 w-3.5 text-blue-400" />, label: "시약·장비 검색", desc: "500만+ 품목 검색", href: "/test/search" },
+    { id: "r-search", icon: <Search className="h-3.5 w-3.5 text-blue-400" />, label: "시약·장비 검색", desc: "500만+ 품목 검색", href: "/app/search" },
     { id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-blue-400" />, label: "제품 비교", desc: "스펙·가격 비교", href: "/test/compare" },
     { id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청하기", desc: "공급사에 견적 발송", href: "/test/quote" },
     { id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-blue-400" />, label: "재고 등록", desc: "입고 품목 등록", href: "/dashboard/inventory" },
@@ -504,7 +504,7 @@ export default function DashboardPage() {
             <CardTitle className="text-sm font-semibold">빠른 실행</CardTitle>
           </CardHeader>
           <CardContent className="p-3 pt-0 grid grid-cols-2 gap-2">
-            <Link href="/test/search" className="block">
+            <Link href="/app/search" className="block">
               <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-blue-950/20 border-blue-900/50 text-blue-400 hover:bg-blue-950/30">
                 <Search className="h-3.5 w-3.5 flex-shrink-0" />
                 시약·장비 검색
@@ -719,7 +719,7 @@ export default function DashboardPage() {
             <CardContent className="p-4 pt-0">
               {/* 메인 액션 흐름 */}
               <div className="space-y-0.5">
-                <Link href="/test/search" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-blue-950/30 transition-colors group">
+                <Link href="/app/search" className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-blue-950/30 transition-colors group">
                   <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-950/50 flex-shrink-0">
                     <Search className="h-3.5 w-3.5 text-blue-400" />
                   </div>
@@ -892,7 +892,7 @@ export default function DashboardPage() {
       {/* 모바일 하단 고정 빠른 실행 바 */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-[#111114]/95 backdrop-blur-sm border-t border-[#2a2a2e]/50 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <Link href="/test/search" className="flex-1">
+          <Link href="/app/search" className="flex-1">
             <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-[#111114] text-slate-400 hover:bg-[#222226] border-[#2a2a2e]">
               <Search className="h-3.5 w-3.5" />
               시약 검색

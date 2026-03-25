@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -20,12 +21,13 @@ const PIPELINE_STEPS = [
 
 export function BioInsightHeroSection() {
   const router = useRouter();
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -49,17 +51,35 @@ export function BioInsightHeroSection() {
 
           {/* CTAs */}
           <div className="flex items-center justify-center gap-3 pt-4">
-            <Link href="/dashboard">
-              <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
-                운영 콘솔 시작하기
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </Link>
-            <Link href="/support">
-              <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
-                데모 요청
-              </Button>
-            </Link>
+            {session?.user ? (
+              <>
+                <Link href="/app/search">
+                  <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
+                    소싱 워크벤치 열기
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/dashboard">
+                  <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
+                    대시보드
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/search">
+                  <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
+                    무료로 시작하기
+                    <ArrowRight className="ml-1.5 h-4 w-4" />
+                  </Button>
+                </Link>
+                <Link href="/auth/signin?callbackUrl=/dashboard">
+                  <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
+                    운영 콘솔 시작하기
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 

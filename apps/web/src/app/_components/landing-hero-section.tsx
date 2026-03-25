@@ -15,7 +15,7 @@ export function LandingHeroSection() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -43,7 +43,7 @@ export function LandingHeroSection() {
 
           {/* CTAs */}
           <div className="flex flex-wrap items-center justify-center gap-3 mb-6">
-            <Link href="/test/search">
+            <Link href="/search">
               <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm">
                 시약·장비 검색 시작하기
                 <ArrowRight className="ml-1.5 h-4 w-4" />

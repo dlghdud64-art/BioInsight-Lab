@@ -188,8 +188,20 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* 데스크탑 네비게이션 */}
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
-                /* ── 로그인: [검색] [대시보드로 이동(강조)] ── */
+                /* ── 로그인: [서비스소개] [요금&도입] [검색] [대시보드(강조)] ── */
                 <>
+                  <Link
+                    href="/intro"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
+                  >
+                    서비스 소개
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
+                  >
+                    요금 &amp; 도입
+                  </Link>
                   <Link
                     href="/app/search"
                     className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
@@ -197,7 +209,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     검색
                   </Link>
                   <Link
-                    href="/app/dashboard"
+                    href="/dashboard"
                     className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />

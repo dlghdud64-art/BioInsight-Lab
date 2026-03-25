@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Search, ArrowRight, Beaker, Package, FlaskConical, Microscope, LogIn } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import Link from "next/link";
+import { savePendingAction } from "@/lib/auth/pending-action";
 
 const exampleQueries = [
   { label: "Anti-GAPDH antibody", icon: Beaker },
@@ -32,12 +33,7 @@ function PublicSearchContent() {
       router.push(`/app/search?q=${encodeURIComponent(trimmed)}`);
     } else {
       // 비로그인: pending state 저장 + 로그인 모달
-      try {
-        sessionStorage.setItem("bioinsight_pendingQuery", trimmed);
-        sessionStorage.setItem("bioinsight_pendingAction", "search");
-      } catch {
-        // sessionStorage 불가
-      }
+      savePendingAction({ action: "run_search", query: trimmed });
       setShowLoginModal(true);
     }
   }, [query, session, router]);
@@ -47,12 +43,7 @@ function PublicSearchContent() {
     if (session?.user) {
       router.push(`/app/search?q=${encodeURIComponent(exampleQuery)}`);
     } else {
-      try {
-        sessionStorage.setItem("bioinsight_pendingQuery", exampleQuery);
-        sessionStorage.setItem("bioinsight_pendingAction", "search");
-      } catch {
-        // sessionStorage 불가
-      }
+      savePendingAction({ action: "run_search", query: exampleQuery });
       setShowLoginModal(true);
     }
   }, [session, router]);
@@ -153,7 +144,7 @@ function PublicSearchContent() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
-            <Link href={`/auth/signin?callbackUrl=${encodeURIComponent("/app/search")}`}>
+            <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(query.trim() ? `/app/search?q=${encodeURIComponent(query.trim())}` : "/app/search")}`}>
               <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
                 로그인하기
               </Button>

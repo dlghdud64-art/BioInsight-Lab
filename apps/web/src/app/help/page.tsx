@@ -8,7 +8,7 @@ const guides = [
   {
     title: "검색 및 제품 찾기",
     description: "제품명, 타깃, 브랜드, 카탈로그 번호로 검색하는 방법",
-    href: "/test/search",
+    href: "/search",
   },
   {
     title: "제품 비교하기",

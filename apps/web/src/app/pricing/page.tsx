@@ -171,7 +171,7 @@ export default function PricingPage() {
 
   const getCheckoutUrl = useCallback(
     (planId: PlanId): string => {
-      if (planId === "starter") return "/test/search";
+      if (planId === "starter") return "/search";
       if (planId === "enterprise") return "/support";
       const params = new URLSearchParams();
       params.set("plan", planId);

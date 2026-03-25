@@ -100,7 +100,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && searchQuery.trim()) {
       e.preventDefault();
-      router.push(`/test/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      router.push(`/app/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -290,7 +290,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             variant="ghost"
             size="icon"
             className="h-10 w-10 md:hidden flex-shrink-0 p-2 text-slate-400 hover:text-slate-100 hover:bg-transparent transition-colors"
-            onClick={() => router.push("/test/search")}
+            onClick={() => router.push("/app/search")}
             aria-label="검색"
           >
             <Search className="h-5 w-5" />

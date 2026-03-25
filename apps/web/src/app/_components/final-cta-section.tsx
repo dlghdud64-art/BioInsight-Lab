@@ -37,12 +37,22 @@ export function FinalCTASection() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-          <Link href="/dashboard" className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 px-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2">
+          {isLoggedIn ? (
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto h-11 px-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2">
+                운영 콘솔 열기
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : (
+            <Button
+              onClick={handleConsoleClick}
+              className="w-full sm:w-auto h-11 px-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm flex items-center justify-center gap-2"
+            >
               운영 콘솔 시작하기
               <ArrowRight className="h-4 w-4" />
             </Button>
-          </Link>
+          )}
           <Link href="/support" className="w-full sm:w-auto">
             <Button variant="outline" className="w-full sm:w-auto h-11 px-8 border-[#333338] text-slate-400 hover:bg-[#222226] font-medium text-sm">
               도입 문의

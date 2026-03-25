@@ -10,7 +10,7 @@ export function FlowSection() {
       number: 1,
       title: "검색",
       description: "제품명, CAS No., 제조사 또는 실험 목적으로 검색하고 대체 후보까지 함께 확인하세요.",
-      href: "/test/search",
+      href: "/search",
       icon: Search,
       color: "indigo",
     },

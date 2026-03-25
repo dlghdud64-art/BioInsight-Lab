@@ -163,7 +163,7 @@ function SignInContent() {
           <p className="text-center text-sm text-slate-400">
             계정이 없으신가요?{" "}
             <Link
-              href="/test/search"
+              href="/search"
               className="font-semibold text-blue-400 hover:text-blue-300 underline underline-offset-2"
             >
               무료로 시작하기

@@ -148,7 +148,7 @@ export function DemoFlowSwitcherSection() {
                     className="inline-flex items-center gap-1 text-xs"
                     onClick={() => {
                       if (current.id === "search") {
-                        window.location.href = "/test/search";
+                        window.location.href = "/search";
                       } else if (current.id === "compare") {
                         window.location.href = "/test/quote";
                       } else {

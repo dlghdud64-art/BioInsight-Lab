@@ -123,7 +123,7 @@ export function HeroDemoFlowPanel() {
           <span className="text-[8px] px-1 py-0.5 bg-[#222226] rounded text-slate-500">datasheet</span>
           <span className="text-[8px] px-1 py-0.5 bg-[#222226] rounded text-slate-500">vendor catalog</span>
         </div>
-        <Link href="/test/search">
+        <Link href="/search">
           <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-[#2a2a2e] text-indigo-600 hover:bg-indigo-50">
             직접 만들기 →
           </Button>

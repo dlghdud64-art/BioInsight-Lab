@@ -16,7 +16,7 @@ const STEPS = [
     description:
       "제품명 또는 키워드로 검색하면 관련 제품이 자동으로 추천되고, GPT가 검색 의도를 분석하여 키워드 기반 필터를 자동으로 적용합니다.",
     ctaLabel: "검색하러 가기",
-    href: "/test/search",
+    href: "/search",
   },
   {
     id: "compare",

@@ -273,7 +273,7 @@ export default function InventoryPage() {
   const handleSearchAlternative = (inventory: UserInventory) => {
     // 제품명을 쿼리 파라미터로 전달하여 검색 페이지로 이동
     const searchQuery = encodeURIComponent(inventory.productName);
-    router.push(`/test/search?q=${searchQuery}&from=inventory&inventoryId=${inventory.id}`);
+    router.push(`/app/search?q=${searchQuery}&from=inventory&inventoryId=${inventory.id}`);
   };
 
   if (status === "loading" || isLoadingAll) {
