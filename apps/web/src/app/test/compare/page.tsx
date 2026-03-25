@@ -487,6 +487,13 @@ export default function TestComparePage() {
               가격차 {Math.round(((highestPrice - cheapestPrice) / cheapestPrice) * 100)}%
             </Badge>
           )}
+          {/* 기준안 상태 */}
+          {selectedDecisionItemId ? (
+            <span className="text-[10px] text-emerald-400 font-medium">기준안 선택됨</span>
+          ) : (
+            <span className="text-[10px] text-slate-500">기준안 미선택</span>
+          )}
+
           {uniqueCategories.length > 1 && (
             <Badge className="text-[9px] h-4 bg-red-600/10 text-red-400 border-red-600/20 border">
               카테고리 혼합
@@ -1220,7 +1227,10 @@ export default function TestComparePage() {
 
       {/* ═══ Review Center Work Window ═══ */}
       {reviewMode && products.length >= 2 && (() => {
-        const recommended = products[0]; // scenario-sorted first = recommended
+        // 기준안이 있으면 기준안, 없으면 scenario 정렬 1등을 추천안으로
+        const recommended = selectedDecisionItemId
+          ? products.find((p: any) => p.id === selectedDecisionItemId) || products[0]
+          : products[0];
         const recVendor = recommended?.vendors?.[0];
         const recPrice = recVendor?.priceInKRW || 0;
         const rejected = products.slice(1);
@@ -1388,7 +1398,7 @@ export default function TestComparePage() {
                 <div className="px-5 py-4 border-b border-bd">
                   <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">전달 상태</div>
                   <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">추천안</span><span className="text-slate-200">{recommended?.name?.substring(0, 15)}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-400">{selectedDecisionItemId ? "기준안" : "추천안"}</span><span className="text-slate-200">{recommended?.name?.substring(0, 15)}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">확인 필요</span><span className={allResolved ? "text-emerald-400" : "text-amber-400"}>{allResolved ? "모두 해결" : `${blockerItems.length - resolvedBlockers.size}건 미해결`}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">메모</span><span className="text-slate-200">{reviewNote ? "작성됨" : "없음"}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">전달 가능</span><span className={allResolved ? "text-emerald-400 font-medium" : "text-amber-400"}>{allResolved ? "예" : "아니오"}</span></div>
