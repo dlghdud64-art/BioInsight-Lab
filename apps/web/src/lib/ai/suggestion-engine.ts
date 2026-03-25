@@ -33,6 +33,125 @@ export interface AISuggestion {
 /** @deprecated — 이전 호환용. AISuggestion 사용 권장 */
 export type SuggestionType = SuggestionScope;
 
+// ── Suggestion Orchestration Layer ────────────────────────────────────────
+
+/** contextHash: 현재 화면 상태를 대표하는 해시 */
+export function computeContextHash(scope: SuggestionScope, inputs: Record<string, unknown>): string {
+  const sorted = JSON.stringify(inputs, Object.keys(inputs).sort());
+  // Simple hash for dedup (not crypto)
+  let hash = 0;
+  for (let i = 0; i < sorted.length; i++) {
+    hash = ((hash << 5) - hash + sorted.charCodeAt(i)) | 0;
+  }
+  return `${scope}_${Math.abs(hash).toString(36)}`;
+}
+
+/** Suggestion lifecycle store — 화면당 1개 active suggestion 관리 */
+export interface SuggestionStore {
+  active: AISuggestion | null;
+  contextHash: string | null;
+  dismissedHashes: Set<string>;
+  acceptedHashes: Set<string>;
+}
+
+export function createSuggestionStore(): SuggestionStore {
+  return { active: null, contextHash: null, dismissedHashes: new Set(), acceptedHashes: new Set() };
+}
+
+/**
+ * shouldRegenerate — contextHash가 바뀌었고, dismissed/accepted가 아닌 경우에만 true
+ */
+export function shouldRegenerate(store: SuggestionStore, newHash: string): boolean {
+  if (store.contextHash === newHash) return false; // 같은 context → 재생성 금지
+  if (store.dismissedHashes.has(newHash)) return false; // 이미 dismissed
+  if (store.acceptedHashes.has(newHash)) return false; // 이미 accepted
+  return true;
+}
+
+/**
+ * acceptSuggestion — suggestion 수락 처리
+ */
+export function acceptSuggestion(store: SuggestionStore): SuggestionStore {
+  if (!store.active || !store.contextHash) return store;
+  trackSuggestionEvent("suggestion_accepted", store.active, store.contextHash);
+  return {
+    ...store,
+    active: { ...store.active, status: "accepted", updatedAt: new Date().toISOString() },
+    acceptedHashes: new Set([...store.acceptedHashes, store.contextHash]),
+  };
+}
+
+/**
+ * dismissSuggestion — suggestion 무시 처리
+ */
+export function dismissSuggestion(store: SuggestionStore): SuggestionStore {
+  if (!store.active || !store.contextHash) return store;
+  trackSuggestionEvent("suggestion_dismissed", store.active, store.contextHash);
+  return {
+    ...store,
+    active: null,
+    dismissedHashes: new Set([...store.dismissedHashes, store.contextHash]),
+  };
+}
+
+/**
+ * invalidateSuggestion — source 변경으로 기존 suggestion 무효화
+ */
+export function invalidateSuggestion(store: SuggestionStore): SuggestionStore {
+  return { ...store, active: null, contextHash: null };
+}
+
+// ── Suggestion Priority ──────────────────────────────────────────────────
+
+export type SourcingSuggestionType = "request_first" | "compare_first" | "mixed_flow" | "warning";
+export type CompareSuggestionType = "request_handoff" | "selection_prompt" | "dual_request" | "need_more_review";
+export type RequestSuggestionType = "missing_check" | "draft_update" | "draft_create" | "ready";
+
+/** sourcing 우선순위: request_first > compare_first > mixed_flow > warning */
+const SOURCING_PRIORITY: SourcingSuggestionType[] = ["request_first", "compare_first", "mixed_flow", "warning"];
+/** compare 우선순위: request_handoff > selection_prompt > dual_request > need_more_review */
+const COMPARE_PRIORITY: CompareSuggestionType[] = ["request_handoff", "selection_prompt", "dual_request", "need_more_review"];
+/** request 우선순위: missing_check > draft_update > draft_create > ready */
+const REQUEST_PRIORITY: RequestSuggestionType[] = ["missing_check", "draft_update", "draft_create", "ready"];
+
+export function pickHighestPriority<T extends string>(candidates: T[], priorityOrder: T[]): T | null {
+  for (const p of priorityOrder) {
+    if (candidates.includes(p)) return p;
+  }
+  return candidates[0] || null;
+}
+
+export { SOURCING_PRIORITY, COMPARE_PRIORITY, REQUEST_PRIORITY };
+
+// ── Telemetry ────────────────────────────────────────────────────────────
+
+type SuggestionEventType = "suggestion_generated" | "suggestion_viewed" | "suggestion_accepted" | "suggestion_dismissed" | "suggestion_edited";
+
+export function trackSuggestionEvent(
+  event: SuggestionEventType,
+  suggestion: AISuggestion | null,
+  contextHash: string | null,
+  action?: string,
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    // analytics integration point — trackEvent 연동 시 여기 확장
+    const payload = {
+      event,
+      scope: suggestion?.scope,
+      contextHash,
+      suggestionType: suggestion?.title,
+      targetId: suggestion?.targetId,
+      action,
+      timestamp: new Date().toISOString(),
+    };
+    // console.debug("[AI Telemetry]", payload);
+    // 향후: trackEvent(event, payload);
+  } catch {
+    // silent
+  }
+}
+
 // ── P1-A: Search Next Step Summary ─────────────────────────────────────────
 
 export interface SearchSummaryInput {

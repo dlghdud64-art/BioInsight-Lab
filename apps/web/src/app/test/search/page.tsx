@@ -31,7 +31,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCompareStore } from "@/lib/store/compare-store";
-import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
+import {
+  generateSearchSummary, type SearchSummaryLine,
+  computeContextHash, shouldRegenerate, type SuggestionStore, createSuggestionStore,
+  trackSuggestionEvent,
+} from "@/lib/ai/suggestion-engine";
 
 export default function SearchPage() {
   const {
@@ -65,7 +69,8 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  const [aiSuggestionDismissed, setAiSuggestionDismissed] = useState(false);
+  // ── AI suggestion orchestration (contextHash 기반) ──
+  const [aiStore, setAiStore] = useState<SuggestionStore>(createSuggestionStore);
 
   // Batch-fetch compare status for visible products
   const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
@@ -116,8 +121,29 @@ export default function SearchPage() {
   // compare/request 후보는 유지, rail 선택만 리셋
   useEffect(() => {
     setRailProduct(null);
-    setAiSuggestionDismissed(false); // 새 검색 시 AI 제안 다시 노출
+    // AI: query 변경 = new context → 기존 suggestion invalidate (dismissed는 유지)
   }, [searchQuery]);
+
+  // ── AI contextHash 계산 + shouldRegenerate 체크 ──
+  const aiContextHash = useMemo(() =>
+    computeContextHash("sourcing_summary", {
+      query: searchQuery,
+      resultIds: products.map((p: any) => p.id).sort().join(","),
+      compareIds: compareIds.sort().join(","),
+      quoteItemIds: quoteItems.map((q: any) => q.productId).sort().join(","),
+    }),
+    [searchQuery, products, compareIds, quoteItems],
+  );
+  const aiShouldShow = useMemo(() =>
+    aiSearchSummary.length > 0 && shouldRegenerate(aiStore, aiContextHash),
+    [aiSearchSummary, aiStore, aiContextHash],
+  );
+  // contextHash가 바뀌면 active suggestion 갱신
+  useEffect(() => {
+    if (aiShouldShow && aiContextHash !== aiStore.contextHash) {
+      setAiStore(prev => ({ ...prev, active: null, contextHash: aiContextHash }));
+    }
+  }, [aiContextHash, aiShouldShow]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restore pending search after login
   useEffect(() => {
@@ -200,8 +226,8 @@ export default function SearchPage() {
               </span>
             </div>
 
-            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 (AIInsightCard 대체) ═══ */}
-            {aiSearchSummary.length > 0 && !aiSuggestionDismissed && (
+            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 ═══ */}
+            {aiShouldShow && (
               <div className="px-4 pt-1.5">
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-600/20 bg-blue-600/5">
                   <span className="text-[10px] font-semibold text-blue-400 shrink-0">AI 제안</span>
@@ -228,7 +254,13 @@ export default function SearchPage() {
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
-                      onClick={() => setAiSuggestionDismissed(true)}>
+                      onClick={() => {
+                        trackSuggestionEvent("suggestion_dismissed", aiStore.active, aiContextHash);
+                        setAiStore(prev => ({
+                          ...prev, active: null,
+                          dismissedHashes: new Set([...prev.dismissedHashes, aiContextHash]),
+                        }));
+                      }}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
