@@ -1,15 +1,42 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
-  ChevronRight, Menu, X, LayoutDashboard,
+  Warehouse, ChevronRight, Menu, X, LayoutDashboard, User, LogOut, Settings,
 } from "lucide-react";
 
-function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
+function AccountMenu({ userName }: { userName?: string | null }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button onClick={() => setOpen(!open)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-slate-300 hover:text-white hover:bg-white/5 transition-colors">
+        <User className="h-4 w-4" />
+        <span className="hidden xl:inline max-w-[80px] truncate">{userName || "계정"}</span>
+        <ChevronRight className={`h-3 w-3 transition-transform ${open ? "rotate-90" : ""}`} />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 w-48 z-50 rounded-lg border border-white/10 shadow-xl py-1" style={{ backgroundColor: "#1a1e26" }}>
+            <Link href="/dashboard" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><LayoutDashboard className="h-3.5 w-3.5 text-slate-400" />대시보드</Link>
+            <Link href="/app/search" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Search className="h-3.5 w-3.5 text-slate-400" />검색</Link>
+            <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="flex items-center gap-2 px-3 py-2 text-sm text-slate-200 hover:bg-white/5"><Settings className="h-3.5 w-3.5 text-slate-400" />계정 설정</Link>
+            <div className="border-t border-white/10 my-1" />
+            <button onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }} className="flex items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-red-950/30 w-full text-left"><LogOut className="h-3.5 w-3.5" />로그아웃</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+function MobileMenu() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -26,13 +53,13 @@ function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
           </div>
           <nav className="flex-1 flex flex-col items-center justify-center gap-6">
             <Link href="/intro" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">서비스 소개</Link>
-            <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 &amp; 도입</Link>
+            <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 & 도입</Link>
             {isLoggedIn ? (
               <>
                 <Link href="/dashboard" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">대시보드</Link>
-                <Link href="/app/search" onClick={() => setOpen(false)}>
-                  <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">소싱 워크벤치</Button>
-                </Link>
+                <Link href="/app/search" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">검색</Link>
+                <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">계정 설정</Link>
+                <button onClick={() => { setOpen(false); signOut({ callbackUrl: "/" }); }} className="text-lg font-medium text-red-400 hover:text-red-300 mt-4">로그아웃</button>
               </>
             ) : (
               <>
@@ -138,8 +165,9 @@ function PlexusCanvas() {
 }
 
 export function BioInsightHeroSection() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isLoggedIn = !!session?.user;
+  const isAuthLoading = status === "loading";
 
   return (
     <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
@@ -159,16 +187,21 @@ export function BioInsightHeroSection() {
           <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
         </Link>
 
-        {/* Desktop nav links */}
+        {/* Desktop nav links — session-aware, loading-safe */}
         <div className="hidden md:flex items-center gap-6">
           <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
-          <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 &amp; 도입</Link>
-          {isLoggedIn ? (
+          <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
+          {isAuthLoading ? (
+            <div className="w-24 h-8 rounded-md bg-white/5 animate-pulse" />
+          ) : isLoggedIn ? (
             <>
-              <Link href="/dashboard" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">대시보드</Link>
-              <Link href="/app/search">
-                <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>소싱 워크벤치</Button>
+              <Link href="/app/search" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">검색</Link>
+              <Link href="/dashboard">
+                <Button className="text-sm font-semibold px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5">
+                  <LayoutDashboard className="h-3.5 w-3.5" />대시보드
+                </Button>
               </Link>
+              <AccountMenu userName={session?.user?.name} />
             </>
           ) : (
             <>
@@ -182,12 +215,20 @@ export function BioInsightHeroSection() {
 
         {/* Mobile: hamburger + CTA */}
         <div className="flex md:hidden items-center gap-3">
-          <Link href={isLoggedIn ? "/app/search" : "/search"}>
-            <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">
-              {isLoggedIn ? "워크벤치" : "시작하기"}
-            </Button>
-          </Link>
-          <MobileMenu isLoggedIn={isLoggedIn} />
+          {isAuthLoading ? (
+            <div className="w-16 h-7 rounded-md bg-white/5 animate-pulse" />
+          ) : isLoggedIn ? (
+            <Link href="/dashboard">
+              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex items-center gap-1">
+                <LayoutDashboard className="h-3 w-3" />대시보드
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/search">
+              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
+            </Link>
+          )}
+          <MobileMenu />
         </div>
       </nav>
 
@@ -202,31 +243,14 @@ export function BioInsightHeroSection() {
           시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          {isLoggedIn ? (
-            <>
-              <Link href="/app/search">
-                <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
-                  소싱 워크벤치 열기<Search className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/dashboard">
-                <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />대시보드
-                </Button>
-              </Link>
-            </>
-          ) : (
-            <>
-              <Link href="/search">
-                <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
-                  시약·장비 검색 시작하기<Search className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/auth/signin?callbackUrl=/dashboard">
-                <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">운영 콘솔 시작하기</Button>
-              </Link>
-            </>
-          )}
+          <Link href="/search">
+            <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+              시약·장비 검색 시작하기<Search className="ml-2 h-4 w-4" />
+            </Button>
+          </Link>
+          <Link href="/support">
+            <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
+          </Link>
         </div>
 
         {/* Pipeline */}

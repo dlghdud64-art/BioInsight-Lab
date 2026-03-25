@@ -47,12 +47,13 @@ export function MainFooter() {
       links: [
         { label: "이용약관", href: "/terms", onClick: null },
         { label: "개인정보처리방침", href: "/privacy", onClick: null },
+        { label: "운영정책", href: "/operations-policy", onClick: null },
       ],
     },
   ];
 
   return (
-    <footer className="border-t" style={{ backgroundColor: "#081019", borderColor: "#1E2D40" }}>
+    <footer className="border-t" style={{ backgroundColor: "#0E1218", borderColor: "#1E2530" }}>
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
@@ -149,6 +150,8 @@ export function MainFooter() {
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
             <span className="text-slate-600">|</span>
             <Link href="/privacy" className="hover:text-slate-300 transition-colors">개인정보처리방침</Link>
+            <span className="text-slate-600">|</span>
+            <Link href="/operations-policy" className="hover:text-slate-300 transition-colors">운영정책</Link>
           </div>
         </div>
       </div>

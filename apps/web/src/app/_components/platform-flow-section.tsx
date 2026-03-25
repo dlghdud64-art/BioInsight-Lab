@@ -1,48 +1,45 @@
 "use client";
 
-import {
-  Search, GitCompare, FileText, ShieldCheck, Package,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
-const OPS_VALUES = [
+const COMPARISON_ROWS = [
   {
-    icon: Search,
-    title: "벤더 분산 제거",
-    before: "벤더 사이트 6~10곳 반복 검색, 건당 30분 이상",
-    after: "비교 가능한 후보 리스트를 즉시 정리",
+    step: "1. 검색",
+    before: "벤더 사이트를 개별 방문하고 수기로 후보를 정리",
+    after: "통합 검색으로 후보를 한 화면에서 바로 비교",
   },
   {
-    icon: GitCompare,
-    title: "판단 속도 향상",
-    before: "엑셀에서 수기로 스펙·가격 정리, 공유 불가",
+    step: "2. 비교",
+    before: "엑셀에서 수기로 스펙·가격을 정리, 팀 공유 불가",
     after: "비교 워크스페이스에서 팀 단위 실시간 판단",
   },
   {
-    icon: FileText,
-    title: "커뮤니케이션 구조화",
-    before: "이메일로 견적 요청, 회신 추적 불가",
-    after: "입찰·견적 상태와 SLA를 연결 추적",
+    step: "3. 견적 요청",
+    before: "벤더별 양식과 이메일로 개별 요청, 회신 추적 불가",
+    after: "비교 결과에서 바로 견적 요청서 생성·전송",
   },
   {
-    icon: ShieldCheck,
-    title: "상태 추적 강화",
-    before: "승인·발주·입고를 별도 관리, 빈번한 누락",
-    after: "승인 → 발주 → 입고 → 재고 상태 실시간 연결",
+    step: "4. 발주",
+    before: "승인 프로세스가 구두·문서 기반, 누락 빈번",
+    after: "승인 라인 → 발주 전환까지 한 흐름으로 연결",
   },
   {
-    icon: Package,
-    title: "재고 운영 연동",
-    before: "구매 완료 후 재고 수동 등록, Lot·유효기간 누락",
-    after: "입고와 재고 위험을 같은 흐름에서 반영",
+    step: "5. 입고",
+    before: "입고 확인을 수기로 처리, 수량·Lot 누락 가능",
+    after: "입고 시 자동 반영, 부분 입고·이슈 즉시 처리",
+  },
+  {
+    step: "6. 재고 운영",
+    before: "구매 후 재고 수동 등록, Lot·유효기간 관리 어려움",
+    after: "요청–발주–입고–재고 이력이 하나로 연결",
   },
 ];
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#0A121C", borderBottom: "1px solid #1E2D40" }}>
-      <div className="max-w-6xl mx-auto px-4 md:px-6">
-        <div className="mb-12">
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#10151C", borderBottom: "1px solid #232C3A" }}>
+      <div className="max-w-[1240px] mx-auto px-4 md:px-6">
+        <div className="mb-10">
           <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
             Operational Value
           </p>
@@ -50,43 +47,51 @@ export function PlatformFlowSection() {
             각 단계에서 무엇이 달라지는가
           </h2>
           <p className="text-xs md:text-sm text-[#BAC6D9] max-w-lg">
-            기존 방식의 병목을 LabAxis 운영 파이프라인이 어떻게 해소하는지 보여드립니다.
+            6단계 운영 파이프라인에서 기존 방식의 병목이 어떻게 해소되는지 보여드립니다.
           </p>
         </div>
 
-        <div className="space-y-3">
-          {OPS_VALUES.map((item) => {
-            const Icon = item.icon;
-            return (
-              <div
-                key={item.title}
-                className="rounded-lg p-4 md:p-5 transition-colors"
-                style={{ backgroundColor: "#131C28", border: "1px solid #26364C" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#172232"; e.currentTarget.style.borderColor = "#31506F"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#131C28"; e.currentTarget.style.borderColor = "#26364C"; }}
-              >
-                <div className="flex items-start gap-4">
-                  <Icon className="h-4 w-4 text-[#8794AA] flex-shrink-0 mt-1" strokeWidth={1.8} />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-semibold text-[#F3F7FF] mb-2">{item.title}</h3>
-                    <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4">
-                      <div className="flex-1">
-                        <p className="text-xs text-[#7F8CA3] leading-relaxed">
-                          <span className="font-medium">기존</span> {item.before}
-                        </p>
-                      </div>
-                      <ArrowRight className="hidden md:block h-3 w-3 text-[#26364C] flex-shrink-0" />
-                      <div className="flex-1">
-                        <p className="text-xs text-[#BAC6D9] leading-relaxed">
-                          <span className="text-[#5A94FF] font-medium">LabAxis</span> {item.after}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+        {/* Decision table header */}
+        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-2.5 mb-2 rounded-t-lg" style={{ backgroundColor: "#1A2029" }}>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8794AA]">단계</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#667389]">기존 방식</span>
+          <span />
+          <span className="text-[10px] font-bold uppercase tracking-wider text-[#5A94FF]">LABAXIS 도입 후</span>
+        </div>
+
+        {/* Decision rows */}
+        <div className="space-y-1">
+          {COMPARISON_ROWS.map((row) => (
+            <div
+              key={row.step}
+              className="rounded-lg p-4 md:p-0 md:grid md:grid-cols-[140px_1fr_40px_1fr] md:items-center transition-colors"
+              style={{ backgroundColor: "#1A2029", border: "1px solid #303A4A" }}
+              onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#1F2631"; e.currentTarget.style.borderColor = "#3A4A60"; }}
+              onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#1A2029"; e.currentTarget.style.borderColor = "#303A4A"; }}
+            >
+              {/* Step */}
+              <div className="md:px-5 md:py-4">
+                <span className="text-sm font-bold text-[#F3F7FF]">{row.step}</span>
               </div>
-            );
-          })}
+
+              {/* Before — muted */}
+              <div className="md:px-4 md:py-4 mt-2 md:mt-0">
+                <p className="text-xs text-[#667389] leading-relaxed">{row.before}</p>
+              </div>
+
+              {/* Arrow */}
+              <div className="hidden md:flex items-center justify-center">
+                <ArrowRight className="h-3.5 w-3.5 text-[#354459]" />
+              </div>
+
+              {/* After — strong payoff */}
+              <div className="md:px-4 md:py-4 mt-2 md:mt-0 md:rounded-r-lg" style={{ backgroundColor: "rgba(90,148,255,0.04)" }}>
+                <p className="text-xs text-[#F3F7FF] font-medium leading-relaxed">
+                  <span className="text-[#5A94FF] font-semibold">LabAxis</span>{" "}{row.after}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
