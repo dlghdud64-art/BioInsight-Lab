@@ -2,6 +2,8 @@ import { TestFlowProvider } from "../test/_components/test-flow-provider";
 import { MainHeader } from "../_components/main-header";
 import { StepNav } from "./step-nav";
 
+export const dynamic = "force-dynamic";
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <TestFlowProvider>
