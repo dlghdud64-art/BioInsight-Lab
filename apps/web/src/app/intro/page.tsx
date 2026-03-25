@@ -191,11 +191,11 @@ export default function IntroPage() {
             <div className="md:hidden space-y-2">
               {[
                 { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에 검색", color: "text-blue-400", dot: "bg-blue-600" },
-                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 자동 생성", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 즉시 생성", color: "text-slate-300", dot: "bg-slate-600" },
                 { num: 3, icon: FileText, title: "견적 요청", change: "이메일 수집 → 클릭 한 번으로 전송", color: "text-slate-300", dot: "bg-slate-600" },
-                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 자동 발주", color: "text-slate-300", dot: "bg-slate-600" },
-                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 입고 스캔으로 자동 반영", color: "text-slate-300", dot: "bg-slate-600" },
-                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 자동 추적", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 발주 연동", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 입고 스캔으로 즉시 반영", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 연동 추적", color: "text-slate-300", dot: "bg-slate-600" },
               ].map((step) => (
                 <div key={step.num} className="flex items-start gap-2.5 px-3 py-2.5 bg-pn rounded-lg border border-bd">
                   <div className={`shrink-0 w-5 h-5 rounded-full ${step.dot} text-slate-100 text-[10px] font-bold flex items-center justify-center mt-0.5`}>{step.num}</div>
@@ -211,11 +211,11 @@ export default function IntroPage() {
             <div className="hidden md:grid md:grid-cols-6 gap-3">
               {[
                 { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에", color: "text-blue-400", dot: "bg-blue-600" },
-                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 자동", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 즉시 생성", color: "text-slate-300", dot: "bg-slate-600" },
                 { num: 3, icon: FileText, title: "견적 요청", change: "이메일 → 클릭 한 번", color: "text-slate-300", dot: "bg-slate-600" },
                 { num: 4, icon: ShoppingCart, title: "발주", change: "수기 → 승인 후 발주", color: "text-slate-300", dot: "bg-slate-600" },
                 { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 → 스캔 반영", color: "text-slate-300", dot: "bg-slate-600" },
-                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 자동 추적", color: "text-slate-300", dot: "bg-slate-600" },
+                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 연동 추적", color: "text-slate-300", dot: "bg-slate-600" },
               ].map((step, i) => (
                 <div key={step.num} className="relative">
                   <div className="bg-pn border border-bd rounded-xl p-4 h-full flex flex-col items-center text-center">
@@ -297,7 +297,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["통합 검색으로 후보 한 번에 확인", "프로토콜 붙여넣기 → 필요 시약 자동 추출"].map((t, i) => (
+                    {["통합 검색으로 후보 한 번에 확인", "프로토콜 붙여넣기 → 필요 시약 정리"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -331,7 +331,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["통합 견적 요청 — 가격 비교표 자동 생성", "구매 이력·공급사 응답 통합 관리"].map((t, i) => (
+                    {["통합 견적 요청 — 가격 비교표 즉시 생성", "구매 이력·공급사 응답 통합 관리"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -365,7 +365,7 @@ export default function IntroPage() {
                 <div className="rounded-lg bg-pn border border-bd p-3">
                   <p className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider mb-1.5">LabAxis</p>
                   <ul className="space-y-1">
-                    {["실시간 예산 소진 현황 + 승인 라인 자동화", "Audit Trail로 구매 이력 전건 추적"].map((t, i) => (
+                    {["실시간 예산 소진 현황 + 승인 라인 설정", "Audit Trail로 구매 이력 전건 추적"].map((t, i) => (
                       <li key={i} className="flex items-start gap-1.5 text-xs text-blue-300 font-medium">
                         <CheckCircle2 className="h-3 w-3 text-blue-400 mt-0.5 flex-shrink-0" />{t}
                       </li>
@@ -402,19 +402,19 @@ export default function IntroPage() {
                   icon: CheckSquare,
                   iconColor: "text-slate-400",
                   title: "승인 라인",
-                  desc: "견적 요청·발주 전 승인 단계를 설정합니다. 금액 기준 자동 라우팅, 승인자 지정 및 에스컬레이션을 지원합니다.",
+                  desc: "견적 요청·발주 전 승인 단계를 설정합니다. 금액 기준 라우팅, 승인자 지정 및 에스컬레이션을 지원합니다.",
                 },
                 {
                   icon: ScrollText,
                   iconColor: "text-slate-400",
                   title: "Audit Trail",
-                  desc: "모든 구매 활동이 자동으로 기록됩니다. 누가, 언제, 무엇을 요청·승인·발주했는지 전건 추적합니다. GMP/GLP 감사 대비에 활용할 수 있습니다.",
+                  desc: "모든 구매 활동이 기록됩니다. 누가, 언제, 무엇을 요청·승인·발주했는지 전건 추적합니다. GMP/GLP 감사 대비에 활용할 수 있습니다.",
                 },
                 {
                   icon: Wallet,
                   iconColor: "text-slate-400",
                   title: "예산 통합",
-                  desc: "부서·프로젝트별 예산을 설정하고 실시간 소진 현황을 파악합니다. 예산 초과 시 자동 알림과 발주 차단을 지원합니다.",
+                  desc: "부서·프로젝트별 예산을 설정하고 실시간 소진 현황을 파악합니다. 예산 초과 시 알림과 발주 차단을 지원합니다.",
                 },
               ].map((item, i) => (
                 <div key={i} className="bg-pn border border-bd rounded-xl p-4 md:p-6 flex gap-4">

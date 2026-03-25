@@ -79,7 +79,7 @@ function MobileMenu() {
 const PIPELINE_STEPS = [
   { icon: Search, label: "검색", sub: "시약·장비 단일 검색" },
   { icon: GitCompare, label: "비교", sub: "벤더별 스펙 가격 비교" },
-  { icon: FileText, label: "견적", sub: "견적 요청 및 자동 문서" },
+  { icon: FileText, label: "견적", sub: "견적 요청 초안 준비" },
   { icon: ShoppingCart, label: "발주", sub: "승인 라인 및 연동" },
   { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
 ];
