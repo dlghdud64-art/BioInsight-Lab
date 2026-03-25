@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AIInsightCard } from "@/components/ai-insight-card";
 import { useCompareStore } from "@/lib/store/compare-store";
-import { generateSearchSummary, generateDockRecommendation, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
+import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
 
 export default function SearchPage() {
   const {
@@ -136,16 +136,6 @@ export default function SearchPage() {
     [quoteItems, compareIds, products],
   );
 
-  // AI Dock Recommendation
-  const aiDockRec = useMemo<string | null>(
-    () => (compareIds.length > 0 || quoteItems.length > 0) ? generateDockRecommendation({
-      compareIds,
-      quoteItemIds: quoteItems.map((q: any) => q.productId),
-      products,
-    }) : null,
-    [compareIds, quoteItems, products],
-  );
-
   // AI Next Step Summary
   const aiSearchSummary = useMemo<SearchSummaryLine[]>(
     () => hasSearched && products.length > 0 ? generateSearchSummary({
@@ -174,52 +164,68 @@ export default function SearchPage() {
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
-            {/* Result header strip — operating command chrome */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
-              <div className="flex items-center gap-2 flex-wrap">
-                {/* Mode badge */}
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                  quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-400" :
-                  compareIds.length > 0 ? "bg-blue-600/15 text-blue-400" :
-                  "bg-pn text-slate-400"
-                }`}>
-                  {quoteItems.length > 0 ? "견적 준비" : compareIds.length > 0 ? "비교 준비" : "소싱"}
-                </span>
-                <span className="text-xs font-semibold text-slate-300">
-                  {isSearchLoading ? "검색 중..." : `결과 ${products.length}건`}
-                </span>
+            {/* ═══ Operating Status Bar — 2줄 구조 ═══ */}
+            <div className="px-4 py-2 border-b border-bd bg-el/50 space-y-0.5">
+              {/* 1행: 사실 정보 — 결과 수, 필터, 검색어 */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                  <span className="font-medium text-slate-300">
+                    {isSearchLoading ? "검색 중..." : `결과 ${products.length}건`}
+                  </span>
+                  {activeFilterCount > 0 && (
+                    <span>· 필터 {activeFilterCount}개 적용</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  {/* Desktop filter trigger */}
+                  <Sheet>
+                    <SheetTrigger asChild>
+                      <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
+                        <SlidersHorizontal className="h-3 w-3" />
+                        필터
+                        {activeFilterCount > 0 && (
+                          <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
+                        )}
+                      </button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="w-[280px] p-4">
+                      <SearchPanel />
+                    </SheetContent>
+                  </Sheet>
+                  {searchQuery && (
+                    <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+                      <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
+                        <TrendingDown className="h-3 w-3" />
+                        재고
+                      </button>
+                    </Link>
+                  )}
+                </div>
+              </div>
+              {/* 2행: 작업 상태 + 다음 행동 방향 */}
+              <div className="flex items-center gap-1.5 text-[11px]">
                 {compareIds.length > 0 && (
-                  <span className="text-[10px] text-blue-400 font-medium">· 비교 {compareIds.length}</span>
+                  <span className="text-blue-400 font-medium">비교 후보 {compareIds.length}</span>
+                )}
+                {compareIds.length > 0 && quoteItems.length > 0 && (
+                  <span className="text-slate-600">·</span>
                 )}
                 {quoteItems.length > 0 && (
-                  <span className="text-[10px] text-emerald-400 font-medium">· 견적 {quoteItems.length}</span>
+                  <span className="text-emerald-400 font-medium">견적 후보 {quoteItems.length}</span>
                 )}
-                <span className="text-[10px] text-slate-500 hidden md:inline">· 정렬: 관련도</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                {/* Desktop filter trigger */}
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
-                      <SlidersHorizontal className="h-3 w-3" />
-                      필터
-                      {activeFilterCount > 0 && (
-                        <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
-                      )}
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[280px] p-4">
-                    <SearchPanel />
-                  </SheetContent>
-                </Sheet>
-                {searchQuery && (
-                  <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-                    <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
-                      <TrendingDown className="h-3 w-3" />
-                      재고
-                    </button>
-                  </Link>
+                {(compareIds.length > 0 || quoteItems.length > 0) && (
+                  <span className="text-slate-600">·</span>
                 )}
+                <span className="text-slate-300">
+                  {(() => {
+                    if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
+                    if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
+                    if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
+                    if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
+                    if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
+                    return "";
+                  })()}
+                </span>
               </div>
             </div>
 
@@ -499,13 +505,6 @@ export default function SearchPage() {
               )}
             </div>
 
-            {/* AI dock recommendation */}
-            {aiDockRec && (
-              <div className="hidden md:flex items-center gap-1.5 text-[10px] text-slate-300">
-                <span className="text-slate-500">→</span>
-                <span>{aiDockRec}</span>
-              </div>
-            )}
             {/* Spacer + clear all */}
             {(compareIds.length > 0 || quoteItems.length > 0) && (
               <>
