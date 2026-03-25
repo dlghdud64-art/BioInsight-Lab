@@ -67,6 +67,22 @@ export function SourcingContextRail({
         </Button>
       </div>
 
+      {/* Membership 상태 라벨 */}
+      {(isInCompare || isInRequest) && (
+        <div className="flex items-center gap-1.5 px-4 py-1.5 border-b border-bd/50 bg-pn/50">
+          {isInCompare && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-blue-600/10 text-blue-400 border border-blue-600/20">
+              <GitCompare className="h-3 w-3" />비교 후보에 포함됨
+            </span>
+          )}
+          {isInRequest && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-600/10 text-emerald-400 border border-emerald-600/20">
+              <FileText className="h-3 w-3" />견적 후보에 포함됨
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Rail 본문 — 스크롤, shared detail summary 재사용 */}
       <div className="flex-1 overflow-y-auto">
         <ProductDetailSummary
