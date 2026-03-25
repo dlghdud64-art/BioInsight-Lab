@@ -60,7 +60,9 @@ export default function SearchPage() {
   const { getDisplayName: getStoredName } = useCompareStore();
   const { data: session } = useSession();
   const router = useRouter();
-  const [railProduct, setRailProduct] = useState<any>(null);
+  // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
+  const [activeResultId, setActiveResultId] = useState<string | null>(null);
+  const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
@@ -115,7 +117,7 @@ export default function SearchPage() {
 
   // ── Step 2 상태 정책: query 변경 시 activeResultId 초기화 ──
   useEffect(() => {
-    setRailProduct(null);
+    setActiveResultId(null);
     setAiDismissedHash(null); // 새 검색 시 AI 제안 다시 노출
   }, [searchQuery]);
 
@@ -265,7 +267,7 @@ export default function SearchPage() {
                       const existing = quoteItems.find((q: any) => q.productId === product.id);
                       if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
                     })}
-                    onSelect={() => setRailProduct(product)}
+                    onSelect={() => setActiveResultId(product.id)}
                   />
                 ))
               ) : (
@@ -290,7 +292,7 @@ export default function SearchPage() {
                   const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
                   if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(railProduct); }
                 })}
-                onClose={() => setRailProduct(null)}
+                onClose={() => setActiveResultId(null)}
                 onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
                 onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
                 compareCount={compareIds.length}

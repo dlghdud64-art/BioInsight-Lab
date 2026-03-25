@@ -82,6 +82,8 @@ export default function TestComparePage() {
   });
   const [editingLeadTime, setEditingLeadTime] = useState<{ productId: string; vendorIndex: number } | null>(null);
   const [tempLeadTime, setTempLeadTime] = useState<string>("");
+  // ── Step 3: compareSessionId — compareIds 기반 세션 식별자 ──
+  const compareSessionId = useMemo(() => `cs_${compareIds.slice().sort().join("_")}`, [compareIds]);
   // ── Step 3 상태 분리: activeCompareItemId (rail용) + selectedDecisionItemId (기준안) ──
   const [activeCompareItemId, setActiveCompareItemId] = useState<string | null>(null);
   const [selectedDecisionItemId, _setSelectedDecisionItemId] = useState<string | null>(() => {
@@ -1284,10 +1286,10 @@ export default function TestComparePage() {
 
       {/* ═══ Review Center Work Window ═══ */}
       {reviewMode && products.length >= 2 && (() => {
-        // 기준안이 있으면 기준안, 없으면 scenario 정렬 1등을 추천안으로
+        // 기준안이 있으면 기준안 기준으로 handoff. 없으면 추천안만 표시 (자동 확정 금지)
         const recommended = selectedDecisionItemId
-          ? products.find((p: any) => p.id === selectedDecisionItemId) || products[0]
-          : products[0];
+          ? products.find((p: any) => p.id === selectedDecisionItemId) ?? null
+          : null;
         const recVendor = recommended?.vendors?.[0];
         const recPrice = recVendor?.priceInKRW || 0;
         const rejected = products.slice(1);
@@ -1464,16 +1466,17 @@ export default function TestComparePage() {
                 <div className="flex-1" />
                 <div className="px-5 py-4 border-t border-bd space-y-2" style={{ backgroundColor: '#434548' }}>
                   <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
-                    disabled={!allResolved}
+                    disabled={!allResolved || !recommended}
                     onClick={() => {
-                      products.forEach((p: any) => addProductToQuote(p));
-                      trackEvent("compare_review_handoff", { product_count: products.length, note: !!reviewNote });
-                      toast({ title: "견적관리 워크큐로 전달 준비 완료", description: `${products.length}개 제품이 견적 리스트에 추가되었습니다` });
+                      if (!recommended) return;
+                      addProductToQuote(recommended);
+                      trackEvent("compare_review_handoff", { selectedDecisionItemId: recommended.id, note: !!reviewNote });
+                      toast({ title: "견적 리스트에 추가됨", description: recommended.name });
                       setReviewMode(false);
                       router.push("/app/quote");
                     }}>
                     <Send className="h-3 w-3 mr-1.5" />
-                    검토 완료 후 Workqueue로 보내기
+                    {recommended ? "기준안 견적 전환" : "기준안 선택 필요"}
                   </Button>
                   <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd" onClick={() => setReviewMode(false)}>
                     비교로 돌아가기
@@ -1492,14 +1495,15 @@ export default function TestComparePage() {
                   }
                 </div>
                 <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40"
-                  disabled={!allResolved}
+                  disabled={!allResolved || !recommended}
                   onClick={() => {
-                    products.forEach((p: any) => addProductToQuote(p));
-                    toast({ title: "전달 준비 완료", description: `${products.length}개 제품 추가됨` });
+                    if (!recommended) return;
+                    addProductToQuote(recommended);
+                    toast({ title: "견적 전환 완료", description: recommended.name });
                     setReviewMode(false);
                     router.push("/app/quote");
                   }}>
-                  Workqueue로 보내기
+                  {recommended ? "기준안 견적 전환" : "기준안 선택 필요"}
                 </Button>
               </div>
             </div>
