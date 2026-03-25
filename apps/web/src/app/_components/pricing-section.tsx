@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="py-8 md:py-10 border-b border-[#2a2a2e] bg-[#111114] scroll-mt-14">
+    <section id="pricing" className="py-8 md:py-10 border-b border-slate-800 scroll-mt-14">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
           요금 & 도입
         </h2>
         <div className="md:grid md:grid-cols-3 md:gap-4 md:items-start overflow-x-auto snap-x snap-mandatory scroll-pl-4 scroll-pr-4 flex md:block gap-3 pb-2 md:pb-4">
 
-          {/* Starter (Free) — 시각적으로 약하게 */}
-          <Card className="border border-[#2a2a2e] bg-[#111114] rounded-lg min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
+          {/* Starter (Free) */}
+          <Card className="border border-slate-800 bg-slate-900 rounded-lg min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <CardTitle className="text-sm text-slate-500">Starter</CardTitle>
@@ -24,7 +24,7 @@ export function PricingSection() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
-              <div className="text-xs font-semibold text-gray-400 bg-[#222226] rounded px-2 py-1 inline-block">
+              <div className="text-xs font-semibold text-slate-500 bg-slate-800 rounded px-2 py-1 inline-block">
                 등록 품목 최대 10개 (체험용)
               </div>
               <ul className="space-y-1 text-xs text-slate-500 list-disc list-inside">
@@ -34,7 +34,7 @@ export function PricingSection() {
                 <li>로그인 없이 체험 가능</li>
               </ul>
               <Link href="/auth/signin?callbackUrl=/dashboard" className="block mt-3">
-                <Button variant="outline" size="sm" className="w-full text-xs text-gray-500 border-gray-300 hover:bg-[#222226]">
+                <Button variant="outline" size="sm" className="w-full text-xs text-slate-400 border-slate-700 hover:bg-slate-800 bg-transparent">
                   무료로 찍어보기
                 </Button>
               </Link>
@@ -42,7 +42,7 @@ export function PricingSection() {
           </Card>
 
           {/* Team */}
-          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-[#333338] hover:shadow-sm transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
+          <Card className="border border-slate-800 bg-slate-900 rounded-lg hover:border-slate-700 transition-all min-w-[85vw] md:min-w-0 snap-center flex-shrink-0 md:flex-shrink">
             <CardHeader className="p-3">
               <div className="flex items-center justify-between mb-1">
                 <CardTitle className="text-sm text-slate-100">Team 플랜</CardTitle>
@@ -52,7 +52,7 @@ export function PricingSection() {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2">
-              <div className="text-xs font-semibold text-slate-600 bg-[#222226] rounded px-2 py-1 inline-block">
+              <div className="text-xs font-semibold text-slate-300 bg-slate-800 rounded px-2 py-1 inline-block">
                 등록 품목 최대 30개
               </div>
               <ul className="space-y-1 text-xs text-slate-400 list-disc list-inside">
@@ -76,7 +76,7 @@ export function PricingSection() {
                 추천
               </Badge>
             </div>
-            <Card className="border-2 border-blue-600 bg-[#1a1a1e] rounded-lg shadow-xl ring-2 ring-blue-600 ring-offset-2 h-full">
+            <Card className="border-2 border-blue-500/30 bg-slate-900 rounded-lg shadow-lg ring-2 ring-blue-500/20 ring-offset-2 ring-offset-slate-950 h-full">
               <CardHeader className="p-3 pt-5">
                 <div className="flex items-center justify-between mb-1">
                   <CardTitle className="text-sm text-slate-100">Business / Enterprise</CardTitle>

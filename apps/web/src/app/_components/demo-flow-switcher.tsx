@@ -26,7 +26,7 @@ const STEPS = [
     description:
       "필요한 제품들을 선택하여 비교하고, 가격과 수량을 입력하면 견적 요청 리스트가 자동으로 생성됩니다. 수량과 비교를 조정하면 리스트가 자동으로 업데이트됩니다.",
     ctaLabel: "비교하러 가기",
-    href: "/test/quote",
+    href: "/app/quote",
   },
   {
     id: "groupware",
@@ -36,7 +36,7 @@ const STEPS = [
     description:
       "생성된 견적 요청 리스트를 TSV/엑셀 형식으로 복사하여 그룹웨어 구매 요청 양식에 붙여넣을 수 있습니다. 기존 구매 프로세스와 동일한 형식으로 제공됩니다.",
     ctaLabel: "그룹웨어로 리스트 붙여넣기",
-    href: "/test/quote/request",
+    href: "/app/quote/request",
   },
 ];
 

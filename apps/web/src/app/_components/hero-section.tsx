@@ -4,15 +4,11 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { HeroDemoFlowPanel } from "./home/hero-demo-flow-panel";
 import { ArrowRight } from "lucide-react";
-import { useSession } from "next-auth/react";
 
 // HeroSection 컴포넌트 - 업무툴 스타일
 export function HeroSection() {
-  const { data: session } = useSession();
-  const isLoggedIn = !!session?.user;
-
   return (
-    <section className="border-b border-[#2a2a2e] bg-gradient-to-b from-white via-slate-50/30 to-white py-8 md:py-16 lg:py-20">
+    <section className="border-b border-bd bg-gradient-to-b from-white via-slate-50/30 to-white py-8 md:py-16 lg:py-20">
       <div className="mx-auto max-w-6xl px-4 md:px-6 grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)] lg:items-center">
         {/* 왼쪽: 제목 / 설명 / 버튼들 */}
         <div className="space-y-3 md:space-y-5">
@@ -23,28 +19,25 @@ export function HeroSection() {
                 한 번에
               </span>
             </h1>
-            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-slate-300 max-w-xl">
+            <p className="text-base md:text-lg lg:text-xl leading-relaxed text-slate-700 max-w-xl">
               구매 준비와 견적 요청 리스트를 <span className="font-semibold text-slate-100">자동으로 정리</span>하여{" "}
               <span className="font-semibold text-emerald-700 whitespace-nowrap">90% 시간을 절약</span>하세요.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 md:gap-3">
-            <Link href={isLoggedIn ? "/app/search" : "/search"} className="flex-1 sm:flex-initial">
+            <Link href="/search" className="flex-1 sm:flex-initial">
               <Button className="w-full sm:w-auto bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg hover:shadow-xl transition-all text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]">
-                {isLoggedIn ? "검색 시작하기" : "무료로 시작하기"}
+                검색 시작하기
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
-            <Link
-              href={isLoggedIn ? "/app/dashboard" : "/auth/signin?callbackUrl=/app/dashboard"}
-              className="flex-1 sm:flex-initial"
-            >
+            <Link href="/search" className="flex-1 sm:flex-initial">
               <Button
                 variant="outline"
-                className="w-full sm:w-auto border-2 border-[#333338] bg-[#1a1a1e] text-slate-300 hover:bg-[#222226] hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
+                className="w-full sm:w-auto border-2 border-bs bg-pn text-slate-700 hover:bg-pg hover:border-slate-400 text-sm md:text-base px-5 md:px-6 py-5 md:py-6 h-auto min-h-[44px]"
               >
-                {isLoggedIn ? "대시보드" : "운영 콘솔 시작하기"}
+                견적 요청 리스트
               </Button>
             </Link>
           </div>

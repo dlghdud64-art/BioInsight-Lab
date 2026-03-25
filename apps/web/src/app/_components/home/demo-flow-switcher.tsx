@@ -74,7 +74,7 @@ export function DemoFlowSwitcherSection() {
   return (
     <section
       id="demo-flow-section"
-      className="border-y border-slate-100 bg-[#111114]/60 py-10"
+      className="border-y border-slate-100 bg-pg/60 py-10"
     >
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4">
         <header className="text-center space-y-1">
@@ -87,7 +87,7 @@ export function DemoFlowSwitcherSection() {
         </header>
 
         <div className="w-full max-w-xl space-y-4">
-          <div className="inline-flex w-full rounded-full border border-[#2a2a2e] bg-[#1a1a1e]/80 p-1 text-xs shadow-sm">
+          <div className="inline-flex w-full rounded-full border border-bd bg-pn/80 p-1 text-xs shadow-sm">
             {STEPS.map((step) => {
               const selected = step.id === active;
               return (
@@ -112,9 +112,9 @@ export function DemoFlowSwitcherSection() {
             })}
           </div>
 
-          <Card className="border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
+          <Card className="border-bd bg-pn shadow-sm">
             <CardHeader className="flex flex-row items-start gap-3">
-              <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-[#222226]">
+              <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-el">
                 {active === "search" && <Search className="h-4 w-4" />}
                 {active === "compare" && <ListChecks className="h-4 w-4" />}
                 {active === "groupware" && (
@@ -150,9 +150,9 @@ export function DemoFlowSwitcherSection() {
                       if (current.id === "search") {
                         window.location.href = "/search";
                       } else if (current.id === "compare") {
-                        window.location.href = "/test/quote";
+                        window.location.href = "/search";
                       } else {
-                        window.location.href = "/test/quote/request";
+                        window.location.href = "/search";
                       }
                     }}
                   >

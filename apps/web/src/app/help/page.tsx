@@ -13,12 +13,12 @@ const guides = [
   {
     title: "제품 비교하기",
     description: "여러 제품을 선택하여 가격, 스펙, 납기를 비교하는 방법",
-    href: "/test/compare",
+    href: "/search",
   },
   {
     title: "품목 리스트 만들기",
     description: "구매 요청 리스트를 만들고 TSV/CSV로 내보내는 방법",
-    href: "/test/quote",
+    href: "/search",
   },
   {
     title: "프로토콜 분석",

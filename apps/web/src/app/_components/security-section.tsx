@@ -4,13 +4,13 @@ import { Shield, Lock, Server } from "lucide-react";
 // SecuritySection 컴포넌트 - 연구/구매 워크벤치 스타일
 export function SecuritySection() {
   return (
-    <section id="security" className="py-8 md:py-10 border-b border-[#2a2a2e] bg-[#1a1a1e]">
+    <section id="security" className="py-8 md:py-10 border-b border-bd bg-pn">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
         <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
           보안
         </h2>
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 scrollbar-hide md:grid md:grid-cols-3 md:gap-6 md:overflow-visible md:pb-0 -mx-4 px-4 md:mx-0 md:px-0">
-          <Card className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
+          <Card className="bg-pn border border-bd rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
             <CardContent className="flex items-start gap-2.5 p-6">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-100 flex-shrink-0">
                 <Shield className="h-3.5 w-3.5 text-emerald-600" strokeWidth={1.5} />
@@ -24,10 +24,10 @@ export function SecuritySection() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
+          <Card className="bg-pn border border-bd rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
             <CardContent className="flex items-start gap-2.5 p-6">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#222226] flex-shrink-0">
-                <Lock className="h-3.5 w-3.5 text-slate-300" strokeWidth={1.5} />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-el flex-shrink-0">
+                <Lock className="h-3.5 w-3.5 text-slate-700" strokeWidth={1.5} />
               </div>
               <div className="space-y-0.5 min-w-0 flex-1">
                 <h3 className="text-sm font-semibold text-slate-100">공유 링크 보안</h3>
@@ -38,7 +38,7 @@ export function SecuritySection() {
             </CardContent>
           </Card>
 
-          <Card className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
+          <Card className="bg-pn border border-bd rounded-xl shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-200 min-w-[85%] snap-center shrink-0 md:min-w-0 md:shrink">
             <CardContent className="flex items-start gap-2.5 p-6">
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-indigo-100 flex-shrink-0">
                 <Server className="h-3.5 w-3.5 text-indigo-600" strokeWidth={1.5} />
