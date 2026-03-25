@@ -81,35 +81,35 @@ div.quote-table td.no-column-cell {
    ============================================ */
 @layer base {
   :root {
-    /* LabAxis Surface Hierarchy — cool gray, dark-only */
-    --surface-shell: #161619;
-    --surface-page: #1d1d22;
-    --surface-panel: #25252b;
-    --surface-elevated: #2d2d34;
-    --surface-strong: #36363e;
-    --border-default: #36363e;
-    --border-strong: #42424b;
+    /* LabAxis Surface Hierarchy — dark-only */
+    --surface-shell: #242628;
+    --surface-page: #2b2d30;
+    --surface-panel: #333538;
+    --surface-elevated: #3c3e42;
+    --surface-strong: #46484c;
+    --border-default: #46484c;
+    --border-strong: #535559;
 
-    /* shadcn/ui semantic tokens (HSL) — neutral cool gray */
-    --background: 250 5% 8%;
-    --foreground: 210 40% 98%;
-    --card: 250 5% 14%;
-    --card-foreground: 210 40% 98%;
-    --popover: 250 5% 14%;
-    --popover-foreground: 210 40% 98%;
-    /* Primary: 딥 블루 — CTA/active/focus 전용 */
-    --primary: 221.2 83.2% 53.3%;
+    /* shadcn/ui semantic tokens (HSL) — neutral graphite, minimal tint */
+    --background: 220 3% 14%;
+    --foreground: 0 0% 93%;
+    --card: 220 3% 19%;
+    --card-foreground: 0 0% 93%;
+    --popover: 220 3% 16%;
+    --popover-foreground: 0 0% 93%;
+    /* Primary: muted blue accent (채도 낮춤) */
+    --primary: 221 70% 50%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 250 4% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 250 4% 17%;
-    --muted-foreground: 250 4% 64%;
-    --accent: 250 4% 17%;
-    --accent-foreground: 210 40% 98%;
+    --secondary: 220 2% 22%;
+    --secondary-foreground: 0 0% 93%;
+    --muted: 220 2% 22%;
+    --muted-foreground: 220 2% 55%;
+    --accent: 220 2% 22%;
+    --accent-foreground: 0 0% 95%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
-    --border: 250 4% 17%;
-    --input: 250 4% 17%;
+    --border: 240 4% 24%;
+    --input: 240 4% 20%;
     --ring: 221.2 83.2% 53.3%;
     /* Radius: 통일된 둥글기 (0.5rem = 8px) */
     --radius: 0.5rem;
@@ -165,7 +165,7 @@ div.quote-table td.no-column-cell {
 /* 카드 레이아웃 고정 및 텍스트 유동성 */
 @layer components {
   .stat-card-fixed {
-    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md bg-surface-panel border-[--border-default];
+    @apply h-[160px] flex flex-col justify-between transition-all hover:shadow-md bg-pn border-bd;
   }
   .text-auto-scale {
     @apply truncate text-[clamp(0.875rem,3vw,1.5rem)] font-bold tracking-tighter;
@@ -199,16 +199,4 @@ div.quote-table td.no-column-cell {
   .hover\:bg-st:hover { background-color: var(--surface-strong); }
   .hover\:bg-pn:hover { background-color: var(--surface-panel); }
   .bg-sh\/95 { background-color: color-mix(in srgb, var(--surface-shell) 95%, transparent); }
-}
-
-/* ── Reduced Motion ── */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }

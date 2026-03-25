@@ -147,19 +147,19 @@ export function toStepFunnel(stats: OverviewStatsRaw): { stages: StepFunnelStage
         key: "step1", title: "검토 큐", count: stats.totalReview,
         description: "입력 해석과 항목 검토가 진행 중입니다",
         subStatus: `검토 필요 ${stats.reviewNeeded} · 실패 ${stats.matchFailed}`,
-        ctaLabel: "검토 큐 열기", linkHref: "/test/search",
+        ctaLabel: "검토 큐 열기", linkHref: "/app/search",
       },
       {
         key: "step2", title: "비교 큐", count: stats.totalCompare,
         description: "후보 선택과 비교 확정이 필요한 항목입니다",
         subStatus: `선택 필요 ${stats.compareNeeded}`,
-        ctaLabel: "비교 큐 열기", linkHref: "/test/compare",
+        ctaLabel: "비교 큐 열기", linkHref: "/app/compare",
       },
       {
         key: "step3", title: "견적 초안", count: stats.totalQuoteDraft,
         description: "제출 전 수량·단위·예산을 확인할 수 있습니다",
         subStatus: `제출 가능 ${stats.approved}`,
-        ctaLabel: "견적 초안 열기", linkHref: "/test/quote",
+        ctaLabel: "견적 초안 열기", linkHref: "/app/quote",
       },
     ],
   };

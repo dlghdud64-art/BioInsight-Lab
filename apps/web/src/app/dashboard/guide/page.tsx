@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
@@ -31,6 +33,10 @@ import {
   Mail,
   FileUp,
   Wrench,
+  ClipboardPaste,
+  RotateCcw,
+  CreditCard,
+  MessageCircle,
 } from "lucide-react";
 
 /* ─────────────────────────── 최근 업데이트 ─────────────────────────── */
@@ -60,7 +66,7 @@ const RECENT_UPDATES = [
     date: "2026-02-28",
     tag: "수정",
     tagColor: "bg-amber-500/20 text-amber-400",
-    title: "일일요약 이메일 발송 안정화",
+    title: "하루 한 번 요약 이메일 발송 안정화",
     desc: "일부 조직에서 발송이 누락되던 문제가 해결되었습니다.",
   },
 ];
@@ -202,10 +208,10 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     id: "inv-2",
     category: "inventory",
     icon: Shield,
-    title: "안전재고 및 유효기간 관리",
-    what: "품목별 안전재고 기준을 설정하고, 유효기간 임박 시 자동 알림을 받습니다.",
+    title: "안전재고·유효기간·재주문",
+    what: "품목별 안전재고 기준을 설정하고, 유효기간 임박 시 자동 알림을 받습니다. 재고 부족 품목은 재주문 요청으로 바로 연결됩니다.",
     when: "재고 부족이나 기한 만료를 사전에 방지하고 싶을 때",
-    keyInputs: ["안전재고 수량", "알림 기준일"],
+    keyInputs: ["안전재고 수량", "알림 기준일", "재주문 수량"],
     nextAction: "부족 품목 자동 견적 요청",
     link: { label: "재고 관리 열기", href: "/dashboard/inventory" },
   },
@@ -219,6 +225,17 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     keyInputs: ["바코드 (카메라 스캔)"],
     nextAction: "수량 확인 후 입고 완료",
     link: { label: "스캔 입고 열기", href: "/dashboard/inventory/scan" },
+  },
+  {
+    id: "inv-4",
+    category: "inventory",
+    icon: Brain,
+    title: "재고 운영 도우미 (AI 어시스턴트)",
+    what: "AI가 Lot 번호 추적, 유효기간 만료 예측, 사용량 기반 재주문 시점을 제안합니다. 재고 패널 하단의 어시스턴트 버튼으로 실행합니다.",
+    when: "재고 운영에 대한 조언이나 자동화된 추천이 필요할 때",
+    keyInputs: ["현재 재고 데이터 (자동 참조)"],
+    nextAction: "추천 사항 검토 → 재주문/폐기 결정",
+    link: { label: "재고 관리 열기", href: "/dashboard/inventory" },
   },
 
   // ── 조직/권한 관리 ──
@@ -244,6 +261,17 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     nextAction: "승인 요청 테스트",
     link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" },
   },
+  {
+    id: "org-3",
+    category: "org-role",
+    icon: Shield,
+    title: "Owner / Admin / 일반 멤버 권한 차이",
+    what: "Owner는 조직당 1명으로 결제, 조직 삭제, 소유권 이전 등 최고 권한을 갖습니다. Admin은 멤버 초대·역할 변경·설정을 관리하지만 Owner 변경이나 조직 삭제는 불가합니다. Approver는 승인, Requester는 요청, Viewer는 조회만 가능합니다.",
+    when: "역할별 접근 범위를 확인하거나 변경해야 할 때",
+    keyInputs: [],
+    nextAction: "역할 변경은 조직 설정에서 수행",
+    link: { label: "조직 설정으로 이동", href: "/dashboard/organizations" },
+  },
 
   // ── 알림/설정/구독 ──
   {
@@ -251,20 +279,20 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     category: "notification",
     icon: Bell,
     title: "알림 채널 설정",
-    what: "이메일, 인앱 알림, 일일요약 등 알림 수신 방식을 선택합니다.",
+    what: "이메일, 인앱 알림, 하루 한 번 요약 등 알림 수신 방식을 선택합니다.",
     when: "중요 알림을 놓치고 싶지 않을 때",
     keyInputs: ["알림 유형별 ON/OFF", "수신 채널"],
-    nextAction: "일일요약 시간 설정",
+    nextAction: "하루 한 번 요약 시간 설정",
     link: { label: "알림 설정으로 이동", href: "/dashboard/settings" },
   },
   {
     id: "noti-2",
     category: "notification",
     icon: Mail,
-    title: "일일요약 이메일",
-    what: "하루 동안의 견적 변동, 재고 알림, 팀 활동을 요약한 이메일을 매일 받습니다.",
-    when: "매일 전체 현황을 간편하게 확인하고 싶을 때",
-    keyInputs: ["수신 시간 설정"],
+    title: "알림 전달 방식: 즉시 vs 하루 한 번 요약",
+    what: "견적 회신·재고 경고 등 긴급 알림은 즉시 이메일로 발송되고, 팀 활동·일반 변동은 하루 한 번 요약 이메일로 묶어 전달됩니다. 설정에서 어떤 항목을 즉시/요약에 포함할지 선택할 수 있습니다.",
+    when: "알림이 너무 많거나, 중요 알림만 즉시 받고 싶을 때",
+    keyInputs: ["즉시 알림 항목", "하루 한 번 요약 수신 시간"],
     nextAction: "요약 내용 커스터마이즈",
     link: { label: "알림 설정으로 이동", href: "/dashboard/settings" },
   },
@@ -277,6 +305,17 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     when: "플랜을 업그레이드하거나 해지를 검토할 때",
     keyInputs: [],
     nextAction: "플랜 비교 후 변경",
+    link: { label: "구독 관리로 이동", href: "/dashboard/settings/plans" },
+  },
+  {
+    id: "noti-4",
+    category: "notification",
+    icon: CreditCard,
+    title: "해지 및 의견 수집 흐름",
+    what: "구독 해지를 요청하면 해지 사유를 선택하는 간단한 설문이 표시됩니다. 해지 후에도 현재 결제 주기 종료까지 서비스가 유지되며, 90일간 데이터가 보관됩니다. 재구독 시 데이터가 복원됩니다.",
+    when: "구독 해지를 고려하거나 요금 부담을 줄이고 싶을 때",
+    keyInputs: [],
+    nextAction: "해지 사유 선택 → 확인 → 유예 기간 안내",
     link: { label: "구독 관리로 이동", href: "/dashboard/settings/plans" },
   },
 
@@ -295,6 +334,17 @@ const GUIDE_ENTRIES: GuideEntry[] = [
   {
     id: "ai-2",
     category: "ai-bom-pdf",
+    icon: ClipboardPaste,
+    title: "PDF 분석 실패 시 대체 경로 (텍스트 붙여넣기)",
+    what: "스캔본·암호화·손상 PDF 등으로 분석에 실패하면, 품목 목록을 직접 텍스트로 붙여넣어 동일한 BOM 추출 결과를 얻을 수 있습니다. 견적 생성 화면의 '텍스트 입력' 탭을 선택하세요.",
+    when: "PDF 분석이 실패하거나 이미지 기반 스캔 PDF를 사용할 때",
+    keyInputs: ["품목 목록 텍스트 (줄바꿈 구분)"],
+    nextAction: "AI 파싱 결과 확인 → 비교/견적 연결",
+    link: { label: "견적 생성 열기", href: "/dashboard/quotes" },
+  },
+  {
+    id: "ai-3",
+    category: "ai-bom-pdf",
     icon: Brain,
     title: "BOM 추출",
     what: "실험 프로토콜이나 논문 PDF에서 필요한 시약 목록(BOM)을 자동 추출합니다.",
@@ -304,7 +354,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     link: { label: "BOM 추출 시작", href: "/dashboard/quotes" },
   },
   {
-    id: "ai-3",
+    id: "ai-4",
     category: "ai-bom-pdf",
     icon: Sparkles,
     title: "AI 텍스트 대체",
@@ -354,7 +404,7 @@ const GUIDE_ENTRIES: GuideEntry[] = [
     category: "role-guide",
     icon: Shield,
     title: "관리자 (Owner)",
-    what: "조직 설정, 멤버 관리, 구독·결제, 보안 정책 등 시스템 전반을 관리합니다.",
+    what: "조직 설정, 멤버 관리, 구독·결제, 보안 정책 등 시스템 전반을 관리합니다. Owner는 조직당 1명으로, 결제·삭제·소유권 이전 등 최고 권한을 보유합니다.",
     when: "조직 레벨의 설정 변경이 필요할 때",
     keyInputs: [],
     nextAction: "조직 설정 → 멤버 → 구독 관리",
@@ -405,12 +455,12 @@ export default function GuidePage() {
           placeholder="가이드 검색 (예: 견적 요청, 재고, PDF 분석)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-[#232329] border-[#2a2a31] text-slate-100 placeholder:text-slate-500 focus:border-[#323239] focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-el border-bd text-slate-100 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
       {/* ── 최근 업데이트 ── */}
-      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] p-4 mb-6">
+      <div className="rounded-xl bg-pn border border-bd p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4 text-amber-400" />
           <h2 className="text-sm font-semibold text-slate-100">최근 업데이트</h2>
@@ -419,7 +469,7 @@ export default function GuidePage() {
           {RECENT_UPDATES.map((update, i) => (
             <div
               key={i}
-              className="flex items-start gap-3 rounded-lg bg-[#1f1f25] border border-[#2a2a31] px-3.5 py-3"
+              className="flex items-start gap-3 rounded-lg bg-pn border border-bd px-3.5 py-3"
             >
               <div className="flex flex-col items-start gap-1 flex-shrink-0">
                 <span className="text-[10px] text-slate-500 font-mono">{update.date}</span>
@@ -458,7 +508,7 @@ export default function GuidePage() {
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
                       ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] border border-transparent"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-pn border border-transparent"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
@@ -471,10 +521,10 @@ export default function GuidePage() {
             })}
 
             {/* 사이드바 하단 링크 */}
-            <div className="border-t border-[#2a2a31] mt-4 pt-4 space-y-1">
+            <div className="border-t border-bd mt-4 pt-4 space-y-1">
               <Link
                 href="/dashboard/faq"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
               >
                 <HelpCircle className="h-3.5 w-3.5 text-slate-500" />
                 자주 묻는 질문
@@ -482,7 +532,7 @@ export default function GuidePage() {
               </Link>
               <Link
                 href="/dashboard/support"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-[#1f1f25] transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
                 1:1 문의하기
@@ -508,7 +558,7 @@ export default function GuidePage() {
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     isActive
                       ? "bg-blue-600 text-white"
-                      : "bg-[#1f1f25] border border-[#2a2a31] text-slate-400 hover:text-slate-200"
+                      : "bg-pn border border-bd text-slate-400 hover:text-slate-200"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -541,7 +591,7 @@ export default function GuidePage() {
 
       {/* 데스크탑 하단 지원 */}
       <div className="hidden md:block mt-8 mb-4">
-        <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-5 py-5 flex items-center justify-between">
+        <div className="rounded-xl bg-pn border border-bd px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
               <HelpCircle className="h-4 w-4 text-blue-400" />
@@ -556,7 +606,7 @@ export default function GuidePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] hover:text-slate-100"
+                className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn hover:text-slate-100"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
                 자주 묻는 질문
@@ -587,7 +637,7 @@ function GuideContent({
 }) {
   if (entries.length === 0) {
     return (
-      <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] py-16 text-center">
+      <div className="rounded-xl bg-pn border border-bd py-16 text-center">
         <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
         <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
         <p className="text-xs text-slate-500">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
@@ -602,7 +652,7 @@ function GuideContent({
         <div className="flex items-center gap-2 mb-1">
           <activeCategoryMeta.icon className="h-4 w-4 text-blue-400" />
           <h2 className="text-sm font-semibold text-slate-200">{activeCategoryMeta.label}</h2>
-          <Badge className="text-[10px] px-1.5 py-0 bg-[#232329] border-[#2a2a31] text-slate-500">
+          <Badge className="text-[10px] px-1.5 py-0 bg-el border-bd text-slate-500">
             {entries.length}개 가이드
           </Badge>
         </div>
@@ -619,7 +669,7 @@ function GuideContent({
         return (
           <Card
             key={entry.id}
-            className="bg-[#1f1f25] border-[#2a2a31] hover:border-[#323239] transition-colors overflow-hidden"
+            className="bg-pn border-bd hover:border-bd transition-colors overflow-hidden"
           >
             <CardContent className="p-4 md:p-5">
               <div className="flex items-start gap-3.5">
@@ -656,7 +706,7 @@ function GuideContent({
                             <Badge
                               key={i}
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 border-[#323239] text-slate-400 bg-[#232329]"
+                              className="text-[10px] px-1.5 py-0 border-bd text-slate-400 bg-el"
                             >
                               {input}
                             </Badge>
@@ -680,7 +730,7 @@ function GuideContent({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#232329] hover:text-slate-100 hover:border-blue-500/30"
+                      className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-el hover:text-slate-100 hover:border-blue-500/30"
                     >
                       {entry.link.label}
                       <ArrowRight className="h-3 w-3" />
@@ -699,14 +749,14 @@ function GuideContent({
 /* ── 모바일 하단 지원 ── */
 function MobileSupportFooter() {
   return (
-    <div className="rounded-xl bg-[#1c1c21] border border-[#2a2a31] px-4 py-4 mt-6 mb-4">
+    <div className="rounded-xl bg-pn border border-bd px-4 py-4 mt-6 mb-4">
       <p className="text-sm font-semibold text-slate-200 mb-3">추가 도움이 필요하신가요?</p>
       <div className="flex flex-col gap-2">
         <Link href="/dashboard/faq">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs border-[#323239] text-slate-300 bg-transparent hover:bg-[#1f1f25] w-full"
+            className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn w-full"
           >
             <HelpCircle className="h-3.5 w-3.5" />
             자주 묻는 질문

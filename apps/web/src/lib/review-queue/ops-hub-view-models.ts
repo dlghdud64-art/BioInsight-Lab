@@ -211,9 +211,9 @@ export const DUMMY_OVERVIEW: OrganizationOverviewPageViewModel = {
   },
 
   kpis: [
-    { key: "reviewNeeded", title: "검토 필요", value: 9, description: "Step 1에서 확인이 필요한 항목입니다", statusLabel: "확인 필요", tone: "amber", linkHref: "/test/search" },
-    { key: "compareWaiting", title: "비교 확정 대기", value: 5, description: "후보 선택이 필요한 항목입니다", statusLabel: "처리 가능", tone: "blue", linkHref: "/test/compare" },
-    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: 4, description: "Step 3에서 바로 제출할 수 있습니다", statusLabel: "즉시 처리 가능", tone: "green", linkHref: "/test/quote" },
+    { key: "reviewNeeded", title: "검토 필요", value: 9, description: "Step 1에서 확인이 필요한 항목입니다", statusLabel: "확인 필요", tone: "amber", linkHref: "/search" },
+    { key: "compareWaiting", title: "비교 확정 대기", value: 5, description: "후보 선택이 필요한 항목입니다", statusLabel: "처리 가능", tone: "blue", linkHref: "/search" },
+    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: 4, description: "Step 3에서 바로 제출할 수 있습니다", statusLabel: "즉시 처리 가능", tone: "green", linkHref: "/search" },
     { key: "approvalPending", title: "승인 대기", value: 3, description: "검토 또는 제출 승인이 필요한 요청입니다", statusLabel: "우선 확인", tone: "red", linkHref: null },
     { key: "budgetWarnings", title: "예산 확인 필요", value: 2, description: "제출 전 예산 검토가 필요한 항목입니다", statusLabel: "검토 필요", tone: "amber", linkHref: null },
     { key: "inventoryWarnings", title: "재고 중복 가능", value: 1, description: "기존 재고와 중복 구매 가능성이 있습니다", statusLabel: "대조 필요", tone: "amber", linkHref: "/dashboard/inventory" },
@@ -223,18 +223,18 @@ export const DUMMY_OVERVIEW: OrganizationOverviewPageViewModel = {
 
   stepFunnel: {
     stages: [
-      { key: "step1", title: "검토 큐", count: 24, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 9 · 실패 3", linkHref: "/test/search", ctaLabel: "검토 큐 열기" },
-      { key: "step2", title: "비교 큐", count: 9, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 5 · 확정 4", linkHref: "/test/compare", ctaLabel: "비교 큐 열기" },
-      { key: "step3", title: "견적 초안", count: 6, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 4 · 보류 2", linkHref: "/test/quote", ctaLabel: "견적 초안 열기" },
+      { key: "step1", title: "검토 큐", count: 24, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 9 · 실패 3", linkHref: "/search", ctaLabel: "검토 큐 열기" },
+      { key: "step2", title: "비교 큐", count: 9, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 5 · 확정 4", linkHref: "/search", ctaLabel: "비교 큐 열기" },
+      { key: "step3", title: "견적 초안", count: 6, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 4 · 보류 2", linkHref: "/search", ctaLabel: "견적 초안 열기" },
     ],
   },
 
   alerts: {
     items: [
       { id: "a1", severity: "urgent", severityLabel: "긴급", title: "승인 지연", description: "3일 이상 대기 중인 승인 요청 1건", count: 1, linkHref: "#approvals", ctaLabel: "승인 요청 보기" },
-      { id: "a2", severity: "warning", severityLabel: "주의", title: "예산 확인 필요", description: "제출 전 검토가 필요한 견적 초안 2건", count: 2, linkHref: "/test/quote", ctaLabel: "예산 확인 항목 보기" },
+      { id: "a2", severity: "warning", severityLabel: "주의", title: "예산 확인 필요", description: "제출 전 검토가 필요한 견적 초안 2건", count: 2, linkHref: "/search", ctaLabel: "예산 확인 항목 보기" },
       { id: "a3", severity: "warning", severityLabel: "주의", title: "재고 중복 가능", description: "기존 보유 재고와 대조가 필요한 항목 1건", count: 1, linkHref: "/dashboard/inventory", ctaLabel: "재고 대조 항목 보기" },
-      { id: "a4", severity: "info", severityLabel: "안내", title: "매칭 실패 항목", description: "후보를 찾지 못한 항목 3건", count: 3, linkHref: "/test/search", ctaLabel: "검토 큐 확인" },
+      { id: "a4", severity: "info", severityLabel: "안내", title: "매칭 실패 항목", description: "후보를 찾지 못한 항목 3건", count: 3, linkHref: "/search", ctaLabel: "검토 큐 확인" },
     ],
     isEmpty: false,
     emptyMessage: "현재 우선 확인이 필요한 운영 경고가 없습니다",
@@ -242,10 +242,10 @@ export const DUMMY_OVERVIEW: OrganizationOverviewPageViewModel = {
 
   workQueue: {
     sections: [
-      { id: "wq1", title: "즉시 승인 가능", count: 7, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", linkHref: "/test/search", ctaLabel: "승인 가능한 항목 보기", details: [] },
-      { id: "wq2", title: "후보 선택 필요", count: 5, description: "비교 후 선택 확정이 필요한 항목입니다", linkHref: "/test/compare", ctaLabel: "비교 확정하러 가기", details: [{ label: "프로토콜 기반", count: 2 }, { label: "엑셀 기반", count: 3 }] },
-      { id: "wq3", title: "제출 직전 확인", count: 4, description: "견적 요청 전에 수량·단위·예산을 확인하세요", linkHref: "/test/quote", ctaLabel: "견적 초안 확인하기", details: [] },
-      { id: "wq4", title: "수동 확인 필요", count: 3, description: "자동 해석만으로는 확정할 수 없는 항목입니다", linkHref: "/test/search", ctaLabel: "수동 검토 항목 보기", details: [{ label: "제조사 확인 필요", count: 2 }, { label: "규격 불일치", count: 1 }] },
+      { id: "wq1", title: "즉시 승인 가능", count: 7, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", linkHref: "/search", ctaLabel: "승인 가능한 항목 보기", details: [] },
+      { id: "wq2", title: "후보 선택 필요", count: 5, description: "비교 후 선택 확정이 필요한 항목입니다", linkHref: "/search", ctaLabel: "비교 확정하러 가기", details: [{ label: "프로토콜 기반", count: 2 }, { label: "엑셀 기반", count: 3 }] },
+      { id: "wq3", title: "제출 직전 확인", count: 4, description: "견적 요청 전에 수량·단위·예산을 확인하세요", linkHref: "/search", ctaLabel: "견적 초안 확인하기", details: [] },
+      { id: "wq4", title: "수동 확인 필요", count: 3, description: "자동 해석만으로는 확정할 수 없는 항목입니다", linkHref: "/search", ctaLabel: "수동 검토 항목 보기", details: [{ label: "제조사 확인 필요", count: 2 }, { label: "규격 불일치", count: 1 }] },
     ],
     isEmpty: false,
     emptyMessage: "지금 바로 처리할 작업이 없습니다",
@@ -278,9 +278,9 @@ export const DUMMY_OVERVIEW: OrganizationOverviewPageViewModel = {
   },
 
   quickLinks: [
-    { href: "/test/search", label: "Step 1 검토 큐 열기" },
-    { href: "/test/compare", label: "Step 2 비교 큐 열기" },
-    { href: "/test/quote", label: "Step 3 견적 초안 열기" },
+    { href: "/search", label: "Step 1 검토 큐 열기" },
+    { href: "/search", label: "Step 2 비교 큐 열기" },
+    { href: "/search", label: "Step 3 견적 초안 열기" },
     { href: "#approvals", label: "승인 요청 보기" },
     { href: "#members", label: "멤버 및 접근 관리 보기" },
     { href: "#settings", label: "정책 및 설정 보기" },
@@ -297,9 +297,9 @@ export const DUMMY_OVERVIEW: OrganizationOverviewPageViewModel = {
 export const DUMMY_OVERVIEW_EMPTY: OrganizationOverviewPageViewModel = {
   organization: { id: "org-2", name: "신규 조직", plan: "starter", memberCount: 1, createdAt: new Date().toISOString() },
   kpis: [
-    { key: "reviewNeeded", title: "검토 필요", value: 0, description: "Step 1에서 확인이 필요한 항목입니다", statusLabel: "정상", tone: "green", linkHref: "/test/search" },
-    { key: "compareWaiting", title: "비교 확정 대기", value: 0, description: "후보 선택이 필요한 항목입니다", statusLabel: "정상", tone: "green", linkHref: "/test/compare" },
-    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: 0, description: "Step 3에서 바로 제출할 수 있습니다", statusLabel: "없음", tone: "slate", linkHref: "/test/quote" },
+    { key: "reviewNeeded", title: "검토 필요", value: 0, description: "Step 1에서 확인이 필요한 항목입니다", statusLabel: "정상", tone: "green", linkHref: "/search" },
+    { key: "compareWaiting", title: "비교 확정 대기", value: 0, description: "후보 선택이 필요한 항목입니다", statusLabel: "정상", tone: "green", linkHref: "/search" },
+    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: 0, description: "Step 3에서 바로 제출할 수 있습니다", statusLabel: "없음", tone: "slate", linkHref: "/search" },
     { key: "approvalPending", title: "승인 대기", value: 0, description: "검토 또는 제출 승인이 필요한 요청입니다", statusLabel: "정상", tone: "green", linkHref: null },
     { key: "budgetWarnings", title: "예산 확인 필요", value: 0, description: "제출 전 예산 검토가 필요한 항목입니다", statusLabel: "정상", tone: "green", linkHref: null },
     { key: "inventoryWarnings", title: "재고 중복 가능", value: 0, description: "기존 재고와 중복 구매 가능성이 있습니다", statusLabel: "정상", tone: "green", linkHref: null },
@@ -307,18 +307,18 @@ export const DUMMY_OVERVIEW_EMPTY: OrganizationOverviewPageViewModel = {
     { key: "recentActivity", title: "최근 7일 활동", value: 0, description: "검토, 비교, 제출, 승인 이벤트 기준입니다", statusLabel: "활동 추적 중", tone: "slate", linkHref: null },
   ],
   stepFunnel: { stages: [
-    { key: "step1", title: "검토 큐", count: 0, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 0 · 실패 0", linkHref: "/test/search", ctaLabel: "검토 큐 열기" },
-    { key: "step2", title: "비교 큐", count: 0, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 0 · 확정 0", linkHref: "/test/compare", ctaLabel: "비교 큐 열기" },
-    { key: "step3", title: "견적 초안", count: 0, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 0 · 보류 0", linkHref: "/test/quote", ctaLabel: "견적 초안 열기" },
+    { key: "step1", title: "검토 큐", count: 0, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 0 · 실패 0", linkHref: "/search", ctaLabel: "검토 큐 열기" },
+    { key: "step2", title: "비교 큐", count: 0, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 0 · 확정 0", linkHref: "/search", ctaLabel: "비교 큐 열기" },
+    { key: "step3", title: "견적 초안", count: 0, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 0 · 보류 0", linkHref: "/search", ctaLabel: "견적 초안 열기" },
   ]},
   alerts: { items: [], isEmpty: true, emptyMessage: "현재 우선 확인이 필요한 운영 경고가 없습니다" },
   workQueue: { sections: [], isEmpty: true, emptyMessage: "지금 바로 처리할 작업이 없습니다" },
   approvalInbox: { pendingCount: 0, pendingDescription: "", myRequestsCount: 0, myRequestsDescription: "", recentDecisions: [], isEmpty: true, emptyMessage: "현재 승인 대기 요청이 없습니다" },
   activityFeed: { items: [], isEmpty: true, emptyMessage: "아직 기록된 운영 활동이 없습니다" },
   quickLinks: [
-    { href: "/test/search", label: "Step 1 검토 큐 열기" },
-    { href: "/test/compare", label: "Step 2 비교 큐 열기" },
-    { href: "/test/quote", label: "Step 3 견적 초안 열기" },
+    { href: "/search", label: "Step 1 검토 큐 열기" },
+    { href: "/search", label: "Step 2 비교 큐 열기" },
+    { href: "/search", label: "Step 3 견적 초안 열기" },
     { href: "#approvals", label: "승인 요청 보기" },
     { href: "#members", label: "멤버 및 접근 관리 보기" },
     { href: "#settings", label: "정책 및 설정 보기" },

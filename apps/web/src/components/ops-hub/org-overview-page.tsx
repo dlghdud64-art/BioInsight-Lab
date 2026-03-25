@@ -64,7 +64,7 @@ export function OrganizationOverviewPage({ vm, blockStates }: OrganizationOvervi
             직접 검색 또는 업로드 해석으로 검토 큐를 만들면<br />비교와 견적 작업이 이어집니다
           </p>
           <Button asChild className="bg-blue-600 hover:bg-blue-500">
-            <Link href="/test/search">Step 1 시작하기</Link>
+            <Link href="/app/search">Step 1 시작하기</Link>
           </Button>
         </div>
 

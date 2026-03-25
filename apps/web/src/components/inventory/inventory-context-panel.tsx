@@ -231,7 +231,7 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
       actions.push({
         type: "reorder",
         label: "재주문 검토",
-        reasoning: `최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 예상`,
+        reasoning: `재주문: 최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 — 리드타임(${item.leadTimeDays ?? 14}일) 감안 시 즉시 발주 권장`,
         priority: "high",
       });
     }
@@ -243,20 +243,20 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
       actions.push({
         type: "dispose",
         label: "폐기 검토",
-        reasoning: `lot ${item.lotNumber || "N/A"} / 만료 D-${days} / 미개봉 ${Math.max(1, Math.floor(item.currentQuantity * 0.3))}ea`,
+        reasoning: `폐기: 만료 D-${days} / 미개봉 ${Math.max(1, Math.floor(item.currentQuantity * 0.3))}ea — lot ${item.lotNumber || "N/A"} 유효기한 임박으로 폐기 또는 긴급 소진 필요`,
         priority: "high",
       });
       actions.push({
         type: "use_first",
         label: "우선 사용 권장",
-        reasoning: `만료 임박 lot 우선 소진으로 폐기 손실 최소화`,
+        reasoning: `만료 임박 lot 우선 소진으로 폐기 손실 최소화 — FEFO(First-Expiry-First-Out) 원칙 적용`,
         priority: "medium",
       });
     } else if (days <= 0) {
       actions.push({
         type: "dispose",
         label: "즉시 폐기",
-        reasoning: `유효기간 만료 ${Math.abs(days)}일 경과, 사용 불가`,
+        reasoning: `폐기: 유효기간 만료 ${Math.abs(days)}일 경과, 사용 불가 — 규정 상 즉시 폐기 처리 필수`,
         priority: "high",
       });
     }
@@ -266,7 +266,7 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
     actions.push({
       type: "relocate",
       label: "위치 이동/등록",
-      reasoning: `${item.storageCondition.includes("freezer") ? "냉동" : item.storageCondition.includes("fridge") ? "냉장" : "상온"} 보관 품목, 현재 위치 미지정`,
+      reasoning: `위치 이동: ${item.storageCondition.includes("freezer") ? "냉동" : item.storageCondition.includes("fridge") ? "냉장" : "상온"} 보관 조건 불일치 — 현재 위치 미지정으로 품질 저하 위험`,
       priority: "medium",
     });
   }
@@ -288,14 +288,14 @@ const SEVERITY_STYLE: Record<string, string> = {
   critical: "bg-red-500/15 text-red-400 border-red-500/30",
   high: "bg-amber-500/15 text-amber-400 border-amber-500/30",
   medium: "bg-blue-500/15 text-blue-400 border-blue-500/30",
-  low: "bg-slate-500/15 text-slate-400 border-slate-500/30",
+  low: "bg-pg0/15 text-slate-400 border-slate-500/30",
 };
 
 const LOT_STATUS_STYLE: Record<string, string> = {
   active: "bg-emerald-500/15 text-emerald-400",
   expiring: "bg-amber-500/15 text-amber-400",
   expired: "bg-red-500/15 text-red-400",
-  depleted: "bg-slate-500/15 text-slate-400",
+  depleted: "bg-pg0/15 text-slate-400",
 };
 
 const LOT_STATUS_LABEL: Record<string, string> = {
@@ -348,10 +348,10 @@ export function InventoryContextPanel({
 
   return (
     <div
-      className={`w-[420px] shrink-0 border-l border-[#2a2a2e] bg-[#222226] overflow-y-auto h-full ${className}`}
+      className={`w-[420px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
     >
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-[#222226] border-b border-[#2a2a2e] px-5 py-4">
+      <div className="sticky top-0 z-10 bg-el border-b border-bd px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -448,7 +448,7 @@ export function InventoryContextPanel({
             {lots.map((lot) => (
               <div
                 key={lot.lotNumber}
-                className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
+                className="rounded-lg border border-bd bg-pn px-3 py-2.5"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="font-mono text-xs font-semibold text-slate-300">
@@ -495,7 +495,7 @@ export function InventoryContextPanel({
               {risks.map((risk, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
+                  className="flex items-start gap-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5"
                 >
                   <Badge
                     variant="outline"
@@ -522,9 +522,9 @@ export function InventoryContextPanel({
               return (
                 <div
                   key={idx}
-                  className="flex items-start gap-2.5 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5"
+                  className="flex items-start gap-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-[#222226] shrink-0 mt-0.5">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-md bg-el shrink-0 mt-0.5">
                     <FlowIcon className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -547,12 +547,12 @@ export function InventoryContextPanel({
 
         {/* ── E. Recommended Actions ── */}
         <section>
-          <SectionHeader icon={Sparkles} label="권장 조치" />
+          <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
           <div className="mt-2.5 space-y-2">
             {actions.map((action, idx) => (
               <div
                 key={idx}
-                className={`rounded-lg border border-[#2a2a2e] bg-[#1a1a1e] px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
+                className={`rounded-lg border border-bd bg-pn px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
               >
                 <div className="flex items-center justify-between mb-1">
                   <p className="text-xs font-bold text-slate-200">{action.label}</p>
@@ -570,8 +570,12 @@ export function InventoryContextPanel({
                     <ChevronRight className="h-2.5 w-2.5" />
                   </Button>
                 </div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  {action.reasoning}
+                <p className="text-[11px] text-slate-500 leading-relaxed flex items-start gap-1">
+                  <Info className="h-3 w-3 shrink-0 mt-px text-slate-600" />
+                  <span>
+                    <span className="font-medium text-slate-400">추천 이유:</span>{" "}
+                    {action.reasoning}
+                  </span>
                 </p>
               </div>
             ))}
@@ -580,11 +584,11 @@ export function InventoryContextPanel({
       </div>
 
       {/* Sticky footer actions */}
-      <div className="sticky bottom-0 bg-[#222226] border-t border-[#2a2a2e] px-5 py-3 flex gap-2">
+      <div className="sticky bottom-0 bg-el border-t border-bd px-5 py-3 flex gap-2">
         <Button
           variant="outline"
           size="sm"
-          className="flex-1 h-8 text-xs border-[#2a2a2e] bg-[#1a1a1e] text-slate-300 hover:bg-[#2a2a2e] hover:text-slate-100"
+          className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300 hover:bg-st hover:text-slate-100"
           onClick={() => onEdit?.(item)}
         >
           정보 수정
@@ -619,7 +623,7 @@ function SectionHeader({
       {count !== undefined && (
         <Badge
           variant="outline"
-          className="text-[9px] px-1 py-0 border-[#333338] text-slate-500"
+          className="text-[9px] px-1 py-0 border-bs text-slate-500"
         >
           {count}
         </Badge>

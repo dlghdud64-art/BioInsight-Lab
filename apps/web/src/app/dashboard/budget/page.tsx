@@ -277,16 +277,16 @@ export default function BudgetPage() {
         {isFetching ? (
           <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
             {Array.from({ length: 3 }).map((_, idx) => (
-              <Card key={idx} className="shadow-sm border-[#2a2a2e] animate-pulse">
+              <Card key={idx} className="shadow-sm border-bd animate-pulse">
                 <CardHeader className="pb-2">
-                  <div className="h-5 w-36 rounded bg-slate-700 mb-2" />
-                  <div className="h-4 w-48 rounded bg-slate-700" />
+                  <div className="h-5 w-36 rounded bg-slate-200 bg-st mb-2" />
+                  <div className="h-4 w-48 rounded bg-slate-200 bg-st" />
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
-                  <div className="h-3 rounded bg-[#222226]" />
+                  <div className="h-3 rounded bg-el bg-el" />
                   <div className="flex justify-end gap-2">
-                    <div className="h-8 w-20 rounded bg-[#222226]" />
-                    <div className="h-8 w-14 rounded bg-[#222226]" />
+                    <div className="h-8 w-20 rounded bg-el bg-el" />
+                    <div className="h-8 w-14 rounded bg-el bg-el" />
                   </div>
                 </CardContent>
               </Card>
@@ -320,7 +320,7 @@ export default function BudgetPage() {
                 return (
                   <Card
                     key={budget.id}
-                    className="shadow-sm border-[#2a2a2e]"
+                    className="shadow-sm border-bd"
                   >
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg flex justify-between items-center gap-2">
@@ -331,8 +331,8 @@ export default function BudgetPage() {
                           const end = new Date(budget.periodEnd);
                           if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-50 text-red-700 border-red-200">초과</Badge>;
                           if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-50 text-orange-700 border-orange-200">경고</Badge>;
-                          if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-[#222226] text-slate-400 border-[#2a2a2e]">예정</Badge>;
-                          if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-[#222226] text-slate-500 border-[#2a2a2e]">종료</Badge>;
+                          if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-el text-slate-600 border-bd">예정</Badge>;
+                          if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-el text-slate-500 border-bd">종료</Badge>;
                           return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200">운영 중</Badge>;
                         })()}
                       </CardTitle>
@@ -658,7 +658,7 @@ function BudgetForm({
       </div>
 
       {periodStart && periodEnd && (
-        <div className="p-3 bg-[#111114] rounded-lg text-xs text-muted-foreground">
+        <div className="p-3 bg-pg rounded-lg text-xs text-muted-foreground">
           <Calendar className="h-3 w-3 inline mr-1" />
           예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")}
           {" "}
@@ -716,8 +716,8 @@ function BudgetForm({
       </div>
 
       {submitError && (
-        <div className="rounded-md border border-red-200 dark:border-red-800 bg-red-50 dark:bg-[#1a1a1e] px-3 py-2">
-          <p className="text-xs text-red-600 dark:text-red-400">
+        <div className="rounded-md border border-red-200  border-red-800 bg-red-50 bg-pn px-3 py-2">
+          <p className="text-xs text-red-600 text-red-400">
             {submitError}
           </p>
         </div>

@@ -28,6 +28,7 @@ import {
   buildStockRiskReentryContext,
   buildExpiryReentryContext,
 } from "@/lib/ops-console/reentry-context";
+import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { ReentryActionButton } from "../_components/reentry-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -302,7 +303,7 @@ export default function StockRiskPage() {
                   <PriorityCard
                     key={item.entityId}
                     item={item}
-                    onClick={() => router.push(item.targetRoute)}
+                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/stock-risk', summary: item.title, returnLabel: '재고 위험으로' }))}
                   />
                 ))}
               </div>
@@ -347,7 +348,7 @@ export default function StockRiskPage() {
                     <ActionableRow
                       key={item.entityId}
                       item={item}
-                      onClick={() => router.push(item.targetRoute)}
+                      onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/stock-risk', summary: item.title, returnLabel: '재고 위험으로' }))}
                     />
                   ))}
                 </div>
@@ -593,6 +594,13 @@ export default function StockRiskPage() {
                                     </>
                                   )}
                                 </Button>
+                                {!isConverted && !isBlocked && (
+                                  <Link href={`/app/search?q=${encodeURIComponent(rr.productName)}&source=reorder&qty=${rr.recommendedOrderQuantity}`}>
+                                    <Button size="sm" variant="ghost" className="text-[10px] h-6 px-2 text-blue-400 hover:text-blue-300 gap-1">
+                                      <Search className="h-3 w-3" />소싱
+                                    </Button>
+                                  </Link>
+                                )}
                                 {isBlocked && rr.blockedReasons.length > 0 && (
                                   <div className="text-left">
                                     {rr.blockedReasons.map((reason, i) => (

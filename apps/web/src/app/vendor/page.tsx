@@ -56,9 +56,9 @@ export default function VendorDashboardPage() {
   const requests: VendorRequest[] = requestsData?.requests || [];
 
   return (
-    <div className="min-h-screen bg-[#111114]">
+    <div className="min-h-screen bg-pg">
       {/* Header */}
-      <div className="bg-[#1a1a1e] border-b border-[#2a2a2e]">
+      <div className="bg-pn border-b border-bd">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
@@ -116,7 +116,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Requests Table */}
-        <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
+        <div className="bg-pn border border-bd shadow-sm">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -139,7 +139,7 @@ export default function VendorDashboardPage() {
               </TableHeader>
               <TableBody>
                 {requests.map((request) => (
-                  <TableRow key={request.id} className="hover:bg-[#222226]">
+                  <TableRow key={request.id} className="hover:bg-pg">
                     <TableCell className="font-medium p-3">
                       {request.quoteTitle}
                     </TableCell>

@@ -84,7 +84,7 @@ function getStatusStyle(status: TeamSpendingData["status"]) {
     case "안정":
       return { bg: "bg-emerald-50  bg-emerald-950/20", text: "text-emerald-700 text-emerald-400", border: "border-emerald-200  border-emerald-900/40" };
     case "주의":
-      return { bg: "bg-amber-50 dark:bg-amber-950/20", text: "text-amber-400", border: "border-amber-200 dark:border-amber-900/40" };
+      return { bg: "bg-amber-50  bg-amber-950/20", text: "text-amber-700 text-amber-400", border: "border-amber-200  border-amber-900/40" };
     case "초과 위험":
       return { bg: "bg-red-50 bg-red-950/20", text: "text-red-700 text-red-400", border: "border-red-200  border-red-900/40" };
     case "검토 필요":
@@ -123,7 +123,7 @@ export default function TeamAnalyticsView() {
       {/* ══ 1. 팀별 KPI 카드 ══ */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
 
-        <div className="rounded-xl border border-[#2a2a2e]/50 bg-[#161d2f] p-4 shadow-sm">
+        <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <Users className="h-4 w-4 text-blue-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전체 팀</span>
@@ -132,18 +132,18 @@ export default function TeamAnalyticsView() {
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
-        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-900/30 bg-amber-950/10" : "border-[#2a2a2e]/50 bg-[#161d2f]"}`}>
+        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30  bg-amber-950/10  border-amber-900/30" : "border-bd/60 bg-pn border-bd/50"}`}>
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
           </div>
-          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 text-amber-400" : "text-slate-100"}`}>
             {riskTeams}개
           </div>
           <p className="text-xs text-slate-400 mt-1">소진율 75% 이상</p>
         </div>
 
-        <div className="rounded-xl border border-[#2a2a2e]/50 bg-[#161d2f] p-4 shadow-sm">
+        <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="h-4 w-4 text-purple-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">최고 지출 팀</span>
@@ -152,7 +152,7 @@ export default function TeamAnalyticsView() {
           <p className="text-xs text-slate-400 mt-1">₩{topSpendingTeam.spent.toLocaleString("ko-KR")}</p>
         </div>
 
-        <div className="rounded-xl border border-[#2a2a2e]/50 bg-[#161d2f] p-4 shadow-sm">
+        <div className="rounded-xl border border-bd/60 bg-pn border-bd/50 p-4 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <ArrowUpRight className="h-4 w-4 text-rose-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전월 대비 증가</span>
@@ -203,10 +203,10 @@ export default function TeamAnalyticsView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
         {/* 팀별 사용액 비교 */}
-        <Card className="rounded-xl border-[#2a2a2e]/50 shadow-sm bg-[#161d2f]">
+        <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
           <CardHeader className="pb-2 p-4">
             <CardTitle className="text-sm font-semibold text-slate-200">팀별 사용액 비교</CardTitle>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">배정 예산 대비 현재 사용액</p>
+            <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">배정 예산 대비 현재 사용액</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <ResponsiveContainer width="100%" height={240}>
@@ -241,10 +241,10 @@ export default function TeamAnalyticsView() {
         </Card>
 
         {/* 팀별 예산 소진율 비교 */}
-        <Card className="rounded-xl border-[#2a2a2e]/50 shadow-sm bg-[#161d2f]">
+        <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
           <CardHeader className="pb-2 p-4">
             <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 소진율</CardTitle>
-            <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">소진율 기준 내림차순 정렬</p>
+            <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">소진율 기준 내림차순 정렬</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
             <ResponsiveContainer width="100%" height={240}>
@@ -278,10 +278,10 @@ export default function TeamAnalyticsView() {
       </div>
 
       {/* ══ 4. 팀별 분석 테이블 ══ */}
-      <Card className="rounded-xl border-[#2a2a2e]/50 shadow-sm bg-[#161d2f]">
+      <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
         <CardHeader className="p-4 pb-0">
           <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 집행 현황</CardTitle>
-          <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+          <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">
             전체 {totalTeams}개 팀 중 {riskTeams}개 팀이 주의 이상 상태
           </p>
         </CardHeader>
@@ -289,7 +289,7 @@ export default function TeamAnalyticsView() {
           <div className="overflow-x-auto">
             <Table className="min-w-[800px]">
               <TableHeader>
-                <TableRow className="border-slate-100 dark:border-[#2a2a2e]/50">
+                <TableRow className="border-slate-100 border-bd/50">
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">팀명</TableHead>
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">배정 예산</TableHead>
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider text-right">사용액</TableHead>
@@ -304,7 +304,7 @@ export default function TeamAnalyticsView() {
                 {TEAM_DATA.map((team) => {
                   const statusStyle = getStatusStyle(team.status);
                   return (
-                    <TableRow key={team.id} className="border-[#2a2a2e]/30 hover:bg-[#222226]/20 transition-colors">
+                    <TableRow key={team.id} className="border-slate-100 border-bd/30 hover:bg-pg hover:bg-el/20 transition-colors">
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
@@ -324,7 +324,7 @@ export default function TeamAnalyticsView() {
                           <span className={`text-xs font-semibold ${team.burnRate >= 90 ? "text-red-600 text-red-400" : team.burnRate >= 75 ? "text-amber-600 text-amber-400" : "text-slate-400"}`}>
                             {team.burnRate}%
                           </span>
-                          <div className="w-14 h-1.5 bg-slate-700/60 rounded-full overflow-hidden">
+                          <div className="w-14 h-1.5 bg-st/60 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full transition-all"
                               style={{
@@ -370,31 +370,31 @@ export default function TeamAnalyticsView() {
       </Card>
 
       {/* ══ 5. 팀 관점 액션 ══ */}
-      <div className="rounded-xl border border-[#2a2a2e]/50 bg-[#1a1a1e]/30 p-4">
-        <p className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-3">
+      <div className="rounded-xl border border-bd/50 bg-pg/60 bg-pn/30 p-4">
+        <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider mb-3">
           팀 관리 후속 조치
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Link href="/dashboard/purchases">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] hover:bg-[#222226] border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
               팀별 구매 내역
             </Button>
           </Link>
           <Link href="/dashboard/budget">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] hover:bg-[#222226] border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
               <CreditCard className="h-3.5 w-3.5 text-slate-500" />
               예산 재배정 검토
             </Button>
           </Link>
           <Link href="/dashboard/analytics/category">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] hover:bg-[#222226] border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
               <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
               카테고리별 상세 분석
             </Button>
           </Link>
           <Link href="/dashboard/settings">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-[#1a1a1e] hover:bg-[#222226] border-[#333338] font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
               <Settings className="h-3.5 w-3.5 text-slate-500" />
               조직 / 예산 관리
             </Button>

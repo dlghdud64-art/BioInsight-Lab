@@ -26,7 +26,7 @@ const STEPS = [
     description:
       "필요한 제품들을 선택하여 비교하고, 가격과 수량을 입력하면 견적 요청 리스트가 자동으로 생성됩니다. 수량과 비교를 조정하면 리스트가 자동으로 업데이트됩니다.",
     ctaLabel: "비교하러 가기",
-    href: "/app/quote",
+    href: "/search",
   },
   {
     id: "groupware",
@@ -36,7 +36,7 @@ const STEPS = [
     description:
       "생성된 견적 요청 리스트를 TSV/엑셀 형식으로 복사하여 그룹웨어 구매 요청 양식에 붙여넣을 수 있습니다. 기존 구매 프로세스와 동일한 형식으로 제공됩니다.",
     ctaLabel: "그룹웨어로 리스트 붙여넣기",
-    href: "/app/quote/request",
+    href: "/search",
   },
 ];
 
@@ -45,7 +45,7 @@ export function DemoFlowSwitcher() {
   const router = useRouter();
 
   return (
-    <Card className="border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
+    <Card className="border-bd bg-pn shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-slate-100">
           3단계 사용 흐름
@@ -58,12 +58,12 @@ export function DemoFlowSwitcher() {
       <CardContent className="pt-0">
         <Tabs value={active} onValueChange={setActive}>
           {/* 탭 버튼 그룹 */}
-          <TabsList className="mb-4 grid grid-cols-3 bg-[#111114]">
+          <TabsList className="mb-4 grid grid-cols-3 bg-pg">
             {STEPS.map((step) => (
               <TabsTrigger
                 key={step.id}
                 value={step.id}
-                className="text-xs data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-100"
+                className="text-xs data-[state=active]:bg-pn data-[state=active]:text-slate-100"
                 onMouseEnter={() => setActive(step.id)}
               >
                 {step.label}
@@ -80,7 +80,7 @@ export function DemoFlowSwitcher() {
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-[#111114] px-3 py-1 text-[11px] font-medium text-slate-500">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-pg px-3 py-1 text-[11px] font-medium text-slate-500">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-semibold text-white">
                       {step.stepLabel.replace("Step ", "")}
                     </span>

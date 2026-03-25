@@ -272,7 +272,7 @@ export const EMPTY_STATE_GUIDANCE: Record<string, {
     title: '아직 처리할 운영 항목이 없습니다',
     description: '시약 검색으로 소싱을 시작하거나, 기존 견적/발주 상태를 확인하세요.',
     suggestions: [
-      { label: '시약 검색 시작', route: '/test/search' },
+      { label: '시약 검색 시작', route: '/search' },
       { label: '견적 현황 확인', route: '/dashboard/quotes' },
     ],
   },
@@ -281,14 +281,14 @@ export const EMPTY_STATE_GUIDANCE: Record<string, {
     description: '모든 작업이 처리되었거나, 아직 운영 항목이 생성되지 않았습니다.',
     suggestions: [
       { label: '오늘 현황 보기', route: '/dashboard' },
-      { label: '시약 검색 시작', route: '/test/search' },
+      { label: '시약 검색 시작', route: '/search' },
     ],
   },
   quotes: {
     title: '견적 요청 내역이 없습니다',
     description: '시약 검색 후 비교/견적 요청을 시작하세요.',
     suggestions: [
-      { label: '시약 검색 시작', route: '/test/search' },
+      { label: '시약 검색 시작', route: '/search' },
       { label: '재고 위험 확인', route: '/dashboard/stock-risk' },
     ],
   },

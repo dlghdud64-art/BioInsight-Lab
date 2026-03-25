@@ -61,7 +61,7 @@ export default function BudgetDetailPage() {
     return (
       <div className="w-full px-4 md:px-6 py-6">
         <div className="max-w-3xl mx-auto">
-          <Card className="border-[#333338]">
+          <Card className="border-bd border-bs">
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground text-slate-500 mb-4" />
               <p className="text-slate-300 mb-2">예산을 찾을 수 없습니다.</p>
@@ -110,7 +110,7 @@ export default function BudgetDetailPage() {
           />
         </div>
 
-        <Card className="border-[#333338] bg-[#1a1a1e]/50">
+        <Card className="border-bd border-bs bg-pn/50">
           <CardHeader>
             <CardTitle className="text-white">
               사용 현황
@@ -128,15 +128,15 @@ export default function BudgetDetailPage() {
             </div>
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs md:text-sm">
-                <span className="text-muted-foreground dark:text-slate-400">예산 사용률</span>
+                <span className="text-muted-foreground text-slate-400">예산 사용률</span>
                 <span className="font-medium text-white">
                   {usageRate.toFixed(1)}%
                 </span>
               </div>
               <Progress
                 value={Math.min(usageRate, 100)}
-                className={`h-2 dark:bg-[#222226] ${
-                  isOverBudget ? "bg-red-200 dark:bg-red-900/30" : isWarning ? "bg-orange-200 dark:bg-orange-900/30" : ""
+                className={`h-2 bg-el ${
+                  isOverBudget ? "bg-red-200  bg-red-900/30" : isWarning ? "bg-orange-200  bg-orange-900/30" : ""
                 }`}
               />
             </div>
@@ -150,7 +150,7 @@ export default function BudgetDetailPage() {
         </Card>
 
         {budget.description && (
-          <Card className="border-[#333338] bg-[#1a1a1e]/50">
+          <Card className="border-bd border-bs bg-pn/50">
             <CardHeader>
               <CardTitle className="text-white text-base">설명</CardTitle>
             </CardHeader>

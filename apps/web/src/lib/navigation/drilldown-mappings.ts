@@ -36,21 +36,21 @@ interface KpiDrilldownMapping {
 
 export const KPI_DRILLDOWN_MAP: Record<KpiDrilldownKey, KpiDrilldownMapping> = {
   review_needed: {
-    href: "/test/search",
+    href: "/search",
     filters: { status: "needs_review" },
     sort: "priority_desc",
     sourceLabel: "대시보드 > 검토 필요 항목",
     returnLabel: "대시보드로 돌아가기",
   },
   compare_pending: {
-    href: "/test/compare",
+    href: "/search",
     filters: { status: "selection_needed" },
     sort: "priority_desc",
     sourceLabel: "대시보드 > 비교 확정 대기",
     returnLabel: "대시보드로 돌아가기",
   },
   quote_ready: {
-    href: "/test/quote",
+    href: "/search",
     filters: { status: "draft_ready" },
     sourceLabel: "대시보드 > 견적 초안 제출 가능",
     returnLabel: "대시보드로 돌아가기",
@@ -63,13 +63,13 @@ export const KPI_DRILLDOWN_MAP: Record<KpiDrilldownKey, KpiDrilldownMapping> = {
     returnLabel: "대시보드로 돌아가기",
   },
   budget_warning: {
-    href: "/test/quote",
+    href: "/search",
     filters: { budgetHint: "budgetCheckRequired" },
     sourceLabel: "대시보드 > 예산 확인 필요",
     returnLabel: "대시보드로 돌아가기",
   },
   inventory_duplicate: {
-    href: "/test/quote",
+    href: "/search",
     filters: { inventoryHint: "possibleDuplicatePurchase" },
     sourceLabel: "대시보드 > 재고 중복 가능",
     returnLabel: "대시보드로 돌아가기",
@@ -87,7 +87,7 @@ export const KPI_DRILLDOWN_MAP: Record<KpiDrilldownKey, KpiDrilldownMapping> = {
     returnLabel: "대시보드로 돌아가기",
   },
   match_failed: {
-    href: "/test/search",
+    href: "/search",
     filters: { status: "match_failed" },
     sourceLabel: "대시보드 > 매칭 실패 항목",
     returnLabel: "대시보드로 돌아가기",
@@ -125,15 +125,15 @@ export const QUEUE_RETURN_MAP: Record<QueueSourceKey, QueueReturnMapping> = {
     returnLabel: "승인 대기 목록으로 돌아가기",
   },
   review_queue: {
-    returnHref: "/test/search",
+    returnHref: "/search",
     returnLabel: "검토 큐로 돌아가기",
   },
   compare_queue: {
-    returnHref: "/test/compare",
+    returnHref: "/search",
     returnLabel: "비교 큐로 돌아가기",
   },
   quote_draft_queue: {
-    returnHref: "/test/quote",
+    returnHref: "/search",
     returnLabel: "견적 초안으로 돌아가기",
   },
   inventory_queue: {
@@ -141,7 +141,7 @@ export const QUEUE_RETURN_MAP: Record<QueueSourceKey, QueueReturnMapping> = {
     returnLabel: "재고 관리로 돌아가기",
   },
   search_results: {
-    returnHref: "/test/search",
+    returnHref: "/search",
     returnLabel: "검색 결과로 돌아가기",
   },
   work_queue: {
@@ -167,7 +167,7 @@ export const RELATED_QUEUE_BRIDGES: Record<string, RelatedQueueBridge> = {
     bridgeReason: "이 항목은 필수 문서 누락으로 차단되어 있습니다. 문서 확인 큐에서 먼저 처리할 수 있습니다.",
   },
   "low_stock_to_reorder": {
-    targetHref: "/test/search",
+    targetHref: "/search",
     bridgeLabel: "재발주 검색 시작",
     bridgeReason: "재고 부족 품목을 검색하고 견적 요청으로 연결할 수 있습니다.",
   },

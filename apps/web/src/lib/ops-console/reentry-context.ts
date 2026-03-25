@@ -709,7 +709,7 @@ export function buildReentryCommand(ctx: ReentryContext): ReentryCommand {
   let basePath: string;
   switch (decision.recommendedEntryPath) {
     case 'search':
-      basePath = '/test/search';
+      basePath = '/search';
       break;
     case 'compare':
       basePath = '/compare';
@@ -770,7 +770,7 @@ export function checkReentryFallbacks(ctx: ReentryContext): ReentryFallback[] {
     fallbacks.push({
       type: 'source_entity_missing',
       reason: '원본 엔티티를 찾을 수 없습니다',
-      alternativePath: '/test/search',
+      alternativePath: '/search',
       alternativeLabel: '수동 검색으로 전환',
       canFallbackToManual: true,
     });
@@ -780,7 +780,7 @@ export function checkReentryFallbacks(ctx: ReentryContext): ReentryFallback[] {
     fallbacks.push({
       type: 'blocked_vendor_only',
       reason: '기존 공급사가 모두 제외되어 신규 공급사 탐색이 필요합니다',
-      alternativePath: '/test/search',
+      alternativePath: '/search',
       alternativeLabel: '공급사 제약 없이 검색',
       canFallbackToManual: true,
     });
@@ -790,7 +790,7 @@ export function checkReentryFallbacks(ctx: ReentryContext): ReentryFallback[] {
     fallbacks.push({
       type: 'no_compare_ready_candidate',
       reason: '검색할 품목 정보가 부족하여 비교 후보를 구성할 수 없습니다',
-      alternativePath: '/test/search',
+      alternativePath: '/search',
       alternativeLabel: '수동 검색으로 시작',
       canFallbackToManual: true,
     });

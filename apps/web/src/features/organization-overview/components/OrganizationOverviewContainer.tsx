@@ -100,28 +100,28 @@ export function OrganizationOverviewContainer() {
         key: "step1", title: "검토 큐", count: reviewQueue.items.filter((i) => i.status !== "excluded").length,
         description: "입력 해석과 항목 검토가 진행 중입니다",
         subStatus: `검토 필요 ${reviewNeeded} · 실패 ${matchFailed}`,
-        ctaLabel: "검토 큐 열기", linkHref: "/test/search",
+        ctaLabel: "검토 큐 열기", linkHref: "/app/search",
       },
       {
         key: "step2", title: "비교 큐", count: compareNeeded,
         description: "후보 선택과 비교 확정이 필요한 항목입니다",
         subStatus: `선택 필요 ${compareNeeded}`,
-        ctaLabel: "비교 큐 열기", linkHref: "/test/compare",
+        ctaLabel: "비교 큐 열기", linkHref: "/app/compare",
       },
       {
         key: "step3", title: "견적 초안", count: approved,
         description: "제출 전 수량·단위·예산을 확인할 수 있습니다",
         subStatus: `제출 가능 ${approved}`,
-        ctaLabel: "견적 초안 열기", linkHref: "/test/quote",
+        ctaLabel: "견적 초안 열기", linkHref: "/app/quote",
       },
     ],
   }), [reviewQueue.items.length, reviewNeeded, matchFailed, compareNeeded, approved]);
 
   // ── Quick Links ──
   const quickLinks = useMemo(() => [
-    { label: "Step 1 검토 큐 열기", href: "/test/search" },
-    { label: "Step 2 비교 큐 열기", href: "/test/compare" },
-    { label: "Step 3 견적 초안 열기", href: "/test/quote" },
+    { label: "Step 1 검토 큐 열기", href: "/app/search" },
+    { label: "Step 2 비교 큐 열기", href: "/app/compare" },
+    { label: "Step 3 견적 초안 열기", href: "/app/quote" },
     { label: "멤버 및 접근 관리 보기", href: "/dashboard/organizations" },
     { label: "정책 및 설정 보기", href: "/dashboard/settings" },
   ], []);
@@ -144,17 +144,17 @@ export function OrganizationOverviewContainer() {
             id: "ready", title: "즉시 승인 가능", count: readyItems.length,
             description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다",
             details: [{ label: "확정 가능", count: readyItems.length }],
-            ctaLabel: "승인 가능한 항목 보기", linkHref: "/test/search",
+            ctaLabel: "승인 가능한 항목 보기", linkHref: "/app/search",
           }] : []),
           ...(compareNeeded > 0 ? [{
             id: "selection-needed", title: "후보 선택 필요", count: compareNeeded,
             description: "비교 후 선택 확정이 필요한 항목입니다",
-            details: [], ctaLabel: "비교 확정하러 가기", linkHref: "/test/compare",
+            details: [], ctaLabel: "비교 확정하러 가기", linkHref: "/app/compare",
           }] : []),
           ...(reviewItems.length > 0 ? [{
             id: "manual-review", title: "수동 확인 필요", count: reviewItems.length,
             description: "자동 해석만으로는 확정할 수 없는 항목입니다",
-            details: [], ctaLabel: "수동 검토 항목 보기", linkHref: "/test/search",
+            details: [], ctaLabel: "수동 검토 항목 보기", linkHref: "/app/search",
           }] : []),
         ],
       },

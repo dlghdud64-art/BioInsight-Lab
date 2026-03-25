@@ -167,7 +167,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (isLoadingState) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-[#1a1a1e] dark:border-[#2a2a2e] animate-pulse">
+      <Card className="border border-bd shadow-sm bg-pn bg-pn border-bd animate-pulse">
         <CardContent className="p-4 h-[100px] sm:p-5 sm:h-[140px]" />
       </Card>
     );
@@ -175,7 +175,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
   if (!selectedBudget || !selectedBudget.hasBudget) {
     return (
-      <Card className="border border-slate-200 shadow-sm bg-white dark:bg-[#1a1a1e] dark:border-[#2a2a2e]">
+      <Card className="border border-bd shadow-sm bg-pn bg-pn border-bd">
         <CardContent className="py-6 px-5 flex items-center gap-4">
           <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50  bg-blue-950/40">
             <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-blue-300 opacity-50" />
@@ -207,7 +207,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
   const otherWarningCount = otherWarningBudgets.length;
 
   return (
-    <Card className={`border border-slate-200 shadow-sm overflow-hidden dark:border-[#2a2a2e] ${hasWarning ? "bg-red-50/30 dark:bg-red-950/20" : "bg-white dark:bg-[#1a1a1e]"}`}>
+    <Card className={`border border-bd shadow-sm overflow-hidden border-bd ${hasWarning ? "bg-red-50/30 bg-red-950/20" : "bg-pn bg-pn"}`}>
       <CardContent className="p-0">
         <div className="flex flex-col sm:flex-row gap-0">
           {/* 좌측: 텍스트 요약 */}
@@ -228,7 +228,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   value={effectiveSelected ?? ""}
                   onValueChange={(v) => setSelectedScopeKey(v || null)}
                 >
-                  <SelectTrigger className="h-8 w-[180px] text-xs border-slate-200 dark:border-[#333338]">
+                  <SelectTrigger className="h-8 w-[180px] text-xs border-bd border-bs">
                     <SelectValue placeholder="예산 선택" />
                   </SelectTrigger>
                   <SelectContent>
@@ -240,7 +240,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="px-2 py-1.5 rounded-full bg-slate-50 dark:bg-[#222226]/60 border border-slate-200/80 dark:border-[#333338]/80 text-[11px] text-slate-600 dark:text-slate-300">
+                <div className="px-2 py-1.5 rounded-full bg-pg bg-el/60 border border-bd/80 border-bs/80 text-[11px] text-slate-300">
                   {effectiveBudgets[0]?.budgetName}
                 </div>
               )}
@@ -287,7 +287,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               </div>
               <Progress
                 value={usageRate}
-                className={`h-2.5 ${usageRate >= 80 ? "[&>div]:bg-red-500 bg-red-100 dark:bg-red-950/40" : "bg-slate-100 dark:bg-[#222226]/60"}`}
+                className={`h-2.5 ${usageRate >= 80 ? "[&>div]:bg-red-500 bg-red-950/40" : "bg-el bg-el/60"}`}
               />
               <p className="text-[10px] text-slate-400 text-slate-500">
                 총 예산 {formatKRW(selectedBudget.totalBudget)} 기준
@@ -334,9 +334,9 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
         )}
         {!selectedBudget.hasWarning && (
-          <div className="mx-3 sm:mx-4 rounded-lg bg-slate-50 dark:bg-[#222226]/50 border border-slate-200 dark:border-[#333338] px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-500 dark:text-slate-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          <div className="mx-3 sm:mx-4 rounded-lg bg-pg bg-el/50 border border-bd border-bs px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
+            <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-slate-300 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
           </div>

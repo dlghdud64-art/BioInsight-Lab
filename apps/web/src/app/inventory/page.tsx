@@ -278,7 +278,7 @@ export default function InventoryPage() {
 
   if (status === "loading" || isLoadingAll) {
     return (
-      <div className="min-h-screen bg-[#111114]">
+      <div className="min-h-screen bg-pg">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -295,7 +295,7 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111114]">
+    <div className="min-h-screen bg-pg">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -327,7 +327,7 @@ export default function InventoryPage() {
                           <Badge
                             key={item.id}
                             variant="outline"
-                            className="bg-[#1a1a1e] border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-pn border-amber-300 text-amber-900 px-3 py-1"
                           >
                             {item.productName}
                           </Badge>
@@ -335,7 +335,7 @@ export default function InventoryPage() {
                         {missingLocationItems.length > 3 && (
                           <Badge
                             variant="outline"
-                            className="bg-[#1a1a1e] border-amber-300 text-amber-900 px-3 py-1"
+                            className="bg-pn border-amber-300 text-amber-900 px-3 py-1"
                           >
                             +{missingLocationItems.length - 3}개 더
                           </Badge>
@@ -552,7 +552,7 @@ function InventoryCard({
           ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
           ? "border-orange-200 bg-orange-50/30"
-          : "border-[#2a2a2e] bg-[#1a1a1e]"
+          : "border-bd bg-pn"
       }`}
     >
       <CardHeader className="pb-3">
@@ -608,7 +608,7 @@ function InventoryCard({
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
               ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-[#222226]"
+              : "hover:bg-pg"
           }`}
           onClick={() => onLocationClick(inventory)}
         >
@@ -768,7 +768,7 @@ function TeamInventoryCard({
           ? "border-amber-300 bg-amber-50/50 ring-2 ring-amber-200"
           : isLowStock
           ? "border-orange-200 bg-orange-50/30"
-          : "border-[#2a2a2e] bg-[#1a1a1e]"
+          : "border-bd bg-pn"
       }`}
     >
       <CardHeader className="pb-3">
@@ -840,7 +840,7 @@ function TeamInventoryCard({
           className={`flex items-center gap-2 text-sm cursor-pointer p-2 rounded transition-colors -mx-2 ${
             isLocationMissing
               ? "bg-amber-100 hover:bg-amber-200 border border-amber-300"
-              : "hover:bg-[#222226]"
+              : "hover:bg-pg"
           }`}
           onClick={() => onLocationClick(inventory)}
         >

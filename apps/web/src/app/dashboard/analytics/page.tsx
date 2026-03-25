@@ -170,7 +170,7 @@ export default function AnalyticsPage() {
   const pendingApprovalAmount = Math.round(budget.used * 0.08);
 
   return (
-    <div className="min-h-screen bg-[#09090b] p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
+    <div className="min-h-screen bg-sh p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ══ 페이지 헤더 ══ */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
@@ -184,12 +184,12 @@ export default function AnalyticsPage() {
               : "예산 운영 현황과 지출 위험 신호를 모니터링합니다."}
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-[#1a1a1e] border border-[#2a2a2e] rounded-md p-0.5 flex-shrink-0">
+        <div className="flex items-center gap-1 bg-pn border border-bd rounded-md p-0.5 flex-shrink-0">
           <button
             onClick={() => setCurrentView("overview")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               currentView === "overview"
-                ? "bg-[#222226] text-slate-100"
+                ? "bg-el text-slate-100"
                 : "text-slate-400 hover:text-slate-300"
             }`}
           >
@@ -200,7 +200,7 @@ export default function AnalyticsPage() {
             onClick={() => setCurrentView("team")}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
               currentView === "team"
-                ? "bg-[#222226] text-slate-100"
+                ? "bg-el text-slate-100"
                 : "text-slate-400 hover:text-slate-300"
             }`}
           >
@@ -232,10 +232,10 @@ export default function AnalyticsPage() {
           {isLoading ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
               {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4 space-y-2">
-                  <Skeleton className="h-3 w-20 bg-[#222226]" />
-                  <Skeleton className="h-6 w-28 bg-[#222226]" />
-                  <Skeleton className="h-2 w-full bg-[#222226]" />
+                <div key={i} className="rounded-md border border-bd bg-pn p-4 space-y-2">
+                  <Skeleton className="h-3 w-20 bg-el" />
+                  <Skeleton className="h-6 w-28 bg-el" />
+                  <Skeleton className="h-2 w-full bg-el" />
                 </div>
               ))}
             </div>
@@ -246,7 +246,7 @@ export default function AnalyticsPage() {
               <div className={`rounded-md border p-4 ${
                 budgetStatus === "danger" ? "border-red-900/60 bg-red-950/10" :
                 budgetStatus === "warning" ? "border-amber-900/60 bg-amber-950/10" :
-                "border-[#2a2a2e] bg-[#1a1a1e]"
+                "border-bd bg-pn"
               }`}>
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">예산 소진율</p>
                 <div className={`text-xl font-bold ${budgetStatusColor}`}>
@@ -254,7 +254,7 @@ export default function AnalyticsPage() {
                 </div>
                 {budget.total > 0 && (
                   <div className="mt-2">
-                    <div className="h-1.5 bg-[#222226] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-el rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${budgetBarColor}`}
                         style={{ width: `${Math.min(100, budget.usageRate)}%` }}
@@ -269,7 +269,7 @@ export default function AnalyticsPage() {
 
               {/* 승인 대기 금액 */}
               <Link href="/dashboard/purchases" className="block group">
-                <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4 h-full group-hover:border-[#333338] transition-colors">
+                <div className="rounded-md border border-bd bg-pn p-4 h-full group-hover:border-bs transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <p className="text-xs font-medium uppercase tracking-wider text-slate-500">승인 대기 금액</p>
                     <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
@@ -282,7 +282,7 @@ export default function AnalyticsPage() {
               </Link>
 
               {/* 이번 달 지출 총액 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4">
+              <div className="rounded-md border border-bd bg-pn p-4">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">이번 달 지출</p>
                 <div className="text-xl font-bold text-slate-100">
                   {currentMonth ? `₩${currentMonth.amount.toLocaleString("ko-KR")}` : "₩0"}
@@ -293,7 +293,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* 전월 대비 변동 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4">
+              <div className="rounded-md border border-bd bg-pn p-4">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">전월 대비</p>
                 <div className="flex items-center gap-1.5">
                   {monthChange !== null && monthChange > 0 ? (
@@ -314,7 +314,7 @@ export default function AnalyticsPage() {
 
               {/* 잔여 예산 */}
               <div className={`rounded-md border p-4 ${
-                budgetStatus === "danger" ? "border-red-900/60 bg-red-950/10" : "border-[#2a2a2e] bg-[#1a1a1e]"
+                budgetStatus === "danger" ? "border-red-900/60 bg-red-950/10" : "border-bd bg-pn"
               }`}>
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">잔여 예산</p>
                 <div className={`text-xl font-bold ${budget.remaining <= 0 && budget.total > 0 ? "text-red-400" : "text-slate-100"}`}>
@@ -345,10 +345,10 @@ export default function AnalyticsPage() {
           {isLoading ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
               {[0, 1, 2, 3].map((i) => (
-                <div key={i} className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-5 space-y-3">
-                  <Skeleton className="h-4 w-32 bg-[#222226]" />
-                  <Skeleton className="h-20 w-full bg-[#222226]" />
-                  <Skeleton className="h-8 w-24 bg-[#222226]" />
+                <div key={i} className="rounded-md border border-bd bg-pn p-5 space-y-3">
+                  <Skeleton className="h-4 w-32 bg-el" />
+                  <Skeleton className="h-20 w-full bg-el" />
+                  <Skeleton className="h-8 w-24 bg-el" />
                 </div>
               ))}
             </div>
@@ -356,14 +356,14 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
               {/* Panel 1: 카테고리별 초과 위험 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-5">
+              <div className="rounded-md border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <AlertTriangle className="h-4 w-4 text-slate-400" />
                     <h3 className="text-sm font-semibold text-slate-200">카테고리별 초과 위험</h3>
                   </div>
                   {categoryItems.length > 0 && (
-                    <Badge className="text-[10px] px-1.5 py-0.5 border-0 bg-[#222226] text-slate-400 font-medium">
+                    <Badge className="text-[10px] px-1.5 py-0.5 border-0 bg-el text-slate-400 font-medium">
                       {categoryItems.length}개 카테고리
                     </Badge>
                   )}
@@ -389,7 +389,7 @@ export default function AnalyticsPage() {
                               </div>
                               <span className="text-xs text-slate-400">₩{cat.totalAmount.toLocaleString("ko-KR")}</span>
                             </div>
-                            <div className="mt-1 h-1 bg-[#222226] rounded-full overflow-hidden">
+                            <div className="mt-1 h-1 bg-el rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${dotColor}`}
                                 style={{ width: `${Math.min(100, cat.pct)}%` }}
@@ -406,10 +406,14 @@ export default function AnalyticsPage() {
                     })}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 py-4">카테고리 데이터가 아직 없습니다.</p>
+                  <div className="py-4 space-y-2">
+                    <p className="text-sm text-slate-500">카테고리 데이터가 아직 없습니다</p>
+                    <p className="text-[10px] text-slate-600">견적 관리와 구매 기록이 쌓이면 카테고리별 초과 위험을 보여줍니다</p>
+                    <Link href="/dashboard/quotes" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">견적 운영 워크큐 열기 <ArrowRight className="h-3 w-3" /></Link>
+                  </div>
                 )}
 
-                <div className="mt-4 pt-3 border-t border-[#2a2a2e]">
+                <div className="mt-4 pt-3 border-t border-bd">
                   <Link href="/dashboard/budget" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors">
                     예산 검토 <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -417,7 +421,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 2: 공급사 집중도 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-5">
+              <div className="rounded-md border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <Store className="h-4 w-4 text-slate-400" />
@@ -448,7 +452,7 @@ export default function AnalyticsPage() {
                                 ₩{v.totalAmount.toLocaleString("ko-KR")}
                               </span>
                             </div>
-                            <div className="mt-1 h-1 bg-[#222226] rounded-full overflow-hidden">
+                            <div className="mt-1 h-1 bg-el rounded-full overflow-hidden">
                               <div
                                 className={`h-full rounded-full ${isConcentrated ? "bg-amber-400" : "bg-blue-400"}`}
                                 style={{ width: `${Math.min(100, v.pct)}%` }}
@@ -468,10 +472,14 @@ export default function AnalyticsPage() {
                     )}
                   </div>
                 ) : (
-                  <p className="text-sm text-slate-500 py-4">공급사 데이터가 아직 없습니다.</p>
+                  <div className="py-4 space-y-2">
+                    <p className="text-sm text-slate-500">공급사 데이터가 아직 없습니다</p>
+                    <p className="text-[10px] text-slate-600">구매 이력이 쌓이면 공급사 집중도와 협상 리스크를 보여줍니다</p>
+                    <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">구매 내역 보기 <ArrowRight className="h-3 w-3" /></Link>
+                  </div>
                 )}
 
-                <div className="mt-4 pt-3 border-t border-[#2a2a2e]">
+                <div className="mt-4 pt-3 border-t border-bd">
                   <Link href="/dashboard/analytics" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors">
                     공급사 분석 <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -479,7 +487,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 3: 이상 지출 탐지 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-5">
+              <div className="rounded-md border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <TrendingUp className="h-4 w-4 text-slate-400" />
@@ -513,13 +521,18 @@ export default function AnalyticsPage() {
                   }
 
                   if (anomalies.length === 0) {
-                    return <p className="text-sm text-slate-500 py-4">현재 이상 패턴이 감지되지 않았습니다.</p>;
+                    return (
+                      <div className="py-4 space-y-2">
+                        <p className="text-sm text-slate-500">현재 이상 패턴이 감지되지 않았습니다</p>
+                        <p className="text-[10px] text-slate-600">반복 구매와 고액 단건 지출이 쌓이면 비정상 패턴을 자동 탐지합니다</p>
+                      </div>
+                    );
                   }
 
                   return (
                     <div className="space-y-2.5">
                       {anomalies.slice(0, 4).map((a, i) => (
-                        <div key={i} className="rounded bg-[#222226]/50 px-3 py-2">
+                        <div key={i} className="rounded bg-el/50 px-3 py-2">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-sm text-slate-200 truncate">{a.item}</p>
@@ -534,7 +547,7 @@ export default function AnalyticsPage() {
                   );
                 })()}
 
-                <div className="mt-4 pt-3 border-t border-[#2a2a2e]">
+                <div className="mt-4 pt-3 border-t border-bd">
                   <Link href="/dashboard/purchases" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors">
                     구매내역 보기 <ArrowRight className="h-3 w-3" />
                   </Link>
@@ -542,7 +555,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 4: 재주문 예상 항목 */}
-              <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-5">
+              <div className="rounded-md border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
                     <RefreshCw className="h-4 w-4 text-slate-400" />
@@ -566,7 +579,7 @@ export default function AnalyticsPage() {
                       <div className="space-y-2.5">
                         <p className="text-sm text-slate-500 py-2">반복 구매 품목 모두 최근 주문 완료</p>
                         {repeatItems.slice(0, 3).map((item, i) => (
-                          <div key={i} className="flex items-center gap-3 rounded bg-[#222226]/50 px-3 py-2">
+                          <div key={i} className="flex items-center gap-3 rounded bg-el/50 px-3 py-2">
                             <CategoryIcon category={item.category} />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-slate-300 truncate">{item.item}</p>
@@ -580,13 +593,19 @@ export default function AnalyticsPage() {
                   }
 
                   if (reorderCandidates.length === 0) {
-                    return <p className="text-sm text-slate-500 py-4">반복 구매 데이터가 쌓이면 예측이 시작됩니다.</p>;
+                    return (
+                      <div className="py-4 space-y-2">
+                        <p className="text-sm text-slate-500">반복 구매 데이터가 쌓이면 재주문 예측이 시작됩니다</p>
+                        <p className="text-[10px] text-slate-600">구매 이력과 재고 소비 패턴이 축적되면 재주문 시점을 자동 제안합니다</p>
+                        <Link href="/app/search" className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300">소싱 시작하기 <ArrowRight className="h-3 w-3" /></Link>
+                      </div>
+                    );
                   }
 
                   return (
                     <div className="space-y-2.5">
                       {reorderCandidates.map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded bg-[#222226]/50 px-3 py-2">
+                        <div key={i} className="flex items-center gap-3 rounded bg-el/50 px-3 py-2">
                           <CategoryIcon category={item.category} />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-200 truncate">{item.item}</p>
@@ -605,8 +624,8 @@ export default function AnalyticsPage() {
                   );
                 })()}
 
-                <div className="mt-4 pt-3 border-t border-[#2a2a2e]">
-                  <Link href="/test/compare" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors">
+                <div className="mt-4 pt-3 border-t border-bd">
+                  <Link href="/app/compare" className="inline-flex items-center gap-1.5 text-xs text-slate-400 hover:text-slate-300 transition-colors">
                     비교 재진입 <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
@@ -618,7 +637,7 @@ export default function AnalyticsPage() {
         {/* ═══════════════════════════════════════════════════
             BOTTOM: 상세 분석 (Collapsible)
            ═══════════════════════════════════════════════════ */}
-        <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e]">
+        <div className="rounded-md border border-bd bg-pn">
           <button
             onClick={() => setChartsOpen(!chartsOpen)}
             className="w-full flex items-center justify-between px-5 py-3 text-left"
@@ -632,7 +651,7 @@ export default function AnalyticsPage() {
               {isLoading ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {[0, 1].map((i) => (
-                    <div key={i} className="rounded bg-[#222226] p-4 space-y-2">
+                    <div key={i} className="rounded bg-el p-4 space-y-2">
                       <Skeleton className="h-4 w-28 bg-slate-700" />
                       <Skeleton className="h-[180px] w-full bg-slate-700 rounded" />
                     </div>
@@ -641,7 +660,7 @@ export default function AnalyticsPage() {
               ) : (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {/* 월별 지출 바 차트 */}
-                  <div className="rounded bg-[#222226]/60 p-4">
+                  <div className="rounded bg-el/60 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-medium text-slate-400">월별 지출 변화</h4>
                       <Link href="/dashboard/purchases">
@@ -683,7 +702,7 @@ export default function AnalyticsPage() {
                   </div>
 
                   {/* 카테고리 파이 차트 */}
-                  <div className="rounded bg-[#222226]/60 p-4">
+                  <div className="rounded bg-el/60 p-4">
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-medium text-slate-400">카테고리별 비중</h4>
                       <Link href="/dashboard/budget">
@@ -750,32 +769,32 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* ══ 빠른 이동 ══ */}
-        <div className="rounded-md border border-[#2a2a2e] bg-[#1a1a1e] p-4">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">빠른 이동</p>
+        {/* ══ 조치 바로가기 ══ */}
+        <div className="rounded-md border border-bd bg-pn p-4">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">조치 바로가기</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Link href="/dashboard/purchases">
-              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-[#2a2a2e] bg-[#222226]/50 hover:bg-[#222226] px-3 text-xs font-medium text-slate-300 transition-colors">
-                <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
-                구매내역 보기
-              </button>
-            </Link>
             <Link href="/dashboard/budget">
-              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-[#2a2a2e] bg-[#222226]/50 hover:bg-[#222226] px-3 text-xs font-medium text-slate-300 transition-colors">
-                <CreditCard className="h-3.5 w-3.5 text-slate-500" />
-                예산 검토
+              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                예산 위험 검토
               </button>
             </Link>
-            <Link href="/dashboard/analytics">
-              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-[#2a2a2e] bg-[#222226]/50 hover:bg-[#222226] px-3 text-xs font-medium text-slate-300 transition-colors">
+            <Link href="/dashboard/purchases">
+              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
                 <Store className="h-3.5 w-3.5 text-slate-500" />
-                공급사 분석
+                공급사 의존 점검
               </button>
             </Link>
-            <Link href="/test/compare">
-              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-[#2a2a2e] bg-[#222226]/50 hover:bg-[#222226] px-3 text-xs font-medium text-slate-300 transition-colors">
+            <Link href="/dashboard/stock-risk">
+              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
                 <RefreshCw className="h-3.5 w-3.5 text-slate-500" />
-                비교 재진입
+                재주문 후보 열기
+              </button>
+            </Link>
+            <Link href="/dashboard/quotes">
+              <button className="w-full h-9 flex items-center justify-start gap-2 rounded border border-bd bg-el/50 hover:bg-el px-3 text-xs font-medium text-slate-300 transition-colors">
+                <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
+                견적 워크큐 열기
               </button>
             </Link>
           </div>

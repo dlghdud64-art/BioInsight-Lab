@@ -263,8 +263,8 @@ export const PROMPT_UNIT_SPECS: PromptUnitSpec[] = [
     name: 'Sourcing Flow Screen Tree',
     purpose: 'search→results→compare→quote draft→quote detail handoff를 하나의 sourcing flow로 고정',
     targetFiles: [
-      'apps/web/src/app/test/search/**',
-      'apps/web/src/app/test/compare/**',
+      'apps/web/src/app/search/**',
+      'apps/web/src/app/search/**',
       'apps/web/src/lib/ops-console/reentry-context.ts',
       'apps/web/src/lib/ops-console/sourcing-flow-adapter.ts',
     ],
@@ -624,8 +624,8 @@ search→results→compare→quote draft→quote detail handoff를
 재진입 context 유지, 3가지 entry path(quick/compare/review) 분기를 명확히 한다.
 
 ### 수정 대상
-- apps/web/src/app/test/search/ 하위 파일들
-- apps/web/src/app/test/compare/ 하위 파일들
+- apps/web/src/app/search/ 하위 파일들
+- apps/web/src/app/search/ 하위 파일들
 - apps/web/src/lib/ops-console/reentry-context.ts
 - apps/web/src/lib/ops-console/sourcing-flow-adapter.ts
 
@@ -665,7 +665,7 @@ search→results→compare→quote draft→quote detail handoff를
 
 5. Quote Detail Handoff:
    - 초안 생성 완료 → /dashboard/quotes/[quoteId]로 이동
-   - navigation-context에 origin=sourcing_flow, returnPath=/test/search?현재조건 설정
+   - navigation-context에 origin=sourcing_flow, returnPath=/search?현재조건 설정
 
 6. Return Path 전체:
    - search → source entity (re-entry context의 sourceRoute)

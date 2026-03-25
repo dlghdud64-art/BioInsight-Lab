@@ -17,8 +17,6 @@ import {
 import { getStageInfo, getNextActionLabel, canConvertToPO, type ProcurementStage, type ApprovalPolicy, type ApprovalStatus } from "@/lib/procurement-stage";
 import { evaluateGuardrails, hasBlocker, getGuardrailSummary, SEVERITY_CONFIG, type GuardrailResult } from "@/lib/guardrail";
 
-type OrderStatus = "pending" | "quoted" | "ordered" | "shipping" | "delivered";
-
 // ── PO Conversion Item (mock-compatible) ──
 interface POCandidate {
   id: string;
@@ -34,44 +32,8 @@ interface POCandidate {
   stage: ProcurementStage;
 }
 
-const STATUS_CONFIG: Record<
-  OrderStatus,
-  { label: string; dot: "amber" | "blue" | "slate" | "emerald"; dotPulse?: boolean; className: string; borderClass: string }
-> = {
-  pending: {
-    label: "견적 대기",
-    dot: "amber",
-    className: "bg-amber-50 text-amber-700 border-amber-200",
-    borderClass: "border-[#2a2a2e]",
-  },
-  quoted: {
-    label: "견적 도착",
-    dot: "blue",
-    dotPulse: true,
-    className: "bg-blue-50 text-blue-700 border-blue-200",
-    borderClass: "border-blue-100",
-  },
-  ordered: {
-    label: "발주 완료",
-    dot: "slate",
-    className: "bg-[#222226] text-slate-400 border-[#2a2a2e]",
-    borderClass: "border-[#2a2a2e]",
-  },
-  shipping: {
-    label: "배송 중",
-    dot: "emerald",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    borderClass: "border-[#2a2a2e]",
-  },
-  delivered: {
-    label: "배송 완료",
-    dot: "emerald",
-    className: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    borderClass: "border-[#2a2a2e]",
-  },
-};
-
-const MOCK_ORDERS: POCandidate[] = [
+// Mock data — will be replaced with real query
+const MOCK_CANDIDATES: POCandidate[] = [
   {
     id: "poc-001",
     title: "Thermo Fisher FBS 외 2건",
@@ -115,14 +77,14 @@ function POConversionContent() {
   const [excludedItems, setExcludedItems] = useState<Set<string>>(new Set());
 
   // In production: useQuery to fetch po_conversion_candidate items
-  const candidates = MOCK_ORDERS;
-  const selected = candidates.find((c: POCandidate) => c.id === selectedId) ?? candidates[0];
+  const candidates = MOCK_CANDIDATES;
+  const selected = candidates.find(c => c.id === selectedId) ?? candidates[0];
 
   // Guard check — guardrail layer 기반
-  const unresolvedBlockers = selected ? selected.blockers.filter((b: string) => !resolvedBlockers.has(b)) : [];
+  const unresolvedBlockers = selected ? selected.blockers.filter(b => !resolvedBlockers.has(b)) : [];
   const approvalCleared = selected ? canConvertToPO(selected.approvalPolicy, selected.approvalStatus) : false;
-  const activeItems = selected ? selected.items.filter((_: POCandidate["items"][number], idx: number) => !excludedItems.has(`${selected.id}-${idx}`)) : [];
-  const activeTotal = activeItems.reduce((sum: number, i: POCandidate["items"][number]) => sum + i.lineTotal, 0);
+  const activeItems = selected ? selected.items.filter((_, idx) => !excludedItems.has(`${selected.id}-${idx}`)) : [];
+  const activeTotal = activeItems.reduce((sum, i) => sum + i.lineTotal, 0);
 
   // Guardrail evaluation
   const guardrailResults: GuardrailResult[] = useMemo(() => {
@@ -134,8 +96,8 @@ function POConversionContent() {
       vendorApproved: true, // TODO: vendor approval 상태 연결
       approvalPolicy: selected.approvalPolicy,
       approvalStatus: selected.approvalStatus,
-      isHazardous: selected.blockers.some((b: string) => b.includes("위험물")),
-      hazardousDocsReady: !selected.blockers.some((b: string) => b.includes("위험물")),
+      isHazardous: selected.blockers.some(b => b.includes("위험물")),
+      hazardousDocsReady: !selected.blockers.some(b => b.includes("위험물")),
     });
   }, [selected, activeTotal]);
 
@@ -173,7 +135,7 @@ function POConversionContent() {
           </div>
         </div>
         {/* Candidate selector strip */}
-        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#3e4044' }}>
+        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#353739' }}>
           {candidates.map(c => (
             <button key={c.id} onClick={() => setSelectedId(c.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${

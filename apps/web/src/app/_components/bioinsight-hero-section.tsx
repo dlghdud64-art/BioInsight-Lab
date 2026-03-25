@@ -64,7 +64,7 @@ function MobileMenu() {
             ) : (
               <>
                 <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
-                <Link href="/search" onClick={() => setOpen(false)}>
+                <Link href="/app/search" onClick={() => setOpen(false)}>
                   <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
                 </Link>
               </>
@@ -206,7 +206,7 @@ export function BioInsightHeroSection() {
           ) : (
             <>
               <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
-              <Link href="/search">
+              <Link href="/app/search">
                 <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
               </Link>
             </>
@@ -224,7 +224,7 @@ export function BioInsightHeroSection() {
               </Button>
             </Link>
           ) : (
-            <Link href="/search">
+            <Link href="/app/search">
               <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
             </Link>
           )}
@@ -243,7 +243,7 @@ export function BioInsightHeroSection() {
           시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
-          <Link href="/search">
+          <Link href="/app/search">
             <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
               시약·장비 검색 시작하기<Search className="ml-2 h-4 w-4" />
             </Button>

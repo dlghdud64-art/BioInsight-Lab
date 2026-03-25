@@ -24,12 +24,12 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded border border-indigo-600/20 bg-indigo-600/5">
-        <div className="w-6 h-6 rounded bg-indigo-600/10 flex items-center justify-center animate-pulse shrink-0">
-          <Sparkles className="h-3 w-3 text-indigo-400" />
+      <div className="flex items-center gap-2 px-3 py-2 rounded border border-bd bg-pn">
+        <div className="w-6 h-6 rounded bg-el flex items-center justify-center animate-pulse shrink-0">
+          <Sparkles className="h-3 w-3 text-slate-400" />
         </div>
         <div className="flex-1 space-y-1 min-w-0">
-          <div className="h-2.5 bg-indigo-600/10 rounded animate-pulse w-32" />
+          <div className="h-2.5 bg-el rounded animate-pulse w-32" />
         </div>
       </div>
     );
@@ -78,37 +78,37 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
   };
 
   return (
-    <div className="rounded border border-indigo-600/20 bg-indigo-600/5 overflow-hidden">
+    <div className="rounded border border-bd bg-pn overflow-hidden">
       {/* Single-line strip — ultra compact */}
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-left hover:bg-indigo-600/10 transition-colors"
+        className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-left hover:bg-el transition-colors"
       >
-        <Sparkles className="h-3 w-3 text-indigo-400 shrink-0" />
-        <p className="text-[11px] text-indigo-300 leading-snug line-clamp-1 flex-1 min-w-0">
+        <Sparkles className="h-3 w-3 text-slate-400 shrink-0" />
+        <p className="text-[11px] text-slate-300 leading-snug line-clamp-1 flex-1 min-w-0">
           {getInsightText()}
         </p>
-        <Badge variant="secondary" className="bg-indigo-600/10 text-indigo-400 border-indigo-600/20 text-[9px] px-1.5 py-0 shrink-0">
+        <Badge variant="secondary" className="bg-el text-slate-400 border-bd text-[9px] px-1.5 py-0 shrink-0">
           {getCategoryLabel(queryAnalysis.category)}
         </Badge>
-        <div className="shrink-0 text-indigo-400">
+        <div className="shrink-0 text-slate-400">
           {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
         </div>
       </button>
 
       {/* 확장 상세 */}
       {isExpanded && (
-        <div className="px-3 pb-2.5 pt-1 space-y-2 border-t border-indigo-600/20">
+        <div className="px-3 pb-2.5 pt-1 space-y-2 border-t border-bd">
           <div className="flex flex-wrap items-center gap-1 pt-1.5">
-            <span className="text-[10px] font-medium text-indigo-400 mr-0.5">비교 기준</span>
+            <span className="text-[10px] font-medium text-slate-400 mr-0.5">비교 기준</span>
             {getComparisonCriteria().slice(0, 4).map((c, i) => (
-              <Badge key={i} variant="outline" className="text-[10px] text-indigo-300 border-indigo-600/20 px-1.5 py-0">
+              <Badge key={i} variant="outline" className="text-[10px] text-slate-300 border-bd px-1.5 py-0">
                 {c}
               </Badge>
             ))}
           </div>
-          <p className="text-xs text-indigo-300/80 leading-relaxed">{getInterpretation()}</p>
+          <p className="text-xs text-slate-400 leading-relaxed">{getInterpretation()}</p>
         </div>
       )}
     </div>

@@ -725,7 +725,7 @@ function SafetySpendPageContent() {
                     ) : (
                       <div className="space-y-2 max-h-[400px] overflow-y-auto">
                         {searchResults?.products?.map((product: any) => (
-                          <Card key={product.id} className="cursor-pointer hover:bg-[#222226]">
+                          <Card key={product.id} className="cursor-pointer hover:bg-pg">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between">
                                 <div className="flex-1">

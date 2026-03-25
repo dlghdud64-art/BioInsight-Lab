@@ -56,15 +56,15 @@ interface Notification {
 /** 카테고리별 아이콘 + tint 매핑 */
 const CATEGORY_CONFIG: Record<
   NotificationCategory,
-  { icon: React.ElementType; text: string; label: string }
+  { icon: React.ElementType; tint: string; unreadTint: string }
 > = {
-  stock_alert:       { icon: AlertTriangle,  text: "text-red-400",     label: "재고 부족" },
-  quote_arrived:     { icon: FileText,       text: "text-blue-400",    label: "견적 도착" },
-  delivery_complete: { icon: Truck,          text: "text-emerald-400", label: "입고 완료" },
-  approval_pending:  { icon: ClipboardCheck, text: "text-amber-400",   label: "승인 대기" },
-  expiry_warning:    { icon: Clock,          text: "text-orange-400",  label: "유효기간 경고" },
-  safety_alert:      { icon: ShieldAlert,    text: "text-purple-400",  label: "안전 관리" },
-  system:            { icon: Bell,           text: "text-slate-400",   label: "시스템" },
+  stock_alert:       { icon: AlertTriangle, tint: "text-slate-500", unreadTint: "text-red-400" },
+  quote_arrived:     { icon: FileText,      tint: "text-slate-500", unreadTint: "text-blue-400" },
+  delivery_complete: { icon: Truck,         tint: "text-slate-500", unreadTint: "text-blue-400" },
+  approval_pending:  { icon: ClipboardCheck,tint: "text-slate-500", unreadTint: "text-blue-400" },
+  expiry_warning:    { icon: Clock,         tint: "text-slate-500", unreadTint: "text-amber-400" },
+  safety_alert:      { icon: ShieldAlert,   tint: "text-slate-500", unreadTint: "text-amber-400" },
+  system:            { icon: Bell,          tint: "text-slate-500", unreadTint: "text-slate-300" },
 };
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
@@ -202,42 +202,12 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const renderCategoryIcon = (category: NotificationCategory, isRead: boolean) => {
     const config = CATEGORY_CONFIG[category];
     const Icon = config.icon;
-    const iconSize = "h-4 w-4";
-    return (
-      <Icon className={`flex-shrink-0 ${iconSize} ${config.text}`} />
-    );
-  };
-
-  /** 단일 알림 아이템 렌더링 — Simple Notification Row */
-  const renderNotificationItem = (notification: Notification) => {
-    const config = CATEGORY_CONFIG[notification.category];
-    return (
-      <button
-        key={notification.id}
-        type="button"
-        onClick={() => handleNotificationClick(notification)}
-        className={`w-full text-left px-3 py-2.5 hover:bg-el transition-colors ${notification.read ? "opacity-50" : ""}`}
-      >
-        <div className="flex items-start gap-2.5">
-          {renderCategoryIcon(notification.category, notification.read)}
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text}`}>
-                {config.label}
-              </span>
-              <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{notification.time}</span>
-            </div>
-            <p className={`text-xs truncate ${notification.read ? "text-slate-500" : "text-slate-100 font-medium"}`}>
-              {notification.text}
-            </p>
-          </div>
-        </div>
-      </button>
-    );
+    const color = isRead ? config.tint : config.unreadTint;
+    return <Icon className={`h-4 w-4 flex-shrink-0 ${color}`} />;
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-[#2a2a2e] bg-[#09090b]">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-bd bg-sh">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -281,7 +251,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-[#1a1a1e] border-[#333338] focus:bg-[#1a1a1e] w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-pn border-bs focus:bg-pn w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -312,38 +282,67 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
-              {/* ── 상단 헤더 ── */}
-              <div className="px-3 py-2.5 border-b border-[#333338] bg-[#1a1a1e]/50 flex items-center justify-between">
-                <h3 className="text-sm font-bold text-slate-100">작업 알림</h3>
+            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-pn shadow-2xl shadow-black/40 border border-bd ring-1 ring-black/20">
+              {/* 헤더 */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-bd">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-slate-200">알림</span>
+                  {unreadCount > 0 && (
+                    <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[11px] font-semibold rounded-full bg-blue-600 text-white">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
                 {unreadCount > 0 && (
-                  <button type="button" onClick={handleMarkAllRead} className="text-[11px] text-blue-400 hover:text-blue-300">
+                  <button
+                    type="button"
+                    onClick={handleMarkAllRead}
+                    className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  >
                     모두 읽음
                   </button>
                 )}
               </div>
 
-              {/* ── 알림 목록 ── */}
-              <div className="max-h-[420px] overflow-y-auto">
+              {/* 알림 목록 */}
+              <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-8 text-center">
-                    <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-                    <p className="text-sm font-medium text-slate-400">모든 작업이 처리되었습니다</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">새 작업이 발생하면 여기에 표시됩니다</p>
+                    <CheckCircle2 className="h-6 w-6 text-slate-500 mx-auto mb-2" />
+                    <p className="text-xs text-slate-500">새 알림이 없습니다</p>
                   </div>
                 ) : (
-                  <div className="divide-y divide-slate-800/40">
-                    {notifications.map(renderNotificationItem)}
-                  </div>
+                  notifications.slice(0, 8).map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => handleNotificationClick(n)}
+                      className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-el transition-colors"
+                    >
+                      {/* unread 파란 점 */}
+                      <div className="flex items-center gap-2 pt-0.5">
+                        {!n.read ? (
+                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
+                        ) : (
+                          <span className="w-1.5 h-1.5 flex-shrink-0" />
+                        )}
+                        {renderCategoryIcon(n.category, n.read)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-xs leading-snug line-clamp-2 ${n.read ? "text-slate-400" : "text-slate-200"}`}>{n.text}</p>
+                        <span className="text-[11px] text-slate-500 mt-0.5 block">{n.time}</span>
+                      </div>
+                    </button>
+                  ))
                 )}
               </div>
 
-              {/* ── 하단 CTA ── */}
-              <div className="border-t border-[#333338] px-3 py-2.5">
+              {/* 푸터 */}
+              <div className="border-t border-bd px-4 py-2.5 text-center">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
-                  className="block w-full text-center text-xs font-semibold py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors"
+                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
                 >
                   전체 알림 보기
                 </Link>
@@ -389,8 +388,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-[#333338] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#222226] transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-[#333338]">
+              <button className="flex items-center gap-2 pl-3 border-l border-bs flex-shrink-0 px-3 py-2 rounded-lg hover:bg-el transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-bs">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="bg-blue-900/50 text-blue-400 text-xs font-semibold">
                     {user?.name
@@ -456,7 +455,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#222226] mobile-menu-button lg:hidden -mr-1"
+              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-el mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >

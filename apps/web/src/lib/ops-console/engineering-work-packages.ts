@@ -221,8 +221,8 @@ export const WORK_PACKAGES: WorkPackage[] = [
       'AI inline summary layer (보조)',
     ],
     files: [
-      'app/test/search/**',
-      'app/test/compare/**',
+      'app/search/**',
+      'app/search/**',
       'lib/ops-console/reentry-context.ts',
       'lib/ops-console/sourcing-flow-adapter.ts',
     ],

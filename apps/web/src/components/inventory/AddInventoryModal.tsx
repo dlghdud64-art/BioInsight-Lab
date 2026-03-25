@@ -206,7 +206,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
           <form onSubmit={handleSubmit} className="grid gap-6 py-4">
             {/* 1. 기본 식별 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-[#333338] pb-2">
+              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-bd border-bs pb-2">
                 기본 식별 정보
               </h4>
 
@@ -218,7 +218,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                   id="productName"
                   value={formProductName}
                   readOnly
-                  className="border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-[#1a1a1e]/50"
+                  className="border-bs border-bs bg-pg bg-pn/50"
                   placeholder="예: Gibco FBS, 50ml Conical Tube"
                 />
               </div>
@@ -230,7 +230,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="manufacturer"
                     value={formBrand}
                     readOnly
-                    className="bg-slate-50 dark:bg-[#1a1a1e]/50"
+                    className="bg-pg bg-pn/50"
                     placeholder="예: Thermo Fisher"
                   />
                 </div>
@@ -240,7 +240,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     id="catNo"
                     value={formCatNo}
                     readOnly
-                    className="bg-slate-50 dark:bg-[#1a1a1e]/50 font-mono"
+                    className="bg-pg bg-pn/50 font-mono"
                     placeholder="예: 16000-044"
                   />
                 </div>
@@ -295,7 +295,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
             {/* 2. 수량 및 관리 정보 */}
             <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-blue-600 dark:text-blue-400 border-b border-slate-200 dark:border-[#333338] pb-2 mt-2">
+              <h4 className="text-sm font-semibold text-blue-600 text-blue-400 border-b border-bd border-bs pb-2 mt-2">
                 수량 및 관리 정보
               </h4>
 

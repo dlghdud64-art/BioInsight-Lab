@@ -83,7 +83,7 @@ export function OrganizationOverviewPresenter(props: OrganizationOverviewPresent
             <h3 className="text-base font-bold text-slate-200 mb-2">{PAGE_COPY.fullEmptyTitle}</h3>
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">{PAGE_COPY.fullEmptyDescription}</p>
             <Button asChild className="bg-blue-600 hover:bg-blue-500">
-              <Link href="/test/search">{PAGE_COPY.fullEmptyCta}</Link>
+              <Link href="/app/search">{PAGE_COPY.fullEmptyCta}</Link>
             </Button>
           </div>
           {props.quickLinks && <QuickLinksBlock links={props.quickLinks} />}

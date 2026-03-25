@@ -236,7 +236,7 @@ export function DateRangePicker({
                   key={p.key}
                   type="button"
                   onClick={() => handlePreset(p.key)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-slate-200 dark:border-[#333338] bg-white dark:bg-[#222226] text-slate-700 dark:text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700 dark:hover:bg-blue-950/30 dark:hover:text-blue-400 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-bd border-bs bg-pn bg-el text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700  hover:bg-blue-950/30  hover:text-blue-400 transition-colors"
                 >
                   {p.label}
                 </button>
@@ -274,7 +274,7 @@ export function DateRangePicker({
             </SheetHeader>
 
             {/* Month navigation */}
-            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-[#2a2a2e]">
+            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 border-bd">
               <Button
                 variant="ghost"
                 size="sm"
@@ -344,7 +344,7 @@ export function DateRangePicker({
             </div>
 
             {/* Bottom fixed bar: 초기화 + 적용 */}
-            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]">
+            <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-100 border-bd bg-pn bg-pn">
               <Button
                 variant="outline"
                 className="flex-1 h-10 text-sm"

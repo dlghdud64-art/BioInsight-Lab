@@ -16,7 +16,7 @@ export interface CreateQuoteParams {
   notes?: Record<string, string>;
   vendorIds?: Record<string, string>; // productId -> vendorId 매핑
   /**
-   * Draft/quote builder items (from /test/quote)
+   * Draft/quote builder items (from /search)
    * - productId may not exist in DB (e.g. "p1"); in that case we store a snapshot row with productId=null
    * - these fields map to QuoteListItem columns (name/vendor/brand/unitPrice/lineTotal/notes/lineNumber)
    */

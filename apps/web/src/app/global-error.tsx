@@ -19,8 +19,8 @@ export default function GlobalError({
   return (
     <html lang="ko">
       <body>
-        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-[#111114]">
-          <div className="max-w-md w-full space-y-4 text-center bg-[#1a1a1e] p-8 rounded-lg shadow-md">
+        <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-pg">
+          <div className="max-w-md w-full space-y-4 text-center bg-pn p-8 rounded-lg shadow-md">
             <div className="flex justify-center">
               <AlertCircle className="h-12 w-12 text-red-500" />
             </div>

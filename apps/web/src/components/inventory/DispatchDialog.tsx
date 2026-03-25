@@ -178,7 +178,7 @@ export function DispatchDialog({
             size="sm"
             onClick={handleSubmit}
             disabled={!quantity || parseFloat(quantity) <= 0 || isLoading}
-            className="text-xs gap-1.5 bg-[#222226] hover:bg-[#1a1a1e] text-white"
+            className="text-xs gap-1.5 bg-el hover:bg-pn text-white"
           >
             <Truck className="h-3 w-3" />
             {isLoading ? "처리 중..." : "출고 완료"}

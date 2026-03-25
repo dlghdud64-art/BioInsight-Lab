@@ -18,9 +18,9 @@ export const overviewEmptyFixture = {
   ],
   stepFunnel: {
     stages: [
-      { key: "step1", title: "검토 큐", count: 0, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 0 · 실패 0", ctaLabel: "검토 큐 열기", linkHref: "/test/search" },
-      { key: "step2", title: "비교 큐", count: 0, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 0 · 확정 0", ctaLabel: "비교 큐 열기", linkHref: "/test/compare" },
-      { key: "step3", title: "견적 초안", count: 0, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 0 · 보류 0", ctaLabel: "견적 초안 열기", linkHref: "/test/quote" },
+      { key: "step1", title: "검토 큐", count: 0, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 0 · 실패 0", ctaLabel: "검토 큐 열기", linkHref: "/app/search" },
+      { key: "step2", title: "비교 큐", count: 0, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 0 · 확정 0", ctaLabel: "비교 큐 열기", linkHref: "/app/compare" },
+      { key: "step3", title: "견적 초안", count: 0, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 0 · 보류 0", ctaLabel: "견적 초안 열기", linkHref: "/app/quote" },
     ],
   },
   alerts: { isEmpty: true, items: [] },
@@ -28,9 +28,9 @@ export const overviewEmptyFixture = {
   approvalInbox: { pendingCount: 0, pendingDescription: "현재 승인 대기 요청이 없습니다", myRequestsCount: 0, myRequestsDescription: "내가 요청한 승인이 없습니다", recentDecisions: [] },
   activityFeed: { isEmpty: true, items: [] },
   quickLinks: [
-    { label: "Step 1 검토 큐 열기", href: "/test/search" },
-    { label: "Step 2 비교 큐 열기", href: "/test/compare" },
-    { label: "Step 3 견적 초안 열기", href: "/test/quote" },
+    { label: "Step 1 검토 큐 열기", href: "/app/search" },
+    { label: "Step 2 비교 큐 열기", href: "/app/compare" },
+    { label: "Step 3 견적 초안 열기", href: "/app/quote" },
     { label: "멤버 및 접근 관리 보기", href: "/dashboard/organizations" },
   ],
   pageState: { isLoading: false, hasPartialError: false, errorBlocks: [] },

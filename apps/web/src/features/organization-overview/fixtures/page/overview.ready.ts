@@ -18,23 +18,23 @@ export const overviewReadyFixture = {
   ],
   stepFunnel: {
     stages: [
-      { key: "step1", title: "검토 큐", count: 24, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 9 · 실패 3", ctaLabel: "검토 큐 열기", linkHref: "/test/search" },
-      { key: "step2", title: "비교 큐", count: 9, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 5 · 확정 4", ctaLabel: "비교 큐 열기", linkHref: "/test/compare" },
-      { key: "step3", title: "견적 초안", count: 6, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 4 · 보류 2", ctaLabel: "견적 초안 열기", linkHref: "/test/quote" },
+      { key: "step1", title: "검토 큐", count: 24, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: "검토 필요 9 · 실패 3", ctaLabel: "검토 큐 열기", linkHref: "/app/search" },
+      { key: "step2", title: "비교 큐", count: 9, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: "선택 필요 5 · 확정 4", ctaLabel: "비교 큐 열기", linkHref: "/app/compare" },
+      { key: "step3", title: "견적 초안", count: 6, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: "제출 가능 4 · 보류 2", ctaLabel: "견적 초안 열기", linkHref: "/app/quote" },
     ],
   },
   alerts: {
     isEmpty: false,
     items: [
-      { id: "alert-1", severity: "warning", severityLabel: "주의", title: "예산 확인 필요", description: "제출 전 검토가 필요한 견적 초안 1건", ctaLabel: "예산 확인 항목 보기", linkHref: "/test/quote" },
+      { id: "alert-1", severity: "warning", severityLabel: "주의", title: "예산 확인 필요", description: "제출 전 검토가 필요한 견적 초안 1건", ctaLabel: "예산 확인 항목 보기", linkHref: "/app/quote" },
       { id: "alert-2", severity: "warning", severityLabel: "주의", title: "재고 중복 가능", description: "기존 보유 재고와 대조가 필요한 항목 2건", ctaLabel: "재고 대조 항목 보기", linkHref: "/dashboard/inventory" },
     ],
   },
   workQueue: {
     isEmpty: false,
     sections: [
-      { id: "ready", title: "즉시 승인 가능", count: 6, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", details: [{ label: "확정 가능", count: 6 }], ctaLabel: "승인 가능한 항목 보기", linkHref: "/test/search" },
-      { id: "selection-needed", title: "후보 선택 필요", count: 5, description: "비교 후 선택 확정이 필요한 항목입니다", details: [{ label: "프로토콜 기반", count: 2 }, { label: "엑셀 기반", count: 3 }], ctaLabel: "비교 확정하러 가기", linkHref: "/test/compare" },
+      { id: "ready", title: "즉시 승인 가능", count: 6, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", details: [{ label: "확정 가능", count: 6 }], ctaLabel: "승인 가능한 항목 보기", linkHref: "/app/search" },
+      { id: "selection-needed", title: "후보 선택 필요", count: 5, description: "비교 후 선택 확정이 필요한 항목입니다", details: [{ label: "프로토콜 기반", count: 2 }, { label: "엑셀 기반", count: 3 }], ctaLabel: "비교 확정하러 가기", linkHref: "/app/compare" },
     ],
   },
   approvalInbox: {
@@ -56,9 +56,9 @@ export const overviewReadyFixture = {
     ],
   },
   quickLinks: [
-    { label: "Step 1 검토 큐 열기", href: "/test/search" },
-    { label: "Step 2 비교 큐 열기", href: "/test/compare" },
-    { label: "Step 3 견적 초안 열기", href: "/test/quote" },
+    { label: "Step 1 검토 큐 열기", href: "/app/search" },
+    { label: "Step 2 비교 큐 열기", href: "/app/compare" },
+    { label: "Step 3 견적 초안 열기", href: "/app/quote" },
     { label: "승인 요청 보기", href: "/dashboard/settings" },
     { label: "멤버 및 접근 관리 보기", href: "/dashboard/organizations" },
     { label: "정책 및 설정 보기", href: "/dashboard/settings" },

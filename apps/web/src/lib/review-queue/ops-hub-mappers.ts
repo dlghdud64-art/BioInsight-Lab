@@ -167,9 +167,9 @@ function mapKpis(input: OpsHubRawInput): OverviewKpiCardViewModel[] {
   const recent = countRecentActivity(input.activityEvents, 7);
 
   const entries: { key: string; title: string; value: number; linkHref: string | null }[] = [
-    { key: "reviewNeeded", title: "검토 필요", value: review.needsReview, linkHref: "/test/search" },
-    { key: "compareWaiting", title: "비교 확정 대기", value: compare.pending, linkHref: "/test/compare" },
-    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: quote.ready, linkHref: "/test/quote" },
+    { key: "reviewNeeded", title: "검토 필요", value: review.needsReview, linkHref: "/search" },
+    { key: "compareWaiting", title: "비교 확정 대기", value: compare.pending, linkHref: "/search" },
+    { key: "quoteDraftReady", title: "견적 초안 제출 가능", value: quote.ready, linkHref: "/search" },
     { key: "approvalPending", title: "승인 대기", value: approval.pending, linkHref: null },
     { key: "budgetWarnings", title: "예산 확인 필요", value: budget, linkHref: null },
     { key: "inventoryWarnings", title: "재고 중복 가능", value: inventory, linkHref: "/dashboard/inventory" },
@@ -195,9 +195,9 @@ function mapStepFunnel(input: OpsHubRawInput): StepFunnelViewModel {
 
   return {
     stages: [
-      { key: "step1", title: "검토 큐", count: r.total, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: `검토 필요 ${r.needsReview} · 실패 ${r.matchFailed}`, linkHref: "/test/search", ctaLabel: "검토 큐 열기" },
-      { key: "step2", title: "비교 큐", count: c.total, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: `선택 필요 ${c.pending} · 확정 ${c.confirmed}`, linkHref: "/test/compare", ctaLabel: "비교 큐 열기" },
-      { key: "step3", title: "견적 초안", count: q.total, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: `제출 가능 ${q.ready} · 보류 ${q.missing + q.review}`, linkHref: "/test/quote", ctaLabel: "견적 초안 열기" },
+      { key: "step1", title: "검토 큐", count: r.total, description: "입력 해석과 항목 검토가 진행 중입니다", subStatus: `검토 필요 ${r.needsReview} · 실패 ${r.matchFailed}`, linkHref: "/search", ctaLabel: "검토 큐 열기" },
+      { key: "step2", title: "비교 큐", count: c.total, description: "후보 선택과 비교 확정이 필요한 항목입니다", subStatus: `선택 필요 ${c.pending} · 확정 ${c.confirmed}`, linkHref: "/search", ctaLabel: "비교 큐 열기" },
+      { key: "step3", title: "견적 초안", count: q.total, description: "제출 전 수량·단위·예산을 확인할 수 있습니다", subStatus: `제출 가능 ${q.ready} · 보류 ${q.missing + q.review}`, linkHref: "/search", ctaLabel: "견적 초안 열기" },
     ],
   };
 }
@@ -216,7 +216,7 @@ function mapAlerts(input: OpsHubRawInput): AlertsBlockViewModel {
   const budgetCount = countBudgetWarnings(input.quoteDrafts);
   if (budgetCount > 0) {
     const sev = resolveAlertSeverity("budgetCheck", budgetCount);
-    items.push({ id: "budget-check", severity: sev, severityLabel: sev === "urgent" ? "긴급" : "주의", title: "예산 확인 필요", description: `제출 전 검토가 필요한 견적 초안 ${budgetCount}건`, count: budgetCount, linkHref: "/test/quote", ctaLabel: "예산 확인 항목 보기" });
+    items.push({ id: "budget-check", severity: sev, severityLabel: sev === "urgent" ? "긴급" : "주의", title: "예산 확인 필요", description: `제출 전 검토가 필요한 견적 초안 ${budgetCount}건`, count: budgetCount, linkHref: "/search", ctaLabel: "예산 확인 항목 보기" });
   }
 
   // 재고 중복
@@ -229,13 +229,13 @@ function mapAlerts(input: OpsHubRawInput): AlertsBlockViewModel {
   // 매칭 실패
   const matchFailed = input.reviewItems.filter((i) => i.status === "match_failed").length;
   if (matchFailed >= 3) {
-    items.push({ id: "match-fail", severity: "info", severityLabel: "안내", title: "매칭 실패 항목", description: `후보를 찾지 못한 항목 ${matchFailed}건`, count: matchFailed, linkHref: "/test/search", ctaLabel: "검토 큐 확인" });
+    items.push({ id: "match-fail", severity: "info", severityLabel: "안내", title: "매칭 실패 항목", description: `후보를 찾지 못한 항목 ${matchFailed}건`, count: matchFailed, linkHref: "/search", ctaLabel: "검토 큐 확인" });
   }
 
   // 제출 차단
   const blocked = input.quoteDrafts.filter((i) => i.status === "missing_required_fields").length;
   if (blocked > 0) {
-    items.push({ id: "blocked", severity: "warning", severityLabel: "주의", title: "견적 제출 차단", description: `필수 정보가 누락된 견적 초안 ${blocked}건`, count: blocked, linkHref: "/test/quote", ctaLabel: "초안 수정" });
+    items.push({ id: "blocked", severity: "warning", severityLabel: "주의", title: "견적 제출 차단", description: `필수 정보가 누락된 견적 초안 ${blocked}건`, count: blocked, linkHref: "/search", ctaLabel: "초안 수정" });
   }
 
   // 정렬: urgent > warning > info
@@ -251,17 +251,17 @@ function mapWorkQueue(input: OpsHubRawInput): WorkQueueBlockViewModel {
   const confirmed = input.reviewItems.filter((i) => i.status === "confirmed");
 
   if (confirmed.length > 0) {
-    sections.push({ id: "approve-ready", title: "즉시 승인 가능", count: confirmed.length, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", linkHref: "/test/search", ctaLabel: "승인 가능한 항목 보기", details: [] });
+    sections.push({ id: "approve-ready", title: "즉시 승인 가능", count: confirmed.length, description: "검토가 끝나 바로 다음 단계로 보낼 수 있습니다", linkHref: "/search", ctaLabel: "승인 가능한 항목 보기", details: [] });
   }
 
   const comparePending = input.compareItems.filter((i) => i.status === "pending_comparison" || i.status === "selection_needed");
   if (comparePending.length > 0) {
-    sections.push({ id: "compare-needed", title: "후보 선택 필요", count: comparePending.length, description: "비교 후 선택 확정이 필요한 항목입니다", linkHref: "/test/compare", ctaLabel: "비교 확정하러 가기", details: [] });
+    sections.push({ id: "compare-needed", title: "후보 선택 필요", count: comparePending.length, description: "비교 후 선택 확정이 필요한 항목입니다", linkHref: "/search", ctaLabel: "비교 확정하러 가기", details: [] });
   }
 
   const draftReady = input.quoteDrafts.filter((i) => i.status === "draft_ready");
   if (draftReady.length > 0) {
-    sections.push({ id: "submit-ready", title: "제출 직전 확인", count: draftReady.length, description: "견적 요청 전에 수량·단위·예산을 확인하세요", linkHref: "/test/quote", ctaLabel: "견적 초안 확인하기", details: [] });
+    sections.push({ id: "submit-ready", title: "제출 직전 확인", count: draftReady.length, description: "견적 요청 전에 수량·단위·예산을 확인하세요", linkHref: "/search", ctaLabel: "견적 초안 확인하기", details: [] });
   }
 
   if (reviewNeeded.length > 0) {
@@ -269,7 +269,7 @@ function mapWorkQueue(input: OpsHubRawInput): WorkQueueBlockViewModel {
     const spec = reviewNeeded.filter((i) => i.reviewReason?.includes("spec_unclear")).length;
     const qty = reviewNeeded.filter((i) => i.reviewReason?.includes("quantity_missing")).length;
     sections.push({
-      id: "manual-review", title: "수동 확인 필요", count: reviewNeeded.length, description: "자동 해석만으로는 확정할 수 없는 항목입니다", linkHref: "/test/search", ctaLabel: "수동 검토 항목 보기",
+      id: "manual-review", title: "수동 확인 필요", count: reviewNeeded.length, description: "자동 해석만으로는 확정할 수 없는 항목입니다", linkHref: "/search", ctaLabel: "수동 검토 항목 보기",
       details: [
         ...(mfg > 0 ? [{ label: "제조사 확인 필요", count: mfg }] : []),
         ...(spec > 0 ? [{ label: "규격 확인 필요", count: spec }] : []),
@@ -328,9 +328,9 @@ function mapActivityFeed(events: ActivityEvent[], limit: number = 10): ActivityF
 // ═══════════════════════════════════════════════════
 
 const DEFAULT_QUICK_LINKS: QuickLinkItemViewModel[] = [
-  { href: "/test/search", label: "Step 1 검토 큐 열기" },
-  { href: "/test/compare", label: "Step 2 비교 큐 열기" },
-  { href: "/test/quote", label: "Step 3 견적 초안 열기" },
+  { href: "/search", label: "Step 1 검토 큐 열기" },
+  { href: "/search", label: "Step 2 비교 큐 열기" },
+  { href: "/search", label: "Step 3 견적 초안 열기" },
   { href: "#approvals", label: "승인 요청 보기" },
   { href: "#members", label: "멤버 및 접근 관리 보기" },
   { href: "#settings", label: "정책 및 설정 보기" },

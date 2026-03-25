@@ -3,7 +3,7 @@
 /**
  * CompareFlowGuard
  *
- * 비교 상태의 유효 범위를 플로우 경로(/test/search, /test/compare, /test/quote)로 제한.
+ * 비교 상태의 유효 범위를 플로우 경로(/app/search, /app/compare, /app/quote)로 제한.
  * - 플로우 → 외부 이동: 현재 비교 목록을 stash하고 비움
  * - 외부 → 플로우 재진입: stash가 있으면 복원 토스트 표시
  *
@@ -73,7 +73,7 @@ export function CompareFlowGuard() {
                   duration: 3000,
                 });
                 // 3. compare 화면으로 이동
-                router.push("/test/compare");
+                router.push("/app/compare");
               }}>
                 복원
               </ToastAction>

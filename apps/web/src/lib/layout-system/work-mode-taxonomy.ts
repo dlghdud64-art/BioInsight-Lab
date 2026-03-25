@@ -123,7 +123,7 @@ export const WORK_MODE_DEFINITIONS: Record<WorkMode, WorkModeDefinition> = {
     targetScreens: [
       '/dashboard/inventory',          // 재고 관리
       '/dashboard/stock-risk',         // 재고 위험
-      '/test/compare',                 // 견적 비교
+      '/search',                 // 견적 비교
     ],
     density: 'dense',
     primaryAction: '목록 탐색 → 항목 선택 → 상세 확인 → 조치 실행',
@@ -252,7 +252,7 @@ export const SCREEN_MAPPINGS: ScreenMapping[] = [
     gap: 'split pane 구조로 정리 필요',
   },
   {
-    route: '/test/compare',
+    route: '/search',
     label: '제품 비교',
     workMode: 'split_ops',
     currentPattern: '비교 workspace',

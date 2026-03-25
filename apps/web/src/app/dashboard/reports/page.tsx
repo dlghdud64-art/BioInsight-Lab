@@ -291,7 +291,7 @@ export default function ReportsPage() {
   const CHART_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
   return (
-    <div className="flex-1 space-y-5 bg-[#09090b] min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
+    <div className="flex-1 space-y-5 bg-sh min-h-screen p-3 sm:p-4 md:p-6 max-w-7xl mx-auto w-full">
       {/* ================================================================
           HEADER
           ================================================================ */}
@@ -303,12 +303,12 @@ export default function ReportsPage() {
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="border-[#2a2a2e] bg-[#1a1a1e] text-slate-300 hover:bg-[#222226] hover:text-slate-100">
+              <Button variant="outline" size="sm" className="border-bd bg-pn text-slate-300 hover:bg-el hover:text-slate-100">
                 <CloudUpload className="h-4 w-4 mr-1.5" />
                 <span className="hidden sm:inline">데이터 </span>가져오기
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-[#1a1a1e] border-[#2a2a2e]">
+            <DialogContent className="max-w-2xl bg-pn border-bd">
               <DialogHeader>
                 <DialogTitle className="text-slate-100">구매 내역 CSV Import</DialogTitle>
                 <DialogDescription className="text-slate-400">
@@ -325,7 +325,7 @@ export default function ReportsPage() {
                       ? "border-blue-500 bg-blue-950/20"
                       : selectedFile
                       ? "border-blue-400 bg-blue-950/10"
-                      : "border-[#333338] bg-[#09090b] hover:border-slate-600"
+                      : "border-bs bg-sh hover:border-slate-600"
                   }`}
                   onClick={() => document.getElementById("file-input")?.click()}
                 >
@@ -362,7 +362,7 @@ export default function ReportsPage() {
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
-                    className="border-[#333338] text-slate-300"
+                    className="border-bs text-slate-300"
                     onClick={() => {
                       setIsImportDialogOpen(false);
                       setSelectedFile(null);
@@ -384,13 +384,13 @@ export default function ReportsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-[#2a2a2e] bg-[#1a1a1e] text-slate-300 hover:bg-[#222226] hover:text-slate-100"
+            className="border-bd bg-pn text-slate-300 hover:bg-el hover:text-slate-100"
             onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}
           >
             <RefreshCcw className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">갱신</span>
           </Button>
-          <Button size="sm" className="bg-[#222226] text-slate-200 hover:bg-slate-700">
+          <Button size="sm" className="bg-el text-slate-200 hover:bg-slate-700">
             <FileDown className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">내보내기</span>
           </Button>
@@ -400,7 +400,7 @@ export default function ReportsPage() {
       {/* ================================================================
           FILTER BAR
           ================================================================ */}
-      <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-3 sm:p-4">
+      <div className="bg-pn border border-bd rounded-lg p-3 sm:p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">기간</label>
@@ -416,7 +416,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger id="category" className="bg-[#222226] border-[#333338] text-slate-200">
+              <SelectTrigger id="category" className="bg-el border-bs text-slate-200">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -430,7 +430,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
             <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger id="team" className="bg-[#222226] border-[#333338] text-slate-200">
+              <SelectTrigger id="team" className="bg-el border-bs text-slate-200">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -443,7 +443,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
             <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-              <SelectTrigger id="vendor" className="bg-[#222226] border-[#333338] text-slate-200">
+              <SelectTrigger id="vendor" className="bg-el border-bs text-slate-200">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -457,7 +457,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
             <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-              <SelectTrigger id="budget" className="bg-[#222226] border-[#333338] text-slate-200">
+              <SelectTrigger id="budget" className="bg-el border-bs text-slate-200">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -477,9 +477,9 @@ export default function ReportsPage() {
       {isLoading && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 animate-pulse">
-              <div className="h-3 w-20 bg-[#222226] rounded mb-3" />
-              <div className="h-6 w-28 bg-[#222226] rounded" />
+            <div key={i} className="bg-pn border border-bd rounded-lg p-4 animate-pulse">
+              <div className="h-3 w-20 bg-el rounded mb-3" />
+              <div className="h-6 w-28 bg-el rounded" />
             </div>
           ))}
         </div>
@@ -489,7 +489,7 @@ export default function ReportsPage() {
           EMPTY STATE
           ================================================================ */}
       {!hasData && !isLoading && (
-        <div className="bg-[#1a1a1e] border border-dashed border-[#333338] rounded-lg min-h-[400px] flex items-center justify-center">
+        <div className="bg-pn border border-dashed border-bs rounded-lg min-h-[400px] flex items-center justify-center">
           <div className="text-center py-16">
             <BarChart2 className="h-12 w-12 text-slate-600 mx-auto mb-4" />
             <p className="text-sm font-medium text-slate-300 mb-1">데이터가 없습니다</p>
@@ -498,7 +498,7 @@ export default function ReportsPage() {
               variant="outline"
               size="sm"
               onClick={() => setIsImportDialogOpen(true)}
-              className="border-[#333338] text-slate-300 hover:bg-[#222226]"
+              className="border-bs text-slate-300 hover:bg-el"
             >
               <CloudUpload className="h-4 w-4 mr-1.5" />
               데이터 가져오기
@@ -519,7 +519,7 @@ export default function ReportsPage() {
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">이번 기간 핵심 인사이트</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Insight 1: Spend Change Driver */}
-              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="h-4 w-4 text-blue-400 flex-shrink-0" />
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">지출 변화 원인</span>
@@ -540,7 +540,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Insight 2: Outlier Detection */}
-              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">이상치 감지</span>
@@ -559,7 +559,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Insight 3: Cost Concentration */}
-              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-violet-400 flex-shrink-0" />
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">비용 집중 구간</span>
@@ -578,7 +578,7 @@ export default function ReportsPage() {
               </div>
 
               {/* Insight 4: Vendor Dependency */}
-              <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col gap-3">
+              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <ShieldAlert className="h-4 w-4 text-emerald-400 flex-shrink-0" />
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더 의존도</span>
@@ -593,7 +593,7 @@ export default function ReportsPage() {
                     {insights.topVendor ? `${insights.topVendor.vendor} 단일 공급 비중` : "벤더 데이터 없음"}
                   </p>
                 </div>
-                <Link href="/test/compare" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium mt-auto">
+                <Link href="/app/compare" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium mt-auto">
                   벤더 비교 →
                 </Link>
               </div>
@@ -606,11 +606,11 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Block 1: Category Breakdown */}
-            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col">
+            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리별 분석</p>
                 <Link href="/dashboard/purchases">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-[#222226] h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
                     카테고리 검토 →
                   </Button>
                 </Link>
@@ -647,14 +647,14 @@ export default function ReportsPage() {
               )}
               {/* Category budget comparison list */}
               {insights.sortedCats.length > 0 && (
-                <div className="mt-3 space-y-2 border-t border-[#2a2a2e] pt-3">
+                <div className="mt-3 space-y-2 border-t border-bd pt-3">
                   {insights.sortedCats.slice(0, 4).map((cat) => {
                     const pct = totalAmount > 0 ? Math.round((cat.value / totalAmount) * 100) : 0;
                     return (
                       <div key={cat.name} className="flex items-center justify-between text-xs">
                         <span className="text-slate-300 truncate mr-2">{cat.name}</span>
                         <div className="flex items-center gap-2">
-                          <div className="w-20 h-1.5 bg-[#222226] rounded-full overflow-hidden">
+                          <div className="w-20 h-1.5 bg-el rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
                           </div>
                           <span className="text-slate-400 w-16 text-right font-mono">{formatCurrency(cat.value, "KRW")}</span>
@@ -667,11 +667,11 @@ export default function ReportsPage() {
             </div>
 
             {/* Block 2: Vendor Analysis */}
-            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col">
+            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">공급사별 분석</p>
-                <Link href="/test/compare">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-[#222226] h-7 px-2">
+                <Link href="/app/compare">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
                     벤더 비교 →
                   </Button>
                 </Link>
@@ -697,7 +697,7 @@ export default function ReportsPage() {
               )}
               {/* Vendor concentration warning */}
               {insights.topVendor && insights.vendorRisk !== "safe" && (
-                <div className={`mt-3 border-t border-[#2a2a2e] pt-3 flex items-start gap-2 text-xs ${
+                <div className={`mt-3 border-t border-bd pt-3 flex items-start gap-2 text-xs ${
                   insights.vendorRisk === "danger" ? "text-red-400" : "text-amber-400"
                 }`}>
                   <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
@@ -710,11 +710,11 @@ export default function ReportsPage() {
             </div>
 
             {/* Block 3: Monthly Trend */}
-            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col">
+            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">기간별 추이</p>
                 <Link href="/dashboard/purchases">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-[#222226] h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
                     구매내역 필터 →
                   </Button>
                 </Link>
@@ -740,7 +740,7 @@ export default function ReportsPage() {
               )}
               {/* Trend explanation */}
               {monthlyData.length >= 2 && (
-                <div className="mt-3 border-t border-[#2a2a2e] pt-3 text-xs text-slate-400 flex items-center gap-1.5">
+                <div className="mt-3 border-t border-bd pt-3 text-xs text-slate-400 flex items-center gap-1.5">
                   <Activity className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>
                     최근 월 대비{" "}
@@ -754,11 +754,11 @@ export default function ReportsPage() {
             </div>
 
             {/* Block 4: Budget vs Actual */}
-            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 flex flex-col">
+            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 대비 실적</p>
                 <Link href="/dashboard/budget">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-[#222226] h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
                     예산 관리 →
                   </Button>
                 </Link>
@@ -774,7 +774,7 @@ export default function ReportsPage() {
                     </div>
                     <Progress
                       value={Math.min(budgetUsedPct, 100)}
-                      className="h-2 bg-[#222226]"
+                      className="h-2 bg-el"
                     />
                     <div className="flex justify-between text-xs">
                       <span className={budgetOvershoot ? "text-red-400 font-medium" : "text-slate-500"}>
@@ -796,11 +796,11 @@ export default function ReportsPage() {
                 <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center">
                   <p className="text-xs text-slate-500">예산 필터를 선택하면 예산 대비 실적을 확인할 수 있습니다.</p>
                   <div className="grid grid-cols-2 gap-3 w-full mt-3">
-                    <div className="bg-[#222226] rounded-md p-3 text-center">
+                    <div className="bg-el rounded-md p-3 text-center">
                       <p className="text-xs text-slate-500 mb-1">총 지출</p>
                       <p className="text-sm font-bold text-slate-100 font-mono">{formatCurrency(totalAmount, "KRW")}</p>
                     </div>
-                    <div className="bg-[#222226] rounded-md p-3 text-center">
+                    <div className="bg-el rounded-md p-3 text-center">
                       <p className="text-xs text-slate-500 mb-1">건수 / 거래처</p>
                       <p className="text-sm font-bold text-slate-100 font-mono">{itemCount}건 / {vendorCount}개</p>
                     </div>
@@ -814,7 +814,7 @@ export default function ReportsPage() {
               BOTTOM: DETAIL TABLE
               ============================================================ */}
           {details.length > 0 && (
-            <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4">
+            <div className="bg-pn border border-bd rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">상세 내역</p>
                 <span className="text-xs text-slate-600">{details.length}건</span>
@@ -822,7 +822,7 @@ export default function ReportsPage() {
               <div className="overflow-x-auto">
                 <Table className="min-w-[600px]">
                   <TableHeader>
-                    <TableRow className="bg-[#222226]/50 hover:bg-[#222226]/50 border-b border-[#333338]">
+                    <TableRow className="bg-el/50 hover:bg-el/50 border-b border-bs">
                       <TableHead className="text-xs font-medium text-slate-400">날짜</TableHead>
                       <TableHead className="text-xs font-medium text-slate-400">제품명</TableHead>
                       <TableHead className="text-xs font-medium text-slate-400">벤더</TableHead>
@@ -836,7 +836,7 @@ export default function ReportsPage() {
                       const unitPrice = item.unitPrice ?? item.price ?? 0;
                       const isOutlier = unitPrice > insights.avgUnitPrice * 2 && insights.avgUnitPrice > 0;
                       return (
-                        <TableRow key={index} className="border-b border-[#2a2a2e]/50 hover:bg-[#222226]/30">
+                        <TableRow key={index} className="border-b border-bd/50 hover:bg-el/30">
                           <TableCell className="py-3 text-xs text-slate-300">
                             {formatDate(item.date || item.purchaseDate, { format: "date" })}
                           </TableCell>
@@ -861,7 +861,7 @@ export default function ReportsPage() {
 
           {/* Fallback: data exists but all sections empty */}
           {hasData && !monthlyData?.length && !vendorData?.length && !categoryData?.length && !details?.length && (
-            <div className="bg-[#1a1a1e] border border-dashed border-[#333338] rounded-lg min-h-[200px] flex items-center justify-center">
+            <div className="bg-pn border border-dashed border-bs rounded-lg min-h-[200px] flex items-center justify-center">
               <p className="text-xs text-slate-500">필터를 설정하여 상세 구매 분석 데이터를 조회하세요.</p>
             </div>
           )}

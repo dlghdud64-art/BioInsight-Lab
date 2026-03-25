@@ -4,7 +4,7 @@
  * 모든 비교 관련 UI(검색 결과 배지, 상단 비교 바, 비교 페이지)가
  * 이 스토어의 productIds를 참조한다.
  *
- * Flow scope: /test/search, /test/compare, /test/quote 에서만 활성.
+ * Flow scope: /search, /search, /search 에서만 활성.
  * 다른 메뉴(/dashboard 등)로 이동 시 stash로 대피 → 플로우 재진입 시 복원 제안.
  *
  * localStorage key: "compare-storage"

@@ -186,7 +186,7 @@ function resolveNextRoute(
 ): string | undefined {
   switch (stage) {
     case 'search_entry':
-      return entryPath === 'compare' ? '/compare' : '/test/search';
+      return entryPath === 'compare' ? '/compare' : '/search';
     case 'candidate_narrowing':
       return '/compare';
     case 'compare_gate':
@@ -220,7 +220,7 @@ export function buildSourcingBlockers(
       type: 'no_compare_ready_candidate',
       label: '비교 가능한 후보가 없습니다',
       recoveryOptions: [
-        { label: '검색 다시 시작', route: '/test/search' },
+        { label: '검색 다시 시작', route: '/search' },
         { label: '수동 후보 추가', route: '/compare' },
       ],
     });
@@ -232,8 +232,8 @@ export function buildSourcingBlockers(
       type: 'blocked_vendor_only',
       label: '기존 공급사가 모두 제외되었습니다',
       recoveryOptions: [
-        { label: '공급사 제약 없이 검색', route: '/test/search' },
-        { label: '신규 공급사 탐색', route: '/test/search?expand_vendors=true' },
+        { label: '공급사 제약 없이 검색', route: '/search' },
+        { label: '신규 공급사 탐색', route: '/search?expand_vendors=true' },
       ],
     });
   }
@@ -278,7 +278,7 @@ export function buildSourcingBlockers(
       type: 'invalid_source_lineage',
       label: '원본 엔티티 추적이 불가합니다',
       recoveryOptions: [
-        { label: '수동 검색으로 전환', route: '/test/search' },
+        { label: '수동 검색으로 전환', route: '/search' },
       ],
     });
   }

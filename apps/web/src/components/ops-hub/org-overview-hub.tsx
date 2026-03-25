@@ -107,7 +107,7 @@ export function OrgOverviewHub({
           직접 검색 또는 업로드 해석으로 검토 큐를 만들면<br />비교와 견적 작업이 이어집니다
         </p>
         <Button asChild className="bg-blue-600 hover:bg-blue-500">
-          <Link href="/test/search">Step 1 시작하기</Link>
+          <Link href="/app/search">Step 1 시작하기</Link>
         </Button>
       </div>
     );
@@ -141,9 +141,9 @@ export function OrgOverviewHub({
         <h3 className="text-sm font-bold text-slate-100 mb-3">작업 흐름 요약</h3>
         <div className="grid md:grid-cols-3 gap-3">
           {[
-            { title: "검토 큐", count: funnel.step1Total, desc: "입력 해석과 항목 검토가 진행 중입니다", sub: `검토 필요 ${funnel.step1NeedsReview} · 실패 ${funnel.step1MatchFailed}`, href: "/test/search", cta: "검토 큐 열기" },
-            { title: "비교 큐", count: funnel.step2Total, desc: "후보 선택과 비교 확정이 필요한 항목입니다", sub: `선택 필요 ${funnel.step2Pending} · 확정 ${funnel.step2Confirmed}`, href: "/test/compare", cta: "비교 큐 열기" },
-            { title: "견적 초안", count: funnel.step3Total, desc: "제출 전 수량·단위·예산을 확인할 수 있습니다", sub: `제출 가능 ${funnel.step3Ready} · 보류 ${funnel.step3Missing + funnel.step3Review}`, href: "/test/quote", cta: "견적 초안 열기" },
+            { title: "검토 큐", count: funnel.step1Total, desc: "입력 해석과 항목 검토가 진행 중입니다", sub: `검토 필요 ${funnel.step1NeedsReview} · 실패 ${funnel.step1MatchFailed}`, href: "/app/search", cta: "검토 큐 열기" },
+            { title: "비교 큐", count: funnel.step2Total, desc: "후보 선택과 비교 확정이 필요한 항목입니다", sub: `선택 필요 ${funnel.step2Pending} · 확정 ${funnel.step2Confirmed}`, href: "/app/compare", cta: "비교 큐 열기" },
+            { title: "견적 초안", count: funnel.step3Total, desc: "제출 전 수량·단위·예산을 확인할 수 있습니다", sub: `제출 가능 ${funnel.step3Ready} · 보류 ${funnel.step3Missing + funnel.step3Review}`, href: "/app/quote", cta: "견적 초안 열기" },
           ].map((step) => (
             <div key={step.title} className="bg-pn border border-bd rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
@@ -304,9 +304,9 @@ export function OrgOverviewHub({
         <h3 className="text-sm font-bold text-slate-100 mb-3">빠른 이동</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {[
-            { href: "/test/search", label: "Step 1 검토 큐 열기" },
-            { href: "/test/compare", label: "Step 2 비교 큐 열기" },
-            { href: "/test/quote", label: "Step 3 견적 초안 열기" },
+            { href: "/app/search", label: "Step 1 검토 큐 열기" },
+            { href: "/app/compare", label: "Step 2 비교 큐 열기" },
+            { href: "/app/quote", label: "Step 3 견적 초안 열기" },
             { href: "#approvals", label: "승인 요청 보기" },
             { href: "#members", label: "멤버 및 접근 관리 보기" },
             { href: "#settings", label: "정책 및 설정 보기" },

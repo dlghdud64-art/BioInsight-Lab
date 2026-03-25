@@ -53,9 +53,9 @@ export const KPI_CONFIG: {
 }[] = [
   { key: "totalMembers", label: "총 멤버", icon: "Users", emptyText: "멤버를 초대하세요", linkHref: "" },
   { key: "approvalPending", label: "승인 대기", icon: "ClipboardCheck", emptyText: "승인 대기 없음", linkHref: "" },
-  { key: "reviewNeeded", label: "검토 필요", icon: "AlertTriangle", emptyText: "검토 필요 항목 없음", linkHref: "/test/search" },
-  { key: "compareWaiting", label: "비교 대기", icon: "GitCompare", emptyText: "비교 대기 없음", linkHref: "/test/compare" },
-  { key: "quoteDraftReady", label: "견적 제출 가능", icon: "FileText", emptyText: "제출 가능 초안 없음", linkHref: "/test/quote" },
+  { key: "reviewNeeded", label: "검토 필요", icon: "AlertTriangle", emptyText: "검토 필요 항목 없음", linkHref: "/search" },
+  { key: "compareWaiting", label: "비교 대기", icon: "GitCompare", emptyText: "비교 대기 없음", linkHref: "/search" },
+  { key: "quoteDraftReady", label: "견적 제출 가능", icon: "FileText", emptyText: "제출 가능 초안 없음", linkHref: "/search" },
   { key: "budgetWarnings", label: "예산 경고", icon: "CreditCard", emptyText: "예산 경고 없음", linkHref: "" },
   { key: "inventoryWarnings", label: "재고 중복 경고", icon: "Package", emptyText: "재고 경고 없음", linkHref: "/dashboard/inventory" },
 ];
@@ -136,7 +136,7 @@ export function generateAlerts(params: {
       title: "예산 확인 필요",
       description: `예산 확인이 필요한 견적 초안 ${budgetItems.length}건`,
       count: budgetItems.length,
-      linkHref: "/test/quote",
+      linkHref: "/search",
       linkLabel: "견적 초안 확인",
     });
   }
@@ -181,7 +181,7 @@ export function generateAlerts(params: {
       title: "매칭 실패 항목",
       description: `후보를 찾지 못한 항목 ${matchFailed.length}건`,
       count: matchFailed.length,
-      linkHref: "/test/search",
+      linkHref: "/search",
       linkLabel: "검토 큐 확인",
     });
   }
@@ -195,7 +195,7 @@ export function generateAlerts(params: {
       title: "견적 제출 차단",
       description: `필수 정보가 누락된 견적 초안 ${blocked.length}건`,
       count: blocked.length,
-      linkHref: "/test/quote",
+      linkHref: "/search",
       linkLabel: "초안 수정",
     });
   }
@@ -211,7 +211,7 @@ export function generateAlerts(params: {
       title: "비교 작업 적체",
       description: `후보 선택 대기 중인 항목 ${longCompare.length}건`,
       count: longCompare.length,
-      linkHref: "/test/compare",
+      linkHref: "/search",
       linkLabel: "비교 큐 확인",
     });
   }
@@ -254,7 +254,7 @@ export function generateWorkQueue(params: {
       title: "검토 필요",
       count: reviewNeeded.length,
       description: "Step 1에서 확인이 필요한 항목",
-      linkHref: "/test/search",
+      linkHref: "/search",
       linkLabel: "검토 큐 열기",
       items: [
         ...(mfgMissing > 0 ? [{ label: "제조사 확인 필요", count: mfgMissing }] : []),
@@ -274,7 +274,7 @@ export function generateWorkQueue(params: {
       title: "후보 선택 필요",
       count: compareNeeded.length,
       description: "Step 2에서 비교 확정 대기 중",
-      linkHref: "/test/compare",
+      linkHref: "/search",
       linkLabel: "비교 큐 열기",
       items: [],
     });
@@ -288,7 +288,7 @@ export function generateWorkQueue(params: {
       title: "견적 제출 가능",
       count: draftReady.length,
       description: "Step 3에서 바로 제출 가능",
-      linkHref: "/test/quote",
+      linkHref: "/search",
       linkLabel: "견적 초안 열기",
       items: [],
     });
@@ -302,7 +302,7 @@ export function generateWorkQueue(params: {
       title: "수동 확인 필요",
       count: matchFailed.length,
       description: "후보를 찾지 못한 항목",
-      linkHref: "/test/search",
+      linkHref: "/search",
       linkLabel: "검토 큐 열기",
       items: [],
     });

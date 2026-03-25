@@ -257,7 +257,7 @@ export default function AdminQuoteDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-[#111114]">
+      <div className="flex min-h-screen bg-pg">
         <AdminSidebar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -268,7 +268,7 @@ export default function AdminQuoteDetailPage() {
 
   if (!quote) {
     return (
-      <div className="flex min-h-screen bg-[#111114]">
+      <div className="flex min-h-screen bg-pg">
         <AdminSidebar />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -287,17 +287,17 @@ export default function AdminQuoteDetailPage() {
 
   const statusInfo = STATUS_LABELS[quote.status] || {
     label: quote.status,
-    color: "bg-[#222226] text-gray-800",
+    color: "bg-el text-slate-200",
   };
   const isEditable = quote.status !== "COMPLETED" && quote.status !== "CANCELLED";
 
   return (
-    <div className="flex min-h-screen bg-[#111114]">
+    <div className="flex min-h-screen bg-pg">
       <AdminSidebar />
 
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-4">
+        <div className="bg-pn border-b border-bd px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/admin/quotes">
@@ -468,7 +468,7 @@ export default function AdminQuoteDetailPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-[#111114]">
+                    <TableRow className="bg-pg">
                       <TableHead className="w-[50px]">No.</TableHead>
                       <TableHead>제품명</TableHead>
                       <TableHead>브랜드</TableHead>
@@ -609,7 +609,7 @@ export default function AdminQuoteDetailPage() {
               </div>
 
               {/* Total */}
-              <div className="border-t border-[#2a2a2e] px-6 py-4 bg-[#111114]">
+              <div className="border-t border-bd px-6 py-4 bg-pg">
                 <div className="flex justify-end">
                   <div className="text-right">
                     <p className="text-sm text-slate-500">총 견적 금액</p>

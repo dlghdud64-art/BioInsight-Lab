@@ -6,10 +6,10 @@ import { Settings, RefreshCw } from "lucide-react";
 
 export default function AdminSettingsPage() {
   return (
-    <div className="flex min-h-screen bg-[#111114]">
+    <div className="flex min-h-screen bg-pg">
       <AdminSidebar />
       <div className="flex-1 flex flex-col min-h-screen">
-        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-pn border-b border-bd px-6 py-3.5 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-base font-bold text-slate-100">설정</h1>
@@ -21,8 +21,8 @@ export default function AdminSettingsPage() {
           </div>
         </div>
         <div className="flex-1 p-5">
-          <div className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg py-16 text-center">
-            <div className="inline-flex items-center justify-center p-3 rounded-full bg-[#222226] mb-3">
+          <div className="bg-pn border border-bd rounded-lg py-16 text-center">
+            <div className="inline-flex items-center justify-center p-3 rounded-full bg-el mb-3">
               <Settings className="h-5 w-5 text-slate-400" />
             </div>
             <p className="text-sm font-medium text-slate-600">시스템 설정</p>

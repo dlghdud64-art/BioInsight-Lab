@@ -77,11 +77,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.classList.remove('light');document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}catch(e){}` }} />
-      </head>
-      <body className="min-h-screen bg-surface-shell font-sans text-slate-100 antialiased">
+    <html lang="ko" className="dark" suppressHydrationWarning>
+      <body className="min-h-screen bg-sh font-sans text-slate-100 antialiased">
         <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>

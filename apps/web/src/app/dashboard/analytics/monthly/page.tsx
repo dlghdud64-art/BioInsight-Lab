@@ -66,7 +66,7 @@ export default function MonthlyAnalyticsPage() {
             </p>
           </div>
           <Select value={year} onValueChange={setYear}>
-            <SelectTrigger className="w-[140px] h-10 border-[#2a2a2e]">
+            <SelectTrigger className="w-[140px] h-10 border-bd">
               <SelectValue placeholder="연도 선택" />
             </SelectTrigger>
             <SelectContent>
@@ -77,7 +77,7 @@ export default function MonthlyAnalyticsPage() {
         </div>
       </div>
 
-      <Card className="shadow-sm border-[#2a2a2e]">
+      <Card className="shadow-sm border-bd">
         <CardHeader>
           <CardTitle>월별 지출 추이 (단위: 만원)</CardTitle>
           <p className="text-sm text-muted-foreground">연도별 월간 지출액을 막대 그래프로 확인할 수 있습니다.</p>
@@ -119,7 +119,7 @@ export default function MonthlyAnalyticsPage() {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm border-[#2a2a2e]">
+      <Card className="shadow-sm border-bd">
         <CardHeader>
           <CardTitle>월별 지출액 상세</CardTitle>
           <p className="text-sm text-muted-foreground">월별 지출 금액을 표로 확인합니다.</p>

@@ -222,7 +222,7 @@ export default function TeamSettingsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-[#111114]">
+      <div className="min-h-screen bg-pg">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -236,7 +236,7 @@ export default function TeamSettingsPage() {
   // Empty State: 팀이 없을 때
   if (!currentTeam) {
     return (
-      <div className="min-h-screen bg-[#111114]">
+      <div className="min-h-screen bg-pg">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto">
@@ -294,7 +294,7 @@ export default function TeamSettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#111114]">
+    <div className="min-h-screen bg-pg">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />

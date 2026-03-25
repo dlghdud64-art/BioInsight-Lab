@@ -108,7 +108,7 @@ const safeLocaleAmount = (val: number | null | undefined): string =>
 
 function FullPageShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#111114]">
+    <div className="min-h-screen bg-pg">
       <div className="container mx-auto px-4 py-8">{children}</div>
     </div>
   );
@@ -619,11 +619,11 @@ export default function QuoteDetailPage() {
 
   const getUrgency = (): { label: string; cls: string } => {
     const deadline = quote.deliveryDate || quote.validUntil;
-    if (!deadline) return { label: "일반", cls: "bg-[#222226] text-slate-600" };
+    if (!deadline) return { label: "일반", cls: "bg-el text-slate-600" };
     const daysLeft = Math.ceil((new Date(deadline).getTime() - Date.now()) / 86400000);
-    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-100 text-red-700" };
-    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-100 text-amber-700" };
-    return { label: "일반", cls: "bg-[#222226] text-slate-600" };
+    if (daysLeft <= 3) return { label: "긴급", cls: "bg-red-600/10 text-red-400" };
+    if (daysLeft <= 7) return { label: "주의", cls: "bg-amber-600/10 text-amber-400" };
+    return { label: "일반", cls: "bg-el text-slate-400" };
   };
   const urgency = getUrgency();
 
@@ -656,22 +656,22 @@ export default function QuoteDetailPage() {
   // ── JSX ──────────────────────────────────────────────────────────
   return (
     <>
-      <div className="min-h-screen bg-[#111114]">
+      <div className="min-h-screen bg-pg">
         <div className="container mx-auto px-3 md:px-4 py-4 md:py-8">
           <div className="max-w-5xl mx-auto flex flex-col gap-4 sm:gap-5">
 
             {/* ── 1. 헤더 카드 ── */}
-            <Card className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-8 md:py-5">
+            <Card className="bg-pn rounded-xl border border-bd shadow-sm px-4 py-4 md:px-8 md:py-5">
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                 <div className="flex flex-col gap-2 flex-1 min-w-0">
                   {/* 브레드크럼 */}
                   <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
-                    <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-slate-300 transition-colors">
+                    <Link href="/dashboard" className="inline-flex items-center gap-1 hover:text-slate-700 transition-colors">
                       <Home className="h-3.5 w-3.5" />
                       <span className="hidden sm:inline">Home</span>
                     </Link>
                     <span>/</span>
-                    <Link href="/dashboard/quotes" className="hover:text-slate-300 transition-colors whitespace-nowrap">견적 운영</Link>
+                    <Link href="/dashboard/quotes" className="hover:text-slate-700 transition-colors whitespace-nowrap">견적 운영</Link>
                     <span>/</span>
                     <span className="text-slate-500 truncate max-w-[140px] sm:max-w-xs">{quote.title || "견적 상세"}</span>
                   </div>
@@ -679,7 +679,7 @@ export default function QuoteDetailPage() {
                   {/* 제목 + 상태 */}
                   <div className="flex flex-wrap items-center gap-2">
                     <Link href="/quotes">
-                      <Button variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-100 hover:bg-[#222226] rounded-md">
+                      <Button variant="ghost" className="h-8 w-8 p-0 text-slate-500 hover:text-slate-100 hover:bg-el rounded-md">
                         <ChevronLeft className="h-4 w-4" />
                       </Button>
                     </Link>
@@ -737,11 +737,11 @@ export default function QuoteDetailPage() {
 
             {/* ── 1-1. 운영 상태 스트립 ── */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">현재 단계</span>
                 <span className="text-sm font-bold text-slate-200">{sc.label}</span>
               </div>
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">다음 액션</span>
                 <div className="flex items-center gap-1.5">
                   <span className="text-xs font-semibold text-blue-600">{nextAction.actor}</span>
@@ -749,7 +749,7 @@ export default function QuoteDetailPage() {
                   <span className="text-xs text-slate-600">{nextAction.label}</span>
                 </div>
               </div>
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">긴급도</span>
                 <Badge variant="outline" className={cn("text-[10px] px-2 py-0.5 w-fit font-semibold", urgency.cls)}>{urgency.label}</Badge>
               </div>
@@ -757,19 +757,19 @@ export default function QuoteDetailPage() {
 
             {/* ── 2. 운영 KPI 스트립 ── */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">수신 견적</span>
                 <span className={cn("text-xl font-bold", respondedCount > 0 ? "text-emerald-600" : "text-slate-400")}>
                   {respondedCount}<span className="text-sm font-medium text-slate-500 ml-1">건</span>
                 </span>
               </div>
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">미응답 벤더</span>
                 <span className={cn("text-xl font-bold", pendingCount > 0 ? "text-amber-500" : "text-slate-400")}>
                   {pendingCount}<span className="text-sm font-medium text-slate-500 ml-1">건</span>
                 </span>
               </div>
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">승인 필요</span>
                 {needsApproval ? (
                   <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-blue-50 text-blue-700 border-blue-200">예</Badge>
@@ -777,7 +777,7 @@ export default function QuoteDetailPage() {
                   <span className="text-sm font-medium text-slate-400">—</span>
                 )}
               </div>
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 flex flex-col gap-0.5">
                 <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">구매 전환</span>
                 {canConvert ? (
                   <Badge variant="outline" className="text-xs px-2 py-0.5 w-fit font-semibold bg-emerald-50 text-emerald-700 border-emerald-200">가능</Badge>
@@ -788,7 +788,7 @@ export default function QuoteDetailPage() {
             </div>
 
             {/* ── 3. 견적 정보 (컴팩트 + 접힘) ── */}
-            <Card className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-6 md:py-5">
+            <Card className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-4 md:px-6 md:py-5">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                 <div>
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">요청자</p>
@@ -832,7 +832,7 @@ export default function QuoteDetailPage() {
                     요청 메시지 {messageExpanded ? "접기" : "펼치기"}
                   </button>
                   {messageExpanded && (
-                    <blockquote className="mt-2 rounded-lg bg-blue-50/50 border-l-4 border-blue-200 pl-4 pr-4 py-3 text-sm text-slate-300 whitespace-pre-wrap break-words leading-relaxed">
+                    <blockquote className="mt-2 rounded-lg bg-blue-50/50 border-l-4 border-blue-200 pl-4 pr-4 py-3 text-sm text-slate-700 whitespace-pre-wrap break-words leading-relaxed">
                       {quote.description || quote.message}
                     </blockquote>
                   )}
@@ -842,13 +842,13 @@ export default function QuoteDetailPage() {
 
             {/* ── 4. 3탭 구조: 수신 견적 / 비교·추천 / 구매 처리 ── */}
             <Tabs value={isAdmin ? activeTab : (activeTab === "received" ? "compare" : activeTab)} onValueChange={setActiveTab} className="w-full">
-              <div className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                <TabsList className="flex bg-[#111114]/80 border-b border-[#2a2a2e] gap-0 rounded-none p-0 h-auto w-full justify-start">
+              <div className="bg-pn rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+                <TabsList className="flex bg-pg/80 border-b border-bd gap-0 rounded-none p-0 h-auto w-full justify-start">
                   {/* 수신 견적 탭 - 관리자 전용 */}
                   {isAdmin && (
                     <TabsTrigger
                       value="received"
-                      className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                      className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-pn data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                     >
                       <FileText className="h-3.5 w-3.5 flex-shrink-0" />
                       수신 견적
@@ -859,14 +859,14 @@ export default function QuoteDetailPage() {
                   )}
                   <TabsTrigger
                     value="compare"
-                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-pn data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                   >
                     <GitCompare className="h-3.5 w-3.5 flex-shrink-0" />
                     비교/추천
                   </TabsTrigger>
                   <TabsTrigger
                     value="purchase"
-                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-[#1a1a1e] data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
+                    className="flex items-center gap-1.5 rounded-none bg-transparent border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600 data-[state=active]:bg-pn data-[state=active]:shadow-none px-5 py-3 text-xs md:text-sm text-slate-500 whitespace-nowrap font-medium"
                   >
                     <ShoppingCart className="h-3.5 w-3.5 flex-shrink-0" />
                     구매 처리
@@ -888,7 +888,7 @@ export default function QuoteDetailPage() {
                       <p className="text-xs text-slate-500 mb-4">벤더명을 입력하고 각 품목의 단가를 기록하세요. 저장 후 비교/추천 탭에 자동 반영됩니다.</p>
 
                       {/* 벤더 기본 입력 */}
-                      <div className="flex items-center gap-3 mb-3 p-3 bg-[#111114] rounded-lg border border-[#2a2a2e]">
+                      <div className="flex items-center gap-3 mb-3 p-3 bg-pg rounded-lg border border-bd">
                         <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
                         <Label className="text-sm font-semibold whitespace-nowrap">벤더명 *</Label>
                         <Input
@@ -900,7 +900,7 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 벤더 확장 필드 (관리자 전용) */}
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 p-3 bg-[#111114]/50 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4 p-3 bg-pg/50 rounded-lg border border-slate-100">
                         <div className="space-y-1">
                           <Label className="text-[11px] text-slate-500">응답 상태</Label>
                           <Select value={vendorResponseStatus} onValueChange={setVendorResponseStatus}>
@@ -923,7 +923,7 @@ export default function QuoteDetailPage() {
                         </div>
                         <div className="space-y-1">
                           <Label className="text-[11px] text-slate-500">대체품 여부</Label>
-                          <label className="flex items-center gap-2 h-8 px-2 border rounded-md bg-[#1a1a1e] text-xs cursor-pointer">
+                          <label className="flex items-center gap-2 h-8 px-2 border rounded-md bg-pn text-xs cursor-pointer">
                             <input type="checkbox" checked={vendorHasSubstitute} onChange={(e) => setVendorHasSubstitute(e.target.checked)} className="rounded" />
                             대체품 있음
                           </label>
@@ -931,10 +931,10 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 품목별 단가 테이블 */}
-                      <div className="overflow-x-auto rounded-lg border border-[#2a2a2e]">
+                      <div className="overflow-x-auto rounded-lg border border-bd">
                         <table className="w-full text-sm">
-                          <thead className="bg-[#111114]">
-                            <tr className="border-b border-[#2a2a2e]">
+                          <thead className="bg-pg">
+                            <tr className="border-b border-bd">
                               <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">품목명</th>
                               <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">수량</th>
                               <th className="text-left py-2.5 px-3 font-semibold text-xs text-slate-600">단가 *</th>
@@ -948,7 +948,7 @@ export default function QuoteDetailPage() {
                             {quote.items?.map((item: any) => {
                               const ri = replyItems[item.id] || {};
                               return (
-                                <tr key={item.id} className="border-b border-slate-100 hover:bg-[#222226]/50">
+                                <tr key={item.id} className="border-b border-slate-100 hover:bg-pg/50">
                                   <td className="p-2 md:p-3">
                                     <div className="text-xs md:text-sm font-medium text-slate-200">{item.name || item.product?.name || "제품 정보 없음"}</div>
                                     {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
@@ -1023,10 +1023,10 @@ export default function QuoteDetailPage() {
                           {isAdmin && <button onClick={() => refetchVendorRequests()} className="ml-auto text-xs text-blue-600 hover:underline">새로고침</button>}
                         </div>
 
-                        <div className="overflow-x-auto rounded-lg border border-[#2a2a2e]">
+                        <div className="overflow-x-auto rounded-lg border border-bd">
                           <table className="w-full text-xs">
-                            <thead className="bg-[#111114]">
-                              <tr className="border-b border-[#2a2a2e]">
+                            <thead className="bg-pg">
+                              <tr className="border-b border-bd">
                                 <th className="text-left py-2.5 px-3 font-semibold text-slate-600">품목</th>
                                 {respondedVendors.map((vr: any) => (
                                   <th key={vr.id} className="text-center py-2.5 px-3 font-semibold text-slate-600 min-w-[130px]">
@@ -1045,7 +1045,7 @@ export default function QuoteDetailPage() {
                                 const minPrice = validPrices.length > 0 ? Math.min(...validPrices) : null;
                                 const maxPrice = validPrices.length > 1 ? Math.max(...validPrices) : null;
                                 return (
-                                  <tr key={item.id} className="border-b border-slate-100 hover:bg-[#222226]/50">
+                                  <tr key={item.id} className="border-b border-slate-100 hover:bg-pg/50">
                                     <td className="py-3 px-3">
                                       <div className="font-medium text-slate-200">{item.name || item.product?.name}</div>
                                       {item.catalogNumber && <div className="text-[10px] text-slate-400">{item.catalogNumber}</div>}
@@ -1059,7 +1059,7 @@ export default function QuoteDetailPage() {
                                         <td key={vr.id} className="py-3 px-3 text-center">
                                           {price !== null ? (
                                             <div className={cn("inline-flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-lg", isLowest ? "bg-emerald-50 border border-emerald-200" : "")}>
-                                              <span className={cn("font-bold text-sm", isLowest ? "text-emerald-700" : "text-slate-300")}>
+                                              <span className={cn("font-bold text-sm", isLowest ? "text-emerald-700" : "text-slate-700")}>
                                                 {price > 0 ? price.toLocaleString() : "—"}
                                                 <span className="text-[10px] font-normal ml-0.5">{ri?.currency || "KRW"}</span>
                                               </span>
@@ -1085,8 +1085,8 @@ export default function QuoteDetailPage() {
                               })}
 
                               {/* 합계 행 */}
-                              <tr className="border-t-2 border-[#2a2a2e] bg-[#111114]">
-                                <td className="py-3 px-3 font-bold text-sm text-slate-300">총 합계</td>
+                              <tr className="border-t-2 border-bd bg-pg">
+                                <td className="py-3 px-3 font-bold text-sm text-slate-700">총 합계</td>
                                 {respondedVendors.map((vr: any) => {
                                   const total = quote.items?.reduce((sum: number, item: any) => {
                                     const ri = vr.responseItems?.find((r: any) => r.quoteItemId === item.id);
@@ -1105,7 +1105,7 @@ export default function QuoteDetailPage() {
                                   const saving = isLowestTotal && maxTotal > minTotal ? maxTotal - minTotal : null;
                                   return (
                                     <td key={vr.id} className="py-3 px-3 text-center">
-                                      <div className={cn("inline-flex flex-col items-center gap-0.5", isLowestTotal ? "text-emerald-700" : "text-slate-300")}>
+                                      <div className={cn("inline-flex flex-col items-center gap-0.5", isLowestTotal ? "text-emerald-700" : "text-slate-700")}>
                                         <span className="font-bold text-sm">{total > 0 ? `${total.toLocaleString()} KRW` : "—"}</span>
                                         {isLowestTotal && saving && (
                                           <span className="text-[10px] font-semibold text-emerald-600 flex items-center gap-0.5">
@@ -1123,7 +1123,7 @@ export default function QuoteDetailPage() {
                       </div>
                     </>
                   ) : (
-                    <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-[#2a2a2e] rounded-lg bg-[#111114]">
+                    <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-bd rounded-lg bg-pg">
                       <GitCompare className="h-8 w-8 text-slate-300 mx-auto mb-3" />
                       <p className="font-medium text-slate-600 mb-1">수신된 견적이 없습니다</p>
                       <p className="text-xs text-slate-400">벤더 회신이 도착하면 자동으로 비교 테이블이 생성됩니다.</p>
@@ -1146,7 +1146,7 @@ export default function QuoteDetailPage() {
                       <p className="text-xs text-slate-500">구매 처리를 진행할 수 없습니다.</p>
                     </div>
                   ) : respondedVendors.length === 0 ? (
-                    <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-[#2a2a2e] rounded-lg bg-[#111114]">
+                    <div className="text-center py-10 text-muted-foreground text-sm border border-dashed border-bd rounded-lg bg-pg">
                       <ShoppingCart className="h-8 w-8 text-slate-300 mx-auto mb-3" />
                       <p className="font-medium text-slate-600 mb-1">구매 처리 준비 중</p>
                       <p className="text-xs text-slate-400">벤더 회신이 1건 이상 있어야 구매 처리가 가능합니다.</p>
@@ -1168,7 +1168,7 @@ export default function QuoteDetailPage() {
 
                       {/* 결제 금액 */}
                       {purchaseTotal > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-[#111114] rounded-lg border border-[#2a2a2e] text-sm">
+                        <div className="flex items-center justify-between p-3 bg-pg rounded-lg border border-bd text-sm">
                           <span className="text-muted-foreground font-medium">결제 금액</span>
                           <span className="font-bold text-slate-100">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
                         </div>
@@ -1224,7 +1224,7 @@ export default function QuoteDetailPage() {
                       </div>
 
                       {/* 재고 반영 옵션 */}
-                      <label className="flex items-center gap-2 p-3 bg-[#111114] rounded-lg border border-[#2a2a2e] cursor-pointer">
+                      <label className="flex items-center gap-2 p-3 bg-pg rounded-lg border border-bd cursor-pointer">
                         <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
                         <div>
                           <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>
@@ -1238,11 +1238,11 @@ export default function QuoteDetailPage() {
             </Tabs>
 
             {/* ── 5. 견적 요청 품목 (접힘) ── */}
-            <Card className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <Card className="bg-pn rounded-xl border border-gray-100 shadow-sm overflow-hidden">
               <button
                 type="button"
                 onClick={() => setItemsExpanded(!itemsExpanded)}
-                className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 text-sm font-semibold text-slate-300 hover:bg-[#222226] transition-colors"
+                className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 text-sm font-semibold text-slate-700 hover:bg-pg transition-colors"
               >
                 <span className="flex items-center gap-2">
                   <Package className="h-4 w-4 text-slate-400" />
@@ -1260,7 +1260,7 @@ export default function QuoteDetailPage() {
                       const vendor = item.product?.vendors?.[0]?.vendor;
                       const isEditing = editingNoteId === item.id;
                       return (
-                        <div key={item.id} className="p-3 border border-[#2a2a2e] rounded-lg space-y-2">
+                        <div key={item.id} className="p-3 border border-bd rounded-lg space-y-2">
                           <div className="font-semibold text-sm text-slate-100">{item.product?.name || item.name || "제품 정보 없음"}</div>
                           <div className="text-xs text-muted-foreground space-y-0.5">
                             {(vendor?.name || item.product?.brand) && <div>벤더: {vendor?.name || item.product?.brand}</div>}
@@ -1291,8 +1291,8 @@ export default function QuoteDetailPage() {
                   {/* 데스크탑: 테이블 */}
                   <div className="hidden md:block overflow-x-auto">
                     <table className="w-full">
-                      <thead className="bg-[#111114]">
-                        <tr className="border-b border-[#2a2a2e]">
+                      <thead className="bg-pg">
+                        <tr className="border-b border-bd">
                           <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">제품명</th>
                           <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">벤더</th>
                           <th className="text-left py-3 px-4 font-semibold text-xs text-slate-600">규격</th>
@@ -1305,7 +1305,7 @@ export default function QuoteDetailPage() {
                           const vendor = item.product?.vendors?.[0]?.vendor;
                           const isEditing = editingNoteId === item.id;
                           return (
-                            <tr key={item.id} className="border-b border-slate-100 hover:bg-[#222226]/50">
+                            <tr key={item.id} className="border-b border-slate-100 hover:bg-pg/50">
                               <td className="py-3 px-4 min-w-[180px]">
                                 <div className="font-semibold text-sm text-slate-100 truncate">{item.product?.name || item.name || "제품 정보 없음"}</div>
                               </td>
@@ -1341,13 +1341,13 @@ export default function QuoteDetailPage() {
             </Card>
 
             {/* ── 5.5 최근 활동 ── */}
-            <Card className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-3 sm:px-6">
+            <Card className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-3 sm:px-6">
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">최근 활동</h3>
               <ActivityTimeline entityType="QUOTE" entityId={quoteId} limit={3} />
             </Card>
 
             {/* ── 6. 하단 액션 바 ── */}
-            <Card className="bg-[#1a1a1e] rounded-xl border border-gray-100 shadow-sm px-4 py-4 sm:px-6">
+            <Card className="bg-pn rounded-xl border border-gray-100 shadow-sm px-4 py-4 sm:px-6">
               <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3">
 
                 {/* 관리자: 견적 저장 */}
@@ -1567,7 +1567,7 @@ export default function QuoteDetailPage() {
             )}
 
             {purchaseTotal > 0 && (
-              <div className="flex items-center justify-between p-3 bg-[#111114] rounded-lg border border-[#2a2a2e] text-sm">
+              <div className="flex items-center justify-between p-3 bg-pg rounded-lg border border-bd text-sm">
                 <span className="text-muted-foreground font-medium">결제 금액</span>
                 <span className="font-bold text-slate-100">₩{purchaseTotal.toLocaleString("ko-KR")}</span>
               </div>
@@ -1613,7 +1613,7 @@ export default function QuoteDetailPage() {
             </div>
 
             {/* 재고 반영 옵션 */}
-            <label className="flex items-center gap-2 p-3 bg-[#111114] rounded-lg border border-[#2a2a2e] cursor-pointer">
+            <label className="flex items-center gap-2 p-3 bg-pg rounded-lg border border-bd cursor-pointer">
               <input type="checkbox" checked={autoInventory} onChange={(e) => setAutoInventory(e.target.checked)} className="rounded" />
               <div>
                 <span className="text-sm font-medium text-slate-200">입고 시 재고에 자동 반영</span>

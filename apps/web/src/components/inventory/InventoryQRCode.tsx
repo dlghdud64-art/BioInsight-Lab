@@ -72,7 +72,7 @@ export function InventoryQRCode({
         await QRCode.toCanvas(canvasRef.current, scanUrl, {
           width: 180,
           margin: 2,
-          color: { dark: "#1e293b", light: "#ffffff" },
+          color: {  "#1e293b", light: "#ffffff" },
         });
         setDataUrl(canvasRef.current.toDataURL("image/png"));
       } catch (err) {
@@ -193,7 +193,7 @@ export function InventoryQRCode({
         ? `${window.location.origin}/dashboard/inventory/scan?id=${lot.id}`
         : `/dashboard/inventory/scan?id=${lot.id}`;
       const canvas = document.createElement("canvas");
-      await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: { dark: "#1e293b", light: "#ffffff" } });
+      await QRCode.toCanvas(canvas, url, { width: 180, margin: 2, color: {  "#1e293b", light: "#ffffff" } });
       const qrUrl = canvas.toDataURL("image/png");
       return buildLabelHtml({ qrDataUrl: qrUrl, name: productName, cat: catalogNumber, lot: lot.lotNumber, loc: lot.location, qty: lot.currentQuantity, unitStr: lot.unit, invId: lot.id });
     });
