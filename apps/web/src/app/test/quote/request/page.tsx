@@ -41,7 +41,7 @@ function QuoteRequestPageContent() {
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
-      navRouter.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/test/quote/request")}`);
+      navRouter.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/app/quote/request")}`);
     }
   }, [authStatus, navRouter]);
 
@@ -103,7 +103,7 @@ function QuoteRequestPageContent() {
               <ReadinessIcon className="h-3.5 w-3.5" />{config.label}
             </span>
             <div className="w-px h-5 bg-bd hidden md:block" />
-            <Link href="/test/quote" className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+            <Link href="/app/quote" className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
               <ArrowLeft className="h-3.5 w-3.5" />요청 조립
             </Link>
           </div>
@@ -167,13 +167,13 @@ function QuoteRequestPageContent() {
               {submissionOutcome.heldCount > 0 && (
                 <div className="flex items-center justify-between py-2 border-b border-bd/50">
                   <div className="flex items-center gap-2"><AlertTriangle className="h-4 w-4 text-amber-400" /><div><p className="text-sm text-slate-200 font-medium">보류 항목</p><p className="text-[10px] text-slate-400">{submissionOutcome.heldVendors.join(", ")}</p></div></div>
-                  <Link href="/test/quote"><Button size="sm" variant="outline" className="h-7 text-[10px] text-amber-400 border-amber-600/30">요청 조립</Button></Link>
+                  <Link href="/app/quote"><Button size="sm" variant="outline" className="h-7 text-[10px] text-amber-400 border-amber-600/30">요청 조립</Button></Link>
                 </div>
               )}
             </div>
             <div className="flex items-center justify-center gap-3 pt-4">
               <Link href="/dashboard/quotes"><Button className="bg-emerald-600 hover:bg-emerald-500 text-white px-6">견적관리 워크큐<ArrowRight className="h-3.5 w-3.5 ml-2" /></Button></Link>
-              <Link href="/test/search"><Button variant="outline" className="text-slate-300 border-bd">추가 소싱</Button></Link>
+              <Link href="/app/search"><Button variant="outline" className="text-slate-300 border-bd">추가 소싱</Button></Link>
             </div>
           </div>
         </div>

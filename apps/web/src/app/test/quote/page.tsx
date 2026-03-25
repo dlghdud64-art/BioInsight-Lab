@@ -55,7 +55,7 @@ export default function RequestAssemblyPage() {
   // Auth gate — request 계열 route는 로그인 필요
   useEffect(() => {
     if (authStatus === "unauthenticated") {
-      router.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/test/quote")}`);
+      router.replace(`/auth/signin?callbackUrl=${encodeURIComponent("/app/quote")}`);
     }
   }, [authStatus, router]);
 
@@ -88,7 +88,7 @@ export default function RequestAssemblyPage() {
             <div className="w-px h-5 bg-bd hidden sm:block" />
             <span className="text-xs text-slate-400 hidden sm:block">견적 요청 조립 워크벤치</span>
           </div>
-          <Link href="/test/search" className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+          <Link href="/app/search" className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
             <ArrowLeft className="h-3.5 w-3.5" />소싱으로
           </Link>
         </div>
@@ -120,7 +120,7 @@ export default function RequestAssemblyPage() {
           )}
           {summary.inCompareCount > 0 && (
             <button
-              onClick={() => router.push("/test/compare")}
+              onClick={() => router.push("/app/compare")}
               className="inline-flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 transition-colors cursor-pointer"
             >
               <GitCompare className="h-2.5 w-2.5" />비교중 {summary.inCompareCount} →
@@ -208,7 +208,7 @@ export default function RequestAssemblyPage() {
                     size="sm"
                     variant="outline"
                     className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                    onClick={() => router.push("/test/compare")}
+                    onClick={() => router.push("/app/compare")}
                   >
                     <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                     비교 열기
@@ -224,7 +224,7 @@ export default function RequestAssemblyPage() {
                     size="sm"
                     variant="outline"
                     className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                    onClick={() => router.push("/test/compare")}
+                    onClick={() => router.push("/app/compare")}
                   >
                     <GitCompare className="h-3.5 w-3.5 mr-1.5" />
                     비교 판단 먼저
@@ -234,7 +234,7 @@ export default function RequestAssemblyPage() {
                   size="sm"
                   className="w-full h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
                   disabled={!canProceed}
-                  onClick={() => router.push("/test/quote/request")}
+                  onClick={() => router.push("/app/quote/request")}
                 >
                   요청서 작성
                   <ArrowRight className="h-3 w-3 ml-1.5" />
@@ -255,7 +255,7 @@ export default function RequestAssemblyPage() {
             <Package className="h-8 w-8 text-slate-600 mb-3" />
             <p className="text-sm text-slate-300 mb-1">견적 요청 후보가 없습니다</p>
             <p className="text-xs text-slate-500 mb-4">소싱 워크벤치에서 제품을 담아주세요</p>
-            <Link href="/test/search">
+            <Link href="/app/search">
               <Button size="sm" className="bg-blue-600 hover:bg-blue-500 text-white text-xs">
                 <ArrowLeft className="h-3 w-3 mr-1.5" />
                 소싱 워크벤치로
@@ -295,7 +295,7 @@ export default function RequestAssemblyPage() {
                   size="sm"
                   variant="outline"
                   className="h-8 px-3 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                  onClick={() => router.push("/test/compare")}
+                  onClick={() => router.push("/app/compare")}
                 >
                   <GitCompare className="h-3.5 w-3.5 mr-1" />
                   비교 열기
@@ -305,7 +305,7 @@ export default function RequestAssemblyPage() {
                 size="sm"
                 className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
                 disabled={!canProceed}
-                onClick={() => router.push("/test/quote/request")}
+                onClick={() => router.push("/app/quote/request")}
               >
                 요청서 작성
                 <ArrowRight className="h-3 w-3 ml-1" />
