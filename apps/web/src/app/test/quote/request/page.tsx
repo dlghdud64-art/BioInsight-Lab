@@ -27,7 +27,7 @@ const READINESS_CONFIG: Record<string, { color: string; icon: any; label: string
 
 function QuoteRequestPageContent() {
   const [vendorNotes, setVendorNotes] = useState<Record<string, string>>({});
-  const [activeGroupIdx, setActiveGroupIdx] = useState(0);
+  const [activeSupplierRequestId, setActiveSupplierRequestId] = useState<string | null>(null);
   const [holdUnits, setHoldUnits] = useState<Set<string>>(new Set());
   const [submissionOutcome, setSubmissionOutcome] = useState<{
     sentCount: number; heldCount: number; vendorCount: number; totalAmount: number; heldVendors: string[]; sentAt: string;
@@ -51,7 +51,15 @@ function QuoteRequestPageContent() {
   const config = READINESS_CONFIG[level] || READINESS_CONFIG.blocked;
   const ReadinessIcon = config.icon;
   const canSend = level === "ready_to_write_request" || level === "split_required" || level === "review_first";
-  const activeGroup: VendorGroup | undefined = vendorGroups[activeGroupIdx];
+  // ── Step 4: activeSupplierRequestId → activeGroup derive ──
+  const requestAssemblyId = useMemo(() => `ra_${quoteItems.map((q: any) => q.productId).sort().join("_")}`, [quoteItems]);
+  const supplierRequestIds = useMemo(() => vendorGroups.map(g => g.vendorId), [vendorGroups]);
+  // 첫 진입 또는 유효하지 않은 id → 첫 번째 공급사 자동 활성화
+  const resolvedActiveId = activeSupplierRequestId && supplierRequestIds.includes(activeSupplierRequestId)
+    ? activeSupplierRequestId
+    : supplierRequestIds[0] ?? null;
+  const activeGroupIdx = vendorGroups.findIndex(g => g.vendorId === resolvedActiveId);
+  const activeGroup: VendorGroup | undefined = vendorGroups[activeGroupIdx >= 0 ? activeGroupIdx : 0];
   const readyCount = vendorGroups.filter(g => !holdUnits.has(g.vendorName)).length;
   const holdCount = holdUnits.size;
   const toggleHold = (v: string) => setHoldUnits(prev => { const n = new Set(prev); n.has(v) ? n.delete(v) : n.add(v); return n; });
@@ -126,7 +134,7 @@ function QuoteRequestPageContent() {
             const isHeld = holdUnits.has(g.vendorName);
             const isActive = idx === activeGroupIdx;
             return (
-              <button key={g.vendorName} onClick={() => setActiveGroupIdx(idx)}
+              <button key={g.vendorName} onClick={() => setActiveSupplierRequestId(g.vendorId)}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all border ${
                   isActive ? "bg-blue-600/10 text-blue-300 border-blue-600/30 ring-1 ring-blue-600/20"
                   : isHeld ? "text-slate-500 border-bd opacity-50" : "text-slate-400 border-bd hover:bg-el"
@@ -367,7 +375,7 @@ function QuoteRequestPageContent() {
                 const isActive = idx === activeGroupIdx;
                 const isHeld = holdUnits.has(g.vendorName);
                 return (
-                  <button key={g.vendorName} onClick={() => setActiveGroupIdx(idx)}
+                  <button key={g.vendorName} onClick={() => setActiveSupplierRequestId(g.vendorId)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs transition-all ${
                       isActive ? "bg-blue-600/10 border border-blue-600/30" : "hover:bg-el border border-transparent"
                     }`}>
@@ -445,7 +453,10 @@ function QuoteRequestPageContent() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {vendorGroups.length > 1 && activeGroupIdx < vendorGroups.length - 1 && (
-                <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs text-slate-400 border-bd" onClick={() => setActiveGroupIdx(activeGroupIdx + 1)}>
+                <Button size="sm" variant="outline" className="h-8 px-2.5 text-xs text-slate-400 border-bd" onClick={() => {
+                  const nextIdx = activeGroupIdx + 1;
+                  if (nextIdx < vendorGroups.length) setActiveSupplierRequestId(vendorGroups[nextIdx].vendorId);
+                }}>
                   다음<ChevronRight className="h-3 w-3 ml-0.5" />
                 </Button>
               )}
