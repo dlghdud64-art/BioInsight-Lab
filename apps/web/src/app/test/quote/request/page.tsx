@@ -9,6 +9,7 @@ import { useSession } from "next-auth/react";
 import { useRouter as useNavRouter } from "next/navigation";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { calculateAssembly, type VendorGroup } from "../../_components/request-assembly";
+import { generateRequestDraft } from "@/lib/ai/suggestion-engine";
 import { PriceDisplay } from "@/components/products/price-display";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

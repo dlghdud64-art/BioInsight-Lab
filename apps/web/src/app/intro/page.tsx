@@ -166,7 +166,6 @@ export default function IntroPage() {
                     <span className="font-semibold text-xs text-slate-100">{step.title}</span>
                     <p className="text-[10px] text-slate-500 leading-tight">{step.desc}</p>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed break-keep">{item.desc}</p>
                 </div>
               ))}
             </div>

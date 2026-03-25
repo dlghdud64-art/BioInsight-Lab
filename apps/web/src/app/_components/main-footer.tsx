@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Github, Mail, ExternalLink } from "lucide-react";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 function scrollToId(id: string) {
   const element = document.getElementById(id);

@@ -11,6 +11,7 @@ import {
   SheetTrigger,
   SheetClose,
 } from "@/components/ui/sheet";
+import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 interface MainHeaderProps {
   onMenuClick?: () => void;

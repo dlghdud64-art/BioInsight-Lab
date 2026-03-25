@@ -53,9 +53,6 @@ export function BioInsightSocialProofSection() {
                     {metric.sub}
                   </div>
                 </div>
-                {i < PIPELINE_STEPS.length - 1 && (
-                  <ChevronRight className="h-3 w-3 text-[#354459] shrink-0 mx-0.5" />
-                )}
               </div>
             );
           })}
