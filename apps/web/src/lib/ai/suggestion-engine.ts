@@ -6,32 +6,39 @@
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type SuggestionScope = "sourcing_summary" | "compare_recommendation" | "request_draft";
-export type SuggestionStatus = "generated" | "accepted" | "edited" | "dismissed";
-export type Confidence = "low" | "medium" | "high";
-export type SuggestionAction =
-  | "apply_compare_candidates"
-  | "apply_request_candidates"
-  | "set_selected_decision"
-  | "apply_request_draft"
-  | "navigate_request";
+export type AiSuggestionScope = "sourcing_summary" | "compare_recommendation" | "request_draft";
+export type AiSuggestionStatus = "generated" | "accepted" | "edited" | "dismissed";
 
-export interface AISuggestion {
+export type AiSuggestionAction =
+  | { id: string; type: "apply_compare_candidates"; label: string; payload: { itemIds: string[] } }
+  | { id: string; type: "apply_request_candidates"; label: string; payload: { itemIds: string[] } }
+  | { id: string; type: "apply_selected_decision"; label: string; payload: { itemId: string } }
+  | { id: string; type: "apply_request_draft_patch"; label: string; payload: { supplierId: string; patch: Record<string, unknown> } }
+  | { id: string; type: "open_review"; label: string; payload?: Record<string, never> }
+  | { id: string; type: "dismiss"; label: string; payload?: Record<string, never> };
+
+export interface AiSuggestion {
   id: string;
-  scope: SuggestionScope;
+  scope: AiSuggestionScope;
   targetId: string;
+  contextHash: string;
   title: string;
   message: string;
-  actions: SuggestionAction[];
-  status: SuggestionStatus;
-  confidence: Confidence;
+  actions: AiSuggestionAction[];
+  status: AiSuggestionStatus;
+  confidence: number; // 0-1
   sourceContext: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
 
-/** @deprecated — 이전 호환용. AISuggestion 사용 권장 */
-export type SuggestionType = SuggestionScope;
+// ── Backward compat aliases ──
+export type SuggestionScope = AiSuggestionScope;
+export type SuggestionStatus = AiSuggestionStatus;
+export type SuggestionAction = AiSuggestionAction;
+export type AISuggestion = AiSuggestion;
+export type Confidence = "low" | "medium" | "high";
+/** @deprecated */ export type SuggestionType = AiSuggestionScope;
 
 // ── Suggestion Orchestration Layer ────────────────────────────────────────
 
