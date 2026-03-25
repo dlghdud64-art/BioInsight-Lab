@@ -248,55 +248,33 @@ function QuoteRequestPageContent() {
                 </table>
               </div>
 
-              {/* AI Draft — 반자동 운영 레이어 */}
+              {/* AI Draft strip */}
               <div className="px-4 py-2 border-b border-bd/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-blue-400" />
-                    <span className="text-[10px] font-medium text-slate-400">요청서 메시지</span>
+                    <Sparkles className="h-3 w-3 text-blue-400 shrink-0" />
                     {aiDraftStatus[activeGroup.vendorId] === "generated" && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300">AI 초안</span>
+                      <span className="text-[10px] text-blue-300 font-medium">초안 생성 완료 · 납기 문구 추가 · 대체 가능 여부 포함</span>
                     )}
                     {aiDraftStatus[activeGroup.vendorId] === "edited" && (
-                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-300">수정됨</span>
+                      <span className="text-[10px] text-emerald-300 font-medium">검토 후 전송</span>
                     )}
+                    {!aiDraftStatus[activeGroup.vendorId] || aiDraftStatus[activeGroup.vendorId] === "idle" || aiDraftStatus[activeGroup.vendorId] === "dismissed" ? (
+                      <span className="text-[10px] text-slate-400">요청서 메시지</span>
+                    ) : null}
                   </div>
                   {!vendorNotes[activeGroup.vendorId] ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                      onClick={() => handleGenerateAiDraft(activeGroup)}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />AI 초안 생성
+                    <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
+                      <Sparkles className="h-3 w-3 mr-1" />초안 생성
                     </Button>
                   ) : aiDraftStatus[activeGroup.vendorId] === "generated" ? (
                     <div className="flex items-center gap-1">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400"
-                        onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}
-                      >
-                        삭제
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-6 px-2 text-[10px] text-blue-400"
-                        onClick={() => handleGenerateAiDraft(activeGroup)}
-                      >
-                        재생성
-                      </Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>삭제</Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400" onClick={() => handleGenerateAiDraft(activeGroup)}>재생성</Button>
                     </div>
                   ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                      onClick={() => handleGenerateAiDraft(activeGroup)}
-                    >
-                      <Sparkles className="h-3 w-3 mr-1" />AI 초안 생성
+                    <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
+                      <Sparkles className="h-3 w-3 mr-1" />초안 생성
                     </Button>
                   )}
                 </div>

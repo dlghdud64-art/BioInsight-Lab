@@ -1,8 +1,7 @@
 /**
  * AI Suggestion Engine — P1 반자동 운영 레이어
  *
- * 독립 쇼케이스가 아니라 검색/비교/요청 흐름 안의 inline workflow helper.
- * 모든 출력은 사용자 승인 전까지 실행되지 않는다.
+ * 모든 문구는 행동 방향형. 설명하지 않고 다음 행동을 보여준다.
  */
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -34,7 +33,7 @@ export interface SearchSummaryLine {
 }
 
 export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryLine[] {
-  const { query, products, compareIds, quoteItemIds } = input;
+  const { products, compareIds, quoteItemIds } = input;
   const lines: SearchSummaryLine[] = [];
   if (products.length === 0) return lines;
 
@@ -46,74 +45,47 @@ export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryL
   if (prices.length >= 2) {
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-    const diff = max - min;
-    const diffPct = Math.round((diff / min) * 100);
+    const diffPct = Math.round(((max - min) / min) * 100);
     if (diffPct > 30) {
-      lines.push({ text: `가격 차이가 ${diffPct}%로 큽니다. 비교 후 요청을 권장합니다.`, signal: "compare" });
+      lines.push({ text: `비교 권장 · 가격차 ${diffPct}%`, signal: "compare" });
     }
   }
 
-  // 규격/카테고리 유사성 분석
-  const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
-  const brands = [...new Set(products.map((p: any) => p.brand).filter(Boolean))];
-
   // 비교 적합 후보
   const compareCandidates = products.filter((p: any) => {
-    const hasPrice = p.vendors?.[0]?.priceInKRW > 0;
-    const notInCompare = !compareIds.includes(p.id);
-    return hasPrice && notInCompare;
+    return p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id);
   });
 
   if (compareCandidates.length >= 2 && compareIds.length === 0) {
-    lines.push({
-      text: `비교 적합 후보 ${Math.min(compareCandidates.length, 5)}개가 확인되었습니다.`,
-      signal: "compare",
-    });
+    lines.push({ text: `비교 권장 · 후보 ${Math.min(compareCandidates.length, 5)}개`, signal: "compare" });
   }
 
-  // 납기 불완전 감지
+  // 납기 불완전
   const missingLeadTime = products.filter((p: any) => {
     const vendors = p.vendors || [];
     return vendors.length > 0 && !vendors[0]?.leadTime;
   });
   if (missingLeadTime.length > 0) {
-    lines.push({
-      text: `납기 정보가 불완전한 품목 ${missingLeadTime.length}개는 견적 요청 전환이 적절합니다.`,
-      signal: "request",
-    });
+    lines.push({ text: `납기 확인 필요 · ${missingLeadTime.length}개`, signal: "caution" });
   }
 
   // 공급사 다양성
   const vendorNames = [...new Set(products.flatMap((p: any) => (p.vendors || []).map((v: any) => v.vendor?.name)).filter(Boolean))];
-  if (vendorNames.length >= 3) {
-    lines.push({
-      text: `${vendorNames.length}개 공급사에서 결과가 확인되어 비교 범위가 충분합니다.`,
-      signal: "info",
-    });
-  } else if (vendorNames.length === 1 && products.length > 1) {
-    lines.push({
-      text: `단일 공급사 결과입니다. 추가 검색으로 비교 범위를 넓히는 것을 권장합니다.`,
-      signal: "caution",
-    });
+  if (vendorNames.length === 1 && products.length > 1) {
+    lines.push({ text: "공급사 확인 필요 · 단일 공급사", signal: "caution" });
   }
 
-  // 이미 비교 중이면 다음 단계 안내
+  // 이미 비교 중
   if (compareIds.length >= 2 && quoteItemIds.length === 0) {
-    lines.push({
-      text: `비교 ${compareIds.length}개 준비 완료. 비교 판단 화면으로 이동하여 검토를 시작하세요.`,
-      signal: "compare",
-    });
+    lines.push({ text: `비교 ${compareIds.length}개 준비 · 비교 시작`, signal: "compare" });
   }
 
-  // 견적 담기 완료 상태
+  // 견적 담기 완료
   if (quoteItemIds.length > 0) {
-    lines.push({
-      text: `견적 ${quoteItemIds.length}건이 담겨 있습니다. 요청서 작성으로 전환할 수 있습니다.`,
-      signal: "request",
-    });
+    lines.push({ text: `바로 요청 가능 · ${quoteItemIds.length}건`, signal: "request" });
   }
 
-  return lines.slice(0, 3); // max 3 lines
+  return lines.slice(0, 3);
 }
 
 // ── P1-A2: Dock-level Next Action Recommendation ──────────────────────────
@@ -127,40 +99,25 @@ export interface DockRecommendationInput {
 export function generateDockRecommendation(input: DockRecommendationInput): string | null {
   const { compareIds, quoteItemIds, products } = input;
 
-  // 비교 후보 분석
   const compareProducts = products.filter((p: any) => compareIds.includes(p.id));
   const compareCategories = [...new Set(compareProducts.map((p: any) => p.category).filter(Boolean))];
-
-  // 견적 후보 분석
   const requestProducts = products.filter((p: any) => quoteItemIds.includes(p.id));
   const missingLeadTime = requestProducts.filter((p: any) => !(p.vendors?.[0]?.leadTime));
 
-  // 비교 + 견적 모두 있으면
   if (compareIds.length >= 2 && quoteItemIds.length > 0) {
-    return `비교 ${compareIds.length}개와 견적 ${quoteItemIds.length}건이 준비되었습니다. 비교 후 요청서 생성이 적절합니다.`;
+    return "비교 후 요청 권장";
   }
-
-  // 비교만 있으면
   if (compareIds.length >= 2 && quoteItemIds.length === 0) {
-    if (compareCategories.length <= 1) {
-      return `동일 카테고리 ${compareIds.length}개가 모였습니다. 비교 시작이 적절합니다.`;
-    }
-    return `서로 다른 카테고리가 포함되어 있습니다. 규격 확인 후 비교를 시작하세요.`;
+    if (compareCategories.length > 1) return "규격 확인 후 비교 시작";
+    return "비교 시작";
   }
-
-  // 견적만 있으면
   if (quoteItemIds.length > 0) {
-    if (missingLeadTime.length > 0) {
-      return `견적 후보 ${quoteItemIds.length}개 중 ${missingLeadTime.length}개는 납기 미확정입니다. 요청서에 납기 문의를 포함하세요.`;
-    }
-    return `견적 후보 ${quoteItemIds.length}건이 준비되었습니다. 요청서 생성으로 이동할 수 있습니다.`;
+    if (missingLeadTime.length > 0) return `납기 확인 필요 · ${missingLeadTime.length}건`;
+    return "요청서 생성으로 이동";
   }
-
-  // 비교 1개만
   if (compareIds.length === 1) {
-    return `비교 후보 1개가 추가되었습니다. 1개 더 추가하면 비교가 가능합니다.`;
+    return "비교 후보 1개 더 추가";
   }
-
   return null;
 }
 
@@ -168,14 +125,14 @@ export function generateDockRecommendation(input: DockRecommendationInput): stri
 
 export interface CompareDecisionInput {
   products: any[];
-  scenario: string; // "cost" | "leadtime" | "spec" | "manual"
+  scenario: string;
   getAverageLeadTime: (product: any) => number;
   quoteItemsCount: number;
 }
 
 export interface CompareDecisionSummary {
   recommendation: string;
-  reasons: string[];
+  details: string[];
   nextAction: string;
   confidence: Confidence;
 }
@@ -184,18 +141,16 @@ export function generateCompareDecision(input: CompareDecisionInput): CompareDec
   const { products, scenario, getAverageLeadTime, quoteItemsCount } = input;
   if (products.length < 2) return null;
 
-  const reasons: string[] = [];
+  const details: string[] = [];
   let recommendation = "";
   let nextAction = "";
   let confidence: Confidence = "medium";
 
-  // 가격 데이터
   const priced = products
     .map((p: any) => ({ product: p, price: p.vendors?.[0]?.priceInKRW || 0 }))
     .filter((x) => x.price > 0)
     .sort((a, b) => a.price - b.price);
 
-  // 납기 데이터
   const withLeadTime = products
     .map((p: any) => ({ product: p, leadTime: getAverageLeadTime(p) }))
     .filter((x) => x.leadTime > 0)
@@ -205,47 +160,48 @@ export function generateCompareDecision(input: CompareDecisionInput): CompareDec
   const fastest = withLeadTime[0];
 
   if (scenario === "cost" && cheapest) {
-    const name = cheapest.product.name?.substring(0, 20) || "—";
-    recommendation = `가격 우선이면 ${name}이(가) 유리합니다.`;
+    const name = cheapest.product.name?.substring(0, 18) || "—";
+    recommendation = `기준안으로 설정 · ${name}`;
     if (priced.length >= 2) {
       const diff = Math.round(((priced[priced.length - 1].price - cheapest.price) / cheapest.price) * 100);
-      reasons.push(`최저가 ₩${cheapest.price.toLocaleString()} — 최고가 대비 ${diff}% 저렴`);
+      details.push(`최저가 ₩${cheapest.price.toLocaleString()} · ${diff}% 차이`);
     }
     if (fastest && fastest.product.id !== cheapest.product.id) {
-      reasons.push(`납기는 ${fastest.product.name?.substring(0, 15)}이(가) 더 빠름 (${fastest.leadTime}일)`);
+      details.push(`납기 우선이면 ${fastest.product.name?.substring(0, 12)} (${fastest.leadTime}일)`);
     }
     confidence = priced.length >= 2 ? "high" : "medium";
   } else if (scenario === "leadtime" && fastest) {
-    const name = fastest.product.name?.substring(0, 20) || "—";
-    recommendation = `납기 우선이면 ${name}이(가) 적합합니다.`;
-    reasons.push(`예상 납기 ${fastest.leadTime}일`);
+    const name = fastest.product.name?.substring(0, 18) || "—";
+    recommendation = `기준안으로 설정 · ${name}`;
+    details.push(`납기 ${fastest.leadTime}일`);
     if (cheapest && cheapest.product.id !== fastest.product.id) {
-      reasons.push(`가격은 ${cheapest.product.name?.substring(0, 15)}이(가) 더 저렴`);
+      details.push(`가격 우선이면 ${cheapest.product.name?.substring(0, 12)}`);
     }
     confidence = withLeadTime.length >= 2 ? "high" : "medium";
   } else if (scenario === "spec") {
-    recommendation = `규격 일치 기준으로 상위 결과를 검토하세요.`;
+    recommendation = "현재 선택안 유지";
     const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
     if (categories.length > 1) {
-      reasons.push(`서로 다른 카테고리 (${categories.length}개) 포함 — 규격 직접 확인 필요`);
+      details.push(`카테고리 ${categories.length}개 · 규격 직접 확인`);
     }
     confidence = "medium";
   } else {
-    recommendation = `수동 선택 모드에서 직접 비교 중입니다.`;
-    if (cheapest) reasons.push(`참고: 최저가 ${cheapest.product.name?.substring(0, 15)} (₩${cheapest.price.toLocaleString()})`);
+    recommendation = "현재 선택안 유지";
+    if (cheapest) details.push(`참고: 최저가 ${cheapest.product.name?.substring(0, 12)} ₩${cheapest.price.toLocaleString()}`);
     confidence = "low";
   }
 
-  // 다음 액션
   if (quoteItemsCount > 0) {
-    nextAction = `견적 ${quoteItemsCount}건이 담겨 있습니다. 요청서 생성으로 이동할 수 있습니다.`;
+    nextAction = `요청 단계로 이동 · ${quoteItemsCount}건`;
+  } else if (priced.length >= 2) {
+    nextAction = "2개 함께 요청 권장";
   } else if (cheapest) {
-    nextAction = `선택한 제품을 견적 담기하여 요청서 생성을 준비하세요.`;
+    nextAction = "비교 후 요청 권장";
   } else {
-    nextAction = `가격 정보가 부족합니다. 견적 요청으로 공급사에 직접 확인하세요.`;
+    nextAction = "요청 전환 권장 · 가격 미확인";
   }
 
-  return { recommendation, reasons, nextAction, confidence };
+  return { recommendation, details, nextAction, confidence };
 }
 
 // ── P1-C: Request Draft Generator ──────────────────────────────────────────

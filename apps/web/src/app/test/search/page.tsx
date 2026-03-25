@@ -238,17 +238,14 @@ export default function SearchPage() {
             {/* AI Next Step Summary — 반자동 운영 레이어 */}
             {aiSearchSummary.length > 0 && (
               <div className="px-4 pt-1.5">
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-1.5 rounded border border-bd bg-pn/80">
+                <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded border border-bd bg-pn/80">
                   {aiSearchSummary.map((line, i) => (
-                    <span key={i} className={`text-[11px] leading-snug ${
-                      line.signal === "compare" ? "text-blue-300" :
-                      line.signal === "request" ? "text-emerald-300" :
-                      line.signal === "caution" ? "text-amber-300" :
-                      "text-slate-400"
+                    <span key={i} className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded ${
+                      line.signal === "compare" ? "bg-blue-600/10 text-blue-300" :
+                      line.signal === "request" ? "bg-emerald-600/10 text-emerald-300" :
+                      line.signal === "caution" ? "bg-amber-600/10 text-amber-300" :
+                      "bg-slate-600/10 text-slate-400"
                     }`}>
-                      {line.signal === "compare" && "◆ "}
-                      {line.signal === "request" && "→ "}
-                      {line.signal === "caution" && "⚠ "}
                       {line.text}
                     </span>
                   ))}
