@@ -112,6 +112,12 @@ export default function SearchPage() {
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
+  // ── Step 2 상태 정책: query 변경 시 activeResultId 초기화 ──
+  // compare/request 후보는 유지, rail 선택만 리셋
+  useEffect(() => {
+    setRailProduct(null);
+  }, [searchQuery]);
+
   // Restore pending search after login
   useEffect(() => {
     if (session?.user && !hasSearched) {
@@ -366,7 +372,7 @@ export default function SearchPage() {
                   <span>·</span>
                   <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
                   <span>·</span>
-                  <Link href="/test/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
+                  <Link href="/app/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
                 </div>
               ) : (
                 <Button
@@ -469,6 +475,20 @@ export default function SearchPage() {
               )}
             </div>
 
+            {/* 현재 검색 결과 밖 후보 안내 */}
+            {(() => {
+              const visibleIds = new Set(products.map((p: any) => p.id));
+              const hiddenCompare = compareIds.filter((id: string) => !visibleIds.has(id)).length;
+              const hiddenRequest = quoteItems.filter((q: any) => !visibleIds.has(q.productId)).length;
+              const total = hiddenCompare + hiddenRequest;
+              if (total === 0) return null;
+              return (
+                <span className="text-[10px] text-slate-500 hidden sm:inline">
+                  이전 검색 후보 {total}개 유지 중
+                </span>
+              );
+            })()}
+
             {/* Spacer + clear all */}
             {(compareIds.length > 0 || quoteItems.length > 0) && (
               <>
@@ -496,7 +516,7 @@ export default function SearchPage() {
         phase="ready"
         primaryAction={{
           label: "비교 분석 시작",
-          onClick: () => { router.push("/test/compare"); setWorkWindowMode(null); },
+          onClick: () => { router.push("/app/compare"); setWorkWindowMode(null); },
         }}
         secondaryAction={{ label: "닫기", onClick: () => setWorkWindowMode(null) }}
       >
@@ -536,7 +556,7 @@ export default function SearchPage() {
         onRemoveItem={removeQuoteItem}
         onUpdateItem={updateQuoteItem}
         onClearAll={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
-        onCreateRequest={() => { router.push("/test/quote"); setWorkWindowMode(null); }}
+        onCreateRequest={() => { router.push("/app/quote"); setWorkWindowMode(null); }}
         onSwitchToCompare={() => setWorkWindowMode("compare")}
         onToggleCompare={(productId: string) => {
           const p = products.find((pp: any) => pp.id === productId);
