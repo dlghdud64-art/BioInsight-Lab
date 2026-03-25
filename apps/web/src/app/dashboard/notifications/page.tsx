@@ -4,12 +4,15 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Bell,
   Package,
   Clock,
   FileText,
   ShieldCheck,
+  ShieldAlert,
   Users,
   CreditCard,
   Settings,
@@ -24,9 +27,15 @@ import {
   Mail,
   Inbox,
   CheckCircle2,
+  ArrowRight,
 } from "lucide-react";
+import { Suspense } from "react";
 
-/* ── 카테고리 정의 ── */
+/* ── 타입 정의 ── */
+
+type NotificationCategory = "stock_alert" | "quote_arrived" | "delivery_complete" | "approval_pending" | "expiry_warning" | "safety_alert" | "system";
+type NotificationPriority = "urgent" | "normal" | "low";
+type ProcessingStatus = "pending" | "in_progress" | "completed" | "archived";
 
 type Category = "all" | "inventory" | "quote" | "org" | "safety" | "billing" | "system";
 
@@ -387,7 +396,7 @@ function NotificationsContent() {
                 </span>
                 <span className="text-slate-300 dark:text-slate-600">·</span>
                 <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {formatTime(notification.time)}
+                  {notification.time}
                 </span>
               </div>
 
@@ -469,8 +478,8 @@ function NotificationsContent() {
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
-            onClick={markAllCompleted}
-            disabled={pendingNotifications.length === 0}
+            onClick={markAllRead}
+            disabled={unreadCount === 0}
           >
             <CheckCircle2 className="h-4 w-4 mr-2" />
             모두 완료 처리
@@ -499,43 +508,6 @@ function NotificationsContent() {
                     <span className="block w-2 h-2 rounded-full bg-blue-500" />
                   )}
                 </span>
-
-      {/* 요약 카드 */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className={urgentPendingCount > 0 ? "border-red-100 dark:border-red-900/30" : ""}>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-red-50 dark:bg-red-950/30 p-2.5">
-              <Flame className="h-5 w-5 text-red-500 dark:text-red-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-100">{urgentPendingCount}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">긴급 처리</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-amber-100 dark:bg-amber-950/40 p-2.5">
-              <ClipboardCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-100">{pendingNotifications.length}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">미처리 작업</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="rounded-lg bg-emerald-100 dark:bg-emerald-950/40 p-2.5">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-slate-100">{completedNotifications.length}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">완료된 작업</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
 
                 {/* 텍스트 */}
                 <div className="flex-1 min-w-0">

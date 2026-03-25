@@ -90,11 +90,39 @@ const config: Config = {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        // ── Operational Motion Grammar ──
+        "motion-fade-switch": {
+          "0%": { opacity: "0.4", transform: "translateY(2px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "motion-soft-refresh": {
+          "0%": { opacity: "0.6" },
+          "50%": { opacity: "0.85" },
+          "100%": { opacity: "1" },
+        },
+        "motion-optimistic": {
+          "0%": { opacity: "0.5", transform: "scale(0.98)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "motion-rollback": {
+          "0%": { opacity: "1", transform: "scale(1)" },
+          "40%": { opacity: "0.3", transform: "scale(0.97)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "motion-toast-in": {
+          "0%": { opacity: "0", transform: "translateY(8px) scale(0.96)" },
+          "100%": { opacity: "1", transform: "translateY(0) scale(1)" },
+        },
       },
       animation: {
         shake: "shake 0.5s ease-in-out infinite",
         marquee: "marquee 60s linear infinite",
         fadeIn: "fadeIn 0.5s ease-in-out forwards",
+        "motion-fade-switch": "motion-fade-switch 120ms ease-out",
+        "motion-soft-refresh": "motion-soft-refresh 180ms ease-out",
+        "motion-optimistic": "motion-optimistic 120ms ease-out",
+        "motion-rollback": "motion-rollback 300ms ease-out",
+        "motion-toast-in": "motion-toast-in 200ms ease-out",
       },
     },
   },

@@ -200,3 +200,15 @@ div.quote-table td.no-column-cell {
   .hover\:bg-pn:hover { background-color: var(--surface-panel); }
   .bg-sh\/95 { background-color: color-mix(in srgb, var(--surface-shell) 95%, transparent); }
 }
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

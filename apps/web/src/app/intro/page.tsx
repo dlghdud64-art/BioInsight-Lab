@@ -7,7 +7,7 @@ import {
   AlertTriangle, Clock, PackageX,
   Microscope, Users, ShieldCheck,
   KeyRound, CheckSquare, ScrollText, Wallet,
-  CheckCircle2,
+  CheckCircle2, Zap, Layers,
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -624,30 +624,22 @@ export default function IntroPage() {
                   title: "예산 통합",
                   desc: "부서·프로젝트별 예산을 설정하고 실시간 소진 현황을 파악합니다. 예산 초과 시 자동 알림과 발주 차단을 지원합니다.",
                 },
-              ].map((item, i) => (
-                <div key={i} className={`bg-[#1a1a1e] rounded-xl border-2 ${item.borderColor} hover:shadow-md transition-shadow p-3 md:p-6`}>
-                  {/* 모바일: 가로 배치 (아이콘 + 제목/설명 + 배지) */}
-                  <div className="md:hidden flex items-center gap-3">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${item.iconBg}`}>
-                      <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
+              ].map((item, i) => {
+                const Icon = item.icon;
+                return (
+                  <div key={i} className="bg-[#1a1a1e] rounded-xl border border-[#2a2a2e] hover:border-[#3a3a3e] transition-colors p-4 md:p-6">
+                    <div className="flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-lg bg-pn flex items-center justify-center flex-shrink-0">
+                        <Icon className={`h-4 w-4 ${item.iconColor}`} strokeWidth={1.5} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-bold text-slate-100 mb-1">{item.title}</h3>
+                        <p className="text-xs text-slate-400 leading-relaxed break-keep">{item.desc}</p>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-[13px] font-bold text-slate-100">{item.title}</h3>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{item.mobileDesc}</p>
-                    </div>
-                    <span className={`text-[9px] font-semibold border rounded-md px-1.5 py-0.5 flex-shrink-0 whitespace-nowrap ${item.badgeColor}`}>{item.badge}</span>
                   </div>
-                  {/* 데스크탑: 세로 배치 */}
-                  <div className="hidden md:block">
-                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-4 ${item.iconBg}`}>
-                      <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
-                    </div>
-                    <h3 className="text-sm font-bold text-slate-100 mb-2">{item.title}</h3>
-                    <p className="text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
-                    <span className={`text-[10px] font-semibold border rounded-md px-2 py-1 ${item.badgeColor}`}>{item.badge}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* 도입 근거 요약 */}

@@ -1,4 +1,5 @@
-import { Search, GitCompare, FileText } from "lucide-react";
+import { Search, GitCompare, FileText, Sparkles, Languages, Lightbulb } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 
 // AI 보조 레이어 — 독립 쇼케이스가 아니라 워크플로우 내 inline helper
 export function AISection() {

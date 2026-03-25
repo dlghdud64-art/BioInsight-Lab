@@ -3746,7 +3746,7 @@ function TeamInventoryCard({
 export default function InventoryPage() {
   return (
     <Suspense fallback={null}>
-      <InventoryContent />
+      <InventoryPageContent />
     </Suspense>
   );
 }

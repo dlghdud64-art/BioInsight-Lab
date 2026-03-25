@@ -226,6 +226,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
   const responseCount = quote.responses?.length ?? 0;
   const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
+  const maxPrice = prices.length ? Math.max(...prices) : null;
   const delayed = isDelayed(quote);
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
   const daysSinceCreated = Math.floor((Date.now() - new Date(quote.createdAt).getTime()) / 86400000);
@@ -543,7 +544,7 @@ function QuotesPageContent() {
           <button
             key={label}
             onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-            className={`text-left rounded-xl border bg-[#1a1a1e] p-4 shadow-sm transition-all cursor-pointer ${hover} ${isActive ? active : ""}`}
+            className={`text-left rounded-xl border bg-[#1a1a1e] p-4 shadow-sm transition-all cursor-pointer hover:border-slate-600 ${isActive ? "border-blue-600/50 bg-blue-600/5" : "border-[#2a2a2e]"}`}
           >
             <div className="flex items-center gap-2 mb-1">
               {icon}
@@ -612,7 +613,7 @@ function QuotesPageContent() {
       )}
 
       {/* 필터 변경 / background revalidation indicator (기존 list 유지) */}
-      {isFilterChanging && (
+      {isLoading && (
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <div className="h-3 w-3 animate-spin rounded-full border border-blue-600 border-t-transparent" />
           {statusFilter !== "all" || modeChip ? "필터 적용 중..." : "최신 상태를 확인 중"}

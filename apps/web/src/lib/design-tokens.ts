@@ -92,4 +92,6 @@ export const MOTION = {
   fadeSwitch: "animate-motion-fade-switch",
   softRefresh: "animate-motion-soft-refresh",
   optimistic: "animate-motion-optimistic",
+  rollback: "animate-motion-rollback",
+  toastIn: "animate-motion-toast-in",
 } as const;

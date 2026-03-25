@@ -202,96 +202,37 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const renderCategoryIcon = (category: NotificationCategory, isRead: boolean) => {
     const config = CATEGORY_CONFIG[category];
     const Icon = config.icon;
-    const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+    const iconSize = "h-4 w-4";
     return (
       <Icon className={`flex-shrink-0 ${iconSize} ${config.text}`} />
     );
   };
 
-  /** 단일 알림 아이템 렌더링 — Operations Triage Card */
-  const renderNotificationItem = (notification: TaskNotification) => {
-    const isCompleted = notification.status === "completed";
-    const isUrgent = notification.priority === "urgent";
+  /** 단일 알림 아이템 렌더링 — Simple Notification Row */
+  const renderNotificationItem = (notification: Notification) => {
     const config = CATEGORY_CONFIG[notification.category];
-
-    // 완료/참고 카드: 버튼 없이 카드 전체 클릭
-    if (isCompleted) {
-      return (
-        <button
-          key={notification.id}
-          type="button"
-          onClick={() => handleNotificationClick(notification)}
-          className="w-full text-left px-3 py-2.5 opacity-50 hover:opacity-70 transition-colors"
-        >
-          <div className="flex items-start gap-2.5">
-            {renderCategoryIcon(notification.category, "sm")}
-            <div className="flex-1 min-w-0 overflow-hidden">
-              <div className="flex items-center gap-1.5 mb-0.5">
-                <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text}`}>
-                  {notification.typeLabel}
-                </span>
-                <Badge variant="secondary" className="h-3.5 px-1 text-[9px] font-medium leading-none rounded-sm bg-slate-700">
-                  완료
-                </Badge>
-                <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{notification.time}</span>
-              </div>
-              <p className="text-xs text-slate-500 line-through truncate">
-                {notification.targetName}
-              </p>
-            </div>
-          </div>
-        </button>
-      );
-    }
-
-    // 미처리 카드: 상태 → 이슈 → 조치 이유 → 하단 action
     return (
-      <div
+      <button
         key={notification.id}
-        className={`px-3 py-3 ${isUrgent ? "bg-red-950/10" : ""}`}
+        type="button"
+        onClick={() => handleNotificationClick(notification)}
+        className={`w-full text-left px-3 py-2.5 hover:bg-el transition-colors ${notification.read ? "opacity-50" : ""}`}
       >
-        {/* 본문: 아이콘 + 텍스트 */}
         <div className="flex items-start gap-2.5">
-          {renderCategoryIcon(notification.category, "sm")}
+          {renderCategoryIcon(notification.category, notification.read)}
           <div className="flex-1 min-w-0 overflow-hidden">
-            {/* 1행: 상태 배지 + 우측 시간 */}
-            <div className="flex items-center gap-1.5 mb-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
               <span className={`text-[10px] font-semibold uppercase tracking-wider ${config.text}`}>
-                {notification.typeLabel}
+                {config.label}
               </span>
-              {isUrgent && (
-                <Badge className="h-3.5 px-1 text-[9px] font-bold leading-none rounded-sm bg-red-950/40 text-red-400 border-0">
-                  긴급
-                </Badge>
-              )}
               <span className="ml-auto text-[10px] text-slate-500 flex-shrink-0">{notification.time}</span>
             </div>
-            {/* 2행: 품목명 */}
-            <p className="text-xs font-semibold text-slate-100 truncate">
-              {notification.targetName}
-            </p>
-            {/* 3행: 조치 이유 */}
-            <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">
-              {notification.statusText}
+            <p className={`text-xs truncate ${notification.read ? "text-slate-500" : "text-slate-100 font-medium"}`}>
+              {notification.text}
             </p>
           </div>
         </div>
-        {/* 하단 액션 존: primary action 1개 */}
-        <div className="mt-2.5 pl-8">
-          <button
-            type="button"
-            onClick={(e) => handleNotificationCTA(e, notification)}
-            className={`inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-md transition-colors ${
-              isUrgent
-                ? "text-red-400 bg-red-950/30 border border-red-800 hover:bg-red-950/50"
-                : "text-slate-400 border border-[#333338] hover:bg-[#222226]"
-            }`}
-          >
-            {notification.ctaLabel}
-            <ArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
+      </button>
     );
   };
 
@@ -366,111 +307,45 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
-                {pendingCount > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500" />
                 )}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[360px] min-w-[320px] p-0 shadow-xl">
-              {/* ── 상단: 행동 기준 요약 ── */}
-              <div className="px-3 py-2.5 border-b border-[#333338] bg-[#1a1a1e]/50">
-                <h3 className="text-sm font-bold text-slate-100 mb-2">
-                  작업 알림
-                </h3>
-                {/* Triage 탭 필터 */}
-                <div className="flex items-center gap-1.5">
-                  {immediateActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("immediate")}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "immediate"
-                          ? "bg-red-950/40 text-red-400 ring-1 ring-red-800"
-                          : "text-red-400 hover:bg-red-950/20"
-                      }`}
-                    >
-                      <Flame className="h-2.5 w-2.5" />
-                      즉시 조치 {immediateActions.length}
-                    </button>
-                  )}
-                  {todayActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("today")}
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "today"
-                          ? "bg-amber-950/40 text-amber-400 ring-1 ring-amber-800"
-                          : "text-amber-400 hover:bg-amber-950/20"
-                      }`}
-                    >
-                      오늘 처리 {todayActions.length}
-                    </button>
-                  )}
-                  {completedActions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setTriageTab("completed")}
-                      className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full transition-colors ${
-                        triageTab === "completed"
-                          ? "bg-[#222226] text-slate-400 ring-1 ring-slate-700"
-                          : "text-slate-500 hover:bg-[#222226]/50"
-                      }`}
-                    >
-                      참고 {completedActions.length}
-                    </button>
-                  )}
-                </div>
+              {/* ── 상단 헤더 ── */}
+              <div className="px-3 py-2.5 border-b border-[#333338] bg-[#1a1a1e]/50 flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-100">작업 알림</h3>
+                {unreadCount > 0 && (
+                  <button type="button" onClick={handleMarkAllRead} className="text-[11px] text-blue-400 hover:text-blue-300">
+                    모두 읽음
+                  </button>
+                )}
               </div>
 
-              {/* ── 작업 목록 (탭 필터) ── */}
+              {/* ── 알림 목록 ── */}
               <div className="max-h-[420px] overflow-y-auto">
-                {pendingCount === 0 && completedActions.length === 0 ? (
+                {notifications.length === 0 ? (
                   <div className="p-8 text-center">
                     <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
                     <p className="text-sm font-medium text-slate-400">모든 작업이 처리되었습니다</p>
                     <p className="text-[11px] text-slate-500 mt-0.5">새 작업이 발생하면 여기에 표시됩니다</p>
                   </div>
-                ) : currentTriageItems.length === 0 ? (
-                  <div className="p-6 text-center">
-                    <CheckCircle2 className="h-6 w-6 text-slate-300 mx-auto mb-1.5" />
-                    <p className="text-xs text-slate-400">
-                      {triageTab === "immediate" ? "즉시 조치할 항목이 없습니다" :
-                       triageTab === "today" ? "오늘 처리할 항목이 없습니다" :
-                       "완료된 항목이 없습니다"}
-                    </p>
-                  </div>
                 ) : (
                   <div className="divide-y divide-slate-800/40">
-                    {currentTriageItems.map(renderNotificationItem)}
+                    {notifications.map(renderNotificationItem)}
                   </div>
                 )}
               </div>
 
               {/* ── 하단 CTA ── */}
-              <div className="border-t border-[#333338] px-3 py-2.5 flex items-center gap-2">
-                <Link
-                  href={`/dashboard/notifications?tab=${triageTab}`}
-                  onClick={() => setIsNotificationOpen(false)}
-                  className="flex-1"
-                >
-                  <button
-                    type="button"
-                    className="w-full text-center text-xs font-semibold py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors"
-                  >
-                    작업함 보기
-                  </button>
-                </Link>
+              <div className="border-t border-[#333338] px-3 py-2.5">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
-                  className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                  className="block w-full text-center text-xs font-semibold py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500 transition-colors"
                 >
-                  <button
-                    type="button"
-                    className="text-xs font-medium px-3 py-2 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-[#222226] transition-colors"
-                  >
-                    전체 보기
-                  </button>
+                  전체 알림 보기
                 </Link>
               </div>
             </DropdownMenuContent>
