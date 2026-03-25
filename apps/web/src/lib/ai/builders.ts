@@ -5,6 +5,7 @@
  * 이번 단계는 "AI 엔진 완성"이 아니라 "반자동 suggestion operating surface 삽입".
  */
 import type { AiSuggestion, AiSuggestionAction, AiSuggestionReason } from "./suggestion-engine";
+import type { RequestDraftPatch } from "./request-draft-patch";
 import { buildSourcingContextHash, buildCompareContextHash, buildRequestContextHash } from "./context-hash";
 
 function uid(): string {
@@ -241,6 +242,8 @@ export interface RequestBuilderInput {
   missingFields: string[];
   leadTimeIncluded: boolean;
   substituteIncluded: boolean;
+  // field provenance — user edited fields are protected from AI patches
+  userEditedFields?: string[];
 }
 
 export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion | null {
@@ -311,13 +314,34 @@ export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion
       : `${vendorName} 대상 ${items.length}건 초안을 생성할 수 있습니다.`;
     const draftMessage = generateSimpleDraft(vendorName, items, leadTimeIncluded, substituteIncluded);
     const afterReadiness = Math.min(100, baseReadiness + 40);
+
+    // grouped patches — field-group 단위로 세분화 (최대 2개 group)
+    const groupedPatches: RequestDraftPatch[] = [];
+    // user-edited messageBody는 AI가 건드리지 않음
+    const userEdited = input.userEditedFields || [];
+    if (!userEdited.includes("messageBody")) {
+      groupedPatches.push({ group: "messageBody", supplierId: activeSupplierRequestId!, value: draftMessage });
+    }
+    // followup flag 보완
+    const flagPatch: { leadTimeQuestionIncluded?: boolean; substituteQuestionIncluded?: boolean } = {};
+    if (!leadTimeIncluded) flagPatch.leadTimeQuestionIncluded = true;
+    if (!substituteIncluded) flagPatch.substituteQuestionIncluded = true;
+    if (Object.keys(flagPatch).length > 0) {
+      groupedPatches.push({ group: "followupFlags", supplierId: activeSupplierRequestId!, value: flagPatch });
+    }
+
     preview = {
       beforeLabel: `전송 준비 ${baseReadiness}%`,
       afterLabel: `적용 시 ${afterReadiness}%`,
-      summary: `초안 + 누락 질문 ${draftParts.length}건 추가`,
+      summary: `초안${draftParts.length > 0 ? ` + ${draftParts.join("/")}` : ""} 추가`,
     };
+    // 첫 grouped patch를 primary action payload로 사용
+    const primaryPatch = groupedPatches[0];
     actions = [
-      { id: uid(), type: "apply_request_draft_patch", label: "초안 적용", payload: { supplierId: activeSupplierRequestId, patch: { messageBody: draftMessage } } },
+      { id: uid(), type: "apply_request_draft_patch", label: "초안 적용", payload: {
+        supplierId: activeSupplierRequestId!,
+        patch: primaryPatch ? { [primaryPatch.group]: primaryPatch.group === "messageBody" ? (primaryPatch as { value: string }).value : true } : { messageBody: draftMessage },
+      }},
       { id: uid(), type: "dismiss", label: "무시" },
     ];
     confidence = 0.75;
