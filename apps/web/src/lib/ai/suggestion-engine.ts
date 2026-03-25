@@ -6,17 +6,32 @@
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type SuggestionType = "search_summary" | "compare_recommendation" | "request_draft";
+export type SuggestionScope = "sourcing_summary" | "compare_recommendation" | "request_draft";
 export type SuggestionStatus = "generated" | "accepted" | "edited" | "dismissed";
 export type Confidence = "low" | "medium" | "high";
+export type SuggestionAction =
+  | "apply_compare_candidates"
+  | "apply_request_candidates"
+  | "set_selected_decision"
+  | "apply_request_draft"
+  | "navigate_request";
 
 export interface AISuggestion {
-  type: SuggestionType;
+  id: string;
+  scope: SuggestionScope;
+  targetId: string;
+  title: string;
+  message: string;
+  actions: SuggestionAction[];
   status: SuggestionStatus;
   confidence: Confidence;
-  sourceContext: string;
-  actionTarget?: string;
+  sourceContext: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
+
+/** @deprecated — 이전 호환용. AISuggestion 사용 권장 */
+export type SuggestionType = SuggestionScope;
 
 // ── P1-A: Search Next Step Summary ─────────────────────────────────────────
 
@@ -178,7 +193,7 @@ export function generateCompareDecision(input: CompareDecisionInput): CompareDec
       details.push(`가격 우선이면 ${cheapest.product.name?.substring(0, 12)}`);
     }
     confidence = withLeadTime.length >= 2 ? "high" : "medium";
-  } else if (scenario === "spec") {
+  } else if (scenario === "spec_match") {
     recommendation = "현재 선택안 유지";
     const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
     if (categories.length > 1) {

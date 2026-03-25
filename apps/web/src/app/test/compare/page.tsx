@@ -84,8 +84,26 @@ export default function TestComparePage() {
   const [tempLeadTime, setTempLeadTime] = useState<string>("");
   // ── Step 3 상태 분리: activeCompareItemId (rail용) + selectedDecisionItemId (기준안) ──
   const [activeCompareItemId, setActiveCompareItemId] = useState<string | null>(null);
-  const [selectedDecisionItemId, setSelectedDecisionItemId] = useState<string | null>(null);
-  const [scenario, setScenario] = useState<string>("cost");
+  const [selectedDecisionItemId, _setSelectedDecisionItemId] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      try { return sessionStorage.getItem("compare_selectedDecisionItemId") || null; } catch { return null; }
+    }
+    return null;
+  });
+  const setSelectedDecisionItemId = (id: string | null) => {
+    _setSelectedDecisionItemId(id);
+    try { id ? sessionStorage.setItem("compare_selectedDecisionItemId", id) : sessionStorage.removeItem("compare_selectedDecisionItemId"); } catch {}
+  };
+  const [scenario, _setScenario] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try { return sessionStorage.getItem("compare_scenario") || "cost"; } catch { return "cost"; }
+    }
+    return "cost";
+  });
+  const setScenario = (s: string) => {
+    _setScenario(s);
+    try { sessionStorage.setItem("compare_scenario", s); } catch {}
+  };
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewNote, setReviewNote] = useState("");
   const [aiJudgmentDismissed, setAiJudgmentDismissed] = useState(false);
@@ -133,6 +151,15 @@ export default function TestComparePage() {
   const averageLeadTimes = averageLeadTimesData?.averageLeadTimes || {};
 
   // ── Effects ────────────────────────────────────────────────────────────────
+  // restore: selectedDecisionItemId가 현재 세션에 없으면 초기화
+  useEffect(() => {
+    if (allProducts.length > 0 && selectedDecisionItemId) {
+      if (!allProducts.some((p: any) => p.id === selectedDecisionItemId)) {
+        setSelectedDecisionItemId(null);
+      }
+    }
+  }, [allProducts]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (allProducts.length > 0) {
       setProductOrder(allProducts.map((_item: any, index: number) => index));
@@ -211,7 +238,7 @@ export default function TestComparePage() {
     // Scenario controls sort when no manual sortBy override
     const effectiveSort = scenario === "cost" ? "price"
       : scenario === "leadtime" ? "leadTime"
-      : scenario === "spec" ? "specification"
+      : scenario === "spec_match" ? "specification"
       : sortBy;
 
     filtered.sort((a, b) => {
@@ -540,7 +567,7 @@ export default function TestComparePage() {
               {[
                 { key: "cost", label: "최저 총비용" },
                 { key: "leadtime", label: "최단 납기" },
-                { key: "spec", label: "규격 완전 일치" },
+                { key: "spec_match", label: "규격 완전 일치" },
                 { key: "manual", label: "수동 선택" },
               ].map((s) => (
                 <button
@@ -1166,7 +1193,7 @@ export default function TestComparePage() {
             <span className="font-medium text-slate-300">
               {scenario === "cost" ? "최저 총비용"
                 : scenario === "leadtime" ? "최단 납기"
-                : scenario === "spec" ? "규격 완전 일치"
+                : scenario === "spec_match" ? "규격 완전 일치"
                 : "수동 선택"}
             </span>
             <span className="text-slate-700">·</span>

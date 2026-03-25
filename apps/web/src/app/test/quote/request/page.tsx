@@ -270,8 +270,8 @@ function QuoteRequestPageContent() {
                     </Button>
                   ) : aiDraftStatus[activeGroup.vendorId] === "generated" ? (
                     <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>삭제</Button>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400" onClick={() => handleGenerateAiDraft(activeGroup)}>재생성</Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>무시</Button>
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400" onClick={() => handleGenerateAiDraft(activeGroup)}>초안 업데이트</Button>
                     </div>
                   ) : (
                     <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
