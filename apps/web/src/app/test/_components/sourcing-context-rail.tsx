@@ -88,14 +88,14 @@ export function SourcingContextRail({
           </div>
         )}
 
-        {/* 다음 단계 제안 — inventory panel의 recommended actions 패턴 */}
+        {/* 다음 단계 — 짧은 행동형 */}
         <div className="px-4 py-3 border-b border-bd/50">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
             다음 단계
           </div>
-          <div className="space-y-1.5 text-xs text-slate-400">
+          <div className="space-y-1.5 text-xs">
             {!isInCompare && !isInRequest && (
-              <p>비교 목록에 추가하거나 견적을 요청하세요.</p>
+              <p className="text-slate-400">비교 후보에 추가하거나 견적 후보에 추가</p>
             )}
             {isInCompare && compareCount >= 2 && onOpenCompareWindow && (
               <button
@@ -103,11 +103,11 @@ export function SourcingContextRail({
                 className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors"
               >
                 <GitCompare className="h-3 w-3" />
-                비교 검토 시작 ({compareCount}개)
+                {compareCount}개 비교 시작
               </button>
             )}
             {isInCompare && compareCount < 2 && (
-              <p className="text-amber-400">비교하려면 2개 이상 필요합니다.</p>
+              <p className="text-amber-400">비교 후보 1개 더 추가</p>
             )}
             {isInRequest && onOpenRequestWindow && (
               <button
@@ -115,7 +115,7 @@ export function SourcingContextRail({
                 className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 <FileText className="h-3 w-3" />
-                견적 요청 검토 ({requestCount}건)
+                견적 요청서 만들기
               </button>
             )}
           </div>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
-  GitCompare, FlaskConical, FileText, ChevronRight,
+  GitCompare, FlaskConical, FileText, ChevronRight, Check,
   AlertTriangle,
 } from "lucide-react";
 
@@ -18,6 +18,8 @@ interface SourcingResultRowProps {
   onToggleRequest: () => void;
   onSelect: () => void;
   compareSessionCount?: number;
+  /** preview mode — 시각 1단 낮추고 click intercept (실행 금지) */
+  isPreview?: boolean;
 }
 
 // ── 3행: 동적 운영 신호 ──────────────────────────────────────────────────
@@ -31,10 +33,10 @@ interface OpSignal {
 
 /**
  * Compact operational chip 색상 맵
- * green  = 진행 가능 / 유리 (재고 확보, 비교 적합, 바로 요청 가능)
- * amber  = 확인 필요 / 위험 (현행 확인 필요, 견적 필요, 재고 확인 필요, 가격 검토 필요)
- * blue   = 다음 행동 추천 (비교 권장, 요청 전환 권장)
- * neutral = 상태 정보 (N영업일, 재고 가능)
+ * green  = 진행 가능 / 유리
+ * amber  = 확인 필요 / 위험
+ * blue   = 다음 행동 추천
+ * neutral = 상태 정보
  */
 const CHIP_STYLES: Record<ChipColor, string> = {
   green: "text-emerald-400 bg-emerald-400/8 border-emerald-400/20",
@@ -46,14 +48,11 @@ const CHIP_STYLES: Record<ChipColor, string> = {
 function buildOperatingSignals(product: any, vendor: any, unitPrice: number | null): OpSignal[] {
   const signals: OpSignal[] = [];
   const lt = vendor?.leadTime;
+  const ltSource = vendor?.leadTimeSource; // "supplier" | "historical" | undefined
 
-  // ── 1순위: 납기/견적 ──
+  // ── 1순위: 납기 ──
   if (!lt) {
-    if (!unitPrice || unitPrice <= 0) {
-      signals.push({ label: "견적 필요", color: "amber" });
-    } else {
-      signals.push({ label: "납기 확인 필요", color: "amber" });
-    }
+    signals.push({ label: "납기 확인 필요", color: "amber" });
   } else {
     const str = String(lt).trim().toLowerCase();
     if (str === "즉시" || str === "즉시 출고" || str === "in stock" || str === "0") {
@@ -61,14 +60,19 @@ function buildOperatingSignals(product: any, vendor: any, unitPrice: number | nu
     } else {
       const num = parseInt(str);
       if (!isNaN(num)) {
-        signals.push({ label: `${num}영업일`, color: "neutral" });
+        // 출처에 따라 표현 구분
+        if (ltSource === "historical") {
+          signals.push({ label: `평균 리드타임 ${num}영업일`, color: "neutral" });
+        } else {
+          signals.push({ label: `예상 배송기간 ${num}영업일`, color: "neutral" });
+        }
       } else {
         signals.push({ label: "납기 확인 필요", color: "amber" });
       }
     }
   }
 
-  // ── 2순위: 재고/가격/확인 필요 ──
+  // ── 2순위: 재고/가격 상태 ──
   const hasStock = product.stockStatus === "in_stock" || product.inStock === true;
   const stockAvailable = product.stockStatus === "available" || product.stockAvailable === true;
   const lowStock = product.stockStatus === "low" || product.lowStock === true;
@@ -80,16 +84,13 @@ function buildOperatingSignals(product: any, vendor: any, unitPrice: number | nu
   } else if (lowStock) {
     signals.push({ label: "재고 부족", color: "amber" });
   } else if (!unitPrice || unitPrice <= 0) {
-    signals.push({ label: "재고 확인 필요", color: "amber" });
+    signals.push({ label: "견적 필요", color: "amber" });
+  } else if (unitPrice > 500000) {
+    signals.push({ label: "고가 후보", color: "amber" });
   } else if (unitPrice > 100000) {
-    signals.push({ label: "가격 검토 필요", color: "amber" });
+    signals.push({ label: "예산 검토 필요", color: "amber" });
   } else {
-    const ltNum = lt ? parseInt(String(lt)) : NaN;
-    if (!isNaN(ltNum) && ltNum > 7) {
-      signals.push({ label: "현행 확인 필요", color: "amber" });
-    } else {
-      signals.push({ label: "재고 확인 필요", color: "amber" });
-    }
+    signals.push({ label: "재고 확인 필요", color: "amber" });
   }
 
   // ── 3순위: 행동 방향 ──
@@ -129,22 +130,17 @@ function buildStaticMeta(product: any, vendor: any): string {
 }
 
 // ── Row 상태 스타일 ─────────────────────────────────────────────────────
-// 우선순위: selected > membership(compare/request) > hover > default
 
 function getRowStyle(isSelected: boolean, isInCompare: boolean, isInRequest: boolean): string {
   if (isSelected) {
-    // 가장 강한 상태: filled surface + stronger border + left accent
     return "bg-[#2a2d32] border-slate-500/50 border-l-2 border-l-blue-500 hover:bg-[#2a2d32]";
   }
   if (isInCompare) {
-    // compare membership: 약한 blue tint
     return "bg-blue-600/[0.04] border-blue-600/[0.12] hover:bg-blue-600/[0.07]";
   }
   if (isInRequest) {
-    // request membership: 약한 indigo tint (compare와 구분)
     return "bg-indigo-600/[0.04] border-indigo-600/[0.12] hover:bg-indigo-600/[0.07]";
   }
-  // default + hover
   return "bg-transparent border-transparent hover:bg-white/[0.03]";
 }
 
@@ -153,6 +149,7 @@ function getRowStyle(isSelected: boolean, isInCompare: boolean, isInRequest: boo
 export function SourcingResultRow({
   product, isInCompare, isInRequest, isSelected,
   onToggleCompare, onToggleRequest, onSelect,
+  isPreview = false,
 }: SourcingResultRowProps) {
   const [imgError, setImgError] = useState(false);
   const vendor = product.vendors?.[0];
@@ -161,6 +158,9 @@ export function SourcingResultRow({
   const staticMeta = buildStaticMeta(product, vendor);
   const opSignals = buildOperatingSignals(product, vendor, unitPrice);
   const rowStyle = getRowStyle(isSelected, isInCompare, isInRequest);
+
+  // preview mode: saturation/contrast 1단 낮춤
+  const previewDim = isPreview ? "opacity-85" : "";
 
   return (
     <div
@@ -182,12 +182,12 @@ export function SourcingResultRow({
           {/* 1행: 제품명 */}
           <p className="text-sm font-semibold text-slate-100 line-clamp-1 leading-tight">{product.name}</p>
 
-          {/* 2행: 정적 메타 — slate, 11px, medium */}
+          {/* 2행: 정적 메타 */}
           {staticMeta && (
             <p className="text-[11px] font-medium text-slate-400 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
           )}
 
-          {/* 3행: 동적 운영 신호 — compact operational chips */}
+          {/* 3행: 동적 운영 신호 */}
           {opSignals.length > 0 && (
             <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden">
               {opSignals.map((sig, idx) => (
@@ -219,33 +219,45 @@ export function SourcingResultRow({
           </span>
         </div>
 
-        {/* Desktop CTA */}
-        <div className="shrink-0 hidden sm:flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${
-              isInCompare
-                ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25"
-                : "text-slate-300 hover:text-blue-400 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"
-            }`}
-            onClick={onToggleCompare}>
-            <GitCompare className="h-3 w-3 mr-1" />{isInCompare ? "비교 후보" : "비교 추가"}
-          </Button>
-          <Button variant="ghost" size="sm"
-            className={`h-7 px-2 rounded text-xs font-medium ${
-              isInRequest
-                ? "bg-indigo-600/15 text-indigo-400 hover:bg-indigo-600/25"
-                : "text-slate-500 hover:text-slate-300 hover:bg-el"
-            }`}
-            onClick={onToggleRequest}>
-            <FileText className="h-3 w-3 mr-1" />{isInRequest ? "견적 후보" : "견적"}
-          </Button>
+        {/* Desktop CTA — 비교 추가 primary, 견적 담기 secondary */}
+        <div className={`shrink-0 hidden sm:flex items-center gap-1.5 ${previewDim}`} onClick={(e) => e.stopPropagation()}>
+          {/* Primary: 비교 */}
+          {isInCompare ? (
+            <button
+              className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20 cursor-default"
+              onClick={onToggleCompare}
+            >
+              <Check className="h-3 w-3" />비교 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm"
+              className="h-7 px-2.5 rounded text-xs font-medium text-slate-200 hover:text-blue-400 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"
+              onClick={onToggleCompare}>
+              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+            </Button>
+          )}
+          {/* Secondary: 견적 */}
+          {isInRequest ? (
+            <button
+              className="h-7 px-2 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-500/10 text-slate-400 border border-slate-500/15 cursor-default"
+              onClick={onToggleRequest}
+            >
+              <Check className="h-3 w-3" />견적 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm"
+              className="h-7 px-2 rounded text-xs font-medium text-slate-500 hover:text-slate-300 hover:bg-el"
+              onClick={onToggleRequest}>
+              <FileText className="h-3 w-3 mr-1" />견적 담기
+            </Button>
+          )}
         </div>
 
         <ChevronRight className={`h-3.5 w-3.5 shrink-0 transition-colors hidden sm:block mt-1 ${isSelected ? "text-blue-400" : "text-slate-600 group-hover:text-slate-400"}`} />
       </div>
 
       {/* Mobile bottom: price + CTA */}
-      <div className="flex items-center justify-between px-3 pb-2 pt-0 sm:hidden" onClick={(e) => e.stopPropagation()}>
+      <div className={`flex items-center justify-between px-3 pb-2 pt-0 sm:hidden ${previewDim}`} onClick={(e) => e.stopPropagation()}>
         <div className="text-xs">
           {unitPrice ? (
             <span className="font-semibold tabular-nums text-slate-100"><PriceDisplay price={unitPrice} currency="KRW" /></span>
@@ -254,16 +266,24 @@ export function SourcingResultRow({
           )}
         </div>
         <div className="flex items-center gap-1.5">
-          <Button variant="ghost" size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${isInCompare ? "bg-blue-600/15 text-blue-400" : "text-slate-400 border border-bd"}`}
-            onClick={onToggleCompare}>
-            <GitCompare className="h-3 w-3 mr-1" />{isInCompare ? "비교 후보" : "비교 추가"}
-          </Button>
-          <Button variant="ghost" size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${isInRequest ? "bg-indigo-600/15 text-indigo-400" : "text-slate-500 border border-bd"}`}
-            onClick={onToggleRequest}>
-            <FileText className="h-3 w-3 mr-1" />{isInRequest ? "견적 후보" : "견적 담기"}
-          </Button>
+          {isInCompare ? (
+            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20" onClick={onToggleCompare}>
+              <Check className="h-3 w-3" />비교 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-300 border border-bd" onClick={onToggleCompare}>
+              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+            </Button>
+          )}
+          {isInRequest ? (
+            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-500/10 text-slate-400 border border-slate-500/15" onClick={onToggleRequest}>
+              <Check className="h-3 w-3" />견적 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-500 border border-bd" onClick={onToggleRequest}>
+              <FileText className="h-3 w-3 mr-1" />견적 담기
+            </Button>
+          )}
         </div>
       </div>
     </div>
