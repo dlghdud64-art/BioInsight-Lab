@@ -1,3 +1,5 @@
+import { MainLayout } from "./_components/main-layout";
+import { MainHeader } from "./_components/main-header";
 import { MainFooter } from "./_components/main-footer";
 import { BioInsightHeroSection } from "./_components/bioinsight-hero-section";
 import { BioInsightSocialProofSection } from "./_components/bioinsight-social-proof-section";
@@ -39,6 +41,6 @@ export default function HomePage() {
         <FinalCTASection />
       </div>
       <MainFooter />
-    </div>
+    </MainLayout>
   );
 }

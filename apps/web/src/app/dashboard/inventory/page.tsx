@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense } from "react";
-
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";

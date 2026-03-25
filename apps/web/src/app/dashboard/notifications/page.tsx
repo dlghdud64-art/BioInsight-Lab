@@ -269,7 +269,7 @@ const INITIAL_NOTIFICATIONS: Notification[] = [
 
 /* ── 컴포넌트 ── */
 
-export default function NotificationsPage() {
+function NotificationsContent() {
   const [notifications, setNotifications] = useState<Notification[]>(INITIAL_NOTIFICATIONS);
   const [activeCategory, setActiveCategory] = useState<Category>("all");
 

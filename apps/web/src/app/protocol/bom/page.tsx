@@ -692,7 +692,6 @@ export default function ProtocolBOMPage() {
                     <p className="text-sm font-semibold text-slate-200">PDF 분석에 실패했습니다</p>
                     <p className="text-xs text-slate-500 max-w-xs leading-relaxed">{pdfParseError}</p>
                   </div>
-                  <p className="text-xs text-slate-400">텍스트 붙여넣기로 대체 등록할 수 있습니다.</p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline" size="sm" className="text-xs"
@@ -705,11 +704,11 @@ export default function ProtocolBOMPage() {
                       size="sm" className="text-xs bg-blue-600 hover:bg-blue-700 text-white"
                       onClick={() => setActiveTab("paste")}
                     >
-                      <Clipboard className="h-3 w-3 mr-1" />텍스트 붙여넣기로 진행
+                      <Clipboard className="h-3 w-3 mr-1" />텍스트 입력으로 전환
                     </Button>
                   </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             ) : extractionResult ? (
               /* ── 추출 완료 ── */
               <div className="space-y-4">

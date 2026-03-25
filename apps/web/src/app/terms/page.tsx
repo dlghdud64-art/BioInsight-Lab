@@ -1,6 +1,7 @@
 import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function TermsPage() {
   return (
@@ -210,7 +211,6 @@ export default function TermsPage() {
             </CardContent>
           </Card>
         </div>
-      </div>
       <MainFooter />
     </MainLayout>
   );
