@@ -1,144 +1,268 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
-  Search, ArrowRight, GitCompare, FileText, ShoppingCart, PackageCheck,
-  Warehouse, ChevronRight,
+  Search, GitCompare, FileText, ShoppingCart, PackageCheck,
+  ChevronRight, Menu, X, LayoutDashboard,
 } from "lucide-react";
 
-const PIPELINE_STEPS = [
-  { icon: Search, label: "검색", sub: "시약·장비 통합 검색" },
-  { icon: GitCompare, label: "비교", sub: "벤더별 스펙·가격 비교" },
-  { icon: FileText, label: "견적", sub: "견적 요청·회신 관리" },
-  { icon: ShoppingCart, label: "발주", sub: "승인·발주 전환" },
-  { icon: PackageCheck, label: "입고", sub: "수령 확인·검수" },
-  { icon: Warehouse, label: "재고", sub: "재고·운영 추적" },
-];
-
-export function BioInsightHeroSection() {
-  const router = useRouter();
-  const { data: session } = useSession();
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
-
+function MobileMenu({ isLoggedIn }: { isLoggedIn: boolean }) {
+  const [open, setOpen] = useState(false);
   return (
-    <section className="relative w-full pt-28 md:pt-36 pb-16 md:pb-20 bg-[#1a1a1e] border-b border-[#333338]">
-      <div className="container px-4 md:px-6 mx-auto relative z-10">
-        {/* Value Proposition */}
-        <div className="max-w-3xl mx-auto text-center space-y-4 mb-10 md:mb-14">
-          <p className="text-xs font-semibold uppercase tracking-widest text-blue-400 mb-2">
-            Biotech Procurement Operations Platform
-          </p>
-          <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold tracking-tight text-slate-100 leading-tight break-keep">
-            구매 요청부터 입고까지,{" "}
-            <br className="hidden sm:block" />
-            <span className="text-blue-400">운영 상태를 한눈에</span>
-          </h1>
-          <p className="text-sm md:text-base text-slate-400 max-w-xl mx-auto leading-relaxed break-keep">
-            비교 → 견적 → 발주 → 입고 → 재고까지.
-            연구실 구매 운영의 전 과정을 하나의 콘솔에서 추적하고 통제합니다.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex items-center justify-center gap-3 pt-4">
-            {session?.user ? (
+    <>
+      <button onClick={() => setOpen(true)} className="p-2 text-slate-300 hover:text-white" aria-label="메뉴">
+        <Menu className="h-5 w-5" />
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 bg-[#06142E]/95 backdrop-blur-md flex flex-col">
+          <div className="flex justify-between items-center px-6 py-5">
+            <span className="font-bold text-xl text-white">LabAxis</span>
+            <button onClick={() => setOpen(false)} className="p-2 text-slate-300 hover:text-white" aria-label="닫기">
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
+            <Link href="/intro" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">서비스 소개</Link>
+            <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 &amp; 도입</Link>
+            {isLoggedIn ? (
               <>
-                <Link href="/app/search">
-                  <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
-                    소싱 워크벤치 열기
-                    <ArrowRight className="ml-1.5 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/dashboard">
-                  <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
-                    대시보드
-                  </Button>
+                <Link href="/dashboard" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">대시보드</Link>
+                <Link href="/app/search" onClick={() => setOpen(false)}>
+                  <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">소싱 워크벤치</Button>
                 </Link>
               </>
             ) : (
               <>
-                <Link href="/search">
-                  <Button className="h-11 px-8 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm">
-                    무료로 시작하기
-                    <ArrowRight className="ml-1.5 h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/auth/signin?callbackUrl=/dashboard">
-                  <Button variant="ghost" className="h-11 px-6 text-slate-400 hover:text-slate-100 font-medium text-sm">
-                    운영 콘솔 시작하기
-                  </Button>
+                <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
+                <Link href="/search" onClick={() => setOpen(false)}>
+                  <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
                 </Link>
               </>
             )}
-          </div>
+          </nav>
+        </div>
+      )}
+    </>
+  );
+}
+
+const PIPELINE_STEPS = [
+  { icon: Search, label: "검색", sub: "시약·장비 단일 검색" },
+  { icon: GitCompare, label: "비교", sub: "벤더별 스펙 가격 비교" },
+  { icon: FileText, label: "견적", sub: "견적 요청 및 자동 문서" },
+  { icon: ShoppingCart, label: "발주", sub: "승인 라인 및 연동" },
+  { icon: PackageCheck, label: "입고/재고", sub: "재고 연동 추적" },
+];
+
+function PlexusCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const parent = canvas.parentElement;
+    if (!parent) return;
+    let animId: number;
+    let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+    let mouse = { x: -9999, y: -9999 };
+
+    const init = () => {
+      canvas.width = parent.clientWidth;
+      canvas.height = parent.clientHeight;
+      const count = Math.floor((canvas.width * canvas.height) / 15000);
+      particles = [];
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: (Math.random() - 0.5) * 0.5,
+          r: Math.random() * 2.0 + 1.0,
+        });
+      }
+    };
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const rect = canvas.getBoundingClientRect();
+      const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        for (let j = i + 1; j < particles.length; j++) {
+          const p2 = particles[j];
+          const dx = p.x - p2.x, dy = p.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 160) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
+            ctx.strokeStyle = `rgba(255,255,255,${0.5 - (dist / 160) * 0.5})`;
+            ctx.lineWidth = 1.2; ctx.stroke();
+          }
+        }
+        if (adjMouseY !== -9999) {
+          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const distm = Math.sqrt(dxm * dxm + dym * dym);
+          if (distm < 200) {
+            ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
+            ctx.strokeStyle = `rgba(96,165,250,${0.6 - (distm / 200) * 0.6})`;
+            ctx.lineWidth = 1.5; ctx.stroke();
+          }
+        }
+      }
+      for (const p of particles) {
+        if (adjMouseY !== -9999) {
+          const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
+          const distm = Math.sqrt(dxm * dxm + dym * dym);
+          if (distm < 120) { p.x += dxm * 0.015; p.y += dym * 0.015; }
+          else { p.x += p.vx; p.y += p.vy; }
+        } else { p.x += p.vx; p.y += p.vy; }
+        if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,1)"; ctx.fill();
+      }
+      animId = requestAnimationFrame(draw);
+    };
+    init(); draw();
+    const onResize = () => init();
+    const onMove = (e: MouseEvent) => { mouse.x = e.clientX; mouse.y = e.clientY; };
+    const onLeave = () => { mouse.x = -9999; mouse.y = -9999; };
+    window.addEventListener("resize", onResize);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseleave", onLeave);
+    return () => { window.removeEventListener("resize", onResize); window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseleave", onLeave); cancelAnimationFrame(animId); };
+  }, []);
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />;
+}
+
+export function BioInsightHeroSection() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session?.user;
+
+  return (
+    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
+
+      {/* Background */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
+        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.22) 0%, rgba(78,138,255,0.12) 24%, rgba(78,138,255,0.00) 56%), radial-gradient(circle at 50% 42%, rgba(37,99,235,0.14) 0%, rgba(37,99,235,0.00) 62%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
+        <div className="absolute inset-0 z-0 pointer-events-auto opacity-40">
+          <PlexusCanvas />
+        </div>
+      </div>
+
+      {/* Nav */}
+      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/5">
+        <Link href="/" className="flex items-center gap-2 cursor-pointer">
+          <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
+        </Link>
+
+        {/* Desktop nav links */}
+        <div className="hidden md:flex items-center gap-6">
+          <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
+          <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 &amp; 도입</Link>
+          {isLoggedIn ? (
+            <>
+              <Link href="/dashboard" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">대시보드</Link>
+              <Link href="/app/search">
+                <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>소싱 워크벤치</Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
+              <Link href="/search">
+                <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
+              </Link>
+            </>
+          )}
         </div>
 
-        {/* 6-Step Pipeline */}
-        <div className="max-w-4xl mx-auto">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 text-center mb-4">
-            End-to-End Operations Pipeline
-          </p>
+        {/* Mobile: hamburger + CTA */}
+        <div className="flex md:hidden items-center gap-3">
+          <Link href={isLoggedIn ? "/app/search" : "/search"}>
+            <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">
+              {isLoggedIn ? "워크벤치" : "시작하기"}
+            </Button>
+          </Link>
+          <MobileMenu isLoggedIn={isLoggedIn} />
+        </div>
+      </nav>
 
-          {/* Desktop: horizontal */}
+      {/* Hero */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 pt-16 pb-20 text-center w-full">
+        <p className="text-blue-400 font-extrabold text-[11px] tracking-[0.25em] mb-6 uppercase">Biotech Procurement Operations Platform</p>
+        <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
+          구매 요청부터 입고·재고까지,<br />연구 구매 운영을<br />
+          <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>한곳에서</span> 연결합니다
+        </h1>
+        <p className="text-base md:text-lg text-slate-300 mb-10 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+          시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
+        </p>
+        <div className="flex flex-col sm:flex-row gap-4">
+          {isLoggedIn ? (
+            <>
+              <Link href="/app/search">
+                <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+                  소싱 워크벤치 열기<Search className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />대시보드
+                </Button>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/search">
+                <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+                  시약·장비 검색 시작하기<Search className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+              <Link href="/auth/signin?callbackUrl=/dashboard">
+                <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">운영 콘솔 시작하기</Button>
+              </Link>
+            </>
+          )}
+        </div>
+
+        {/* Pipeline */}
+        <div className="mt-16 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-10">
+          <p className="text-slate-400 font-bold text-[11px] tracking-widest uppercase mb-6">End-to-End Operations Pipeline</p>
           <div className="hidden md:flex items-center justify-center gap-0">
             {PIPELINE_STEPS.map((step, idx) => {
               const Icon = step.icon;
               return (
                 <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-4 py-3 rounded-md hover:bg-[#222226] transition-colors">
-                    <div className="w-10 h-10 rounded-md border border-blue-500/30 bg-blue-600/15 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-blue-400" strokeWidth={1.8} />
+                  <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
+                    <div className="w-14 h-14 rounded-xl bg-[#0E1B30] border border-[#1E3455] flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-slate-300 transition-colors">
+                      <Icon className="h-6 w-6 text-white drop-shadow-lg" strokeWidth={1.8} />
                     </div>
-                    <span className="text-xs font-semibold text-slate-200">{step.label}</span>
-                    <span className="text-[10px] text-slate-500 whitespace-nowrap">{step.sub}</span>
+                    <span className="text-sm font-bold text-white drop-shadow-md">{step.label}</span>
+                    <span className="text-[10px] text-slate-300 font-medium whitespace-nowrap">{step.sub}</span>
                   </div>
-                  {idx < PIPELINE_STEPS.length - 1 && (
-                    <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 mx-0.5" />
-                  )}
+                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-5 w-5 text-slate-500 flex-shrink-0 mx-2 md:mx-6" />}
                 </div>
               );
             })}
           </div>
-
-          {/* Mobile: 2x3 grid */}
-          <div className="md:hidden grid grid-cols-3 gap-2 px-2">
-            {PIPELINE_STEPS.map((step) => {
+          <div className="md:hidden flex items-center justify-center gap-1.5 px-2 overflow-x-auto">
+            {PIPELINE_STEPS.map((step, idx) => {
               const Icon = step.icon;
               return (
-                <div key={step.label} className="flex flex-col items-center gap-1 py-2.5 rounded-md border border-blue-500/30 bg-blue-600/15">
-                  <Icon className="h-4 w-4 text-blue-400" strokeWidth={1.8} />
-                  <span className="text-[11px] font-semibold text-slate-300">{step.label}</span>
+                <div key={step.label} className="flex items-center shrink-0">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
+                    <Icon className="h-3.5 w-3.5 text-white" strokeWidth={1.8} />
+                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}</span>
+                  </div>
+                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600 mx-0.5 shrink-0" />}
                 </div>
               );
             })}
           </div>
-        </div>
-
-        {/* Compact Search Bar */}
-        <div className="max-w-md mx-auto mt-10">
-          <form onSubmit={handleSearch} className="flex items-center h-10 border border-[#333338] rounded-md bg-[#222226] px-3 focus-within:ring-1 focus-within:ring-slate-500 focus-within:border-slate-400 transition-all">
-            <Search className="h-4 w-4 text-slate-400 flex-shrink-0" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="시약명, CAS No., 제조사 검색"
-              className="flex-1 bg-transparent px-2 text-sm text-slate-100 placeholder:text-slate-400 outline-none"
-            />
-            <Button type="submit" variant="ghost" size="sm" className="h-7 px-3 text-xs text-slate-400 hover:text-slate-100">
-              검색
-            </Button>
-          </form>
         </div>
       </div>
     </section>

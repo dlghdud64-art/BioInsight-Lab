@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { Github, Mail, ExternalLink } from "lucide-react";
-import { BioInsightLogo } from "@/components/bioinsight-logo";
 
 function scrollToId(id: string) {
   const element = document.getElementById(id);
@@ -48,26 +47,26 @@ export function MainFooter() {
       links: [
         { label: "이용약관", href: "/terms", onClick: null },
         { label: "개인정보처리방침", href: "/privacy", onClick: null },
-        { label: "운영정책", href: "/operations-policy", onClick: null },
       ],
     },
   ];
 
   return (
-    <footer className="border-t border-[#333338] bg-[#111114]">
+    <footer className="border-t" style={{ backgroundColor: "#081019", borderColor: "#1E2D40" }}>
       <div className="mx-auto max-w-6xl px-4 py-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
           {/* 왼쪽: 로고/설명/소셜 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <BioInsightLogo showText={true} variant="dark" className="h-6" />
-              <span className="rounded-full bg-[#2a2a2e] px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
+              <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
+              <span className="rounded-full bg-st px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-300">
                 Beta
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-xs">
-              바이오 시약·장비 검색, 견적, 구매, 재고 관리를 하나로 연결한 운영 플랫폼입니다.
+              바이오 시약·장비 검색, 견적, 구매, 재고 관리를
+              <br />하나로 연결한 운영 플랫폼입니다.
             </p>
             <div className="flex items-center gap-3 text-slate-400">
               {/* GitHub */}
@@ -75,7 +74,7 @@ export function MainFooter() {
                 href="https://github.com/..."
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-bs hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="GitHub"
               >
                 <Github className="h-4 w-4" />
@@ -83,7 +82,7 @@ export function MainFooter() {
               {/* Mail */}
               <a
                 href="mailto:contact@labaxis.io"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-bs hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="이메일 문의"
               >
                 <Mail className="h-4 w-4" />
@@ -93,7 +92,7 @@ export function MainFooter() {
                 href="#"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[#333338] hover:border-slate-500 hover:text-slate-100 transition-colors"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-bs hover:border-slate-500 hover:text-slate-100 transition-colors"
                 aria-label="문서"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -144,7 +143,7 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-[#333338] pt-4 text-center md:text-left text-[11px] text-slate-500">
+        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 border-t border-bs pt-4 text-center md:text-left text-[11px] text-slate-500">
           <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
             <Link href="/terms" className="hover:text-slate-300 transition-colors">이용약관</Link>
