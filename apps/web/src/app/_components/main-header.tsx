@@ -172,7 +172,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 </button>
               ) : (
                 <SheetClose asChild>
-                  <Link href="/auth/signin?callbackUrl=/dashboard">
+                  <Link href="/search">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-lg text-sm">
                       무료로 시작하기
                     </Button>
@@ -225,7 +225,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     로그인
                   </Link>
                   <Link
-                    href="/auth/signin?callbackUrl=/dashboard"
+                    href="/search"
                     className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
                   >
                     무료로 시작하기
