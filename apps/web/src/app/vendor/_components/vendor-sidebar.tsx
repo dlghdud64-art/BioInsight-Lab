@@ -38,8 +38,8 @@ export function VendorSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-pn border-r border-bd min-h-screen">
-      <div className="p-4 border-b border-bd">
+    <aside className="w-64 bg-[#1a1a1e] border-r border-[#2a2a2e] min-h-screen">
+      <div className="p-4 border-b border-[#2a2a2e]">
         <h2 className="font-bold text-lg text-slate-100">Vendor Portal</h2>
         <p className="text-xs text-slate-600 mt-1">LabAxis</p>
       </div>
@@ -57,7 +57,7 @@ export function VendorSidebar() {
                 "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                 isActive
                   ? "bg-blue-50 text-blue-700"
-                  : "text-slate-700 hover:bg-el"
+                  : "text-slate-300 hover:bg-[#222226]"
               )}
             >
               <Icon className={cn("h-5 w-5 flex-shrink-0", isActive ? "text-blue-600" : "")} />
@@ -70,7 +70,7 @@ export function VendorSidebar() {
       <div className="absolute bottom-4 left-0 right-0 px-3">
         <Link
           href="/vendor/logout"
-          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-slate-700 hover:bg-el transition-colors"
+          className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-slate-300 hover:bg-[#222226] transition-colors"
         >
           <LogOut className="h-4 w-4" />
           로그아웃

@@ -158,7 +158,7 @@ function InventoryScanContent() {
   // ─── 재고 ID가 있을 때 — 상세 뷰 ─────────────────────────────────────
   if (inventoryId) {
     return (
-      <div className="min-h-screen bg-pn p-4">
+      <div className="min-h-screen bg-[#1a1a1e] p-4">
         <div className="max-w-lg mx-auto space-y-4">
           {/* 헤더 */}
           <div className="flex items-center gap-3 pt-2">
@@ -238,7 +238,7 @@ function InventoryScanContent() {
                       </p>
                       <p className="text-xs text-blue-500">{inventory.unit || "개"} (현재)</p>
                     </div>
-                    <div className="bg-el rounded-lg p-3 text-center">
+                    <div className="bg-[#222226] rounded-lg p-3 text-center">
                       <p className="text-2xl font-bold text-slate-300">
                         {inventory.safetyStock ?? "—"}
                       </p>
@@ -273,7 +273,7 @@ function InventoryScanContent() {
                       </div>
                     )}
                     {inventory.notes && (
-                      <p className="text-xs text-slate-500 bg-el rounded p-2 italic">
+                      <p className="text-xs text-slate-500 bg-[#222226] rounded p-2 italic">
                         {inventory.notes}
                       </p>
                     )}
@@ -318,7 +318,7 @@ function InventoryScanContent() {
 
   // ─── ID 없을 때 — 카메라 스캐너 뷰 ────────────────────────────────────
   return (
-    <div className="min-h-screen bg-pn flex flex-col">
+    <div className="min-h-screen bg-[#1a1a1e] flex flex-col">
       {/* 헤더 */}
       <div className="flex items-center gap-3 p-4 text-white">
         <Link href="/dashboard/inventory">
@@ -438,7 +438,7 @@ export default function InventoryScanPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex items-center justify-center min-h-screen bg-pn">
+        <div className="flex items-center justify-center min-h-screen bg-[#1a1a1e]">
           <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
         </div>
       }

@@ -186,7 +186,7 @@ export default function AdminRequestsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -203,7 +203,7 @@ export default function AdminRequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -362,7 +362,7 @@ function RequestCard({
   }, 0);
 
   return (
-    <div className="border rounded-lg p-4 hover:bg-pg transition-colors">
+    <div className="border rounded-lg p-4 hover:bg-[#222226] transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-3">
           {/* 요청자 정보 */}

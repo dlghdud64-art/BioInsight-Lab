@@ -233,7 +233,7 @@ function SafetyAdminPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -246,7 +246,7 @@ function SafetyAdminPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -268,7 +268,7 @@ function SafetyAdminPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />

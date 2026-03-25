@@ -112,20 +112,6 @@ export default function SearchPage() {
 
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
-  // Restore pending search after login
-  useEffect(() => {
-    if (session?.user && !hasSearched) {
-      try {
-        const pending = sessionStorage.getItem("labaxis-pending-search");
-        if (pending) {
-          sessionStorage.removeItem("labaxis-pending-search");
-          setSearchQuery(pending);
-          setTimeout(() => runSearch(), 100);
-        }
-      } catch {}
-    }
-  }, [session?.user]); // eslint-disable-line react-hooks/exhaustive-deps
-
   // Compare 2+ 자동 work window hint
   const compareReady = compareIds.length >= 2;
   const requestReady = quoteItems.length > 0;
@@ -136,21 +122,10 @@ export default function SearchPage() {
     [quoteItems, compareIds, products],
   );
 
-  // AI Next Step Summary
-  const aiSearchSummary = useMemo<SearchSummaryLine[]>(
-    () => hasSearched && products.length > 0 ? generateSearchSummary({
-      query: searchQuery,
-      products,
-      compareIds,
-      quoteItemIds: quoteItems.map((q: any) => q.productId),
-    }) : [],
-    [hasSearched, products, searchQuery, compareIds, quoteItems],
-  );
-
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
-      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} />
+      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} />
 
       {/* ═══ Mobile filter sheet ═══ */}
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
@@ -160,37 +135,46 @@ export default function SearchPage() {
       </Sheet>
 
       {/* ═══ B + C. Workbench Body ═══ */}
-      {hasSearched && !!session?.user ? (
+      {hasSearched ? (
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
-            {/* ═══ 3행: Operating Status Bar — 순수 상태 표시 ═══ */}
-            <div className="px-4 py-1.5 border-b border-bd/60 flex items-baseline gap-3 text-[11px]">
-              {/* 결과 수 */}
-              <span className="text-slate-400">
-                {isSearchLoading ? "검색 중..." : <><span className="font-medium text-slate-300">{products.length}</span>건</>}
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="text-slate-500">필터 {activeFilterCount}개</span>
-              )}
-              {/* 비교/견적 후보 + 다음 행동 */}
-              <span className="text-slate-600 hidden sm:inline">|</span>
-              {compareIds.length > 0 && (
-                <span className="text-blue-400 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
-              )}
-              {quoteItems.length > 0 && (
-                <span className="text-emerald-400 font-medium hidden sm:inline">견적 후보 {quoteItems.length}</span>
-              )}
-              <span className="text-slate-400 hidden md:inline">
-                {(() => {
-                  if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
-                  if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
-                  if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
-                  if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
-                  if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
-                  return "";
-                })()}
-              </span>
+            {/* Result header strip */}
+            <div className="flex items-center justify-between px-4 py-2 border-b border-bd bg-el/50">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">소싱 후보</span>
+                {products.length > 0 && (
+                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px] bg-pn text-slate-300">
+                    {products.length}건
+                  </Badge>
+                )}
+                {isSearchLoading && <Loader2 className="h-3 w-3 animate-spin text-slate-500" />}
+              </div>
+              <div className="flex items-center gap-1.5">
+                {/* Desktop filter trigger */}
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
+                      <SlidersHorizontal className="h-3 w-3" />
+                      필터
+                      {activeFilterCount > 0 && (
+                        <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px] p-4">
+                    <SearchPanel />
+                  </SheetContent>
+                </Sheet>
+                {session?.user && searchQuery && (
+                  <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+                    <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
+                      <TrendingDown className="h-3 w-3" />
+                      재고
+                    </button>
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* AI Insight — compact, inline */}
@@ -202,24 +186,6 @@ export default function SearchPage() {
                   isLoading={analysisLoading}
                   queryAnalysis={queryAnalysis}
                 />
-              </div>
-            )}
-
-            {/* AI Next Step Summary — 반자동 운영 레이어 */}
-            {aiSearchSummary.length > 0 && (
-              <div className="px-4 pt-1.5">
-                <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded border border-bd bg-pn/80">
-                  {aiSearchSummary.map((line, i) => (
-                    <span key={i} className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded ${
-                      line.signal === "compare" ? "bg-blue-600/10 text-blue-300" :
-                      line.signal === "request" ? "bg-emerald-600/10 text-emerald-300" :
-                      line.signal === "caution" ? "bg-amber-600/10 text-amber-300" :
-                      "bg-slate-600/10 text-slate-400"
-                    }`}>
-                      {line.text}
-                    </span>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -239,7 +205,7 @@ export default function SearchPage() {
                     isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
                     isSelected={railProduct?.id === product.id}
                     compareSessionCount={compareStatuses[product.id]?.activeCount}
-                    onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
+                    onToggleCompare={() => toggleCompare(product.id, { name: product.name, brand: product.brand })}
                     onToggleRequest={() => handleProtectedAction(() => {
                       const existing = quoteItems.find((q: any) => q.productId === product.id);
                       if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
@@ -264,145 +230,63 @@ export default function SearchPage() {
                 product={railProduct}
                 isInCompare={compareIds.includes(railProduct.id)}
                 isInRequest={quoteItems.some((q: any) => q.productId === railProduct.id)}
-                onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
+                onToggleCompare={() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand })}
                 onToggleRequest={() => handleProtectedAction(() => {
                   const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
                   if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(railProduct); }
                 })}
                 onClose={() => setRailProduct(null)}
-                onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
-                onOpenRequestWindow={() => handleProtectedAction(() => setWorkWindowMode("request"))}
+                onOpenCompareWindow={() => setWorkWindowMode("compare")}
+                onOpenRequestWindow={() => setWorkWindowMode("request")}
                 compareCount={compareIds.length}
                 requestCount={quoteItems.length}
                 searchQuery={searchQuery}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
-                  <GitCompare className="h-6 w-6 text-blue-400/60" />
+                <div className="w-10 h-10 rounded-lg bg-el border border-bd flex items-center justify-center mb-3">
+                  <Package className="h-5 w-5 text-slate-600" />
                 </div>
-                <p className="text-sm font-semibold text-slate-200 mb-1.5">제품을 선택해 비교를 시작하세요</p>
-                <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                  선택한 제품은 비교 목록에 모아<br />가격, 규격, 제조사를 함께 검토할 수 있습니다.
-                </p>
+                <p className="text-xs text-slate-400 mb-1">제품을 선택하세요</p>
+                <p className="text-[10px] text-slate-500">행을 클릭하면 상세 정보와<br />다음 액션을 확인할 수 있습니다</p>
               </div>
             )}
           </div>
         </div>
       ) : (
-        /* ═══ Search Entry Surface — 비로그인 or 검색 전 ═══ */
-        <div className="flex-1 overflow-hidden flex">
-          {/* Center: search entry */}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="text-center max-w-lg px-6">
-              <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-5">
-                <Search className="h-7 w-7 text-blue-400" />
-              </div>
-              <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
-              <p className="text-sm text-slate-300 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
-              <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
-
-              {/* 예시 검색어 chip */}
-              <div className="flex items-center gap-1.5 flex-wrap justify-center mb-6">
-                {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
-                  <button
-                    key={term}
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery(term);
-                      if (session?.user) {
-                        runSearch();
-                      } else {
-                        try { sessionStorage.setItem("labaxis-pending-search", term); } catch {}
-                        setIsLoginPromptOpen(true);
-                      }
-                    }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-
-              {/* 검색 가능한 키 설명 */}
-              <div className="mb-6 space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">검색 가능한 키</p>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  {["시약명", "CAS No.", "제조사", "카탈로그 번호", "규격"].map((key) => (
-                    <span key={key} className="text-[11px] px-2 py-0.5 rounded bg-el border border-bd text-slate-400">{key}</span>
-                  ))}
-                </div>
-              </div>
-
-              {/* 로그인 후 가능한 작업 — 비로그인만 표시 */}
-              {!session?.user && (
-                <div className="mb-6">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">로그인 후 가능한 작업</p>
-                  <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
-                    {[
-                      { icon: GitCompare, label: "비교", desc: "후보 나란히 비교" },
-                      { icon: FileText, label: "견적 요청", desc: "요청서 생성·전송" },
-                      { icon: Package, label: "재고 연결", desc: "입고·Lot 추적" },
-                      { icon: Search, label: "운영 이력", desc: "검색·구매 이력 관리" },
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      return (
-                        <div key={item.label} className="flex items-start gap-2 px-3 py-2 rounded-md bg-el/50 border border-bd text-left">
-                          <Icon className="h-3.5 w-3.5 text-blue-400/70 mt-0.5 shrink-0" />
-                          <div>
-                            <p className="text-[11px] font-medium text-slate-300">{item.label}</p>
-                            <p className="text-[10px] text-slate-500">{item.desc}</p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {session?.user ? (
-                <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                  <Link href="/protocol/bom" className="hover:text-slate-300 transition-colors">BOM 등록</Link>
-                  <span>·</span>
-                  <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
-                  <span>·</span>
-                  <Link href="/test/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
-                </div>
-              ) : (
-                <Button
-                  className="h-9 px-6 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium"
-                  onClick={() => setIsLoginPromptOpen(true)}
+        /* Pre-search — compact landing, not hero */
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center max-w-md px-6">
+            <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-4">
+              <Search className="h-6 w-6 text-slate-500" />
+            </div>
+            <h2 className="text-base font-semibold text-slate-200 mb-1">소싱 워크벤치</h2>
+            <p className="text-xs text-slate-400 mb-4">시약명, CAS No., 제조사, 카탈로그 번호로 검색</p>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center mb-4">
+              {["Trypsin", "FBS", "DMEM", "Tris-HCl", "67-66-3"].map((term) => (
+                <button
+                  key={term}
+                  type="button"
+                  onClick={() => { setSearchQuery(term); runSearch(); }}
+                  className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
                 >
-                  로그인하고 검색 시작하기
-                </Button>
-              )}
+                  {term}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
+              <Link href="/protocol/bom" className="hover:text-slate-300 transition-colors">BOM 등록</Link>
+              <span>·</span>
+              <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
+              <span>·</span>
+              <Link href="/test/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
             </div>
           </div>
-
-          {/* Right guide rail — 비로그인 안내 */}
-          {!session?.user && (
-            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col items-center justify-center text-center px-6">
-              <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
-                <Search className="h-6 w-6 text-blue-400/60" />
-              </div>
-              <p className="text-sm font-semibold text-slate-200 mb-1.5">로그인 후 검색 결과를 확인하세요</p>
-              <p className="text-xs text-slate-400 leading-relaxed mb-5">
-                제품 비교, 견적 요청, 요청서 작성,<br />운영 이력 관리는 로그인 후 사용할 수 있습니다.
-              </p>
-              <Button
-                size="sm"
-                className="h-8 px-4 bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium"
-                onClick={() => setIsLoginPromptOpen(true)}
-              >
-                로그인하고 검색 계속하기
-              </Button>
-            </div>
-          )}
         </div>
       )}
 
-      {/* ═══ D. Sticky Action Dock — logged-in only ═══ */}
-      {hasSearched && !!session?.user && (
+      {/* ═══ D. Sticky Action Dock — scaled, readable, action-first ═══ */}
+      {hasSearched && (
         <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
@@ -415,9 +299,9 @@ export default function SearchPage() {
               {compareIds.length > 0 ? (
                 <>
                   {compareReady ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("compare"))}>
+                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
                       <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                      {compareIds.length}개 비교 시작
+                      비교 열기
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-400">
@@ -456,9 +340,9 @@ export default function SearchPage() {
                     </span>
                   )}
                   <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request"))}>
+                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
                     <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    견적 요청서 만들기
+                    견적 검토
                   </Button>
                   <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
                     <Trash2 className="h-3.5 w-3.5" />
@@ -569,16 +453,12 @@ export default function SearchPage() {
       <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>로그인 후 검색 결과를 확인하세요</DialogTitle>
-            <DialogDescription>
-              검색 결과 확인과 비교·견적 요청은 로그인 후 사용할 수 있습니다.
-              로그인 후 입력한 검색어로 바로 이어서 검색할 수 있습니다.
-            </DialogDescription>
+            <DialogTitle>로그인이 필요합니다</DialogTitle>
+            <DialogDescription>상세보기와 견적 담기 기능을 이용하려면 로그인해 주세요.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
             <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLoginRedirect}>로그인하기</Button>
-            <Button variant="outline" className="w-full" onClick={handleLoginRedirect}>무료로 시작하기</Button>
-            <Button variant="ghost" className="w-full text-slate-500" onClick={() => setIsLoginPromptOpen(false)}>돌아가기</Button>
+            <Button variant="ghost" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>취소</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -586,8 +466,8 @@ export default function SearchPage() {
   );
 }
 
-/** ═══ A. Search Utility Bar — 3층: 앱 헤더 / 검색 바 / (상태바는 본문에서) ═══ */
-function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean }) {
+/** ═══ A. Search Utility Bar — compact, not hero ═══ */
+function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCount: number; onOpenFilter: () => void }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
@@ -595,49 +475,47 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!localQuery.trim()) return;
-    setSearchQuery(localQuery);
-
-    if (!isLoggedIn) {
-      try { sessionStorage.setItem("labaxis-pending-search", localQuery.trim()); } catch {}
-      onAuthRequired();
-      return;
+    if (localQuery.trim()) {
+      setSearchQuery(localQuery);
+      // save recent
+      try {
+        const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
+        const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
+        localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+      } catch {}
+      runSearch();
     }
 
-    try {
-      const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
-      const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
-      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
-    } catch {}
-    runSearch();
-  };
-
   return (
-    <div className="shrink-0 border-b border-bd bg-el">
-      {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-1.5 border-b border-bd/50">
-        <Link href="/" className="flex items-center gap-1.5 shrink-0">
-          <span className="text-sm md:text-base font-bold text-slate-100 tracking-tight">LabAxis</span>
-          <span className="text-[11px] md:text-xs font-semibold text-slate-400">소싱</span>
+    <div className="shrink-0">
+      {/* 상단: 워드마크 */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd bg-el">
+        <Link href="/" className="text-sm md:text-base font-bold text-slate-200 tracking-tight">
+          LabAxis
         </Link>
+        {hasSearched && searchQuery && (
+          <span className="text-[10px] md:text-xs text-slate-500 truncate max-w-[150px]">
+            &ldquo;{searchQuery}&rdquo;
+          </span>
+        )}
       </div>
-
-      {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
-        <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#35373b] transition-all">
+      {/* 하단: 소싱 + 검색창 */}
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2 md:py-3 border-b border-bd">
+        <span className="text-xs md:text-sm font-semibold text-slate-400 shrink-0">소싱</span>
+        <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 max-w-3xl">
+          <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"
               value={localQuery}
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
               placeholder="시약명 / CAS / 제조사 / 카탈로그 번호"
-              className="h-8 md:h-9 px-2 text-xs md:text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
+              className="h-8 md:h-10 px-2 text-xs md:text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
             />
             <Button
               type="submit"
               size="sm"
-              className="h-6 md:h-7 px-3 md:px-4 mr-1 md:mr-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-medium rounded shrink-0"
+              className="h-6 md:h-8 px-3 md:px-4 mr-1 md:mr-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-medium rounded shrink-0"
               disabled={!localQuery.trim()}
             >
               검색
@@ -645,45 +523,16 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           </div>
         </form>
 
-        {/* Utility controls — ghost, 검색 버튼보다 약하게 */}
-        <div className="flex items-center gap-1 shrink-0">
-          {/* Filter — desktop: Sheet trigger */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] transition-colors">
-                <SlidersHorizontal className="h-3 w-3" />
-                필터
-                {activeFilterCount > 0 && (
-                  <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
-                )}
-              </button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] p-4">
-              <SearchPanel />
-            </SheetContent>
-          </Sheet>
-
-          {/* Filter — mobile */}
-          <button
-            onClick={onOpenFilter}
-            className="md:hidden inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
-          >
-            <SlidersHorizontal className="h-3 w-3" />
-            {activeFilterCount > 0 && (
-              <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white">{activeFilterCount}</span>
-            )}
-          </button>
-
-          {/* Inventory link — desktop only */}
-          {isLoggedIn && hasSearched && searchQuery && (
-            <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors">
-                <TrendingDown className="h-3 w-3" />
-                재고
-              </button>
-            </Link>
+        {/* Filter trigger — mobile */}
+        <button
+          onClick={onOpenFilter}
+          className="md:hidden inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-st transition-colors"
+        >
+          <SlidersHorizontal className="h-3 w-3" />
+          {activeFilterCount > 0 && (
+            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white">{activeFilterCount}</span>
           )}
-        </div>
+        </button>
       </div>
     </div>
   );

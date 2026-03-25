@@ -81,9 +81,9 @@ export function FeaturesShowcaseSection() {
     switch (tabId) {
       case "sourcing":
         return (
-          <div className="w-full h-full bg-pn rounded-xl shadow-md border border-gray-100 p-4 md:p-6 space-y-4 max-w-full overflow-hidden">
+          <div className="w-full h-full bg-[#1a1a1e] rounded-xl shadow-md border border-gray-100 p-4 md:p-6 space-y-4 max-w-full overflow-hidden">
             {/* 검색 바 */}
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-pg rounded-lg p-3 sm:p-4 border border-bd">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 bg-[#111114] rounded-lg p-3 sm:p-4 border border-[#2a2a2e]">
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <Search className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
                 <input
@@ -101,7 +101,7 @@ export function FeaturesShowcaseSection() {
             {/* 검색 결과 리스트 */}
             <div className="space-y-3">
               {/* 리스트 아이템 1: 추천 */}
-              <div className="bg-pn rounded-lg p-4 border border-gray-100 shadow-sm">
+              <div className="bg-[#1a1a1e] rounded-lg p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -111,7 +111,7 @@ export function FeaturesShowcaseSection() {
                     <p className="text-xs text-gray-500 mb-2">순도 99.9%</p>
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-base font-bold text-slate-100">₩45,000</span>
-                      <Badge className="bg-blue-100 text-blue-700  bg-blue-900/40  text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
+                      <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 text-[10px] px-1.5 py-0.5 inline-flex items-center gap-1">
                         <Tag className="h-2.5 w-2.5" />
                         최저가
                       </Badge>
@@ -126,7 +126,7 @@ export function FeaturesShowcaseSection() {
               </div>
 
               {/* 리스트 아이템 2: 대체 */}
-              <div className="bg-pn rounded-lg p-4 border border-gray-100 shadow-sm">
+              <div className="bg-[#1a1a1e] rounded-lg p-4 border border-gray-100 shadow-sm">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
@@ -148,11 +148,11 @@ export function FeaturesShowcaseSection() {
 
       case "purchasing":
         return (
-          <div className="w-full h-full bg-pn rounded-xl shadow-md border border-gray-100 p-4 md:p-6 space-y-3 max-w-full overflow-hidden">
+          <div className="w-full h-full bg-[#1a1a1e] rounded-xl shadow-md border border-gray-100 p-4 md:p-6 space-y-3 max-w-full overflow-hidden">
             {/* 견적 비교 테이블 */}
-            <div className="border border-bd rounded-lg overflow-hidden">
+            <div className="border border-[#2a2a2e] rounded-lg overflow-hidden">
               {/* 테이블 헤더 */}
-              <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 bg-pg px-3 py-2.5 border-b border-bd">
+              <div className="grid grid-cols-[2.5fr_1fr_1fr_0.8fr_0.6fr] gap-2 bg-[#111114] px-3 py-2.5 border-b border-[#2a2a2e]">
                 <div className="text-[11px] font-semibold text-slate-100">품목명</div>
                 <div className="text-[11px] font-semibold text-slate-100 text-center">벤더 A</div>
                 <div className="text-[11px] font-semibold text-slate-100 text-center">벤더 B</div>
@@ -261,7 +261,7 @@ export function FeaturesShowcaseSection() {
 
       case "management":
         return (
-          <div className="w-full h-full bg-pn rounded-2xl shadow-2xl border border-slate-100 p-8">
+          <div className="w-full h-full bg-[#1a1a1e] rounded-2xl shadow-2xl border border-slate-100 p-8">
             {/* 알림 센터 제목 */}
             <div className="mb-4">
               <h3 className="text-sm font-semibold text-slate-400 flex items-center gap-2">
@@ -271,9 +271,9 @@ export function FeaturesShowcaseSection() {
             </div>
 
             {/* 알림 센터 카드 */}
-            <div className="bg-pn rounded-xl overflow-hidden">
+            <div className="bg-[#1a1a1e] rounded-xl overflow-hidden">
               {/* 알림 헤더 */}
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-bd">
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3 border-b border-[#2a2a2e]">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
@@ -287,7 +287,7 @@ export function FeaturesShowcaseSection() {
               {/* 알림 리스트 */}
               <div className="divide-y divide-gray-100">
                 {/* 알림 1: 긴급 재고 부족 */}
-                <div className="px-4 py-3 hover:bg-pg transition-colors cursor-pointer">
+                <div className="px-4 py-3 hover:bg-[#222226] transition-colors cursor-pointer">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
                       <div className="w-2.5 h-2.5 rounded-full bg-red-500"></div>
@@ -311,7 +311,7 @@ export function FeaturesShowcaseSection() {
                 </div>
 
                 {/* 알림 2: 견적서 도착 */}
-                <div className="px-4 py-3 hover:bg-pg transition-colors cursor-pointer">
+                <div className="px-4 py-3 hover:bg-[#222226] transition-colors cursor-pointer">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
                       <div className="w-2.5 h-2.5 rounded-full bg-blue-500"></div>
@@ -335,7 +335,7 @@ export function FeaturesShowcaseSection() {
                 </div>
 
                 {/* 알림 3: 입고 완료 */}
-                <div className="px-4 py-3 hover:bg-pg transition-colors cursor-pointer">
+                <div className="px-4 py-3 hover:bg-[#222226] transition-colors cursor-pointer">
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 mt-1">
                       <div className="w-2.5 h-2.5 rounded-full bg-green-500"></div>
@@ -366,7 +366,7 @@ export function FeaturesShowcaseSection() {
   };
 
   return (
-    <section id="features-showcase" className="py-10 md:py-20 pb-12 md:pb-28 border-b border-bd bg-pn">
+    <section id="features-showcase" className="py-10 md:py-20 pb-12 md:pb-28 border-b border-[#2a2a2e] bg-[#1a1a1e]">
       <div className="max-w-7xl mx-auto px-4">
         <div className="text-center space-y-2 mb-6 md:mb-10">
           <span className="inline-block text-xs font-semibold text-blue-600 uppercase tracking-widest mb-1">주요 기능</span>
@@ -377,11 +377,11 @@ export function FeaturesShowcaseSection() {
         </div>
 
         {/* 데스크탑: 통합 제품 쇼케이스 */}
-        <div className="hidden md:grid md:grid-cols-[5fr_7fr] rounded-2xl border border-bd shadow-sm overflow-hidden">
+        <div className="hidden md:grid md:grid-cols-[5fr_7fr] rounded-2xl border border-[#2a2a2e] shadow-sm overflow-hidden">
 
           {/* 좌측: 기능 선택 패널 */}
-          <div className="bg-pg/80 border-r border-bd p-6 flex flex-col">
-            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest pb-3 border-b border-bd mb-4">기능 선택</p>
+          <div className="bg-[#111114]/80 border-r border-[#2a2a2e] p-6 flex flex-col">
+            <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest pb-3 border-b border-[#2a2a2e] mb-4">기능 선택</p>
             <div className="space-y-2 flex-1">
               {tabs.map((tab) => {
                 const TabIcon = tab.icon;
@@ -392,14 +392,14 @@ export function FeaturesShowcaseSection() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full text-left p-4 rounded-xl transition-all duration-200 ${
                       isActive
-                        ? "bg-pn border border-bd shadow-sm"
-                        : "hover:bg-pn/70 border border-transparent"
+                        ? "bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm"
+                        : "hover:bg-[#1a1a1e]/70 border border-transparent"
                     }`}
                   >
                     <div className="flex items-start gap-3">
                       <div
                         className={`flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 ${
-                          isActive ? tab.gradient : "bg-el"
+                          isActive ? tab.gradient : "bg-[#222226]"
                         }`}
                       >
                         <TabIcon
@@ -426,7 +426,7 @@ export function FeaturesShowcaseSection() {
                               className={`text-[11px] px-2 py-0.5 rounded-full font-medium transition-colors ${
                                 isActive
                                   ? "bg-blue-100 text-blue-700"
-                                  : "bg-el text-slate-500"
+                                  : "bg-[#222226] text-slate-500"
                               }`}
                             >
                               {feature}
@@ -445,14 +445,14 @@ export function FeaturesShowcaseSection() {
           </div>
 
           {/* 우측: 미리보기 패널 */}
-          <div className="bg-pn flex flex-col">
+          <div className="bg-[#1a1a1e] flex flex-col">
             {/* 미리보기 헤더 */}
             <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <div className={`w-6 h-6 rounded-md ${activeTabData.gradient} flex items-center justify-center`}>
                   <Icon className="h-3.5 w-3.5 text-white" />
                 </div>
-                <span className="text-sm font-semibold text-slate-700">{activeTabData.title}</span>
+                <span className="text-sm font-semibold text-slate-300">{activeTabData.title}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-300"></div>
@@ -461,7 +461,7 @@ export function FeaturesShowcaseSection() {
               </div>
             </div>
             {/* 미리보기 콘텐츠 */}
-            <div className="flex-1 p-6 min-h-[420px] relative bg-pg/20">
+            <div className="flex-1 p-6 min-h-[420px] relative bg-[#111114]/20">
               <div
                 key={activeTab}
                 className="absolute inset-6 animate-fadeIn max-w-full overflow-hidden"
@@ -479,7 +479,7 @@ export function FeaturesShowcaseSection() {
             return (
               <div
                 key={tab.id}
-                className="flex items-start gap-3 p-3.5 bg-pn rounded-xl border border-gray-100"
+                className="flex items-start gap-3 p-3.5 bg-[#1a1a1e] rounded-xl border border-gray-100"
               >
                 <div className={`shrink-0 w-9 h-9 rounded-lg flex items-center justify-center ${tab.gradient}`}>
                   <TabIcon className="h-[18px] w-[18px] text-white" />

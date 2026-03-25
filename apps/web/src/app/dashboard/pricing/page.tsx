@@ -36,10 +36,10 @@ export default function PricingPage() {
       {/* 3단 요금제 카드 */}
       <div className="grid md:grid-cols-3 gap-6 md:gap-8 max-w-5xl mx-auto">
         {/* Starter */}
-        <Card className="border-bd flex flex-col">
+        <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-el bg-el rounded-full flex items-center justify-center mb-4">
-              <User className="text-slate-400 w-6 h-6" />
+            <div className="mx-auto w-12 h-12 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+              <User className="text-slate-600 dark:text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">스타터 (Starter)</CardTitle>
             <CardDescription className="mt-2">초기 랩실 및 개인 연구원</CardDescription>
@@ -118,10 +118,10 @@ export default function PricingPage() {
         </Card>
 
         {/* Enterprise */}
-        <Card className="border-bd flex flex-col">
+        <Card className="border-[#2a2a2e] flex flex-col">
           <CardHeader className="text-center pb-4">
-            <div className="mx-auto w-12 h-12 bg-el bg-el rounded-full flex items-center justify-center mb-4">
-              <Building2 className="text-slate-400 w-6 h-6" />
+            <div className="mx-auto w-12 h-12 bg-[#222226] rounded-full flex items-center justify-center mb-4">
+              <Building2 className="text-slate-600 dark:text-slate-400 w-6 h-6" />
             </div>
             <CardTitle className="text-2xl">엔터프라이즈</CardTitle>
             <CardDescription className="mt-2">기업 연구소 및 대형 R&D 센터</CardDescription>
@@ -154,7 +154,7 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full bg-pg bg-pn/50">
+            <Button variant="outline" className="w-full bg-[#1a1a1e]/50">
               영업팀과 상담하기
             </Button>
           </CardFooter>
@@ -164,9 +164,9 @@ export default function PricingPage() {
       {/* 상세 기능 비교표 */}
       <div className="mt-16 max-w-5xl mx-auto">
         <h3 className="text-2xl font-bold text-center mb-8">상세 기능 비교</h3>
-        <div className="border border-bd border-bs rounded-lg bg-pn bg-sh overflow-hidden">
+        <div className="border border-[#333338] rounded-lg bg-[#09090b] overflow-hidden">
           <Table>
-            <TableHeader className="bg-pg bg-pn/50">
+            <TableHeader className="bg-[#1a1a1e]/50">
               <TableRow>
                 <TableHead className="w-[30%]">기능</TableHead>
                 <TableHead className="text-center">Starter</TableHead>
@@ -178,8 +178,8 @@ export default function PricingPage() {
             </TableHeader>
             <TableBody>
               {/* 카테고리 1: 재고 관리 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
-                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
+              <TableRow className="bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <Package className="h-3.5 w-3.5 text-slate-500" />
                     재고 관리
@@ -188,16 +188,16 @@ export default function PricingPage() {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium text-slate-300">팀원 수</TableCell>
-                <TableCell className="text-center text-slate-400">1명</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center text-slate-500 dark:text-slate-400">1명</TableCell>
+                <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
                   무제한
                 </TableCell>
                 <TableCell className="text-center text-slate-300 font-medium">무제한</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium text-slate-300">재고 등록 한도</TableCell>
-                <TableCell className="text-center text-slate-400">최대 100개</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center text-slate-500 dark:text-slate-400">최대 100개</TableCell>
+                <TableCell className="text-center font-bold text-blue-600 dark:text-blue-400 bg-blue-50/20 dark:bg-blue-950/20">
                   무제한
                 </TableCell>
                 <TableCell className="text-center text-slate-300 font-medium">무제한</TableCell>
@@ -228,8 +228,8 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 2: 구매 및 정산 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
-                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
+              <TableRow className="bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <CreditCard className="h-3.5 w-3.5 text-slate-500" />
                     구매 및 정산
@@ -274,8 +274,8 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 3: 분석 및 권한 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
-                <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
+              <TableRow className="bg-[#1a1a1e]/30">
+                <TableCell colSpan={4} className="font-bold text-slate-600 dark:text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <BarChart3 className="h-3.5 w-3.5 text-slate-500" />
                     분석 및 권한

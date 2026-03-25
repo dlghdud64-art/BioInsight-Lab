@@ -138,7 +138,7 @@ function AuditLogsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -151,7 +151,7 @@ function AuditLogsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -173,7 +173,7 @@ function AuditLogsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -424,14 +424,14 @@ function AuditLogsPageContent() {
                                         </TableRow>
                                         <CollapsibleContent asChild>
                                           <TableRow>
-                                            <TableCell colSpan={7} className="bg-pg">
+                                            <TableCell colSpan={7} className="bg-[#111114]">
                                               <div className="p-4 space-y-3">
                                                 {log.metadata && (
                                                   <div>
                                                     <p className="text-xs font-semibold mb-2">
                                                       메타데이터
                                                     </p>
-                                                    <pre className="text-xs bg-pn p-3 rounded border border-bd overflow-x-auto">
+                                                    <pre className="text-xs bg-[#1a1a1e] p-3 rounded border border-[#2a2a2e] overflow-x-auto">
                                                       {JSON.stringify(log.metadata, null, 2)}
                                                     </pre>
                                                   </div>
@@ -441,7 +441,7 @@ function AuditLogsPageContent() {
                                                     <p className="text-xs font-semibold mb-2">
                                                       변경 사항
                                                     </p>
-                                                    <pre className="text-xs bg-pn p-3 rounded border border-bd overflow-x-auto">
+                                                    <pre className="text-xs bg-[#1a1a1e] p-3 rounded border border-[#2a2a2e] overflow-x-auto">
                                                       {JSON.stringify(log.changes, null, 2)}
                                                     </pre>
                                                   </div>

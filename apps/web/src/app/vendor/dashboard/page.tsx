@@ -68,7 +68,7 @@ function StatCard({
   trend?: string;
 }) {
   return (
-    <div className="bg-pn border border-bd shadow-sm p-4">
+    <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm p-4">
       <div className="flex items-start justify-between mb-3">
         <div className="bg-blue-50 p-2 rounded">
           <Icon className="h-5 w-5 text-blue-600" />
@@ -82,7 +82,7 @@ function StatCard({
       </div>
       <div>
         <div className="text-2xl font-bold text-slate-100">{value}</div>
-        <div className="text-sm font-medium text-slate-700 mt-1">{title}</div>
+        <div className="text-sm font-medium text-slate-300 mt-1">{title}</div>
         {subtitle && (
           <div className="text-xs text-slate-500 mt-1">{subtitle}</div>
         )}
@@ -128,12 +128,12 @@ export default function VendorDashboardPage() {
   const requests: VendorRequest[] = requestsData?.requests || [];
 
   return (
-    <div className="flex min-h-screen bg-pg">
+    <div className="flex min-h-screen bg-[#111114]">
       <VendorSidebar />
       
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-pn border-b border-bd px-6 py-4">
+        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-4">
           <h1 className="text-xl font-bold text-slate-100">Dashboard</h1>
           <p className="text-sm text-slate-600 mt-1">
             견적 요청 현황을 한눈에 확인하세요
@@ -173,8 +173,8 @@ export default function VendorDashboardPage() {
           </div>
 
           {/* RFQ List Table */}
-          <div className="bg-pn border border-bd shadow-sm">
-            <div className="border-b border-bd px-4 py-3">
+          <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
+            <div className="border-b border-[#2a2a2e] px-4 py-3">
               <h2 className="font-semibold text-slate-100">견적 요청 목록 (RFQ)</h2>
               <p className="text-sm text-slate-600 mt-1">
                 받은 견적 요청에 빠르게 응답하세요
@@ -182,7 +182,7 @@ export default function VendorDashboardPage() {
             </div>
 
             {/* Status Filters */}
-            <div className="border-b border-bd px-4 py-3 flex gap-2">
+            <div className="border-b border-[#2a2a2e] px-4 py-3 flex gap-2">
               <Button
                 variant={statusFilter === "ALL" ? "default" : "outline"}
                 size="sm"
@@ -234,7 +234,7 @@ export default function VendorDashboardPage() {
                 </TableHeader>
                 <TableBody>
                   {requests.map((request) => (
-                    <TableRow key={request.id} className="hover:bg-pg">
+                    <TableRow key={request.id} className="hover:bg-[#222226]">
                       <TableCell className="p-3 text-sm">
                         {format(new Date(request.requestedAt), "PPP", { locale: ko })}
                       </TableCell>

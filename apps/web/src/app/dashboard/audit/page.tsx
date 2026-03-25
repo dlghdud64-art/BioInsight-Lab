@@ -169,7 +169,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-pn hover:bg-el text-white  bg-el  text-slate-100  hover:bg-slate-200"
+            className="bg-slate-100 text-slate-900 hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -182,10 +182,10 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      <div className="border border-bd border-bs rounded-lg bg-pn bg-sh overflow-hidden shadow-sm">
+      <div className="border border-[#333338] rounded-lg bg-[#09090b] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-pg bg-pn/50">
+          <TableHeader className="bg-[#1a1a1e]/50">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">일시 (Timestamp) / ID</TableHead>
               <TableHead className="font-semibold">작업자 (User)</TableHead>
@@ -198,7 +198,7 @@ export default function AuditTrailPage() {
             {auditLogs.map((log) => (
               <TableRow
                 key={log.id}
-                className="hover:bg-pg  hover:bg-pn/50"
+                className="hover:bg-[#1a1a1e]/50"
               >
                 <TableCell>
                   <div className="font-mono text-sm font-medium text-slate-100">
@@ -208,7 +208,7 @@ export default function AuditTrailPage() {
                 </TableCell>
                 <TableCell>
                   <div className="font-medium text-slate-100">{log.user}</div>
-                  <div className="text-xs text-slate-400 mt-0.5">
+                  <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     IP: {log.ip}
                   </div>
                 </TableCell>

@@ -22,7 +22,7 @@ function RedirectContent() {
   }, [query, router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-pn">
+    <div className="min-h-screen flex items-center justify-center bg-[#1a1a1e]">
       <div className="text-center">
         <Loader2 className="h-6 w-6 animate-spin mx-auto mb-3 text-blue-500" />
         <p className="text-sm text-slate-500">검색 결과로 이동 중...</p>
@@ -35,7 +35,7 @@ export default function SearchAnalysisPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center bg-pn">
+        <div className="min-h-screen flex items-center justify-center bg-[#1a1a1e]">
           <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
         </div>
       }

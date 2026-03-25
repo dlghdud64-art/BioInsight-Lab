@@ -129,7 +129,7 @@ export default function TemplatesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         <PageHeader
@@ -176,7 +176,7 @@ export default function TemplatesPage() {
             {filteredTemplates.map((template) => (
               <div
                 key={template.id}
-                className="bg-pn border border-bd rounded-lg p-4 hover:border-bs hover:shadow-sm transition-all"
+                className="bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg p-4 hover:border-[#333338] hover:shadow-sm transition-all"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">

@@ -152,7 +152,7 @@ function BillingSuccessPageContent() {
                   </div>
 
                   {/* 추가 정보 */}
-                  <div className="pt-4 border-t border-bd">
+                  <div className="pt-4 border-t border-[#2a2a2e]">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                       <Link href="/dashboard/budget" className="flex items-center gap-2 text-slate-600 hover:text-slate-100 transition-colors">
                         <DollarSign className="h-4 w-4" />

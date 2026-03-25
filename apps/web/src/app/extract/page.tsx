@@ -262,7 +262,7 @@ export default function ExtractPage() {
           {/* Left Panel: 입력 */}
           <div className="space-y-4">
             <SecurityAlert />
-            <div className="bg-pn/80 backdrop-blur-sm border border-bd/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-[#1a1a1e]/80 backdrop-blur-sm border border-[#2a2a2e]/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               
@@ -283,7 +283,7 @@ export default function ExtractPage() {
                       ? "border-blue-500 bg-blue-50/50 shadow-lg shadow-blue-500/20 scale-[1.02]" 
                       : pdfFile 
                       ? "border-green-500 bg-green-50/50" 
-                      : "border-bs bg-pg/50 hover:border-slate-400 hover:bg-el/50"
+                      : "border-[#333338] bg-[#111114]/50 hover:border-slate-400 hover:bg-[#222226]/50"
                     }
                   `}
                 >
@@ -317,7 +317,7 @@ export default function ExtractPage() {
                   ) : (
                     <>
                       <Upload className={`h-12 w-12 mx-auto mb-3 ${isDragging ? "text-blue-500" : "text-slate-400"}`} />
-                      <h3 className="text-sm font-semibold text-slate-700 mb-1">
+                      <h3 className="text-sm font-semibold text-slate-300 mb-1">
                         PDF 파일 업로드
                       </h3>
                       <p className="text-xs text-slate-500 mb-3">
@@ -343,10 +343,10 @@ export default function ExtractPage() {
 
                 <div className="relative mb-4">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-bd"></div>
+                    <div className="w-full border-t border-[#2a2a2e]"></div>
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-pn/80 px-2 text-slate-500">또는</span>
+                    <span className="bg-[#1a1a1e]/80 px-2 text-slate-500">또는</span>
                   </div>
                 </div>
 
@@ -360,7 +360,7 @@ export default function ExtractPage() {
 1. Add 5ml of PBS buffer to the cell culture.
 2. Incubate at 37°C for 30 minutes.
 3. Add trypsin-EDTA solution..."
-                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-pn/50 backdrop-blur-sm border-bd focus:border-blue-400 focus:ring-blue-400"
+                  className="flex-1 min-h-[300px] text-sm font-mono resize-y bg-[#1a1a1e]/50 backdrop-blur-sm border-[#2a2a2e] focus:border-blue-400 focus:ring-blue-400"
                 />
                 
                 <Button
@@ -386,7 +386,7 @@ export default function ExtractPage() {
 
           {/* Right Panel: 결과 */}
           <div className="space-y-4">
-            <div className="bg-pn/80 backdrop-blur-sm border border-bd/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
+            <div className="bg-[#1a1a1e]/80 backdrop-blur-sm border border-[#2a2a2e]/50 shadow-lg rounded-xl p-6 relative overflow-hidden flex flex-col min-h-[600px]">
               {/* Glassmorphism 효과를 위한 그라데이션 오버레이 */}
               <div className="absolute inset-0 bg-gradient-to-br from-white/60 to-transparent pointer-events-none" />
               

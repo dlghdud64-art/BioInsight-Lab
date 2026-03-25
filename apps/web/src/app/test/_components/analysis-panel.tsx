@@ -28,7 +28,7 @@ export function AnalysisPanel() {
           <CardTitle className="text-sm font-semibold text-slate-200">검색어/쿼리</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="p-3 bg-pg rounded-lg text-sm text-slate-700">
+          <div className="p-3 bg-[#111114] rounded-lg text-sm text-slate-300">
             {searchQuery || "검색어가 없습니다"}
           </div>
           <Link href="/test/search">
@@ -66,7 +66,7 @@ export function AnalysisPanel() {
           <Button
             onClick={runProtocolAnalysis}
             disabled={!protocolText || isExtracting}
-            className="w-full bg-pn text-white hover:bg-el"
+            className="w-full bg-[#1a1a1e] text-white hover:bg-[#222226]"
           >
             <Brain className="h-4 w-4 mr-2" />
             {isExtracting ? "분석 중..." : "필드 추출 실행"}

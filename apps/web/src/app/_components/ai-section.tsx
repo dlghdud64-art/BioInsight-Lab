@@ -3,53 +3,53 @@ import { Search, GitCompare, FileText } from "lucide-react";
 // AI 보조 레이어 — 독립 쇼케이스가 아니라 워크플로우 내 inline helper
 export function AISection() {
   return (
-    <section id="ai" className="py-8 md:py-10 border-b border-bd bg-pg">
+    <section id="ai" className="py-8 md:py-10 border-b border-[#2a2a2e] bg-[#111114]">
       <div className="mx-auto max-w-6xl px-4 md:px-6">
-        <div className="mb-4">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 mb-1">AI Assist</p>
-          <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100">
-            검색·비교·요청 흐름 안의 보조 레이어
-          </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            AI가 다음 단계를 준비하고, 사용자가 승인하면 시스템이 실행합니다.
-          </p>
-        </div>
+        <h2 className="text-base md:text-lg font-semibold tracking-tight text-slate-100 mb-3">
+          자동화 기능
+        </h2>
         <div className="grid gap-3 md:grid-cols-3">
-          <div className="rounded-lg border border-bd bg-pn p-3 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600/15 shrink-0">
-                <Search className="h-3 w-3 text-blue-400" />
+          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-purple-300 hover:shadow-sm transition-all">
+            <CardContent className="flex items-start gap-2.5 p-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-purple-100 flex-shrink-0">
+                <Sparkles className="h-3.5 w-3.5 text-purple-600" strokeWidth={1.5} />
               </div>
-              <h3 className="text-sm font-semibold text-slate-200">검색 요약</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              비교 적합 후보, 요청 전환 필요 품목, 주의 신호를 1~2줄로 요약합니다.
-            </p>
-          </div>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-slate-100">자동 추출</h3>
+                <p className="text-xs leading-snug text-slate-600">
+                  검색어를 분석해 타깃, 카테고리, 실험 유형을 자동으로 추출합니다.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border border-bd bg-pn p-3 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600/15 shrink-0">
-                <GitCompare className="h-3 w-3 text-blue-400" />
+          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-blue-300 hover:shadow-sm transition-all">
+            <CardContent className="flex items-start gap-2.5 p-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-100 flex-shrink-0">
+                <Languages className="h-3.5 w-3.5 text-blue-600" strokeWidth={1.5} />
               </div>
-              <h3 className="text-sm font-semibold text-slate-200">비교 판단 요약</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              현재 비교 모드 기준으로 추천 선택안과 다음 액션을 제안합니다.
-            </p>
-          </div>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-slate-100">자동 번역/요약</h3>
+                <p className="text-xs leading-snug text-slate-600">
+                  영문 데이터시트를 한글로 번역하고 핵심 정보를 요약합니다.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div className="rounded-lg border border-bd bg-pn p-3 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <div className="flex h-6 w-6 items-center justify-center rounded bg-blue-600/15 shrink-0">
-                <FileText className="h-3 w-3 text-blue-400" />
+          <Card className="border border-[#2a2a2e] bg-[#1a1a1e] rounded-lg hover:border-amber-300 hover:shadow-sm transition-all">
+            <CardContent className="flex items-start gap-2.5 p-3">
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-amber-100 flex-shrink-0">
+                <Lightbulb className="h-3.5 w-3.5 text-amber-600" strokeWidth={1.5} />
               </div>
-              <h3 className="text-sm font-semibold text-slate-200">요청서 초안 생성</h3>
-            </div>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              납기 요청, 대체 가능 여부 문의, 첨부 안내가 포함된 메시지 초안을 자동으로 준비합니다.
-            </p>
-          </div>
+              <div className="space-y-0.5 min-w-0 flex-1">
+                <h3 className="text-sm font-semibold text-slate-100">대체품 추천</h3>
+                <p className="text-xs leading-snug text-slate-600">
+                  유사 스펙의 대체품을 자동으로 추천합니다.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </section>

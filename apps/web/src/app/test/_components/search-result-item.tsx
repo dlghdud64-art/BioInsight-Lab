@@ -62,14 +62,14 @@ export function SearchResultItem({
 
   return (
     <div
-      className="bg-pn rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer"
+      className="bg-[#1a1a1e] rounded-lg shadow-sm hover:shadow-md border border-gray-100 hover:-translate-y-0.5 transition-all duration-300 overflow-hidden group cursor-pointer"
       onClick={onClick}
     >
       {/* 수직 스택 레이아웃 */}
       <div className="p-4 space-y-3">
         {/* 썸네일 + 제품명 행 */}
         <div className="flex items-start gap-3">
-          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-pn overflow-hidden flex items-center justify-center">
+          <div className="w-16 h-16 shrink-0 rounded-md border border-slate-100 bg-[#1a1a1e] overflow-hidden flex items-center justify-center">
             {!showFallback ? (
               <img
                 src={imageSrc}
@@ -106,7 +106,7 @@ export function SearchResultItem({
             <Badge
               key={idx}
               variant="outline"
-              className="bg-el text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
+              className="bg-[#222226] text-gray-600 text-xs px-2 py-0.5 rounded border-0 font-normal"
             >
               {spec.value}
             </Badge>
@@ -147,7 +147,7 @@ export function SearchResultItem({
               <Button
                 variant="ghost"
                 size="sm"
-                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-200 hover:bg-el"}`}
+                className={`rounded h-9 py-2 md:px-3 px-2 flex-none md:flex-auto ${isInCompare ? "bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200" : "text-slate-600 hover:text-slate-200 hover:bg-[#222226]"}`}
                 onClick={onToggleCompare}
               >
                 <GitCompare className="h-4 w-4 md:mr-1.5" />

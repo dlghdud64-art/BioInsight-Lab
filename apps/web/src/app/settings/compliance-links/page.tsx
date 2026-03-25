@@ -312,7 +312,7 @@ function ComplianceLinksPageContent() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -330,7 +330,7 @@ function ComplianceLinksPageContent() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -359,7 +359,7 @@ function ComplianceLinksPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />

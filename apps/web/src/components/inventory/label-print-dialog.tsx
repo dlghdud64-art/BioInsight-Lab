@@ -120,7 +120,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[800px] max-w-[95vw] max-h-[90vh] overflow-y-auto p-0 gap-0 bg-pg border-bd">
+      <DialogContent className="w-[800px] max-w-[95vw] max-h-[90vh] overflow-y-auto p-0 gap-0 bg-surface-page border-[--border-default]">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle className="text-base font-semibold flex items-center gap-2 text-foreground">
             <Printer className="h-4 w-4 text-blue-500" />
@@ -132,7 +132,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
         </DialogHeader>
 
         {/* Settings bar */}
-        <div className="mx-6 mb-4 bg-el rounded-xl p-4 border border-bd">
+        <div className="mx-6 mb-4 bg-surface-elevated rounded-xl p-4 border border-[--border-default]">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
             <div className="space-y-1.5">
               <Label className="text-xs text-muted-foreground">라벨 규격</Label>
@@ -215,7 +215,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
               {items.map((item) => {
                 const chk = selectedIds.has(item.id), ov = nameOverflowIds.has(item.id);
                 return (
-                  <label key={item.id} className={`flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer transition-colors ${chk ? "bg-el border border-blue-500/30" : "bg-pn border border-bd hover:border-blue-500/20"}`}>
+                  <label key={item.id} className={`flex items-start gap-2.5 p-2.5 rounded-lg cursor-pointer transition-colors ${chk ? "bg-surface-elevated border border-blue-500/30" : "bg-surface-panel border border-[--border-default] hover:border-blue-500/20"}`}>
                     <Checkbox checked={chk} onCheckedChange={() => toggleItem(item.id)} className="h-3.5 w-3.5 mt-0.5 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5">
@@ -284,7 +284,7 @@ export function LabelPrintDialog({ open, onOpenChange, items }: LabelPrintDialog
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-bd bg-pn flex items-center justify-end gap-2">
+        <div className="px-6 py-4 border-t border-[--border-default] bg-surface-panel flex items-center justify-end gap-2">
           <Button variant="ghost" size="sm" className="text-xs gap-1.5" onClick={() => onOpenChange(false)}>
             <X className="h-3.5 w-3.5" />닫기
           </Button>

@@ -49,7 +49,7 @@ export function SearchStepNav() {
   const currentStep = getCurrentStep();
 
   return (
-    <nav className="w-full bg-pn border-b border-bd fixed top-14 left-0 right-0 z-[45] shadow-none" style={{ minHeight: '64px' }}>
+    <nav className="w-full bg-[#1a1a1e] border-b border-[#2a2a2e] fixed top-14 left-0 right-0 z-[45] shadow-none" style={{ minHeight: '64px' }}>
       <div className="container mx-auto px-3 md:px-4 lg:px-8">
         <div className="max-w-7xl mx-auto">
           {/* 모바일: 숫자만 원형 배지 */}
@@ -68,7 +68,7 @@ export function SearchStepNav() {
                         ? "bg-blue-600 text-white"
                         : isCompleted
                         ? "bg-blue-950/20 text-blue-400"
-                        : "bg-st text-slate-500"
+                        : "bg-[#2a2a2e] text-slate-500"
                     )}
                   >
                     {isCompleted ? (
@@ -78,7 +78,7 @@ export function SearchStepNav() {
                     )}
                   </Link>
                   {index < steps.length - 1 && (
-                    <div className={cn("h-[2px] w-6 mx-1", isCompleted ? "bg-blue-500" : "bg-st")} />
+                    <div className={cn("h-[2px] w-6 mx-1", isCompleted ? "bg-blue-500" : "bg-[#2a2a2e]")} />
                   )}
                 </div>
               );
@@ -110,10 +110,10 @@ export function SearchStepNav() {
                       className={cn(
                         "flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
                         isActive
-                          ? "bg-pn/20 text-white"
+                          ? "bg-[#1a1a1e]/20 text-white"
                           : isCompleted
                           ? "bg-blue-900/30 text-blue-400"
-                          : "bg-st text-slate-500"
+                          : "bg-[#2a2a2e] text-slate-500"
                       )}
                     >
                       {isCompleted ? (
@@ -128,7 +128,7 @@ export function SearchStepNav() {
                     </span>
                   </Link>
                   {index < steps.length - 1 && (
-                    <div className={cn("h-[2px] w-12 mx-1", isCompleted ? "bg-blue-500" : "bg-st")} />
+                    <div className={cn("h-[2px] w-12 mx-1", isCompleted ? "bg-blue-500" : "bg-[#2a2a2e]")} />
                   )}
                 </div>
               );

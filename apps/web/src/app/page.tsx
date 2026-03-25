@@ -5,38 +5,39 @@ import dynamic from "next/dynamic";
 
 const PlatformFlowSection = dynamic(
   () => import("./_components/platform-flow-section").then((mod) => ({ default: mod.PlatformFlowSection })),
-  { loading: () => <div className="h-96 w-full bg-el" /> }
+  { loading: () => <div className="h-96 w-full bg-[#222226]" /> }
 );
 
 const OpsConsolePreviewSection = dynamic(
   () => import("./_components/ops-console-preview-section").then((mod) => ({ default: mod.OpsConsolePreviewSection })),
-  { loading: () => <div className="h-64 w-full bg-el" /> }
+  { loading: () => <div className="h-64 w-full bg-[#222226]" /> }
 );
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-el" /> }
+  { loading: () => <div className="h-64 w-full bg-[#222226]" /> }
 );
 
 export default function HomePage() {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#020617" }}>
-      {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
-      <BioInsightHeroSection />
+    <MainLayout>
+      <MainHeader />
+      <div className="w-full">
+        {/* 1. Hero: 운영 가치 제안 + 6단계 파이프라인 */}
+        <BioInsightHeroSection />
 
-      {/* 2. Trust Strip */}
-      <BioInsightSocialProofSection />
+        {/* 2. Trust Strip: 운영 메트릭 */}
+        <BioInsightSocialProofSection />
 
-      {/* 3. Platform Flow */}
-      <PlatformFlowSection />
+        {/* 3. Platform Flow: 6단계 운영 파이프라인 상세 */}
+        <PlatformFlowSection />
 
-      {/* 4. Ops Console Preview */}
-      <OpsConsolePreviewSection />
+        {/* 4. Ops Console Preview: 4-mode 콘솔 소개 */}
+        <OpsConsolePreviewSection />
 
-      {/* 5. Final CTA */}
-      <FinalCTASection />
-
-      {/* Footer */}
+        {/* 5. Final CTA: Enterprise 톤 */}
+        <FinalCTASection />
+      </div>
       <MainFooter />
     </div>
   );

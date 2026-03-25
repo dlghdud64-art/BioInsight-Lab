@@ -291,7 +291,7 @@ export default function EnterpriseSettingsPage() {
                         )}
 
                         {!ssoEnabled && (
-                          <div className="p-4 bg-pg border border-bd rounded-lg text-sm text-slate-600">
+                          <div className="p-4 bg-[#111114] border border-[#2a2a2e] rounded-lg text-sm text-slate-400">
                             SSO를 활성화하려면 위의 스위치를 켜주세요.
                           </div>
                         )}
@@ -347,7 +347,7 @@ export default function EnterpriseSettingsPage() {
                               return (
                                 <div
                                   key={log.id}
-                                  className="flex items-start gap-4 p-4 border border-bd rounded-lg hover:bg-pg transition-colors"
+                                  className="flex items-start gap-4 p-4 border border-[#2a2a2e] rounded-lg hover:bg-[#111114] transition-colors"
                                 >
                                   <div className={`p-2 rounded-lg ${
                                     log.success
@@ -369,7 +369,7 @@ export default function EnterpriseSettingsPage() {
                                         {log.action}
                                       </span>
                                     </div>
-                                    <div className="text-sm text-slate-700 mb-2">
+                                    <div className="text-sm text-slate-300 mb-2">
                                       {log.user && (
                                         <span className="font-medium">{log.user.name || log.user.email}</span>
                                       )}
@@ -409,9 +409,9 @@ export default function EnterpriseSettingsPage() {
                       </CardHeader>
                       <CardContent className="pb-6 md:pb-4">
                         <div className="grid gap-4 md:gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-                          <div className="p-4 md:p-3 border rounded-lg bg-pn shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-[#1a1a1e] shadow-sm hover:shadow-md transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">VIEWER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
                                 <span className="text-green-600 mt-0.5">✓</span>
                                 <span>견적 조회</span>
@@ -426,9 +426,9 @@ export default function EnterpriseSettingsPage() {
                               </li>
                             </ul>
                           </div>
-                          <div className="p-4 md:p-3 border rounded-lg bg-pn shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-[#1a1a1e] shadow-sm hover:shadow-md transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">REQUESTER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
                                 <span className="text-green-600 mt-0.5">✓</span>
                                 <span>VIEWER 권한</span>
@@ -443,9 +443,9 @@ export default function EnterpriseSettingsPage() {
                               </li>
                             </ul>
                           </div>
-                          <div className="p-4 md:p-3 border rounded-lg bg-pn shadow-sm hover:shadow-md transition-shadow">
+                          <div className="p-4 md:p-3 border rounded-lg bg-[#1a1a1e] shadow-sm hover:shadow-md transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">APPROVER</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
                                 <span className="text-green-600 mt-0.5">✓</span>
                                 <span>REQUESTER 권한</span>
@@ -462,7 +462,7 @@ export default function EnterpriseSettingsPage() {
                           </div>
                           <div className="p-4 md:p-3 border rounded-lg bg-purple-50 shadow-sm hover:shadow-md transition-shadow">
                             <div className="font-semibold text-sm md:text-sm mb-3 md:mb-2">ADMIN</div>
-                            <ul className="text-xs md:text-xs text-slate-600 space-y-2 md:space-y-1">
+                            <ul className="text-xs md:text-xs text-slate-400 space-y-2 md:space-y-1">
                               <li className="flex items-start gap-1.5">
                                 <span className="text-green-600 mt-0.5">✓</span>
                                 <span>모든 권한</span>
@@ -611,7 +611,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
                     )}
                   </div>
                 </TableCell>
-                <TableCell className="text-xs md:text-sm text-slate-600">
+                <TableCell className="text-xs md:text-sm text-slate-400">
                   {member.user?.email}
                 </TableCell>
                 <TableCell>
@@ -655,7 +655,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
           </TableBody>
         </Table>
       </div>
-      <div className="text-xs md:text-sm text-slate-600 p-3 bg-pg rounded-lg">
+      <div className="text-xs md:text-sm text-slate-400 p-3 bg-[#111114] rounded-lg">
         <p className="font-medium mb-1 flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-slate-500" />
           참고

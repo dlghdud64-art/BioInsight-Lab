@@ -4,7 +4,7 @@ import { FlaskConical, Home, Search } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-pg flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#111114] flex items-center justify-center px-4">
       <div className="max-w-md w-full text-center">
         {/* Icon */}
         <div className="mb-6 flex justify-center">
@@ -45,7 +45,7 @@ export default function NotFound() {
         </div>
 
         {/* Help Text */}
-        <div className="mt-8 pt-8 border-t border-bd">
+        <div className="mt-8 pt-8 border-t border-[#2a2a2e]">
           <p className="text-sm text-slate-500">
             문제가 계속되면{" "}
             <a

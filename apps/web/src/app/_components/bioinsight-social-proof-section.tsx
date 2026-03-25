@@ -1,30 +1,56 @@
-import { Search, GitCompare, FileText, ShoppingCart, PackageCheck, Warehouse, ChevronRight } from "lucide-react";
+import { ArrowLeftRight, Activity, Building2, Clock } from "lucide-react";
 
-const PIPELINE_STEPS = [
-  { num: 1, icon: Search, label: "검색", desc: "통합 검색", highlight: true },
-  { num: 2, icon: GitCompare, label: "비교", desc: "스펙·가격 비교", highlight: false },
-  { num: 3, icon: FileText, label: "견적 요청", desc: "요청서 생성", highlight: true },
-  { num: 4, icon: ShoppingCart, label: "발주", desc: "승인·발주", highlight: false },
-  { num: 5, icon: PackageCheck, label: "입고", desc: "검수·반영", highlight: false },
-  { num: 6, icon: Warehouse, label: "재고 운영", desc: "Lot·유효기간", highlight: true },
+const metrics = [
+  {
+    icon: ArrowLeftRight,
+    value: "End-to-End",
+    label: "운영 파이프라인",
+    sub: "비교→견적→발주→입고→재고",
+  },
+  {
+    icon: Activity,
+    value: "실시간",
+    label: "상태 추적",
+    sub: "SLA · Owner · Handoff 가시성",
+  },
+  {
+    icon: Building2,
+    value: "100+",
+    label: "글로벌 벤더",
+    sub: "Sigma · Gibco · TCI 외",
+  },
+  {
+    icon: Clock,
+    value: "50%",
+    label: "사이클 단축",
+    sub: "반복 구매 프로세스 자동화",
+  },
 ];
 
 export function BioInsightSocialProofSection() {
   return (
-    <section style={{ backgroundColor: "#161E28", borderTop: "1px solid rgba(120,160,230,0.08)", borderBottom: "1px solid rgba(120,160,230,0.08)" }}>
-      <div className="max-w-[1240px] mx-auto px-4 py-4">
-        <div className="flex items-center justify-center gap-1 md:gap-0 overflow-x-auto">
-          {PIPELINE_STEPS.map((step, i) => {
-            const Icon = step.icon;
+    <section className="py-0 bg-[#222226]/80 border-y border-[#333338]">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-[#2a2a2e]/60">
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
             return (
-              <div key={step.num} className="flex items-center shrink-0">
-                <div className={`flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-lg transition-colors ${step.highlight ? "bg-[#1A2433]" : ""}`}>
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${step.highlight ? "bg-blue-600/20 text-blue-400" : "bg-[#1E2530] text-slate-500"}`}>
-                    {step.num}
+              <div
+                key={metric.label}
+                className="flex items-center justify-center gap-3 py-4 md:py-4 md:px-6"
+              >
+                <Icon className="h-5 w-5 text-blue-400 flex-shrink-0" strokeWidth={1.8} />
+                <div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-base md:text-lg font-bold text-blue-400 leading-none">
+                      {metric.value}
+                    </span>
+                    <span className="text-xs font-medium text-slate-400 leading-none">
+                      {metric.label}
+                    </span>
                   </div>
-                  <div className="min-w-0">
-                    <p className={`text-xs font-semibold leading-none ${step.highlight ? "text-[#F3F7FF]" : "text-slate-300"}`}>{step.label}</p>
-                    <p className="text-[10px] text-[#667389] leading-none mt-0.5 hidden md:block">{step.desc}</p>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5 whitespace-nowrap">
+                    {metric.sub}
                   </div>
                 </div>
                 {i < PIPELINE_STEPS.length - 1 && (

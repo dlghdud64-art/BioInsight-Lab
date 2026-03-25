@@ -203,7 +203,7 @@ export default function PricingPage() {
           key="annual"
           className="flex flex-col items-center gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-300"
         >
-          <span className="text-slate-500 line-through text-xs md:text-lg font-normal">{plan.price}</span>
+          <span className="text-slate-400 line-through text-xs md:text-lg font-normal">{plan.price}</span>
           <span className="text-lg md:text-3xl font-bold text-slate-100">
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
             <span className="text-[10px] md:text-sm font-normal text-slate-400">/월(연간)</span>
@@ -242,15 +242,15 @@ export default function PricingPage() {
 
               {/* ── 결제 주기 토글 ── */}
               <div className="flex items-center justify-center mb-4 md:mb-12">
-                <div className="bg-el rounded-full p-0.5 md:p-1 inline-flex border border-bd">
+                <div className="bg-[#222226] rounded-full p-0.5 md:p-1 inline-flex">
                   <button
                     type="button"
                     onClick={() => setIsAnnual(false)}
                     className={cn(
                       "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
                       !isAnnual
-                        ? "bg-pn shadow-sm text-slate-100"
-                        : "text-slate-400 hover:text-slate-300"
+                        ? "bg-[#1a1a1e] shadow-sm text-slate-100"
+                        : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     월간
@@ -261,8 +261,8 @@ export default function PricingPage() {
                     className={cn(
                       "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent flex items-center gap-1 md:gap-2",
                       isAnnual
-                        ? "bg-pn shadow-sm text-slate-100"
-                        : "text-slate-400 hover:text-slate-300"
+                        ? "bg-[#1a1a1e] shadow-sm text-slate-100"
+                        : "text-slate-500 hover:text-slate-300"
                     )}
                   >
                     연간
@@ -301,10 +301,10 @@ export default function PricingPage() {
                         "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-bd bg-pn",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] bg-pn border-blue-500/40",
-                        !isSelected && "hover:border-bs hover:bg-el",
-                        isRecommended && !isSelected && "border-2 border-blue-500/40 shadow-lg md:scale-105 z-10",
-                        isRecommended && isSelected && "border-2 border-blue-500/40 shadow-lg ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] md:scale-105 z-10"
+                        isSelected && "ring-2 ring-blue-500 ring-offset-2 bg-blue-50/50 border-blue-300",
+                        !isSelected && "hover:border-[#333338] hover:bg-[#222226]/50",
+                        isRecommended && !isSelected && "border-2 border-blue-200 shadow-2xl md:scale-105 z-10",
+                        isRecommended && isSelected && "border-2 border-blue-500 shadow-2xl ring-2 ring-blue-500 ring-offset-2 md:scale-105 z-10"
                       )}
                     >
                       {plan.badge && (
@@ -320,7 +320,7 @@ export default function PricingPage() {
                           <div
                             className={cn(
                               "p-3 rounded-full transition-colors",
-                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-el"
+                              isSelected || isRecommended ? "bg-blue-100" : "bg-[#222226]"
                             )}
                           >
                             <Icon
@@ -413,7 +413,7 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-bd hover:bg-el text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
+                            className="w-full border-[#2a2a2e] hover:bg-[#222226] text-slate-500 hover:text-slate-200 h-9 md:h-10 text-sm"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -447,8 +447,8 @@ export default function PricingPage() {
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
                   <table className="w-full text-[11px]">
                     <thead>
-                      <tr className="border-b border-bd sticky top-0 bg-sh">
-                        <th className="text-left py-2 pr-2 font-semibold text-slate-400 w-[40%]">기능</th>
+                      <tr className="border-b border-[#2a2a2e] sticky top-0 bg-[#1a1a1e]">
+                        <th className="text-left py-2 pr-2 font-semibold text-slate-600 w-[40%]">기능</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
                         <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
                         <th className="text-center py-2 px-1 font-semibold text-blue-400 w-[15%]">Biz</th>
@@ -460,8 +460,8 @@ export default function PricingPage() {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
                             <tr key={`mcat-${index}`} className={cn(
-                              "border-t border-bd",
-                              item.tier === "business" ? "bg-blue-500/5" : "bg-el/50"
+                              "border-t",
+                              item.tier === "business" ? "bg-blue-50/30" : item.tier === "enterprise" ? "bg-[#111114]" : "bg-[#111114]/50"
                             )}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
@@ -478,12 +478,12 @@ export default function PricingPage() {
                         }
                         const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                         const mCell = (val: boolean | string, highlight?: boolean) => (
-                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-500/5")}>
-                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-400" /> : <span className="text-slate-700">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
+                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-50/20")}>
+                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-600" /> : <span className="text-slate-300">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
                           </td>
                         );
                         return (
-                          <tr key={`mrow-${index}`} className="border-b border-bd/50">
+                          <tr key={`mrow-${index}`} className="border-b border-slate-100">
                             <td className="py-1.5 pr-2 text-slate-300 font-medium">{d.feature}</td>
                             {mCell(d.starter)}
                             {mCell(d.team)}
@@ -502,12 +502,12 @@ export default function PricingPage() {
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-pn border-b border-bd">
-                            <TableHead className="font-semibold w-[280px] py-3 pl-5 text-slate-300">기능</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-blue-400">Business</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Enterprise</TableHead>
+                          <TableRow className="bg-[#111114] border-b border-[#2a2a2e]">
+                            <TableHead className="font-semibold w-[240px] py-3 pl-5 text-slate-300">기능</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-300">Starter</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-300">Team</TableHead>
+                            <TableHead className="text-center font-semibold py-3 bg-blue-50 text-blue-800">Business</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-slate-300">Enterprise</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -519,8 +519,8 @@ export default function PricingPage() {
                                 <TableRow
                                   key={`cat-${index}`}
                                   className={cn(
-                                    "border-t border-bd",
-                                    isBusinessTier ? "bg-blue-500/5" : "bg-el/50"
+                                    "border-t border-[#2a2a2e]",
+                                    isBusinessTier ? "bg-blue-50/50" : isEnterpriseTier ? "bg-[#222226]/70" : "bg-[#111114]/50"
                                   )}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
@@ -528,8 +528,8 @@ export default function PricingPage() {
                                       <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : "text-slate-500")}>
                                         {item.label}
                                       </span>
-                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-el border border-bd px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-600 bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded-full">Business+</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-slate-200 border border-[#333338] px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -538,10 +538,10 @@ export default function PricingPage() {
                             const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string; key?: boolean };
                             const isKey = dataItem.key;
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className={cn("text-sm font-medium", value === "—" ? "text-slate-600" : "text-slate-200")}>{value}</span>;
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-600 mx-auto" /> : <span className="text-slate-300 text-lg leading-none">—</span>) : <span className="text-sm font-medium text-slate-300">{value}</span>;
                             return (
-                              <TableRow key={index} className={cn("hover:bg-el/40 transition-colors border-b border-bd/50", isKey && "border-l-2 border-l-blue-500/50")}>
-                                <TableCell className={cn("py-2.5 pl-5 text-sm font-medium", isKey ? "text-slate-100" : "text-slate-300")}>{dataItem.feature}</TableCell>
+                              <TableRow key={index} className="hover:bg-[#222226]/40 transition-colors">
+                                <TableCell className="py-2.5 pl-5 text-sm text-slate-300 font-medium">{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
                                 <TableCell className="text-center py-2.5 bg-blue-500/5">{renderCell(dataItem.business)}</TableCell>
@@ -562,7 +562,8 @@ export default function PricingPage() {
       </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-sh/95 backdrop-blur-sm border-t border-bd">
+      {/* 모바일: 1줄 컴팩트 / 데스크톱: 풀 레이아웃 */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#1a1a1e]/95 border-t border-[#2a2a2e] shadow-[0_-4px_12px_rgba(15,23,42,0.08)]">
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
@@ -588,7 +589,7 @@ export default function PricingPage() {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 text-xs border-bd text-slate-400 hover:text-slate-200 bg-transparent"
+              className="h-8 px-3 text-xs border-[#2a2a2e]"
               onClick={() => (window.location.href = "/support")}
             >
               문의

@@ -45,7 +45,7 @@ export function DemoFlowSwitcher() {
   const router = useRouter();
 
   return (
-    <Card className="border-bd bg-pn shadow-sm">
+    <Card className="border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold text-slate-100">
           3단계 사용 흐름
@@ -58,12 +58,12 @@ export function DemoFlowSwitcher() {
       <CardContent className="pt-0">
         <Tabs value={active} onValueChange={setActive}>
           {/* 탭 버튼 그룹 */}
-          <TabsList className="mb-4 grid grid-cols-3 bg-pg">
+          <TabsList className="mb-4 grid grid-cols-3 bg-[#111114]">
             {STEPS.map((step) => (
               <TabsTrigger
                 key={step.id}
                 value={step.id}
-                className="text-xs data-[state=active]:bg-pn data-[state=active]:text-slate-100"
+                className="text-xs data-[state=active]:bg-[#1a1a1e] data-[state=active]:text-slate-100"
                 onMouseEnter={() => setActive(step.id)}
               >
                 {step.label}
@@ -80,7 +80,7 @@ export function DemoFlowSwitcher() {
             >
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 rounded-full bg-pg px-3 py-1 text-[11px] font-medium text-slate-500">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-[#111114] px-3 py-1 text-[11px] font-medium text-slate-500">
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-600 text-[10px] font-semibold text-white">
                       {step.stepLabel.replace("Step ", "")}
                     </span>

@@ -1951,11 +1951,11 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       queryClient.invalidateQueries({ queryKey: ["quotes"] });
       router.refresh();
 
-      // completion bridge — callback 또는 견적관리 워크큐로 이동
+      // completion bridge — callback 또는 구매 검토 큐로 이동
       if (onSubmitSuccess) {
         onSubmitSuccess({ sentCount: vendorGroupsForSubmit.size, vendorCount: vendorGroupsForSubmit.size, totalAmount: quoteItems.reduce((s, i) => s + (i.lineTotal || 0), 0) });
       } else {
-        router.push("/dashboard/quotes");
+        router.push("/dashboard/purchases");
       }
     } catch (error: any) {
       toast({

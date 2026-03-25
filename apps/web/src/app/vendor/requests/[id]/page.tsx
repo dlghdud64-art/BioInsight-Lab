@@ -82,7 +82,7 @@ export default function VendorRequestDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen bg-pg">
+      <div className="flex min-h-screen bg-[#111114]">
         <VendorSidebar />
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
@@ -93,7 +93,7 @@ export default function VendorRequestDetailPage() {
 
   if (!request) {
     return (
-      <div className="flex min-h-screen bg-pg">
+      <div className="flex min-h-screen bg-[#111114]">
         <VendorSidebar />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-slate-600">요청을 찾을 수 없습니다.</p>
@@ -105,12 +105,12 @@ export default function VendorRequestDetailPage() {
   const isReadOnly = !request.canEdit;
 
   return (
-    <div className="flex min-h-screen bg-pg">
+    <div className="flex min-h-screen bg-[#111114]">
       <VendorSidebar />
       
       <div className="flex-1">
         {/* Header */}
-        <div className="bg-pn border-b border-bd px-6 py-4">
+        <div className="bg-[#1a1a1e] border-b border-[#2a2a2e] px-6 py-4">
           <div className="flex items-center gap-4 mb-3">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/vendor/dashboard">

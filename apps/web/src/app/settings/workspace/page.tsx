@@ -354,7 +354,7 @@ function WorkspaceSettingsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -367,7 +367,7 @@ function WorkspaceSettingsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-pg">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -390,7 +390,7 @@ function WorkspaceSettingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-pg">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -490,10 +490,10 @@ function WorkspaceSettingsPageContent() {
                             return (
                               <div
                                 key={member.id}
-                                className="flex items-center justify-between p-3 border border-bd rounded-lg hover:bg-pg transition-colors"
+                                className="flex items-center justify-between p-3 border border-[#2a2a2e] rounded-lg hover:bg-[#222226] transition-colors"
                               >
                                 <div className="flex items-center gap-3 flex-1">
-                                  <div className="h-8 w-8 rounded-full bg-el flex items-center justify-center">
+                                  <div className="h-8 w-8 rounded-full bg-[#222226] flex items-center justify-center">
                                     <Users className="h-4 w-4 text-slate-500" />
                                   </div>
                                   <div className="flex-1">
@@ -654,7 +654,7 @@ function WorkspaceSettingsPageContent() {
                                 </Button>
                               </div>
                             )}
-                            <div className="pt-3 border-t border-bd">
+                            <div className="pt-3 border-t border-[#2a2a2e]">
                               <p className="text-xs text-muted-foreground flex items-center gap-2">
                                 <Clock className="h-3 w-3" />
                                 초대 링크는 기본적으로 7일 후 만료됩니다.
@@ -713,7 +713,7 @@ function WorkspaceSettingsPageContent() {
                                 로딩 중...
                               </div>
                             ) : allowedDomains.length === 0 ? (
-                              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-bd rounded-lg">
+                              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-[#2a2a2e] rounded-lg">
                                 <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                                 <p>허용된 도메인이 없습니다.</p>
                                 <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>

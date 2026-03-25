@@ -219,10 +219,10 @@ export function StorageLocationView() {
             <button
               key={zone.id}
               onClick={() => setSelectedZone(isSelected ? null : zone.id)}
-              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:border-bs ${
+              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:border-[#3a3a3e] ${
                 isSelected
-                  ? "bg-pn border-blue-500/60 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10"
-                  : "bg-pn border-bd hover:bg-el"
+                  ? "bg-[#1a1a1e] border-blue-500/60 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10"
+                  : "bg-[#1a1a1e] border-[#2a2a2e] hover:bg-[#222226]"
               }`}
             >
               {/* Header */}
@@ -283,9 +283,9 @@ export function StorageLocationView() {
 
       {/* ── Drill-down: Selected Zone Items ── */}
       {activeZone && (
-        <div className="rounded-xl border border-bd bg-pg overflow-hidden animate-in slide-in-from-top-2 duration-300">
+        <div className="rounded-xl border border-[#2a2a2e] bg-[#111114] overflow-hidden animate-in slide-in-from-top-2 duration-300">
           {/* Drill-down Header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-pn/50">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[#2a2a2e] bg-[#1a1a1e]/50">
             <div className="flex items-center gap-2">
               <span className={activeZone.iconColor}>{activeZone.icon}</span>
               <h3 className="text-sm font-bold text-slate-200">
@@ -308,7 +308,7 @@ export function StorageLocationView() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-bd text-[11px] text-slate-500 uppercase tracking-wide">
+                <tr className="border-b border-[#2a2a2e] text-[11px] text-slate-500 uppercase tracking-wide">
                   <th className="text-left px-5 py-2.5 font-medium">품목</th>
                   <th className="text-left px-3 py-2.5 font-medium">Lot</th>
                   <th className="text-center px-3 py-2.5 font-medium">수량</th>
@@ -321,7 +321,7 @@ export function StorageLocationView() {
                 {activeZone.items.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b border-bd/50 hover:bg-pn/60 transition-colors"
+                    className="border-b border-[#2a2a2e]/50 hover:bg-[#1a1a1e]/60 transition-colors"
                   >
                     {/* Name + Catalog */}
                     <td className="px-5 py-3">
@@ -407,7 +407,7 @@ export function StorageLocationView() {
           </div>
 
           {/* Zone-level summary footer */}
-          <div className="flex items-center gap-4 px-5 py-3 border-t border-bd bg-pn/30 text-[11px] text-slate-500">
+          <div className="flex items-center gap-4 px-5 py-3 border-t border-[#2a2a2e] bg-[#1a1a1e]/30 text-[11px] text-slate-500">
             <span>
               총 <span className="text-slate-300 font-medium">{activeZone.totalItems}</span>건
             </span>
