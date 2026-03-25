@@ -352,11 +352,6 @@ export default function IntroPage() {
                   <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
                     <Zap className="h-5 w-5 text-amber-500" />
                   </div>
-                  {i < 5 && (
-                    <div className="absolute -right-2 top-1/2 -translate-y-1/2 z-10">
-                      <ChevronRight className="h-4 w-4 text-slate-400" />
-                    </div>
-                  )}
                 </div>
                 <div className="rounded-lg bg-[#111114] border border-slate-100 p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존 업무 문제</p>
