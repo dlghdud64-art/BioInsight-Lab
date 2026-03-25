@@ -82,7 +82,9 @@ export default function TestComparePage() {
   });
   const [editingLeadTime, setEditingLeadTime] = useState<{ productId: string; vendorIndex: number } | null>(null);
   const [tempLeadTime, setTempLeadTime] = useState<string>("");
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  // ── Step 3 상태 분리: activeCompareItemId (rail용) + selectedDecisionItemId (기준안) ──
+  const [activeCompareItemId, setActiveCompareItemId] = useState<string | null>(null);
+  const [selectedDecisionItemId, setSelectedDecisionItemId] = useState<string | null>(null);
   const [scenario, setScenario] = useState<string>("cost");
   const [reviewMode, setReviewMode] = useState(false);
   const [reviewNote, setReviewNote] = useState("");
@@ -374,7 +376,7 @@ export default function TestComparePage() {
             Step 1에서 제품을 검색한 뒤 &apos;비교 담기&apos;를 눌러 슬롯을 채워보세요.
             최대 5개 제품의 스펙·가격·납기를 한눈에 비교할 수 있습니다.
           </p>
-          <Link href="/test/search">
+          <Link href="/app/search">
             <Button className="bg-blue-600 hover:bg-blue-500 text-white px-6">
               <Search className="h-4 w-4 mr-2" />
               제품 검색하러 가기
@@ -417,7 +419,10 @@ export default function TestComparePage() {
   }
 
   // ── Selected product for evidence rail ────────────────────────────────────
-  const selectedProduct = selectedProductId ? products.find((p: any) => p.id === selectedProductId) : null;
+  const selectedProduct = activeCompareItemId ? products.find((p: any) => p.id === activeCompareItemId) : null;
+  const decisionProduct = selectedDecisionItemId ? products.find((p: any) => p.id === selectedDecisionItemId) : null;
+  // recommendedItemId = scenario 정렬 1등 (자동 계산, 사용자 확정 아님)
+  const recommendedItemId = products.length >= 2 ? products[0]?.id : null;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -438,7 +443,7 @@ export default function TestComparePage() {
             <span className="text-xs text-slate-400 hidden sm:block">비교 판단 워크벤치</span>
           </div>
           <Link
-            href="/test/search"
+            href="/app/search"
             className="flex items-center gap-1 text-xs md:text-sm text-slate-300 hover:text-white transition-colors font-medium"
           >
             소싱으로
@@ -505,7 +510,7 @@ export default function TestComparePage() {
                 </span>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="h-7 text-[10px] text-blue-400 border-blue-600/30" asChild>
-                    <Link href="/test/search">유사 제품 찾기</Link>
+                    <Link href="/app/search">유사 제품 찾기</Link>
                   </Button>
                   <Button
                     size="sm"
@@ -622,15 +627,18 @@ export default function TestComparePage() {
                 const isCheapest = cheapestProduct?.id === product.id && hasPriceDiff;
                 const isFastest = fastestProduct?.id === product.id && hasLeadTimeData;
                 const isInQuote = quoteItems.some((q: any) => q.productId === product.id);
-                const isSelected = selectedProductId === product.id;
+                const isActive = activeCompareItemId === product.id;
+                const isDecision = selectedDecisionItemId === product.id;
                 const leadTime = getAverageLeadTime(product);
 
                 return (
                   <div
                     key={product.id}
-                    onClick={() => setSelectedProductId(isSelected ? null : product.id)}
+                    onClick={() => setActiveCompareItemId(isActive ? null : product.id)}
                     className={`rounded-xl border transition-colors cursor-pointer ${
-                      isSelected
+                      isDecision
+                        ? "border-emerald-500/60 bg-emerald-600/10 ring-1 ring-emerald-500/30"
+                        : isActive
                         ? "border-blue-600/50 bg-blue-600/5"
                         : isCheapest
                         ? "border-emerald-700/40 bg-emerald-600/5 hover:border-emerald-600/60"
@@ -644,6 +652,8 @@ export default function TestComparePage() {
                       <div className="flex-1 min-w-0 space-y-1">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="text-xs font-semibold text-slate-100 leading-tight">{product.name}</span>
+                          {isDecision && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/20 text-emerald-300 border border-emerald-500/30 font-medium">기준안</span>}
+                          {recommendedItemId === product.id && !isDecision && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300 border border-blue-600/20">추천</span>}
                           {isCheapest && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-400 border border-emerald-600/20">최저가</span>}
                           {isFastest && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-400 border border-blue-600/20">최단납기</span>}
                           {!vendor?.priceInKRW && <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-400 border border-slate-600">가격 문의</span>}
@@ -671,6 +681,27 @@ export default function TestComparePage() {
 
                       {/* Right: actions */}
                       <div className="flex items-center gap-1.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {!isDecision ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedDecisionItemId(product.id)}
+                            className="h-7 px-2 text-[10px] text-blue-400 hover:text-blue-300 border border-blue-600/30 hover:bg-blue-600/10"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            기준안 설정
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setSelectedDecisionItemId(null)}
+                            className="h-7 px-2 text-[10px] text-emerald-400 bg-emerald-600/10 border border-emerald-600/20"
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            기준안
+                          </Button>
+                        )}
                         <Button
                           size="sm"
                           variant="ghost"
@@ -908,15 +939,33 @@ export default function TestComparePage() {
                   )}
                 </div>
 
+                {/* 추천안 → 기준안 반영 */}
+                {recommendedItemId && recommendedItemId !== selectedDecisionItemId && (
+                  <div className="pt-1 border-t border-slate-700 flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-[10px] text-slate-400">
+                      추천: <strong className="text-slate-200">{products[0]?.name?.substring(0, 20)}</strong>
+                      {selectedDecisionItemId ? " (현재 기준안과 다름)" : " (기준안 미선택)"}
+                    </span>
+                    <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                      onClick={() => setSelectedDecisionItemId(recommendedItemId)}>
+                      현재 선택안 반영
+                    </Button>
+                  </div>
+                )}
+
                 {/* 다음 조치 */}
                 <div className="pt-1 border-t border-slate-700 flex items-center justify-between flex-wrap gap-2">
-                  <span className="text-[10px] text-slate-500">다음 조치</span>
+                  <span className="text-[10px] text-slate-500">
+                    {selectedDecisionItemId
+                      ? `기준안: ${decisionProduct?.name?.substring(0, 20) || "선택됨"}`
+                      : "기준안 미선택"}
+                  </span>
                   <div className="flex items-center gap-2">
                     {quoteItemsCount === 0 ? (
                       <span className="text-[10px] text-slate-400">제품을 선택해 견적 담기를 눌러보세요</span>
                     ) : (
                       <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white" asChild>
-                        <Link href="/test/quote">견적 {quoteItemsCount}건 → 요청 조립</Link>
+                        <Link href="/app/quote">견적 {quoteItemsCount}건 → 요청 조립</Link>
                       </Button>
                     )}
                   </div>
@@ -936,9 +985,22 @@ export default function TestComparePage() {
                   <div className="text-xs font-semibold text-slate-100 leading-snug">{selectedProduct.name}</div>
                   {selectedProduct.brand && <div className="text-[10px] text-slate-500 mt-0.5">{selectedProduct.brand}</div>}
                 </div>
-                <button onClick={() => setSelectedProductId(null)} className="text-slate-600 hover:text-slate-400 shrink-0 mt-0.5">
+                <button onClick={() => setActiveCompareItemId(null)} className="text-slate-600 hover:text-slate-400 shrink-0 mt-0.5">
                   <X className="h-3.5 w-3.5" />
                 </button>
+              </div>
+
+              {/* 현재 상태 + 기준안 설정 */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] px-2 py-0.5 rounded bg-blue-600/10 text-blue-300 border border-blue-600/20">비교 중</span>
+                {selectedDecisionItemId === activeCompareItemId ? (
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-600/15 text-emerald-300 border border-emerald-500/20">기준안</span>
+                ) : (
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-blue-300 border border-slate-700"
+                    onClick={() => setSelectedDecisionItemId(activeCompareItemId)}>
+                    기준안으로 설정
+                  </Button>
+                )}
               </div>
 
               {/* Vendor info */}
@@ -1111,6 +1173,15 @@ export default function TestComparePage() {
               CSV
             </Button>
 
+            {/* 기준안 상태 */}
+            {selectedDecisionItemId ? (
+              <span className="text-[10px] text-emerald-400 hidden sm:inline">
+                기준안: {decisionProduct?.name?.substring(0, 15)}
+              </span>
+            ) : (
+              <span className="text-[10px] text-amber-400 hidden sm:inline">기준안 미선택</span>
+            )}
+
             {/* Primary: enter review mode */}
             {products.length >= 2 ? (
               <Button
@@ -1140,7 +1211,7 @@ export default function TestComparePage() {
 
             {quoteItemsCount > 0 && (
               <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" asChild>
-                <Link href="/test/quote">요청 조립 →</Link>
+                <Link href="/app/quote">요청 조립 →</Link>
               </Button>
             )}
           </div>
@@ -1332,7 +1403,7 @@ export default function TestComparePage() {
                       trackEvent("compare_review_handoff", { product_count: products.length, note: !!reviewNote });
                       toast({ title: "견적관리 워크큐로 전달 준비 완료", description: `${products.length}개 제품이 견적 리스트에 추가되었습니다` });
                       setReviewMode(false);
-                      router.push("/test/quote");
+                      router.push("/app/quote");
                     }}>
                     <Send className="h-3 w-3 mr-1.5" />
                     검토 완료 후 Workqueue로 보내기
@@ -1359,7 +1430,7 @@ export default function TestComparePage() {
                     products.forEach((p: any) => addProductToQuote(p));
                     toast({ title: "전달 준비 완료", description: `${products.length}개 제품 추가됨` });
                     setReviewMode(false);
-                    router.push("/test/quote");
+                    router.push("/app/quote");
                   }}>
                   Workqueue로 보내기
                 </Button>
