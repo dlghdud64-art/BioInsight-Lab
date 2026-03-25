@@ -4,7 +4,7 @@
  * 실제 LLM 호출 없이 현재 app state 기반으로 생성.
  * 이번 단계는 "AI 엔진 완성"이 아니라 "반자동 suggestion operating surface 삽입".
  */
-import type { AiSuggestion, AiSuggestionAction } from "./suggestion-engine";
+import type { AiSuggestion, AiSuggestionAction, AiSuggestionReason } from "./suggestion-engine";
 import { buildSourcingContextHash, buildCompareContextHash, buildRequestContextHash } from "./context-hash";
 
 function uid(): string {
@@ -44,23 +44,39 @@ export function buildSourcingSuggestion(input: SourcingBuilderInput): AiSuggesti
   let title: string;
   let message: string;
   let actions: AiSuggestionAction[] = [];
+  let reasons: AiSuggestionReason[] = [];
   let confidence = 0.7;
 
   if (withoutPrice.length >= 2 && compareIds.length === 0) {
-    // request_first: 가격 미등록 항목이 많아 요청 전환 필요
+    // request_first
     title = "요청 전환이 필요한 항목이 있습니다";
     message = `가격 미등록 ${withoutPrice.length}건은 견적 요청으로 전환하는 것이 적절합니다.`;
     const candidateIds = withoutPrice.slice(0, 3).map(p => p.id);
+    reasons = [
+      { id: uid(), label: `가격 미등록 ${withoutPrice.length}건`, type: "missing" },
+      { id: uid(), label: `가격 확인된 ${withPrice.length}건`, type: "positive" },
+      ...(withoutPrice.slice(0, 2).map(p => ({ id: uid(), label: `${p.name?.substring(0, 20)} — 가격 없음`, type: "warning" as const }))),
+    ];
     actions = [
       { id: uid(), type: "apply_request_candidates", label: "요청 후보 담기", payload: { itemIds: candidateIds } },
       { id: uid(), type: "dismiss", label: "무시" },
     ];
     confidence = 0.8;
   } else if (notInCompare.length >= 2 && compareIds.length < 2) {
-    // compare_first: 비교 가능한 후보가 있음
-    title = "비교 후보를 정리했습니다";
-    message = `동일 규격 후보 ${Math.min(notInCompare.length, 3)}개를 비교 대상으로 묶는 것이 적절합니다.`;
+    // compare_first
     const candidateIds = notInCompare.slice(0, 3).map(p => p.id);
+    const candidateNames = notInCompare.slice(0, 3).map(p => p.name?.substring(0, 15) || "?");
+    title = "비교 후보를 정리했습니다";
+    message = `${candidateNames.join(", ")} — ${candidateIds.length}개를 비교 대상으로 묶는 것이 적절합니다.`;
+    reasons = [
+      { id: uid(), label: `비교 가능 후보 ${notInCompare.length}건`, type: "positive" },
+      { id: uid(), label: `현재 비교 후보 ${compareIds.length}건`, type: compareIds.length === 0 ? "missing" : "positive" },
+      ...(notInCompare.slice(0, 2).map(p => ({
+        id: uid(),
+        label: `${p.name?.substring(0, 20)} · ₩${(p.vendors?.[0]?.priceInKRW || 0).toLocaleString()}`,
+        type: "positive" as const,
+      }))),
+    ];
     actions = [
       { id: uid(), type: "apply_compare_candidates", label: "비교 후보 담기", payload: { itemIds: candidateIds } },
       { id: uid(), type: "dismiss", label: "무시" },
@@ -70,6 +86,10 @@ export function buildSourcingSuggestion(input: SourcingBuilderInput): AiSuggesti
     // mixed_flow
     title = "비교 후 요청 전환이 적절합니다";
     message = `비교 후보 ${compareIds.length}개 유지 중. 납기 불확실 항목 ${withoutPrice.length}건은 요청 후보에 유지합니다.`;
+    reasons = [
+      { id: uid(), label: `비교 후보 ${compareIds.length}건 유지`, type: "positive" },
+      { id: uid(), label: `납기 불확실 ${withoutPrice.length}건`, type: "warning" },
+    ];
     actions = [
       { id: uid(), type: "open_review", label: "검토" },
       { id: uid(), type: "dismiss", label: "무시" },
@@ -79,6 +99,9 @@ export function buildSourcingSuggestion(input: SourcingBuilderInput): AiSuggesti
     // warning
     title = "납기 확인이 필요한 항목이 있습니다";
     message = `${products.length - withPrice.length}건의 가격/납기 정보가 불완전합니다.`;
+    reasons = [
+      { id: uid(), label: `정보 불완전 ${products.length - withPrice.length}건`, type: "warning" },
+    ];
     actions = [
       { id: uid(), type: "dismiss", label: "확인" },
     ];
@@ -96,6 +119,7 @@ export function buildSourcingSuggestion(input: SourcingBuilderInput): AiSuggesti
     title,
     message,
     actions,
+    reasons,
     status: "generated",
     confidence,
     sourceContext: { query, productCount: products.length, compareCount: compareIds.length, requestCount: requestIds.length },
@@ -130,15 +154,26 @@ export function buildCompareSuggestion(input: CompareBuilderInput): AiSuggestion
   let title: string;
   let message: string;
   let actions: AiSuggestionAction[] = [];
+  let reasons: AiSuggestionReason[] = [];
+  let preview: AiSuggestion["preview"];
   let confidence = 0.7;
 
   const recommended = recommendedItemId ? products.find(p => p.id === recommendedItemId) : null;
+  const selected = selectedDecisionItemId ? products.find(p => p.id === selectedDecisionItemId) : null;
   const modeLabel = compareMode === "cost" ? "비용" : compareMode === "leadtime" ? "납기" : compareMode === "spec_match" ? "규격" : "수동";
 
   if (selectedDecisionItemId && recommendedItemId && selectedDecisionItemId !== recommendedItemId) {
-    // selection_prompt: 추천과 기준안이 다름
     title = `${modeLabel} 기준 추천안과 현재 기준안이 다릅니다`;
-    message = `현재 선택안은 유지 중입니다. ${modeLabel} 기준으로는 ${recommended?.name?.substring(0, 20) || "다른 항목"}이 유리합니다.`;
+    message = `${modeLabel} 기준으로는 ${recommended?.name?.substring(0, 20) || "다른 항목"}이 유리합니다. 확정 전 스펙 차이를 확인하세요.`;
+    reasons = [
+      { id: uid(), label: `${modeLabel} 기준 ${recommended?.name?.substring(0, 15) || "A안"} 유리`, type: "positive" },
+      { id: uid(), label: `현재 기준안: ${selected?.name?.substring(0, 15) || "B안"}`, type: "difference" },
+    ];
+    preview = {
+      beforeLabel: `현재 선택: ${selected?.name?.substring(0, 15) || "B안"}`,
+      afterLabel: `적용 시 선택안: ${recommended?.name?.substring(0, 15) || "A안"}`,
+      summary: `${modeLabel} 기준 추천으로 반영`,
+    };
     actions = [
       { id: uid(), type: "apply_selected_decision", label: "현재 선택안 반영", payload: { itemId: recommendedItemId } },
       { id: uid(), type: "open_review", label: "요청 단계로 이동" },
@@ -146,18 +181,27 @@ export function buildCompareSuggestion(input: CompareBuilderInput): AiSuggestion
     ];
     confidence = 0.7;
   } else if (selectedDecisionItemId) {
-    // request_handoff: 기준안이 정해졌으니 다음 단계로
     title = "요청 단계로 이동할 수 있습니다";
     message = `기준안이 설정되어 있습니다. 견적 요청 단계로 이동하세요.`;
+    reasons = [
+      { id: uid(), label: `기준안: ${selected?.name?.substring(0, 15) || "선택됨"}`, type: "positive" },
+    ];
     actions = [
       { id: uid(), type: "open_review", label: "요청 단계로 이동" },
       { id: uid(), type: "dismiss", label: "무시" },
     ];
     confidence = 0.8;
   } else if (recommendedItemId) {
-    // selection_prompt: 기준안 미선택
     title = `${modeLabel} 기준으로 ${recommended?.name?.substring(0, 20) || "A안"}이 유리합니다`;
     message = "기준안을 반영하면 요청 단계로 이동할 수 있습니다.";
+    reasons = [
+      { id: uid(), label: `${modeLabel} 기준 추천`, type: "positive" },
+      { id: uid(), label: "기준안 미선택", type: "missing" },
+    ];
+    preview = {
+      afterLabel: `적용 시 선택안: ${recommended?.name?.substring(0, 15) || "A안"}`,
+      summary: `${modeLabel} 기준 추천 반영`,
+    };
     actions = [
       { id: uid(), type: "apply_selected_decision", label: "현재 선택안 반영", payload: { itemId: recommendedItemId } },
       { id: uid(), type: "dismiss", label: "무시" },
@@ -176,6 +220,8 @@ export function buildCompareSuggestion(input: CompareBuilderInput): AiSuggestion
     title,
     message,
     actions,
+    reasons,
+    preview,
     status: "generated",
     confidence,
     sourceContext: { compareSessionId, compareMode, productCount: products.length, selectedDecisionItemId },
@@ -213,45 +259,75 @@ export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion
   let title: string;
   let message: string;
   let actions: AiSuggestionAction[] = [];
+  let reasons: AiSuggestionReason[] = [];
+  let preview: AiSuggestion["preview"];
   let confidence = 0.7;
+
+  const fieldLabel = (f: string) =>
+    f === "message_missing" ? "메시지" :
+    f === "delivery_location_missing" ? "납품지" :
+    f === "attachment_missing" ? "첨부파일" :
+    f === "requester_missing" ? "담당자" : f;
+
+  // readiness 추정 (0-100)
+  const baseReadiness = Math.min(100, Math.round(
+    (messageBody.length >= 20 ? 40 : messageBody.length * 2) +
+    (missingFields.length === 0 ? 30 : Math.max(0, 30 - missingFields.length * 10)) +
+    (leadTimeIncluded ? 15 : 0) +
+    (substituteIncluded ? 15 : 0)
+  ));
 
   // 우선순위: missing_check > draft_update > draft_create > ready
   if (missingFields.length > 0) {
-    // missing_check
     title = "전송 전 확인이 필요합니다";
-    const fieldLabels = missingFields.map(f =>
-      f === "message_missing" ? "메시지" :
-      f === "delivery_location_missing" ? "납품지" :
-      f === "attachment_missing" ? "첨부파일" :
-      f === "requester_missing" ? "담당자" : f
-    );
-    message = `누락 항목: ${fieldLabels.join(", ")}. 확인 후 전송 준비로 이동할 수 있습니다.`;
+    message = `누락 ${missingFields.length}건 확인 후 전송 준비로 이동할 수 있습니다.`;
+    reasons = missingFields.slice(0, 3).map(f => ({
+      id: uid(), label: `${fieldLabel(f)} 누락`, type: "missing" as const,
+    }));
+    if (leadTimeIncluded) reasons.push({ id: uid(), label: "납기 확인 질문 포함됨", type: "positive" });
+    const afterReadiness = Math.min(100, baseReadiness + missingFields.length * 10);
+    preview = {
+      beforeLabel: `전송 준비 ${baseReadiness}%`,
+      afterLabel: `확인 후 ${afterReadiness}%`,
+      summary: `누락 ${missingFields.length}건 보완`,
+    };
     actions = [
       { id: uid(), type: "open_review", label: "누락 확인" },
       { id: uid(), type: "dismiss", label: "무시" },
     ];
     confidence = 0.85;
   } else if (!messageBody || messageBody.length < 20) {
-    // draft_create
     title = "요청 초안을 준비했습니다";
     const draftParts: string[] = [];
     if (!leadTimeIncluded) draftParts.push("납기 문의");
     if (!substituteIncluded) draftParts.push("대체품 문의");
+    reasons = [
+      { id: uid(), label: `${vendorName} 대상 ${items.length}건`, type: "positive" },
+      ...(!leadTimeIncluded ? [{ id: uid(), label: "납기 문의 누락", type: "missing" as const }] : []),
+      ...(!substituteIncluded ? [{ id: uid(), label: "대체품 문의 누락", type: "missing" as const }] : []),
+    ];
     message = draftParts.length > 0
       ? `${draftParts.join(", ")} 포함하여 초안을 생성할 수 있습니다.`
       : `${vendorName} 대상 ${items.length}건 초안을 생성할 수 있습니다.`;
-
-    // 초안 patch 생성
     const draftMessage = generateSimpleDraft(vendorName, items, leadTimeIncluded, substituteIncluded);
+    const afterReadiness = Math.min(100, baseReadiness + 40);
+    preview = {
+      beforeLabel: `전송 준비 ${baseReadiness}%`,
+      afterLabel: `적용 시 ${afterReadiness}%`,
+      summary: `초안 + 누락 질문 ${draftParts.length}건 추가`,
+    };
     actions = [
       { id: uid(), type: "apply_request_draft_patch", label: "초안 적용", payload: { supplierId: activeSupplierRequestId, patch: { messageBody: draftMessage } } },
       { id: uid(), type: "dismiss", label: "무시" },
     ];
     confidence = 0.75;
   } else if (messageBody.length >= 20 && missingFields.length === 0) {
-    // ready
     title = "검토 후 전송";
     message = `${vendorName} 대상 ${items.length}건 요청이 준비되었습니다.`;
+    reasons = [
+      { id: uid(), label: `전송 준비 완료`, type: "positive" },
+      { id: uid(), label: `${items.length}건 품목 포함`, type: "positive" },
+    ];
     actions = [
       { id: uid(), type: "open_review", label: "검토" },
       { id: uid(), type: "dismiss", label: "확인" },
@@ -270,6 +346,8 @@ export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion
     title,
     message,
     actions,
+    reasons,
+    preview,
     status: "generated",
     confidence,
     sourceContext: { requestAssemblyId, vendorName, itemCount: items.length, missingFields },

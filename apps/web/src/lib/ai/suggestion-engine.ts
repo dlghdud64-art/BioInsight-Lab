@@ -17,6 +17,18 @@ export type AiSuggestionAction =
   | { id: string; type: "open_review"; label: string; payload?: Record<string, never> }
   | { id: string; type: "dismiss"; label: string; payload?: Record<string, never> };
 
+export interface AiSuggestionReason {
+  id: string;
+  label: string;
+  type: "positive" | "warning" | "missing" | "difference";
+}
+
+export interface AiSuggestionPreview {
+  beforeLabel?: string;
+  afterLabel?: string;
+  summary?: string;
+}
+
 export interface AiSuggestion {
   id: string;
   scope: AiSuggestionScope;
@@ -27,6 +39,8 @@ export interface AiSuggestion {
   actions: AiSuggestionAction[];
   status: AiSuggestionStatus;
   confidence: number; // 0-1
+  reasons?: AiSuggestionReason[];
+  preview?: AiSuggestionPreview;
   sourceContext: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
