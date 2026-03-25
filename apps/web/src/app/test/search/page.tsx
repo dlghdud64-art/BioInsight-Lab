@@ -66,6 +66,7 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  const [aiSuggestionDismissed, setAiSuggestionDismissed] = useState(false);
 
   // Batch-fetch compare status for visible products
   const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
@@ -116,6 +117,7 @@ export default function SearchPage() {
   // compare/request 후보는 유지, rail 선택만 리셋
   useEffect(() => {
     setRailProduct(null);
+    setAiSuggestionDismissed(false); // 새 검색 시 AI 제안 다시 노출
   }, [searchQuery]);
 
   // Restore pending search after login
@@ -211,20 +213,38 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* AI Next Step Summary — 반자동 운영 레이어 */}
-            {aiSearchSummary.length > 0 && (
+            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 ═══ */}
+            {aiSearchSummary.length > 0 && !aiSuggestionDismissed && (
               <div className="px-4 pt-1.5">
-                <div className="flex flex-wrap items-center gap-1.5 px-2.5 py-1.5 rounded border border-bd bg-pn/80">
-                  {aiSearchSummary.map((line, i) => (
-                    <span key={i} className={`inline-flex items-center text-[10px] font-medium px-2 py-0.5 rounded ${
-                      line.signal === "compare" ? "bg-blue-600/10 text-blue-300" :
-                      line.signal === "request" ? "bg-emerald-600/10 text-emerald-300" :
-                      line.signal === "caution" ? "bg-amber-600/10 text-amber-300" :
-                      "bg-slate-600/10 text-slate-400"
-                    }`}>
-                      {line.text}
-                    </span>
-                  ))}
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-600/20 bg-blue-600/5">
+                  <span className="text-[10px] font-semibold text-blue-400 shrink-0">AI 제안</span>
+                  <span className="text-[10px] text-slate-300 flex-1 truncate">
+                    {aiSearchSummary[0]?.text}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-300 hover:bg-blue-600/10 border border-blue-600/20"
+                        onClick={() => handleProtectedAction(() => {
+                          const candidates = products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3);
+                          candidates.forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
+                        })}>
+                        비교 후보 담기
+                      </Button>
+                    )}
+                    {aiSearchSummary.some(l => l.signal === "request") && quoteItems.length === 0 && (
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-300 hover:bg-emerald-600/10 border border-emerald-600/20"
+                        onClick={() => handleProtectedAction(() => {
+                          const candidates = products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !quoteItems.some((q: any) => q.productId === p.id)).slice(0, 3);
+                          candidates.forEach((p: any) => addProductToQuote(p));
+                        })}>
+                        요청 후보 담기
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
+                      onClick={() => setAiSuggestionDismissed(true)}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
