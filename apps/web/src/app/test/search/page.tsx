@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { AIInsightCard } from "@/components/ai-insight-card";
 import { useCompareStore } from "@/lib/store/compare-store";
+import { generateSearchSummary, generateDockRecommendation, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
 
 export default function SearchPage() {
   const {
@@ -135,6 +136,27 @@ export default function SearchPage() {
     [quoteItems, compareIds, products],
   );
 
+  // AI Dock Recommendation
+  const aiDockRec = useMemo<string | null>(
+    () => (compareIds.length > 0 || quoteItems.length > 0) ? generateDockRecommendation({
+      compareIds,
+      quoteItemIds: quoteItems.map((q: any) => q.productId),
+      products,
+    }) : null,
+    [compareIds, quoteItems, products],
+  );
+
+  // AI Next Step Summary
+  const aiSearchSummary = useMemo<SearchSummaryLine[]>(
+    () => hasSearched && products.length > 0 ? generateSearchSummary({
+      query: searchQuery,
+      products,
+      compareIds,
+      quoteItemIds: quoteItems.map((q: any) => q.productId),
+    }) : [],
+    [hasSearched, products, searchQuery, compareIds, quoteItems],
+  );
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
@@ -210,6 +232,27 @@ export default function SearchPage() {
                   isLoading={analysisLoading}
                   queryAnalysis={queryAnalysis}
                 />
+              </div>
+            )}
+
+            {/* AI Next Step Summary — 반자동 운영 레이어 */}
+            {aiSearchSummary.length > 0 && (
+              <div className="px-4 pt-1.5">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-1.5 rounded border border-bd bg-pn/80">
+                  {aiSearchSummary.map((line, i) => (
+                    <span key={i} className={`text-[11px] leading-snug ${
+                      line.signal === "compare" ? "text-blue-300" :
+                      line.signal === "request" ? "text-emerald-300" :
+                      line.signal === "caution" ? "text-amber-300" :
+                      "text-slate-400"
+                    }`}>
+                      {line.signal === "compare" && "◆ "}
+                      {line.signal === "request" && "→ "}
+                      {line.signal === "caution" && "⚠ "}
+                      {line.text}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -459,13 +502,11 @@ export default function SearchPage() {
               )}
             </div>
 
-            {/* Stage recommendation */}
-            {(compareIds.length > 0 || quoteItems.length > 0) && (
-              <div className="hidden md:flex items-center gap-1.5 text-[10px] text-slate-400">
-                <span>다음 단계:</span>
-                {compareIds.length >= 2 && quoteItems.length === 0 && <span className="text-blue-400 font-medium">비교 후 견적 요청</span>}
-                {quoteItems.length > 0 && <span className="text-emerald-400 font-medium">견적 요청서 작성</span>}
-                {compareIds.length === 1 && quoteItems.length === 0 && <span className="text-amber-400 font-medium">비교 후보 1개 더 추가</span>}
+            {/* AI dock recommendation */}
+            {aiDockRec && (
+              <div className="hidden md:flex items-center gap-1.5 text-[10px] text-slate-300">
+                <span className="text-slate-500">→</span>
+                <span>{aiDockRec}</span>
               </div>
             )}
             {/* Spacer + clear all */}

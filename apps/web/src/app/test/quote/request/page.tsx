@@ -14,8 +14,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft, ArrowRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Info, ChevronRight, Eye, BookmarkPlus,
+  ArrowLeft, ArrowRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Info, ChevronRight, Eye, BookmarkPlus, Sparkles,
 } from "lucide-react";
+import { generateRequestDraft, type RequestDraft } from "@/lib/ai/suggestion-engine";
 
 const READINESS_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
   ready_to_write_request: { color: "text-emerald-400 bg-emerald-600/10 border-emerald-600/30", icon: CheckCircle2, label: "전송 가능" },
@@ -64,6 +65,22 @@ function QuoteRequestPageContent() {
       sentCount: result.sentCount, heldCount: holdCount, vendorCount: result.vendorCount,
       totalAmount: result.totalAmount, heldVendors: Array.from(holdUnits), sentAt: new Date().toLocaleString("ko-KR"),
     });
+  };
+
+  // AI Request Draft
+  const [aiDraftStatus, setAiDraftStatus] = useState<Record<string, "idle" | "generated" | "edited" | "dismissed">>({});
+
+  const handleGenerateAiDraft = (group: VendorGroup) => {
+    const draft = generateRequestDraft({
+      vendorName: group.vendorName,
+      items: group.items.map((item) => ({
+        productName: item.productName,
+        quantity: item.quantity,
+        catalogNumber: (item as any).catalogNumber,
+      })),
+    });
+    handleVendorNoteChange(group.vendorId, draft.message);
+    setAiDraftStatus((prev) => ({ ...prev, [group.vendorId]: "generated" }));
   };
 
   return (
@@ -231,10 +248,70 @@ function QuoteRequestPageContent() {
                 </table>
               </div>
 
+              {/* AI Draft — 반자동 운영 레이어 */}
+              <div className="px-4 py-2 border-b border-bd/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 text-blue-400" />
+                    <span className="text-[10px] font-medium text-slate-400">요청서 메시지</span>
+                    {aiDraftStatus[activeGroup.vendorId] === "generated" && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300">AI 초안</span>
+                    )}
+                    {aiDraftStatus[activeGroup.vendorId] === "edited" && (
+                      <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/15 text-emerald-300">수정됨</span>
+                    )}
+                  </div>
+                  {!vendorNotes[activeGroup.vendorId] ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                      onClick={() => handleGenerateAiDraft(activeGroup)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />AI 초안 생성
+                    </Button>
+                  ) : aiDraftStatus[activeGroup.vendorId] === "generated" ? (
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400"
+                        onClick={() => { handleVendorNoteChange(activeGroup.vendorId, ""); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}
+                      >
+                        삭제
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px] text-blue-400"
+                        onClick={() => handleGenerateAiDraft(activeGroup)}
+                      >
+                        재생성
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                      onClick={() => handleGenerateAiDraft(activeGroup)}
+                    >
+                      <Sparkles className="h-3 w-3 mr-1" />AI 초안 생성
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               {/* Form — 공급사 전달 정보 보완 */}
               <div className="p-4">
                 <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-3">공급사 전달 정보</div>
-                <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={handleVendorNoteChange} onSubmitSuccess={handleSubmitSuccess} />
+                <QuoteRequestPanel ref={requestPanelRef} vendorNotes={vendorNotes} onVendorNoteChange={(id, note) => {
+                  handleVendorNoteChange(id, note);
+                  // Mark as edited if it was an AI draft
+                  if (aiDraftStatus[id] === "generated") {
+                    setAiDraftStatus(prev => ({ ...prev, [id]: "edited" }));
+                  }
+                }} onSubmitSuccess={handleSubmitSuccess} />
               </div>
             </div>
           )}
