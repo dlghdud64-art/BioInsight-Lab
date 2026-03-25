@@ -1,7 +1,6 @@
 import { MainLayout } from "../_components/main-layout";
 import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function TermsPage() {
   return (
@@ -20,17 +19,8 @@ export default function TermsPage() {
           </div>
         </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>제1조 (목적)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                본 약관은 LabAxis(이하 "회사")이 제공하는 서비스의 이용과 관련하여 
-                회사와 이용자 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
-              </p>
-            </CardContent>
-          </Card>
+        {/* Body */}
+        <div className="space-y-10 text-sm md:text-[15px] leading-relaxed text-[#BAC6D9]">
 
           <section>
             <h2 className="text-lg font-bold text-white mb-3">제1조 (목적)</h2>
@@ -200,17 +190,8 @@ export default function TermsPage() {
             <p>이 약관은 2026년 3월 24일부터 시행합니다.</p>
           </section>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>문의</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                본 약관에 대한 문의사항이 있으시면 <a href="mailto:contact@labaxis.io" className="text-primary hover:underline">contact@labaxis.io</a>으로 연락주세요.
-              </p>
-            </CardContent>
-          </Card>
         </div>
+      </div>
       <MainFooter />
     </MainLayout>
   );
