@@ -56,7 +56,7 @@ function SplineBg() {
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
+  const callbackUrl = searchParams?.get("callbackUrl") || "/";
 
   return (
     <div className="flex min-h-[100dvh]">

@@ -219,7 +219,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     요금 &amp; 도입
                   </Link>
                   <Link
-                    href="/auth/signin?callbackUrl=/dashboard"
+                    href="/auth/signin"
                     className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     로그인

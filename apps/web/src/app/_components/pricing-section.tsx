@@ -33,7 +33,7 @@ export function PricingSection() {
                 <li>공유 링크 (일부 제한)</li>
                 <li>로그인 없이 체험 가능</li>
               </ul>
-              <Link href="/auth/signin?callbackUrl=/dashboard" className="block mt-3">
+              <Link href="/auth/signin" className="block mt-3">
                 <Button variant="outline" size="sm" className="w-full text-xs text-slate-400 border-slate-700 hover:bg-slate-800 bg-transparent">
                   무료로 찍어보기
                 </Button>
