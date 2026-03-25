@@ -27,9 +27,9 @@ export function FinalCTASection() {
             구매 운영을 체계화하세요
           </h2>
           <p className="text-xs md:text-sm text-[#BAC6D9] max-w-md mx-auto leading-relaxed">
-            비교·견적·발주·입고·재고까지 끊기지 않는 운영 파이프라인.
+            AI는 결정을 대신하지 않습니다.
             <br />
-            운영 콘솔에서 전 과정을 추적하고 통제합니다.
+            필요한 후보와 다음 단계를 먼저 정리해, 운영자가 더 빠르게 선택할 수 있게 돕습니다.
           </p>
         </div>
 

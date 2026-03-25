@@ -239,8 +239,11 @@ export function BioInsightHeroSection() {
           구매 요청부터 입고·재고까지,<br />
           <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>운영 상태를 한눈에</span>
         </h1>
-        <p className="text-base md:text-lg text-slate-300 mb-10 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-          시약·장비 검색, 비교, 견적, 발주, 입고, 재고 관리까지<br className="hidden sm:block" />흩어진 연구 구매 업무를 하나의 운영 흐름으로 연결하세요.
+        <p className="text-base md:text-lg text-slate-300 mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+          검색부터 비교, 요청, 입고, 재고까지 하나의 운영 흐름으로 연결합니다.<br className="hidden sm:block" />AI는 각 단계에서 필요한 후보 정리와 다음 작업 준비를 돕습니다.
+        </p>
+        <p className="text-sm text-slate-400 mb-10 max-w-xl leading-relaxed">
+          LabAxis는 검색 결과 정리, 비교 판단, 요청 초안 준비를 돕는 AI 보조 기능을 제공합니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <Link href={isLoggedIn ? "/app/search" : "/search"}>
