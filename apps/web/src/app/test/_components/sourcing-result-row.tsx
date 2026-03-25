@@ -13,6 +13,8 @@ import {
   FlaskConical,
   FileText,
   ChevronRight,
+  Check,
+  AlertTriangle,
 } from "lucide-react";
 
 interface SourcingResultRowProps {
@@ -55,6 +57,16 @@ export function SourcingResultRow({
   const keySpecs = getKeySpecs(product);
   const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
   const vendorName = vendor?.vendor?.name;
+
+  // 2순위: 선택적 row-level 운영 태그 — 주의 row/선택 row에만 표시
+  const rowTag = (() => {
+    if (!unitPrice) return { text: "견적 필요", color: "text-amber-400 bg-amber-400/8 border-amber-400/20" };
+    if (!vendor?.leadTime) return { text: "납기 확인 필요", color: "text-amber-400 bg-amber-400/8 border-amber-400/20" };
+    if (isInCompare) return { text: "비교 적합", color: "text-emerald-400 bg-emerald-400/8 border-emerald-400/20" };
+    if (isInRequest) return { text: "바로 요청 가능", color: "text-emerald-400 bg-emerald-400/8 border-emerald-400/20" };
+    if (unitPrice > 500000) return { text: "비교 권장", color: "text-blue-400 bg-blue-400/8 border-blue-400/20" };
+    return null;
+  })();
 
   return (
     <div
@@ -114,6 +126,12 @@ export function SourcingResultRow({
                   {PRODUCT_CATEGORIES[product.category as keyof typeof PRODUCT_CATEGORIES]}
                 </Badge>
               )}
+              {/* 2순위: 선택적 운영 태그 */}
+              {rowTag && (
+                <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0 h-4 rounded-full border ${rowTag.color}`}>
+                  {rowTag.text}
+                </span>
+              )}
             </div>
           )}
         </div>
@@ -125,40 +143,42 @@ export function SourcingResultRow({
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
-            <span className="text-xs text-slate-500">가격 문의</span>
+            <span className="text-xs text-slate-500">견적 필요</span>
           )}
         </div>
 
-        {/* Desktop CTA — hierarchy: primary=견적, secondary=비교 */}
+        {/* Desktop CTA — hierarchy: primary=비교 추가 > secondary=견적 담기 */}
         <div className="shrink-0 hidden sm:flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-          {/* Secondary: 비교 — text label, not icon-only */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 px-2 rounded text-xs font-medium ${
-              isInCompare
-                ? "bg-blue-600/15 text-blue-400 hover:bg-blue-600/25"
-                : "text-slate-500 hover:text-slate-300 hover:bg-el border border-transparent hover:border-bd"
-            }`}
-            onClick={onToggleCompare}
-          >
-            <GitCompare className="h-3 w-3 mr-1" />
-            {isInCompare ? "비교 담김" : "비교 추가"}
-          </Button>
-          {/* Primary: 견적 — stronger visual weight */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${
-              isInRequest
-                ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25"
-                : "bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300"
-            }`}
-            onClick={onToggleRequest}
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            {isInRequest ? "견적 담김" : "견적 담기"}
-          </Button>
+          {/* Primary: 비교 추가 (strong outline, blue) */}
+          {isInCompare ? (
+            <button
+              className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20 cursor-default"
+              onClick={onToggleCompare}
+            >
+              <Check className="h-3 w-3" />비교 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm"
+              className="h-7 px-2.5 rounded text-xs font-medium text-slate-200 hover:text-blue-400 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"
+              onClick={onToggleCompare}>
+              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+            </Button>
+          )}
+          {/* Secondary: 견적 담기 (ghost, muted) */}
+          {isInRequest ? (
+            <button
+              className="h-7 px-2 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-500/10 text-slate-400 border border-slate-500/15 cursor-default"
+              onClick={onToggleRequest}
+            >
+              <Check className="h-3 w-3" />견적 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm"
+              className="h-7 px-2 rounded text-xs font-medium text-slate-500 hover:text-slate-300 hover:bg-el"
+              onClick={onToggleRequest}>
+              <FileText className="h-3 w-3 mr-1" />견적 담기
+            </Button>
+          )}
         </div>
 
         {/* Chevron */}
@@ -178,38 +198,30 @@ export function SourcingResultRow({
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
-            <span className="text-slate-500">가격 문의</span>
+            <span className="text-slate-500">견적 필요</span>
           )}
         </div>
 
         {/* Mobile CTA */}
         <div className="flex items-center gap-1.5">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${
-              isInCompare
-                ? "bg-blue-600/15 text-blue-400"
-                : "text-slate-400 border border-bd"
-            }`}
-            onClick={onToggleCompare}
-          >
-            <GitCompare className="h-3 w-3 mr-1" />
-            {isInCompare ? "비교 담김" : "비교 추가"}
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className={`h-7 px-2.5 rounded text-xs font-medium ${
-              isInRequest
-                ? "bg-emerald-600/15 text-emerald-400"
-                : "bg-blue-600/10 text-blue-400"
-            }`}
-            onClick={onToggleRequest}
-          >
-            <FileText className="h-3 w-3 mr-1" />
-            {isInRequest ? "견적 담김" : "견적 담기"}
-          </Button>
+          {isInCompare ? (
+            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20" onClick={onToggleCompare}>
+              <Check className="h-3 w-3" />비교 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-300 border border-bd" onClick={onToggleCompare}>
+              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+            </Button>
+          )}
+          {isInRequest ? (
+            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-500/10 text-slate-400 border border-slate-500/15" onClick={onToggleRequest}>
+              <Check className="h-3 w-3" />견적 후보
+            </button>
+          ) : (
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-500 border border-bd" onClick={onToggleRequest}>
+              <FileText className="h-3 w-3 mr-1" />견적 담기
+            </Button>
+          )}
         </div>
       </div>
     </div>

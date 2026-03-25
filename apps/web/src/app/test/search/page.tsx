@@ -301,7 +301,7 @@ export default function SearchPage() {
                   {compareReady ? (
                     <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => setWorkWindowMode("compare")}>
                       <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                      비교 열기
+                      {compareIds.length}개 비교 시작
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-400">
@@ -342,7 +342,7 @@ export default function SearchPage() {
                   <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
                   <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => setWorkWindowMode("request")}>
                     <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    견적 검토
+                    견적 요청서 만들기
                   </Button>
                   <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
                     <Trash2 className="h-3.5 w-3.5" />
@@ -453,12 +453,12 @@ export default function SearchPage() {
       <Dialog open={isLoginPromptOpen} onOpenChange={setIsLoginPromptOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>로그인이 필요합니다</DialogTitle>
-            <DialogDescription>상세보기와 견적 담기 기능을 이용하려면 로그인해 주세요.</DialogDescription>
+            <DialogTitle>로그인 후 계속할 수 있습니다</DialogTitle>
+            <DialogDescription>검색 결과 확인, 비교 후보 저장, 견적 요청 생성은 로그인 후 사용할 수 있습니다.</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
-            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLoginRedirect}>로그인하기</Button>
-            <Button variant="ghost" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>취소</Button>
+            <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={handleLoginRedirect}>로그인하고 계속하기</Button>
+            <Button variant="ghost" className="w-full" onClick={() => setIsLoginPromptOpen(false)}>나중에 하기</Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -485,6 +485,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter }: { activeFilterCou
       } catch {}
       runSearch();
     }
+  };
 
   return (
     <div className="shrink-0">

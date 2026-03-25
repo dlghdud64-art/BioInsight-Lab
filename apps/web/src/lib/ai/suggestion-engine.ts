@@ -37,7 +37,7 @@ export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryL
   const lines: SearchSummaryLine[] = [];
   if (products.length === 0) return lines;
 
-  // 가격 분석
+  // 가격 분석 → 비교 권장
   const prices = products
     .map((p: any) => p.vendors?.[0]?.priceInKRW)
     .filter((p: number | undefined): p is number => !!p && p > 0);
@@ -47,7 +47,7 @@ export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryL
     const max = Math.max(...prices);
     const diffPct = Math.round(((max - min) / min) * 100);
     if (diffPct > 30) {
-      lines.push({ text: `비교 권장 · 가격차 ${diffPct}%`, signal: "compare" });
+      lines.push({ text: "비교 후보를 준비했습니다", signal: "compare" });
     }
   }
 
@@ -57,7 +57,7 @@ export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryL
   });
 
   if (compareCandidates.length >= 2 && compareIds.length === 0) {
-    lines.push({ text: `비교 권장 · 후보 ${Math.min(compareCandidates.length, 5)}개`, signal: "compare" });
+    lines.push({ text: "동일 규격 후보가 있어 비교가 가능합니다", signal: "compare" });
   }
 
   // 납기 불완전
@@ -66,23 +66,34 @@ export function generateSearchSummary(input: SearchSummaryInput): SearchSummaryL
     return vendors.length > 0 && !vendors[0]?.leadTime;
   });
   if (missingLeadTime.length > 0) {
-    lines.push({ text: `납기 확인 필요 · ${missingLeadTime.length}개`, signal: "caution" });
+    lines.push({ text: "납기 확인이 필요한 항목이 있습니다", signal: "caution" });
   }
 
   // 공급사 다양성
   const vendorNames = [...new Set(products.flatMap((p: any) => (p.vendors || []).map((v: any) => v.vendor?.name)).filter(Boolean))];
   if (vendorNames.length === 1 && products.length > 1) {
-    lines.push({ text: "공급사 확인 필요 · 단일 공급사", signal: "caution" });
+    lines.push({ text: "공급사 확인 필요", signal: "caution" });
   }
 
-  // 이미 비교 중
+  // 비교 + 요청 혼합
+  if (compareIds.length >= 2 && quoteItemIds.length > 0) {
+    lines.push({ text: "비교 후 요청 전환이 적절합니다", signal: "compare" });
+  }
+
+  // 비교 준비됨
   if (compareIds.length >= 2 && quoteItemIds.length === 0) {
-    lines.push({ text: `비교 ${compareIds.length}개 준비 · 비교 시작`, signal: "compare" });
+    lines.push({ text: "비교 후보가 준비되었습니다", signal: "compare" });
+  }
+
+  // 요청 전환 필요
+  const noPriceProducts = products.filter((p: any) => !(p.vendors?.[0]?.priceInKRW > 0));
+  if (noPriceProducts.length > 0 && quoteItemIds.length === 0 && compareIds.length === 0) {
+    lines.push({ text: "요청 전환이 필요한 항목이 있습니다", signal: "request" });
   }
 
   // 견적 담기 완료
-  if (quoteItemIds.length > 0) {
-    lines.push({ text: `바로 요청 가능 · ${quoteItemIds.length}건`, signal: "request" });
+  if (quoteItemIds.length > 0 && compareIds.length === 0) {
+    lines.push({ text: "바로 요청 가능", signal: "request" });
   }
 
   return lines.slice(0, 3);
@@ -104,19 +115,22 @@ export function generateDockRecommendation(input: DockRecommendationInput): stri
   const requestProducts = products.filter((p: any) => quoteItemIds.includes(p.id));
   const missingLeadTime = requestProducts.filter((p: any) => !(p.vendors?.[0]?.leadTime));
 
+  // 혼합형
   if (compareIds.length >= 2 && quoteItemIds.length > 0) {
-    return "비교 후 요청 권장";
+    return "비교 후 요청 전환이 적절합니다";
   }
+  // 비교 중심
   if (compareIds.length >= 2 && quoteItemIds.length === 0) {
-    if (compareCategories.length > 1) return "규격 확인 후 비교 시작";
-    return "비교 시작";
+    if (compareCategories.length <= 1) return "동일 카테고리 비교가 가능합니다";
+    return "비교 시작이 적절합니다";
   }
+  // 요청 중심
   if (quoteItemIds.length > 0) {
-    if (missingLeadTime.length > 0) return `납기 확인 필요 · ${missingLeadTime.length}건`;
-    return "요청서 생성으로 이동";
+    if (missingLeadTime.length > 0) return "요청 전환이 필요한 항목이 있습니다";
+    return "요청서 생성으로 이어갈 수 있습니다";
   }
   if (compareIds.length === 1) {
-    return "비교 후보 1개 더 추가";
+    return "비교 후보가 준비되었습니다";
   }
   return null;
 }
@@ -161,44 +175,43 @@ export function generateCompareDecision(input: CompareDecisionInput): CompareDec
 
   if (scenario === "cost" && cheapest) {
     const name = cheapest.product.name?.substring(0, 18) || "—";
-    recommendation = `기준안으로 설정 · ${name}`;
-    if (priced.length >= 2) {
-      const diff = Math.round(((priced[priced.length - 1].price - cheapest.price) / cheapest.price) * 100);
-      details.push(`최저가 ₩${cheapest.price.toLocaleString()} · ${diff}% 차이`);
-    }
+    recommendation = name;
+    details.push("가격 기준으로 유리합니다");
     if (fastest && fastest.product.id !== cheapest.product.id) {
-      details.push(`납기 우선이면 ${fastest.product.name?.substring(0, 12)} (${fastest.leadTime}일)`);
+      details.push("납기 기준으로 유리합니다");
     }
     confidence = priced.length >= 2 ? "high" : "medium";
   } else if (scenario === "leadtime" && fastest) {
     const name = fastest.product.name?.substring(0, 18) || "—";
-    recommendation = `기준안으로 설정 · ${name}`;
-    details.push(`납기 ${fastest.leadTime}일`);
+    recommendation = name;
+    details.push("납기 기준으로 유리합니다");
     if (cheapest && cheapest.product.id !== fastest.product.id) {
-      details.push(`가격 우선이면 ${cheapest.product.name?.substring(0, 12)}`);
+      details.push("가격 기준으로 유리합니다");
     }
     confidence = withLeadTime.length >= 2 ? "high" : "medium";
   } else if (scenario === "spec") {
     recommendation = "현재 선택안 유지";
     const categories = [...new Set(products.map((p: any) => p.category).filter(Boolean))];
     if (categories.length > 1) {
-      details.push(`카테고리 ${categories.length}개 · 규격 직접 확인`);
+      details.push("규격 일치도가 높습니다");
     }
     confidence = "medium";
   } else {
     recommendation = "현재 선택안 유지";
-    if (cheapest) details.push(`참고: 최저가 ${cheapest.product.name?.substring(0, 12)} ₩${cheapest.price.toLocaleString()}`);
+    if (priced.length >= 2) {
+      details.push("추가 비교보다 요청 전환이 적절합니다");
+    }
     confidence = "low";
   }
 
   if (quoteItemsCount > 0) {
-    nextAction = `요청 단계로 이동 · ${quoteItemsCount}건`;
+    nextAction = "요청 단계로 이동";
   } else if (priced.length >= 2) {
     nextAction = "2개 함께 요청 권장";
   } else if (cheapest) {
-    nextAction = "비교 후 요청 권장";
+    nextAction = "현재 선택안 유지";
   } else {
-    nextAction = "요청 전환 권장 · 가격 미확인";
+    nextAction = "추가 비교 필요";
   }
 
   return { recommendation, details, nextAction, confidence };
@@ -257,6 +270,8 @@ export function generateRequestDraft(input: RequestDraftInput): RequestDraft {
     { label: "납기 요청", status: "included" },
     { label: "대체 가능 여부 문의", status: "included" },
     { label: "첨부 안내", status: "included" },
+    { label: "납품지 확인", status: "missing" },
+    { label: "담당자 정보", status: "missing" },
   ];
 
   return {
