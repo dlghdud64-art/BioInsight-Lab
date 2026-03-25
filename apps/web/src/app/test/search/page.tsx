@@ -164,69 +164,33 @@ export default function SearchPage() {
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
-            {/* ═══ Operating Status Bar — 2줄 구조 ═══ */}
-            <div className="px-4 py-2 border-b border-bd bg-el/50 space-y-0.5">
-              {/* 1행: 사실 정보 — 결과 수, 필터, 검색어 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-[11px] text-slate-400">
-                  <span className="font-medium text-slate-300">
-                    {isSearchLoading ? "검색 중..." : `결과 ${products.length}건`}
-                  </span>
-                  {activeFilterCount > 0 && (
-                    <span>· 필터 {activeFilterCount}개 적용</span>
-                  )}
-                </div>
-                <div className="flex items-center gap-1.5">
-                  {/* Desktop filter trigger */}
-                  <Sheet>
-                    <SheetTrigger asChild>
-                      <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
-                        <SlidersHorizontal className="h-3 w-3" />
-                        필터
-                        {activeFilterCount > 0 && (
-                          <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
-                        )}
-                      </button>
-                    </SheetTrigger>
-                    <SheetContent side="left" className="w-[280px] p-4">
-                      <SearchPanel />
-                    </SheetContent>
-                  </Sheet>
-                  {searchQuery && (
-                    <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-                      <button className="inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-el transition-colors">
-                        <TrendingDown className="h-3 w-3" />
-                        재고
-                      </button>
-                    </Link>
-                  )}
-                </div>
-              </div>
-              {/* 2행: 작업 상태 + 다음 행동 방향 */}
-              <div className="flex items-center gap-1.5 text-[11px]">
-                {compareIds.length > 0 && (
-                  <span className="text-blue-400 font-medium">비교 후보 {compareIds.length}</span>
-                )}
-                {compareIds.length > 0 && quoteItems.length > 0 && (
-                  <span className="text-slate-600">·</span>
-                )}
-                {quoteItems.length > 0 && (
-                  <span className="text-emerald-400 font-medium">견적 후보 {quoteItems.length}</span>
-                )}
-                {(compareIds.length > 0 || quoteItems.length > 0) && (
-                  <span className="text-slate-600">·</span>
-                )}
-                <span className="text-slate-300">
-                  {(() => {
-                    if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
-                    if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
-                    if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
-                    if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
-                    if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
-                    return "";
-                  })()}
-                </span>
-              </div>
+            {/* ═══ 3행: Operating Status Bar — 순수 상태 표시 ═══ */}
+            <div className="px-4 py-1.5 border-b border-bd/60 flex items-baseline gap-3 text-[11px]">
+              {/* 결과 수 */}
+              <span className="text-slate-400">
+                {isSearchLoading ? "검색 중..." : <><span className="font-medium text-slate-300">{products.length}</span>건</>}
+              </span>
+              {activeFilterCount > 0 && (
+                <span className="text-slate-500">필터 {activeFilterCount}개</span>
+              )}
+              {/* 비교/견적 후보 + 다음 행동 */}
+              <span className="text-slate-600 hidden sm:inline">|</span>
+              {compareIds.length > 0 && (
+                <span className="text-blue-400 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
+              )}
+              {quoteItems.length > 0 && (
+                <span className="text-emerald-400 font-medium hidden sm:inline">견적 후보 {quoteItems.length}</span>
+              )}
+              <span className="text-slate-400 hidden md:inline">
+                {(() => {
+                  if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
+                  if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
+                  if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
+                  if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
+                  if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
+                  return "";
+                })()}
+              </span>
             </div>
 
             {/* AI Insight — compact, inline */}
@@ -622,7 +586,7 @@ export default function SearchPage() {
   );
 }
 
-/** ═══ A. Search Utility Bar — compact, not hero ═══ */
+/** ═══ A. Search Utility Bar — 3층: 앱 헤더 / 검색 바 / (상태바는 본문에서) ═══ */
 function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
@@ -634,14 +598,12 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
     if (!localQuery.trim()) return;
     setSearchQuery(localQuery);
 
-    // 비로그인: 검색어 저장 → auth gate
     if (!isLoggedIn) {
       try { sessionStorage.setItem("labaxis-pending-search", localQuery.trim()); } catch {}
       onAuthRequired();
       return;
     }
 
-    // save recent (logged-in only)
     try {
       const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
       const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
@@ -651,15 +613,18 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0">
-      {/* 워드마크 + 소싱 + 검색창 — 한 줄 */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
+    <div className="shrink-0 border-b border-bd bg-el">
+      {/* ── 1행: 앱 헤더 ── */}
+      <div className="flex items-center justify-between px-4 md:px-6 py-1.5 border-b border-bd/50">
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
-          <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
-          <span className="text-xs md:text-sm font-semibold text-slate-400">소싱</span>
+          <span className="text-sm md:text-base font-bold text-slate-100 tracking-tight">LabAxis</span>
+          <span className="text-[11px] md:text-xs font-semibold text-slate-400">소싱</span>
         </Link>
-        <div className="w-px h-5 bg-bd hidden sm:block" />
-        <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 max-w-3xl">
+      </div>
+
+      {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
+        <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
           <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#35373b] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
@@ -667,12 +632,12 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               value={localQuery}
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
               placeholder="시약명 / CAS / 제조사 / 카탈로그 번호"
-              className="h-8 md:h-10 px-2 text-xs md:text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
+              className="h-8 md:h-9 px-2 text-xs md:text-sm border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-500"
             />
             <Button
               type="submit"
               size="sm"
-              className="h-6 md:h-8 px-3 md:px-4 mr-1 md:mr-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-medium rounded shrink-0"
+              className="h-6 md:h-7 px-3 md:px-4 mr-1 md:mr-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[10px] md:text-xs font-medium rounded shrink-0"
               disabled={!localQuery.trim()}
             >
               검색
@@ -680,16 +645,45 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           </div>
         </form>
 
-        {/* Filter trigger — mobile */}
-        <button
-          onClick={onOpenFilter}
-          className="md:hidden inline-flex items-center gap-1 text-[10px] px-2 py-1 rounded border border-bd text-slate-400 hover:bg-st transition-colors"
-        >
-          <SlidersHorizontal className="h-3 w-3" />
-          {activeFilterCount > 0 && (
-            <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white">{activeFilterCount}</span>
+        {/* Utility controls — ghost, 검색 버튼보다 약하게 */}
+        <div className="flex items-center gap-1 shrink-0">
+          {/* Filter — desktop: Sheet trigger */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] transition-colors">
+                <SlidersHorizontal className="h-3 w-3" />
+                필터
+                {activeFilterCount > 0 && (
+                  <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
+                )}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-[280px] p-4">
+              <SearchPanel />
+            </SheetContent>
+          </Sheet>
+
+          {/* Filter — mobile */}
+          <button
+            onClick={onOpenFilter}
+            className="md:hidden inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-400 hover:text-slate-300 hover:bg-white/[0.04] transition-colors"
+          >
+            <SlidersHorizontal className="h-3 w-3" />
+            {activeFilterCount > 0 && (
+              <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white">{activeFilterCount}</span>
+            )}
+          </button>
+
+          {/* Inventory link — desktop only */}
+          {isLoggedIn && hasSearched && searchQuery && (
+            <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+              <button className="hidden md:inline-flex items-center gap-1 text-[10px] px-2 py-1.5 rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.04] transition-colors">
+                <TrendingDown className="h-3 w-3" />
+                재고
+              </button>
+            </Link>
           )}
-        </button>
+        </div>
       </div>
     </div>
   );
