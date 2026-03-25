@@ -176,7 +176,7 @@ export function VendorRequestModal({
               {vendors.map((vendor, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-2 p-3 rounded-lg border border-[#2a2a2e] bg-[#111114]"
+                  className="flex items-start gap-2 p-3 rounded-lg border border-bd bg-pg"
                 >
                   <div className="flex-1 space-y-2">
                     <div className="flex items-center gap-2">

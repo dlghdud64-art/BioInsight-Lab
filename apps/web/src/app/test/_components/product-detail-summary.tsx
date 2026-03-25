@@ -14,6 +14,7 @@ import {
   Calendar,
   ClipboardList,
   ExternalLink,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -206,37 +207,39 @@ export function ProductDetailSummary({
         </div>
       </div>
 
-      {/* 액션 바 */}
+      {/* 액션 바 — 비교 primary, 견적 secondary */}
       {(onToggleCompare || onToggleRequest) && (
         <div className="px-4 py-3 border-b border-bd/50 space-y-1.5">
-          {onToggleRequest && (
-            <Button
-              size="sm"
-              className={`w-full h-7 text-xs font-medium ${
-                isInRequest
-                  ? "bg-emerald-600/15 text-emerald-400 border border-emerald-600/30 hover:bg-red-600/10 hover:text-red-400 hover:border-red-600/30"
-                  : "bg-blue-600 hover:bg-blue-500 text-white"
-              }`}
-              onClick={onToggleRequest}
-            >
-              <FileText className="h-3 w-3 mr-1.5" />
-              {isInRequest ? "견적에서 해제" : "견적 담기"}
-            </Button>
-          )}
           {onToggleCompare && (
-            <Button
-              variant="outline"
-              size="sm"
-              className={`w-full h-7 text-xs font-medium border-bd ${
-                isInCompare
-                  ? "bg-blue-600/10 text-blue-400 border-blue-600/30"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-              onClick={onToggleCompare}
-            >
-              <GitCompare className="h-3 w-3 mr-1.5" />
-              {isInCompare ? "비교 해제" : "비교 추가"}
-            </Button>
+            isInCompare ? (
+              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-blue-600/12 text-blue-400/80 border border-blue-600/20">
+                <Check className="h-3 w-3" />비교 후보에 포함됨
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                className="w-full h-7 text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white"
+                onClick={onToggleCompare}
+              >
+                <GitCompare className="h-3 w-3 mr-1.5" />비교 후보에 추가
+              </Button>
+            )
+          )}
+          {onToggleRequest && (
+            isInRequest ? (
+              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-slate-500/10 text-slate-400 border border-slate-500/15">
+                <Check className="h-3 w-3" />견적 후보에 포함됨
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full h-7 text-xs font-medium border-bd text-slate-400 hover:text-slate-200"
+                onClick={onToggleRequest}
+              >
+                <FileText className="h-3 w-3 mr-1.5" />견적 후보에 추가
+              </Button>
+            )
           )}
         </div>
       )}

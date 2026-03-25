@@ -13,7 +13,7 @@ export function TestStepHelp() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <button className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-300 transition-colors">
+        <button className="text-xs text-slate-500 underline underline-offset-2 hover:text-slate-700 transition-colors">
           단계 안내 보기
         </button>
       </SheetTrigger>

@@ -50,7 +50,7 @@ export function QueryAnalysisCard({ intent }: QueryAnalysisCardProps) {
             <summary className="cursor-pointer text-muted-foreground hover:text-foreground">
               Raw JSON 보기
             </summary>
-            <pre className="mt-2 p-2 bg-[#222226] rounded text-[10px] overflow-auto">
+            <pre className="mt-2 p-2 bg-el rounded text-[10px] overflow-auto">
               {JSON.stringify(intent, null, 2)}
             </pre>
           </details>

@@ -14,7 +14,7 @@ export function TestBoardColumn({
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-4">
-        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1a1a1e] text-xs font-semibold text-white">
+        <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-pn text-xs font-semibold text-white">
           {step}
         </span>
         <div>

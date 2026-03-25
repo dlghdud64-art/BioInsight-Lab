@@ -47,12 +47,12 @@ export function QuoteListPreviewCard() {
   };
 
   return (
-    <Card className="rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]">
+    <Card className="rounded-lg border border-bd bg-pn">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-[#333338] px-2 py-0.5 text-xs font-medium text-slate-600 bg-[#111114]">
+              <span className="inline-flex items-center rounded-full border border-bs px-2 py-0.5 text-xs font-medium text-slate-600 bg-pg">
                 Step 3
               </span>
               <span>견적 요청 리스트 정리</span>
@@ -68,7 +68,7 @@ export function QuoteListPreviewCard() {
         <div className="border rounded-lg overflow-hidden">
           <div className="max-h-[400px] overflow-y-auto">
             <Table>
-              <TableHeader className="sticky top-0 bg-[#1a1a1e] z-10">
+              <TableHeader className="sticky top-0 bg-pn z-10">
                 <TableRow className="h-9">
                   <TableHead className="w-8 text-[10px] p-2">No.</TableHead>
                   <TableHead className="text-[10px] p-2">제품명</TableHead>
@@ -169,7 +169,7 @@ export function QuoteListPreviewCard() {
               <Button
                 variant="default"
                 size="sm"
-                className="w-full text-xs bg-[#1a1a1e] hover:bg-[#222226]"
+                className="w-full text-xs bg-pn hover:bg-el"
               >
                 견적 보기 →
               </Button>

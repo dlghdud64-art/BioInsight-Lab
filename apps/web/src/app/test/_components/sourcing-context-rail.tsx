@@ -8,6 +8,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { ProductDetailSummary, toDetailData } from "./product-detail-summary";
 
 interface SourcingContextRailProps {
@@ -45,6 +46,8 @@ export function SourcingContextRail({
   requestCount = 0,
   searchQuery,
 }: SourcingContextRailProps) {
+  const { data: session } = useSession();
+  const isGuest = !session?.user;
   const detailData = toDetailData(product);
 
   return (
@@ -78,14 +81,21 @@ export function SourcingContextRail({
           showDetailLink={true}
         />
 
-        {/* 다음 단계 제안 — inventory panel의 recommended actions 패턴 */}
+        {/* 비로그인 안내 */}
+        {isGuest && (
+          <div className="px-4 py-2 bg-blue-600/5 border-b border-blue-600/10">
+            <p className="text-[10px] text-blue-300">비교·견적 요청은 로그인 후 진행됩니다.</p>
+          </div>
+        )}
+
+        {/* 다음 단계 — 짧은 행동형 */}
         <div className="px-4 py-3 border-b border-bd/50">
           <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
             다음 단계
           </div>
-          <div className="space-y-1.5 text-xs text-slate-400">
+          <div className="space-y-1.5 text-xs">
             {!isInCompare && !isInRequest && (
-              <p>비교 목록에 추가하거나 견적을 요청하세요.</p>
+              <p className="text-slate-400">비교 후보에 추가하거나 견적 후보에 추가</p>
             )}
             {isInCompare && compareCount >= 2 && onOpenCompareWindow && (
               <button
@@ -93,11 +103,11 @@ export function SourcingContextRail({
                 className="flex items-center gap-1.5 text-blue-400 hover:text-blue-300 transition-colors"
               >
                 <GitCompare className="h-3 w-3" />
-                비교 검토 시작 ({compareCount}개)
+                {compareCount}개 비교 시작
               </button>
             )}
             {isInCompare && compareCount < 2 && (
-              <p className="text-amber-400">비교하려면 2개 이상 필요합니다.</p>
+              <p className="text-amber-400">비교 후보 1개 더 추가</p>
             )}
             {isInRequest && onOpenRequestWindow && (
               <button
@@ -105,7 +115,7 @@ export function SourcingContextRail({
                 className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 transition-colors"
               >
                 <FileText className="h-3 w-3" />
-                견적 요청 검토 ({requestCount}건)
+                견적 요청서 만들기
               </button>
             )}
           </div>
