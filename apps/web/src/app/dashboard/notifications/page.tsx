@@ -53,7 +53,7 @@ const CATEGORY_CONFIG: Record<
   approval_pending:  { icon: ClipboardCheck,bg: "bg-amber-100",  text: "text-amber-600",  darkBg: "dark:bg-amber-950/40",  darkText: "dark:text-amber-400",  label: "승인 대기" },
   expiry_warning:    { icon: Clock,         bg: "bg-orange-100", text: "text-orange-600", darkBg: "dark:bg-orange-950/40", darkText: "dark:text-orange-400", label: "유효기간 경고" },
   safety_alert:      { icon: ShieldAlert,   bg: "bg-purple-100", text: "text-purple-600", darkBg: "dark:bg-purple-950/40", darkText: "dark:text-purple-400", label: "안전 관리" },
-  system:            { icon: Bell,          bg: "bg-slate-100",  text: "text-slate-600",  darkBg: "dark:bg-[#222226]",     darkText: "dark:text-slate-400",  label: "시스템" },
+  system:            { icon: Bell,          bg: "bg-[#222226]",  text: "text-slate-400",  darkBg: "",     darkText: "",  label: "시스템" },
 };
 
 /* ── 시간 포맷팅 ── */
@@ -268,10 +268,10 @@ function NotificationsContent() {
         key={notification.id}
         className={`transition-all hover:shadow-md cursor-pointer ${
           isCompleted
-            ? "opacity-60 bg-slate-50/50 dark:bg-[#1a1a1e]/50"
+            ? "opacity-60 bg-[#1a1a1e]/50"
             : isUrgent
             ? "border-red-200 dark:border-red-900/40 bg-red-50/20 dark:bg-red-950/10"
-            : "hover:bg-slate-50 dark:hover:bg-[#222226]/50"
+            : "hover:bg-[#222226]/50"
         }`}
       >
         <CardContent className="p-4">
@@ -306,7 +306,7 @@ function NotificationsContent() {
               <p className={`text-sm font-semibold ${
                 isCompleted
                   ? "text-slate-400 dark:text-slate-500 line-through"
-                  : "text-slate-900 dark:text-slate-100"
+                  : "text-slate-100"
               }`}>
                 {notification.targetName}
               </p>
@@ -338,7 +338,7 @@ function NotificationsContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 px-2 text-xs text-slate-500 hover:text-slate-700"
+                        className="h-7 px-2 text-xs text-slate-500 hover:text-slate-300"
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsCompleted(notification.id);
@@ -352,7 +352,7 @@ function NotificationsContent() {
                         className={`h-7 px-3 text-xs gap-1 ${
                           isUrgent
                             ? "border-red-200 text-red-700 bg-red-50 hover:bg-red-100 dark:border-red-800 dark:text-red-400 dark:bg-red-950/30"
-                            : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-[#333338] dark:text-slate-300"
+                            : "border-[#333338] text-slate-300 hover:bg-[#222226]"
                         }`}
                         asChild
                       >
@@ -395,7 +395,7 @@ function NotificationsContent() {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100">
             알림 센터
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
@@ -422,7 +422,7 @@ function NotificationsContent() {
               <Flame className="h-5 w-5 text-red-500 dark:text-red-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{urgentPendingCount}</p>
+              <p className="text-2xl font-bold text-slate-100">{urgentPendingCount}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">긴급 처리</p>
             </div>
           </CardContent>
@@ -433,7 +433,7 @@ function NotificationsContent() {
               <ClipboardCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{pendingNotifications.length}</p>
+              <p className="text-2xl font-bold text-slate-100">{pendingNotifications.length}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">미처리 작업</p>
             </div>
           </CardContent>
@@ -444,7 +444,7 @@ function NotificationsContent() {
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-slate-900 dark:text-slate-100">{completedNotifications.length}</p>
+              <p className="text-2xl font-bold text-slate-100">{completedNotifications.length}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400">완료된 작업</p>
             </div>
           </CardContent>
@@ -562,7 +562,7 @@ function NotificationsContent() {
 
 export default function NotificationsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2a2a2e] border-t-blue-600" /></div>}>
       <NotificationsContent />
     </Suspense>
   );

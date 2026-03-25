@@ -147,7 +147,7 @@ function SecuritySettingsPageContent() {
 
   if (status === "loading" || orgsLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -160,7 +160,7 @@ function SecuritySettingsPageContent() {
 
   if (organizations.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -182,7 +182,7 @@ function SecuritySettingsPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -282,7 +282,7 @@ function SecuritySettingsPageContent() {
                             로딩 중...
                           </div>
                         ) : allowedDomains.length === 0 ? (
-                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-slate-200 rounded-lg">
+                          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed border-[#2a2a2e] rounded-lg">
                             <Mail className="h-8 w-8 mx-auto mb-2 text-slate-400" />
                             <p>허용된 도메인이 없습니다.</p>
                             <p className="text-xs mt-1">모든 이메일 도메인이 허용됩니다.</p>

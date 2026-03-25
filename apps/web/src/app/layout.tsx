@@ -7,7 +7,7 @@ import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Analytics } from "@vercel/analytics/react";
-import { FloatingThemeToggle } from "@/components/layout/ThemeToggle";
+
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 import { BRAND } from "@/lib/brand";
 
@@ -77,14 +77,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" suppressHydrationWarning>
-      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased dark:bg-[#0b1120] dark:text-slate-100">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+    <html lang="ko" className="dark" style={{ colorScheme: "dark" }} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `try{document.documentElement.classList.remove('light');document.documentElement.classList.add('dark');document.documentElement.style.colorScheme='dark'}catch(e){}` }} />
+      </head>
+      <body className="min-h-screen bg-surface-shell font-sans text-slate-100 antialiased">
+        <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
               <QueryProvider>
@@ -93,7 +91,7 @@ export default function RootLayout({
                 </QRScannerProviderWrapper>
                 <Toaster />
                 <CompareFlowGuard />
-                <FloatingThemeToggle />
+
                 <Analytics />
               </QueryProvider>
             </AuthSessionProvider>

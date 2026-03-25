@@ -60,10 +60,10 @@ export default function SearchResultList({
     return (
       <div className="text-center py-16 md:py-20">
         <div className="flex flex-col items-center justify-center w-full max-w-3xl mx-auto px-4">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-[#222226] flex items-center justify-center mb-4">
             <Search className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">원하는 시약을 검색해보세요</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-2">원하는 시약을 검색해보세요</h3>
           <p className="text-base text-gray-500 break-keep whitespace-pre-wrap leading-relaxed">
             제품명, 벤더, 카테고리를 검색할 수 있습니다.
           </p>
@@ -76,10 +76,10 @@ export default function SearchResultList({
     return (
       <div className="text-center py-16 md:py-20">
         <div className="flex flex-col items-center justify-center">
-          <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+          <div className="w-16 h-16 rounded-full bg-[#222226] flex items-center justify-center mb-4">
             <FileText className="h-8 w-8 text-gray-400" strokeWidth={1.5} />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">검색 결과가 없습니다</h3>
+          <h3 className="text-lg font-semibold text-slate-100 mb-2">검색 결과가 없습니다</h3>
           <p className="text-sm text-gray-500">다른 검색어로 다시 시도해보세요.</p>
         </div>
       </div>
@@ -91,10 +91,10 @@ export default function SearchResultList({
       {/* 헤더: 검색 결과 개수 & 정렬 */}
       <div className="flex items-center justify-between mb-4">
         <div className="text-sm text-gray-600">
-          검색 결과: <span className="font-bold text-gray-900">{results.length}</span>건
+          검색 결과: <span className="font-bold text-slate-100">{results.length}</span>건
         </div>
         <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-[180px] border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-100">
+          <SelectTrigger className="w-[180px] border-[#2a2a2e] rounded-lg shadow-sm focus:ring-2 focus:ring-blue-100">
             <SelectValue placeholder="정렬 기준" />
           </SelectTrigger>
           <SelectContent>

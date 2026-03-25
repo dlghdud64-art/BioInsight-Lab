@@ -180,7 +180,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
 
   if (isLoading) {
     return (
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
         <CardContent className="py-12 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
@@ -193,7 +193,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
 
   if (error) {
     return (
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
         <CardContent className="py-12">
           <div className="text-center text-destructive">
             <XCircle className="h-12 w-12 mx-auto mb-4" />
@@ -207,11 +207,11 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
   return (
     <div className="space-y-6">
       {/* Header Controls */}
-      <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+      <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-sm font-semibold text-slate-900">벤더 회신</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-100">벤더 회신</CardTitle>
               <CardDescription className="text-xs text-slate-500 mt-1">
                 벤더별 견적 회신을 비교하고 CSV로 내보낼 수 있습니다.
               </CardDescription>
@@ -270,7 +270,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
 
       {/* Vendor Requests List */}
       {filteredVendors.length === 0 ? (
-        <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
           <CardContent className="py-12 text-center">
             <Mail className="h-12 w-12 mx-auto text-slate-300 mb-4" />
             <p className="text-sm font-medium text-slate-600">
@@ -288,9 +288,9 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
       ) : (
         <>
           {/* Vendor Requests Summary Table */}
-          <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
             <CardHeader>
-              <CardTitle className="text-sm font-semibold text-slate-900">
+              <CardTitle className="text-sm font-semibold text-slate-100">
                 벤더 요청 현황 ({filteredVendors.length}개)
               </CardTitle>
             </CardHeader>
@@ -312,7 +312,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                         <TableCell className="text-xs">
                           <div>
                             {vendor.vendorName && (
-                              <div className="font-medium text-slate-900">{vendor.vendorName}</div>
+                              <div className="font-medium text-slate-100">{vendor.vendorName}</div>
                             )}
                             <div className="text-slate-500">{vendor.vendorEmail}</div>
                           </div>
@@ -349,9 +349,9 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
 
           {/* Responses Comparison Table */}
           {snapshotItems.length > 0 && (
-            <Card className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <Card className="rounded-xl border border-[#2a2a2e] bg-[#1a1a1e] shadow-sm">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold text-slate-900">회신 비교</CardTitle>
+                <CardTitle className="text-sm font-semibold text-slate-100">회신 비교</CardTitle>
                 <CardDescription className="text-xs text-slate-500">
                   품목별 벤더 회신을 비교합니다. (요청 당시 기준)
                 </CardDescription>
@@ -361,10 +361,10 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="text-xs sticky left-0 bg-white z-10" rowSpan={2}>
+                        <TableHead className="text-xs sticky left-0 bg-[#1a1a1e] z-10" rowSpan={2}>
                           No.
                         </TableHead>
-                        <TableHead className="text-xs sticky left-12 bg-white z-10" rowSpan={2}>
+                        <TableHead className="text-xs sticky left-12 bg-[#1a1a1e] z-10" rowSpan={2}>
                           제품명
                         </TableHead>
                         <TableHead className="text-xs" rowSpan={2}>
@@ -376,7 +376,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                         {filteredVendors.map((vendor: any) => (
                           <TableHead
                             key={vendor.id}
-                            className="text-xs text-center border-l border-slate-200"
+                            className="text-xs text-center border-l border-[#2a2a2e]"
                             colSpan={3}
                           >
                             {vendor.vendorName || vendor.vendorEmail}
@@ -386,7 +386,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                       <TableRow>
                         {filteredVendors.map((vendor: any) => (
                           <React.Fragment key={vendor.id}>
-                            <TableHead className="text-xs text-right border-l border-slate-200">
+                            <TableHead className="text-xs text-right border-l border-[#2a2a2e]">
                               단가
                             </TableHead>
                             <TableHead className="text-xs text-center">납기(일)</TableHead>
@@ -398,10 +398,10 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                     <TableBody>
                       {snapshotItems.map((item: any, index: number) => (
                         <TableRow key={item.quoteItemId}>
-                          <TableCell className="text-xs font-medium sticky left-0 bg-white">
+                          <TableCell className="text-xs font-medium sticky left-0 bg-[#1a1a1e]">
                             {item.lineNumber || index + 1}
                           </TableCell>
-                          <TableCell className="text-xs sticky left-12 bg-white">
+                          <TableCell className="text-xs sticky left-12 bg-[#1a1a1e]">
                             {item.productName}
                           </TableCell>
                           <TableCell className="text-xs text-slate-600">
@@ -420,7 +420,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                             return (
                               <React.Fragment key={vendor.id}>
                                 <TableCell
-                                  className={`text-xs text-right border-l border-slate-200 ${
+                                  className={`text-xs text-right border-l border-[#2a2a2e] ${
                                     isWaiting ? "text-slate-400" : ""
                                   }`}
                                 >

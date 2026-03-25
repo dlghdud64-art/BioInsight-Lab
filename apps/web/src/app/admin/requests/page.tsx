@@ -186,7 +186,7 @@ export default function AdminRequestsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="flex">
           <DashboardSidebar />
@@ -203,7 +203,7 @@ export default function AdminRequestsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -212,7 +212,7 @@ export default function AdminRequestsPage() {
             <div className="max-w-6xl mx-auto space-y-6">
               {/* 페이지 헤더 */}
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900">구매 요청 승인</h1>
+                <h1 className="text-2xl md:text-3xl font-bold text-slate-100">구매 요청 승인</h1>
                 <p className="text-sm text-muted-foreground mt-1">
                   팀원들의 구매 요청을 검토하고 승인하세요
                 </p>
@@ -362,7 +362,7 @@ function RequestCard({
   }, 0);
 
   return (
-    <div className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+    <div className="border rounded-lg p-4 hover:bg-[#222226] transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 space-y-3">
           {/* 요청자 정보 */}

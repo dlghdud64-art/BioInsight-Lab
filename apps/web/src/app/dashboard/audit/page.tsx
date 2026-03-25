@@ -62,7 +62,7 @@ export default function AuditTrailPage() {
             <div className="flex flex-col items-center gap-4 text-center">
               <ShieldAlert className="h-12 w-12 text-amber-600" />
               <div>
-                <h3 className="font-semibold text-slate-900">접근 권한이 없습니다</h3>
+                <h3 className="font-semibold text-slate-100">접근 권한이 없습니다</h3>
                 <p className="text-sm text-slate-600 mt-1">
                   감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.
                 </p>
@@ -157,7 +157,7 @@ export default function AuditTrailPage() {
             <Lock className="h-4 w-4" />
             <span className="font-semibold tracking-tight text-sm">보안 및 컴플라이언스</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
             감사 증적 (Audit Trail)
             <Lock className="h-6 w-6 text-slate-500" />
           </h2>
@@ -167,7 +167,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-[#1a1a1e] hover:bg-[#222226] text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200"
+            className="bg-slate-100 text-slate-900 hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -180,10 +180,10 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      <div className="border border-slate-200 dark:border-[#333338] rounded-lg bg-white dark:bg-[#09090b] overflow-hidden shadow-sm">
+      <div className="border border-[#333338] rounded-lg bg-[#09090b] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-slate-50 dark:bg-[#1a1a1e]/50">
+          <TableHeader className="bg-[#1a1a1e]/50">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">일시 (Timestamp) / ID</TableHead>
               <TableHead className="font-semibold">작업자 (User)</TableHead>
@@ -196,16 +196,16 @@ export default function AuditTrailPage() {
             {auditLogs.map((log) => (
               <TableRow
                 key={log.id}
-                className="hover:bg-slate-50 dark:hover:bg-[#1a1a1e]/50"
+                className="hover:bg-[#1a1a1e]/50"
               >
                 <TableCell>
-                  <div className="font-mono text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="font-mono text-sm font-medium text-slate-100">
                     {log.time}
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">{log.id}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-slate-900 dark:text-slate-100">{log.user}</div>
+                  <div className="font-medium text-slate-100">{log.user}</div>
                   <div className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
                     IP: {log.ip}
                   </div>
@@ -217,7 +217,7 @@ export default function AuditTrailPage() {
                   >
                     {log.action}
                   </Badge>
-                  <div className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  <div className="text-sm font-medium text-slate-100">
                     {log.target}
                   </div>
                 </TableCell>

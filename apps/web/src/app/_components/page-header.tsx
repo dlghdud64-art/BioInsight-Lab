@@ -34,7 +34,7 @@ export function PageHeader({
                 <Icon className={cn("h-5 w-5 sm:h-6 sm:w-6", iconColor)} />
               </div>
             )}
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 truncate min-w-0">{title}</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-100 dark:text-slate-100 truncate min-w-0">{title}</h1>
           </div>
           {description && (
             <div className="text-muted-foreground max-w-2xl hidden sm:block">

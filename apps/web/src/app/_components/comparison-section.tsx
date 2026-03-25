@@ -60,11 +60,11 @@ export function ComparisonSection() {
   const [activeView, setActiveView] = useState<"before" | "after">("before");
 
   return (
-    <section className="py-6 md:py-10 border-b border-slate-200 bg-gradient-to-b from-white via-slate-50/30 to-white">
+    <section className="py-6 md:py-10 border-b border-[#2a2a2e] bg-gradient-to-b from-white via-slate-50/30 to-white">
       <div className="mx-auto max-w-4xl px-4 md:px-6">
         {/* 헤더 */}
         <div className="text-center mb-4 md:mb-8">
-          <h2 className="text-base md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900 mb-1 md:mb-2">
+          <h2 className="text-base md:text-2xl lg:text-3xl font-bold tracking-tight text-slate-100 mb-1 md:mb-2">
             업무 흐름 비교
           </h2>
           <p className="text-[11px] md:text-sm text-slate-500 max-w-2xl mx-auto">
@@ -74,12 +74,12 @@ export function ComparisonSection() {
 
         {/* 모바일 토글 */}
         <div className="flex items-center justify-center mb-4 md:hidden">
-          <div className="flex items-center bg-slate-100 rounded-full p-1 w-full max-w-sm">
+          <div className="flex items-center bg-[#222226] rounded-full p-1 w-full max-w-sm">
             <button
               onClick={() => setActiveView("before")}
               className={`flex-1 px-4 py-2 rounded-full font-semibold text-sm transition-all ${
                 activeView === "before"
-                  ? "bg-white text-slate-900 shadow-sm"
+                  ? "bg-[#1a1a1e] text-slate-100 shadow-sm"
                   : "text-slate-400"
               }`}
             >
@@ -100,9 +100,9 @@ export function ComparisonSection() {
 
         {/* 데스크탑: 단계별 비교 테이블 */}
         <div className="hidden md:block mb-6 md:mb-8">
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+          <div className="border border-[#2a2a2e] rounded-xl overflow-hidden bg-[#1a1a1e] shadow-sm">
             {/* 테이블 헤더 */}
-            <div className="grid grid-cols-[180px_1fr_auto_1fr] items-center bg-slate-50 border-b border-slate-200 px-5 py-3.5">
+            <div className="grid grid-cols-[180px_1fr_auto_1fr] items-center bg-[#111114] border-b border-[#2a2a2e] px-5 py-3.5">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                 업무 단계
               </span>
@@ -120,14 +120,14 @@ export function ComparisonSection() {
               {WORKFLOW_STEPS.map((step, idx) => (
                 <div
                   key={idx}
-                  className="grid grid-cols-[180px_1fr_auto_1fr] items-start px-5 py-4 hover:bg-slate-50/50 transition-colors"
+                  className="grid grid-cols-[180px_1fr_auto_1fr] items-start px-5 py-4 hover:bg-[#222226]/50 transition-colors"
                 >
                   {/* 단계 라벨 */}
                   <div className="flex items-center gap-2 pr-4">
                     <span className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[11px] font-bold text-slate-600">
                       {idx + 1}
                     </span>
-                    <span className="text-sm font-semibold text-slate-800 leading-tight">
+                    <span className="text-sm font-semibold text-slate-200 leading-tight">
                       {step.stage}
                     </span>
                   </div>
@@ -148,7 +148,7 @@ export function ComparisonSection() {
                   {/* BioInsight 도입 후 */}
                   <div className="flex items-start gap-2">
                     <CheckCircle2 className="flex-shrink-0 w-4 h-4 text-blue-500 mt-0.5" />
-                    <p className="text-sm text-slate-800 leading-relaxed font-medium">
+                    <p className="text-sm text-slate-200 leading-relaxed font-medium">
                       {step.after}
                     </p>
                   </div>
@@ -167,7 +167,7 @@ export function ComparisonSection() {
                 className={`border rounded-lg p-3 transition-all ${
                   activeView === "after"
                     ? "border-blue-200 bg-blue-50/30"
-                    : "border-slate-200 bg-white"
+                    : "border-[#2a2a2e] bg-[#1a1a1e]"
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1.5">
@@ -180,14 +180,14 @@ export function ComparisonSection() {
                   >
                     {idx + 1}
                   </span>
-                  <span className="text-xs font-semibold text-slate-800">
+                  <span className="text-xs font-semibold text-slate-200">
                     {step.stage}
                   </span>
                 </div>
                 <p
                   className={`text-xs leading-relaxed pl-7 ${
                     activeView === "after"
-                      ? "text-slate-800 font-medium"
+                      ? "text-slate-200 font-medium"
                       : "text-slate-600"
                   }`}
                 >
@@ -203,9 +203,9 @@ export function ComparisonSection() {
           {VALUE_SUMMARIES.map((item, idx) => (
             <div
               key={idx}
-              className="text-center p-3 md:p-4 bg-white rounded-lg border border-slate-200 shadow-sm"
+              className="text-center p-3 md:p-4 bg-[#1a1a1e] rounded-lg border border-[#2a2a2e] shadow-sm"
             >
-              <div className="text-sm md:text-base font-semibold text-slate-900 mb-0.5">
+              <div className="text-sm md:text-base font-semibold text-slate-100 mb-0.5">
                 {item.title}
               </div>
               <div className="text-[10px] md:text-xs text-slate-500 leading-snug">

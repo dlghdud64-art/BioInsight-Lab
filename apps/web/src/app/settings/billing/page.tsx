@@ -140,7 +140,7 @@ function BillingPageContent() {
 
   const getPlanBadge = (planType: SubscriptionPlan) => {
     const config = {
-      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-gray-100 text-gray-800" },
+      [SubscriptionPlan.FREE]: { label: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName, color: "bg-[#222226] text-gray-800" },
       [SubscriptionPlan.TEAM]: { label: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName, color: "bg-blue-100 text-blue-800" },
       [SubscriptionPlan.ORGANIZATION]: { label: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName, color: "bg-indigo-100 text-indigo-800" },
     };
@@ -165,7 +165,7 @@ function BillingPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="flex">
         <DashboardSidebar />
@@ -189,9 +189,9 @@ function BillingPageContent() {
             )}
 
             {/* 현재 플랜 - 리스트 스타일 */}
-            <div className="bg-white border border-slate-200 shadow-sm">
-              <div className="border-b border-slate-200 px-4 py-3">
-                <h2 className="font-semibold text-slate-900">현재 플랜</h2>
+            <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
+              <div className="border-b border-[#2a2a2e] px-4 py-3">
+                <h2 className="font-semibold text-slate-100">현재 플랜</h2>
                 <p className="text-sm text-slate-600 mt-1">{currentOrg.name}</p>
               </div>
               <div className="p-4">
@@ -239,7 +239,7 @@ function BillingPageContent() {
                 </div>
 
                 {/* 플랜 제한 - 테이블 스타일 */}
-                <div className="border-t border-slate-200 pt-4">
+                <div className="border-t border-[#2a2a2e] pt-4">
                   <Table>
                     <TableBody>
                       <TableRow>
@@ -261,9 +261,9 @@ function BillingPageContent() {
             </div>
 
             {/* 기능 비교 */}
-            <div className="bg-white border border-slate-200 shadow-sm">
-              <div className="border-b border-slate-200 px-4 py-3">
-                <h2 className="font-semibold text-slate-900">플랜별 기능</h2>
+            <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm">
+              <div className="border-b border-[#2a2a2e] px-4 py-3">
+                <h2 className="font-semibold text-slate-100">플랜별 기능</h2>
                 <p className="text-sm text-slate-600 mt-1">각 플랜에서 사용할 수 있는 기능을 확인하세요.</p>
               </div>
               <div className="p-4">

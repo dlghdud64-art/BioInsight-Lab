@@ -84,7 +84,7 @@ const MOCK_CATEGORY_DATA = [
 
 function BudgetDetailSkeleton() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-[#09090b] py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -99,7 +99,7 @@ function BudgetDetailSkeleton() {
             <Skeleton className="h-8 w-24" />
           </div>
         </div>
-        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]/60">
+        <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
           <CardContent className="p-4 md:p-6">
             <div className="grid grid-cols-3 gap-4 md:gap-6">
               <div className="space-y-2">
@@ -171,7 +171,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   if (!id) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#09090b]">
+      <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
         <p className="text-sm text-slate-500 dark:text-slate-400">잘못된 접근입니다.</p>
       </div>
     );
@@ -183,7 +183,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   if (notFound || !budget) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#09090b]">
+      <div className="min-h-screen flex items-center justify-center bg-[#09090b]">
         <div className="text-center space-y-4">
           <p className="text-sm text-slate-500 dark:text-slate-400">해당 예산 정보를 찾을 수 없습니다.</p>
           <Link
@@ -210,8 +210,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const budgetStatus = (() => {
     if (usageRate > 100) return { label: "초과", color: "bg-red-100 text-red-700 border-red-200" };
     if (usageRate >= 80) return { label: "경고", color: "bg-orange-100 text-orange-700 border-orange-200" };
-    if (now < periodStart) return { label: "예정", color: "bg-slate-100 text-slate-600 border-slate-200" };
-    if (now > periodEnd) return { label: "종료", color: "bg-slate-100 text-slate-500 border-slate-200" };
+    if (now < periodStart) return { label: "예정", color: "bg-[#222226] text-slate-400 border-[#2a2a2e]" };
+    if (now > periodEnd) return { label: "종료", color: "bg-[#222226] text-slate-500 border-[#2a2a2e]" };
     return { label: "운영 중", color: "bg-emerald-50 text-emerald-700 border-emerald-200" };
   })();
 
@@ -265,7 +265,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   const formatDate = (d: string) => new Date(d).toLocaleDateString("ko-KR");
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-[#09090b] py-8 px-4 md:px-8">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 헤더 + 액션 버튼 */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -274,7 +274,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               <Wallet className="h-5 w-5" />
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-white break-keep">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-white break-keep">
                 {budget.name}
               </h1>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
@@ -293,7 +293,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-200 dark:border-[#333338]"
+              className="border-[#333338]"
               onClick={handleExcelDownload}
             >
               <FileSpreadsheet className="w-4 h-4 mr-1.5" />
@@ -302,7 +302,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             <Button
               variant="outline"
               size="sm"
-              className="border-slate-200 dark:border-[#333338]"
+              className="border-[#333338]"
               onClick={handleReportGenerate}
             >
               <FileText className="w-4 h-4 mr-1.5" />
@@ -310,7 +310,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </Button>
             <Link
               href="/dashboard/budget"
-              className="inline-flex items-center text-xs md:text-sm text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+              className="inline-flex items-center text-xs md:text-sm text-slate-400 hover:text-slate-100"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               목록
@@ -319,18 +319,18 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
         </div>
 
         {/* 수치 요약 */}
-        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]/60">
+        <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
           <CardContent className="p-4 md:p-6">
             <div className="grid grid-cols-3 gap-4 md:gap-6">
               <div className="space-y-1">
                 <p className="text-xs text-slate-500 dark:text-slate-400">예산 금액</p>
-                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
+                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-white break-keep">
                   {formatAmount(budget.amount)}
                 </p>
               </div>
               <div className="space-y-1">
                 <p className="text-xs text-slate-500 dark:text-slate-400">사용 금액</p>
-                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-slate-900 dark:text-white break-keep">
+                <p className="text-xl md:text-2xl font-extrabold tracking-tighter text-white break-keep">
                   {formatAmount(usage?.totalSpent ?? 0)}
                 </p>
               </div>
@@ -345,7 +345,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               <div className="mt-4 space-y-2">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500 dark:text-slate-400">예산 사용률</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">{usageRate.toFixed(1)}%</span>
+                  <span className="font-semibold text-white">{usageRate.toFixed(1)}%</span>
                 </div>
                 <Progress value={Math.min(usageRate, 100)} className="h-2" />
               </div>
@@ -355,9 +355,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
         {/* 차트 */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="md:col-span-2 shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]/60">
+          <Card className="md:col-span-2 shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">월별 집행 추이</CardTitle>
+              <CardTitle className="text-sm font-bold text-white">월별 집행 추이</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -386,9 +386,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </CardContent>
           </Card>
 
-          <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]/60">
+          <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">항목별 지출 비중</CardTitle>
+              <CardTitle className="text-sm font-bold text-white">항목별 지출 비중</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
@@ -425,9 +425,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
         </div>
 
         {/* 집행 내역 */}
-        <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e] bg-white dark:bg-[#1a1a1e]/60">
+        <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
           <CardHeader>
-            <CardTitle className="text-sm font-bold text-slate-900 dark:text-white">집행 내역</CardTitle>
+            <CardTitle className="text-sm font-bold text-white">집행 내역</CardTitle>
             <CardDescription className="text-slate-500 dark:text-slate-400">
               구매 데이터가 연동되면 실제 집행 내역이 표시됩니다.
             </CardDescription>
@@ -445,9 +445,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
       {/* 보고서 팝업 (placeholder) */}
       <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] bg-white dark:bg-[#1a1a1e] border-slate-200 dark:border-[#2a2a2e]">
+        <DialogContent className="sm:max-w-[500px] bg-[#1a1a1e] border-[#2a2a2e]">
           <DialogHeader>
-            <DialogTitle className="text-slate-900 dark:text-white">구매 보고서</DialogTitle>
+            <DialogTitle className="text-white">구매 보고서</DialogTitle>
             <DialogDescription className="text-slate-500 dark:text-slate-400">
               {selectedSpending?.item} - 관련 구매 증빙 자료
             </DialogDescription>
@@ -457,22 +457,22 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <span className="text-slate-500 dark:text-slate-400">항목</span>
-                  <p className="font-medium text-slate-900 dark:text-white">{selectedSpending.item}</p>
+                  <p className="font-medium text-white">{selectedSpending.item}</p>
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-slate-400">벤더</span>
-                  <p className="font-medium text-slate-900 dark:text-white">{selectedSpending.vendor}</p>
+                  <p className="font-medium text-white">{selectedSpending.vendor}</p>
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-slate-400">금액</span>
-                  <p className="font-medium text-slate-900 dark:text-white">{formatAmount(selectedSpending.amount)}</p>
+                  <p className="font-medium text-white">{formatAmount(selectedSpending.amount)}</p>
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-slate-400">날짜</span>
-                  <p className="font-medium text-slate-900 dark:text-white">{formatDate(selectedSpending.date)}</p>
+                  <p className="font-medium text-white">{formatDate(selectedSpending.date)}</p>
                 </div>
               </div>
-              <div className="rounded-lg border border-slate-200 dark:border-[#333338] flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-lg border border-[#333338] flex flex-col items-center justify-center py-12 text-center">
                 <FileText className="w-12 h-12 text-slate-400 mb-2" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
                   PDF/이미지 보고서는 구매 데이터 연동 후 제공됩니다.

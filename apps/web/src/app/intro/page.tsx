@@ -11,11 +11,11 @@ import dynamic from "next/dynamic";
 
 const ComparisonSection = dynamic(
   () => import("../_components/comparison-section").then((mod) => ({ default: mod.ComparisonSection })),
-  { loading: () => <div className="h-96 w-full bg-slate-50" /> }
+  { loading: () => <div className="h-96 w-full bg-[#111114]" /> }
 );
 const FinalCTASection = dynamic(
   () => import("../_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-slate-50" /> }
+  { loading: () => <div className="h-64 w-full bg-[#111114]" /> }
 );
 
 export default function IntroPage() {
@@ -42,7 +42,7 @@ export default function IntroPage() {
               </div>
 
               {/* Headline */}
-              <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-slate-900 mb-4 leading-snug break-keep">
+              <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-slate-100 mb-4 leading-snug break-keep">
                 <span className="md:hidden">시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서</span>
                 <span className="hidden md:inline">시약·장비 검색부터<br /><span className="text-blue-600">구매 운영</span>까지 한곳에서</span>
               </h1>
@@ -62,7 +62,7 @@ export default function IntroPage() {
                   { label: "재고 운영", icon: Package, color: "text-slate-600" },
                 ].map((step, i) => (
                   <div key={i} className="flex items-center gap-1.5">
-                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg px-3 py-1.5">
+                    <div className="flex items-center gap-1.5 text-xs font-medium text-slate-600 bg-[#1a1a1e] border border-[#2a2a2e] rounded-lg px-3 py-1.5">
                       <step.icon className={`h-3 w-3 ${step.color} flex-shrink-0`} />
                       {step.label}
                     </div>
@@ -76,8 +76,8 @@ export default function IntroPage() {
             {/* Right: mini UI mockup (desktop) */}
             <div className="hidden md:flex flex-col gap-2 flex-shrink-0 w-[380px]">
               {/* Search bar mockup */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-md p-3">
-                <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-3">
+              <div className="bg-[#1a1a1e] rounded-xl border border-[#2a2a2e] shadow-md p-3">
+                <div className="flex items-center gap-2 bg-[#111114] border border-[#2a2a2e] rounded-lg px-3 py-2 mb-3">
                   <Search className="h-3.5 w-3.5 text-slate-400" />
                   <span className="text-sm text-slate-500">PBS buffer 10x, 500ml</span>
                 </div>
@@ -87,16 +87,16 @@ export default function IntroPage() {
                   { brand: "Thermo Fisher", name: "Dulbecco's PBS 10X (500mL)", price: "₩41,500", lead: "5일", badge: "" },
                   { brand: "Bio-Rad", name: "10X PBS Concentrate (500mL)", price: "₩45,200", lead: "7일", badge: "" },
                 ].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${i === 0 ? "bg-blue-50/60" : "hover:bg-slate-50"} ${i < 2 ? "mb-1" : ""}`}>
-                    <div className="w-7 h-7 rounded-md bg-slate-100 flex-shrink-0 flex items-center justify-center">
+                  <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${i === 0 ? "bg-blue-50/60" : "hover:bg-[#222226]"} ${i < 2 ? "mb-1" : ""}`}>
+                    <div className="w-7 h-7 rounded-md bg-[#222226] flex-shrink-0 flex items-center justify-center">
                       <span className="text-[10px] font-bold text-slate-400">{item.brand.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-800 truncate">{item.name}</p>
+                      <p className="text-xs font-medium text-slate-200 truncate">{item.name}</p>
                       <p className="text-[10px] text-slate-400">{item.brand} · 납기 {item.lead}</p>
                     </div>
                     <div className="text-right flex-shrink-0">
-                      <p className="text-xs font-bold text-slate-900">{item.price}</p>
+                      <p className="text-xs font-bold text-slate-100">{item.price}</p>
                       {item.badge && (
                         <span className="text-[9px] font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-full">{item.badge}</span>
                       )}
@@ -108,7 +108,7 @@ export default function IntroPage() {
                     <GitCompare className="h-3 w-3 text-white" />
                     <span className="text-[11px] font-semibold text-white">비교 목록에 추가</span>
                   </div>
-                  <div className="h-8 px-3 rounded-lg border border-slate-200 flex items-center">
+                  <div className="h-8 px-3 rounded-lg border border-[#2a2a2e] flex items-center">
                     <span className="text-[11px] text-slate-600">견적 요청</span>
                   </div>
                 </div>
@@ -119,18 +119,18 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 제품 한눈 요약 (모바일 전용) ═════════════════════════════════ */}
-        <div className="md:hidden py-3 bg-white border-b border-slate-100 px-4">
+        <div className="md:hidden py-3 bg-[#1a1a1e] border-b border-slate-100 px-4">
           <p className="text-[10px] font-semibold text-blue-600 uppercase tracking-wider mb-2">한눈에 보기</p>
           <ul className="space-y-1.5">
-            <li className="flex items-center gap-2 text-xs text-slate-700">
+            <li className="flex items-center gap-2 text-xs text-slate-300">
               <Search className="h-3 w-3 text-blue-500 shrink-0" />
               시약·장비 통합 검색 + 대체품 확인
             </li>
-            <li className="flex items-center gap-2 text-xs text-slate-700">
+            <li className="flex items-center gap-2 text-xs text-slate-300">
               <GitCompare className="h-3 w-3 text-violet-500 shrink-0" />
               가격·납기·스펙 비교
             </li>
-            <li className="flex items-center gap-2 text-xs text-slate-700">
+            <li className="flex items-center gap-2 text-xs text-slate-300">
               <FileText className="h-3 w-3 text-teal-500 shrink-0" />
               견적 → 구매 → 재고 한 번에
             </li>
@@ -138,11 +138,11 @@ export default function IntroPage() {
         </div>
 
         {/* ══ 2. 핵심 제품 흐름 (4단계) ═══════════════════════════════════ */}
-        <section className="py-10 md:py-16 bg-white border-b border-slate-100">
+        <section className="py-10 md:py-16 bg-[#1a1a1e] border-b border-slate-100">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-5 md:mb-12">
               <p className="text-xs font-semibold text-blue-600 uppercase tracking-wider mb-1 md:mb-2">제품 흐름</p>
-              <h2 className="text-lg md:text-3xl font-bold text-slate-900 break-keep">
+              <h2 className="text-lg md:text-3xl font-bold text-slate-100 break-keep">
                 검색부터 운영까지 한 번에
               </h2>
               <p className="hidden md:block text-base text-slate-500 mt-2 max-w-2xl break-keep">
@@ -156,12 +156,12 @@ export default function IntroPage() {
                 { num: 1, title: "시약·장비 검색", desc: "여러 벤더를 통합 검색, 카테고리·브랜드 필터", dot: "bg-blue-600", bg: "bg-blue-50" },
                 { num: 2, title: "제품 비교", desc: "가격·납기·순도를 나란히 비교, AI 분석", dot: "bg-violet-600", bg: "bg-violet-50" },
                 { num: 3, title: "견적 요청", desc: "비교표에서 바로 견적 생성·전달", dot: "bg-teal-600", bg: "bg-teal-50" },
-                { num: 4, title: "재고·이력 운영", desc: "구매 시 자동 재고 반영, Lot·유효기간 추적", dot: "bg-slate-700", bg: "bg-slate-50" },
+                { num: 4, title: "재고·이력 운영", desc: "구매 시 자동 재고 반영, Lot·유효기간 추적", dot: "bg-slate-700", bg: "bg-[#111114]" },
               ].map((step) => (
                 <div key={step.num} className={`flex items-start gap-2.5 px-3 py-2.5 ${step.bg} rounded-lg border border-slate-100`}>
                   <div className={`shrink-0 w-5 h-5 rounded-full ${step.dot} text-white text-[10px] font-bold flex items-center justify-center mt-0.5`}>{step.num}</div>
                   <div className="min-w-0">
-                    <span className="font-semibold text-xs text-slate-900">{step.title}</span>
+                    <span className="font-semibold text-xs text-slate-100">{step.title}</span>
                     <p className="text-[10px] text-slate-500 leading-tight">{step.desc}</p>
                   </div>
                 </div>
@@ -178,14 +178,14 @@ export default function IntroPage() {
                     <span className="text-sm font-bold text-blue-900">시약·장비 검색</span>
                   </div>
                   {/* Mini UI */}
-                  <div className="bg-white rounded-lg border border-blue-100 p-2.5 mb-3 space-y-1.5">
-                    <div className="flex items-center gap-1.5 bg-slate-50 rounded px-2 py-1">
+                  <div className="bg-[#1a1a1e] rounded-lg border border-blue-100 p-2.5 mb-3 space-y-1.5">
+                    <div className="flex items-center gap-1.5 bg-[#111114] rounded px-2 py-1">
                       <Search className="h-3 w-3 text-slate-300" />
                       <div className="h-2 bg-slate-200 rounded flex-1" />
                     </div>
                     {[{ w: "w-3/4" }, { w: "w-5/6" }, { w: "w-2/3" }].map((bar, i) => (
                       <div key={i} className={`flex items-center gap-2 px-1 py-1 ${i === 0 ? "bg-blue-50 rounded" : ""}`}>
-                        <div className="w-4 h-4 rounded bg-slate-100 flex-shrink-0" />
+                        <div className="w-4 h-4 rounded bg-[#222226] flex-shrink-0" />
                         <div className={`h-2 bg-slate-200 rounded ${bar.w}`} />
                         <div className="h-2 bg-slate-300 rounded w-8 ml-auto flex-shrink-0" />
                       </div>
@@ -208,7 +208,7 @@ export default function IntroPage() {
                     <span className="text-sm font-bold text-violet-900">제품 비교</span>
                   </div>
                   {/* Mini comparison table */}
-                  <div className="bg-white rounded-lg border border-violet-100 p-2 mb-3">
+                  <div className="bg-[#1a1a1e] rounded-lg border border-violet-100 p-2 mb-3">
                     <div className="grid grid-cols-3 gap-1 text-[9px] text-center mb-1">
                       <div className="text-slate-400 font-semibold">항목</div>
                       <div className="text-violet-600 font-semibold">A사</div>
@@ -243,14 +243,14 @@ export default function IntroPage() {
                     <span className="text-sm font-bold text-teal-900">견적 요청</span>
                   </div>
                   {/* Mini quote UI */}
-                  <div className="bg-white rounded-lg border border-teal-100 p-2.5 mb-3 space-y-2">
+                  <div className="bg-[#1a1a1e] rounded-lg border border-teal-100 p-2.5 mb-3 space-y-2">
                     {[
                       { name: "PBS 10X 500mL", qty: "×5" },
                       { name: "DMSO 99.9%", qty: "×2" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-2 text-[10px]">
                         <div className="w-3 h-3 rounded-sm bg-teal-100 flex-shrink-0" />
-                        <span className="text-slate-700 flex-1 truncate">{item.name}</span>
+                        <span className="text-slate-300 flex-1 truncate">{item.name}</span>
                         <span className="text-slate-400 flex-shrink-0">{item.qty}</span>
                       </div>
                     ))}
@@ -269,13 +269,13 @@ export default function IntroPage() {
 
               {/* Step 4: 재고 운영 */}
               <div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 md:p-5 h-full">
+                <div className="bg-[#111114] border border-[#2a2a2e] rounded-xl p-4 md:p-5 h-full">
                   <div className="flex items-center gap-2 mb-4">
                     <div className="w-7 h-7 rounded-full bg-slate-700 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">4</div>
-                    <span className="text-sm font-bold text-slate-900">재고·이력 운영</span>
+                    <span className="text-sm font-bold text-slate-100">재고·이력 운영</span>
                   </div>
                   {/* Mini inventory UI */}
-                  <div className="bg-white rounded-lg border border-slate-200 p-2.5 mb-3 space-y-1.5">
+                  <div className="bg-[#1a1a1e] rounded-lg border border-[#2a2a2e] p-2.5 mb-3 space-y-1.5">
                     <div className="flex items-center justify-between text-[10px] text-slate-500 px-1">
                       <span>품목</span><span>수량</span><span>상태</span>
                     </div>
@@ -283,8 +283,8 @@ export default function IntroPage() {
                       { name: "PBS 10X", qty: "5ea", status: "정상", color: "text-emerald-500" },
                       { name: "DMSO", qty: "2ea", status: "부족", color: "text-red-500" },
                     ].map((item, i) => (
-                      <div key={i} className="flex items-center justify-between text-[10px] px-1 py-1 rounded bg-slate-50">
-                        <span className="text-slate-700 font-medium">{item.name}</span>
+                      <div key={i} className="flex items-center justify-between text-[10px] px-1 py-1 rounded bg-[#111114]">
+                        <span className="text-slate-300 font-medium">{item.name}</span>
                         <span className="text-slate-500">{item.qty}</span>
                         <span className={`font-semibold ${item.color}`}>{item.status}</span>
                       </div>
@@ -300,11 +300,11 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 3. 누가 쓰나요? (페르소나 — 강화) ═══════════════════════════ */}
-        <section className="py-10 md:py-16 bg-slate-50">
+        <section className="py-10 md:py-16 bg-[#111114]">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-8 md:mb-10">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">도입 대상</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 break-keep">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-100 break-keep">
                 어떤 팀이 어떻게 사용하나요?
               </h2>
               <p className="text-sm md:text-base text-slate-500 mt-2 break-keep">
@@ -319,12 +319,12 @@ export default function IntroPage() {
                 { role: "QC/QA 매니저", icon: ShieldCheck, color: "text-emerald-500", bg: "bg-emerald-50", benefits: ["구매→재고→사용 이력 한 곳 추적", "유효기간 자동 알림"], tags: ["이력", "유통기한"] },
                 { role: "구매 담당자", icon: Layers, color: "text-indigo-500", bg: "bg-indigo-50", benefits: ["통합 견적 요청, 5분 완료", "구매 이력·응답 통합 관리"], tags: ["견적", "비교"] },
               ].map((p) => (
-                <div key={p.role} className="bg-white border border-gray-100 rounded-lg p-3.5 flex items-start gap-3">
+                <div key={p.role} className="bg-[#1a1a1e] border border-gray-100 rounded-lg p-3.5 flex items-start gap-3">
                   <div className={`shrink-0 w-8 h-8 rounded-lg ${p.bg} flex items-center justify-center`}>
                     <p.icon className={`h-4 w-4 ${p.color}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-sm font-bold text-slate-900 mb-1">{p.role}</h3>
+                    <h3 className="text-sm font-bold text-slate-100 mb-1">{p.role}</h3>
                     <ul className="space-y-0.5">
                       {p.benefits.map((b, i) => (
                         <li key={i} className="flex items-start gap-1.5 text-xs text-slate-600">
@@ -341,17 +341,17 @@ export default function IntroPage() {
             <div className="hidden md:grid md:grid-cols-3 md:gap-6">
 
               {/* R&D 연구자 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
+              <div className="bg-[#1a1a1e] border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-amber-600 uppercase tracking-wider mb-1">R&D 연구자</p>
-                    <h3 className="text-base font-bold text-slate-900">실험 준비 시간 단축</h3>
+                    <h3 className="text-base font-bold text-slate-100">실험 준비 시간 단축</h3>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
                     <Zap className="h-5 w-5 text-amber-500" />
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-100 p-3">
+                <div className="rounded-lg bg-[#111114] border border-slate-100 p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존 업무 문제</p>
                   <ul className="space-y-1">
                     {["벤더 사이트 10+ 개를 반복 방문해 시약 검색", "스펙 비교를 직접 엑셀에 정리 — 건당 20분 이상"].map((t, i) => (
@@ -372,23 +372,23 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="flex gap-2 mt-auto">
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">시약·장비 검색</span>
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">제품 비교</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">시약·장비 검색</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">제품 비교</span>
                 </div>
               </div>
 
               {/* QC/QA 매니저 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
+              <div className="bg-[#1a1a1e] border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-1">QC/QA 매니저</p>
-                    <h3 className="text-base font-bold text-slate-900">이력 추적과 감사 대비</h3>
+                    <h3 className="text-base font-bold text-slate-100">이력 추적과 감사 대비</h3>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center flex-shrink-0">
                     <ShieldCheck className="h-5 w-5 text-emerald-500" />
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-100 p-3">
+                <div className="rounded-lg bg-[#111114] border border-slate-100 p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존 업무 문제</p>
                   <ul className="space-y-1">
                     {["Lot No.·유효기간을 엑셀·수기로 별도 관리", "GMP 감사 대비 이력 취합에 많은 시간 소요"].map((t, i) => (
@@ -409,23 +409,23 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="flex gap-2 mt-auto">
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">재고 이력</span>
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">유통기한 관리</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">재고 이력</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">유통기한 관리</span>
                 </div>
               </div>
 
               {/* 구매 담당자 */}
-              <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
+              <div className="bg-[#1a1a1e] border border-gray-100 shadow-sm rounded-xl p-5 md:p-6 flex flex-col gap-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <p className="text-xs font-semibold text-indigo-600 uppercase tracking-wider mb-1">구매 담당자</p>
-                    <h3 className="text-base font-bold text-slate-900">견적 수집과 비교 자동화</h3>
+                    <h3 className="text-base font-bold text-slate-100">견적 수집과 비교 자동화</h3>
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0">
                     <Layers className="h-5 w-5 text-indigo-500" />
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 border border-slate-100 p-3">
+                <div className="rounded-lg bg-[#111114] border border-slate-100 p-3">
                   <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">기존 업무 문제</p>
                   <ul className="space-y-1">
                     {["벤더별 견적 수집·정리·비교에 건당 45분 이상", "견적 버전 관리가 이메일·파일 분산으로 복잡"].map((t, i) => (
@@ -446,8 +446,8 @@ export default function IntroPage() {
                   </ul>
                 </div>
                 <div className="flex gap-2 mt-auto">
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">견적 요청</span>
-                  <span className="text-[10px] font-semibold text-slate-500 bg-slate-100 rounded-md px-2 py-1">가격 비교</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">견적 요청</span>
+                  <span className="text-[10px] font-semibold text-slate-500 bg-[#222226] rounded-md px-2 py-1">가격 비교</span>
                 </div>
               </div>
             </div>
@@ -460,11 +460,11 @@ export default function IntroPage() {
         </div>
 
         {/* ══ 5. 보안 & 도입 근거 ═══════════════════════════════════════ */}
-        <section className="py-10 md:py-16 bg-slate-50 border-t border-slate-200">
+        <section className="py-10 md:py-16 bg-[#111114] border-t border-[#2a2a2e]">
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-8">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">보안 & 운영 신뢰성</p>
-              <h2 className="text-2xl md:text-3xl font-bold text-slate-900 break-keep">
+              <h2 className="text-2xl md:text-3xl font-bold text-slate-100 break-keep">
                 조직에서 안심하고 운영할 수 있습니다
               </h2>
               <p className="hidden md:block text-sm md:text-base text-slate-500 mt-2 max-w-2xl break-keep">
@@ -508,14 +508,14 @@ export default function IntroPage() {
                   badgeColor: "text-indigo-700 bg-indigo-50 border-indigo-200",
                 },
               ].map((item, i) => (
-                <div key={i} className={`bg-white rounded-xl border-2 ${item.borderColor} hover:shadow-md transition-shadow p-3 md:p-6`}>
+                <div key={i} className={`bg-[#1a1a1e] rounded-xl border-2 ${item.borderColor} hover:shadow-md transition-shadow p-3 md:p-6`}>
                   {/* 모바일: 가로 배치 (아이콘 + 제목/설명 + 배지) */}
                   <div className="md:hidden flex items-center gap-3">
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${item.iconBg}`}>
                       <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-[13px] font-bold text-slate-900">{item.title}</h3>
+                      <h3 className="text-[13px] font-bold text-slate-100">{item.title}</h3>
                       <p className="text-[11px] text-slate-500 mt-0.5">{item.mobileDesc}</p>
                     </div>
                     <span className={`text-[9px] font-semibold border rounded-md px-1.5 py-0.5 flex-shrink-0 whitespace-nowrap ${item.badgeColor}`}>{item.badge}</span>
@@ -525,7 +525,7 @@ export default function IntroPage() {
                     <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-4 ${item.iconBg}`}>
                       <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-sm font-bold text-slate-900 mb-2">{item.title}</h3>
+                    <h3 className="text-sm font-bold text-slate-100 mb-2">{item.title}</h3>
                     <p className="text-xs text-slate-600 leading-relaxed mb-4 break-keep">{item.desc}</p>
                     <span className={`text-[10px] font-semibold border rounded-md px-2 py-1 ${item.badgeColor}`}>{item.badge}</span>
                   </div>
@@ -534,7 +534,7 @@ export default function IntroPage() {
             </div>
 
             {/* 도입 근거 요약 */}
-            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
+            <div className="bg-[#1a1a1e] rounded-xl border border-[#2a2a2e] p-4 md:p-6">
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3 md:mb-4">도입 적합성 체크</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                 {[
@@ -547,7 +547,7 @@ export default function IntroPage() {
                 ].map((item, i) => (
                   <div key={i} className={`flex items-start gap-2 ${i >= 4 ? "hidden md:flex" : ""}`}>
                     <CheckCircle2 className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-xs md:text-sm text-slate-700 break-keep">{item}</span>
+                    <span className="text-xs md:text-sm text-slate-300 break-keep">{item}</span>
                   </div>
                 ))}
               </div>
@@ -558,7 +558,7 @@ export default function IntroPage() {
                   </button>
                 </Link>
                 <Link href="/support">
-                  <button className="h-9 px-5 text-sm font-medium text-slate-600 border border-slate-200 hover:bg-slate-50 rounded-lg transition-colors">
+                  <button className="h-9 px-5 text-sm font-medium text-slate-600 border border-[#2a2a2e] hover:bg-[#222226] rounded-lg transition-colors">
                     도입 상담 문의
                   </button>
                 </Link>

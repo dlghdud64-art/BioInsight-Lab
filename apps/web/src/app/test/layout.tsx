@@ -5,7 +5,7 @@ import { MainHeader } from "../_components/main-header";
 export default function TestLayout({ children }: { children: React.ReactNode }) {
   return (
     <TestFlowProvider>
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[#111114]">
         {/* 공통 상단 헤더 */}
         <MainHeader />
         <StepNav />

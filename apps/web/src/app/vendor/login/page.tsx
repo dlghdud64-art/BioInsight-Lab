@@ -49,10 +49,10 @@ export default function VendorLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#111114] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="text-2xl font-bold text-slate-100 mb-2">
             벤더 포털
           </h1>
           <p className="text-sm text-slate-600">
@@ -60,7 +60,7 @@ export default function VendorLoginPage() {
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 shadow-sm p-6">
+        <div className="bg-[#1a1a1e] border border-[#2a2a2e] shadow-sm p-6">
           <div className="space-y-4">
             <div>
               <Label htmlFor="email" className="text-sm font-medium">
@@ -100,7 +100,7 @@ export default function VendorLoginPage() {
             </Button>
           </div>
 
-          <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="mt-6 pt-6 border-t border-[#2a2a2e]">
             <p className="text-xs text-slate-500 text-center">
               입력하신 이메일로 로그인 링크가 발송됩니다.
               <br />

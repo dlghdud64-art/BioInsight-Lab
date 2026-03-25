@@ -99,7 +99,7 @@ export default function CollaborationPage() {
   return (
     <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
       <div className="flex flex-col space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-100">
           협업 네트워크
         </h2>
         <p className="text-muted-foreground">
@@ -112,13 +112,13 @@ export default function CollaborationPage() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
         <Input
           placeholder="필요한 시약명, 제조사, 카탈로그 번호를 검색하세요..."
-          className="pl-10 h-14 text-lg bg-white dark:bg-[#09090b] border-slate-200 dark:border-[#333338] shadow-sm"
+          className="pl-10 h-14 text-lg bg-[#09090b] border-[#333338] shadow-sm"
         />
       </div>
 
       {/* 공유 시약 리스트 */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center">
+        <h3 className="text-lg font-semibold text-slate-100 flex items-center">
           <Share2 className="w-5 h-5 mr-2 text-blue-600 dark:text-blue-400" />
           현재 대여/공유 가능한 시약
         </h3>
@@ -127,14 +127,14 @@ export default function CollaborationPage() {
           {sharedReagents.map((item) => (
             <Card
               key={item.id}
-              className="border-slate-200 dark:border-[#333338] hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
+              className="border-[#333338] hover:border-blue-300 dark:hover:border-blue-700 transition-colors"
             >
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge
                       variant="secondary"
-                      className="bg-slate-100 dark:bg-[#222226] text-slate-600 dark:text-slate-400 font-normal"
+                      className="bg-[#222226] text-slate-400 font-normal"
                     >
                       <Building2 className="w-3 h-3 mr-1" />
                       {item.lab}
@@ -143,7 +143,7 @@ export default function CollaborationPage() {
                       {item.available}
                     </span>
                   </div>
-                  <h4 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                  <h4 className="text-lg font-bold text-slate-100">
                     {item.name}
                   </h4>
                   <p className="text-sm text-slate-500 dark:text-slate-400 font-mono">

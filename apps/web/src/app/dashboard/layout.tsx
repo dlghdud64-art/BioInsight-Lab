@@ -13,7 +13,7 @@ export default function DashboardLayout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-[#0b1120]">
+    <div className="flex h-screen overflow-hidden bg-surface-shell">
       {/* 왼쪽 고정: Sidebar */}
       <DashboardSidebar />
 

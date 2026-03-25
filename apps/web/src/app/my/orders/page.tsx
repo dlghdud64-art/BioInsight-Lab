@@ -78,7 +78,7 @@ export default function MyOrdersPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -91,7 +91,7 @@ export default function MyOrdersPage() {
 
   if (status === "unauthenticated") {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-[#111114]">
         <MainHeader />
         <div className="container mx-auto px-4 py-8">
           <Card>
@@ -112,7 +112,7 @@ export default function MyOrdersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#111114]">
       <MainHeader />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-6xl mx-auto space-y-6">

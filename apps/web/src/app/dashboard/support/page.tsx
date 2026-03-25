@@ -42,7 +42,7 @@ const FEATURE_CATEGORIES = [
   { value: "inventory", label: "재고 관리", icon: Package, color: "text-emerald-600 bg-emerald-50" },
   { value: "purchase", label: "구매 운영·이력", icon: BarChart3, color: "text-amber-600 bg-amber-50" },
   { value: "team", label: "팀·조직 관리", icon: Users, color: "text-indigo-600 bg-indigo-50" },
-  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-600 bg-slate-100" },
+  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-400 bg-[#222226]" },
 ];
 
 const PRIORITY_OPTIONS = [
@@ -124,7 +124,7 @@ export default function DashboardSupportPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="text-[10px] border-slate-200 text-slate-500">접수 대기</Badge>;
+        return <Badge variant="outline" className="text-[10px] border-[#2a2a2e] text-slate-500">접수 대기</Badge>;
       case "in_progress":
         return <Badge className="text-[10px] bg-blue-50 text-blue-700 border border-blue-200">확인 중</Badge>;
       case "answered":
@@ -142,7 +142,7 @@ export default function DashboardSupportPage() {
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-4 md:pt-6 max-w-5xl mx-auto w-full">
       {/* 페이지 헤더 */}
       <div className="space-y-1.5 mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+        <h1 className="text-2xl md:text-3xl font-bold text-slate-100 tracking-tight">
           운영 지원 센터
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed">
@@ -153,9 +153,9 @@ export default function DashboardSupportPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* 좌측: 문의 작성 */}
         <div className="space-y-5">
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-[#2a2a2e] shadow-sm">
             <CardHeader className="pb-4">
-              <CardTitle className="text-base font-semibold text-slate-900 flex items-center gap-2">
+              <CardTitle className="text-base font-semibold text-slate-100 flex items-center gap-2">
                 <LifeBuoy className="h-4.5 w-4.5 text-blue-600" />
                 문의 작성
               </CardTitle>
@@ -164,7 +164,7 @@ export default function DashboardSupportPage() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* 관련 기능 선택 */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-700">
+                  <Label className="text-xs font-semibold text-slate-300">
                     관련 기능 <span className="text-red-500">*</span>
                   </Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -179,7 +179,7 @@ export default function DashboardSupportPage() {
                           className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
-                              : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                              : "border-[#2a2a2e] bg-[#1a1a1e] hover:border-[#333338] hover:bg-[#111114]/50"
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
@@ -187,7 +187,7 @@ export default function DashboardSupportPage() {
                           }`}>
                             <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-white" : ""}`} />
                           </div>
-                          <span className={`text-xs font-medium ${isSelected ? "text-blue-900" : "text-slate-700"}`}>
+                          <span className={`text-xs font-medium ${isSelected ? "text-blue-900" : "text-slate-300"}`}>
                             {cat.label}
                           </span>
                         </button>
@@ -198,7 +198,7 @@ export default function DashboardSupportPage() {
 
                 {/* 관련 리소스 연결 */}
                 <div className="space-y-2">
-                  <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">
+                  <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-300">
                     관련 주문/견적/재고 ID <span className="text-slate-400 font-normal">(선택)</span>
                   </Label>
                   <Input
@@ -206,14 +206,14 @@ export default function DashboardSupportPage() {
                     placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
                     value={relatedResource}
                     onChange={(e) => setRelatedResource(e.target.value)}
-                    className="border-slate-200 text-sm h-9"
+                    className="border-[#2a2a2e] text-sm h-9"
                   />
                   <p className="text-[10px] text-slate-400">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
                 </div>
 
                 {/* 우선순위 */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-700">우선순위</Label>
+                  <Label className="text-xs font-semibold text-slate-300">우선순위</Label>
                   <div className="flex gap-2">
                     {PRIORITY_OPTIONS.map((opt) => (
                       <button
@@ -227,13 +227,13 @@ export default function DashboardSupportPage() {
                               : opt.value === "medium"
                               ? "border-amber-400 bg-amber-50 ring-1 ring-amber-400"
                               : "border-blue-400 bg-blue-50 ring-1 ring-blue-400"
-                            : "border-slate-200 bg-white hover:bg-slate-50"
+                            : "border-[#2a2a2e] bg-[#1a1a1e] hover:bg-[#111114]"
                         }`}
                       >
                         <span className={`text-xs font-semibold ${
                           priority === opt.value
                             ? opt.value === "high" ? "text-red-700" : opt.value === "medium" ? "text-amber-700" : "text-blue-700"
-                            : "text-slate-600"
+                            : "text-slate-400"
                         }`}>{opt.label}</span>
                         <p className="text-[10px] text-slate-400 mt-0.5">{opt.description}</p>
                       </button>
@@ -243,7 +243,7 @@ export default function DashboardSupportPage() {
 
                 {/* 제목 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-700">
+                  <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-300">
                     제목 <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -251,13 +251,13 @@ export default function DashboardSupportPage() {
                     placeholder="이슈를 간단히 요약해주세요"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="border-slate-200 text-sm"
+                    className="border-[#2a2a2e] text-sm"
                   />
                 </div>
 
                 {/* 내용 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-700">
+                  <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-300">
                     상세 내용 <span className="text-red-500">*</span>
                   </Label>
                   <Textarea
@@ -265,18 +265,18 @@ export default function DashboardSupportPage() {
                     placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    className="min-h-[140px] resize-none border-slate-200 text-sm"
+                    className="min-h-[140px] resize-none border-[#2a2a2e] text-sm"
                   />
                 </div>
 
                 {/* 첨부파일 */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-700">
+                  <Label className="text-xs font-semibold text-slate-300">
                     첨부파일 <span className="text-slate-400 font-normal">(선택, 최대 5개)</span>
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((file, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-700">
+                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-[#2a2a2e] bg-[#111114] px-2.5 py-1.5 text-xs text-slate-300">
                         <FileText className="h-3 w-3 text-slate-400" />
                         <span className="max-w-[120px] truncate">{file.name}</span>
                         <span className="text-[10px] text-slate-400">({(file.size / 1024).toFixed(0)}KB)</span>
@@ -286,7 +286,7 @@ export default function DashboardSupportPage() {
                       </div>
                     ))}
                     {attachments.length < 5 && (
-                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
+                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-[#333338] bg-[#1a1a1e] px-3 py-1.5 text-xs text-slate-500 hover:border-blue-400 hover:text-blue-600 cursor-pointer transition-colors">
                         <Paperclip className="h-3 w-3" />
                         파일 추가
                         <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
@@ -318,10 +318,10 @@ export default function DashboardSupportPage() {
         {/* 우측: 문의 이력 + 안내 */}
         <div className="space-y-5">
           {/* 문의 이력 */}
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-[#2a2a2e] shadow-sm">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                <CardTitle className="text-sm font-semibold text-slate-100 flex items-center gap-2">
                   <MessageSquare className="h-4 w-4 text-slate-500" />
                   내 문의 이력
                 </CardTitle>
@@ -338,13 +338,13 @@ export default function DashboardSupportPage() {
                 {MOCK_TICKETS.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5 hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="rounded-lg border border-slate-100 bg-[#111114]/50 px-3 py-2.5 hover:bg-[#111114] transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <span className="text-[10px] font-mono text-slate-400">{ticket.id}</span>
                       {getStatusBadge(ticket.status)}
                     </div>
-                    <p className="text-xs font-medium text-slate-800 leading-snug mb-1.5">{ticket.title}</p>
+                    <p className="text-xs font-medium text-slate-200 leading-snug mb-1.5">{ticket.title}</p>
                     <div className="flex items-center gap-3 text-[10px] text-slate-400">
                       <span className="flex items-center gap-1">
                         <Clock className="h-2.5 w-2.5" />
@@ -377,9 +377,9 @@ export default function DashboardSupportPage() {
           </Card>
 
           {/* 운영 안내 */}
-          <Card className="border-slate-200 shadow-sm">
+          <Card className="border-[#2a2a2e] shadow-sm">
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-semibold text-slate-900">지원 안내</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-100">지원 안내</CardTitle>
             </CardHeader>
             <CardContent className="pt-0 space-y-3">
               <div className="flex items-start gap-2.5">
@@ -387,7 +387,7 @@ export default function DashboardSupportPage() {
                   <Clock className="h-3.5 w-3.5 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-700">응답 시간</p>
+                  <p className="text-xs font-medium text-slate-300">응답 시간</p>
                   <p className="text-[11px] text-slate-500">평일 09:00–18:00 접수 기준, 당일 내 1차 확인</p>
                 </div>
               </div>
@@ -396,7 +396,7 @@ export default function DashboardSupportPage() {
                   <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-700">처리 프로세스</p>
+                  <p className="text-xs font-medium text-slate-300">처리 프로세스</p>
                   <p className="text-[11px] text-slate-500">접수 → 담당자 배정 → 확인 → 답변 → 완료</p>
                 </div>
               </div>

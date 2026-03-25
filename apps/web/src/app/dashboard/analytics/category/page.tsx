@@ -67,12 +67,12 @@ export default function CategoryAnalyticsPage() {
       <div className="mb-6">
         <Link
           href="/dashboard/analytics"
-          className="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-slate-100 flex items-center mb-4 transition-colors"
+          className="text-sm text-slate-500 hover:text-slate-100 flex items-center mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           지출 분석 홈으로
         </Link>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-100">
           카테고리별 지출 분석
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -114,7 +114,7 @@ export default function CategoryAnalyticsPage() {
       {!isLoading && !isError && hasData && (
         <div className="grid gap-6 md:grid-cols-2">
           {/* 좌측: 도넛 차트 */}
-          <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
+          <Card className="shadow-sm border-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="text-lg">비중 (도넛 차트)</CardTitle>
             </CardHeader>
@@ -165,7 +165,7 @@ export default function CategoryAnalyticsPage() {
           </Card>
 
           {/* 우측: 항목별 상세 금액 리스트 */}
-          <Card className="shadow-sm border-slate-200 dark:border-[#2a2a2e]">
+          <Card className="shadow-sm border-[#2a2a2e]">
             <CardHeader>
               <CardTitle className="text-lg">항목별 상세 금액</CardTitle>
             </CardHeader>
@@ -176,7 +176,7 @@ export default function CategoryAnalyticsPage() {
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 dark:border-[#2a2a2e] bg-slate-50 dark:bg-[#1a1a1e]/40"
+                    className="flex items-center justify-between p-4 rounded-lg border border-[#2a2a2e] bg-[#1a1a1e]/40"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
@@ -186,11 +186,11 @@ export default function CategoryAnalyticsPage() {
                         <Icon className="w-5 h-5" style={{ color }} />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{item.name}</p>
+                        <p className="font-semibold text-slate-100 truncate">{item.name}</p>
                         <p className="text-xs text-slate-400">{item.value}% 비중</p>
                       </div>
                     </div>
-                    <span className="font-bold text-slate-900 dark:text-slate-100 ml-4 whitespace-nowrap">
+                    <span className="font-bold text-slate-100 ml-4 whitespace-nowrap">
                       {formatCurrency(item.amount)}
                     </span>
                   </div>

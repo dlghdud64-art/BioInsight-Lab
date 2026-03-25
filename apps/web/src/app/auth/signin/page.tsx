@@ -6,91 +6,111 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { ArrowLeft, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck, Users, Zap, Search, GitCompare, FileText, ShoppingCart, PackageCheck, Warehouse } from "lucide-react";
 
+const pipelineSteps = [
+  { icon: Search, label: "검색" },
+  { icon: GitCompare, label: "비교" },
+  { icon: FileText, label: "견적" },
+  { icon: ShoppingCart, label: "발주" },
+  { icon: PackageCheck, label: "입고" },
+  { icon: Warehouse, label: "재고" },
+];
+
+const trustItems = [
+  { icon: ShieldCheck, text: "256-bit 엔터프라이즈급 데이터 암호화" },
+  { icon: Users, text: "조직 단위 역할 기반 접근 제어" },
+  { icon: Zap, text: "구매-재고 운영 실시간 연결" },
+];
 
 function SignInContent() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get("callbackUrl") || "/dashboard";
+
   return (
     <div className="flex min-h-screen">
-      {/* 좌측 비주얼 영역 (데스크톱 전용) - fixed 로고 + 절대 좌표 슬로건 */}
-      <div className="hidden lg:flex w-1/2 bg-[#09090b] relative min-h-screen flex-col overflow-hidden">
-        {/* 1. 브랜드 로고 */}
-        <Link href="/" className="absolute top-16 left-16 z-[999] group cursor-pointer flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
-            <Image src="/brand/Bio-Insight.png" alt="LabAxis" width={48} height={48} className="w-full h-full object-cover" />
-          </div>
-          <div className="flex flex-col justify-center leading-tight">
-            <div className="flex items-center gap-1">
-              <span className="text-xl font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">LabAxis</span>
-            </div>
-            <div className="text-[11px] text-slate-400 tracking-tight">Procurement & Research</div>
-          </div>
-        </Link>
-
-        {/* 2. 슬로건: 수직 중앙 배치 */}
-        <div className="flex-1 flex flex-col justify-center pl-16 pr-14 space-y-6">
-          <h1 className="text-5xl font-extrabold leading-tight text-white tracking-tight antialiased">
-            연구실의 <span className="text-blue-400">검색</span>·<span className="text-blue-400">견적</span>·<span className="text-blue-400">구매</span>·<span className="text-blue-400">재고</span><br />
-            업무를 한곳에서.
-          </h1>
-          <p className="text-slate-300/90 text-[17px] max-w-sm leading-relaxed antialiased">
-            조직 단위의 구매 운영과 <span className="text-blue-400">협업</span>까지<br />
-            연결하는 플랫폼으로 확장됩니다.
-          </p>
+      {/* 좌측 브랜딩 영역 (데스크톱 전용) */}
+      <div className="hidden lg:flex w-[55%] bg-pg relative min-h-screen flex-col overflow-hidden">
+        {/* 상단: 회사명 텍스트 */}
+        <div className="pt-12 pl-12">
+          <Link href="/" className="inline-block">
+            <span className="text-2xl font-bold tracking-tight text-slate-100">LabAxis</span>
+          </Link>
         </div>
 
-        {/* 3. 하단 보안 지표 */}
-        <div className="absolute bottom-12 left-16 flex items-center gap-2 text-slate-500 text-sm antialiased">
-          <ShieldCheck className="w-4 h-4 text-blue-500 shrink-0" />
-          256-bit 엔터프라이즈급 데이터 암호화 적용 중
+        {/* 중앙: 운영형 카피 */}
+        <div className="flex-1 flex flex-col justify-center pl-12 pr-12 space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold leading-snug text-slate-100 tracking-tight">
+              연구실의 검색-견적-구매-재고<br />
+              업무를 한곳에서.
+            </h1>
+            <p className="text-slate-300 text-[15px] max-w-md leading-relaxed">
+              반복 검색, 수기 견적, 재고 공백을 운영 시스템으로 전환합니다.
+            </p>
+          </div>
+
+          {/* 파이프라인 6단계 */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {pipelineSteps.map((step, i) => (
+              <div key={step.label} className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 bg-pn border border-bd rounded-md px-3 py-1.5">
+                  <step.icon className="w-3.5 h-3.5 text-blue-400" />
+                  <span className="text-xs text-slate-300 font-medium">{step.label}</span>
+                </div>
+                {i < pipelineSteps.length - 1 && (
+                  <span className="text-slate-500 text-xs select-none">→</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 하단 신뢰 정보 */}
+        <div className="pb-10 pl-12 pr-12 space-y-3">
+          {trustItems.map((item) => (
+            <div key={item.text} className="flex items-center gap-2.5">
+              <item.icon className="w-4 h-4 text-slate-500 shrink-0" />
+              <span className="text-sm text-slate-400">{item.text}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* 우측 로그인 영역 */}
-      <div className="w-full lg:w-1/2 flex flex-col min-h-screen bg-[#09090b]">
-        {/* 모바일: 실제 로고 + 브랜드 네임 - 상단 중앙 정렬 */}
+      {/* 우측 auth 영역 */}
+      <div className="w-full lg:w-[45%] flex flex-col min-h-screen bg-sh">
+        {/* 모바일: 상단 회사명 텍스트 */}
         <div className="lg:hidden flex justify-center pt-8 pb-4">
-          <Link href="/" className="group flex items-center gap-3 cursor-pointer">
-            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md transition-transform group-hover:scale-105">
-              <Image src="/brand/Bio-Insight.png" alt="LabAxis" width={40} height={40} className="w-full h-full object-cover" />
-            </div>
-            <div className="leading-tight">
-              <div className="flex items-center gap-1">
-                <span className="text-lg font-bold tracking-tighter text-white group-hover:text-blue-400 transition-colors">LabAxis</span>
-              </div>
-              <div className="text-[10px] text-slate-400 tracking-tight">Procurement & Research</div>
-            </div>
+          <Link href="/" className="text-xl font-bold tracking-tight text-slate-100">
+            LabAxis
           </Link>
         </div>
+
         <div className="flex-1 flex items-center justify-center p-6 sm:p-8">
-          <div className="max-w-md w-full space-y-8">
-            <div className="text-center lg:text-left">
+          <div className="w-full max-w-sm">
+            {/* Elevated auth panel */}
+            <div className="bg-pn border border-bd rounded-xl p-8 space-y-6">
+              {/* 홈으로 돌아가기 */}
               <Link
                 href="/"
-                className="inline-flex items-center text-sm text-slate-500 hover:text-slate-100 mb-8 transition-colors"
+                className="inline-flex items-center text-xs text-slate-400 hover:text-slate-100 transition-colors"
               >
-                <ArrowLeft className="w-4 h-4 mr-1" />
+                <ArrowLeft className="w-3.5 h-3.5 mr-1" />
                 홈으로 돌아가기
               </Link>
-            </div>
 
-            <div className="space-y-6">
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-slate-100">
-                  로그인
-                </h2>
-                <p className="text-slate-400 mt-1 text-sm">
-                  연구실의 검색·견적·구매·재고 업무를 한곳에서 처리하세요.
+              {/* 타이틀 */}
+              <div>
+                <h2 className="text-xl font-bold text-slate-100">로그인</h2>
+                <p className="text-slate-400 mt-1.5 text-sm leading-relaxed">
+                  연구실의 검색-견적-구매-재고 업무를 한곳에서 처리하세요.
                 </p>
               </div>
 
-              {/* Google 로그인 버튼 */}
+              {/* Google 로그인 = primary */}
               <Button
                 variant="outline"
-                className="w-full h-12 border-[#333338] hover:bg-[#1a1a1e]/50 hover:border-slate-600 font-medium"
+                className="w-full h-12 bg-pn border-bd hover:bg-el font-medium text-slate-100"
                 onClick={() => signIn("google", { callbackUrl })}
               >
                 <svg className="mr-3 h-5 w-5 shrink-0" viewBox="0 0 24 24">
@@ -114,32 +134,32 @@ function SignInContent() {
                 Google로 로그인
               </Button>
 
-              {/* 또는 이메일로 계속하기 구분선 */}
+              {/* divider */}
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-[#333338]" />
+                  <span className="w-full border-t border-bd" />
                 </div>
                 <div className="relative flex justify-center">
-                  <span className="bg-[#09090b] px-3 text-xs text-slate-400">
+                  <span className="bg-pn px-3 text-xs text-slate-500">
                     또는 이메일로 계속하기
                   </span>
                 </div>
               </div>
 
-              {/* 이메일/비밀번호 필드 (Disabled) - 16px로 iOS 자동 확대 방지 */}
+              {/* 이메일/비밀번호 필드 (Disabled) */}
               <div className="space-y-3">
                 <Input
                   type="email"
                   placeholder="이메일"
                   disabled
-                  className="bg-[#1a1a1e]/50 cursor-not-allowed text-base"
+                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-60 cursor-not-allowed"
                   style={{ fontSize: "16px" }}
                 />
                 <Input
                   type="password"
                   placeholder="비밀번호"
                   disabled
-                  className="bg-[#1a1a1e]/50 cursor-not-allowed text-base"
+                  className="bg-el border-bd text-base text-slate-100 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 opacity-60 cursor-not-allowed"
                   style={{ fontSize: "16px" }}
                 />
                 <p className="text-xs text-slate-500 text-center">
@@ -151,7 +171,7 @@ function SignInContent() {
         </div>
 
         {/* 하단 푸터 */}
-        <div className="p-6 sm:p-8 pt-0 space-y-4">
+        <div className="p-6 sm:p-8 pt-0 space-y-3">
           <p className="text-center text-sm text-slate-400">
             계정이 없으신가요?{" "}
             <Link
@@ -161,8 +181,8 @@ function SignInContent() {
               무료로 시작하기
             </Link>
           </p>
-          <p className="text-center text-[11px] text-slate-500 leading-relaxed">
-            LabAxis는 데이터 무결성과 CFR 21 Part 11 가이드를 준수합니다.
+          <p className="text-center text-xs text-slate-500 leading-relaxed">
+            데이터 무결성과 ISMS 가이드를 준수합니다.
           </p>
         </div>
       </div>
@@ -173,7 +193,7 @@ function SignInContent() {
 export default function SignInPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
+      <div className="flex min-h-screen items-center justify-center bg-pg">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>

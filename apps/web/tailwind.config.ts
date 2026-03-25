@@ -3,6 +3,14 @@ import type { Config } from "tailwindcss";
 // Tailwind 설정 - 중복 정의 제거
 const config: Config = {
   darkMode: ["class"],
+  safelist: [
+    "bg-sh", "bg-pg", "bg-pn", "bg-el", "bg-st",
+    "border-bd", "border-bs",
+    "text-sh", "text-pg", "text-pn",
+    "hover:bg-el", "hover:bg-st", "hover:bg-pn",
+    "divide-bd",
+    { pattern: /bg-(sh|pg|pn|el|st)\/\d+/ },
+  ],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -14,6 +22,14 @@ const config: Config = {
         sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
       },
       colors: {
+        // ── 전역 surface hierarchy (dark-only, 직접 hex) ──
+        sh: "#2a2c2f",       // shell — neutral graphite (~18%)
+        pg: "#303236",       // page — work area (~21%)
+        pn: "#393b3f",       // panel — card/section (~24%)
+        el: "#434548",       // elevated — input/search/empty (~27%)
+        st: "#4d4f53",       // strong — hover/active surface (~31%)
+        bd: "#4d4f53",       // border default
+        bs: "#5a5c60",       // border strong (~36%)
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

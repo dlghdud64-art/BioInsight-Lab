@@ -32,9 +32,9 @@ export function SearchPanel() {
 
   return (
     <div className="space-y-3">
-      <Card className="bg-white rounded-xl shadow-sm p-4 border border-gray-100">
+      <Card className="bg-[#1a1a1e] rounded-xl shadow-sm p-4 border border-gray-100">
         <CardHeader>
-          <CardTitle className="text-sm font-semibold text-slate-900">
+          <CardTitle className="text-sm font-semibold text-slate-100">
             <span>검색 필터</span>
           </CardTitle>
           <CardDescription className="text-xs text-slate-500">
@@ -45,7 +45,7 @@ export function SearchPanel() {
           {/* 현재 검색어 표시 (읽기 전용) */}
           {searchQuery ? (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">
+              <Label className="text-xs font-medium text-slate-300">
                 🔍 현재 검색어
               </Label>
               <div className="flex items-center gap-2">
@@ -70,7 +70,7 @@ export function SearchPanel() {
             </div>
           ) : (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-slate-700">
+              <Label className="text-xs font-medium text-slate-300">
                 검색어
               </Label>
               <p className="text-xs text-slate-500">
@@ -85,7 +85,7 @@ export function SearchPanel() {
                 카테고리
               </Label>
               <Select value={searchCategory || "all"} onValueChange={(v) => setSearchCategory(v === "all" ? "" : v)}>
-                <SelectTrigger id="category" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="category" className="h-8 text-xs bg-[#111114] border-[#2a2a2e] focus:ring-2 focus:ring-blue-500">
                   <SelectValue placeholder="전체" />
                 </SelectTrigger>
                 <SelectContent>
@@ -107,7 +107,7 @@ export function SearchPanel() {
                 value={sortBy}
                 onValueChange={(v: any) => setSortBy(v)}
               >
-                <SelectTrigger id="sort" className="h-8 text-xs bg-gray-50 border-gray-200 focus:ring-2 focus:ring-blue-500">
+                <SelectTrigger id="sort" className="h-8 text-xs bg-[#111114] border-[#2a2a2e] focus:ring-2 focus:ring-blue-500">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,13 +121,13 @@ export function SearchPanel() {
           </div>
 
           {/* 고급 필터 */}
-          <div className="pt-2 border-t border-slate-200">
+          <div className="pt-2 border-t border-[#2a2a2e]">
             <button
               type="button"
               onClick={() => setIsAdvancedFilterOpen(!isAdvancedFilterOpen)}
               className="flex items-center justify-between w-full text-left"
             >
-              <Label className="text-xs font-medium text-slate-700 cursor-pointer">고급 필터</Label>
+              <Label className="text-xs font-medium text-slate-300 cursor-pointer">고급 필터</Label>
               <div className="flex items-center gap-2">
                 {(minPrice !== undefined || maxPrice !== undefined || grade || searchBrand) && (
                   <Button

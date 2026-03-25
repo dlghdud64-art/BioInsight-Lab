@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetDetailLoading() {
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#09090b] py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-[#09090b] py-8 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -16,7 +16,7 @@ export default function BudgetDetailLoading() {
           <Skeleton className="h-8 w-24" />
         </div>
 
-        <Card className="shadow-sm border-slate-200 bg-white/90 dark:bg-[#1a1a1e]/60">
+        <Card className="shadow-sm border-[#2a2a2e] bg-[#1a1a1e]/60">
           <CardHeader>
             <CardTitle>
               <Skeleton className="h-5 w-48" />
