@@ -87,7 +87,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 <nav className="px-4 pb-2">
                   <div className="px-1 pb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">제품</div>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-[#2a2a2e] rounded-lg mb-0.5 transition-colors">
+                    <Link href="/app/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-300 hover:bg-[#2a2a2e] rounded-lg mb-0.5 transition-colors">
                       <Search className="h-4 w-4 text-slate-500" />
                       AI 검색 및 견적
                     </Link>
@@ -124,7 +124,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     </Link>
                   </SheetClose>
                   <SheetClose asChild>
-                    <Link href="/test/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-[#2a2a2e] rounded-lg mb-0.5 transition-colors">
+                    <Link href="/search" className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-slate-100 hover:bg-[#2a2a2e] rounded-lg mb-0.5 transition-colors">
                       <Search className="h-4 w-4 text-slate-500" />
                       AI 검색 및 견적
                     </Link>
@@ -172,7 +172,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 </button>
               ) : (
                 <SheetClose asChild>
-                  <Link href="/auth/signin?callbackUrl=/dashboard">
+                  <Link href="/auth/signin?callbackUrl=/app/dashboard">
                     <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-11 rounded-lg text-sm">
                       무료로 시작하기
                     </Button>
@@ -190,13 +190,13 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 /* ── 로그인: [검색] [대시보드로 이동(강조)] ── */
                 <>
                   <Link
-                    href="/test/search"
+                    href="/app/search"
                     className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     검색
                   </Link>
                   <Link
-                    href="/dashboard"
+                    href="/app/dashboard"
                     className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
                   >
                     <LayoutDashboard className="h-3.5 w-3.5" />
@@ -219,13 +219,19 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     요금 &amp; 도입
                   </Link>
                   <Link
-                    href="/auth/signin?callbackUrl=/dashboard"
+                    href="/search"
+                    className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
+                  >
+                    검색
+                  </Link>
+                  <Link
+                    href="/auth/signin?callbackUrl=/app/dashboard"
                     className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap"
                   >
                     로그인
                   </Link>
                   <Link
-                    href="/auth/signin?callbackUrl=/dashboard"
+                    href="/search"
                     className="inline-flex items-center justify-center bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-5 py-2 transition-colors whitespace-nowrap shadow-sm"
                   >
                     무료로 시작하기
