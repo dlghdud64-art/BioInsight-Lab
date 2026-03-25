@@ -665,7 +665,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm">
+                          <p className="text-sm truncate">
                             <span className="font-semibold text-white">{log.actor}</span>
                             <span className="text-slate-400">님이 </span>
                             {actionParts ? (
@@ -678,28 +678,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                               <span className="text-slate-400">{log.action}</span>
                             )}
                           </p>
-                          <p className="text-xs text-slate-400 mt-1">{log.time}</p>
+                          <span className="text-[11px] text-slate-500 shrink-0">{log.time}</span>
                         </div>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm truncate">
-                          <span className="font-semibold text-white">{log.actor}</span>
-                          <span className="text-slate-400">님이 </span>
-                          {actionParts ? (
-                            <>
-                              <span className="text-slate-400">{actionParts.before}</span>
-                              <span className="text-blue-600 text-blue-400 font-medium">{actionParts.target}</span>
-                              <span className="text-slate-400">{actionParts.after}</span>
-                            </>
-                          ) : (
-                            <span className="text-slate-400">{log.action}</span>
-                          )}
-                        </p>
-                      </div>
-                      <span className="text-[11px] text-slate-500 shrink-0">{log.time}</span>
-                    </div>
                   );
                 })}
+                </div>
               </CardContent>
             </Card>
 

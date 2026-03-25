@@ -155,6 +155,8 @@ function SignInContent() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
 
         {/* 하단 푸터 */}
         <div className="p-6 sm:p-8 pt-0 space-y-3">

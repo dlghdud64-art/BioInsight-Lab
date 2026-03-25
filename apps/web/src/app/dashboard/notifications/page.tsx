@@ -23,6 +23,7 @@ import {
   BarChart3,
   Mail,
   Inbox,
+  CheckCircle2,
 } from "lucide-react";
 
 /* ── 카테고리 정의 ── */
@@ -471,12 +472,10 @@ export default function NotificationsPage() {
             onClick={markAllCompleted}
             disabled={pendingNotifications.length === 0}
           >
-            {cat.label}
-            {cat.value === "all" && unreadCount > 0 && (
-              <span className="ml-1.5 text-[10px] opacity-80">{unreadCount}</span>
-            )}
-          </button>
-        ))}
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            모두 완료 처리
+          </Button>
+        </div>
       </div>
 
       {/* ── 알림 리스트 ── */}

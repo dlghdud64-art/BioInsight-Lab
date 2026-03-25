@@ -829,7 +829,7 @@ function InventoryPageContent() {
         </div>
         <div className="h-96 rounded-xl bg-el" />
       </div>
-    ),
+    );
   }
 
   // 프로덕션 환경에서는 인증 체크 필수

@@ -149,26 +149,41 @@ function POConversionContent() {
   }
 
   return (
-    <div
-      className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-[#1a1a1e] border rounded-xl shadow-sm hover:shadow-md transition-all ${config.borderClass}`}
-    >
-      <div className="flex items-center gap-4 min-w-0">
-        <div
-          className={`h-12 w-12 rounded-full flex items-center justify-center shrink-0 ${
-            isQuoted ? "bg-blue-50" : "bg-[#111114]"
-          }`}
-        >
-          <FileText
-            className={`h-6 w-6 ${isQuoted ? "text-blue-600" : "text-slate-400"}`}
-          />
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+
+      {/* ═══ PO Decision Header ═══ */}
+      <div className="shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
+            <div className="w-px h-5 bg-bd" />
+            <span className="text-xs md:text-sm font-medium text-slate-400">발주 전환</span>
+          </div>
+          <div className="flex items-center gap-3">
+            {selected && <span className="text-lg font-bold tabular-nums text-slate-100 hidden sm:block">₩{activeTotal.toLocaleString("ko-KR")}</span>}
+            <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${
+              canCreate ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/30" : "text-amber-400 bg-amber-600/10 border-amber-600/30"
+            }`}>
+              {canCreate ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+              {canCreate ? "생성 가능" : "조건 확인"}
+            </span>
+            <Link href="/dashboard/quotes"><Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500"><ArrowLeft className="h-3 w-3 mr-1" />워크큐</Button></Link>
+          </div>
         </div>
-        <div className="min-w-0">
-          <h3 className="font-bold text-slate-100 text-lg truncate">
-            {order.title}
-          </h3>
-          <p className="text-sm text-slate-500 mt-1">
-            요청일: {order.requestedAt} • 주문번호: {order.id}
-          </p>
+        {/* Candidate selector strip */}
+        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#3e4044' }}>
+          {candidates.map(c => (
+            <button key={c.id} onClick={() => setSelectedId(c.id)}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${
+                (selected?.id === c.id) ? "bg-blue-600/10 text-blue-300 border-blue-600/30" : "text-slate-400 border-transparent hover:bg-el"
+              }`}>
+              <FileText className="h-3.5 w-3.5" />
+              <span>{c.vendor}</span>
+              <span className="text-[10px] tabular-nums opacity-70">₩{c.totalAmount.toLocaleString("ko-KR")}</span>
+              {c.blockers.length > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-600/15 text-amber-400">{c.blockers.length}</span>}
+            </button>
+          ))}
+          <span className="text-[10px] text-slate-500 shrink-0 ml-1">{candidates.length}건 전환 후보</span>
         </div>
       </div>
 
@@ -349,21 +364,15 @@ function POConversionContent() {
             <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40" disabled={!canCreate}>
               <Truck className="h-3 w-3 mr-1.5" />PO 생성
             </Button>
-          )}
-          <Button
-            variant={order.actionPrimary ? "default" : "outline"}
-            className={
-              order.actionPrimary
-                ? "bg-blue-600 hover:bg-blue-700 shrink-0"
-                : "text-slate-400 border-[#2a2a2e] shrink-0"
-            }
-            asChild
-          >
-            <Link href={`/dashboard/orders/${order.id}`}>
-              {order.actionLabel}
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
+            <div className="flex gap-2">
+              <Button size="sm" variant="outline" className="flex-1 h-7 text-[10px] text-slate-400 border-bd">
+                <Pause className="h-3 w-3 mr-1" />보류
+              </Button>
+              <Link href="/dashboard/quotes" className="flex-1">
+                <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd">워크큐</Button>
+              </Link>
+            </div>
+          </div>
         </div>
       </div>}
 
@@ -389,140 +398,12 @@ function POConversionContent() {
 
 export default function OrdersPage() {
   return (
-    <>
-      <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
-        <div className="flex flex-col space-y-2 mb-6">
-          <h2 className="text-3xl font-bold tracking-tight">견적 및 구매 내역</h2>
-          <p className="text-muted-foreground">
-            요청하신 견적과 진행 중인 주문을 확인하세요.
-          </p>
-        </div>
-
-        <Tabs defaultValue="all" className="w-full">
-          <TabsList className="mb-6 bg-[#222226]/50 p-1 flex flex-wrap h-auto gap-1">
-            <TabsTrigger value="all">전체</TabsTrigger>
-            <TabsTrigger value="pending">견적 대기</TabsTrigger>
-            <TabsTrigger
-              value="quoted"
-              className="text-blue-600 data-[state=active]:text-blue-700 data-[state=active]:bg-blue-50 dark:data-[state=active]:bg-blue-950/30 text-slate-400 dark:text-slate-300"
-            >
-              <Bell className="mr-2 h-4 w-4 text-slate-500" />
-              견적 도착
-            </TabsTrigger>
-            <TabsTrigger value="ordered">발주 완료</TabsTrigger>
-            <TabsTrigger value="shipping">배송 중</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="all" className="space-y-4 mt-0">
-            {allOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                onTrack={() => handleTrackOrder(order)}
-              />
-            ))}
-          </TabsContent>
-          <TabsContent value="pending" className="space-y-4 mt-0">
-            {pendingOrders.length > 0 ? (
-              pendingOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                견적 대기 중인 건이 없습니다.
-              </p>
-            )}
-          </TabsContent>
-          <TabsContent value="quoted" className="space-y-4 mt-0">
-            {quotedOrders.length > 0 ? (
-              quotedOrders.map((order) => (
-                <OrderCard key={order.id} order={order} />
-              ))
-            ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                도착한 견적이 없습니다.
-              </p>
-            )}
-          </TabsContent>
-          <TabsContent value="ordered" className="space-y-4 mt-0">
-            {orderedOrders.length > 0 ? (
-              orderedOrders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  onTrack={() => handleTrackOrder(order)}
-                />
-              ))
-            ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                발주 완료된 건이 없습니다.
-              </p>
-            )}
-          </TabsContent>
-          <TabsContent value="shipping" className="space-y-4 mt-0">
-            {shippingOrders.length > 0 ? (
-              shippingOrders.map((order) => (
-                <OrderCard
-                  key={order.id}
-                  order={order}
-                  onTrack={() => handleTrackOrder(order)}
-                />
-              ))
-            ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                배송 중인 건이 없습니다.
-              </p>
-            )}
-          </TabsContent>
-        </Tabs>
+    <Suspense fallback={
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
-
-      {/* 운영 실행 현황 (deep-link로 진입 시) */}
-      {entityIdParam && (
-        <div className="fixed bottom-4 right-4 z-40 w-80 rounded-xl border bg-[#1a1a1e] shadow-lg p-4">
-          <OpsExecutionContext
-            entityType="ORDER"
-            entityId={entityIdParam}
-            compact
-          />
-        </div>
-      )}
-
-      {/* 주문 추적 AI 보조 패널 */}
-      <OrderAiAssistantPanel
-        open={aiPanel.isOpen}
-        onOpenChange={aiPanel.setIsOpen}
-        state={aiPanel.panelState}
-        data={aiPanel.panelData}
-        actionId={aiPanel.actionId}
-        onRegenerateFollowUp={aiPanel.regenerateFollowUp}
-        onApproveFollowUp={async (actionId, payload) => {
-          const res = await fetch(`/api/ai-actions/${actionId}/approve`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ payload }),
-          });
-          if (res.ok) {
-            aiPanel.setIsOpen(false);
-          }
-        }}
-        isGenerating={aiPanel.isGenerating}
-        error={aiPanel.error}
-      />
-    </>
-  );
-}
-
-export default function OrderHistoryPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        </div>
-      }
-    >
-      <OrderHistoryPageContent />
+    }>
+      <POConversionContent />
     </Suspense>
   );
 }
