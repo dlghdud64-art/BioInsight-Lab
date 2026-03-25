@@ -31,11 +31,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCompareStore } from "@/lib/store/compare-store";
-import {
-  generateSearchSummary, type SearchSummaryLine,
-  computeContextHash, shouldRegenerate, type SuggestionStore, createSuggestionStore,
-  trackSuggestionEvent,
-} from "@/lib/ai/suggestion-engine";
+import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
 
 export default function SearchPage() {
   const {
@@ -69,8 +65,8 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
-  // ── AI suggestion orchestration (contextHash 기반) ──
-  const [aiStore, setAiStore] = useState<SuggestionStore>(createSuggestionStore);
+  // ── AI suggestion orchestration (contextHash 기반, SSR-safe) ──
+  const [aiDismissedHash, setAiDismissedHash] = useState<string | null>(null);
 
   // Batch-fetch compare status for visible products
   const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
@@ -118,32 +114,18 @@ export default function SearchPage() {
   const totalAmount = quoteItems.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
   // ── Step 2 상태 정책: query 변경 시 activeResultId 초기화 ──
-  // compare/request 후보는 유지, rail 선택만 리셋
   useEffect(() => {
     setRailProduct(null);
-    // AI: query 변경 = new context → 기존 suggestion invalidate (dismissed는 유지)
+    setAiDismissedHash(null); // 새 검색 시 AI 제안 다시 노출
   }, [searchQuery]);
 
-  // ── AI contextHash 계산 + shouldRegenerate 체크 ──
-  const aiContextHash = useMemo(() =>
-    computeContextHash("sourcing_summary", {
-      query: searchQuery,
-      resultIds: products.map((p: any) => p.id).sort().join(","),
-      compareIds: compareIds.sort().join(","),
-      quoteItemIds: quoteItems.map((q: any) => q.productId).sort().join(","),
-    }),
-    [searchQuery, products, compareIds, quoteItems],
-  );
-  const aiShouldShow = useMemo(() =>
-    aiSearchSummary.length > 0 && shouldRegenerate(aiStore, aiContextHash),
-    [aiSearchSummary, aiStore, aiContextHash],
-  );
-  // contextHash가 바뀌면 active suggestion 갱신
-  useEffect(() => {
-    if (aiShouldShow && aiContextHash !== aiStore.contextHash) {
-      setAiStore(prev => ({ ...prev, active: null, contextHash: aiContextHash }));
-    }
-  }, [aiContextHash, aiShouldShow]); // eslint-disable-line react-hooks/exhaustive-deps
+  // ── AI contextHash (간단 해시, SSR-safe) ──
+  const aiContextHash = useMemo(() => {
+    const key = `${searchQuery}_${products.length}_${compareIds.length}_${quoteItems.length}`;
+    return key;
+  }, [searchQuery, products.length, compareIds.length, quoteItems.length]);
+
+  const aiShouldShow = aiSearchSummary.length > 0 && aiDismissedHash !== aiContextHash;
 
   // Restore pending search after login
   useEffect(() => {
@@ -254,13 +236,7 @@ export default function SearchPage() {
                       </Button>
                     )}
                     <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
-                      onClick={() => {
-                        trackSuggestionEvent("suggestion_dismissed", aiStore.active, aiContextHash);
-                        setAiStore(prev => ({
-                          ...prev, active: null,
-                          dismissedHashes: new Set([...prev.dismissedHashes, aiContextHash]),
-                        }));
-                      }}>
+                      onClick={() => setAiDismissedHash(aiContextHash)}>
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
