@@ -73,12 +73,13 @@ export interface RequestDraftGateInput {
   assemblyStatus: "drafting" | "partial_ready" | "ready_to_send" | "sent";
   isResolvedContext: boolean;
   isStaleContext: boolean;
+  isNoOp: boolean;
 }
 
 export function selectRequestDraftSuggestionGate(
   input: RequestDraftGateInput
 ): RequestDraftSuggestionGate {
-  const { suggestion, draft, activeSupplierRequestId, assemblyStatus, isResolvedContext, isStaleContext } = input;
+  const { suggestion, draft, activeSupplierRequestId, assemblyStatus, isResolvedContext, isStaleContext, isNoOp } = input;
 
   // 1. No suggestion
   if (!suggestion || !draft) return "hidden_no_suggestion";
@@ -109,6 +110,9 @@ export function selectRequestDraftSuggestionGate(
   ) {
     return "hidden_redundant";
   }
+
+  // 8. No-op (실질 변경 없음 → card/action row suppress)
+  if (isNoOp) return "hidden_redundant";
 
   return "visible";
 }
