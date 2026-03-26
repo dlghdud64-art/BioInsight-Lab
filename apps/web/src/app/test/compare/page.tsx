@@ -942,8 +942,13 @@ export default function TestComparePage() {
                 <div className="flex items-center gap-1.5 pt-1">
                   {recommendedItemId && recommendedItemId !== selectedDecisionItemId && (
                     <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-300 hover:bg-blue-600/10 border border-blue-600/20"
-                      onClick={() => { setSelectedDecisionItemId(recommendedItemId); setAiJudgmentDismissed(true); }}>
-                      현재 선택안 반영
+                      onClick={() => {
+                        // Step 1: 기준안 채택 (decision lifecycle)
+                        setSelectedDecisionItemId(recommendedItemId);
+                        // Step 2: suggestion accepted (suggestion lifecycle — 별도 처리)
+                        setAiJudgmentDismissed(true);
+                      }}>
+                      기준안으로 설정
                     </Button>
                   )}
                   {quoteItemsCount > 0 && selectedDecisionItemId && (
@@ -1014,7 +1019,7 @@ export default function TestComparePage() {
                     </span>
                     <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
                       onClick={() => setSelectedDecisionItemId(recommendedItemId)}>
-                      현재 선택안 반영
+                      기준안으로 설정
                     </Button>
                   </div>
                 )}
@@ -1466,17 +1471,17 @@ export default function TestComparePage() {
                 <div className="flex-1" />
                 <div className="px-5 py-4 border-t border-bd space-y-2" style={{ backgroundColor: '#434548' }}>
                   <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
-                    disabled={!allResolved || !recommended}
+                    disabled={!allResolved || !decisionProduct}
                     onClick={() => {
-                      if (!recommended) return;
-                      addProductToQuote(recommended);
-                      trackEvent("compare_review_handoff", { selectedDecisionItemId: recommended.id, note: !!reviewNote });
-                      toast({ title: "견적 리스트에 추가됨", description: recommended.name });
+                      if (!decisionProduct) return;
+                      addProductToQuote(decisionProduct);
+                      trackEvent("compare_review_handoff", { selectedDecisionItemId, note: !!reviewNote });
+                      toast({ title: "견적 리스트에 추가됨", description: decisionProduct.name });
                       setReviewMode(false);
                       router.push("/app/quote");
                     }}>
                     <Send className="h-3 w-3 mr-1.5" />
-                    {recommended ? "기준안 견적 전환" : "기준안 선택 필요"}
+                    {decisionProduct ? "기준안 견적 전환" : "기준안 선택 필요"}
                   </Button>
                   <Button size="sm" variant="outline" className="w-full h-7 text-[10px] text-slate-400 border-bd" onClick={() => setReviewMode(false)}>
                     비교로 돌아가기
