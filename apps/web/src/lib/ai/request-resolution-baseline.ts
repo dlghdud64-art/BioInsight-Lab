@@ -34,6 +34,14 @@ export type RequestDraftResolutionStatus =
 
 // ── Baseline model (supplier당 최신 1개) ──
 
+export interface RequestDraftBaselineComparable {
+  messageBody: string;
+  leadTimeQuestionIncluded: boolean;
+  substituteQuestionIncluded: boolean;
+  attachmentIds: string[];
+  itemIds: string[];
+}
+
 export interface RequestDraftGenerationBaseline {
   requestAssemblyId: string;
   supplierId: string;
@@ -41,6 +49,7 @@ export interface RequestDraftGenerationBaseline {
   draftFingerprint: string;
   recordedAt: string;
   source: RequestDraftGenerationBaselineSource;
+  comparable: RequestDraftBaselineComparable;
 }
 
 // ── Resolution → Baseline source mapping ──
@@ -92,6 +101,13 @@ export function buildRequestDraftGenerationBaselineSnapshot(
     draftFingerprint: buildRequestDraftFingerprint(contextInput),
     recordedAt: now,
     source,
+    comparable: {
+      messageBody: draft.messageBody,
+      leadTimeQuestionIncluded: draft.leadTimeQuestionIncluded,
+      substituteQuestionIncluded: draft.substituteQuestionIncluded,
+      attachmentIds: draft.attachments.map(a => a.id),
+      itemIds: [...draft.itemIds],
+    },
   };
 }
 
