@@ -82,31 +82,104 @@ export function computeFinalActiveSuggestion(
   return input.representative;
 }
 
+// ── Status echo types (imported inline to avoid circular) ──
+
+export type RequestDraftEchoKind = "none" | "accepted" | "edited" | "conflicted";
+
+export interface RequestDraftStatusEcho {
+  kind: RequestDraftEchoKind;
+  label: string | null;
+  tone: "neutral" | "muted" | "warning";
+  persistent: boolean;
+}
+
+// ── Header density ──
+
+export interface RequestDraftHeaderDensity {
+  headerBottomGap: "compact" | "normal";
+  formStartGap: "compact" | "normal";
+  showSuggestionDivider: boolean;
+}
+
+// ── Review intent ──
+
+export interface RequestDraftReviewIntent {
+  targetField: string;
+  label: string;
+}
+
 // ── Surface model (component가 읽는 단일 묶음) ──
+//
+// selector = domain truth + UI-ready composition
+// container = selector model consumption
+// card/chip = presentational rendering only
 
 export interface RequestDraftSuggestionSurfaceModel {
+  // Suggestion card
   suggestion: RequestDraftSuggestion | null;
   previewItems: EffectivePreviewItem[];
   actionability: RequestDraftSuggestionActionability;
-  shouldRender: boolean;
+  reviewIntent: RequestDraftReviewIntent | null;
+  shouldRenderSuggestion: boolean;
+
+  // Status echo chip
+  statusEcho: RequestDraftStatusEcho;
+  shouldRenderStatusEcho: boolean;
+
+  // Header density
+  density: RequestDraftHeaderDensity;
 }
 
 export function buildSurfaceModel(input: {
   activeSuggestion: RequestDraftSuggestion | null;
   previewItems: EffectivePreviewItem[];
   actionability: RequestDraftSuggestionActionability;
+  reviewIntent: RequestDraftReviewIntent | null;
+  statusEcho: RequestDraftStatusEcho;
 }): RequestDraftSuggestionSurfaceModel {
-  const shouldRender = !!(
+  const shouldRenderSuggestion = !!(
     input.activeSuggestion &&
     input.actionability.gate === "visible" &&
     input.previewItems.length > 0
   );
 
+  const shouldRenderStatusEcho = input.statusEcho.kind !== "none";
+
+  const density: RequestDraftHeaderDensity = {
+    headerBottomGap: shouldRenderSuggestion ? "normal" : "compact",
+    formStartGap: shouldRenderSuggestion ? "normal" : "compact",
+    showSuggestionDivider: shouldRenderSuggestion,
+  };
+
   return {
     suggestion: input.activeSuggestion,
-    previewItems: input.previewItems,
+    previewItems: shouldRenderSuggestion ? input.previewItems : [],
     actionability: input.actionability,
-    shouldRender,
+    reviewIntent: shouldRenderSuggestion ? input.reviewIntent : null,
+    shouldRenderSuggestion,
+    statusEcho: input.statusEcho,
+    shouldRenderStatusEcho,
+    density,
+  };
+}
+
+// ── Null-safe defaults ──
+
+const EMPTY_STATUS_ECHO: RequestDraftStatusEcho = {
+  kind: "none", label: null, tone: "muted", persistent: false,
+};
+
+export function buildEmptySurfaceModel(statusEcho?: RequestDraftStatusEcho): RequestDraftSuggestionSurfaceModel {
+  const echo = statusEcho ?? EMPTY_STATUS_ECHO;
+  return {
+    suggestion: null,
+    previewItems: [],
+    actionability: { gate: "hidden_no_suggestion" as RequestDraftSuggestionActionability["gate"], accept: { visible: false, disabled: true, reason: "stale" as const }, review: { visible: false, disabled: true, reason: "stale" as const }, dismiss: { visible: false, disabled: true, reason: "stale" as const } },
+    reviewIntent: null,
+    shouldRenderSuggestion: false,
+    statusEcho: echo,
+    shouldRenderStatusEcho: echo.kind !== "none",
+    density: { headerBottomGap: "compact", formStartGap: "compact", showSuggestionDivider: false },
   };
 }
 
@@ -123,8 +196,10 @@ export function recomputeActiveSuggestionSelection(input: {
   gate: RequestDraftSuggestionActionability["gate"];
   previewItems: EffectivePreviewItem[];
   actionability: RequestDraftSuggestionActionability;
+  reviewIntent: RequestDraftReviewIntent | null;
+  statusEcho: RequestDraftStatusEcho;
 }): RecomputeResult {
-  const { supplierContext, candidateStore, gate, previewItems, actionability } = input;
+  const { supplierContext, candidateStore, gate, previewItems, actionability, reviewIntent, statusEcho } = input;
 
   // Step 1: context key
   const contextKey = computeCurrentContextKey(supplierContext);
@@ -139,7 +214,9 @@ export function recomputeActiveSuggestionSelection(input: {
   const surfaceModel = buildSurfaceModel({
     activeSuggestion,
     previewItems: activeSuggestion ? previewItems : [],
-    actionability: activeSuggestion ? actionability : { ...actionability, gate: actionability.gate },
+    actionability,
+    reviewIntent: activeSuggestion ? reviewIntent : null,
+    statusEcho,
   });
 
   return {
