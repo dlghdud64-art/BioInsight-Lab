@@ -1,36 +1,41 @@
 /**
- * Request Draft Patch — field-group 단위 partial merge + user-owned field 보호
+ * Request Draft Patch — field-level provenance + partial merge + user edit 보호
  *
- * 규칙:
- * - AI patch는 activeSupplierRequestId 기준 현재 supplier draft에만 적용
- * - draft 전체 replace 금지, field-group 단위 partial merge만
- * - user edited field는 AI가 overwrite 금지
- * - replace_ai_only는 마지막 source가 ai인 항목에만 적용
- * - attachments 실파일 리스트는 AI가 직접 변경 금지
+ * ── 최상단 고정 규칙 ──
+ * 1. edited=true인 필드는 AI patch가 자동 overwrite 금지. 사용자 명시 승인 시에만 교체.
+ * 2. itemIds의 canonical source는 request assembly selection. AI가 itemIds를 자동 변경 불가.
+ * 3. stale patch (동일 patchId 재적용 / contextHash 불일치 / user edit 이후) apply 금지.
+ * 4. draft-level edited는 source of truth 아님 — fieldMeta 기반 파생값으로만 계산.
+ * 5. readiness / right rail / bottom dock는 active supplier 아닌 assembly 전체 기준.
+ * 6. supplier draft 전체 replace 금지. field 단위 partial merge만 허용.
+ * 7. sent 상태 draft는 immutable. content overwrite / 상태 회귀 금지.
  */
 
 // ── Field provenance ─────────────────────────────────────────────────────────
 
-export type DraftFieldSource = "user" | "ai" | "system";
+export type DraftFieldSource = "user_edit" | "ai_patch" | "seed" | "system" | "merge";
 
 export interface DraftFieldMeta {
   source: DraftFieldSource;
   updatedAt: string;
-  edited: boolean; // true = user가 수정한 상태, AI overwrite 금지
+  patchId?: string;
+  contextHash?: string;
+  dirty: boolean;   // 현재 값이 초기값과 다른지
+  edited: boolean;  // user가 직접 수정했는지
 }
 
-export interface SupplierRequestDraftMeta {
-  fieldMeta: {
-    messageBody?: DraftFieldMeta;
-    questions?: DraftFieldMeta;
-    requestedFields?: DraftFieldMeta;
-    notes?: DraftFieldMeta;
-    attachmentsMeta?: DraftFieldMeta;
-    followupFlags?: DraftFieldMeta;
-  };
-}
+export type DraftFieldKey =
+  | "messageBody"
+  | "questions"
+  | "requestedFields"
+  | "notes"
+  | "attachments"
+  | "leadTimeQuestionIncluded"
+  | "substituteQuestionIncluded";
 
-// ── Request question / field ─────────────────────────────────────────────────
+export type FieldMetaMap = Partial<Record<DraftFieldKey, DraftFieldMeta>>;
+
+// ── Request question / field / attachment ────────────────────────────────────
 
 export interface RequestQuestion {
   id: string;
@@ -46,241 +51,415 @@ export interface RequestedField {
   source?: DraftFieldSource;
 }
 
-export interface RequestAttachment {
+export interface AttachmentRef {
   id: string;
   name: string;
   type: string;
   url?: string;
 }
 
+// ── Edit / merge / origin states ─────────────────────────────────────────────
+
+export type EditState = "pristine" | "edited";
+export type MergeState = "clean" | "partial" | "conflicted";
+export type DraftOrigin = "manual" | "ai_seeded" | "mixed";
+
+// ── Last patch result ────────────────────────────────────────────────────────
+
+export interface LastPatchResult {
+  patchId: string;
+  contextHash: string;
+  appliedFields: DraftFieldKey[];
+  skippedFields: DraftFieldKey[];
+  conflictedFields: DraftFieldKey[];
+  mergedFields: DraftFieldKey[];
+  appliedAt: string;
+}
+
 // ── Supplier request draft ───────────────────────────────────────────────────
 
 export interface SupplierRequestDraft {
   supplierId: string;
-  itemIds: string[];
+  vendorName: string;
+  itemIds: string[];        // canonical source: assembly selection. AI 변경 금지.
   messageBody: string;
-  attachments: RequestAttachment[];
+  attachments: AttachmentRef[];
   leadTimeQuestionIncluded: boolean;
   substituteQuestionIncluded: boolean;
+  questions: RequestQuestion[];
+  requestedFields: RequestedField[];
+  notes: string;
   missingFields: string[];
   readiness: "draft" | "in_progress" | "ready" | "sent";
-  questions?: RequestQuestion[];
-  requestedFields?: RequestedField[];
-  notes?: string;
-  meta?: SupplierRequestDraftMeta;
+  // provenance / state
+  fieldMeta: FieldMetaMap;
+  editState: EditState;
+  mergeState: MergeState;
+  origin: DraftOrigin;
+  lastPatchResult: LastPatchResult | null;
 }
 
-// ── Patch types ──────────────────────────────────────────────────────────────
+// ── Patch type ───────────────────────────────────────────────────────────────
 
-export type RequestDraftPatch =
-  | { group: "messageBody"; supplierId: string; value: string }
-  | { group: "questions"; supplierId: string; mode: "append_missing" | "toggle_on" | "replace_ai_only"; value: RequestQuestion[] }
-  | { group: "requestedFields"; supplierId: string; mode: "append_missing" | "replace_ai_only"; value: RequestedField[] }
-  | { group: "attachmentsMeta"; supplierId: string; value: { suggestedAttachmentTypes: Array<"spec_sheet" | "quote_target_list" | "internal_note"> } }
-  | { group: "notes"; supplierId: string; value: string }
-  | { group: "followupFlags"; supplierId: string; value: { leadTimeQuestionIncluded?: boolean; substituteQuestionIncluded?: boolean } };
-
-// ── Merge logic ──────────────────────────────────────────────────────────────
-
-function isUserEdited(draft: SupplierRequestDraft, fieldName: string): boolean {
-  const meta = draft.meta?.fieldMeta?.[fieldName as keyof SupplierRequestDraftMeta["fieldMeta"]];
-  return meta?.source === "user" && meta?.edited === true;
+export interface SupplierDraftPatch {
+  patchId: string;
+  supplierId: string;
+  contextHash: string;
+  source: "ai_patch" | "system";
+  fields: Partial<{
+    messageBody: string;
+    attachments: AttachmentRef[];
+    leadTimeQuestionIncluded: boolean;
+    substituteQuestionIncluded: boolean;
+    questions: RequestQuestion[];
+    requestedFields: RequestedField[];
+    notes: string;
+    // itemIds는 의도적으로 제외 — AI 변경 금지
+  }>;
+  generatedAt: string;
 }
 
-function setFieldMeta(draft: SupplierRequestDraft, fieldName: string, source: DraftFieldSource): SupplierRequestDraft {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function hasUserEditedField(fieldMeta: FieldMetaMap): boolean {
+  return Object.values(fieldMeta).some(m => m?.source === "user_edit" && m?.edited);
+}
+
+function hasAiPatchedField(fieldMeta: FieldMetaMap): boolean {
+  return Object.values(fieldMeta).some(m => m?.source === "ai_patch");
+}
+
+function mergeUniqueById<T extends { id: string }>(current: T[], incoming: T[]): T[] {
+  const existingIds = new Set(current.map(x => x.id));
+  const newItems = incoming.filter(x => !existingIds.has(x.id));
+  return [...current, ...newItems];
+}
+
+// ── User edit action (field-level) ──────────────────────────────────────────
+
+export function updateSupplierDraftField(
+  draft: SupplierRequestDraft,
+  field: DraftFieldKey,
+  value: unknown
+): SupplierRequestDraft {
   const now = new Date().toISOString();
-  const currentMeta = draft.meta || { fieldMeta: {} };
-  return {
-    ...draft,
-    meta: {
-      ...currentMeta,
-      fieldMeta: {
-        ...currentMeta.fieldMeta,
-        [fieldName]: { source, updatedAt: now, edited: source === "user" },
+  const next = { ...draft };
+
+  // 실제 필드 업데이트
+  switch (field) {
+    case "messageBody": next.messageBody = value as string; break;
+    case "notes": next.notes = value as string; break;
+    case "leadTimeQuestionIncluded": next.leadTimeQuestionIncluded = value as boolean; break;
+    case "substituteQuestionIncluded": next.substituteQuestionIncluded = value as boolean; break;
+    case "questions": next.questions = value as RequestQuestion[]; break;
+    case "requestedFields": next.requestedFields = value as RequestedField[]; break;
+    case "attachments": next.attachments = value as AttachmentRef[]; break;
+    default: break;
+  }
+
+  // provenance 기록
+  next.fieldMeta = {
+    ...next.fieldMeta,
+    [field]: { source: "user_edit" as const, dirty: true, edited: true, updatedAt: now },
+  };
+
+  // 파생 상태 재계산
+  next.editState = "edited";
+  next.origin = hasAiPatchedField(next.fieldMeta) ? "mixed" : next.origin === "ai_seeded" ? "mixed" : next.origin;
+  next.missingFields = recalcMissingFields(next);
+  next.readiness = recalcReadiness(next);
+
+  return next;
+}
+
+// ── Apply supplier draft patch (core merge) ─────────────────────────────────
+
+export interface ApplyPatchResult {
+  draft: SupplierRequestDraft;
+  appliedFields: DraftFieldKey[];
+  skippedFields: DraftFieldKey[];
+  conflictedFields: DraftFieldKey[];
+  mergedFields: DraftFieldKey[];
+  wasNoOp: boolean;
+}
+
+export function applySupplierDraftPatch(
+  current: SupplierRequestDraft,
+  patch: SupplierDraftPatch
+): ApplyPatchResult {
+  const noOp: ApplyPatchResult = {
+    draft: current,
+    appliedFields: [],
+    skippedFields: [],
+    conflictedFields: [],
+    mergedFields: [],
+    wasNoOp: true,
+  };
+
+  // Rule 6: sent draft는 immutable
+  if (current.readiness === "sent") return noOp;
+
+  // Rule: 동일 patchId 재적용 방지
+  if (current.lastPatchResult?.patchId === patch.patchId) return noOp;
+
+  // Rule: stale contextHash + user edit 이후면 재적용 금지
+  if (
+    current.lastPatchResult?.contextHash === patch.contextHash &&
+    current.editState === "edited"
+  ) {
+    return noOp;
+  }
+
+  // supplierId 불일치
+  if (current.supplierId !== patch.supplierId) return noOp;
+
+  const next = { ...current };
+  const appliedFields: DraftFieldKey[] = [];
+  const skippedFields: DraftFieldKey[] = [];
+  const conflictedFields: DraftFieldKey[] = [];
+  const mergedFields: DraftFieldKey[] = [];
+
+  for (const [field, incomingValue] of Object.entries(patch.fields)) {
+    if (incomingValue === undefined) continue;
+    const key = field as DraftFieldKey;
+    const meta = next.fieldMeta?.[key];
+    const wasUserEdited = meta?.source === "user_edit" || meta?.dirty === true || meta?.edited === true;
+
+    // ── attachments: merge 우선 (replace 금지) ──
+    if (key === "attachments") {
+      const merged = mergeUniqueById(next.attachments, incomingValue as AttachmentRef[]);
+      if (merged.length !== next.attachments.length) {
+        next.attachments = merged;
+        mergedFields.push("attachments");
+        next.fieldMeta = {
+          ...next.fieldMeta,
+          attachments: { source: "merge", updatedAt: patch.generatedAt, patchId: patch.patchId, contextHash: patch.contextHash, dirty: false, edited: false },
+        };
+      } else {
+        skippedFields.push("attachments");
+      }
+      continue;
+    }
+
+    // ── messageBody: 가장 보수적 ──
+    if (key === "messageBody" && wasUserEdited) {
+      conflictedFields.push("messageBody");
+      continue;
+    }
+
+    // ── 기타: user edit 이면 skip ──
+    if (wasUserEdited) {
+      skippedFields.push(key);
+      continue;
+    }
+
+    // ── 미편집 필드: 적용 ──
+    switch (key) {
+      case "messageBody": next.messageBody = incomingValue as string; break;
+      case "notes": next.notes = incomingValue as string; break;
+      case "leadTimeQuestionIncluded": next.leadTimeQuestionIncluded = incomingValue as boolean; break;
+      case "substituteQuestionIncluded": next.substituteQuestionIncluded = incomingValue as boolean; break;
+      case "questions": {
+        // append_missing by default for AI
+        const existing = next.questions;
+        const existingTexts = new Set(existing.map(q => q.text.toLowerCase()));
+        const newOnes = (incomingValue as RequestQuestion[]).filter(q => !existingTexts.has(q.text.toLowerCase()));
+        if (newOnes.length > 0) {
+          next.questions = [...existing, ...newOnes.map(q => ({ ...q, source: "ai_patch" as const }))];
+          mergedFields.push("questions");
+        } else {
+          skippedFields.push("questions");
+        }
+        continue; // fieldMeta handled separately for merge
+      }
+      case "requestedFields": {
+        const existing = next.requestedFields;
+        const existingLabels = new Set(existing.map(f => f.label.toLowerCase()));
+        const newOnes = (incomingValue as RequestedField[]).filter(f => !existingLabels.has(f.label.toLowerCase()));
+        if (newOnes.length > 0) {
+          next.requestedFields = [...existing, ...newOnes.map(f => ({ ...f, source: "ai_patch" as const }))];
+          mergedFields.push("requestedFields");
+        } else {
+          skippedFields.push("requestedFields");
+        }
+        continue;
+      }
+      default: continue;
+    }
+
+    appliedFields.push(key);
+    next.fieldMeta = {
+      ...next.fieldMeta,
+      [key]: {
+        source: "ai_patch" as const,
+        updatedAt: patch.generatedAt,
+        patchId: patch.patchId,
+        contextHash: patch.contextHash,
+        dirty: false,
+        edited: false,
       },
-    },
+    };
+  }
+
+  // ── 파생 상태 재계산 ──
+  next.missingFields = recalcMissingFields(next);
+  next.readiness = recalcReadiness(next);
+
+  next.mergeState =
+    conflictedFields.length > 0 ? "conflicted"
+    : (skippedFields.length > 0 || mergedFields.length > 0) ? "partial"
+    : "clean";
+
+  next.editState = hasUserEditedField(next.fieldMeta) ? "edited" : "pristine";
+
+  next.origin = hasAiPatchedField(next.fieldMeta)
+    ? hasUserEditedField(next.fieldMeta) ? "mixed" : "ai_seeded"
+    : "manual";
+
+  next.lastPatchResult = {
+    patchId: patch.patchId,
+    contextHash: patch.contextHash,
+    appliedFields,
+    skippedFields,
+    conflictedFields,
+    mergedFields,
+    appliedAt: new Date().toISOString(),
+  };
+
+  return {
+    draft: next,
+    appliedFields,
+    skippedFields,
+    conflictedFields,
+    mergedFields,
+    wasNoOp: appliedFields.length === 0 && mergedFields.length === 0,
   };
 }
 
-export interface MergeResult {
-  draft: SupplierRequestDraft;
-  mergedFields: string[];
-  blockedFields: string[];
-}
+// ── Missing fields (canonical 재계산) ───────────────────────────────────────
 
-/**
- * mergeRequestDraftPatch — field-group 단위 partial merge
- *
- * merge 우선순위:
- * 1. active supplier draft 확인
- * 2. supplierId 일치 확인
- * 3. field-group별 merge strategy 적용
- * 4. user-edited field 보호
- * 5. derived state 재계산 (missingFields, readiness)
- */
-export function mergeRequestDraftPatch(
-  draft: SupplierRequestDraft,
-  patch: RequestDraftPatch
-): MergeResult {
-  // supplierId 불일치면 skip
-  if (draft.supplierId !== patch.supplierId) {
-    return { draft, mergedFields: [], blockedFields: [patch.group] };
-  }
-
-  const mergedFields: string[] = [];
-  const blockedFields: string[] = [];
-  let result = { ...draft };
-
-  switch (patch.group) {
-    case "messageBody": {
-      if (isUserEdited(draft, "messageBody")) {
-        blockedFields.push("messageBody");
-      } else {
-        result.messageBody = patch.value;
-        result = setFieldMeta(result, "messageBody", "ai");
-        mergedFields.push("messageBody");
-      }
-      break;
-    }
-
-    case "questions": {
-      if (patch.mode === "append_missing") {
-        // 기존 user 입력 유지, 누락분만 추가
-        const existing = result.questions || [];
-        const existingTexts = new Set(existing.map(q => q.text.toLowerCase()));
-        const newOnes = patch.value.filter(q => !existingTexts.has(q.text.toLowerCase()));
-        if (newOnes.length > 0) {
-          result.questions = [...existing, ...newOnes.map(q => ({ ...q, source: "ai" as const }))];
-          result = setFieldMeta(result, "questions", "ai");
-          mergedFields.push("questions");
-        }
-      } else if (patch.mode === "toggle_on") {
-        // false → true만 허용, true → false는 AI가 하지 않음
-        const existing = result.questions || [];
-        result.questions = existing.map(q => {
-          const match = patch.value.find(pq => pq.id === q.id);
-          if (match && !q.checked) return { ...q, checked: true };
-          return q;
-        });
-        mergedFields.push("questions");
-      } else if (patch.mode === "replace_ai_only") {
-        // 마지막 source가 ai인 항목만 교체
-        if (isUserEdited(draft, "questions")) {
-          blockedFields.push("questions");
-        } else {
-          const existing = result.questions || [];
-          const userOwned = existing.filter(q => q.source === "user");
-          result.questions = [...userOwned, ...patch.value.map(q => ({ ...q, source: "ai" as const }))];
-          result = setFieldMeta(result, "questions", "ai");
-          mergedFields.push("questions");
-        }
-      }
-      break;
-    }
-
-    case "requestedFields": {
-      if (patch.mode === "append_missing") {
-        const existing = result.requestedFields || [];
-        const existingLabels = new Set(existing.map(f => f.label.toLowerCase()));
-        const newOnes = patch.value.filter(f => !existingLabels.has(f.label.toLowerCase()));
-        if (newOnes.length > 0) {
-          result.requestedFields = [...existing, ...newOnes.map(f => ({ ...f, source: "ai" as const }))];
-          result = setFieldMeta(result, "requestedFields", "ai");
-          mergedFields.push("requestedFields");
-        }
-      } else if (patch.mode === "replace_ai_only") {
-        if (isUserEdited(draft, "requestedFields")) {
-          blockedFields.push("requestedFields");
-        } else {
-          const existing = result.requestedFields || [];
-          const userOwned = existing.filter(f => f.source === "user");
-          result.requestedFields = [...userOwned, ...patch.value.map(f => ({ ...f, source: "ai" as const }))];
-          result = setFieldMeta(result, "requestedFields", "ai");
-          mergedFields.push("requestedFields");
-        }
-      }
-      break;
-    }
-
-    case "attachmentsMeta": {
-      // attachments 실파일 리스트는 AI가 직접 변경 금지
-      // suggestion metadata만 저장 (실제 파일 첨부는 user action)
-      result = setFieldMeta(result, "attachmentsMeta", "ai");
-      mergedFields.push("attachmentsMeta");
-      break;
-    }
-
-    case "notes": {
-      if (isUserEdited(draft, "notes")) {
-        blockedFields.push("notes");
-      } else {
-        result.notes = patch.value;
-        result = setFieldMeta(result, "notes", "ai");
-        mergedFields.push("notes");
-      }
-      break;
-    }
-
-    case "followupFlags": {
-      // false → true 제안만 허용, true → false는 AI가 하지 않음
-      if (patch.value.leadTimeQuestionIncluded === true && !result.leadTimeQuestionIncluded) {
-        result.leadTimeQuestionIncluded = true;
-        mergedFields.push("leadTimeQuestionIncluded");
-      }
-      if (patch.value.substituteQuestionIncluded === true && !result.substituteQuestionIncluded) {
-        result.substituteQuestionIncluded = true;
-        mergedFields.push("substituteQuestionIncluded");
-      }
-      if (mergedFields.length > 0) {
-        result = setFieldMeta(result, "followupFlags", "ai");
-      }
-      break;
-    }
-  }
-
-  // derived state 재계산
-  result.missingFields = calculateMissingFields(result);
-  result.readiness = calculateDraftReadiness(result);
-
-  return { draft: result, mergedFields, blockedFields };
-}
-
-// ── Derived state calculators ────────────────────────────────────────────────
-
-export function calculateMissingFields(draft: SupplierRequestDraft): string[] {
+export function recalcMissingFields(draft: SupplierRequestDraft): string[] {
   const missing: string[] = [];
-  if (!draft.messageBody || draft.messageBody.length < 10) missing.push("message_missing");
-  if (!draft.leadTimeQuestionIncluded) missing.push("leadtime_question_missing");
-  if (!draft.substituteQuestionIncluded) missing.push("substitute_question_missing");
-  if (draft.attachments.length === 0) missing.push("attachment_missing");
+  if (!draft.supplierId) missing.push("supplier_missing");
+  if (draft.itemIds.length === 0) missing.push("items_missing");
+  if (!draft.messageBody || draft.messageBody.trim().length === 0) missing.push("message_missing");
+  // 비필수: attachments, leadTime, substitute — missingFields에 포함하지 않음
   return missing;
 }
 
-export function calculateDraftReadiness(draft: SupplierRequestDraft): SupplierRequestDraft["readiness"] {
-  if (draft.readiness === "sent") return "sent"; // 이미 전송됨 — AI가 변경 금지
-  const missing = calculateMissingFields(draft);
-  if (missing.length === 0 && draft.messageBody.length >= 20) return "ready";
-  if (draft.messageBody.length > 0 || (draft.questions && draft.questions.length > 0)) return "in_progress";
+// ── Readiness (canonical 재계산) ─────────────────────────────────────────────
+
+export function recalcReadiness(draft: SupplierRequestDraft): SupplierRequestDraft["readiness"] {
+  if (draft.readiness === "sent") return "sent"; // immutable
+  const missing = recalcMissingFields(draft);
+  if (missing.length === 0 && draft.messageBody.trim().length > 0) return "ready";
+  if (draft.messageBody.length > 0 || draft.questions.length > 0 || draft.leadTimeQuestionIncluded || draft.substituteQuestionIncluded) return "in_progress";
   return "draft";
 }
 
-export function calculateAssemblyReadiness(
-  draftMap: Record<string, SupplierRequestDraft>
-): { totalSuppliers: number; readyCount: number; missingCount: number; totalMissingFields: number; canSendAll: boolean } {
-  const drafts = Object.values(draftMap);
-  const totalSuppliers = drafts.length;
-  const readyCount = drafts.filter(d => d.readiness === "ready" || d.readiness === "sent").length;
-  const missingCount = drafts.filter(d => d.readiness !== "ready" && d.readiness !== "sent").length;
-  const totalMissingFields = drafts.reduce((sum, d) => sum + d.missingFields.length, 0);
-  const canSendAll = totalSuppliers > 0 && readyCount === totalSuppliers;
-  return { totalSuppliers, readyCount, missingCount, totalMissingFields, canSendAll };
+// ── Assembly-level readiness (active supplier 의존 없음) ─────────────────────
+
+export interface AssemblySummary {
+  totalSuppliers: number;
+  readyCount: number;
+  inProgressCount: number;
+  draftCount: number;
+  sentCount: number;
+  missingFieldCount: number;
+  conflictedDraftCount: number;
+  partialDraftCount: number;
+  estimatedTotal: number | null;
+  canSubmitAssembly: boolean;
 }
 
-// ── User edit helpers ────────────────────────────────────────────────────────
+export type AssemblyStatus = "drafting" | "partial_ready" | "ready_to_send" | "sent";
 
-export function markFieldAsUserEdited(
+export function selectAssemblySummary(
+  draftMap: Record<string, SupplierRequestDraft>
+): AssemblySummary {
+  const drafts = Object.values(draftMap);
+  let readyCount = 0, inProgressCount = 0, draftCount = 0, sentCount = 0;
+  let missingFieldCount = 0, conflictedDraftCount = 0, partialDraftCount = 0;
+
+  for (const d of drafts) {
+    const r = recalcReadiness(d);
+    if (r === "ready") readyCount++;
+    else if (r === "in_progress") inProgressCount++;
+    else if (r === "sent") sentCount++;
+    else draftCount++;
+    missingFieldCount += recalcMissingFields(d).length;
+    if (d.mergeState === "conflicted") conflictedDraftCount++;
+    if (d.mergeState === "partial") partialDraftCount++;
+  }
+
+  const canSubmitAssembly =
+    drafts.length > 0 &&
+    (readyCount + sentCount) === drafts.length &&
+    conflictedDraftCount === 0;
+
+  return {
+    totalSuppliers: drafts.length,
+    readyCount,
+    inProgressCount,
+    draftCount,
+    sentCount,
+    missingFieldCount,
+    conflictedDraftCount,
+    partialDraftCount,
+    estimatedTotal: null,
+    canSubmitAssembly,
+  };
+}
+
+export function selectAssemblyStatus(
+  draftMap: Record<string, SupplierRequestDraft>
+): AssemblyStatus {
+  const summary = selectAssemblySummary(draftMap);
+  if (summary.sentCount === summary.totalSuppliers && summary.totalSuppliers > 0) return "sent";
+  if (summary.canSubmitAssembly) return "ready_to_send";
+  if (summary.readyCount > 0 || summary.inProgressCount > 0) return "partial_ready";
+  return "drafting";
+}
+
+// ── Stale patch check ────────────────────────────────────────────────────────
+
+export function isPatchStale(
+  patch: SupplierDraftPatch,
   draft: SupplierRequestDraft,
-  fieldName: keyof SupplierRequestDraftMeta["fieldMeta"]
-): SupplierRequestDraft {
-  return setFieldMeta(draft, fieldName, "user");
+  currentContextHash: string
+): boolean {
+  if (patch.contextHash !== currentContextHash) return true;
+  if (patch.supplierId !== draft.supplierId) return true;
+  if (draft.lastPatchResult?.patchId === patch.patchId) return true; // 이미 적용됨
+  return false;
+}
+
+// ── Draft-level edited (selector용 파생값, source of truth 아님) ─────────────
+
+export function isDraftEdited(draft: SupplierRequestDraft): boolean {
+  return hasUserEditedField(draft.fieldMeta);
+}
+
+// ── Create empty draft ──────────────────────────────────────────────────────
+
+export function createEmptyDraft(supplierId: string, vendorName: string, itemIds: string[]): SupplierRequestDraft {
+  return {
+    supplierId,
+    vendorName,
+    itemIds,
+    messageBody: "",
+    attachments: [],
+    leadTimeQuestionIncluded: false,
+    substituteQuestionIncluded: false,
+    questions: [],
+    requestedFields: [],
+    notes: "",
+    missingFields: ["message_missing"],
+    readiness: "draft",
+    fieldMeta: {},
+    editState: "pristine",
+    mergeState: "clean",
+    origin: "manual",
+    lastPatchResult: null,
+  };
 }
