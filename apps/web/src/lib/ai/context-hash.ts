@@ -55,7 +55,7 @@ export function buildCompareContextHash(params: {
   });
 }
 
-// ── Request ──
+// ── Request (legacy — builder 호환) ──
 export function buildRequestContextHash(params: {
   requestAssemblyId: string;
   activeSupplierRequestId: string | null;
@@ -72,4 +72,45 @@ export function buildRequestContextHash(params: {
     lt: params.leadTimeIncluded ? "1" : "0",
     sub: params.substituteIncluded ? "1" : "0",
   });
+}
+
+// ── Request Draft (full — editState/mergeState/attachments 포함) ──
+
+export interface RequestDraftContextInput {
+  requestAssemblyId: string;
+  supplierId: string;
+  itemIds: string[];
+  messageBody: string;
+  attachmentIds: string[];
+  leadTimeQuestionIncluded: boolean;
+  substituteQuestionIncluded: boolean;
+  editState?: "pristine" | "edited";
+  mergeState?: "clean" | "partial" | "conflicted";
+}
+
+export function buildRequestDraftContextHash(input: RequestDraftContextInput): string {
+  return buildContextHash("request_draft", {
+    raid: input.requestAssemblyId,
+    sid: input.supplierId,
+    iids: input.itemIds.slice().sort().join(","),
+    mb_len: input.messageBody.length.toString(),
+    mb_fp: stableHash(input.messageBody.substring(0, 200)),
+    aids: input.attachmentIds.slice().sort().join(","),
+    lt: input.leadTimeQuestionIncluded ? "1" : "0",
+    sub: input.substituteQuestionIncluded ? "1" : "0",
+    es: input.editState ?? "pristine",
+    ms: input.mergeState ?? "clean",
+  });
+}
+
+export function buildRequestDraftFingerprint(input: RequestDraftContextInput): string {
+  // fingerprint는 messageBody 내용까지 포함하여 더 세밀하게 구분
+  return stableHash(stableStringify({
+    sid: input.supplierId,
+    iids: input.itemIds.slice().sort().join(","),
+    mb: input.messageBody,
+    aids: input.attachmentIds.slice().sort().join(","),
+    lt: input.leadTimeQuestionIncluded ? "1" : "0",
+    sub: input.substituteQuestionIncluded ? "1" : "0",
+  }));
 }

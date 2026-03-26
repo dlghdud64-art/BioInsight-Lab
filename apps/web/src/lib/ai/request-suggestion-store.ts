@@ -222,6 +222,92 @@ export function isSuggestionSuppressed(
   return state.resolvedHistory.some(h => h.contextHash === contextHash);
 }
 
+/**
+ * shouldShowRequestDraftSuggestion — sent/conflicted/stale/resolved 종합 판정.
+ * 의사코드 그대로 구현.
+ */
+export function shouldShowRequestDraftSuggestion(params: {
+  suggestion: RequestDraftSuggestion | null;
+  draftReadiness: "draft" | "in_progress" | "ready" | "sent";
+  draftMergeState: "clean" | "partial" | "conflicted";
+  assemblyStatus: "drafting" | "partial_ready" | "ready_to_send" | "sent";
+  currentContextHash: string;
+  resolvedHistory: RequestSuggestionState["resolvedHistory"];
+}): boolean {
+  const { suggestion, draftReadiness, draftMergeState, assemblyStatus, currentContextHash, resolvedHistory } = params;
+  if (!suggestion) return false;
+  if (suggestion.status !== "generated") return false;
+
+  // sent 보호
+  if (draftReadiness === "sent") return false;
+  if (assemblyStatus === "sent") return false;
+
+  // conflict 우선
+  if (draftMergeState === "conflicted") return false;
+
+  // context hash 불일치 → stale
+  if (suggestion.sourceContext.contextHash !== currentContextHash) return false;
+
+  // 동일 contextHash 이미 resolved
+  const alreadyResolved = resolvedHistory.some(
+    h => h.contextHash === suggestion.sourceContext.contextHash &&
+         h.supplierId === suggestion.sourceContext.supplierId
+  );
+  if (alreadyResolved) return false;
+
+  return true;
+}
+
+// ── Placement ────────────────────────────────────────────────────────────────
+
+export type SuggestionPlacement = "hidden" | "center_inline_top";
+
+export function getRequestDraftSuggestionPlacement(input: {
+  hasActiveSuggestion: boolean;
+  activeSupplierRequestId: string | null;
+  suggestionSupplierId: string | null;
+  draftReadiness?: "draft" | "in_progress" | "ready" | "sent";
+  draftMergeState?: "clean" | "partial" | "conflicted";
+  assemblyStatus?: "drafting" | "partial_ready" | "ready_to_send" | "sent";
+  isResolvedContext: boolean;
+}): SuggestionPlacement {
+  if (!input.hasActiveSuggestion) return "hidden";
+  if (!input.activeSupplierRequestId) return "hidden";
+  if (!input.suggestionSupplierId) return "hidden";
+  if (input.suggestionSupplierId !== input.activeSupplierRequestId) return "hidden";
+  if (input.isResolvedContext) return "hidden";
+  if (input.draftReadiness === "sent") return "hidden";
+  if (input.draftMergeState === "conflicted") return "hidden";
+  if (input.assemblyStatus === "sent") return "hidden";
+  return "center_inline_top";
+}
+
+// ── Preview items ────────────────────────────────────────────────────────────
+
+export interface SuggestionPreviewItem {
+  key: "message" | "lead_time" | "substitute" | "attachments" | "items";
+  label: string;
+}
+
+export function buildRequestDraftSuggestionPreviewItems(
+  suggestion: RequestDraftSuggestion
+): SuggestionPreviewItem[] {
+  const items: SuggestionPreviewItem[] = [];
+  const patch = suggestion.payload.patch.fields;
+
+  if (typeof patch.messageBody === "string" && patch.messageBody.trim().length > 0) {
+    items.push({ key: "message", label: "요청 메시지 초안 보강" });
+  }
+  if (patch.leadTimeQuestionIncluded === true) {
+    items.push({ key: "lead_time", label: "납기 문의 포함" });
+  }
+  if (patch.substituteQuestionIncluded === true) {
+    items.push({ key: "substitute", label: "대체품 문의 포함" });
+  }
+
+  return items.slice(0, 4);
+}
+
 export function selectSuggestionStatus(
   state: RequestSuggestionState
 ): RequestSuggestionStatus | null {
