@@ -127,8 +127,6 @@ export default function SearchPage() {
     return key;
   }, [searchQuery, products.length, compareIds.length, quoteItems.length]);
 
-  const aiShouldShow = aiSearchSummary.length > 0 && aiDismissedHash !== aiContextHash;
-
   // Restore pending search after login
   useEffect(() => {
     if (session?.user && !hasSearched) {
@@ -163,6 +161,8 @@ export default function SearchPage() {
     }) : [],
     [hasSearched, products, searchQuery, compareIds, quoteItems],
   );
+
+  const aiShouldShow = aiSearchSummary.length > 0 && aiDismissedHash !== aiContextHash;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
