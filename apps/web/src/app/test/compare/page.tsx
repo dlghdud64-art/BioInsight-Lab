@@ -56,6 +56,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { generateCompareDecision, type CompareDecisionSummary } from "@/lib/ai/suggestion-engine";
+import { buildCompareDecisionOptionSet } from "@/lib/ai/decision-option-builders";
+import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
 
 export default function TestComparePage() {
   const { compareIds, toggleCompare, clearCompare, addProductToQuote, quoteItems } = useTestFlow();
@@ -110,6 +112,8 @@ export default function TestComparePage() {
   const [reviewNote, setReviewNote] = useState("");
   const [aiJudgmentDismissed, setAiJudgmentDismissed] = useState(false);
   const [resolvedBlockers, setResolvedBlockers] = useState<Set<number>>(new Set());
+  // ── P2: 3-option decision surface ──
+  const [activeDecisionOptionStrategy, setActiveDecisionOptionStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
 
   // ── Data fetching ──────────────────────────────────────────────────────────
   const { data: compareProductsData, isLoading, error } = useQuery({
@@ -453,6 +457,25 @@ export default function TestComparePage() {
   const decisionProduct = selectedDecisionItemId ? products.find((p: any) => p.id === selectedDecisionItemId) : null;
   // recommendedItemId = scenario 정렬 1등 (자동 계산, 사용자 확정 아님)
   const recommendedItemId = products.length >= 2 ? products[0]?.id : null;
+
+  // ── P2: 3-option decision set ──
+  const compareOptionSet = useMemo<DecisionOptionSet | null>(() => {
+    if (products.length < 2) return null;
+    return buildCompareDecisionOptionSet({
+      compareSessionId,
+      products: products.map((p: any) => ({
+        id: p.id,
+        name: p.name || "",
+        priceKRW: p.vendors?.[0]?.priceInKRW ?? null,
+        leadTimeDays: getAverageLeadTime(p) || null,
+        specMatchScore: null,
+      })),
+    });
+  }, [compareSessionId, products, getAverageLeadTime]);
+
+  const compareOptions = compareOptionSet?.options ?? [];
+  const activeDecisionOption = compareOptions.find(o => o.frame === activeDecisionOptionStrategy) ?? compareOptions.find(o => o.frame === "balanced") ?? null;
+  const shouldShowDecisionStrip = compareOptions.length === 3 && !aiJudgmentDismissed;
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
@@ -922,49 +945,105 @@ export default function TestComparePage() {
               </div>
             )}
 
-            {/* ═══ AI 판단 block — P1 반자동 운영 레이어 ═══ */}
-            {aiDecision && !aiJudgmentDismissed && (
-              <div className="rounded-lg border border-blue-600/20 bg-blue-600/5 px-4 py-3 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-                  <span className="text-xs font-semibold text-blue-300">AI 판단</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-600/10 text-blue-400 border border-blue-600/20">
-                    {aiDecision.confidence === "high" ? "확신도 높음" : aiDecision.confidence === "medium" ? "확신도 보통" : "확신도 낮음"}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-200 font-medium">{aiDecision.recommendation}</div>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {aiDecision.details.map((d, i) => (
-                    <span key={i} className="text-[10px] text-slate-400">· {d}</span>
-                  ))}
-                  <span className="text-[10px] text-slate-500">→ {aiDecision.nextAction}</span>
-                </div>
-                <div className="flex items-center gap-1.5 pt-1">
-                  {recommendedItemId && recommendedItemId !== selectedDecisionItemId && (
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-300 hover:bg-blue-600/10 border border-blue-600/20"
-                      onClick={() => {
-                        // Step 1: 기준안 채택 (decision lifecycle)
-                        setSelectedDecisionItemId(recommendedItemId);
-                        // Step 2: suggestion accepted (suggestion lifecycle — 별도 처리)
-                        setAiJudgmentDismissed(true);
-                      }}>
-                      기준안으로 설정
-                    </Button>
-                  )}
-                  {quoteItemsCount > 0 && selectedDecisionItemId && (
-                    <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-300 hover:bg-emerald-600/10 border border-emerald-600/20"
-                      onClick={() => router.push("/app/quote")}>
-                      요청 단계로 이동
-                    </Button>
-                  )}
-                  {quoteItemsCount > 0 && !selectedDecisionItemId && (
-                    <span className="text-[10px] text-amber-400">기준안 선택 후 이동</span>
-                  )}
-                  <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300 ml-auto"
-                    onClick={() => setAiJudgmentDismissed(true)}>
+            {/* ═══ P2: 3-Option Decision Strip — 반자동 운영 판단안 ═══ */}
+            {shouldShowDecisionStrip && (
+              <div className="space-y-3">
+                {/* strip header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                    <span className="text-xs font-semibold text-slate-300">판단안 3개</span>
+                    <span className="text-[10px] text-slate-500">현재 비교 기준에 따라 3개의 검토 전략을 제안합니다</span>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-6 px-1.5 text-slate-500 hover:text-slate-300" onClick={() => setAiJudgmentDismissed(true)}>
                     <X className="h-3 w-3" />
                   </Button>
                 </div>
+
+                {/* 3-option cards */}
+                <div className="grid grid-cols-3 gap-2">
+                  {compareOptions.map((opt) => {
+                    const isActive = activeDecisionOption?.id === opt.id;
+                    const strategyLabel = opt.frame === "conservative" ? "보수형" : opt.frame === "balanced" ? "균형형" : "대안형";
+                    const strategyColor = opt.frame === "conservative" ? "blue" : opt.frame === "balanced" ? "emerald" : "amber";
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        className={`text-left rounded-lg border p-2.5 transition-all ${
+                          isActive
+                            ? `border-${strategyColor}-500/40 bg-${strategyColor}-600/10 ring-1 ring-${strategyColor}-500/30`
+                            : "border-slate-700/50 bg-[#2a2c30] hover:border-slate-600"
+                        }`}
+                        onClick={() => setActiveDecisionOptionStrategy(opt.frame as "conservative" | "balanced" | "alternative")}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
+                            isActive ? `bg-${strategyColor}-600/20 text-${strategyColor}-300 border border-${strategyColor}-500/30` : "bg-slate-700/50 text-slate-400"
+                          }`}>{strategyLabel}</span>
+                          <span className={`text-[9px] px-1 py-0.5 rounded ${
+                            opt.confidence >= 0.8 ? "text-emerald-400" : opt.confidence >= 0.6 ? "text-blue-400" : "text-slate-500"
+                          }`}>{opt.confidence >= 0.8 ? "높음" : opt.confidence >= 0.6 ? "보통" : "낮음"}</span>
+                        </div>
+                        <div className="text-[11px] font-medium text-slate-200 mb-0.5">{opt.title}</div>
+                        <div className="text-[10px] text-slate-400 line-clamp-2">{opt.rationale}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* active option detail */}
+                {activeDecisionOption && (
+                  <div className="rounded-lg border border-slate-700/50 bg-[#2a2c30] p-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-slate-200">{activeDecisionOption.title}</span>
+                      <span className="text-[9px] text-slate-500">{activeDecisionOption.recommendedUseCase}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400">{activeDecisionOption.rationale}</div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-[9px] font-semibold text-emerald-400 mb-1">장점</div>
+                        {activeDecisionOption.strengths.map((s, i) => (
+                          <div key={i} className="text-[10px] text-slate-300 flex items-start gap-1">
+                            <Check className="h-2.5 w-2.5 text-emerald-500 mt-0.5 shrink-0" />{s}
+                          </div>
+                        ))}
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-semibold text-amber-400 mb-1">리스크</div>
+                        {activeDecisionOption.risks.map((r) => (
+                          <div key={r.id} className="text-[10px] text-slate-300 flex items-start gap-1">
+                            <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-amber-400" : "text-slate-500"}`} />{r.label}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* commit CTA — preview와 분리 */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-700/50">
+                      <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                        onClick={() => {
+                          // operator commit: preview → actual selectedDecisionItemId 변경
+                          const targetId = (activeDecisionOption as any).targetItemId ?? products[0]?.id;
+                          if (targetId) {
+                            setSelectedDecisionItemId(targetId);
+                            trackEvent("compare_decision_option_committed", { strategy: activeDecisionOption.frame, targetId });
+                            toast({ title: "기준안 설정됨", description: activeDecisionOption.title });
+                          }
+                        }}>
+                        이 안으로 기준안 설정
+                      </Button>
+                      {selectedDecisionItemId && (
+                        <Button size="sm" variant="ghost" className="h-7 px-3 text-[10px] text-emerald-300 hover:bg-emerald-600/10 border border-emerald-600/20"
+                          onClick={() => router.push("/app/quote")}>
+                          요청 단계 준비
+                        </Button>
+                      )}
+                      {!selectedDecisionItemId && (
+                        <span className="text-[10px] text-slate-500">기준안 채택 후 요청 단계로 이동할 수 있습니다</span>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
