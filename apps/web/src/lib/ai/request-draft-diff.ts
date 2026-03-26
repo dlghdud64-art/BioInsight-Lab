@@ -170,7 +170,82 @@ export function getRequestDraftPreviewMetrics(
   return { addedAttachmentCount, addedQuestionCount, addedFieldCount };
 }
 
-// ── Effective preview items (diff 기준만) ──
+// ── Preview copy token system ──
+//
+// 어휘 영역 분리:
+//   preview  → 보강 / 포함 / 추가 예정 / 조정
+//   echo     → 반영됨 / 수정함 / 검토 필요
+//   summary  → 준비 완료 / 미완성 / 충돌 있음 / 전송 가능
+//
+// 금지 어휘: 완성 / 최적화 / 자동 생성 완료 / 즉시 전송 / 대신 결정
+
+export type RequestDraftChangeKind = "replace" | "toggle" | "merge" | "append";
+
+export interface RequestDraftPreviewCopyToken {
+  key: RequestDraftEffectiveChangeKey;
+  kind: RequestDraftChangeKind;
+  label: string;
+}
+
+export interface BuildPreviewCopyInput {
+  change: RequestDraftEffectiveChange;
+  metrics?: RequestDraftPreviewMetrics;
+}
+
+/**
+ * change kind별 고정 문구 mapping.
+ * - replace(message) → 초안 보강
+ * - toggle(question flag) → 문의 포함
+ * - merge(attachments) → n건 추가 예정
+ * - append(questions/fields/notes) → n건 추가 / 보강
+ */
+export function buildRequestDraftPreviewCopy(
+  input: BuildPreviewCopyInput
+): RequestDraftPreviewCopyToken | null {
+  const { change, metrics } = input;
+  if (!change.changed) return null;
+
+  switch (change.key) {
+    // ── replace: 초안/문안 보강 ──
+    case "messageBody":
+      return { key: "messageBody", kind: "replace", label: "요청 메시지 초안 보강" };
+
+    case "notes":
+      return { key: "notes", kind: "replace", label: "비고 보강" };
+
+    // ── toggle: 문의 포함 ──
+    case "leadTimeQuestionIncluded":
+      return { key: "leadTimeQuestionIncluded", kind: "toggle", label: "납기 문의 포함" };
+
+    case "substituteQuestionIncluded":
+      return { key: "substituteQuestionIncluded", kind: "toggle", label: "대체품 문의 포함" };
+
+    // ── merge: n건 추가 예정 ──
+    case "attachments": {
+      const count = metrics?.addedAttachmentCount ?? 0;
+      if (count <= 0) return null; // dedupe 후 0건이면 생성 금지
+      return { key: "attachments", kind: "merge", label: `첨부 ${count}건 추가 예정` };
+    }
+
+    // ── append: n건 추가 ──
+    case "questions": {
+      const count = metrics?.addedQuestionCount ?? 0;
+      if (count <= 0) return null;
+      return { key: "questions", kind: "append", label: `확인 질문 ${count}건 추가` };
+    }
+
+    case "requestedFields": {
+      const count = metrics?.addedFieldCount ?? 0;
+      if (count <= 0) return null;
+      return { key: "requestedFields", kind: "append", label: `요청 항목 ${count}건 추가` };
+    }
+
+    default:
+      return null;
+  }
+}
+
+// ── Effective preview items (token 기반) ──
 
 export function buildEffectivePreviewItems(input: {
   draft: SupplierRequestDraft;
@@ -178,42 +253,13 @@ export function buildEffectivePreviewItems(input: {
 }): EffectivePreviewItem[] {
   const diff = diffRequestDraftPatch(input);
   const metrics = getRequestDraftPreviewMetrics(input.draft, input.patch);
+
   const items: EffectivePreviewItem[] = [];
-
   for (const change of diff.changes) {
-    if (!change.changed) continue;
-
-    switch (change.key) {
-      case "messageBody":
-        items.push({ key: "message", label: "요청 메시지 초안 보강" });
-        break;
-      case "leadTimeQuestionIncluded":
-        items.push({ key: "lead_time", label: "납기 문의 포함" });
-        break;
-      case "substituteQuestionIncluded":
-        items.push({ key: "substitute", label: "대체품 문의 포함" });
-        break;
-      case "attachments":
-        if (metrics.addedAttachmentCount > 0) {
-          items.push({ key: "attachments", label: `첨부 ${metrics.addedAttachmentCount}건 추가 예정` });
-        }
-        break;
-      case "questions":
-        if (metrics.addedQuestionCount > 0) {
-          items.push({ key: "questions", label: `질문 ${metrics.addedQuestionCount}건 추가` });
-        }
-        break;
-      case "requestedFields":
-        if (metrics.addedFieldCount > 0) {
-          items.push({ key: "fields", label: `요청 항목 ${metrics.addedFieldCount}건 추가` });
-        }
-        break;
-      case "notes":
-        items.push({ key: "notes", label: "비고 보강" });
-        break;
-    }
+    const token = buildRequestDraftPreviewCopy({ change, metrics });
+    if (!token) continue;
+    items.push({ key: token.key as EffectivePreviewItem["key"], label: token.label });
   }
-
   return items.slice(0, 4);
 }
 
