@@ -243,7 +243,8 @@ export function BioInsightHeroSection() {
           검색부터 비교, 요청, 입고, 재고까지 하나의 운영 흐름으로 연결합니다.<br className="hidden sm:block" />AI는 각 단계에서 필요한 후보 정리와 다음 작업 준비를 돕습니다.
         </p>
         <p className="text-sm text-slate-400 mb-10 max-w-xl leading-relaxed">
-          LabAxis는 검색 결과 정리, 비교 판단, 요청 초안 준비를 돕는 AI 보조 기능을 제공합니다.
+          LabAxis는 검색 결과 정리, 비교 판단, 요청 초안 준비를 돕는 AI 보조 기능을 제공합니다.<br className="hidden sm:block" />
+          운영자는 더 빠르게 검토하고, 필요한 다음 단계로 바로 이어갈 수 있습니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-4">
           <Link href={isLoggedIn ? "/app/search" : "/search"}>

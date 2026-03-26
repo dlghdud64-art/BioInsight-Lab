@@ -314,7 +314,7 @@ export default function IntroPage() {
                   </div>
                   <div>
                     <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">구매 담당자</p>
-                    <h3 className="text-sm font-bold text-slate-100">견적 수집·비교 자동화</h3>
+                    <h3 className="text-sm font-bold text-slate-100">견적 수집·비교 정리</h3>
                   </div>
                 </div>
                 <p className="text-[11px] font-semibold text-blue-400">견적 수집 시간 80% 절감, 비교 판단 즉시 가능</p>
