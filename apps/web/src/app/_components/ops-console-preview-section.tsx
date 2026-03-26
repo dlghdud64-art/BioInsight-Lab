@@ -8,26 +8,30 @@ import {
 const CONSOLE_LAYERS = [
   {
     icon: ListChecks,
-    title: "작업 큐",
-    purpose: "지금 당장 처리할 견적·입고·예외를 모아 처리",
+    title: "작업 큐 정리",
+    purpose: "검색 결과와 요청 준비 대상을 빠르게 정리하고, 먼저 검토할 후보를 앞에 둡니다.",
+    support: "AI는 반영할 항목과 다음 검토 대상을 제안합니다.",
     items: "회신 지연 · 입고 지연 · 재주문 필요",
   },
   {
     icon: LayoutDashboard,
-    title: "일일 검토",
-    purpose: "오늘 확인할 병목과 예외를 운영자 뷰로 정리",
+    title: "일일 검토와 판단",
+    purpose: "비교가 필요한 후보와 판단 포인트를 먼저 정리해 운영자가 더 빠르게 선택지를 검토할 수 있게 합니다.",
+    support: "비용, 납기, 규격 적합성 같은 검토 포인트를 읽기 쉽게 연결합니다.",
     items: "이월 항목 · 장기 차단 · 체류 시간",
   },
   {
     icon: BarChart3,
-    title: "거버넌스",
-    purpose: "SLA·승인·예외·정책을 통제하는 관리 계층",
+    title: "운영 통제와 누락 점검",
+    purpose: "공급사 요청서에 포함할 메시지와 문의 항목을 준비하고, 누락된 항목을 점검합니다.",
+    support: "운영자는 검토 후 적용하거나 수정할 수 있습니다.",
     items: "SLA 준수율 · 케이던스 · 팀 워크로드",
   },
   {
     icon: Wrench,
-    title: "개선",
-    purpose: "반복 패턴과 병목 원인을 추적하고 후속 최적화",
+    title: "반복 흐름 개선",
+    purpose: "반복되는 요청 준비와 검토 흐름을 더 일관된 운영 방식으로 정리할 수 있습니다.",
+    support: "조직 기준에 맞는 워크플로를 점진적으로 다듬어 갈 수 있습니다.",
     items: "병목 식별 · 개선 조치 · 추적 대시보드",
   },
 ];
@@ -36,7 +40,7 @@ const SYSTEM_PROOFS = [
   { icon: UserCheck, text: "배정 → 승인 → 수주·입고까지 상태 추적" },
   { icon: ArrowRightLeft, text: "비교·견적·발주가 하나의 작업 흐름으로 연결" },
   { icon: AlertTriangle, text: "SLA·예외·병목이 같은 화면에서 드러남" },
-  { icon: Timer, text: "결과가 재고·입고·재주문으로 이어짐" },
+  { icon: Timer, text: "정리된 후보와 요청 준비 항목은 운영자가 바로 검토하고 다음 단계로 이어갈 수 있습니다" },
 ];
 
 export function OpsConsolePreviewSection() {
@@ -48,10 +52,10 @@ export function OpsConsolePreviewSection() {
             Operations Console
           </p>
           <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
-            4개 운영 계층으로 구매 운영을 통제합니다
+            검색부터 요청 준비까지, 검토와 운영이 이어지는 구조
           </h2>
           <p className="text-xs md:text-sm text-[#BAC6D9] max-w-lg">
-            작업 큐 → 일일 검토 → 거버넌스 → 개선. 각 계층이 운영 단계에 맞는 통제를 제공합니다.
+            LabAxis는 검색 결과를 정리하는 수준에서 끝나지 않고, 비교 검토와 공급사 요청 준비, 누락 점검과 다음 운영 판단까지 이어지는 작업 흐름으로 정리합니다.
           </p>
         </div>
 
@@ -70,7 +74,8 @@ export function OpsConsolePreviewSection() {
                   <Icon className="h-4 w-4 text-[#8794AA]" strokeWidth={1.8} />
                   <span className="text-sm font-bold text-[#F3F7FF]">{layer.title}</span>
                 </div>
-                <p className="text-[11px] text-[#BAC6D9] leading-relaxed mb-1.5">{layer.purpose}</p>
+                <p className="text-[11px] text-[#BAC6D9] leading-relaxed mb-1">{layer.purpose}</p>
+                {layer.support && <p className="text-[10px] text-[#8794AA] leading-relaxed mb-1.5">{layer.support}</p>}
                 <p className="text-[10px] text-[#6FA2FF] font-medium">{layer.items}</p>
               </div>
             );
