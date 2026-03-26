@@ -5,7 +5,11 @@
  * 이번 단계는 "AI 엔진 완성"이 아니라 "반자동 suggestion operating surface 삽입".
  */
 import type { AiSuggestion, AiSuggestionAction, AiSuggestionReason } from "./suggestion-engine";
-import type { RequestDraftPatch } from "./request-draft-patch";
+import type { SupplierDraftPatch } from "./request-draft-patch";
+import type { RequestDraftSuggestion } from "./request-suggestion-store";
+
+// Legacy compat
+type RequestDraftPatch = SupplierDraftPatch;
 import { buildSourcingContextHash, buildCompareContextHash, buildRequestContextHash } from "./context-hash";
 
 function uid(): string {
@@ -377,6 +381,51 @@ export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion
     sourceContext: { requestAssemblyId, vendorName, itemCount: items.length, missingFields },
     createdAt: now,
     updatedAt: now,
+  };
+}
+
+/**
+ * AiSuggestion → RequestDraftSuggestion 변환 어댑터.
+ * builder의 일반 AiSuggestion을 store의 lifecycle 관리형으로 변환.
+ * accepted 시 반환되는 patch는 applySupplierDraftPatch()에 그대로 전달 가능.
+ */
+export function toRequestDraftSuggestion(
+  base: AiSuggestion,
+  requestAssemblyId: string,
+  supplierId: string,
+  itemIds: string[],
+  draftFingerprint: string,
+  draftPatch: SupplierDraftPatch
+): RequestDraftSuggestion {
+  return {
+    id: base.id,
+    scope: "request_draft",
+    targetId: base.targetId,
+    title: base.title,
+    message: base.message,
+    actions: ["accept", "dismiss", "review"],
+    status: "generated",
+    confidence: base.confidence,
+    sourceContext: {
+      requestAssemblyId,
+      supplierId,
+      contextHash: base.contextHash,
+      itemIds,
+      draftFingerprint,
+    },
+    payload: {
+      supplierId,
+      requestAssemblyId,
+      patch: draftPatch,
+      preview: {
+        messageBody: typeof draftPatch.fields.messageBody === "string" ? draftPatch.fields.messageBody?.substring(0, 100) : undefined,
+        leadTimeQuestionIncluded: draftPatch.fields.leadTimeQuestionIncluded,
+        substituteQuestionIncluded: draftPatch.fields.substituteQuestionIncluded,
+        itemCount: itemIds.length,
+      },
+      rationale: (base.reasons || []).map(r => r.label),
+    },
+    generatedAt: base.createdAt,
   };
 }
 
