@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle } from "lucide-react";
+import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
@@ -32,6 +32,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggestion-engine";
+import { buildSourcingStrategyOptionSet } from "@/lib/ai/decision-option-builders";
+import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
+import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDraft, type SourcingStrategyOptionLocal } from "@/lib/ai/sourcing-operating-layer";
 
 export default function SearchPage() {
   const {
@@ -69,6 +72,10 @@ export default function SearchPage() {
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   // ── AI suggestion orchestration (contextHash 기반, SSR-safe) ──
   const [aiDismissedHash, setAiDismissedHash] = useState<string | null>(null);
+  // ── P2: Sourcing tri-option operating layer ──
+  const [activeSourcingStrategy, setActiveSourcingStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
+  const [sourcingDismissed, setSourcingDismissed] = useState(false);
+  const [compareSeedDraft, setCompareSeedDraft] = useState<CompareSeedDraft | null>(null);
 
   // Batch-fetch compare status for visible products
   const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
@@ -164,6 +171,28 @@ export default function SearchPage() {
 
   const aiShouldShow = aiSearchSummary.length > 0 && aiDismissedHash !== aiContextHash;
 
+  // ── P2: Sourcing 3-option set ──
+  const sourcingOptionSet = useMemo<DecisionOptionSet | null>(() => {
+    if (!hasSearched || products.length < 2) return null;
+    return buildSourcingStrategyOptionSet({
+      query: searchQuery,
+      products: products.map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        brand: p.brand,
+        priceKRW: p.vendors?.[0]?.priceInKRW ?? 0,
+        leadTimeDays: p.vendors?.[0]?.leadTimeDays ?? 0,
+        specMatchScore: 0,
+      })),
+      compareIds,
+      requestIds: quoteItems.map((q: any) => q.productId),
+    });
+  }, [hasSearched, products, searchQuery, compareIds, quoteItems]);
+
+  const sourcingOptions = (sourcingOptionSet?.options ?? []) as (DecisionOption & { compareSeedIds?: string[] })[];
+  const activeSourcingOption = sourcingOptions.find(o => o.frame === activeSourcingStrategy) ?? sourcingOptions.find(o => o.frame === "balanced") ?? null;
+  const shouldShowSourcingStrip = sourcingOptionSet && sourcingOptions.length === 3 && !sourcingDismissed && hasSearched && products.length >= 2;
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
@@ -210,37 +239,136 @@ export default function SearchPage() {
               </span>
             </div>
 
-            {/* ═══ AI 제안 strip — P1 반자동 운영 레이어 ═══ */}
-            {aiShouldShow && (
+            {/* ═══ P2: Sourcing tri-option strategy surface ═══ */}
+            {shouldShowSourcingStrip && (
+              <div className="px-4 pt-2 space-y-1.5">
+                {/* Strategy strip header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="h-3 w-3 text-blue-400" />
+                    <span className="text-[10px] font-semibold text-slate-300">소싱 전략안 3개</span>
+                    <span className="text-[10px] text-slate-500">먼저 검토할 후보 묶음과 비교 시작 전략을 제안합니다</span>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
+                    onClick={() => setSourcingDismissed(true)}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+
+                {/* 3-option strip */}
+                <div className="grid grid-cols-3 gap-1.5">
+                  {sourcingOptions.map((opt) => {
+                    const strategyLabel = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
+                    const isActive = activeSourcingStrategy === opt.frame;
+                    return (
+                      <button key={opt.id} type="button"
+                        className={`text-left px-2.5 py-2 rounded border transition-all ${isActive ? "border-blue-500/40 bg-blue-600/10" : "border-slate-700/50 bg-[#2a2c30] hover:border-slate-600"}`}
+                        onClick={() => { setActiveSourcingStrategy(opt.frame as any); setCompareSeedDraft(null); }}>
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${isActive ? "bg-blue-600/20 text-blue-300" : "bg-slate-700/50 text-slate-400"}`}>{strategyLabel}</span>
+                          <span className={`text-[8px] px-1 py-0.5 rounded ${opt.confidence >= 0.8 ? "text-emerald-400 bg-emerald-600/10" : opt.confidence >= 0.6 ? "text-blue-400 bg-blue-600/10" : "text-slate-400 bg-slate-600/10"}`}>
+                            {opt.confidence >= 0.8 ? "높음" : opt.confidence >= 0.6 ? "보통" : "낮음"}
+                          </span>
+                        </div>
+                        <div className="text-[10px] font-medium text-slate-200 truncate">{opt.title}</div>
+                        <div className="text-[9px] text-slate-500 truncate mt-0.5">{opt.recommendedUseCase}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Active option detail + compare seed zone */}
+                {activeSourcingOption && (
+                  <div className="rounded border border-slate-700/40 bg-[#26282c] px-3 py-2 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-slate-200">{activeSourcingOption.title}</span>
+                      <span className="text-[9px] text-slate-500">{activeSourcingOption.recommendedUseCase}</span>
+                    </div>
+                    <div className="text-[10px] text-slate-400">{activeSourcingOption.rationale}</div>
+                    {/* Strengths + Risks */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <div className="text-[9px] font-semibold text-emerald-400 mb-0.5">장점</div>
+                        {activeSourcingOption.strengths.map((s, i) => (
+                          <div key={i} className="text-[9px] text-slate-400 flex items-start gap-1"><Check className="h-2.5 w-2.5 text-emerald-500 shrink-0 mt-0.5" />{s}</div>
+                        ))}
+                      </div>
+                      <div>
+                        <div className="text-[9px] font-semibold text-amber-400 mb-0.5">리스크</div>
+                        {activeSourcingOption.risks.map((r, i) => (
+                          <div key={i} className="text-[9px] text-slate-400 flex items-start gap-1"><AlertTriangle className={`h-2.5 w-2.5 shrink-0 mt-0.5 ${r.severity === "medium" ? "text-amber-500" : "text-slate-500"}`} />{r.label}</div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Compare seed action zone */}
+                    <div className="flex items-center gap-2 pt-1 border-t border-slate-700/30">
+                      {!compareSeedDraft ? (
+                        <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                          onClick={() => handleProtectedAction(() => {
+                            // 전략 기반 candidate grouping → compare seed draft 생성
+                            const candidateIds = products
+                              .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
+                              .slice(0, 3)
+                              .map((p: any) => p.id);
+                            if (candidateIds.length >= 2) {
+                              setCompareSeedDraft({
+                                source: "sourcing_option",
+                                sourceOptionId: activeSourcingOption.id,
+                                sourceStrategy: activeSourcingOption.frame as any,
+                                candidateIds,
+                                rationale: activeSourcingOption.rationale,
+                                createdAt: new Date().toISOString(),
+                              });
+                            }
+                          })}>
+                          이 전략으로 비교 후보 구성
+                        </Button>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-1">
+                          <span className="text-[9px] text-slate-400">비교 후보 초안 · {compareSeedDraft.candidateIds.length}개</span>
+                          <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={() => handleProtectedAction(() => {
+                              // operator confirm → compare candidate basket에 반영 + compare 진입
+                              compareSeedDraft.candidateIds.forEach(id => {
+                                const p = products.find((pp: any) => pp.id === id);
+                                if (p && !compareIds.includes(id)) {
+                                  toggleCompare(id, { name: p.name, brand: p.brand });
+                                }
+                              });
+                              setCompareSeedDraft(null);
+                              router.push("/app/compare");
+                            })}>
+                            이 묶음으로 비교 시작
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-slate-400"
+                            onClick={() => setCompareSeedDraft(null)}>
+                            취소
+                          </Button>
+                        </div>
+                      )}
+                      <span className="text-[9px] text-slate-600 ml-auto">운영자가 비교 시작을 결정합니다</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
+            {!shouldShowSourcingStrip && aiShouldShow && (
               <div className="px-4 pt-1.5">
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-600/20 bg-blue-600/5">
                   <span className="text-[10px] font-semibold text-blue-400 shrink-0">AI 제안</span>
-                  <span className="text-[10px] text-slate-300 flex-1 truncate">
-                    {aiSearchSummary[0]?.text}
-                  </span>
+                  <span className="text-[10px] text-slate-300 flex-1 truncate">{aiSearchSummary[0]?.text}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
                       <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-300 hover:bg-blue-600/10 border border-blue-600/20"
                         onClick={() => handleProtectedAction(() => {
-                          const candidates = products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3);
-                          candidates.forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
-                        })}>
-                        비교 후보 담기
-                      </Button>
-                    )}
-                    {aiSearchSummary.some(l => l.signal === "request") && quoteItems.length === 0 && (
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-300 hover:bg-emerald-600/10 border border-emerald-600/20"
-                        onClick={() => handleProtectedAction(() => {
-                          const candidates = products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !quoteItems.some((q: any) => q.productId === p.id)).slice(0, 3);
-                          candidates.forEach((p: any) => addProductToQuote(p));
-                        })}>
-                        요청 후보 담기
-                      </Button>
+                          products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3)
+                            .forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
+                        })}>비교 후보 담기</Button>
                     )}
                     <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
-                      onClick={() => setAiDismissedHash(aiContextHash)}>
-                      <X className="h-3 w-3" />
-                    </Button>
+                      onClick={() => setAiDismissedHash(aiContextHash)}><X className="h-3 w-3" /></Button>
                   </div>
                 </div>
               </div>
