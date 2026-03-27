@@ -295,13 +295,6 @@ export default function SearchPage() {
               </span>
             </div>
 
-            {/* ═══ P2: 비교 구성안 — 선택 2개 이상일 때만 compact helper copy 노출 ═══ */}
-            {!shouldShowSourcingStrip && hasSearched && products.length >= 2 && compareIds.length < 2 && quoteItems.length < 2 && (
-              <div className="px-4 pt-1">
-                <span className="text-[9px] text-slate-600">제품을 2개 이상 선택하면 비교 구성안을 제안합니다</span>
-              </div>
-            )}
-
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
             {!shouldShowSourcingStrip && aiShouldShow && (
               <div className="px-4 pt-1.5">
@@ -359,23 +352,46 @@ export default function SearchPage() {
 
           {/* C. Right Context Rail — persistent panel */}
           <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col overflow-hidden">
-            {/* ═══ 비교 구성안 — compact trigger (선택 2개 이상일 때만) ═══ */}
+            {/* ═══ AI 비교 구성안 — 독립 entry card (선택 2개 이상일 때만) ═══ */}
             {shouldShowSourcingStrip && (
-              <button
-                type="button"
-                onClick={() => handleProtectedAction(openStrategyOverlay)}
-                className="w-full px-3 py-2 border-b border-bd/50 flex items-center justify-between hover:bg-white/[0.02] transition-colors group"
-              >
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="h-3 w-3 text-blue-400" />
-                  <span className="text-[10px] font-semibold text-slate-300">비교 구성안 3개</span>
-                  <span className="text-[9px] text-slate-500">· 현재 선택 기준</span>
+              <div className="px-3 py-3 border-b border-bd/50">
+                <div className="rounded-lg border border-blue-500/25 bg-blue-600/[0.06] p-3 space-y-2">
+                  {/* Header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex items-center justify-center w-5 h-5 rounded bg-blue-600/20">
+                        <Sparkles className="h-3 w-3 text-blue-400" />
+                      </div>
+                      <span className="text-[11px] font-semibold text-slate-200">AI 비교 구성안</span>
+                    </div>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300 font-medium">준비됨</span>
+                  </div>
+                  {/* Context */}
+                  <div className="flex items-center gap-2 text-[10px]">
+                    <span className="text-slate-400">현재 선택 <span className="text-slate-200 font-medium">{compareIds.length}개</span> 기준</span>
+                    <span className="text-slate-600">·</span>
+                    <span className="text-slate-400">판단안 <span className="text-blue-300 font-medium">3개</span></span>
+                  </div>
+                  {/* CTA */}
+                  <Button
+                    size="sm"
+                    className="w-full h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                    onClick={() => handleProtectedAction(openStrategyOverlay)}
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    구성안 열기
+                  </Button>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] text-slate-500">비교 후보 {compareIds.length}개</span>
-                  <span className="text-[9px] text-blue-400 group-hover:text-blue-300 transition-colors">보기 →</span>
+              </div>
+            )}
+            {/* AI 미노출 시 helper copy */}
+            {!shouldShowSourcingStrip && hasSearched && products.length >= 2 && compareIds.length < 2 && quoteItems.length < 2 && (
+              <div className="px-3 py-2 border-b border-bd/50">
+                <div className="rounded border border-slate-700/40 bg-[#252729] px-3 py-2 flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />
+                  <span className="text-[10px] text-slate-500">비교 후보를 2개 이상 선택하면 AI 구성안을 볼 수 있습니다</span>
                 </div>
-              </button>
+              </div>
             )}
 
             {railProduct ? (
@@ -685,38 +701,50 @@ export default function SearchPage() {
         totalAmount={totalAmount}
       />
 
-      {/* ═══ Strategy Overlay — anchored decision layer ═══ */}
+      {/* ═══ AI Decision Layer — right-anchored, workbench context 유지 ═══ */}
       {isStrategyOverlayOpen && canOpenStrategyOverlay && (
         <div className="fixed inset-0 z-[70]" onClick={closeStrategyOverlay}>
-          {/* Subtle backdrop */}
-          <div className="absolute inset-0 bg-black/30" />
-          {/* Anchored overlay panel — right side */}
+          {/* Minimal backdrop — workbench 맥락 유지 */}
+          <div className="absolute inset-0 bg-black/15" />
+          {/* Anchored decision layer — right edge, rail과 연결된 느낌 */}
           <div
-            className="absolute top-[100px] right-4 bottom-[80px] w-[380px] bg-[#2a2c30] border border-bd rounded-lg shadow-2xl shadow-black/40 flex flex-col overflow-hidden"
+            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-[#1e2024] border-l border-blue-500/20 shadow-2xl shadow-black/50 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-4 py-3 border-b border-bd/60 flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  <span className="text-xs font-semibold text-slate-200">비교 구성안</span>
+            {/* Layer header — strong AI branding */}
+            <div className="px-4 py-3.5 border-b border-bd/60 bg-blue-600/[0.04]">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600/20 border border-blue-500/30">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                  </div>
+                  <div>
+                    <span className="text-[12px] font-semibold text-slate-100">AI 비교 구성안</span>
+                    <span className="text-[10px] text-slate-500 ml-2">미리보기</span>
+                  </div>
                 </div>
-                <span className="text-[10px] text-slate-500">현재 선택 기준 미리보기</span>
+                <div className="flex items-center gap-1.5">
+                  {isStrategyStale && (
+                    <span className="text-[9px] text-amber-400 px-1.5 py-0.5 rounded bg-amber-600/10 border border-amber-500/20">갱신 필요</span>
+                  )}
+                  <button
+                    type="button"
+                    onClick={closeStrategyOverlay}
+                    className="h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center gap-1">
-                {isStrategyStale && (
-                  <span className="text-[9px] text-amber-400 px-1.5 py-0.5 rounded bg-amber-600/10">선택 변경됨</span>
-                )}
-                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300"
-                  onClick={closeStrategyOverlay}>
-                  <X className="h-3.5 w-3.5" />
-                </Button>
+              <div className="flex items-center gap-2 text-[10px]">
+                <span className="text-slate-400">현재 선택 <span className="text-slate-200 font-medium">{compareIds.length}개</span></span>
+                <span className="text-slate-600">·</span>
+                <span className="text-slate-400">판단안 <span className="text-blue-300 font-medium">3개</span></span>
               </div>
             </div>
 
-            {/* Segmented tabs */}
-            <div className="px-3 py-2 border-b border-bd/40 flex gap-1">
+            {/* Segmented tabs — 비용/납기/규격 */}
+            <div className="px-3 py-2.5 border-b border-bd/40 flex gap-1.5">
               {sourcingOptions.map((opt) => {
                 const label = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
                 const isActive = previewStrategy === opt.frame;
@@ -725,8 +753,8 @@ export default function SearchPage() {
                     key={opt.id}
                     type="button"
                     onClick={() => setPreviewStrategy(opt.frame as any)}
-                    className={`flex-1 text-center px-2 py-1.5 rounded text-[10px] font-medium transition-all ${isActive
-                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30"
+                    className={`flex-1 text-center px-2 py-2 rounded-md text-[10px] font-medium transition-all ${isActive
+                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30 shadow-sm shadow-blue-500/10"
                       : "text-slate-500 hover:text-slate-400 hover:bg-white/[0.03] border border-transparent"
                     }`}
                   >
@@ -737,31 +765,31 @@ export default function SearchPage() {
             </div>
 
             {/* Preview panel — single option detail */}
-            <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="flex-1 overflow-y-auto px-4 py-4">
               {previewOption ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {/* Delta summary — numbers first */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="px-2.5 py-2 rounded border border-bd/40 bg-[#252729]">
-                      <span className="text-[9px] text-slate-500 block">포함 후보</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-100">
+                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                      <span className="text-[9px] text-slate-500 block mb-0.5">추가 후보</span>
+                      <span className="text-base font-bold tabular-nums text-slate-100">
                         {products.filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0).slice(0, 3).length}개
                       </span>
                     </div>
-                    <div className="px-2.5 py-2 rounded border border-bd/40 bg-[#252729]">
-                      <span className="text-[9px] text-slate-500 block">현재 비교</span>
-                      <span className="text-sm font-semibold tabular-nums text-slate-100">{compareIds.length}개</span>
+                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                      <span className="text-[9px] text-slate-500 block mb-0.5">현재 비교</span>
+                      <span className="text-base font-bold tabular-nums text-slate-100">{compareIds.length}개</span>
                     </div>
                   </div>
 
                   {/* Strengths */}
                   <div>
                     <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">강점</span>
-                    <div className="mt-1 space-y-0.5">
-                      {previewOption.strengths.slice(0, 2).map((s: string, i: number) => (
-                        <div key={i} className="flex items-start gap-1.5">
+                    <div className="mt-1.5 space-y-1">
+                      {previewOption.strengths.slice(0, 3).map((s: string, i: number) => (
+                        <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-emerald-600/[0.05] border border-emerald-500/10">
                           <Check className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />
-                          <span className="text-[10px] text-slate-300">{s}</span>
+                          <span className="text-[10px] text-slate-300 leading-relaxed">{s}</span>
                         </div>
                       ))}
                     </div>
@@ -771,25 +799,27 @@ export default function SearchPage() {
                   {previewOption.risks.length > 0 && (
                     <div>
                       <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">리스크</span>
-                      <div className="mt-1 space-y-0.5">
+                      <div className="mt-1.5 space-y-1">
                         {previewOption.risks.slice(0, 2).map((r, i: number) => (
-                          <div key={i} className="flex items-start gap-1.5">
+                          <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-amber-600/[0.05] border border-amber-500/10">
                             <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
-                            <span className="text-[10px] text-slate-400">{typeof r === "string" ? r : r.label}</span>
+                            <span className="text-[10px] text-slate-400 leading-relaxed">{typeof r === "string" ? r : r.label}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Rationale — 1 line */}
-                  <div className="px-2.5 py-2 rounded bg-blue-600/5 border border-blue-600/15">
-                    <span className="text-[10px] text-blue-300">{previewOption.rationale}</span>
+                  {/* Rationale */}
+                  <div className="px-3 py-2.5 rounded-md bg-blue-600/[0.06] border border-blue-500/15">
+                    <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-1">추천 이유</span>
+                    <span className="text-[10px] text-blue-200 leading-relaxed">{previewOption.rationale}</span>
                   </div>
 
                   {/* Next action */}
-                  <div className="text-[10px] text-slate-500">
-                    다음 단계: <span className="text-slate-300">{previewOption.nextAction}</span>
+                  <div className="flex items-center gap-2 text-[10px] px-2.5 py-2 rounded bg-[#252729] border border-bd/30">
+                    <span className="text-slate-500">다음 단계</span>
+                    <span className="text-slate-300 font-medium">{previewOption.nextAction}</span>
                   </div>
                 </div>
               ) : (
@@ -798,23 +828,27 @@ export default function SearchPage() {
             </div>
 
             {/* Action area — preview / apply separation */}
-            <div className="px-4 py-3 border-t border-bd/60 space-y-2">
+            <div className="px-4 py-3.5 border-t border-bd/60 bg-[#1a1c1f]">
               {isStrategyStale ? (
-                <div className="text-center">
-                  <span className="text-[10px] text-amber-400">선택 상태가 변경되어 구성안을 다시 계산해야 합니다</span>
-                  <Button size="sm" className="w-full h-7 mt-1.5 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300"
+                <div className="text-center space-y-2">
+                  <div className="flex items-center justify-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-400" />
+                    <span className="text-[10px] text-amber-400">선택 상태가 변경되었습니다</span>
+                  </div>
+                  <Button size="sm" className="w-full h-8 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300"
                     onClick={closeStrategyOverlay}>
                     닫기
                   </Button>
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-400 hover:text-slate-300"
+                  <Button size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40"
                     onClick={closeStrategyOverlay}>
-                    미리보기 유지
+                    닫기
                   </Button>
-                  <Button size="sm" className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                  <Button size="sm" className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
                     onClick={() => handleProtectedAction(() => applyStrategyOption(previewStrategy))}>
+                    <Sparkles className="h-3 w-3 mr-1" />
                     이 구성 반영
                   </Button>
                 </div>
