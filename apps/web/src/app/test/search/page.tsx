@@ -76,6 +76,10 @@ export default function SearchPage() {
   const [activeSourcingStrategy, setActiveSourcingStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
   const [sourcingDismissed, setSourcingDismissed] = useState(false);
   const [compareSeedDraft, setCompareSeedDraft] = useState<CompareSeedDraft | null>(null);
+  // ── Strategy overlay state (compact trigger + anchored overlay) ──
+  const [isStrategyOverlayOpen, setIsStrategyOverlayOpen] = useState(false);
+  const [previewStrategy, setPreviewStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
+  const [preSelectionSnapshot, setPreSelectionSnapshot] = useState<string[] | null>(null);
 
   // Batch-fetch compare status for visible products
   const productIds = useMemo(() => products.map((p: any) => p.id), [products]);
@@ -126,6 +130,7 @@ export default function SearchPage() {
   useEffect(() => {
     setActiveResultId(null);
     setAiDismissedHash(null); // 새 검색 시 AI 제안 다시 노출
+    setIsStrategyOverlayOpen(false); // 새 검색 시 overlay 닫기
   }, [searchQuery]);
 
   // ── AI contextHash (간단 해시, SSR-safe) ──
@@ -147,6 +152,13 @@ export default function SearchPage() {
       } catch {}
     }
   }, [session?.user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-close overlay when selection drops below threshold
+  useEffect(() => {
+    if (isStrategyOverlayOpen && compareIds.length < 2 && quoteItems.length < 2) {
+      setIsStrategyOverlayOpen(false);
+    }
+  }, [compareIds.length, quoteItems.length, isStrategyOverlayOpen]);
 
   // Compare 2+ 자동 work window hint
   const compareReady = compareIds.length >= 2;
@@ -195,6 +207,45 @@ export default function SearchPage() {
   const hasComparableSelection = compareIds.length >= 2;
   const hasRequestReadySelection = quoteItems.length >= 2;
   const shouldShowSourcingStrip = sourcingOptionSet && sourcingOptions.length === 3 && !sourcingDismissed && hasSearched && products.length >= 2 && (hasComparableSelection || hasRequestReadySelection);
+
+  // Overlay open guard: can only open when selection is meaningful
+  const canOpenStrategyOverlay = shouldShowSourcingStrip;
+  // Stale check: snapshot mismatch
+  const selectionKey = `${compareIds.join(",")}_${quoteItems.map((q: any) => q.productId).join(",")}`;
+  const isStrategyStale = isStrategyOverlayOpen && preSelectionSnapshot !== null && preSelectionSnapshot.join(",") !== compareIds.join(",");
+
+  const openStrategyOverlay = () => {
+    if (!canOpenStrategyOverlay) return;
+    setPreviewStrategy(activeSourcingStrategy);
+    setPreSelectionSnapshot([...compareIds]);
+    setIsStrategyOverlayOpen(true);
+  };
+
+  const closeStrategyOverlay = () => {
+    setIsStrategyOverlayOpen(false);
+    setCompareSeedDraft(null);
+  };
+
+  const applyStrategyOption = (optionFrame: "conservative" | "balanced" | "alternative") => {
+    if (isStrategyStale) return;
+    const opt = sourcingOptions.find(o => o.frame === optionFrame);
+    if (!opt) return;
+    const candidateIds = products
+      .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
+      .slice(0, 3)
+      .map((p: any) => p.id);
+    if (candidateIds.length >= 2) {
+      candidateIds.forEach(id => {
+        const p = products.find((pp: any) => pp.id === id);
+        if (p && !compareIds.includes(id)) { toggleCompare(id, { name: p.name, brand: p.brand }); }
+      });
+      setActiveSourcingStrategy(optionFrame);
+      closeStrategyOverlay();
+    }
+  };
+
+  // Preview option for overlay
+  const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
@@ -306,83 +357,23 @@ export default function SearchPage() {
 
           {/* C. Right Context Rail — persistent panel */}
           <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col overflow-hidden">
-            {/* ═══ 비교 구성안 — right rail compact panel (선택 2개 이상일 때만) ═══ */}
+            {/* ═══ 비교 구성안 — compact trigger (선택 2개 이상일 때만) ═══ */}
             {shouldShowSourcingStrip && (
-              <div className="px-3 py-2 border-b border-bd/50 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1">
-                    <Sparkles className="h-3 w-3 text-blue-400" />
-                    <span className="text-[10px] font-semibold text-slate-300">비교 구성안 3개</span>
-                  </div>
-                  <Button size="sm" variant="ghost" className="h-4 px-1 text-[9px] text-slate-600 hover:text-slate-400"
-                    onClick={() => setSourcingDismissed(true)}>
-                    <X className="h-2.5 w-2.5" />
-                  </Button>
+              <button
+                type="button"
+                onClick={() => handleProtectedAction(openStrategyOverlay)}
+                className="w-full px-3 py-2 border-b border-bd/50 flex items-center justify-between hover:bg-white/[0.02] transition-colors group"
+              >
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="h-3 w-3 text-blue-400" />
+                  <span className="text-[10px] font-semibold text-slate-300">비교 구성안 3개</span>
+                  <span className="text-[9px] text-slate-500">· 현재 선택 기준</span>
                 </div>
-                <span className="text-[9px] text-slate-500">현재 선택 기준으로 구성안을 제안합니다</span>
-
-                {sourcingOptions.map((opt) => {
-                  const label = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
-                  const isActive = activeSourcingStrategy === opt.frame;
-                  return (
-                    <button key={opt.id} type="button"
-                      className={`w-full text-left px-2 py-1.5 rounded border transition-all ${isActive ? "border-blue-500/30 bg-blue-600/8" : "border-slate-700/40 bg-[#2a2c30] hover:border-slate-600"}`}
-                      onClick={() => { setActiveSourcingStrategy(opt.frame as any); setCompareSeedDraft(null); }}>
-                      <div className="flex items-center justify-between">
-                        <span className={`text-[9px] px-1 py-0.5 rounded ${isActive ? "bg-blue-600/15 text-blue-300" : "bg-slate-700/40 text-slate-500"}`}>{label}</span>
-                        <span className="text-[9px] text-slate-500">{opt.strengths[0]?.substring(0, 20)}</span>
-                      </div>
-                      <div className="text-[9px] text-slate-400 mt-0.5 truncate">{opt.rationale.substring(0, 40)}…</div>
-                    </button>
-                  );
-                })}
-
-                {/* Apply CTA */}
-                {activeSourcingOption && (
-                  <div className="pt-1 border-t border-slate-700/30 space-y-1">
-                    {!compareSeedDraft ? (
-                      <Button size="sm" className="w-full h-6 text-[9px] bg-blue-600 hover:bg-blue-500 text-white"
-                        onClick={() => handleProtectedAction(() => {
-                          const candidateIds = products
-                            .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
-                            .slice(0, 3)
-                            .map((p: any) => p.id);
-                          if (candidateIds.length >= 2) {
-                            setCompareSeedDraft({
-                              source: "sourcing_option",
-                              sourceOptionId: activeSourcingOption.id,
-                              sourceStrategy: activeSourcingOption.frame as any,
-                              candidateIds,
-                              rationale: activeSourcingOption.rationale,
-                              createdAt: new Date().toISOString(),
-                            });
-                          }
-                        })}>
-                        이 구성으로 비교 후보 반영
-                      </Button>
-                    ) : (
-                      <div className="space-y-1">
-                        <span className="text-[9px] text-slate-400">비교 후보 초안 · {compareSeedDraft.candidateIds.length}개</span>
-                        <div className="flex gap-1">
-                          <Button size="sm" className="flex-1 h-6 text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white"
-                            onClick={() => handleProtectedAction(() => {
-                              compareSeedDraft.candidateIds.forEach(id => {
-                                const p = products.find((pp: any) => pp.id === id);
-                                if (p && !compareIds.includes(id)) { toggleCompare(id, { name: p.name, brand: p.brand }); }
-                              });
-                              setCompareSeedDraft(null);
-                              router.push("/app/compare");
-                            })}>
-                            비교 시작
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-slate-500"
-                            onClick={() => setCompareSeedDraft(null)}>취소</Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] text-slate-500">비교 후보 {compareIds.length}개</span>
+                  <span className="text-[9px] text-blue-400 group-hover:text-blue-300 transition-colors">보기 →</span>
+                </div>
+              </button>
             )}
 
             {railProduct ? (
@@ -691,6 +682,145 @@ export default function SearchPage() {
         }}
         totalAmount={totalAmount}
       />
+
+      {/* ═══ Strategy Overlay — anchored decision layer ═══ */}
+      {isStrategyOverlayOpen && canOpenStrategyOverlay && (
+        <div className="fixed inset-0 z-[70]" onClick={closeStrategyOverlay}>
+          {/* Subtle backdrop */}
+          <div className="absolute inset-0 bg-black/30" />
+          {/* Anchored overlay panel — right side */}
+          <div
+            className="absolute top-[100px] right-4 bottom-[80px] w-[380px] bg-[#2a2c30] border border-bd rounded-lg shadow-2xl shadow-black/40 flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-bd/60 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                  <span className="text-xs font-semibold text-slate-200">비교 구성안</span>
+                </div>
+                <span className="text-[10px] text-slate-500">현재 선택 기준 미리보기</span>
+              </div>
+              <div className="flex items-center gap-1">
+                {isStrategyStale && (
+                  <span className="text-[9px] text-amber-400 px-1.5 py-0.5 rounded bg-amber-600/10">선택 변경됨</span>
+                )}
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300"
+                  onClick={closeStrategyOverlay}>
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Segmented tabs */}
+            <div className="px-3 py-2 border-b border-bd/40 flex gap-1">
+              {sourcingOptions.map((opt) => {
+                const label = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
+                const isActive = previewStrategy === opt.frame;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setPreviewStrategy(opt.frame as any)}
+                    className={`flex-1 text-center px-2 py-1.5 rounded text-[10px] font-medium transition-all ${isActive
+                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30"
+                      : "text-slate-500 hover:text-slate-400 hover:bg-white/[0.03] border border-transparent"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Preview panel — single option detail */}
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {previewOption ? (
+                <div className="space-y-3">
+                  {/* Delta summary — numbers first */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="px-2.5 py-2 rounded border border-bd/40 bg-[#252729]">
+                      <span className="text-[9px] text-slate-500 block">포함 후보</span>
+                      <span className="text-sm font-semibold tabular-nums text-slate-100">
+                        {products.filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0).slice(0, 3).length}개
+                      </span>
+                    </div>
+                    <div className="px-2.5 py-2 rounded border border-bd/40 bg-[#252729]">
+                      <span className="text-[9px] text-slate-500 block">현재 비교</span>
+                      <span className="text-sm font-semibold tabular-nums text-slate-100">{compareIds.length}개</span>
+                    </div>
+                  </div>
+
+                  {/* Strengths */}
+                  <div>
+                    <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">강점</span>
+                    <div className="mt-1 space-y-0.5">
+                      {previewOption.strengths.slice(0, 2).map((s: string, i: number) => (
+                        <div key={i} className="flex items-start gap-1.5">
+                          <Check className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />
+                          <span className="text-[10px] text-slate-300">{s}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Risks */}
+                  {previewOption.risks.length > 0 && (
+                    <div>
+                      <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">리스크</span>
+                      <div className="mt-1 space-y-0.5">
+                        {previewOption.risks.slice(0, 2).map((r: string, i: number) => (
+                          <div key={i} className="flex items-start gap-1.5">
+                            <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                            <span className="text-[10px] text-slate-400">{r}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Rationale — 1 line */}
+                  <div className="px-2.5 py-2 rounded bg-blue-600/5 border border-blue-600/15">
+                    <span className="text-[10px] text-blue-300">{previewOption.rationale}</span>
+                  </div>
+
+                  {/* Next action */}
+                  <div className="text-[10px] text-slate-500">
+                    다음 단계: <span className="text-slate-300">{previewOption.nextAction}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-full text-xs text-slate-500">구성안을 선택하세요</div>
+              )}
+            </div>
+
+            {/* Action area — preview / apply separation */}
+            <div className="px-4 py-3 border-t border-bd/60 space-y-2">
+              {isStrategyStale ? (
+                <div className="text-center">
+                  <span className="text-[10px] text-amber-400">선택 상태가 변경되어 구성안을 다시 계산해야 합니다</span>
+                  <Button size="sm" className="w-full h-7 mt-1.5 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300"
+                    onClick={closeStrategyOverlay}>
+                    닫기
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="ghost" className="flex-1 h-7 text-[10px] text-slate-400 hover:text-slate-300"
+                    onClick={closeStrategyOverlay}>
+                    미리보기 유지
+                  </Button>
+                  <Button size="sm" className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                    onClick={() => handleProtectedAction(() => applyStrategyOption(previewStrategy))}>
+                    이 구성 반영
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Utility dialogs */}
       <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
