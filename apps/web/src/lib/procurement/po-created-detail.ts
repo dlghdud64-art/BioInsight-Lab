@@ -23,6 +23,8 @@ export type PODraftState =
   | "po_acknowledged"
   | "supplier_confirmed"
   | "receiving_prepared"
+  | "receiving_in_progress"
+  | "received_recorded"
   | "po_cancelled";
 
 export const PO_DRAFT_STATE_LABELS: Record<PODraftState, string> = {
@@ -32,6 +34,8 @@ export const PO_DRAFT_STATE_LABELS: Record<PODraftState, string> = {
   po_acknowledged: "공급사 확인",
   supplier_confirmed: "공급 확정",
   receiving_prepared: "입고 준비 완료",
+  receiving_in_progress: "입고 진행 중",
+  received_recorded: "입고 기록 완료",
   po_cancelled: "취소됨",
 };
 
