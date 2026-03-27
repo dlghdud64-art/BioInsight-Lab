@@ -17,6 +17,9 @@ import {
   ArrowLeft, ArrowRight, FileText, CheckCircle2, AlertTriangle, AlertCircle, Info, ChevronRight, Eye, BookmarkPlus, Sparkles,
 } from "lucide-react";
 import { generateRequestDraft, type RequestDraft } from "@/lib/ai/suggestion-engine";
+import { buildRequestStrategyOptionSet } from "@/lib/ai/decision-option-builders";
+import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
+import { Check, X } from "lucide-react";
 
 const READINESS_CONFIG: Record<string, { color: string; icon: any; label: string }> = {
   ready_to_write_request: { color: "text-emerald-400 bg-emerald-600/10 border-emerald-600/30", icon: CheckCircle2, label: "전송 가능" },
@@ -75,9 +78,13 @@ function QuoteRequestPageContent() {
     });
   };
 
-  // AI Request Draft — 2단계: 생성(suggestion만) → 적용(messageBody 반영)
+  // AI Request Draft — P1 legacy (하위 호환)
   const [aiDraftStatus, setAiDraftStatus] = useState<Record<string, "idle" | "generated" | "accepted" | "edited" | "dismissed">>({});
   const [aiDraftSuggestion, setAiDraftSuggestion] = useState<Record<string, string>>({});
+
+  // ── P2: 3-option request strategy surface ──
+  const [activeStrategyBySupplier, setActiveStrategyBySupplier] = useState<Record<string, "minimal" | "standard" | "extended">>({});
+  const [strategyDismissedBySupplier, setStrategyDismissedBySupplier] = useState<Record<string, boolean>>({});
 
   const handleGenerateAiDraft = (group: VendorGroup) => {
     const draft = generateRequestDraft({
@@ -99,6 +106,29 @@ function QuoteRequestPageContent() {
     handleVendorNoteChange(vendorId, suggestion);
     setAiDraftStatus((prev) => ({ ...prev, [vendorId]: "accepted" as any }));
   };
+
+  // ── P2: 3-option strategy set builder ──
+  const requestOptionSet = useMemo<DecisionOptionSet | null>(() => {
+    if (!activeGroup) return null;
+    return buildRequestStrategyOptionSet({
+      vendorName: activeGroup.vendorName,
+      items: activeGroup.items.map(i => ({ productName: i.productName, quantity: i.quantity, catalogNumber: (i as any).catalogNumber })),
+      messageBody: vendorNotes[activeGroup.vendorId] || "",
+      missingFields: [],
+      leadTimeIncluded: false,
+      substituteIncluded: false,
+    });
+  }, [activeGroup, vendorNotes]);
+
+  const requestOptions = requestOptionSet?.options ?? [];
+  const currentStrategy = activeGroup ? (activeStrategyBySupplier[activeGroup.vendorId] ?? "standard") : "standard";
+  const activeRequestOption = requestOptions.find(o => {
+    const frame = o.frame;
+    return (currentStrategy === "minimal" && frame === "conservative") ||
+           (currentStrategy === "standard" && frame === "balanced") ||
+           (currentStrategy === "extended" && frame === "alternative");
+  }) ?? requestOptions.find(o => o.frame === "balanced") ?? null;
+  const shouldShowRequestStrip = requestOptions.length === 3 && activeGroup && !strategyDismissedBySupplier[activeGroup?.vendorId ?? ""];
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
@@ -265,39 +295,101 @@ function QuoteRequestPageContent() {
                 </table>
               </div>
 
-              {/* ═══ AI 초안 block — P1 반자동 운영 레이어 ═══ */}
-              <div className="px-4 py-2 border-b border-blue-600/10 bg-blue-600/[0.03]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-blue-400 shrink-0" />
-                    <span className="text-[10px] font-semibold text-blue-400">AI 초안</span>
-                    {aiDraftStatus[activeGroup.vendorId] === "generated" && (
-                      <span className="text-[10px] text-blue-300">초안 생성 완료 · 납기 문구 추가 · 대체 가능 여부 포함</span>
-                    )}
-                    {aiDraftStatus[activeGroup.vendorId] === "edited" && (
-                      <span className="text-[10px] text-emerald-300">검토 후 전송</span>
-                    )}
-                    {(!aiDraftStatus[activeGroup.vendorId] || aiDraftStatus[activeGroup.vendorId] === "idle" || aiDraftStatus[activeGroup.vendorId] === "dismissed") && (
-                      <span className="text-[10px] text-slate-400">공급사별 초안을 준비할 수 있습니다</span>
-                    )}
-                  </div>
-                  {!vendorNotes[activeGroup.vendorId] ? (
-                    <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
-                      <Sparkles className="h-3 w-3 mr-1" />초안 생성
-                    </Button>
-                  ) : aiDraftStatus[activeGroup.vendorId] === "generated" ? (
-                    <div className="flex items-center gap-1">
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-emerald-400 hover:bg-emerald-600/10 border border-emerald-600/20" onClick={() => handleApplyAiDraft(activeGroup.vendorId)}>초안 적용</Button>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-400" onClick={() => handleGenerateAiDraft(activeGroup)}>초안 업데이트</Button>
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-slate-400 hover:text-red-400" onClick={() => { setAiDraftSuggestion(prev => { const n = {...prev}; delete n[activeGroup.vendorId]; return n; }); setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "dismissed" })); }}>무시</Button>
+              {/* ═══ P2: 3-Option Request Strategy Strip — 반자동 운영 요청 전략안 ═══ */}
+              {shouldShowRequestStrip ? (
+                <div className="px-4 py-3 border-b border-slate-700/30 space-y-2.5">
+                  {/* strip header */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs font-semibold text-slate-300">요청 전략안 3개</span>
+                      <span className="text-[10px] text-slate-500">반영과 수정은 운영자가 직접 결정합니다</span>
                     </div>
-                  ) : (
-                    <Button size="sm" variant="outline" className="h-6 px-2.5 text-[10px] text-blue-400 border-blue-600/30 hover:bg-blue-600/10" onClick={() => handleGenerateAiDraft(activeGroup)}>
-                      <Sparkles className="h-3 w-3 mr-1" />초안 생성
+                    <Button size="sm" variant="ghost" className="h-6 px-1.5 text-slate-500 hover:text-slate-300" onClick={() => setStrategyDismissedBySupplier(prev => ({ ...prev, [activeGroup.vendorId]: true }))}>
+                      <X className="h-3 w-3" />
                     </Button>
+                  </div>
+
+                  {/* 3-option cards */}
+                  <div className="grid grid-cols-3 gap-2">
+                    {requestOptions.map((opt) => {
+                      const strategyKey = opt.frame === "conservative" ? "minimal" : opt.frame === "balanced" ? "standard" : "extended";
+                      const isActive = currentStrategy === strategyKey;
+                      const strategyLabel = strategyKey === "minimal" ? "최소 문의" : strategyKey === "standard" ? "표준 요청" : "확장 검증";
+                      const strategyColor = strategyKey === "minimal" ? "blue" : strategyKey === "standard" ? "emerald" : "amber";
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          className={`text-left rounded-lg border p-2 transition-all ${
+                            isActive
+                              ? `border-${strategyColor}-500/40 bg-${strategyColor}-600/10 ring-1 ring-${strategyColor}-500/30`
+                              : "border-slate-700/50 bg-[#2a2c30] hover:border-slate-600"
+                          }`}
+                          onClick={() => setActiveStrategyBySupplier(prev => ({ ...prev, [activeGroup.vendorId]: strategyKey as any }))}
+                        >
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className={`text-[9px] px-1.5 py-0.5 rounded font-semibold ${
+                              isActive ? `bg-${strategyColor}-600/20 text-${strategyColor}-300 border border-${strategyColor}-500/30` : "bg-slate-700/50 text-slate-400"
+                            }`}>{strategyLabel}</span>
+                          </div>
+                          <div className="text-[11px] font-medium text-slate-200 mb-0.5">{opt.title}</div>
+                          <div className="text-[10px] text-slate-400 line-clamp-2">{opt.rationale}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* active option detail + apply CTA */}
+                  {activeRequestOption && (
+                    <div className="rounded-lg border border-slate-700/50 bg-[#2a2c30] p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-slate-200">{activeRequestOption.title}</span>
+                        <span className="text-[9px] text-slate-500">{activeRequestOption.recommendedUseCase}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">{activeRequestOption.rationale}</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <div className="text-[9px] font-semibold text-emerald-400 mb-1">장점</div>
+                          {activeRequestOption.strengths.map((s, i) => (
+                            <div key={i} className="text-[10px] text-slate-300 flex items-start gap-1">
+                              <Check className="h-2.5 w-2.5 text-emerald-500 mt-0.5 shrink-0" />{s}
+                            </div>
+                          ))}
+                        </div>
+                        <div>
+                          <div className="text-[9px] font-semibold text-amber-400 mb-1">리스크</div>
+                          {activeRequestOption.risks.map((r) => (
+                            <div key={r.id} className="text-[10px] text-slate-300 flex items-start gap-1">
+                              <AlertTriangle className={`h-2.5 w-2.5 mt-0.5 shrink-0 ${r.severity === "high" ? "text-red-400" : r.severity === "medium" ? "text-amber-400" : "text-slate-500"}`} />{r.label}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {/* apply CTA — preview와 분리, draft field-level patch만 수행 */}
+                      <div className="flex items-center gap-2 pt-1 border-t border-slate-700/50">
+                        <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
+                          onClick={() => {
+                            // operator commit: generate draft message for selected strategy, then field-level apply
+                            const draft = generateRequestDraft({
+                              vendorName: activeGroup.vendorName,
+                              items: activeGroup.items.map(i => ({ productName: i.productName, quantity: i.quantity, catalogNumber: (i as any).catalogNumber })),
+                              purpose: currentStrategy === "minimal" ? "brief" : currentStrategy === "extended" ? "detailed" : undefined,
+                            });
+                            handleVendorNoteChange(activeGroup.vendorId, draft.message);
+                            setAiDraftStatus(prev => ({ ...prev, [activeGroup.vendorId]: "accepted" }));
+                          }}>
+                          이 안을 초안에 반영
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7 px-3 text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700/50"
+                          onClick={() => setStrategyDismissedBySupplier(prev => ({ ...prev, [activeGroup.vendorId]: true }))}>
+                          직접 수정 계속
+                        </Button>
+                      </div>
+                    </div>
                   )}
                 </div>
-              </div>
+              ) : null}
 
               {/* Form — 공급사 전달 정보 보완 */}
               <div className="p-4">
