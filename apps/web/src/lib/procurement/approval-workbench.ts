@@ -216,6 +216,7 @@ export function returnToQuoteReview(input: {
   return {
     procurementCase: {
       stage: "quote_review",
+      quoteStatus: "review_in_progress",
       approvalStatus: "not_started",
       updatedAt: now,
     },
@@ -283,6 +284,19 @@ export function completeApprovalCheck(
   };
 }
 
+export function reopenApprovalCheck(
+  review: ApprovalReviewState,
+  check: string
+): ApprovalReviewState {
+  if (review.pendingChecks.includes(check)) return review;
+  return {
+    ...review,
+    completedChecks: review.completedChecks.filter(c => c !== check),
+    pendingChecks: [...review.pendingChecks, check],
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export function appendApprovalReviewerNote(
   review: ApprovalReviewState,
   note: string
@@ -313,6 +327,50 @@ export function setApprovalActiveSection(
   section: ApprovalReviewState["activeSection"]
 ): ApprovalReviewState {
   return { ...review, activeSection: section, updatedAt: new Date().toISOString() };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Center Workbench Model (selector output for approval review surface)
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface ApprovalWorkbenchModel {
+  procurementCase: ProcurementCase | null;
+  approvalDraft: ApprovalDraft | null;
+  reviewState: ApprovalReviewState | null;
+  decisionRecords: ApprovalDecisionRecord[];
+  decisionGate: ApprovalDecisionGateModel | null;
+  shouldRender: boolean;
+}
+
+export function buildApprovalWorkbenchModel(input: {
+  procCase: ProcurementCase | null;
+  draft: ApprovalDraft | null;
+  review: ApprovalReviewState | null;
+  decisionRecords: ApprovalDecisionRecord[];
+}): ApprovalWorkbenchModel {
+  const { procCase, draft, review, decisionRecords } = input;
+
+  if (!procCase || !draft || !review) {
+    return {
+      procurementCase: null,
+      approvalDraft: null,
+      reviewState: null,
+      decisionRecords: [],
+      decisionGate: null,
+      shouldRender: false,
+    };
+  }
+
+  const decisionGate = computeApprovalDecisionGate(draft, review);
+
+  return {
+    procurementCase: procCase,
+    approvalDraft: draft,
+    reviewState: review,
+    decisionRecords,
+    decisionGate,
+    shouldRender: true,
+  };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
