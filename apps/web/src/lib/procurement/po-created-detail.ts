@@ -19,15 +19,17 @@ import type { PurchaseOrderRecord, PurchaseOrderLineItem } from "./po-conversion
 export type PODraftState =
   | "po_draft_created"
   | "po_ready_for_send"
-  | "po_sent"         // future
-  | "po_acknowledged" // future
-  | "po_cancelled";   // future
+  | "po_sent"
+  | "po_acknowledged"
+  | "supplier_confirmed"
+  | "po_cancelled";
 
 export const PO_DRAFT_STATE_LABELS: Record<PODraftState, string> = {
   po_draft_created: "Draft 생성됨",
   po_ready_for_send: "전송 준비 완료",
   po_sent: "전송됨",
   po_acknowledged: "공급사 확인",
+  supplier_confirmed: "공급 확정",
   po_cancelled: "취소됨",
 };
 

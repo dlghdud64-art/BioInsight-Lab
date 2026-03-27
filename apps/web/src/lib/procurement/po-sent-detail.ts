@@ -268,7 +268,7 @@ export function markSupplierAcknowledged(
   }
 
   // Guard: already acknowledged
-  if (tracking.acknowledgmentStatus === "acknowledgment_received" && detail.draftState === "po_acknowledged" as PODraftState) {
+  if (tracking.acknowledgmentStatus === "acknowledgment_received" && detail.draftState === "po_acknowledged") {
     return {
       success: false,
       newState: detail.draftState,
@@ -449,7 +449,7 @@ export function canEnterReceivingPreparation(
   const missingItems: string[] = [];
 
   // Must be at least po_sent
-  if (detail.draftState !== "po_sent" && detail.draftState !== ("po_acknowledged" as PODraftState)) {
+  if (detail.draftState !== "po_sent" && detail.draftState !== "po_acknowledged") {
     blockingIssues.push({ code: "invalid_state", message: "전송 완료 상태가 아닙니다." });
   }
 
@@ -548,7 +548,7 @@ export function buildPostSendWorkbenchModel(input: {
   const { detail, tracking, responses } = input;
 
   // Not visible if not in post-send state
-  if (!detail || !tracking || (detail.draftState !== "po_sent" && detail.draftState !== ("po_acknowledged" as PODraftState))) {
+  if (!detail || !tracking || (detail.draftState !== "po_sent" && detail.draftState !== "po_acknowledged")) {
     return {
       detail: null,
       tracking: null,
@@ -734,7 +734,7 @@ export function buildSentQueueRowBadge(
     stateColor = "amber";
   } else if (tracking.acknowledgmentStatus === "acknowledgment_received") {
     stateColor = "emerald";
-  } else if (detail.draftState === ("po_acknowledged" as PODraftState)) {
+  } else if (detail.draftState === "po_acknowledged") {
     stateColor = "blue";
   } else {
     stateColor = "slate";
@@ -745,7 +745,7 @@ export function buildSentQueueRowBadge(
   return {
     purchaseOrderId: detail.purchaseOrderId,
     vendorName: detail.supplierName,
-    stateBadge: detail.draftState === ("po_acknowledged" as PODraftState) ? "공급사 확인" : "전송됨",
+    stateBadge: detail.draftState === "po_acknowledged" ? "공급사 확인" : "전송됨",
     substatusBadge,
     stateColor,
     agingHours,
