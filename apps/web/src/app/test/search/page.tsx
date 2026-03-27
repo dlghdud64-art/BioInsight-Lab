@@ -241,6 +241,8 @@ export default function SearchPage() {
       });
       setActiveSourcingStrategy(optionFrame);
       closeStrategyOverlay();
+      // Auto-open compare review work window after apply
+      setWorkWindowMode("compare");
     }
   };
 
