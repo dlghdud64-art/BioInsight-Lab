@@ -191,7 +191,10 @@ export default function SearchPage() {
 
   const sourcingOptions = (sourcingOptionSet?.options ?? []) as (DecisionOption & { compareSeedIds?: string[] })[];
   const activeSourcingOption = sourcingOptions.find(o => o.frame === activeSourcingStrategy) ?? sourcingOptions.find(o => o.frame === "balanced") ?? null;
-  const shouldShowSourcingStrip = sourcingOptionSet && sourcingOptions.length === 3 && !sourcingDismissed && hasSearched && products.length >= 2;
+  // 전략안은 선택 상태 기반으로만 노출 — 검색 직후/선택 전/혼합 카테고리에서는 숨김
+  const hasComparableSelection = compareIds.length >= 2;
+  const hasRequestReadySelection = quoteItems.length >= 2;
+  const shouldShowSourcingStrip = sourcingOptionSet && sourcingOptions.length === 3 && !sourcingDismissed && hasSearched && products.length >= 2 && (hasComparableSelection || hasRequestReadySelection);
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
@@ -239,117 +242,10 @@ export default function SearchPage() {
               </span>
             </div>
 
-            {/* ═══ P2: Sourcing tri-option strategy surface ═══ */}
-            {shouldShowSourcingStrip && (
-              <div className="px-4 pt-2 space-y-1.5">
-                {/* Strategy strip header */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5">
-                    <Sparkles className="h-3 w-3 text-blue-400" />
-                    <span className="text-[10px] font-semibold text-slate-300">소싱 전략안 3개</span>
-                    <span className="text-[10px] text-slate-500">먼저 검토할 후보 묶음과 비교 시작 전략을 제안합니다</span>
-                  </div>
-                  <Button size="sm" variant="ghost" className="h-5 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
-                    onClick={() => setSourcingDismissed(true)}>
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-
-                {/* 3-option strip */}
-                <div className="grid grid-cols-3 gap-1.5">
-                  {sourcingOptions.map((opt) => {
-                    const strategyLabel = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
-                    const isActive = activeSourcingStrategy === opt.frame;
-                    return (
-                      <button key={opt.id} type="button"
-                        className={`text-left px-2.5 py-2 rounded border transition-all ${isActive ? "border-blue-500/40 bg-blue-600/10" : "border-slate-700/50 bg-[#2a2c30] hover:border-slate-600"}`}
-                        onClick={() => { setActiveSourcingStrategy(opt.frame as any); setCompareSeedDraft(null); }}>
-                        <div className="flex items-center gap-1.5 mb-0.5">
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded ${isActive ? "bg-blue-600/20 text-blue-300" : "bg-slate-700/50 text-slate-400"}`}>{strategyLabel}</span>
-                          <span className={`text-[8px] px-1 py-0.5 rounded ${opt.confidence >= 0.8 ? "text-emerald-400 bg-emerald-600/10" : opt.confidence >= 0.6 ? "text-blue-400 bg-blue-600/10" : "text-slate-400 bg-slate-600/10"}`}>
-                            {opt.confidence >= 0.8 ? "높음" : opt.confidence >= 0.6 ? "보통" : "낮음"}
-                          </span>
-                        </div>
-                        <div className="text-[10px] font-medium text-slate-200 truncate">{opt.title}</div>
-                        <div className="text-[9px] text-slate-500 truncate mt-0.5">{opt.recommendedUseCase}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Active option detail + compare seed zone */}
-                {activeSourcingOption && (
-                  <div className="rounded border border-slate-700/40 bg-[#26282c] px-3 py-2 space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-medium text-slate-200">{activeSourcingOption.title}</span>
-                      <span className="text-[9px] text-slate-500">{activeSourcingOption.recommendedUseCase}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-400">{activeSourcingOption.rationale}</div>
-                    {/* Strengths + Risks */}
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <div className="text-[9px] font-semibold text-emerald-400 mb-0.5">장점</div>
-                        {activeSourcingOption.strengths.map((s, i) => (
-                          <div key={i} className="text-[9px] text-slate-400 flex items-start gap-1"><Check className="h-2.5 w-2.5 text-emerald-500 shrink-0 mt-0.5" />{s}</div>
-                        ))}
-                      </div>
-                      <div>
-                        <div className="text-[9px] font-semibold text-amber-400 mb-0.5">리스크</div>
-                        {activeSourcingOption.risks.map((r, i) => (
-                          <div key={i} className="text-[9px] text-slate-400 flex items-start gap-1"><AlertTriangle className={`h-2.5 w-2.5 shrink-0 mt-0.5 ${r.severity === "medium" ? "text-amber-500" : "text-slate-500"}`} />{r.label}</div>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Compare seed action zone */}
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-700/30">
-                      {!compareSeedDraft ? (
-                        <Button size="sm" className="h-7 px-3 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
-                          onClick={() => handleProtectedAction(() => {
-                            // 전략 기반 candidate grouping → compare seed draft 생성
-                            const candidateIds = products
-                              .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
-                              .slice(0, 3)
-                              .map((p: any) => p.id);
-                            if (candidateIds.length >= 2) {
-                              setCompareSeedDraft({
-                                source: "sourcing_option",
-                                sourceOptionId: activeSourcingOption.id,
-                                sourceStrategy: activeSourcingOption.frame as any,
-                                candidateIds,
-                                rationale: activeSourcingOption.rationale,
-                                createdAt: new Date().toISOString(),
-                              });
-                            }
-                          })}>
-                          이 전략으로 비교 후보 구성
-                        </Button>
-                      ) : (
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="text-[9px] text-slate-400">비교 후보 초안 · {compareSeedDraft.candidateIds.length}개</span>
-                          <Button size="sm" className="h-7 px-3 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white"
-                            onClick={() => handleProtectedAction(() => {
-                              // operator confirm → compare candidate basket에 반영 + compare 진입
-                              compareSeedDraft.candidateIds.forEach(id => {
-                                const p = products.find((pp: any) => pp.id === id);
-                                if (p && !compareIds.includes(id)) {
-                                  toggleCompare(id, { name: p.name, brand: p.brand });
-                                }
-                              });
-                              setCompareSeedDraft(null);
-                              router.push("/app/compare");
-                            })}>
-                            이 묶음으로 비교 시작
-                          </Button>
-                          <Button size="sm" variant="ghost" className="h-7 px-2 text-[10px] text-slate-400"
-                            onClick={() => setCompareSeedDraft(null)}>
-                            취소
-                          </Button>
-                        </div>
-                      )}
-                      <span className="text-[9px] text-slate-600 ml-auto">운영자가 비교 시작을 결정합니다</span>
-                    </div>
-                  </div>
-                )}
+            {/* ═══ P2: 비교 구성안 — 선택 2개 이상일 때만 compact helper copy 노출 ═══ */}
+            {!shouldShowSourcingStrip && hasSearched && products.length >= 2 && compareIds.length < 2 && quoteItems.length < 2 && (
+              <div className="px-4 pt-1">
+                <span className="text-[9px] text-slate-600">제품을 2개 이상 선택하면 비교 구성안을 제안합니다</span>
               </div>
             )}
 
@@ -410,6 +306,85 @@ export default function SearchPage() {
 
           {/* C. Right Context Rail — persistent panel */}
           <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col overflow-hidden">
+            {/* ═══ 비교 구성안 — right rail compact panel (선택 2개 이상일 때만) ═══ */}
+            {shouldShowSourcingStrip && (
+              <div className="px-3 py-2 border-b border-bd/50 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="h-3 w-3 text-blue-400" />
+                    <span className="text-[10px] font-semibold text-slate-300">비교 구성안 3개</span>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-4 px-1 text-[9px] text-slate-600 hover:text-slate-400"
+                    onClick={() => setSourcingDismissed(true)}>
+                    <X className="h-2.5 w-2.5" />
+                  </Button>
+                </div>
+                <span className="text-[9px] text-slate-500">현재 선택 기준으로 구성안을 제안합니다</span>
+
+                {sourcingOptions.map((opt) => {
+                  const label = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
+                  const isActive = activeSourcingStrategy === opt.frame;
+                  return (
+                    <button key={opt.id} type="button"
+                      className={`w-full text-left px-2 py-1.5 rounded border transition-all ${isActive ? "border-blue-500/30 bg-blue-600/8" : "border-slate-700/40 bg-[#2a2c30] hover:border-slate-600"}`}
+                      onClick={() => { setActiveSourcingStrategy(opt.frame as any); setCompareSeedDraft(null); }}>
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[9px] px-1 py-0.5 rounded ${isActive ? "bg-blue-600/15 text-blue-300" : "bg-slate-700/40 text-slate-500"}`}>{label}</span>
+                        <span className="text-[9px] text-slate-500">{opt.strengths[0]?.substring(0, 20)}</span>
+                      </div>
+                      <div className="text-[9px] text-slate-400 mt-0.5 truncate">{opt.rationale.substring(0, 40)}…</div>
+                    </button>
+                  );
+                })}
+
+                {/* Apply CTA */}
+                {activeSourcingOption && (
+                  <div className="pt-1 border-t border-slate-700/30 space-y-1">
+                    {!compareSeedDraft ? (
+                      <Button size="sm" className="w-full h-6 text-[9px] bg-blue-600 hover:bg-blue-500 text-white"
+                        onClick={() => handleProtectedAction(() => {
+                          const candidateIds = products
+                            .filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0)
+                            .slice(0, 3)
+                            .map((p: any) => p.id);
+                          if (candidateIds.length >= 2) {
+                            setCompareSeedDraft({
+                              source: "sourcing_option",
+                              sourceOptionId: activeSourcingOption.id,
+                              sourceStrategy: activeSourcingOption.frame as any,
+                              candidateIds,
+                              rationale: activeSourcingOption.rationale,
+                              createdAt: new Date().toISOString(),
+                            });
+                          }
+                        })}>
+                        이 구성으로 비교 후보 반영
+                      </Button>
+                    ) : (
+                      <div className="space-y-1">
+                        <span className="text-[9px] text-slate-400">비교 후보 초안 · {compareSeedDraft.candidateIds.length}개</span>
+                        <div className="flex gap-1">
+                          <Button size="sm" className="flex-1 h-6 text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white"
+                            onClick={() => handleProtectedAction(() => {
+                              compareSeedDraft.candidateIds.forEach(id => {
+                                const p = products.find((pp: any) => pp.id === id);
+                                if (p && !compareIds.includes(id)) { toggleCompare(id, { name: p.name, brand: p.brand }); }
+                              });
+                              setCompareSeedDraft(null);
+                              router.push("/app/compare");
+                            })}>
+                            비교 시작
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-slate-500"
+                            onClick={() => setCompareSeedDraft(null)}>취소</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
             {railProduct ? (
               <SourcingContextRail
                 product={railProduct}
