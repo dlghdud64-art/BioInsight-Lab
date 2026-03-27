@@ -25,6 +25,10 @@ export type PODraftState =
   | "receiving_prepared"
   | "receiving_in_progress"
   | "received_recorded"
+  | "inventory_intake_in_progress"
+  | "stocked_recorded"
+  | "stock_release_in_progress"
+  | "stock_available_recorded"
   | "po_cancelled";
 
 export const PO_DRAFT_STATE_LABELS: Record<PODraftState, string> = {
@@ -36,6 +40,10 @@ export const PO_DRAFT_STATE_LABELS: Record<PODraftState, string> = {
   receiving_prepared: "입고 준비 완료",
   receiving_in_progress: "입고 진행 중",
   received_recorded: "입고 기록 완료",
+  inventory_intake_in_progress: "재고 반영 진행 중",
+  stocked_recorded: "재고 반영 완료",
+  stock_release_in_progress: "가용 전환 진행 중",
+  stock_available_recorded: "가용 재고 전환 완료",
   po_cancelled: "취소됨",
 };
 

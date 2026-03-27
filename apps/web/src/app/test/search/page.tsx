@@ -772,10 +772,10 @@ export default function SearchPage() {
                     <div>
                       <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">리스크</span>
                       <div className="mt-1 space-y-0.5">
-                        {previewOption.risks.slice(0, 2).map((r: string, i: number) => (
+                        {previewOption.risks.slice(0, 2).map((r, i: number) => (
                           <div key={i} className="flex items-start gap-1.5">
                             <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
-                            <span className="text-[10px] text-slate-400">{r}</span>
+                            <span className="text-[10px] text-slate-400">{typeof r === "string" ? r : r.label}</span>
                           </div>
                         ))}
                       </div>
