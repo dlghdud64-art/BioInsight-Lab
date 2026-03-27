@@ -30,10 +30,22 @@ export function buildCompareDecisionOptionSet(
 ): DecisionOptionSet | null {
   if (ctx.products.length < 2) return null;
 
+  // NaN-safe sort: Infinity - Infinity = NaN 방지
+  const safeSort = (arr: typeof ctx.products, key: keyof typeof ctx.products[0], desc = false) => {
+    return [...arr].sort((a, b) => {
+      const va = (a as any)[key] ?? null;
+      const vb = (b as any)[key] ?? null;
+      if (va === null && vb === null) return 0;
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return desc ? (vb as number) - (va as number) : (va as number) - (vb as number);
+    });
+  };
+
   const sorted = {
-    byCost: [...ctx.products].sort((a, b) => (a.priceKRW ?? Infinity) - (b.priceKRW ?? Infinity)),
-    byLeadTime: [...ctx.products].sort((a, b) => (a.leadTimeDays ?? Infinity) - (b.leadTimeDays ?? Infinity)),
-    bySpec: [...ctx.products].sort((a, b) => (b.specMatchScore ?? 0) - (a.specMatchScore ?? 0)),
+    byCost: safeSort(ctx.products, "priceKRW"),
+    byLeadTime: safeSort(ctx.products, "leadTimeDays"),
+    bySpec: safeSort(ctx.products, "specMatchScore", true),
   };
 
   const costTarget = sorted.byCost[0];
