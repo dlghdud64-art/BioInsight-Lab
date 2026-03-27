@@ -780,10 +780,10 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   return (
     <div className="shrink-0 border-b border-bd bg-el">
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-1.5 border-b border-bd/50">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
         <Link href="/" className="flex items-center gap-1.5 shrink-0">
-          <span className="text-sm md:text-base font-bold text-slate-100 tracking-tight">LabAxis</span>
-          <span className="text-[11px] md:text-xs font-semibold text-slate-400">소싱</span>
+          <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+          <span className="text-xs md:text-sm font-semibold text-slate-400">소싱</span>
         </Link>
       </div>
 

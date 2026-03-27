@@ -485,11 +485,11 @@ export default function TestComparePage() {
       <div className="shrink-0">
         {/* Top bar */}
         <div
-          className="flex items-center justify-between px-4 md:px-6 py-1.5 border-b border-bd/50 bg-el"
+          className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el"
         >
           <div className="flex items-center gap-1.5 md:gap-2">
             <Link href="/" className="flex items-center gap-1.5 shrink-0">
-              <span className="text-sm md:text-base font-bold text-slate-100 tracking-tight">LabAxis</span>
+              <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
               <span className="text-xs md:text-sm font-semibold text-slate-400">비교</span>
             </Link>
             <div className="w-px h-5 bg-bd hidden sm:block" />
@@ -1387,11 +1387,11 @@ export default function TestComparePage() {
           <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
             {/* Review Header — sticky */}
             <div className="shrink-0 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-              <div className="flex items-center justify-between px-4 md:px-6 py-1.5 border-b border-bd/50">
+              <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
                 <div className="flex items-center gap-2">
                   <Link href="/" className="flex items-center gap-1.5 shrink-0">
-                    <span className="text-sm md:text-base font-bold text-slate-100 tracking-tight">LabAxis</span>
-                    <span className="text-[11px] md:text-xs font-semibold text-slate-400">검토</span>
+                    <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+                    <span className="text-xs md:text-sm font-semibold text-slate-400">검토</span>
                   </Link>
                   <div className="w-px h-5 bg-bd hidden sm:block" />
                   <span className="text-xs text-slate-400 hidden sm:block">선택안 검토 및 전달 준비</span>
