@@ -269,6 +269,157 @@ export function getRailPersistenceScope(context: CaseContextSnapshot): RailPersi
   };
 }
 
+// ══════════════════════════════════════════════
+// Continuity Hardening Batch 2
+// ══════════════════════════════════════════════
+
+/**
+ * NavigationMessage — resolution/stale/redirect 시 operator에게 표시할 메시지
+ * 같은 explanation 계열 문법을 사용.
+ */
+export interface NavigationMessage {
+  type: "success" | "info" | "warning" | "error";
+  title: string;
+  detail: string;
+  /** 설명 payload에서 온 것인지 여부 */
+  fromExplanationPayload: boolean;
+}
+
+/**
+ * buildResolutionMessage — resolution 후 "왜 여기로 왔는지" 설명
+ */
+export function buildResolutionMessage(
+  decision: string,
+  destination: PostResolutionDestination,
+  context: CaseContextSnapshot,
+): NavigationMessage {
+  switch (destination.target) {
+    case "same_case_next_domain":
+      return {
+        type: "success",
+        title: `${decision === "approved" ? "승인" : "처리"} 완료`,
+        detail: `동일 케이스에 ${destination.reason}`,
+        fromExplanationPayload: false,
+      };
+    case "inbox":
+      return {
+        type: decision === "approved" ? "success" : decision === "escalated" ? "warning" : "info",
+        title: decision === "approved" ? "승인 완료" : decision === "escalated" ? "에스컬레이션 완료" : "처리 완료",
+        detail: destination.reason,
+        fromExplanationPayload: false,
+      };
+    case "dashboard":
+      return {
+        type: "success",
+        title: "모든 대기 건 처리 완료",
+        detail: destination.reason,
+        fromExplanationPayload: false,
+      };
+    case "stay":
+      return {
+        type: decision === "error" ? "error" : "info",
+        title: decision === "error" ? "오류 발생" : "대기 중",
+        detail: destination.reason,
+        fromExplanationPayload: false,
+      };
+    default:
+      return {
+        type: "info",
+        title: "이동",
+        detail: destination.reason,
+        fromExplanationPayload: false,
+      };
+  }
+}
+
+/**
+ * buildStaleMessage — stale 발생 시 설명
+ */
+export function buildStaleMessage(
+  context: CaseContextSnapshot,
+): NavigationMessage {
+  return {
+    type: "warning",
+    title: "상태 변경 감지",
+    detail: context.staleReason || "정책 또는 승인 상태가 변경되었습니다. 새로고침 후 최신 상태를 확인하세요.",
+    fromExplanationPayload: true,
+  };
+}
+
+/**
+ * buildRedirectMessage — redirect 시 설명
+ */
+export function buildRedirectMessage(
+  reason: string,
+  fromRoute: string,
+  toRoute: string,
+): NavigationMessage {
+  return {
+    type: "info",
+    title: "자동 이동",
+    detail: `${reason} (${fromRoute} → ${toRoute})`,
+    fromExplanationPayload: false,
+  };
+}
+
+// ══════════════════════════════════════════════
+// Breadcrumb Continuity
+// ══════════════════════════════════════════════
+
+/**
+ * buildContinuityBreadcrumbs — case context 기반 breadcrumb (filter/state 포함)
+ */
+export function buildContinuityBreadcrumbs(context: CaseContextSnapshot): Array<{
+  label: string;
+  href: string;
+  active: boolean;
+  hasExplanation: boolean;
+}> {
+  const crumbs: Array<{ label: string; href: string; active: boolean; hasExplanation: boolean }> = [];
+
+  crumbs.push({
+    label: "Governance",
+    href: "/dashboard/approval",
+    active: !context.currentDomain && !context.caseId,
+    hasExplanation: false,
+  });
+
+  if (context.caseId) {
+    crumbs.push({
+      label: `Case ${context.caseId.slice(0, 8)}`,
+      href: `/dashboard/approval/case/${context.caseId}`,
+      active: !context.currentDomain,
+      hasExplanation: context.conflictPayload !== null,
+    });
+  }
+
+  if (context.currentDomain) {
+    const DOMAIN_SHORT: Record<string, string> = {
+      fire_execution: "발송",
+      stock_release: "릴리스",
+      exception_resolve: "예외해결",
+      exception_return_to_stage: "예외복귀",
+    };
+    crumbs.push({
+      label: DOMAIN_SHORT[context.currentDomain] || context.currentDomain,
+      href: `/dashboard/approval/case/${context.caseId}/${context.currentDomain}`,
+      active: true,
+      hasExplanation: context.conflictPayload !== null,
+    });
+  }
+
+  if (context.isStale) {
+    crumbs.push({
+      label: "⚠ Stale",
+      href: "#",
+      active: false,
+      hasExplanation: false,
+    });
+  }
+
+  return crumbs;
+}
+
 // ── Events ──
-export type CaseContinuityEventType = "case_context_created" | "domain_entered" | "domain_switched" | "resolution_completed" | "explanation_refreshed" | "stale_detected" | "stale_cleared";
+export type CaseContinuityEventType = "case_context_created" | "domain_entered" | "domain_switched" | "resolution_completed" | "explanation_refreshed" | "stale_detected" | "stale_cleared" | "navigation_message_shown" | "redirect_executed";
 export interface CaseContinuityEvent { type: CaseContinuityEventType; caseId: string; domain: ApprovalDomain | null; reason: string; timestamp: string; }
