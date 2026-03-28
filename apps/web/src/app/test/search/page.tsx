@@ -13,7 +13,12 @@ import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { RequestReviewWindow } from "../_components/request-review-window";
+import { CompareReviewWorkWindow } from "../_components/compare-review-work-window";
+import { RequestAssemblyWorkWindow } from "../_components/request-assembly-work-window";
 import { calculateRequestReadiness } from "../_components/request-readiness";
+import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
+import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
+import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -66,7 +71,10 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | null>(null);
+  // ── Compare Review + Request Assembly canonical state ──
+  const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
+  const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -164,6 +172,24 @@ export default function SearchPage() {
   const compareReady = compareIds.length >= 2;
   const requestReady = quoteItems.length > 0;
 
+  // ── AI compare readiness evaluation — 자동 활성화 ──
+  const aiCompareReadiness = useMemo(() => {
+    if (!compareReady) return { active: false, mode: "inactive" as const, label: "" };
+    const candidates = compareIds.map((id: string) => {
+      const p = products.find((pp: any) => pp.id === id);
+      if (!p) return null;
+      const v = p.vendors?.[0];
+      return { id: p.id, name: p.name, brand: p.brand || "", category: p.category || "", priceKRW: v?.priceInKRW || 0, leadTimeDays: v?.leadTimeDays || 0 };
+    }).filter(Boolean) as any[];
+    const catResult = validateCompareCategoryIntegrity(candidates);
+    return {
+      active: true,
+      mode: catResult.compareMode as "direct" | "mixed_warning" | "blocked",
+      label: catResult.compareMode === "direct" ? "같은 카테고리 비교 준비 완료" : catResult.compareMode === "mixed_warning" ? "혼합 카테고리 — 경고 상태" : "비교 불가 상태",
+      catResult,
+    };
+  }, [compareReady, compareIds, products]);
+
   // Request readiness for dock indicators
   const requestReadiness = useMemo(
     () => calculateRequestReadiness(quoteItems, compareIds, products),
@@ -241,8 +267,8 @@ export default function SearchPage() {
       });
       setActiveSourcingStrategy(optionFrame);
       closeStrategyOverlay();
-      // Auto-open compare review work window after apply
-      setWorkWindowMode("compare");
+      // Auto-open compare review center work window after AI apply
+      setWorkWindowMode("compare-review");
     }
   };
 
@@ -352,47 +378,56 @@ export default function SearchPage() {
 
           {/* C. Right Context Rail — persistent panel */}
           <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col overflow-hidden">
-            {/* ═══ AI 비교 구성안 — 독립 entry card (선택 2개 이상일 때만) ═══ */}
-            {shouldShowSourcingStrip && (
-              <div className="px-3 py-3 border-b border-bd/50">
-                <div className="rounded-lg border border-blue-500/25 bg-blue-600/[0.06] p-3 space-y-2">
-                  {/* Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <div className="flex items-center justify-center w-5 h-5 rounded bg-blue-600/20">
-                        <Sparkles className="h-3 w-3 text-blue-400" />
-                      </div>
-                      <span className="text-[11px] font-semibold text-slate-200">AI 비교 구성안</span>
-                    </div>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300 font-medium">준비됨</span>
-                  </div>
-                  {/* Context */}
-                  <div className="flex items-center gap-2 text-[10px]">
-                    <span className="text-slate-400">현재 선택 <span className="text-slate-200 font-medium">{compareIds.length}개</span> 기준</span>
-                    <span className="text-slate-600">·</span>
-                    <span className="text-slate-400">판단안 <span className="text-blue-300 font-medium">3개</span></span>
-                  </div>
-                  {/* CTA */}
-                  <Button
-                    size="sm"
-                    className="w-full h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
-                    onClick={() => handleProtectedAction(openStrategyOverlay)}
-                  >
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    구성안 열기
-                  </Button>
-                </div>
-              </div>
-            )}
-            {/* AI 미노출 시 helper copy */}
-            {!shouldShowSourcingStrip && hasSearched && products.length >= 2 && compareIds.length < 2 && quoteItems.length < 2 && (
+            {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
+            {aiCompareReadiness.active ? (
               <div className="px-3 py-2 border-b border-bd/50">
-                <div className="rounded border border-slate-700/40 bg-[#252729] px-3 py-2 flex items-center gap-2">
-                  <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />
-                  <span className="text-[10px] text-slate-500">비교 후보를 2개 이상 선택하면 AI 구성안을 볼 수 있습니다</span>
+                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-500/20 bg-blue-600/[0.04]" : aiCompareReadiness.mode === "mixed_warning" ? "border-amber-500/20 bg-amber-600/[0.04]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-1.5">
+                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-400" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-400" : "bg-red-400"}`} />
+                      <span className="text-[10px] font-semibold text-slate-200">AI 비교 판단 활성</span>
+                    </div>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-600/15 text-blue-300" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-600/15 text-amber-300" : "bg-red-600/15 text-red-300"}`}>
+                      {compareIds.length}개 선택
+                    </span>
+                  </div>
+                  <div className="text-[10px] text-slate-400 mb-2">{aiCompareReadiness.label}</div>
+                  <div className="flex items-center gap-1.5 text-[10px]">
+                    {shouldShowSourcingStrip && (
+                      <span className="text-blue-300">판단안 3개 준비됨</span>
+                    )}
+                  </div>
+                  {/* Primary CTA: 비교 검토 시작 */}
+                  <div className="flex gap-1.5 mt-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                      onClick={() => handleProtectedAction(() => setWorkWindowMode("compare-review"))}
+                    >
+                      <GitCompare className="h-3 w-3 mr-1" />
+                      비교 검토 시작
+                    </Button>
+                    {shouldShowSourcingStrip && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[10px] text-slate-400 hover:text-blue-300 border border-bd/30"
+                        onClick={() => handleProtectedAction(openStrategyOverlay)}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
-            )}
+            ) : hasSearched && products.length >= 2 && compareIds.length < 2 ? (
+              <div className="px-3 py-2 border-b border-bd/50">
+                <div className="rounded-md border border-slate-700/40 bg-[#252729] px-3 py-2 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
+                  <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 AI 비교 판단이 활성화됩니다</span>
+                </div>
+              </div>
+            ) : null}
 
             {railProduct ? (
               <SourcingContextRail
@@ -550,9 +585,9 @@ export default function SearchPage() {
               {compareIds.length > 0 ? (
                 <>
                   {compareReady ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("compare"))}>
-                      <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                      {compareIds.length}개 비교 시작
+                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("compare-review"))}>
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                      AI 비교 검토 시작
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-400">
@@ -636,46 +671,47 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* ═══ E. Center Work Window — Compare Review ═══ */}
-      <CenterWorkWindow
-        open={workWindowMode === "compare"}
+      {/* ═══ E. Center Work Window — Compare Review (difference-first decision surface) ═══ */}
+      <CompareReviewWorkWindow
+        open={workWindowMode === "compare-review" || workWindowMode === "compare"}
         onClose={() => setWorkWindowMode(null)}
-        title="비교 검토"
-        subtitle={`${compareIds.length}개 제품 비교`}
-        phase="ready"
-        primaryAction={{
-          label: "비교 분석 시작",
-          onClick: () => { router.push("/app/compare"); setWorkWindowMode(null); },
+        compareIds={compareIds}
+        products={products}
+        openedBy={workWindowMode === "compare-review" ? "ai_apply" : "manual"}
+        aiOptionId={activeSourcingStrategy}
+        onShortlistApplied={(shortlistIds, requestCandidateIds) => {
+          // Sync: shortlist가 compare truth에 반영
         }}
-        secondaryAction={{ label: "닫기", onClick: () => setWorkWindowMode(null) }}
-      >
-        <div className="space-y-2">
-          <p className="text-xs text-slate-400 mb-3">선택한 제품을 나란히 비교합니다. 공급사·가격·스펙을 확인하고 최적 후보를 선택하세요.</p>
-          {compareIds.map((id: string) => {
-            const p = products.find((pp: any) => pp.id === id);
-            if (!p) return null;
-            const v = p.vendors?.[0];
-            return (
-              <div key={id} className="flex items-center gap-3 px-3 py-2 rounded border border-bd bg-el">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-100 truncate">{p.name}</p>
-                  <p className="text-xs text-slate-400">{v?.vendor?.name || "—"} · {p.catalogNumber || "—"}</p>
-                </div>
-                {v?.priceInKRW > 0 && (
-                  <span className="text-sm font-semibold tabular-nums text-slate-100 shrink-0">
-                    <PriceDisplay price={v.priceInKRW} currency="KRW" />
-                  </span>
-                )}
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => toggleCompare(id)}>
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-      </CenterWorkWindow>
+        onRequestHandoff={(handoff) => {
+          setRequestHandoff(handoff);
+          // 견적 후보 반영 → request assembly work window 열기
+          setWorkWindowMode("request-assembly");
+        }}
+        onUndoDecision={() => {
+          setRequestHandoff(null);
+        }}
+      />
 
-      {/* ═══ E. Center Work Window — Request Review (6-area) ═══ */}
+      {/* ═══ E-2. Center Work Window — Request Assembly (견적 요청 조립) ═══ */}
+      <RequestAssemblyWorkWindow
+        open={workWindowMode === "request-assembly"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={requestHandoff}
+        products={products}
+        quoteItems={quoteItems}
+        onDraftRecorded={(snapshot) => {
+          setRequestDraftSnapshot(snapshot);
+        }}
+        onSubmissionReady={(_handoff) => {
+          // Submission handoff 저장
+        }}
+        onGoToSubmission={() => {
+          router.push("/app/quote");
+          setWorkWindowMode(null);
+        }}
+      />
+
+      {/* ═══ E-3. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
