@@ -1,6 +1,14 @@
 /**
  * Receiving Preparation Workspace v2 — 입고 준비 운영면
  * ack confirmed+ready 이후. 예정 수령 대상/inbound expectation 정리.
+ *
+ * TRUTH CONTRACT:
+ * - reads: CanonicalProcurementLineRef[] (from ack resolution), ReceivingReadinessCheckV2
+ * - writes: 없음 — workspace는 read-only. resolution engine이 etaWindow/references write.
+ * - center: expected line set + ETA/reference completeness + readiness check
+ * - rail: ack classification evidence + delivery tracking snapshot
+ * - dock: update ETA / update reference / mark prep ready / hold
+ * - forbidden: ack truth 재해석, receiving execution 직접 진입
  */
 
 import type { SupplierAckResolutionSessionV2, ReceivingReadinessCheckV2, CanonicalProcurementLineRef } from "./supplier-acknowledgment-resolution-v2-engine";

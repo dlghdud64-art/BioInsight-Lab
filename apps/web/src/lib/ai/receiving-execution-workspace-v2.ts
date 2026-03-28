@@ -1,6 +1,14 @@
 /**
  * Receiving Execution Workspace v2 — 실제 입고 처리 운영면
  * 수령 수량/상태 기록. stock release 직행 금지 — receiving resolution 경유 필수.
+ *
+ * TRUTH CONTRACT:
+ * - reads: CanonicalProcurementLineRef[] (from prep session — expectedQty/unit 전파)
+ * - writes: 없음 — workspace는 read-only. resolution engine이 lineRecords write.
+ * - center: line-level receipt capture (qty/lot/expiry/damage/discrepancy/substitute)
+ * - rail: prep session evidence + ack classification snapshot
+ * - dock: record receipt / flag discrepancy / flag damage / complete execution / hold
+ * - forbidden: stock release 직행 — variance disposition 경유 필수
  */
 
 import type { ReceivingPrepSessionV2 } from "./receiving-preparation-resolution-v2-engine";

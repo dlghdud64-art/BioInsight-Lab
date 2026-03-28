@@ -3,6 +3,14 @@
  *
  * sent_state_committed → tracking 생성/관리/exception 처리.
  * tracking ≠ supplier ack. 전달 상태만 추적.
+ *
+ * TRUTH CONTRACT:
+ * - reads: SentStateRecordV2 (sendTransactionId, firedPayloadSnapshot)
+ * - writes: DeliveryTrackingRecordV2 (trackingId, deliveryStatus) — via resolution engine only
+ * - center: delivery status tracking + exception triage
+ * - rail: send transaction evidence + external provider reference
+ * - dock: poll / mark delivered / mark failed / route exception / supplier ack handoff
+ * - forbidden: sent truth 수정, supplier ack truth 선행 확정
  */
 
 import type { SentStateRecordV2 } from "./actual-send-fired-transaction-v2-engine";

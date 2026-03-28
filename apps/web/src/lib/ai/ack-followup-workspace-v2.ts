@@ -2,6 +2,14 @@
  * Ack Followup Workspace v2 — non-confirmed supplier ack 운영 큐
  * followup은 예외 쓰레기통이 아니라 분명한 operator work queue.
  * 결과 → receiving_preparation_handoff 또는 exception_recovery.
+ *
+ * TRUTH CONTRACT:
+ * - reads: AckResolutionSession (ackClassification, followupReason)
+ * - writes: 없음 — workspace는 read-only. resolution engine이 followup session write.
+ * - center: followup draft + send + response capture + classification
+ * - rail: ack classification evidence + delivery/send snapshot
+ * - dock: draft / send / record response / classify / resolve / retry / hold
+ * - forbidden: readiness check 없이 resolve_as_confirmed_ready (P0 fix)
  */
 
 import type { AckFollowupHandoffGateV2, FollowupType } from "./ack-followup-handoff-gate-v2-engine";

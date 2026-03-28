@@ -4,6 +4,14 @@
  * irreversible mutation 직후 첫 운영면.
  * sent_state_committed 이후 무엇이 실제로 커밋되었는지 읽고 정리.
  * dispatched ≠ sent. tracking/ack은 다음 단계.
+ *
+ * TRUTH CONTRACT (read-only surface):
+ * - reads: SentStateRecordV2 (firedPayloadSnapshot, firedAuthorizationSnapshot, fireExecutionStatus)
+ * - writes: 없음 — post-commit read + decision routing surface
+ * - center: fired payload/recipient/authorization review + failure triage
+ * - rail: commit snapshot evidence + channel response
+ * - dock: tracking handoff / retry / correction routing
+ * - forbidden: sent truth 재작성, tracking/ack truth 미리 확정
  */
 
 import type { SentStateRecordV2, FiredPayloadSnapshotV2, FiredAuthorizationSnapshotV2, FireExecutionStatus, FireFailureClass } from "./actual-send-fired-transaction-v2-engine";

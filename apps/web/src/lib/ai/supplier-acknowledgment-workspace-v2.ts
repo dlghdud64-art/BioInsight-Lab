@@ -3,6 +3,14 @@
  *
  * tracking = 전달 상태 추적, ack = 상대방 의사 이벤트.
  * ack ≠ tracking. ack 이후 receiving preparation 체인으로 연결.
+ *
+ * TRUTH CONTRACT:
+ * - reads: SentStateRecordV2, DeliveryTrackingRecordV2
+ * - writes: SupplierAcknowledgmentRecordV2 (ackType, confirmedScope) — via captureSupplierAck
+ * - center: ack capture + classification + receiving-ready 판단
+ * - rail: delivery tracking evidence + send payload snapshot
+ * - dock: capture ack / classify / confirm / route followup
+ * - forbidden: ack 없이 receiving prep 진입, delivery truth 수정
  */
 
 import type { SentStateRecordV2 } from "./actual-send-fired-transaction-v2-engine";
