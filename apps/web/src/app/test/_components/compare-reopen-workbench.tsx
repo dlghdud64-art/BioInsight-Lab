@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Check, Minus, AlertTriangle, ArrowRight, ArrowLeft, GitCompare, TrendingDown, Clock, Package, FileText } from "lucide-react";
-import { type CompareReopenState, type CompareReopenDecisionSnapshot, createInitialCompareReopenState, buildCompareBaselineReuseDecision, buildCompareReopenDifferenceSummary, validateCompareReopenBeforeRecord, buildCompareReopenDecisionSnapshot, buildRequestReopenFromCompareHandoff } from "@/lib/ai/compare-reopen-engine";
+import { type CompareReopenState, type CompareReopenDecisionSnapshot, createInitialCompareReopenState, buildCompareBaselineReuseDecision, buildCompareReopenDifferenceSummary, validateCompareReopenBeforeRecord, buildCompareReopenDecisionSnapshot, buildRequestReopenFromCompareHandoff, buildCompareEligibilityPlanV2 } from "@/lib/ai/compare-reopen-engine";
 import type { CompareReopenHandoff } from "@/lib/ai/sourcing-result-review-engine";
 
 interface CompareReopenWorkbenchProps {
@@ -90,6 +90,22 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
               </div>
             </div>
           )}
+
+          {/* Compare Eligibility Summary (V2) */}
+          {(() => {
+            const eligibility = buildCompareEligibilityPlanV2(reopenState.compareCandidateIds, "");
+            return (
+              <div>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Compare Eligibility</span>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="px-3 py-2 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Exact</span><span className="text-lg font-bold text-blue-400">{eligibility.exactComparableIds.length}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-violet-500/20 bg-violet-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Equivalent</span><span className="text-lg font-bold text-violet-400">{eligibility.equivalentComparableIds.length}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Sub Hold</span><span className="text-lg font-bold text-amber-400">{eligibility.substituteHoldIds.length}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Direct Bypass</span><span className="text-lg font-bold text-emerald-400">{eligibility.requestDirectBypassIds.length}</span></div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Difference summary */}
           {diffSummary && (
