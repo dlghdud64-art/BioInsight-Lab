@@ -1,5 +1,11 @@
 /**
  * Receiving Preparation Resolution v2 — prep action → readiness mutation → audit
+ *
+ * ⚠️ WRITE-PATH RESOLUTION — pure read-only resolution이 아님.
+ * - canonical write scope: etaWindow, shipmentReferenceSet, missingInputs, executionAllowed
+ * - single writer: 이 엔진만 위 필드를 최초 기록/변경
+ * - input source trust: CanonicalProcurementLineRef (from ack resolution) + operator input
+ * - downstream consumer: receiving-execution-handoff-gate (executionAllowed 읽기만)
  */
 
 import type { ReceivingPrepWorkspaceStateV2, ReceivingPrepWorkspaceStatus } from "./receiving-preparation-workspace-v2";

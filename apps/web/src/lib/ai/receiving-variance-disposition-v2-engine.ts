@@ -4,6 +4,14 @@
  * Receiving Execution → Stock Release 직행 금지. 반드시 이 단계 경유.
  * short/over/damaged/substitute discrepancy → accepted/hold/reject disposition.
  * releasable inventory만 stock release로 넘김.
+ *
+ * ⚠️ WRITE-PATH RESOLUTION — pure read-only resolution이 아님.
+ * - canonical write scope: lineDispositions[].disposition, releasableQty, holdQty, rejectedQty,
+ *   totalReleasableQty, totalHoldQty, totalRejectedQty, stockReleaseAllowed
+ * - single writer: 이 엔진만 line disposition과 releasable/hold/rejected qty를 최초 확정
+ * - input source trust: ReceivingExecSessionV2.lineRecords (actual receipt truth — read only)
+ * - downstream consumer: stock-release-handoff-gate (stockReleaseAllowed, totalReleasableQty 읽기만)
+ * - forbidden: stock release 직접 실행 금지 — stock-release-handoff-gate 경유 필수
  */
 
 import type { ReceivingExecSessionV2, ReceivingExecSessionStatus } from "./receiving-execution-resolution-v2-engine";

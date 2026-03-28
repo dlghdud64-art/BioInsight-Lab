@@ -1,6 +1,14 @@
 /**
  * Receiving Execution Resolution v2 — 입고 실행 mutation spine
  * line별 실제 수령 기록. discrepancy/damage/substitute 분리. stock release 직행 금지.
+ *
+ * ⚠️ WRITE-PATH RESOLUTION — pure read-only resolution이 아님.
+ * - canonical write scope: lineRecords[].actualReceivedQty, lotNumber, expiryDate, lineReceiptStatus,
+ *   damageFlag, discrepancyFlag, substituteFlag, discrepancyLines, damageLines, substituteLines
+ * - single writer: 이 엔진만 actual receipt truth를 최초 기록
+ * - input source trust: ReceivingPrepSessionV2.receivingExpectedLineSet (CanonicalProcurementLineRef)
+ * - downstream consumer: receiving-variance-disposition (lineRecords 읽기만)
+ * - forbidden: stock release 직접 생성 금지 — variance disposition 경유 필수
  */
 
 import type { ReceivingLineRecordV2, LineReceiptStatusV2 } from "./receiving-execution-workspace-v2";
