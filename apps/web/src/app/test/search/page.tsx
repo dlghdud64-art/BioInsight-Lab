@@ -24,6 +24,7 @@ import { PoCreatedDetailWorkbench } from "../_components/po-created-detail-workb
 import { DispatchPreparationWorkbench } from "../_components/dispatch-preparation-workbench";
 import { SendConfirmationWorkbench } from "../_components/send-confirmation-workbench";
 import { PoSentTrackingWorkbench } from "../_components/po-sent-tracking-workbench";
+import { SupplierConfirmationWorkbench } from "../_components/supplier-confirmation-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -84,7 +85,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -888,15 +889,29 @@ export default function SearchPage() {
         handoff={null}
         onAcknowledgmentRecorded={(_obj) => {}}
         onSupplierConfirmation={() => {
-          // Full procurement chain complete — next: Supplier Confirmation / Receiving Prep
-          setWorkWindowMode(null);
+          setWorkWindowMode("supplier-confirm");
         }}
         onReturnToSendConfirmation={() => {
           setWorkWindowMode("send-confirm");
         }}
       />
 
-      {/* ═══ E-12. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-12. Center Work Window — Supplier Confirmation ═══ */}
+      <SupplierConfirmationWorkbench
+        open={workWindowMode === "supplier-confirm"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onConfirmationRecorded={(_obj) => {}}
+        onReceivingPrepHandoff={() => {
+          // Procurement OS chain 완성 — Receiving Preparation은 다음 확장
+          setWorkWindowMode(null);
+        }}
+        onReturnToSentTracking={() => {
+          setWorkWindowMode("po-sent-tracking");
+        }}
+      />
+
+      {/* ═══ E-13. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
