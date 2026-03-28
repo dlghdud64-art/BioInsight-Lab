@@ -51,6 +51,7 @@ import { ReceivingExecutionReentryWorkbench } from "../_components/receiving-exe
 import { StockReleaseReentryWorkbench } from "../_components/stock-release-reentry-workbench";
 import { ReorderDecisionReentryWorkbench } from "../_components/reorder-decision-reentry-workbench";
 import { ProcurementReentryReopenWorkbench } from "../_components/procurement-reentry-reopen-workbench";
+import { CompareReviewCenterWorkWindow } from "../_components/compare-review-center-work-window";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -111,7 +112,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -749,6 +750,36 @@ export default function SearchPage() {
         onUndoDecision={() => {
           setRequestHandoff(null);
         }}
+      />
+
+      {/* ═══ E-1b. Center Work Window — Compare Review Center (판단 작업면) ═══ */}
+      <CompareReviewCenterWorkWindow
+        open={workWindowMode === "compare-review-center"}
+        onClose={() => setWorkWindowMode(null)}
+        compareId={`cmp_${Date.now().toString(36)}`}
+        requestReference={searchQuery || ""}
+        initialOptions={compareIds.map((id) => {
+          const p = products.find((pp: any) => pp.id === id);
+          const v = p?.vendors?.[0];
+          return {
+            optionId: id,
+            supplier: v?.vendor?.name || p?.brand || "—",
+            itemName: p?.name || "—",
+            packSpec: p?.specification || p?.packSize || "—",
+            leadTimeDays: v?.leadTimeDays || null,
+            priceKRW: v?.priceInKRW || null,
+            availability: "unknown" as const,
+            riskFlags: [],
+            reviewStatus: "pending_review" as const,
+            rationale: { selectionReasonCodes: [], selectionNote: "", exclusionReasonCodes: [], exclusionNote: "" },
+          };
+        })}
+        isReopened={false}
+        onReviewCompleted={(_state) => {}}
+        onApprovalHandoff={() => {
+          setWorkWindowMode("po-conversion");
+        }}
+        onFollowupRequest={(_ids) => {}}
       />
 
       {/* ═══ E-2. Center Work Window — Request Assembly (견적 요청 조립) ═══ */}
