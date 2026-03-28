@@ -626,10 +626,17 @@ export default function SearchPage() {
                     </span>
                   )}
                   <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                  <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request"))}>
-                    <FileText className="h-3.5 w-3.5 mr-1.5" />
-                    견적 요청서 만들기
-                  </Button>
+                  {requestHandoff ? (
+                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request-assembly"))}>
+                      <FileText className="h-3.5 w-3.5 mr-1.5" />
+                      견적 요청 조립
+                    </Button>
+                  ) : (
+                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request"))}>
+                      <FileText className="h-3.5 w-3.5 mr-1.5" />
+                      견적 요청서 만들기
+                    </Button>
+                  )}
                   <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>

@@ -70,6 +70,8 @@ export function RequestAssemblyWorkWindow({
   // ── Assembly state ──
   const [assemblyState, setAssemblyState] = useState<RequestAssemblyState | null>(null);
   const [purpose, setPurpose] = useState("");
+  const [urgency, setUrgency] = useState<"normal" | "urgent" | "critical">("normal");
+  const [substituteScope, setSubstituteScope] = useState<"none" | "same_brand" | "equivalent">("none");
   const [draftSnapshot, setDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
 
   // Initialize on open
@@ -93,9 +95,9 @@ export function RequestAssemblyWorkWindow({
     if (!assemblyState) return null;
     return validateRequestAssemblyBeforeDraft({
       ...assemblyState,
-      requestConditions: { ...assemblyState.requestConditions, purpose },
+      requestConditions: { ...assemblyState.requestConditions, purpose, urgency, substituteScope },
     });
-  }, [assemblyState, purpose]);
+  }, [assemblyState, purpose, urgency, substituteScope]);
 
   // ── Actions ──
   const toggleVendor = useCallback((vendorId: string) => {
@@ -122,11 +124,23 @@ export function RequestAssemblyWorkWindow({
     });
   }, []);
 
+  const toggleLineSubstitute = useCallback((lineId: string) => {
+    setAssemblyState((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        requestLines: prev.requestLines.map((l) =>
+          l.lineId === lineId ? { ...l, substituteAllowed: !l.substituteAllowed } : l,
+        ),
+      };
+    });
+  }, []);
+
   const recordDraft = useCallback(() => {
     if (!assemblyState || !validation?.canRecordDraft) return;
     const stateWithPurpose: RequestAssemblyState = {
       ...assemblyState,
-      requestConditions: { ...assemblyState.requestConditions, purpose },
+      requestConditions: { ...assemblyState.requestConditions, purpose, urgency, substituteScope },
     };
     const snapshot = buildRequestDraftSnapshot(stateWithPurpose);
     setDraftSnapshot(snapshot);
@@ -139,7 +153,7 @@ export function RequestAssemblyWorkWindow({
       substatus: "ready_for_submission_prep",
       requestDraftSnapshotId: snapshot.id,
     } : prev);
-  }, [assemblyState, validation, purpose, onDraftRecorded, onSubmissionReady]);
+  }, [assemblyState, validation, purpose, urgency, substituteScope, onDraftRecorded, onSubmissionReady]);
 
   if (!open || !assemblyState) return null;
 
@@ -208,6 +222,14 @@ export function RequestAssemblyWorkWindow({
                         disabled={isDraftRecorded}
                       />
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => toggleLineSubstitute(line.lineId)}
+                      disabled={isDraftRecorded}
+                      className={`h-6 px-2 rounded text-[9px] border transition-all ${line.substituteAllowed ? "border-emerald-500/30 bg-emerald-600/10 text-emerald-400" : "border-bd/40 text-slate-500 hover:text-slate-400"}`}
+                    >
+                      {line.substituteAllowed ? "대체 허용" : "대체 불가"}
+                    </button>
                     {!line.isComplete && (
                       <AlertTriangle className="h-3 w-3 text-amber-400" />
                     )}
@@ -251,7 +273,8 @@ export function RequestAssemblyWorkWindow({
           {/* ═══ C. Request Conditions ═══ */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">요청 조건</span>
-            <div className="mt-2 space-y-2">
+            <div className="mt-2 space-y-3">
+              {/* Purpose */}
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">요청 목적</label>
                 <Input
@@ -262,14 +285,74 @@ export function RequestAssemblyWorkWindow({
                   disabled={isDraftRecorded}
                 />
               </div>
+              {/* Urgency + Substitute scope */}
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">긴급도</label>
+                  <div className="flex gap-1">
+                    {(["normal", "urgent", "critical"] as const).map((u) => {
+                      const label = u === "normal" ? "일반" : u === "urgent" ? "긴급" : "최우선";
+                      const isActive = urgency === u;
+                      return (
+                        <button
+                          key={u}
+                          type="button"
+                          onClick={() => setUrgency(u)}
+                          disabled={isDraftRecorded}
+                          className={`flex-1 h-7 rounded text-[10px] font-medium border transition-all ${isActive
+                            ? u === "critical" ? "bg-red-600/15 border-red-500/30 text-red-300"
+                              : u === "urgent" ? "bg-amber-600/15 border-amber-500/30 text-amber-300"
+                              : "bg-blue-600/10 border-blue-500/25 text-blue-300"
+                            : "border-bd/40 text-slate-500 hover:text-slate-400"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-[10px] text-slate-400 block mb-1">대체품 허용 범위</label>
+                  <div className="flex gap-1">
+                    {(["none", "same_brand", "equivalent"] as const).map((s) => {
+                      const label = s === "none" ? "불가" : s === "same_brand" ? "동일 브랜드" : "동등 규격";
+                      const isActive = substituteScope === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSubstituteScope(s)}
+                          disabled={isDraftRecorded}
+                          className={`flex-1 h-7 rounded text-[10px] font-medium border transition-all ${isActive
+                            ? "bg-blue-600/10 border-blue-500/25 text-blue-300"
+                            : "border-bd/40 text-slate-500 hover:text-slate-400"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+              {/* Response requirements + inquiry items */}
               <div className="grid grid-cols-2 gap-2">
                 <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
-                  <span className="text-[9px] text-slate-500 block mb-0.5">응답 요청 항목</span>
-                  <span className="text-[10px] text-slate-300">{assemblyState.requestConditions.responseRequirements.join(", ")}</span>
+                  <span className="text-[9px] text-slate-500 block mb-1">응답 요청 항목</span>
+                  <div className="flex flex-wrap gap-1">
+                    {assemblyState.requestConditions.responseRequirements.map((r, i) => (
+                      <span key={i} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-300">{r}</span>
+                    ))}
+                  </div>
                 </div>
                 <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
-                  <span className="text-[9px] text-slate-500 block mb-0.5">대체 허용</span>
-                  <span className="text-[10px] text-slate-300">{assemblyState.requestConditions.substituteScope === "none" ? "불가" : assemblyState.requestConditions.substituteScope === "same_brand" ? "동일 브랜드" : "동등 규격"}</span>
+                  <span className="text-[9px] text-slate-500 block mb-1">확인 요청 사항</span>
+                  <div className="flex flex-wrap gap-1">
+                    {["납기", "재고", "MOQ", "단가"].map((item) => (
+                      <span key={item} className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-300">{item}</span>
+                    ))}
+                  </div>
                 </div>
               </div>
             </div>

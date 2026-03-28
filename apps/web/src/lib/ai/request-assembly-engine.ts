@@ -22,6 +22,7 @@ export type RequestAssemblyStatus =
 
 export type RequestAssemblySubstatus =
   | "awaiting_vendor_targets"
+  | "awaiting_request_lines"
   | "awaiting_request_conditions"
   | "assembly_in_progress"
   | "assembly_blocked"
@@ -37,12 +38,16 @@ export interface RequestAssemblyState {
   requestAssemblyOpenedAt: string | null;
   requestAssemblyOpenedBy: "compare_handoff" | "manual" | null;
   compareDecisionSnapshotId: string | null;
+  aiActivationSnapshotId: string | null;
   requestCandidateIds: string[];
   targetVendors: VendorTarget[];
   requestLines: RequestDraftLine[];
   requestConditions: RequestConditionDraft;
   requestDraftSnapshotId: string | null;
   requestAssemblyDecisionSummary: string | null;
+  // ── Lineage / provenance ──
+  compareRationaleSummary: string;
+  unresolvedInfoItems: string[];
 }
 
 export function createInitialRequestAssemblyState(
@@ -58,13 +63,63 @@ export function createInitialRequestAssemblyState(
     requestAssemblyOpenedAt: new Date().toISOString(),
     requestAssemblyOpenedBy: "compare_handoff",
     compareDecisionSnapshotId: handoff.compareDecisionSnapshotId,
+    aiActivationSnapshotId: null,
     requestCandidateIds: handoff.requestCandidateIds,
     targetVendors: vendors,
     requestLines: lines,
     requestConditions: buildDefaultRequestConditions(),
     requestDraftSnapshotId: null,
     requestAssemblyDecisionSummary: null,
+    compareRationaleSummary: handoff.compareRationaleSummary,
+    unresolvedInfoItems: handoff.unresolvedInfoItems,
   };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Request Assembly Seed Resolver
+// ══════════════════════════════════════════════════════════════════════════════
+
+export interface RequestAssemblySeed {
+  shortlistedItemIds: string[];
+  requestCandidateIds: string[];
+  compareRationaleSummary: string;
+  aiProvenanceSummary: string | null;
+  vendorSuggestionIds: string[];
+  unresolvedInfoItems: string[];
+  defaultRequestConditions: RequestConditionDraft;
+}
+
+export function resolveRequestAssemblySeed(
+  handoff: RequestCandidateHandoff,
+  candidateInfos: RequestCandidateInfo[],
+): RequestAssemblySeed {
+  const vendorIds = [...new Set(candidateInfos.map((c) => c.vendorId).filter(Boolean))] as string[];
+  return {
+    shortlistedItemIds: handoff.shortlistedItemIds,
+    requestCandidateIds: handoff.requestCandidateIds,
+    compareRationaleSummary: handoff.compareRationaleSummary,
+    aiProvenanceSummary: null,
+    vendorSuggestionIds: vendorIds,
+    unresolvedInfoItems: handoff.unresolvedInfoItems,
+    defaultRequestConditions: buildDefaultRequestConditions(),
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Compare Lineage Integrity Check
+// ══════════════════════════════════════════════════════════════════════════════
+
+export function validateCompareLineageIntegrity(
+  compareDecisionSnapshotId: string | null,
+  requestCandidateIds: string[],
+): { valid: boolean; issue: string | null } {
+  if (!compareDecisionSnapshotId && requestCandidateIds.length > 0) {
+    return { valid: false, issue: "compare decision snapshot 없이 request candidate가 존재합니다" };
+  }
+  if (requestCandidateIds.length === 0) {
+    return { valid: false, issue: "request candidate가 없습니다" };
+  }
+  return { valid: true, issue: null };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -244,11 +299,14 @@ export function validateRequestAssemblyBeforeDraft(
 export interface RequestDraftSnapshot {
   id: string;
   compareDecisionSnapshotId: string | null;
+  aiActivationSnapshotId: string | null;
   requestCandidateIds: string[];
   targetVendorIds: string[];
   requestDraftLines: RequestDraftLine[];
   requestConditionSummary: RequestConditionDraft;
   missingInfoSummary: string[];
+  unresolvedInfoItems: string[];
+  compareRationaleSummary: string;
   operatorDecisionSummary: string;
   recordedAt: string;
   recordedBy: string;
@@ -260,11 +318,14 @@ export function buildRequestDraftSnapshot(
   return {
     id: `rdraft_${Date.now().toString(36)}`,
     compareDecisionSnapshotId: state.compareDecisionSnapshotId,
+    aiActivationSnapshotId: state.aiActivationSnapshotId,
     requestCandidateIds: state.requestCandidateIds,
     targetVendorIds: state.targetVendors.filter((v) => v.included).map((v) => v.vendorId),
     requestDraftLines: state.requestLines,
     requestConditionSummary: state.requestConditions,
     missingInfoSummary: state.requestLines.filter((l) => !l.isComplete).map((l) => `${l.itemName}: 불완전`),
+    unresolvedInfoItems: state.unresolvedInfoItems,
+    compareRationaleSummary: state.compareRationaleSummary,
     operatorDecisionSummary: state.requestAssemblyDecisionSummary || "",
     recordedAt: new Date().toISOString(),
     recordedBy: "operator",
