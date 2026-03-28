@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2 } from "lucide-react";
+import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2, Sparkles } from "lucide-react";
 import {
   type CompareReviewState,
   type CompareCandidateInfo,
@@ -21,6 +21,16 @@ import {
 // Props
 // ══════════════════════════════════════════════════════════════════════════════
 
+interface AiOptionPreview {
+  id: string;
+  frame: "conservative" | "balanced" | "alternative";
+  title: string;
+  rationale: string;
+  strengths: string[];
+  risks: Array<{ label: string; severity: string } | string>;
+  nextAction: string;
+}
+
 interface CompareReviewWorkWindowProps {
   open: boolean;
   onClose: () => void;
@@ -28,6 +38,8 @@ interface CompareReviewWorkWindowProps {
   products: any[];
   openedBy: "ai_apply" | "manual";
   aiOptionId?: string | null;
+  /** AI 3-option set for decision header */
+  aiOptions?: AiOptionPreview[];
   onShortlistApplied: (shortlistIds: string[], requestCandidateIds: string[]) => void;
   onRequestHandoff: (handoff: RequestCandidateHandoff) => void;
   onUndoDecision: () => void;
@@ -44,10 +56,17 @@ export function CompareReviewWorkWindow({
   products,
   openedBy,
   aiOptionId,
+  aiOptions = [],
   onShortlistApplied,
   onRequestHandoff,
   onUndoDecision,
 }: CompareReviewWorkWindowProps) {
+  // ── AI option state ──
+  const [activeAiFrame, setActiveAiFrame] = useState<"conservative" | "balanced" | "alternative">(
+    (aiOptionId as any) || "balanced",
+  );
+  const activeAiOption = aiOptions.find((o) => o.frame === activeAiFrame) ?? aiOptions.find((o) => o.frame === "balanced") ?? null;
+  const hasAiOptions = aiOptions.length === 3;
   // ── Candidate resolution ──
   const candidates = useMemo<CompareCandidateInfo[]>(() => {
     return compareIds.map((id) => {
@@ -127,7 +146,11 @@ export function CompareReviewWorkWindow({
       requestCandidateIds: sl,
       decisionReasonSummary: `${sl.length}개 shortlist, ${ex.length}개 제외`,
     };
-    const snapshot = buildCompareDecisionSnapshot(reviewState, differenceSummary, payload);
+    const snapshot = buildCompareDecisionSnapshot(reviewState, differenceSummary, payload, {
+      aiDefaultOptionId: aiOptionId ?? "balanced",
+      aiPreviewOptionIdAtDecision: activeAiFrame,
+      operatorOverrideFlag: hasAiOptions && activeAiFrame !== (aiOptionId ?? "balanced"),
+    });
     setDecisionSnapshot(snapshot);
     setShowUndoBanner(true);
     onShortlistApplied(sl, sl);
@@ -194,6 +217,67 @@ export function CompareReviewWorkWindow({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {/* ═══ AI Decision Header + Segmented Switch ═══ */}
+        {hasAiOptions && (
+          <div className="px-5 py-3 border-b border-bd/40 bg-blue-600/[0.02]">
+            {/* AI activation status */}
+            <div className="flex items-center justify-between mb-2.5">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+                <span className="text-[10px] font-semibold text-slate-200">AI 비교 판단 활성</span>
+                <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-300 font-medium">
+                  기본안: {activeAiFrame === "conservative" ? "비용 우선" : activeAiFrame === "balanced" ? "균형안" : "규격 신뢰"}
+                </span>
+              </div>
+              <span className="text-[9px] text-slate-500">다른 판단안으로 전환 가능</span>
+            </div>
+            {/* Segmented switch */}
+            <div className="flex gap-1.5 mb-3">
+              {(["conservative", "balanced", "alternative"] as const).map((frame) => {
+                const label = frame === "conservative" ? "비용 우선" : frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
+                const isActive = activeAiFrame === frame;
+                return (
+                  <button
+                    key={frame}
+                    type="button"
+                    onClick={() => setActiveAiFrame(frame)}
+                    className={`flex-1 text-center px-2 py-2 rounded-md text-[10px] font-medium transition-all ${isActive
+                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30 shadow-sm shadow-blue-500/10"
+                      : "text-slate-500 hover:text-slate-400 hover:bg-white/[0.03] border border-transparent"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+            {/* Active AI option preview */}
+            {activeAiOption && (
+              <div className="px-3 py-2.5 rounded-md bg-[#252729] border border-bd/30 space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-blue-400 shrink-0" />
+                  <span className="text-[10px] text-blue-200 leading-relaxed">{activeAiOption.rationale}</span>
+                </div>
+                {activeAiOption.strengths.length > 0 && (
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {activeAiOption.strengths.slice(0, 2).map((s, i) => (
+                      <span key={i} className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400">
+                        <Check className="h-2.5 w-2.5" />{s}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {activeAiOption.risks.length > 0 && (
+                  <div className="flex items-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                    <span className="text-[9px] text-amber-400">{typeof activeAiOption.risks[0] === "string" ? activeAiOption.risks[0] : (activeAiOption.risks[0] as any).label}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ═══ Scrollable body ═══ */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">

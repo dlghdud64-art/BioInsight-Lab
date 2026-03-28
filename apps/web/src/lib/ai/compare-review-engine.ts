@@ -259,13 +259,26 @@ export interface CompareDecisionSnapshot {
   decidedAt: string;
   decidedBy: string;
   aiCompositionProvenance: string | null;
+  // ── AI activation provenance (Batch 2) ──
+  aiActivationSnapshotId: string | null;
+  aiDefaultOptionId: string | null;
+  aiPreviewOptionIdAtDecision: string | null;
+  openedFromAiCompareState: boolean;
+  operatorOverrideFlag: boolean;
 }
 
 export function buildCompareDecisionSnapshot(
   state: CompareReviewState,
   differenceSummary: CompareDifferenceSummary,
   payload: CompareDecisionPayload,
+  aiProvenance?: {
+    aiDefaultOptionId?: string | null;
+    aiPreviewOptionIdAtDecision?: string | null;
+    operatorOverrideFlag?: boolean;
+  },
 ): CompareDecisionSnapshot {
+  const defaultAiId = aiProvenance?.aiDefaultOptionId ?? null;
+  const previewAiId = aiProvenance?.aiPreviewOptionIdAtDecision ?? null;
   return {
     id: `cdec_${Date.now().toString(36)}`,
     compareCandidateIds: state.compareCandidateIds,
@@ -279,6 +292,11 @@ export function buildCompareDecisionSnapshot(
     decidedAt: new Date().toISOString(),
     decidedBy: "operator",
     aiCompositionProvenance: state.aiCompositionSourceOptionId,
+    aiActivationSnapshotId: state.compareSelectionSnapshotId,
+    aiDefaultOptionId: defaultAiId,
+    aiPreviewOptionIdAtDecision: previewAiId,
+    openedFromAiCompareState: state.compareOpenedBy === "ai_apply",
+    operatorOverrideFlag: aiProvenance?.operatorOverrideFlag ?? false,
   };
 }
 

@@ -679,6 +679,15 @@ export default function SearchPage() {
         products={products}
         openedBy={workWindowMode === "compare-review" ? "ai_apply" : "manual"}
         aiOptionId={activeSourcingStrategy}
+        aiOptions={sourcingOptions.map((opt) => ({
+          id: opt.id,
+          frame: opt.frame as "conservative" | "balanced" | "alternative",
+          title: opt.title,
+          rationale: opt.rationale,
+          strengths: opt.strengths,
+          risks: opt.risks,
+          nextAction: opt.nextAction,
+        }))}
         onShortlistApplied={(shortlistIds, requestCandidateIds) => {
           // Sync: shortlist가 compare truth에 반영
         }}
