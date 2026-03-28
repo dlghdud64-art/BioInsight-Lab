@@ -10,10 +10,9 @@
  * 3. organization
  * 4. system default (가장 일반적)
  *
- * POLICY DOMAINS (Batch 1):
- * 1. budget_policy — 팀/조직별 예산 임계값
- * 2. vendor_policy — 공급사 allow/deny/preferred
- * 3. release_policy — site/location별 릴리스 제한
+ * POLICY DOMAINS:
+ * Batch 1: budget_policy, vendor_policy, release_policy
+ * Batch 2: restricted_item, reorder_policy, sod_exception_policy
  *
  * POLICY EVALUATION:
  * - 모든 scope에서 rule 수집
@@ -55,6 +54,69 @@ export function createScope(type: OrgPolicyScopeType, id: string, label: string)
 // ══════════════════════════════════════════════
 
 export type OrgPolicyDomain = "budget" | "vendor" | "release" | "restricted_item" | "reorder" | "sod_exception";
+
+// ══════════════════════════════════════════════
+// Policy Explanation (Batch 2 — explainability)
+// ══════════════════════════════════════════════
+
+export interface PolicyExplanation {
+  domain: OrgPolicyDomain;
+  effectiveEffect: OrgPolicyEffect;
+  /** 사람이 읽을 수 있는 한 줄 설명 */
+  summary: string;
+  /** 이긴 규칙의 scope source */
+  governingScopeSource: string;
+  /** 이긴 규칙의 ID */
+  governingRuleId: string | null;
+  /** 매칭된 규칙 수 */
+  matchedRuleCount: number;
+  /** 무시된(overridden) 규칙들 */
+  overriddenRules: Array<{ ruleId: string; scope: string; effect: OrgPolicyEffect; reason: string }>;
+  /** 왜 이 effect가 적용됐는지 */
+  whyThisEffect: string;
+}
+
+export function buildPolicyExplanation(decision: OrgPolicyDecision): PolicyExplanation {
+  const matched = decision.matchedRules.filter(m => m.matched);
+  const overridden = matched
+    .filter(m => m.rule.ruleId !== decision.governingRule?.ruleId)
+    .map(m => ({
+      ruleId: m.rule.ruleId,
+      scope: `${m.rule.scope.scopeType}:${m.rule.scope.scopeId}`,
+      effect: m.rule.effect,
+      reason: `더 넓은 scope (precedence ${m.rule.scope.precedence}) — 더 좁은 scope 정책이 우선`,
+    }));
+
+  const governingSource = decision.governingScope
+    ? `${decision.governingScope.scopeType}:${decision.governingScope.scopeId} (${decision.governingScope.scopeLabel})`
+    : "시스템 기본값";
+
+  let whyThisEffect: string;
+  if (!decision.governingRule) {
+    whyThisEffect = "해당 도메인에 적용되는 조직 정책이 없어 기본 허용";
+  } else if (decision.effectiveEffect === "block") {
+    whyThisEffect = `${governingSource} 정책이 이 작업을 차단: ${decision.effectiveDetail}`;
+  } else if (decision.effectiveEffect === "require_approval" || decision.effectiveEffect === "require_dual_approval") {
+    whyThisEffect = `${governingSource} 정책이 승인을 요구: ${decision.effectiveDetail}`;
+  } else if (decision.effectiveEffect === "warn") {
+    whyThisEffect = `${governingSource} 정책이 주의 표시: ${decision.effectiveDetail}`;
+  } else if (decision.effectiveEffect === "escalate") {
+    whyThisEffect = `${governingSource} 정책이 에스컬레이션 요구: ${decision.effectiveDetail}`;
+  } else {
+    whyThisEffect = `${governingSource} 정책이 허용`;
+  }
+
+  return {
+    domain: decision.domain,
+    effectiveEffect: decision.effectiveEffect,
+    summary: decision.effectiveDetail || "해당 정책 없음",
+    governingScopeSource: governingSource,
+    governingRuleId: decision.governingRule?.ruleId || null,
+    matchedRuleCount: matched.length,
+    overriddenRules: overridden,
+    whyThisEffect,
+  };
+}
 
 export type OrgPolicyEffect = "allow" | "warn" | "block" | "require_approval" | "require_dual_approval" | "escalate";
 
@@ -243,6 +305,117 @@ export function evaluateReleasePolicy(
 }
 
 // ══════════════════════════════════════════════
+// Restricted Item Policy (Batch 2)
+// ══════════════════════════════════════════════
+
+export function evaluateRestrictedItemPolicy(
+  rules: OrgPolicyRule[],
+  context: OrgPolicyEvaluationContext,
+): OrgPolicyDecision {
+  const itemRules = rules
+    .filter(r => r.domain === "restricted_item" && r.active)
+    .filter(r => isRuleInScope(r, context))
+    .sort((a, b) => b.scope.precedence - a.scope.precedence);
+
+  const matched: MatchedRule[] = [];
+  let governing: OrgPolicyRule | null = null;
+
+  for (const rule of itemRules) {
+    let isMatch = false;
+
+    switch (rule.conditionType) {
+      case "item_category":
+        isMatch = evaluateCondition(context.itemCategoryId, rule.conditionOperator, String(rule.conditionValue));
+        break;
+      case "item_classification":
+        isMatch = evaluateCondition(context.itemClassification, rule.conditionOperator, String(rule.conditionValue));
+        break;
+    }
+
+    matched.push({ rule, matched: isMatch, reason: isMatch ? `Item ${context.itemCategoryId}/${context.itemClassification}: ${rule.effectDetail}` : "" });
+    if (isMatch && !governing) governing = rule;
+  }
+
+  return buildDecision("restricted_item", matched, governing);
+}
+
+// ══════════════════════════════════════════════
+// Reorder Policy (Batch 2)
+// ══════════════════════════════════════════════
+
+export function evaluateReorderPolicy(
+  rules: OrgPolicyRule[],
+  context: OrgPolicyEvaluationContext,
+): OrgPolicyDecision {
+  const reorderRules = rules
+    .filter(r => r.domain === "reorder" && r.active)
+    .filter(r => isRuleInScope(r, context))
+    .sort((a, b) => b.scope.precedence - a.scope.precedence);
+
+  const matched: MatchedRule[] = [];
+  let governing: OrgPolicyRule | null = null;
+
+  for (const rule of reorderRules) {
+    let isMatch = false;
+
+    switch (rule.conditionType) {
+      case "reorder_qty":
+        isMatch = evaluateCondition(String(context.reorderQty), rule.conditionOperator, String(rule.conditionValue));
+        break;
+      case "reorder_amount":
+        isMatch = evaluateCondition(String(context.totalAmount), rule.conditionOperator, String(rule.conditionValue));
+        break;
+      case "reorder_vendor":
+        isMatch = evaluateCondition(context.vendorId, rule.conditionOperator, String(rule.conditionValue));
+        break;
+    }
+
+    matched.push({ rule, matched: isMatch, reason: isMatch ? `Reorder ${context.reorderQty}: ${rule.effectDetail}` : "" });
+    if (isMatch && !governing) governing = rule;
+  }
+
+  return buildDecision("reorder", matched, governing);
+}
+
+// ══════════════════════════════════════════════
+// SoD Exception Policy (Batch 2)
+// ══════════════════════════════════════════════
+
+export function evaluateSoDExceptionPolicy(
+  rules: OrgPolicyRule[],
+  context: OrgPolicyEvaluationContext,
+): OrgPolicyDecision {
+  const sodRules = rules
+    .filter(r => r.domain === "sod_exception" && r.active)
+    .filter(r => isRuleInScope(r, context))
+    .sort((a, b) => b.scope.precedence - a.scope.precedence);
+
+  const matched: MatchedRule[] = [];
+  let governing: OrgPolicyRule | null = null;
+
+  for (const rule of sodRules) {
+    let isMatch = false;
+
+    switch (rule.conditionType) {
+      case "risk_tier":
+        isMatch = evaluateCondition(context.riskTier, rule.conditionOperator, String(rule.conditionValue));
+        break;
+      case "action_key":
+        isMatch = evaluateCondition(context.actionKey, rule.conditionOperator, String(rule.conditionValue));
+        break;
+      case "amount_threshold":
+        isMatch = evaluateCondition(String(context.totalAmount), rule.conditionOperator, String(rule.conditionValue));
+        break;
+    }
+
+    matched.push({ rule, matched: isMatch, reason: isMatch ? `SoD exception for ${context.actionKey}: ${rule.effectDetail}` : "" });
+    if (isMatch && !governing) governing = rule;
+  }
+
+  return buildDecision("sod_exception", matched, governing);
+}
+
+// ══════════════════════════════════════════════
 // Unified Evaluation
 // ══════════════════════════════════════════════
 
@@ -254,7 +427,17 @@ export function evaluateAllOrgPolicies(
     evaluateBudgetPolicy(rules, context),
     evaluateVendorPolicy(rules, context),
     evaluateReleasePolicy(rules, context),
+    evaluateRestrictedItemPolicy(rules, context),
+    evaluateReorderPolicy(rules, context),
+    evaluateSoDExceptionPolicy(rules, context),
   ];
+}
+
+/**
+ * buildAllPolicyExplanations — 모든 decision에 대한 설명 생성
+ */
+export function buildAllPolicyExplanations(decisions: OrgPolicyDecision[]): PolicyExplanation[] {
+  return decisions.map(buildPolicyExplanation);
 }
 
 /**
