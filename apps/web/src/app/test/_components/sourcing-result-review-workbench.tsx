@@ -3,7 +3,7 @@
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Check, AlertTriangle, ArrowRight, ArrowLeft, Search, GitCompare, FileText, Eye, Minus } from "lucide-react";
-import { type SourcingResultReviewState, type SourcingResultReviewObject, type ResultCandidateDecision, type CandidateDecisionType, createInitialSourcingResultReviewState, buildSourcingResultTriage, buildSourcingCandidateAssemblyPlan, validateSourcingResultReviewBeforeRecord, buildSourcingResultReviewObject } from "@/lib/ai/sourcing-result-review-engine";
+import { type SourcingResultReviewState, type SourcingResultReviewObject, type ResultCandidateDecision, type CandidateDecisionType, createInitialSourcingResultReviewState, buildSourcingResultTriage, buildSourcingCandidateAssemblyPlan, validateSourcingResultReviewBeforeRecord, buildSourcingResultReviewObject, buildSourcingResultGroupPlan, buildSourcingCompareDeltaSummary } from "@/lib/ai/sourcing-result-review-engine";
 import type { SourcingSearchResultHandoff } from "@/lib/ai/sourcing-search-reopen-engine";
 
 const DECISION_CONFIG: Record<CandidateDecisionType, { label: string; color: string; bg: string }> = {
@@ -94,6 +94,39 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
               </div>
             </div>
           )}
+
+          {/* Candidate Group Summary (V2) */}
+          {reviewState.candidateDecisions.length > 0 && (() => {
+            const groupPlan = buildSourcingResultGroupPlan(reviewState.candidateDecisions, "");
+            return (
+              <div>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Candidate Group</span>
+                <div className="mt-2 grid grid-cols-4 gap-2">
+                  <div className="px-3 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Exact Match</span><span className="text-lg font-bold text-blue-400">{groupPlan.exactMatchCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-violet-500/20 bg-violet-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Equivalent</span><span className="text-lg font-bold text-violet-400">{groupPlan.equivalentCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Substitute</span><span className="text-lg font-bold text-emerald-400">{groupPlan.substituteCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">Blocked</span><span className="text-lg font-bold text-slate-500">{groupPlan.blockedCandidateIds.length}</span></div>
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Delta-First Compare Summary (V2) */}
+          {(() => {
+            const compareCandidates = reviewState.candidateDecisions.filter(d => d.decisionType === "compare_candidate");
+            if (compareCandidates.length < 2) return null;
+            const deltaSummary = buildSourcingCompareDeltaSummary(compareCandidates.length);
+            return (
+              <div>
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Delta-First Compare</span>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">가격</span><span className="text-[10px] text-slate-200">{deltaSummary.priceDeltaSummary}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">납기</span><span className="text-[10px] text-slate-200">{deltaSummary.leadTimeDeltaSummary}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">규격</span><span className="text-[10px] text-slate-200">{deltaSummary.specFitDeltaSummary}</span></div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Candidate list */}
           <div>
