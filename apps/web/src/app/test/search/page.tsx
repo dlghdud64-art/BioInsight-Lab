@@ -46,6 +46,7 @@ import { DispatchPreparationReentryWorkbench } from "../_components/dispatch-pre
 import { SendConfirmationReentryWorkbench } from "../_components/send-confirmation-reentry-workbench";
 import { PoSentReentryTrackingWorkbench } from "../_components/po-sent-reentry-tracking-workbench";
 import { SupplierConfirmationReentryWorkbench } from "../_components/supplier-confirmation-reentry-workbench";
+import { ReceivingPreparationReentryWorkbench } from "../_components/receiving-preparation-reentry-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -106,7 +107,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -1226,16 +1227,30 @@ export default function SearchPage() {
         handoff={null}
         onConfirmationRecorded={(_obj) => {}}
         onReceivingPrepReentryHandoff={() => {
-          // Receiving Preparation Re-entry → Receiving Preparation (14단계)로 순환
-          // 이후 Execution → Intake → Stock → Reorder 전체 cycle 자동 순환
-          setWorkWindowMode("receiving-prep");
+          setWorkWindowMode("rcv-prep-reentry");
         }}
         onReturnToSentTrackingReentry={() => {
           setWorkWindowMode("sent-tracking-reentry");
         }}
       />
 
-      {/* ═══ E-34. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-34. Center Work Window — Receiving Preparation Re-entry ═══ */}
+      <ReceivingPreparationReentryWorkbench
+        open={workWindowMode === "rcv-prep-reentry"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onPrepRecorded={(_obj) => {}}
+        onReceivingExecReentryHandoff={() => {
+          // Receiving Execution Re-entry → Receiving Execution (15단계)로 순환
+          // 이후 Inventory Intake → Stock Release → Reorder Decision 전체 cycle 자동 순환
+          setWorkWindowMode("receiving-exec");
+        }}
+        onReturnToSupplierConfirmReentry={() => {
+          setWorkWindowMode("supplier-confirm-reentry");
+        }}
+      />
+
+      {/* ═══ E-35. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
