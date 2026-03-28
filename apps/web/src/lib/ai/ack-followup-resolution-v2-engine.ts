@@ -4,14 +4,14 @@
  */
 
 import type { AckFollowupWorkspaceStateV2, FollowupWorkspaceStatus } from "./ack-followup-workspace-v2";
-import type { AckClassification } from "./supplier-acknowledgment-resolution-v2-engine";
+import type { AckClassification, ReceivingReadinessCheckV2 } from "./supplier-acknowledgment-resolution-v2-engine";
 
 export type FollowupSessionStatus = "followup_open" | "followup_draft_in_progress" | "followup_sent" | "followup_response_pending" | "followup_response_received" | "followup_classified" | "followup_resolved_confirmed_ready" | "followup_resolved_exception" | "followup_hold" | "followup_timeout";
 
-export interface AckFollowupSessionV2 { followupSessionId: string; caseId: string; sentStateRecordId: string; ackResolutionSessionId: string; sessionStatus: FollowupSessionStatus; followupContent: string; followupSentAt: string | null; responseContent: string; responseReceivedAt: string | null; responseClassification: AckClassification | null; receivingReadyAfterFollowup: boolean; nextTarget: "receiving_preparation_handoff" | "exception_recovery" | "retry_followup" | "hold"; retryCount: number; openedAt: string; lastUpdatedAt: string; openedBy: string; auditEventRefs: string[]; }
+export interface AckFollowupSessionV2 { followupSessionId: string; caseId: string; sentStateRecordId: string; ackResolutionSessionId: string; sessionStatus: FollowupSessionStatus; followupContent: string; followupSentAt: string | null; responseContent: string; responseReceivedAt: string | null; responseClassification: AckClassification | null; receivingReadyAfterFollowup: boolean; receivingReadinessCheck: ReceivingReadinessCheckV2 | null; nextTarget: "receiving_preparation_handoff" | "exception_recovery" | "retry_followup" | "hold"; retryCount: number; openedAt: string; lastUpdatedAt: string; openedBy: string; auditEventRefs: string[]; }
 
-export type FollowupAction = "open_followup_session" | "draft_followup" | "send_followup" | "record_response" | "classify_response" | "resolve_as_confirmed_ready" | "resolve_as_exception" | "retry_followup" | "hold_followup" | "mark_timeout";
-export interface FollowupActionPayload { action: FollowupAction; content?: string; responseClassification?: AckClassification; reason?: string; actor: string; timestamp: string; }
+export type FollowupAction = "open_followup_session" | "draft_followup" | "send_followup" | "record_response" | "classify_response" | "submit_receiving_readiness_check" | "resolve_as_confirmed_ready" | "resolve_as_exception" | "retry_followup" | "hold_followup" | "mark_timeout";
+export interface FollowupActionPayload { action: FollowupAction; content?: string; responseClassification?: AckClassification; receivingReadinessCheck?: ReceivingReadinessCheckV2; reason?: string; actor: string; timestamp: string; }
 export interface AckFollowupMutationResultV2 { applied: boolean; rejectedReasonIfAny: string | null; updatedSession: AckFollowupSessionV2; emittedEvents: FollowupEvent[]; }
 
 export type FollowupEventType = "followup_session_opened" | "followup_drafted" | "followup_sent" | "followup_response_recorded" | "followup_response_classified" | "followup_resolved_confirmed_ready" | "followup_resolved_exception" | "followup_retried" | "followup_held" | "followup_timeout" | "followup_mutation_rejected";
@@ -19,7 +19,7 @@ export interface FollowupEvent { type: FollowupEventType; caseId: string; follow
 
 export function createInitialFollowupSession(caseId: string, sentStateRecordId: string, ackResolutionSessionId: string, actor: string): AckFollowupSessionV2 {
   const now = new Date().toISOString();
-  return { followupSessionId: `fllwsn_${Date.now().toString(36)}`, caseId, sentStateRecordId, ackResolutionSessionId, sessionStatus: "followup_open", followupContent: "", followupSentAt: null, responseContent: "", responseReceivedAt: null, responseClassification: null, receivingReadyAfterFollowup: false, nextTarget: "hold", retryCount: 0, openedAt: now, lastUpdatedAt: now, openedBy: actor, auditEventRefs: [] };
+  return { followupSessionId: `fllwsn_${Date.now().toString(36)}`, caseId, sentStateRecordId, ackResolutionSessionId, sessionStatus: "followup_open", followupContent: "", followupSentAt: null, responseContent: "", responseReceivedAt: null, responseClassification: null, receivingReadyAfterFollowup: false, receivingReadinessCheck: null, nextTarget: "hold", retryCount: 0, openedAt: now, lastUpdatedAt: now, openedBy: actor, auditEventRefs: [] };
 }
 
 export function applyAckFollowupMutation(session: AckFollowupSessionV2, payload: FollowupActionPayload): AckFollowupMutationResultV2 {
@@ -34,10 +34,43 @@ export function applyAckFollowupMutation(session: AckFollowupSessionV2, payload:
     case "draft_followup": { if (!payload.content) return reject("Content 필수"); u.followupContent = payload.content; u.sessionStatus = "followup_draft_in_progress"; events.push(makeEvent("followup_drafted", "Draft created")); break; }
     case "send_followup": { if (!u.followupContent) return reject("Draft 없이 전송 불가"); u.followupSentAt = now; u.sessionStatus = "followup_sent"; events.push(makeEvent("followup_sent", "Followup sent")); break; }
     case "record_response": { if (!payload.content) return reject("Response content 필수"); u.responseContent = payload.content; u.responseReceivedAt = now; u.sessionStatus = "followup_response_received"; events.push(makeEvent("followup_response_recorded", "Response recorded")); break; }
-    case "classify_response": { if (!payload.responseClassification) return reject("Classification 필수"); u.responseClassification = payload.responseClassification; u.sessionStatus = "followup_classified"; u.receivingReadyAfterFollowup = payload.responseClassification === "ack_confirmed_ready"; u.nextTarget = u.receivingReadyAfterFollowup ? "receiving_preparation_handoff" : payload.responseClassification === "ack_declined" ? "exception_recovery" : "retry_followup"; events.push(makeEvent("followup_response_classified", `Classified: ${payload.responseClassification}`)); break; }
-    case "resolve_as_confirmed_ready": { if (!u.receivingReadyAfterFollowup) return reject("Receiving not ready after followup"); u.sessionStatus = "followup_resolved_confirmed_ready"; u.nextTarget = "receiving_preparation_handoff"; events.push(makeEvent("followup_resolved_confirmed_ready", "Resolved — receiving handoff ready")); break; }
+    case "classify_response": {
+      if (!payload.responseClassification) return reject("Classification 필수");
+      u.responseClassification = payload.responseClassification;
+      u.sessionStatus = "followup_classified";
+      // P0 FIX: classify_response는 receivingReadyAfterFollowup을 자동 true로 만들지 않음.
+      // confirmed_ready classification이어도 반드시 submit_receiving_readiness_check를 거쳐야 함.
+      u.receivingReadyAfterFollowup = false;
+      u.receivingReadinessCheck = null;
+      u.nextTarget = payload.responseClassification === "ack_declined" ? "exception_recovery" : "retry_followup";
+      events.push(makeEvent("followup_response_classified", `Classified: ${payload.responseClassification} — readiness check 필요`));
+      break;
+    }
+    case "submit_receiving_readiness_check": {
+      // P0 FIX: followup 경유여도 반드시 ReceivingReadinessCheckV2 7개 criteria를 재수행.
+      if (!payload.receivingReadinessCheck) return reject("ReceivingReadinessCheckV2 필수 — 7개 criteria 모두 제출해야 함");
+      if (u.responseClassification !== "ack_confirmed_ready") return reject("Response가 ack_confirmed_ready로 분류되지 않음 — readiness check 불가");
+      const rc = payload.receivingReadinessCheck;
+      u.receivingReadinessCheck = rc;
+      const allReady = rc.supplierAcceptedFull && rc.etaOrShipmentTimingAvailable && rc.lineItemScopeConfirmed && rc.deliveryReferenceAvailable && rc.noSubstitutionPending && rc.noSplitShipmentUnresolved && rc.quantityPackConfirmed;
+      u.receivingReadyAfterFollowup = allReady;
+      u.nextTarget = allReady ? "receiving_preparation_handoff" : "retry_followup";
+      events.push(makeEvent("followup_response_classified", `Readiness check: ${allReady ? "PASS — all 7 criteria satisfied" : "FAIL — not all criteria met"}`));
+      break;
+    }
+    case "resolve_as_confirmed_ready": {
+      // P0 FIX: receivingReadyAfterFollowup + receivingReadinessCheck가 모두 있어야만 resolve 가능.
+      if (!u.receivingReadyAfterFollowup) return reject("Receiving not ready — submit_receiving_readiness_check를 먼저 수행하세요");
+      if (!u.receivingReadinessCheck) return reject("ReceivingReadinessCheckV2가 제출되지 않음 — 7개 criteria 검증 필요");
+      const rc2 = u.receivingReadinessCheck;
+      const recheck = rc2.supplierAcceptedFull && rc2.etaOrShipmentTimingAvailable && rc2.lineItemScopeConfirmed && rc2.deliveryReferenceAvailable && rc2.noSubstitutionPending && rc2.noSplitShipmentUnresolved && rc2.quantityPackConfirmed;
+      if (!recheck) return reject("ReceivingReadinessCheckV2 재검증 실패 — 7개 criteria 미충족");
+      u.sessionStatus = "followup_resolved_confirmed_ready"; u.nextTarget = "receiving_preparation_handoff";
+      events.push(makeEvent("followup_resolved_confirmed_ready", "Resolved — readiness check 7/7 passed, receiving handoff ready"));
+      break;
+    }
     case "resolve_as_exception": { u.sessionStatus = "followup_resolved_exception"; u.nextTarget = "exception_recovery"; events.push(makeEvent("followup_resolved_exception", payload.reason || "Exception")); break; }
-    case "retry_followup": { u.sessionStatus = "followup_open"; u.followupContent = ""; u.followupSentAt = null; u.responseContent = ""; u.responseReceivedAt = null; u.responseClassification = null; u.receivingReadyAfterFollowup = false; u.retryCount += 1; u.nextTarget = "hold"; events.push(makeEvent("followup_retried", `Retry #${u.retryCount}`)); break; }
+    case "retry_followup": { u.sessionStatus = "followup_open"; u.followupContent = ""; u.followupSentAt = null; u.responseContent = ""; u.responseReceivedAt = null; u.responseClassification = null; u.receivingReadyAfterFollowup = false; u.receivingReadinessCheck = null; u.retryCount += 1; u.nextTarget = "hold"; events.push(makeEvent("followup_retried", `Retry #${u.retryCount}`)); break; }
     case "hold_followup": { u.sessionStatus = "followup_hold"; u.nextTarget = "hold"; events.push(makeEvent("followup_held", payload.reason || "Hold")); break; }
     case "mark_timeout": { u.sessionStatus = "followup_timeout"; u.nextTarget = "exception_recovery"; events.push(makeEvent("followup_timeout", "Timeout")); break; }
     default: return reject(`Unknown action: ${payload.action}`);

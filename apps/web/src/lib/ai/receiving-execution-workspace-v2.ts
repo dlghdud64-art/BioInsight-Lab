@@ -22,6 +22,8 @@ export interface ReceivingExecWorkspaceStateV2 {
 }
 
 export function buildReceivingExecWorkspaceStateV2(gate: ReceivingExecHandoffGateV2, prepSession: ReceivingPrepSessionV2): ReceivingExecWorkspaceStateV2 {
-  const lines: ReceivingLineRecordV2[] = prepSession.receivingExpectedLineSet.map((lineId, i) => ({ lineId, expectedQty: 0, actualReceivedQty: 0, unit: "", lotNumber: "", expiryDate: "", lineReceiptStatus: "pending", damageFlag: false, discrepancyFlag: false, substituteFlag: false, receivingNote: "" }));
-  return { workspaceId: `rcvexws_${Date.now().toString(36)}`, caseId: prepSession.caseId, sentStateRecordId: prepSession.sentStateRecordId, prepSessionId: prepSession.prepSessionId, workspaceStatus: "execution_not_started", lineRecords: lines, totalExpectedQty: 0, totalReceivedQty: 0, hasDiscrepancy: false, hasDamage: false, hasSubstitute: false, canCompleteExecution: false, canRouteDiscrepancy: false, operatorNote: "", generatedAt: new Date().toISOString() };
+  /** P1 FIX: typed CanonicalProcurementLineRef에서 expectedQty와 unit을 전파. */
+  const lines: ReceivingLineRecordV2[] = prepSession.receivingExpectedLineSet.map((lineRef) => ({ lineId: lineRef.lineRefId, expectedQty: lineRef.expectedQty, actualReceivedQty: 0, unit: lineRef.unit, lotNumber: "", expiryDate: "", lineReceiptStatus: "pending" as const, damageFlag: false, discrepancyFlag: false, substituteFlag: false, receivingNote: "" }));
+  const totalExpected = lines.reduce((s, l) => s + l.expectedQty, 0);
+  return { workspaceId: `rcvexws_${Date.now().toString(36)}`, caseId: prepSession.caseId, sentStateRecordId: prepSession.sentStateRecordId, prepSessionId: prepSession.prepSessionId, workspaceStatus: "execution_not_started", lineRecords: lines, totalExpectedQty: totalExpected, totalReceivedQty: 0, hasDiscrepancy: false, hasDamage: false, hasSubstitute: false, canCompleteExecution: false, canRouteDiscrepancy: false, operatorNote: "", generatedAt: new Date().toISOString() };
 }

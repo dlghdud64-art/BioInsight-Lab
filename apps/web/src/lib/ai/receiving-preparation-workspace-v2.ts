@@ -3,7 +3,7 @@
  * ack confirmed+ready 이후. 예정 수령 대상/inbound expectation 정리.
  */
 
-import type { SupplierAckResolutionSessionV2, ReceivingReadinessCheckV2 } from "./supplier-acknowledgment-resolution-v2-engine";
+import type { SupplierAckResolutionSessionV2, ReceivingReadinessCheckV2, CanonicalProcurementLineRef } from "./supplier-acknowledgment-resolution-v2-engine";
 import type { ReceivingPreparationHandoffGateV2 } from "./receiving-preparation-handoff-gate-v2-engine";
 
 export type ReceivingPrepWorkspaceStatus = "prep_not_started" | "prep_in_progress" | "prep_ready" | "prep_blocked" | "prep_hold";
@@ -11,7 +11,8 @@ export type ReceivingPrepWorkspaceStatus = "prep_not_started" | "prep_in_progres
 export interface ReceivingPrepWorkspaceStateV2 {
   workspaceId: string; caseId: string; sentStateRecordId: string; ackResolutionSessionId: string;
   workspaceStatus: ReceivingPrepWorkspaceStatus;
-  receivingExpectedLineSet: string[]; shipmentReferenceSet: string[]; etaWindow: string;
+  /** P1 FIX: typed line reference로 강화 — expectedQty 전파 포함. */
+  receivingExpectedLineSet: CanonicalProcurementLineRef[]; shipmentReferenceSet: string[]; etaWindow: string;
   receivingReadinessStatus: "ready" | "blocked" | "warning";
   missingReceivingInputs: string[]; warnings: string[];
   receivingExecutionAllowed: boolean;

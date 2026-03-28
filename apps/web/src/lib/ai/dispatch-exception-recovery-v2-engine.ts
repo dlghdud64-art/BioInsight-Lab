@@ -49,7 +49,38 @@ export function applyExceptionMutation(record: DispatchExceptionRecordV2, payloa
     case "resolve_exception": { u.status = "resolved"; u.resolvedAt = now; u.resolvedBy = payload.actor; addAudit("resolved", payload.reason || "", "resolution_in_progress", u.status); break; }
     case "escalate_exception": { u.status = "escalated"; addAudit("escalated", payload.reason || "", u.status, "escalated"); break; }
     case "cancel_exception": { u.status = "cancelled"; u.resolvedAt = now; u.resolvedBy = payload.actor; addAudit("cancelled", payload.reason || "", u.status, "cancelled"); break; }
-    case "return_to_stage": { if (!payload.returnToStage) return reject("Return stage 필수"); u.returnToStage = payload.returnToStage; u.status = "resolved"; u.resolvedAt = now; u.resolvedBy = payload.actor; addAudit("returned_to_stage", `Return to ${payload.returnToStage}`, "resolution_in_progress", "resolved"); break; }
+    case "return_to_stage": {
+      if (!payload.returnToStage) return reject("Return stage 필수");
+      // P1 FIX: mandatory gate bypass guard — recovery가 필수 gate를 건너뛰지 못하게 제한.
+      // 각 source stage에서 허용된 return target만 사용 가능.
+      const ALLOWED_RETURN_TARGETS: Partial<Record<ExceptionSourceStage, ExceptionSourceStage[]>> = {
+        stock_release: ["receiving_variance_disposition", "receiving_execution"],
+        receiving_variance_disposition: ["receiving_execution", "receiving_preparation"],
+        receiving_execution: ["receiving_preparation"],
+        receiving_preparation: ["supplier_acknowledgment"],
+        ack_followup: ["supplier_acknowledgment"],
+        supplier_acknowledgment: ["delivery_tracking", "sent_outcome"],
+        delivery_tracking: ["sent_outcome"],
+        sent_outcome: ["actual_send_fire"],
+        actual_send_fire: ["actual_send_execute"],
+        actual_send_execute: ["actual_send_run"],
+        actual_send_run: ["actual_send_execution"],
+        actual_send_execution: ["actual_send_commit"],
+        actual_send_commit: ["actual_send_transaction"],
+        actual_send_transaction: ["actual_send_action"],
+        actual_send_action: ["send_execution"],
+        send_execution: ["send_confirmation"],
+        send_confirmation: ["draft_assembly"],
+        draft_assembly: ["dispatch_preparation"],
+      };
+      const allowedTargets = ALLOWED_RETURN_TARGETS[u.sourceStage];
+      if (allowedTargets && !allowedTargets.includes(payload.returnToStage)) {
+        return reject(`Return to ${payload.returnToStage} 불가 — ${u.sourceStage}에서 허용된 return target: ${allowedTargets.join(", ")}. Mandatory gate bypass 금지.`);
+      }
+      u.returnToStage = payload.returnToStage; u.status = "resolved"; u.resolvedAt = now; u.resolvedBy = payload.actor;
+      addAudit("returned_to_stage", `Return to ${payload.returnToStage} (validated against allowed re-entry matrix)`, "resolution_in_progress", "resolved");
+      break;
+    }
     default: return reject(`Unknown action: ${payload.action}`);
   }
   return { applied: true, rejectedReasonIfAny: null, updatedRecord: u };

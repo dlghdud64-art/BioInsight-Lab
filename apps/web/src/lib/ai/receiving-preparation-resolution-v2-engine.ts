@@ -3,9 +3,10 @@
  */
 
 import type { ReceivingPrepWorkspaceStateV2, ReceivingPrepWorkspaceStatus } from "./receiving-preparation-workspace-v2";
+import type { CanonicalProcurementLineRef } from "./supplier-acknowledgment-resolution-v2-engine";
 
 export type ReceivingPrepSessionStatus = "prep_open" | "prep_in_progress" | "prep_hold" | "prep_ready_for_execution" | "prep_blocked";
-export interface ReceivingPrepSessionV2 { prepSessionId: string; caseId: string; sentStateRecordId: string; ackResolutionSessionId: string; sessionStatus: ReceivingPrepSessionStatus; receivingExpectedLineSet: string[]; shipmentReferenceSet: string[]; etaWindow: string; missingInputs: string[]; warnings: string[]; executionAllowed: boolean; openedAt: string; lastUpdatedAt: string; openedBy: string; auditEventRefs: string[]; }
+export interface ReceivingPrepSessionV2 { prepSessionId: string; caseId: string; sentStateRecordId: string; ackResolutionSessionId: string; sessionStatus: ReceivingPrepSessionStatus; /** P1 FIX: typed line reference — expectedQty 전파. */ receivingExpectedLineSet: CanonicalProcurementLineRef[]; shipmentReferenceSet: string[]; etaWindow: string; missingInputs: string[]; warnings: string[]; executionAllowed: boolean; openedAt: string; lastUpdatedAt: string; openedBy: string; auditEventRefs: string[]; }
 
 export type PrepAction = "open_prep_session" | "update_eta" | "update_shipment_reference" | "resolve_missing_input" | "acknowledge_warning" | "mark_prep_ready" | "hold_prep";
 export interface PrepActionPayload { action: PrepAction; value?: string; inputKey?: string; reason?: string; actor: string; timestamp: string; }
@@ -14,7 +15,7 @@ export interface ReceivingPrepMutationResultV2 { applied: boolean; rejectedReaso
 export type PrepEventType = "receiving_prep_session_opened" | "receiving_prep_eta_updated" | "receiving_prep_reference_updated" | "receiving_prep_input_resolved" | "receiving_prep_warning_acknowledged" | "receiving_prep_marked_ready" | "receiving_prep_held" | "receiving_prep_mutation_rejected";
 export interface PrepEvent { type: PrepEventType; caseId: string; prepSessionId: string; reason: string; actor: string; timestamp: string; }
 
-export function createInitialPrepSession(caseId: string, sentStateRecordId: string, ackResolutionSessionId: string, expectedLines: string[], actor: string): ReceivingPrepSessionV2 {
+export function createInitialPrepSession(caseId: string, sentStateRecordId: string, ackResolutionSessionId: string, expectedLines: CanonicalProcurementLineRef[], actor: string): ReceivingPrepSessionV2 {
   const now = new Date().toISOString();
   return { prepSessionId: `prepsn_${Date.now().toString(36)}`, caseId, sentStateRecordId, ackResolutionSessionId, sessionStatus: "prep_open", receivingExpectedLineSet: expectedLines, shipmentReferenceSet: [], etaWindow: "", missingInputs: ["ETA/출고 시점", "배송 참조번호"], warnings: [], executionAllowed: false, openedAt: now, lastUpdatedAt: now, openedBy: actor, auditEventRefs: [] };
 }

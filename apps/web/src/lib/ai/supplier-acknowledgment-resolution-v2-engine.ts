@@ -14,6 +14,18 @@
 import type { SupplierAcknowledgmentRecordV2, AckType, SupplierAckWorkspaceStatus } from "./supplier-acknowledgment-workspace-v2";
 
 // ── Ack Classification (refined) ──
+/**
+ * Canonical Procurement Line Reference — 전체 post-fire chain에서 line identity로 사용.
+ * bare string 대신 typed reference로 downstream 정합성 보장.
+ */
+export interface CanonicalProcurementLineRef {
+  lineRefId: string;
+  sourcePoLineId: string;
+  productIdentity: string;
+  expectedQty: number;
+  unit: string;
+}
+
 export type AckClassification = "ack_confirmed_ready" | "ack_confirmed_pending_detail" | "ack_partial" | "ack_conditional" | "ack_unclear" | "ack_declined" | "ack_no_response_timeout";
 
 // ── Receiving Readiness Check ──
@@ -38,7 +50,8 @@ export interface SupplierAckResolutionSessionV2 {
   receivingReady: boolean;
   followupRequired: boolean; followupReason: string;
   exceptionRequired: boolean; exceptionReason: string;
-  acceptedLineSet: string[]; changedLineSet: string[]; rejectedLineSet: string[];
+  /** P1 FIX: typed line reference로 강화. bare string[] 대신 CanonicalProcurementLineRef 사용. */
+  acceptedLineSet: CanonicalProcurementLineRef[]; changedLineSet: CanonicalProcurementLineRef[]; rejectedLineSet: CanonicalProcurementLineRef[];
   supplierResponseSnapshot: string;
   nextHandoffTarget: "receiving_preparation_handoff" | "ack_followup" | "exception_recovery" | "hold";
   operatorNote: string;
