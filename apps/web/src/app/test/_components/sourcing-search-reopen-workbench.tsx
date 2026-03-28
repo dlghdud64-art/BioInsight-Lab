@@ -4,8 +4,14 @@ import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, Check, AlertTriangle, ArrowRight, ArrowLeft, Search, RefreshCw, Filter, Zap } from "lucide-react";
-import { type SourcingSearchReopenState, type SourcingSearchReopenObject, createInitialSourcingSearchReopenState, buildSourcingSearchSeeds, buildSearchBaselineReuseDecision, validateSourcingSearchReopenBeforeRecord, buildSourcingSearchReopenObject, buildSourcingSearchResultHandoff } from "@/lib/ai/sourcing-search-reopen-engine";
+import { type SourcingSearchReopenState, type SourcingSearchReopenObject, createInitialSourcingSearchReopenState, buildSourcingSearchSeeds, buildSearchBaselineReuseDecision, validateSourcingSearchReopenBeforeRecord, buildSourcingSearchReopenObject, buildSourcingSearchResultHandoff, type SourcingStrategyOption, type SourcingStrategyType } from "@/lib/ai/sourcing-search-reopen-engine";
 import type { SourcingReopenHandoff } from "@/lib/ai/procurement-reentry-engine";
+
+const STRATEGY_CONFIG: Record<SourcingStrategyType, { label: string; color: string; bg: string }> = {
+  exact_match_first: { label: "Exact Match", color: "text-blue-400", bg: "bg-blue-600/10" },
+  cross_vendor_equivalent: { label: "Cross-Vendor", color: "text-violet-400", bg: "bg-violet-600/10" },
+  alternative_pack_substitute: { label: "Alt Pack/Sub", color: "text-emerald-400", bg: "bg-emerald-600/10" },
+};
 
 interface SourcingSearchReopenWorkbenchProps {
   open: boolean; onClose: () => void; handoff: SourcingReopenHandoff | null;
@@ -19,6 +25,12 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
   const [reopenObject, setReopenObject] = useState<SourcingSearchReopenObject | null>(null);
   const [keyword, setKeyword] = useState("");
   const [category, setCategory] = useState("");
+  const [selectedStrategy, setSelectedStrategy] = useState<string | null>(null);
+  const defaultStrategies: SourcingStrategyOption[] = [
+    { id: "strat_exact", strategyType: "exact_match_first", label: "Exact Match First", rationale: "동일 제품·동일 규격 우선 검색", risk: "대체 후보 부족 가능", recommendedScenario: "기존 제품 재구매", downstreamEffect: "비교 단계 최소화" },
+    { id: "strat_cross", strategyType: "cross_vendor_equivalent", label: "Cross-Vendor Equivalent", rationale: "다른 공급사의 동등 제품 탐색", risk: "규격 차이 검증 필요", recommendedScenario: "가격·납기 최적화", downstreamEffect: "비교 단계 확대" },
+    { id: "strat_alt", strategyType: "alternative_pack_substitute", label: "Alternative Pack / Substitute", rationale: "대체 용량·대체 제품 포함 검색", risk: "호환성 검증 필요", recommendedScenario: "긴급 재고 확보", downstreamEffect: "비교+규격 검증 필요" },
+  ];
 
   useMemo(() => { if (open && handoff && !reopenState) setReopenState(createInitialSourcingSearchReopenState(handoff)); }, [open, handoff]); // eslint-disable-line
 
@@ -96,6 +108,29 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
             <div className="mt-2 px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
               <div className="flex items-center gap-1.5 mb-0.5"><Zap className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">긴급도</span></div>
               <span className="text-[10px] text-slate-300 font-medium">{reopenState.prioritySignal.urgency} — {reopenState.prioritySignal.reorderQtyBasis}</span>
+            </div>
+          </div>
+
+          {/* AI Sourcing Strategy Options (tri-option decision strip) */}
+          <div>
+            <div className="flex items-center gap-1.5 mb-2"><Zap className="h-3 w-3 text-blue-400" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">AI Sourcing Strategy</span></div>
+            <div className="space-y-1.5">
+              {defaultStrategies.map(strat => {
+                const config = STRATEGY_CONFIG[strat.strategyType];
+                const isSelected = selectedStrategy === strat.id;
+                return (
+                  <button key={strat.id} type="button" onClick={() => !isRecorded && setSelectedStrategy(strat.id)} disabled={isRecorded}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border text-left transition-all ${isSelected ? "border-blue-500/30 bg-blue-600/[0.06]" : "border-bd/40 bg-[#252729] hover:bg-[#2a2c30]"}`}>
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-[11px] font-medium block ${isSelected ? "text-slate-100" : "text-slate-300"}`}>{strat.label}</span>
+                      <span className="text-[9px] text-slate-500">{strat.rationale}</span>
+                      <div className="flex items-center gap-2 mt-0.5"><span className="text-[8px] text-amber-400">Risk: {strat.risk}</span><span className="text-[8px] text-slate-600">·</span><span className="text-[8px] text-slate-500">{strat.downstreamEffect}</span></div>
+                    </div>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium shrink-0 ${isSelected ? config.color + " " + config.bg : "text-slate-500 bg-slate-700/30"}`}>{config.label}</span>
+                    {isSelected && <Check className="h-4 w-4 text-blue-400 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
 

@@ -109,3 +109,97 @@ export interface SourcingSearchResultHandoff { sourcingSearchReopenObjectId: str
 export function buildSourcingSearchResultHandoff(obj: SourcingSearchReopenObject): SourcingSearchResultHandoff {
   return { sourcingSearchReopenObjectId: obj.id, querySeedSummary: obj.querySeedSummary, filterSeedSummary: obj.filterSeedSummary, baselineReuseSummary: obj.baselineReuseSummary, sourcingPrioritySummary: obj.sourcingPrioritySummary, sourcingResultReadiness: obj.querySeedSummary !== "미지정" ? "ready" : "pending" };
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// V2 Extensions — Procurement Re-entry Reopen based sourcing search reopen
+// ══════════════════════════════════════════════════════════════════════════════
+
+import type { SourcingSearchReopenFromProcurementHandoff } from "./procurement-reentry-reopen-engine";
+
+// ── V2 State extension ──
+export interface SourcingSearchReopenStateV2 extends SourcingSearchReopenState {
+  procurementReentryReopenObjectId: string;
+  searchSeedPackageId: string | null;
+  seedTranslationSummary: string;
+  strategyOptions: SourcingStrategyOption[];
+  selectedStrategyOptionId: string | null;
+  duplicateSearchReopenRisk: boolean;
+}
+
+// ── Sourcing Strategy Option (tri-option) ──
+export type SourcingStrategyType = "exact_match_first" | "cross_vendor_equivalent" | "alternative_pack_substitute";
+export interface SourcingStrategyOption { id: string; strategyType: SourcingStrategyType; label: string; rationale: string; risk: string; recommendedScenario: string; downstreamEffect: string; }
+
+export function createInitialSourcingSearchReopenStateV2(handoff: SourcingSearchReopenFromProcurementHandoff): SourcingSearchReopenStateV2 {
+  const hasReorder = handoff.reorderCandidateQtySummary && handoff.reorderCandidateQtySummary !== "0개";
+  return {
+    sourcingSearchReopenStatus: "sourcing_search_reopen_open",
+    substatus: "awaiting_query_seed_review",
+    sourcingSearchReopenOpenedAt: new Date().toISOString(),
+    procurementReentryObjectId: handoff.procurementReentryReopenObjectId,
+    selectedReentryRoute: handoff.selectedReopenRoute,
+    querySeed: { keywordBasis: "", categorySeed: "", specPackSeed: "", manufacturerSeed: "", catalogReferenceSeed: "", excludedTerms: [] },
+    filterSeed: { preferredVendors: [], excludedVendors: [], inStockPreference: false, leadTimePreference: "normal", priceSensitivity: "medium", regionPreference: "" },
+    prioritySignal: { urgency: hasReorder ? "normal" : "watch", reorderQtyBasis: handoff.reorderCandidateQtySummary, coverageTarget: "", expiryHorizonNote: "" },
+    baselineReuseMode: handoff.baselineReuseSummary.includes("full_reuse") ? "full_reuse" : handoff.baselineReuseSummary.includes("partial") ? "partial_reuse" : "full_reset",
+    missingDecisionCount: 2,
+    sourcingSearchReopenBlockedFlag: handoff.sourcingSearchReopenReadiness === "blocked",
+    sourcingSearchReopenBlockedReason: handoff.sourcingSearchReopenReadiness === "blocked" ? "Search Reopen 조건 미충족" : null,
+    sourcingSearchReopenObjectId: null,
+    // V2 extensions
+    procurementReentryReopenObjectId: handoff.procurementReentryReopenObjectId,
+    searchSeedPackageId: null,
+    seedTranslationSummary: "",
+    strategyOptions: buildDefaultStrategyOptions(),
+    selectedStrategyOptionId: null,
+    duplicateSearchReopenRisk: false,
+  };
+}
+
+function buildDefaultStrategyOptions(): SourcingStrategyOption[] {
+  return [
+    { id: "strat_exact", strategyType: "exact_match_first", label: "Exact Match First", rationale: "동일 제품·동일 규격 우선 검색", risk: "대체 후보 부족 가능", recommendedScenario: "기존 제품 재구매", downstreamEffect: "비교 단계 최소화" },
+    { id: "strat_cross", strategyType: "cross_vendor_equivalent", label: "Cross-Vendor Equivalent", rationale: "다른 공급사의 동등 제품 탐색", risk: "규격 차이 검증 필요", recommendedScenario: "가격·납기 최적화", downstreamEffect: "비교 단계 확대" },
+    { id: "strat_alt", strategyType: "alternative_pack_substitute", label: "Alternative Pack / Substitute", rationale: "대체 용량·대체 제품 포함 검색", risk: "호환성 검증 필요", recommendedScenario: "긴급 재고 확보", downstreamEffect: "비교+규격 검증 필요" },
+  ];
+}
+
+// ── Search Seed Package Builder ──
+export interface SearchSeedPackage { id: string; keywordSeeds: string[]; categorySeeds: string[]; specSeeds: string[]; vendorHints: string[]; excludedHints: string[]; urgencySignals: string[]; quantityBand: string; commercialSignals: string[]; blockingIssues: string[]; warnings: string[]; }
+export function buildSourcingSearchSeedPackage(state: SourcingSearchReopenStateV2): SearchSeedPackage {
+  const blocking: string[] = [];
+  const warnings: string[] = [];
+  if (!state.querySeed.keywordBasis && !state.querySeed.categorySeed) blocking.push("검색 키워드 또는 카테고리 미지정");
+  return { id: `seedpkg_${Date.now().toString(36)}`, keywordSeeds: state.querySeed.keywordBasis ? [state.querySeed.keywordBasis] : [], categorySeeds: state.querySeed.categorySeed ? [state.querySeed.categorySeed] : [], specSeeds: state.querySeed.specPackSeed ? [state.querySeed.specPackSeed] : [], vendorHints: state.filterSeed.preferredVendors, excludedHints: [...state.querySeed.excludedTerms, ...state.filterSeed.excludedVendors], urgencySignals: [state.prioritySignal.urgency], quantityBand: state.prioritySignal.reorderQtyBasis, commercialSignals: [state.filterSeed.priceSensitivity], blockingIssues: blocking, warnings };
+}
+
+// ── V2 Validator ──
+export interface SourcingSearchReopenValidationV2 { canRecordSourcingSearchReopen: boolean; canOpenSourcingResult: boolean; blockingIssues: string[]; warnings: string[]; missingItems: string[]; recommendedNextAction: string; }
+export function validateSourcingSearchReopenV2BeforeRecord(state: SourcingSearchReopenStateV2): SourcingSearchReopenValidationV2 {
+  const blocking: string[] = [];
+  const warnings: string[] = [];
+  const missing: string[] = [];
+  if (state.sourcingSearchReopenBlockedFlag) blocking.push(state.sourcingSearchReopenBlockedReason || "차단됨");
+  const seedPkg = buildSourcingSearchSeedPackage(state);
+  seedPkg.blockingIssues.forEach(b => { blocking.push(b); missing.push(b); });
+  if (!state.selectedStrategyOptionId) { warnings.push("Strategy 미선택"); missing.push("Strategy 선택"); }
+  if (state.baselineReuseMode === "pending") { warnings.push("Baseline 미결정"); missing.push("Baseline 결정"); }
+  if (state.duplicateSearchReopenRisk) warnings.push("중복 search reopen 위험");
+  const canRecord = blocking.length === 0;
+  return { canRecordSourcingSearchReopen: canRecord, canOpenSourcingResult: canRecord && !!state.selectedStrategyOptionId, blockingIssues: blocking, warnings, missingItems: missing, recommendedNextAction: blocking.length > 0 ? "차단 사항 해결" : !state.selectedStrategyOptionId ? "Strategy 선택 후 진행" : "Sourcing Result로 보내기" };
+}
+
+// ── V2 Canonical Object ──
+export interface SourcingSearchReopenObjectV2 extends SourcingSearchReopenObject { procurementReentryReopenObjectId: string; searchSeedPackageSummary: string; selectedStrategyOptionId: string; selectedStrategyLabel: string; }
+export function buildSourcingSearchReopenObjectV2(state: SourcingSearchReopenStateV2): SourcingSearchReopenObjectV2 {
+  const base = buildSourcingSearchReopenObject(state);
+  const selectedStrategy = state.strategyOptions.find(o => o.id === state.selectedStrategyOptionId);
+  return { ...base, procurementReentryReopenObjectId: state.procurementReentryReopenObjectId, searchSeedPackageSummary: `${state.querySeed.keywordBasis || state.querySeed.categorySeed || "미지정"} | ${state.filterSeed.priceSensitivity} | ${state.prioritySignal.urgency}`, selectedStrategyOptionId: state.selectedStrategyOptionId || "", selectedStrategyLabel: selectedStrategy?.label || "미선택" };
+}
+
+// ── V2 Result Handoff ──
+export interface SourcingSearchResultHandoffV2 extends SourcingSearchResultHandoff { searchSeedPackageSummary: string; selectedStrategyOptionId: string; reopenScopeSummary: string; }
+export function buildSourcingSearchResultHandoffV2(obj: SourcingSearchReopenObjectV2): SourcingSearchResultHandoffV2 {
+  const base = buildSourcingSearchResultHandoff(obj);
+  return { ...base, searchSeedPackageSummary: obj.searchSeedPackageSummary, selectedStrategyOptionId: obj.selectedStrategyOptionId, reopenScopeSummary: obj.reentryScopeSummary };
+}
