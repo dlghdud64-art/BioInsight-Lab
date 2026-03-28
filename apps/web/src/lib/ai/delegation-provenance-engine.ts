@@ -212,8 +212,12 @@ function walkCascadeChain(
   const lineage: string[] = [];
 
   if (depth > 5) {
-    warnings.push({ warningType: "cascade_depth", detail: `Delegation cascade depth > 5 — 과도한 재위임` });
+    // Hard block for Tier 3 / dual approval contexts; warning for others
+    warnings.push({ warningType: "cascade_depth", detail: `Delegation cascade depth > 5 — 과도한 재위임. Tier 3 action에서는 hard block 권장` });
     return { conflicts, warnings, lineage };
+  }
+  if (depth > 3) {
+    warnings.push({ warningType: "cascade_depth", detail: `Delegation cascade depth ${depth + 1} — 깊은 재위임 체인 주의` });
   }
 
   if (!current.parentDelegationId) return { conflicts, warnings, lineage };
