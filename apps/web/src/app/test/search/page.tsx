@@ -39,6 +39,7 @@ import { RequestSubmissionReopenWorkbench } from "../_components/request-submiss
 import { QuoteManagementReentryWorkbench } from "../_components/quote-management-reentry-workbench";
 import { QuoteNormalizationReentryWorkbench } from "../_components/quote-normalization-reentry-workbench";
 import { QuoteCompareReentryWorkbench } from "../_components/quote-compare-reentry-workbench";
+import { ApprovalReentryWorkbench } from "../_components/approval-reentry-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -99,7 +100,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -1121,15 +1122,29 @@ export default function SearchPage() {
         handoff={null}
         onDecisionRecorded={(_snapshot) => {}}
         onApprovalReentryHandoff={() => {
-          // Approval Re-entry → PO Conversion (8단계)으로 순환
-          setWorkWindowMode("po-conversion");
+          setWorkWindowMode("approval-reentry");
         }}
         onReturnToNormReentry={() => {
           setWorkWindowMode("norm-reentry");
         }}
       />
 
-      {/* ═══ E-27. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-27. Center Work Window — Approval Re-entry ═══ */}
+      <ApprovalReentryWorkbench
+        open={workWindowMode === "approval-reentry"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onDecisionRecorded={(_obj) => {}}
+        onPoConversionReentryHandoff={() => {
+          // PO Conversion Re-entry → PO Conversion (8단계)으로 순환
+          setWorkWindowMode("po-conversion");
+        }}
+        onReturnToCompareReentry={() => {
+          setWorkWindowMode("compare-reentry");
+        }}
+      />
+
+      {/* ═══ E-28. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
