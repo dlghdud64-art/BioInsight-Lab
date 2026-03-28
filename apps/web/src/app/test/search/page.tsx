@@ -15,10 +15,12 @@ import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { RequestReviewWindow } from "../_components/request-review-window";
 import { CompareReviewWorkWindow } from "../_components/compare-review-work-window";
 import { RequestAssemblyWorkWindow } from "../_components/request-assembly-work-window";
+import { RequestSubmissionWorkWindow } from "../_components/request-submission-work-window";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
 import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
+import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -71,10 +73,11 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | null>(null);
-  // ── Compare Review + Request Assembly canonical state ──
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | null>(null);
+  // ── Compare Review + Request Assembly + Submission canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
+  const [submissionEvent, setSubmissionEvent] = useState<RequestSubmissionEvent | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -722,12 +725,28 @@ export default function SearchPage() {
           // Submission handoff 저장
         }}
         onGoToSubmission={() => {
-          router.push("/app/quote");
-          setWorkWindowMode(null);
+          setWorkWindowMode("request-submission");
         }}
       />
 
-      {/* ═══ E-3. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-3. Center Work Window — Request Submission (최종 검토 + 제출) ═══ */}
+      <RequestSubmissionWorkWindow
+        open={workWindowMode === "request-submission"}
+        onClose={() => setWorkWindowMode(null)}
+        draftSnapshot={requestDraftSnapshot}
+        onSubmissionExecuted={(event) => {
+          setSubmissionEvent(event);
+        }}
+        onQuoteWorkqueueOpen={(_handoff) => {
+          router.push("/app/quote");
+          setWorkWindowMode(null);
+        }}
+        onBackToAssembly={() => {
+          setWorkWindowMode("request-assembly");
+        }}
+      />
+
+      {/* ═══ E-4. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
