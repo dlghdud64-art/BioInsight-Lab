@@ -18,6 +18,7 @@ import { RequestAssemblyWorkWindow } from "../_components/request-assembly-work-
 import { RequestSubmissionWorkWindow } from "../_components/request-submission-work-window";
 import { QuoteManagementWorkqueue } from "../_components/quote-management-workqueue";
 import { QuoteNormalizationWorkbench } from "../_components/quote-normalization-workbench";
+import { QuoteCompareReviewWorkbench } from "../_components/quote-compare-review-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -78,7 +79,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -773,7 +774,7 @@ export default function SearchPage() {
           }
         }}
         onCompareReviewOpen={() => {
-          // Future: open quote compare review center work window
+          setWorkWindowMode("quote-compare");
         }}
         onFollowUpOpen={(_vendorId) => {
           // Future: open follow-up dialog
@@ -796,7 +797,26 @@ export default function SearchPage() {
         }}
       />
 
-      {/* ═══ E-6. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-6. Center Work Window — Quote Compare Review ═══ */}
+      <QuoteCompareReviewWorkbench
+        open={workWindowMode === "quote-compare"}
+        onClose={() => setWorkWindowMode(null)}
+        workqueueObjectId={quoteWorkqueueHandoff?.requestSubmissionEventId || ""}
+        requestSubmissionEventId={quoteWorkqueueHandoff?.requestSubmissionEventId || ""}
+        normalizedQuotes={[]}
+        onDecisionRecorded={(_snapshot) => {
+          // Store quote compare decision snapshot
+        }}
+        onApprovalHandoff={(_handoff) => {
+          // Future: open approval workbench
+          setWorkWindowMode(null);
+        }}
+        onBackToQueue={() => {
+          setWorkWindowMode("quote-queue");
+        }}
+      />
+
+      {/* ═══ E-7. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
