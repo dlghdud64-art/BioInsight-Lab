@@ -21,6 +21,9 @@ import { QuoteNormalizationWorkbench } from "../_components/quote-normalization-
 import { QuoteCompareReviewWorkbench } from "../_components/quote-compare-review-workbench";
 import { PoConversionEntryWorkbench } from "../_components/po-conversion-entry-workbench";
 import { PoCreatedDetailWorkbench } from "../_components/po-created-detail-workbench";
+import { DispatchPreparationWorkbench } from "../_components/dispatch-preparation-workbench";
+import { SendConfirmationWorkbench } from "../_components/send-confirmation-workbench";
+import { PoSentTrackingWorkbench } from "../_components/po-sent-tracking-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -81,7 +84,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -843,15 +846,57 @@ export default function SearchPage() {
           // Store PO created object
         }}
         onDispatchPrepHandoff={(_handoff) => {
-          // Future: open dispatch preparation workbench
-          setWorkWindowMode(null);
+          setWorkWindowMode("dispatch-prep");
         }}
         onReturnToConversion={() => {
           setWorkWindowMode("po-conversion");
         }}
       />
 
-      {/* ═══ E-9. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-9. Center Work Window — Dispatch Preparation ═══ */}
+      <DispatchPreparationWorkbench
+        open={workWindowMode === "dispatch-prep"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onPrepRecorded={(_obj) => {}}
+        onSendConfirmationHandoff={(_h) => {
+          setWorkWindowMode("send-confirm");
+        }}
+        onReturnToCreated={() => {
+          setWorkWindowMode("po-created");
+        }}
+      />
+
+      {/* ═══ E-10. Center Work Window — Send Confirmation ═══ */}
+      <SendConfirmationWorkbench
+        open={workWindowMode === "send-confirm"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onExecutionRecorded={(_event) => {}}
+        onPoSentDetailHandoff={(_h) => {
+          setWorkWindowMode("po-sent-tracking");
+        }}
+        onReturnToPreparation={() => {
+          setWorkWindowMode("dispatch-prep");
+        }}
+      />
+
+      {/* ═══ E-11. Center Work Window — PO Sent Tracking ═══ */}
+      <PoSentTrackingWorkbench
+        open={workWindowMode === "po-sent-tracking"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onAcknowledgmentRecorded={(_obj) => {}}
+        onSupplierConfirmation={() => {
+          // Full procurement chain complete — next: Supplier Confirmation / Receiving Prep
+          setWorkWindowMode(null);
+        }}
+        onReturnToSendConfirmation={() => {
+          setWorkWindowMode("send-confirm");
+        }}
+      />
+
+      {/* ═══ E-12. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
