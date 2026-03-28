@@ -43,6 +43,7 @@ import { ApprovalReentryWorkbench } from "../_components/approval-reentry-workbe
 import { PoConversionReentryWorkbench } from "../_components/po-conversion-reentry-workbench";
 import { PoCreatedReentryWorkbench } from "../_components/po-created-reentry-workbench";
 import { DispatchPreparationReentryWorkbench } from "../_components/dispatch-preparation-reentry-workbench";
+import { SendConfirmationReentryWorkbench } from "../_components/send-confirmation-reentry-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -103,7 +104,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -1181,15 +1182,29 @@ export default function SearchPage() {
         handoff={null}
         onPrepRecorded={(_obj) => {}}
         onSendConfirmationReentryHandoff={() => {
-          // Send Confirmation Re-entry → Send Confirmation (11단계)로 순환
-          setWorkWindowMode("send-confirm");
+          setWorkWindowMode("send-confirm-reentry");
         }}
         onReturnToCreatedReentry={() => {
           setWorkWindowMode("po-created-reentry");
         }}
       />
 
-      {/* ═══ E-31. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-31. Center Work Window — Send Confirmation Re-entry ═══ */}
+      <SendConfirmationReentryWorkbench
+        open={workWindowMode === "send-confirm-reentry"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onReexecutionRecorded={(_event) => {}}
+        onPoSentReentryTrackingHandoff={() => {
+          // PO Sent Re-entry Tracking → PO Sent Tracking (12단계)로 순환
+          setWorkWindowMode("po-sent-tracking");
+        }}
+        onReturnToDispatchPrepReentry={() => {
+          setWorkWindowMode("dispatch-prep-reentry");
+        }}
+      />
+
+      {/* ═══ E-32. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
