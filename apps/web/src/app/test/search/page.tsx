@@ -16,11 +16,13 @@ import { RequestReviewWindow } from "../_components/request-review-window";
 import { CompareReviewWorkWindow } from "../_components/compare-review-work-window";
 import { RequestAssemblyWorkWindow } from "../_components/request-assembly-work-window";
 import { RequestSubmissionWorkWindow } from "../_components/request-submission-work-window";
+import { QuoteManagementWorkqueue } from "../_components/quote-management-workqueue";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
 import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
 import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
+import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -73,11 +75,12 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | null>(null);
-  // ── Compare Review + Request Assembly + Submission canonical state ──
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | null>(null);
+  // ── Compare Review + Request Assembly + Submission + Quote Queue canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
   const [submissionEvent, setSubmissionEvent] = useState<RequestSubmissionEvent | null>(null);
+  const [quoteWorkqueueHandoff, setQuoteWorkqueueHandoff] = useState<QuoteWorkqueueHandoff | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -737,16 +740,32 @@ export default function SearchPage() {
         onSubmissionExecuted={(event) => {
           setSubmissionEvent(event);
         }}
-        onQuoteWorkqueueOpen={(_handoff) => {
-          router.push("/app/quote");
-          setWorkWindowMode(null);
+        onQuoteWorkqueueOpen={(handoff) => {
+          setQuoteWorkqueueHandoff(handoff);
+          setWorkWindowMode("quote-queue");
         }}
         onBackToAssembly={() => {
           setWorkWindowMode("request-assembly");
         }}
       />
 
-      {/* ═══ E-4. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-4. Center Work Window — Quote Management Workqueue ═══ */}
+      <QuoteManagementWorkqueue
+        open={workWindowMode === "quote-queue"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={quoteWorkqueueHandoff}
+        onNormalizationOpen={(_vendorId) => {
+          // Future: open normalization center work window
+        }}
+        onCompareReviewOpen={() => {
+          // Future: open quote compare review center work window
+        }}
+        onFollowUpOpen={(_vendorId) => {
+          // Future: open follow-up dialog
+        }}
+      />
+
+      {/* ═══ E-5. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
