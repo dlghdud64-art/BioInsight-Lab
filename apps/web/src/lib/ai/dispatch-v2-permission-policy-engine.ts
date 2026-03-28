@@ -50,6 +50,46 @@ export type StageActionKey =
 
 export type PermissionLevel = "allowed" | "requires_approval" | "denied";
 
+// ══════════════════════════════════════════════
+// Action Risk Tier — self-approval / dual approval 기준
+// ══════════════════════════════════════════════
+
+export type ActionRiskTier = "tier1_routine" | "tier2_org_impact" | "tier3_irreversible";
+
+const ACTION_RISK_TIERS: Partial<Record<StageActionKey, ActionRiskTier>> = {
+  // Tier 3: irreversible / inventory / override
+  actual_send_fire_execute: "tier3_irreversible",
+  stock_release_execute: "tier3_irreversible",
+  exception_resolve: "tier3_irreversible",
+  exception_return_to_stage: "tier3_irreversible",
+  approve_exception_override: "tier3_irreversible",
+  approve_fire_execution: "tier3_irreversible",
+  approve_recovery_return: "tier3_irreversible",
+  // Tier 2: org impact
+  variance_disposition_set: "tier2_org_impact",
+  approve_stock_release: "tier2_org_impact",
+  approve_reorder_trigger: "tier2_org_impact",
+  supplier_ack_classify: "tier2_org_impact",
+  // Tier 1: everything else defaults to tier1_routine
+};
+
+function getActionRiskTier(actionKey: StageActionKey): ActionRiskTier {
+  return ACTION_RISK_TIERS[actionKey] || "tier1_routine";
+}
+
+/**
+ * Self-approval rule:
+ * - Tier 1: self-approve allowed
+ * - Tier 2: self-approve allowed only if role >= admin
+ * - Tier 3: self-approve NEVER allowed — must be different approver
+ */
+function isSelfApprovalAllowed(actionKey: StageActionKey, actor: ActorContext): boolean {
+  const tier = getActionRiskTier(actionKey);
+  if (tier === "tier3_irreversible") return false;
+  if (tier === "tier2_org_impact") return actor.roles.some(r => ROLE_HIERARCHY[r] >= ROLE_HIERARCHY["admin"]);
+  return true; // tier1
+}
+
 export interface StageActionPermission {
   actionKey: StageActionKey;
   minimumRole: ProcurementRole;
@@ -181,6 +221,30 @@ export interface PermissionCheckResult {
   blockedByPolicy: boolean;
   escalationRequired: boolean;
   escalationRole: ProcurementRole | null;
+  /** Structured approval requirement — UI/engine/audit가 같은 output 사용 */
+  approvalRequirement: ApprovalRequirementV2;
+}
+
+// ══════════════════════════════════════════════
+// Approval Requirement Object (Batch 1 핵심)
+// ══════════════════════════════════════════════
+
+export interface ApprovalRequirementV2 {
+  actionKey: StageActionKey;
+  actionRiskTier: ActionRiskTier;
+  actorRole: ProcurementRole[];
+  allowed: boolean;
+  blockedReasonCodes: string[];
+  warningCodes: string[];
+  approvalRequired: boolean;
+  requiredApproverRole: ProcurementRole | null;
+  selfApprovalAllowed: boolean;
+  dualApprovalRequired: boolean;
+  escalationRequired: boolean;
+  overrideAllowed: boolean;
+  overrideRequiresReason: boolean;
+  auditRequired: boolean;
+  policySnapshot: PolicyEvaluationResult[];
 }
 
 const ROLE_HIERARCHY: Record<ProcurementRole, number> = { viewer: 0, requester: 1, operator: 2, approver: 3, admin: 4, owner: 5 };
@@ -192,35 +256,68 @@ function hasMinimumRole(actor: ActorContext, minimumRole: ProcurementRole): bool
 
 export function checkPermission(actionKey: StageActionKey, actor: ActorContext, policyContext: Partial<PolicyEvaluationContext> = {}): PermissionCheckResult {
   const permission = PERMISSION_MATRIX.find(p => p.actionKey === actionKey);
-  if (!permission) return { actionKey, permitted: false, permissionLevel: "denied", reason: `Unknown action: ${actionKey}`, requiresApproval: false, approvalRole: null, policyResults: [], blockedByPolicy: false, escalationRequired: false, escalationRole: null };
+  const riskTier = getActionRiskTier(actionKey);
+  const selfApproveAllowed = isSelfApprovalAllowed(actionKey, actor);
+  const dualApprovalRequired = riskTier === "tier3_irreversible";
+
+  const buildRequirement = (allowed: boolean, blockedReasons: string[], warnings: string[], approvalRequired: boolean, approverRole: ProcurementRole | null, escalation: boolean, policySnapshot: PolicyEvaluationResult[]): ApprovalRequirementV2 => ({
+    actionKey, actionRiskTier: riskTier, actorRole: actor.roles, allowed,
+    blockedReasonCodes: blockedReasons, warningCodes: warnings,
+    approvalRequired, requiredApproverRole: approverRole,
+    selfApprovalAllowed: selfApproveAllowed && !dualApprovalRequired,
+    dualApprovalRequired,
+    escalationRequired: escalation,
+    overrideAllowed: riskTier !== "tier3_irreversible",
+    overrideRequiresReason: riskTier !== "tier1_routine",
+    auditRequired: riskTier !== "tier1_routine",
+    policySnapshot,
+  });
+
+  if (!permission) {
+    const req = buildRequirement(false, [`Unknown action: ${actionKey}`], [], false, null, false, []);
+    return { actionKey, permitted: false, permissionLevel: "denied", reason: `Unknown action: ${actionKey}`, requiresApproval: false, approvalRole: null, policyResults: [], blockedByPolicy: false, escalationRequired: false, escalationRole: null, approvalRequirement: req };
+  }
 
   // Role check
   if (!hasMinimumRole(actor, permission.minimumRole)) {
-    return { actionKey, permitted: false, permissionLevel: "denied", reason: `최소 역할 ${permission.minimumRole} 필요 — 현재 역할: ${actor.roles.join(", ")}`, requiresApproval: false, approvalRole: null, policyResults: [], blockedByPolicy: false, escalationRequired: false, escalationRole: null };
+    const reason = `최소 역할 ${permission.minimumRole} 필요 — 현재 역할: ${actor.roles.join(", ")}`;
+    const req = buildRequirement(false, [reason], [], false, null, false, []);
+    return { actionKey, permitted: false, permissionLevel: "denied", reason, requiresApproval: false, approvalRole: null, policyResults: [], blockedByPolicy: false, escalationRequired: false, escalationRole: null, approvalRequirement: req };
   }
 
   // Policy evaluation
   const fullContext: PolicyEvaluationContext = { caseId: "", actionKey, actor, totalAmount: 0, lineCount: 0, variancePercentage: 0, isRestrictedItem: false, targetLocation: "", sourceStage: "", returnToStage: null, ...policyContext };
   const policyResults = permission.policyConstraints.map(key => POLICY_EVALUATORS[key](fullContext));
   const blockedByPolicy = policyResults.some(r => r.status === "block");
+  const policyWarnings = policyResults.filter(r => r.status === "warning").map(r => r.reason);
   const escalationRequired = policyResults.some(r => r.requiresEscalation);
   const escalationRole = policyResults.find(r => r.requiresEscalation)?.escalationRole || null;
 
   if (blockedByPolicy) {
     const blockReasons = policyResults.filter(r => r.status === "block").map(r => r.reason);
-    return { actionKey, permitted: false, permissionLevel: "denied", reason: blockReasons.join("; "), requiresApproval: true, approvalRole: escalationRole, policyResults, blockedByPolicy: true, escalationRequired: true, escalationRole };
+    const req = buildRequirement(false, blockReasons, policyWarnings, true, escalationRole, true, policyResults);
+    return { actionKey, permitted: false, permissionLevel: "denied", reason: blockReasons.join("; "), requiresApproval: true, approvalRole: escalationRole, policyResults, blockedByPolicy: true, escalationRequired: true, escalationRole, approvalRequirement: req };
   }
 
   if (permission.requiresApproval) {
-    // Check if actor can self-approve
-    const canSelfApprove = permission.approvalRole && hasMinimumRole(actor, permission.approvalRole);
+    // Tier-based self-approval check (replaces simple role check)
+    const hasApproverRole = permission.approvalRole && hasMinimumRole(actor, permission.approvalRole);
+    const canSelfApprove = hasApproverRole && selfApproveAllowed;
+
     if (canSelfApprove) {
-      return { actionKey, permitted: true, permissionLevel: "allowed", reason: "Role sufficient for self-approval", requiresApproval: false, approvalRole: null, policyResults, blockedByPolicy: false, escalationRequired: false, escalationRole: null };
+      const req = buildRequirement(true, [], policyWarnings, false, null, false, policyResults);
+      return { actionKey, permitted: true, permissionLevel: "allowed", reason: `Self-approval allowed (${riskTier})`, requiresApproval: false, approvalRole: null, policyResults, blockedByPolicy: false, escalationRequired: false, escalationRole: null, approvalRequirement: req };
     }
-    return { actionKey, permitted: false, permissionLevel: "requires_approval", reason: `${permission.approvalRole} 승인 필요`, requiresApproval: true, approvalRole: permission.approvalRole, policyResults, blockedByPolicy: false, escalationRequired, escalationRole };
+
+    const reason = dualApprovalRequired
+      ? `${permission.approvalRole} 승인 필요 (Tier 3 — self-approve 금지, 별도 승인자 필수)`
+      : `${permission.approvalRole} 승인 필요`;
+    const req = buildRequirement(false, [], policyWarnings, true, permission.approvalRole, escalationRequired, policyResults);
+    return { actionKey, permitted: false, permissionLevel: "requires_approval", reason, requiresApproval: true, approvalRole: permission.approvalRole, policyResults, blockedByPolicy: false, escalationRequired, escalationRole, approvalRequirement: req };
   }
 
-  return { actionKey, permitted: true, permissionLevel: "allowed", reason: "Permitted", requiresApproval: false, approvalRole: null, policyResults, blockedByPolicy: false, escalationRequired, escalationRole };
+  const req = buildRequirement(true, [], policyWarnings, false, null, false, policyResults);
+  return { actionKey, permitted: true, permissionLevel: "allowed", reason: "Permitted", requiresApproval: false, approvalRole: null, policyResults, blockedByPolicy: false, escalationRequired, escalationRole, approvalRequirement: req };
 }
 
 // ══════════════════════════════════════════════
