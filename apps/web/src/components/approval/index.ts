@@ -31,3 +31,13 @@ export { ReorderTriggerWorkbench, type ReorderTriggerWorkbenchProps } from "./re
 
 // Governance Dashboard
 export { GovernanceDashboard, type GovernanceDashboardProps } from "./governance-dashboard";
+
+// Policy Explainability Primitives
+export {
+  PolicyExplanationCard, type PolicyExplanationCardProps,
+  WinningScopeBadge, type WinningScopeBadgeProps,
+  ApprovalSourceTrace, type ApprovalSourceTraceProps,
+  EscalationSourceTrace, type EscalationSourceTraceProps,
+  OverriddenRuleList, type OverriddenRuleListProps,
+  WhyThisEffectPanel, type WhyThisEffectPanelProps,
+} from "./policy-explainability-primitives";
