@@ -11,3 +11,23 @@ export { PolicyMessageStack, type PolicyMessageStackProps } from "./policy-messa
 export { ApproverRequirementCard, type ApproverRequirementCardProps } from "./approver-requirement-card";
 export { ReapprovalBanner, type ReapprovalBannerProps } from "./reapproval-banner";
 export { NextActionHint, type NextActionHintProps } from "./next-action-hint";
+
+// Line Delta Primitives
+export {
+  LineDeltaSummaryStrip, type LineDeltaSummaryStripProps,
+  BlockerRowAnnotation, type BlockerRowAnnotationProps,
+  SubsetChips, type SubsetChipData, type SubsetChipsProps,
+  ThresholdBreachMarker, type ThresholdBreachMarkerProps,
+  LineStatusIndicator, type LineStatusIndicatorProps,
+} from "./line-delta-primitives";
+
+// Workbenches
+export { FireApprovalWorkbench, type FireApprovalWorkbenchProps } from "./fire-approval-workbench";
+export { StockReleaseApprovalWorkbench, type StockReleaseApprovalWorkbenchProps } from "./stock-release-approval-workbench";
+export { ExceptionApprovalWorkbench, type ExceptionApprovalWorkbenchProps } from "./exception-approval-workbench";
+export { VarianceDispositionWorkbench, type VarianceDispositionWorkbenchProps } from "./variance-disposition-workbench";
+export { ReceivingWorkbench, type ReceivingWorkbenchProps } from "./receiving-workbench";
+export { ReorderTriggerWorkbench, type ReorderTriggerWorkbenchProps } from "./reorder-trigger-workbench";
+
+// Governance Dashboard
+export { GovernanceDashboard, type GovernanceDashboardProps } from "./governance-dashboard";
