@@ -17,12 +17,15 @@ import { CompareReviewWorkWindow } from "../_components/compare-review-work-wind
 import { RequestAssemblyWorkWindow } from "../_components/request-assembly-work-window";
 import { RequestSubmissionWorkWindow } from "../_components/request-submission-work-window";
 import { QuoteManagementWorkqueue } from "../_components/quote-management-workqueue";
+import { QuoteNormalizationWorkbench } from "../_components/quote-normalization-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
 import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
 import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
 import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
+import type { QuoteNormalizationHandoff } from "@/lib/ai/quote-workqueue-engine";
+import { buildQuoteNormalizationHandoff as buildNormHandoff } from "@/lib/ai/quote-workqueue-engine";
 import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -75,12 +78,13 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | null>(null);
-  // ── Compare Review + Request Assembly + Submission + Quote Queue canonical state ──
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | null>(null);
+  // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
   const [submissionEvent, setSubmissionEvent] = useState<RequestSubmissionEvent | null>(null);
   const [quoteWorkqueueHandoff, setQuoteWorkqueueHandoff] = useState<QuoteWorkqueueHandoff | null>(null);
+  const [normalizationHandoff, setNormalizationHandoff] = useState<QuoteNormalizationHandoff | null>(null);
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -754,8 +758,19 @@ export default function SearchPage() {
         open={workWindowMode === "quote-queue"}
         onClose={() => setWorkWindowMode(null)}
         handoff={quoteWorkqueueHandoff}
-        onNormalizationOpen={(_vendorId) => {
-          // Future: open normalization center work window
+        onNormalizationOpen={(vendorId) => {
+          // Build normalization handoff from queue handoff
+          if (quoteWorkqueueHandoff) {
+            setNormalizationHandoff({
+              quoteWorkqueueRowId: `qrow_${vendorId}`,
+              requestSubmissionEventId: quoteWorkqueueHandoff.requestSubmissionEventId,
+              vendorTargetId: vendorId,
+              rawQuoteReference: null,
+              expectedRequestLineCount: quoteWorkqueueHandoff.submittedLineIds.length,
+              receivedQuoteLineCount: 0,
+            });
+            setWorkWindowMode("quote-normalization");
+          }
         }}
         onCompareReviewOpen={() => {
           // Future: open quote compare review center work window
@@ -765,7 +780,23 @@ export default function SearchPage() {
         }}
       />
 
-      {/* ═══ E-5. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-5. Center Work Window — Quote Normalization ═══ */}
+      <QuoteNormalizationWorkbench
+        open={workWindowMode === "quote-normalization"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={normalizationHandoff}
+        onNormalizationRecorded={(_normalizedQuote) => {
+          // Update queue row state
+        }}
+        onCompareHandoffReady={() => {
+          setWorkWindowMode("quote-queue");
+        }}
+        onBackToQueue={() => {
+          setWorkWindowMode("quote-queue");
+        }}
+      />
+
+      {/* ═══ E-6. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
