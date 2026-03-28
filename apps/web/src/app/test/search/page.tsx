@@ -27,6 +27,7 @@ import { PoSentTrackingWorkbench } from "../_components/po-sent-tracking-workben
 import { SupplierConfirmationWorkbench } from "../_components/supplier-confirmation-workbench";
 import { ReceivingPreparationWorkbench } from "../_components/receiving-preparation-workbench";
 import { ReceivingExecutionWorkbench } from "../_components/receiving-execution-workbench";
+import { InventoryIntakeWorkbench } from "../_components/inventory-intake-workbench";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
@@ -87,7 +88,7 @@ export default function SearchPage() {
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
-  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | null>(null);
+  const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | null>(null);
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -933,15 +934,29 @@ export default function SearchPage() {
         handoff={null}
         onExecutionRecorded={(_obj) => {}}
         onInventoryIntakeHandoff={() => {
-          // Full Procurement OS chain 완성 — Inventory Intake는 다음 확장
-          setWorkWindowMode(null);
+          setWorkWindowMode("inventory-intake");
         }}
         onReturnToPreparation={() => {
           setWorkWindowMode("receiving-prep");
         }}
       />
 
-      {/* ═══ E-15. Center Work Window — Request Review (기존 6-area) ═══ */}
+      {/* ═══ E-15. Center Work Window — Inventory Intake ═══ */}
+      <InventoryIntakeWorkbench
+        open={workWindowMode === "inventory-intake"}
+        onClose={() => setWorkWindowMode(null)}
+        handoff={null}
+        onIntakeRecorded={(_obj) => {}}
+        onStockReleaseHandoff={() => {
+          // Full Procurement OS chain 완성 — Stock Release는 다음 확장
+          setWorkWindowMode(null);
+        }}
+        onReturnToExecution={() => {
+          setWorkWindowMode("receiving-exec");
+        }}
+      />
+
+      {/* ═══ E-16. Center Work Window — Request Review (기존 6-area) ═══ */}
       <RequestReviewWindow
         open={workWindowMode === "request"}
         onClose={() => setWorkWindowMode(null)}
