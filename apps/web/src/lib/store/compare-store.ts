@@ -50,6 +50,29 @@ export function isFlowPath(pathname: string): boolean {
   return /^\/test\/(search|compare|quote)(\/.*)?$/.test(pathname);
 }
 
+/**
+ * 전체 workbench 임시 상태 초기화 (logout 시 호출)
+ *
+ * clear 대상:
+ *  - compare store: productIds, productMeta, stash
+ *  - quote-draft store
+ *  - ai-suggestion store
+ *  - localStorage 키: compare-storage, quote-draft-storage
+ *
+ * 명시적으로 save된 데이터(DB 영속)는 건드리지 않음.
+ */
+export function clearAllWorkbenchState() {
+  // 1. compare store 초기화
+  useCompareStore.getState().clearProducts();
+  useCompareStore.getState().clearStash();
+
+  // 2. localStorage 직접 제거 (persist middleware가 hydrate로 복원하는 것 방지)
+  if (typeof window !== "undefined") {
+    window.localStorage.removeItem("compare-storage");
+    window.localStorage.removeItem("quote-draft-storage");
+  }
+}
+
 export const useCompareStore = create<CompareState>()(
   persist(
     (set, get) => ({

@@ -32,6 +32,14 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import type { CompareInsight } from "@/lib/compare-workspace/compare-insight-generator";
 import { getDecisionConfig, getDraftStatusConfig } from "@/lib/compare-workspace/decision-constants";
+import {
+  classifyCandidates,
+  computeDeltaSummary,
+  type CategorizedCandidate,
+  type CompareCategory,
+  type DeltaSummaryItem,
+} from "@/lib/compare-workspace/compare-engine";
+import { ChevronDown, ChevronUp, ListFilter, ArrowRightLeft, TrendingDown as TrendDown } from "lucide-react";
 
 // ── Types ──
 
@@ -185,6 +193,155 @@ function relativeTime(dateStr: string | null): string {
   return new Date(dateStr).toLocaleDateString("ko-KR");
 }
 
+// ── Category Badge ──
+
+const CATEGORY_CONFIG: Record<CompareCategory, { label: string; className: string }> = {
+  direct_comparable: { label: "직접 비교", className: "bg-green-600/20 text-green-300" },
+  substitute_reference: { label: "대체 참조", className: "bg-amber-600/20 text-amber-300" },
+  blocked_or_mismatch: { label: "비교 불가", className: "bg-red-600/20 text-red-300" },
+};
+
+function CategoryBadge({ category }: { category: CompareCategory }) {
+  const c = CATEGORY_CONFIG[category];
+  return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
+}
+
+// ── Decision Header ──
+
+function DecisionHeader({
+  diffResult,
+  candidateCount,
+  blockerSummary,
+}: {
+  diffResult: DiffResultDisplay;
+  candidateCount: number;
+  blockerSummary: string;
+}) {
+  return (
+    <div className="p-3 border rounded-lg bg-pn space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <VerdictBadge verdict={diffResult.summary.overallVerdict} />
+          <span className="text-sm text-slate-300">{candidateCount}건 비교 완료</span>
+        </div>
+      </div>
+      {blockerSummary && (
+        <p className="text-xs text-amber-300 flex items-center gap-1.5">
+          <AlertTriangle className="h-3 w-3 shrink-0" />
+          {blockerSummary}
+        </p>
+      )}
+      <p className="text-sm text-slate-300">{diffResult.summary.verdictReason}</p>
+    </div>
+  );
+}
+
+// ── Candidate Summary Card ──
+
+type CandidateAction = "shortlist" | "hold" | "exclude" | null;
+
+function CandidateSummaryCard({
+  candidate,
+  sourceProduct,
+  action,
+  onActionChange,
+}: {
+  candidate: CategorizedCandidate;
+  sourceProduct: ProductInfo;
+  action: CandidateAction;
+  onActionChange: (action: CandidateAction) => void;
+}) {
+  const diff = candidate.diff;
+  const criticalCount = diff?.summary.criticalCount ?? 0;
+  const highCount = diff?.summary.highCount ?? 0;
+  const totalDiffs = diff?.totalDifferences ?? 0;
+
+  return (
+    <div className="p-3 border rounded-lg bg-pn space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <CategoryBadge category={candidate.category} />
+          <span className="text-sm font-medium truncate">{candidate.product.name}</span>
+        </div>
+        {diff && <VerdictBadge verdict={diff.summary.overallVerdict} />}
+      </div>
+      <p className="text-xs text-slate-400">{candidate.categoryReason}</p>
+      {totalDiffs > 0 && (
+        <div className="flex gap-2 flex-wrap">
+          {criticalCount > 0 && <Badge variant="destructive" className="text-xs">치명적 {criticalCount}</Badge>}
+          {highCount > 0 && <Badge className="text-xs bg-orange-600/20 text-orange-300">높음 {highCount}</Badge>}
+          <Badge variant="outline" className="text-xs">차이 {totalDiffs}건</Badge>
+        </div>
+      )}
+      {/* Shortlist / Hold / Exclude 액션 */}
+      {candidate.category !== "blocked_or_mismatch" && (
+        <div className="flex gap-1.5 pt-1">
+          <Button
+            size="sm"
+            variant={action === "shortlist" ? "default" : "outline"}
+            className="text-xs h-7 flex-1"
+            onClick={() => onActionChange(action === "shortlist" ? null : "shortlist")}
+          >
+            후보 등록
+          </Button>
+          <Button
+            size="sm"
+            variant={action === "hold" ? "secondary" : "outline"}
+            className="text-xs h-7 flex-1"
+            onClick={() => onActionChange(action === "hold" ? null : "hold")}
+          >
+            보류
+          </Button>
+          <Button
+            size="sm"
+            variant={action === "exclude" ? "outline" : "outline"}
+            className={`text-xs h-7 flex-1 ${action === "exclude" ? "bg-red-600/10 text-red-400 border-red-700" : ""}`}
+            onClick={() => onActionChange(action === "exclude" ? null : "exclude")}
+          >
+            제외
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Delta Summary Section ──
+
+function DeltaSummarySection({ deltas }: { deltas: DeltaSummaryItem[] }) {
+  if (deltas.length === 0) return null;
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <TrendDown className="h-4 w-4" />
+          핵심 Delta 요약
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        {deltas.map((d) => (
+          <div key={d.field} className="flex items-center justify-between p-2 border rounded bg-pn/50">
+            <div>
+              <span className="text-xs font-medium">{d.label}</span>
+              <span className="text-xs text-slate-400 ml-2">기준: {formatDisplayValue(d.sourceValue)}</span>
+            </div>
+            <div className="text-right">
+              {d.deltaDirection === "better" ? (
+                <span className="text-xs font-medium text-green-400">{d.deltaDisplay}</span>
+              ) : (
+                <span className="text-xs text-slate-400">{d.deltaDisplay}</span>
+              )}
+              {d.deltaDirection === "better" && (
+                <p className="text-xs text-slate-400 truncate max-w-[120px]">{d.bestProductName}</p>
+              )}
+            </div>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Main Component ──
 
 export function CompareAnalysisDrawer({
@@ -207,6 +364,9 @@ export function CompareAnalysisDrawer({
   const [decisionForm, setDecisionForm] = useState<{ state: string; note: string } | null>(null);
   const [isDecisionSaving, setIsDecisionSaving] = useState(false);
   const [isLoadingExisting, setIsLoadingExisting] = useState(false);
+  // Decision surface state
+  const [candidateActions, setCandidateActions] = useState<Record<string, CandidateAction>>({});
+  const [showRawDiffTable, setShowRawDiffTable] = useState(false);
 
   // Fetch linked outcomes for a session
   const fetchLinkedOutcomes = useCallback(async (sessionId: string) => {
@@ -452,7 +612,7 @@ export function CompareAnalysisDrawer({
 
   return (
     <Sheet open={open} onOpenChange={handleOpen}>
-      <SheetContent side="right" className="w-full sm:max-w-xl overflow-y-auto">
+      <SheetContent side="right" className={`w-full overflow-y-auto ${productIds.length >= 3 ? "sm:max-w-2xl" : "sm:max-w-xl"}`}>
         <SheetHeader>
           <SheetTitle>구조적 비교 분석</SheetTitle>
           <SheetDescription>
@@ -477,107 +637,196 @@ export function CompareAnalysisDrawer({
 
         {sessionData && diffResult && (
           <div className="mt-4 space-y-4">
-            {/* 종합 판정 */}
-            <Card>
-              <CardContent className="pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">종합 판정</span>
-                  <VerdictBadge verdict={diffResult.summary.overallVerdict} />
-                </div>
-                <p className="text-sm text-muted-foreground">{diffResult.summary.verdictReason}</p>
-                <div className="flex gap-2 mt-2 flex-wrap">
-                  {diffResult.summary.criticalCount > 0 && (
-                    <Badge variant="destructive">치명적 {diffResult.summary.criticalCount}</Badge>
-                  )}
-                  {diffResult.summary.highCount > 0 && (
-                    <Badge className="bg-orange-600/20 text-orange-300">높음 {diffResult.summary.highCount}</Badge>
-                  )}
-                  {diffResult.summary.mediumCount > 0 && (
-                    <Badge className="bg-yellow-600/20 text-yellow-300">보통 {diffResult.summary.mediumCount}</Badge>
-                  )}
-                </div>
-                {/* 데이터 불완전성 경고 */}
-                {missingDataItems.length > 0 && (
-                  <div className="flex items-start gap-2 mt-3 p-2 bg-amber-600/10 rounded border border-amber-700">
-                    <HelpCircle className="h-4 w-4 text-amber-400 mt-0.5 shrink-0" />
-                    <p className="text-xs text-amber-300">
-                      {missingDataItems.length}건의 항목에 한쪽 데이터가 누락되어 있습니다.
-                      공급사에 추가 정보를 요청하면 비교 정확도가 높아집니다.
-                    </p>
-                  </div>
-                )}
+            {/* ━━━ 1. Decision Header ━━━ */}
+            <DecisionHeader
+              diffResult={diffResult}
+              candidateCount={products.length - 1}
+              blockerSummary={
+                (() => {
+                  const parts: string[] = [];
+                  if (diffResult.summary.criticalCount > 0) parts.push(`치명적 ${diffResult.summary.criticalCount}건`);
+                  if (missingDataItems.length > 0) parts.push(`데이터 누락 ${missingDataItems.length}건`);
+                  return parts.join(", ");
+                })()
+              }
+            />
 
-                {/* 판정 상태 */}
-                {linkedOutcomes && (
-                  <div className="flex items-center gap-2 mt-3 pt-3 border-t">
-                    <span className="text-xs text-slate-400">판정:</span>
-                    <DecisionStateBadge state={linkedOutcomes.decisionState} />
-                    {linkedOutcomes.decidedAt && (
-                      <span className="text-xs text-slate-400">
-                        ({new Date(linkedOutcomes.decidedAt).toLocaleDateString("ko-KR")})
-                      </span>
-                    )}
-                  </div>
+            {/* 판정 상태 */}
+            {linkedOutcomes && (
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-xs text-slate-400">판정:</span>
+                <DecisionStateBadge state={linkedOutcomes.decisionState} />
+                {linkedOutcomes.decidedAt && (
+                  <span className="text-xs text-slate-400">
+                    ({new Date(linkedOutcomes.decidedAt).toLocaleDateString("ko-KR")})
+                  </span>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            )}
 
-            <Tabs defaultValue="diff" className="w-full">
+            {/* ━━━ 2. Delta Summary (decision-first) ━━━ */}
+            {(() => {
+              // delta 계산을 위해 products를 ProductForCompare 형태로 매핑
+              const sourceP = products[0];
+              const candidatePs = products.slice(1);
+              if (!sourceP || candidatePs.length === 0) return null;
+              // CategorizedCandidate를 생성하려면 diff가 필요 — sessionData.diffResult 활용
+              const allDiffs = sessionData.diffResult;
+              const candidates: CategorizedCandidate[] = candidatePs.map((cp, idx) => {
+                const diff = allDiffs[idx] ?? null;
+                const verdict = diff?.summary.overallVerdict;
+                let category: CompareCategory = "direct_comparable";
+                let reason = "직접 비교 가능";
+                if (verdict === "INCOMPATIBLE") {
+                  category = "blocked_or_mismatch";
+                  reason = `치명적 차이 ${diff?.summary.criticalCount ?? 0}건`;
+                } else if (verdict === "SIGNIFICANT_DIFFERENCES" && (diff?.summary.highCount ?? 0) >= 2) {
+                  category = "substitute_reference";
+                  reason = `중요 차이 ${diff?.summary.highCount ?? 0}건 — 대체 참조용`;
+                }
+                return {
+                  product: { id: cp.id, name: cp.name, brand: cp.brand ?? undefined, vendors: [] },
+                  category,
+                  categoryReason: reason,
+                  diff: diff as any,
+                };
+              });
+
+              // Delta summary 계산
+              const deltas: DeltaSummaryItem[] = [];
+              // 가격/납기 delta를 diff에서 추출
+              for (const c of candidates) {
+                if (c.category !== "direct_comparable" || !c.diff) continue;
+                for (const item of (c.diff as any).items ?? []) {
+                  if (item.fieldKey === "quoteAmount" && item.diffType === "DIFFERENT") {
+                    const sv = Number(item.sourceValue);
+                    const tv = Number(item.targetValue);
+                    if (!isNaN(sv) && !isNaN(tv) && tv < sv) {
+                      deltas.push({
+                        field: "price",
+                        label: "최저가",
+                        sourceValue: sv,
+                        bestValue: tv,
+                        bestProductId: c.product.id,
+                        bestProductName: c.product.name,
+                        deltaDirection: "better",
+                        deltaDisplay: `₩${tv.toLocaleString()} (${Math.round(((sv - tv) / sv) * 100)}% 절감)`,
+                      });
+                    }
+                  }
+                  if (item.fieldKey === "leadTimeDays" && item.diffType === "DIFFERENT") {
+                    const sv = Number(item.sourceValue);
+                    const tv = Number(item.targetValue);
+                    if (!isNaN(sv) && !isNaN(tv) && tv < sv) {
+                      deltas.push({
+                        field: "leadTime",
+                        label: "최단 납기",
+                        sourceValue: sv,
+                        bestValue: tv,
+                        bestProductId: c.product.id,
+                        bestProductName: c.product.name,
+                        deltaDirection: "better",
+                        deltaDisplay: `${tv}일 (${sv - tv}일 단축)`,
+                      });
+                    }
+                  }
+                }
+              }
+
+              return (
+                <>
+                  {deltas.length > 0 && <DeltaSummarySection deltas={deltas} />}
+
+                  {/* ━━━ 3. Candidate Summary Cards ━━━ */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-1">
+                      <ListFilter className="h-3.5 w-3.5 text-slate-400" />
+                      <span className="text-xs font-medium text-slate-400">후보 제품</span>
+                    </div>
+                    {candidates.map((c) => (
+                      <CandidateSummaryCard
+                        key={c.product.id}
+                        candidate={c}
+                        sourceProduct={sourceP}
+                        action={candidateActions[c.product.id] ?? null}
+                        onActionChange={(action) =>
+                          setCandidateActions((prev) => ({ ...prev, [c.product.id]: action }))
+                        }
+                      />
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
+
+            <Tabs defaultValue="action" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="diff">차이 항목</TabsTrigger>
-                <TabsTrigger value="insight">AI 분석</TabsTrigger>
                 <TabsTrigger value="action">후속 조치</TabsTrigger>
+                <TabsTrigger value="insight">AI 분석</TabsTrigger>
+                <TabsTrigger value="diff">상세 비교</TabsTrigger>
               </TabsList>
 
-              {/* 차이 항목 탭 */}
+              {/* ━━━ 4. Raw Diff Table — collapsed by default ━━━ */}
               <TabsContent value="diff" className="space-y-2 mt-3">
-                {diffResult.items
-                  .filter((item) => item.diffType !== "IDENTICAL")
-                  .map((item, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-3 border rounded-lg ${
-                        item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY"
-                          ? "bg-amber-600/10 border-amber-700"
-                          : "bg-pn"
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-sm font-medium">{item.fieldLabel}</span>
-                        <SignificanceBadge significance={item.significance} />
-                        {(item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY") && (
-                          <Badge variant="outline" className="text-xs bg-amber-600/20 text-amber-400">
-                            불완전
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="text-xs text-muted-foreground space-y-0.5">
-                        <div>
-                          <span className="text-slate-400">A:</span>{" "}
-                          {item.sourceValue != null ? formatDisplayValue(item.sourceValue) : (
-                            <span className="text-amber-400 italic">(정보 없음)</span>
-                          )}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-xs flex items-center gap-1"
+                  onClick={() => setShowRawDiffTable(!showRawDiffTable)}
+                >
+                  {showRawDiffTable ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                  항목별 상세 비교 {showRawDiffTable ? "접기" : "펼치기"} ({diffResult.items.filter((i) => i.diffType !== "IDENTICAL").length}건)
+                </Button>
+                {showRawDiffTable && (
+                  <>
+                    {diffResult.items
+                      .filter((item) => item.diffType !== "IDENTICAL")
+                      .map((item, idx) => (
+                        <div
+                          key={idx}
+                          className={`p-3 border rounded-lg ${
+                            item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY"
+                              ? "bg-amber-600/10 border-amber-700"
+                              : "bg-pn"
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-sm font-medium">{item.fieldLabel}</span>
+                            <SignificanceBadge significance={item.significance} />
+                            {(item.diffType === "SOURCE_ONLY" || item.diffType === "TARGET_ONLY") && (
+                              <Badge variant="outline" className="text-xs bg-amber-600/20 text-amber-400">
+                                불완전
+                              </Badge>
+                            )}
+                          </div>
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            <div>
+                              <span className="text-slate-400">A:</span>{" "}
+                              {item.sourceValue != null ? formatDisplayValue(item.sourceValue) : (
+                                <span className="text-amber-400 italic">(정보 없음)</span>
+                              )}
+                            </div>
+                            <div>
+                              <span className="text-slate-400">B:</span>{" "}
+                              {item.targetValue != null ? formatDisplayValue(item.targetValue) : (
+                                <span className="text-amber-400 italic">(정보 없음)</span>
+                              )}
+                            </div>
+                          </div>
+                          <ActionabilityHint actionability={item.actionability} />
                         </div>
-                        <div>
-                          <span className="text-slate-400">B:</span>{" "}
-                          {item.targetValue != null ? formatDisplayValue(item.targetValue) : (
-                            <span className="text-amber-400 italic">(정보 없음)</span>
-                          )}
-                        </div>
-                      </div>
-                      <ActionabilityHint actionability={item.actionability} />
+                      ))}
+                    {diffResult.items.filter((i) => i.diffType !== "IDENTICAL").length === 0 && (
+                      <p className="text-sm text-center text-muted-foreground py-4">
+                        차이가 없습니다. 두 제품이 동일합니다.
+                      </p>
+                    )}
+                    <div className="text-xs text-slate-400 pt-2 border-t">
+                      비교 기준: 제품 DB 등록 정보 (카탈로그, 공급사 데이터).
+                      문서 파싱 기반 비교는 V2에서 지원됩니다.
                     </div>
-                  ))}
-                {diffResult.items.filter((i) => i.diffType !== "IDENTICAL").length === 0 && (
-                  <p className="text-sm text-center text-muted-foreground py-4">
-                    차이가 없습니다. 두 제품이 동일합니다.
-                  </p>
+                  </>
                 )}
-                {/* 출처 표시 */}
-                <div className="text-xs text-slate-400 pt-2 border-t">
-                  비교 기준: 제품 DB 등록 정보 (카탈로그, 공급사 데이터).
-                  문서 파싱 기반 비교는 V2에서 지원됩니다.
-                </div>
               </TabsContent>
 
               {/* AI 분석 탭 */}
