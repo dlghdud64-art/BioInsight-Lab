@@ -15,11 +15,13 @@ import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard, Clipbo
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { USER_ROLES } from "@/lib/constants";
-import { resetWorkbenchSessionOnLogout } from "@/lib/auth/workbench-session-reset";
+import { resetWorkbenchSessionOnLogout, invalidateWorkbenchQueryCache } from "@/lib/auth/workbench-session-reset";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // 로딩 상태는 최대 2초까지만 표시
   const [showLoading, setShowLoading] = useState(true);
@@ -116,6 +118,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => {
           resetWorkbenchSessionOnLogout();
+          invalidateWorkbenchQueryCache(queryClient);
           signOut({ callbackUrl: "/" });
         }}>
           <LogOut className="mr-2 h-4 w-4" />

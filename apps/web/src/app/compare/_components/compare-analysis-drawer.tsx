@@ -797,6 +797,81 @@ export function CompareAnalysisDrawer({
               </div>
             )}
 
+            {/* ━━━ Zone B: AI Judgment Surface — header 바로 아래 독립 block ━━━ */}
+            {(() => {
+              const allDiffs = sessionData.diffResult;
+              const candidatePs = products.slice(1);
+              const directItems = candidatePs.filter((_, idx) => {
+                const v = allDiffs[idx]?.summary.overallVerdict;
+                return v !== "INCOMPATIBLE" && !(v === "SIGNIFICANT_DIFFERENCES" && (allDiffs[idx]?.summary.highCount ?? 0) >= 2);
+              });
+              const refItems = candidatePs.filter((_, idx) => {
+                const v = allDiffs[idx]?.summary.overallVerdict;
+                return v === "SIGNIFICANT_DIFFERENCES" && (allDiffs[idx]?.summary.highCount ?? 0) >= 2;
+              });
+              const blockedItems = candidatePs.filter((_, idx) => allDiffs[idx]?.summary.overallVerdict === "INCOMPATIBLE");
+
+              // 구조화된 AI 판단 요약 — 산문이 아니라 structured bullets
+              const judgmentLines: Array<{ type: "priority" | "reference" | "excluded"; text: string }> = [];
+
+              if (directItems.length > 0) {
+                const names = directItems.map(p => p.name).join(", ");
+                judgmentLines.push({
+                  type: "priority",
+                  text: `우선 검토: ${directItems.length}건 (${names}) — 가격/납기 기준 shortlist 가능`,
+                });
+              }
+              if (refItems.length > 0) {
+                const names = refItems.map(p => p.name).join(", ");
+                judgmentLines.push({
+                  type: "reference",
+                  text: `참고 후보: ${refItems.length}건 (${names}) — 카테고리 유사, 직접 대체 제한`,
+                });
+              }
+              if (blockedItems.length > 0) {
+                const names = blockedItems.map(p => p.name).join(", ");
+                judgmentLines.push({
+                  type: "excluded",
+                  text: `제외/보류: ${blockedItems.length}건 (${names}) — 카테고리 불일치 또는 치명적 차이`,
+                });
+              }
+
+              if (judgmentLines.length === 0) return null;
+
+              return (
+                <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                    <h4 className="text-xs font-semibold text-blue-300">AI 판단 요약</h4>
+                  </div>
+                  <div className="space-y-1.5">
+                    {judgmentLines.map((line, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <span className={`mt-0.5 h-1.5 w-1.5 rounded-full shrink-0 ${
+                          line.type === "priority" ? "bg-emerald-400" :
+                          line.type === "reference" ? "bg-amber-400" : "bg-red-400/60"
+                        }`} />
+                        <p className={`text-xs leading-relaxed ${
+                          line.type === "priority" ? "text-slate-200" :
+                          line.type === "reference" ? "text-slate-300" : "text-slate-400"
+                        }`}>
+                          {line.text}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                  {diffResult.summary.criticalCount > 0 && (
+                    <div className="flex items-center gap-1.5 pt-1 border-t border-blue-500/10">
+                      <AlertTriangle className="h-3 w-3 text-amber-400" />
+                      <span className="text-[10px] text-amber-300">
+                        치명적 차이 {diffResult.summary.criticalCount}건 — 담당자 직접 확인 필요
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
+
             {/* ━━━ 2. Delta Summary (decision-first) ━━━ */}
             {(() => {
               // delta 계산을 위해 products를 ProductForCompare 형태로 매핑
