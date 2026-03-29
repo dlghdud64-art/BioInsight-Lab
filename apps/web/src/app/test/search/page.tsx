@@ -323,7 +323,7 @@ export default function SearchPage() {
   const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#363840' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} />
 
@@ -620,7 +620,7 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — logged-in only ═══ */}
       {hasSearched && !!session?.user && (
-        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#434548' }}>
+        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4a4d55' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">

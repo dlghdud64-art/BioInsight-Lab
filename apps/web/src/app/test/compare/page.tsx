@@ -400,7 +400,7 @@ export default function TestComparePage() {
   // ── Empty/Loading/Error states ─────────────────────────────────────────────
   if (compareIds.length === 0) {
     return (
-      <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-4" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[60] flex flex-col items-center justify-center px-4" style={{ backgroundColor: '#363840' }}>
         <div className="text-center mb-8">
           <div className="w-14 h-14 rounded-2xl border border-slate-700 bg-slate-800 flex items-center justify-center mx-auto mb-4">
             <Compare className="h-7 w-7 text-slate-500" strokeWidth={1.5} />
@@ -431,7 +431,7 @@ export default function TestComparePage() {
 
   if (isLoading) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#363840' }}>
         <div className="text-center">
           <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-slate-400" />
           <p className="text-sm text-slate-400">제품 정보를 불러오는 중...</p>
@@ -442,7 +442,7 @@ export default function TestComparePage() {
 
   if (error) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[60] flex items-center justify-center px-4" style={{ backgroundColor: '#363840' }}>
         <div className="text-center">
           <p className="text-sm text-red-400 mb-2">제품 정보를 불러오는 중 오류가 발생했습니다.</p>
           <p className="text-xs text-slate-500 mb-4">제품 ID: {compareIds.join(", ")}</p>
@@ -479,13 +479,14 @@ export default function TestComparePage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#363840' }}>
 
       {/* ═══ 1. Sticky Decision Header ═══ */}
       <div className="shrink-0">
         {/* Top bar */}
         <div
-          className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el"
+          className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-slate-600/40"
+          style={{ backgroundColor: '#464950' }}
         >
           <div className="flex items-center gap-1.5 md:gap-2">
             <Link href="/" className="flex items-center gap-1.5 shrink-0">
@@ -506,8 +507,8 @@ export default function TestComparePage() {
 
         {/* Decision summary strip */}
         <div
-          className="flex items-center gap-2 px-4 md:px-6 py-1.5 border-b border-slate-700 flex-wrap"
-          style={{ backgroundColor: '#393b3f' }}
+          className="flex items-center gap-2 px-4 md:px-6 py-1.5 border-b border-slate-600/30 flex-wrap"
+          style={{ backgroundColor: '#434650' }}
         >
           {/* Suitability badge */}
           <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded border font-medium ${
@@ -556,7 +557,7 @@ export default function TestComparePage() {
 
         {/* ═══ Zone B: AI 판단 요약 — header 직후, 스크롤 전 독립 block ═══ */}
         {shouldShowDecisionStrip && (
-          <div className="px-4 md:px-6 py-2.5 border-b border-slate-700/50" style={{ backgroundColor: '#343639' }}>
+          <div className="px-4 md:px-6 py-2.5 border-b border-slate-600/30" style={{ backgroundColor: '#3e4148' }}>
             <div className="max-w-[1240px] mx-auto">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-3.5 w-3.5 text-blue-400" />
@@ -873,7 +874,7 @@ export default function TestComparePage() {
             {/* ── c) Normalized Decision Matrix ────────────────────────────── */}
             {products.length >= 2 && (
               <div className="rounded-xl border border-slate-700 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-slate-700 flex items-center justify-between" style={{ backgroundColor: '#393b3f' }}>
+                <div className="px-4 py-2.5 border-b border-slate-700 flex items-center justify-between" style={{ backgroundColor: '#424550' }}>
                   <span className="text-xs font-semibold text-slate-300">판단 매트릭스</span>
                   <span className="text-[10px] text-slate-500">항목별 비교</span>
                 </div>
@@ -881,7 +882,7 @@ export default function TestComparePage() {
                   <Table>
                     <TableHeader>
                       <TableRow className="border-slate-700">
-                        <TableHead className="sticky left-0 z-10 w-28 text-[10px] text-slate-500 px-3 py-2" style={{ backgroundColor: '#303236' }}>항목</TableHead>
+                        <TableHead className="sticky left-0 z-10 w-28 text-[10px] text-slate-500 px-3 py-2" style={{ backgroundColor: '#363840' }}>항목</TableHead>
                         {products.map((product: any) => (
                           <TableHead key={product.id} className="min-w-[140px] text-[10px] text-slate-300 px-3 py-2">
                             <div className="leading-tight">
@@ -895,7 +896,7 @@ export default function TestComparePage() {
                     <TableBody>
                       {matrixFields.map((field) => (
                         <TableRow key={field.key} className="border-slate-800 hover:bg-slate-800/30">
-                          <TableCell className="sticky left-0 z-10 text-[10px] font-medium text-slate-400 px-3 py-2" style={{ backgroundColor: '#303236' }}>
+                          <TableCell className="sticky left-0 z-10 text-[10px] font-medium text-slate-400 px-3 py-2" style={{ backgroundColor: '#363840' }}>
                             {field.label}
                           </TableCell>
                           {products.map((product: any) => {
@@ -1013,7 +1014,7 @@ export default function TestComparePage() {
             {/* ═══ P2: 3-Option Decision Strip — 상단 Zone B로 이동됨 ═══ */}
             {/* (기존 위치 제거 — 상단 header 직후 Zone B로 이동 완료) */}
             {shouldShowDecisionStrip && activeDecisionOption && (
-              <div className="rounded-lg border border-slate-700/30 bg-[#2a2c30] p-3 space-y-2">
+              <div className="rounded-lg border border-slate-700/30 bg-[#353840] p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-slate-300">선택된 전략 상세</span>
                   <span className="text-[9px] text-slate-500">{activeDecisionOption.recommendedUseCase}</span>
@@ -1119,7 +1120,7 @@ export default function TestComparePage() {
         </div>
 
         {/* ── Evidence Rail (lg+, 400px) ────────────────────────────────────── */}
-        <div className="hidden lg:flex w-[380px] shrink-0 border-l border-slate-700 flex-col overflow-y-auto" style={{ backgroundColor: '#2c2e32' }}>
+        <div className="hidden lg:flex w-[380px] shrink-0 border-l border-slate-700 flex-col overflow-y-auto" style={{ backgroundColor: '#3a3d44' }}>
           {selectedProduct ? (
             <div className="p-4 space-y-4">
               <div className="flex items-start justify-between gap-2">
@@ -1263,7 +1264,7 @@ export default function TestComparePage() {
       {/* ═══ 3. Sticky Action Dock ═══ */}
       <div
         className="shrink-0 border-t border-slate-700 px-4 md:px-6 py-2.5"
-        style={{ backgroundColor: '#434548' }}
+        style={{ backgroundColor: '#4a4d55' }}
       >
         <div className="flex items-center justify-between max-w-[1240px] mx-auto flex-wrap gap-2">
           {/* Left: context info */}
@@ -1376,9 +1377,9 @@ export default function TestComparePage() {
         const allResolved = blockerItems.length === 0 || blockerItems.every((_, i) => resolvedBlockers.has(i));
 
         return (
-          <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+          <div className="fixed inset-0 z-[70] flex flex-col overflow-hidden" style={{ backgroundColor: '#363840' }}>
             {/* Review Header — sticky */}
-            <div className="shrink-0 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="shrink-0 border-b border-bd" style={{ backgroundColor: '#4a4d55' }}>
               <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
                 <div className="flex items-center gap-2">
                   <Link href="/" className="flex items-center gap-1.5 shrink-0">
@@ -1395,7 +1396,7 @@ export default function TestComparePage() {
                 </div>
               </div>
               {/* Final review summary strip */}
-              <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-t border-bd/50 flex-wrap" style={{ backgroundColor: '#393b3f' }}>
+              <div className="flex items-center gap-3 px-4 md:px-6 py-2 border-t border-bd/50 flex-wrap" style={{ backgroundColor: '#424550' }}>
                 <Badge variant="secondary" className="text-[10px] bg-emerald-600/10 text-emerald-400 border-emerald-600/20">추천안</Badge>
                 <span className="text-xs font-medium text-slate-200">{recommended?.name?.substring(0, 30)}</span>
                 {recPrice > 0 && <span className="text-xs tabular-nums text-slate-100 font-semibold">₩{recPrice.toLocaleString("ko-KR")}</span>}
@@ -1414,8 +1415,8 @@ export default function TestComparePage() {
               <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
 
                 {/* Block A: 선택안 요약 */}
-                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424550' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#4a4d55' }}>
                     <span className="text-xs font-medium text-slate-200">선택안 요약</span>
                   </div>
                   <div className="p-4 space-y-2">
@@ -1438,8 +1439,8 @@ export default function TestComparePage() {
                 </div>
 
                 {/* Block B: Blocker / Exception Checklist */}
-                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424550' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#4a4d55' }}>
                     <span className="text-xs font-medium text-slate-200">확인 항목 ({blockerItems.length}건)</span>
                   </div>
                   <div className="p-4">
@@ -1474,8 +1475,8 @@ export default function TestComparePage() {
                 </div>
 
                 {/* Block C: Handoff memo */}
-                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+                <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424550' }}>
+                  <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#4a4d55' }}>
                     <span className="text-xs font-medium text-slate-200">전달 메모</span>
                     <span className="text-[10px] text-slate-500 ml-2">견적관리 워크큐에 함께 전달됩니다</span>
                   </div>
@@ -1491,8 +1492,8 @@ export default function TestComparePage() {
 
                 {/* Rejected candidates — collapsed */}
                 {rejected.length > 0 && (
-                  <details className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-                    <summary className="px-4 py-2.5 cursor-pointer text-xs font-medium text-slate-400 hover:text-slate-200" style={{ backgroundColor: '#434548' }}>
+                  <details className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#424550' }}>
+                    <summary className="px-4 py-2.5 cursor-pointer text-xs font-medium text-slate-400 hover:text-slate-200" style={{ backgroundColor: '#4a4d55' }}>
                       대안 후보 ({rejected.length}건) — 펼치기
                     </summary>
                     <div className="p-4 space-y-1.5">
@@ -1515,7 +1516,7 @@ export default function TestComparePage() {
               </div>
 
               {/* Review Evidence Rail */}
-              <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#353739' }}>
+              <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col overflow-y-auto" style={{ backgroundColor: '#3e4148' }}>
                 <div className="px-5 py-4 border-b border-bd">
                   <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 근거 요약</div>
                   <div className="space-y-2 text-xs text-slate-300">
@@ -1540,7 +1541,7 @@ export default function TestComparePage() {
                   </div>
                 </div>
                 <div className="flex-1" />
-                <div className="px-5 py-4 border-t border-bd space-y-2" style={{ backgroundColor: '#434548' }}>
+                <div className="px-5 py-4 border-t border-bd space-y-2" style={{ backgroundColor: '#4a4d55' }}>
                   <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"
                     disabled={!allResolved || !decisionProduct}
                     onClick={() => {
@@ -1562,7 +1563,7 @@ export default function TestComparePage() {
             </div>
 
             {/* Mobile sticky dock for review */}
-            <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
+            <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#4a4d55' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {allResolved
