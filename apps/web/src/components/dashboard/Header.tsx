@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { resetWorkbenchSessionOnLogout, invalidateWorkbenchQueryCache } from "@/lib/auth/workbench-session-reset";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -71,6 +73,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([
@@ -440,7 +443,11 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </a>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-                onClick={() => signOut({ callbackUrl: "/" })}
+                onClick={() => {
+                  resetWorkbenchSessionOnLogout();
+                  invalidateWorkbenchQueryCache(queryClient);
+                  signOut({ callbackUrl: "/" });
+                }}
                 className="flex items-center gap-3 py-3 text-sm cursor-pointer text-red-400 focus:text-red-400"
               >
                 <LogOut className="h-4 w-4" />

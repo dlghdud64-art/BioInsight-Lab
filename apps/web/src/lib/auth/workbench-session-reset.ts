@@ -32,6 +32,11 @@ const EPHEMERAL_LOCALSTORAGE_KEYS = [
   "search-sort-state",
   "compare-candidate-actions",
   "compare-shortlist-draft",
+  // ── Batch 24 추가: 이전에 누락된 키 ──
+  "bioinsight-recent-searches",
+  "deliveryAddress",
+  "bioinsight_guest_key",
+  "quote-cart-storage",
 ];
 
 // ── sessionStorage ephemeral keys ──
@@ -42,6 +47,12 @@ const EPHEMERAL_SESSIONSTORAGE_KEYS = [
   "last-search-query",
   "compare-scroll-position",
   "workbench-view-mode",
+  // ── Batch 24 추가: 이전에 누락된 키 ──
+  "labaxis-pending-search",
+  "labaxis-workbench-activity",
+  "bioinsight_pendingAction",
+  "bioinsight_pendingQuery",
+  "bioinsight_pendingTarget",
 ];
 
 /**

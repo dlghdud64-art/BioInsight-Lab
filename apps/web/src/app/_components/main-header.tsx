@@ -5,6 +5,8 @@ import { UserMenu } from "@/components/auth/user-menu";
 import { Button } from "@/components/ui/button";
 import { Menu, Search, FileText, Phone, Info, Headset, LayoutDashboard, ClipboardList, ShoppingCart, Package } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { resetWorkbenchSessionOnLogout, invalidateWorkbenchQueryCache } from "@/lib/auth/workbench-session-reset";
 import {
   Sheet,
   SheetContent,
@@ -20,6 +22,7 @@ interface MainHeaderProps {
 
 export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: MainHeaderProps) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   return (
     <header className="fixed top-0 left-0 w-full z-40 bg-pg/80 backdrop-blur-md border-b border-bs h-14">
@@ -165,7 +168,11 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             <div className="mt-auto border-t border-bs px-4 py-4">
               {session?.user ? (
                 <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
+                  onClick={() => {
+                    resetWorkbenchSessionOnLogout();
+                    invalidateWorkbenchQueryCache(queryClient);
+                    signOut({ callbackUrl: "/" });
+                  }}
                   className="w-full text-left px-3 py-3 text-sm font-medium text-red-400 hover:bg-red-950/30 rounded-md transition-colors"
                 >
                   로그아웃
