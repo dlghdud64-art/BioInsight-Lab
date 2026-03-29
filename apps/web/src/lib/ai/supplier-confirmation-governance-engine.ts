@@ -16,6 +16,8 @@
  * 6. response snapshot과 sent payload snapshot 비교가 canonical delta source
  */
 
+import { getStatusLabel } from "./governance-grammar-registry";
+
 // ══════════════════════════════════════════════
 // Supplier Response Status (governance layer)
 // ══════════════════════════════════════════════
@@ -541,16 +543,10 @@ export interface ConfirmationGovernanceSurface {
   isOverdue: boolean;
 }
 
-const STATUS_LABELS: Record<SupplierResponseStatus, string> = {
-  awaiting_response: "응답 대기",
-  response_received: "응답 수신",
-  confirmed: "확인 완료",
-  partially_confirmed: "부분 확인",
-  change_requested: "변경 요청",
-  rejected: "거부됨",
-  expired: "기한 만료",
-  cancelled: "취소됨",
-};
+/** Status labels — grammar registry 직접 소비. 하드코딩 금지. */
+function getSupplierStatusLabel(status: SupplierResponseStatus): string {
+  return getStatusLabel("supplier_confirmation", status);
+}
 
 const STATUS_COLORS: Record<SupplierResponseStatus, ConfirmationGovernanceSurface["statusColor"]> = {
   awaiting_response: "blue",
@@ -611,7 +607,7 @@ export function buildConfirmationGovernanceSurface(state: SupplierConfirmationGo
 
   return {
     status: state.status,
-    statusLabel: STATUS_LABELS[state.status],
+    statusLabel: getSupplierStatusLabel(state.status),
     statusColor: STATUS_COLORS[state.status],
     isTerminal,
     primaryMessage,

@@ -24,6 +24,7 @@
  */
 
 import type { ExpectedReceiptLine, ReceivingExecutionHandoff } from "./receiving-preparation-governance-engine";
+import { getStatusLabel } from "./governance-grammar-registry";
 
 // ══════════════════════════════════════════════
 // Receiving Execution Status
@@ -535,15 +536,10 @@ export interface ReceivingExecutionGovSurface {
   }>;
 }
 
-const GOV_STATUS_LABELS: Record<ReceivingGovExecutionStatus, string> = {
-  awaiting_receipt: "입고 대기",
-  receiving_in_progress: "입고 진행 중",
-  partially_received: "부분 입고",
-  received: "입고 완료",
-  discrepancy: "불일치 발견",
-  quarantined: "격리 보관",
-  cancelled: "취소됨",
-};
+/** Status labels — grammar registry 직접 소비. 하드코딩 금지. */
+function getReceivingExecStatusLabel(status: ReceivingGovExecutionStatus): string {
+  return getStatusLabel("receiving_execution", status);
+}
 
 const GOV_STATUS_COLORS: Record<ReceivingGovExecutionStatus, ReceivingExecutionGovSurface["statusColor"]> = {
   awaiting_receipt: "blue",
@@ -608,7 +604,7 @@ export function buildReceivingExecutionGovSurface(state: ReceivingExecutionGover
 
   return {
     status: state.status,
-    statusLabel: GOV_STATUS_LABELS[state.status],
+    statusLabel: getReceivingExecStatusLabel(state.status),
     statusColor: GOV_STATUS_COLORS[state.status],
     isTerminal,
     primaryMessage,

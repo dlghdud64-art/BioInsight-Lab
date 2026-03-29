@@ -18,6 +18,8 @@
  * 5. cancelled는 terminal — reopen만으로 되돌릴 수 있음
  */
 
+import { getStatusLabel } from "./governance-grammar-registry";
+
 // ══════════════════════════════════════════════
 // Execution Status
 // ══════════════════════════════════════════════
@@ -359,15 +361,10 @@ export interface ExecutionSurface {
   timeline: Array<{ label: string; timestamp: string | null; status: "completed" | "current" | "pending" | "failed" }>;
 }
 
-const STATUS_LABELS: Record<OutboundExecutionStatus, string> = {
-  draft_dispatch: "발송 초안",
-  scheduled: "예약됨",
-  queued_to_send: "발송 대기",
-  sending: "발송 중",
-  sent: "발송 완료",
-  send_failed: "발송 실패",
-  cancelled: "취소됨",
-};
+/** Status labels — grammar registry 직접 소비. 하드코딩 금지. */
+function getExecutionStatusLabel(status: OutboundExecutionStatus): string {
+  return getStatusLabel("dispatch_execution", status);
+}
 
 const STATUS_COLORS: Record<OutboundExecutionStatus, ExecutionSurface["statusColor"]> = {
   draft_dispatch: "slate",
@@ -422,7 +419,7 @@ export function buildExecutionSurface(state: OutboundExecutionState): ExecutionS
 
   return {
     status: state.status,
-    statusLabel: STATUS_LABELS[state.status],
+    statusLabel: getExecutionStatusLabel(state.status),
     statusColor: STATUS_COLORS[state.status],
     isTerminal,
     primaryMessage,

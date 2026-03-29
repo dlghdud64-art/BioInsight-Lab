@@ -19,6 +19,7 @@
  */
 
 import type { ReorderDecisionGovHandoff } from "./stock-release-governance-engine";
+import { getStatusLabel } from "./governance-grammar-registry";
 
 // ══════════════════════════════════════════════
 // Reorder Decision Governance Status
@@ -604,17 +605,10 @@ export interface ReorderDecisionGovSurface {
   }>;
 }
 
-const REORDER_STATUS_LABELS: Record<ReorderDecisionGovStatus, string> = {
-  not_evaluated: "미평가",
-  evaluating: "평가 중",
-  watch_active: "모니터링",
-  reorder_recommended: "재주문 권고",
-  reorder_required: "재주문 필요",
-  expedite_required: "긴급 재주문",
-  no_action: "조치 불필요",
-  procurement_reentry_ready: "구매 재진입 준비",
-  cancelled: "취소됨",
-};
+/** Status labels — grammar registry 직접 소비. 하드코딩 금지. */
+function getReorderStatusLabel(status: ReorderDecisionGovStatus): string {
+  return getStatusLabel("reorder_decision", status);
+}
 
 const REORDER_STATUS_COLORS: Record<ReorderDecisionGovStatus, ReorderDecisionGovSurface["statusColor"]> = {
   not_evaluated: "slate",
@@ -672,7 +666,7 @@ export function buildReorderDecisionGovSurface(state: ReorderDecisionGovernanceS
 
   return {
     status: state.status,
-    statusLabel: REORDER_STATUS_LABELS[state.status],
+    statusLabel: getReorderStatusLabel(state.status),
     statusColor: REORDER_STATUS_COLORS[state.status],
     isTerminal,
     primaryMessage,

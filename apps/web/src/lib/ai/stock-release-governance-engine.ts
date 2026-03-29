@@ -18,6 +18,7 @@
  */
 
 import type { StockReleaseGateHandoff, GovReceivedLine, GovReceivingDiscrepancy } from "./receiving-execution-governance-engine";
+import { getStatusLabel } from "./governance-grammar-registry";
 
 // ══════════════════════════════════════════════
 // Stock Release Status
@@ -544,14 +545,10 @@ export interface StockReleaseGovSurface {
   }>;
 }
 
-const RELEASE_STATUS_LABELS: Record<StockReleaseGovStatus, string> = {
-  not_evaluated: "미평가",
-  evaluating: "평가 중",
-  hold_active: "보류 활성",
-  partially_released: "부분 릴리즈",
-  released: "릴리즈 완료",
-  cancelled: "취소됨",
-};
+/** Status labels — grammar registry 직접 소비. 하드코딩 금지. */
+function getReleaseStatusLabel(status: StockReleaseGovStatus): string {
+  return getStatusLabel("stock_release", status);
+}
 
 const RELEASE_STATUS_COLORS: Record<StockReleaseGovStatus, StockReleaseGovSurface["statusColor"]> = {
   not_evaluated: "slate",
@@ -593,7 +590,7 @@ export function buildStockReleaseGovSurface(state: StockReleaseGovernanceState):
 
   return {
     status: state.status,
-    statusLabel: RELEASE_STATUS_LABELS[state.status],
+    statusLabel: getReleaseStatusLabel(state.status),
     statusColor: RELEASE_STATUS_COLORS[state.status],
     isTerminal,
     primaryMessage,

@@ -13,6 +13,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PolicyStatusBadge, PolicyMessageStack, ApproverRequirementCard, NextActionHint } from "./index";
 import type { QuoteChainPolicySurface, QuoteChainFullSurface, QuoteChainStage } from "@/lib/ai/quote-approval-governance-engine";
+import { getStageLabel, getVisibleStages } from "@/lib/ai/governance-grammar-registry";
 
 // ══════════════════════════════════════════════
 // QuoteChainProgressStrip — 6단계 진행 공용 컴포넌트
@@ -21,25 +22,12 @@ import type { QuoteChainPolicySurface, QuoteChainFullSurface, QuoteChainStage } 
 export interface QuoteChainProgressStripProps {
   surface: QuoteChainFullSurface;
   onStageClick?: (stage: QuoteChainStage) => void;
+  /** Visibility mode — "ga" shows only GA stages, "pilot" includes pilot stages */
+  visibilityMode?: "ga" | "pilot";
   className?: string;
 }
 
-/** 활성 stage만 매핑 — 미래 슬롯(sent/supplier_confirmed/receiving_prep)은 config 추가 시 여기에 추가 */
-const STAGE_SHORT: Partial<Record<QuoteChainStage, string>> = {
-  quote_review: "검토",
-  quote_shortlist: "선정",
-  quote_approval: "견적승인",
-  po_conversion: "PO전환",
-  po_approval: "PO승인",
-  po_send_readiness: "발송준비",
-  po_created: "PO생성",
-  dispatch_prep: "발송검증",
-  sent: "발송완료",
-  supplier_confirmed: "공급사확인",
-  receiving_prep: "입고준비",
-  stock_release: "릴리즈",
-  reorder_decision: "재주문",
-};
+/** Stage short labels — grammar registry 직접 소비. 하드코딩 금지. */
 
 const BADGE_DOTS: Record<string, string> = {
   allowed: "bg-emerald-400",
@@ -47,13 +35,19 @@ const BADGE_DOTS: Record<string, string> = {
   blocked: "bg-red-400",
 };
 
-export function QuoteChainProgressStrip({ surface, onStageClick, className }: QuoteChainProgressStripProps) {
+export function QuoteChainProgressStrip({ surface, onStageClick, visibilityMode = "ga", className }: QuoteChainProgressStripProps) {
+  const visibleStageIds = React.useMemo(
+    () => new Set(getVisibleStages(visibilityMode).map(s => s.stage)),
+    [visibilityMode],
+  );
+  const filteredStages = surface.stages.filter(s => visibleStageIds.has(s.stage));
+
   return (
     <div className={cn("flex items-center gap-1 px-3 py-2 rounded bg-slate-900 border border-slate-800 overflow-x-auto", className)}>
       <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0 mr-2">
         <span className="tabular-nums font-medium text-slate-300">{surface.overallProgress}%</span>
       </div>
-      {surface.stages.filter(s => STAGE_SHORT[s.stage]).map((stage, idx) => {
+      {filteredStages.map((stage, idx) => {
         const isCompleted = surface.completedStages.includes(stage.stage);
         const isCurrent = stage.stage === surface.currentStage;
         return (
@@ -71,7 +65,7 @@ export function QuoteChainProgressStrip({ surface, onStageClick, className }: Qu
               <span className={cn("h-1.5 w-1.5 rounded-full shrink-0",
                 isCompleted ? "bg-emerald-400" : isCurrent ? BADGE_DOTS[stage.statusBadge] || "bg-blue-400" : "bg-slate-600"
               )} />
-              <span>{STAGE_SHORT[stage.stage]}</span>
+              <span>{getStageLabel(stage.stage, true)}</span>
             </button>
           </React.Fragment>
         );

@@ -41,27 +41,33 @@ export interface StageGrammar {
   phase: "sourcing" | "approval" | "dispatch" | "fulfillment" | "inventory";
   /** 0-based order in chain */
   order: number;
+  /**
+   * Visibility policy — label grammar와 분리.
+   * pilot: 파일럿에서만 노출, ga: 정식 노출, hidden: 숨김.
+   * UI strip은 이 필드로 display gating — label 존재와 노출 여부는 별개.
+   */
+  visibility: "ga" | "pilot" | "hidden";
 }
 
 export const CHAIN_STAGE_GRAMMAR: readonly StageGrammar[] = [
   // ── Phase: Sourcing ──
-  { stage: "quote_review",       shortLabel: "검토",    fullLabel: "견적 검토",       domain: "quote_chain",          phase: "sourcing",    order: 0 },
-  { stage: "quote_shortlist",    shortLabel: "선정",    fullLabel: "견적 후보 선정",   domain: "quote_chain",          phase: "sourcing",    order: 1 },
+  { stage: "quote_review",       shortLabel: "검토",    fullLabel: "견적 검토",       domain: "quote_chain",          phase: "sourcing",    order: 0,  visibility: "ga" },
+  { stage: "quote_shortlist",    shortLabel: "선정",    fullLabel: "견적 후보 선정",   domain: "quote_chain",          phase: "sourcing",    order: 1,  visibility: "ga" },
   // ── Phase: Approval ──
-  { stage: "quote_approval",     shortLabel: "견적승인", fullLabel: "견적 승인",       domain: "quote_chain",          phase: "approval",    order: 2 },
-  { stage: "po_conversion",      shortLabel: "PO전환",   fullLabel: "발주서 전환",     domain: "quote_chain",          phase: "approval",    order: 3 },
-  { stage: "po_approval",        shortLabel: "PO승인",   fullLabel: "발주서 승인",     domain: "quote_chain",          phase: "approval",    order: 4 },
+  { stage: "quote_approval",     shortLabel: "견적승인", fullLabel: "견적 승인",       domain: "quote_chain",          phase: "approval",    order: 2,  visibility: "ga" },
+  { stage: "po_conversion",      shortLabel: "PO전환",   fullLabel: "발주서 전환",     domain: "quote_chain",          phase: "approval",    order: 3,  visibility: "ga" },
+  { stage: "po_approval",        shortLabel: "PO승인",   fullLabel: "발주서 승인",     domain: "quote_chain",          phase: "approval",    order: 4,  visibility: "ga" },
   // ── Phase: Dispatch ──
-  { stage: "po_send_readiness",  shortLabel: "발송준비", fullLabel: "발송 준비 검증",   domain: "dispatch_prep",        phase: "dispatch",    order: 5 },
-  { stage: "po_created",         shortLabel: "PO생성",   fullLabel: "발주서 생성 완료", domain: "dispatch_prep",        phase: "dispatch",    order: 6 },
-  { stage: "dispatch_prep",      shortLabel: "발송검증", fullLabel: "발송 전 최종 검증", domain: "dispatch_prep",        phase: "dispatch",    order: 7 },
-  { stage: "sent",               shortLabel: "발송완료", fullLabel: "공급사 발송 완료",  domain: "dispatch_execution",   phase: "dispatch",    order: 8 },
+  { stage: "po_send_readiness",  shortLabel: "발송준비", fullLabel: "발송 준비 검증",   domain: "dispatch_prep",        phase: "dispatch",    order: 5,  visibility: "ga" },
+  { stage: "po_created",         shortLabel: "PO생성",   fullLabel: "발주서 생성 완료", domain: "dispatch_prep",        phase: "dispatch",    order: 6,  visibility: "ga" },
+  { stage: "dispatch_prep",      shortLabel: "발송검증", fullLabel: "발송 전 최종 검증", domain: "dispatch_prep",        phase: "dispatch",    order: 7,  visibility: "ga" },
+  { stage: "sent",               shortLabel: "발송완료", fullLabel: "공급사 발송 완료",  domain: "dispatch_execution",   phase: "dispatch",    order: 8,  visibility: "ga" },
   // ── Phase: Fulfillment ──
-  { stage: "supplier_confirmed", shortLabel: "공급확인", fullLabel: "공급사 확인",      domain: "supplier_confirmation", phase: "fulfillment", order: 9 },
-  { stage: "receiving_prep",     shortLabel: "입고준비", fullLabel: "입고 준비",         domain: "receiving_prep",       phase: "fulfillment", order: 10 },
+  { stage: "supplier_confirmed", shortLabel: "공급확인", fullLabel: "공급사 확인",      domain: "supplier_confirmation", phase: "fulfillment", order: 9,  visibility: "ga" },
+  { stage: "receiving_prep",     shortLabel: "입고준비", fullLabel: "입고 준비",         domain: "receiving_prep",       phase: "fulfillment", order: 10, visibility: "ga" },
   // ── Phase: Inventory ──
-  { stage: "stock_release",      shortLabel: "릴리즈",   fullLabel: "재고 릴리즈",      domain: "stock_release",        phase: "inventory",   order: 11 },
-  { stage: "reorder_decision",   shortLabel: "재주문",   fullLabel: "재주문 판단",      domain: "reorder_decision",     phase: "inventory",   order: 12 },
+  { stage: "stock_release",      shortLabel: "릴리즈",   fullLabel: "재고 릴리즈",      domain: "stock_release",        phase: "inventory",   order: 11, visibility: "ga" },
+  { stage: "reorder_decision",   shortLabel: "재주문",   fullLabel: "재주문 판단",      domain: "reorder_decision",     phase: "inventory",   order: 12, visibility: "ga" },
 ] as const;
 
 // ══════════════════════════════════════════════════════
@@ -404,6 +410,18 @@ export function getPanelLabel(panelId: string): string {
   return getPanelGrammar(panelId)?.label ?? panelId;
 }
 
+/**
+ * Visibility-filtered stage list.
+ * UI strip은 이 함수로 display gating — label 존재와 노출 여부 분리.
+ * "ga"면 항상 보이고, "pilot"이면 pilot 모드에서만, "hidden"이면 안 보임.
+ */
+export function getVisibleStages(mode: "ga" | "pilot"): readonly StageGrammar[] {
+  if (mode === "pilot") {
+    return CHAIN_STAGE_GRAMMAR.filter(s => s.visibility !== "hidden");
+  }
+  return CHAIN_STAGE_GRAMMAR.filter(s => s.visibility === "ga");
+}
+
 // ══════════════════════════════════════════════════════
 // 8. Validation — grammar 무결성 검증
 // ══════════════════════════════════════════════════════
@@ -503,4 +521,99 @@ export function validateGrammarRegistry(): GrammarValidationResult {
       irreversibleActionCount: DOCK_ACTION_GRAMMAR.filter(a => a.risk === "irreversible").length,
     },
   };
+}
+
+// ══════════════════════════════════════════════════════
+// 9. Pilot Lifecycle Grammar — launch/graduation 운영 라벨
+// ══════════════════════════════════════════════════════
+
+/**
+ * Pilot lifecycle은 procurement chain (8 domain)과 별개의 운영 레이어.
+ * launch / graduation / restart 전용 라벨을 여기서 관리.
+ * 엔진/workbench에서 이 라벨을 직접 참조 — 하드코딩 금지.
+ */
+
+// ── 9-1. Launch Dock Actions ──
+export interface LifecycleActionGrammar {
+  actionKey: string;
+  label: string;
+  lifecycle: "launch" | "graduation";
+  risk: ActionRisk;
+  requiresConfirmation: boolean;
+}
+
+export const LIFECYCLE_ACTION_GRAMMAR: readonly LifecycleActionGrammar[] = [
+  // Launch
+  { actionKey: "launch_pilot",      label: "파일럿 시작",          lifecycle: "launch",     risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "conduct_drill",     label: "롤백 리허설 실행",     lifecycle: "launch",     risk: "reversible",   requiresConfirmation: true },
+  { actionKey: "modify_scope",      label: "범위 수정 (새 RC0)",   lifecycle: "launch",     risk: "reversible",   requiresConfirmation: true },
+  { actionKey: "export_launch_pack", label: "런치 팩 내보내기",    lifecycle: "launch",     risk: "navigation",   requiresConfirmation: false },
+  { actionKey: "cancel_rc0",        label: "RC0 취소",             lifecycle: "launch",     risk: "irreversible", requiresConfirmation: true },
+  // Graduation
+  { actionKey: "mark_completed",    label: "파일럿 완료 확정",     lifecycle: "graduation", risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "expand_pilot",      label: "파일럿 확장",          lifecycle: "graduation", risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "approve_ga",        label: "GA 승인",              lifecycle: "graduation", risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "rollback_and_reassess", label: "롤백 및 재평가",   lifecycle: "graduation", risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "cancel_pilot",      label: "파일럿 취소",          lifecycle: "graduation", risk: "irreversible", requiresConfirmation: true },
+  { actionKey: "export_graduation_pack", label: "졸업 팩 내보내기", lifecycle: "graduation", risk: "navigation",   requiresConfirmation: false },
+] as const;
+
+// ── 9-2. Completion Verdict Labels ──
+export type PilotCompletionVerdictKey =
+  | "completed_successfully"
+  | "completed_conditionally"
+  | "rollback_required"
+  | "cancelled"
+  | "insufficient_evidence";
+
+export interface VerdictLabelGrammar {
+  verdict: PilotCompletionVerdictKey;
+  label: string;
+  badgeColor: "green" | "amber" | "red" | "gray" | "blue";
+}
+
+export const VERDICT_LABEL_GRAMMAR: readonly VerdictLabelGrammar[] = [
+  { verdict: "completed_successfully",  label: "성공적 완료",    badgeColor: "green" },
+  { verdict: "completed_conditionally", label: "조건부 완료",    badgeColor: "amber" },
+  { verdict: "rollback_required",       label: "롤백 필요",      badgeColor: "red" },
+  { verdict: "cancelled",              label: "취소됨",          badgeColor: "gray" },
+  { verdict: "insufficient_evidence",   label: "Evidence 부족",  badgeColor: "blue" },
+] as const;
+
+// ── 9-3. Graduation Path Labels ──
+export type GraduationPathKey =
+  | "remain_internal_only"
+  | "expand_pilot"
+  | "ready_for_ga"
+  | "rollback_and_reassess";
+
+export interface GraduationPathGrammar {
+  path: GraduationPathKey;
+  label: string;
+  badgeColor: "gray" | "blue" | "green" | "red";
+}
+
+export const GRADUATION_PATH_GRAMMAR: readonly GraduationPathGrammar[] = [
+  { path: "remain_internal_only",  label: "내부 유지",       badgeColor: "gray" },
+  { path: "expand_pilot",          label: "파일럿 확장",     badgeColor: "blue" },
+  { path: "ready_for_ga",          label: "GA 준비 완료",    badgeColor: "green" },
+  { path: "rollback_and_reassess", label: "롤백 및 재평가",  badgeColor: "red" },
+] as const;
+
+// ── 9-4. Lifecycle Lookup Utilities ──
+
+export function getLifecycleActionLabel(actionKey: string): string {
+  return LIFECYCLE_ACTION_GRAMMAR.find(a => a.actionKey === actionKey)?.label ?? actionKey;
+}
+
+export function getVerdictLabel(verdict: PilotCompletionVerdictKey): string {
+  return VERDICT_LABEL_GRAMMAR.find(v => v.verdict === verdict)?.label ?? verdict;
+}
+
+export function getGraduationPathLabel(path: GraduationPathKey): string {
+  return GRADUATION_PATH_GRAMMAR.find(p => p.path === path)?.label ?? path;
+}
+
+export function getLifecycleActions(lifecycle: "launch" | "graduation"): readonly LifecycleActionGrammar[] {
+  return LIFECYCLE_ACTION_GRAMMAR.filter(a => a.lifecycle === lifecycle);
 }
