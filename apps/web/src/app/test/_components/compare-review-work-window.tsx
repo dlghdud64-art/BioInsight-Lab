@@ -2,19 +2,22 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2, Sparkles } from "lucide-react";
+import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import {
   type CompareReviewState,
   type CompareCandidateInfo,
   type CompareDecisionPayload,
   type CompareDecisionSnapshot,
   type RequestCandidateHandoff,
+  type ClassifiedCandidate,
   validateCompareCategoryIntegrity,
   buildCompareDifferenceSummary,
   buildCompareDecisionSnapshot,
   buildRequestCandidateHandoffFromCompare,
   createInitialCompareReviewState,
   isComparePreviewStale,
+  classifyCandidatesForReview,
+  buildAiVerdictSummary,
 } from "@/lib/ai/compare-review-engine";
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -86,9 +89,16 @@ export function CompareReviewWorkWindow({
     }).filter(Boolean) as CompareCandidateInfo[];
   }, [compareIds, products]);
 
-  // ── Validation + Difference ──
+  // ── Validation + Difference + Classification ──
   const categoryResult = useMemo(() => validateCompareCategoryIntegrity(candidates), [candidates]);
   const differenceSummary = useMemo(() => buildCompareDifferenceSummary(candidates), [candidates]);
+  const classifiedCandidates = useMemo(() => classifyCandidatesForReview(candidates, categoryResult, differenceSummary), [candidates, categoryResult, differenceSummary]);
+  const aiVerdict = useMemo(() => buildAiVerdictSummary(classifiedCandidates), [classifiedCandidates]);
+
+  // 분류별 그룹
+  const directGroup = useMemo(() => classifiedCandidates.filter((c) => c.candidateClass === "direct"), [classifiedCandidates]);
+  const referenceGroup = useMemo(() => classifiedCandidates.filter((c) => c.candidateClass === "reference"), [classifiedCandidates]);
+  const blockedGroup = useMemo(() => classifiedCandidates.filter((c) => c.candidateClass === "blocked"), [classifiedCandidates]);
 
   // ── Review state ──
   const [reviewState, setReviewState] = useState<CompareReviewState | null>(null);
@@ -96,6 +106,7 @@ export function CompareReviewWorkWindow({
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [decisionSnapshot, setDecisionSnapshot] = useState<CompareDecisionSnapshot | null>(null);
   const [showUndoBanner, setShowUndoBanner] = useState(false);
+  const [showMatrix, setShowMatrix] = useState(false);
 
   // Initialize state when opened
   useMemo(() => {
@@ -279,190 +290,41 @@ export function CompareReviewWorkWindow({
           </div>
         )}
 
-        {/* ═══ Scrollable body ═══ */}
+        {/* ═══ Scrollable body — AI verdict → 분류별 후보 → delta → matrix ═══ */}
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-          {/* ═══ Category warnings ═══ */}
-          {categoryResult.warnings.length > 0 && (
-            <div className="space-y-1">
-              {categoryResult.warnings.map((w, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.06] border border-amber-500/15">
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
-                  <span className="text-[10px] text-amber-300">{w}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
-          {categoryResult.blockingIssues.length > 0 && (
-            <div className="space-y-1">
-              {categoryResult.blockingIssues.map((b, i) => (
-                <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-red-600/[0.06] border border-red-500/15">
-                  <AlertTriangle className="h-3 w-3 text-red-400 shrink-0" />
-                  <span className="text-[10px] text-red-300">{b}</span>
-                </div>
-              ))}
+          {/* ═══ 1. AI Verdict Block — 3줄 판단 요약 ═══ */}
+          <div className="px-3 py-3 rounded-md bg-[#1a1f2e] border border-blue-500/15">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-3.5 w-3.5 text-blue-400 shrink-0" />
+              <span className="text-[10px] font-semibold text-slate-200">후보군 판단</span>
             </div>
-          )}
-
-          {/* ═══ 2. Difference Summary (numbers first) ═══ */}
-          <div>
-            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">핵심 차이</span>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {differenceSummary.priceAdvantage && (
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <TrendingDown className="h-3 w-3 text-emerald-400" />
-                    <span className="text-[9px] text-slate-500">가격 우위</span>
-                  </div>
-                  <span className="text-[11px] text-slate-200 font-medium block">{differenceSummary.priceAdvantage.label}</span>
-                  <span className="text-[10px] text-slate-400">{differenceSummary.priceAdvantage.delta}</span>
+            <div className="space-y-1.5">
+              {/* 우선 검토 */}
+              <div className="flex items-start gap-2">
+                <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[11px] text-slate-200 leading-relaxed">{aiVerdict.priorityLine}</span>
+              </div>
+              {/* 참고 후보 */}
+              {aiVerdict.referenceLine && (
+                <div className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span className="text-[11px] text-slate-400 leading-relaxed">{aiVerdict.referenceLine}</span>
                 </div>
               )}
-              {differenceSummary.leadTimeAdvantage && (
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <Clock className="h-3 w-3 text-blue-400" />
-                    <span className="text-[9px] text-slate-500">납기 우위</span>
-                  </div>
-                  <span className="text-[11px] text-slate-200 font-medium block">{differenceSummary.leadTimeAdvantage.label}</span>
-                  <span className="text-[10px] text-slate-400">{differenceSummary.leadTimeAdvantage.delta}</span>
+              {/* 제외·보류 */}
+              {aiVerdict.blockedLine && (
+                <div className="flex items-start gap-2">
+                  <span className="shrink-0 mt-0.5 w-1.5 h-1.5 rounded-full bg-red-400" />
+                  <span className="text-[11px] text-slate-400 leading-relaxed">{aiVerdict.blockedLine}</span>
                 </div>
               )}
-              <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Package className="h-3 w-3 text-slate-400" />
-                  <span className="text-[9px] text-slate-500">규격</span>
-                </div>
-                <span className="text-[11px] text-slate-200 font-medium">{differenceSummary.specFitNote}</span>
-              </div>
-              <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Package className="h-3 w-3 text-slate-400" />
-                  <span className="text-[9px] text-slate-500">브랜드</span>
-                </div>
-                <span className="text-[11px] text-slate-200 font-medium">{differenceSummary.brandNote}</span>
-              </div>
-            </div>
-            {/* Operational risk line */}
-            <div className="mt-2 px-3 py-2 rounded bg-[#252729] border border-bd/30">
-              <span className="text-[10px] text-slate-400">{differenceSummary.operationalRisk}</span>
             </div>
           </div>
 
-          {/* ═══ 3. Compare Matrix ═══ */}
-          <div>
-            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">비교 매트릭스</span>
-            <div className="mt-2 border border-bd/40 rounded-md overflow-hidden">
-              {/* Header */}
-              <div className="grid grid-cols-[1fr_repeat(var(--cols),minmax(0,1fr))] bg-[#252729] border-b border-bd/40" style={{ "--cols": candidates.length } as React.CSSProperties}>
-                <div className="px-3 py-2 text-[9px] text-slate-500 font-medium">항목</div>
-                {candidates.map((c) => (
-                  <div key={c.id} className="px-3 py-2 text-[10px] text-slate-300 font-medium truncate border-l border-bd/30">{c.brand || c.name}</div>
-                ))}
-              </div>
-              {/* Rows */}
-              {[
-                { label: "제품명", getter: (c: CompareCandidateInfo) => c.name },
-                { label: "카탈로그", getter: (c: CompareCandidateInfo) => c.catalogNumber || "—" },
-                { label: "규격", getter: (c: CompareCandidateInfo) => c.spec || "—" },
-                { label: "단가", getter: (c: CompareCandidateInfo) => c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "견적 필요" },
-                { label: "납기", getter: (c: CompareCandidateInfo) => c.leadTimeDays > 0 ? `${c.leadTimeDays}영업일` : "확인 필요" },
-              ].map((row, ri) => (
-                <div key={ri} className="grid border-b border-bd/20 last:border-b-0" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
-                  <div className="px-3 py-1.5 text-[9px] text-slate-500">{row.label}</div>
-                  {candidates.map((c) => (
-                    <div key={c.id} className="px-3 py-1.5 text-[10px] text-slate-300 truncate border-l border-bd/20">{row.getter(c)}</div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ═══ Missing info ═══ */}
-          {differenceSummary.missingInfoItems.length > 0 && (
-            <div>
-              <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">누락 정보</span>
-              <div className="mt-1.5 space-y-0.5">
-                {differenceSummary.missingInfoItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-1.5 text-[10px] text-amber-400">
-                    <AlertTriangle className="h-3 w-3 shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ═══ 4. Decision Actions — shortlist / exclude per candidate ═══ */}
-          <div>
-            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">판단</span>
-            <div className="mt-2 space-y-1.5">
-              {candidates.map((c) => {
-                const isShortlisted = shortlistIds.has(c.id);
-                const isExcluded = excludedIds.has(c.id);
-                return (
-                  <div key={c.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : "border-bd/40 bg-[#252729]"}`}>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[11px] text-slate-200 font-medium block truncate">{c.name}</span>
-                      <span className="text-[10px] text-slate-500">{c.brand} · {c.catalogNumber || "—"}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="text-[10px] tabular-nums text-slate-400">{c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "—"}</span>
-                      <Button
-                        size="sm"
-                        variant={isShortlisted ? "default" : "ghost"}
-                        className={`h-6 px-2 text-[9px] ${isShortlisted ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25 border border-emerald-500/25" : "text-slate-500 hover:text-emerald-400 border border-bd/30"}`}
-                        onClick={() => toggleShortlist(c.id)}
-                        disabled={isDecisionRecorded}
-                      >
-                        <Check className="h-3 w-3 mr-0.5" />
-                        {isShortlisted ? "shortlist" : "남기기"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className={`h-6 px-2 text-[9px] ${isExcluded ? "bg-red-600/10 text-red-400 border border-red-500/20" : "text-slate-500 hover:text-red-400 border border-bd/30"}`}
-                        onClick={() => toggleExclude(c.id)}
-                        disabled={isDecisionRecorded}
-                      >
-                        <Minus className="h-3 w-3 mr-0.5" />
-                        제외
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ═══ Undo banner ═══ */}
-          {showUndoBanner && isDecisionRecorded && (
-            <div className="flex items-center justify-between px-3 py-2 rounded-md bg-blue-600/[0.06] border border-blue-500/15">
-              <span className="text-[10px] text-blue-300">비교 결과가 저장되었습니다 — shortlist {shortlistCount}개</span>
-              <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-blue-400 hover:text-blue-300" onClick={handleUndo}>
-                <Undo2 className="h-3 w-3 mr-0.5" />
-                되돌리기
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* ═══ 5. Readiness Summary + Actions ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
-          {/* Summary strip */}
-          <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">shortlist <span className="text-slate-300 font-medium">{shortlistCount}</span></span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-500">제외 <span className="text-slate-300 font-medium">{excludedCount}</span></span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-500">{categoryResult.recommendedNextAction}</span>
-          </div>
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>
-              닫기
-            </Button>
-            {!isDecisionRecorded ? (
+          {/* ═══ 2. Primary CTA — verdict 직하 ═══ */}
+          {!isDecisionRecorded && (
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 className="flex-1 h-8 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
@@ -472,7 +334,10 @@ export function CompareReviewWorkWindow({
                 <Check className="h-3 w-3 mr-1" />
                 비교 결과 저장 ({shortlistCount}개 shortlist)
               </Button>
-            ) : (
+            </div>
+          )}
+          {isDecisionRecorded && (
+            <div className="flex gap-2">
               <Button
                 size="sm"
                 className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium"
@@ -482,7 +347,231 @@ export function CompareReviewWorkWindow({
                 견적 후보로 반영
                 <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
+              <Button size="sm" variant="ghost" className="h-8 px-3 text-[9px] text-blue-400 hover:text-blue-300 border border-bd/40" onClick={handleUndo}>
+                <Undo2 className="h-3 w-3 mr-0.5" />
+                되돌리기
+              </Button>
+            </div>
+          )}
+
+          {/* ═══ 3. 분류별 후보 카드 — direct → reference → blocked ═══ */}
+          {/* ── 직접 비교 (direct) ── */}
+          {directGroup.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">직접 비교</span>
+                <span className="text-[9px] text-slate-600">{directGroup.length}</span>
+              </div>
+              <div className="space-y-1.5">
+                {directGroup.map((cl) => {
+                  const c = candidates.find((cc) => cc.id === cl.id);
+                  if (!c) return null;
+                  const isShortlisted = shortlistIds.has(c.id);
+                  const isExcluded = excludedIds.has(c.id);
+                  return (
+                    <div key={c.id} className={`px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : "border-bd/40 bg-[#252729]"}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-slate-200 font-medium truncate">{c.name}</span>
+                            {cl.deltaOneLiner && (
+                              <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-emerald-600/10 text-emerald-400">{cl.deltaOneLiner}</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500">{c.brand} · {c.catalogNumber || "—"}</span>
+                          <span className="text-[9px] text-slate-500 block mt-0.5">{cl.classReason}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] tabular-nums text-slate-400">{c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "—"}</span>
+                          <Button size="sm" variant={isShortlisted ? "default" : "ghost"} className={`h-6 px-2 text-[9px] ${isShortlisted ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25 border border-emerald-500/25" : "text-slate-500 hover:text-emerald-400 border border-bd/30"}`} onClick={() => toggleShortlist(c.id)} disabled={isDecisionRecorded}>
+                            <Check className="h-3 w-3 mr-0.5" />{isShortlisted ? "shortlist" : "남기기"}
+                          </Button>
+                          <Button size="sm" variant="ghost" className={`h-6 px-2 text-[9px] ${isExcluded ? "bg-red-600/10 text-red-400 border border-red-500/20" : "text-slate-500 hover:text-red-400 border border-bd/30"}`} onClick={() => toggleExclude(c.id)} disabled={isDecisionRecorded}>
+                            <Minus className="h-3 w-3 mr-0.5" />제외
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── 참고 후보 (reference) ── */}
+          {referenceGroup.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">참고 후보</span>
+                <span className="text-[9px] text-slate-600">{referenceGroup.length}</span>
+              </div>
+              <div className="space-y-1.5">
+                {referenceGroup.map((cl) => {
+                  const c = candidates.find((cc) => cc.id === cl.id);
+                  if (!c) return null;
+                  const isShortlisted = shortlistIds.has(c.id);
+                  const isExcluded = excludedIds.has(c.id);
+                  return (
+                    <div key={c.id} className={`px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : "border-amber-500/15 bg-amber-600/[0.02]"}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] text-slate-200 font-medium truncate">{c.name}</span>
+                            {cl.deltaOneLiner && (
+                              <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">{cl.deltaOneLiner}</span>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-slate-500">{c.brand} · {c.catalogNumber || "—"}</span>
+                          <span className="text-[9px] text-amber-400/80 block mt-0.5">{cl.classReason}</span>
+                          {cl.riskNote && <span className="text-[9px] text-slate-500 block">{cl.riskNote}</span>}
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-[10px] tabular-nums text-slate-400">{c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "—"}</span>
+                          <Button size="sm" variant="ghost" className={`h-6 px-2 text-[9px] ${isShortlisted ? "bg-emerald-600/15 text-emerald-400 hover:bg-emerald-600/25 border border-emerald-500/25" : "text-slate-500 hover:text-emerald-400 border border-bd/30"}`} onClick={() => toggleShortlist(c.id)} disabled={isDecisionRecorded}>
+                            <Check className="h-3 w-3 mr-0.5" />{isShortlisted ? "shortlist" : "남기기"}
+                          </Button>
+                          <Button size="sm" variant="ghost" className={`h-6 px-2 text-[9px] ${isExcluded ? "bg-red-600/10 text-red-400 border border-red-500/20" : "text-slate-500 hover:text-red-400 border border-bd/30"}`} onClick={() => toggleExclude(c.id)} disabled={isDecisionRecorded}>
+                            <Minus className="h-3 w-3 mr-0.5" />제외
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── 제외·보류 (blocked) ── */}
+          {blockedGroup.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1.5 mb-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-400" />
+                <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">제외·보류</span>
+                <span className="text-[9px] text-slate-600">{blockedGroup.length}</span>
+              </div>
+              <div className="space-y-1.5">
+                {blockedGroup.map((cl) => {
+                  const c = candidates.find((cc) => cc.id === cl.id);
+                  if (!c) return null;
+                  return (
+                    <div key={c.id} className="px-3 py-2.5 rounded-md border border-red-500/10 bg-red-600/[0.02] opacity-70">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <span className="text-[11px] text-slate-300 font-medium block truncate">{c.name}</span>
+                          <span className="text-[10px] text-slate-500">{c.brand} · {c.catalogNumber || "—"}</span>
+                          <span className="text-[9px] text-red-400/80 block mt-0.5">{cl.classReason}</span>
+                          {cl.riskNote && <span className="text-[9px] text-slate-500 block">{cl.riskNote}</span>}
+                        </div>
+                        <span className="shrink-0 text-[9px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">{cl.suggestedAction === "hold" ? "보류" : "제외"}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ═══ 4. Delta Summary — 핵심 차이 (축약) ═══ */}
+          <div>
+            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">핵심 차이</span>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              {differenceSummary.priceAdvantage && (
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <TrendingDown className="h-3 w-3 text-emerald-400" />
+                    <span className="text-[9px] text-slate-500">가격 우위</span>
+                  </div>
+                  <span className="text-[10px] text-slate-200 font-medium">{differenceSummary.priceAdvantage.label}</span>
+                </div>
+              )}
+              {differenceSummary.leadTimeAdvantage && (
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <Clock className="h-3 w-3 text-blue-400" />
+                    <span className="text-[9px] text-slate-500">납기 우위</span>
+                  </div>
+                  <span className="text-[10px] text-slate-200 font-medium">{differenceSummary.leadTimeAdvantage.label}</span>
+                </div>
+              )}
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Package className="h-3 w-3 text-slate-400" />
+                  <span className="text-[9px] text-slate-500">규격</span>
+                </div>
+                <span className="text-[10px] text-slate-200 font-medium">{differenceSummary.specFitNote}</span>
+              </div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Package className="h-3 w-3 text-slate-400" />
+                  <span className="text-[9px] text-slate-500">브랜드</span>
+                </div>
+                <span className="text-[10px] text-slate-200 font-medium">{differenceSummary.brandNote}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ═══ 5. Compare Matrix — collapsed by default ═══ */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowMatrix(!showMatrix)}
+              className="w-full flex items-center justify-between py-1.5 group"
+            >
+              <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider group-hover:text-slate-400 transition-colors">비교 매트릭스</span>
+              {showMatrix
+                ? <ChevronUp className="h-3 w-3 text-slate-500" />
+                : <ChevronDown className="h-3 w-3 text-slate-500" />
+              }
+            </button>
+            {showMatrix && (
+              <div className="mt-1 border border-bd/40 rounded-md overflow-hidden">
+                {/* Header */}
+                <div className="grid grid-cols-[1fr_repeat(var(--cols),minmax(0,1fr))] bg-[#252729] border-b border-bd/40" style={{ "--cols": candidates.length } as React.CSSProperties}>
+                  <div className="px-3 py-2 text-[9px] text-slate-500 font-medium">항목</div>
+                  {candidates.map((c) => (
+                    <div key={c.id} className="px-3 py-2 text-[10px] text-slate-300 font-medium truncate border-l border-bd/30">{c.brand || c.name}</div>
+                  ))}
+                </div>
+                {/* Rows */}
+                {[
+                  { label: "제품명", getter: (c: CompareCandidateInfo) => c.name },
+                  { label: "카탈로그", getter: (c: CompareCandidateInfo) => c.catalogNumber || "—" },
+                  { label: "규격", getter: (c: CompareCandidateInfo) => c.spec || "—" },
+                  { label: "단가", getter: (c: CompareCandidateInfo) => c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "견적 필요" },
+                  { label: "납기", getter: (c: CompareCandidateInfo) => c.leadTimeDays > 0 ? `${c.leadTimeDays}영업일` : "확인 필요" },
+                ].map((row, ri) => (
+                  <div key={ri} className="grid border-b border-bd/20 last:border-b-0" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
+                    <div className="px-3 py-1.5 text-[9px] text-slate-500">{row.label}</div>
+                    {candidates.map((c) => (
+                      <div key={c.id} className="px-3 py-1.5 text-[10px] text-slate-300 truncate border-l border-bd/20">{row.getter(c)}</div>
+                    ))}
+                  </div>
+                ))}
+              </div>
             )}
+          </div>
+        </div>
+
+        {/* ═══ Dock — status strip + 닫기 ═══ */}
+        <div className="px-5 py-2.5 border-t border-bd bg-[#1a1c1f]">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 text-[10px]">
+              <span className="text-slate-500">shortlist <span className="text-slate-300 font-medium">{shortlistCount}</span></span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-500">제외 <span className="text-slate-300 font-medium">{excludedCount}</span></span>
+              {isDecisionRecorded && (
+                <>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-emerald-400 font-medium">저장됨</span>
+                </>
+              )}
+            </div>
+            <Button size="sm" variant="ghost" className="h-7 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>
+              닫기
+            </Button>
           </div>
         </div>
       </div>

@@ -352,3 +352,160 @@ export function isComparePreviewStale(
   const sorted2 = [...currentCompareIds].sort();
   return sorted1.some((id, i) => id !== sorted2[i]);
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Candidate Classification — direct / reference / blocked
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type CandidateClass = "direct" | "reference" | "blocked";
+
+export interface ClassifiedCandidate {
+  id: string;
+  name: string;
+  brand: string;
+  candidateClass: CandidateClass;
+  /** AI가 생성한 1줄 판단 이유 */
+  classReason: string;
+  /** delta 한 줄 — "₩12,000 저렴" 또는 "3일 빠름" 등 */
+  deltaOneLiner: string;
+  /** 후보 위험/주의 사항 (없으면 빈 문자열) */
+  riskNote: string;
+  /** 추천 다음 행동 */
+  suggestedAction: "shortlist" | "hold" | "exclude";
+}
+
+/**
+ * 후보군을 direct / reference / blocked로 분류.
+ *
+ * 분류 규칙:
+ * - blocked: category 불일치가 심하거나 핵심 데이터(가격+납기 모두) 없음
+ * - reference: grade/spec 차이 또는 단일 핵심 데이터 없음
+ * - direct: 나머지 (직접 비교 가능)
+ *
+ * 이 함수는 AI 판단을 대신하지 않고, **판단면을 정리**합니다.
+ */
+export function classifyCandidatesForReview(
+  candidates: CompareCandidateInfo[],
+  categoryResult: CompareCategoryResult,
+  differenceSummary: CompareDifferenceSummary,
+): ClassifiedCandidate[] {
+  if (candidates.length < 2) return [];
+
+  // 기준 후보 (첫 번째)
+  const source = candidates[0];
+
+  return candidates.map((c) => {
+    const isSource = c.id === source.id;
+    const missingPrice = !c.priceKRW || c.priceKRW <= 0;
+    const missingLead = !c.leadTimeDays || c.leadTimeDays <= 0;
+    const missingBoth = missingPrice && missingLead;
+    const categoryDiff = source.category && c.category
+      && source.category.toLowerCase() !== c.category.toLowerCase();
+
+    // ── Classification ──
+    let candidateClass: CandidateClass = "direct";
+    let classReason = "";
+    let riskNote = "";
+    let suggestedAction: "shortlist" | "hold" | "exclude" = "shortlist";
+
+    if (categoryDiff && categoryResult.compareMode === "blocked") {
+      candidateClass = "blocked";
+      classReason = "카테고리 불일치 — 비교 불가";
+      riskNote = "카테고리가 다른 제품입니다";
+      suggestedAction = "exclude";
+    } else if (missingBoth) {
+      candidateClass = "blocked";
+      classReason = "가격·납기 정보 모두 없음";
+      riskNote = "견적 확인 후 비교 가능";
+      suggestedAction = "hold";
+    } else if (categoryDiff) {
+      candidateClass = "reference";
+      classReason = "카테고리 차이 — 참고 비교만 가능";
+      riskNote = "동일 규격 비교 시 주의";
+      suggestedAction = "hold";
+    } else if (missingPrice || missingLead) {
+      candidateClass = "reference";
+      classReason = missingPrice ? "가격 미확인 — 참고 후보" : "납기 미확인 — 참고 후보";
+      riskNote = "누락 정보 확인 후 판단 필요";
+      suggestedAction = "hold";
+    } else {
+      candidateClass = "direct";
+      classReason = "직접 비교 가능";
+      suggestedAction = "shortlist";
+    }
+
+    // ── Delta one-liner ──
+    let deltaOneLiner = "";
+    if (!isSource && !missingPrice && source.priceKRW > 0) {
+      const priceDiff = source.priceKRW - c.priceKRW;
+      if (priceDiff > 0) {
+        deltaOneLiner = `₩${priceDiff.toLocaleString("ko-KR")} 저렴`;
+      } else if (priceDiff < 0) {
+        deltaOneLiner = `₩${Math.abs(priceDiff).toLocaleString("ko-KR")} 비쌈`;
+      }
+    }
+    if (!isSource && !missingLead && source.leadTimeDays > 0) {
+      const leadDiff = source.leadTimeDays - c.leadTimeDays;
+      if (leadDiff > 0) {
+        deltaOneLiner += (deltaOneLiner ? " · " : "") + `${leadDiff}일 빠름`;
+      } else if (leadDiff < 0) {
+        deltaOneLiner += (deltaOneLiner ? " · " : "") + `${Math.abs(leadDiff)}일 느림`;
+      }
+    }
+    if (isSource) {
+      deltaOneLiner = "기준 후보";
+      classReason = "비교 기준";
+      candidateClass = "direct";
+      suggestedAction = "shortlist";
+    }
+
+    return {
+      id: c.id,
+      name: c.name,
+      brand: c.brand,
+      candidateClass,
+      classReason,
+      deltaOneLiner,
+      riskNote,
+      suggestedAction,
+    };
+  });
+}
+
+/**
+ * 상단 AI 판단 블록용 3줄 요약 생성.
+ *
+ * - 우선 검토: direct 중 delta 우위 후보
+ * - 참고 후보: reference 후보 이유
+ * - 제외·보류: blocked 후보 이유
+ */
+export function buildAiVerdictSummary(
+  classified: ClassifiedCandidate[],
+): { priorityLine: string; referenceLine: string; blockedLine: string } {
+  const directCandidates = classified.filter((c) => c.candidateClass === "direct" && c.deltaOneLiner !== "기준 후보");
+  const refs = classified.filter((c) => c.candidateClass === "reference");
+  const blocked = classified.filter((c) => c.candidateClass === "blocked");
+
+  // 우선 검토 라인
+  let priorityLine = "";
+  if (directCandidates.length > 0) {
+    const best = directCandidates[0];
+    priorityLine = `우선 검토: ${best.name} — ${best.deltaOneLiner || "동일 조건"}`;
+  } else {
+    priorityLine = "직접 비교 가능한 후보 없음 — 견적 확인 필요";
+  }
+
+  // 참고 후보 라인
+  let referenceLine = "";
+  if (refs.length > 0) {
+    referenceLine = `참고 후보 ${refs.length}개: ${refs.map((r) => r.classReason).join(", ")}`;
+  }
+
+  // 제외·보류 라인
+  let blockedLine = "";
+  if (blocked.length > 0) {
+    blockedLine = `제외·보류 ${blocked.length}개: ${blocked.map((b) => b.classReason).join(", ")}`;
+  }
+
+  return { priorityLine, referenceLine, blockedLine };
+}
