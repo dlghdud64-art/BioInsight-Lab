@@ -206,37 +206,94 @@ function CategoryBadge({ category }: { category: CompareCategory }) {
   return <Badge variant="outline" className={`text-xs ${c.className}`}>{c.label}</Badge>;
 }
 
-// ── Decision Header ──
+// ── Zone A: Decision Header Surface ──
+// 독립 상단 panel — 결론/CTA/후보분류가 스크롤 없이 보임
 
 function DecisionHeader({
   diffResult,
   candidateCount,
   blockerSummary,
+  directCount,
+  referenceCount,
+  blockedCount,
+  shortlistCount,
+  onRequestHandoff,
 }: {
   diffResult: DiffResultDisplay;
   candidateCount: number;
   blockerSummary: string;
+  directCount: number;
+  referenceCount: number;
+  blockedCount: number;
+  shortlistCount: number;
+  onRequestHandoff?: () => void;
 }) {
+  const canProceed = directCount > 0 || shortlistCount > 0;
+
   return (
-    <div className="p-3 border rounded-lg bg-pn space-y-2">
+    <div className="p-4 border rounded-lg bg-slate-900/80 border-slate-700 space-y-3">
+      {/* Headline */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <VerdictBadge verdict={diffResult.summary.overallVerdict} />
-          <span className="text-sm text-slate-300">{candidateCount}건 비교 완료</span>
+          <span className="text-sm font-medium text-slate-200">{candidateCount}건 비교 완료</span>
         </div>
       </div>
+
+      {/* Candidate Classification Chips */}
+      <div className="flex gap-2 flex-wrap">
+        {directCount > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-emerald-500/15 text-emerald-300 border border-emerald-500/25">
+            직접 비교 {directCount}
+          </span>
+        )}
+        {referenceCount > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-amber-500/15 text-amber-300 border border-amber-500/25">
+            참고 후보 {referenceCount}
+          </span>
+        )}
+        {blockedCount > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-red-500/10 text-red-400/70 border border-red-500/20">
+            제외/보류 {blockedCount}
+          </span>
+        )}
+      </div>
+
+      {/* Blocker Warning */}
       {blockerSummary && (
-        <p className="text-xs text-amber-300 flex items-center gap-1.5">
-          <AlertTriangle className="h-3 w-3 shrink-0" />
-          {blockerSummary}
-        </p>
+        <div className="flex items-center gap-1.5 p-2 rounded bg-amber-500/10 border border-amber-500/20">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400" />
+          <p className="text-xs text-amber-300">{blockerSummary}</p>
+        </div>
       )}
-      <p className="text-sm text-slate-300">{diffResult.summary.verdictReason}</p>
+
+      {/* Primary CTA */}
+      <div className="pt-1">
+        {canProceed ? (
+          <Button
+            className="w-full bg-blue-600 hover:bg-blue-500 text-white font-medium"
+            onClick={onRequestHandoff}
+          >
+            <ShoppingCart className="h-4 w-4 mr-2" />
+            선택 후보 요청으로 넘기기 ({shortlistCount > 0 ? `${shortlistCount}건 선택` : `${directCount}건 비교 가능`})
+          </Button>
+        ) : (
+          <div className="p-2.5 rounded bg-slate-800 border border-slate-700 text-center">
+            <p className="text-xs text-slate-400">
+              {directCount === 0 && referenceCount === 0
+                ? "직접 비교 가능한 후보가 없어 요청으로 넘길 수 없습니다"
+                : "현재 선택은 참고 후보만 포함하고 있어 요청 본문 후보가 없습니다"}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-400">{diffResult.summary.verdictReason}</p>
     </div>
   );
 }
 
-// ── Candidate Summary Card ──
+// ── Zone C: Candidate Decision Surface ──
 
 type CandidateAction = "shortlist" | "hold" | "exclude" | null;
 
@@ -255,13 +312,20 @@ function CandidateSummaryCard({
   const criticalCount = diff?.summary.criticalCount ?? 0;
   const highCount = diff?.summary.highCount ?? 0;
   const totalDiffs = diff?.totalDifferences ?? 0;
+  const isBlocked = candidate.category === "blocked_or_mismatch";
 
   return (
-    <div className="p-3 border rounded-lg bg-pn space-y-2">
+    <div className={`p-3 border rounded-lg space-y-2 ${
+      isBlocked
+        ? "bg-slate-900/30 border-slate-800/50 opacity-70"
+        : candidate.category === "direct_comparable"
+          ? "bg-slate-900/60 border-emerald-500/20"
+          : "bg-slate-900/60 border-amber-500/15"
+    }`}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0">
           <CategoryBadge category={candidate.category} />
-          <span className="text-sm font-medium truncate">{candidate.product.name}</span>
+          <span className={`text-sm font-medium truncate ${isBlocked ? "text-slate-500" : ""}`}>{candidate.product.name}</span>
         </div>
         {diff && <VerdictBadge verdict={diff.summary.overallVerdict} />}
       </div>
@@ -273,9 +337,9 @@ function CandidateSummaryCard({
           <Badge variant="outline" className="text-xs">차이 {totalDiffs}건</Badge>
         </div>
       )}
-      {/* Shortlist / Hold / Exclude 액션 */}
-      {candidate.category !== "blocked_or_mismatch" && (
-        <div className="flex gap-1.5 pt-1">
+      {/* Shortlist / Hold / Exclude — blocked 후보에서는 제외 */}
+      {!isBlocked && (
+        <div className="flex gap-1.5 pt-1 border-t border-slate-800/50 mt-1">
           <Button
             size="sm"
             variant={action === "shortlist" ? "default" : "outline"}
@@ -302,6 +366,50 @@ function CandidateSummaryCard({
           </Button>
         </div>
       )}
+      {isBlocked && (
+        <p className="text-[10px] text-red-400/60 italic">비교 불가 — {candidate.categoryReason}</p>
+      )}
+    </div>
+  );
+}
+
+/** Candidate Section — category별 분리 렌더 */
+function CandidateSectionGroup({
+  title,
+  subtitle,
+  candidates,
+  sourceProduct,
+  candidateActions,
+  onActionChange,
+  borderColor,
+}: {
+  title: string;
+  subtitle: string;
+  candidates: CategorizedCandidate[];
+  sourceProduct: ProductInfo;
+  candidateActions: Record<string, CandidateAction>;
+  onActionChange: (productId: string, action: CandidateAction) => void;
+  borderColor: string;
+}) {
+  if (candidates.length === 0) return null;
+  return (
+    <div className={`space-y-2 p-3 rounded-lg border ${borderColor}`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <h4 className="text-xs font-semibold text-slate-300">{title}</h4>
+          <p className="text-[10px] text-slate-500">{subtitle}</p>
+        </div>
+        <span className="text-xs tabular-nums text-slate-400">{candidates.length}건</span>
+      </div>
+      {candidates.map((c) => (
+        <CandidateSummaryCard
+          key={c.product.id}
+          candidate={c}
+          sourceProduct={sourceProduct}
+          action={candidateActions[c.product.id] ?? null}
+          onActionChange={(action) => onActionChange(c.product.id, action)}
+        />
+      ))}
     </div>
   );
 }
@@ -637,19 +745,44 @@ export function CompareAnalysisDrawer({
 
         {sessionData && diffResult && (
           <div className="mt-4 space-y-4">
-            {/* ━━━ 1. Decision Header ━━━ */}
-            <DecisionHeader
-              diffResult={diffResult}
-              candidateCount={products.length - 1}
-              blockerSummary={
-                (() => {
-                  const parts: string[] = [];
-                  if (diffResult.summary.criticalCount > 0) parts.push(`치명적 ${diffResult.summary.criticalCount}건`);
-                  if (missingDataItems.length > 0) parts.push(`데이터 누락 ${missingDataItems.length}건`);
-                  return parts.join(", ");
-                })()
-              }
-            />
+            {/* ━━━ Zone A: Decision Header Surface ━━━ */}
+            {(() => {
+              // Pre-compute candidate classification for header
+              const allDiffs = sessionData.diffResult;
+              const candidatePs = products.slice(1);
+              const cats = candidatePs.map((cp, idx) => {
+                const d = allDiffs[idx];
+                const v = d?.summary.overallVerdict;
+                if (v === "INCOMPATIBLE") return "blocked_or_mismatch";
+                if (v === "SIGNIFICANT_DIFFERENCES" && (d?.summary.highCount ?? 0) >= 2) return "substitute_reference";
+                return "direct_comparable";
+              });
+              const directCount = cats.filter(c => c === "direct_comparable").length;
+              const refCount = cats.filter(c => c === "substitute_reference").length;
+              const blockedCount = cats.filter(c => c === "blocked_or_mismatch").length;
+              const shortlistCount = Object.values(candidateActions).filter(a => a === "shortlist").length;
+
+              return (
+                <DecisionHeader
+                  diffResult={diffResult}
+                  candidateCount={products.length - 1}
+                  blockerSummary={(() => {
+                    const parts: string[] = [];
+                    if (diffResult.summary.criticalCount > 0) parts.push(`치명적 ${diffResult.summary.criticalCount}건`);
+                    if (missingDataItems.length > 0) parts.push(`데이터 누락 ${missingDataItems.length}건`);
+                    return parts.join(", ");
+                  })()}
+                  directCount={directCount}
+                  referenceCount={refCount}
+                  blockedCount={blockedCount}
+                  shortlistCount={shortlistCount}
+                  onRequestHandoff={() => {
+                    toast({ title: "요청 화면으로 이동합니다", description: "선택된 후보를 기반으로 견적 요청을 생성합니다." });
+                    onOpenChange(false);
+                  }}
+                />
+              );
+            })()}
 
             {/* 판정 상태 */}
             {linkedOutcomes && (
@@ -737,28 +870,41 @@ export function CompareAnalysisDrawer({
                 <>
                   {deltas.length > 0 && <DeltaSummarySection deltas={deltas} />}
 
-                  {/* ━━━ 3. Candidate Summary Cards ━━━ */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 px-1">
-                      <ListFilter className="h-3.5 w-3.5 text-slate-400" />
-                      <span className="text-xs font-medium text-slate-400">후보 제품</span>
-                    </div>
-                    {candidates.map((c) => (
-                      <CandidateSummaryCard
-                        key={c.product.id}
-                        candidate={c}
-                        sourceProduct={sourceP}
-                        action={candidateActions[c.product.id] ?? null}
-                        onActionChange={(action) =>
-                          setCandidateActions((prev) => ({ ...prev, [c.product.id]: action }))
-                        }
-                      />
-                    ))}
+                  {/* ━━━ Zone C: Candidate Decision Surface — category별 분리 ━━━ */}
+                  <div className="space-y-3">
+                    <CandidateSectionGroup
+                      title="우선 검토 — 직접 비교 가능"
+                      subtitle="요청으로 넘길 수 있는 실질 후보"
+                      candidates={candidates.filter(c => c.category === "direct_comparable")}
+                      sourceProduct={sourceP}
+                      candidateActions={candidateActions}
+                      onActionChange={(id, action) => setCandidateActions(prev => ({ ...prev, [id]: action }))}
+                      borderColor="border-emerald-500/20 bg-emerald-500/5"
+                    />
+                    <CandidateSectionGroup
+                      title="참고 후보 — 대체/참조"
+                      subtitle="카테고리 유사하지만 직접 비교 제한"
+                      candidates={candidates.filter(c => c.category === "substitute_reference")}
+                      sourceProduct={sourceP}
+                      candidateActions={candidateActions}
+                      onActionChange={(id, action) => setCandidateActions(prev => ({ ...prev, [id]: action }))}
+                      borderColor="border-amber-500/15 bg-amber-500/5"
+                    />
+                    <CandidateSectionGroup
+                      title="제외/보류"
+                      subtitle="비교 불가 또는 카테고리 불일치"
+                      candidates={candidates.filter(c => c.category === "blocked_or_mismatch")}
+                      sourceProduct={sourceP}
+                      candidateActions={candidateActions}
+                      onActionChange={(id, action) => setCandidateActions(prev => ({ ...prev, [id]: action }))}
+                      borderColor="border-slate-800/50 bg-slate-900/20"
+                    />
                   </div>
                 </>
               );
             })()}
 
+            {/* ━━━ Zone D: Evidence / Detail Surface ━━━ */}
             <Tabs defaultValue="action" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="action">후속 조치</TabsTrigger>
@@ -766,7 +912,7 @@ export function CompareAnalysisDrawer({
                 <TabsTrigger value="diff">상세 비교</TabsTrigger>
               </TabsList>
 
-              {/* ━━━ 4. Raw Diff Table — collapsed by default ━━━ */}
+              {/* Raw Diff — collapsed, evidence role */}
               <TabsContent value="diff" className="space-y-2 mt-3">
                 <Button
                   variant="ghost"

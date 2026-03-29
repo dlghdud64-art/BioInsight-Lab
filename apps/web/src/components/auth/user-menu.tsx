@@ -15,7 +15,7 @@ import { User, LogOut, Settings, CreditCard, HelpCircle, LayoutDashboard, Clipbo
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { USER_ROLES } from "@/lib/constants";
-import { clearAllWorkbenchState } from "@/lib/store/compare-store";
+import { resetWorkbenchSessionOnLogout } from "@/lib/auth/workbench-session-reset";
 
 export function UserMenu() {
   const { data: session, status } = useSession();
@@ -115,7 +115,7 @@ export function UserMenu() {
         </a>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => {
-          clearAllWorkbenchState();
+          resetWorkbenchSessionOnLogout();
           signOut({ callbackUrl: "/" });
         }}>
           <LogOut className="mr-2 h-4 w-4" />
