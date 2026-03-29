@@ -24,13 +24,21 @@ export interface QuoteChainProgressStripProps {
   className?: string;
 }
 
-const STAGE_SHORT: Record<QuoteChainStage, string> = {
+/** 활성 stage만 매핑 — 미래 슬롯(sent/supplier_confirmed/receiving_prep)은 config 추가 시 여기에 추가 */
+const STAGE_SHORT: Partial<Record<QuoteChainStage, string>> = {
   quote_review: "검토",
   quote_shortlist: "선정",
   quote_approval: "견적승인",
   po_conversion: "PO전환",
   po_approval: "PO승인",
   po_send_readiness: "발송준비",
+  po_created: "PO생성",
+  dispatch_prep: "발송검증",
+  sent: "발송완료",
+  supplier_confirmed: "공급사확인",
+  receiving_prep: "입고준비",
+  stock_release: "릴리즈",
+  reorder_decision: "재주문",
 };
 
 const BADGE_DOTS: Record<string, string> = {
@@ -45,7 +53,7 @@ export function QuoteChainProgressStrip({ surface, onStageClick, className }: Qu
       <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0 mr-2">
         <span className="tabular-nums font-medium text-slate-300">{surface.overallProgress}%</span>
       </div>
-      {surface.stages.map((stage, idx) => {
+      {surface.stages.filter(s => STAGE_SHORT[s.stage]).map((stage, idx) => {
         const isCompleted = surface.completedStages.includes(stage.stage);
         const isCurrent = stage.stage === surface.currentStage;
         return (

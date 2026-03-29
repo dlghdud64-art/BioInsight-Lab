@@ -31,7 +31,15 @@ export type QuoteChainStage =
   | "quote_approval"
   | "po_conversion"
   | "po_approval"
-  | "po_send_readiness";
+  | "po_send_readiness"
+  | "po_created"
+  | "dispatch_prep"
+  // Future slots — type만 선언, config/UI는 해당 배치에서 추가
+  | "sent"
+  | "supplier_confirmed"
+  | "receiving_prep"
+  | "stock_release"
+  | "reorder_decision";
 
 export interface QuoteChainStageConfig {
   stage: QuoteChainStage;
@@ -105,6 +113,76 @@ export const QUOTE_CHAIN_STAGES: QuoteChainStageConfig[] = [
     policyConstraints: [],
     lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber"],
   },
+  {
+    stage: "po_created",
+    label: "PO 생성",
+    description: "PO 확정 — dispatch preparation 진입점",
+    riskTier: "tier1_routine",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: [],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId"],
+  },
+  {
+    stage: "dispatch_prep",
+    label: "발송 준비",
+    description: "공급사 발송 전 최종 검증/차단/스케줄링",
+    riskTier: "tier2_org_impact",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: ["snapshot_validity", "commercial_terms", "document_completeness"],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId"],
+  },
+  {
+    stage: "sent",
+    label: "발송 완료",
+    description: "공급사에 PO 발송 완료 — 실행 결과 terminal",
+    riskTier: "tier1_routine",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: [],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId", "payloadSnapshotId"],
+  },
+  {
+    stage: "supplier_confirmed",
+    label: "공급사 확인",
+    description: "공급사 응답 수신 + operator review 완료",
+    riskTier: "tier1_routine",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: ["supplier_response_delta"],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId", "payloadSnapshotId", "executionId"],
+  },
+  {
+    stage: "receiving_prep",
+    label: "입고 준비",
+    description: "실물 입고 준비 — inbound blocker 계산 + site/handling 확인",
+    riskTier: "tier1_routine",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: ["inbound_readiness", "site_handling"],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId", "payloadSnapshotId", "executionId", "confirmationGovernanceId"],
+  },
+  {
+    stage: "stock_release",
+    label: "재고 릴리즈",
+    description: "품질/안전/준법 게이트 통과 후 가용 재고 전환 — received ≠ available",
+    riskTier: "tier2_org_impact",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: ["quality_gate", "safety_gate", "compliance_gate", "lot_traceability", "expiry_validity"],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId", "payloadSnapshotId", "executionId", "confirmationGovernanceId", "receivingPrepStateId", "receivingExecutionId"],
+  },
+  {
+    stage: "reorder_decision",
+    label: "재주문 판단",
+    description: "released 기준 gap 평가 + supply context 분석 + 재주문/감시/불필요 판단 + procurement re-entry handoff",
+    riskTier: "tier2_org_impact",
+    approvalRequired: false,
+    approvalThresholdAmount: null,
+    policyConstraints: ["coverage_analysis", "safety_stock_gate", "lead_time_gate", "loss_accounting"],
+    lockedFieldsFromPrevious: ["vendorId", "lineItems", "totalAmount", "approvalSnapshotId", "poNumber", "conversionSnapshotId", "poCreatedObjectId", "payloadSnapshotId", "executionId", "confirmationGovernanceId", "receivingPrepStateId", "receivingExecutionId", "stockReleaseGovernanceId"],
+  },
 ];
 
 // ══════════════════════════════════════════════
@@ -161,14 +239,14 @@ export function evaluateQuoteChainGate(
   }
 
   // Approval snapshot for stages after approval
-  if (stage === "po_conversion" || stage === "po_send_readiness") {
+  if (stage === "po_conversion" || stage === "po_send_readiness" || stage === "po_created" || stage === "dispatch_prep" || stage === "sent" || stage === "supplier_confirmed" || stage === "receiving_prep" || stage === "stock_release" || stage === "reorder_decision") {
     if (!approvalSnapshotValid) {
       blockers.push("승인 snapshot 미유효 — 재승인 필요");
     }
   }
 
   // Next stage
-  const stageOrder: QuoteChainStage[] = ["quote_review", "quote_shortlist", "quote_approval", "po_conversion", "po_approval", "po_send_readiness"];
+  const stageOrder: QuoteChainStage[] = ["quote_review", "quote_shortlist", "quote_approval", "po_conversion", "po_approval", "po_send_readiness", "po_created", "dispatch_prep", "sent", "supplier_confirmed", "receiving_prep", "stock_release", "reorder_decision"];
   const currentIdx = stageOrder.indexOf(stage);
   const nextStage = currentIdx < stageOrder.length - 1 ? stageOrder[currentIdx + 1] : null;
 
@@ -259,7 +337,7 @@ export function buildQuoteChainFullSurface(
   isRestrictedItem: boolean,
   snapshotValid: boolean,
 ): QuoteChainFullSurface {
-  const allStages: QuoteChainStage[] = ["quote_review", "quote_shortlist", "quote_approval", "po_conversion", "po_approval", "po_send_readiness"];
+  const allStages: QuoteChainStage[] = ["quote_review", "quote_shortlist", "quote_approval", "po_conversion", "po_approval", "po_send_readiness", "po_created", "dispatch_prep", "sent", "supplier_confirmed", "receiving_prep", "stock_release", "reorder_decision"];
 
   const surfaces: QuoteChainPolicySurface[] = allStages.map(stage => {
     const prevCompleted = stage === "quote_review" || completedStages.includes(allStages[allStages.indexOf(stage) - 1]);

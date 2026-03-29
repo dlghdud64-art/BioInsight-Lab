@@ -72,6 +72,22 @@ export function DispatchPrepWorkbench({
           </div>
         )}
 
+        {/* Soft blockers / warnings */}
+        {state.softBlockers.length > 0 && (
+          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-4 space-y-2">
+            <h4 className="text-xs font-medium text-amber-300">검토 권장 사항</h4>
+            {state.softBlockers.map((b, i) => (
+              <div key={i} className="flex items-start gap-2 text-xs">
+                <span className="text-amber-400 shrink-0 mt-0.5">△</span>
+                <div>
+                  <span className="text-amber-300">{b.detail}</span>
+                  <span className="text-amber-400/70 ml-2">→ {b.remediationAction}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
         {/* Confirmation checklist */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
           <div className="flex items-center justify-between">
@@ -150,6 +166,12 @@ export function DispatchPrepWorkbench({
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {onCancelPrep && <button onClick={onCancelPrep} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">취소</button>}
             {onReopenConversion && <button onClick={onReopenConversion} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">PO 전환 재열기</button>}
+            {onRequestCorrection && state.readiness === "blocked" && (
+              <button onClick={() => onRequestCorrection(state.hardBlockers[0]?.remediationAction || "")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">보정 요청</button>
+            )}
+            {onScheduleSend && state.readiness === "ready_to_send" && state.allConfirmed && (
+              <button onClick={() => onScheduleSend("")} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">예약 발송</button>
+            )}
             {onSendNow && state.readiness === "ready_to_send" && (
               <button onClick={onSendNow} disabled={!state.allConfirmed} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">발송 실행</button>
             )}
