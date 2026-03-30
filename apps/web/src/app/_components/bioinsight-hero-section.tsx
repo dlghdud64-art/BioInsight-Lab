@@ -180,7 +180,7 @@ export function BioInsightHeroSection() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
         <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.22) 0%, rgba(78,138,255,0.12) 24%, rgba(78,138,255,0.00) 56%), radial-gradient(circle at 50% 42%, rgba(37,99,235,0.14) 0%, rgba(37,99,235,0.00) 62%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
-        <div className="absolute inset-0 z-0 pointer-events-auto opacity-40">
+        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
           <PlexusCanvas />
         </div>
       </div>
@@ -237,39 +237,39 @@ export function BioInsightHeroSection() {
       </nav>
 
       {/* Hero */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-6 pt-16 pb-20 text-center w-full">
-        <p className="text-blue-400 font-extrabold text-[11px] tracking-[0.25em] mb-6 uppercase">Biotech Procurement Operations Platform</p>
-        <h1 className="text-4xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 text-center w-full">
+        <p className="text-blue-400 font-extrabold text-[10px] md:text-[11px] tracking-[0.25em] mb-4 md:mb-6 uppercase">Biotech Procurement Operations Platform</p>
+        <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
           구매 요청부터 입고·재고까지,<br />
           <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>운영 상태를 한눈에</span>
         </h1>
-        <p className="text-base md:text-lg text-slate-300 mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+        <p className="text-sm md:text-lg text-slate-300 mb-3 md:mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
           검색부터 비교, 요청, 입고, 재고까지 하나의 운영 흐름으로 연결합니다.<br className="hidden sm:block" />AI는 각 단계에서 필요한 후보 정리와 다음 작업 준비를 돕습니다.
         </p>
-        <p className="text-sm text-slate-400 mb-10 max-w-xl leading-relaxed">
+        <p className="text-xs md:text-sm text-slate-400 mb-8 md:mb-10 max-w-xl leading-relaxed">
           LabAxis는 검색 결과 정리, 비교 판단, 요청 초안 준비를 돕는 AI 보조 기능을 제공합니다.<br className="hidden sm:block" />
           운영자는 더 빠르게 검토하고, 필요한 다음 단계로 바로 이어갈 수 있습니다.
         </p>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Link href={isLoggedIn ? "/app/search" : "/search"}>
-            <Button className="h-12 px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
+          <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
+            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
               {isLoggedIn ? "소싱 워크벤치 열기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           {isLoggedIn ? (
-            <Link href="/dashboard">
-              <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">대시보드</Button>
+            <Link href="/dashboard" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[14px] sm:text-[15px] rounded-lg shadow-lg">대시보드</Button>
             </Link>
           ) : (
-            <Link href="/support">
-              <Button variant="outline" className="h-12 px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
+            <Link href="/support" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[14px] sm:text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
             </Link>
           )}
         </div>
 
         {/* Pipeline */}
-        <div className="mt-16 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-10">
-          <p className="text-slate-400 font-bold text-[11px] tracking-widest uppercase mb-6">End-to-End Operations Pipeline</p>
+        <div className="mt-10 sm:mt-16 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-6 sm:pt-10">
+          <p className="text-slate-400 font-bold text-[10px] sm:text-[11px] tracking-widest uppercase mb-4 sm:mb-6">End-to-End Operations Pipeline</p>
           <div className="hidden md:flex items-center justify-center gap-0">
             {PIPELINE_STEPS.map((step, idx) => {
               const Icon = step.icon;
