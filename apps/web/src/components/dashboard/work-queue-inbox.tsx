@@ -142,7 +142,7 @@ export function WorkQueueInbox() {
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#1a1c20] shadow-sm">
+    <div className="rounded-xl border border-white/[0.10] bg-[#2c2e32] shadow-sm">
       {/* ── Compact Briefing Strip ── */}
       {activeItems.length === 0 ? (
         /* Empty: one-line operational brief */
