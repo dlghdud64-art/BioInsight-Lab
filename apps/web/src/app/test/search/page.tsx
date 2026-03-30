@@ -116,6 +116,30 @@ export default function SearchPage() {
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "approval-handoff-gate" | "approval-workbench" | "po-created-wb-v2" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
+  // ── Stage ownership: sourcing owns up to compare, request/quote owns after ──
+  const REQUEST_STAGE_MODES = new Set([
+    "request-assembly", "request-submission", "request-reopen", "submission-reopen",
+  ]);
+  const QUOTE_STAGE_MODES = new Set([
+    "quote-queue", "quote-normalization", "quote-compare", "quote-reentry", "norm-reentry", "compare-reentry",
+  ]);
+  const POST_QUOTE_STAGE_MODES = new Set([
+    "approval-handoff-gate", "approval-workbench", "approval-reentry",
+    "po-conversion", "po-conv-reentry", "po-created", "po-created-reentry", "po-created-wb-v2",
+    "dispatch-prep", "dispatch-prep-reentry", "send-confirm", "send-confirm-reentry",
+    "po-sent-tracking", "sent-tracking-reentry", "supplier-confirm", "supplier-confirm-reentry",
+    "receiving-prep", "rcv-prep-reentry", "receiving-exec", "rcv-exec-reentry",
+    "inventory-intake", "stock-release", "stock-release-reentry",
+    "reorder-decision", "reorder-decision-reentry", "procurement-reentry", "procurement-reentry-reopen",
+  ]);
+  const stageOwner: "sourcing" | "request" | "quote" | "post-quote" = useMemo(() => {
+    if (!workWindowMode) return "sourcing";
+    if (REQUEST_STAGE_MODES.has(workWindowMode)) return "request";
+    if (QUOTE_STAGE_MODES.has(workWindowMode)) return "quote";
+    if (POST_QUOTE_STAGE_MODES.has(workWindowMode)) return "post-quote";
+    return "sourcing";
+  }, [workWindowMode]);
+  const isSourcingOwner = stageOwner === "sourcing";
   // ── Compare Review + Request Assembly + Submission + Quote Queue + Normalization canonical state ──
   const [requestHandoff, setRequestHandoff] = useState<RequestCandidateHandoff | null>(null);
   const [requestDraftSnapshot, setRequestDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
@@ -325,7 +349,7 @@ export default function SearchPage() {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#363840' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
-      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} />
+      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
 
       {/* ═══ Mobile filter sheet ═══ */}
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
@@ -336,6 +360,7 @@ export default function SearchPage() {
 
       {/* ═══ B + C. Workbench Body ═══ */}
       {hasSearched && !!session?.user ? (
+        isSourcingOwner ? (
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
@@ -506,6 +531,29 @@ export default function SearchPage() {
             )}
           </div>
         </div>
+        ) : (
+        /* ═══ Stage Shell — request/quote/post-quote 단계 배경 ═══ */
+        <div className="flex-1 overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#2e3035' }}>
+          <div className="text-center max-w-md px-6">
+            <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-4">
+              <FileText className="h-6 w-6 text-slate-400" />
+            </div>
+            <p className="text-sm font-semibold text-slate-200 mb-1.5">
+              {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
+            </p>
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">
+              {stageOwner === "request" ? "소싱 비교 결과를 기반으로 견적 요청서를 조립·제출합니다." : stageOwner === "quote" ? "제출된 견적을 정규화·비교·검토합니다." : "승인된 견적을 PO로 전환하고 발주를 실행합니다."}
+            </p>
+            <button
+              type="button"
+              onClick={() => setWorkWindowMode(null)}
+              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              소싱 검색으로 돌아가기
+            </button>
+          </div>
+        </div>
+        )
       ) : (
         /* ═══ Search Entry Surface — 비로그인 or 검색 전 ═══ */
         <div className="flex-1 overflow-hidden flex">
@@ -618,8 +666,8 @@ export default function SearchPage() {
         </div>
       )}
 
-      {/* ═══ D. Sticky Action Dock — logged-in only ═══ */}
-      {hasSearched && !!session?.user && (
+      {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
+      {hasSearched && !!session?.user && isSourcingOwner && (
         <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4a4d55' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
@@ -1600,7 +1648,14 @@ export default function SearchPage() {
 }
 
 /** ═══ A. Search Utility Bar — 3층: 앱 헤더 / 검색 바 / (상태바는 본문에서) ═══ */
-function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean }) {
+const STAGE_LABELS: Record<string, string> = {
+  sourcing: "소싱",
+  request: "요청 조립",
+  quote: "견적 관리",
+  "post-quote": "발주 · 운영",
+};
+
+function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn, stageOwner = "sourcing", onBackToSourcing }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean; stageOwner?: string; onBackToSourcing?: () => void }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
 
@@ -1634,7 +1689,15 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
             <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
           </Link>
           <span className="text-slate-600 text-xs">/</span>
-          <span className="text-xs font-semibold text-slate-300">소싱</span>
+          {stageOwner !== "sourcing" ? (
+            <>
+              <button type="button" onClick={onBackToSourcing} className="text-xs font-medium text-slate-500 hover:text-slate-300 transition-colors">소싱</button>
+              <span className="text-slate-600 text-xs">/</span>
+              <span className="text-xs font-semibold text-white">{STAGE_LABELS[stageOwner] || stageOwner}</span>
+            </>
+          ) : (
+            <span className="text-xs font-semibold text-slate-300">소싱</span>
+          )}
         </div>
       </div>
 
