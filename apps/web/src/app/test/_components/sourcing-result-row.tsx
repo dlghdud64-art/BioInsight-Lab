@@ -141,7 +141,7 @@ function getRowStyle(isSelected: boolean, isInCompare: boolean, isInRequest: boo
   if (isInRequest) {
     return "bg-indigo-600/[0.04] border-indigo-600/[0.12] hover:bg-indigo-600/[0.07]";
   }
-  return "bg-transparent border-transparent hover:bg-white/[0.03]";
+  return "bg-transparent border-transparent hover:bg-white/[0.05]";
 }
 
 // ── Component ────────────────────────────────────────────────────────────
@@ -184,7 +184,7 @@ export function SourcingResultRow({
 
           {/* 2행: 정적 메타 */}
           {staticMeta && (
-            <p className="text-[11px] font-medium text-slate-400 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
+            <p className="text-[11px] font-medium text-slate-300 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
           )}
 
           {/* 3행: 동적 운영 신호 */}
@@ -214,7 +214,7 @@ export function SourcingResultRow({
               <AlertTriangle className="h-3 w-3" />견적 필요
             </span>
           )}
-          <span className="text-[10px] text-slate-500">
+          <span className="text-[10px] text-slate-400">
             {isInRequest ? "견적 후보" : isInCompare ? "비교 후보" : unitPrice ? "VAT 별도" : ""}
           </span>
         </div>
@@ -231,7 +231,7 @@ export function SourcingResultRow({
             </button>
           ) : (
             <Button variant="ghost" size="sm"
-              className="h-7 px-2.5 rounded text-xs font-medium text-slate-200 hover:text-blue-400 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"
+              className="h-7 px-2.5 rounded text-xs font-medium text-slate-100 hover:text-blue-300 hover:bg-blue-600/10 border border-bd hover:border-blue-600/30"
               onClick={onToggleCompare}>
               <GitCompare className="h-3 w-3 mr-1" />비교 추가
             </Button>
@@ -246,7 +246,7 @@ export function SourcingResultRow({
             </button>
           ) : (
             <Button variant="ghost" size="sm"
-              className="h-7 px-2 rounded text-xs font-medium text-slate-500 hover:text-slate-300 hover:bg-el"
+              className="h-7 px-2 rounded text-xs font-medium text-slate-400 hover:text-slate-200 hover:bg-el"
               onClick={onToggleRequest}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
             </Button>
@@ -280,7 +280,7 @@ export function SourcingResultRow({
               <Check className="h-3 w-3" />견적 후보
             </button>
           ) : (
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-500 border border-bd" onClick={onToggleRequest}>
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-400 border border-bd" onClick={onToggleRequest}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
             </Button>
           )}

@@ -347,7 +347,7 @@ export default function SearchPage() {
   const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#363840' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#3a3d46' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
 
@@ -367,14 +367,14 @@ export default function SearchPage() {
             {/* ═══ 3행: Operating Status Bar — 순수 상태 표시 ═══ */}
             <div className="px-4 py-1.5 border-b border-bd/60 flex items-baseline gap-3 text-[11px]">
               {/* 결과 수 */}
-              <span className="text-slate-400">
-                {isSearchLoading ? "검색 중..." : <><span className="font-medium text-slate-300">{products.length}</span>건</>}
+              <span className="text-slate-300">
+                {isSearchLoading ? "검색 중..." : <><span className="font-semibold text-slate-200">{products.length}</span>건</>}
               </span>
               {activeFilterCount > 0 && (
-                <span className="text-slate-500">필터 {activeFilterCount}개</span>
+                <span className="text-slate-400">필터 {activeFilterCount}개</span>
               )}
               {/* 비교/견적 후보 + 다음 행동 */}
-              <span className="text-slate-600 hidden sm:inline">|</span>
+              <span className="text-slate-500 hidden sm:inline">|</span>
               {compareIds.length > 0 && (
                 <span className="text-blue-400 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
               )}
@@ -449,7 +449,7 @@ export default function SearchPage() {
           </div>
 
           {/* C. Right Context Rail — persistent panel */}
-          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col overflow-hidden">
+          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2a2d33] flex-col overflow-hidden">
             {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
             {aiCompareReadiness.active ? (
               <div className="px-3 py-2 border-b border-bd/50">
@@ -533,24 +533,66 @@ export default function SearchPage() {
         </div>
         ) : (
         /* ═══ Stage Shell — request/quote/post-quote 단계 배경 ═══ */
-        <div className="flex-1 overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#2e3035' }}>
-          <div className="text-center max-w-md px-6">
-            <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-4">
-              <FileText className="h-6 w-6 text-slate-400" />
+        <div className="flex-1 overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#32353c' }}>
+          <div className="max-w-lg w-full px-6">
+            {/* Stage header */}
+            <div className="text-center mb-6">
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 border ${stageOwner === "request" ? "bg-emerald-600/10 border-emerald-500/20" : stageOwner === "quote" ? "bg-blue-600/10 border-blue-500/20" : "bg-orange-600/10 border-orange-500/20"}`}>
+                {stageOwner === "request" ? <FileText className="h-5 w-5 text-emerald-400" /> : stageOwner === "quote" ? <Package className="h-5 w-5 text-blue-400" /> : <Package className="h-5 w-5 text-orange-400" />}
+              </div>
+              <p className="text-sm font-bold text-slate-100 mb-1">
+                {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
+              </p>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {stageOwner === "request" ? "소싱 비교 결과를 기반으로 견적 요청서를 조립·제출합니다." : stageOwner === "quote" ? "제출된 견적을 정규화·비교·검토합니다." : "승인된 견적을 PO로 전환하고 발주를 실행합니다."}
+              </p>
             </div>
-            <p className="text-sm font-semibold text-slate-200 mb-1.5">
-              {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
-            </p>
-            <p className="text-xs text-slate-400 leading-relaxed mb-4">
-              {stageOwner === "request" ? "소싱 비교 결과를 기반으로 견적 요청서를 조립·제출합니다." : stageOwner === "quote" ? "제출된 견적을 정규화·비교·검토합니다." : "승인된 견적을 PO로 전환하고 발주를 실행합니다."}
-            </p>
-            <button
-              type="button"
-              onClick={() => setWorkWindowMode(null)}
-              className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
-            >
-              소싱 검색으로 돌아가기
-            </button>
+
+            {/* Handoff context — 이전 선택 맥락 */}
+            {(quoteItems.length > 0 || compareIds.length > 0 || searchQuery) && (
+              <div className="rounded-lg border border-bd bg-[#282b31] px-4 py-3 mb-4 space-y-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">이전 선택 맥락</p>
+                <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
+                  {searchQuery && (
+                    <span className="text-slate-300">검색: <span className="font-medium text-slate-200">{searchQuery}</span></span>
+                  )}
+                  {compareIds.length > 0 && (
+                    <span className="text-blue-400">비교 후보 <span className="font-semibold">{compareIds.length}건</span></span>
+                  )}
+                  {quoteItems.length > 0 && (
+                    <span className="text-emerald-400">견적 후보 <span className="font-semibold">{quoteItems.length}건</span></span>
+                  )}
+                </div>
+                {quoteItems.length > 0 && (
+                  <div className="text-[11px] text-slate-400 mt-1 line-clamp-2">
+                    {quoteItems.slice(0, 3).map((q: any) => q.name || q.productName || "품목").join(", ")}
+                    {quoteItems.length > 3 && ` 외 ${quoteItems.length - 3}개`}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Next action */}
+            <div className="rounded-lg border border-bd bg-[#282b31] px-4 py-3 mb-4">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">다음 액션</p>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                {stageOwner === "request"
+                  ? "워크벤치 상단의 작업 창에서 요청서 조립 · 검토 · 제출을 진행하세요."
+                  : stageOwner === "quote"
+                  ? "워크벤치 상단의 작업 창에서 견적 정규화 · 비교 검토를 진행하세요."
+                  : "워크벤치 상단의 작업 창에서 PO 전환 · 발주를 진행하세요."}
+              </p>
+            </div>
+
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setWorkWindowMode(null)}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                소싱 검색으로 돌아가기
+              </button>
+            </div>
           </div>
         </div>
         )
@@ -646,7 +688,7 @@ export default function SearchPage() {
 
           {/* Right guide rail — 비로그인 안내 */}
           {!session?.user && (
-            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-pn flex-col items-center justify-center text-center px-6">
+            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2a2d33] flex-col items-center justify-center text-center px-6">
               <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
                 <Search className="h-6 w-6 text-blue-400/60" />
               </div>
@@ -668,13 +710,13 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
       {hasSearched && !!session?.user && isSourcingOwner && (
-        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4a4d55' }}>
+        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4e515b' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-600"}`} />
-                <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-200" : "text-slate-500"}`}>비교</span>
+                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-500"}`} />
+                <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-100" : "text-slate-400"}`}>비교</span>
                 <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600/15 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
               </div>
               {compareIds.length > 0 ? (
@@ -704,8 +746,8 @@ export default function SearchPage() {
             {/* Request segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-600"}`} />
-                <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-200" : "text-slate-500"}`}>견적</span>
+                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-500"}`} />
+                <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-100" : "text-slate-400"}`}>견적</span>
                 <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
               </div>
               {quoteItems.length > 0 ? (
@@ -1681,9 +1723,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-bd bg-el">
+    <div className="shrink-0 border-b border-bd bg-[#2e3138]">
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#2e3138]">
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard" className="flex items-center">
             <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
@@ -1704,7 +1746,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
       <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-pn border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#35373b] transition-all">
+          <div className="flex items-center flex-1 bg-[#33363d] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#393c44] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"

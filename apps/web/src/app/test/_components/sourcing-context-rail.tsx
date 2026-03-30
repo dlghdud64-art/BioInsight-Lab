@@ -53,8 +53,8 @@ export function SourcingContextRail({
   return (
     <div className="flex flex-col h-full">
       {/* Rail 헤더 — sticky */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-bd bg-el z-10">
-        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-bd bg-[#2a2d33] z-10">
+        <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
           제품 상세
         </span>
         <Button
@@ -106,12 +106,12 @@ export function SourcingContextRail({
 
         {/* 다음 단계 — 짧은 행동형 */}
         <div className="px-4 py-3 border-b border-bd/50">
-          <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+          <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
             다음 단계
           </div>
           <div className="space-y-1.5 text-xs">
             {!isInCompare && !isInRequest && (
-              <p className="text-slate-400">비교 후보에 추가하거나 견적 후보에 추가</p>
+              <p className="text-slate-300">비교 후보에 추가하거나 견적 후보에 추가</p>
             )}
             {isInCompare && compareCount >= 2 && onOpenCompareWindow && (
               <button
@@ -140,7 +140,7 @@ export function SourcingContextRail({
         {/* 운영 연결 */}
         {searchQuery && (
           <div className="px-4 py-3">
-            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">연결</div>
+            <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">연결</div>
             <Link
               href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}
               className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors py-1"

@@ -162,8 +162,8 @@ export function RequestAssemblyWorkWindow({
   const incompleteLines = assemblyState.requestLines.filter((l) => !l.isComplete);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-[#22252a] border border-bd rounded-xl shadow-2xl w-full max-w-[1080px] max-h-[82vh] overflow-hidden flex flex-col">
         {/* ═══ 1. Identity Strip ═══ */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
           <div className="flex items-center gap-3">
