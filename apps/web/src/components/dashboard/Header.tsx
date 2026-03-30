@@ -210,7 +210,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-bd bg-sh">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-white/[0.06] bg-[#1a1c1f]">
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
