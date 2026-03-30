@@ -2,13 +2,15 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useMemo, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -16,7 +18,9 @@ import {
   ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
   AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
   AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
+  Loader2, Mail, Ban,
 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
@@ -339,11 +343,103 @@ const MODE_CHIPS = [
 function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
+
+  // ── 견적 요청 발송 state ──
+  const [sendVendorEmail, setSendVendorEmail] = useState("");
+  const [sendVendorName, setSendVendorName] = useState("");
+  const [sendMessage, setSendMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendBlockedReason, setSendBlockedReason] = useState<string | null>(null);
+
+  // ── 견적 요청 발송 핸들러 ──
+  const handleSendQuoteRequest = useCallback(async (quoteId: string) => {
+    console.log("[quote-send] click", { quoteId });
+    setSendError(null);
+    setSendBlockedReason(null);
+    setSendSuccess(false);
+
+    // Guard: vendor email
+    if (!sendVendorEmail.trim()) {
+      console.log("[quote-send] blocked: 공급사 이메일 누락");
+      setSendBlockedReason("공급사 연락처가 없어 발송할 수 없습니다");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendVendorEmail.trim())) {
+      console.log("[quote-send] blocked: 이메일 형식 오류");
+      setSendBlockedReason("유효한 이메일 주소를 입력하세요");
+      return;
+    }
+
+    console.log("[quote-send] guard passed", { quoteId, email: sendVendorEmail.trim() });
+    setIsSending(true);
+
+    try {
+      console.log("[quote-send] mutation start", { quoteId });
+      const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendors: [{ email: sendVendorEmail.trim(), name: sendVendorName.trim() || undefined }],
+          message: sendMessage.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `발송 실패 (${res.status})`);
+      }
+
+      const result = await res.json();
+      console.log("[quote-send] success", { quoteId, sent: result.sent });
+
+      // Invalidate all related queries
+      queryClient.invalidateQueries({ queryKey: ["quotes"] });
+      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+      queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
+
+      setSendSuccess(true);
+      toast({
+        title: "견적 요청이 발송되었습니다",
+        description: `${sendVendorEmail.trim()}에게 발송 완료`,
+      });
+
+      // 2초 후 자동으로 work window 닫기 + state 정리
+      setTimeout(() => {
+        setSendVendorEmail("");
+        setSendVendorName("");
+        setSendMessage("");
+        setSendSuccess(false);
+        setActiveWorkWindow(null);
+      }, 2000);
+
+    } catch (error: any) {
+      console.log("[quote-send] failed:", error.message);
+      setSendError(error.message || "발송 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSending(false);
+    }
+  }, [sendVendorEmail, sendVendorName, sendMessage, queryClient, toast]);
+
+  // Work window 열릴 때 발송 state 초기화
+  useEffect(() => {
+    if (activeWorkWindow === "request_send") {
+      setSendVendorEmail("");
+      setSendVendorName("");
+      setSendMessage("");
+      setSendError(null);
+      setSendBlockedReason(null);
+      setSendSuccess(false);
+    }
+  }, [activeWorkWindow]);
 
   // ── Rail open/close — single source of truth ──
   const openQuoteContextRail = (caseId: string, source: string = "row") => {
@@ -856,11 +952,19 @@ function QuotesPageContent() {
       {activeWorkWindow && selectedQuote && selectedSignals && (
         <CenterWorkWindow
           open={true}
-          onClose={() => setActiveWorkWindow(null)}
+          onClose={() => { if (!isSending) setActiveWorkWindow(null); }}
           title={selectedSignals.ctaLabel}
           subtitle={`${selectedQuote.title} · ${selectedSignals.badge}`}
-          phase="ready"
-          primaryAction={{
+          phase={isSending ? "executing" : sendSuccess ? "complete" : "ready"}
+          primaryAction={activeWorkWindow === "request_send" ? {
+            label: isSending ? "발송 중..." : sendSuccess ? "발송 완료" : "견적 요청 발송",
+            onClick: () => {
+              if (!isSending && !sendSuccess) {
+                handleSendQuoteRequest(selectedQuote.id);
+              }
+            },
+            disabled: isSending || sendSuccess,
+          } : {
             label: activeWorkWindow === "compare_review"
               ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
               : activeWorkWindow === "approval_prep"
@@ -871,7 +975,7 @@ function QuotesPageContent() {
               setActiveWorkWindow(null);
             },
           }}
-          secondaryAction={{ label: "닫기", onClick: () => setActiveWorkWindow(null) }}
+          secondaryAction={{ label: isSending ? "발송 중…" : "닫기", onClick: () => { if (!isSending) setActiveWorkWindow(null); } }}
         >
           <div className="space-y-4">
             {/* Work window header context */}
@@ -888,10 +992,108 @@ function QuotesPageContent() {
 
             {/* Action-specific content */}
             {activeWorkWindow === "request_send" && (
-              <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-200">견적 요청 발송</p>
-                <p className="text-xs text-slate-400">선택한 공급사에 견적 요청을 발송합니다. 발송 후 회신 수집이 시작됩니다.</p>
-                <div className="text-xs text-slate-500">품목: {selectedQuote.items.length}건</div>
+              <div className="space-y-4">
+                {/* 발송 성공 */}
+                {sendSuccess && (
+                  <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/10 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                      <p className="text-sm font-medium text-emerald-300">견적 요청을 발송했습니다</p>
+                    </div>
+                    <p className="text-xs text-slate-400 pl-6">{sendVendorEmail}에게 발송 완료 — 회신 수집 단계로 전환됩니다</p>
+                  </div>
+                )}
+
+                {/* 발송 실패 */}
+                {sendError && (
+                  <div className="rounded-lg border border-red-600/30 bg-red-600/10 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <AlertCircle className="h-4 w-4 text-red-400" />
+                      <p className="text-sm font-medium text-red-300">발송 중 오류가 발생했습니다</p>
+                    </div>
+                    <p className="text-xs text-red-400/80 pl-6">{sendError}</p>
+                    <Button size="sm" variant="outline" className="mt-2 ml-6 h-7 text-[10px] border-red-600/20 text-red-400 hover:bg-red-600/10" onClick={() => setSendError(null)}>
+                      다시 시도
+                    </Button>
+                  </div>
+                )}
+
+                {/* 차단 사유 */}
+                {sendBlockedReason && (
+                  <div className="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Ban className="h-4 w-4 text-amber-400" />
+                      <p className="text-sm font-medium text-amber-300">발송 전 확인 필요</p>
+                    </div>
+                    <p className="text-xs text-amber-400/80 pl-6">{sendBlockedReason}</p>
+                  </div>
+                )}
+
+                {/* 발송 중 로딩 */}
+                {isSending && (
+                  <div className="rounded-lg border border-blue-600/30 bg-blue-600/10 p-4 flex items-center gap-3">
+                    <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
+                    <div>
+                      <p className="text-sm font-medium text-blue-300">발송 중...</p>
+                      <p className="text-xs text-slate-400">공급사에게 견적 요청 이메일을 전송하고 있습니다</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* 발송 폼 — 성공 시 숨김 */}
+                {!sendSuccess && (
+                  <>
+                    <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Mail className="h-4 w-4 text-slate-400" />
+                        <p className="text-xs font-medium text-slate-200">견적 요청 발송</p>
+                      </div>
+                      <p className="text-xs text-slate-400">공급사에게 견적 요청 이메일을 발송합니다. 발송 후 회신 수집이 시작됩니다.</p>
+                      <div className="text-xs text-slate-500 flex items-center gap-3">
+                        <span>품목: {selectedQuote.items.length}건</span>
+                        {selectedQuote.deliveryDate && <span>납기: {new Date(selectedQuote.deliveryDate).toLocaleDateString("ko-KR")}</span>}
+                      </div>
+                    </div>
+
+                    <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="ww-send-vendor-email" className="text-xs font-medium text-slate-300">공급사 이메일 <span className="text-red-400 text-[10px]">필수</span></Label>
+                        <Input
+                          id="ww-send-vendor-email"
+                          type="email"
+                          placeholder="vendor@example.com"
+                          value={sendVendorEmail}
+                          onChange={(e) => { setSendVendorEmail(e.target.value); setSendBlockedReason(null); }}
+                          disabled={isSending}
+                          className="h-9 text-sm bg-el border-bd"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="ww-send-vendor-name" className="text-xs font-medium text-slate-300">공급사명 <span className="text-slate-500 text-[10px]">선택</span></Label>
+                        <Input
+                          id="ww-send-vendor-name"
+                          placeholder="공급사명"
+                          value={sendVendorName}
+                          onChange={(e) => setSendVendorName(e.target.value)}
+                          disabled={isSending}
+                          className="h-9 text-sm bg-el border-bd"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor="ww-send-message" className="text-xs font-medium text-slate-300">요청 메시지 <span className="text-slate-500 text-[10px]">선택</span></Label>
+                        <Textarea
+                          id="ww-send-message"
+                          placeholder="추가 요청 사항이 있으면 입력하세요"
+                          value={sendMessage}
+                          onChange={(e) => setSendMessage(e.target.value)}
+                          disabled={isSending}
+                          rows={3}
+                          className="text-sm bg-el border-bd"
+                        />
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             )}
             {activeWorkWindow === "followup_send" && (
