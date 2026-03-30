@@ -161,29 +161,29 @@ export default function DashboardPage() {
 
   // -- KPI 해석 문구 --
   const getInventoryInsight = () => {
-    if (stats.totalInventory === 0) return "품목을 등록하면 현황이 표시됩니다";
-    if (stats.lowStockAlerts > 0) return `${stats.lowStockAlerts}개 품목 부족 -- 점검 필요`;
+    if (stats.totalInventory === 0) return "등록된 품목이 없어 비교·요청 이력이 아직 없습니다";
+    if (stats.lowStockAlerts > 0) return `${stats.lowStockAlerts}개 품목 부족 — 발주 검토 필요`;
     return "전체 품목 정상 운영 중";
   };
 
   const getStockInsight = () => {
-    if (stats.lowStockAlerts === 0) return "현재 모든 품목 정상 수준";
-    if (stats.lowStockAlerts >= 3) return "즉시 발주 검토가 필요합니다";
-    return "해당 품목의 발주를 검토하세요";
+    if (stats.lowStockAlerts === 0) return "모든 품목이 안전재고 이상으로 유지되고 있습니다";
+    if (stats.lowStockAlerts >= 3) return "3건 이상 부족 — 일괄 발주를 검토하세요";
+    return "해당 품목의 개별 발주를 검토하세요";
   };
 
   const getSpendingInsight = () => {
     const change = stats.monthOverMonthChange;
-    if (stats.monthlySpending === 0) return "이번 달 지출 내역 없음";
-    if (change > 10) return `전월 대비 ${change.toFixed(0)}% 증가 -- 확인 필요`;
-    if (change < -10) return `전월 대비 ${Math.abs(change).toFixed(0)}% 절감`;
-    return "전월과 유사한 지출 수준";
+    if (stats.monthlySpending === 0) return "이번 달 지출이 없어 추이를 표시할 수 없습니다";
+    if (change > 10) return `전월 대비 ${change.toFixed(0)}% 증가 — 지출 항목을 확인하세요`;
+    if (change < -10) return `전월 대비 ${Math.abs(change).toFixed(0)}% 절감 — 정상 범위`;
+    return "전월과 유사한 수준을 유지하고 있습니다";
   };
 
   const getQuoteInsight = () => {
-    if (stats.activeQuotes === 0) return "현재 진행 중인 견적 없음";
-    if (stats.respondedQuotes > 0) return `${stats.respondedQuotes}건 응답 수신 -- 검토 필요`;
-    return "공급사 응답 대기 중";
+    if (stats.activeQuotes === 0) return "진행 중인 견적이 없어 응답 대기 건이 없습니다";
+    if (stats.respondedQuotes > 0) return `${stats.respondedQuotes}건 응답 수신 — 확정 또는 반려가 필요합니다`;
+    return "공급사 응답 대기 중 — 평균 1~2일 소요";
   };
 
   // -- KPI risk level --
@@ -251,13 +251,34 @@ export default function DashboardPage() {
     });
   }
 
-  // -- 추천 작업 (항상 표시) --
-  const recommendedActions = [
-    { id: "r-search", icon: <Search className="h-3.5 w-3.5 text-blue-400" />, label: "시약·장비 검색", desc: "500만+ 품목 검색", href: "/app/search" },
-    { id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-blue-400" />, label: "제품 비교", desc: "스펙·가격 비교", href: "/app/compare" },
-    { id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청하기", desc: "공급사에 견적 발송", href: "/app/quote" },
-    { id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-blue-400" />, label: "재고 등록", desc: "입고 품목 등록", href: "/dashboard/inventory" },
-  ];
+  // -- 상태 기반 추천 작업 --
+  const recommendedActions: Array<{ id: string; icon: React.ReactNode; label: string; desc: string; href: string; state: "idle" | "ready" | "blocked" }> = [];
+
+  // 품목 등록 상태
+  if (stats.totalInventory === 0) {
+    recommendedActions.push({ id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-slate-400" />, label: "품목 등록", desc: "등록된 품목이 없어 비교·견적을 시작할 수 없습니다", href: "/dashboard/inventory", state: "blocked" });
+  } else {
+    recommendedActions.push({ id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-emerald-400" />, label: "재고 등록", desc: `${stats.totalInventory}개 운영 중 · 추가 입고 등록`, href: "/dashboard/inventory", state: "ready" });
+  }
+
+  // 비교 상태
+  if (stats.undecidedCompareCount > 0) {
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-amber-400" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
+  } else if (stats.totalInventory > 0) {
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/compare", state: "idle" });
+  }
+
+  // 견적 상태
+  if (stats.respondedQuotes > 0) {
+    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-amber-400" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
+  } else if (stats.activeQuotes > 0) {
+    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 현황", desc: `${stats.activeQuotes}건 응답 대기 중`, href: "/dashboard/quotes?status=PENDING", state: "idle" });
+  } else {
+    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청", desc: "작성 대기 요청 없음 — 비교 결과에서 견적을 시작하세요", href: "/app/quote", state: "idle" });
+  }
+
+  // 검색
+  recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "500만+ 품목에서 후보 탐색", href: "/app/search", state: "idle" });
 
   // -- KPI 판단 카드 렌더 (공통) --
   const renderKpiCard = (config: {
@@ -298,24 +319,24 @@ export default function DashboardPage() {
       {/* --- AI 작업함 --- */}
       <WorkQueueInbox />
 
-      {/* --- Empty State --- */}
+      {/* --- Empty State (보조 섹션) --- */}
       {!hasAnyData && !statsLoading && (
-        <div className="rounded-xl bg-[#1e2024] border border-white/[0.08] border-dashed p-5 md:p-6">
-          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-4">운영 시작 가이드</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="rounded-lg border border-white/[0.05] border-dashed p-4 md:p-5 bg-white/[0.01]">
+          <p className="text-[10px] font-medium text-slate-600 uppercase tracking-widest mb-3">시작하기</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
-              { step: "1", label: "품목 등록", desc: "시약·장비 데이터를 등록하세요", href: "/dashboard/inventory", icon: <Plus className="h-4 w-4 text-blue-400" /> },
-              { step: "2", label: "비교 시작", desc: "벤더별 스펙·가격을 비교하세요", href: "/app/compare", icon: <GitCompare className="h-4 w-4 text-blue-400" /> },
-              { step: "3", label: "견적 요청", desc: "공급사에 견적을 요청하세요", href: "/app/quote", icon: <FileText className="h-4 w-4 text-slate-400" /> },
-              { step: "4", label: "재고 연결", desc: "입고 후 재고를 자동 연결하세요", href: "/dashboard/inventory", icon: <Package className="h-4 w-4 text-blue-400" /> },
+              { step: "1", label: "품목 등록", desc: "시약·장비 등록", href: "/dashboard/inventory", icon: <Plus className="h-3.5 w-3.5 text-slate-500" /> },
+              { step: "2", label: "비교 시작", desc: "스펙·가격 비교", href: "/app/compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-500" /> },
+              { step: "3", label: "견적 요청", desc: "공급사 견적 요청", href: "/app/quote", icon: <FileText className="h-3.5 w-3.5 text-slate-500" /> },
+              { step: "4", label: "재고 연결", desc: "입고 후 연결", href: "/dashboard/inventory", icon: <Package className="h-3.5 w-3.5 text-slate-500" /> },
             ].map((item) => (
-              <Link key={item.step} href={item.href} className="group bg-el border border-bd rounded-lg p-3 hover:bg-st transition-colors">
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 bg-st rounded px-1.5 py-0.5">{item.step}</span>
+              <Link key={item.step} href={item.href} className="group border border-white/[0.05] rounded-md p-2.5 hover:bg-white/[0.03] transition-colors">
+                <div className="flex items-center gap-1.5 mb-1">
+                  <span className="text-[9px] font-bold text-slate-600 bg-white/[0.05] rounded px-1 py-0.5">{item.step}</span>
                   {item.icon}
                 </div>
-                <p className="text-xs font-semibold text-white">{item.label}</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">{item.desc}</p>
+                <p className="text-[11px] font-medium text-slate-300">{item.label}</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">{item.desc}</p>
               </Link>
             ))}
           </div>
@@ -520,15 +541,19 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* 추천 작업 */}
+            {/* 상태 기반 추천 */}
             <div className="space-y-1.5">
               {urgentItems.length > 0 && <div className="border-t border-bd" />}
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">추천 작업</p>
-              <div className="grid grid-cols-2 gap-2">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">다음 작업</p>
+              <div className="space-y-1">
                 {recommendedActions.map((action) => (
-                  <Link key={action.id} href={action.href} className="flex items-center gap-2 p-2 rounded-lg bg-el hover:bg-st transition-colors">
+                  <Link key={action.id} href={action.href} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] transition-colors">
                     {action.icon}
-                    <span className="text-xs font-medium text-slate-200">{action.label}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-white" : "text-slate-300"}`}>{action.label}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{action.desc}</p>
+                    </div>
+                    <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -561,17 +586,19 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* 최근 구매 (축소) */}
-        {stats.recentPurchases.length > 0 && (
-          <Card className="bg-[#1e2024] border-white/[0.08] shadow-sm rounded-xl">
-            <CardHeader className="pb-2 p-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-white">최근 구매</CardTitle>
-                <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
-              </div>
-            </CardHeader>
-            <CardContent className="p-3 pt-0 space-y-2">
-              {stats.recentPurchases.slice(0, 3).map((p, i) => (
+        {/* 최근 처리 이력 (축소) */}
+        <Card className="bg-[#1e2024] border-white/[0.08] shadow-sm rounded-xl">
+          <CardHeader className="pb-2 p-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
+              <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
+            </div>
+          </CardHeader>
+          <CardContent className="p-3 pt-0 space-y-2">
+            {stats.recentPurchases.length === 0 ? (
+              <p className="text-xs text-slate-500 py-2">아직 처리된 운영 이력이 없습니다</p>
+            ) : (
+              stats.recentPurchases.slice(0, 3).map((p, i) => (
                 <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-bd/30 last:border-0">
                   <Beaker className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
@@ -582,10 +609,10 @@ export default function DashboardPage() {
                     {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
                   </span>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        )}
+              ))
+            )}
+          </CardContent>
+        </Card>
       </div>
 
       {/* ======= 데스크탑 레이아웃 ======= */}
@@ -665,11 +692,11 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* 최근 구매 내역 */}
+          {/* 최근 처리 이력 */}
           <Card className="overflow-hidden bg-[#1e2024] border-white/[0.08] shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-sm font-semibold text-white">최근 구매 내역</CardTitle>
+                <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
                 <Link href="/dashboard/purchases" className="flex items-center text-xs text-slate-500 hover:text-slate-100 font-medium transition-colors">
                   전체 보기 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </Link>
@@ -679,7 +706,7 @@ export default function DashboardPage() {
               {stats.recentPurchases.length === 0 ? (
                 <div className="flex items-center gap-3 py-4 text-center justify-center">
                   <Package className="h-5 w-5 text-slate-500" />
-                  <p className="text-sm text-slate-400">구매 내역을 등록하면 여기에 표시됩니다.</p>
+                  <p className="text-sm text-slate-400">아직 처리된 운영 이력이 없습니다</p>
                 </div>
               ) : (
                 <div className="space-y-0 divide-y divide-bd/50">
@@ -726,17 +753,17 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* 추천 작업 */}
+              {/* 상태 기반 추천 */}
               <div className="space-y-2">
                 {urgentItems.length > 0 && <div className="border-t border-bd" />}
-                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">추천 작업</p>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">다음 작업</p>
                 <div className="space-y-0.5">
                   {recommendedActions.map((action) => (
                     <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
                       {action.icon}
                       <div className="flex-1 min-w-0">
-                        <span className="block text-sm font-semibold text-white">{action.label}</span>
-                        <span className="block text-[11px] text-slate-500">{action.desc}</span>
+                        <span className={`block text-sm font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-white" : "text-slate-300"}`}>{action.label}</span>
+                        <span className="block text-[11px] text-slate-500 leading-snug">{action.desc}</span>
                       </div>
                       <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
                     </Link>

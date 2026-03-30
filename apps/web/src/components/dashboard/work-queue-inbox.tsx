@@ -142,74 +142,84 @@ export function WorkQueueInbox() {
   }
 
   return (
-    <div className="rounded-xl border border-bd/60 bg-pn border-bd shadow-sm">
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 pb-2">
-        <div className="flex items-center gap-2">
-          <Zap className="h-5 w-5 text-amber-500" />
-          <h2 className="text-sm font-semibold text-slate-100">
-            AI 작업함
-          </h2>
-          {(data?.activeCount ?? 0) > 0 && (
-            <Badge
-              variant="secondary"
-              className="bg-amber-100 text-amber-800 text-xs px-1.5 py-0"
-            >
-              {data?.activeCount}
-            </Badge>
-          )}
-        </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-xs text-slate-500"
-          onClick={() => router.push("/dashboard/work-queue")}
-        >
-          전체 보기 <ChevronRight className="h-3 w-3 ml-1" />
-        </Button>
-      </div>
-
-      {/* Active Items */}
-      <div className="px-4 pb-2 space-y-2">
-        {activeItems.length === 0 ? (
-          <div className="py-8 text-center">
-            <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">모든 AI 작업이 처리되었습니다</p>
-            <p className="text-xs text-slate-400 mt-1">운영 상태 정상</p>
+    <div className="rounded-xl border border-white/[0.08] bg-[#1a1c20] shadow-sm">
+      {/* ── Compact Briefing Strip ── */}
+      {activeItems.length === 0 ? (
+        /* Empty: one-line operational brief */
+        <div className="flex items-center justify-between px-4 py-3">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
+            <span className="text-[13px] font-medium text-slate-200">현재 처리 필요 항목 없음</span>
+            <span className="text-[11px] text-slate-500 hidden sm:inline">· 운영 상태 정상</span>
           </div>
-        ) : (
-          activeItems.slice(0, 3).map((item) => (
-            <WorkQueueCard
-              key={item.id}
-              item={item}
-              onNavigate={() => router.push(getDeepLinkPath(item))}
-              onApprove={() => approveMutation.mutate({ id: item.id })}
-              onDismiss={() => dismissMutation.mutate(item.id)}
-              onExecuteOps={(actionId: string) =>
-                executeOpsMutation.mutate({ actionId, itemId: item.id })
-              }
-              isApproving={approveMutation.isPending}
-              isExecutingOps={executeOpsMutation.isPending}
-            />
-          ))
-        )}
-
-        {activeItems.length > 3 && (
-          <button
+          <Button
+            variant="ghost" size="sm" className="text-[11px] text-slate-500 h-7 px-2"
             onClick={() => router.push("/dashboard/work-queue")}
-            className="w-full text-center py-2 text-xs text-blue-600 hover:text-blue-700 font-medium"
           >
-            +{activeItems.length - 3}건 더 보기
-          </button>
-        )}
-      </div>
+            작업함 <ChevronRight className="h-3 w-3 ml-0.5" />
+          </Button>
+        </div>
+      ) : (
+        /* Active: compact briefing + expandable items */
+        <>
+          <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center gap-2.5">
+              <span className="relative flex h-2 w-2 flex-shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+              </span>
+              <span className="text-[13px] font-medium text-slate-200">처리 대기 {activeItems.length}건</span>
+              <span className="text-[11px] text-slate-500 hidden sm:inline">
+                · {activeItems[0] ? (ACTIVITY_LABEL[activeItems[0].lastActivity ?? ""] || activeItems[0].description?.slice(0, 30) || "검토 필요") : ""}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {(data?.completedCount ?? 0) > 0 && (
+                <span className="text-[10px] text-slate-600 hidden sm:inline">완료 {data?.completedCount}</span>
+              )}
+              <Button
+                variant="ghost" size="sm" className="text-[11px] text-slate-500 h-7 px-2"
+                onClick={() => router.push("/dashboard/work-queue")}
+              >
+                전체 <ChevronRight className="h-3 w-3 ml-0.5" />
+              </Button>
+            </div>
+          </div>
 
-      {/* Recent Completed (접힘 영역) */}
-      {(data?.completedCount ?? 0) > 0 && (
-        <div className="border-t border-slate-100 border-bd">
+          {/* Top 2 active items inline */}
+          <div className="px-4 pb-3 space-y-1.5">
+            {activeItems.slice(0, 2).map((item) => (
+              <WorkQueueCard
+                key={item.id}
+                item={item}
+                onNavigate={() => router.push(getDeepLinkPath(item))}
+                onApprove={() => approveMutation.mutate({ id: item.id })}
+                onDismiss={() => dismissMutation.mutate(item.id)}
+                onExecuteOps={(actionId: string) =>
+                  executeOpsMutation.mutate({ actionId, itemId: item.id })
+                }
+                isApproving={approveMutation.isPending}
+                isExecutingOps={executeOpsMutation.isPending}
+              />
+            ))}
+            {activeItems.length > 2 && (
+              <button
+                onClick={() => router.push("/dashboard/work-queue")}
+                className="w-full text-center py-1.5 text-[11px] text-slate-500 hover:text-slate-300 font-medium transition-colors"
+              >
+                +{activeItems.length - 2}건 더 보기
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Recent Completed (접힘 영역) — only when items exist AND expanded */}
+      {(data?.completedCount ?? 0) > 0 && activeItems.length > 0 && (
+        <div className="border-t border-white/[0.04]">
           <button
             onClick={() => setShowCompleted((v) => !v)}
-            className="w-full flex items-center justify-between px-4 py-2 text-xs text-slate-500 hover:bg-el/50 transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 text-[11px] text-slate-600 hover:text-slate-400 transition-colors"
           >
             <span>최근 완료 ({data?.completedCount}건)</span>
             <ChevronDown
