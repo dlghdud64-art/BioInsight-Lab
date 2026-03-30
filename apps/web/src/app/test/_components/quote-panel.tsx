@@ -2729,15 +2729,14 @@ export function QuoteItemsSummaryPanel({
               <Button
                 type="button"
                 onClick={() => {
+                  if (isSubmitting) return;
                   const form = document.getElementById('quote-request-form') as HTMLFormElement;
                   if (form) {
-                    setIsSubmitting(true);
                     form.requestSubmit();
-                    // form 제출 후 상태 리셋은 form의 onsubmit에서 처리됨
-                    setTimeout(() => setIsSubmitting(false), 3000);
+                    // isSubmitting은 handleSubmit에서 관리 — setTimeout race condition 제거
                   }
                 }}
-                className="w-full h-14 text-lg font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all"
+                className={`w-full h-14 text-lg font-bold shadow-lg hover:shadow-xl transition-all ${isSubmitting ? "bg-blue-700 text-blue-200 cursor-wait" : "bg-blue-600 hover:bg-blue-700 text-white"}`}
                 disabled={isSubmitting || quoteItems.length === 0}
               >
                 {isSubmitting ? (

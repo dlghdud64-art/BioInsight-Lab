@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Check, AlertTriangle, Send, ArrowRight, Building2, Package, FileText, ClipboardCheck, Shield } from "lucide-react";
+import { X, Check, AlertTriangle, Send, ArrowRight, Building2, Package, FileText, ClipboardCheck, Shield, Loader2, AlertCircle } from "lucide-react";
 import {
   type RequestSubmissionState,
   type RequestSubmissionEvent,
@@ -71,26 +71,63 @@ export function RequestSubmissionWorkWindow({
     return validateRequestSubmissionBeforeExecute(submissionState, draftSnapshot);
   }, [submissionState, draftSnapshot]);
 
+  // ── Execution feedback state ──
+  const [executionError, setExecutionError] = useState<string | null>(null);
+  const [blockedReason, setBlockedReason] = useState<string | null>(null);
+  const isExecutingRef = useRef(false);
+
   // ── Actions ──
   const executeSubmission = useCallback(async () => {
-    if (!submissionState || !draftSnapshot || !validation?.canSubmit) return;
+    // Prevent duplicate clicks
+    if (isExecutingRef.current) return;
+
+    // Clear previous feedback
+    setExecutionError(null);
+    setBlockedReason(null);
+
+    // Guard with explicit feedback — never silent fail
+    if (!submissionState || !draftSnapshot) {
+      setBlockedReason("제출 데이터가 준비되지 않았습니다. 초안으로 돌아가 다시 시도하세요.");
+      return;
+    }
+    if (!validation?.canSubmit) {
+      const reasons = validation?.blockingIssues?.length
+        ? validation.blockingIssues.join(", ")
+        : "제출 조건을 충족하지 못했습니다.";
+      setBlockedReason(reasons);
+      return;
+    }
+
+    // Begin execution with pending state
+    isExecutingRef.current = true;
     setIsSubmitting(true);
-    // Build canonical submission event
-    const event = buildRequestSubmissionEvent(submissionState, draftSnapshot);
-    setSubmissionEvent(event);
-    onSubmissionExecuted(event);
-    // Update state
-    setSubmissionState((prev) => prev ? {
-      ...prev,
-      requestSubmissionStatus: "request_submitted",
-      substatus: "submitted_to_quote_workqueue",
-      requestSubmissionEventId: event.id,
-      submittedAt: event.submittedAt,
-      submittedBy: event.submittedBy,
-      submittedVendorTargetCount: event.submittedVendorTargetIds.length,
-      submittedLineCount: event.submittedLineIds.length,
-    } : prev);
-    setIsSubmitting(false);
+
+    try {
+      // Simulate network latency for realistic feedback
+      await new Promise((resolve) => setTimeout(resolve, 600));
+
+      // Build canonical submission event
+      const event = buildRequestSubmissionEvent(submissionState, draftSnapshot);
+      setSubmissionEvent(event);
+      onSubmissionExecuted(event);
+
+      // Update state
+      setSubmissionState((prev) => prev ? {
+        ...prev,
+        requestSubmissionStatus: "request_submitted",
+        substatus: "submitted_to_quote_workqueue",
+        requestSubmissionEventId: event.id,
+        submittedAt: event.submittedAt,
+        submittedBy: event.submittedBy,
+        submittedVendorTargetCount: event.submittedVendorTargetIds.length,
+        submittedLineCount: event.submittedLineIds.length,
+      } : prev);
+    } catch (err: any) {
+      setExecutionError(err?.message || "요청 제출 중 오류가 발생했습니다. 다시 시도해주세요.");
+    } finally {
+      setIsSubmitting(false);
+      isExecutingRef.current = false;
+    }
   }, [submissionState, draftSnapshot, validation, onSubmissionExecuted]);
 
   const handleQuoteWorkqueue = useCallback(() => {
@@ -109,7 +146,7 @@ export function RequestSubmissionWorkWindow({
   const blockedLines = submissionLines.filter((l) => l.blockingReason);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget && !isSubmitting) onClose(); }}>
       <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         {/* ═══ 1. Identity Strip ═══ */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
@@ -134,7 +171,7 @@ export function RequestSubmissionWorkWindow({
               </div>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-colors">
+          <button type="button" onClick={onClose} disabled={isSubmitting} className={`h-7 w-7 flex items-center justify-center rounded transition-colors ${isSubmitting ? "text-slate-600 cursor-not-allowed" : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.05]"}`}>
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -269,23 +306,64 @@ export function RequestSubmissionWorkWindow({
           )}
 
           {/* ═══ Submission success ═══ */}
-          {isSubmitted && (
-            <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15 space-y-2">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-emerald-400" />
-                <span className="text-[11px] text-emerald-300 font-medium">요청이 제출되었습니다</span>
+          {isSubmitted && submissionEvent && (
+            <div className="px-4 py-4 rounded-lg bg-emerald-600/[0.08] border border-emerald-500/20 space-y-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-emerald-600/20 flex items-center justify-center shrink-0">
+                  <Check className="h-4 w-4 text-emerald-400" />
+                </div>
+                <div>
+                  <span className="text-[12px] text-emerald-300 font-semibold block">견적 요청이 제출되었습니다</span>
+                  <span className="text-[10px] text-emerald-400/70">{new Date(submissionEvent.submittedAt).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
+                </div>
               </div>
-              <div className="text-[10px] text-slate-400">
-                {conditionSummary?.outboundSummary} — Quote Workqueue에서 견적 회신을 관리할 수 있습니다.
+              <div className="grid grid-cols-3 gap-2">
+                <div className="px-2.5 py-1.5 rounded bg-emerald-900/20 border border-emerald-700/20 text-center">
+                  <span className="text-[9px] text-emerald-500 block">공급사</span>
+                  <span className="text-sm font-bold text-emerald-300 tabular-nums">{submissionEvent.submittedVendorTargetIds.length}</span>
+                </div>
+                <div className="px-2.5 py-1.5 rounded bg-emerald-900/20 border border-emerald-700/20 text-center">
+                  <span className="text-[9px] text-emerald-500 block">품목</span>
+                  <span className="text-sm font-bold text-emerald-300 tabular-nums">{submissionEvent.submittedLineIds.length}</span>
+                </div>
+                <div className="px-2.5 py-1.5 rounded bg-emerald-900/20 border border-emerald-700/20 text-center">
+                  <span className="text-[9px] text-emerald-500 block">상태</span>
+                  <span className="text-[10px] font-medium text-emerald-300">발송 요청됨</span>
+                </div>
+              </div>
+              <div className="text-[10px] text-slate-400 leading-relaxed">
+                {conditionSummary?.outboundSummary} — 다음 단계: Quote Workqueue에서 공급사 회신을 추적하고 견적을 비교할 수 있습니다.
               </div>
             </div>
           )}
         </div>
 
         {/* ═══ 6. Submission Gate + Actions ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f] space-y-2">
+          {/* Execution feedback: blocked reason */}
+          {blockedReason && !isSubmitted && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-red-600/[0.08] border border-red-500/20">
+              <AlertCircle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-medium text-red-300 block">제출이 차단되었습니다</span>
+                <span className="text-[10px] text-red-400/80">{blockedReason}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Execution feedback: error */}
+          {executionError && !isSubmitted && (
+            <div className="flex items-start gap-2 px-3 py-2 rounded-md bg-red-600/[0.08] border border-red-500/20">
+              <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+              <div>
+                <span className="text-[10px] font-medium text-red-300 block">제출 실패</span>
+                <span className="text-[10px] text-red-400/80">{executionError}</span>
+              </div>
+            </div>
+          )}
+
           {/* Summary strip */}
-          <div className="flex items-center gap-3 text-[10px] mb-2.5">
+          <div className="flex items-center gap-3 text-[10px]">
             <span className="text-slate-500">공급사 <span className="text-slate-300 font-medium">{vendorTargets.length}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">품목 <span className="text-slate-300 font-medium">{submissionLines.length}</span></span>
@@ -296,23 +374,26 @@ export function RequestSubmissionWorkWindow({
               </>
             )}
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">{isSubmitted ? "제출 완료" : validation?.recommendedNextAction || ""}</span>
+            <span className="text-slate-500">{isSubmitted ? "제출 완료" : isSubmitting ? "제출 처리 중..." : validation?.recommendedNextAction || ""}</span>
           </div>
           {/* Action buttons */}
           <div className="flex gap-2">
             {!isSubmitted ? (
               <>
-                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onBackToAssembly}>
+                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onBackToAssembly} disabled={isSubmitting}>
                   초안으로 돌아가기
                 </Button>
                 <Button
                   size="sm"
-                  className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium"
+                  className={`flex-1 h-8 text-[10px] font-medium transition-all ${isSubmitting ? "bg-orange-700 text-orange-200 cursor-wait" : "bg-orange-600 hover:bg-orange-500 text-white"}`}
                   onClick={executeSubmission}
-                  disabled={!validation?.canSubmit || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   {isSubmitting ? (
-                    <span>제출 중...</span>
+                    <span className="flex items-center gap-1.5">
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                      제출 중...
+                    </span>
                   ) : (
                     <>
                       <Send className="h-3 w-3 mr-1" />
