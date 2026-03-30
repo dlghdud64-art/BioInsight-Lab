@@ -14,6 +14,7 @@ import {
   ClipboardCheck,
 } from "lucide-react-native";
 import { useDashboardSummary, usePurchases } from "../../hooks/useApi";
+import { iconColor, spinnerColor } from "../../theme/colors";
 
 function formatAmount(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
@@ -36,7 +37,7 @@ export default function HomeScreen() {
       icon: FileText,
       label: "승인 대기 견적",
       count: summary?.pendingQuotes ?? 0,
-      color: "#f59e0b",
+      color: iconColor.warning,
       bgColor: "bg-amber-50",
       onPress: () => router.push("/(tabs)/quotes"),
     },
@@ -44,7 +45,7 @@ export default function HomeScreen() {
       icon: AlertTriangle,
       label: "재고 부족 알림",
       count: summary?.lowStockItems ?? 0,
-      color: "#ef4444",
+      color: iconColor.danger,
       bgColor: "bg-red-50",
       onPress: () => router.push("/(tabs)/inventory"),
     },
@@ -52,7 +53,7 @@ export default function HomeScreen() {
       icon: ClipboardCheck,
       label: "점검 필요",
       count: summary?.pendingInspections ?? 0,
-      color: "#7c3aed",
+      color: iconColor.violet,
       bgColor: "bg-purple-50",
       onPress: () => router.push("/(tabs)/inventory"),
     },
@@ -62,31 +63,31 @@ export default function HomeScreen() {
     {
       icon: FileText,
       label: "견적 확인",
-      color: "#f59e0b",
+      color: iconColor.warning,
       onPress: () => router.push("/(tabs)/quotes"),
     },
     {
       icon: ShoppingCart,
       label: "구매 등록",
-      color: "#2563eb",
+      color: iconColor.primary,
       onPress: () => router.push("/purchases/register"),
     },
     {
       icon: ArrowDownToLine,
       label: "입고 처리",
-      color: "#059669",
+      color: iconColor.success,
       onPress: () => router.push("/inventory/lot-receive" as any),
     },
     {
       icon: ArrowUpFromLine,
       label: "출고 처리",
-      color: "#8b5cf6",
+      color: iconColor.violet,
       onPress: () => router.push("/inventory/lot-dispatch" as any),
     },
     {
       icon: QrCode,
       label: "QR 스캔",
-      color: "#0ea5e9",
+      color: iconColor.sky,
       onPress: () => router.push("/scan"),
     },
   ];
@@ -111,7 +112,7 @@ export default function HomeScreen() {
 
         {/* 오늘 처리할 일 — 실제 데이터가 있는 항목만 */}
         {isLoading ? (
-          <ActivityIndicator color="#2563eb" className="py-8" />
+          <ActivityIndicator color={spinnerColor} className="py-8" />
         ) : tasks.length > 0 ? (
           <View className="px-5 mb-5">
             <Text className="text-base font-bold text-slate-900 mb-3">
@@ -139,7 +140,7 @@ export default function HomeScreen() {
                         {task.count}
                       </Text>
                     </View>
-                    <ChevronRight size={16} color="#94a3b8" />
+                    <ChevronRight size={16} color={iconColor.muted} />
                   </View>
                 </Pressable>
               ))}
@@ -198,7 +199,7 @@ export default function HomeScreen() {
                       {p.productName}
                     </Text>
                     <View className="flex-row items-center gap-1 mt-0.5">
-                      <Calendar size={10} color="#94a3b8" />
+                      <Calendar size={10} color={iconColor.muted} />
                       <Text className="text-xs text-slate-400">
                         {formatDate(p.purchasedAt)}
                       </Text>

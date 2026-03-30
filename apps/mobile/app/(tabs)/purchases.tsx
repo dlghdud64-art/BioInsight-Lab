@@ -2,6 +2,7 @@ import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, Scr
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Plus, Calendar, Store, ChevronRight } from "lucide-react-native";
+import { iconColor, spinnerColor } from "../../theme/colors";
 import { usePurchases } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
@@ -46,15 +47,15 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
       </View>
 
       {/* 2행: 메타 정보 */}
-      <View className="flex-row flex-wrap gap-x-4 gap-y-1">
+      <View className="flex-row flex-wrap gap-x-3 gap-y-1">
         {item.vendor && (
           <View className="flex-row items-center gap-1">
-            <Store size={12} color="#94a3b8" />
+            <Store size={12} color={iconColor.muted} />
             <Text className="text-xs text-slate-500">{item.vendor}</Text>
           </View>
         )}
         <View className="flex-row items-center gap-1">
-          <Calendar size={12} color="#94a3b8" />
+          <Calendar size={12} color={iconColor.muted} />
           <Text className="text-xs text-slate-500">
             {formatDate(item.purchasedAt)}
           </Text>
@@ -72,7 +73,7 @@ function PurchaseCard({ item }: { item: PurchaseRecord }) {
               {item.quantity} {item.unit || "ea"}
             </Text>
           )}
-          <ChevronRight size={14} color="#94a3b8" />
+          <ChevronRight size={14} color={iconColor.muted} />
         </View>
       </View>
     </Pressable>
@@ -192,7 +193,7 @@ export default function PurchasesScreen() {
 
       {/* 리스트 */}
       {isLoading ? (
-        <ActivityIndicator color="#2563eb" className="mt-10" />
+        <ActivityIndicator color={spinnerColor} className="mt-10" />
       ) : (
         <FlatList
           data={filtered}

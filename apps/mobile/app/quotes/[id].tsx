@@ -13,6 +13,7 @@ import { useQuoteDetail, useQuoteHistory } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ErrorState } from "../../components/ErrorState";
+import { iconColor, spinnerColor } from "../../theme/colors";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -58,15 +59,15 @@ function TimelineItem({ item, isLast }: { item: QuoteStatusHistory; isLast: bool
       <View className="flex-1 pb-4">
         <View className="flex-row items-center gap-1.5 mb-1">
           <StatusLabel status={item.previousStatus} />
-          <ArrowRight size={10} color="#94a3b8" />
+          <ArrowRight size={10} color={iconColor.muted} />
           <StatusLabel status={item.newStatus} />
         </View>
         {item.reason && (
           <Text className="text-xs text-slate-500 mb-0.5">{item.reason}</Text>
         )}
         <View className="flex-row items-center gap-2">
-          <Text className="text-[11px] text-slate-400">{item.changedBy}</Text>
-          <Text className="text-[11px] text-slate-400">{formatDate(item.createdAt)}</Text>
+          <Text className="text-xs text-slate-400">{item.changedBy}</Text>
+          <Text className="text-xs text-slate-400">{formatDate(item.createdAt)}</Text>
         </View>
       </View>
     </View>
@@ -81,7 +82,7 @@ export default function QuoteDetailScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={spinnerColor} />
       </View>
     );
   }
@@ -138,14 +139,14 @@ export default function QuoteDetailScreen() {
 
           <View className="gap-2">
             <View className="flex-row items-center gap-2">
-              <Calendar size={14} color="#94a3b8" />
+              <Calendar size={14} color={iconColor.muted} />
               <Text className="text-xs text-slate-500">
                 생성: {formatDate(quote.createdAt)}
               </Text>
             </View>
             {quote.requesterName && (
               <View className="flex-row items-center gap-2">
-                <User size={14} color="#94a3b8" />
+                <User size={14} color={iconColor.muted} />
                 <Text className="text-xs text-slate-500">
                   요청자: {quote.requesterName}
                 </Text>
@@ -153,7 +154,7 @@ export default function QuoteDetailScreen() {
             )}
             {quote.totalAmount && (
               <View className="flex-row items-center gap-2">
-                <Package size={14} color="#94a3b8" />
+                <Package size={14} color={iconColor.muted} />
                 <Text className="text-sm font-bold text-blue-600">
                   총액: {formatAmount(quote.totalAmount)}
                 </Text>
@@ -184,7 +185,7 @@ export default function QuoteDetailScreen() {
                 <View className="flex-row gap-3">
                   {vr.deliveryDays && (
                     <View className="flex-row items-center gap-1">
-                      <Truck size={12} color="#94a3b8" />
+                      <Truck size={12} color={iconColor.muted} />
                       <Text className="text-xs text-slate-500">
                         납기 {vr.deliveryDays}일
                       </Text>
@@ -237,7 +238,7 @@ export default function QuoteDetailScreen() {
           onPress={() => router.push({ pathname: "/quotes/memo", params: { id } })}
         >
           <View className="flex-row items-center gap-2 flex-1">
-            <MessageSquare size={14} color="#94a3b8" />
+            <MessageSquare size={14} color={iconColor.muted} />
             <View className="flex-1">
               <Text className="text-sm font-bold text-slate-900">메모</Text>
               <Text className="text-xs text-slate-400 mt-0.5" numberOfLines={1}>
@@ -245,14 +246,14 @@ export default function QuoteDetailScreen() {
               </Text>
             </View>
           </View>
-          <Edit3 size={16} color="#94a3b8" />
+          <Edit3 size={16} color={iconColor.muted} />
         </Pressable>
 
         {/* 상태 변경 이력 */}
         {history && history.length > 0 && (
           <View className="mx-4 mt-4 mb-4">
             <View className="flex-row items-center gap-1.5 mb-3">
-              <Clock size={14} color="#475569" />
+              <Clock size={14} color={iconColor.emphasis} />
               <Text className="text-sm font-bold text-slate-900">상태 변경 이력</Text>
             </View>
             <View className="bg-white rounded-xl border border-slate-200 p-4">
@@ -272,10 +273,10 @@ export default function QuoteDetailScreen() {
           onPress={() => router.push({ pathname: "/quotes/status-change", params: { id } })}
         >
           <View className="flex-row items-center gap-2">
-            <RefreshCw size={16} color="#475569" />
+            <RefreshCw size={16} color={iconColor.emphasis} />
             <Text className="text-sm font-semibold text-slate-700">상태 변경</Text>
           </View>
-          <ChevronRight size={16} color="#94a3b8" />
+          <ChevronRight size={16} color={iconColor.muted} />
         </Pressable>
 
         {/* 견적 발송 */}

@@ -1,5 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { AlertTriangle } from "lucide-react-native";
+import { iconColor } from "../theme/colors";
 
 export function ErrorState({
   title = "불러오기 실패",
@@ -12,7 +13,7 @@ export function ErrorState({
 }) {
   return (
     <View className="flex-1 items-center justify-center py-20 px-6">
-      <AlertTriangle size={48} color="#ef4444" />
+      <AlertTriangle size={48} color={iconColor.danger} />
       <Text className="text-base font-medium text-slate-700 mt-4">
         {title}
       </Text>

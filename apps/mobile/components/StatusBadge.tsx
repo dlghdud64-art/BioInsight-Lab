@@ -29,7 +29,7 @@ export function StatusBadge({ status }: { status: string }) {
 
   return (
     <View className={`px-2 py-0.5 rounded-full ${style.bg}`}>
-      <Text className={`text-[11px] font-semibold ${style.text}`}>
+      <Text className={`text-xs font-semibold ${style.text}`}>
         {style.label}
       </Text>
     </View>

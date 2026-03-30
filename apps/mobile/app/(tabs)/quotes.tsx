@@ -2,6 +2,7 @@ import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, Scr
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Calendar, ChevronRight } from "lucide-react-native";
+import { iconColor, spinnerColor } from "../../theme/colors";
 import { useQuotes } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
@@ -46,7 +47,7 @@ function QuoteCard({ item }: { item: Quote }) {
       {/* 2행: 메타 */}
       <View className="flex-row items-center gap-3">
         <View className="flex-row items-center gap-1">
-          <Calendar size={12} color="#94a3b8" />
+          <Calendar size={12} color={iconColor.muted} />
           <Text className="text-xs text-slate-500">
             {formatDate(item.createdAt)}
           </Text>
@@ -63,7 +64,7 @@ function QuoteCard({ item }: { item: Quote }) {
         <Text className="text-base font-bold text-blue-600">
           {formatAmount(item.totalAmount)}
         </Text>
-        <ChevronRight size={16} color="#cbd5e1" />
+        <ChevronRight size={16} color={iconColor.faint} />
       </View>
     </Pressable>
   );
@@ -124,7 +125,7 @@ export default function QuotesScreen() {
 
       {/* 리스트 */}
       {isLoading ? (
-        <ActivityIndicator color="#2563eb" className="mt-10" />
+        <ActivityIndicator color={spinnerColor} className="mt-10" />
       ) : (
         <FlatList
           data={filtered}

@@ -3,6 +3,8 @@ import { View, Text, ScrollView, Pressable, ActivityIndicator, Alert } from "rea
 import { useLocalSearchParams, router } from "expo-router";
 import { Calendar, Store, Tag, Package, FileText, RefreshCw, ArrowDownToLine, CheckCircle } from "lucide-react-native";
 import { usePurchaseDetail, lookupInventory, useCreateInventory } from "../../hooks/useApi";
+import { ErrorState } from "../../components/ErrorState";
+import { iconColor, spinnerColor } from "../../theme/colors";
 import { getErrorMessage } from "../../lib/errorMessages";
 
 function formatDate(iso?: string) {
@@ -23,19 +25,19 @@ export default function PurchaseDetailScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={spinnerColor} />
       </View>
     );
   }
 
   if (isError || !record) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-base font-bold text-slate-900 mb-1">불러오기 실패</Text>
-        <Text className="text-sm text-slate-500 text-center mb-4">구매 정보를 가져올 수 없습니다.</Text>
-        <Pressable className="bg-blue-600 rounded-xl px-6 py-3" onPress={() => refetch()}>
-          <Text className="text-sm font-semibold text-white">다시 시도</Text>
-        </Pressable>
+      <View className="flex-1 bg-white">
+        <ErrorState
+          title="불러오기 실패"
+          description="구매 정보를 가져올 수 없습니다."
+          onRetry={() => refetch()}
+        />
       </View>
     );
   }
@@ -130,7 +132,7 @@ export default function PurchaseDetailScreen() {
           {details.map((item) => (
             <View key={item.label} className="flex-row items-center gap-3">
               <View className="w-8 h-8 rounded-lg bg-slate-50 items-center justify-center">
-                <item.icon size={16} color="#64748b" />
+                <item.icon size={16} color={iconColor.secondary} />
               </View>
               <View className="flex-1">
                 <Text className="text-xs text-slate-400">{item.label}</Text>
@@ -144,7 +146,7 @@ export default function PurchaseDetailScreen() {
         {record.notes && (
           <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
             <View className="flex-row items-center gap-2 mb-2">
-              <FileText size={14} color="#94a3b8" />
+              <FileText size={14} color={iconColor.muted} />
               <Text className="text-sm font-bold text-slate-900">비고</Text>
             </View>
             <Text className="text-sm text-slate-600">{record.notes}</Text>
@@ -163,7 +165,7 @@ export default function PurchaseDetailScreen() {
         </Pressable>
         {isReflected ? (
           <View className="flex-1 flex-row items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 rounded-xl py-3">
-            <CheckCircle size={16} color="#059669" />
+            <CheckCircle size={16} color={iconColor.success} />
             <Text className="text-sm font-semibold text-emerald-700">입고 완료</Text>
           </View>
         ) : (

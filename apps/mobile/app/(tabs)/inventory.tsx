@@ -2,6 +2,7 @@ import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, Scr
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { MapPin, Layers, ChevronRight, Filter } from "lucide-react-native";
+import { iconColor, spinnerColor } from "../../theme/colors";
 import { useInventory } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
 import { EmptyState } from "../../components/EmptyState";
@@ -62,7 +63,7 @@ function InventoryCard({ item }: { item: ProductInventory }) {
         </View>
         {item.lots && item.lots.length > 0 && (
           <View className="flex-row items-center gap-1">
-            <Layers size={14} color="#94a3b8" />
+            <Layers size={14} color={iconColor.muted} />
             <Text className="text-xs text-slate-500">
               {item.lots.length} Lots
             </Text>
@@ -73,12 +74,12 @@ function InventoryCard({ item }: { item: ProductInventory }) {
       {/* 3행: 위치 + 화살표 */}
       <View className="flex-row items-center justify-between mt-3 pt-2.5 border-t border-slate-100">
         <View className="flex-row items-center gap-1">
-          <MapPin size={13} color="#94a3b8" />
+          <MapPin size={13} color={iconColor.muted} />
           <Text className="text-xs text-slate-500">
             {item.location || "위치 미지정"}
           </Text>
         </View>
-        <ChevronRight size={16} color="#cbd5e1" />
+        <ChevronRight size={16} color={iconColor.faint} />
       </View>
     </Pressable>
   );
@@ -156,7 +157,7 @@ export default function InventoryScreen() {
 
       {/* 리스트 */}
       {isLoading ? (
-        <ActivityIndicator color="#2563eb" className="mt-10" />
+        <ActivityIndicator color={spinnerColor} className="mt-10" />
       ) : (
         <FlatList
           data={filtered}

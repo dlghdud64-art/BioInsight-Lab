@@ -23,7 +23,9 @@ import {
 } from "lucide-react-native";
 import { useInventoryDetail, useInspections } from "../../hooks/useApi";
 import { StatusBadge } from "../../components/StatusBadge";
+import { ErrorState } from "../../components/ErrorState";
 import { SafetyInfoCard } from "../../components/SafetyInfoCard";
+import { iconColor, spinnerColor } from "../../theme/colors";
 import type { InventoryLot, Inspection } from "../../types";
 
 function formatDate(iso?: string) {
@@ -40,9 +42,9 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
     new Date(lot.expiryDate).getTime() - Date.now() < 30 * 24 * 60 * 60 * 1000;
 
   const borderColor = isExpired
-    ? "border-red-300 bg-red-50/50"
+    ? "border-red-300 bg-red-50"
     : isExpiringSoon
-      ? "border-amber-300 bg-amber-50/30"
+      ? "border-amber-300 bg-amber-50"
       : "border-slate-200 bg-white";
 
   const nav = (path: string) =>
@@ -63,7 +65,7 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
     <View className={`rounded-xl border p-3.5 mb-3 ${borderColor}`}>
       <View className="flex-row items-center justify-between mb-2">
         <View className="flex-row items-center gap-2">
-          <Tag size={14} color="#64748b" />
+          <Tag size={14} color={iconColor.secondary} />
           <Text className="text-sm font-semibold text-slate-800">
             {lot.lotNumber || "Lot 미지정"}
           </Text>
@@ -74,22 +76,22 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
         </Text>
       </View>
 
-      <View className="flex-row flex-wrap gap-x-4 gap-y-1 mb-3">
+      <View className="flex-row flex-wrap gap-x-3 gap-y-1 mb-3">
         {lot.storageCondition && (
           <View className="flex-row items-center gap-1">
-            <Thermometer size={12} color="#94a3b8" />
+            <Thermometer size={12} color={iconColor.muted} />
             <Text className="text-xs text-slate-500">{lot.storageCondition}</Text>
           </View>
         )}
         <View className="flex-row items-center gap-1">
-          <MapPin size={12} color={lot.location ? "#94a3b8" : "#ef4444"} />
+          <MapPin size={12} color={lot.location ? iconColor.muted : iconColor.danger} />
           <Text className={`text-xs ${lot.location ? "text-slate-500" : "text-red-500"}`}>
             {lot.location || "위치 미지정"}
           </Text>
         </View>
         {lot.expiryDate && (
           <View className="flex-row items-center gap-1">
-            <Calendar size={12} color={isExpired ? "#ef4444" : isExpiringSoon ? "#f59e0b" : "#94a3b8"} />
+            <Calendar size={12} color={isExpired ? iconColor.danger : isExpiringSoon ? iconColor.warning : iconColor.muted} />
             <Text
               className={`text-xs ${
                 isExpired ? "text-red-600 font-semibold"
@@ -106,31 +108,31 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
 
       <View className="flex-row gap-2">
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1 bg-emerald-50 border border-emerald-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-emerald-50 border border-emerald-200 rounded-xl py-2"
           onPress={() => nav("/inventory/lot-receive")}
         >
-          <ArrowDownToLine size={13} color="#059669" />
+          <ArrowDownToLine size={14} color={iconColor.success} />
           <Text className="text-xs font-semibold text-emerald-700">입고</Text>
         </Pressable>
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1 bg-blue-50 border border-blue-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-blue-50 border border-blue-200 rounded-xl py-2"
           onPress={() => nav("/inventory/lot-dispatch")}
         >
-          <ArrowUpFromLine size={13} color="#2563eb" />
+          <ArrowUpFromLine size={14} color={iconColor.primary} />
           <Text className="text-xs font-semibold text-blue-700">출고</Text>
         </Pressable>
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1 bg-slate-50 border border-slate-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-slate-50 border border-slate-200 rounded-xl py-2"
           onPress={() => nav("/inventory/lot-location")}
         >
-          <Navigation size={13} color="#64748b" />
+          <Navigation size={14} color={iconColor.secondary} />
           <Text className="text-xs font-semibold text-slate-600">위치</Text>
         </Pressable>
         <Pressable
-          className="flex-1 flex-row items-center justify-center gap-1 bg-purple-50 border border-purple-200 rounded-lg py-2"
+          className="flex-1 flex-row items-center justify-center gap-1 bg-purple-50 border border-purple-200 rounded-xl py-2"
           onPress={() => nav("/inventory/lot-label")}
         >
-          <Printer size={13} color="#7c3aed" />
+          <Printer size={14} color={iconColor.violet} />
           <Text className="text-xs font-semibold text-purple-700">라벨</Text>
         </Pressable>
       </View>
@@ -139,9 +141,9 @@ function LotCard({ lot, inventoryId }: { lot: InventoryLot; inventoryId: string 
 }
 
 const RESULT_STYLE: Record<string, { icon: typeof CheckCircle2; color: string; label: string; bg: string }> = {
-  PASS: { icon: CheckCircle2, color: "#059669", label: "양호", bg: "bg-emerald-50" },
-  CAUTION: { icon: AlertTriangle, color: "#d97706", label: "주의", bg: "bg-amber-50" },
-  FAIL: { icon: XCircle, color: "#dc2626", label: "불량", bg: "bg-red-50" },
+  PASS: { icon: CheckCircle2, color: iconColor.success, label: "양호", bg: "bg-emerald-50" },
+  CAUTION: { icon: AlertTriangle, color: iconColor.warning, label: "주의", bg: "bg-amber-50" },
+  FAIL: { icon: XCircle, color: iconColor.danger, label: "불량", bg: "bg-red-50" },
 };
 
 function InspectionHistoryItem({ item }: { item: Inspection }) {
@@ -174,19 +176,19 @@ export default function InventoryDetailScreen() {
   if (isLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator color="#2563eb" />
+        <ActivityIndicator color={spinnerColor} />
       </View>
     );
   }
 
   if (isError || !inventory) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-base font-bold text-slate-900 mb-1">불러오기 실패</Text>
-        <Text className="text-sm text-slate-500 text-center mb-4">재고 정보를 가져올 수 없습니다.</Text>
-        <Pressable className="bg-blue-600 rounded-xl px-6 py-3" onPress={() => refetch()}>
-          <Text className="text-sm font-semibold text-white">다시 시도</Text>
-        </Pressable>
+      <View className="flex-1 bg-white">
+        <ErrorState
+          title="불러오기 실패"
+          description="재고 정보를 가져올 수 없습니다."
+          onRetry={() => refetch()}
+        />
       </View>
     );
   }
@@ -252,7 +254,7 @@ export default function InventoryDetailScreen() {
                   router.push({ pathname: "/inventory/lot-receive", params: { id } })
                 }
               >
-                <Plus size={14} color="white" />
+                <Plus size={14} color={iconColor.white} />
                 <Text className="text-xs font-semibold text-white">첫 입고 등록</Text>
               </Pressable>
             </View>
@@ -277,7 +279,7 @@ export default function InventoryDetailScreen() {
         <View className="mx-4 mt-4">
           <View className="flex-row items-center justify-between mb-2">
             <View className="flex-row items-center gap-1.5">
-              <ClipboardCheck size={14} color="#475569" />
+              <ClipboardCheck size={14} color={iconColor.emphasis} />
               <Text className="text-sm font-bold text-slate-900">점검 이력</Text>
             </View>
             <Pressable
@@ -286,7 +288,7 @@ export default function InventoryDetailScreen() {
                 router.push({ pathname: "/inventory/inspection", params: { id } })
               }
             >
-              <Plus size={12} color="white" />
+              <Plus size={12} color={iconColor.white} />
               <Text className="text-xs font-semibold text-white">점검 기록</Text>
             </Pressable>
           </View>
@@ -313,7 +315,7 @@ export default function InventoryDetailScreen() {
             router.push({ pathname: "/inventory/lot-receive", params: { id } })
           }
         >
-          <Plus size={16} color="white" />
+          <Plus size={16} color={iconColor.white} />
           <Text className="text-sm font-semibold text-white">신규 입고</Text>
         </Pressable>
       </View>
