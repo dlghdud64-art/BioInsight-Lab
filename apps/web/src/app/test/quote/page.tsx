@@ -81,12 +81,13 @@ export default function RequestAssemblyPage() {
         {/* Top bar */}
         <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-1.5 shrink-0">
+            <Link href="/dashboard" className="flex items-center shrink-0">
               <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
-              <span className="text-xs md:text-sm font-semibold text-slate-400">요청 조립</span>
             </Link>
-            <div className="w-px h-5 bg-bd hidden sm:block" />
-            <span className="text-xs text-slate-400 hidden sm:block">견적 요청 조립 워크벤치</span>
+            <span className="text-slate-600 text-xs">/</span>
+            <Link href="/app/search" className="text-xs text-slate-500 hover:text-slate-300 transition-colors hidden sm:block">소싱</Link>
+            <span className="text-slate-600 text-xs hidden sm:block">/</span>
+            <span className="text-xs font-semibold text-slate-300">요청 조립</span>
           </div>
           <Link href="/app/search" className="text-xs text-slate-400 hover:text-white transition-colors flex items-center gap-1">
             <ArrowLeft className="h-3.5 w-3.5" />소싱으로

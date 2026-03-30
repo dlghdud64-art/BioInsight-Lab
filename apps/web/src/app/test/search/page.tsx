@@ -1629,10 +1629,13 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
     <div className="shrink-0 border-b border-bd bg-el">
       {/* ── 1행: 앱 헤더 ── */}
       <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-el">
-        <Link href="/" className="flex items-center gap-1.5 shrink-0">
-          <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
-          <span className="text-xs md:text-sm font-semibold text-slate-400">소싱</span>
-        </Link>
+        <div className="flex items-center gap-2 shrink-0">
+          <Link href="/dashboard" className="flex items-center">
+            <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
+          </Link>
+          <span className="text-slate-600 text-xs">/</span>
+          <span className="text-xs font-semibold text-slate-300">소싱</span>
+        </div>
       </div>
 
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
