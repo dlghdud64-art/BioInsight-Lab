@@ -509,3 +509,283 @@ export function buildAiVerdictSummary(
 
   return { priorityLine, referenceLine, blockedLine };
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Strategy Decision Options — 전략별 실질 분기
+// ══════════════════════════════════════════════════════════════════════════════
+
+export type StrategyFrame = "cost" | "balanced" | "spec";
+
+export type OperationalReadiness =
+  | "request_ready"
+  | "hold_spec_check"
+  | "hold_price_check"
+  | "hold_lead_check"
+  | "excluded";
+
+export interface StrategyCandidate {
+  id: string;
+  name: string;
+  brand: string;
+  readiness: OperationalReadiness;
+  readinessLabel: string;
+  /** 이 전략에서의 추천 순위 (1 = 최우선) */
+  rank: number;
+  /** 이 전략 기준 선택 이유 */
+  selectionReason: string;
+  /** 이 전략 기준 리스크 */
+  riskNote: string;
+  /** 다음 액션 */
+  nextAction: string;
+}
+
+export interface StrategyDecisionOption {
+  frame: StrategyFrame;
+  title: string;
+  subtitle: string;
+  /** 추천 후보 (request ready) */
+  recommended: StrategyCandidate[];
+  /** 보류 후보 */
+  held: StrategyCandidate[];
+  /** 제외 후보 */
+  excluded: StrategyCandidate[];
+  /** 전체 요약 한 줄 */
+  verdictLine: string;
+  /** 이 결정안 기준 요청 가능 여부 */
+  requestReady: boolean;
+  /** 이 결정안 기준 blocker 목록 */
+  blockers: string[];
+  /** 이 결정안의 핵심 이점 */
+  keyBenefit: string;
+  /** 이 결정안의 핵심 리스크 */
+  keyRisk: string;
+}
+
+export interface DecisionSummaryHeader {
+  recommendedFrame: StrategyFrame;
+  recommendedFrameLabel: string;
+  requestReadyCount: number;
+  holdCount: number;
+  excludedCount: number;
+  topBlocker: string;
+}
+
+/**
+ * 3개 전략별 실질 분기를 생성합니다.
+ *
+ * 각 전략은 동일한 후보를 다른 기준으로 평가하여
+ * 추천/보류/제외 분류와 readiness가 실제로 달라집니다.
+ */
+export function buildStrategyDecisionOptions(
+  candidates: CompareCandidateInfo[],
+  classified: ClassifiedCandidate[],
+  categoryResult: CompareCategoryResult,
+  differenceSummary: CompareDifferenceSummary,
+): { options: StrategyDecisionOption[]; header: DecisionSummaryHeader } {
+  if (candidates.length < 2) {
+    return {
+      options: [],
+      header: {
+        recommendedFrame: "balanced",
+        recommendedFrameLabel: "균형",
+        requestReadyCount: 0,
+        holdCount: 0,
+        excludedCount: 0,
+        topBlocker: "비교 후보 부족",
+      },
+    };
+  }
+
+  const source = candidates[0];
+
+  function buildOption(frame: StrategyFrame): StrategyDecisionOption {
+    const title = frame === "cost" ? "비용 우선" : frame === "balanced" ? "납기·가격 균형" : "규격 신뢰 우선";
+    const subtitle = frame === "cost"
+      ? "최저 비용 후보를 즉시 요청"
+      : frame === "balanced"
+        ? "비용과 납기를 균형 있게 고려"
+        : "규격 적합성을 최우선으로 검증";
+
+    const stratCandidates: StrategyCandidate[] = candidates.map((c) => {
+      const cl = classified.find((cc) => cc.id === c.id);
+      const isBlocked = cl?.candidateClass === "blocked";
+      const missingPrice = !c.priceKRW || c.priceKRW <= 0;
+      const missingLead = !c.leadTimeDays || c.leadTimeDays <= 0;
+      const categoryDiff = source.category && c.category
+        && source.category.toLowerCase() !== c.category.toLowerCase();
+
+      // 전략별 readiness 분기
+      let readiness: OperationalReadiness = "request_ready";
+      let readinessLabel = "즉시 요청 가능";
+      let selectionReason = "";
+      let riskNote = "";
+      let nextAction = "요청에 포함";
+      let rank = 99;
+
+      if (isBlocked) {
+        readiness = "excluded";
+        readinessLabel = "제외";
+        selectionReason = cl?.classReason || "비교 불가";
+        riskNote = cl?.riskNote || "";
+        nextAction = "제외 유지";
+        rank = 99;
+      } else if (frame === "cost") {
+        // 비용 우선: 가격이 가장 낮은 후보 추천, 가격 없으면 hold
+        if (missingPrice) {
+          readiness = "hold_price_check";
+          readinessLabel = "보류 · 가격 확인 필요";
+          selectionReason = "가격 미확인 — 비용 비교 불가";
+          riskNote = "견적 미수신 시 비용 판단 불가";
+          nextAction = "공급사에 가격 문의";
+          rank = 50;
+        } else {
+          const cheapest = candidates
+            .filter((cc) => cc.priceKRW > 0)
+            .sort((a, b) => a.priceKRW - b.priceKRW)[0];
+          if (cheapest && c.id === cheapest.id) {
+            readiness = "request_ready";
+            readinessLabel = "즉시 요청 가능";
+            selectionReason = `최저 단가 ₩${c.priceKRW.toLocaleString("ko-KR")}`;
+            riskNote = categoryDiff ? "카테고리 차이 주의" : (missingLead ? "납기 미확인" : "");
+            nextAction = "요청에 포함";
+            rank = 1;
+          } else {
+            const priceDiff = c.priceKRW - (cheapest?.priceKRW || 0);
+            readiness = "hold_spec_check";
+            readinessLabel = "보류 · 비용 열위";
+            selectionReason = `최저가 대비 ₩${priceDiff.toLocaleString("ko-KR")} 높음`;
+            riskNote = "비용 우선 기준에서 후순위";
+            nextAction = "비용 외 장점이 있으면 재검토";
+            rank = 30;
+          }
+        }
+      } else if (frame === "balanced") {
+        // 균형: 가격+납기 종합 점수 기준
+        if (missingPrice && missingLead) {
+          readiness = "hold_price_check";
+          readinessLabel = "보류 · 정보 부족";
+          selectionReason = "가격·납기 모두 미확인";
+          riskNote = "비교 근거 없음";
+          nextAction = "공급사 정보 요청";
+          rank = 80;
+        } else if (missingPrice || missingLead) {
+          readiness = missingPrice ? "hold_price_check" : "hold_lead_check";
+          readinessLabel = missingPrice ? "보류 · 가격 확인 필요" : "보류 · 납기 확인 필요";
+          selectionReason = missingPrice ? "가격 미확인" : "납기 미확인";
+          riskNote = "부분 정보로 균형 판단 제한";
+          nextAction = "누락 정보 확인 후 재비교";
+          rank = 40;
+        } else {
+          // 가격 순위 + 납기 순위의 합산
+          const priceRank = candidates
+            .filter((cc) => cc.priceKRW > 0)
+            .sort((a, b) => a.priceKRW - b.priceKRW)
+            .findIndex((cc) => cc.id === c.id) + 1;
+          const leadRank = candidates
+            .filter((cc) => cc.leadTimeDays > 0)
+            .sort((a, b) => a.leadTimeDays - b.leadTimeDays)
+            .findIndex((cc) => cc.id === c.id) + 1;
+          const compositeRank = priceRank + leadRank;
+
+          readiness = "request_ready";
+          readinessLabel = "즉시 요청 가능";
+          selectionReason = `가격 ${priceRank}위 · 납기 ${leadRank}위 — 종합 ${compositeRank}`;
+          riskNote = categoryDiff ? "카테고리 차이 주의" : "";
+          nextAction = "요청에 포함";
+          rank = compositeRank;
+        }
+      } else {
+        // 규격 신뢰: 카테고리 일치 + 규격 명확성 우선
+        if (categoryDiff) {
+          readiness = "hold_spec_check";
+          readinessLabel = "보류 · 규격 재확인";
+          selectionReason = "카테고리 불일치 — 규격 적합성 확인 필요";
+          riskNote = "오선정 위험";
+          nextAction = "규격 확인 후 재비교";
+          rank = 60;
+        } else if (!c.spec && !c.catalogNumber) {
+          readiness = "hold_spec_check";
+          readinessLabel = "보류 · 규격 정보 부족";
+          selectionReason = "규격/카탈로그 정보 없음";
+          riskNote = "규격 적합성 판단 불가";
+          nextAction = "공급사에 규격 확인";
+          rank = 50;
+        } else {
+          readiness = "request_ready";
+          readinessLabel = "즉시 요청 가능";
+          selectionReason = `규격 확인됨 — ${c.spec || c.catalogNumber || "카탈로그 일치"}`;
+          riskNote = missingPrice ? "가격 미확인 — 비용 확인 필요" : "";
+          nextAction = "요청에 포함";
+          rank = c.id === source.id ? 1 : 5;
+        }
+      }
+
+      return {
+        id: c.id,
+        name: c.name,
+        brand: c.brand,
+        readiness,
+        readinessLabel,
+        rank,
+        selectionReason,
+        riskNote,
+        nextAction,
+      };
+    });
+
+    const sorted = [...stratCandidates].sort((a, b) => a.rank - b.rank);
+    const recommended = sorted.filter((s) => s.readiness === "request_ready");
+    const held = sorted.filter((s) => s.readiness !== "request_ready" && s.readiness !== "excluded");
+    const excluded = sorted.filter((s) => s.readiness === "excluded");
+
+    const blockers: string[] = [];
+    if (recommended.length === 0) blockers.push("즉시 요청 가능한 후보 없음");
+    held.forEach((h) => {
+      if (h.riskNote) blockers.push(h.riskNote);
+    });
+
+    const verdictLine = recommended.length > 0
+      ? `${recommended[0].name} — ${recommended[0].selectionReason}`
+      : held.length > 0
+        ? `보류 후보 ${held.length}건 — ${held[0].selectionReason}`
+        : "비교 가능한 후보 없음";
+
+    return {
+      frame,
+      title,
+      subtitle,
+      recommended,
+      held,
+      excluded,
+      verdictLine,
+      requestReady: recommended.length > 0 && blockers.length === 0,
+      blockers,
+      keyBenefit: recommended.length > 0 ? recommended[0].selectionReason : "해당 없음",
+      keyRisk: held.length > 0 ? held[0].riskNote : (excluded.length > 0 ? excluded[0].riskNote : ""),
+    };
+  }
+
+  const options: StrategyDecisionOption[] = [
+    buildOption("cost"),
+    buildOption("balanced"),
+    buildOption("spec"),
+  ];
+
+  // 가장 requestReady인 옵션을 기본 추천으로
+  const bestOption = options.find((o) => o.requestReady) || options[1];
+  const allRecommended = bestOption.recommended.length;
+  const allHeld = bestOption.held.length;
+  const allExcluded = bestOption.excluded.length;
+
+  return {
+    options,
+    header: {
+      recommendedFrame: bestOption.frame,
+      recommendedFrameLabel: bestOption.title,
+      requestReadyCount: allRecommended,
+      holdCount: allHeld,
+      excludedCount: allExcluded,
+      topBlocker: bestOption.blockers[0] || "",
+    },
+  };
+}
