@@ -38,7 +38,7 @@ const STATUS_CONFIG = {
   no_response: { label: "미응답", color: "text-slate-500", bg: "bg-slate-700/30", icon: Mail },
   partial_response: { label: "일부 응답", color: "text-amber-400", bg: "bg-amber-600/10", icon: MailOpen },
   quote_received: { label: "견적 수신", color: "text-blue-400", bg: "bg-blue-600/10", icon: MailOpen },
-  normalization_required: { label: "정규화 필요", color: "text-orange-400", bg: "bg-orange-600/10", icon: RefreshCw },
+  normalization_required: { label: "정리 필요", color: "text-orange-400", bg: "bg-orange-600/10", icon: RefreshCw },
   ready_for_compare: { label: "비교 준비", color: "text-emerald-400", bg: "bg-emerald-600/10", icon: Check },
   needs_followup: { label: "추가 요청", color: "text-red-400", bg: "bg-red-600/10", icon: AlertTriangle },
 } as const;
@@ -93,7 +93,7 @@ export function QuoteManagementWorkqueue({
         missingLineCount: 0,
         normalizationStatus: "required" as const,
         lastUpdatedAt: new Date().toISOString(),
-        nextAction: "정규화 필요",
+        nextAction: "견적 정리 필요",
       } : r,
     ));
     setQueueState((prev) => prev ? {
@@ -159,7 +159,7 @@ export function QuoteManagementWorkqueue({
               <span className={`text-lg font-bold tabular-nums ${receivedCount > 0 ? "text-blue-400" : "text-slate-600"}`}>{receivedCount}</span>
             </div>
             <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
-              <span className="text-[9px] text-slate-500 block">정규화 필요</span>
+              <span className="text-[9px] text-slate-500 block">정리 필요</span>
               <span className={`text-lg font-bold tabular-nums ${normalizationCount > 0 ? "text-orange-400" : "text-slate-600"}`}>{normalizationCount}</span>
             </div>
             <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
@@ -213,7 +213,7 @@ export function QuoteManagementWorkqueue({
                     {row.normalizationStatus === "required" && (
                       <Button size="sm" variant="ghost" className="h-6 px-2 text-[9px] text-orange-400 hover:text-orange-300 border border-orange-500/20"
                         onClick={(e) => { e.stopPropagation(); simulateNormalization(row.rowId); }}>
-                        정규화
+                        견적 정리
                       </Button>
                     )}
                     {row.responseStatus === "ready_for_compare" && (
@@ -251,7 +251,7 @@ export function QuoteManagementWorkqueue({
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">응답 <span className="text-slate-300 font-medium">{receivedCount}/{rows.length}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">정규화 필요 <span className="text-slate-300 font-medium">{normalizationCount}</span></span>
+            <span className="text-slate-500">정리 필요 <span className="text-slate-300 font-medium">{normalizationCount}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">비교 준비 <span className="text-slate-300 font-medium">{compareReadyCount}</span></span>
             <span className="text-slate-600">·</span>
@@ -272,7 +272,7 @@ export function QuoteManagementWorkqueue({
                 }}
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
-                정규화 필요 견적 열기
+                정리 필요 견적 열기
               </Button>
             )}
             <Button

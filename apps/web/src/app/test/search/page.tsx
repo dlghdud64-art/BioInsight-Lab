@@ -544,7 +544,7 @@ export default function SearchPage() {
                 {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
               </p>
               <p className="text-xs text-slate-400 leading-relaxed">
-                {stageOwner === "request" ? "소싱 비교 결과를 기반으로 견적 요청서를 조립·제출합니다." : stageOwner === "quote" ? "제출된 견적을 정규화·비교·검토합니다." : "승인된 견적을 PO로 전환하고 발주를 실행합니다."}
+                {stageOwner === "request" ? "소싱 비교 결과를 기반으로 견적 요청서를 조립·제출합니다." : stageOwner === "quote" ? "제출된 견적을 공급사별로 정리·비교·검토합니다." : "승인된 견적을 PO로 전환하고 발주를 실행합니다."}
               </p>
             </div>
 
@@ -579,7 +579,7 @@ export default function SearchPage() {
                 {stageOwner === "request"
                   ? "워크벤치 상단의 작업 창에서 요청서 조립 · 검토 · 제출을 진행하세요."
                   : stageOwner === "quote"
-                  ? "워크벤치 상단의 작업 창에서 견적 정규화 · 비교 검토를 진행하세요."
+                  ? "워크벤치 상단의 작업 창에서 견적 정리 · 비교 검토를 진행하세요."
                   : "워크벤치 상단의 작업 창에서 PO 전환 · 발주를 진행하세요."}
               </p>
             </div>
@@ -936,7 +936,8 @@ export default function SearchPage() {
         }}
         onQuoteWorkqueueOpen={(handoff) => {
           setQuoteWorkqueueHandoff(handoff);
-          setWorkWindowMode("quote-queue");
+          // Primary destination: dashboard quote management (not sourcing-internal popup)
+          router.push("/dashboard/quotes");
         }}
         onBackToAssembly={() => {
           setWorkWindowMode("request-assembly");

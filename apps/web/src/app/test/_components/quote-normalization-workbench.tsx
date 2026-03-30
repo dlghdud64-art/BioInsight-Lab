@@ -106,7 +106,7 @@ export function QuoteNormalizationWorkbench({
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-orange-400" />}
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "정규화 완료" : "견적 정규화"}</h2>
+              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "견적 정리 완료" : "공급사별 견적 정리"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <Building2 className="h-3 w-3 text-slate-500" />
                 <span className="text-slate-400">{handoff.vendorTargetId}</span>
@@ -182,7 +182,7 @@ export function QuoteNormalizationWorkbench({
 
           {/* ═══ C. Normalized Commercial Fields ═══ */}
           <div>
-            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">정규화된 상업 조건</span>
+            <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">정리된 상업 조건</span>
             <div className="mt-2 border border-bd/40 rounded-md overflow-hidden">
               {/* Header */}
               <div className="grid grid-cols-6 bg-[#252729] border-b border-bd/40 px-3 py-1.5">
@@ -236,9 +236,9 @@ export function QuoteNormalizationWorkbench({
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15 space-y-1">
               <div className="flex items-center gap-2">
                 <Check className="h-4 w-4 text-emerald-400" />
-                <span className="text-[11px] text-emerald-300 font-medium">정규화가 완료되었습니다</span>
+                <span className="text-[11px] text-emerald-300 font-medium">견적 정리가 완료되었습니다</span>
               </div>
-              <span className="text-[10px] text-slate-400">Quote Workqueue에서 비교 준비 상태를 확인하세요.</span>
+              <span className="text-[10px] text-slate-400">견적 관리에서 비교 준비 상태를 확인하세요.</span>
             </div>
           )}
         </div>
@@ -264,7 +264,7 @@ export function QuoteNormalizationWorkbench({
                 disabled={!validation?.canRecordNormalizedQuote}
               >
                 <RefreshCw className="h-3 w-3 mr-1" />
-                정규화 완료 저장
+                견적 정리 완료
               </Button>
             ) : (
               <Button

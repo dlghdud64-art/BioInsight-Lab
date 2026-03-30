@@ -10,7 +10,7 @@ const CLASS_CONFIG: Record<QuoteReentryClassification, { label: string; color: s
   new_expected: { label: "신규 대기", color: "text-blue-400" },
   prior_active_retained: { label: "기존 유지", color: "text-emerald-400" },
   stale: { label: "Stale", color: "text-slate-500" },
-  needs_normalization_reentry: { label: "정규화 재진입", color: "text-orange-400" },
+  needs_normalization_reentry: { label: "정리 재진입", color: "text-orange-400" },
   ready_for_compare_reentry: { label: "비교 재진입", color: "text-violet-400" },
   blocked_pending_response: { label: "응답 대기", color: "text-amber-400" },
 };
@@ -58,7 +58,7 @@ export function QuoteManagementReentryWorkbench({ open, onClose, handoff, onReen
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Stale <span className="text-slate-500 font-medium">{reentryState.staleQuoteCount}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">정규화 <span className="text-orange-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
+                <span className="text-slate-400">정리 필요 <span className="text-orange-300 font-medium">{reentryState.normalizationReentryCandidateCount}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">비교 <span className="text-violet-300 font-medium">{reentryState.compareReentryCandidateCount}</span></span>
               </div>

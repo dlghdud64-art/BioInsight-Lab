@@ -108,7 +108,7 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
           {isRecorded && (
             <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15">
               <div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Request Reopen 저장 완료</span></div>
-              <span className="text-[10px] text-slate-400 block mt-1">Request Submission Reopen으로 진행하여 요청을 다시 제출할 수 있습니다. 이후 Quote Workqueue → 정규화 → 비교 → PO 전환 → 입고 흐름이 다시 이어집니다.</span>
+              <span className="text-[10px] text-slate-400 block mt-1">Request Submission Reopen으로 진행하여 요청을 다시 제출할 수 있습니다. 이후 견적 관리 → 견적 정리 → 비교 → PO 전환 → 입고 흐름이 다시 이어집니다.</span>
             </div>
           )}
         </div>

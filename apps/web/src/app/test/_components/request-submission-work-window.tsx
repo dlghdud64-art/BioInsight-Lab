@@ -370,7 +370,7 @@ export function RequestSubmissionWorkWindow({
                 </div>
               </div>
               <p className="text-sm text-slate-300 leading-relaxed">
-                {conditionSummary?.outboundSummary} — 다음 단계: Quote Workqueue에서 공급사 회신을 추적하고 견적을 비교할 수 있습니다.
+                {conditionSummary?.outboundSummary} — 다음 단계: 견적 관리에서 공급사 회신을 추적하고 견적을 비교할 수 있습니다.
               </p>
             </div>
           )}
@@ -459,7 +459,7 @@ export function RequestSubmissionWorkWindow({
                   onClick={handleQuoteWorkqueue}
                 >
                   <ClipboardCheck className="h-4 w-4 mr-2" />
-                  Quote Workqueue 열기
+                  견적 관리로 이동
                   <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </>
