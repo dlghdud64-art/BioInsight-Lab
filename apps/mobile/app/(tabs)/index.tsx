@@ -75,13 +75,13 @@ export default function HomeScreen() {
       icon: ArrowDownToLine,
       label: "입고 처리",
       color: "#059669",
-      onPress: () => router.push("/(tabs)/inventory"),
+      onPress: () => router.push("/inventory/lot-receive" as any),
     },
     {
       icon: ArrowUpFromLine,
       label: "출고 처리",
       color: "#8b5cf6",
-      onPress: () => router.push("/(tabs)/inventory"),
+      onPress: () => router.push("/inventory/lot-dispatch" as any),
     },
     {
       icon: QrCode,

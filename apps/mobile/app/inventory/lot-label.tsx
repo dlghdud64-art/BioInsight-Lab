@@ -135,7 +135,7 @@ export default function LotLabelScreen() {
           <Text className={`text-xs font-semibold ${mode === "a4-multi" ? "text-purple-700" : "text-slate-500"}`}>
             A4 다중 배치
           </Text>
-          <Text className="text-[10px] text-slate-400">8장/페이지</Text>
+          <Text className="text-[11px] text-slate-400">8장/페이지</Text>
         </Pressable>
         <Pressable
           className={`flex-1 p-3.5 rounded-xl border items-center gap-1.5 ${
@@ -149,7 +149,7 @@ export default function LotLabelScreen() {
           <Text className={`text-xs font-semibold ${mode === "label-printer" ? "text-purple-700" : "text-slate-500"}`}>
             라벨 프린터용
           </Text>
-          <Text className="text-[10px] text-slate-400">62mm 롤</Text>
+          <Text className="text-[11px] text-slate-400">62mm 롤</Text>
         </Pressable>
       </View>
 

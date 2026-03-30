@@ -105,6 +105,26 @@ function QuickEntryForm() {
       return;
     }
 
+    // confirmation step — irreversible 데이터 생성 전 확인
+    const summaryLines = [
+      `제품명: ${form.productName.trim()}`,
+      form.vendor.trim() ? `공급사: ${form.vendor.trim()}` : null,
+      `금액: ₩${Number(form.amount).toLocaleString("ko-KR")}`,
+      form.quantity ? `수량: ${form.quantity} ${form.unit || "ea"}` : null,
+      `구매일: ${purchaseDate.toLocaleDateString("ko-KR")}`,
+    ].filter(Boolean).join("\n");
+
+    Alert.alert(
+      "구매 등록 확인",
+      `아래 내용으로 등록합니다.\n\n${summaryLines}`,
+      [
+        { text: "취소", style: "cancel" },
+        { text: "등록", style: "default", onPress: () => executeSave() },
+      ]
+    );
+  };
+
+  const executeSave = () => {
     createPurchase.mutate(
       {
         productName: form.productName.trim(),

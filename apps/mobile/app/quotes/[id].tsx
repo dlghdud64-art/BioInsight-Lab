@@ -4,12 +4,15 @@ import {
   ScrollView,
   Pressable,
   ActivityIndicator,
+  Alert,
 } from "react-native";
+import { useState } from "react";
 import { useLocalSearchParams, router } from "expo-router";
-import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck, ChevronRight, Edit3, RefreshCw, Clock, ArrowRight } from "lucide-react-native";
+import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck, ChevronRight, Edit3, RefreshCw, Clock, ArrowRight, Send } from "lucide-react-native";
 import { useQuoteDetail, useQuoteHistory } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
+import { ErrorState } from "../../components/ErrorState";
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -24,12 +27,13 @@ function formatAmount(n?: number) {
 const STATUS_LABEL: Record<string, string> = {
   DRAFT: "초안",
   PENDING: "대기",
+  SENT: "발송완료",
   IN_PROGRESS: "진행중",
+  RESPONDED: "회신도착",
   COMPLETED: "완료",
   CANCELLED: "취소",
   ON_HOLD: "보류",
   PURCHASED: "구매전환",
-  RESPONDED: "응답완료",
 };
 
 function StatusLabel({ status }: { status: string | null }) {
@@ -61,8 +65,8 @@ function TimelineItem({ item, isLast }: { item: QuoteStatusHistory; isLast: bool
           <Text className="text-xs text-slate-500 mb-0.5">{item.reason}</Text>
         )}
         <View className="flex-row items-center gap-2">
-          <Text className="text-[10px] text-slate-400">{item.changedBy}</Text>
-          <Text className="text-[10px] text-slate-400">{formatDate(item.createdAt)}</Text>
+          <Text className="text-[11px] text-slate-400">{item.changedBy}</Text>
+          <Text className="text-[11px] text-slate-400">{formatDate(item.createdAt)}</Text>
         </View>
       </View>
     </View>
@@ -84,17 +88,41 @@ export default function QuoteDetailScreen() {
 
   if (isError || !quote) {
     return (
-      <View className="flex-1 items-center justify-center bg-white px-6">
-        <Text className="text-base font-bold text-slate-900 mb-1">불러오기 실패</Text>
-        <Text className="text-sm text-slate-500 text-center mb-4">견적 정보를 가져올 수 없습니다.</Text>
-        <Pressable className="bg-blue-600 rounded-xl px-6 py-3" onPress={() => refetch()}>
-          <Text className="text-sm font-semibold text-white">다시 시도</Text>
-        </Pressable>
+      <View className="flex-1 bg-white">
+        <ErrorState
+          title="불러오기 실패"
+          description="견적 정보를 가져올 수 없습니다."
+          onRetry={() => refetch()}
+        />
       </View>
     );
   }
 
   const canConvert = ["COMPLETED", "RESPONDED"].includes(quote.status);
+  const canSend = quote.status === "PENDING";
+  const [sendState, setSendState] = useState<"idle" | "sending" | "sent">("idle");
+
+  const handleSendRequest = () => {
+    Alert.alert(
+      "견적 요청 발송",
+      `"${quote.title}" 견적을 공급사에 발송하시겠습니까?\n\n발송 후에는 취소할 수 없습니다.`,
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "발송",
+          style: "destructive",
+          onPress: async () => {
+            setSendState("sending");
+            // TODO: API 연동 — sendQuoteRequest(id)
+            setTimeout(() => {
+              setSendState("sent");
+              refetch();
+            }, 1200);
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -249,6 +277,31 @@ export default function QuoteDetailScreen() {
           </View>
           <ChevronRight size={16} color="#94a3b8" />
         </Pressable>
+
+        {/* 견적 발송 */}
+        {canSend && (
+          <Pressable
+            className={`flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
+              sendState === "sending" ? "bg-blue-400" : sendState === "sent" ? "bg-emerald-600" : "bg-blue-600"
+            }`}
+            onPress={handleSendRequest}
+            disabled={sendState !== "idle"}
+          >
+            {sendState === "sending" ? (
+              <>
+                <ActivityIndicator size="small" color="white" />
+                <Text className="text-sm font-semibold text-white">발송 중...</Text>
+              </>
+            ) : sendState === "sent" ? (
+              <Text className="text-sm font-semibold text-white">발송 완료</Text>
+            ) : (
+              <>
+                <Send size={16} color="white" />
+                <Text className="text-sm font-semibold text-white">견적 요청 발송</Text>
+              </>
+            )}
+          </Pressable>
+        )}
 
         {/* 주문 전환 */}
         {canConvert && (

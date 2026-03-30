@@ -93,7 +93,7 @@ export function SafetyInfoCard({
                   {code}
                 </Text>
                 {HAZARD_LABELS[code] && (
-                  <Text className="text-[10px] text-red-500">
+                  <Text className="text-[11px] text-red-500">
                     {HAZARD_LABELS[code]}
                   </Text>
                 )}

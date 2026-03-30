@@ -1,4 +1,4 @@
-import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Pressable, RefreshControl, ActivityIndicator, ScrollView } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Calendar, ChevronRight } from "lucide-react-native";
@@ -12,10 +12,11 @@ import type { Quote } from "../../types";
 const FILTERS = [
   { key: "ALL", label: "전체" },
   { key: "PENDING", label: "대기" },
-  { key: "IN_PROGRESS", label: "진행" },
+  { key: "SENT", label: "발송완료" },
+  { key: "RESPONDED", label: "회신도착" },
   { key: "COMPLETED", label: "완료" },
+  { key: "CANCELLED", label: "취소" },
   { key: "PURCHASED", label: "구매전환" },
-  { key: "ON_HOLD", label: "보류" },
 ];
 
 function formatDate(iso: string) {
@@ -94,14 +95,19 @@ export default function QuotesScreen() {
       </View>
 
       {/* 필터 */}
-      <View className="px-4 py-2.5 bg-white border-b border-slate-100 flex-row gap-2">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10 }}
+        className="bg-white border-b border-slate-100"
+      >
         {FILTERS.map((f) => (
           <Pressable
             key={f.key}
-            className={`px-3 py-1.5 rounded-full ${
+            className={`mr-2 px-3 py-1.5 rounded-full border ${
               statusFilter === f.key
-                ? "bg-blue-600"
-                : "bg-slate-100"
+                ? "bg-blue-600 border-blue-600"
+                : "bg-white border-slate-200"
             }`}
             onPress={() => setStatusFilter(f.key)}
           >
@@ -114,7 +120,7 @@ export default function QuotesScreen() {
             </Text>
           </Pressable>
         ))}
-      </View>
+      </ScrollView>
 
       {/* 리스트 */}
       {isLoading ? (

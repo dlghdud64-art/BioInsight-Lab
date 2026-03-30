@@ -3,7 +3,7 @@
 export interface Quote {
   id: string;
   title: string;
-  status: "DRAFT" | "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "ON_HOLD" | "PURCHASED" | "RESPONDED" | "VENDOR_INQUIRY" | "WAITING_REPLY";
+  status: "DRAFT" | "PENDING" | "SENT" | "IN_PROGRESS" | "RESPONDED" | "COMPLETED" | "CANCELLED" | "ON_HOLD" | "PURCHASED" | "VENDOR_INQUIRY" | "WAITING_REPLY";
   totalAmount?: number;
   createdAt: string;
   updatedAt: string;

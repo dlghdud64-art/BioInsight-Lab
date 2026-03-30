@@ -1,7 +1,10 @@
 import { Tabs } from "expo-router";
-import { Home, FileText, ShoppingCart, Package, Menu } from "lucide-react-native";
+import { Home, FileText, ShoppingCart, Package, Settings } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
@@ -11,8 +14,8 @@ export default function TabsLayout() {
         tabBarStyle: {
           borderTopColor: "#e2e8f0",
           backgroundColor: "#ffffff",
-          paddingBottom: 4,
-          height: 60,
+          paddingBottom: Math.max(insets.bottom, 4),
+          height: 56 + Math.max(insets.bottom, 4),
         },
         tabBarLabelStyle: {
           fontSize: 11,
@@ -57,8 +60,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="more"
         options={{
-          title: "더보기",
-          tabBarIcon: ({ color, size }) => <Menu size={size} color={color} />,
+          title: "설정",
+          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />
       {/* 기존 탭 숨김 처리 */}
