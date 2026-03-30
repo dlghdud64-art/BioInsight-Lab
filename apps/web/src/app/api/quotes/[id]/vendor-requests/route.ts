@@ -179,6 +179,14 @@ export async function POST(
     const successCount = emailResults.filter((r: any) => r.success).length;
     const failCount = emailResults.filter((r: any) => !r.success).length;
 
+    // 이메일이 1건 이상 성공했으면 quote 상태를 SENT로 전환
+    if (successCount > 0 && quote.status === "PENDING") {
+      await db.quote.update({
+        where: { id },
+        data: { status: "SENT" },
+      });
+    }
+
     if (successCount > 0) {
       await createActivityLog({
         activityType: "EMAIL_SENT",
