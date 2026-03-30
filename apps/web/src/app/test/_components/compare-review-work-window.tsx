@@ -209,18 +209,18 @@ export function CompareReviewWorkWindow({
   // ════════════════════════════════════════════════════════════════════════════
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#16181c] border border-slate-700/50 rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-[#1e2024] border border-slate-600/40 rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
 
         {/* ═══ HEADER — Identity + Mode Switch ═══ */}
-        <div className="px-5 py-3.5 border-b border-slate-700/40 bg-[#1c1e22]">
+        <div className="px-5 py-3.5 border-b border-slate-600/30 bg-[#262930]">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-600/15 border border-blue-500/25">
                 <GitCompare className="h-4 w-4 text-blue-400" />
               </div>
               <div>
-                <h2 className="text-[15px] font-bold text-slate-100">비교 검토</h2>
+                <h2 className="text-[15px] font-bold text-white">비교 검토</h2>
                 <div className="flex items-center gap-2 text-[11px] mt-0.5">
                   <span className="text-slate-400">후보 <span className="text-slate-200 font-semibold">{candidates.length}개</span></span>
                   <span className="text-slate-600">·</span>
@@ -237,10 +237,10 @@ export function CompareReviewWorkWindow({
 
           {/* Segmented Control */}
           {hasAiOptions && (
-            <div className="p-1.5 rounded-xl bg-[#0e1014] border border-slate-700/40 flex gap-1">
+            <div className="p-1.5 rounded-xl bg-[#16181c] border border-slate-600/30 flex gap-1">
               <button type="button" onClick={() => setSurfaceMode("ai")}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
-                  isAiMode ? "bg-blue-600/25 text-blue-100 border border-blue-500/40 shadow-md shadow-blue-500/15" : "text-slate-500 hover:text-slate-400 border border-slate-700/30"
+                  isAiMode ? "bg-blue-600/25 text-blue-100 border border-blue-500/40 shadow-md shadow-blue-500/15" : "text-slate-400 hover:text-slate-300 border border-slate-600/30"
                 }`}>
                 {isAiMode && <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />}
                 <Sparkles className={`h-4 w-4 ${isAiMode ? "text-blue-400" : "text-slate-600"}`} />
@@ -248,7 +248,7 @@ export function CompareReviewWorkWindow({
               </button>
               <button type="button" onClick={() => setSurfaceMode("basic")}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
-                  !isAiMode ? "bg-slate-600/25 text-slate-100 border border-slate-500/40 shadow-md" : "text-slate-500 hover:text-slate-400 border border-slate-700/30"
+                  !isAiMode ? "bg-slate-600/25 text-slate-100 border border-slate-500/40 shadow-md" : "text-slate-400 hover:text-slate-300 border border-slate-600/30"
                 }`}>
                 <GitCompare className={`h-4 w-4 ${!isAiMode ? "text-slate-300" : "text-slate-600"}`} />
                 사실 비교
@@ -267,27 +267,27 @@ export function CompareReviewWorkWindow({
             ═══════════════════════════════════════════════════════════════════ */
             <>
               {/* ── Decision Header ── */}
-              <div className="px-5 py-4 bg-[#12151c] border-b border-blue-500/10">
+              <div className="px-5 py-4 bg-[#1a1e28] border-b border-blue-500/15">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-blue-400" />
                   <span className="text-[11px] font-bold text-blue-300 uppercase tracking-widest">결정 요약</span>
                 </div>
                 <div className="grid grid-cols-3 gap-2.5">
-                  <div className="px-3.5 py-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/15">
+                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-emerald-500/20">
                     <span className="text-[10px] text-emerald-400 font-medium block">즉시 요청 가능</span>
-                    <span className="text-[18px] font-bold text-emerald-300">{decisionHeader.requestReadyCount}<span className="text-[11px] text-emerald-400/60 ml-0.5">건</span></span>
+                    <span className="text-[18px] font-bold text-emerald-300">{decisionHeader.requestReadyCount}<span className="text-[11px] text-emerald-400/70 ml-0.5">건</span></span>
                   </div>
-                  <div className="px-3.5 py-2.5 rounded-lg bg-amber-950/25 border border-amber-500/10">
+                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-amber-500/15">
                     <span className="text-[10px] text-amber-400 font-medium block">보류 · 확인 필요</span>
-                    <span className="text-[18px] font-bold text-amber-300">{decisionHeader.holdCount}<span className="text-[11px] text-amber-400/60 ml-0.5">건</span></span>
+                    <span className="text-[18px] font-bold text-amber-300">{decisionHeader.holdCount}<span className="text-[11px] text-amber-400/70 ml-0.5">건</span></span>
                   </div>
-                  <div className="px-3.5 py-2.5 rounded-lg bg-red-950/20 border border-red-500/10">
+                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-red-500/15">
                     <span className="text-[10px] text-red-400 font-medium block">제외</span>
-                    <span className="text-[18px] font-bold text-red-300">{decisionHeader.excludedCount}<span className="text-[11px] text-red-400/60 ml-0.5">건</span></span>
+                    <span className="text-[18px] font-bold text-red-300">{decisionHeader.excludedCount}<span className="text-[11px] text-red-400/70 ml-0.5">건</span></span>
                   </div>
                 </div>
                 {decisionHeader.topBlocker && (
-                  <div className="flex items-center gap-2 mt-2.5 px-3 py-2 rounded-lg bg-amber-950/20 border border-amber-500/10">
+                  <div className="flex items-center gap-2 mt-2.5 px-3 py-2 rounded-lg bg-[#28251e] border border-amber-500/15">
                     <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
                     <span className="text-[11px] text-amber-300">{decisionHeader.topBlocker}</span>
                   </div>
@@ -295,8 +295,8 @@ export function CompareReviewWorkWindow({
               </div>
 
               {/* ── Tri-Option Strategy Cards ── */}
-              <div className="px-5 pt-4 pb-3 border-b border-slate-700/20">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">결정 시나리오 선택</span>
+              <div className="px-5 pt-4 pb-3 border-b border-slate-600/15">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">결정 시나리오 선택</span>
                 <div className="grid grid-cols-3 gap-2">
                   {strategyOptions.map((opt: StrategyDecisionOption) => {
                     const FrameIcon = FRAME_ICON[opt.frame];
@@ -305,19 +305,19 @@ export function CompareReviewWorkWindow({
                     return (
                       <button key={opt.frame} type="button" onClick={() => { setActiveFrame(opt.frame); }}
                         className={`text-left px-3.5 py-3 rounded-lg border-2 transition-all ${
-                          isActive ? `${colors.bg} ${colors.border} ring-1 ring-offset-0 ring-${opt.frame === "cost" ? "emerald" : opt.frame === "balanced" ? "blue" : "amber"}-500/20` : "border-slate-700/30 hover:border-slate-600/40 bg-[#16181c]"
+                          isActive ? `${colors.bg} ${colors.border} ring-1 ring-offset-0 ring-${opt.frame === "cost" ? "emerald" : opt.frame === "balanced" ? "blue" : "amber"}-500/20` : "border-slate-600/30 hover:border-slate-500/40 bg-[#24272c]"
                         }`}>
                         <div className="flex items-center gap-2 mb-1.5">
-                          <FrameIcon className={`h-4 w-4 ${isActive ? colors.text : "text-slate-600"}`} />
-                          <span className={`text-[12px] font-bold ${isActive ? colors.text : "text-slate-400"}`}>{opt.title}</span>
+                          <FrameIcon className={`h-4 w-4 ${isActive ? colors.text : "text-slate-500"}`} />
+                          <span className={`text-[12px] font-bold ${isActive ? colors.text : "text-slate-300"}`}>{opt.title}</span>
                         </div>
-                        <p className={`text-[10px] leading-snug ${isActive ? "text-slate-300" : "text-slate-600"}`}>{opt.subtitle}</p>
+                        <p className={`text-[10px] leading-snug ${isActive ? "text-slate-200" : "text-slate-500"}`}>{opt.subtitle}</p>
                         <div className="flex items-center gap-2 mt-2">
-                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? colors.accent + " " + colors.text : "bg-slate-800 text-slate-600"}`}>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? colors.accent + " " + colors.text : "bg-slate-700/50 text-slate-500"}`}>
                             요청 {opt.recommended.length}
                           </span>
                           {opt.held.length > 0 && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-600">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-500">
                               보류 {opt.held.length}
                             </span>
                           )}
@@ -376,9 +376,9 @@ export function CompareReviewWorkWindow({
                       </div>
                       <div className="space-y-1.5">
                         {activeOption.excluded.map((sc: StrategyCandidate) => (
-                          <div key={sc.id} className="px-4 py-2.5 rounded-lg border border-red-500/10 bg-red-950/15">
-                            <span className="text-[12px] text-slate-400 font-medium block">{sc.name}</span>
-                            <span className="text-[10px] text-red-400/60 block mt-0.5">{sc.selectionReason}</span>
+                          <div key={sc.id} className="px-4 py-2.5 rounded-lg border border-red-500/15 bg-[#241e1e]">
+                            <span className="text-[12px] text-slate-300 font-medium block">{sc.name}</span>
+                            <span className="text-[10px] text-red-400/70 block mt-0.5">{sc.selectionReason}</span>
                           </div>
                         ))}
                       </div>
@@ -386,20 +386,20 @@ export function CompareReviewWorkWindow({
                   )}
 
                   {/* ── Recommendation Block ── */}
-                  <div className="mt-4 px-4 py-3.5 rounded-lg bg-[#111420] border border-blue-500/10">
+                  <div className="mt-4 px-4 py-3.5 rounded-lg bg-[#1c2030] border border-blue-500/15">
                     <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-2">결정 근거</span>
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
                       <div>
-                        <span className="text-slate-600 block text-[10px]">추천 이유</span>
-                        <span className="text-slate-300">{activeOption.keyBenefit}</span>
+                        <span className="text-slate-500 block text-[10px]">추천 이유</span>
+                        <span className="text-slate-200">{activeOption.keyBenefit}</span>
                       </div>
                       <div>
-                        <span className="text-slate-600 block text-[10px]">운영 리스크</span>
-                        <span className="text-slate-300">{activeOption.keyRisk || "없음"}</span>
+                        <span className="text-slate-500 block text-[10px]">운영 리스크</span>
+                        <span className="text-slate-200">{activeOption.keyRisk || "없음"}</span>
                       </div>
                       {activeOption.blockers.length > 0 && (
                         <div className="col-span-2">
-                          <span className="text-slate-600 block text-[10px]">요청 전 확인</span>
+                          <span className="text-slate-500 block text-[10px]">요청 전 확인</span>
                           <span className="text-amber-300">{activeOption.blockers.join(" / ")}</span>
                         </div>
                       )}
@@ -409,12 +409,12 @@ export function CompareReviewWorkWindow({
               )}
 
               {/* ── AI Decision CTA ── */}
-              <div className="px-5 py-4 border-t border-slate-700/30 bg-[#16181c]">
+              <div className="px-5 py-4 border-t border-slate-600/25 bg-[#262930]">
                 {!isDecisionRecorded ? (
                   <div className="space-y-2">
                     {/* 결정안 적용 버튼 */}
                     <Button size="sm"
-                      className="w-full h-10 text-[12px] bg-blue-600/20 hover:bg-blue-600/30 text-blue-200 font-semibold rounded-lg border border-blue-500/30"
+                      className="w-full h-10 text-[12px] bg-blue-600/25 hover:bg-blue-600/35 text-blue-100 font-semibold rounded-lg border border-blue-500/35"
                       onClick={applyStrategyDecision}
                       disabled={!activeOption || activeOption.recommended.length === 0}>
                       <Sparkles className="h-3.5 w-3.5 mr-2" />
@@ -457,13 +457,13 @@ export function CompareReviewWorkWindow({
             <>
               {/* ── Fact Comparison Table ── */}
               <div className="px-5 pt-4 pb-3">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">후보 사실 비교</span>
-                <div className="border border-slate-800/40 rounded-lg overflow-hidden">
-                  <div className="grid bg-[#1c1e22] border-b border-slate-800/40"
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">후보 사실 비교</span>
+                <div className="border border-slate-600/20 rounded-lg overflow-hidden">
+                  <div className="grid bg-[#262930] border-b border-slate-600/20"
                     style={{ gridTemplateColumns: `100px repeat(${candidates.length}, minmax(0, 1fr))` }}>
                     <div className="px-3 py-2 text-[10px] text-slate-600 font-medium">항목</div>
                     {candidates.map((c) => (
-                      <div key={c.id} className="px-3 py-2 text-[11px] text-slate-300 font-semibold truncate border-l border-slate-800/30">{c.name}</div>
+                      <div key={c.id} className="px-3 py-2 text-[11px] text-slate-200 font-semibold truncate border-l border-slate-600/20">{c.name}</div>
                     ))}
                   </div>
                   {[
@@ -474,11 +474,11 @@ export function CompareReviewWorkWindow({
                     { label: "단가", getter: (c: CompareCandidateInfo) => c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "미확인" },
                     { label: "납기", getter: (c: CompareCandidateInfo) => c.leadTimeDays > 0 ? `${c.leadTimeDays}영업일` : "미확인" },
                   ].map((row, ri) => (
-                    <div key={ri} className="grid border-b border-slate-800/20 last:border-b-0"
+                    <div key={ri} className="grid border-b border-slate-700/15 last:border-b-0"
                       style={{ gridTemplateColumns: `100px repeat(${candidates.length}, minmax(0, 1fr))` }}>
-                      <div className="px-3 py-2 text-[10px] text-slate-600 font-medium">{row.label}</div>
+                      <div className="px-3 py-2 text-[10px] text-slate-500 font-medium">{row.label}</div>
                       {candidates.map((c) => (
-                        <div key={c.id} className="px-3 py-2 text-[11px] text-slate-400 truncate border-l border-slate-800/20">{row.getter(c)}</div>
+                        <div key={c.id} className="px-3 py-2 text-[11px] text-slate-300 truncate border-l border-slate-700/15">{row.getter(c)}</div>
                       ))}
                     </div>
                   ))}
@@ -486,49 +486,49 @@ export function CompareReviewWorkWindow({
               </div>
 
               {/* ── Key Differences ── */}
-              <div className="px-5 py-3 border-t border-slate-800/30">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2 block">핵심 차이</span>
+              <div className="px-5 py-3 border-t border-slate-600/15">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 block">핵심 차이</span>
                 <div className="grid grid-cols-2 gap-2">
                   {differenceSummary.priceAdvantage && (
-                    <div className="px-3 py-2 rounded border border-slate-800/30 bg-[#1a1c20]">
-                      <div className="flex items-center gap-1.5 mb-0.5"><TrendingDown className="h-3 w-3 text-emerald-600/50" /><span className="text-[10px] text-slate-500">가격</span></div>
-                      <span className="text-[11px] text-slate-300">{differenceSummary.priceAdvantage.label}</span>
+                    <div className="px-3 py-2 rounded border border-slate-600/20 bg-[#262830]">
+                      <div className="flex items-center gap-1.5 mb-0.5"><TrendingDown className="h-3 w-3 text-emerald-500/70" /><span className="text-[10px] text-slate-400">가격</span></div>
+                      <span className="text-[11px] text-slate-200">{differenceSummary.priceAdvantage.label}</span>
                     </div>
                   )}
                   {differenceSummary.leadTimeAdvantage && (
-                    <div className="px-3 py-2 rounded border border-slate-800/30 bg-[#1a1c20]">
-                      <div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-blue-600/50" /><span className="text-[10px] text-slate-500">납기</span></div>
-                      <span className="text-[11px] text-slate-300">{differenceSummary.leadTimeAdvantage.label}</span>
+                    <div className="px-3 py-2 rounded border border-slate-600/20 bg-[#262830]">
+                      <div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-blue-500/70" /><span className="text-[10px] text-slate-400">납기</span></div>
+                      <span className="text-[11px] text-slate-200">{differenceSummary.leadTimeAdvantage.label}</span>
                     </div>
                   )}
-                  <div className="px-3 py-2 rounded border border-slate-800/30 bg-[#1a1c20]">
+                  <div className="px-3 py-2 rounded border border-slate-600/20 bg-[#262830]">
                     <div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-600" /><span className="text-[10px] text-slate-500">규격</span></div>
-                    <span className="text-[11px] text-slate-300">{differenceSummary.specFitNote}</span>
+                    <span className="text-[11px] text-slate-200">{differenceSummary.specFitNote}</span>
                   </div>
-                  <div className="px-3 py-2 rounded border border-slate-800/30 bg-[#1a1c20]">
+                  <div className="px-3 py-2 rounded border border-slate-600/20 bg-[#262830]">
                     <div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-600" /><span className="text-[10px] text-slate-500">브랜드</span></div>
-                    <span className="text-[11px] text-slate-300">{differenceSummary.brandNote}</span>
+                    <span className="text-[11px] text-slate-200">{differenceSummary.brandNote}</span>
                   </div>
                 </div>
               </div>
 
               {/* ── Manual Selection ── */}
-              <div className="px-5 pt-3 pb-3 border-t border-slate-800/30">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 block">수동 선택</span>
+              <div className="px-5 pt-3 pb-3 border-t border-slate-600/15">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">수동 선택</span>
                 <div className="space-y-2">
                   {candidates.map((c) => {
                     const isShortlisted = shortlistIds.has(c.id);
                     const isExcluded = excludedIds.has(c.id);
                     return (
                       <div key={c.id} className={`px-4 py-3 rounded-lg border transition-all ${
-                        isShortlisted ? "border-emerald-500/30 bg-emerald-950/40"
-                          : isExcluded ? "border-red-500/20 bg-red-950/20 opacity-50"
-                            : "border-slate-700/30 bg-[#1a1c20]"
+                        isShortlisted ? "border-emerald-500/30 bg-[#1e2820]"
+                          : isExcluded ? "border-red-500/20 bg-[#241e1e] opacity-60"
+                            : "border-slate-600/25 bg-[#282b32]"
                       }`}>
                         <div className="flex items-center justify-between gap-3">
                           <div className="min-w-0">
-                            <span className="text-[13px] font-bold text-slate-100 block truncate">{c.name}</span>
-                            <span className="text-[11px] text-slate-500 block mt-0.5">{c.brand} · {c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "가격 미확인"}</span>
+                            <span className="text-[13px] font-bold text-white block truncate">{c.name}</span>
+                            <span className="text-[11px] text-slate-400 block mt-0.5">{c.brand} · {c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "가격 미확인"}</span>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button type="button" onClick={() => toggleShortlist(c.id)} disabled={isDecisionRecorded}
@@ -552,7 +552,7 @@ export function CompareReviewWorkWindow({
               </div>
 
               {/* ── Basic CTA ── */}
-              <div className="px-5 py-4 border-t border-slate-700/30 bg-[#16181c]">
+              <div className="px-5 py-4 border-t border-slate-600/25 bg-[#262930]">
                 {!isDecisionRecorded ? (
                   <div>
                     <Button size="sm"
@@ -590,12 +590,12 @@ export function CompareReviewWorkWindow({
         </div>
 
         {/* ═══ Dock ═══ */}
-        <div className="px-5 py-2.5 border-t border-slate-700/40 bg-[#1c1e22]">
+        <div className="px-5 py-2.5 border-t border-slate-600/30 bg-[#262930]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 text-[11px]">
-              <span className="text-slate-500">선택 후보 <span className="text-slate-300 font-semibold">{shortlistCount}</span></span>
-              <span className="text-slate-700">·</span>
-              <span className="text-slate-500">제외 <span className="text-slate-300 font-semibold">{excludedCount}</span></span>
+              <span className="text-slate-400">선택 후보 <span className="text-slate-200 font-semibold">{shortlistCount}</span></span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-400">제외 <span className="text-slate-200 font-semibold">{excludedCount}</span></span>
               {isDecisionRecorded && (
                 <><span className="text-slate-700">·</span><span className="text-emerald-400 font-semibold">저장됨</span></>
               )}
@@ -633,12 +633,12 @@ function StrategyCandidateCard({
 }) {
   const isRecommended = variant === "recommended";
   const cardBg = isShortlisted
-    ? "border-emerald-500/30 bg-emerald-950/40"
+    ? "border-emerald-500/30 bg-[#1e2820]"
     : isExcluded
-      ? "border-red-500/20 bg-red-950/20 opacity-50"
+      ? "border-red-500/20 bg-[#241e1e] opacity-60"
       : isRecommended
-        ? "border-slate-600/30 bg-[#171a1f]"
-        : "border-slate-700/20 bg-[#15161a]";
+        ? "border-slate-500/25 bg-[#282b32]"
+        : "border-slate-600/20 bg-[#24272c]";
 
   return (
     <div className={`px-4 py-3.5 rounded-lg border transition-all ${cardBg}`}>
@@ -648,15 +648,15 @@ function StrategyCandidateCard({
           isRecommended ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/10 text-amber-400"
         }`}>{sc.readinessLabel}</span>
       </div>
-      <span className="text-[13px] font-bold text-slate-100 block">{sc.name}</span>
-      <span className="text-[11px] text-slate-500 block mt-0.5">{sc.brand}</span>
+      <span className="text-[13px] font-bold text-white block">{sc.name}</span>
+      <span className="text-[11px] text-slate-400 block mt-0.5">{sc.brand}</span>
 
       {/* Reason + Risk + Next */}
       <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
-        <div><span className="text-slate-600">이유:</span> <span className="text-slate-300">{sc.selectionReason}</span></div>
-        <div><span className="text-slate-600">다음:</span> <span className="text-slate-300">{sc.nextAction}</span></div>
+        <div><span className="text-slate-500">이유:</span> <span className="text-slate-200">{sc.selectionReason}</span></div>
+        <div><span className="text-slate-500">다음:</span> <span className="text-slate-200">{sc.nextAction}</span></div>
         {sc.riskNote && (
-          <div className="col-span-2"><span className="text-slate-600">리스크:</span> <span className="text-amber-300/80">{sc.riskNote}</span></div>
+          <div className="col-span-2"><span className="text-slate-500">리스크:</span> <span className="text-amber-300">{sc.riskNote}</span></div>
         )}
       </div>
 
