@@ -231,63 +231,64 @@ export function CompareReviewWorkWindow({
     const isDirect = variant === "direct";
 
     const cardBg = isShortlisted
-      ? "border-emerald-500/35 bg-emerald-950/40"
+      ? "border-emerald-500/40 bg-emerald-950/50"
       : isExcluded
-        ? "border-red-500/20 bg-red-950/20 opacity-45"
+        ? "border-red-500/25 bg-red-950/25 opacity-50"
         : isDirect
-          ? "border-slate-600/35 bg-slate-800/50"
-          : "border-slate-700/25 bg-slate-800/25";
+          ? "border-slate-500/40 bg-[#1e2128]"
+          : "border-slate-600/30 bg-[#1a1d22]";
 
     return (
-      <div key={c.id} className={`px-4 py-4 rounded-lg border transition-all ${cardBg}`}>
-        <div className="flex items-start gap-3">
+      <div key={c.id} className={`px-6 py-5 rounded-xl border transition-all ${cardBg}`}>
+        <div className="flex items-start gap-4">
           <div className="flex-1 min-w-0">
-            {/* 제품명 — 가장 크게 */}
-            <span className={`text-[14px] font-bold block truncate leading-snug ${isDirect ? "text-slate-50" : "text-slate-300"}`}>{c.name}</span>
-            {/* delta one-liner — 바로 아래 */}
-            <div className="flex items-center gap-2 mt-1.5">
-              <span className={`text-[13px] font-semibold ${isDirect ? "text-emerald-300" : "text-slate-400"}`}>
+            {/* 제품명 — 18px bold, 가장 먼저 읽힘 */}
+            <span className={`text-[18px] font-bold block truncate leading-snug ${isDirect ? "text-white" : "text-slate-200"}`}>{c.name}</span>
+            {/* 가격 — 18px, 제품명 바로 아래 강조 */}
+            <div className="flex items-center gap-3 mt-2">
+              <span className={`text-[18px] font-bold ${isDirect ? "text-emerald-300" : "text-slate-300"}`}>
                 {c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "가격 미확인"}
               </span>
               {cl.deltaOneLiner && (
-                <span className={`shrink-0 text-[11px] px-2 py-0.5 rounded font-medium ${isDirect ? "bg-emerald-500/20 text-emerald-200" : "bg-amber-500/15 text-amber-300"}`}>
+                <span className={`shrink-0 text-[13px] px-2.5 py-0.5 rounded-md font-semibold ${isDirect ? "bg-emerald-500/20 text-emerald-200 border border-emerald-500/25" : "bg-amber-500/15 text-amber-200 border border-amber-500/20"}`}>
                   {cl.deltaOneLiner}
                 </span>
               )}
             </div>
-            {/* 브랜드·카탈로그 — 메타 2행 */}
-            <span className="text-[11px] text-slate-600 block mt-1">
+            {/* 브랜드·카탈로그 — 14px 메타 */}
+            <span className="text-[14px] text-slate-400 block mt-1.5 leading-relaxed">
               {c.brand}{c.catalogNumber ? ` · ${c.catalogNumber}` : ""}
             </span>
+            {/* 판단 신호 — chip */}
             {!isDirect && cl.classReason && (
-              <span className="text-[10px] text-amber-400/60 block mt-1">{cl.classReason}{cl.riskNote ? ` — ${cl.riskNote}` : ""}</span>
+              <span className="inline-block text-[12px] text-amber-300 bg-amber-500/10 border border-amber-500/15 px-2.5 py-0.5 rounded mt-2">{cl.classReason}{cl.riskNote ? ` — ${cl.riskNote}` : ""}</span>
             )}
           </div>
-          {/* 액션 버튼 — positive 강조, negative ghost */}
-          <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          {/* 액션 버튼 — h-10, positive 강조, negative ghost */}
+          <div className="flex items-center gap-2 shrink-0 pt-1">
             <button
               type="button"
               onClick={() => toggleShortlist(c.id)}
               disabled={isDecisionRecorded}
-              className={`h-9 px-3.5 rounded-md text-[12px] font-bold flex items-center gap-1.5 transition-all ${
+              className={`h-10 px-4 rounded-lg text-[13px] font-bold flex items-center gap-2 transition-all ${
                 isShortlisted
-                  ? "bg-emerald-500/25 text-emerald-200 border border-emerald-500/40"
-                  : "text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/15 border border-slate-700/50 hover:border-emerald-500/30"
+                  ? "bg-emerald-500/30 text-emerald-100 border border-emerald-400/50"
+                  : "text-slate-300 hover:text-emerald-200 hover:bg-emerald-500/15 border border-slate-600/50 hover:border-emerald-400/40"
               } ${isDecisionRecorded ? "opacity-40 cursor-not-allowed" : ""}`}
             >
-              <Check className="h-3.5 w-3.5" />{isShortlisted ? "선택됨" : "선택"}
+              <Check className="h-4 w-4" />{isShortlisted ? "선택됨" : "선택"}
             </button>
             <button
               type="button"
               onClick={() => toggleExclude(c.id)}
               disabled={isDecisionRecorded}
-              className={`h-9 px-3 rounded-md text-[12px] font-medium flex items-center gap-1.5 transition-all ${
+              className={`h-10 px-3.5 rounded-lg text-[13px] font-medium flex items-center gap-2 transition-all ${
                 isExcluded
-                  ? "bg-red-500/15 text-red-400 border border-red-500/25"
-                  : "text-slate-600 hover:text-red-400 hover:bg-red-500/10 border border-slate-800/50"
+                  ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                  : "text-slate-500 hover:text-red-300 hover:bg-red-500/10 border border-slate-700/40"
               } ${isDecisionRecorded ? "opacity-40 cursor-not-allowed" : ""}`}
             >
-              <Minus className="h-3.5 w-3.5" />제외
+              <Minus className="h-4 w-4" />제외
             </button>
           </div>
         </div>
@@ -296,66 +297,63 @@ export function CompareReviewWorkWindow({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#13151a] border border-slate-700/40 rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="bg-[#181b21] border border-slate-600/50 rounded-2xl shadow-2xl w-full max-w-[1080px] max-h-[82vh] overflow-hidden flex flex-col">
 
         {/* ═══════════════════════════════════════════════════════════════════
-            HEADER — Identity + Mode Switch
-            AI 비교 판단이 기본. 기본 비교는 secondary text button.
+            HEADER — 20px title, AI 기본 진입, 기본 비교는 secondary
         ═══════════════════════════════════════════════════════════════════ */}
-        <div className="px-5 py-4 border-b border-slate-700/40 bg-[#1c1e24] flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className={`w-8 h-8 rounded-lg flex items-center justify-center border ${isAiMode ? "bg-blue-600/15 border-blue-500/25" : "bg-slate-600/15 border-slate-500/25"}`}>
+        <div className="px-8 py-5 border-b border-slate-600/40 bg-[#1e2128] flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${isAiMode ? "bg-blue-600/20 border-blue-500/30" : "bg-slate-600/20 border-slate-500/30"}`}>
               {isAiMode
-                ? <Sparkles className="h-4 w-4 text-blue-400" />
-                : <GitCompare className="h-4 w-4 text-slate-400" />
+                ? <Sparkles className="h-5 w-5 text-blue-400" />
+                : <GitCompare className="h-5 w-5 text-slate-400" />
               }
             </div>
             <div>
-              <h2 className="text-[16px] font-bold text-slate-50">
+              <h2 className="text-[20px] font-bold text-white leading-tight">
                 {isAiMode ? "AI 비교 판단" : "기본 비교"}
               </h2>
-              <div className="flex items-center gap-2 text-[12px] mt-0.5">
-                <span className="text-slate-400">후보 <span className="text-slate-200 font-semibold">{candidates.length}개</span></span>
+              <div className="flex items-center gap-2.5 text-[14px] mt-1">
+                <span className="text-slate-400">후보 <span className="text-slate-100 font-semibold">{candidates.length}개</span></span>
                 <span className="text-slate-600">·</span>
                 <span className={compareModeColor}>{compareModeLabel}</span>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {/* 기본 비교는 secondary text button */}
+          <div className="flex items-center gap-3">
             {hasAiOptions && (
               <button
                 type="button"
                 onClick={() => setSurfaceMode(isAiMode ? "basic" : "ai")}
-                className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-300 px-2.5 py-1.5 rounded border border-slate-700/35 hover:border-slate-600/50 transition-colors"
+                className="flex items-center gap-2 text-[13px] text-slate-400 hover:text-slate-200 px-3.5 py-2 rounded-lg border border-slate-600/40 hover:border-slate-500/60 transition-colors"
               >
-                {isAiMode ? <><GitCompare className="h-3 w-3" />기본 비교</> : <><Sparkles className="h-3 w-3" />AI 판단</>}
+                {isAiMode ? <><GitCompare className="h-3.5 w-3.5" />기본 비교</> : <><Sparkles className="h-3.5 w-3.5" />AI 판단</>}
               </button>
             )}
-            <button type="button" onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-md text-slate-500 hover:text-slate-300 hover:bg-white/[0.06] transition-colors">
-              <X className="h-4 w-4" />
+            <button type="button" onClick={onClose} className="h-9 w-9 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/[0.08] transition-colors">
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════
-            BLOCKER SUMMARY BAR — one-liner chip strip
-            3초 안에 읽히는 상황 요약
+            BLOCKER SUMMARY BAR
         ═══════════════════════════════════════════════════════════════════ */}
-        <div className="px-5 py-2.5 border-b border-slate-800/50 bg-[#15171c] flex items-center gap-2 flex-wrap">
+        <div className="px-8 py-3 border-b border-slate-700/40 bg-[#1a1d23] flex items-center gap-2.5 flex-wrap">
           {blockerSummaryChips.length === 0 ? (
-            <span className="text-[11px] text-slate-600">비교 상태 확인 중…</span>
+            <span className="text-[13px] text-slate-500">비교 상태 확인 중…</span>
           ) : (
             blockerSummaryChips.map((chip) => (
               <span
                 key={chip.id}
-                className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                className={`text-[13px] font-semibold px-3 py-1 rounded-full ${
                   chip.tone === "emerald"
-                    ? "bg-emerald-500/15 text-emerald-300"
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20"
                     : chip.tone === "amber"
-                      ? "bg-amber-500/12 text-amber-300"
-                      : "bg-red-500/12 text-red-400"
+                      ? "bg-amber-500/12 text-amber-300 border border-amber-500/15"
+                      : "bg-red-500/12 text-red-400 border border-red-500/15"
                 }`}
               >
                 {chip.label}
@@ -365,11 +363,11 @@ export function CompareReviewWorkWindow({
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════
-            AI STRATEGY SELECTOR — radio segment style, bigger labels
+            AI STRATEGY SELECTOR — 15px bold, radio segment
         ═══════════════════════════════════════════════════════════════════ */}
         {isAiMode && (
-          <div className="px-5 py-3 border-b border-slate-700/20 bg-[#14161b]">
-            <div className="flex gap-1 p-1 rounded-xl bg-[#0d1014] border border-slate-700/35">
+          <div className="px-8 py-4 border-b border-slate-700/30 bg-[#1a1c22]">
+            <div className="flex gap-1.5 p-1.5 rounded-xl bg-[#12151a] border border-slate-600/35">
               {(["conservative", "balanced", "alternative"] as const).map((frame) => {
                 const label = frame === "conservative" ? "비용 우선" : frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
                 const isActive = activeAiFrame === frame;
@@ -378,10 +376,10 @@ export function CompareReviewWorkWindow({
                     key={frame}
                     type="button"
                     onClick={() => setActiveAiFrame(frame)}
-                    className={`flex-1 py-2.5 text-center rounded-lg text-[13px] font-bold transition-all ${
+                    className={`flex-1 py-3 text-center rounded-lg text-[15px] font-bold transition-all ${
                       isActive
-                        ? "bg-blue-600/20 text-blue-100 border border-blue-500/35 shadow-sm"
-                        : "text-slate-500 hover:text-slate-300 border border-transparent hover:bg-white/[0.03]"
+                        ? "bg-blue-600/25 text-blue-100 border border-blue-500/40 shadow-sm shadow-blue-500/10"
+                        : "text-slate-400 hover:text-slate-200 border border-transparent hover:bg-white/[0.04]"
                     }`}
                   >
                     {label}
@@ -397,15 +395,15 @@ export function CompareReviewWorkWindow({
         ═══════════════════════════════════════════════════════════════════ */}
         <div className="flex-1 overflow-y-auto">
 
-          {/* ── ZONE A: 우선 검토 후보 (direct) — 최강 강조 ── */}
+          {/* ── ZONE A: 우선 검토 후보 (direct) ── */}
           {directGroup.length > 0 && (
-            <div className="px-5 pt-5 pb-4 bg-[#14171d]">
-              <div className="flex items-center gap-2.5 mb-4">
-                <div className="w-2.5 h-2.5 rounded bg-emerald-400" />
-                <span className="text-[13px] font-bold text-emerald-300 tracking-wide">우선 검토 후보</span>
-                <span className="text-[11px] text-slate-500 font-medium">{directGroup.length}개</span>
+            <div className="px-8 pt-7 pb-6 bg-[#181b21]">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="w-3 h-3 rounded bg-emerald-400" />
+                <span className="text-[16px] font-bold text-emerald-300">우선 검토 후보</span>
+                <span className="text-[14px] text-slate-400 font-medium">{directGroup.length}개</span>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {directGroup.map((cl) => renderCandidateCard(cl, "direct"))}
               </div>
             </div>
@@ -413,47 +411,47 @@ export function CompareReviewWorkWindow({
 
           {/* ── ZONE B: 참고 후보 (reference) — 접기 기본값 ── */}
           {referenceGroup.length > 0 && (
-            <div className="border-t border-slate-800/40 bg-[#13151a]">
+            <div className="border-t border-slate-600/30 bg-[#171a1f]">
               <button
                 type="button"
                 onClick={() => setShowReferenceGroup(!showReferenceGroup)}
-                className="w-full flex items-center gap-2.5 px-5 py-3.5 text-left hover:bg-white/[0.02] transition-colors"
+                className="w-full flex items-center gap-3 px-8 py-4 text-left hover:bg-white/[0.02] transition-colors"
               >
-                <div className="w-2 h-2 rounded bg-amber-400/60" />
-                <span className="text-[12px] font-semibold text-amber-400/80">참고 후보</span>
-                <span className="text-[11px] text-slate-600 font-medium">{referenceGroup.length}개 — 직접 비교 제한</span>
+                <div className="w-2.5 h-2.5 rounded bg-amber-400/70" />
+                <span className="text-[15px] font-semibold text-amber-300">참고 후보</span>
+                <span className="text-[13px] text-slate-500 font-medium">{referenceGroup.length}개 — 직접 비교 제한</span>
                 {showReferenceGroup
-                  ? <ChevronUp className="ml-auto h-3.5 w-3.5 text-slate-600" />
-                  : <ChevronDown className="ml-auto h-3.5 w-3.5 text-slate-600" />
+                  ? <ChevronUp className="ml-auto h-4 w-4 text-slate-500" />
+                  : <ChevronDown className="ml-auto h-4 w-4 text-slate-500" />
                 }
               </button>
               {showReferenceGroup && (
-                <div className="px-5 pb-4 space-y-2.5">
+                <div className="px-8 pb-5 space-y-3">
                   {referenceGroup.map((cl) => renderCandidateCard(cl, "reference"))}
                 </div>
               )}
             </div>
           )}
 
-          {/* ── ZONE C: 제외·보류 (blocked) — minimal ── */}
+          {/* ── ZONE C: 제외·보류 (blocked) ── */}
           {blockedGroup.length > 0 && (
-            <div className="px-5 py-3 border-t border-slate-800/30 bg-[#111316]">
-              <div className="flex items-center gap-2 mb-2.5">
-                <div className="w-2 h-2 rounded bg-red-400/50" />
-                <span className="text-[11px] font-semibold text-red-400/70">제외·보류</span>
-                <span className="text-[10px] text-slate-700">{blockedGroup.length}개 — 비교 불가</span>
+            <div className="px-8 py-5 border-t border-slate-700/30 bg-[#161820]">
+              <div className="flex items-center gap-2.5 mb-3">
+                <div className="w-2.5 h-2.5 rounded bg-red-400/60" />
+                <span className="text-[14px] font-semibold text-red-300/80">제외·보류</span>
+                <span className="text-[13px] text-slate-500">{blockedGroup.length}개</span>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {blockedGroup.map((cl) => {
                   const c = candidates.find((cc) => cc.id === cl.id);
                   if (!c) return null;
                   return (
-                    <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-red-500/10 bg-red-950/10">
+                    <div key={c.id} className="flex items-center gap-4 px-5 py-3.5 rounded-lg border border-red-500/15 bg-red-950/15">
                       <div className="flex-1 min-w-0">
-                        <span className="text-[12px] text-slate-500 font-medium block truncate">{c.name}</span>
-                        <span className="text-[10px] text-red-400/50 block mt-0.5">{cl.classReason}</span>
+                        <span className="text-[14px] text-slate-400 font-medium block truncate">{c.name}</span>
+                        <span className="text-[12px] text-red-400/60 block mt-0.5">{cl.classReason}</span>
                       </div>
-                      <span className="shrink-0 text-[10px] px-2 py-0.5 rounded bg-red-500/10 text-red-400/70 font-medium">{cl.suggestedAction === "hold" ? "보류" : "제외"}</span>
+                      <span className="shrink-0 text-[12px] px-3 py-1 rounded-md bg-red-500/12 text-red-400/80 font-medium border border-red-500/15">{cl.suggestedAction === "hold" ? "보류" : "제외"}</span>
                     </div>
                   );
                 })}
@@ -461,66 +459,65 @@ export function CompareReviewWorkWindow({
             </div>
           )}
 
-          {/* ── ZONE D: 참고 정보 (핵심 차이 + 상세 비교표) — 최저 무게 ── */}
-          <div className="border-t border-slate-800/20 bg-[#0f1114]">
-            {/* 핵심 차이 */}
-            <div className="px-5 py-3">
-              <span className="text-[9px] font-semibold text-slate-700 uppercase tracking-widest">참고 — 핵심 차이</span>
-              <div className="mt-2 grid grid-cols-2 gap-1.5">
+          {/* ── ZONE D: 핵심 차이 — 대비 복구, 가시 영역 확보 ── */}
+          <div className="border-t border-slate-600/30 bg-[#161820]">
+            <div className="px-8 py-5">
+              <span className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">핵심 차이</span>
+              <div className="mt-3 grid grid-cols-2 gap-2.5">
                 {differenceSummary.priceAdvantage && (
-                  <div className="px-2.5 py-1.5 rounded border border-slate-800/30 bg-[#13151a]">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <TrendingDown className="h-2.5 w-2.5 text-emerald-800/50" />
-                      <span className="text-[8px] text-slate-700">가격</span>
+                  <div className="px-4 py-3 rounded-lg border border-slate-600/30 bg-[#1c1f26]">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <TrendingDown className="h-3.5 w-3.5 text-emerald-500/60" />
+                      <span className="text-[11px] text-slate-400 font-medium">가격</span>
                     </div>
-                    <span className="text-[9px] text-slate-600">{differenceSummary.priceAdvantage.label}</span>
+                    <span className="text-[13px] text-slate-300 leading-relaxed">{differenceSummary.priceAdvantage.label}</span>
                   </div>
                 )}
                 {differenceSummary.leadTimeAdvantage && (
-                  <div className="px-2.5 py-1.5 rounded border border-slate-800/30 bg-[#13151a]">
-                    <div className="flex items-center gap-1 mb-0.5">
-                      <Clock className="h-2.5 w-2.5 text-blue-800/50" />
-                      <span className="text-[8px] text-slate-700">납기</span>
+                  <div className="px-4 py-3 rounded-lg border border-slate-600/30 bg-[#1c1f26]">
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Clock className="h-3.5 w-3.5 text-blue-500/60" />
+                      <span className="text-[11px] text-slate-400 font-medium">납기</span>
                     </div>
-                    <span className="text-[9px] text-slate-600">{differenceSummary.leadTimeAdvantage.label}</span>
+                    <span className="text-[13px] text-slate-300 leading-relaxed">{differenceSummary.leadTimeAdvantage.label}</span>
                   </div>
                 )}
-                <div className="px-2.5 py-1.5 rounded border border-slate-800/30 bg-[#13151a]">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <Package className="h-2.5 w-2.5 text-slate-800" />
-                    <span className="text-[8px] text-slate-700">규격</span>
+                <div className="px-4 py-3 rounded-lg border border-slate-600/30 bg-[#1c1f26]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Package className="h-3.5 w-3.5 text-slate-500/60" />
+                    <span className="text-[11px] text-slate-400 font-medium">규격</span>
                   </div>
-                  <span className="text-[9px] text-slate-600">{differenceSummary.specFitNote}</span>
+                  <span className="text-[13px] text-slate-300 leading-relaxed">{differenceSummary.specFitNote}</span>
                 </div>
-                <div className="px-2.5 py-1.5 rounded border border-slate-800/30 bg-[#13151a]">
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <Package className="h-2.5 w-2.5 text-slate-800" />
-                    <span className="text-[8px] text-slate-700">브랜드</span>
+                <div className="px-4 py-3 rounded-lg border border-slate-600/30 bg-[#1c1f26]">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <Package className="h-3.5 w-3.5 text-slate-500/60" />
+                    <span className="text-[11px] text-slate-400 font-medium">브랜드</span>
                   </div>
-                  <span className="text-[9px] text-slate-600">{differenceSummary.brandNote}</span>
+                  <span className="text-[13px] text-slate-300 leading-relaxed">{differenceSummary.brandNote}</span>
                 </div>
               </div>
             </div>
 
             {/* 상세 비교표 — collapsed */}
-            <div className="px-5 py-2 border-t border-slate-800/20">
+            <div className="px-8 py-3 border-t border-slate-700/25">
               <button
                 type="button"
                 onClick={() => setShowMatrix(!showMatrix)}
-                className="w-full flex items-center justify-between py-1 group"
+                className="w-full flex items-center justify-between py-1.5 group"
               >
-                <span className="text-[8px] font-medium text-slate-700 uppercase tracking-widest group-hover:text-slate-600 transition-colors">상세 비교표</span>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-slate-400 transition-colors">상세 비교표</span>
                 {showMatrix
-                  ? <ChevronUp className="h-3 w-3 text-slate-700" />
-                  : <ChevronDown className="h-3 w-3 text-slate-700" />
+                  ? <ChevronUp className="h-4 w-4 text-slate-500" />
+                  : <ChevronDown className="h-4 w-4 text-slate-500" />
                 }
               </button>
               {showMatrix && (
-                <div className="mt-1.5 border border-slate-800/40 rounded-md overflow-hidden mb-2">
-                  <div className="grid bg-[#16181c] border-b border-slate-800/40" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
-                    <div className="px-3 py-1.5 text-[8px] text-slate-600 font-medium">항목</div>
+                <div className="mt-2 border border-slate-600/35 rounded-lg overflow-hidden mb-3">
+                  <div className="grid bg-[#1e2128] border-b border-slate-600/30" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
+                    <div className="px-4 py-2.5 text-[11px] text-slate-400 font-semibold">항목</div>
                     {candidates.map((c) => (
-                      <div key={c.id} className="px-3 py-1.5 text-[9px] text-slate-500 font-medium truncate border-l border-slate-800/30">{c.brand || c.name}</div>
+                      <div key={c.id} className="px-4 py-2.5 text-[12px] text-slate-300 font-semibold truncate border-l border-slate-700/30">{c.brand || c.name}</div>
                     ))}
                   </div>
                   {[
@@ -530,10 +527,10 @@ export function CompareReviewWorkWindow({
                     { label: "단가", getter: (c: CompareCandidateInfo) => c.priceKRW > 0 ? `₩${c.priceKRW.toLocaleString("ko-KR")}` : "견적 필요" },
                     { label: "납기", getter: (c: CompareCandidateInfo) => c.leadTimeDays > 0 ? `${c.leadTimeDays}영업일` : "확인 필요" },
                   ].map((row, ri) => (
-                    <div key={ri} className="grid border-b border-slate-800/20 last:border-b-0" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
-                      <div className="px-3 py-1 text-[8px] text-slate-600">{row.label}</div>
+                    <div key={ri} className="grid border-b border-slate-700/20 last:border-b-0" style={{ gridTemplateColumns: `1fr repeat(${candidates.length}, minmax(0, 1fr))` }}>
+                      <div className="px-4 py-2 text-[11px] text-slate-500 font-medium">{row.label}</div>
                       {candidates.map((c) => (
-                        <div key={c.id} className="px-3 py-1 text-[9px] text-slate-500 truncate border-l border-slate-800/20">{row.getter(c)}</div>
+                        <div key={c.id} className="px-4 py-2 text-[13px] text-slate-300 truncate border-l border-slate-700/20">{row.getter(c)}</div>
                       ))}
                     </div>
                   ))}
@@ -544,46 +541,43 @@ export function CompareReviewWorkWindow({
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════════
-            STICKY DOCK — 주 CTA
-            화면 전체에서 가장 명확한 1순위 액션
+            STICKY DOCK — 주 CTA (h-12, 15px bold)
         ═══════════════════════════════════════════════════════════════════ */}
-        <div className="px-5 py-4 border-t border-slate-700/40 bg-[#1c1e24]">
+        <div className="px-8 py-5 border-t border-slate-600/50 bg-[#1e2128]">
           {!isDecisionRecorded ? (
-            <div className="flex items-center gap-3">
-              {/* 상태 요약 */}
-              <div className="text-[11px] text-slate-500 shrink-0">
-                선택 <span className="text-slate-200 font-semibold">{shortlistCount}</span>
-                {excludedCount > 0 && <> · 제외 <span className="text-slate-400 font-medium">{excludedCount}</span></>}
+            <div className="flex items-center gap-4">
+              <div className="text-[13px] text-slate-400 shrink-0">
+                선택 <span className="text-white font-bold">{shortlistCount}</span>
+                {excludedCount > 0 && <> · 제외 <span className="text-slate-300 font-semibold">{excludedCount}</span></>}
               </div>
-              {/* 주 CTA */}
               <Button
-                className="flex-1 h-11 text-[14px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-lg"
+                className="flex-1 h-12 text-[15px] font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-xl"
                 onClick={recordDecision}
                 disabled={shortlistCount === 0 || !categoryResult.isComparable}
               >
-                <Check className="h-4 w-4 mr-2" />
+                <Check className="h-5 w-5 mr-2" />
                 {shortlistCount > 0
-                  ? `선택한 후보 ${shortlistCount}건으로 비교 계속`
+                  ? `선택한 ${shortlistCount}건으로 비교 계속`
                   : "후보를 1개 이상 선택하세요"
                 }
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-950/30 border border-emerald-500/20 flex-1 min-w-0">
-                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                <span className="text-[12px] text-emerald-300 font-semibold truncate">후보 {shortlistCount}건 저장됨</span>
-                <button type="button" onClick={handleUndo} className="ml-auto shrink-0 text-[11px] text-blue-400 hover:text-blue-300 flex items-center gap-1.5 font-medium">
-                  <Undo2 className="h-3.5 w-3.5" />되돌리기
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-emerald-950/40 border border-emerald-500/25 flex-1 min-w-0">
+                <Check className="h-5 w-5 text-emerald-400 shrink-0" />
+                <span className="text-[14px] text-emerald-200 font-bold truncate">후보 {shortlistCount}건 저장됨</span>
+                <button type="button" onClick={handleUndo} className="ml-auto shrink-0 text-[13px] text-blue-400 hover:text-blue-300 flex items-center gap-1.5 font-semibold">
+                  <Undo2 className="h-4 w-4" />되돌리기
                 </button>
               </div>
               <Button
-                className="h-11 px-5 text-[13px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg whitespace-nowrap shrink-0"
+                className="h-12 px-6 text-[15px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl whitespace-nowrap shrink-0"
                 onClick={handleRequestHandoff}
               >
-                <FileText className="h-4 w-4 mr-2" />
+                <FileText className="h-5 w-5 mr-2" />
                 견적 후보로 반영
-                <ArrowRight className="h-4 w-4 ml-2" />
+                <ArrowRight className="h-5 w-5 ml-2" />
               </Button>
             </div>
           )}
