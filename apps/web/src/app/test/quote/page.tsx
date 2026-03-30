@@ -191,7 +191,7 @@ export default function RequestAssemblyPage() {
                 </div>
               </div>
 
-              {/* Compare State — actionable */}
+              {/* Compare State — informational */}
               {allCompareIds.length > 0 && (
                 <div className="px-4 py-3 border-b border-bd">
                   <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 상태</div>
@@ -204,31 +204,34 @@ export default function RequestAssemblyPage() {
                       {summary.inCompareCount}건이 비교 목록과 견적 목록에 모두 포함됨
                     </p>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
+                  <button
+                    type="button"
                     onClick={() => router.push("/app/compare")}
+                    className="text-[10px] text-slate-500 hover:text-blue-400 transition-colors flex items-center gap-1"
                   >
-                    <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                    비교 열기
-                  </Button>
+                    <GitCompare className="h-3 w-3" />
+                    비교 결과 다시 확인
+                  </button>
                 </div>
               )}
 
               {/* Side rail actions */}
               <div className="px-4 py-3 space-y-2">
                 <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">다음 단계</div>
-                {allCompareIds.length > 0 && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full h-8 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                    onClick={() => router.push("/app/compare")}
-                  >
-                    <GitCompare className="h-3.5 w-3.5 mr-1.5" />
-                    비교 판단 먼저
-                  </Button>
+                {/* 비교 진행 중 후보가 있으면 blocker CTA */}
+                {summary.inCompareCount > 0 && (
+                  <div className="px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5 mb-2">
+                    <p className="text-[10px] text-amber-300 mb-1.5">비교 판단 미완료 후보 {summary.inCompareCount}건</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-7 text-[10px] text-amber-400 border-amber-600/30 hover:bg-amber-600/10"
+                      onClick={() => router.push("/app/compare")}
+                    >
+                      <GitCompare className="h-3 w-3 mr-1.5" />
+                      비교 판단 먼저
+                    </Button>
+                  </div>
                 )}
                 <Button
                   size="sm"
@@ -280,7 +283,7 @@ export default function RequestAssemblyPage() {
               </span>
             </div>
 
-            {/* Right: dual CTAs */}
+            {/* Right: request-stage CTAs only — dock은 현재 단계 action 전용 */}
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 size="sm"
@@ -290,17 +293,6 @@ export default function RequestAssemblyPage() {
               >
                 전체 해제
               </Button>
-              {allCompareIds.length > 0 && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 px-3 text-xs text-blue-400 border-blue-600/30 hover:bg-blue-600/10"
-                  onClick={() => router.push("/app/compare")}
-                >
-                  <GitCompare className="h-3.5 w-3.5 mr-1" />
-                  비교 열기
-                </Button>
-              )}
               <Button
                 size="sm"
                 className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40"

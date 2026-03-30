@@ -147,7 +147,7 @@ export function validateCompareCategoryIntegrity(
       ? "비교 후보를 다시 구성하세요"
       : isMixed
         ? "카테고리를 통일하거나 견적 후보로 전환하세요"
-        : "차이를 검토하고 shortlist를 구성하세요",
+        : "차이를 검토하고 선택 후보를 구성하세요",
   };
 }
 
@@ -326,7 +326,7 @@ export function buildRequestCandidateHandoffFromCompare(
     unresolvedInfoItems: snapshot.differenceSummary.missingInfoItems,
     nextRequestActionSeed: snapshot.requestCandidateIds.length > 0
       ? "견적 요청 조립으로 이동"
-      : "shortlist 후보를 견적 후보로 반영하세요",
+      : "선택 후보를 견적 후보로 반영하세요",
   };
 }
 

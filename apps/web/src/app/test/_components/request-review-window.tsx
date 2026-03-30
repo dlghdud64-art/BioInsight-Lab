@@ -390,18 +390,18 @@ export function RequestReviewWindow({
             </div>
           )}
 
-          {/* Compare 돌아가기 경로 */}
+          {/* Compare 복귀 경로 — 비교 미완료 시 blocker, 완료 시 secondary review */}
           {reviewItems.some((r) => r.includes("비교")) && (
-            <div className="flex items-center gap-2 px-3 py-2 rounded border border-blue-600/20 bg-blue-600/5">
-              <GitCompare className="h-3.5 w-3.5 text-blue-400 shrink-0" />
-              <span className="text-xs text-blue-300 flex-1">비교 진행 중인 후보가 있습니다.</span>
+            <div className="flex items-center gap-2 px-3 py-2 rounded border border-amber-600/20 bg-amber-600/5">
+              <GitCompare className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+              <span className="text-xs text-amber-300 flex-1">비교 판단 미완료 후보가 있습니다.</span>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-2 text-[10px] text-blue-400 hover:text-blue-300 shrink-0"
+                className="h-6 px-2 text-[10px] text-amber-400 hover:text-amber-300 shrink-0"
                 onClick={onSwitchToCompare}
               >
-                비교 먼저 →
+                비교 판단 먼저
               </Button>
             </div>
           )}
