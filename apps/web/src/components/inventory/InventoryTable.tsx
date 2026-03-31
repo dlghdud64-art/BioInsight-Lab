@@ -366,34 +366,55 @@ export function InventoryTable({
                       <span className="text-[11px]">Lot {group.lotCount}개</span>
                     </div>
 
-                    {/* 3행: 품목 액션 */}
+                    {/* 3행: 상태별 primary action 차등 노출 */}
                     <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                      {onRestock && !isRisky && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-200 hover:bg-emerald-50  border-emerald-800  hover:bg-emerald-950"
-                          onClick={() => onRestock(group.lots[0])}
-                        >
-                          <PackagePlus className="h-3 w-3 shrink-0" />
-                          입고
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className={`h-7 px-2.5 text-[11px] gap-1 ${
-                          isRisky
-                            ? groupStatus === "부족" || displayStatus === "폐기"
-                              ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-                              : "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-                            : "text-slate-600 border-bd hover:bg-pg border-bs hover:bg-el"
-                        }`}
-                        onClick={() => onReorder(group.lots[0])}
-                      >
-                        <RotateCcw className="h-3 w-3 shrink-0" />
-                        재발주
-                      </Button>
+                      {(() => {
+                        // 상태별 primary action: 부족→재주문, 만료임박→폐기/검토, 정상→입고, 입고대기→입고처리
+                        const isLow = group.safetyStock !== null && group.totalQuantity <= group.safetyStock;
+                        const isOut = group.totalQuantity === 0;
+                        const isExpiringItem = expiryDays !== null && expiryDays <= 7;
+                        const isExpiredItem = expiryDays !== null && expiryDays <= 0;
+                        const isIncoming = group.totalQuantity <= (group.safetyStock || 0) * 0.5;
+
+                        if (isExpiredItem) {
+                          return (
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
+                              <Trash2 className="h-3 w-3 shrink-0" />폐기/교체
+                            </Button>
+                          );
+                        }
+                        if (isExpiringItem) {
+                          return (
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-amber-400 border-amber-500/30 hover:bg-amber-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
+                              <Clock className="h-3 w-3 shrink-0" />교체 주문
+                            </Button>
+                          );
+                        }
+                        if (isOut || isLow) {
+                          return (
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-blue-400 border-blue-500/30 hover:bg-blue-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
+                              <RotateCcw className="h-3 w-3 shrink-0" />재주문
+                            </Button>
+                          );
+                        }
+                        if (isIncoming && onRestock) {
+                          return (
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 font-medium" onClick={() => onRestock(group.lots[0])}>
+                              <Truck className="h-3 w-3 shrink-0" />입고 처리
+                            </Button>
+                          );
+                        }
+                        // 정상: 입고 또는 조정
+                        return onRestock ? (
+                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-emerald-600 border-emerald-800 hover:bg-emerald-950" onClick={() => onRestock(group.lots[0])}>
+                            <PackagePlus className="h-3 w-3 shrink-0" />입고
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-slate-600 border-bs hover:bg-el" onClick={() => onReorder(group.lots[0])}>
+                            <RotateCcw className="h-3 w-3 shrink-0" />재발주
+                          </Button>
+                        );
+                      })()}
                       <Button
                         variant="outline"
                         size="sm"

@@ -283,6 +283,48 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
   return actions;
 }
 
+/* ── Mock recent transactions ── */
+interface RecentTransaction {
+  type: "in" | "out" | "dispose";
+  label: string;
+  detail: string;
+  date: string;
+}
+
+function generateMockTransactions(item: ContextPanelItem): RecentTransaction[] {
+  const txs: RecentTransaction[] = [];
+  txs.push({
+    type: "in",
+    label: "입고",
+    detail: `${item.vendor || "공급사"} · ${Math.ceil(item.currentQuantity * 0.4)} ${item.unit}`,
+    date: "3/25",
+  });
+  txs.push({
+    type: "out",
+    label: "출고 (실험 사용)",
+    detail: `${item.testPurpose || "일반 실험"} · 2 ${item.unit}`,
+    date: "3/27",
+  });
+  if (item.expiryDate) {
+    const days = Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000);
+    if (days <= 0) {
+      txs.push({
+        type: "dispose",
+        label: "폐기 처리",
+        detail: `만료 lot ${item.lotNumber || "N/A"} · 1 ${item.unit}`,
+        date: "3/28",
+      });
+    }
+  }
+  txs.push({
+    type: "out",
+    label: "출고 (이동)",
+    detail: `${item.location || "선반"} → 실험실 B`,
+    date: "3/29",
+  });
+  return txs.slice(0, 4);
+}
+
 /* ── Severity badge styling ── */
 const SEVERITY_STYLE: Record<string, string> = {
   critical: "bg-red-500/15 text-red-400 border-red-500/30",
@@ -545,7 +587,70 @@ export function InventoryContextPanel({
           </div>
         </section>
 
-        {/* ── E. Recommended Actions ── */}
+        {/* ── E. Recent Transactions ── */}
+        <section>
+          <SectionHeader icon={ArrowRight} label="최근 입출고" />
+          <div className="mt-2.5 space-y-1.5">
+            {generateMockTransactions(item).map((tx, idx) => (
+              <div key={idx} className="flex items-center gap-2.5 px-3 py-2 rounded-lg border border-bd bg-pn">
+                <div className={`flex h-5 w-5 items-center justify-center rounded ${
+                  tx.type === "in" ? "bg-emerald-500/15" : tx.type === "out" ? "bg-amber-500/15" : "bg-red-500/15"
+                }`}>
+                  <span className={`text-[9px] font-bold ${
+                    tx.type === "in" ? "text-emerald-400" : tx.type === "out" ? "text-amber-400" : "text-red-400"
+                  }`}>{tx.type === "in" ? "입" : tx.type === "out" ? "출" : "폐"}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-slate-300 font-medium">{tx.label}</span>
+                    <span className="text-[10px] text-slate-600">{tx.date}</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">{tx.detail}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── F. Consumption & Lead Time Rationale ── */}
+        {item.averageDailyUsage && item.averageDailyUsage > 0 && (
+          <section>
+            <SectionHeader icon={Info} label="소진 예측 근거" />
+            <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1.5">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500">일평균 사용량</span>
+                <span className="text-slate-300 font-medium">{item.averageDailyUsage} {item.unit}/일</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-500">예상 소진일</span>
+                <span className={`font-medium ${
+                  (item.currentQuantity / item.averageDailyUsage) <= (item.leadTimeDays ?? 14) ? "text-red-400" : "text-slate-300"
+                }`}>{Math.ceil(item.currentQuantity / item.averageDailyUsage)}일 후</span>
+              </div>
+              {item.leadTimeDays && (
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-slate-500">공급 리드타임</span>
+                  <span className="text-slate-300 font-medium">{item.leadTimeDays}일</span>
+                </div>
+              )}
+              {item.leadTimeDays && item.averageDailyUsage > 0 && (
+                <div className="mt-1.5 pt-1.5 border-t border-bd/40">
+                  <p className="text-[10px] text-slate-500 leading-relaxed">
+                    {(() => {
+                      const daysLeft = item.currentQuantity / item.averageDailyUsage;
+                      if (daysLeft <= item.leadTimeDays) {
+                        return `최근 14일 사용속도 기준 ${Math.ceil(daysLeft)}일 내 소진 예상 — 리드타임(${item.leadTimeDays}일) 감안 시 즉시 발주 권장`;
+                      }
+                      return `현재 사용 속도 유지 시 ${Math.ceil(daysLeft)}일 여유 — 리드타임 내 안전`;
+                    })()}
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* ── G. Recommended Actions ── */}
         <section>
           <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
           <div className="mt-2.5 space-y-2">
@@ -581,26 +686,76 @@ export function InventoryContextPanel({
             ))}
           </div>
         </section>
+
+        {/* ── H. Last Modified / Audit ── */}
+        <section>
+          <SectionHeader icon={History} label="최근 수정 이력" />
+          <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">마지막 수정</span>
+              <span className="text-slate-400">2026-03-28 14:22</span>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">수정자</span>
+              <span className="text-slate-300">김연구원</span>
+            </div>
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-500">변경 내용</span>
+              <span className="text-slate-400">수량 조정 5→3</span>
+            </div>
+          </div>
+        </section>
       </div>
 
-      {/* Sticky footer actions */}
-      <div className="sticky bottom-0 bg-el border-t border-bd px-5 py-3 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300 hover:bg-st hover:text-slate-100"
-          onClick={() => onEdit?.(item)}
-        >
-          정보 수정
-        </Button>
-        <Button
-          size="sm"
-          className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
-          onClick={() => onReorder?.(item)}
-        >
-          <Sparkles className="h-3 w-3 mr-1" />
-          재발주 검토
-        </Button>
+      {/* Sticky footer actions — state-based primary action */}
+      <div className="sticky bottom-0 bg-el border-t border-bd px-5 py-3">
+        {(() => {
+          // 상태별 primary action 차등 노출
+          const isLow = item.safetyStock !== null && item.currentQuantity <= item.safetyStock;
+          const isExpiring = item.expiryDate ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000) <= 7 : false;
+          const isExpired = item.expiryDate ? new Date(item.expiryDate).getTime() < Date.now() : false;
+          const isOut = item.currentQuantity === 0;
+
+          if (isExpired) {
+            return (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
+                <Button size="sm" className="flex-1 h-8 text-xs bg-red-600 hover:bg-red-500 text-white font-medium" onClick={() => onDispose?.(item)}>
+                  <AlertTriangle className="h-3 w-3 mr-1" />폐기 검토
+                </Button>
+              </div>
+            );
+          }
+          if (isExpiring) {
+            return (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onDispose?.(item)}>폐기/검토</Button>
+                <Button size="sm" className="flex-1 h-8 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={() => onReorder?.(item)}>
+                  <Sparkles className="h-3 w-3 mr-1" />재주문 + 교체
+                </Button>
+              </div>
+            );
+          }
+          if (isOut || isLow) {
+            return (
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
+                <Button size="sm" className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => onReorder?.(item)}>
+                  <ShoppingCart className="h-3 w-3 mr-1" />재주문
+                </Button>
+              </div>
+            );
+          }
+          // 정상
+          return (
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onReorder?.(item)}>
+                <Sparkles className="h-3 w-3 mr-1" />재발주 검토
+              </Button>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
