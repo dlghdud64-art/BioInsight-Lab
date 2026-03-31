@@ -367,7 +367,7 @@ function CandidateSummaryCard({
         </div>
       )}
       {isBlocked && (
-        <p className="text-[10px] text-red-400/60 italic">비교 불가 — {candidate.categoryReason}</p>
+        <p className="text-xs text-red-400/60 italic">비교 불가 — {candidate.categoryReason}</p>
       )}
     </div>
   );
@@ -397,7 +397,7 @@ function CandidateSectionGroup({
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-xs font-semibold text-slate-300">{title}</h4>
-          <p className="text-[10px] text-slate-500">{subtitle}</p>
+          <p className="text-xs text-slate-500">{subtitle}</p>
         </div>
         <span className="text-xs tabular-nums text-slate-400">{candidates.length}건</span>
       </div>
@@ -595,6 +595,14 @@ export function CompareAnalysisDrawer({
       toast({ title: "AI 분석 실패", variant: "destructive" });
     },
   });
+
+  // AI 분석 자동 실행: 세션 로드 완료 + insight 없으면 자동 트리거
+  useEffect(() => {
+    if (sessionData && !insight && !insightMutation.isPending && !insightMutation.isSuccess) {
+      insightMutation.mutate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionData]);
 
   // 공급사 문의 초안 (영속화)
   const inquiryMutation = useMutation({
@@ -863,7 +871,7 @@ export function CompareAnalysisDrawer({
                   {diffResult.summary.criticalCount > 0 && (
                     <div className="flex items-center gap-1.5 pt-1 border-t border-blue-500/10">
                       <AlertTriangle className="h-3 w-3 text-amber-400" />
-                      <span className="text-[10px] text-amber-300">
+                      <span className="text-xs text-amber-300">
                         치명적 차이 {diffResult.summary.criticalCount}건 — 담당자 직접 확인 필요
                       </span>
                     </div>
@@ -980,11 +988,11 @@ export function CompareAnalysisDrawer({
             })()}
 
             {/* ━━━ Zone D: Evidence / Detail Surface ━━━ */}
-            <Tabs defaultValue="action" className="w-full">
+            <Tabs defaultValue="insight" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="insight">AI 비교 보조</TabsTrigger>
                 <TabsTrigger value="action">후속 조치</TabsTrigger>
-                <TabsTrigger value="insight">AI 분석</TabsTrigger>
-                <TabsTrigger value="diff">상세 비교</TabsTrigger>
+                <TabsTrigger value="diff" className="text-muted-foreground">속성 비교</TabsTrigger>
               </TabsList>
 
               {/* Raw Diff — collapsed, evidence role */}
@@ -1052,37 +1060,88 @@ export function CompareAnalysisDrawer({
 
               {/* AI 분석 탭 */}
               <TabsContent value="insight" className="space-y-3 mt-3">
-                {!insight && (
+                {/* 로딩 상태 */}
+                {!insight && insightMutation.isPending && (
+                  <div className="flex items-center justify-center gap-2 py-8">
+                    <Loader2 className="h-4 w-4 animate-spin text-blue-400" />
+                    <span className="text-sm text-slate-400">AI 비교 분석 중...</span>
+                  </div>
+                )}
+
+                {/* 실패 시 수동 재실행 */}
+                {!insight && !insightMutation.isPending && (
                   <Button
                     onClick={() => insightMutation.mutate()}
                     disabled={insightMutation.isPending}
                     className="w-full"
                   >
-                    {insightMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        AI 분석 중...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        AI 분석 실행
-                      </>
-                    )}
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    AI 분석 실행
                   </Button>
                 )}
+
                 {insight && (
                   <>
-                    {/* AI 신뢰도 고지 */}
-                    <div className="flex items-start gap-2 p-2 bg-el rounded text-xs text-slate-400">
-                      <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                      <span>
-                        AI 분석은 제품 DB 데이터 기반 참고 자료입니다.
-                        최종 판단은 담당자가 직접 확인하세요.
-                      </span>
-                    </div>
+                    {/* 1. 권장 판단 요약 — decision-first */}
+                    <Card className="border-blue-500/30 bg-blue-500/5">
+                      <CardContent className="pt-4 pb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Sparkles className="h-4 w-4 text-blue-400" />
+                          <span className="text-sm font-semibold text-blue-300">권장 판단</span>
+                        </div>
+                        <p className="text-sm leading-relaxed">{insight.overallAssessment}</p>
+                      </CardContent>
+                    </Card>
 
-                    {/* 핵심 변경 사항 */}
+                    {/* 2. 추천 액션 — what to do next */}
+                    {insight.recommendedActions.length > 0 && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">다음 액션</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {insight.recommendedActions.map((action, i) => (
+                              <div key={i} className="p-2 border rounded bg-pn">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className="text-xs">
+                                    {actionTypeLabel(action.actionType)}
+                                  </Badge>
+                                  <span className="text-sm font-medium">{action.label}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* 3. 검토 필요 — blockers/warnings */}
+                    {insight.reviewPoints.length > 0 && (
+                      <Card>
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-sm">검토 필요 항목</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {insight.reviewPoints.map((point, i) => (
+                              <div key={i} className="flex items-start gap-2 text-sm">
+                                <AlertTriangle className={`h-4 w-4 mt-0.5 ${
+                                  point.urgency === "HIGH" ? "text-red-500" : "text-yellow-500"
+                                }`} />
+                                <div>
+                                  <span className="font-medium">{point.field}</span>
+                                  <p className="text-muted-foreground text-xs">{point.reason}</p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* 4. 핵심 변경 사항 — context */}
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm">핵심 변경 사항</CardTitle>
@@ -1099,7 +1158,7 @@ export function CompareAnalysisDrawer({
                       </CardContent>
                     </Card>
 
-                    {/* 불확실 필드 */}
+                    {/* 5. 불확실 항목 — caveats */}
                     {insight.uncertainFields.length > 0 && (
                       <Card className="border-amber-700 bg-amber-600/10">
                         <CardHeader className="pb-2">
@@ -1124,60 +1183,14 @@ export function CompareAnalysisDrawer({
                       </Card>
                     )}
 
-                    {/* 검토 포인트 */}
-                    {insight.reviewPoints.length > 0 && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">검토 필요 항목</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {insight.reviewPoints.map((point, i) => (
-                              <div key={i} className="flex items-start gap-2 text-sm">
-                                <AlertTriangle className={`h-4 w-4 mt-0.5 ${
-                                  point.urgency === "HIGH" ? "text-red-500" : "text-yellow-500"
-                                }`} />
-                                <div>
-                                  <span className="font-medium">{point.field}</span>
-                                  <p className="text-muted-foreground text-xs">{point.reason}</p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* 추천 액션 */}
-                    {insight.recommendedActions.length > 0 && (
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">추천 액션</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-2">
-                            {insight.recommendedActions.map((action, i) => (
-                              <div key={i} className="p-2 border rounded bg-pn">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline" className="text-xs">
-                                    {actionTypeLabel(action.actionType)}
-                                  </Badge>
-                                  <span className="text-sm font-medium">{action.label}</span>
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">{action.description}</p>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    )}
-
-                    {/* 종합 평가 */}
-                    <Card>
-                      <CardContent className="pt-4">
-                        <p className="text-sm">{insight.overallAssessment}</p>
-                      </CardContent>
-                    </Card>
+                    {/* 6. AI 참고 고지 — footer */}
+                    <div className="flex items-start gap-2 p-2 bg-el rounded text-xs text-slate-400">
+                      <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                      <span>
+                        AI 분석은 제품 DB 데이터 기반 참고 자료입니다.
+                        최종 판단은 담당자가 직접 확인하세요.
+                      </span>
+                    </div>
                   </>
                 )}
               </TabsContent>
