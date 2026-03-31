@@ -14,12 +14,22 @@ import dynamic from "next/dynamic";
 
 const ComparisonSection = dynamic(
   () => import("../_components/comparison-section").then((mod) => ({ default: mod.ComparisonSection })),
-  { loading: () => <div className="h-96 w-full" style={{ backgroundColor: "#151C26" }} /> }
+  { loading: () => <div className="h-96 w-full" style={{ backgroundColor: "#131A24" }} /> }
 );
 const FinalCTASection = dynamic(
   () => import("../_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full" style={{ backgroundColor: "#1A2230" }} /> }
+  { loading: () => <div className="h-64 w-full" style={{ backgroundColor: "#131A24" }} /> }
 );
+
+/*
+ * ── Surface Family ───────────────────────────────────────────────────
+ *  Hero Surface     : #020617  — deepest navy, brand flagship only
+ *  Content Surface  : #131A24  — all body sections, unified base
+ *  Card Surface     : #1C2535  — elevated cards, border #2A3648
+ *  Conversion Panel : #E9EDF3  — contained light-neutral CTA panel
+ *  Footer Surface   : #0A0E14  — dark-neutral closing band
+ * ─────────────────────────────────────────────────────────────────────
+ */
 
 export default function IntroPage() {
   return (
@@ -27,7 +37,7 @@ export default function IntroPage() {
       <MainHeader />
       <div className="w-full">
 
-        {/* ══ 1. Hero ══════════════════════════════════════════════════════ */}
+        {/* ══ 1. Hero Surface ═════════════════════════════════════════════ */}
         <section className="relative pt-20 pb-10 md:pt-28 md:pb-20 overflow-hidden" style={{ backgroundColor: "#020617" }}>
           {/* Grid background */}
           <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
@@ -38,13 +48,11 @@ export default function IntroPage() {
           <div className="relative mx-auto max-w-6xl px-4 md:px-6 flex flex-col md:flex-row md:items-center md:gap-12">
             {/* Left copy */}
             <div className="flex-1 min-w-0">
-              {/* Eyebrow */}
               <div className="inline-flex items-center gap-2 text-xs font-semibold text-blue-400 rounded-full px-3 py-1.5 mb-5">
                 <span className="w-1.5 h-1.5 rounded-full bg-blue-400 flex-shrink-0" />
                 연구실 구매 운영 플랫폼
               </div>
 
-              {/* Headline */}
               <h1 className="text-[28px] md:text-5xl font-extrabold tracking-tight text-white mb-4 leading-snug break-keep">
                 시약·장비 검색부터<br />
                 <span className="text-blue-400">구매 운영</span>까지 한곳에서
@@ -86,11 +94,11 @@ export default function IntroPage() {
                 </div>
                 {[
                   { brand: "Sigma-Aldrich", name: "PBS 10X, pH 7.4 (500mL)", price: "₩38,000", lead: "3일", badge: "최저가" },
-                  { brand: "Thermo Fisher", name: "Dulbecco’s PBS 10X (500mL)", price: "₩41,500", lead: "5일", badge: "" },
+                  { brand: "Thermo Fisher", name: "Dulbecco's PBS 10X (500mL)", price: "₩41,500", lead: "5일", badge: "" },
                   { brand: "Bio-Rad", name: "10X PBS Concentrate (500mL)", price: "₩45,200", lead: "7일", badge: "" },
                 ].map((item, i) => (
-                  <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${i < 2 ? "mb-1" : ""}`} style={i === 0 ? { backgroundColor: "#1E2738" } : {}}>
-                    <div className="w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: "#2E3B50" }}>
+                  <div key={i} className={`flex items-center gap-2.5 px-2 py-2 rounded-lg ${i < 2 ? "mb-1" : ""}`} style={i === 0 ? { backgroundColor: "#1C2535" } : {}}>
+                    <div className="w-7 h-7 rounded-md flex-shrink-0 flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
                       <span className="text-[10px] font-bold" style={{ color: "#8A99AF" }}>{item.brand.charAt(0)}</span>
                     </div>
                     <div className="flex-1 min-w-0">
@@ -121,10 +129,10 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 2. 운영 문제 — 핵심 병목 3개 ═══════════════════════════════ */}
-        <section className="py-10 md:py-16" style={{ backgroundColor: "#151C26", borderBottom: "1px solid #2A3648" }}>
+        <section className="py-10 md:py-16" style={{ backgroundColor: "#131A24", borderTop: "1px solid #1E2A3A" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-8">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6FA2FF] mb-2">Pain Point</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-blue-400 mb-2">Pain Point</p>
               <h2 className="text-xl md:text-[26px] font-bold text-white break-keep">
                 연구실 구매, 왜 느릴까
               </h2>
@@ -136,7 +144,7 @@ export default function IntroPage() {
                 { icon: AlertTriangle, title: "수기 견적", stat: "건당 45분+", desc: "이메일·전화로 견적 수집, 엑셀에 수기 정리. 비교 불가" },
                 { icon: PackageX, title: "재고 공백", stat: "연간 15%+ 손실", desc: "구매 후 재고 반영 누락. 유효기간 만료를 뒤늦게 발견" },
               ].map((item, i) => (
-                <div key={i} className="rounded-xl p-5" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
+                <div key={i} className="rounded-xl p-5" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                   <div className="flex items-center gap-3 mb-2.5">
                     <item.icon className="h-5 w-5 text-[#8A99AF]" strokeWidth={1.5} />
                     <h3 className="text-sm font-bold text-white">{item.title}</h3>
@@ -150,10 +158,10 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 3. LabAxis 운영 흐름 — 6단계 파이프라인 ═══════════════════ */}
-        <section className="py-10 md:py-16" style={{ backgroundColor: "#0F1520", borderBottom: "1px solid #2A3648" }}>
+        <section className="py-10 md:py-16" style={{ backgroundColor: "#131A24", borderTop: "1px solid #1E2A3A" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-10">
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "#6FA2FF" }}>운영 흐름</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-blue-400">운영 흐름</p>
               <h2 className="text-xl md:text-[26px] font-bold text-white break-keep">
                 검색 → 비교 → 견적 → 발주 → 입고 → 재고
               </h2>
@@ -173,8 +181,8 @@ export default function IntroPage() {
                   { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 스캔으로 즉시 반영" },
                   { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 추적" },
                 ].map((step) => (
-                  <div key={step.num} className="snap-start shrink-0 w-[140px] rounded-xl p-3 flex flex-col items-center text-center" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
-                    <div className={`w-8 h-8 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-xs font-bold flex items-center justify-center mb-2`} style={step.num !== 1 ? { backgroundColor: "#344257" } : {}}>{step.num}</div>
+                  <div key={step.num} className="snap-start shrink-0 w-[140px] rounded-xl p-3 flex flex-col items-center text-center" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
+                    <div className={`w-8 h-8 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-xs font-bold flex items-center justify-center mb-2`} style={step.num !== 1 ? { backgroundColor: "#283548" } : {}}>{step.num}</div>
                     <step.icon className={`h-4 w-4 mb-1.5 ${step.num === 1 ? "text-blue-400" : ""}`} style={step.num !== 1 ? { color: "#8A99AF" } : {}} strokeWidth={1.5} />
                     <h3 className="text-xs font-bold text-white mb-0.5">{step.title}</h3>
                     <p className="text-[10px] leading-tight" style={{ color: "#9DADC0" }}>{step.change}</p>
@@ -194,8 +202,8 @@ export default function IntroPage() {
                 { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 연동 추적" },
               ].map((step, i) => (
                 <div key={step.num} className="relative">
-                  <div className="rounded-xl p-4 h-full flex flex-col items-center text-center" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
-                    <div className={`w-10 h-10 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-sm font-bold flex items-center justify-center mb-3`} style={step.num !== 1 ? { backgroundColor: "#344257" } : {}}>{step.num}</div>
+                  <div className="rounded-xl p-4 h-full flex flex-col items-center text-center" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
+                    <div className={`w-10 h-10 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-sm font-bold flex items-center justify-center mb-3`} style={step.num !== 1 ? { backgroundColor: "#283548" } : {}}>{step.num}</div>
                     <step.icon className={`h-5 w-5 mb-2 ${step.num === 1 ? "text-blue-400" : ""}`} style={step.num !== 1 ? { color: "#8A99AF" } : {}} strokeWidth={1.5} />
                     <h3 className="text-sm font-bold text-white mb-1">{step.title}</h3>
                     <p className="text-[11px] leading-snug" style={{ color: "#9DADC0" }}>{step.change}</p>
@@ -212,12 +220,12 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 4. 비교표 ═══════════════════════════════════════════════════ */}
-        <div className="mx-auto w-full max-w-6xl px-4 md:px-6" style={{ backgroundColor: "#151C26" }}>
+        <div className="mx-auto w-full max-w-6xl px-4 md:px-6" style={{ backgroundColor: "#131A24" }}>
           <ComparisonSection />
         </div>
 
         {/* ══ Mid CTA ═══════════════════════════════════════════════════ */}
-        <section className="py-8 md:py-12" style={{ backgroundColor: "#1A2230" }}>
+        <section className="py-8 md:py-12" style={{ backgroundColor: "#131A24" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link href="/search">
               <button className="h-11 px-7 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 active:scale-95 rounded-lg transition-all flex items-center gap-2 shadow-lg shadow-blue-600/20">
@@ -225,7 +233,7 @@ export default function IntroPage() {
               </button>
             </Link>
             <Link href="/support">
-              <button className="h-11 px-7 text-sm font-medium rounded-lg transition-all active:scale-95" style={{ color: "#C8D4E5", border: "1px solid #3A4E6A" }}>
+              <button className="h-11 px-7 text-sm font-medium rounded-lg transition-all active:scale-95" style={{ color: "#C8D4E5", border: "1px solid #2A3648" }}>
                 도입 상담 문의
               </button>
             </Link>
@@ -233,10 +241,10 @@ export default function IntroPage() {
         </section>
 
         {/* ══ 5. 역할별 변화 — 압축 before/after ═══════════════════════ */}
-        <section className="py-10 md:py-16" style={{ backgroundColor: "#151C26", borderBottom: "1px solid #2A3648" }}>
+        <section className="py-10 md:py-16" style={{ backgroundColor: "#131A24", borderTop: "1px solid #1E2A3A" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-8">
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "#6FA2FF" }}>역할별 변화</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-blue-400">역할별 변화</p>
               <h2 className="text-xl md:text-[26px] font-bold text-white break-keep">
                 도입 후 각 역할이 달라지는 방식
               </h2>
@@ -250,7 +258,7 @@ export default function IntroPage() {
                   { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합" },
                   { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail" },
                 ].map((c, i) => (
-                  <div key={i} className="snap-start shrink-0 w-[280px] rounded-xl p-4 flex flex-col gap-3" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
+                  <div key={i} className="snap-start shrink-0 w-[280px] rounded-xl p-4 flex flex-col gap-3" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
                         <c.icon className="h-4 w-4" style={{ color: "#8A99AF" }} strokeWidth={1.5} />
@@ -260,7 +268,7 @@ export default function IntroPage() {
                         <p className="text-[11px] font-semibold text-blue-400">{c.highlight}</p>
                       </div>
                     </div>
-                    <div className="rounded-lg p-2.5" style={{ backgroundColor: "#151C26", border: "1px solid #2A3648" }}>
+                    <div className="rounded-lg p-2.5" style={{ backgroundColor: "#0F1520", border: "1px solid #1E2A3A" }}>
                       <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#667389" }}>기존</p>
                       <p className="text-[11px] leading-relaxed" style={{ color: "#8A99AF" }}>{c.before}</p>
                     </div>
@@ -280,7 +288,7 @@ export default function IntroPage() {
                 { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합" },
                 { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail" },
               ].map((c, i) => (
-                <div key={i} className="rounded-xl p-5 flex flex-col gap-3" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
+                <div key={i} className="rounded-xl p-5 flex flex-col gap-3" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
                       <c.icon className="h-5 w-5" style={{ color: "#8A99AF" }} strokeWidth={1.5} />
@@ -290,7 +298,7 @@ export default function IntroPage() {
                       <h3 className="text-sm font-bold text-white">{c.highlight}</h3>
                     </div>
                   </div>
-                  <div className="rounded-lg p-3" style={{ backgroundColor: "#151C26", border: "1px solid #2A3648" }}>
+                  <div className="rounded-lg p-3" style={{ backgroundColor: "#0F1520", border: "1px solid #1E2A3A" }}>
                     <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#667389" }}>기존</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "#8A99AF" }}>{c.before}</p>
                   </div>
@@ -304,11 +312,11 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* ══ 6. 통제·추적·승인 — 압축 2×2 + 적합성 ════════════════════ */}
-        <section className="py-10 md:py-16" style={{ backgroundColor: "#1A2230", borderBottom: "1px solid #2A3648" }}>
+        {/* ══ 6. 통제·추적·승인 — 조직 기반 ═══════════════════════════ */}
+        <section className="py-10 md:py-16" style={{ backgroundColor: "#131A24", borderTop: "1px solid #1E2A3A" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
             <div className="mb-6 md:mb-8">
-              <p className="text-[11px] font-bold uppercase tracking-widest mb-2" style={{ color: "#6FA2FF" }}>조직 운영</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest mb-2 text-blue-400">조직 운영</p>
               <h2 className="text-xl md:text-[26px] font-bold text-white break-keep">
                 통제·추적·승인 — 조직 기반
               </h2>
@@ -323,9 +331,9 @@ export default function IntroPage() {
                   { icon: ScrollText, title: "Audit Trail", desc: "전건 추적, GMP/GLP 감사 대비" },
                   { icon: Wallet, title: "예산 통합", desc: "실시간 소진 현황 + 초과 차단" },
                 ].map((item, i) => (
-                  <div key={i} className="snap-start shrink-0 w-[200px] rounded-xl p-4 flex flex-col gap-2" style={{ backgroundColor: "#232D3C", border: "1px solid #344257" }}>
-                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#2E3B50" }}>
-                      <item.icon className="h-4 w-4" style={{ color: "#6FA2FF" }} strokeWidth={1.5} />
+                  <div key={i} className="snap-start shrink-0 w-[200px] rounded-xl p-4 flex flex-col gap-2" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
+                    <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
+                      <item.icon className="h-4 w-4 text-blue-400" strokeWidth={1.5} />
                     </div>
                     <h3 className="text-xs font-bold text-white">{item.title}</h3>
                     <p className="text-[11px] leading-relaxed" style={{ color: "#C8D4E5" }}>{item.desc}</p>
@@ -342,9 +350,9 @@ export default function IntroPage() {
                 { icon: ScrollText, title: "Audit Trail", desc: "모든 구매 활동 전건 추적. GMP/GLP 감사 대비 활용" },
                 { icon: Wallet, title: "예산 통합", desc: "부서·프로젝트별 예산 설정, 실시간 소진 현황, 초과 시 차단" },
               ].map((item, i) => (
-                <div key={i} className="rounded-xl p-5 flex gap-4" style={{ backgroundColor: "#232D3C", border: "1px solid #344257" }}>
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#2E3B50" }}>
-                    <item.icon className="h-5 w-5" style={{ color: "#6FA2FF" }} strokeWidth={1.5} />
+                <div key={i} className="rounded-xl p-5 flex gap-4" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#283548" }}>
+                    <item.icon className="h-5 w-5 text-blue-400" strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>
@@ -354,8 +362,8 @@ export default function IntroPage() {
               ))}
             </div>
 
-            {/* 도입 적합성 — 압축 */}
-            <div className="rounded-xl p-4 md:p-5" style={{ backgroundColor: "#232D3C", border: "1px solid #344257" }}>
+            {/* 도입 적합성 */}
+            <div className="rounded-xl p-4 md:p-5" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
               <p className="text-[11px] font-bold uppercase tracking-widest mb-3" style={{ color: "#8A99AF" }}>이런 조직이면 지금 필요합니다</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                 {[
@@ -370,14 +378,14 @@ export default function IntroPage() {
                   </div>
                 ))}
               </div>
-              <div className="mt-4 pt-3 flex flex-wrap items-center justify-center gap-3" style={{ borderTop: "1px solid #344257" }}>
+              <div className="mt-4 pt-3 flex flex-wrap items-center justify-center gap-3" style={{ borderTop: "1px solid #2A3648" }}>
                 <Link href="/pricing">
-                  <button className="h-10 px-5 text-sm font-semibold text-blue-400 rounded-lg transition-all active:scale-95" style={{ border: "1px solid #3A4E6A", backgroundColor: "#1A2230" }}>
+                  <button className="h-10 px-5 text-sm font-semibold text-blue-400 rounded-lg transition-all active:scale-95" style={{ border: "1px solid #2A3648", backgroundColor: "#131A24" }}>
                     요금 & 플랜 보기
                   </button>
                 </Link>
                 <Link href="/support">
-                  <button className="h-10 px-5 text-sm font-medium rounded-lg transition-all active:scale-95" style={{ color: "#C8D4E5", border: "1px solid #344257" }}>
+                  <button className="h-10 px-5 text-sm font-medium rounded-lg transition-all active:scale-95" style={{ color: "#C8D4E5", border: "1px solid #2A3648" }}>
                     도입 상담 문의
                   </button>
                 </Link>

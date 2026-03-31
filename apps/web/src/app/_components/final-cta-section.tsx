@@ -23,7 +23,7 @@ export function FinalCTASection() {
     <section
       className="py-20 md:py-28"
       style={{
-        backgroundColor: "#141B27",
+        backgroundColor: "#131A24",
         borderTop: "1px solid #1E2A3A",
       }}
     >
