@@ -120,54 +120,29 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* ══ 2. 운영 문제 — 현재 연구실 구매 운영의 병목 ═════════════════ */}
-        <section className="py-10 md:py-16 border-b border-bd" style={{ backgroundColor: "#2a2c30" }}>
+        {/* ══ 2. 운영 문제 — 핵심 병목 3개 ═══════════════════════════════ */}
+        <section className="py-10 md:py-16" style={{ backgroundColor: "#151C26", borderBottom: "1px solid #2A3648" }}>
           <div className="mx-auto max-w-6xl px-4 md:px-6">
-            <div className="mb-6 md:mb-10">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1 md:mb-2">운영 병목</p>
-              <h2 className="text-xl md:text-3xl font-bold text-slate-100 break-keep">
-                현재 연구실 구매 운영의 병목
+            <div className="mb-6 md:mb-8">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6FA2FF] mb-2">Pain Point</p>
+              <h2 className="text-xl md:text-[26px] font-bold text-white break-keep">
+                연구실 구매, 왜 느릴까
               </h2>
-              <p className="text-sm md:text-base text-slate-400 mt-2 max-w-2xl break-keep">
-                반복되는 비효율이 연구 시간을 깎아먹고 있습니다.
-              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {[
-                {
-                  icon: Clock,
-                  iconColor: "text-slate-400",
-                  title: "반복 검색",
-                  desc: "벤더 사이트 10개 이상을 일일이 방문해 같은 시약을 검색합니다. 건당 30분 이상 소요.",
-                  stat: "건당 30분+",
-                },
-                {
-                  icon: AlertTriangle,
-                  iconColor: "text-slate-400",
-                  title: "수기 견적",
-                  desc: "이메일·전화로 견적을 수집하고, 엑셀에 수기로 정리합니다. 버전 관리와 비교가 불가능.",
-                  stat: "건당 45분+",
-                },
-                {
-                  icon: PackageX,
-                  iconColor: "text-slate-400",
-                  title: "재고 공백",
-                  desc: "구매 완료 후 재고 반영이 누락됩니다. 유효기간 만료·안전재고 부족을 뒤늦게 발견.",
-                  stat: "연간 15%+ 손실",
-                },
+                { icon: Clock, title: "반복 검색", stat: "건당 30분+", desc: "벤더 사이트 10곳을 일일이 방문해 같은 시약을 검색합니다" },
+                { icon: AlertTriangle, title: "수기 견적", stat: "건당 45분+", desc: "이메일·전화로 견적 수집, 엑셀에 수기 정리. 비교 불가" },
+                { icon: PackageX, title: "재고 공백", stat: "연간 15%+ 손실", desc: "구매 후 재고 반영 누락. 유효기간 만료를 뒤늦게 발견" },
               ].map((item, i) => (
-                <div key={i} className="bg-pg border border-bd rounded-xl p-4 md:p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-9 h-9 rounded-lg bg-el flex items-center justify-center flex-shrink-0">
-                      <item.icon className={`h-4.5 w-4.5 ${item.iconColor}`} strokeWidth={1.5} />
-                    </div>
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-100">{item.title}</h3>
-                      <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded">{item.stat}</span>
-                    </div>
+                <div key={i} className="rounded-xl p-5" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <item.icon className="h-5 w-5 text-[#8A99AF]" strokeWidth={1.5} />
+                    <h3 className="text-sm font-bold text-white">{item.title}</h3>
+                    <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded ml-auto" style={{ border: "1px solid rgba(245,158,11,0.15)" }}>{item.stat}</span>
                   </div>
-                  <p className="text-xs text-slate-300 leading-relaxed break-keep">{item.desc}</p>
+                  <p className="text-[13px] text-[#C8D4E5] leading-relaxed break-keep">{item.desc}</p>
                 </div>
               ))}
             </div>

@@ -11,7 +11,7 @@ const PIPELINE_STEPS = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section style={{ backgroundColor: "#161E28", borderTop: "1px solid rgba(120,160,230,0.08)", borderBottom: "1px solid rgba(120,160,230,0.08)" }}>
+    <section style={{ backgroundColor: "#0F1520", borderTop: "1px solid rgba(120,160,230,0.08)", borderBottom: "1px solid rgba(120,160,230,0.10)" }}>
       <div className="max-w-[1240px] mx-auto px-4 py-4">
         <div className="flex items-center justify-center gap-1 md:gap-0 overflow-x-auto">
           {PIPELINE_STEPS.map((step, i) => {

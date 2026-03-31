@@ -45,54 +45,54 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#121820", borderBottom: "1px solid #232C3A" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#1A2230", borderBottom: "1px solid #2E3B50" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-2">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#6FA2FF] mb-2.5">
             Operations Console
           </p>
-          <h2 className="text-xl md:text-2xl font-bold text-[#F3F7FF] tracking-tight mb-2">
+          <h2 className="text-xl md:text-[26px] font-bold text-white tracking-tight mb-2.5">
             검색부터 요청 준비까지, 검토와 운영이 이어지는 구조
           </h2>
-          <p className="text-xs md:text-sm text-[#BAC6D9] max-w-lg">
+          <p className="text-sm text-[#C8D4E5] max-w-lg leading-relaxed">
             LabAxis는 검색 결과를 정리하는 수준에서 끝나지 않고, 비교 검토와 공급사 요청 준비, 누락 점검과 다음 운영 판단까지 이어지는 작업 흐름으로 정리합니다.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mb-8">
           {CONSOLE_LAYERS.map((layer) => {
             const Icon = layer.icon;
             return (
               <div
                 key={layer.title}
-                className="rounded-lg px-5 py-4 transition-colors"
-                style={{ backgroundColor: "#1A2029", border: "1px solid #303A4A" }}
-                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#1F2631"; e.currentTarget.style.borderColor = "#3A4A60"; }}
-                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#1A2029"; e.currentTarget.style.borderColor = "#303A4A"; }}
+                className="rounded-lg px-5 py-5 transition-colors"
+                style={{ backgroundColor: "#232D3C", border: "1px solid #344257" }}
+                onMouseEnter={e => { e.currentTarget.style.backgroundColor = "#283548"; e.currentTarget.style.borderColor = "#4A5E78"; }}
+                onMouseLeave={e => { e.currentTarget.style.backgroundColor = "#232D3C"; e.currentTarget.style.borderColor = "#344257"; }}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <Icon className="h-4 w-4 text-[#8794AA]" strokeWidth={1.8} />
-                  <span className="text-sm font-bold text-[#F3F7FF]">{layer.title}</span>
+                <div className="flex items-center gap-2.5 mb-2.5">
+                  <Icon className="h-4 w-4 text-[#6FA2FF]" strokeWidth={1.8} />
+                  <span className="text-sm font-bold text-white">{layer.title}</span>
                 </div>
-                <p className="text-[11px] text-[#BAC6D9] leading-relaxed mb-1">{layer.purpose}</p>
-                {layer.support && <p className="text-[10px] text-[#8794AA] leading-relaxed mb-1.5">{layer.support}</p>}
-                <p className="text-[10px] text-[#6FA2FF] font-medium">{layer.items}</p>
+                <p className="text-[12px] text-[#C8D4E5] leading-relaxed mb-1.5">{layer.purpose}</p>
+                {layer.support && <p className="text-[11px] text-[#9DADC0] leading-relaxed mb-2">{layer.support}</p>}
+                <p className="text-[11px] text-[#6FA2FF] font-semibold">{layer.items}</p>
               </div>
             );
           })}
         </div>
 
-        <div className="rounded-lg px-5 py-4" style={{ backgroundColor: "#151B22", border: "1px solid #232C3A" }}>
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-[#6FA2FF] mb-3">
+        <div className="rounded-lg px-5 py-5" style={{ backgroundColor: "#1E2838", border: "1px solid #2E3B50" }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#6FA2FF] mb-3.5">
             System Evidence
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {SYSTEM_PROOFS.map((proof) => {
               const Icon = proof.icon;
               return (
-                <div key={proof.text} className="flex items-center gap-2.5 py-1">
-                  <Icon className="h-3.5 w-3.5 text-[#5A94FF] flex-shrink-0" strokeWidth={1.8} />
-                  <span className="text-xs text-[#BAC6D9]">{proof.text}</span>
+                <div key={proof.text} className="flex items-start gap-2.5 py-1.5">
+                  <Icon className="h-4 w-4 text-[#6FA2FF] flex-shrink-0 mt-0.5" strokeWidth={1.8} />
+                  <span className="text-[13px] text-[#D0DAE8] leading-relaxed">{proof.text}</span>
                 </div>
               );
             })}
