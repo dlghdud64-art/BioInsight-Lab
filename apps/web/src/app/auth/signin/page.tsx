@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Users, Zap } from "lucide-react";
 
-const PIPELINE = ["Search", "Compare", "Request", "Order", "Receive", "Stock"];
+const PIPELINE = ["Search", "Compare", "Request", "Order", "Receive", "Inventory"];
 
 const trustItems = [
   { icon: ShieldCheck, text: "256-bit 엔터프라이즈급 데이터 암호화" },
@@ -16,28 +16,41 @@ const trustItems = [
   { icon: Zap, text: "구매-재고 운영 실시간 연결" },
 ];
 
-/* ── Restrained 3D Background — delayed, dimmed, non-interactive ── */
+/* ── 3D Pipeline Background — autoplay loop, restrained motion ── */
 function SplineBg() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [loaded, setLoaded] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   useEffect(() => {
     if (!canvasRef.current) return;
-    // Check reduced-motion preference
+
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) { setLoaded(true); return; }
+    setReducedMotion(prefersReducedMotion);
 
     let app: any = null;
-    // Delayed mount — auth card renders first
+    // Delayed mount — auth card renders first, then 3D fades in
     const timer = setTimeout(async () => {
       try {
         const { Application } = await import("@splinetool/runtime");
         app = new Application(canvasRef.current!);
         await app.load("https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode");
+
+        // Ensure scene animations autoplay + loop
+        if (typeof app.play === "function") {
+          app.play();
+        }
+
         setLoaded(true);
-      } catch { setLoaded(true); }
-    }, 1000);
-    return () => { clearTimeout(timer); app?.dispose?.(); };
+      } catch {
+        setLoaded(true);
+      }
+    }, 800);
+
+    return () => {
+      clearTimeout(timer);
+      app?.dispose?.();
+    };
   }, []);
 
   return (
@@ -46,9 +59,11 @@ function SplineBg() {
       className="absolute inset-0 w-full h-full"
       style={{
         pointerEvents: "none",
-        opacity: loaded ? 0.86 : 0,
-        filter: "brightness(1.17) contrast(1.06) saturate(1.08)",
-        transition: "opacity 2s ease",
+        opacity: loaded ? 0.88 : 0,
+        filter: reducedMotion
+          ? "brightness(1.08) contrast(1.04) saturate(1.0)"
+          : "brightness(1.14) contrast(1.06) saturate(1.06)",
+        transition: "opacity 2.4s ease",
       }}
     />
   );
@@ -61,7 +76,7 @@ function SignInContent() {
   return (
     <div className="flex min-h-[100dvh]">
 
-      {/* ══════ LEFT 56%: Deep Navy Branded Intro + 3D ══════ */}
+      {/* ══════ LEFT: Operation Flow Context + 3D Pipeline ══════ */}
       <div
         className="hidden lg:flex relative overflow-hidden flex-col"
         style={{
@@ -69,72 +84,89 @@ function SignInContent() {
           background: "linear-gradient(165deg, #0E2A52 0%, #091D3A 50%, #061224 100%)",
         }}
       >
-        {/* Grid texture — fallback when Spline not loaded */}
+        {/* Grid texture — structural fallback when Spline loading */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundSize: "40px 40px",
-            backgroundImage: "linear-gradient(to right, rgba(255,255,255,0.045) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.045) 1px, transparent 1px)",
+            backgroundImage:
+              "linear-gradient(to right, rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.04) 1px, transparent 1px)",
             maskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
             WebkitMaskImage: "radial-gradient(ellipse at 70% 60%, black 20%, transparent 80%)",
           }}
         />
 
-        {/* 3D Scene — scaled down + pushed right, left copy zone protected */}
+        {/* 3D Scene — pushed right, copy zone protected via gradient mask */}
         <div
           className="absolute inset-0 z-0 origin-center"
           style={{
             transform: "translateX(14%) translateY(2%) scale(0.90)",
-            maskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 18%, black 40%, black 100%)",
-            WebkitMaskImage: "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 18%, black 40%, black 100%)",
+            maskImage:
+              "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.10) 16%, black 38%, black 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent 0%, rgba(0,0,0,0.10) 16%, black 38%, black 100%)",
           }}
         >
           <SplineBg />
         </div>
 
-        {/* Navy overlay — graded, not flat black */}
+        {/* Subtle breathing overlay — gives 3D a living-pipeline feel via CSS */}
+        <div
+          className="absolute inset-0 z-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse at 65% 50%, rgba(59,130,246,0.06) 0%, transparent 60%)",
+            animation: "signin-pulse 10s ease-in-out infinite",
+          }}
+        />
+
+        {/* Navy overlay — graded, not flat */}
         <div
           className="absolute inset-0 z-[1] pointer-events-none"
           style={{
             background: [
               "linear-gradient(180deg, rgba(7,22,45,0.04) 0%, rgba(5,12,24,0.10) 100%)",
-              "radial-gradient(circle at 25% 20%, rgba(30,90,180,0.12) 0%, transparent 45%)",
+              "radial-gradient(circle at 25% 20%, rgba(30,90,180,0.10) 0%, transparent 45%)",
             ].join(", "),
           }}
         />
 
         {/* Foreground copy — z above scene+overlay */}
-        <div className="relative z-[2] flex-1 flex flex-col" style={{ paddingTop: 40, paddingLeft: 48, paddingRight: 40, paddingBottom: 40 }}>
-
-          {/* Brand mark */}
+        <div
+          className="relative z-[2] flex-1 flex flex-col"
+          style={{ paddingTop: 40, paddingLeft: 48, paddingRight: 40, paddingBottom: 40 }}
+        >
+          {/* Brand wordmark — sole brand role */}
           <div>
             <Link href="/" className="inline-flex items-center gap-2">
               <span className="text-[22px] font-bold tracking-tight text-white">LabAxis</span>
             </Link>
           </div>
 
-          {/* Headline block — max-width 420px */}
-          <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 380 }}>
-            <div className="space-y-4" style={{ marginBottom: 22 }}>
+          {/* Headline + body — operation flow context */}
+          <div className="flex-1 flex flex-col justify-center" style={{ maxWidth: 400 }}>
+            <div className="space-y-4" style={{ marginBottom: 24 }}>
               <p className="text-[10px] font-semibold tracking-[0.2em] text-blue-400/80 uppercase">
                 Research Procurement Operating System
               </p>
               <h1 className="text-[30px] font-extrabold leading-[1.35] text-white tracking-tight">
-                연구 구매 운영을<br />
-                하나의 흐름으로<br />
-                연결합니다
+                반복되는 구매 업무,<br />
+                하나의 운영 흐름으로<br />
+                정리하세요
               </h1>
-              <p className="text-[14px] text-[#a0b4cc] leading-[1.75] max-w-[380px]">
-                시약 검색, 비교, 요청, 발주, 입고, 재고 관리를 분절된 도구가 아닌 하나의 운영 흐름으로 정리합니다.
+              <p className="text-[14px] text-[#a0b4cc] leading-[1.75] max-w-[400px]">
+                시약 검색, 비교, 요청, 발주, 입고, 재고 관리까지 —
+                분절된 도구를 오가는 대신 하나의 흐름 안에서 운영합니다.
               </p>
             </div>
 
-            {/* Workflow caption — subtle signal line */}
+            {/* Micro-flow — 3D pipeline stages, exact 1:1 alignment */}
             <div className="flex items-center gap-2 flex-wrap">
               {PIPELINE.map((step, i) => (
                 <span key={step} className="flex items-center gap-2">
-                  <span className="text-[11px] font-medium text-white/50">{step}</span>
-                  {i < PIPELINE.length - 1 && <span className="text-blue-400/40 text-[9px]">→</span>}
+                  <span className="text-[11px] font-medium text-white/55">{step}</span>
+                  {i < PIPELINE.length - 1 && (
+                    <span className="text-blue-400/40 text-[9px]">→</span>
+                  )}
                 </span>
               ))}
             </div>
@@ -150,9 +182,20 @@ function SignInContent() {
             ))}
           </div>
         </div>
+
+        {/* CSS keyframes for breathing overlay */}
+        <style jsx>{`
+          @keyframes signin-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .signin-pulse-overlay { animation: none !important; opacity: 0.5 !important; }
+          }
+        `}</style>
       </div>
 
-      {/* ══════ RIGHT 44%: Clean Light Auth Surface ══════ */}
+      {/* ══════ RIGHT: Clean Light Auth Surface ══════ */}
       <div className="w-full lg:flex-1 relative flex flex-col min-h-[100dvh]" style={{ backgroundColor: "#F3F5F9" }}>
 
         {/* Mobile: dark brand header */}
@@ -164,7 +207,7 @@ function SignInContent() {
         <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16">
           <div className="w-full max-w-[376px] -translate-y-4">
 
-            {/* Back link — inside stack, above card */}
+            {/* Back link */}
             <Link href="/" className="inline-flex items-center text-xs text-slate-500 hover:text-slate-700 transition-colors mb-5">
               <ArrowLeft className="w-3.5 h-3.5 mr-1" />홈으로 돌아가기
             </Link>
@@ -217,7 +260,7 @@ function SignInContent() {
               </div>
             </div>
 
-            {/* Signup Block — inside stack, below card */}
+            {/* Signup Block */}
             <div className="mt-6 text-center space-y-1.5">
               <p className="text-sm text-slate-500">
                 계정이 없으신가요?{" "}
