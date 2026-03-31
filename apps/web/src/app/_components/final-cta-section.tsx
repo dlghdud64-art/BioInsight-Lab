@@ -28,15 +28,22 @@ export function FinalCTASection() {
       }}
     >
       <div className="mx-auto max-w-2xl px-4 md:px-6">
-        {/* Contained light-neutral CTA panel */}
+        {/* Contained light-neutral CTA panel — 좌측 하이라이트 accent border */}
         <div
-          className="rounded-2xl px-8 py-12 md:px-12 md:py-14 text-center"
+          className="rounded-2xl px-8 py-12 md:px-12 md:py-14 text-center relative overflow-hidden"
           style={{
             backgroundColor: "#E9EDF3",
             border: "1px solid #D5DBE5",
             boxShadow: "0 8px 32px rgba(0,0,0,0.18), 0 1px 3px rgba(0,0,0,0.10)",
           }}
         >
+          {/* 상단 accent line — 파이프라인 완결을 상징하는 멀티컬러 gradient */}
+          <div
+            className="absolute top-0 left-0 right-0 h-[3px] rounded-t-2xl"
+            style={{
+              background: "linear-gradient(90deg, #6FA2FF 0%, #67C5E0 33%, #F0A832 66%, #4ECDA4 100%)",
+            }}
+          />
           <div className="space-y-4 mb-10">
             <h2
               className="text-xl md:text-[28px] font-bold tracking-tight leading-tight"
