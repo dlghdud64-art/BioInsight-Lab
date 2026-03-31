@@ -140,15 +140,15 @@ export default function IntroPage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
               {[
-                { icon: Clock, title: "반복 검색", stat: "건당 30분+", desc: "벤더 사이트 10곳을 일일이 방문해 같은 시약을 검색합니다" },
-                { icon: AlertTriangle, title: "수기 견적", stat: "건당 45분+", desc: "이메일·전화로 견적 수집, 엑셀에 수기 정리. 비교 불가" },
-                { icon: PackageX, title: "재고 공백", stat: "연간 15%+ 손실", desc: "구매 후 재고 반영 누락. 유효기간 만료를 뒤늦게 발견" },
+                { icon: Clock, title: "반복 검색", stat: "건당 30분+", desc: "벤더 사이트 10곳을 일일이 방문해 같은 시약을 검색합니다", iconColor: "#F0A832", cardBg: "rgba(240,168,50,0.06)", statTextColor: "#F0A832", statBgColor: "rgba(240,168,50,0.10)", statBorderColor: "rgba(240,168,50,0.20)" },
+                { icon: AlertTriangle, title: "수기 견적", stat: "건당 45분+", desc: "이메일·전화로 견적 수집, 엑셀에 수기 정리. 비교 불가", iconColor: "#F87171", cardBg: "rgba(248,113,113,0.06)", statTextColor: "#F87171", statBgColor: "rgba(248,113,113,0.10)", statBorderColor: "rgba(248,113,113,0.20)" },
+                { icon: PackageX, title: "재고 공백", stat: "연간 15%+ 손실", desc: "구매 후 재고 반영 누락. 유효기간 만료를 뒤늦게 발견", iconColor: "#FB923C", cardBg: "rgba(251,146,60,0.06)", statTextColor: "#FB923C", statBgColor: "rgba(251,146,60,0.10)", statBorderColor: "rgba(251,146,60,0.20)" },
               ].map((item, i) => (
-                <div key={i} className="rounded-xl p-5" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
+                <div key={i} className="rounded-xl p-5" style={{ backgroundColor: item.cardBg, border: "1px solid #2A3648" }}>
                   <div className="flex items-center gap-3 mb-2.5">
-                    <item.icon className="h-5 w-5 text-[#8A99AF]" strokeWidth={1.5} />
+                    <item.icon className="h-5 w-5" style={{ color: item.iconColor }} strokeWidth={1.5} />
                     <h3 className="text-sm font-bold text-white">{item.title}</h3>
-                    <span className="text-[10px] font-bold text-amber-300 bg-amber-500/10 px-2 py-0.5 rounded ml-auto" style={{ border: "1px solid rgba(245,158,11,0.15)" }}>{item.stat}</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded ml-auto" style={{ color: item.statTextColor, backgroundColor: item.statBgColor, border: `1px solid ${item.statBorderColor}` }}>{item.stat}</span>
                   </div>
                   <p className="text-[13px] text-[#C8D4E5] leading-relaxed break-keep">{item.desc}</p>
                 </div>
@@ -174,16 +174,16 @@ export default function IntroPage() {
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
               <div className="flex gap-2.5" style={{ width: "max-content" }}>
                 {[
-                  { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에 검색" },
-                  { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 즉시 생성" },
-                  { num: 3, icon: FileText, title: "견적 요청", change: "이메일 수집 → 클릭 한 번 전송" },
-                  { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 발주 연동" },
-                  { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 스캔으로 즉시 반영" },
-                  { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 추적" },
+                  { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에 검색", color: "#6FA2FF", bgColor: "rgba(111,162,255,0.15)" },
+                  { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 정리 → 비교표 즉시 생성", color: "#67C5E0", bgColor: "rgba(103,197,224,0.12)" },
+                  { num: 3, icon: FileText, title: "견적 요청", change: "이메일 수집 → 클릭 한 번 전송", color: "#6FA2FF", bgColor: "rgba(111,162,255,0.12)" },
+                  { num: 4, icon: ShoppingCart, title: "발주", change: "수기 발주 → 승인 후 발주 연동", color: "#F0A832", bgColor: "rgba(240,168,50,0.12)" },
+                  { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 확인 → 스캔으로 즉시 반영", color: "#4ECDA4", bgColor: "rgba(78,205,164,0.12)" },
+                  { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 관리 → Lot·유효기간 추적", color: "#4ECDA4", bgColor: "rgba(78,205,164,0.15)" },
                 ].map((step) => (
                   <div key={step.num} className="snap-start shrink-0 w-[140px] rounded-xl p-3 flex flex-col items-center text-center" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
-                    <div className={`w-8 h-8 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-xs font-bold flex items-center justify-center mb-2`} style={step.num !== 1 ? { backgroundColor: "#283548" } : {}}>{step.num}</div>
-                    <step.icon className={`h-4 w-4 mb-1.5 ${step.num === 1 ? "text-blue-400" : ""}`} style={step.num !== 1 ? { color: "#8A99AF" } : {}} strokeWidth={1.5} />
+                    <div className="w-8 h-8 rounded-full text-white text-xs font-bold flex items-center justify-center mb-2" style={{ backgroundColor: step.bgColor }}>{step.num}</div>
+                    <step.icon className="h-4 w-4 mb-1.5" style={{ color: step.color }} strokeWidth={1.5} />
                     <h3 className="text-xs font-bold text-white mb-0.5">{step.title}</h3>
                     <p className="text-[10px] leading-tight" style={{ color: "#9DADC0" }}>{step.change}</p>
                   </div>
@@ -194,17 +194,17 @@ export default function IntroPage() {
             {/* Desktop: 6-column pipeline */}
             <div className="hidden md:grid md:grid-cols-6 gap-3">
               {[
-                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에" },
-                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 즉시 생성" },
-                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 → 클릭 한 번" },
-                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 → 승인 후 발주" },
-                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 → 스캔 반영" },
-                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 연동 추적" },
+                { num: 1, icon: Search, title: "통합 검색", change: "벤더 10곳 → 한 번에", color: "#6FA2FF", bgColor: "rgba(111,162,255,0.15)" },
+                { num: 2, icon: GitCompare, title: "제품 비교", change: "엑셀 → 비교표 즉시 생성", color: "#67C5E0", bgColor: "rgba(103,197,224,0.12)" },
+                { num: 3, icon: FileText, title: "견적 요청", change: "이메일 → 클릭 한 번", color: "#6FA2FF", bgColor: "rgba(111,162,255,0.12)" },
+                { num: 4, icon: ShoppingCart, title: "발주", change: "수기 → 승인 후 발주", color: "#F0A832", bgColor: "rgba(240,168,50,0.12)" },
+                { num: 5, icon: ClipboardCheck, title: "입고 검수", change: "수기 → 스캔 반영", color: "#4ECDA4", bgColor: "rgba(78,205,164,0.12)" },
+                { num: 6, icon: Warehouse, title: "재고 운영", change: "엑셀 → 연동 추적", color: "#4ECDA4", bgColor: "rgba(78,205,164,0.15)" },
               ].map((step, i) => (
                 <div key={step.num} className="relative">
                   <div className="rounded-xl p-4 h-full flex flex-col items-center text-center" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
-                    <div className={`w-10 h-10 rounded-full ${step.num === 1 ? "bg-blue-600" : ""} text-white text-sm font-bold flex items-center justify-center mb-3`} style={step.num !== 1 ? { backgroundColor: "#283548" } : {}}>{step.num}</div>
-                    <step.icon className={`h-5 w-5 mb-2 ${step.num === 1 ? "text-blue-400" : ""}`} style={step.num !== 1 ? { color: "#8A99AF" } : {}} strokeWidth={1.5} />
+                    <div className="w-10 h-10 rounded-full text-white text-sm font-bold flex items-center justify-center mb-3" style={{ backgroundColor: step.bgColor }}>{step.num}</div>
+                    <step.icon className="h-5 w-5 mb-2" style={{ color: step.color }} strokeWidth={1.5} />
                     <h3 className="text-sm font-bold text-white mb-1">{step.title}</h3>
                     <p className="text-[11px] leading-snug" style={{ color: "#9DADC0" }}>{step.change}</p>
                   </div>
@@ -254,26 +254,26 @@ export default function IntroPage() {
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-2">
               <div className="flex gap-3" style={{ width: "max-content" }}>
                 {[
-                  { icon: Microscope, role: "연구원", highlight: "탐색 시간 70% 단축", before: "벤더 10+곳 반복 방문 · 엑셀 수기 비교", after: "통합 검색으로 후보 즉시 확인 · 프로토콜 기반 자동 정리" },
-                  { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합" },
-                  { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail" },
+                  { icon: Microscope, role: "연구원", highlight: "탐색 시간 70% 단축", before: "벤더 10+곳 반복 방문 · 엑셀 수기 비교", after: "통합 검색으로 후보 즉시 확인 · 프로토콜 기반 자동 정리", iconColor: "#67C5E0" },
+                  { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합", iconColor: "#F0A832" },
+                  { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail", iconColor: "#6FA2FF" },
                 ].map((c, i) => (
                   <div key={i} className="snap-start shrink-0 w-[280px] rounded-xl p-4 flex flex-col gap-3" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                     <div className="flex items-center gap-2.5">
                       <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
-                        <c.icon className="h-4 w-4" style={{ color: "#8A99AF" }} strokeWidth={1.5} />
+                        <c.icon className="h-4 w-4" style={{ color: c.iconColor }} strokeWidth={1.5} />
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>{c.role}</p>
                         <p className="text-[11px] font-semibold text-blue-400">{c.highlight}</p>
                       </div>
                     </div>
-                    <div className="rounded-lg p-2.5" style={{ backgroundColor: "#0F1520", border: "1px solid #1E2A3A" }}>
-                      <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#667389" }}>기존</p>
+                    <div className="rounded-lg p-2.5" style={{ backgroundColor: "rgba(200,120,50,0.06)", border: "1px solid rgba(200,120,50,0.15)" }}>
+                      <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#B09070" }}>기존</p>
                       <p className="text-[11px] leading-relaxed" style={{ color: "#8A99AF" }}>{c.before}</p>
                     </div>
                     <div className="rounded-lg p-2.5" style={{ backgroundColor: "#0F1A2A", border: "1px solid #1E3A5F" }}>
-                      <p className="text-[10px] font-bold uppercase mb-1 text-blue-400">LabAxis</p>
+                      <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#6FA2FF" }}>LabAxis</p>
                       <p className="text-[11px] leading-relaxed" style={{ color: "#C8D4E5" }}>{c.after}</p>
                     </div>
                   </div>
@@ -284,26 +284,26 @@ export default function IntroPage() {
             {/* Desktop: 3-column grid */}
             <div className="hidden md:grid md:grid-cols-3 gap-4">
               {[
-                { icon: Microscope, role: "연구원", highlight: "탐색 시간 70% 단축", before: "벤더 10+곳 반복 방문 · 엑셀 수기 비교", after: "통합 검색으로 후보 즉시 확인 · 프로토콜 기반 자동 정리" },
-                { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합" },
-                { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail" },
+                { icon: Microscope, role: "연구원", highlight: "탐색 시간 70% 단축", before: "벤더 10+곳 반복 방문 · 엑셀 수기 비교", after: "통합 검색으로 후보 즉시 확인 · 프로토콜 기반 자동 정리", iconColor: "#67C5E0" },
+                { icon: ShoppingCart, role: "구매 담당자", highlight: "견적 수집 80% 절감", before: "벤더별 견적 건당 45분+ · 이메일 분산 관리", after: "통합 견적 → 가격표 즉시 생성 · 이력 통합", iconColor: "#F0A832" },
+                { icon: Users, role: "관리자", highlight: "구매 이력 전건 추적", before: "엑셀 집계 · 구두 승인", after: "실시간 예산 소진 + 승인 라인 · Audit Trail", iconColor: "#6FA2FF" },
               ].map((c, i) => (
                 <div key={i} className="rounded-xl p-5 flex flex-col gap-3" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
-                      <c.icon className="h-5 w-5" style={{ color: "#8A99AF" }} strokeWidth={1.5} />
+                      <c.icon className="h-5 w-5" style={{ color: c.iconColor }} strokeWidth={1.5} />
                     </div>
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>{c.role}</p>
                       <h3 className="text-sm font-bold text-white">{c.highlight}</h3>
                     </div>
                   </div>
-                  <div className="rounded-lg p-3" style={{ backgroundColor: "#0F1520", border: "1px solid #1E2A3A" }}>
-                    <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#667389" }}>기존</p>
+                  <div className="rounded-lg p-3" style={{ backgroundColor: "rgba(200,120,50,0.06)", border: "1px solid rgba(200,120,50,0.15)" }}>
+                    <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#B09070" }}>기존</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "#8A99AF" }}>{c.before}</p>
                   </div>
                   <div className="rounded-lg p-3" style={{ backgroundColor: "#0F1A2A", border: "1px solid #1E3A5F" }}>
-                    <p className="text-[10px] font-bold uppercase mb-1 text-blue-400">LabAxis</p>
+                    <p className="text-[10px] font-bold uppercase mb-1" style={{ color: "#6FA2FF" }}>LabAxis</p>
                     <p className="text-[12px] leading-relaxed" style={{ color: "#C8D4E5" }}>{c.after}</p>
                   </div>
                 </div>
@@ -326,14 +326,14 @@ export default function IntroPage() {
             <div className="md:hidden overflow-x-auto snap-x snap-mandatory scrollbar-hide -mx-4 px-4 pb-3">
               <div className="flex gap-2.5" style={{ width: "max-content" }}>
                 {[
-                  { icon: KeyRound, title: "역할 권한", desc: "견적·승인·관리자 역할 분리" },
-                  { icon: CheckSquare, title: "승인 라인", desc: "금액 기준 라우팅 + 에스컬레이션" },
-                  { icon: ScrollText, title: "Audit Trail", desc: "전건 추적, GMP/GLP 감사 대비" },
-                  { icon: Wallet, title: "예산 통합", desc: "실시간 소진 현황 + 초과 차단" },
+                  { icon: KeyRound, title: "역할 권한", desc: "견적·승인·관리자 역할 분리", color: "#6FA2FF" },
+                  { icon: CheckSquare, title: "승인 라인", desc: "금액 기준 라우팅 + 에스컬레이션", color: "#67C5E0" },
+                  { icon: ScrollText, title: "Audit Trail", desc: "전건 추적, GMP/GLP 감사 대비", color: "#F0A832" },
+                  { icon: Wallet, title: "예산 통합", desc: "실시간 소진 현황 + 초과 차단", color: "#4ECDA4" },
                 ].map((item, i) => (
                   <div key={i} className="snap-start shrink-0 w-[200px] rounded-xl p-4 flex flex-col gap-2" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                     <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#283548" }}>
-                      <item.icon className="h-4 w-4 text-blue-400" strokeWidth={1.5} />
+                      <item.icon className="h-4 w-4" style={{ color: item.color }} strokeWidth={1.5} />
                     </div>
                     <h3 className="text-xs font-bold text-white">{item.title}</h3>
                     <p className="text-[11px] leading-relaxed" style={{ color: "#C8D4E5" }}>{item.desc}</p>
@@ -345,14 +345,14 @@ export default function IntroPage() {
             {/* Desktop: 2×2 grid */}
             <div className="hidden md:grid md:grid-cols-2 gap-4 mb-6">
               {[
-                { icon: KeyRound, title: "역할 기반 권한 제어", desc: "견적 요청·승인·관리자 역할을 분리하여 내부 구매 프로세스에 맞게 운영" },
-                { icon: CheckSquare, title: "승인 라인", desc: "금액 기준 라우팅, 승인자 지정 및 에스컬레이션 지원" },
-                { icon: ScrollText, title: "Audit Trail", desc: "모든 구매 활동 전건 추적. GMP/GLP 감사 대비 활용" },
-                { icon: Wallet, title: "예산 통합", desc: "부서·프로젝트별 예산 설정, 실시간 소진 현황, 초과 시 차단" },
+                { icon: KeyRound, title: "역할 기반 권한 제어", desc: "견적 요청·승인·관리자 역할을 분리하여 내부 구매 프로세스에 맞게 운영", color: "#6FA2FF" },
+                { icon: CheckSquare, title: "승인 라인", desc: "금액 기준 라우팅, 승인자 지정 및 에스컬레이션 지원", color: "#67C5E0" },
+                { icon: ScrollText, title: "Audit Trail", desc: "모든 구매 활동 전건 추적. GMP/GLP 감사 대비 활용", color: "#F0A832" },
+                { icon: Wallet, title: "예산 통합", desc: "부서·프로젝트별 예산 설정, 실시간 소진 현황, 초과 시 차단", color: "#4ECDA4" },
               ].map((item, i) => (
                 <div key={i} className="rounded-xl p-5 flex gap-4" style={{ backgroundColor: "#1C2535", border: "1px solid #2A3648" }}>
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#283548" }}>
-                    <item.icon className="h-5 w-5 text-blue-400" strokeWidth={1.5} />
+                    <item.icon className="h-5 w-5" style={{ color: item.color }} strokeWidth={1.5} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-sm font-bold text-white mb-1">{item.title}</h3>

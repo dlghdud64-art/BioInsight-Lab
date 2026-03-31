@@ -54,6 +54,8 @@ export default function PricingPage() {
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
       buttonText: "무료로 시작하기",
+      color: "#94A3B8",
+      iconBgSelected: "rgba(148,163,184,0.10)",
       features: [
         "1개 워크스페이스",
         "최대 2명",
@@ -76,6 +78,8 @@ export default function PricingPage() {
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
       buttonText: "Team으로 시작하기",
+      color: "#67C5E0",
+      iconBgSelected: "rgba(103,197,224,0.10)",
       features: [
         "최대 10명",
         "비교 / 요청 운영",
@@ -98,6 +102,8 @@ export default function PricingPage() {
       isRecommended: true,
       cardHeight: "md:min-h-[540px]",
       buttonText: "Business 도입하기",
+      color: "#6FA2FF",
+      iconBgSelected: "rgba(111,162,255,0.10)",
       features: [
         "최대 30명",
         "승인 라인 / 감사 로그",
@@ -120,6 +126,8 @@ export default function PricingPage() {
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
       buttonText: "도입 문의하기",
+      color: "#A78BFA",
+      iconBgSelected: "rgba(167,139,250,0.10)",
       features: [
         "사용자 수 협의",
         "SSO / 고급 권한",
@@ -297,16 +305,12 @@ export default function PricingPage() {
                       <CardHeader className="text-center pb-1 md:pb-4 px-2.5 md:px-6 pt-3 md:pt-6">
                         <div className="hidden md:flex justify-center mb-3">
                           <div
-                            className={cn(
-                              "p-3 rounded-full transition-colors",
-                              isSelected || isRecommended ? "bg-blue-500/10" : "bg-el"
-                            )}
+                            className="p-3 rounded-full transition-colors bg-el"
+                            style={isSelected || isRecommended ? { backgroundColor: plan.iconBgSelected } : undefined}
                           >
                             <Icon
-                              className={cn(
-                                "h-6 w-6",
-                                isSelected || isRecommended ? "text-blue-400" : "text-slate-400"
-                              )}
+                              className="h-6 w-6"
+                              style={{ color: isSelected || isRecommended ? plan.color : "#64748B" }}
                             />
                           </div>
                         </div>
@@ -446,10 +450,10 @@ export default function PricingPage() {
                                 <div className="flex items-center gap-1">
                                   <span className={cn(
                                     "text-[10px] font-bold uppercase tracking-wider",
-                                    item.tier === "business" ? "text-blue-400" : "text-slate-500"
+                                    item.tier === "business" ? "text-blue-400" : item.tier === "enterprise" ? "text-violet-400" : "text-slate-500"
                                   )}>{item.label}</span>
                                   {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-400 bg-blue-500/10 px-1 rounded">Biz+</span>}
-                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-slate-500 bg-el px-1 rounded">Ent.</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-violet-400 bg-violet-500/10 px-1 rounded">Ent.</span>}
                                 </div>
                               </td>
                             </tr>
@@ -504,11 +508,11 @@ export default function PricingPage() {
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
-                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : "text-slate-500")}>
+                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : isEnterpriseTier ? "text-violet-400" : "text-slate-500")}>
                                         {item.label}
                                       </span>
                                       {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-slate-500 bg-el border border-bd px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 rounded-full">Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
