@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Check, Minus, AlertTriangle, ArrowRight, GitCompare, TrendingDown, Clock, Package, FileText, Undo2, Sparkles, ChevronDown, ChevronUp, ShieldCheck, Zap, Scale } from "lucide-react";
 import {
@@ -78,12 +78,24 @@ export function CompareReviewWorkWindow({
   onUndoDecision,
 }: CompareReviewWorkWindowProps) {
   // ── Mode state ──
+  // AI가 기본 진입면 — aiOptions가 있으면 무조건 ai, 없으면 fallback basic
   const hasAiOptions = aiOptions.length === 3;
   const [surfaceMode, setSurfaceMode] = useState<"ai" | "basic">(hasAiOptions ? "ai" : "basic");
   const isAiMode = surfaceMode === "ai" && hasAiOptions;
 
+  // ── 열릴 때마다 AI 모드로 강제 리셋 (이전 탭 기억 차단) + 스크롤 top ──
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (open) {
+      setSurfaceMode(hasAiOptions ? "ai" : "basic");
+      // 스크롤 시작점을 항상 최상단으로 보정
+      requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: 0 }));
+    }
+  }, [open, hasAiOptions]);
+
   // ── AI strategy state ──
   const [activeFrame, setActiveFrame] = useState<StrategyFrame>("balanced");
+  const [showRationale, setShowRationale] = useState(false);
 
   // ── Candidate resolution ──
   const candidates = useMemo<CompareCandidateInfo[]>(() => {
@@ -235,30 +247,34 @@ export function CompareReviewWorkWindow({
             </button>
           </div>
 
-          {/* Segmented Control */}
+          {/* Segmented Control — AI = primary mode, 상세 비교 = secondary drilldown */}
           {hasAiOptions && (
-            <div className="p-1.5 rounded-xl bg-[#16181c] border border-slate-600/30 flex gap-1">
+            <div className="p-1 rounded-xl bg-[#14161a] border border-slate-700/40 flex gap-1">
               <button type="button" onClick={() => setSurfaceMode("ai")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
-                  isAiMode ? "bg-blue-600/25 text-blue-100 border border-blue-500/40 shadow-md shadow-blue-500/15" : "text-slate-400 hover:text-slate-300 border border-slate-600/30"
+                className={`flex-[1.2] flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
+                  isAiMode
+                    ? "bg-blue-600/30 text-blue-50 border border-blue-500/50 shadow-lg shadow-blue-500/20 ring-1 ring-blue-400/25"
+                    : "text-slate-500 hover:text-slate-400 border border-transparent"
                 }`}>
                 {isAiMode && <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />}
-                <Sparkles className={`h-4 w-4 ${isAiMode ? "text-blue-400" : "text-slate-600"}`} />
+                <Sparkles className={`h-4 w-4 ${isAiMode ? "text-blue-300" : "text-slate-600"}`} />
                 AI 결정 보조
               </button>
               <button type="button" onClick={() => setSurfaceMode("basic")}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-[12px] font-bold transition-all ${
-                  !isAiMode ? "bg-slate-600/25 text-slate-100 border border-slate-500/40 shadow-md" : "text-slate-400 hover:text-slate-300 border border-slate-600/30"
+                className={`flex-[0.8] flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg text-[11px] font-medium transition-all ${
+                  !isAiMode
+                    ? "bg-slate-700/30 text-slate-200 border border-slate-500/30"
+                    : "text-slate-600 hover:text-slate-500 border border-transparent"
                 }`}>
-                <GitCompare className={`h-4 w-4 ${!isAiMode ? "text-slate-300" : "text-slate-600"}`} />
-                사실 비교
+                <GitCompare className={`h-3.5 w-3.5 ${!isAiMode ? "text-slate-400" : "text-slate-700"}`} />
+                상세 비교
               </button>
             </div>
           )}
         </div>
 
         {/* ═══ SCROLLABLE BODY ═══ */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto">
 
           {isAiMode ? (
             /* ═══════════════════════════════════════════════════════════════════
@@ -266,29 +282,35 @@ export function CompareReviewWorkWindow({
                 목적: 무엇을 해야 하는가
             ═══════════════════════════════════════════════════════════════════ */
             <>
-              {/* ── Decision Header ── */}
-              <div className="px-5 py-4 bg-[#1a1e28] border-b border-blue-500/15">
-                <div className="flex items-center gap-2 mb-3">
-                  <Sparkles className="h-4 w-4 text-blue-400" />
-                  <span className="text-[11px] font-bold text-blue-300 uppercase tracking-widest">결정 요약</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-emerald-500/20">
-                    <span className="text-[10px] text-emerald-400 font-medium block">즉시 요청 가능</span>
-                    <span className="text-[18px] font-bold text-emerald-300">{decisionHeader.requestReadyCount}<span className="text-[11px] text-emerald-400/70 ml-0.5">건</span></span>
-                  </div>
-                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-amber-500/15">
-                    <span className="text-[10px] text-amber-400 font-medium block">보류 · 확인 필요</span>
-                    <span className="text-[18px] font-bold text-amber-300">{decisionHeader.holdCount}<span className="text-[11px] text-amber-400/70 ml-0.5">건</span></span>
-                  </div>
-                  <div className="px-3.5 py-2.5 rounded-lg bg-[#222830] border border-red-500/15">
-                    <span className="text-[10px] text-red-400 font-medium block">제외</span>
-                    <span className="text-[18px] font-bold text-red-300">{decisionHeader.excludedCount}<span className="text-[11px] text-red-400/70 ml-0.5">건</span></span>
-                  </div>
+              {/* ── Decision Header — 권장 판단 한줄 + 카운트 ── */}
+              <div className="px-5 py-3.5 bg-[#1a1e28] border-b border-blue-500/15">
+                {/* 한줄 판단 */}
+                <p className="text-[13px] font-bold text-blue-50 mb-2.5">
+                  {decisionHeader.requestReadyCount > 0
+                    ? `${decisionHeader.requestReadyCount}건 즉시 요청 가능 — 선택 후 진행하세요`
+                    : decisionHeader.holdCount > 0
+                      ? "확인 필요 항목이 있습니다 — 검토 후 결정하세요"
+                      : "비교 대상이 부족합니다"
+                  }
+                </p>
+                {/* 카운트 strip */}
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/15 border border-emerald-500/20">
+                    <span className="text-[14px] font-bold text-emerald-300">{decisionHeader.requestReadyCount}</span>
+                    <span className="text-[10px] text-emerald-400/80">요청 가능</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/15">
+                    <span className="text-[14px] font-bold text-amber-300">{decisionHeader.holdCount}</span>
+                    <span className="text-[10px] text-amber-400/80">보류</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-red-500/10 border border-red-500/15">
+                    <span className="text-[14px] font-bold text-red-300">{decisionHeader.excludedCount}</span>
+                    <span className="text-[10px] text-red-400/80">제외</span>
+                  </span>
                 </div>
                 {decisionHeader.topBlocker && (
-                  <div className="flex items-center gap-2 mt-2.5 px-3 py-2 rounded-lg bg-[#28251e] border border-amber-500/15">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                  <div className="flex items-center gap-2 mt-2 px-2.5 py-1.5 rounded-md bg-[#28251e] border border-amber-500/15">
+                    <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
                     <span className="text-[11px] text-amber-300">{decisionHeader.topBlocker}</span>
                   </div>
                 )}
@@ -385,25 +407,33 @@ export function CompareReviewWorkWindow({
                     </div>
                   )}
 
-                  {/* ── Recommendation Block ── */}
-                  <div className="mt-4 px-4 py-3.5 rounded-lg bg-[#1c2030] border border-blue-500/15">
-                    <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest block mb-2">결정 근거</span>
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">추천 이유</span>
-                        <span className="text-slate-200">{activeOption.keyBenefit}</span>
-                      </div>
-                      <div>
-                        <span className="text-slate-500 block text-[10px]">운영 리스크</span>
-                        <span className="text-slate-200">{activeOption.keyRisk || "없음"}</span>
-                      </div>
-                      {activeOption.blockers.length > 0 && (
-                        <div className="col-span-2">
-                          <span className="text-slate-500 block text-[10px]">요청 전 확인</span>
-                          <span className="text-amber-300">{activeOption.blockers.join(" / ")}</span>
+                  {/* ── Recommendation Block — 접힘 섹션 ── */}
+                  <div className="mt-3">
+                    <button type="button" onClick={() => setShowRationale(!showRationale)}
+                      className="flex items-center gap-1.5 text-[10px] text-slate-500 hover:text-slate-400 font-medium uppercase tracking-widest transition-colors">
+                      {showRationale ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                      결정 근거 {showRationale ? "접기" : "보기"}
+                    </button>
+                    {showRationale && (
+                      <div className="mt-2 px-4 py-3 rounded-lg bg-[#1c2030] border border-blue-500/10">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">추천 이유</span>
+                            <span className="text-slate-200">{activeOption.keyBenefit}</span>
+                          </div>
+                          <div>
+                            <span className="text-slate-500 block text-[10px]">운영 리스크</span>
+                            <span className="text-slate-200">{activeOption.keyRisk || "없음"}</span>
+                          </div>
+                          {activeOption.blockers.length > 0 && (
+                            <div className="col-span-2">
+                              <span className="text-slate-500 block text-[10px]">요청 전 확인</span>
+                              <span className="text-amber-300">{activeOption.blockers.join(" / ")}</span>
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -457,7 +487,7 @@ export function CompareReviewWorkWindow({
             <>
               {/* ── Fact Comparison Table ── */}
               <div className="px-5 pt-4 pb-3">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">후보 사실 비교</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 block">후보 상세 비교</span>
                 <div className="border border-slate-600/20 rounded-lg overflow-hidden">
                   <div className="grid bg-[#262930] border-b border-slate-600/20"
                     style={{ gridTemplateColumns: `100px repeat(${candidates.length}, minmax(0, 1fr))` }}>
@@ -633,44 +663,37 @@ function StrategyCandidateCard({
 }) {
   const isRecommended = variant === "recommended";
   const cardBg = isShortlisted
-    ? "border-emerald-500/30 bg-[#1e2820]"
+    ? isRecommended ? "border-emerald-500/40 bg-emerald-950/40 ring-1 ring-emerald-500/20" : "border-emerald-500/30 bg-[#1e2820]"
     : isExcluded
       ? "border-red-500/20 bg-[#241e1e] opacity-60"
       : isRecommended
-        ? "border-slate-500/25 bg-[#282b32]"
+        ? "border-blue-500/25 bg-[#1e2230]"
         : "border-slate-600/20 bg-[#24272c]";
 
   return (
-    <div className={`px-4 py-3.5 rounded-lg border transition-all ${cardBg}`}>
-      {/* Readiness badge + name */}
-      <div className="flex items-center gap-2 mb-1.5">
-        <span className={`text-[9px] px-2 py-0.5 rounded font-semibold uppercase tracking-wider ${
-          isRecommended ? "bg-emerald-500/15 text-emerald-400" : "bg-amber-500/10 text-amber-400"
+    <div className={`px-4 py-3.5 rounded-lg border-2 transition-all ${cardBg}`}>
+      {/* Name + badge row */}
+      <div className="flex items-center justify-between gap-2 mb-1">
+        <span className="text-[13px] font-bold text-white truncate">{sc.name}</span>
+        <span className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase tracking-wider shrink-0 ${
+          isRecommended ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/25" : "bg-amber-500/15 text-amber-400 border border-amber-500/20"
         }`}>{sc.readinessLabel}</span>
       </div>
-      <span className="text-[13px] font-bold text-white block">{sc.name}</span>
-      <span className="text-[11px] text-slate-400 block mt-0.5">{sc.brand}</span>
+      {/* 핵심 판단 1줄 */}
+      <span className="text-[11px] text-slate-200 block leading-snug">{sc.selectionReason}</span>
+      <span className="text-[10px] text-slate-500 block mt-0.5">{sc.brand}</span>
 
-      {/* Reason + Risk + Next */}
-      <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[10px]">
-        <div><span className="text-slate-500">이유:</span> <span className="text-slate-200">{sc.selectionReason}</span></div>
-        <div><span className="text-slate-500">다음:</span> <span className="text-slate-200">{sc.nextAction}</span></div>
-        {sc.riskNote && (
-          <div className="col-span-2"><span className="text-slate-500">리스크:</span> <span className="text-amber-300">{sc.riskNote}</span></div>
-        )}
-      </div>
-
-      {/* Actions */}
+      {/* Actions — 즉시 보이게 상단 배치 */}
       <div className="flex items-center gap-1.5 mt-2.5">
         <button type="button" onClick={() => onToggleShortlist(sc.id)} disabled={disabled}
-          className={`h-8 px-3 rounded-md text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-            isShortlisted ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 border border-slate-700/40"
+          className={`h-9 px-3.5 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+            isShortlisted ? "bg-emerald-500/25 text-emerald-200 border border-emerald-500/40 shadow-sm shadow-emerald-500/10" : "text-slate-300 hover:text-emerald-300 hover:bg-emerald-500/15 border border-slate-600/40"
           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
           <Check className="h-3.5 w-3.5" />{isShortlisted ? "선택됨" : "선택"}
         </button>
         <button type="button" onClick={() => onToggleExclude(sc.id)} disabled={disabled}
-          className={`h-8 px-3 rounded-md text-[11px] font-semibold flex items-center gap-1.5 transition-all ${
-            isExcluded ? "bg-red-500/15 text-red-400 border border-red-500/25" : "text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-700/40"
+          className={`h-9 px-3.5 rounded-md text-[11px] font-bold flex items-center gap-1.5 transition-all ${
+            isExcluded ? "bg-red-500/20 text-red-300 border border-red-500/30" : "text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-slate-600/40"
           } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}>
           <Minus className="h-3.5 w-3.5" />제외
         </button>
