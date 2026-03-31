@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { X, Check, AlertTriangle, FileText, ArrowRight, Package, Building2, ClipboardList, ChevronRight, AlertCircle } from "lucide-react";
+import { X, Check, AlertTriangle, FileText, ArrowRight, Package, Building2, ClipboardList, ChevronRight, AlertCircle, ChevronLeft } from "lucide-react";
 import {
   type RequestAssemblyState,
   type RequestCandidateInfo,
@@ -73,6 +73,10 @@ export function RequestAssemblyWorkWindow({
   const [urgency, setUrgency] = useState<"normal" | "urgent" | "critical">("normal");
   const [substituteScope, setSubstituteScope] = useState<"none" | "same_brand" | "equivalent">("none");
   const [draftSnapshot, setDraftSnapshot] = useState<RequestDraftSnapshot | null>(null);
+
+  // ── Scope strip: selected item ──
+  const [selectedLineIdx, setSelectedLineIdx] = useState(0);
+  const itemStripRef = useRef<HTMLDivElement>(null);
 
   // Initialize on open
   useMemo(() => {
@@ -218,285 +222,394 @@ export function RequestAssemblyWorkWindow({
           </div>
         </div>
 
-        {/* ═══ 2. Scrollable Body ═══ */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
+        {/* ═══ 2. Scope Strips ═══ */}
+        <div className="shrink-0 border-b border-slate-600/30 bg-[#22252b]">
 
-          {/* ═══ Compare provenance ═══ */}
-          {handoff?.compareRationaleSummary && (
-            <div className="px-4 py-3 rounded-lg bg-blue-600/[0.06] border border-blue-500/20">
-              <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-1">비교 판단 근거</span>
-              <span className="text-sm text-blue-200 leading-relaxed">{handoff.compareRationaleSummary}</span>
+          {/* ── 2a. Vendor Strip ── */}
+          <div className="px-6 pt-3 pb-2">
+            <div className="flex items-center gap-2 mb-2">
+              <Building2 className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-xs font-medium text-slate-400">공급사 대상</span>
+              <span className="text-xs text-slate-500">{includedVendors.length}/{assemblyState.targetVendors.length}</span>
             </div>
-          )}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {assemblyState.targetVendors.map((vendor) => (
+                <button
+                  key={vendor.vendorId}
+                  type="button"
+                  onClick={() => toggleVendor(vendor.vendorId)}
+                  disabled={isDraftRecorded}
+                  className={`shrink-0 flex items-center gap-2 h-8 px-3 rounded-lg border text-xs font-medium transition-all ${
+                    vendor.included
+                      ? "border-emerald-500/30 bg-emerald-600/10 text-emerald-300"
+                      : "border-slate-600/25 bg-[#2a2e35] text-slate-400 opacity-60 hover:opacity-80"
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
+                    vendor.included
+                      ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
+                      : "border-slate-600/40"
+                  }`}>
+                    {vendor.included && <Check className="h-2.5 w-2.5" />}
+                  </span>
+                  <span className="truncate max-w-[120px]">{vendor.vendorDisplayName}</span>
+                  {vendor.priority === 1 && (
+                    <span className="text-blue-400 text-xs">★</span>
+                  )}
+                </button>
+              ))}
+              {assemblyState.targetVendors.length === 0 && (
+                <span className="text-xs text-amber-400 flex items-center gap-1.5">
+                  <AlertTriangle className="h-3 w-3" />공급사 미지정
+                </span>
+              )}
+            </div>
+          </div>
 
-          {/* ═══ A. Request Target Summary — 품목 섹션 ═══ */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <Package className="h-4 w-4 text-slate-400" />
-              <h3 className="text-[15px] font-semibold text-slate-100">요청 품목</h3>
-              <span className="text-xs text-slate-400 ml-1">{assemblyState.requestLines.length}건</span>
+          {/* ── 2b. Item Strip ── */}
+          <div className="px-6 pb-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Package className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-xs font-medium text-slate-400">요청 품목</span>
+              <span className="text-xs text-slate-500">{assemblyState.requestLines.length}건</span>
+              {incompleteLines.length > 0 && (
+                <span className="text-xs text-amber-400 font-medium ml-1">불완전 {incompleteLines.length}</span>
+              )}
             </div>
-            <div className="space-y-2">
-              {assemblyState.requestLines.map((line) => (
-                <div
-                  key={line.lineId}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-lg border transition-all ${
+            <div ref={itemStripRef} className="flex gap-1.5 overflow-x-auto pb-1">
+              {assemblyState.requestLines.map((line, idx) => {
+                const isSelected = idx === selectedLineIdx;
+                return (
+                  <button
+                    key={line.lineId}
+                    type="button"
+                    onClick={() => setSelectedLineIdx(idx)}
+                    className={`shrink-0 flex items-center gap-2 h-9 px-3 rounded-lg border text-xs font-medium transition-all ${
+                      isSelected
+                        ? "border-blue-500/40 bg-blue-600/12 text-blue-200"
+                        : line.isComplete
+                          ? "border-slate-600/25 bg-[#2a2e35] text-slate-300 hover:border-slate-500/40"
+                          : "border-amber-500/20 bg-amber-600/[0.04] text-amber-200 hover:border-amber-500/30"
+                    }`}
+                  >
+                    <span className="truncate max-w-[140px]">{line.itemName}</span>
+                    {line.isComplete ? (
+                      <Check className="h-3 w-3 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ═══ 3. Center + Rail ═══ */}
+        <div className="flex-1 flex min-h-0">
+
+          {/* ── Center: Single-focus work window (63%) ── */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5" style={{ flexBasis: "63%" }}>
+
+            {/* ── Compare provenance (컨텍스트 배너) ── */}
+            {handoff?.compareRationaleSummary && (
+              <div className="px-4 py-3 rounded-lg bg-blue-600/[0.06] border border-blue-500/20">
+                <span className="text-xs font-semibold text-blue-400 uppercase tracking-wider block mb-1">비교 판단 근거</span>
+                <span className="text-sm text-blue-200 leading-relaxed">{handoff.compareRationaleSummary}</span>
+              </div>
+            )}
+
+            {/* ── Selected item editing ── */}
+            {(() => {
+              const line = assemblyState.requestLines[selectedLineIdx];
+              if (!line) return null;
+              return (
+                <section>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLineIdx(Math.max(0, selectedLineIdx - 1))}
+                          disabled={selectedLineIdx === 0}
+                          className="h-7 w-7 flex items-center justify-center rounded-md border border-slate-600/30 text-slate-400 hover:text-slate-200 disabled:opacity-30 transition-all"
+                        >
+                          <ChevronLeft className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="text-xs text-slate-400 tabular-nums min-w-[3rem] text-center">{selectedLineIdx + 1} / {assemblyState.requestLines.length}</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedLineIdx(Math.min(assemblyState.requestLines.length - 1, selectedLineIdx + 1))}
+                          disabled={selectedLineIdx === assemblyState.requestLines.length - 1}
+                          className="h-7 w-7 flex items-center justify-center rounded-md border border-slate-600/30 text-slate-400 hover:text-slate-200 disabled:opacity-30 transition-all"
+                        >
+                          <ChevronRight className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <h3 className="text-[15px] font-semibold text-slate-100">품목 편집</h3>
+                    </div>
+                    <span className={`text-xs px-2 py-0.5 rounded-md border ${
+                      line.isComplete
+                        ? "border-emerald-500/25 bg-emerald-600/10 text-emerald-300"
+                        : "border-amber-500/25 bg-amber-600/10 text-amber-300"
+                    }`}>
+                      {line.isComplete ? "완료" : "불완전"}
+                    </span>
+                  </div>
+
+                  <div className={`px-5 py-4 rounded-xl border transition-all ${
                     line.isComplete
                       ? "border-slate-600/30 bg-[#2a2e35]"
                       : "border-amber-500/25 bg-amber-600/[0.04]"
-                  }`}
-                >
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-slate-100 font-medium block truncate">{line.itemName}</span>
-                    <span className="text-xs text-slate-400 mt-0.5 block">{line.catalogReference || "카탈로그 미확인"}</span>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-slate-400">수량</span>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={line.requestedQty}
-                        onChange={(e) => updateLineQty(line.lineId, parseInt(e.target.value) || 1)}
-                        className="w-20 h-8 text-sm text-center bg-[#1e2126] border-slate-600/30 text-slate-100"
-                        disabled={isDraftRecorded}
-                      />
+                  }`}>
+                    <div className="mb-4">
+                      <span className="text-sm text-slate-100 font-semibold block">{line.itemName}</span>
+                      <span className="text-xs text-slate-400 mt-0.5 block">{line.catalogReference || "카탈로그 미확인"}</span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => toggleLineSubstitute(line.lineId)}
-                      disabled={isDraftRecorded}
-                      className={`h-8 px-3 rounded-md text-xs font-medium border transition-all ${
-                        line.substituteAllowed
-                          ? "border-emerald-500/30 bg-emerald-600/12 text-emerald-300"
-                          : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
-                      }`}
-                    >
-                      {line.substituteAllowed ? "대체 허용" : "대체 불가"}
-                    </button>
-                    {!line.isComplete && (
-                      <AlertTriangle className="h-4 w-4 text-amber-400" />
-                    )}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs font-medium text-slate-300 block mb-1.5">요청 수량</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          value={line.requestedQty}
+                          onChange={(e) => updateLineQty(line.lineId, parseInt(e.target.value) || 1)}
+                          className="h-10 text-sm bg-[#1e2126] border-slate-600/30 text-slate-100"
+                          disabled={isDraftRecorded}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-medium text-slate-300 block mb-1.5">대체품 허용</label>
+                        <button
+                          type="button"
+                          onClick={() => toggleLineSubstitute(line.lineId)}
+                          disabled={isDraftRecorded}
+                          className={`w-full h-10 rounded-lg text-sm font-medium border transition-all ${
+                            line.substituteAllowed
+                              ? "border-emerald-500/30 bg-emerald-600/12 text-emerald-300"
+                              : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
+                          }`}
+                        >
+                          {line.substituteAllowed ? "대체 허용" : "대체 불가"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              );
+            })()}
+
+            {/* ── Request Conditions ── */}
+            <section>
+              <div className="flex items-center gap-2 mb-3">
+                <ClipboardList className="h-4 w-4 text-slate-400" />
+                <h3 className="text-[15px] font-semibold text-slate-100">요청 조건</h3>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-300 block mb-1.5">요청 목적</label>
+                  <Input
+                    placeholder="예: 연구실 재고 보충 / 프로젝트 시약 구매"
+                    value={purpose}
+                    onChange={(e) => setPurpose(e.target.value)}
+                    className="h-10 text-sm bg-[#1e2126] border-slate-600/30 text-slate-100 placeholder:text-slate-500"
+                    disabled={isDraftRecorded}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-slate-300 block mb-1.5">긴급도</label>
+                    <div className="flex gap-1.5">
+                      {(["normal", "urgent", "critical"] as const).map((u) => {
+                        const label = u === "normal" ? "일반" : u === "urgent" ? "긴급" : "최우선";
+                        const isActive = urgency === u;
+                        return (
+                          <button
+                            key={u}
+                            type="button"
+                            onClick={() => setUrgency(u)}
+                            disabled={isDraftRecorded}
+                            className={`flex-1 h-9 rounded-md text-sm font-medium border transition-all ${
+                              isActive
+                                ? u === "critical" ? "bg-red-600/15 border-red-500/30 text-red-300"
+                                  : u === "urgent" ? "bg-amber-600/15 border-amber-500/30 text-amber-300"
+                                  : "bg-blue-600/12 border-blue-500/25 text-blue-300"
+                                : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-slate-300 block mb-1.5">대체품 허용 범위</label>
+                    <div className="flex gap-1.5">
+                      {(["none", "same_brand", "equivalent"] as const).map((s) => {
+                        const label = s === "none" ? "불가" : s === "same_brand" ? "동일 브랜드" : "동등 규격";
+                        const isActive = substituteScope === s;
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            onClick={() => setSubstituteScope(s)}
+                            disabled={isDraftRecorded}
+                            className={`flex-1 h-9 rounded-md text-sm font-medium border transition-all ${
+                              isActive
+                                ? "bg-blue-600/12 border-blue-500/25 text-blue-300"
+                                : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
+                            }`}
+                          >
+                            {label}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
+                    <span className="text-xs font-medium text-slate-400 block mb-2">응답 요청 항목</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {assemblyState.requestConditions.responseRequirements.map((r, i) => (
+                        <span key={i} className="text-xs px-2 py-1 rounded-md bg-slate-700/50 text-slate-200 border border-slate-600/20">{r}</span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
+                    <span className="text-xs font-medium text-slate-400 block mb-2">확인 요청 사항</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {["납기", "재고", "MOQ", "단가"].map((item) => (
+                        <span key={item} className="text-xs px-2 py-1 rounded-md bg-slate-700/50 text-slate-200 border border-slate-600/20">{item}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-          {/* ═══ B. Vendor Target Selection — 공급사 섹션 ═══ */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <Building2 className="h-4 w-4 text-slate-400" />
-              <h3 className="text-[15px] font-semibold text-slate-100">공급사 대상</h3>
-              <span className="text-xs text-slate-400 ml-1">{includedVendors.length}/{assemblyState.targetVendors.length}곳 선택</span>
-            </div>
-            <div className="space-y-2">
-              {assemblyState.targetVendors.map((vendor) => (
-                <div
-                  key={vendor.vendorId}
-                  className={`flex items-center gap-4 px-4 py-3.5 rounded-lg border transition-all ${
-                    vendor.included
-                      ? "border-emerald-500/25 bg-emerald-600/[0.05]"
-                      : "border-slate-600/25 bg-[#2a2e35] opacity-60"
-                  }`}
-                >
+            {/* ── Unresolved info from compare ── */}
+            {handoff && handoff.unresolvedInfoItems.length > 0 && (
+              <section>
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertCircle className="h-4 w-4 text-amber-400" />
+                  <h3 className="text-[15px] font-semibold text-slate-100">미확인 항목</h3>
+                  <span className="text-xs text-slate-400">(비교 단계에서 이월)</span>
+                </div>
+                <div className="space-y-1.5">
+                  {handoff.unresolvedInfoItems.map((item, i) => (
+                    <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-600/[0.04] border border-amber-500/15">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                      <span className="text-sm text-amber-200">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+
+          {/* ── Rail: Confirmation & summary (30%) ── */}
+          <div className="shrink-0 overflow-y-auto border-l border-slate-600/25 bg-[#1e2126] px-4 py-5 space-y-4" style={{ flexBasis: "30%", maxWidth: "340px", minWidth: "280px" }}>
+
+            {/* ── Completion overview ── */}
+            <div>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2.5">진행 상태</span>
+              <div className="space-y-1.5">
+                {assemblyState.requestLines.map((line, idx) => (
                   <button
+                    key={line.lineId}
                     type="button"
-                    onClick={() => toggleVendor(vendor.vendorId)}
-                    disabled={isDraftRecorded}
-                    className={`w-6 h-6 rounded-md border flex items-center justify-center shrink-0 transition-all ${
-                      vendor.included
-                        ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
-                        : "border-slate-600/40 text-transparent hover:border-slate-500/50"
+                    onClick={() => setSelectedLineIdx(idx)}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all ${
+                      idx === selectedLineIdx
+                        ? "bg-blue-600/10 border border-blue-500/25"
+                        : "hover:bg-white/[0.03] border border-transparent"
                     }`}
                   >
-                    {vendor.included && <Check className="h-3.5 w-3.5" />}
+                    {line.isComplete ? (
+                      <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                    ) : (
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    )}
+                    <span className="text-xs text-slate-200 truncate flex-1">{line.itemName}</span>
+                    <span className="text-xs text-slate-500 shrink-0">{line.requestedQty}</span>
                   </button>
-                  <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-slate-100 font-medium block truncate">{vendor.vendorDisplayName}</span>
-                    <span className="text-xs text-slate-400 mt-0.5 block">커버 품목 {vendor.lineCoverage.length}건</span>
-                  </div>
-                  <span className={`text-xs shrink-0 px-2 py-0.5 rounded-md border ${
-                    vendor.priority === 1
-                      ? "bg-blue-600/10 border-blue-500/20 text-blue-300"
-                      : "bg-slate-700/30 border-slate-600/20 text-slate-400"
-                  }`}>
-                    우선순위 {vendor.priority}
+                ))}
+              </div>
+            </div>
+
+            {/* ── Validation summary ── */}
+            {validation && (hasBlockers || hasWarnings) && (
+              <div>
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2.5">검증 결과</span>
+                <div className="space-y-1.5">
+                  {validation.blockingIssues.map((b, i) => (
+                    <div key={`block-${i}`} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-red-600/[0.07] border border-red-500/20">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-400 shrink-0 mt-0.5" />
+                      <span className="text-xs text-red-200">{b}</span>
+                    </div>
+                  ))}
+                  {validation.warnings.map((w, i) => (
+                    <div key={`warn-${i}`} className="flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-600/[0.06] border border-amber-500/15">
+                      <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0 mt-0.5" />
+                      <span className="text-xs text-amber-200">{w}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── No issues ── */}
+            {validation && !hasBlockers && !hasWarnings && !isDraftRecorded && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-600/[0.05] border border-emerald-500/15">
+                <Check className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+                <span className="text-xs text-emerald-200">검증 통과 — 차단 없음</span>
+              </div>
+            )}
+
+            {/* ── Draft success ── */}
+            {isDraftRecorded && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-emerald-600/[0.08] border border-emerald-500/20">
+                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
+                <div>
+                  <span className="text-xs font-semibold text-emerald-200 block">초안 저장 완료</span>
+                  <span className="text-xs text-emerald-300/70 mt-0.5 block">제출 준비로 이동 가능</span>
+                </div>
+              </div>
+            )}
+
+            {/* ── Summary stats ── */}
+            <div>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-2.5">요약</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-600/20 bg-[#2a2e35]">
+                  <span className="text-xs text-slate-400">총 품목</span>
+                  <span className="text-xs font-semibold text-slate-200">{assemblyState.requestLines.length}건</span>
+                </div>
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-600/20 bg-[#2a2e35]">
+                  <span className="text-xs text-slate-400">선택 공급사</span>
+                  <span className="text-xs font-semibold text-emerald-300">{includedVendors.length}곳</span>
+                </div>
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-600/20 bg-[#2a2e35]">
+                  <span className="text-xs text-slate-400">완료 / 불완전</span>
+                  <span className="text-xs font-semibold text-slate-200">
+                    <span className="text-emerald-300">{assemblyState.requestLines.filter(l => l.isComplete).length}</span>
+                    <span className="text-slate-500 mx-1">/</span>
+                    <span className={incompleteLines.length > 0 ? "text-amber-300" : "text-slate-400"}>{incompleteLines.length}</span>
                   </span>
                 </div>
-              ))}
-              {assemblyState.targetVendors.length === 0 && (
-                <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg border border-amber-500/25 bg-amber-600/[0.04]">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
-                  <span className="text-sm text-amber-200">공급사 정보가 없습니다. 수동으로 지정하거나 견적 요청 시 확인이 필요합니다.</span>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* ═══ C. Request Conditions — 조건 섹션 ═══ */}
-          <section>
-            <div className="flex items-center gap-2 mb-3">
-              <ClipboardList className="h-4 w-4 text-slate-400" />
-              <h3 className="text-[15px] font-semibold text-slate-100">요청 조건</h3>
-            </div>
-            <div className="space-y-4">
-              {/* Purpose */}
-              <div>
-                <label className="text-xs font-medium text-slate-300 block mb-1.5">요청 목적</label>
-                <Input
-                  placeholder="예: 연구실 재고 보충 / 프로젝트 시약 구매"
-                  value={purpose}
-                  onChange={(e) => setPurpose(e.target.value)}
-                  className="h-10 text-sm bg-[#1e2126] border-slate-600/30 text-slate-100 placeholder:text-slate-500"
-                  disabled={isDraftRecorded}
-                />
-              </div>
-
-              {/* Urgency + Substitute scope */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium text-slate-300 block mb-1.5">긴급도</label>
-                  <div className="flex gap-1.5">
-                    {(["normal", "urgent", "critical"] as const).map((u) => {
-                      const label = u === "normal" ? "일반" : u === "urgent" ? "긴급" : "최우선";
-                      const isActive = urgency === u;
-                      return (
-                        <button
-                          key={u}
-                          type="button"
-                          onClick={() => setUrgency(u)}
-                          disabled={isDraftRecorded}
-                          className={`flex-1 h-9 rounded-md text-sm font-medium border transition-all ${
-                            isActive
-                              ? u === "critical" ? "bg-red-600/15 border-red-500/30 text-red-300"
-                                : u === "urgent" ? "bg-amber-600/15 border-amber-500/30 text-amber-300"
-                                : "bg-blue-600/12 border-blue-500/25 text-blue-300"
-                              : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs font-medium text-slate-300 block mb-1.5">대체품 허용 범위</label>
-                  <div className="flex gap-1.5">
-                    {(["none", "same_brand", "equivalent"] as const).map((s) => {
-                      const label = s === "none" ? "불가" : s === "same_brand" ? "동일 브랜드" : "동등 규격";
-                      const isActive = substituteScope === s;
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => setSubstituteScope(s)}
-                          disabled={isDraftRecorded}
-                          className={`flex-1 h-9 rounded-md text-sm font-medium border transition-all ${
-                            isActive
-                              ? "bg-blue-600/12 border-blue-500/25 text-blue-300"
-                              : "border-slate-600/30 text-slate-400 hover:text-slate-300 hover:border-slate-500/40"
-                          }`}
-                        >
-                          {label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Response requirements + inquiry items */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
-                  <span className="text-xs font-medium text-slate-400 block mb-2">응답 요청 항목</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {assemblyState.requestConditions.responseRequirements.map((r, i) => (
-                      <span key={i} className="text-xs px-2 py-1 rounded-md bg-slate-700/50 text-slate-200 border border-slate-600/20">{r}</span>
-                    ))}
-                  </div>
-                </div>
-                <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
-                  <span className="text-xs font-medium text-slate-400 block mb-2">확인 요청 사항</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {["납기", "재고", "MOQ", "단가"].map((item) => (
-                      <span key={item} className="text-xs px-2 py-1 rounded-md bg-slate-700/50 text-slate-200 border border-slate-600/20">{item}</span>
-                    ))}
-                  </div>
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-600/20 bg-[#2a2e35]">
+                  <span className="text-xs text-slate-400">긴급도</span>
+                  <span className={`text-xs font-semibold ${
+                    urgency === "critical" ? "text-red-300" : urgency === "urgent" ? "text-amber-300" : "text-blue-300"
+                  }`}>
+                    {urgency === "normal" ? "일반" : urgency === "urgent" ? "긴급" : "최우선"}
+                  </span>
                 </div>
               </div>
             </div>
-          </section>
-
-          {/* ═══ Unresolved info from compare ═══ */}
-          {handoff && handoff.unresolvedInfoItems.length > 0 && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <AlertCircle className="h-4 w-4 text-amber-400" />
-                <h3 className="text-[15px] font-semibold text-slate-100">미확인 항목</h3>
-                <span className="text-xs text-slate-400">(비교 단계에서 이월)</span>
-              </div>
-              <div className="space-y-1.5">
-                {handoff.unresolvedInfoItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-amber-600/[0.04] border border-amber-500/15">
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-400 shrink-0" />
-                    <span className="text-sm text-amber-200">{item}</span>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ═══ Validation / Warning / Blocker 섹션 ═══ */}
-          {validation && (hasBlockers || hasWarnings) && (
-            <section>
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-4 w-4 text-red-400" />
-                <h3 className="text-[15px] font-semibold text-slate-100">검증 결과</h3>
-              </div>
-              <div className="space-y-2">
-                {validation.blockingIssues.map((b, i) => (
-                  <div key={`block-${i}`} className="flex items-start gap-3 px-4 py-3 rounded-lg bg-red-600/[0.07] border border-red-500/20">
-                    <AlertTriangle className="h-4 w-4 text-red-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-xs font-semibold text-red-300 uppercase tracking-wider block mb-0.5">차단</span>
-                      <span className="text-sm text-red-200">{b}</span>
-                    </div>
-                  </div>
-                ))}
-                {validation.warnings.map((w, i) => (
-                  <div key={`warn-${i}`} className="flex items-start gap-3 px-4 py-3 rounded-lg bg-amber-600/[0.06] border border-amber-500/15">
-                    <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="text-xs font-semibold text-amber-300 uppercase tracking-wider block mb-0.5">경고</span>
-                      <span className="text-sm text-amber-200">{w}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ═══ No issues — neutral-positive strip ═══ */}
-          {validation && !hasBlockers && !hasWarnings && !isDraftRecorded && (
-            <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-600/[0.05] border border-emerald-500/15">
-              <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-              <span className="text-sm text-emerald-200">검증 통과 — 차단 항목 없음</span>
-            </div>
-          )}
-
-          {/* ═══ Draft success ═══ */}
-          {isDraftRecorded && (
-            <div className="flex items-center gap-3 px-4 py-3.5 rounded-lg bg-emerald-600/[0.08] border border-emerald-500/20">
-              <Check className="h-5 w-5 text-emerald-400 shrink-0" />
-              <div>
-                <span className="text-sm font-semibold text-emerald-200 block">요청 초안이 저장되었습니다</span>
-                <span className="text-xs text-emerald-300/70 mt-0.5 block">제출 준비 단계로 이동할 수 있습니다</span>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* ═══ 3. Sticky Dock ═══ */}
