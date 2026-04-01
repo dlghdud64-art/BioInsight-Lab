@@ -33,6 +33,7 @@ export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<PlanId | null>("business");
   const [expandedCards, setExpandedCards] = useState<Set<PlanId>>(new Set());
+  const [showFullTable, setShowFullTable] = useState(false);
 
   const teamAnnualPerMonth = Math.round(TEAM_MONTHLY * 0.9);
   const businessAnnualPerMonth = Math.round(BUSINESS_MONTHLY * 0.9);
@@ -41,7 +42,8 @@ export default function PricingPage() {
     {
       id: "starter" as PlanId,
       name: "Starter",
-      tagline: "탐색 · 검토 단계",
+      tagline: "개인 탐색 · 비교",
+      audience: "개인 연구자/담당자가 제품을 검색하고 비교하는 단계",
       price: "무료",
       priceMonthly: null as number | null,
       priceAnnualPerMonth: null as number | null,
@@ -52,9 +54,15 @@ export default function PricingPage() {
       badge: null as string | null,
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
-      buttonText: "무료로 시작하기",
+      buttonText: "무료 시작",
+      ctaStyle: "outline" as "outline" | "primary" | "contact",
       color: "#94A3B8",
       iconBgSelected: "rgba(148,163,184,0.10)",
+      keyDiffs: [
+        "사용자 2명 · 워크스페이스 1개",
+        "검색 · 비교 · 견적 리스트",
+        "AI 결과 정리 수준",
+      ],
       features: [
         "워크스페이스 1개 · 사용자 2명",
         "시약·장비 검색 및 사양 비교",
@@ -65,7 +73,8 @@ export default function PricingPage() {
     {
       id: "team" as PlanId,
       name: "Team",
-      tagline: "팀 단위 요청 운영",
+      tagline: "팀 단위 견적 운영",
+      audience: "연구실/팀에서 견적 요청을 공유하고 이력을 관리할 때",
       price: "₩129,000/월",
       priceMonthly: TEAM_MONTHLY,
       priceAnnualPerMonth: teamAnnualPerMonth,
@@ -76,9 +85,15 @@ export default function PricingPage() {
       badge: null as string | null,
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
-      buttonText: "Team으로 시작하기",
+      buttonText: "팀 도입 시작",
+      ctaStyle: "primary" as "outline" | "primary" | "contact",
       color: "#67C5E0",
       iconBgSelected: "rgba(103,197,224,0.10)",
+      keyDiffs: [
+        "사용자 10명 · 팀 워크스페이스",
+        "견적 요청 운영 · 이력 공유",
+        "AI 후보 제안 · 비교 정리",
+      ],
       features: [
         "사용자 최대 10명",
         "견적 요청 운영 및 이력 공유",
@@ -90,6 +105,7 @@ export default function PricingPage() {
       id: "business" as PlanId,
       name: "Business",
       tagline: "조직 구매 운영 표준",
+      audience: "승인 → 발주 → 입고 → 재고까지 조직 전체 구매 흐름을 운영할 때",
       price: "₩349,000/월",
       priceMonthly: BUSINESS_MONTHLY,
       priceAnnualPerMonth: businessAnnualPerMonth,
@@ -100,9 +116,15 @@ export default function PricingPage() {
       badge: "조직 운영에 추천",
       isRecommended: true,
       cardHeight: "md:min-h-[540px]",
-      buttonText: "Business 도입하기",
+      buttonText: "운영 도입 문의",
+      ctaStyle: "primary" as "outline" | "primary" | "contact",
       color: "#6FA2FF",
       iconBgSelected: "rgba(111,162,255,0.10)",
+      keyDiffs: [
+        "사용자 30명 · 다단계 승인",
+        "발주 · 입고 · Lot · 재고 운영",
+        "AI 판단 보조 · 초안 · 누락 점검",
+      ],
       features: [
         "사용자 최대 30명",
         "다단계 승인 라인 · 감사 로그",
@@ -113,7 +135,8 @@ export default function PricingPage() {
     {
       id: "enterprise" as PlanId,
       name: "Enterprise",
-      tagline: "보안 · 연동 · 대규모 표준화",
+      tagline: "보안 · 연동 · 대규모",
+      audience: "SSO, ERP 연동, 전담 지원 등 보안/규정 요건이 있는 대규모 조직",
       price: "별도 문의",
       priceMonthly: null as number | null,
       priceAnnualPerMonth: null as number | null,
@@ -124,9 +147,15 @@ export default function PricingPage() {
       badge: null as string | null,
       isRecommended: false,
       cardHeight: "md:min-h-[540px]",
-      buttonText: "도입 문의하기",
+      buttonText: "상담 요청",
+      ctaStyle: "contact" as "outline" | "primary" | "contact",
       color: "#A78BFA",
       iconBgSelected: "rgba(167,139,250,0.10)",
+      keyDiffs: [
+        "사용자 수 · 워크스페이스 협의",
+        "SSO · API · ERP 연동",
+        "전담 지원 · SLA · 맞춤 자동화",
+      ],
       features: [
         "사용자 수 · 워크스페이스 협의",
         "SSO · 고급 권한 · 감사 확장",
@@ -136,9 +165,20 @@ export default function PricingPage() {
     },
   ];
 
+  // 핵심 결정표 — 의사결정에 영향을 주는 6행만
+  const keyComparisonFeatures: ComparisonItem[] = [
+    { feature: "사용자 수", starter: "최대 2명", team: "최대 10명", business: "최대 30명", enterprise: "협의", key: true },
+    { feature: "견적 요청 운영", starter: "제한", team: true, business: true, enterprise: true, key: true },
+    { feature: "승인 라인", starter: "—", team: "단일 승인", business: "다단계", enterprise: "맞춤", key: true },
+    { feature: "발주 · 입고 · 재고", starter: "—", team: "제한", business: "포함", enterprise: "확장", key: true },
+    { feature: "AI 보조 범위", starter: "결과 정리", team: "후보 제안", business: "판단 보조 · 초안", enterprise: "맞춤 자동화", key: true },
+    { feature: "SSO · API · ERP", starter: "—", team: "—", business: "기본", enterprise: "포함", key: true },
+  ];
+
+  // 전체 기능표 — 상세 확인용
   const comparisonFeatures: ComparisonItem[] = [
     { isCategoryHeader: true, label: "규모 · 접근" },
-    { feature: "워크스페이스", starter: "1개", team: "1개", business: "1개", enterprise: "협의", key: true },
+    { feature: "워크스페이스", starter: "1개", team: "1개", business: "1개", enterprise: "협의" },
     { feature: "사용자 수", starter: "최대 2명", team: "최대 10명", business: "최대 30명", enterprise: "협의", key: true },
     { isCategoryHeader: true, label: "탐색 · 요청" },
     { feature: "시약/장비 검색 · 비교", starter: true, team: true, business: true, enterprise: true },
@@ -328,57 +368,71 @@ export default function PricingPage() {
                         </div>
                       )}
 
-                      <CardHeader className="text-center pb-1 md:pb-4 px-2.5 md:px-6 pt-3 md:pt-6">
-                        <div className="hidden md:flex justify-center mb-3">
+                      <CardHeader className="text-center pb-1 md:pb-3 px-2.5 md:px-6 pt-3 md:pt-6">
+                        {/* 대상 조직 — 가장 먼저 읽히는 요소 */}
+                        <p className="text-[10px] md:text-xs font-bold mb-1.5 md:mb-2" style={{ color: plan.color }}>
+                          {plan.tagline}
+                        </p>
+
+                        <div className="hidden md:flex justify-center mb-2">
                           <div
-                            className="p-3 rounded-full transition-colors"
+                            className="p-2.5 rounded-full transition-colors"
                             style={{ backgroundColor: isSelected || isRecommended ? plan.iconBgSelected : "#EAF1F8" }}
                           >
                             <Icon
-                              className="h-6 w-6"
+                              className="h-5 w-5"
                               style={{ color: isSelected || isRecommended ? plan.color : "#64748B" }}
                             />
                           </div>
                         </div>
 
                         <CardTitle className="text-base md:text-xl font-bold mb-0.5" style={{ color: "#0F1728" }}>{plan.name}</CardTitle>
-                        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-widest mb-2 md:mb-3" style={{ color: "#7B8796" }}>
-                          {plan.tagline}
-                        </p>
 
-                        <div className="flex flex-col items-center gap-0.5 mb-1 md:mb-3 min-h-[4rem] md:min-h-[5rem] overflow-hidden justify-center">
+                        <div className="flex flex-col items-center gap-0.5 mb-1.5 md:mb-2 min-h-[3.5rem] md:min-h-[4.5rem] overflow-hidden justify-center">
                           <span className="text-xl md:text-3xl font-bold text-center" style={{ color: "#0F1728" }}>
                             {renderPrice(plan)}
                           </span>
                         </div>
 
-                        <p className="md:hidden text-[10px] font-medium" style={{ color: "#2563EB" }}>{plan.mobileHook}</p>
-                        <CardDescription className="hidden md:block text-sm leading-relaxed" style={{ color: "#556070" }}>
-                          {plan.description}
-                        </CardDescription>
+                        {/* 대상 조직 설명 — 가격 아래 */}
+                        <p className="hidden md:block text-xs leading-relaxed mb-2" style={{ color: "#7B8796" }}>
+                          {plan.audience}
+                        </p>
+                        <p className="md:hidden text-[10px] font-medium" style={{ color: plan.color }}>{plan.mobileHook}</p>
                       </CardHeader>
 
                       <CardContent className="flex-1 flex flex-col pt-0 px-2.5 md:px-6 pb-3 md:pb-6" onClick={(e) => e.stopPropagation()}>
-                        <ul className="space-y-2 md:space-y-3 mb-3 md:mb-6 flex-1">
+                        {/* 핵심 차이 3줄 — 결정 기준 */}
+                        <div className="mb-2.5 md:mb-4 pb-2.5 md:pb-3" style={{ borderBottom: "1px solid #E3EAF4" }}>
+                          {plan.keyDiffs.map((diff, i) => (
+                            <div key={i} className="flex items-center gap-1.5 md:gap-2 py-0.5">
+                              <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: plan.color }} />
+                              <span className="text-[11px] md:text-xs font-medium" style={{ color: "#334155" }}>{diff}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* 세부 기능 — 보조 정보 */}
+                        <ul className="space-y-1.5 md:space-y-2 mb-3 md:mb-5 flex-1">
                           {plan.features.slice(0, isExpanded ? undefined : MOBILE_FEATURE_LIMIT).map((feature, index) => (
                             <li key={index} className={cn(
-                              "flex items-start gap-2 md:gap-2.5 leading-relaxed",
+                              "flex items-start gap-2 md:gap-2 leading-relaxed",
                               !isExpanded && index >= MOBILE_FEATURE_LIMIT && "hidden md:flex"
                             )}>
                               <Check
-                                className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5"
+                                className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0 mt-0.5"
                                 style={{ color: isRecommended ? "#2563EB" : "#16A34A" }}
                               />
-                              <span className="text-xs md:text-sm" style={{ color: "#334155" }}>{feature}</span>
+                              <span className="text-[11px] md:text-xs" style={{ color: "#556070" }}>{feature}</span>
                             </li>
                           ))}
                           {!isExpanded && plan.features.slice(MOBILE_FEATURE_LIMIT).map((feature, index) => (
-                            <li key={`desktop-${index}`} className="hidden md:flex items-start gap-2.5 leading-relaxed">
+                            <li key={`desktop-${index}`} className="hidden md:flex items-start gap-2 leading-relaxed">
                               <Check
-                                className="h-4 w-4 flex-shrink-0 mt-0.5"
+                                className="h-3.5 w-3.5 flex-shrink-0 mt-0.5"
                                 style={{ color: isRecommended ? "#2563EB" : "#16A34A" }}
                               />
-                              <span className="text-sm" style={{ color: "#334155" }}>{feature}</span>
+                              <span className="text-xs" style={{ color: "#556070" }}>{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -403,12 +457,15 @@ export default function PricingPage() {
                           </button>
                         )}
 
+                        {/* Fix 5: 플랜별 CTA — 도입 방식이 즉시 드러남 */}
                         {isSelected ? (
                           <Button
                             className="w-full font-semibold h-9 md:h-10 text-sm"
                             style={
-                              plan.id === "business"
+                              plan.ctaStyle === "primary"
                                 ? { backgroundColor: "#2F6BFF", color: "#FFFFFF", boxShadow: "0 1px 8px rgba(47,107,255,0.22)" }
+                                : plan.ctaStyle === "contact"
+                                ? { backgroundColor: "#7C3AED", color: "#FFFFFF" }
                                 : { backgroundColor: "#EAF1F8", color: "#0F1728", border: "1px solid #D7E0EB" }
                             }
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
@@ -426,7 +483,7 @@ export default function PricingPage() {
                               handleCardSelect(plan.id);
                             }}
                           >
-                            이 플랜 선택
+                            {plan.buttonText}
                           </Button>
                         )}
                       </CardContent>
@@ -458,21 +515,68 @@ export default function PricingPage() {
                 </div>
               </div>
 
-              {/* ── 플랜별 기능 비교 ── */}
-              <div className="mb-8">
+              {/* ═══ 핵심 결정표 — 10초 비교 ═══ */}
+              <div className="mb-6 md:mb-10">
                 <div className="text-center mb-4 md:mb-6">
-                  <h2 className="text-base md:text-3xl font-bold mb-1 md:mb-2" style={{ color: "#0F1728" }}>
-                    운영 범위 비교
+                  <h2 className="text-base md:text-2xl font-bold mb-1" style={{ color: "#0F1728" }}>
+                    핵심 비교 — 어떤 범위가 필요한가요?
                   </h2>
-
-                  <div className="flex items-center justify-center gap-4 md:gap-6 mt-3 flex-wrap">
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#64748B" }}>Starter</span> 탐색</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#0E7490" }}>Team</span> 요청 운영</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#2563EB" }}>Business</span> 조직 구매 운영</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#7C3AED" }}>Enterprise</span> 보안/연동/대규모</span>
-                  </div>
+                  <p className="text-xs md:text-sm" style={{ color: "#7B8796" }}>
+                    아래 6가지 기준만으로 플랜을 좁힐 수 있습니다
+                  </p>
                 </div>
 
+                <Card className="overflow-hidden" style={{ backgroundColor: "#F6F9FC", border: "1px solid #D7E0EB", borderRadius: "12px" }}>
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow style={{ backgroundColor: "#F6F9FC", borderBottom: "2px solid #D7E0EB" }}>
+                            <TableHead className="font-bold w-[200px] md:w-[280px] py-3 pl-4 md:pl-5 text-xs md:text-sm" style={{ color: "#0F1728" }}>비교 기준</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-[11px] md:text-sm" style={{ color: "#94A3B8" }}>Starter</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-[11px] md:text-sm" style={{ color: "#0E7490" }}>Team</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-[11px] md:text-sm" style={{ color: "#2563EB" }}>Business</TableHead>
+                            <TableHead className="text-center font-semibold py-3 text-[11px] md:text-sm" style={{ color: "#7C3AED" }}>Enterprise</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {keyComparisonFeatures.map((item, index) => {
+                            if ("isCategoryHeader" in item && item.isCategoryHeader) return null;
+                            const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
+                            const renderCell = (value: boolean | string) =>
+                              typeof value === "boolean" ? (value ? <Check className="h-3.5 w-3.5 md:h-4 md:w-4 mx-auto" style={{ color: "#16A34A" }} /> : <span style={{ color: "#CBD5E1" }}>—</span>) : <span className="text-[11px] md:text-sm font-medium" style={{ color: value === "—" ? "#CBD5E1" : "#334155" }}>{value}</span>;
+                            return (
+                              <TableRow key={`key-${index}`} style={{ borderBottom: "1px solid #E3EAF4" }}>
+                                <TableCell className="py-2.5 pl-4 md:pl-5 text-xs md:text-sm font-semibold" style={{ color: "#0F1728" }}>{d.feature}</TableCell>
+                                <TableCell className="text-center py-2.5">{renderCell(d.starter)}</TableCell>
+                                <TableCell className="text-center py-2.5">{renderCell(d.team)}</TableCell>
+                                <TableCell className="text-center py-2.5" style={{ backgroundColor: "rgba(37,99,235,0.04)" }}>{renderCell(d.business)}</TableCell>
+                                <TableCell className="text-center py-2.5">{renderCell(d.enterprise)}</TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* ═══ 전체 기능 비교 — 접기 가능 ═══ */}
+              <div className="mb-8">
+                <div className="flex items-center justify-center mb-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowFullTable(!showFullTable)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+                    style={{ color: "#556070", backgroundColor: showFullTable ? "#EAF1F8" : "transparent", border: "1px solid #D7E0EB" }}
+                  >
+                    {showFullTable ? "전체 기능 비교 접기" : "전체 기능 비교 펼치기"}
+                    <ChevronDown className={cn("h-4 w-4 transition-transform", showFullTable && "rotate-180")} />
+                  </button>
+                </div>
+
+                {showFullTable && <>
                 {/* ── 모바일 테이블 ── */}
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
                   <table className="w-full text-[11px]" style={{ backgroundColor: "#F6F9FC" }}>
@@ -575,6 +679,7 @@ export default function PricingPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </>}
               </div>
 
             </div>
@@ -617,13 +722,13 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── Light → Footer Bridge ── */}
+      {/* ── Light → Footer Bridge (채도 낮은 청회색 전이) ── */}
       <div
         aria-hidden="true"
         style={{
-          height: 100,
+          height: 120,
           background:
-            "linear-gradient(180deg, #DCE5F0 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #071A33 100%)",
+            "linear-gradient(180deg, #DCE5F0 0%, #c0cdd8 12%, #a0b0c0 26%, #8498ac 40%, #687f96 54%, #506880 66%, #3b536c 78%, #283f58 88%, #182d45 95%, #071A33 100%)",
         }}
       />
 

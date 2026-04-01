@@ -24,13 +24,13 @@ export default function HomePage() {
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
-      {/* 1.5. Hero → Content bridge: navy → slate-blue → mist gray-blue → section tint */}
+      {/* 1.5. Hero → Content bridge: navy → blue-gray → muted slate (공기감 전이) */}
       <div
         aria-hidden="true"
         style={{
-          height: 180,
+          height: 200,
           background:
-            "linear-gradient(180deg, #071a33 0%, #0a2040 10%, #102b4a 22%, #1a3858 36%, #284868 50%, #3d5d7e 62%, #5a7896 74%, #7e96ae 84%, #a3b5c8 91%, #c4d0dd 96%, #dbe4ed 100%)",
+            "linear-gradient(180deg, #071a33 0%, #0c2240 12%, #132e50 26%, #1e3d5e 40%, #2c4f6e 54%, #3e6380 66%, #54788f 76%, #6d8ea0 84%, #88a3b3 90%, #a3b8c6 95%, #c0cdd8 100%)",
         }}
       />
 
@@ -43,26 +43,26 @@ export default function HomePage() {
       {/* 4. Ops Console Preview */}
       <OpsConsolePreviewSection />
 
-      {/* 4.5. Ops → CTA bridge: light mist → blue-gray 잔광 → CTA tint */}
+      {/* 4.5. Ops → CTA bridge: light surface → muted blue-gray (자연 조명 변화) */}
       <div
         aria-hidden="true"
         style={{
-          height: 140,
+          height: 160,
           background:
-            "linear-gradient(180deg, #DCE5F0 0%, #c8d3e2 14%, #b0bdcf 32%, #8a9ab2 50%, #6b7d96 66%, #4a5e78 80%, #334a63 92%, #253c55 100%)",
+            "linear-gradient(180deg, #DCE5F0 0%, #d2dce8 10%, #c5d0de 22%, #b5c2d2 36%, #a2b1c4 50%, #8fa0b6 62%, #7c8fa7 74%, #697f98 84%, #566f8a 92%, #47607a 100%)",
         }}
       />
 
       {/* 5. Final CTA */}
       <FinalCTASection />
 
-      {/* 5.5. CTA → Footer bridge: light blue → navy */}
+      {/* 5.5. CTA → Footer bridge: muted slate → navy (채도 낮은 전이) */}
       <div
         aria-hidden="true"
         style={{
-          height: 100,
+          height: 120,
           background:
-            "linear-gradient(180deg, #DCE5F0 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #071A33 100%)",
+            "linear-gradient(180deg, #DCE5F0 0%, #c0cdd8 12%, #a0b0c0 26%, #8498ac 40%, #687f96 54%, #506880 66%, #3b536c 78%, #283f58 88%, #182d45 95%, #071A33 100%)",
         }}
       />
 
