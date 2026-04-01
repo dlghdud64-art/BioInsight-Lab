@@ -34,7 +34,7 @@ function SplineBg() {
       try {
         const { Application } = await import("@splinetool/runtime");
         app = new Application(canvasRef.current!);
-        await app.load("https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode");
+        await app.load("https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode?v=2");
 
         // Ensure scene animations autoplay + loop
         if (typeof app.play === "function") {

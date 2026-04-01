@@ -48,7 +48,7 @@ export default function ArchitectureShowcase() {
 
       {/* [1] 3D PIPELINE CORE ENGINE */}
       <div className="absolute inset-0 z-0">
-        <SplineViewer scene="https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode" />
+        <SplineViewer scene="https://prod.spline.design/Nd9Ab5oDbi1kcWsV/scene.splinecode?v=2" />
       </div>
 
       {/* [2] FLOATING HUD */}
