@@ -11,14 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2, Lock, AlertTriangle, AlertCircle, CheckCircle2, Search, ChevronRight, ArrowUpRight, ShieldAlert } from "lucide-react";
+import { Plus, Calendar, Loader2, Search, ChevronRight, ArrowUpRight, ShieldAlert } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
-import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePermission } from "@/hooks/use-permission";
-import { PermissionGate } from "@/components/permission-gate";
 import Link from "next/link";
 
 interface Budget {
@@ -275,8 +271,23 @@ export default function BudgetPage() {
     );
   }
 
+  // ── 위험/검토 큐 항목 파생 ──
+  const riskQueue = useMemo(() => {
+    const items: { id: string; label: string; detail: string; severity: "critical" | "warning" | "info"; href: string }[] = [];
+    for (const { budget: b, ctrl } of controlSummary.controls) {
+      if (ctrl.risk === "over") {
+        items.push({ id: `over-${b.id}`, label: `${b.name} — 예산 초과`, detail: `소진율 ${Math.round(ctrl.burnRate)}%, 가용 ${formatK(ctrl.available)}`, severity: "critical", href: `/dashboard/budget/${b.id}` });
+      } else if (ctrl.risk === "critical") {
+        items.push({ id: `crit-${b.id}`, label: `${b.name} — 임계 구간`, detail: `소진율 ${Math.round(ctrl.burnRate)}%, 잔여 ${formatK(ctrl.available)}`, severity: "warning", href: `/dashboard/budget/${b.id}` });
+      } else if (ctrl.risk === "warning") {
+        items.push({ id: `warn-${b.id}`, label: `${b.name} — 주의 구간`, detail: `소진율 ${Math.round(ctrl.burnRate)}%`, severity: "info", href: `/dashboard/budget/${b.id}` });
+      }
+    }
+    return items;
+  }, [controlSummary.controls, formatK]);
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#2d2f33' }}>
+    <div className="min-h-screen bg-sh">
       {/* ═══ Header ═══ */}
       <div className="shrink-0">
         <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
@@ -285,10 +296,10 @@ export default function BudgetPage() {
             <div className="w-px h-5 bg-bd" />
             <span className="text-xs md:text-sm font-medium text-slate-400">예산 통제</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingBudget(null)} size="sm" variant="ghost" className="h-7 text-xs text-slate-400 hover:text-slate-200">
+                <Button onClick={() => setEditingBudget(null)} size="sm" className="h-7 text-xs">
                   <Plus className="h-3 w-3 mr-1" />예산 등록
                 </Button>
               </DialogTrigger>
@@ -308,123 +319,209 @@ export default function BudgetPage() {
                 />
               </DialogContent>
             </Dialog>
-            <Link href="/dashboard/quotes"><Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500">워크큐</Button></Link>
+            <Link href="/dashboard/purchases">
+              <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500 hover:text-slate-300">미매핑 요청</Button>
+            </Link>
+            <Link href="/dashboard/quotes">
+              <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500 hover:text-slate-300">워크큐</Button>
+            </Link>
           </div>
         </div>
       </div>
 
-      {/* ═══ Summary Strip ═══ */}
-      <div className="border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3">
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">전체 예산</div>
-              <div className="text-sm font-bold text-slate-200 tabular-nums">{budgets.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">운영 중</div>
-              <div className="text-sm font-bold text-emerald-400 tabular-nums">{controlSummary.active.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">임계치 접근</div>
-              <div className="text-sm font-bold text-amber-400 tabular-nums">{controlSummary.atThreshold.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">초과</div>
-              <div className="text-sm font-bold text-red-400 tabular-nums">{controlSummary.overBudget.length}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">총 집행</div>
-              <div className="text-sm font-bold text-slate-200 tabular-nums">{formatK(controlSummary.totalActual)}</div>
-            </div>
-            <div className="text-center">
-              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">총 가용</div>
-              <div className="text-sm font-bold text-emerald-400 tabular-nums">{formatK(controlSummary.totalAvailable)}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ═══ Content ═══ */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="예산명, 부서, 프로젝트로 검색..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-xs rounded border border-bd bg-pn text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-slate-500"
-          />
+
+        {/* ═══ Page Title ═══ */}
+        <div>
+          <h1 className="text-lg font-bold text-slate-100">예산 통제</h1>
+          <p className="text-xs text-slate-500 mt-0.5">조직/프로젝트/구매 요청에 연결된 예산 한도와 초과 위험을 관리합니다.</p>
         </div>
 
+        {/* ═══ KPI Strip — 통제 중심 5개 ═══ */}
+        {!isFetching && budgets.length > 0 && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+            {/* 전체 예산 풀 */}
+            <div className="rounded-md border border-bd bg-pn p-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">전체 예산 풀</p>
+              <p className="text-lg font-bold text-slate-100 tabular-nums">{formatK(controlSummary.totalBudget)}</p>
+              <p className="text-[10px] text-slate-500 mt-1">활성 {controlSummary.active.length}건 운영 중</p>
+            </div>
+            {/* 예약 금액 */}
+            <div className="rounded-md border border-bd bg-pn p-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">예약 금액</p>
+              <p className="text-lg font-bold text-slate-100 tabular-nums">{formatK(controlSummary.controls.reduce((s, c) => s + c.ctrl.reserved, 0))}</p>
+              <p className="text-[10px] text-slate-500 mt-1">견적 요청·발주 대기 반영</p>
+            </div>
+            {/* 확정 사용 금액 */}
+            <div className="rounded-md border border-bd bg-pn p-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">확정 집행</p>
+              <p className="text-lg font-bold text-slate-100 tabular-nums">{formatK(controlSummary.totalActual)}</p>
+              <p className="text-[10px] text-slate-500 mt-1">발주 완료 반영 금액</p>
+            </div>
+            {/* 초과 위험 항목 */}
+            <div className="rounded-md border border-bd bg-pn p-3.5">
+              <div className="flex items-center gap-1.5 mb-1">
+                <p className="text-[10px] uppercase tracking-wider text-slate-500">초과 위험</p>
+                {(controlSummary.overBudget.length + controlSummary.atThreshold.length) > 0 && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
+              </div>
+              <p className="text-lg font-bold text-slate-100 tabular-nums">{controlSummary.overBudget.length + controlSummary.atThreshold.length}건</p>
+              <p className="text-[10px] text-slate-500 mt-1">
+                {controlSummary.overBudget.length > 0 ? `초과 ${controlSummary.overBudget.length} + 임계 ${controlSummary.atThreshold.length}` : controlSummary.atThreshold.length > 0 ? "임계치 접근 중" : "위험 항목 없음"}
+              </p>
+            </div>
+            {/* 총 가용 */}
+            <div className="rounded-md border border-bd bg-pn p-3.5">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-1">총 가용 잔액</p>
+              <p className="text-lg font-bold text-slate-100 tabular-nums">{formatK(controlSummary.totalAvailable)}</p>
+              <p className="text-[10px] text-slate-500 mt-1">추가 집행 가능 금액</p>
+            </div>
+          </div>
+        )}
+
+        {/* ═══ 위험/검토 큐 ═══ */}
+        {!isFetching && riskQueue.length > 0 && (
+          <div className="rounded-lg border border-bd bg-pn p-4">
+            <p className="text-xs font-semibold text-slate-300 mb-3">위험 · 검토 필요</p>
+            <div className="space-y-2">
+              {riskQueue.map((item) => (
+                <Link key={item.id} href={item.href} className="block">
+                  <div className="flex items-center gap-3 rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
+                    <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                      item.severity === "critical" ? "bg-red-400" : item.severity === "warning" ? "bg-amber-400" : "bg-slate-400"
+                    }`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-slate-200 truncate">{item.label}</p>
+                      <p className="text-[10px] text-slate-500">{item.detail}</p>
+                    </div>
+                    <span className="text-[10px] text-blue-400 font-medium flex-shrink-0">검토</span>
+                    <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ═══ Search + 구매 연결 CTA ═══ */}
+        {budgets.length > 0 && (
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <input
+                type="text"
+                placeholder="예산명, 부서, 프로젝트로 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 text-xs rounded border border-bd bg-pn text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-slate-500"
+              />
+            </div>
+            <Link href="/dashboard/purchases" className="shrink-0">
+              <span className="text-[10px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                미매핑 요청 보기 <ArrowUpRight className="h-3 w-3" />
+              </span>
+            </Link>
+          </div>
+        )}
+
+        {/* ═══ Content ═══ */}
         {isFetching ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-14 rounded border border-bd animate-pulse" style={{ backgroundColor: '#393b3f' }} />
+              <div key={i} className="h-16 rounded border border-bd animate-pulse bg-pn" />
             ))}
           </div>
         ) : budgets.length === 0 ? (
-          /* ── Guided Empty State ── */
-          <div className="rounded-lg border border-bd px-6 py-16 text-center" style={{ backgroundColor: '#393b3f' }}>
-            <ShieldAlert className="h-10 w-10 mx-auto text-slate-500 mb-4" />
-            <p className="text-sm text-slate-300 mb-1.5">등록된 예산이 없습니다</p>
-            <p className="text-xs text-slate-500 mb-5 max-w-md mx-auto">
-              예산을 등록하면 요청/견적/발주 흐름에서 예산 초과 여부를 사전에 확인하고,
-              임계치에 도달하면 자동으로 경고합니다.
-            </p>
-            <Button size="sm" onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
-              <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록하기
-            </Button>
+          /* ── Guided Empty State — 운영형 ── */
+          <div className="rounded-lg border border-bd bg-pn">
+            {/* 주요 메시지 */}
+            <div className="px-6 py-12 text-center">
+              <ShieldAlert className="h-10 w-10 mx-auto text-slate-500 mb-4" />
+              <p className="text-sm font-semibold text-slate-200 mb-1.5">예산이 아직 등록되지 않았습니다</p>
+              <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed mb-6">
+                예산을 등록하면 요청·견적·발주 흐름에서 예산 초과 여부를 사전에 확인하고,
+                임계치에 도달하면 자동으로 경고합니다. 팀/프로젝트별 예산을 만들고 구매 요청과 연결하세요.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Button size="sm" onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />첫 예산 풀 만들기
+                </Button>
+                <Link href="/dashboard/purchases">
+                  <Button size="sm" variant="outline" className="border-bd text-slate-300 bg-transparent hover:bg-el">
+                    구매 요청과 예산 연결
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            {/* 안내 블록 */}
+            <div className="border-t border-bd px-6 py-4">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2.5">예산 등록 후 가능한 통제</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="text-xs text-slate-400">
+                  <span className="font-medium text-slate-300">초과 사전 차단</span>
+                  <span className="block mt-0.5 text-[10px] text-slate-500">요청 단계에서 예산 잔액 부족 시 자동 경고</span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  <span className="font-medium text-slate-300">임계치 알림</span>
+                  <span className="block mt-0.5 text-[10px] text-slate-500">소진율 60%/80% 도달 시 운영자 알림</span>
+                </div>
+                <div className="text-xs text-slate-400">
+                  <span className="font-medium text-slate-300">부서별 분리 관리</span>
+                  <span className="block mt-0.5 text-[10px] text-slate-500">팀·프로젝트별 예산 풀을 독립 추적</span>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          /* ── Budget Control Table ── */
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+          /* ── Budget Control Table — 구매 흐름 기준 ── */
+          <div className="rounded-lg border border-bd overflow-hidden bg-pn">
             {/* Table header */}
-            <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_100px_100px_80px_80px_60px] gap-px px-4 py-2 border-b border-bd text-[10px] uppercase tracking-wider text-slate-500" style={{ backgroundColor: '#434548' }}>
-              <span>예산</span>
+            <div className="hidden md:grid grid-cols-[1fr_90px_90px_90px_90px_80px_80px_40px] gap-px px-4 py-2 border-b border-bd text-[10px] uppercase tracking-wider text-slate-500 bg-el/40">
+              <span>예산 · 소속 · 기간</span>
               <span className="text-right">총액</span>
-              <span className="text-right">예약</span>
-              <span className="text-right">확정</span>
               <span className="text-right">집행</span>
               <span className="text-right">가용</span>
               <span className="text-center">소진율</span>
-              <span className="text-center">리스크</span>
+              <span className="text-center">상태</span>
+              <span className="text-center">다음 행동</span>
               <span />
             </div>
             {/* Rows */}
-            {filteredControls.map(({ budget, ctrl }) => {
+            {filteredControls.map(({ budget: b, ctrl }) => {
               const riskCfg = RISK_CONFIG[ctrl.risk];
+              // 다음 행동 CTA 결정
+              const nextAction = ctrl.risk === "over" ? "초과 검토"
+                : ctrl.risk === "critical" ? "잔액 점검"
+                : ctrl.risk === "warning" ? "추이 확인"
+                : "상세 보기";
               return (
                 <Link
-                  key={budget.id}
-                  href={`/dashboard/budget/${budget.id}`}
-                  className="block border-b border-bd last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                  key={b.id}
+                  href={`/dashboard/budget/${b.id}`}
+                  className="block border-b border-bd last:border-b-0 hover:bg-el/20 transition-colors"
                 >
                   {/* Desktop row */}
-                  <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_100px_100px_80px_80px_60px] gap-px items-center px-4 py-2.5">
+                  <div className="hidden md:grid grid-cols-[1fr_90px_90px_90px_90px_80px_80px_40px] gap-px items-center px-4 py-3">
                     <div className="min-w-0">
-                      <div className="text-xs font-medium text-slate-200 truncate">{budget.name}</div>
-                      <div className="text-[10px] text-slate-500 truncate">
-                        {budget.targetDepartment || "부서 미지정"}
-                        {budget.projectName && ` · ${budget.projectName}`}
+                      <div className="text-xs font-medium text-slate-200 truncate">{b.name}</div>
+                      <div className="text-[10px] text-slate-500 truncate mt-0.5">
+                        {b.targetDepartment || "부서 미지정"}
+                        {b.projectName && ` · ${b.projectName}`}
                         {" · "}
-                        {new Date(budget.periodStart).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                        {new Date(b.periodStart).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                         {" ~ "}
-                        {new Date(budget.periodEnd).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                        {new Date(b.periodEnd).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
                       </div>
                     </div>
                     <div className="text-xs text-slate-300 text-right tabular-nums">{formatK(ctrl.total)}</div>
-                    <div className="text-xs text-blue-400/70 text-right tabular-nums">{formatK(ctrl.reserved)}</div>
-                    <div className="text-xs text-amber-400/70 text-right tabular-nums">{formatK(ctrl.committed)}</div>
                     <div className="text-xs text-slate-200 text-right tabular-nums">{formatK(ctrl.actual)}</div>
-                    <div className="text-xs text-emerald-400 text-right tabular-nums font-medium">{formatK(ctrl.available)}</div>
+                    <div className="text-xs text-slate-200 text-right tabular-nums font-medium">{formatK(ctrl.available)}</div>
                     <div className="text-center">
                       <div className="inline-flex items-center">
                         <div className="w-10 h-1.5 rounded-full bg-slate-700 overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${ctrl.burnRate > 100 ? 'bg-red-500' : ctrl.burnRate >= 80 ? 'bg-orange-500' : ctrl.burnRate >= 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                            className="h-full rounded-full bg-slate-400"
                             style={{ width: `${Math.min(ctrl.burnRate, 100)}%` }}
                           />
                         </div>
@@ -432,9 +529,15 @@ export default function BudgetPage() {
                       </div>
                     </div>
                     <div className="text-center">
-                      <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border font-medium ${riskCfg.color} ${riskCfg.bgColor} ${riskCfg.borderColor}`}>
-                        {riskCfg.label}
-                      </span>
+                      <div className="inline-flex items-center gap-1">
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          ctrl.risk === "over" ? "bg-red-400" : ctrl.risk === "critical" ? "bg-orange-400" : ctrl.risk === "warning" ? "bg-amber-400" : ctrl.risk === "safe" ? "bg-emerald-400" : "bg-slate-500"
+                        }`} />
+                        <span className="text-[10px] text-slate-400 font-medium">{riskCfg.label}</span>
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-[10px] text-blue-400 font-medium">{nextAction}</span>
                     </div>
                     <div className="flex justify-end">
                       <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
@@ -443,18 +546,24 @@ export default function BudgetPage() {
                   {/* Mobile row */}
                   <div className="md:hidden px-4 py-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-medium text-slate-200 truncate mr-2">{budget.name}</span>
-                      <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded border font-medium ${riskCfg.color} ${riskCfg.bgColor} ${riskCfg.borderColor}`}>
-                        {riskCfg.label}
-                      </span>
+                      <span className="text-xs font-medium text-slate-200 truncate mr-2">{b.name}</span>
+                      <div className="inline-flex items-center gap-1 shrink-0">
+                        <div className={`w-1.5 h-1.5 rounded-full ${
+                          ctrl.risk === "over" ? "bg-red-400" : ctrl.risk === "critical" ? "bg-orange-400" : ctrl.risk === "warning" ? "bg-amber-400" : "bg-emerald-400"
+                        }`} />
+                        <span className="text-[10px] text-slate-400">{riskCfg.label}</span>
+                      </div>
                     </div>
                     <div className="text-[10px] text-slate-500 mb-2">
-                      {budget.targetDepartment || "부서 미지정"} · {formatK(ctrl.total)}
+                      {b.targetDepartment || "부서 미지정"} · {formatK(ctrl.total)}
                     </div>
-                    <div className="flex items-center gap-3 text-[10px]">
-                      <span className="text-slate-400">집행 <span className="text-slate-200 tabular-nums">{formatK(ctrl.actual)}</span></span>
-                      <span className="text-slate-400">가용 <span className="text-emerald-400 tabular-nums">{formatK(ctrl.available)}</span></span>
-                      <span className="text-slate-400 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 text-[10px]">
+                        <span className="text-slate-400">집행 <span className="text-slate-200 tabular-nums">{formatK(ctrl.actual)}</span></span>
+                        <span className="text-slate-400">가용 <span className="text-slate-200 tabular-nums">{formatK(ctrl.available)}</span></span>
+                        <span className="text-slate-400 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
+                      </div>
+                      <span className="text-[10px] text-blue-400 font-medium">{nextAction}</span>
                     </div>
                   </div>
                 </Link>
@@ -465,6 +574,32 @@ export default function BudgetPage() {
                 검색 조건에 맞는 예산이 없습니다
               </div>
             )}
+          </div>
+        )}
+
+        {/* ═══ 구매 흐름 연결 CTA ═══ */}
+        {!isFetching && budgets.length > 0 && (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Link href="/dashboard/purchases" className="block">
+              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors text-center">
+                <p className="text-[10px] text-slate-400 font-medium">미매핑 요청 보기</p>
+              </div>
+            </Link>
+            <Link href="/dashboard/quotes" className="block">
+              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors text-center">
+                <p className="text-[10px] text-slate-400 font-medium">초과 위험 견적 보기</p>
+              </div>
+            </Link>
+            <Link href="/dashboard/purchases" className="block">
+              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors text-center">
+                <p className="text-[10px] text-slate-400 font-medium">승인 필요 요청 보기</p>
+              </div>
+            </Link>
+            <Link href="/dashboard/quotes" className="block">
+              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors text-center">
+                <p className="text-[10px] text-slate-400 font-medium">발주 전환 대기 보기</p>
+              </div>
+            </Link>
           </div>
         )}
       </div>
