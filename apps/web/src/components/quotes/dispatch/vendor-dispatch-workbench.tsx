@@ -129,24 +129,24 @@ export function VendorRequestModal({
 
     const supplierOk = includedCount > 0;
     checks.push({
-      label: "공급사 선정",
+      label: "공급사 후보 선별",
       ready: supplierOk,
-      blocker: supplierOk ? undefined : "발송 대상 공급사가 없습니다",
+      blocker: supplierOk ? undefined : "연락 가능한 공급사 후보가 없습니다",
     });
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const contactOk = includedSuppliers.every((s) => emailRegex.test(s.email));
     checks.push({
-      label: "연락처 확인",
+      label: "연락 채널 확인",
       ready: contactOk,
-      blocker: contactOk ? undefined : "유효한 이메일이 없는 공급사가 있습니다",
+      blocker: contactOk ? undefined : "공급사 연락 채널 확인이 필요합니다",
     });
 
     const draftOk = message.trim().length > 10;
     checks.push({
-      label: "메시지 준비",
+      label: "전달 메시지 검토",
       ready: draftOk,
-      blocker: draftOk ? undefined : "발송 메시지가 준비되지 않았습니다",
+      blocker: draftOk ? undefined : "전달 메시지가 준비되지 않았습니다",
     });
 
     const quoteOk = !!quoteId;
@@ -201,7 +201,7 @@ export function VendorRequestModal({
     }));
 
     if (validVendors.length === 0) {
-      toast({ title: "발송 대상 없음", description: "최소 1개 공급사를 선택해주세요.", variant: "destructive" });
+      toast({ title: "전달 대상 없음", description: "최소 1개 공급사를 선택해주세요.", variant: "destructive" });
       return;
     }
     if (!quoteId) {
@@ -228,8 +228,8 @@ export function VendorRequestModal({
 
       const result = await response.json();
       toast({
-        title: "견적 요청 발송 완료",
-        description: `${result.sent}개 공급사에게 견적 요청이 전송되었습니다.`,
+        title: "견적 요청 전달 완료",
+        description: `${result.sent}개 공급사에 플랫폼을 통해 견적 요청이 전달되었습니다.`,
       });
 
       setSuppliers([]);
@@ -239,8 +239,8 @@ export function VendorRequestModal({
       onSuccess?.();
     } catch (error: any) {
       toast({
-        title: "견적 요청 전송 실패",
-        description: error.message || "견적 요청을 전송할 수 없습니다.",
+        title: "견적 요청 전달 실패",
+        description: error.message || "견적 요청을 전달할 수 없습니다.",
         variant: "destructive",
       });
     } finally {
@@ -258,12 +258,12 @@ export function VendorRequestModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-100">
             <Send className="h-5 w-5 text-blue-400" />
-            견적 요청 발송 준비
+            공급사 발송 검토
           </DialogTitle>
           <DialogDescription className="text-slate-400">
             {hasResolved
-              ? `시스템이 ${resolvedCount}개 공급사를 준비했습니다. 포함 여부를 확인하고 발송을 승인하세요.`
-              : "발송 대상 공급사를 확인할 수 없습니다. 공급사 등록 후 다시 시도해주세요."}
+              ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
+              : "선별 가능한 공급사 후보가 없습니다. 공급사 DB 보강 후 다시 시도하세요."}
           </DialogDescription>
         </DialogHeader>
 
@@ -287,11 +287,11 @@ export function VendorRequestModal({
                 <span className={`text-sm font-semibold ${
                   sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-amber-300" : "text-red-300"
                 }`}>
-                  {sendReadiness === "ready" ? "발송 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "발송 불가"}
+                  {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "전달 불가"}
                 </span>
               </div>
               {sendReadiness === "ready" && (
-                <span className="text-xs text-emerald-400/70">바로 발송 가능</span>
+                <span className="text-xs text-emerald-400/70">바로 전달 가능</span>
               )}
             </div>
             <div className="flex flex-wrap gap-3">
@@ -323,7 +323,7 @@ export function VendorRequestModal({
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-blue-400" />
                 <span className="text-sm font-semibold text-slate-200">
-                  발송 대상
+                  선별된 공급사 후보
                 </span>
                 {includedCount > 0 && (
                   <span className="text-xs text-slate-500">
@@ -334,7 +334,7 @@ export function VendorRequestModal({
               </div>
               {hasResolved && (
                 <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-600/10 text-blue-400 font-medium">
-                  <Sparkles className="h-3 w-3 mr-1" />자동 준비
+                  <Sparkles className="h-3 w-3 mr-1" />플랫폼 선별
                 </Badge>
               )}
             </div>
@@ -356,9 +356,12 @@ export function VendorRequestModal({
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-slate-300">공급사 자동 선정 실패</p>
+                    <p className="text-sm text-slate-300">공급사 후보 선별 실패</p>
                     <p className="text-xs text-slate-500 mt-1">
-                      견적 품목에 연결된 공급사가 없거나, 공급사 연락처 DB에 등록된 정보가 없습니다.
+                      해당 품목에 매칭되는 공급사가 없거나, 플랫폼 공급사 DB에 연락 채널이 등록되지 않았습니다.
+                    </p>
+                    <p className="text-xs text-slate-600 mt-1">
+                      플랫폼 운영팀에서 공급사 데이터를 보강 중입니다. 급한 경우 수동으로 추가할 수 있습니다.
                     </p>
                     <div className="flex gap-2 mt-3">
                       <Button
@@ -369,7 +372,7 @@ export function VendorRequestModal({
                         className="h-7 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/20"
                       >
                         <UserPlus className="h-3 w-3 mr-1" />
-                        수동 추가
+                        AI 후보에 없는 공급사 직접 추가
                       </Button>
                     </div>
                   </div>
@@ -382,7 +385,7 @@ export function VendorRequestModal({
               <div className="rounded-lg border border-slate-600/30 bg-[#1e2126] p-3 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <UserPlus className="h-3.5 w-3.5 text-slate-500" />
-                  <p className="text-xs font-medium text-slate-400">예외: 수동 공급사 추가</p>
+                  <p className="text-xs font-medium text-slate-400">AI 후보에 없는 공급사를 직접 추가</p>
                 </div>
                 <div className="flex gap-2">
                   <Input
@@ -434,10 +437,10 @@ export function VendorRequestModal({
               >
                 <Mail className="h-3.5 w-3.5 text-slate-500" />
                 <span className="text-xs font-medium text-slate-400 group-hover:text-slate-300">
-                  발송 메시지
+                  전달 메시지 미리보기
                 </span>
                 <span className="text-xs text-slate-600">·</span>
-                <span className="text-xs text-slate-500">자동 생성</span>
+                <span className="text-xs text-slate-500">플랫폼 자동 생성 초안</span>
                 <ChevronDown className={`h-3 w-3 text-slate-600 ml-auto transition-transform ${messageExpanded ? "rotate-180" : ""}`} />
               </button>
 
@@ -488,7 +491,7 @@ export function VendorRequestModal({
           <div className="flex items-center gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-[#1e2126]">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-slate-500" />
-              <span className="text-xs text-slate-400">회신 마감</span>
+              <span className="text-xs text-slate-400">응답 요청 기한</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Input
@@ -513,7 +516,7 @@ export function VendorRequestModal({
               onClick={() => setShowManualFallback(true)}
               className="text-xs text-slate-600 hover:text-slate-400 mr-auto transition-colors"
             >
-              + 수동 추가
+              + 후보에 없는 공급사 직접 추가
             </button>
           )}
 
@@ -540,17 +543,17 @@ export function VendorRequestModal({
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                발송 중…
+                전달 중…
               </>
             ) : sendReadiness === "blocked" ? (
               <>
                 <AlertTriangle className="h-4 w-4 mr-2" />
-                발송 불가
+                전달 불가
               </>
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                발송 승인
+                선택 공급사에 요청 전달
               </>
             )}
           </Button>
