@@ -53,8 +53,13 @@ export function MainFooter() {
   ];
 
   return (
-    <footer style={{ backgroundColor: "#111820", borderTop: "1px solid #2A3444" }}>
-      <div className="mx-auto max-w-6xl px-4 py-12">
+    <footer>
+      {/* Transition strip: warm neutral → dark closing */}
+      <div style={{ backgroundColor: "#2C3340", borderTop: "1px solid #C5C3BE" }}>
+        <div className="h-1.5" />
+      </div>
+      <div style={{ backgroundColor: "#111820" }}>
+      <div className="mx-auto max-w-6xl px-4 pt-14 pb-12">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
           {/* 왼쪽: 로고/설명/소셜 */}
@@ -157,6 +162,7 @@ export function MainFooter() {
             <Link href="/operations-policy" className="hover:text-[#C8D4E5] transition-colors">운영정책</Link>
           </div>
         </div>
+      </div>
       </div>
     </footer>
   );

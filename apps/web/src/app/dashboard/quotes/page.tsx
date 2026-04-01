@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
+import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
@@ -874,6 +875,8 @@ function QuotesPageContent() {
           onOpenChange={(open) => { if (!open) setActiveWorkWindow(null); }}
           quoteId={selectedQuote.id}
           quoteSummary={selectedQuote.title}
+          resolvedSuppliers={resolveSuppliers({ quote: selectedQuote })}
+          draftMessage={buildDraftMessage(selectedQuote)}
           onSuccess={handleSendSuccess}
         />
       )}

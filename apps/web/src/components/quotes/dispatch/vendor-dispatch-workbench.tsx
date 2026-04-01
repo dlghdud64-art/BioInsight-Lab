@@ -21,6 +21,8 @@ import {
   Sparkles, Pencil, ChevronRight, Shield, Info, ExternalLink,
 } from "lucide-react";
 
+import type { ResolvedSupplier } from "./resolve-suppliers";
+
 // ══════════════════════════════════════════════════════════════
 // Types
 // ══════════════════════════════════════════════════════════════
@@ -36,17 +38,6 @@ interface VendorRequestModalProps {
   /** Quote title / line summary for context display */
   quoteSummary?: string;
   onSuccess?: () => void;
-}
-
-interface ResolvedSupplier {
-  vendorId: string;
-  vendorName: string;
-  email: string;
-  contactSource: "supplier_book" | "recent_rfq" | "ai_recommended" | "manual";
-  confidence: "high" | "medium" | "low";
-  reason?: string;
-  lastUsed?: string;
-  included: boolean;
 }
 
 type SendReadiness = "ready" | "needs_review" | "blocked";
