@@ -178,6 +178,8 @@ function InventoryPageContent() {
   const [contextPanelItem, setContextPanelItem] = useState<ContextPanelItem | null>(null);
   const contextPanelOpen = contextPanelItem !== null;
 
+  // ── Inventory tab (controlled) ──
+  const [activeInventoryTab, setActiveInventoryTab] = useState("manage");
   // ── Lot 추적 tab state ──
   const [lotStatusFilter, setLotStatusFilter] = useState<LotStatusFilter>("all");
   const [lotSearchQuery, setLotSearchQuery] = useState("");
@@ -1231,7 +1233,7 @@ function InventoryPageContent() {
 
         {/* 통합 카드: 탭 + 검색/필터/리스트 */}
         <div className="rounded-xl border border-bd/50 bg-pn shadow-sm overflow-hidden">
-          <Tabs defaultValue="manage" className="w-full">
+          <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
             {/* 상단 통합 헤더 */}
             <div className="p-4 border-b border-bd bg-el/50">
               <TabsList className="flex bg-el p-1 rounded-xl w-fit">
@@ -1240,7 +1242,7 @@ function InventoryPageContent() {
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
-                  <span className="hidden sm:inline">시약 </span>관리
+                  <span className="hidden sm:inline">품목 </span>관리
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
@@ -1254,13 +1256,7 @@ function InventoryPageContent() {
                     </span>
                   ) : null}
                 </TabsTrigger>
-                <TabsTrigger
-                  value="lot-tracking"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
-                >
-                  <GitBranch className="w-4 h-4" />
-                  <span className="hidden sm:inline">Lot </span>추적
-                </TabsTrigger>
+                {/* Lot 추적은 품목 컨텍스트에서 drill-down으로 진입 — 1급 탭에서 제거 */}
                 <TabsTrigger
                   value="storage-location"
                   className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
@@ -1279,7 +1275,7 @@ function InventoryPageContent() {
             </div>
 
             {/* 하단 통합 콘텐츠 */}
-            {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
+            {/* 1. 품목 관리 (item-level 운영 surface) */}
             <TabsContent value="manage" className="m-0 p-6 space-y-4">
               <div className="flex flex-col gap-3 rounded-lg border border-bs bg-el/30 p-3">
                 {/* 모바일: 검색 + 필터 버튼 */}
@@ -1978,8 +1974,17 @@ function InventoryPageContent() {
             </Card>
             </TabsContent>
 
-            {/* 3. Lot 추적 — 실동작 lot list + detail */}
+            {/* 3. Lot 추적 — contextual drill-down (1급 탭에서 내려옴, 품목 컨텍스트에서 진입) */}
             <TabsContent value="lot-tracking" className="m-0 p-4 sm:p-6 space-y-4">
+              {/* Back to item view */}
+              <button
+                type="button"
+                onClick={() => setActiveInventoryTab("manage")}
+                className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors mb-1"
+              >
+                <ChevronRight className="h-3.5 w-3.5 rotate-180" />
+                품목 관리로 돌아가기
+              </button>
               {(() => {
                 const now = new Date();
                 // Build lot records from inventory data
@@ -2194,6 +2199,7 @@ function InventoryPageContent() {
             item={contextPanelItem}
             isOpen={contextPanelOpen}
             onClose={() => setContextPanelItem(null)}
+            onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
             onReorder={(cpItem) => {
               const match = displayInventories.find((inv) => inv.id === cpItem.id);
               if (match) {

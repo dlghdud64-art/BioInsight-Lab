@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Plus, X, Loader2, Mail, Check, AlertTriangle, Building2,
   Sparkles, Pencil, ChevronRight, Shield, Info, ExternalLink,
+  ChevronDown, Send, Clock, UserPlus,
 } from "lucide-react";
 
 import type { ResolvedSupplier } from "./resolve-suppliers";
@@ -53,10 +54,17 @@ interface ReadinessCheck {
 // ══════════════════════════════════════════════════════════════
 
 const CONTACT_SOURCE_LABEL: Record<ResolvedSupplier["contactSource"], string> = {
-  supplier_book: "공급사 연락처 DB",
-  recent_rfq: "최근 견적 이력",
+  supplier_book: "공급사 DB",
+  recent_rfq: "견적 이력",
   ai_recommended: "AI 추천",
   manual: "수동 입력",
+};
+
+const CONTACT_SOURCE_ICON: Record<ResolvedSupplier["contactSource"], string> = {
+  supplier_book: "DB",
+  recent_rfq: "이력",
+  ai_recommended: "AI",
+  manual: "수동",
 };
 
 const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
@@ -64,20 +72,6 @@ const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
   medium: "text-amber-400 border-amber-500/25 bg-amber-600/10",
   low: "text-red-400 border-red-500/25 bg-red-600/10",
 };
-
-function buildDefaultDraft(quoteSummary?: string): string {
-  return [
-    "안녕하세요,",
-    "",
-    quoteSummary
-      ? `아래 품목에 대한 견적을 요청드립니다: ${quoteSummary}`
-      : "첨부 품목에 대한 견적을 요청드립니다.",
-    "",
-    "납기, 재고, MOQ, 단가를 포함하여 회신 부탁드립니다.",
-    "",
-    "감사합니다.",
-  ].join("\n");
-}
 
 // ══════════════════════════════════════════════════════════════
 // Component
@@ -95,50 +89,51 @@ export function VendorRequestModal({
   const { toast } = useToast();
   const router = useRouter();
 
-  // ── Supplier state ──
+  // ── State ──
   const [suppliers, setSuppliers] = useState<ResolvedSupplier[]>([]);
-  const [manualMode, setManualMode] = useState(false);
-  const [manualEmail, setManualEmail] = useState("");
-  const [manualName, setManualName] = useState("");
-
-  // ── Message state ──
   const [message, setMessage] = useState("");
   const [messageEditing, setMessageEditing] = useState(false);
   const [expiresInDays, setExpiresInDays] = useState(14);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showManualFallback, setShowManualFallback] = useState(false);
+  const [manualEmail, setManualEmail] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [messageExpanded, setMessageExpanded] = useState(false);
 
   // ── Initialize from resolved data ──
   useEffect(() => {
     if (!open) return;
     if (resolvedSuppliersInput && resolvedSuppliersInput.length > 0) {
       setSuppliers(resolvedSuppliersInput);
-      setManualMode(false);
     } else {
-      // No AI resolution — fallback to empty manual mode
       setSuppliers([]);
-      setManualMode(true);
     }
-    setMessage(draftMessageInput || buildDefaultDraft(quoteSummary));
+    setMessage(draftMessageInput || "");
     setMessageEditing(false);
-  }, [open, resolvedSuppliersInput, draftMessageInput, quoteSummary]);
+    setShowManualFallback(false);
+    setManualEmail("");
+    setManualName("");
+    setMessageExpanded(false);
+  }, [open, resolvedSuppliersInput, draftMessageInput]);
 
   // ── Derived ──
   const includedSuppliers = suppliers.filter((s) => s.included);
-  const hasAiResolved = suppliers.length > 0 && !manualMode;
+  const excludedSuppliers = suppliers.filter((s) => !s.included);
+  const hasResolved = suppliers.length > 0;
+  const resolvedCount = suppliers.length;
+  const includedCount = includedSuppliers.length;
 
-  // ── Readiness ──
+  // ── Readiness checks ──
   const readinessChecks = useMemo<ReadinessCheck[]>(() => {
     const checks: ReadinessCheck[] = [];
 
-    // Supplier resolved
-    const supplierOk = includedSuppliers.length > 0;
+    const supplierOk = includedCount > 0;
     checks.push({
-      label: "공급사 식별",
+      label: "공급사 선정",
       ready: supplierOk,
       blocker: supplierOk ? undefined : "발송 대상 공급사가 없습니다",
     });
 
-    // Contact resolved
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const contactOk = includedSuppliers.every((s) => emailRegex.test(s.email));
     checks.push({
@@ -147,15 +142,13 @@ export function VendorRequestModal({
       blocker: contactOk ? undefined : "유효한 이메일이 없는 공급사가 있습니다",
     });
 
-    // Draft prepared
     const draftOk = message.trim().length > 10;
     checks.push({
-      label: "발송 초안",
+      label: "메시지 준비",
       ready: draftOk,
-      blocker: draftOk ? undefined : "요청 메시지가 너무 짧습니다",
+      blocker: draftOk ? undefined : "발송 메시지가 준비되지 않았습니다",
     });
 
-    // Quote ID
     const quoteOk = !!quoteId;
     checks.push({
       label: "견적 연결",
@@ -164,12 +157,14 @@ export function VendorRequestModal({
     });
 
     return checks;
-  }, [includedSuppliers, message, quoteId]);
+  }, [includedSuppliers, includedCount, message, quoteId]);
 
   const sendReadiness: SendReadiness = useMemo(() => {
     const allReady = readinessChecks.every((c) => c.ready);
     if (allReady) return "ready";
-    const hasHardBlocker = readinessChecks.some((c) => !c.ready && (c.label === "견적 연결" || c.label === "공급사 식별"));
+    const hasHardBlocker = readinessChecks.some(
+      (c) => !c.ready && (c.label === "견적 연결" || c.label === "공급사 선정"),
+    );
     return hasHardBlocker ? "blocked" : "needs_review";
   }, [readinessChecks]);
 
@@ -177,12 +172,6 @@ export function VendorRequestModal({
   const toggleSupplier = useCallback((vendorId: string) => {
     setSuppliers((prev) =>
       prev.map((s) => s.vendorId === vendorId ? { ...s, included: !s.included } : s),
-    );
-  }, []);
-
-  const editSupplierEmail = useCallback((vendorId: string, email: string) => {
-    setSuppliers((prev) =>
-      prev.map((s) => s.vendorId === vendorId ? { ...s, email, contactSource: "manual" as const } : s),
     );
   }, []);
 
@@ -200,7 +189,7 @@ export function VendorRequestModal({
     setSuppliers((prev) => [...prev, newSupplier]);
     setManualEmail("");
     setManualName("");
-    setManualMode(false);
+    setShowManualFallback(false);
   }, [manualEmail, manualName]);
 
   const handleSubmit = async () => {
@@ -215,14 +204,12 @@ export function VendorRequestModal({
       toast({ title: "발송 대상 없음", description: "최소 1개 공급사를 선택해주세요.", variant: "destructive" });
       return;
     }
-
     if (!quoteId) {
       toast({ title: "견적 ID 없음", description: "견적을 먼저 저장해주세요.", variant: "destructive" });
       return;
     }
 
     setIsSubmitting(true);
-
     try {
       const response = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
         method: "POST",
@@ -240,9 +227,8 @@ export function VendorRequestModal({
       }
 
       const result = await response.json();
-
       toast({
-        title: "견적 요청 전송 완료",
+        title: "견적 요청 발송 완료",
         description: `${result.sent}개 공급사에게 견적 요청이 전송되었습니다.`,
       });
 
@@ -263,7 +249,7 @@ export function VendorRequestModal({
   };
 
   // ══════════════════════════════════════════════════════════════
-  // Render
+  // Render — AI Dispatch Readiness Surface
   // ══════════════════════════════════════════════════════════════
 
   return (
@@ -271,19 +257,19 @@ export function VendorRequestModal({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#24272d] border-slate-600/40">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-100">
-            <Mail className="h-5 w-5 text-blue-400" />
-            견적 요청 발송 검토
+            <Send className="h-5 w-5 text-blue-400" />
+            견적 요청 발송 준비
           </DialogTitle>
           <DialogDescription className="text-slate-400">
-            {hasAiResolved
-              ? "AI가 공급사와 연락처를 준비했습니다. 발송 전 내용만 확인하세요."
-              : "공급사 정보를 입력하여 견적 요청을 발송합니다."}
+            {hasResolved
+              ? `시스템이 ${resolvedCount}개 공급사를 준비했습니다. 포함 여부를 확인하고 발송을 승인하세요.`
+              : "발송 대상 공급사를 확인할 수 없습니다. 공급사 등록 후 다시 시도해주세요."}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-5 py-4">
+        <div className="space-y-4 py-3">
 
-          {/* ═══ Send Readiness Strip ═══ */}
+          {/* ═══ Readiness Strip ═══ */}
           <div className={`rounded-lg border px-4 py-3 ${
             sendReadiness === "ready"
               ? "border-emerald-500/25 bg-emerald-950/10"
@@ -291,19 +277,22 @@ export function VendorRequestModal({
                 ? "border-amber-500/25 bg-amber-950/10"
                 : "border-red-500/25 bg-red-950/10"
           }`}>
-            <div className="flex items-center gap-2 mb-2">
-              {sendReadiness === "ready" ? (
-                <Check className="h-4 w-4 text-emerald-400" />
-              ) : sendReadiness === "needs_review" ? (
-                <AlertTriangle className="h-4 w-4 text-amber-400" />
-              ) : (
-                <AlertTriangle className="h-4 w-4 text-red-400" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                {sendReadiness === "ready" ? (
+                  <Check className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                )}
+                <span className={`text-sm font-semibold ${
+                  sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-amber-300" : "text-red-300"
+                }`}>
+                  {sendReadiness === "ready" ? "발송 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "발송 불가"}
+                </span>
+              </div>
+              {sendReadiness === "ready" && (
+                <span className="text-xs text-emerald-400/70">바로 발송 가능</span>
               )}
-              <span className={`text-sm font-semibold ${
-                sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-amber-300" : "text-red-300"
-              }`}>
-                {sendReadiness === "ready" ? "발송 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "발송 차단"}
-              </span>
             </div>
             <div className="flex flex-wrap gap-3">
               {readinessChecks.map((check) => (
@@ -313,14 +302,14 @@ export function VendorRequestModal({
                   ) : (
                     <X className="h-3 w-3 text-red-400" />
                   )}
-                  <span className={`text-xs ${check.ready ? "text-slate-400" : "text-slate-300"}`}>
+                  <span className={`text-xs ${check.ready ? "text-slate-500" : "text-slate-300"}`}>
                     {check.label}
                   </span>
                 </div>
               ))}
             </div>
             {readinessChecks.some((c) => !c.ready) && (
-              <div className="mt-2 space-y-1">
+              <div className="mt-2 space-y-0.5">
                 {readinessChecks.filter((c) => !c.ready).map((c) => (
                   <p key={c.label} className="text-xs text-slate-400">{c.blocker}</p>
                 ))}
@@ -328,72 +317,87 @@ export function VendorRequestModal({
             )}
           </div>
 
-          {/* ═══ AI-Resolved Suppliers ═══ */}
-          <div className="space-y-3">
+          {/* ═══ Resolved Supplier List — review-only ═══ */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-blue-400" />
-                <Label className="text-sm font-semibold text-slate-200">발송 대상 공급사</Label>
-                {hasAiResolved && (
-                  <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-600/10 text-blue-400 font-medium">
-                    <Sparkles className="h-3 w-3 mr-1" />AI 추천
-                  </Badge>
+                <span className="text-sm font-semibold text-slate-200">
+                  발송 대상
+                </span>
+                {includedCount > 0 && (
+                  <span className="text-xs text-slate-500">
+                    {includedCount}개 선택
+                    {excludedSuppliers.length > 0 && ` · ${excludedSuppliers.length}개 제외`}
+                  </span>
                 )}
               </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => setManualMode(true)}
-                className="h-7 text-xs text-slate-400 hover:text-slate-200"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                수동 추가
-              </Button>
-            </div>
-
-            {/* Resolved supplier cards */}
-            <div className="space-y-2 max-h-[240px] overflow-y-auto">
-              {suppliers.map((supplier) => (
-                <SupplierCard
-                  key={supplier.vendorId}
-                  supplier={supplier}
-                  onToggle={() => toggleSupplier(supplier.vendorId)}
-                  onEditEmail={(email) => editSupplierEmail(supplier.vendorId, email)}
-                />
-              ))}
-
-              {suppliers.length === 0 && !manualMode && (
-                <div className="flex items-center gap-3 px-4 py-4 rounded-lg border border-dashed border-slate-600/40 bg-[#1e2126]">
-                  <Info className="h-4 w-4 text-slate-500 shrink-0" />
-                  <div>
-                    <p className="text-sm text-slate-400">추천 공급사가 없습니다</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      request assembly에서 공급사 정보가 전달되지 않았습니다. 수동으로 추가해주세요.
-                    </p>
-                  </div>
-                </div>
+              {hasResolved && (
+                <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-600/10 text-blue-400 font-medium">
+                  <Sparkles className="h-3 w-3 mr-1" />자동 준비
+                </Badge>
               )}
             </div>
 
-            {/* Manual input panel */}
-            {manualMode && (
+            {/* Supplier cards */}
+            <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
+              {suppliers.map((supplier) => (
+                <SupplierReviewCard
+                  key={supplier.vendorId}
+                  supplier={supplier}
+                  onToggle={() => toggleSupplier(supplier.vendorId)}
+                />
+              ))}
+            </div>
+
+            {/* Empty: no suppliers resolved */}
+            {!hasResolved && !showManualFallback && (
+              <div className="rounded-lg border border-dashed border-amber-500/25 bg-amber-950/5 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-slate-300">공급사 자동 선정 실패</p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      견적 품목에 연결된 공급사가 없거나, 공급사 연락처 DB에 등록된 정보가 없습니다.
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setShowManualFallback(true)}
+                        className="h-7 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/20"
+                      >
+                        <UserPlus className="h-3 w-3 mr-1" />
+                        수동 추가
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manual fallback — only when explicitly opened or no suppliers */}
+            {showManualFallback && (
               <div className="rounded-lg border border-slate-600/30 bg-[#1e2126] p-3 space-y-2">
-                <p className="text-xs font-medium text-slate-400">새 연락처 입력</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <UserPlus className="h-3.5 w-3.5 text-slate-500" />
+                  <p className="text-xs font-medium text-slate-400">예외: 수동 공급사 추가</p>
+                </div>
                 <div className="flex gap-2">
                   <Input
                     type="email"
-                    placeholder="이메일 (필수)"
+                    placeholder="이메일"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    className="h-9 text-sm bg-[#24272d] border-slate-600/30 text-slate-100 flex-1"
+                    className="h-8 text-xs bg-[#24272d] border-slate-600/30 text-slate-100 flex-1"
                   />
                   <Input
                     type="text"
                     placeholder="공급사명"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    className="h-9 text-sm bg-[#24272d] border-slate-600/30 text-slate-100 w-40"
+                    className="h-8 text-xs bg-[#24272d] border-slate-600/30 text-slate-100 w-36"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -401,17 +405,17 @@ export function VendorRequestModal({
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => { setManualMode(false); setManualEmail(""); setManualName(""); }}
-                    className="h-7 text-xs text-slate-400"
+                    onClick={() => { setShowManualFallback(false); setManualEmail(""); setManualName(""); }}
+                    className="h-7 text-xs text-slate-500"
                   >
-                    취소
+                    닫기
                   </Button>
                   <Button
                     type="button"
                     size="sm"
                     onClick={addManualVendor}
                     disabled={!manualEmail.trim()}
-                    className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white"
+                    className="h-7 text-xs bg-slate-600 hover:bg-slate-500 text-slate-200"
                   >
                     추가
                   </Button>
@@ -420,64 +424,99 @@ export function VendorRequestModal({
             )}
           </div>
 
-          {/* ═══ Draft Message ═══ */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-semibold text-slate-200">발송 메시지</Label>
-              {!messageEditing && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setMessageEditing(true)}
-                  className="h-7 text-xs text-slate-400 hover:text-slate-200"
-                >
-                  <Pencil className="h-3 w-3 mr-1" />
-                  수정
-                </Button>
+          {/* ═══ Message Preview — read-only by default ═══ */}
+          {message && (
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => setMessageExpanded(!messageExpanded)}
+                className="flex items-center gap-2 w-full text-left group"
+              >
+                <Mail className="h-3.5 w-3.5 text-slate-500" />
+                <span className="text-xs font-medium text-slate-400 group-hover:text-slate-300">
+                  발송 메시지
+                </span>
+                <span className="text-xs text-slate-600">·</span>
+                <span className="text-xs text-slate-500">자동 생성</span>
+                <ChevronDown className={`h-3 w-3 text-slate-600 ml-auto transition-transform ${messageExpanded ? "rotate-180" : ""}`} />
+              </button>
+
+              {messageExpanded && (
+                <div className="rounded-lg border border-slate-600/25 bg-[#1e2126] px-4 py-3">
+                  {messageEditing ? (
+                    <>
+                      <Textarea
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        className="text-xs min-h-[100px] bg-[#24272d] border-slate-600/30 text-slate-100"
+                        autoFocus
+                      />
+                      <div className="flex justify-end mt-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setMessageEditing(false)}
+                          className="h-6 text-xs text-slate-400"
+                        >
+                          완료
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <pre className="text-xs text-slate-400 whitespace-pre-wrap font-sans leading-relaxed">
+                        {message}
+                      </pre>
+                      <div className="flex justify-end mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setMessageEditing(true)}
+                          className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                        >
+                          수정
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-            {messageEditing ? (
-              <Textarea
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="text-sm min-h-[120px] bg-[#1e2126] border-slate-600/30 text-slate-100"
-                autoFocus
-              />
-            ) : (
-              <div className="rounded-lg border border-slate-600/25 bg-[#1e2126] px-4 py-3">
-                <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
-                  {message || "(메시지 없음)"}
-                </pre>
-              </div>
-            )}
-            <p className="text-xs text-slate-500">
-              {hasAiResolved ? "AI가 요청 내용 기반으로 초안을 작성했습니다" : "메시지는 이메일과 함께 공급사에게 전달됩니다"}
-            </p>
-          </div>
+          )}
 
-          {/* ═══ Expiration ═══ */}
-          <div className="flex items-center gap-4 px-4 py-3 rounded-lg border border-slate-600/25 bg-[#1e2126]">
+          {/* ═══ Dispatch Conditions ═══ */}
+          <div className="flex items-center gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-[#1e2126]">
             <div className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-slate-500" />
-              <span className="text-sm text-slate-300">회신 마감</span>
+              <Clock className="h-3.5 w-3.5 text-slate-500" />
+              <span className="text-xs text-slate-400">회신 마감</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               <Input
                 type="number"
                 min="1"
                 max="365"
                 value={expiresInDays}
                 onChange={(e) => setExpiresInDays(parseInt(e.target.value) || 14)}
-                className="h-8 text-sm w-20 text-center bg-[#24272d] border-slate-600/30 text-slate-100"
+                className="h-7 text-xs w-16 text-center bg-[#24272d] border-slate-600/30 text-slate-100"
               />
-              <span className="text-sm text-slate-400">일 후</span>
+              <span className="text-xs text-slate-500">일</span>
             </div>
           </div>
         </div>
 
-        {/* ═══ Footer / Dock ═══ */}
-        <DialogFooter className="gap-2">
+        {/* ═══ Dock ═══ */}
+        <DialogFooter className="gap-2 pt-2 border-t border-slate-600/20">
+          {/* Fallback: manual add link — demoted to footnote */}
+          {hasResolved && !showManualFallback && (
+            <button
+              type="button"
+              onClick={() => setShowManualFallback(true)}
+              className="text-xs text-slate-600 hover:text-slate-400 mr-auto transition-colors"
+            >
+              + 수동 추가
+            </button>
+          )}
+
           <Button
             type="button"
             variant="ghost"
@@ -501,17 +540,17 @@ export function VendorRequestModal({
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                전송 중...
+                발송 중…
               </>
             ) : sendReadiness === "blocked" ? (
               <>
                 <AlertTriangle className="h-4 w-4 mr-2" />
-                발송 차단됨
+                발송 불가
               </>
             ) : (
               <>
-                <Mail className="h-4 w-4 mr-2" />
-                견적 요청 발송
+                <Send className="h-4 w-4 mr-2" />
+                발송 승인
               </>
             )}
           </Button>
@@ -522,33 +561,28 @@ export function VendorRequestModal({
 }
 
 // ══════════════════════════════════════════════════════════════
-// SupplierCard — individual resolved supplier display
+// SupplierReviewCard — include/exclude toggle, no email editing
 // ══════════════════════════════════════════════════════════════
 
-function SupplierCard({
+function SupplierReviewCard({
   supplier,
   onToggle,
-  onEditEmail,
 }: {
   supplier: ResolvedSupplier;
   onToggle: () => void;
-  onEditEmail: (email: string) => void;
 }) {
-  const [editing, setEditing] = useState(false);
-  const [editEmail, setEditEmail] = useState(supplier.email);
-
   return (
-    <div className={`rounded-lg border px-4 py-3 transition-all ${
+    <div className={`rounded-lg border px-3.5 py-2.5 transition-all ${
       supplier.included
         ? "border-slate-600/40 bg-[#2a2e35]"
-        : "border-slate-600/20 bg-[#1e2126] opacity-50"
+        : "border-slate-600/15 bg-[#1e2126] opacity-40"
     }`}>
-      <div className="flex items-start gap-3">
-        {/* Toggle checkbox */}
+      <div className="flex items-center gap-3">
+        {/* Toggle */}
         <button
           type="button"
           onClick={onToggle}
-          className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+          className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${
             supplier.included
               ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
               : "border-slate-600/40 text-transparent hover:border-slate-500/50"
@@ -557,78 +591,32 @@ function SupplierCard({
           {supplier.included && <Check className="h-3 w-3" />}
         </button>
 
-        <div className="flex-1 min-w-0">
-          {/* Vendor name + confidence badge */}
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-semibold text-slate-100 truncate">{supplier.vendorName}</span>
-            <span className={`text-xs px-1.5 py-0.5 rounded border ${CONFIDENCE_COLOR[supplier.confidence]}`}>
-              {supplier.confidence === "high" ? "확실" : supplier.confidence === "medium" ? "보통" : "낮음"}
-            </span>
-          </div>
-
-          {/* Email — read-only or editable */}
-          <div className="flex items-center gap-2">
-            {editing ? (
-              <div className="flex items-center gap-1.5 flex-1">
-                <Input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                  className="h-7 text-xs bg-[#1e2126] border-slate-600/30 text-slate-100 flex-1"
-                  autoFocus
-                />
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={() => { onEditEmail(editEmail); setEditing(false); }}
-                  className="h-7 text-xs px-2 bg-blue-600 hover:bg-blue-500 text-white"
-                >
-                  저장
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => { setEditEmail(supplier.email); setEditing(false); }}
-                  className="h-7 text-xs px-2 text-slate-400"
-                >
-                  취소
-                </Button>
-              </div>
-            ) : (
-              <>
-                <Mail className="h-3 w-3 text-slate-500 shrink-0" />
-                <span className="text-xs text-slate-300 truncate">{supplier.email}</span>
-                <button
-                  type="button"
-                  onClick={() => setEditing(true)}
-                  className="text-xs text-slate-500 hover:text-blue-400 transition-colors shrink-0"
-                >
-                  변경
-                </button>
-              </>
-            )}
-          </div>
-
-          {/* Contact source + reason */}
-          <div className="flex items-center gap-3 mt-1.5">
-            <span className="text-xs text-slate-500">
-              출처: {CONTACT_SOURCE_LABEL[supplier.contactSource]}
-            </span>
-            {supplier.reason && (
-              <>
-                <span className="text-xs text-slate-600">·</span>
-                <span className="text-xs text-slate-500">{supplier.reason}</span>
-              </>
-            )}
-            {supplier.lastUsed && (
-              <>
-                <span className="text-xs text-slate-600">·</span>
-                <span className="text-xs text-slate-500">최근: {supplier.lastUsed}</span>
-              </>
-            )}
-          </div>
+        {/* Supplier info — compact single-row */}
+        <div className="flex-1 min-w-0 flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-100 truncate">
+            {supplier.vendorName}
+          </span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${CONFIDENCE_COLOR[supplier.confidence]}`}>
+            {supplier.confidence === "high" ? "확실" : supplier.confidence === "medium" ? "보통" : "낮음"}
+          </span>
         </div>
+
+        {/* Contact source badge */}
+        <span className="text-[10px] text-slate-600 shrink-0">
+          {CONTACT_SOURCE_LABEL[supplier.contactSource]}
+        </span>
+      </div>
+
+      {/* Second row: email + reason */}
+      <div className="flex items-center gap-2 mt-1 ml-8">
+        <Mail className="h-3 w-3 text-slate-600 shrink-0" />
+        <span className="text-xs text-slate-500 truncate">{supplier.email}</span>
+        {supplier.reason && (
+          <>
+            <span className="text-xs text-slate-700">·</span>
+            <span className="text-xs text-slate-600 truncate">{supplier.reason}</span>
+          </>
+        )}
       </div>
     </div>
   );

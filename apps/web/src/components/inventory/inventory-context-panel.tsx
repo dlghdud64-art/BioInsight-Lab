@@ -369,6 +369,8 @@ interface InventoryContextPanelProps {
   onReorder?: (item: ContextPanelItem) => void;
   onEdit?: (item: ContextPanelItem) => void;
   onDispose?: (item: ContextPanelItem) => void;
+  /** Lot 전체 추적 surface로 drill-down 진입 */
+  onLotDrillDown?: () => void;
   className?: string;
 }
 
@@ -379,6 +381,7 @@ export function InventoryContextPanel({
   onReorder,
   onEdit,
   onDispose,
+  onLotDrillDown,
   className = "",
 }: InventoryContextPanelProps) {
   const lots = generateMockLots(item);
@@ -526,6 +529,19 @@ export function InventoryContextPanel({
                 </div>
               </div>
             ))}
+            {/* Lot drill-down entry */}
+            {onLotDrillDown && (
+              <button
+                type="button"
+                onClick={onLotDrillDown}
+                className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-bd bg-pn hover:bg-el transition-colors group"
+              >
+                <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-300">
+                  Lot 전체 추적 보기
+                </span>
+                <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-blue-400 transition-colors" />
+              </button>
+            )}
           </div>
         </section>
 
