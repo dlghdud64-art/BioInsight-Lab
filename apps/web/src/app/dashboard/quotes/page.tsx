@@ -9,8 +9,6 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -18,9 +16,9 @@ import {
   ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
   AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
   AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
-  Loader2, Mail, Ban,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
@@ -351,90 +349,16 @@ function QuotesPageContent() {
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
 
-  // ── 견적 요청 발송 state ──
-  const [sendVendorEmail, setSendVendorEmail] = useState("");
-  const [sendVendorName, setSendVendorName] = useState("");
-  const [sendMessage, setSendMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
-  const [sendSuccess, setSendSuccess] = useState(false);
-  const [sendBlockedReason, setSendBlockedReason] = useState<string | null>(null);
-  const [sendConfirmPhase, setSendConfirmPhase] = useState(false);
-
-  // ── 견적 요청 발송 핸들러 ──
-  const handleSendQuoteRequest = useCallback(async (quoteId: string) => {
-    console.log("[quote-send] click", { quoteId });
-    setSendError(null);
-    setSendBlockedReason(null);
-    setSendSuccess(false);
-
-    // Guard: vendor email
-    if (!sendVendorEmail.trim()) {
-      console.log("[quote-send] blocked: 공급사 이메일 누락");
-      setSendBlockedReason("공급사 연락처가 없어 발송할 수 없습니다");
-      return;
+  // ── 견적 발송 성공 후 갱신 ──
+  const handleSendSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
+    if (selectedQuoteId) {
+      queryClient.invalidateQueries({ queryKey: ["quote", selectedQuoteId] });
+      queryClient.invalidateQueries({ queryKey: ["vendor-requests", selectedQuoteId] });
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendVendorEmail.trim())) {
-      console.log("[quote-send] blocked: 이메일 형식 오류");
-      setSendBlockedReason("유효한 이메일 주소를 입력하세요");
-      return;
-    }
+    setActiveWorkWindow(null);
+  }, [queryClient, selectedQuoteId]);
 
-    console.log("[quote-send] guard passed", { quoteId, email: sendVendorEmail.trim() });
-    setIsSending(true);
-
-    try {
-      console.log("[quote-send] mutation start", { quoteId });
-      const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendors: [{ email: sendVendorEmail.trim(), name: sendVendorName.trim() || undefined }],
-          message: sendMessage.trim() || undefined,
-        }),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `발송 실패 (${res.status})`);
-      }
-
-      const result = await res.json();
-      console.log("[quote-send] success", { quoteId, sent: result.sent });
-
-      // Invalidate all related queries
-      queryClient.invalidateQueries({ queryKey: ["quotes"] });
-      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
-
-      setSendSuccess(true);
-      toast({
-        title: "견적 요청이 발송되었습니다",
-        description: `${sendVendorEmail.trim()}에게 발송 완료`,
-      });
-
-      // 발송 성공 — 사용자가 확인 후 직접 닫음 (auto-close 금지)
-
-    } catch (error: any) {
-      console.log("[quote-send] failed:", error.message);
-      setSendError(error.message || "발송 중 오류가 발생했습니다. 다시 시도해주세요.");
-    } finally {
-      setIsSending(false);
-    }
-  }, [sendVendorEmail, sendVendorName, sendMessage, queryClient, toast]);
-
-  // Work window 열릴 때 발송 state 초기화
-  useEffect(() => {
-    if (activeWorkWindow === "request_send") {
-      setSendVendorEmail("");
-      setSendVendorName("");
-      setSendMessage("");
-      setSendError(null);
-      setSendBlockedReason(null);
-      setSendSuccess(false);
-      setSendConfirmPhase(false);
-    }
-  }, [activeWorkWindow]);
 
   // ── Rail open/close — single source of truth ──
   const openQuoteContextRail = (caseId: string, source: string = "row") => {
@@ -943,48 +867,26 @@ function QuotesPageContent() {
 
       </div>{/* end flex container */}
 
+      {/* ═══ 견적 발송 워크벤치 (request_send) ═══ */}
+      {activeWorkWindow === "request_send" && selectedQuote && (
+        <VendorRequestModal
+          open={true}
+          onOpenChange={(open) => { if (!open) setActiveWorkWindow(null); }}
+          quoteId={selectedQuote.id}
+          quoteSummary={selectedQuote.title}
+          onSuccess={handleSendSuccess}
+        />
+      )}
+
       {/* ═══ Center Work Window — rail CTA에서 열리는 task surface ═══ */}
-      {activeWorkWindow && selectedQuote && selectedSignals && (
+      {activeWorkWindow && activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && (
         <CenterWorkWindow
           open={true}
-          onClose={() => { if (!isSending) setActiveWorkWindow(null); }}
+          onClose={() => setActiveWorkWindow(null)}
           title={selectedSignals.ctaLabel}
           subtitle={`${selectedQuote.title} · ${selectedSignals.badge}`}
-          phase={isSending ? "executing" : sendSuccess ? "complete" : sendConfirmPhase ? "confirming" : "ready"}
-          primaryAction={activeWorkWindow === "request_send" ? {
-            label: isSending ? "발송 중..." : sendSuccess ? "확인" : sendConfirmPhase ? "발송 확정" : "발송 내용 확인",
-            onClick: () => {
-              if (sendSuccess) {
-                // 성공 확인 → state 정리 + 창 닫기
-                setSendVendorEmail("");
-                setSendVendorName("");
-                setSendMessage("");
-                setSendSuccess(false);
-                setSendConfirmPhase(false);
-                setActiveWorkWindow(null);
-                return;
-              }
-              if (sendConfirmPhase && !isSending) {
-                // 확인 단계에서 최종 발송
-                handleSendQuoteRequest(selectedQuote.id);
-                return;
-              }
-              if (!sendConfirmPhase && !isSending) {
-                // 폼 입력 → 확인 단계 진입 (validation 먼저)
-                if (!sendVendorEmail.trim()) {
-                  setSendBlockedReason("공급사 연락처가 없어 발송할 수 없습니다");
-                  return;
-                }
-                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendVendorEmail.trim())) {
-                  setSendBlockedReason("유효한 이메일 주소를 입력하세요");
-                  return;
-                }
-                setSendBlockedReason(null);
-                setSendConfirmPhase(true);
-              }
-            },
-            disabled: isSending,
-          } : {
+          phase="ready"
+          primaryAction={{
             label: activeWorkWindow === "compare_review"
               ? ((selectedQuote.responses?.length ?? 0) >= 2 ? "선택안 확정" : "추가 회신 확보")
               : activeWorkWindow === "approval_prep"
@@ -995,19 +897,7 @@ function QuotesPageContent() {
               setActiveWorkWindow(null);
             },
           }}
-          secondaryAction={{ label: sendConfirmPhase && !sendSuccess ? "입력으로 돌아가기" : "닫기", onClick: () => {
-            if (isSending) return;
-            if (sendConfirmPhase && !sendSuccess) {
-              setSendConfirmPhase(false);
-              return;
-            }
-            setSendVendorEmail("");
-            setSendVendorName("");
-            setSendMessage("");
-            setSendSuccess(false);
-            setSendConfirmPhase(false);
-            setActiveWorkWindow(null);
-          } }}
+          secondaryAction={{ label: "닫기", onClick: () => setActiveWorkWindow(null) }}
         >
           <div className="space-y-4">
             {/* Work window header context */}
@@ -1023,138 +913,6 @@ function QuotesPageContent() {
             </div>
 
             {/* Action-specific content */}
-            {activeWorkWindow === "request_send" && (
-              <div className="space-y-4">
-                {/* 발송 성공 */}
-                {sendSuccess && (
-                  <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/10 p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                      <p className="text-sm font-medium text-emerald-300">견적 요청을 발송했습니다</p>
-                    </div>
-                    <p className="text-xs text-slate-400 pl-6">{sendVendorEmail}에게 발송 완료 — 회신 수집 단계로 전환됩니다</p>
-                    <p className="text-[11px] text-slate-500 pl-6 mt-1">확인을 눌러 창을 닫아주세요</p>
-                  </div>
-                )}
-
-                {/* 발송 실패 */}
-                {sendError && (
-                  <div className="rounded-lg border border-red-600/30 bg-red-600/10 p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <AlertCircle className="h-4 w-4 text-red-400" />
-                      <p className="text-sm font-medium text-red-300">발송 중 오류가 발생했습니다</p>
-                    </div>
-                    <p className="text-xs text-red-400/80 pl-6">{sendError}</p>
-                    <Button size="sm" variant="outline" className="mt-2 ml-6 h-7 text-[11px] border-red-600/20 text-red-400 hover:bg-red-600/10" onClick={() => setSendError(null)}>
-                      다시 시도
-                    </Button>
-                  </div>
-                )}
-
-                {/* 차단 사유 */}
-                {sendBlockedReason && (
-                  <div className="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Ban className="h-4 w-4 text-amber-400" />
-                      <p className="text-sm font-medium text-amber-300">발송 전 확인 필요</p>
-                    </div>
-                    <p className="text-xs text-amber-400/80 pl-6">{sendBlockedReason}</p>
-                  </div>
-                )}
-
-                {/* 발송 중 로딩 */}
-                {isSending && (
-                  <div className="rounded-lg border border-blue-600/30 bg-blue-600/10 p-4 flex items-center gap-3">
-                    <Loader2 className="h-4 w-4 text-blue-400 animate-spin" />
-                    <div>
-                      <p className="text-sm font-medium text-blue-300">발송 중...</p>
-                      <p className="text-xs text-slate-400">공급사에게 견적 요청 이메일을 전송하고 있습니다</p>
-                    </div>
-                  </div>
-                )}
-
-                {/* 발송 확인 단계 — 입력 완료 후 최종 확인 */}
-                {sendConfirmPhase && !sendSuccess && !isSending && !sendError && (
-                  <div className="rounded-lg border border-blue-600/30 bg-blue-600/5 p-4 space-y-3">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Mail className="h-4 w-4 text-blue-400" />
-                      <p className="text-sm font-medium text-blue-300">발송 전 최종 확인</p>
-                    </div>
-                    <div className="space-y-2 text-xs">
-                      <div className="flex justify-between"><span className="text-slate-400">요청 제목</span><span className="text-slate-200 font-medium truncate max-w-[240px]">{selectedQuote.title}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-400">공급사</span><span className="text-slate-200 font-medium">{sendVendorName.trim() || "이름 미입력"}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-400">발송 이메일</span><span className="text-blue-300 font-medium">{sendVendorEmail.trim()}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-400">품목 수</span><span className="text-slate-200">{selectedQuote.items.length}건</span></div>
-                      {selectedQuote.deliveryDate && (
-                        <div className="flex justify-between"><span className="text-slate-400">납기</span><span className="text-slate-200">{new Date(selectedQuote.deliveryDate).toLocaleDateString("ko-KR")}</span></div>
-                      )}
-                      {sendMessage.trim() && (
-                        <div className="pt-1 border-t border-bd/50">
-                          <span className="text-slate-400">요청 메시지</span>
-                          <p className="text-slate-300 mt-1 leading-snug">{sendMessage.trim()}</p>
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-amber-400/80 mt-2">발송 후에는 취소할 수 없습니다. 정보를 확인한 뒤 발송 확정을 눌러주세요.</p>
-                  </div>
-                )}
-
-                {/* 발송 폼 — 성공 시, 확인 단계 진입 시 숨김 */}
-                {!sendSuccess && !sendConfirmPhase && (
-                  <>
-                    <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Mail className="h-4 w-4 text-slate-400" />
-                        <p className="text-xs font-medium text-slate-200">견적 요청 발송</p>
-                      </div>
-                      <p className="text-xs text-slate-400">공급사에게 견적 요청 이메일을 발송합니다. 발송 후 회신 수집이 시작됩니다.</p>
-                      <div className="text-xs text-slate-500 flex items-center gap-3">
-                        <span>품목: {selectedQuote.items.length}건</span>
-                        {selectedQuote.deliveryDate && <span>납기: {new Date(selectedQuote.deliveryDate).toLocaleDateString("ko-KR")}</span>}
-                      </div>
-                    </div>
-
-                    <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="ww-send-vendor-email" className="text-xs font-medium text-slate-300">공급사 이메일 <span className="text-red-400 text-[11px]">필수</span></Label>
-                        <Input
-                          id="ww-send-vendor-email"
-                          type="email"
-                          placeholder="vendor@example.com"
-                          value={sendVendorEmail}
-                          onChange={(e) => { setSendVendorEmail(e.target.value); setSendBlockedReason(null); }}
-                          disabled={isSending}
-                          className="h-9 text-sm bg-el border-bd"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="ww-send-vendor-name" className="text-xs font-medium text-slate-300">공급사명 <span className="text-slate-500 text-[11px]">선택</span></Label>
-                        <Input
-                          id="ww-send-vendor-name"
-                          placeholder="공급사명"
-                          value={sendVendorName}
-                          onChange={(e) => setSendVendorName(e.target.value)}
-                          disabled={isSending}
-                          className="h-9 text-sm bg-el border-bd"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="ww-send-message" className="text-xs font-medium text-slate-300">요청 메시지 <span className="text-slate-500 text-[11px]">선택</span></Label>
-                        <Textarea
-                          id="ww-send-message"
-                          placeholder="추가 요청 사항이 있으면 입력하세요"
-                          value={sendMessage}
-                          onChange={(e) => setSendMessage(e.target.value)}
-                          disabled={isSending}
-                          rows={3}
-                          className="text-sm bg-el border-bd"
-                        />
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
             {activeWorkWindow === "followup_send" && (
               <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
                 <p className="text-xs font-medium text-slate-200">재요청 / 추가 회신 확보</p>

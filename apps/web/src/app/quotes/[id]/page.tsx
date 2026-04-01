@@ -57,6 +57,7 @@ import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ActivityTimeline } from "@/components/ai/activity-timeline";
+import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import {
   Select,
   SelectContent,
@@ -205,11 +206,6 @@ export default function QuoteDetailPage() {
 
   // 견적 발송 다이얼로그 state
   const [showSendDialog, setShowSendDialog] = useState(false);
-  const [sendVendorEmail, setSendVendorEmail] = useState("");
-  const [sendVendorName, setSendVendorName] = useState("");
-  const [sendMessage, setSendMessage] = useState("");
-  const [isSending, setIsSending] = useState(false);
-  const [sendError, setSendError] = useState<string | null>(null);
 
   // 구매 완료 시 추가 필드
   const [expectedArrivalDate, setExpectedArrivalDate] = useState("");
@@ -508,45 +504,11 @@ export default function QuoteDetailPage() {
     },
   });
 
-  // ── 견적 발송 핸들러 ──────────────────────────────────────────────
-  const handleSendToVendor = async () => {
-    if (!sendVendorEmail.trim()) {
-      setSendError("벤더 이메일을 입력하세요.");
-      return;
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sendVendorEmail.trim())) {
-      setSendError("유효한 이메일 주소를 입력하세요.");
-      return;
-    }
-    setSendError(null);
-    setIsSending(true);
-    try {
-      const res = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          vendors: [{ email: sendVendorEmail.trim(), name: sendVendorName.trim() || undefined }],
-          message: sendMessage.trim() || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || `발송 실패 (${res.status})`);
-      }
-      // 성공: invalidate + UI 갱신
-      queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
-      queryClient.invalidateQueries({ queryKey: ["quotes"] });
-      setShowSendDialog(false);
-      setSendVendorEmail("");
-      setSendVendorName("");
-      setSendMessage("");
-      toast({ title: "견적 요청이 발송되었습니다", description: `${sendVendorEmail.trim()}에게 발송됨` });
-    } catch (error: any) {
-      setSendError(error.message || "발송 중 오류가 발생했습니다.");
-    } finally {
-      setIsSending(false);
-    }
+  // ── 견적 발송 성공 후 갱신 ──────────────────────────────────────────────
+  const handleSendSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["quote", quoteId] });
+    queryClient.invalidateQueries({ queryKey: ["vendor-requests", quoteId] });
+    queryClient.invalidateQueries({ queryKey: ["quotes"] });
   };
 
   // ── 핸들러 ────────────────────────────────────────────────────────
@@ -1402,7 +1364,7 @@ export default function QuoteDetailPage() {
                 {/* 관리자: PENDING → 견적 발송 */}
                 {isAdmin && quoteStatus === "PENDING" && (
                   <Button
-                    onClick={() => { setSendError(null); setShowSendDialog(true); }}
+                    onClick={() => setShowSendDialog(true)}
                     className="w-full sm:w-auto text-sm h-10 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-sm"
                   >
                     <Send className="h-4 w-4 mr-2 shrink-0" />
@@ -1703,67 +1665,14 @@ export default function QuoteDetailPage() {
         </DialogContent>
       </Dialog>
 
-      {/* ── 견적 발송 다이얼로그 ── */}
-      <Dialog open={showSendDialog} onOpenChange={(open) => { if (!isSending) setShowSendDialog(open); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>견적 요청 발송</DialogTitle>
-            <DialogDescription>공급사에게 견적 요청 이메일을 발송합니다.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="send-vendor-email" className="text-sm font-medium">공급사 이메일 <span className="text-red-500">*</span></Label>
-              <Input
-                id="send-vendor-email"
-                type="email"
-                placeholder="vendor@example.com"
-                value={sendVendorEmail}
-                onChange={(e) => { setSendVendorEmail(e.target.value); setSendError(null); }}
-                disabled={isSending}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="send-vendor-name" className="text-sm font-medium">공급사명 (선택)</Label>
-              <Input
-                id="send-vendor-name"
-                placeholder="공급사명"
-                value={sendVendorName}
-                onChange={(e) => setSendVendorName(e.target.value)}
-                disabled={isSending}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="send-message" className="text-sm font-medium">메시지 (선택)</Label>
-              <Textarea
-                id="send-message"
-                placeholder="추가 요청 사항이 있으면 입력하세요"
-                value={sendMessage}
-                onChange={(e) => setSendMessage(e.target.value)}
-                disabled={isSending}
-                rows={3}
-              />
-            </div>
-            {sendError && (
-              <div className="flex items-start gap-2 rounded-md bg-red-50 border border-red-200 px-3 py-2">
-                <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 shrink-0" />
-                <p className="text-xs text-red-700">{sendError}</p>
-              </div>
-            )}
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setShowSendDialog(false)} disabled={isSending}>
-              취소
-            </Button>
-            <Button onClick={handleSendToVendor} disabled={isSending || !sendVendorEmail.trim()} className="bg-blue-600 hover:bg-blue-700 text-white">
-              {isSending ? (
-                <><RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />발송 중…</>
-              ) : (
-                <><Send className="h-4 w-4 mr-1.5" />발송</>
-              )}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* ── 견적 발송 워크벤치 ── */}
+      <VendorRequestModal
+        open={showSendDialog}
+        onOpenChange={setShowSendDialog}
+        quoteId={quoteId}
+        quoteSummary={quote?.title}
+        onSuccess={handleSendSuccess}
+      />
     </>
   );
 }
