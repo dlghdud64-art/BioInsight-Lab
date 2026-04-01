@@ -121,7 +121,7 @@ function POConversionContent() {
           <div className="flex items-center gap-2">
             <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
             <div className="w-px h-5 bg-bd" />
-            <span className="text-xs md:text-sm font-medium text-slate-400">발주 전환</span>
+            <span className="text-xs md:text-sm font-medium text-slate-400">발주 실행</span>
           </div>
           <div className="flex items-center gap-3">
             {selected && <span className="text-lg font-bold tabular-nums text-slate-100 hidden sm:block">₩{activeTotal.toLocaleString("ko-KR")}</span>}
@@ -232,10 +232,10 @@ function POConversionContent() {
               <div className="flex items-center justify-between px-3 py-2 rounded border border-bd bg-pn">
                 <div className="flex items-center gap-2 text-xs">
                   {approvalCleared ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
-                  <span className="text-slate-300">승인 상태</span>
+                  <span className="text-slate-300">승인 확인</span>
                 </div>
                 <span className={`text-[10px] ${approvalCleared ? "text-emerald-400" : "text-red-400"}`}>
-                  {selected.approvalPolicy === "none" ? "승인 불필요" : selected.approvalStatus === "externally_approved" ? "외부 승인 완료" : "승인 대기"}
+                  {selected.approvalPolicy === "none" ? "승인 불필요" : selected.approvalStatus === "externally_approved" ? "외부 승인 확인됨" : "외부 승인 대기"}
                 </span>
               </div>
               {/* Line items guard */}
@@ -287,7 +287,7 @@ function POConversionContent() {
               <strong className="text-emerald-400">{selected.vendor}</strong> 기준 {activeItems.length}개 품목,
               총 <strong className="text-slate-100">₩{activeTotal.toLocaleString("ko-KR")}</strong>,
               납기 {selected.expectedDelivery},
-              {canCreate ? " PO 생성 가능 상태" : " 조건 확인 필요"}
+              {canCreate ? " 발주 실행 가능" : " 실행 조건 확인 필요"}
             </p>
             <p className="text-[10px] text-slate-500 mt-1">PO 생성 후 Receiving 대기 상태로 이동 · 선택 근거와 문서는 PO 기록에 연결</p>
           </div>
@@ -308,7 +308,7 @@ function POConversionContent() {
               <div className="flex justify-between text-xs"><span className="text-slate-400">납기</span><span className="text-slate-200">{selected.expectedDelivery}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인</span>
                 <span className={approvalCleared ? "text-emerald-400" : "text-amber-400"}>
-                  {selected.approvalPolicy === "none" ? "불필요" : approvalCleared ? "완료" : "대기"}
+                  {selected.approvalPolicy === "none" ? "불필요" : approvalCleared ? "확인됨" : "외부 대기"}
                 </span>
               </div>
             </div>

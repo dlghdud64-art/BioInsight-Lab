@@ -21,7 +21,7 @@ export type ProcurementStage =
   | "quote_partial"            // 일부 응답 도착
   | "quote_received"           // 전체 응답 도착
   | "quote_compare_review"     // 비교 검토 필요
-  | "po_conversion_candidate"  // 발주 전환 후보 (승인 정책에 따라 바로 또는 승인 후)
+  | "po_conversion_candidate"  // 발주 실행 후보 (승인 정책에 따라 바로 또는 외부 승인 확인 후)
   | "po_ready"                 // 발주 전환 가능
   | "po_created"               // 발주 생성 완료
   | "cancelled"                // 취소
@@ -74,7 +74,7 @@ const STAGE_MAP: Record<ProcurementStage, Omit<StageInfo, "stage">> = {
   quote_partial:           { label: "일부 회신",      color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "추가 응답 대기", queueTarget: "quote" },
   quote_received:          { label: "응답 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "비교 검토",     queueTarget: "quote" },
   quote_compare_review:    { label: "비교 검토 필요", color: "text-purple-400",  bgColor: "bg-purple-600/10",   borderColor: "border-purple-600/30",  priority: 0, nextAction: "비교 검토",     queueTarget: "quote" },
-  po_conversion_candidate: { label: "발주 전환 후보", color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "발주 전환 준비", queueTarget: "po" },
+  po_conversion_candidate: { label: "발주 실행 후보", color: "text-blue-400",    bgColor: "bg-blue-600/10",     borderColor: "border-blue-600/30",    priority: 2, nextAction: "발주 실행 준비", queueTarget: "po" },
   po_ready:                { label: "발주 가능",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 1, nextAction: "발주 생성",     queueTarget: "po" },
   po_created:              { label: "발주 완료",      color: "text-emerald-400", bgColor: "bg-emerald-600/10",  borderColor: "border-emerald-600/30", priority: 5, nextAction: "입고 대기",     queueTarget: "done" },
   cancelled:               { label: "취소됨",         color: "text-red-400",     bgColor: "bg-red-600/5",       borderColor: "border-red-600/20",     priority: 9, nextAction: "—",             queueTarget: "cancelled" },
@@ -94,16 +94,17 @@ export function getStageInfo(stage: ProcurementStage): StageInfo {
 export function getNextActionLabel(stage: ProcurementStage, policy: ApprovalPolicy = "none"): string {
   if (stage === "po_conversion_candidate") {
     switch (policy) {
-      case "none": return "발주 전환 준비";
-      case "external_manual": return "승인 패키지 준비";
-      case "in_app_light": return "간이 승인 요청";
+      case "none": return "발주 실행 준비";
+      case "external_manual": return "승인 증빙 연결";
+      case "in_app_light": return "간이 승인 확인";
     }
   }
   return getStageInfo(stage).nextAction;
 }
 
 /**
- * Approval policy 기준으로 PO 전환이 가능한지 판단합니다.
+ * Approval policy 기준으로 PO 실행이 가능한지 판단합니다.
+ * 승인 source of truth는 외부 시스템에 두고, LabAxis는 확인 결과만 반영합니다.
  */
 export function canConvertToPO(policy: ApprovalPolicy, approvalStatus: ApprovalStatus): boolean {
   switch (policy) {
@@ -155,7 +156,7 @@ export const QUOTE_QUEUE_STAGES: ProcurementStage[] = [
   "blocked", "hold",
 ];
 
-/** 발주전환 큐에 보여야 할 stage 목록 */
+/** 발주실행 큐에 보여야 할 stage 목록 */
 export const PO_QUEUE_STAGES: ProcurementStage[] = [
   "po_conversion_candidate", "po_ready",
   "blocked", "hold",
