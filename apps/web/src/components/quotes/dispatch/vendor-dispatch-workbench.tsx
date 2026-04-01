@@ -44,6 +44,7 @@ interface VendorRequestModalProps {
 type SendReadiness = "ready" | "needs_review" | "blocked";
 
 interface ReadinessCheck {
+  key: "supplier" | "contact" | "draft" | "quote";
   label: string;
   ready: boolean;
   blocker?: string;
@@ -129,6 +130,7 @@ export function VendorRequestModal({
 
     const supplierOk = includedCount > 0;
     checks.push({
+      key: "supplier",
       label: "공급사 후보 선별",
       ready: supplierOk,
       blocker: supplierOk ? undefined : "연락 가능한 공급사 후보가 없습니다",
@@ -137,13 +139,17 @@ export function VendorRequestModal({
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const contactOk = includedSuppliers.every((s) => emailRegex.test(s.email));
     checks.push({
+      key: "contact",
       label: "연락 채널 확인",
       ready: contactOk,
-      blocker: contactOk ? undefined : "공급사 연락 채널 확인이 필요합니다",
+      blocker: contactOk
+        ? undefined
+        : `이메일 형식 오류: ${includedSuppliers.filter((s) => !emailRegex.test(s.email)).map((s) => s.vendorName).join(", ")}`,
     });
 
     const draftOk = message.trim().length > 10;
     checks.push({
+      key: "draft",
       label: "전달 메시지 검토",
       ready: draftOk,
       blocker: draftOk ? undefined : "전달 메시지가 준비되지 않았습니다",
@@ -151,6 +157,7 @@ export function VendorRequestModal({
 
     const quoteOk = !!quoteId;
     checks.push({
+      key: "quote",
       label: "견적 연결",
       ready: quoteOk,
       blocker: quoteOk ? undefined : "견적을 먼저 저장해주세요",
@@ -162,8 +169,10 @@ export function VendorRequestModal({
   const sendReadiness: SendReadiness = useMemo(() => {
     const allReady = readinessChecks.every((c) => c.ready);
     if (allReady) return "ready";
+    // supplier(공급사 없음), quote(견적 미저장), contact(이메일 형식 오류)는 hard blocker
+    const HARD_BLOCKER_KEYS: ReadinessCheck["key"][] = ["supplier", "quote", "contact"];
     const hasHardBlocker = readinessChecks.some(
-      (c) => !c.ready && (c.label === "견적 연결" || c.label === "공급사 선정"),
+      (c) => !c.ready && HARD_BLOCKER_KEYS.includes(c.key),
     );
     return hasHardBlocker ? "blocked" : "needs_review";
   }, [readinessChecks]);
@@ -195,12 +204,7 @@ export function VendorRequestModal({
   const handleSubmit = async () => {
     if (sendReadiness === "blocked") return;
 
-    const validVendors = includedSuppliers.map((s) => ({
-      email: s.email,
-      name: s.vendorName,
-    }));
-
-    if (validVendors.length === 0) {
+    if (includedSuppliers.length === 0) {
       toast({ title: "전달 대상 없음", description: "최소 1개 공급사를 선택해주세요.", variant: "destructive" });
       return;
     }
@@ -208,6 +212,26 @@ export function VendorRequestModal({
       toast({ title: "견적 ID 없음", description: "견적을 먼저 저장해주세요.", variant: "destructive" });
       return;
     }
+
+    // 이메일 형식 재검증 — 서버 400 사전 차단
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidSuppliers = includedSuppliers.filter((s) => !emailRegex.test(s.email));
+    if (invalidSuppliers.length > 0) {
+      toast({
+        title: "이메일 형식 오류",
+        description: `${invalidSuppliers.map((s) => s.vendorName).join(", ")}의 이메일을 확인해주세요.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // expiresInDays 범위 검증 — 서버 스키마와 일치
+    const clampedExpires = Math.max(1, Math.min(90, expiresInDays));
+
+    const validVendors = includedSuppliers.map((s) => ({
+      email: s.email,
+      name: s.vendorName,
+    }));
 
     setIsSubmitting(true);
     try {
@@ -217,7 +241,7 @@ export function VendorRequestModal({
         body: JSON.stringify({
           vendors: validVendors,
           message: message.trim() || undefined,
-          expiresInDays,
+          expiresInDays: clampedExpires,
         }),
       });
 
@@ -227,9 +251,14 @@ export function VendorRequestModal({
       }
 
       const result = await response.json();
+      const sentCount = result.summary?.emailsSent ?? result.createdRequests?.length ?? 0;
+      const failedCount = result.summary?.emailsFailed ?? 0;
       toast({
-        title: "견적 요청 전달 완료",
-        description: `${result.sent}개 공급사에 플랫폼을 통해 견적 요청이 전달되었습니다.`,
+        title: failedCount > 0 ? "견적 요청 부분 전달" : "견적 요청 전달 완료",
+        description: failedCount > 0
+          ? `${sentCount}건 전달 완료, ${failedCount}건 발송 실패 — 실패 건은 재시도해주세요.`
+          : `${sentCount}개 공급사에 플랫폼을 통해 견적 요청이 전달되었습니다.`,
+        variant: failedCount > 0 ? "destructive" : "default",
       });
 
       setSuppliers([]);
@@ -254,7 +283,7 @@ export function VendorRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-[#24272d] border-slate-600/40">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-pg border-slate-600/40">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-100">
             <Send className="h-5 w-5 text-blue-400" />
@@ -382,7 +411,7 @@ export function VendorRequestModal({
 
             {/* Manual fallback — only when explicitly opened or no suppliers */}
             {showManualFallback && (
-              <div className="rounded-lg border border-slate-600/30 bg-[#1e2126] p-3 space-y-2">
+              <div className="rounded-lg border border-slate-600/30 bg-sh p-3 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <UserPlus className="h-3.5 w-3.5 text-slate-500" />
                   <p className="text-xs font-medium text-slate-400">AI 후보에 없는 공급사를 직접 추가</p>
@@ -393,14 +422,14 @@ export function VendorRequestModal({
                     placeholder="이메일"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    className="h-8 text-xs bg-[#24272d] border-slate-600/30 text-slate-100 flex-1"
+                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-100 flex-1"
                   />
                   <Input
                     type="text"
                     placeholder="공급사명"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    className="h-8 text-xs bg-[#24272d] border-slate-600/30 text-slate-100 w-36"
+                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-100 w-36"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -445,13 +474,13 @@ export function VendorRequestModal({
               </button>
 
               {messageExpanded && (
-                <div className="rounded-lg border border-slate-600/25 bg-[#1e2126] px-4 py-3">
+                <div className="rounded-lg border border-slate-600/25 bg-sh px-4 py-3">
                   {messageEditing ? (
                     <>
                       <Textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        className="text-xs min-h-[100px] bg-[#24272d] border-slate-600/30 text-slate-100"
+                        className="text-xs min-h-[100px] bg-pg border-slate-600/30 text-slate-100"
                         autoFocus
                       />
                       <div className="flex justify-end mt-2">
@@ -488,7 +517,7 @@ export function VendorRequestModal({
           )}
 
           {/* ═══ Dispatch Conditions ═══ */}
-          <div className="flex items-center gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-[#1e2126]">
+          <div className="flex items-center gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-sh">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-xs text-slate-400">응답 요청 기한</span>
@@ -497,12 +526,15 @@ export function VendorRequestModal({
               <Input
                 type="number"
                 min="1"
-                max="365"
+                max="90"
                 value={expiresInDays}
-                onChange={(e) => setExpiresInDays(parseInt(e.target.value) || 14)}
-                className="h-7 text-xs w-16 text-center bg-[#24272d] border-slate-600/30 text-slate-100"
+                onChange={(e) => {
+                  const v = parseInt(e.target.value) || 14;
+                  setExpiresInDays(Math.max(1, Math.min(90, v)));
+                }}
+                className="h-7 text-xs w-16 text-center bg-sh border-bd text-slate-100"
               />
-              <span className="text-xs text-slate-500">일</span>
+              <span className="text-xs text-slate-500">일 (1~90)</span>
             </div>
           </div>
         </div>
@@ -578,7 +610,7 @@ function SupplierReviewCard({
     <div className={`rounded-lg border px-3.5 py-2.5 transition-all ${
       supplier.included
         ? "border-slate-600/40 bg-[#2a2e35]"
-        : "border-slate-600/15 bg-[#1e2126] opacity-40"
+        : "border-slate-600/15 bg-sh opacity-40"
     }`}>
       <div className="flex items-center gap-3">
         {/* Toggle */}
