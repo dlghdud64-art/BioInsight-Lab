@@ -19,7 +19,7 @@ export const canonicalAiSentenceBank = {
   /** hero + support intro용. 가장 넓고 짧은 가치 문장. */
   broadPromise: [
     "AI가 검색, 비교, 요청 준비의 다음 검토 단계를 정리합니다.",
-    "운영자는 필요한 항목만 더 빠르게 검토하고 적용할 수 있습니다.",
+    "팀은 필요한 항목만 더 빠르게 검토하고 적용할 수 있습니다.",
   ],
 
   /** intro + support + pricing description용. 구체 capability. */
@@ -56,7 +56,7 @@ export const canonicalAiSentenceBank = {
   /** CTA 주변. 가장 보수적. 자동 실행 오해 금지. */
   ctaSupport: [
     "검토 후 다음 단계로 바로 이어갈 수 있습니다.",
-    "운영자가 직접 적용하거나 수정할 수 있습니다.",
+    "직접 적용하거나 수정할 수 있습니다.",
   ],
 
   /** FAQ short answer용. canonical bucket 조합. */

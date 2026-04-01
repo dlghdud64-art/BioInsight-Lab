@@ -22,7 +22,7 @@ const CONSOLE_LAYERS = [
   {
     icon: LayoutDashboard,
     title: "일일 검토와 판단",
-    purpose: "비교가 필요한 후보와 판단 포인트를 먼저 정리해 운영자가 더 빠르게 선택지를 검토할 수 있게 합니다.",
+    purpose: "비교가 필요한 후보와 판단 포인트를 먼저 정리해 담당자가 더 빠르게 선택지를 검토할 수 있게 합니다.",
     support: "비용, 납기, 규격 적합성 같은 검토 포인트를 읽기 쉽게 연결합니다.",
     items: "이월 항목 · 장기 차단 · 체류 시간",
     iconColor: "#2563EB",
@@ -31,7 +31,7 @@ const CONSOLE_LAYERS = [
     icon: BarChart3,
     title: "운영 통제와 누락 점검",
     purpose: "공급사 요청서에 포함할 메시지와 문의 항목을 준비하고, 누락된 항목을 점검합니다.",
-    support: "운영자는 검토 후 적용하거나 수정할 수 있습니다.",
+    support: "검토 후 적용하거나 수정할 수 있습니다.",
     items: "SLA 준수율 · 케이던스 · 팀 워크로드",
     iconColor: "#64748B",
   },
@@ -51,7 +51,7 @@ const SYSTEM_PROOFS = [
   { icon: UserCheck,      text: "배정 → 승인 → 수주·입고까지 상태 추적" },
   { icon: ArrowRightLeft, text: "비교·견적·발주가 하나의 작업 흐름으로 연결" },
   { icon: AlertTriangle,  text: "SLA·예외·병목이 같은 화면에서 드러남" },
-  { icon: Timer,          text: "정리된 후보와 요청 준비 항목은 운영자가 바로 검토하고 다음 단계로 이어갈 수 있습니다" },
+  { icon: Timer,          text: "정리된 후보와 요청 준비 항목을 바로 검토하고 다음 단계로 이어갈 수 있습니다" },
 ];
 
 export function OpsConsolePreviewSection() {

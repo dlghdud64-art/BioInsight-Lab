@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { X, Check, AlertTriangle, ArrowRight, ArrowLeft, Send, Building2, FileText, RefreshCw, ShieldAlert } from "lucide-react";
+import { Check, AlertTriangle, ArrowRight, ArrowLeft, Send, Building2, FileText, RefreshCw, ShieldAlert } from "lucide-react";
 import { type RequestSubmissionReopenState, type RequestResubmissionEvent, createInitialRequestSubmissionReopenState, evaluateRequestResubmissionGuards, validateRequestSubmissionReopenBeforeRecord, buildRequestResubmissionEvent, buildQuoteManagementReentryHandoff } from "@/lib/ai/request-submission-reopen-engine";
 import type { RequestSubmissionReopenHandoff } from "@/lib/ai/request-reopen-engine";
 
@@ -36,26 +36,25 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
   const isRecorded = !!resubmissionEvent;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
-              {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-orange-400" />}
-            </div>
-            <div>
-              <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Resubmission 완료" : "Request Submission Reopen"}</h2>
-              <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                <span className="text-slate-400">Vendor <span className="text-slate-200 font-medium">{reopenState.finalVendorTargetCount}</span></span>
-                <span className="text-slate-600">·</span>
-                <span className="text-slate-400">Lines <span className="text-slate-200 font-medium">{reopenState.reusedRequestLineCount + reopenState.rewrittenRequestLineCount}</span></span>
-                <span className="text-slate-600">·</span>
-                {isRecorded ? <span className="text-emerald-400 font-medium">재제출 완료</span> : validation?.canRecordRequestResubmission ? <span className="text-blue-400 font-medium">재제출 가능</span> : <span className="text-red-400 font-medium">차단됨</span>}
-              </div>
+    <div className="flex flex-col h-full bg-[#1e2024]">
+      {/* ── Decision Header ── */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729] shrink-0">
+        <div className="flex items-center gap-3">
+          <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
+            {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-orange-400" />}
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Resubmission 완료" : "Request Submission Reopen"}</h2>
+            <div className="flex items-center gap-2 text-[10px] mt-0.5">
+              <span className="text-slate-400">Vendor <span className="text-slate-200 font-medium">{reopenState.finalVendorTargetCount}</span></span>
+              <span className="text-slate-600">·</span>
+              <span className="text-slate-400">Lines <span className="text-slate-200 font-medium">{reopenState.reusedRequestLineCount + reopenState.rewrittenRequestLineCount}</span></span>
+              <span className="text-slate-600">·</span>
+              {isRecorded ? <span className="text-emerald-400 font-medium">재제출 완료</span> : validation?.canRecordRequestResubmission ? <span className="text-blue-400 font-medium">재제출 가능</span> : <span className="text-red-400 font-medium">차단됨</span>}
             </div>
           </div>
-          <button type="button" onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05]"><X className="h-4 w-4" /></button>
         </div>
+      </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
           {/* Reopen basis */}
@@ -106,31 +105,31 @@ export function RequestSubmissionReopenWorkbench({ open, onClose, handoff, onRes
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
-          <div className="flex items-center gap-3 text-[10px] mb-2.5">
-            <span className="text-slate-500">Vendor <span className="text-slate-300 font-medium">{reopenState.finalVendorTargetCount}</span></span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-500">Lines <span className="text-slate-300 font-medium">{reopenState.reusedRequestLineCount + reopenState.rewrittenRequestLineCount}</span></span>
-            <span className="text-slate-600">·</span>
-            <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
-          </div>
-          <div className="flex gap-2">
-            {!isRecorded ? (
-              <>
-                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToRequestReopen}><ArrowLeft className="h-3 w-3 mr-1" />Request Reopen</Button>
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium" onClick={executeResubmission} disabled={!validation?.canRecordRequestResubmission || isSubmitting}>
-                  {isSubmitting ? "재제출 중..." : <><Send className="h-3 w-3 mr-1" />Request Resubmission</>}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>닫기</Button>
-                <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onQuoteManagementReentryHandoff}>
-                  <RefreshCw className="h-3 w-3 mr-1" />Quote Management Re-entry<ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </>
-            )}
-          </div>
+      {/* ── Sticky Dock ── */}
+      <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f] shrink-0">
+        <div className="flex items-center gap-3 text-[10px] mb-2.5">
+          <span className="text-slate-500">Vendor <span className="text-slate-300 font-medium">{reopenState.finalVendorTargetCount}</span></span>
+          <span className="text-slate-600">·</span>
+          <span className="text-slate-500">Lines <span className="text-slate-300 font-medium">{reopenState.reusedRequestLineCount + reopenState.rewrittenRequestLineCount}</span></span>
+          <span className="text-slate-600">·</span>
+          <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
+        </div>
+        <div className="flex gap-2">
+          {!isRecorded ? (
+            <>
+              <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToRequestReopen}><ArrowLeft className="h-3 w-3 mr-1" />Request Reopen</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-orange-600 hover:bg-orange-500 text-white font-medium" onClick={executeResubmission} disabled={!validation?.canRecordRequestResubmission || isSubmitting}>
+                {isSubmitting ? "재제출 중..." : <><Send className="h-3 w-3 mr-1" />Request Resubmission</>}
+              </Button>
+            </>
+          ) : (
+            <>
+              <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToRequestReopen}><ArrowLeft className="h-3 w-3 mr-1" />Request Reopen</Button>
+              <Button size="sm" className="flex-1 h-8 text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={onQuoteManagementReentryHandoff}>
+                <RefreshCw className="h-3 w-3 mr-1" />Quote Management Re-entry<ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -58,6 +58,15 @@ import { PoCreatedWorkbenchV2 } from "../_components/po-created-workbench-v2";
 import { calculateRequestReadiness } from "../_components/request-readiness";
 import { validateCompareCategoryIntegrity } from "@/lib/ai/compare-review-engine";
 import type { RequestCandidateHandoff, CompareDecisionSnapshot } from "@/lib/ai/compare-review-engine";
+// ── Reopen chain imports ──
+import { buildCompareReopenHandoff, type CompareReopenHandoff } from "@/lib/ai/sourcing-result-review-engine";
+import type { SourcingResultReviewObject } from "@/lib/ai/sourcing-result-review-engine";
+import { buildRequestReopenFromCompareHandoff, type RequestReopenFromCompareHandoff } from "@/lib/ai/compare-reopen-engine";
+import type { CompareReopenDecisionSnapshot } from "@/lib/ai/compare-reopen-engine";
+import { buildRequestSubmissionReopenHandoff, type RequestSubmissionReopenHandoff } from "@/lib/ai/request-reopen-engine";
+import type { RequestReopenObject } from "@/lib/ai/request-reopen-engine";
+import { buildQuoteManagementReentryHandoff, type QuoteManagementReentryHandoff } from "@/lib/ai/request-submission-reopen-engine";
+import type { RequestResubmissionEvent } from "@/lib/ai/request-submission-reopen-engine";
 import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
 import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
 import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
@@ -116,6 +125,17 @@ export default function SearchPage() {
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
   const [workWindowMode, setWorkWindowMode] = useState<"compare" | "request" | "compare-review" | "compare-review-center" | "approval-handoff-gate" | "approval-workbench" | "po-created-wb-v2" | "request-assembly" | "request-submission" | "quote-queue" | "quote-normalization" | "quote-compare" | "po-conversion" | "po-created" | "dispatch-prep" | "send-confirm" | "po-sent-tracking" | "supplier-confirm" | "receiving-prep" | "receiving-exec" | "inventory-intake" | "stock-release" | "reorder-decision" | "procurement-reentry" | "search-reopen" | "result-review" | "compare-reopen" | "request-reopen" | "submission-reopen" | "quote-reentry" | "norm-reentry" | "compare-reentry" | "approval-reentry" | "po-conv-reentry" | "po-created-reentry" | "dispatch-prep-reentry" | "send-confirm-reentry" | "sent-tracking-reentry" | "supplier-confirm-reentry" | "rcv-prep-reentry" | "rcv-exec-reentry" | "stock-release-reentry" | "reorder-decision-reentry" | "procurement-reentry-reopen" | null>(null);
+
+  // ── Reopen chain canonical states ──
+  const [resultReviewObject, setResultReviewObject] = useState<SourcingResultReviewObject | null>(null);
+  const [compareReopenHandoff, setCompareReopenHandoff] = useState<CompareReopenHandoff | null>(null);
+  const [compareReopenSnapshot, setCompareReopenSnapshot] = useState<CompareReopenDecisionSnapshot | null>(null);
+  const [requestReopenHandoff, setRequestReopenHandoff] = useState<RequestReopenFromCompareHandoff | null>(null);
+  const [requestReopenObject, setRequestReopenObject] = useState<RequestReopenObject | null>(null);
+  const [requestSubmissionReopenHandoff, setRequestSubmissionReopenHandoff] = useState<RequestSubmissionReopenHandoff | null>(null);
+  const [resubmissionEvent, setResubmissionEvent] = useState<RequestResubmissionEvent | null>(null);
+  const [quoteManagementReentryHandoff, setQuoteManagementReentryHandoff] = useState<QuoteManagementReentryHandoff | null>(null);
+
   // ── Stage ownership: sourcing owns up to compare, request/quote owns after ──
   const REQUEST_STAGE_MODES = new Set([
     "request-assembly", "request-submission", "request-reopen", "submission-reopen",
@@ -1197,13 +1217,19 @@ export default function SearchPage() {
         open={workWindowMode === "result-review"}
         onClose={() => setWorkWindowMode(null)}
         handoff={null}
-        onReviewRecorded={(_obj) => {}}
+        onReviewRecorded={(obj) => {
+          setResultReviewObject(obj);
+          // Compare Reopen handoff 미리 생성
+          const crHandoff = buildCompareReopenHandoff(obj);
+          setCompareReopenHandoff(crHandoff);
+        }}
         onCompareReopenHandoff={() => {
           setWorkWindowMode("compare-reopen");
         }}
         onRequestReopenHandoff={() => {
-          // Request Reopen → 3단계 Request Assembly로 순환
-          setWorkWindowMode("request-assembly");
+          // Result Review에서 request-direct 후보가 있을 때 Request Reopen으로 직행
+          // (request-assembly 우회 분기 제거됨)
+          setWorkWindowMode("request-reopen");
         }}
         onReturnToSearchReopen={() => {
           setWorkWindowMode("search-reopen");
@@ -1214,8 +1240,13 @@ export default function SearchPage() {
       <CompareReopenWorkbench
         open={workWindowMode === "compare-reopen"}
         onClose={() => setWorkWindowMode(null)}
-        handoff={null}
-        onDecisionRecorded={(_snapshot) => {}}
+        handoff={compareReopenHandoff}
+        onDecisionRecorded={(snapshot) => {
+          setCompareReopenSnapshot(snapshot);
+          // Compare → Request Reopen handoff 생성
+          const rrHandoff = buildRequestReopenFromCompareHandoff(snapshot);
+          setRequestReopenHandoff(rrHandoff);
+        }}
         onRequestReopenHandoff={() => {
           setWorkWindowMode("request-reopen");
         }}
@@ -1228,8 +1259,13 @@ export default function SearchPage() {
       <RequestReopenWorkbench
         open={workWindowMode === "request-reopen"}
         onClose={() => setWorkWindowMode(null)}
-        handoff={null}
-        onReopenRecorded={(_obj) => {}}
+        handoff={requestReopenHandoff}
+        onReopenRecorded={(obj) => {
+          setRequestReopenObject(obj);
+          // Request Reopen → Submission Reopen handoff 생성
+          const srHandoff = buildRequestSubmissionReopenHandoff(obj);
+          setRequestSubmissionReopenHandoff(srHandoff);
+        }}
         onRequestSubmissionReopenHandoff={() => {
           setWorkWindowMode("submission-reopen");
         }}
@@ -1242,8 +1278,13 @@ export default function SearchPage() {
       <RequestSubmissionReopenWorkbench
         open={workWindowMode === "submission-reopen"}
         onClose={() => setWorkWindowMode(null)}
-        handoff={null}
-        onResubmissionRecorded={(_event) => {}}
+        handoff={requestSubmissionReopenHandoff}
+        onResubmissionRecorded={(event) => {
+          setResubmissionEvent(event);
+          // Submission Reopen → Quote Management Re-entry handoff 생성
+          const qmHandoff = buildQuoteManagementReentryHandoff(event);
+          setQuoteManagementReentryHandoff(qmHandoff);
+        }}
         onQuoteManagementReentryHandoff={() => {
           setWorkWindowMode("quote-reentry");
         }}
@@ -1256,13 +1297,12 @@ export default function SearchPage() {
       <QuoteManagementReentryWorkbench
         open={workWindowMode === "quote-reentry"}
         onClose={() => setWorkWindowMode(null)}
-        handoff={null}
+        handoff={quoteManagementReentryHandoff}
         onReentryRecorded={(_obj) => {}}
         onNormalizationReentryHandoff={() => {
           setWorkWindowMode("norm-reentry");
         }}
         onCompareReentryHandoff={() => {
-          // Compare Re-entry → Quote Compare Review (7단계)로 순환
           setWorkWindowMode("quote-compare");
         }}
         onReturnToSubmissionReopen={() => {

@@ -197,7 +197,14 @@ export function BioInsightHeroSection() {
         />
 
         {/* Layer D: Bottom boundary — white bloom 없음, 얇은 dark separator만 */}
-        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+        <div
+          className="absolute inset-x-0 bottom-0 h-[24vh]"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(7,26,51,0) 0%, rgba(14,33,57,0.08) 34%, rgba(44,64,87,0.18) 62%, rgba(128,145,166,0.28) 100%)",
+          }}
+        />
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(255,255,255,0.04)" }} />
 
         {/* Plexus — opacity 낮춰서 gradient와 경쟁 안 하게 */}
         <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.22 }}>
@@ -261,14 +268,14 @@ export function BioInsightHeroSection() {
         <p className="text-blue-400 font-extrabold text-[10px] md:text-[11px] tracking-[0.25em] mb-4 md:mb-6 uppercase">Biotech Procurement Operations Platform</p>
         <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6">
           구매 요청부터 입고·재고까지,<br />
-          <span className="text-blue-400">운영 상태를 한눈에</span>
+          <span className="text-blue-400">구매 흐름을 한곳에서</span>
         </h1>
         <p className="text-sm md:text-lg text-slate-300 mb-3 md:mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-          검색부터 비교, 요청, 입고, 재고까지 하나의 운영 흐름으로 연결합니다.<br className="hidden sm:block" />AI는 각 단계에서 필요한 후보 정리와 다음 작업 준비를 돕습니다.
+          검색부터 비교, 요청, 입고, 재고까지 하나의 흐름으로 연결합니다.<br className="hidden sm:block" />AI가 검색 결과와 공급사 옵션을 정리하고, 팀은 필요한 검토와 다음 단계에 집중할 수 있습니다.
         </p>
         <p className="text-xs md:text-sm text-slate-400 mb-8 md:mb-10 max-w-xl leading-relaxed">
-          LabAxis는 검색 결과 정리, 비교 판단, 요청 초안 준비를 돕는 AI 보조 기능을 제공합니다.<br className="hidden sm:block" />
-          운영자는 더 빠르게 검토하고, 필요한 다음 단계로 바로 이어갈 수 있습니다.
+          LabAxis는 AI로 검색 결과와 비교 후보를 정리하고,<br className="hidden sm:block" />
+          요청 준비까지 이어서 연구 구매 흐름을 더 빠르게 만듭니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
@@ -314,15 +321,4 @@ export function BioInsightHeroSection() {
                 <div key={step.label} className="flex items-center shrink-0">
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
                     <Icon className="h-3.5 w-3.5 text-white" strokeWidth={1.8} />
-                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}</span>
-                  </div>
-                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-slate-600 mx-0.5 shrink-0" />}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}

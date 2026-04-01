@@ -42,7 +42,7 @@ export function createInitialRequestReopenState(handoff: RequestReopenFromCompar
     reusedRequestLineIds: [],
     rewrittenRequestLineIds: [],
     requestConditionDeltaSummary: "",
-    missingDecisionCount: 3,
+    missingDecisionCount: handoff.requestCandidateIds.length > 0 ? 0 : 1,
     requestReopenBlockedFlag: handoff.requestReopenReadiness === "blocked",
     requestReopenBlockedReason: handoff.requestReopenReadiness === "blocked" ? "Request Reopen 조건 미충족" : null,
     requestReopenObjectId: null,

@@ -72,10 +72,10 @@ export const AI_CLAIM_REGISTRY: AiClaimRegistryEntry[] = [
   {
     id: "hero-3",
     surface: "landing_hero",
-    claimText: "운영자는 더 빠르게 검토하고, 필요한 다음 단계로 바로 이어갈 수 있습니다.",
+    claimText: "AI로 검색 결과와 비교 후보를 정리하고, 요청 준비까지 이어서 연구 구매 흐름을 더 빠르게 만듭니다.",
     mappedCapabilities: ["operator_boundary"],
     evidenceStatus: "supported",
-    why: "operator commit boundary — 운영자가 시작/선택/반영/전송을 직접 결정",
+    why: "operator commit boundary — 팀이 시작/선택/반영/전송을 직접 결정",
   },
 
   // ── Landing Ops Section ──
@@ -90,7 +90,7 @@ export const AI_CLAIM_REGISTRY: AiClaimRegistryEntry[] = [
   {
     id: "ops-2",
     surface: "landing_ops",
-    claimText: "운영자는 검토 후 적용하거나 수정할 수 있습니다.",
+    claimText: "검토 후 적용하거나 수정할 수 있습니다.",
     mappedCapabilities: ["operator_boundary"],
     evidenceStatus: "supported",
     why: "모든 stage에서 explicit operator action 필수",

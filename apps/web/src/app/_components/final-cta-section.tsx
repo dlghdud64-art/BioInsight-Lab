@@ -51,7 +51,7 @@ export function FinalCTASection() {
               style={{ color: "#5B6678" }}
             >
               필요한 후보와 다음 단계를 먼저 정리해,
-              운영자가 더 빠르게 선택할 수 있게 돕습니다.
+              팀이 더 빠르게 검토하고 진행할 수 있게 돕습니다.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 mb-8">
