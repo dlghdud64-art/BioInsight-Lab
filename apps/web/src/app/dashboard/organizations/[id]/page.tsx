@@ -57,15 +57,15 @@ import {
 // 활동 피드 카테고리별 스타일
 type ActivityCategory = "inventory" | "purchase" | "budget" | "team" | "approval" | "member" | "permission" | "quote" | "settings";
 const ACTIVITY_CATEGORY_STYLES: Record<string, { icon: React.ComponentType<{ className?: string }>; bg: string; text: string; label: string }> = {
-  inventory: { icon: Package, bg: "bg-teal-50 bg-teal-950/40", text: "text-teal-600 text-teal-400", label: "재고" },
-  purchase: { icon: ShoppingCart, bg: "bg-blue-50 bg-blue-950/40", text: "text-blue-600 text-blue-400", label: "구매" },
-  budget: { icon: FileText, bg: "bg-amber-50 bg-amber-950/40", text: "text-amber-600 text-amber-400", label: "예산" },
-  approval: { icon: ShieldCheck, bg: "bg-emerald-50 bg-emerald-950/40", text: "text-emerald-600 text-emerald-400", label: "승인" },
-  team: { icon: UserPlus, bg: "bg-purple-50 bg-purple-950/40", text: "text-purple-600 text-purple-400", label: "멤버" },
-  member: { icon: Users, bg: "bg-indigo-50 bg-indigo-950/40", text: "text-indigo-600 text-indigo-400", label: "멤버" },
-  permission: { icon: ShieldCheck, bg: "bg-violet-50 bg-violet-950/40", text: "text-violet-600 text-violet-400", label: "권한" },
-  quote: { icon: FileText, bg: "bg-cyan-50 bg-cyan-950/40", text: "text-cyan-600 text-cyan-400", label: "견적" },
-  settings: { icon: Settings, bg: "bg-slate-100 bg-slate-800/40", text: "text-slate-600 text-slate-400", label: "설정" },
+  inventory: { icon: Package, bg: "bg-teal-950/30", text: "text-teal-400/70", label: "재고" },
+  purchase: { icon: ShoppingCart, bg: "bg-blue-950/30", text: "text-blue-400/70", label: "구매" },
+  budget: { icon: FileText, bg: "bg-amber-950/30", text: "text-amber-400/70", label: "예산" },
+  approval: { icon: ShieldCheck, bg: "bg-emerald-950/30", text: "text-emerald-400/70", label: "승인" },
+  team: { icon: UserPlus, bg: "bg-purple-950/30", text: "text-purple-400/70", label: "멤버" },
+  member: { icon: Users, bg: "bg-indigo-950/30", text: "text-indigo-400/70", label: "멤버" },
+  permission: { icon: ShieldCheck, bg: "bg-violet-950/30", text: "text-violet-400/70", label: "권한" },
+  quote: { icon: FileText, bg: "bg-cyan-950/30", text: "text-cyan-400/70", label: "견적" },
+  settings: { icon: Settings, bg: "bg-slate-800/30", text: "text-slate-400/70", label: "설정" },
 };
 function getActivityCategory(action: string): string {
   const lower = action.toLowerCase();
@@ -87,9 +87,9 @@ function getActivityImportance(action: string): "high" | "medium" | "low" {
   return "low";
 }
 const IMPORTANCE_DOT: Record<string, string> = {
-  high: "bg-red-500",
-  medium: "bg-amber-500",
-  low: "bg-slate-400",
+  high: "bg-red-500/70",
+  medium: "bg-amber-500/60",
+  low: "bg-slate-500/50",
 };
 
 // 역할 라벨 매핑
@@ -507,7 +507,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-slate-400">총 멤버</span>
               <div className="bg-blue-50 bg-blue-900/30 p-1.5 rounded-full">
-                <Users className="h-3.5 w-3.5 text-blue-600 text-blue-400" />
+                <Users className="h-3.5 w-3.5 text-blue-400/70 text-blue-300" />
               </div>
             </div>
             <p className="text-2xl font-bold text-white">{totalMembers}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
@@ -546,7 +546,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-medium text-slate-400">승인 필요</span>
               <div className="bg-blue-50 bg-blue-900/30 p-1.5 rounded-full">
-                <ClipboardCheck className="h-3.5 w-3.5 text-blue-600 text-blue-400" />
+                <ClipboardCheck className="h-3.5 w-3.5 text-blue-400/70 text-blue-300" />
               </div>
             </div>
             <p className="text-2xl font-bold text-white">{approverCount}<span className="text-sm font-normal text-slate-400 ml-0.5">명</span></p>
@@ -612,7 +612,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 <CardContent className="p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="bg-blue-50 bg-blue-900/30 p-2 rounded-lg">
-                      <Users className="h-5 w-5 text-blue-600 text-blue-400" />
+                      <Users className="h-5 w-5 text-blue-400/70 text-blue-300" />
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-white">멤버 현황</p>
@@ -703,12 +703,12 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm truncate">
-                          <span className="font-semibold text-white">{log.actor}</span>
+                          <span className="font-medium text-white/90">{log.actor}</span>
                           <span className="text-slate-400">님이 </span>
                           {actionParts ? (
                             <>
                               <span className="text-slate-400">{actionParts.before}</span>
-                              <span className="text-blue-600 text-blue-400 font-medium">{actionParts.target}</span>
+                              <span className="text-blue-400/70 text-blue-300 font-medium">{actionParts.target}</span>
                               <span className="text-slate-400">{actionParts.after}</span>
                             </>
                           ) : (
@@ -1195,7 +1195,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                               <Badge variant="secondary" className="text-[10px] bg-el text-slate-400 px-1.5 py-0">{style.label}</Badge>
                             </div>
                             <p className="text-sm">
-                              <span className="font-semibold text-white">{log.actor}</span>
+                              <span className="font-medium text-white/90">{log.actor}</span>
                               <span className="text-slate-400">님이 </span>
                               {actionParts ? (
                                 <>

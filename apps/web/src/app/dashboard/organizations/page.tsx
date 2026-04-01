@@ -279,6 +279,19 @@ export default function OrganizationsPage() {
     }
   };
 
+  /* ---------- single-org non-admin auto-redirect ---------- */
+
+  useEffect(() => {
+    if (isFetching || organizations.length === 0) return;
+    // 조직 1개 + owner/admin 아님 → 바로 조직 상세로 redirect
+    if (organizations.length === 1) {
+      const role = organizations[0].role;
+      if (role !== "OWNER" && role !== "ADMIN") {
+        router.replace(`/dashboard/organizations/${organizations[0].id}`);
+      }
+    }
+  }, [isFetching, organizations, router]);
+
   /* ---------- computed ---------- */
 
   const totalMembers = organizations.reduce((s, o) => s + o.memberCount, 0);
