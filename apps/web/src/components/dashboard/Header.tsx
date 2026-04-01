@@ -216,7 +216,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
           {/* 로고 (모바일 전용 - 데스크탑은 고정 사이드바에서 표시) */}
           <Link href="/dashboard" className="flex-shrink-0 lg:hidden">
-            <span className="text-lg font-bold tracking-tight text-slate-100">LabAxis</span>
+            <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
           </Link>
 
           {/* 브레드크럼 (데스크탑 전용) */}

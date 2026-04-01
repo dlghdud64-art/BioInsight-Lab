@@ -138,7 +138,7 @@ function SignInContent() {
           {/* Brand wordmark — sole brand role */}
           <div>
             <Link href="/" className="inline-flex items-center gap-2">
-              <span className="text-[22px] font-bold tracking-tight text-white">LabAxis</span>
+              <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
             </Link>
           </div>
 
@@ -200,7 +200,7 @@ function SignInContent() {
 
         {/* Mobile: dark brand header */}
         <div className="lg:hidden flex justify-center pt-8 pb-4" style={{ backgroundColor: "#07162D" }}>
-          <Link href="/" className="text-xl font-bold tracking-tight text-white">LabAxis</Link>
+          <Link href="/" className="text-xl font-bold tracking-tight text-slate-100">LabAxis</Link>
         </div>
 
         {/* Auth Stack — centered, slightly above middle */}

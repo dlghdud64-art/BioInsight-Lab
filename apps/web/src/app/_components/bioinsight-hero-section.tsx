@@ -50,7 +50,7 @@ function MobileMenu() {
       {open && (
         <div className="fixed inset-0 z-50 bg-[#06142E]/95 backdrop-blur-md flex flex-col">
           <div className="flex justify-between items-center px-6 py-5">
-            <span className="font-bold text-xl text-white">LabAxis</span>
+            <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
             <button onClick={() => setOpen(false)} className="p-2 text-slate-300 hover:text-white" aria-label="닫기">
               <X className="h-5 w-5" />
             </button>
@@ -188,7 +188,7 @@ export function BioInsightHeroSection() {
       {/* Nav */}
       <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/5">
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
-          <span className="font-bold text-xl tracking-tight text-white">LabAxis</span>
+          <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
         </Link>
 
         {/* Desktop nav links — session-aware, loading-safe */}
