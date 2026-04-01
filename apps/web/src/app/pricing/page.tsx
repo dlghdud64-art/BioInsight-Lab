@@ -41,12 +41,12 @@ export default function PricingPage() {
     {
       id: "starter" as PlanId,
       name: "Starter",
-      tagline: "개인 검토와 초기 탐색",
+      tagline: "탐색 · 검토 단계",
       price: "무료",
       priceMonthly: null as number | null,
       priceAnnualPerMonth: null as number | null,
       pricePeriod: undefined as string | undefined,
-      description: "검색과 비교를 먼저 시작할 수 있습니다.",
+      description: "제품 검색, 사양 비교, 견적 리스트 작성을 직접 시작할 수 있습니다.",
       mobileHook: "검색·비교 시작",
       icon: Package,
       badge: null as string | null,
@@ -56,22 +56,22 @@ export default function PricingPage() {
       color: "#94A3B8",
       iconBgSelected: "rgba(148,163,184,0.10)",
       features: [
-        "1개 워크스페이스",
-        "최대 2명",
-        "검색 / 비교 시작",
-        "기본 보조 기능",
+        "워크스페이스 1개 · 사용자 2명",
+        "시약·장비 검색 및 사양 비교",
+        "견적 요청 리스트 생성",
+        "AI 기본 보조 (결과 정리)",
       ],
     },
     {
       id: "team" as PlanId,
       name: "Team",
-      tagline: "팀 협업과 요청 운영 시작",
+      tagline: "팀 단위 요청 운영",
       price: "₩129,000/월",
       priceMonthly: TEAM_MONTHLY,
       priceAnnualPerMonth: teamAnnualPerMonth,
       pricePeriod: undefined as string | undefined,
-      description: "팀 단위로 비교와 견적 요청을 정리할 수 있습니다.",
-      mobileHook: "팀 비교 · 요청 운영",
+      description: "팀 워크스페이스에서 견적 요청 → 비교 → 이력 관리를 함께 운영합니다.",
+      mobileHook: "팀 요청 · 이력 운영",
       icon: Users,
       badge: null as string | null,
       isRecommended: false,
@@ -80,22 +80,22 @@ export default function PricingPage() {
       color: "#67C5E0",
       iconBgSelected: "rgba(103,197,224,0.10)",
       features: [
-        "최대 10명",
-        "비교 / 요청 운영",
-        "요청 이력 공유",
-        "비교 후보 제안",
+        "사용자 최대 10명",
+        "견적 요청 운영 및 이력 공유",
+        "비교 후보 AI 제안",
+        "팀 워크스페이스 공동 관리",
       ],
     },
     {
       id: "business" as PlanId,
       name: "Business",
-      tagline: "승인·감사·재고까지 조직 운영",
+      tagline: "조직 구매 운영 표준",
       price: "₩349,000/월",
       priceMonthly: BUSINESS_MONTHLY,
       priceAnnualPerMonth: businessAnnualPerMonth,
       pricePeriod: undefined as string | undefined,
-      description: "요청, 승인, 입고, 재고를 하나의 흐름으로 연결합니다.",
-      mobileHook: "승인 · 재고 · AI 보조",
+      description: "견적 → 승인 → 발주 → 입고 → 재고를 하나의 운영 흐름으로 연결합니다.",
+      mobileHook: "승인 · 발주 · 재고 운영",
       icon: Building,
       badge: "조직 운영에 추천",
       isRecommended: true,
@@ -104,22 +104,22 @@ export default function PricingPage() {
       color: "#6FA2FF",
       iconBgSelected: "rgba(111,162,255,0.10)",
       features: [
-        "최대 30명",
-        "승인 라인 / 감사 로그",
-        "입고 / 재고 운영",
-        "AI 보조 기능 포함",
+        "사용자 최대 30명",
+        "다단계 승인 라인 · 감사 로그",
+        "입고 · Lot · 재고 운영",
+        "AI 판단 보조 · 초안 생성 · 누락 점검",
       ],
     },
     {
       id: "enterprise" as PlanId,
       name: "Enterprise",
-      tagline: "보안·연동·대규모 운영 표준화",
+      tagline: "보안 · 연동 · 대규모 표준화",
       price: "별도 문의",
       priceMonthly: null as number | null,
       priceAnnualPerMonth: null as number | null,
       pricePeriod: undefined as string | undefined,
-      description: "보안 정책과 시스템 연동이 필요한 조직을 위한 플랜입니다.",
-      mobileHook: "SSO · API · 맞춤 자동화",
+      description: "SSO, ERP 연동, 전담 지원 등 보안/규정 요건이 있는 조직을 위한 구조입니다.",
+      mobileHook: "SSO · ERP · 전담 지원",
       icon: Building2,
       badge: null as string | null,
       isRecommended: false,
@@ -128,31 +128,33 @@ export default function PricingPage() {
       color: "#A78BFA",
       iconBgSelected: "rgba(167,139,250,0.10)",
       features: [
-        "사용자 수 협의",
-        "SSO / 고급 권한",
-        "API / ERP 연동",
-        "맞춤형 자동화 협의",
+        "사용자 수 · 워크스페이스 협의",
+        "SSO · 고급 권한 · 감사 확장",
+        "API · ERP · 그룹웨어 연동",
+        "전담 지원 · SLA · 맞춤 자동화",
       ],
     },
   ];
 
   const comparisonFeatures: ComparisonItem[] = [
-    { isCategoryHeader: true, label: "기본" },
+    { isCategoryHeader: true, label: "규모 · 접근" },
     { feature: "워크스페이스", starter: "1개", team: "1개", business: "1개", enterprise: "협의", key: true },
     { feature: "사용자 수", starter: "최대 2명", team: "최대 10명", business: "최대 30명", enterprise: "협의", key: true },
-    { feature: "검색 / 비교", starter: true, team: true, business: true, enterprise: true },
-    { feature: "견적 요청", starter: "제한", team: true, business: true, enterprise: true },
-    { feature: "요청 이력", starter: "기본", team: true, business: true, enterprise: true },
-    { isCategoryHeader: true, label: "운영", tier: "business" },
-    { feature: "승인 라인", starter: "—", team: "기본", business: "다단계", enterprise: "맞춤", key: true },
-    { feature: "감사 로그", starter: "—", team: "제한", business: "포함", enterprise: "확장", key: true },
-    { feature: "입고 / 재고", starter: "—", team: "제한", business: "포함", enterprise: "확장" },
+    { isCategoryHeader: true, label: "탐색 · 요청" },
+    { feature: "시약/장비 검색 · 비교", starter: true, team: true, business: true, enterprise: true },
+    { feature: "견적 요청 운영", starter: "제한", team: true, business: true, enterprise: true },
+    { feature: "요청 이력 · 공유", starter: "기본", team: "팀 공유", business: "조직 전체", enterprise: "조직 전체" },
+    { isCategoryHeader: true, label: "구매 운영", tier: "business" },
+    { feature: "승인 라인", starter: "—", team: "단일 승인", business: "다단계", enterprise: "맞춤", key: true },
+    { feature: "발주 · 입고 · Lot 관리", starter: "—", team: "제한", business: "포함", enterprise: "확장", key: true },
+    { feature: "재고 · 소진 추적", starter: "—", team: "제한", business: "포함", enterprise: "확장" },
+    { feature: "감사 로그", starter: "—", team: "기본", business: "포함", enterprise: "확장" },
     { isCategoryHeader: true, label: "AI 보조" },
-    { feature: "AI 보조 기능", starter: "기본 보조", team: "결과 정리 / 후보 제안", business: "판단 제안 / 초안 생성 / 누락 점검", enterprise: "확장형 자동화 협의", key: true },
-    { isCategoryHeader: true, label: "보안 / 연동", tier: "enterprise" },
-    { feature: "SSO / 보안", starter: "—", team: "—", business: "제한", enterprise: "포함", key: true },
-    { feature: "API / ERP 연동", starter: "—", team: "—", business: "제한", enterprise: "포함", key: true },
-    { feature: "지원 방식", starter: "이메일 지원", team: "우선 이메일 지원", business: "우선 지원 / 온보딩", enterprise: "전담 지원 / SLA" },
+    { feature: "AI 보조 범위", starter: "결과 정리", team: "후보 제안 · 비교 정리", business: "판단 보조 · 초안 생성 · 누락 점검", enterprise: "확장형 자동화 협의", key: true },
+    { isCategoryHeader: true, label: "보안 · 연동", tier: "enterprise" },
+    { feature: "SSO · 권한 관리", starter: "—", team: "—", business: "기본", enterprise: "포함", key: true },
+    { feature: "API · ERP 연동", starter: "—", team: "—", business: "제한", enterprise: "포함", key: true },
+    { feature: "도입 지원", starter: "이메일", team: "우선 이메일", business: "온보딩 · 우선 지원", enterprise: "전담 지원 · SLA" },
   ];
 
   const getCheckoutUrl = useCallback(
@@ -223,10 +225,10 @@ export default function PricingPage() {
             {/* ── 페이지 헤드라인 ── */}
             <div className="text-center mb-4 md:mb-10">
               <h1 className="text-lg md:text-4xl lg:text-5xl font-bold mb-1 md:mb-3" style={{ color: "#F1F5F9" }}>
-                맞는 플랜으로 시작하세요
+                우리 조직에 맞는 도입 구조
               </h1>
-              <p className="text-xs md:text-lg max-w-xl mx-auto leading-relaxed" style={{ color: "#94A3B8" }}>
-                개인 탐색부터 조직 운영까지, 단계별 플랜
+              <p className="text-xs md:text-lg max-w-2xl mx-auto leading-relaxed" style={{ color: "#94A3B8" }}>
+                탐색 단계부터 조직 전체 운영까지 — 현재 업무 범위에 맞춰 시작하고, 필요할 때 확장하세요
               </p>
             </div>
 
@@ -433,18 +435,41 @@ export default function PricingPage() {
                 })}
               </div>
 
+              {/* ── 도입 기준 가이드 ── */}
+              <div className="mb-6 md:mb-10 rounded-2xl px-5 py-5 md:px-8 md:py-7" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4" }}>
+                <h3 className="text-sm md:text-base font-bold mb-3" style={{ color: "#0F1728" }}>어떤 플랜이 맞을까요?</h3>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-5 text-xs md:text-sm" style={{ color: "#556070" }}>
+                  <div>
+                    <span className="font-semibold" style={{ color: "#64748B" }}>Starter</span>
+                    <p className="mt-0.5 leading-relaxed">개인이 제품을 검색하고 비교하는 단계. 구매 프로세스 없이 탐색만 필요할 때.</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold" style={{ color: "#0E7490" }}>Team</span>
+                    <p className="mt-0.5 leading-relaxed">연구실/팀 단위로 견적 요청을 함께 관리하고, 이력을 공유해야 할 때.</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold" style={{ color: "#2563EB" }}>Business</span>
+                    <p className="mt-0.5 leading-relaxed">승인 → 발주 → 입고 → 재고까지 조직 전체 구매 흐름을 운영해야 할 때.</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold" style={{ color: "#7C3AED" }}>Enterprise</span>
+                    <p className="mt-0.5 leading-relaxed">SSO, ERP 연동, 전담 지원 등 보안·규정 요건이 있는 대규모 조직.</p>
+                  </div>
+                </div>
+              </div>
+
               {/* ── 플랜별 기능 비교 ── */}
               <div className="mb-8">
                 <div className="text-center mb-4 md:mb-6">
                   <h2 className="text-base md:text-3xl font-bold mb-1 md:mb-2" style={{ color: "#0F1728" }}>
-                    플랜별 기능 비교
+                    운영 범위 비교
                   </h2>
 
                   <div className="flex items-center justify-center gap-4 md:gap-6 mt-3 flex-wrap">
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Starter</span> 개인 시작</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Team</span> 협업 시작</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#2563EB" }}>Business</span> 조직 운영 표준</span>
-                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Enterprise</span> 보안/연동/대규모</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#64748B" }}>Starter</span> 탐색</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#0E7490" }}>Team</span> 요청 운영</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#2563EB" }}>Business</span> 조직 구매 운영</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#7C3AED" }}>Enterprise</span> 보안/연동/대규모</span>
                   </div>
                 </div>
 
@@ -555,6 +580,42 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
+
+      {/* ── Conversion band ── */}
+      <section style={{ backgroundColor: "#EAF1FB" }}>
+        <div className="mx-auto max-w-[1120px] px-4 py-12 md:py-16">
+          <div className="rounded-2xl px-8 pt-12 pb-10 md:px-20 md:pt-16 md:pb-14 text-center" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4", boxShadow: "0 1px 8px rgba(37,99,235,0.04)" }}>
+            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#2563EB" }}>Get Started</p>
+            <h2 className="text-xl md:text-[28px] font-bold mb-3" style={{ color: "#0F1728", lineHeight: 1.3 }}>
+              도입 문의 또는 무료 체험으로 시작하세요
+            </h2>
+            <p className="text-sm md:text-base mb-8 max-w-lg mx-auto" style={{ color: "#556070", lineHeight: 1.7 }}>
+              현재 업무 범위에 맞는 플랜을 선택하고, 운영에 바로 연결할 수 있습니다.
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Button
+                className="h-12 px-10 text-[15px] font-bold rounded-lg shadow-sm"
+                style={{ backgroundColor: "#2F6BFF", color: "#FFFFFF" }}
+                onClick={() => (window.location.href = "/search")}
+              >
+                무료로 시작하기
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+              <Button
+                variant="outline"
+                className="h-12 px-10 text-[15px] font-semibold rounded-lg"
+                style={{ borderColor: "#D0DAE8", color: "#334155", backgroundColor: "transparent" }}
+                onClick={() => (window.location.href = "/support")}
+              >
+                도입 문의
+              </Button>
+            </div>
+            <p className="mt-6 text-[12px]" style={{ color: "#94A3B8" }}>
+              현재 Beta 기간 중 모든 기능을 무료로 체험할 수 있습니다
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm" style={{ backgroundColor: "rgba(255,255,255,0.95)", borderTop: "1px solid #E3EAF4" }}>
