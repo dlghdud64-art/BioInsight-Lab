@@ -321,4 +321,15 @@ export function BioInsightHeroSection() {
                 <div key={step.label} className="flex items-center shrink-0">
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
                     <Icon className="h-3.5 w-3.5 text-white" strokeWidth={1.8} />
-                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}
+                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}</span>
+                  </div>
+                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-slate-500 shrink-0 mx-0.5" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

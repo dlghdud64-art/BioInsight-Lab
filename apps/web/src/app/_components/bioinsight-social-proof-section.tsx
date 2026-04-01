@@ -52,4 +52,18 @@ export function BioInsightSocialProofSection() {
                       {step.label}
                     </p>
                     <p className="text-[10px] leading-none mt-0.5 hidden md:block" style={{ color: "#94A3B8" }}>
-                     
+                      {step.desc}
+                    </p>
+                  </div>
+                </div>
+                {i < PIPELINE_STEPS.length - 1 && (
+                  <ChevronRight className="h-3.5 w-3.5 shrink-0 mx-1 md:mx-2" style={{ color: "#94A3B8" }} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
