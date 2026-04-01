@@ -7,8 +7,8 @@ import {
 
 // 카드 surface 통일 — white cards on light body
 const CARD_BG = "#FFFFFF";
-const CARD_BORDER = "#DAD8D3";
-const CARD_BORDER_HOVER = "#C5C3BE";
+const CARD_BORDER = "#E3EAF4";
+const CARD_BORDER_HOVER = "#D0DAE8";
 
 const CONSOLE_LAYERS = [
   {
@@ -56,7 +56,7 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#EFEEEB", borderBottom: "1px solid #E0DED9" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#EDF2F8", borderBottom: "1px solid #E3EAF4" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#64748B" }}>

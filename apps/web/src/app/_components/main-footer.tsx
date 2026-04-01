@@ -53,24 +53,19 @@ export function MainFooter() {
   ];
 
   return (
-    <footer>
-      {/* Transition strip: warm neutral → dark closing */}
-      <div style={{ backgroundColor: "#2C3340", borderTop: "1px solid #C5C3BE" }}>
-        <div className="h-1.5" />
-      </div>
-      <div style={{ backgroundColor: "#111820" }}>
-      <div className="mx-auto max-w-6xl px-4 pt-14 pb-12">
+    <footer style={{ backgroundColor: "#0C1524" }}>
+      <div className="mx-auto max-w-6xl px-4 pt-12 pb-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
           {/* 왼쪽: 로고/설명/소셜 */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide text-slate-400" style={{ backgroundColor: "#1A2230" }}>
+              <span className="text-xl font-bold tracking-tight" style={{ color: "#D9E2F1" }}>LabAxis</span>
+              <span className="rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide" style={{ backgroundColor: "#152035", color: "#8A97AA" }}>
                 Beta
               </span>
             </div>
-            <p className="text-sm text-[#8A99AF] leading-relaxed max-w-xs">
+            <p className="text-sm leading-relaxed max-w-xs" style={{ color: "#8A97AA" }}>
               바이오 시약·장비 검색, 견적, 구매, 재고 관리를
               <br />하나로 연결한 운영 플랫폼입니다.
             </p>
@@ -80,8 +75,10 @@ export function MainFooter() {
                 href="https://github.com/..."
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#6A7A90] hover:text-slate-100 transition-colors"
-                style={{ border: "1px solid #1E2A3A" }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                style={{ border: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                 aria-label="GitHub"
               >
                 <Github className="h-4 w-4" />
@@ -89,8 +86,10 @@ export function MainFooter() {
               {/* Mail */}
               <a
                 href="mailto:contact@labaxis.io"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#6A7A90] hover:text-slate-100 transition-colors"
-                style={{ border: "1px solid #1E2A3A" }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                style={{ border: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                 aria-label="이메일 문의"
               >
                 <Mail className="h-4 w-4" />
@@ -100,8 +99,10 @@ export function MainFooter() {
                 href="#"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[#6A7A90] hover:text-slate-100 transition-colors"
-                style={{ border: "1px solid #1E2A3A" }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+                style={{ border: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                 aria-label="문서"
               >
                 <ExternalLink className="h-4 w-4" />
@@ -113,7 +114,7 @@ export function MainFooter() {
           <div className="grid gap-6 grid-cols-2 sm:grid-cols-4 text-xs">
             {footerColumns.map((col) => (
               <div key={col.title} className="space-y-2.5">
-                <h4 className="text-[11px] font-bold uppercase tracking-wide text-[#6A7A90]">
+                <h4 className="text-[11px] font-bold uppercase tracking-wide" style={{ color: "#8A97AA" }}>
                   {col.title}
                 </h4>
                 <ul className="space-y-1.5">
@@ -124,21 +125,28 @@ export function MainFooter() {
                           href={link.href}
                           target={link.href.startsWith("http") ? "_blank" : undefined}
                           rel={link.href.startsWith("http") ? "noreferrer" : undefined}
-                          className="text-[#9DADC0] hover:text-white transition-colors"
+                          className="transition-colors" style={{ color: "#8A97AA" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                         >
                           {link.label}
                         </a>
                       ) : link.onClick ? (
                         <button
                           onClick={link.onClick}
-                          className="text-[#9DADC0] hover:text-white transition-colors text-left"
+                          className="transition-colors text-left"
+                          style={{ color: "#8A97AA" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                         >
                           {link.label}
                         </button>
                       ) : (
                         <Link
                           href={link.href}
-                          className="text-[#9DADC0] hover:text-white transition-colors"
+                          className="transition-colors" style={{ color: "#8A97AA" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.color = "#8A97AA"; }}
                         >
                           {link.label}
                         </Link>
@@ -152,17 +160,22 @@ export function MainFooter() {
         </div>
 
         {/* 하단 바 */}
-        <div className="mt-10 flex flex-col md:flex-row md:justify-between gap-2 pt-5 text-center md:text-left text-[11px] text-[#6A7A90]" style={{ borderTop: "1px solid #1A2230" }}>
+        <div className="mt-8 flex flex-col md:flex-row md:justify-between gap-2 pt-5 text-center md:text-left text-[11px]" style={{ borderTop: "1px solid rgba(217,226,241,0.10)", color: "#8A97AA" }}>
           <span>&copy; {year} LabAxis. All rights reserved.</span>
           <div className="flex items-center justify-center md:justify-end gap-3">
-            <Link href="/terms" className="hover:text-[#C8D4E5] transition-colors">이용약관</Link>
-            <span className="text-[#344257]">|</span>
-            <Link href="/privacy" className="hover:text-[#C8D4E5] transition-colors">개인정보처리방침</Link>
-            <span className="text-[#344257]">|</span>
-            <Link href="/operations-policy" className="hover:text-[#C8D4E5] transition-colors">운영정책</Link>
+            <Link href="/terms" className="transition-colors"
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>이용약관</Link>
+            <span style={{ color: "rgba(217,226,241,0.15)" }}>|</span>
+            <Link href="/privacy" className="transition-colors"
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>개인정보처리방침</Link>
+            <span style={{ color: "rgba(217,226,241,0.15)" }}>|</span>
+            <Link href="/operations-policy" className="transition-colors"
+                onMouseEnter={(e) => { e.currentTarget.style.color = "#D9E2F1"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = "inherit"; }}>운영정책</Link>
           </div>
         </div>
-      </div>
       </div>
     </footer>
   );

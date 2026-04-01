@@ -24,6 +24,9 @@ export default function HomePage() {
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
+      {/* 1.5. Hero → Content bridge band */}
+      <div style={{ height: 80, background: "linear-gradient(180deg, #081936 0%, #162640 25%, #3A4A62 50%, #8B9AB0 75%, #EDF2F8 100%)" }} />
+
       {/* 2. Trust Strip */}
       <BioInsightSocialProofSection />
 

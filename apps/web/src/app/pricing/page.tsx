@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Check, Package, Users, Building2, Building, ArrowRight, ChevronDown } from "lucide-react";
 import { MainHeader } from "@/app/_components/main-header";
-import { MainLayout } from "@/app/_components/main-layout";
 import { MainFooter } from "@/app/_components/main-footer";
 import { cn } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -190,12 +189,12 @@ export default function PricingPage() {
           key="annual"
           className="flex flex-col items-center gap-0.5 animate-in slide-in-from-bottom-2 fade-in duration-300"
         >
-          <span className="text-slate-500 line-through text-xs md:text-lg font-normal">{plan.price}</span>
-          <span className="text-lg md:text-3xl font-bold text-slate-100">
+          <span style={{ color: "#94A3B8" }} className="line-through text-xs md:text-lg font-normal">{plan.price}</span>
+          <span className="text-lg md:text-3xl font-bold" style={{ color: "#0F1728" }}>
             ₩{plan.priceAnnualPerMonth.toLocaleString()}
-            <span className="text-[10px] md:text-sm font-normal text-slate-400">/월(연간)</span>
+            <span className="text-[10px] md:text-sm font-normal" style={{ color: "#7B8796" }}>/월(연간)</span>
           </span>
-          <span className="inline-flex items-center rounded-md bg-green-500/10 px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold text-green-400 ring-1 ring-green-500/20">
+          <span className="inline-flex items-center rounded-md px-1.5 md:px-2.5 py-0.5 md:py-1 text-[10px] md:text-xs font-semibold" style={{ backgroundColor: "rgba(22,163,74,0.08)", color: "#16A34A", border: "1px solid rgba(22,163,74,0.15)" }}>
             10% 할인
           </span>
         </span>
@@ -204,61 +203,75 @@ export default function PricingPage() {
     return (
       <span key="monthly" className="animate-in slide-in-from-bottom-2 fade-in duration-300">
         {plan.price}
-        {plan.pricePeriod && <span className="text-[10px] md:text-sm font-normal text-slate-400">{plan.pricePeriod}</span>}
+        {plan.pricePeriod && <span className="text-[10px] md:text-sm font-normal" style={{ color: "#7B8796" }}>{plan.pricePeriod}</span>}
       </span>
     );
   };
 
   return (
-    <MainLayout>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#F3F6FB" }}>
       <MainHeader />
-      <div className="w-full">
-        <div className="pt-14 md:pt-20 min-h-screen">
-          <div className="container mx-auto px-4 py-6 md:py-16">
-            <div className="max-w-7xl mx-auto">
+      {/* ── Hero: compact pricing hero ── */}
+      <section
+        className="pt-14 pb-10 md:pt-20 md:pb-14"
+        style={{
+          background: "linear-gradient(180deg, #020617 0%, #0B1A33 40%, #1A2D4D 70%, #3A4F6E 90%, #F3F6FB 100%)",
+        }}
+      >
+        <div className="container mx-auto px-4 pt-6 md:pt-10">
+          <div className="max-w-7xl mx-auto">
+            {/* ── 페이지 헤드라인 ── */}
+            <div className="text-center mb-4 md:mb-10">
+              <h1 className="text-lg md:text-4xl lg:text-5xl font-bold mb-1 md:mb-3" style={{ color: "#F1F5F9" }}>
+                맞는 플랜으로 시작하세요
+              </h1>
+              <p className="text-xs md:text-lg max-w-xl mx-auto leading-relaxed" style={{ color: "#94A3B8" }}>
+                개인 탐색부터 조직 운영까지, 단계별 플랜
+              </p>
+            </div>
 
-              {/* ── 페이지 헤드라인 ── */}
-              <div className="text-center mb-4 md:mb-12">
-                <h1 className="text-lg md:text-4xl lg:text-5xl font-bold text-slate-100 mb-1 md:mb-3">
-                  맞는 플랜으로 시작하세요
-                </h1>
-                <p className="text-slate-400 text-xs md:text-lg max-w-xl mx-auto leading-relaxed">
-                  개인 탐색부터 조직 운영까지, 단계별 플랜
-                </p>
+            {/* ── 결제 주기 토글 ── */}
+            <div className="flex items-center justify-center mb-4 md:mb-8">
+              <div className="rounded-full p-0.5 md:p-1 inline-flex" style={{ backgroundColor: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsAnnual(false)}
+                  className={cn(
+                    "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+                    !isAnnual
+                      ? "shadow-sm"
+                      : ""
+                  )}
+                  style={!isAnnual ? { backgroundColor: "rgba(255,255,255,0.15)", color: "#F1F5F9" } : { color: "#94A3B8" }}
+                >
+                  월간
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAnnual(true)}
+                  className={cn(
+                    "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent flex items-center gap-1 md:gap-2",
+                    isAnnual
+                      ? "shadow-sm"
+                      : ""
+                  )}
+                  style={isAnnual ? { backgroundColor: "rgba(255,255,255,0.15)", color: "#F1F5F9" } : { color: "#94A3B8" }}
+                >
+                  연간
+                  <span className="bg-blue-500/10 text-blue-400 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium">
+                    -10%
+                  </span>
+                </button>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-              {/* ── 결제 주기 토글 ── */}
-              <div className="flex items-center justify-center mb-4 md:mb-12">
-                <div className="bg-el rounded-full p-0.5 md:p-1 inline-flex border border-bd">
-                  <button
-                    type="button"
-                    onClick={() => setIsAnnual(false)}
-                    className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-                      !isAnnual
-                        ? "bg-pn shadow-sm text-slate-100"
-                        : "text-slate-400 hover:text-slate-300"
-                    )}
-                  >
-                    월간
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsAnnual(true)}
-                    className={cn(
-                      "px-3 md:px-5 py-1.5 md:py-2 text-xs md:text-sm font-medium rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent flex items-center gap-1 md:gap-2",
-                      isAnnual
-                        ? "bg-pn shadow-sm text-slate-100"
-                        : "text-slate-400 hover:text-slate-300"
-                    )}
-                  >
-                    연간
-                    <span className="bg-blue-500/10 text-blue-400 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded-full font-medium">
-                      -10%
-                    </span>
-                  </button>
-                </div>
-              </div>
+      {/* ── Content surface ── */}
+      <div style={{ backgroundColor: "#F3F6FB" }}>
+        <div className="container mx-auto px-4 py-6 md:py-12">
+          <div className="max-w-7xl mx-auto">
 
               {/* ── 가격 카드 ── */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-8 mb-10 md:mb-16 items-stretch">
@@ -285,14 +298,25 @@ export default function PricingPage() {
                         }
                       }}
                       className={cn(
-                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none border-bd bg-pn",
+                        "relative flex flex-col transition-all duration-300 cursor-pointer select-none",
                         plan.cardHeight,
                         plan.badge && "overflow-visible",
-                        isSelected && "ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] bg-pn border-blue-500/40",
-                        !isSelected && "hover:border-bs hover:bg-el",
-                        isRecommended && !isSelected && "border-2 border-blue-500/40 shadow-lg md:scale-105 z-10",
-                        isRecommended && isSelected && "border-2 border-blue-500/40 shadow-lg ring-2 ring-blue-500 ring-offset-2 ring-offset-[var(--surface-shell)] md:scale-105 z-10"
+                        isRecommended && "md:scale-105 z-10"
                       )}
+                      style={{
+                        backgroundColor: "#FFFFFF",
+                        border: isSelected
+                          ? "2px solid rgba(37,99,235,0.5)"
+                          : isRecommended
+                          ? "2px solid rgba(37,99,235,0.35)"
+                          : "1px solid #E3EAF4",
+                        boxShadow: isSelected
+                          ? "0 0 0 3px rgba(37,99,235,0.15), 0 4px 20px rgba(37,99,235,0.08)"
+                          : isRecommended
+                          ? "0 4px 20px rgba(37,99,235,0.08)"
+                          : "0 1px 4px rgba(0,0,0,0.03)",
+                        borderRadius: "12px",
+                      }}
                     >
                       {plan.badge && (
                         <div className="absolute -top-3 md:-top-4 left-1/2 -translate-x-1/2 z-10">
@@ -305,8 +329,8 @@ export default function PricingPage() {
                       <CardHeader className="text-center pb-1 md:pb-4 px-2.5 md:px-6 pt-3 md:pt-6">
                         <div className="hidden md:flex justify-center mb-3">
                           <div
-                            className="p-3 rounded-full transition-colors bg-el"
-                            style={isSelected || isRecommended ? { backgroundColor: plan.iconBgSelected } : undefined}
+                            className="p-3 rounded-full transition-colors"
+                            style={{ backgroundColor: isSelected || isRecommended ? plan.iconBgSelected : "#F3F6FB" }}
                           >
                             <Icon
                               className="h-6 w-6"
@@ -315,19 +339,19 @@ export default function PricingPage() {
                           </div>
                         </div>
 
-                        <CardTitle className="text-base md:text-xl font-bold mb-0.5 text-slate-100">{plan.name}</CardTitle>
-                        <p className="text-[10px] md:text-[11px] font-semibold text-slate-500 uppercase tracking-widest mb-2 md:mb-3">
+                        <CardTitle className="text-base md:text-xl font-bold mb-0.5" style={{ color: "#0F1728" }}>{plan.name}</CardTitle>
+                        <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-widest mb-2 md:mb-3" style={{ color: "#7B8796" }}>
                           {plan.tagline}
                         </p>
 
                         <div className="flex flex-col items-center gap-0.5 mb-1 md:mb-3 min-h-[4rem] md:min-h-[5rem] overflow-hidden justify-center">
-                          <span className="text-xl md:text-3xl font-bold text-slate-100 text-center">
+                          <span className="text-xl md:text-3xl font-bold text-center" style={{ color: "#0F1728" }}>
                             {renderPrice(plan)}
                           </span>
                         </div>
 
-                        <p className="md:hidden text-[10px] font-medium text-blue-400/80">{plan.mobileHook}</p>
-                        <CardDescription className="hidden md:block text-sm text-slate-400 leading-relaxed">
+                        <p className="md:hidden text-[10px] font-medium" style={{ color: "#2563EB" }}>{plan.mobileHook}</p>
+                        <CardDescription className="hidden md:block text-sm leading-relaxed" style={{ color: "#556070" }}>
                           {plan.description}
                         </CardDescription>
                       </CardHeader>
@@ -340,23 +364,19 @@ export default function PricingPage() {
                               !isExpanded && index >= MOBILE_FEATURE_LIMIT && "hidden md:flex"
                             )}>
                               <Check
-                                className={cn(
-                                  "h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5",
-                                  isRecommended ? "text-blue-400" : "text-green-400"
-                                )}
+                                className="h-3.5 w-3.5 md:h-4 md:w-4 flex-shrink-0 mt-0.5"
+                                style={{ color: isRecommended ? "#2563EB" : "#16A34A" }}
                               />
-                              <span className="text-xs md:text-sm text-slate-300">{feature}</span>
+                              <span className="text-xs md:text-sm" style={{ color: "#334155" }}>{feature}</span>
                             </li>
                           ))}
                           {!isExpanded && plan.features.slice(MOBILE_FEATURE_LIMIT).map((feature, index) => (
                             <li key={`desktop-${index}`} className="hidden md:flex items-start gap-2.5 leading-relaxed">
                               <Check
-                                className={cn(
-                                  "h-4 w-4 flex-shrink-0 mt-0.5",
-                                  isRecommended ? "text-blue-400" : "text-green-400"
-                                )}
+                                className="h-4 w-4 flex-shrink-0 mt-0.5"
+                                style={{ color: isRecommended ? "#2563EB" : "#16A34A" }}
                               />
-                              <span className="text-sm text-slate-300">{feature}</span>
+                              <span className="text-sm" style={{ color: "#334155" }}>{feature}</span>
                             </li>
                           ))}
                         </ul>
@@ -364,7 +384,8 @@ export default function PricingPage() {
                         {hasMore && (
                           <button
                             type="button"
-                            className="md:hidden flex items-center justify-center gap-1 text-[11px] text-slate-500 hover:text-slate-300 mb-3 transition-colors"
+                            className="md:hidden flex items-center justify-center gap-1 text-[11px] mb-3 transition-colors"
+                            style={{ color: "#7B8796" }}
                             onClick={(e) => {
                               e.stopPropagation();
                               setExpandedCards((prev) => {
@@ -382,12 +403,12 @@ export default function PricingPage() {
 
                         {isSelected ? (
                           <Button
-                            className={cn(
-                              "w-full font-semibold h-9 md:h-10 text-sm",
+                            className="w-full font-semibold h-9 md:h-10 text-sm"
+                            style={
                               plan.id === "business"
-                                ? "bg-blue-600 hover:bg-blue-500 text-white shadow-sm"
-                                : "bg-el hover:bg-st text-slate-100"
-                            )}
+                                ? { backgroundColor: "#2F6BFF", color: "#FFFFFF", boxShadow: "0 1px 8px rgba(47,107,255,0.22)" }
+                                : { backgroundColor: "#F3F6FB", color: "#0F1728", border: "1px solid #E3EAF4" }
+                            }
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
                           >
                             {plan.buttonText}
@@ -396,7 +417,8 @@ export default function PricingPage() {
                         ) : (
                           <Button
                             variant="outline"
-                            className="w-full border-bd hover:bg-el text-slate-400 hover:text-slate-200 h-9 md:h-10 text-sm bg-transparent"
+                            className="w-full h-9 md:h-10 text-sm"
+                            style={{ borderColor: "#E3EAF4", color: "#556070", backgroundColor: "transparent" }}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleCardSelect(plan.id);
@@ -414,46 +436,40 @@ export default function PricingPage() {
               {/* ── 플랜별 기능 비교 ── */}
               <div className="mb-8">
                 <div className="text-center mb-4 md:mb-6">
-                  <h2 className="text-base md:text-3xl font-bold text-slate-100 mb-1 md:mb-2">
+                  <h2 className="text-base md:text-3xl font-bold mb-1 md:mb-2" style={{ color: "#0F1728" }}>
                     플랜별 기능 비교
                   </h2>
 
                   <div className="flex items-center justify-center gap-4 md:gap-6 mt-3 flex-wrap">
-                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Starter</span> 개인 시작</span>
-                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Team</span> 협업 시작</span>
-                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-blue-400 font-semibold">Business</span> 조직 운영 표준</span>
-                    <span className="text-[11px] md:text-xs text-slate-500"><span className="text-slate-300 font-semibold">Enterprise</span> 보안/연동/대규모</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Starter</span> 개인 시작</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Team</span> 협업 시작</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#2563EB" }}>Business</span> 조직 운영 표준</span>
+                    <span className="text-[11px] md:text-xs" style={{ color: "#7B8796" }}><span className="font-semibold" style={{ color: "#334155" }}>Enterprise</span> 보안/연동/대규모</span>
                   </div>
                 </div>
 
                 {/* ── 모바일 테이블 ── */}
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
-                  <table className="w-full text-[11px]">
+                  <table className="w-full text-[11px]" style={{ backgroundColor: "#FFFFFF" }}>
                     <thead>
-                      <tr className="border-b border-bd sticky top-0 bg-sh">
-                        <th className="text-left py-2 pr-2 font-semibold text-slate-400 w-[40%]">기능</th>
-                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Free</th>
-                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Team</th>
-                        <th className="text-center py-2 px-1 font-semibold text-blue-400 w-[15%]">Biz</th>
-                        <th className="text-center py-2 px-1 font-semibold text-slate-500 w-[15%]">Ent.</th>
+                      <tr style={{ borderBottom: "1px solid #E3EAF4", backgroundColor: "#FFFFFF" }}>
+                        <th className="text-left py-2 pr-2 font-semibold w-[40%]" style={{ color: "#556070" }}>기능</th>
+                        <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#7B8796" }}>Free</th>
+                        <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#7B8796" }}>Team</th>
+                        <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#2563EB" }}>Biz</th>
+                        <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#7B8796" }}>Ent.</th>
                       </tr>
                     </thead>
                     <tbody>
                       {comparisonFeatures.map((item, index) => {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
-                            <tr key={`mcat-${index}`} className={cn(
-                              "border-t border-bd",
-                              item.tier === "business" ? "bg-blue-500/5" : "bg-el/50"
-                            )}>
+                            <tr key={`mcat-${index}`} style={{ borderTop: "1px solid #E3EAF4", backgroundColor: item.tier === "business" ? "rgba(37,99,235,0.04)" : "#F3F6FB" }}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
-                                  <span className={cn(
-                                    "text-[10px] font-bold uppercase tracking-wider",
-                                    item.tier === "business" ? "text-blue-400" : item.tier === "enterprise" ? "text-violet-400" : "text-slate-500"
-                                  )}>{item.label}</span>
-                                  {item.tier === "business" && <span className="text-[8px] font-semibold text-blue-400 bg-blue-500/10 px-1 rounded">Biz+</span>}
-                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold text-violet-400 bg-violet-500/10 px-1 rounded">Ent.</span>}
+                                  <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: item.tier === "business" ? "#2563EB" : item.tier === "enterprise" ? "#7C3AED" : "#64748B" }}>{item.label}</span>
+                                  {item.tier === "business" && <span className="text-[8px] font-semibold px-1 rounded" style={{ color: "#2563EB", backgroundColor: "rgba(37,99,235,0.08)" }}>Biz+</span>}
+                                  {item.tier === "enterprise" && <span className="text-[8px] font-semibold px-1 rounded" style={{ color: "#7C3AED", backgroundColor: "rgba(124,58,237,0.08)" }}>Ent.</span>}
                                 </div>
                               </td>
                             </tr>
@@ -461,13 +477,13 @@ export default function PricingPage() {
                         }
                         const d = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string };
                         const mCell = (val: boolean | string, highlight?: boolean) => (
-                          <td className={cn("text-center py-1.5 px-1", highlight && "bg-blue-500/5")}>
-                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3 text-green-400" /> : <span className="text-slate-700">—</span>) : <span className="font-medium text-slate-300">{val}</span>}
+                          <td className="text-center py-1.5 px-1" style={highlight ? { backgroundColor: "rgba(37,99,235,0.04)" } : undefined}>
+                            {typeof val === "boolean" ? (val ? <Check className="inline h-3 w-3" style={{ color: "#16A34A" }} /> : <span style={{ color: "#CBD5E1" }}>—</span>) : <span className="font-medium" style={{ color: "#334155" }}>{val}</span>}
                           </td>
                         );
                         return (
-                          <tr key={`mrow-${index}`} className="border-b border-bd/50">
-                            <td className="py-1.5 pr-2 text-slate-300 font-medium">{d.feature}</td>
+                          <tr key={`mrow-${index}`} style={{ borderBottom: "1px solid rgba(227,234,244,0.5)" }}>
+                            <td className="py-1.5 pr-2 font-medium" style={{ color: "#334155" }}>{d.feature}</td>
                             {mCell(d.starter)}
                             {mCell(d.team)}
                             {mCell(d.business, true)}
@@ -480,17 +496,17 @@ export default function PricingPage() {
                 </div>
 
                 {/* ── 데스크톱 테이블 ── */}
-                <Card className="overflow-hidden hidden md:block border-bd bg-pn">
+                <Card className="overflow-hidden hidden md:block" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4", borderRadius: "12px" }}>
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow className="bg-pn border-b border-bd">
-                            <TableHead className="font-semibold w-[280px] py-3 pl-5 text-slate-300">기능</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Starter</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Team</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-blue-400">Business</TableHead>
-                            <TableHead className="text-center font-semibold py-3 text-slate-400">Enterprise</TableHead>
+                          <TableRow style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #E3EAF4" }}>
+                            <TableHead className="font-semibold w-[280px] py-3 pl-5" style={{ color: "#556070" }}>기능</TableHead>
+                            <TableHead className="text-center font-semibold py-3" style={{ color: "#7B8796" }}>Starter</TableHead>
+                            <TableHead className="text-center font-semibold py-3" style={{ color: "#7B8796" }}>Team</TableHead>
+                            <TableHead className="text-center font-semibold py-3" style={{ color: "#2563EB" }}>Business</TableHead>
+                            <TableHead className="text-center font-semibold py-3" style={{ color: "#7B8796" }}>Enterprise</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -501,18 +517,15 @@ export default function PricingPage() {
                               return (
                                 <TableRow
                                   key={`cat-${index}`}
-                                  className={cn(
-                                    "border-t border-bd",
-                                    isBusinessTier ? "bg-blue-500/5" : "bg-el/50"
-                                  )}
+                                  style={{ borderTop: "1px solid #E3EAF4", backgroundColor: isBusinessTier ? "rgba(37,99,235,0.04)" : "#F8FAFC" }}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
-                                      <span className={cn("text-[11px] font-bold uppercase tracking-widest", isBusinessTier ? "text-blue-400" : isEnterpriseTier ? "text-violet-400" : "text-slate-500")}>
+                                      <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: isBusinessTier ? "#2563EB" : isEnterpriseTier ? "#7C3AED" : "#64748B" }}>
                                         {item.label}
                                       </span>
-                                      {isBusinessTier && <span className="text-[10px] font-semibold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-1.5 py-0.5 rounded-full">Business+</span>}
-                                      {isEnterpriseTier && <span className="text-[10px] font-semibold text-violet-400 bg-violet-500/10 border border-violet-500/20 px-1.5 py-0.5 rounded-full">Enterprise</span>}
+                                      {isBusinessTier && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "#2563EB", backgroundColor: "rgba(37,99,235,0.08)", border: "1px solid rgba(37,99,235,0.15)" }}>Business+</span>}
+                                      {isEnterpriseTier && <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full" style={{ color: "#7C3AED", backgroundColor: "rgba(124,58,237,0.08)", border: "1px solid rgba(124,58,237,0.15)" }}>Enterprise</span>}
                                     </div>
                                   </TableCell>
                                 </TableRow>
@@ -521,13 +534,13 @@ export default function PricingPage() {
                             const dataItem = item as { feature: string; starter: boolean | string; team: boolean | string; business: boolean | string; enterprise: boolean | string; key?: boolean };
                             const isKey = dataItem.key;
                             const renderCell = (value: boolean | string) =>
-                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 text-green-400 mx-auto" /> : <span className="text-slate-700 text-lg leading-none">—</span>) : <span className={cn("text-sm font-medium", value === "—" ? "text-slate-600" : "text-slate-200")}>{value}</span>;
+                              typeof value === "boolean" ? (value ? <Check className="h-4 w-4 mx-auto" style={{ color: "#16A34A" }} /> : <span className="text-lg leading-none" style={{ color: "#CBD5E1" }}>—</span>) : <span className={cn("text-sm font-medium")} style={{ color: value === "—" ? "#CBD5E1" : "#334155" }}>{value}</span>;
                             return (
-                              <TableRow key={index} className={cn("hover:bg-el/40 transition-colors border-b border-bd/50", isKey && "border-l-2 border-l-blue-500/50")}>
-                                <TableCell className={cn("py-2.5 pl-5 text-sm font-medium", isKey ? "text-slate-100" : "text-slate-300")}>{dataItem.feature}</TableCell>
+                              <TableRow key={index} className="transition-colors" style={{ borderBottom: "1px solid rgba(227,234,244,0.5)", borderLeft: isKey ? "2px solid rgba(37,99,235,0.35)" : undefined }}>
+                                <TableCell className="py-2.5 pl-5 text-sm font-medium" style={{ color: isKey ? "#0F1728" : "#334155" }}>{dataItem.feature}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.starter)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.team)}</TableCell>
-                                <TableCell className="text-center py-2.5 bg-blue-500/5">{renderCell(dataItem.business)}</TableCell>
+                                <TableCell className="text-center py-2.5" style={{ backgroundColor: "rgba(37,99,235,0.04)" }}>{renderCell(dataItem.business)}</TableCell>
                                 <TableCell className="text-center py-2.5">{renderCell(dataItem.enterprise)}</TableCell>
                               </TableRow>
                             );
@@ -542,14 +555,13 @@ export default function PricingPage() {
             </div>
           </div>
         </div>
-      </div>
 
       {/* ── 하단 고정 결제 요약 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 bg-sh/95 backdrop-blur-sm border-t border-bd">
+      <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm" style={{ backgroundColor: "rgba(255,255,255,0.95)", borderTop: "1px solid #E3EAF4" }}>
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-xs font-semibold text-slate-100 truncate">
+            <span className="text-xs font-semibold truncate" style={{ color: "#0F1728" }}>
               {selectedPlan === "starter"
                 ? "Starter · 무료"
                 : selectedPlan === "team"
@@ -558,12 +570,13 @@ export default function PricingPage() {
                 ? `Business · ₩${(isAnnual ? businessAnnualPerMonth : BUSINESS_MONTHLY).toLocaleString()}/월`
                 : "Enterprise · 별도 문의"}
             </span>
-            {isAnnual && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-green-500/10 text-green-400 shrink-0">연간</Badge>}
+            {isAnnual && <Badge variant="secondary" className="text-[9px] px-1.5 py-0 shrink-0" style={{ backgroundColor: "rgba(22,163,74,0.08)", color: "#16A34A" }}>연간</Badge>}
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <Button
               size="sm"
-              className="h-8 px-3 text-xs font-semibold bg-blue-600 hover:bg-blue-500"
+              className="h-8 px-3 text-xs font-semibold"
+              style={{ backgroundColor: "#2F6BFF", color: "#FFFFFF" }}
               onClick={() => selectedPlan && handlePrimaryAction({ stopPropagation: () => {} } as React.MouseEvent, selectedPlan)}
             >
               시작하기
@@ -571,7 +584,8 @@ export default function PricingPage() {
             <Button
               size="sm"
               variant="outline"
-              className="h-8 px-3 text-xs border-bd text-slate-400 hover:text-slate-200 bg-transparent"
+              className="h-8 px-3 text-xs"
+              style={{ borderColor: "#E3EAF4", color: "#556070", backgroundColor: "transparent" }}
               onClick={() => (window.location.href = "/support")}
             >
               문의
@@ -581,17 +595,17 @@ export default function PricingPage() {
         {/* ── 데스크톱 바 ── */}
         <div className="hidden md:flex mx-auto max-w-[90rem] px-8 py-4 items-center justify-between gap-x-12">
           <div className="space-y-0.5">
-            <p className="text-base font-semibold text-slate-100">
+            <p className="text-base font-semibold" style={{ color: "#0F1728" }}>
               현재 선택된 플랜
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm" style={{ color: "#556070" }}>
               플랜을 선택 후 바로 시작하거나 도입 문의를 남겨주세요.
             </p>
           </div>
           <div className="flex flex-wrap gap-x-8 gap-y-3 text-sm">
             <div className="flex flex-col">
-              <span className="text-xs text-slate-500 font-medium">요금제</span>
-              <span className="text-base font-semibold text-slate-100">
+              <span className="text-xs font-medium" style={{ color: "#7B8796" }}>요금제</span>
+              <span className="text-base font-semibold" style={{ color: "#0F1728" }}>
                 {selectedPlan === "starter"
                   ? "Starter — 무료"
                   : selectedPlan === "team"
@@ -602,15 +616,16 @@ export default function PricingPage() {
               </span>
             </div>
             <div className="flex flex-col">
-              <span className="text-xs text-slate-500 font-medium">결제 주기</span>
-              <span className="text-base font-semibold text-slate-100">
+              <span className="text-xs font-medium" style={{ color: "#7B8796" }}>결제 주기</span>
+              <span className="text-base font-semibold" style={{ color: "#0F1728" }}>
                 {isAnnual ? "연간 결제 (10% 할인)" : "월간 결제"}
               </span>
             </div>
           </div>
           <div className="flex items-center shrink-0">
             <Button
-              className="px-8 h-11 text-base font-semibold bg-blue-600 hover:bg-blue-500 whitespace-nowrap shadow-sm"
+              className="px-8 h-11 text-base font-semibold whitespace-nowrap shadow-sm"
+              style={{ backgroundColor: "#2F6BFF", color: "#FFFFFF" }}
               onClick={() => (window.location.href = "/support")}
             >
               요금 & 도입 문의
@@ -620,6 +635,6 @@ export default function PricingPage() {
       </div>
 
       <MainFooter />
-    </MainLayout>
+    </div>
   );
 }
