@@ -2,10 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,14 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2, Lock } from "lucide-react";
+import { Plus, Edit, Calendar, Wallet, TrendingUp, Loader2, Lock, AlertTriangle, AlertCircle, CheckCircle2, Search, ChevronRight, ArrowUpRight, ShieldAlert } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { PageHeader } from "@/app/_components/page-header";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { usePermission } from "@/hooks/use-permission";
 import { PermissionGate } from "@/components/permission-gate";
+import Link from "next/link";
 
 interface Budget {
   id: string;
@@ -39,6 +38,39 @@ interface Budget {
     remaining: number;
   };
 }
+
+// ── 예산 통제 파생 계산 (mock: reserved/committed는 서버 연동 전 spent 기반 추정) ──
+function deriveBudgetControl(b: Budget) {
+  const total = b.amount;
+  const actual = b.usage?.totalSpent ?? 0;
+  // 서버 연동 전 mock: reserved/committed는 0 (chain 연결 후 실데이터로 교체)
+  const reserved = 0;
+  const committed = 0;
+  const available = Math.max(total - reserved - committed - actual, 0);
+  const burnRate = total > 0 ? ((reserved + committed + actual) / total) * 100 : 0;
+
+  const now = new Date();
+  const start = new Date(b.periodStart);
+  const end = new Date(b.periodEnd);
+
+  let risk: "safe" | "warning" | "critical" | "over" | "ended" | "upcoming" = "safe";
+  if (now > end) risk = "ended";
+  else if (now < start) risk = "upcoming";
+  else if (burnRate > 100) risk = "over";
+  else if (burnRate >= 80) risk = "critical";
+  else if (burnRate >= 60) risk = "warning";
+
+  return { total, reserved, committed, actual, available, burnRate, risk };
+}
+
+const RISK_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
+  safe: { label: "정상", color: "text-emerald-400", bgColor: "bg-emerald-600/10", borderColor: "border-emerald-600/30" },
+  warning: { label: "주의", color: "text-amber-400", bgColor: "bg-amber-600/10", borderColor: "border-amber-600/30" },
+  critical: { label: "경고", color: "text-orange-400", bgColor: "bg-orange-600/10", borderColor: "border-orange-600/30" },
+  over: { label: "초과", color: "text-red-400", bgColor: "bg-red-600/10", borderColor: "border-red-600/30" },
+  ended: { label: "종료", color: "text-slate-500", bgColor: "bg-slate-600/5", borderColor: "border-slate-600/20" },
+  upcoming: { label: "예정", color: "text-blue-400", bgColor: "bg-blue-600/10", borderColor: "border-blue-600/30" },
+};
 
 // Radix UI SelectItem은 value=""를 허용하지 않음 - placeholder는 SelectValue에서 처리
 const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
@@ -60,7 +92,7 @@ export default function BudgetPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isFetching, setIsFetching] = useState(true);
-  // 권한 훅으로 조직 역할 + 권한 체크 통합
+  const [searchQuery, setSearchQuery] = useState("");
   const { can, organizationId: activeOrgId, isAdminOrOwner: canEditBudget } = usePermission();
 
   /** 예산 목록 서버에서 불러오기 (silent: true 시 로딩 UI 없이 백그라운드 갱신) */
@@ -83,6 +115,28 @@ export default function BudgetPage() {
     fetchBudgets();
   }, [fetchBudgets]);
 
+  // ── 통제 summary 파생 ──
+  const controlSummary = useMemo(() => {
+    const controls = budgets.map((b) => ({ budget: b, ctrl: deriveBudgetControl(b) }));
+    const active = controls.filter((c) => c.ctrl.risk !== "ended" && c.ctrl.risk !== "upcoming");
+    const atThreshold = controls.filter((c) => c.ctrl.risk === "warning" || c.ctrl.risk === "critical");
+    const overBudget = controls.filter((c) => c.ctrl.risk === "over");
+    const totalBudget = controls.reduce((s, c) => s + c.ctrl.total, 0);
+    const totalActual = controls.reduce((s, c) => s + c.ctrl.actual, 0);
+    const totalAvailable = controls.reduce((s, c) => s + c.ctrl.available, 0);
+    return { controls, active, atThreshold, overBudget, totalBudget, totalActual, totalAvailable };
+  }, [budgets]);
+
+  const filteredControls = useMemo(() => {
+    if (!searchQuery.trim()) return controlSummary.controls;
+    const q = searchQuery.toLowerCase();
+    return controlSummary.controls.filter((c) =>
+      c.budget.name.toLowerCase().includes(q) ||
+      c.budget.targetDepartment?.toLowerCase().includes(q) ||
+      c.budget.projectName?.toLowerCase().includes(q)
+    );
+  }, [controlSummary.controls, searchQuery]);
+
   /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
   const handleAddBudget = async (formData: {
     name: string;
@@ -98,7 +152,6 @@ export default function BudgetPage() {
     setSubmitError(null);
 
     try {
-      // 금액 전처리: 숫자 외 문자 제거
       const cleanAmount = typeof formData.amount === 'string'
         ? Number(String(formData.amount).replace(/[^0-9]/g, ""))
         : formData.amount;
@@ -140,10 +193,8 @@ export default function BudgetPage() {
           (json as any)?.error ||
           (json as any)?.details ||
           "예산 반영 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-
         console.error("[BudgetPage] Failed to save budget:", json);
         setSubmitError(message);
-        // 토스트 대신 인라인 에러만 표시 (다이얼로그 내 붉은색 텍스트)
         return;
       }
 
@@ -167,8 +218,6 @@ export default function BudgetPage() {
       };
 
       if (editingBudget) {
-        // Optimistic Update: 서버 재조회 전에 수정된 데이터를 즉시 반영
-        // usage는 서버에서만 계산되므로 기존 값 유지 (화면 깜빡임 방지)
         setBudgets((prev) =>
           prev.map((b) =>
             b.id === editingBudget.id
@@ -179,14 +228,12 @@ export default function BudgetPage() {
         setIsDialogOpen(false);
         setEditingBudget(null);
         toast({ title: "예산이 수정되었습니다." });
-        // 백그라운드 동기화 (최신 서버 데이터 반영, 실패해도 UI는 이미 갱신됨)
         fetchBudgets(true);
         router.refresh();
       } else {
         setBudgets((prev) => [mappedBudget, ...prev]);
         setIsDialogOpen(false);
         setEditingBudget(null);
-        // 신규 예산: 상세 페이지로 이동 (ID가 있을 때만)
         const newId = apiBudget?.id;
         if (newId) {
           router.push(`/dashboard/budget/${newId}`);
@@ -207,9 +254,13 @@ export default function BudgetPage() {
 
   const handleDeleteBudget = (id: string) => {
     setBudgets((prev) => prev.filter((b) => b.id !== id));
-    toast({
-      title: "예산이 삭제되었습니다.",
-    });
+    toast({ title: "예산이 삭제되었습니다." });
+  };
+
+  const formatK = (n: number) => {
+    if (n >= 1_000_000) return `₩${(n / 1_000_000).toFixed(1)}M`;
+    if (n >= 1_000) return `₩${(n / 1_000).toFixed(0)}K`;
+    return `₩${n.toLocaleString("ko-KR")}`;
   };
 
   if (status === "loading") {
@@ -224,36 +275,27 @@ export default function BudgetPage() {
     );
   }
 
-  // 개발 단계: 로그인 체크 제거
-  // if (status === "unauthenticated") {
-  //   router.push("/auth/signin?callbackUrl=/dashboard/budget");
-  //   return null;
-  // }
-
   return (
-    <div className="w-full py-4 md:py-6">
-      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-        <PageHeader
-          title="예산 관리"
-          description="조직/팀/프로젝트별 예산을 설정하고 사용률을 추적합니다."
-          icon={Wallet}
-          actions={
+    <div className="min-h-screen" style={{ backgroundColor: '#2d2f33' }}>
+      {/* ═══ Header ═══ */}
+      <div className="shrink-0">
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="flex items-center gap-2">
+            <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
+            <div className="w-px h-5 bg-bd" />
+            <span className="text-xs md:text-sm font-medium text-slate-400">예산 통제</span>
+          </div>
+          <div className="flex items-center gap-3">
             <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
               <DialogTrigger asChild>
-                <Button onClick={() => setEditingBudget(null)} size="sm" className="text-xs md:text-sm h-8 md:h-10">
-                  <Plus className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-                  <span className="hidden sm:inline">예산안 만들기</span>
-                  <span className="sm:hidden">추가</span>
+                <Button onClick={() => setEditingBudget(null)} size="sm" variant="ghost" className="h-7 text-xs text-slate-400 hover:text-slate-200">
+                  <Plus className="h-3 w-3 mr-1" />예산 등록
                 </Button>
               </DialogTrigger>
               <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>
-                    {editingBudget ? "예산 수정" : "예산안 만들기"}
-                  </DialogTitle>
-                  <DialogDescription>
-                    팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.
-                  </DialogDescription>
+                  <DialogTitle>{editingBudget ? "예산 수정" : "예산안 만들기"}</DialogTitle>
+                  <DialogDescription>팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.</DialogDescription>
                 </DialogHeader>
                 <BudgetForm
                   key={editingBudget?.id ?? "create"}
@@ -261,156 +303,178 @@ export default function BudgetPage() {
                   isSubmitting={isSubmitting}
                   submitError={submitError}
                   onClearSubmitError={() => setSubmitError(null)}
-                  onSubmit={(data) => {
-                    handleAddBudget(data);
-                  }}
-                  onCancel={() => {
-                    setIsDialogOpen(false);
-                    setEditingBudget(null);
-                  }}
+                  onSubmit={(data) => handleAddBudget(data)}
+                  onCancel={() => { setIsDialogOpen(false); setEditingBudget(null); }}
                 />
               </DialogContent>
             </Dialog>
-          }
-        />
+            <Link href="/dashboard/quotes"><Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500">워크큐</Button></Link>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Summary Strip ═══ */}
+      <div className="border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
+        <div className="max-w-7xl mx-auto px-4 md:px-6 py-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">전체 예산</div>
+              <div className="text-sm font-bold text-slate-200 tabular-nums">{budgets.length}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">운영 중</div>
+              <div className="text-sm font-bold text-emerald-400 tabular-nums">{controlSummary.active.length}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">임계치 접근</div>
+              <div className="text-sm font-bold text-amber-400 tabular-nums">{controlSummary.atThreshold.length}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">초과</div>
+              <div className="text-sm font-bold text-red-400 tabular-nums">{controlSummary.overBudget.length}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">총 집행</div>
+              <div className="text-sm font-bold text-slate-200 tabular-nums">{formatK(controlSummary.totalActual)}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">총 가용</div>
+              <div className="text-sm font-bold text-emerald-400 tabular-nums">{formatK(controlSummary.totalAvailable)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ Content ═══ */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+          <input
+            type="text"
+            placeholder="예산명, 부서, 프로젝트로 검색..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 text-xs rounded border border-bd bg-pn text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-slate-500"
+          />
+        </div>
 
         {isFetching ? (
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
-            {Array.from({ length: 3 }).map((_, idx) => (
-              <Card key={idx} className="shadow-sm border-bd animate-pulse">
-                <CardHeader className="pb-2">
-                  <div className="h-5 w-36 rounded bg-slate-200 bg-st mb-2" />
-                  <div className="h-4 w-48 rounded bg-slate-200 bg-st" />
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="h-3 rounded bg-el bg-el" />
-                  <div className="flex justify-end gap-2">
-                    <div className="h-8 w-20 rounded bg-el bg-el" />
-                    <div className="h-8 w-14 rounded bg-el bg-el" />
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="space-y-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-14 rounded border border-bd animate-pulse" style={{ backgroundColor: '#393b3f' }} />
             ))}
           </div>
         ) : budgets.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Wallet className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-slate-300 mb-2">등록된 예산이 없습니다.</p>
-              <p className="text-slate-500 text-sm mb-4">팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.</p>
-              <Button onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
-                <Plus className="h-4 w-4 mr-2" />
-                예산안 만들기
-              </Button>
-            </CardContent>
-          </Card>
+          /* ── Guided Empty State ── */
+          <div className="rounded-lg border border-bd px-6 py-16 text-center" style={{ backgroundColor: '#393b3f' }}>
+            <ShieldAlert className="h-10 w-10 mx-auto text-slate-500 mb-4" />
+            <p className="text-sm text-slate-300 mb-1.5">등록된 예산이 없습니다</p>
+            <p className="text-xs text-slate-500 mb-5 max-w-md mx-auto">
+              예산을 등록하면 요청/견적/발주 흐름에서 예산 초과 여부를 사전에 확인하고,
+              임계치에 도달하면 자동으로 경고합니다.
+            </p>
+            <Button size="sm" onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록하기
+            </Button>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mt-4 sm:mt-6">
-            {Array.isArray(budgets) &&
-              budgets.map((budget) => {
-                const used = budget.usage?.totalSpent ?? 0;
-                const total = budget.amount;
-                const rate = total > 0 ? Math.round((used / total) * 100) : 0;
-                const startStr =
-                  budget.periodStart &&
-                  new Date(budget.periodStart).toLocaleDateString("ko-KR");
-                const endStr =
-                  budget.periodEnd &&
-                  new Date(budget.periodEnd).toLocaleDateString("ko-KR");
-                return (
-                  <Card
-                    key={budget.id}
-                    className="shadow-sm border-bd"
-                  >
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg flex justify-between items-center gap-2">
-                        <span className="truncate min-w-0">{budget.name}</span>
-                        {(() => {
-                          const now = new Date();
-                          const start = new Date(budget.periodStart);
-                          const end = new Date(budget.periodEnd);
-                          if (rate > 100) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-red-50 text-red-700 border-red-200">초과</Badge>;
-                          if (rate >= 80) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-orange-50 text-orange-700 border-orange-200">경고</Badge>;
-                          if (now < start) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-el text-slate-600 border-bd">예정</Badge>;
-                          if (now > end) return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-el text-slate-500 border-bd">종료</Badge>;
-                          return <Badge variant="outline" className="whitespace-nowrap shrink-0 bg-emerald-50 text-emerald-700 border-emerald-200">운영 중</Badge>;
-                        })()}
-                      </CardTitle>
-                      <CardDescription className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-                        <span>{startStr} ~ {endStr}</span>
-                        <span className="text-slate-300">·</span>
-                        <span>{budget.targetDepartment || "부서 미지정"}</span>
-                        {budget.projectName && (
-                          <>
-                            <span className="text-slate-300">·</span>
-                            <span>{budget.projectName}</span>
-                          </>
-                        )}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4 pt-4">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-slate-500 flex items-center gap-1">
-                            <TrendingUp className="h-3.5 w-3.5" />
-                            사용 금액 ({rate}%)
-                          </span>
-                          <span className="font-bold text-xs sm:text-sm">
-                            ₩{used.toLocaleString("ko-KR")} <span className="hidden sm:inline">/ ₩{total.toLocaleString("ko-KR")}</span>
-                          </span>
+          /* ── Budget Control Table ── */
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
+            {/* Table header */}
+            <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_100px_100px_80px_80px_60px] gap-px px-4 py-2 border-b border-bd text-[10px] uppercase tracking-wider text-slate-500" style={{ backgroundColor: '#434548' }}>
+              <span>예산</span>
+              <span className="text-right">총액</span>
+              <span className="text-right">예약</span>
+              <span className="text-right">확정</span>
+              <span className="text-right">집행</span>
+              <span className="text-right">가용</span>
+              <span className="text-center">소진율</span>
+              <span className="text-center">리스크</span>
+              <span />
+            </div>
+            {/* Rows */}
+            {filteredControls.map(({ budget, ctrl }) => {
+              const riskCfg = RISK_CONFIG[ctrl.risk];
+              return (
+                <Link
+                  key={budget.id}
+                  href={`/dashboard/budget/${budget.id}`}
+                  className="block border-b border-bd last:border-b-0 hover:bg-white/[0.02] transition-colors"
+                >
+                  {/* Desktop row */}
+                  <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_100px_100px_80px_80px_60px] gap-px items-center px-4 py-2.5">
+                    <div className="min-w-0">
+                      <div className="text-xs font-medium text-slate-200 truncate">{budget.name}</div>
+                      <div className="text-[10px] text-slate-500 truncate">
+                        {budget.targetDepartment || "부서 미지정"}
+                        {budget.projectName && ` · ${budget.projectName}`}
+                        {" · "}
+                        {new Date(budget.periodStart).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                        {" ~ "}
+                        {new Date(budget.periodEnd).toLocaleDateString("ko-KR", { month: "short", day: "numeric" })}
+                      </div>
+                    </div>
+                    <div className="text-xs text-slate-300 text-right tabular-nums">{formatK(ctrl.total)}</div>
+                    <div className="text-xs text-blue-400/70 text-right tabular-nums">{formatK(ctrl.reserved)}</div>
+                    <div className="text-xs text-amber-400/70 text-right tabular-nums">{formatK(ctrl.committed)}</div>
+                    <div className="text-xs text-slate-200 text-right tabular-nums">{formatK(ctrl.actual)}</div>
+                    <div className="text-xs text-emerald-400 text-right tabular-nums font-medium">{formatK(ctrl.available)}</div>
+                    <div className="text-center">
+                      <div className="inline-flex items-center">
+                        <div className="w-10 h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${ctrl.burnRate > 100 ? 'bg-red-500' : ctrl.burnRate >= 80 ? 'bg-orange-500' : ctrl.burnRate >= 60 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                            style={{ width: `${Math.min(ctrl.burnRate, 100)}%` }}
+                          />
                         </div>
-                        <Progress value={rate} className="h-2" />
+                        <span className="text-[10px] text-slate-400 ml-1.5 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
                       </div>
-                      <div className="flex justify-end gap-2">
-                        <PermissionGate
-                          permission="budgets.update"
-                          disabledFallback={
-                            <Button variant="outline" size="sm" disabled className="opacity-50">
-                              <Lock className="h-3.5 w-3.5 mr-1" />
-                              수정
-                            </Button>
-                          }
-                        >
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setEditingBudget(budget);
-                              setSubmitError(null);
-                              setIsDialogOpen(true);
-                            }}
-                          >
-                            <Edit className="h-3.5 w-3.5 mr-1" />
-                            수정
-                          </Button>
-                        </PermissionGate>
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={`/dashboard/budget/${budget.id}`}>상세 보기</a>
-                        </Button>
-                        <PermissionGate permission="budgets.delete">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              if (confirm("정말 이 예산을 삭제하시겠습니까?")) {
-                                handleDeleteBudget(budget.id);
-                              }
-                            }}
-                          >
-                            삭제
-                          </Button>
-                        </PermissionGate>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                    </div>
+                    <div className="text-center">
+                      <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border font-medium ${riskCfg.color} ${riskCfg.bgColor} ${riskCfg.borderColor}`}>
+                        {riskCfg.label}
+                      </span>
+                    </div>
+                    <div className="flex justify-end">
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+                    </div>
+                  </div>
+                  {/* Mobile row */}
+                  <div className="md:hidden px-4 py-3">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="text-xs font-medium text-slate-200 truncate mr-2">{budget.name}</span>
+                      <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded border font-medium ${riskCfg.color} ${riskCfg.bgColor} ${riskCfg.borderColor}`}>
+                        {riskCfg.label}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-slate-500 mb-2">
+                      {budget.targetDepartment || "부서 미지정"} · {formatK(ctrl.total)}
+                    </div>
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <span className="text-slate-400">집행 <span className="text-slate-200 tabular-nums">{formatK(ctrl.actual)}</span></span>
+                      <span className="text-slate-400">가용 <span className="text-emerald-400 tabular-nums">{formatK(ctrl.available)}</span></span>
+                      <span className="text-slate-400 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+            {filteredControls.length === 0 && budgets.length > 0 && (
+              <div className="px-4 py-8 text-center text-xs text-slate-500">
+                검색 조건에 맞는 예산이 없습니다
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// Budget Form (unchanged logic, only extracted for readability)
+// ═══════════════════════════════════════════════════════════════════
 
 function BudgetForm({
   budget,
@@ -428,21 +492,15 @@ function BudgetForm({
   onCancel: () => void;
 }) {
   const { toast } = useToast();
-  
-  // 기본값 설정: 시작일 = 오늘, 종료일 = 올해 12월 31일
+
   const getDefaultStartDate = (): Date => {
-    if (budget?.periodStart) {
-      return new Date(budget.periodStart);
-    }
+    if (budget?.periodStart) return new Date(budget.periodStart);
     return new Date();
   };
-
   const getDefaultEndDate = (): Date => {
-    if (budget?.periodEnd) {
-      return new Date(budget.periodEnd);
-    }
+    if (budget?.periodEnd) return new Date(budget.periodEnd);
     const now = new Date();
-    return new Date(now.getFullYear(), 11, 31); // 12월 31일 (월은 0-based)
+    return new Date(now.getFullYear(), 11, 31);
   };
 
   const [name, setName] = useState(budget?.name || "");
@@ -455,7 +513,6 @@ function BudgetForm({
   const [description, setDescription] = useState(budget?.description || "");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  // 금액 포맷팅 (천 단위 구분)
   const formatAmount = (value: string) => {
     const numValue = value.replace(/,/g, "");
     if (!numValue) return "";
@@ -468,66 +525,33 @@ function BudgetForm({
     const value = e.target.value.replace(/,/g, "");
     if (value === "" || /^\d*\.?\d*$/.test(value)) {
       setAmount(value);
-      if (errors.amount) {
-        setErrors((prev) => ({ ...prev, amount: "" }));
-      }
+      if (errors.amount) setErrors((prev) => ({ ...prev, amount: "" }));
     }
   };
 
   const handlePeriodStartChange = (date: Date | undefined) => {
-    if (!date) {
-      setPeriodStart(null);
-      return;
-    }
+    if (!date) { setPeriodStart(null); return; }
     setPeriodStart(date);
-    if (periodEnd && date > periodEnd) {
-      setErrors((prev) => ({ ...prev, periodStart: "시작일은 종료일보다 이전이어야 합니다." }));
-    } else {
-      setErrors((prev) => ({ ...prev, periodStart: "" }));
-    }
+    if (periodEnd && date > periodEnd) setErrors((prev) => ({ ...prev, periodStart: "시작일은 종료일보다 이전이어야 합니다." }));
+    else setErrors((prev) => ({ ...prev, periodStart: "" }));
   };
 
   const handlePeriodEndChange = (date: Date | undefined) => {
-    if (!date) {
-      setPeriodEnd(null);
-      return;
-    }
+    if (!date) { setPeriodEnd(null); return; }
     setPeriodEnd(date);
-    if (periodStart && date < periodStart) {
-      setErrors((prev) => ({ ...prev, periodEnd: "종료일은 시작일보다 이후여야 합니다." }));
-    } else {
-      setErrors((prev) => ({ ...prev, periodEnd: "" }));
-    }
+    if (periodStart && date < periodStart) setErrors((prev) => ({ ...prev, periodEnd: "종료일은 시작일보다 이후여야 합니다." }));
+    else setErrors((prev) => ({ ...prev, periodEnd: "" }));
   };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-
-    if (!name.trim()) {
-      newErrors.name = "예산 이름을 입력해주세요.";
-    }
-
+    if (!name.trim()) newErrors.name = "예산 이름을 입력해주세요.";
     const amountNum = parseFloat(amount.replace(/,/g, ""));
-    if (!amount || isNaN(amountNum) || amountNum <= 0) {
-      newErrors.amount = "올바른 예산 금액을 입력해주세요.";
-    }
-
-    if (!periodStart) {
-      newErrors.periodStart = "시작일을 선택해주세요.";
-    }
-
-    if (!periodEnd) {
-      newErrors.periodEnd = "종료일을 선택해주세요.";
-    }
-
-    if (periodStart && periodEnd && periodStart.getTime() > periodEnd.getTime()) {
-      newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
-    }
-
-    if (!targetDepartment.trim()) {
-      newErrors.targetDepartment = "대상 부서/팀을 선택해주세요.";
-    }
-
+    if (!amount || isNaN(amountNum) || amountNum <= 0) newErrors.amount = "올바른 예산 금액을 입력해주세요.";
+    if (!periodStart) newErrors.periodStart = "시작일을 선택해주세요.";
+    if (!periodEnd) newErrors.periodEnd = "종료일을 선택해주세요.";
+    if (periodStart && periodEnd && periodStart.getTime() > periodEnd.getTime()) newErrors.periodEnd = "종료일은 시작일보다 이후여야 합니다.";
+    if (!targetDepartment.trim()) newErrors.targetDepartment = "대상 부서/팀을 선택해주세요.";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -535,28 +559,15 @@ function BudgetForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onClearSubmitError?.();
-    
     if (!validate()) {
-      toast({
-        title: "입력 오류",
-        description: "입력한 정보를 확인해주세요.",
-        variant: "destructive",
-      });
+      toast({ title: "입력 오류", description: "입력한 정보를 확인해주세요.", variant: "destructive" });
       return;
     }
-
-    // 숫자 외 모든 기호 제거 후 변환 (400 Bad Request 방지)
     const cleanAmount = Number(String(amount).replace(/[^0-9]/g, ""));
-    
     if (isNaN(cleanAmount) || cleanAmount <= 0) {
-      toast({
-        title: "입력 오류",
-        description: "올바른 예산 금액을 입력해주세요.",
-        variant: "destructive",
-      });
+      toast({ title: "입력 오류", description: "올바른 예산 금액을 입력해주세요.", variant: "destructive" });
       return;
     }
-
     onSubmit({
       name: name.trim(),
       amount: cleanAmount,
@@ -573,51 +584,22 @@ function BudgetForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">예산 이름 *</Label>
-        <Input
-          id="name"
-          value={name}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-            setName(e.target.value);
-            if (errors.name) {
-              setErrors((prev) => ({ ...prev, name: "" }));
-            }
-          }}
-          placeholder="예: 2024년 R&D 예산"
-          required
-          className={errors.name ? "border-red-500" : ""}
-        />
-        {errors.name && (
-          <p className="text-xs text-red-500 mt-1">{errors.name}</p>
-        )}
+        <Input id="name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: "" })); }} placeholder="예: 2024년 R&D 예산" required className={errors.name ? "border-red-500" : ""} />
+        {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="amount">예산 금액 *</Label>
           <div className="relative">
-            <Input
-              id="amount"
-              type="text"
-              value={formatAmount(amount)}
-              onChange={handleAmountChange}
-              placeholder="예: 10,000,000"
-              required
-              className={errors.amount ? "border-red-500" : ""}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
-              {currency}
-            </span>
+            <Input id="amount" type="text" value={formatAmount(amount)} onChange={handleAmountChange} placeholder="예: 10,000,000" required className={errors.amount ? "border-red-500" : ""} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{currency}</span>
           </div>
-          {errors.amount && (
-            <p className="text-xs text-red-500 mt-1">{errors.amount}</p>
-          )}
+          {errors.amount && <p className="text-xs text-red-500 mt-1">{errors.amount}</p>}
         </div>
         <div>
           <Label htmlFor="currency">통화 *</Label>
           <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
+            <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="KRW">KRW (원)</SelectItem>
               <SelectItem value="USD">USD (달러)</SelectItem>
@@ -627,115 +609,53 @@ function BudgetForm({
           </Select>
         </div>
       </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="periodStart">기간 시작 *</Label>
-          <DatePicker
-            date={periodStart || undefined}
-            onDateChange={handlePeriodStartChange}
-            placeholder="날짜를 선택하세요"
-            maxDate={periodEnd || undefined}
-            className={errors.periodStart ? "border-red-500" : ""}
-          />
-          {errors.periodStart && (
-            <p className="text-xs text-red-500 mt-1">{errors.periodStart}</p>
-          )}
+          <DatePicker date={periodStart || undefined} onDateChange={handlePeriodStartChange} placeholder="날짜를 선택하세요" maxDate={periodEnd || undefined} className={errors.periodStart ? "border-red-500" : ""} />
+          {errors.periodStart && <p className="text-xs text-red-500 mt-1">{errors.periodStart}</p>}
         </div>
         <div>
           <Label htmlFor="periodEnd">기간 종료 *</Label>
-          <DatePicker
-            date={periodEnd || undefined}
-            onDateChange={handlePeriodEndChange}
-            placeholder="날짜를 선택하세요"
-            minDate={periodStart || undefined}
-            className={errors.periodEnd ? "border-red-500" : ""}
-          />
-          {errors.periodEnd && (
-            <p className="text-xs text-red-500 mt-1">{errors.periodEnd}</p>
-          )}
+          <DatePicker date={periodEnd || undefined} onDateChange={handlePeriodEndChange} placeholder="날짜를 선택하세요" minDate={periodStart || undefined} className={errors.periodEnd ? "border-red-500" : ""} />
+          {errors.periodEnd && <p className="text-xs text-red-500 mt-1">{errors.periodEnd}</p>}
         </div>
       </div>
-
       {periodStart && periodEnd && (
         <div className="p-3 bg-pg rounded-lg text-xs text-muted-foreground">
           <Calendar className="h-3 w-3 inline mr-1" />
-          예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")}
-          {" "}
-          ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
+          예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")} ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
         </div>
       )}
-
       <div className="space-y-2">
-        <Label htmlFor="targetDepartment">
-          대상 부서/팀 <span className="text-red-500">*</span>
-        </Label>
-        <Select
-          value={targetDepartment}
-          onValueChange={(v: string) => {
-            setTargetDepartment(v);
-            if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" }));
-          }}
-        >
-          <SelectTrigger id="targetDepartment" className={errors.targetDepartment ? "border-red-500" : ""}>
-            <SelectValue placeholder="부서를 선택해주세요" />
-          </SelectTrigger>
+        <Label htmlFor="targetDepartment">대상 부서/팀 <span className="text-red-500">*</span></Label>
+        <Select value={targetDepartment} onValueChange={(v: string) => { setTargetDepartment(v); if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" })); }}>
+          <SelectTrigger id="targetDepartment" className={errors.targetDepartment ? "border-red-500" : ""}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
           <SelectContent>
             {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value || "empty"} value={opt.value}>
-                {opt.label}
-              </SelectItem>
+              <SelectItem key={opt.value || "empty"} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.targetDepartment && (
-          <p className="text-xs text-red-500 mt-1">{errors.targetDepartment}</p>
-        )}
+        {errors.targetDepartment && <p className="text-xs text-red-500 mt-1">{errors.targetDepartment}</p>}
       </div>
-
       <div>
         <Label htmlFor="projectName">프로젝트/과제명 (선택)</Label>
-        <Input
-          id="projectName"
-          value={projectName}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)}
-          placeholder="예: 신약 개발 프로젝트"
-        />
+        <Input id="projectName" value={projectName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)} placeholder="예: 신약 개발 프로젝트" />
       </div>
-
       <div>
         <Label htmlFor="description">설명 (선택)</Label>
-        <Textarea
-          id="description"
-          value={description}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
-          placeholder="예산에 대한 추가 설명"
-          rows={3}
-          className="resize-none"
-        />
+        <Textarea id="description" value={description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} placeholder="예산에 대한 추가 설명" rows={3} className="resize-none" />
       </div>
-
       {submitError && (
-        <div className="rounded-md border border-red-200  border-red-800 bg-red-50 bg-pn px-3 py-2">
-          <p className="text-xs text-red-600 text-red-400">
-            {submitError}
-          </p>
+        <div className="rounded-md border border-red-200 border-red-800 bg-red-50 bg-pn px-3 py-2">
+          <p className="text-xs text-red-600 text-red-400">{submitError}</p>
         </div>
       )}
-
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>
-          취소
-        </Button>
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>취소</Button>
         <Button type="submit" className="flex-1" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {budget ? "수정 중..." : "저장 중..."}
-            </>
-          ) : (
-            budget ? "예산 수정 저장" : "예산안 저장"
-          )}
+          {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />{budget ? "수정 중..." : "저장 중..."}</>) : (budget ? "예산 수정 저장" : "예산안 저장")}
         </Button>
       </div>
     </form>
