@@ -13,8 +13,8 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
-  ChevronRight, ChevronDown, BarChart2, AlertTriangle,
-  CreditCard, Store, Users, ExternalLink, RefreshCw, Clock,
+  ChevronRight, BarChart2,
+  CreditCard, Users, ExternalLink, RefreshCw, Clock,
   ArrowRight,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
@@ -252,13 +252,13 @@ export default function AnalyticsPage() {
             <div className="space-y-3">
               {/* Primary blocker callout */}
               {topBlocker && (
-                <div className="rounded-lg border border-amber-500/30 bg-amber-950/20 px-5 py-4">
+                <div className="rounded-lg border border-bd bg-pn px-5 py-4">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
+                    <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5" />
                     <div>
-                      <p className="text-sm font-bold text-amber-200">분석 제한: {topBlocker.label}</p>
-                      <p className="text-sm text-slate-300 mt-1">{topBlocker.tip}</p>
-                      <p className="text-xs text-slate-400 mt-2">현재 값: <span className="font-semibold text-amber-300">{topBlocker.value}</span> — 이 항목이 해결되면 인사이트가 활성화됩니다</p>
+                      <p className="text-sm font-bold text-slate-200">분석 제한: {topBlocker.label}</p>
+                      <p className="text-sm text-slate-400 mt-1">{topBlocker.tip}</p>
+                      <p className="text-xs text-slate-500 mt-2">현재 값: <span className="font-semibold text-slate-300">{topBlocker.value}</span> — 이 항목이 해결되면 인사이트가 활성화됩니다</p>
                     </div>
                   </div>
                 </div>
@@ -268,20 +268,47 @@ export default function AnalyticsPage() {
                 {readinessItems.map((item) => (
                   <div
                     key={item.label}
-                    className={`rounded-lg border px-4 py-3 ${
-                      item.ready
-                        ? "border-emerald-500/20 bg-emerald-950/10"
-                        : "border-slate-600/30 bg-pn"
-                    }`}
+                    className="rounded-lg border border-bd bg-pn px-4 py-3"
                   >
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${item.ready ? "bg-emerald-400" : "bg-amber-400"}`} />
-                      <p className="text-xs font-semibold text-slate-300">{item.label}</p>
+                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.ready ? "bg-emerald-400" : "bg-amber-400"}`} />
+                      <p className="text-xs font-semibold text-slate-400">{item.label}</p>
                     </div>
-                    <p className={`text-lg font-bold ${item.ready ? "text-emerald-400" : "text-amber-300"}`}>{item.value}</p>
-                    <p className="text-xs text-slate-400 mt-1 leading-relaxed">{item.tip}</p>
+                    <p className="text-lg font-bold text-slate-200">{item.value}</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.tip}</p>
                   </div>
                 ))}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ═══════════════════════════════════════════════════
+            TODAY FOCUS: 오늘의 우선 확인 — 3초 안에 "무엇을 해야 하나" 전달
+           ═══════════════════════════════════════════════════ */}
+        {!isLoading && (() => {
+          const focusAction = budgetStatus === "danger"
+            ? { label: "예산 소진율 90% 초과 — 즉시 예산 검토가 필요합니다", href: "/dashboard/budget" }
+            : budgetStatus === "warning"
+              ? { label: "예산 소진율 75% 초과 — 잔여 예산 배분을 점검하세요", href: "/dashboard/budget" }
+              : vendorConcentration > 50
+                ? { label: `상위 1개 공급사 의존도 ${vendorConcentration}% — 분산 검토가 필요합니다`, href: "/dashboard/purchases" }
+                : repeatItems.filter(i => { const d = Math.round((Date.now() - new Date(i.latestDate).getTime()) / 86400000); return d >= 30; }).length > 0
+                  ? { label: `재주문 검토 대상 ${repeatItems.filter(i => Math.round((Date.now() - new Date(i.latestDate).getTime()) / 86400000) >= 30).length}건 — 소싱 시점을 확인하세요`, href: "/dashboard/stock-risk" }
+                  : null;
+          if (!focusAction) return null;
+          return (
+            <div className="rounded-md border border-bd bg-pn px-4 py-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">오늘의 우선 확인</span>
+                  <span className="text-sm text-slate-300">{focusAction.label}</span>
+                </div>
+                <Link href={focusAction.href} className="shrink-0 ml-3">
+                  <span className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
+                    확인 <ArrowRight className="h-3 w-3" />
+                  </span>
+                </Link>
               </div>
             </div>
           );
@@ -307,24 +334,23 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
 
               {/* 예산 소진율 */}
-              <div className={`rounded-md border p-4 ${
-                budgetStatus === "danger" ? "border-red-900/60 bg-red-950/10" :
-                budgetStatus === "warning" ? "border-amber-900/60 bg-amber-950/10" :
-                "border-bd bg-pn"
-              }`}>
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">예산 소진율</p>
-                <div className={`text-xl font-bold ${budgetStatusColor}`}>
+              <div className="rounded-md border border-bd bg-pn p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 소진율</p>
+                  <div className={`w-1.5 h-1.5 rounded-full ${budgetStatus === "danger" ? "bg-red-400" : budgetStatus === "warning" ? "bg-amber-400" : "bg-emerald-400"}`} />
+                </div>
+                <div className="text-xl font-bold text-slate-100">
                   {budget.total > 0 ? `${budget.usageRate}%` : "미등록"}
                 </div>
                 {budget.total > 0 && (
                   <div className="mt-2">
-                    <div className="h-1.5 bg-el rounded-full overflow-hidden">
+                    <div className="h-1 bg-el rounded-full overflow-hidden">
                       <div
-                        className={`h-full rounded-full transition-all ${budgetBarColor}`}
+                        className="h-full rounded-full transition-all bg-slate-400"
                         style={{ width: `${Math.min(100, budget.usageRate)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-slate-400 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {budgetStatus === "danger" ? "즉시 검토 필요" : budgetStatus === "warning" ? "주의 구간" : "정상 운영"}
                     </p>
                   </div>
@@ -343,7 +369,7 @@ export default function AnalyticsPage() {
                     </div>
                     <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
                   </div>
-                  <div className="text-xl font-bold text-amber-400">
+                  <div className="text-xl font-bold text-slate-100">
                     {pendingApprovalAmount > 0 ? `₩${pendingApprovalAmount.toLocaleString("ko-KR")}` : "₩0"}
                   </div>
                   <p className="text-xs text-slate-400 mt-1">{pendingApprovalIsEstimate ? "실제 승인 내역 연동 전 추정치입니다" : "클릭하여 구매내역 확인"}</p>
@@ -351,8 +377,8 @@ export default function AnalyticsPage() {
               </Link>
 
               {/* 이번 달 지출 총액 — PRIMARY */}
-              <div className="rounded-lg border-2 border-blue-500/30 bg-blue-950/10 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-blue-400/80 mb-2">이번 달 지출</p>
+              <div className="rounded-md border border-slate-500/40 bg-pn p-4">
+                <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">이번 달 지출</p>
                 <div className="text-2xl font-extrabold text-slate-50">
                   {currentMonth ? `₩${currentMonth.amount.toLocaleString("ko-KR")}` : <span className="text-slate-500">미수집</span>}
                 </div>
@@ -366,29 +392,27 @@ export default function AnalyticsPage() {
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">전월 대비</p>
                 <div className="flex items-center gap-1.5">
                   {monthChange !== null && monthChange > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-red-400" />
+                    <TrendingUp className="h-4 w-4 text-slate-400" />
                   ) : monthChange !== null && monthChange < 0 ? (
-                    <TrendingDown className="h-4 w-4 text-emerald-400" />
+                    <TrendingDown className="h-4 w-4 text-slate-400" />
                   ) : null}
-                  <span className={`text-xl font-bold ${
-                    monthChange !== null ? (monthChange > 0 ? "text-red-400" : "text-emerald-400") : "text-slate-500"
-                  }`}>
+                  <span className="text-xl font-bold text-slate-100">
                     {monthChange !== null ? `${monthChange > 0 ? "+" : ""}${monthChange}%` : "--"}
                   </span>
+                  {monthChange !== null && monthChange > 20 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                 </div>
                 <p className="text-xs text-slate-400 mt-1">
                   {monthChange !== null ? (monthChange > 20 ? "급증 주의" : monthChange < -10 ? "절감 추세" : "변동폭 정상") : "비교 가능한 월별 데이터 부족"}
                 </p>
               </div>
 
-              {/* 잔여 예산 — PRIMARY */}
-              <div className={`rounded-lg border-2 p-4 ${
-                budgetStatus === "danger" ? "border-red-500/40 bg-red-950/15" : "border-emerald-500/25 bg-emerald-950/10"
-              }`}>
-                <p className={`text-xs font-semibold uppercase tracking-wider mb-2 ${
-                  budgetStatus === "danger" ? "text-red-400/80" : "text-emerald-400/80"
-                }`}>잔여 예산</p>
-                <div className={`text-2xl font-extrabold ${budget.remaining <= 0 && budget.total > 0 ? "text-red-400" : "text-slate-50"}`}>
+              {/* 잔여 예산 */}
+              <div className="rounded-md border border-bd bg-pn p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">잔여 예산</p>
+                  {budget.total > 0 && budget.remaining <= 0 && <div className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+                </div>
+                <div className="text-2xl font-extrabold text-slate-50">
                   {budget.total > 0 ? `₩${budget.remaining.toLocaleString("ko-KR")}` : "미등록"}
                 </div>
                 <p className="text-xs text-slate-400 mt-1.5">
@@ -427,11 +451,11 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
               {/* Panel 1: 카테고리별 초과 위험 */}
-              <div className="rounded-lg border border-slate-600/40 bg-[#1e2228] p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <AlertTriangle className="h-4 w-4 text-amber-400" />
-                    <h3 className="text-sm font-bold text-slate-100">카테고리별 초과 위험</h3>
+                    <h3 className="text-sm font-bold text-slate-200">카테고리별 초과 위험</h3>
+                    {categoryItems.some(cat => { const u = budget.total > 0 ? Math.round((cat.totalAmount / (budget.total * cat.pct / 100)) * 100) : 0; return u >= 90; }) && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                   </div>
                   {categoryItems.length > 0 && (
                     <Badge className="text-xs px-1.5 py-0.5 border-0 bg-el text-slate-400 font-medium">
@@ -479,10 +503,10 @@ export default function AnalyticsPage() {
                 ) : (
                   <div className="py-3 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">분석 불충분</span>
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                     </div>
                     <p className="text-xs text-slate-400">카테고리 매핑이 {categoryMappingRate}%로 편중 분석을 시작할 수 없습니다</p>
-                    <p className="text-xs text-slate-400">구매 내역에서 카테고리를 보완하면 초과 위험 분석이 활성화됩니다</p>
+                    <p className="text-xs text-slate-500">구매 내역에서 카테고리를 보완하면 초과 위험 분석이 활성화됩니다</p>
                     <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                       구매 내역에서 카테고리 보완 <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -497,16 +521,14 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 2: 공급사 집중도 */}
-              <div className="rounded-lg border border-slate-600/40 bg-[#1e2228] p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Store className="h-4 w-4 text-blue-400" />
-                    <h3 className="text-sm font-bold text-slate-100">공급사 집중도</h3>
+                    <h3 className="text-sm font-bold text-slate-200">공급사 집중도</h3>
+                    {vendorConcentration > 50 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                   </div>
                   {vendorConcentration > 50 && (
-                    <Badge className="text-xs px-1.5 py-0.5 border-0 bg-amber-950/30 text-amber-400 font-semibold">
-                      집중 위험
-                    </Badge>
+                    <span className="text-xs text-slate-400 font-medium">주의</span>
                   )}
                 </div>
 
@@ -521,7 +543,7 @@ export default function AnalyticsPage() {
                           </span>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className={`text-sm truncate ${isConcentrated ? "text-amber-300" : "text-slate-300"}`}>
+                              <span className="text-sm truncate text-slate-300">
                                 {v.vendor}
                               </span>
                               <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
@@ -535,14 +557,14 @@ export default function AnalyticsPage() {
                               />
                             </div>
                           </div>
-                          <span className={`text-xs font-semibold flex-shrink-0 ${isConcentrated ? "text-amber-400" : "text-slate-500"}`}>
+                          <span className="text-xs font-semibold flex-shrink-0 text-slate-400">
                             {v.pct}%
                           </span>
                         </div>
                       );
                     })}
                     {vendorConcentration > 50 && (
-                      <p className="text-xs text-amber-300 mt-2 pl-7">
+                      <p className="text-xs text-slate-400 mt-2 pl-7">
                         상위 1개 공급사가 전체 지출의 {vendorConcentration}%를 차지합니다. 분산 검토를 권장합니다.
                       </p>
                     )}
@@ -550,10 +572,10 @@ export default function AnalyticsPage() {
                 ) : (
                   <div className="py-3 space-y-2.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">데이터 부족</span>
+                      <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                     </div>
                     <p className="text-xs text-slate-400">최근 30일 공급사 데이터가 {vendorItems.length}건으로 집중도 분석이 불완전합니다</p>
-                    <p className="text-xs text-slate-400">공급사 매핑이 충분해지면 의존 위험과 분산 필요 공급사를 보여줍니다</p>
+                    <p className="text-xs text-slate-500">공급사 매핑이 충분해지면 의존 위험과 분산 필요 공급사를 보여줍니다</p>
                     <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                       구매 내역 확인 <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -568,11 +590,10 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 3: 이상 지출 탐지 */}
-              <div className="rounded-lg border border-slate-600/40 bg-[#1e2228] p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-red-400" />
-                    <h3 className="text-sm font-bold text-slate-100">이상 지출 탐지</h3>
+                    <h3 className="text-sm font-bold text-slate-200">이상 지출 탐지</h3>
                   </div>
                 </div>
 
@@ -605,8 +626,8 @@ export default function AnalyticsPage() {
                     return (
                       <div className="py-3 space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded border ${recent90dCount >= 10 ? "bg-emerald-600/10 text-emerald-400 border-emerald-600/20" : "bg-slate-700/30 text-slate-500 border-bd"}`}>
-                            {recent90dCount >= 10 ? "정상 범위" : "탐지 제한"}
+                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded border ${recent90dCount >= 10 ? "bg-el text-slate-300 border-bd" : "bg-el text-slate-400 border-bd"}`}>
+                            {recent90dCount >= 10 ? "정상" : "준비중"}
                           </span>
                         </div>
                         <p className="text-xs text-slate-400">
@@ -628,9 +649,9 @@ export default function AnalyticsPage() {
                               <p className="text-sm text-slate-200 truncate">{a.item}</p>
                               <p className="text-xs text-slate-400">{a.vendor}</p>
                             </div>
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-400 flex-shrink-0 mt-0.5" />
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
                           </div>
-                          <p className="text-xs text-amber-300 mt-1">{a.reason}</p>
+                          <p className="text-xs text-slate-400 mt-1">{a.reason}</p>
                         </div>
                       ))}
                     </div>
@@ -645,11 +666,10 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 4: 재주문 예상 항목 */}
-              <div className="rounded-lg border border-slate-600/40 bg-[#1e2228] p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <RefreshCw className="h-4 w-4 text-emerald-400" />
-                    <h3 className="text-sm font-bold text-slate-100">재주문 예상 항목</h3>
+                    <h3 className="text-sm font-bold text-slate-200">재주문 예상 항목</h3>
                   </div>
                 </div>
 
@@ -686,7 +706,7 @@ export default function AnalyticsPage() {
                     return (
                       <div className="py-3 space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-slate-700/30 text-slate-500 border border-bd">예측 준비 중</span>
+                          <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                         </div>
                         <p className="text-xs text-slate-400">반복 구매 패턴이 {repeatItems.length}건으로 재주문 예측을 시작하기엔 부족합니다</p>
                         <p className="text-xs text-slate-400">구매 이력과 재고 소비 패턴이 축적되면 재주문 시점을 자동 제안합니다</p>
@@ -706,11 +726,12 @@ export default function AnalyticsPage() {
                               마지막 주문 {item.daysSinceLast}일 전 | {item.count}회 반복
                             </p>
                           </div>
-                          <span className={`text-xs font-semibold flex-shrink-0 ${
-                            item.daysSinceLast >= 60 ? "text-red-400" : item.daysSinceLast >= 30 ? "text-amber-400" : "text-slate-500"
-                          }`}>
-                            {item.daysSinceLast}d
-                          </span>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {item.daysSinceLast >= 60 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                            <span className="text-xs font-semibold text-slate-400">
+                              {item.daysSinceLast}d
+                            </span>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -730,8 +751,8 @@ export default function AnalyticsPage() {
         {/* ═══════════════════════════════════════════════════
             BOTTOM: 상세 분석 (항상 표시)
            ═══════════════════════════════════════════════════ */}
-        <div className="rounded-lg border border-slate-600/40 bg-[#1a1d22]">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-slate-600/25">
+        <div className="rounded-lg border border-bd bg-pn">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-bd">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-300">상세 분석</p>
             {!hasMonthlyData && !hasCategoryData && (
               <span className="text-xs text-slate-400">데이터가 축적되면 차트가 자동 채워집니다</span>
@@ -864,18 +885,14 @@ export default function AnalyticsPage() {
         </div>
 
         {/* ══ 조치 바로가기 — 상태 기반 ══ */}
-        <div className="rounded-lg border border-slate-600/40 bg-pn p-4">
+        <div className="rounded-lg border border-bd bg-pn p-4">
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">다음 조치</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <Link href="/dashboard/budget" className="block">
-              <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 transition-colors ${
-                budgetStatus === "danger"
-                  ? "border-red-500/30 bg-red-950/15 hover:bg-red-950/25"
-                  : budgetStatus === "warning"
-                    ? "border-amber-500/25 bg-amber-950/10 hover:bg-amber-950/20"
-                    : "border-bd bg-el/30 hover:bg-el/60"
-              }`}>
-                <AlertTriangle className={`h-4 w-4 mt-0.5 flex-shrink-0 ${budgetStatus === "danger" ? "text-red-400" : budgetStatus === "warning" ? "text-amber-400" : "text-slate-500"}`} />
+              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/50 px-4 py-3 transition-colors">
+                <div className="mt-1 flex-shrink-0">
+                  <div className={`w-1.5 h-1.5 rounded-full ${budgetStatus === "danger" ? "bg-red-400" : budgetStatus === "warning" ? "bg-amber-400" : "bg-slate-500"}`} />
+                </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-200">예산 위험 검토</p>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -886,8 +903,10 @@ export default function AnalyticsPage() {
               </div>
             </Link>
             <Link href="/dashboard/purchases" className="block">
-              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/60 px-3 py-2.5 transition-colors">
-                <Store className={`h-4 w-4 mt-0.5 flex-shrink-0 ${vendorConcentration > 50 ? "text-amber-400" : "text-slate-500"}`} />
+              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
+                <div className="mt-1 flex-shrink-0">
+                  <div className={`w-1.5 h-1.5 rounded-full ${vendorConcentration > 50 ? "bg-amber-400" : "bg-slate-500"}`} />
+                </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-300">공급사 의존 점검</p>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -898,8 +917,10 @@ export default function AnalyticsPage() {
               </div>
             </Link>
             <Link href="/dashboard/stock-risk" className="block">
-              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/60 px-3 py-2.5 transition-colors">
-                <RefreshCw className={`h-4 w-4 mt-0.5 flex-shrink-0 ${repeatItems.length > 0 ? "text-blue-400" : "text-slate-500"}`} />
+              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
+                <div className="mt-1 flex-shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-300">재주문 후보 검토</p>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -910,8 +931,10 @@ export default function AnalyticsPage() {
               </div>
             </Link>
             <Link href="/dashboard/quotes" className="block">
-              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/60 px-3 py-2.5 transition-colors">
-                <ShoppingCart className="h-4 w-4 mt-0.5 flex-shrink-0 text-slate-500" />
+              <div className="flex items-start gap-3 rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
+                <div className="mt-1 flex-shrink-0">
+                  <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-300">견적 비교 열기</p>
                   <p className="text-xs text-slate-400 mt-0.5">견적 워크큐에서 비교 검토 및 발주 전환 진행</p>
