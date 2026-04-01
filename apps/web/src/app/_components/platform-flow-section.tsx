@@ -37,26 +37,26 @@ const COMPARISON_ROWS = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#141A24", borderBottom: "1px solid #222C3A" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#F2F4F8", borderBottom: "1px solid #D8DFE9" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
-          <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#8A99AF" }}>
+          <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#64748B" }}>
             Operational Value
           </p>
-          <h2 className="text-xl md:text-[26px] font-bold text-white tracking-tight mb-2.5">
+          <h2 className="text-xl md:text-[26px] font-bold tracking-tight mb-2.5" style={{ color: "#1A2030" }}>
             각 단계에서 무엇이 달라지는가
           </h2>
-          <p className="text-sm max-w-lg leading-relaxed" style={{ color: "#9DADC0" }}>
+          <p className="text-sm max-w-lg leading-relaxed" style={{ color: "#475569" }}>
             6단계 운영 파이프라인에서 기존 방식의 병목이 어떻게 해소되는지 보여드립니다.
           </p>
         </div>
 
         {/* Decision table header */}
-        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#1A2232", borderBottom: "1px solid #2A3444" }}>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-[#8A99AF]">단계</span>
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#7A8A9E" }}>기존 방식</span>
+        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #E2E8F0" }}>
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#64748B" }}>단계</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#94A3B8" }}>기존 방식</span>
           <span />
-          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#94A3B8" }}>LABAXIS 도입 후</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#475569" }}>LABAXIS 도입 후</span>
         </div>
 
         {/* Decision rows */}
@@ -65,28 +65,28 @@ export function PlatformFlowSection() {
             <div
               key={row.step}
               className="rounded-lg p-4 md:p-0 md:grid md:grid-cols-[140px_1fr_40px_1fr] md:items-center transition-colors overflow-hidden"
-              style={{ backgroundColor: "#1A2232", border: "1px solid #252F3E" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "#333F52"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#252F3E"; }}
+              style={{ backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#CBD5E1"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#E2E8F0"; }}
             >
               {/* Step */}
               <div className="md:px-5 md:py-4">
-                <span className="text-sm font-bold text-white">{row.step}</span>
+                <span className="text-sm font-bold" style={{ color: "#1E293B" }}>{row.step}</span>
               </div>
 
               {/* Before — very subtle warm tint, text does the work */}
-              <div className="md:px-4 md:py-4 mt-2 md:mt-0" style={{ backgroundColor: "rgba(148,120,90,0.04)" }}>
+              <div className="md:px-4 md:py-4 mt-2 md:mt-0" style={{ backgroundColor: "#FAFAF8" }}>
                 <p className="text-xs leading-relaxed" style={{ color: "#8A8070" }}>{row.before}</p>
               </div>
 
               {/* Arrow */}
               <div className="hidden md:flex items-center justify-center">
-                <ArrowRight className="h-3.5 w-3.5" style={{ color: "#4A5E78" }} />
+                <ArrowRight className="h-3.5 w-3.5" style={{ color: "#CBD5E1" }} />
               </div>
 
               {/* After — subtle cool lift, stronger typography */}
-              <div className="md:px-4 md:py-4 mt-2 md:mt-0 md:rounded-r-lg" style={{ backgroundColor: "rgba(148,163,184,0.04)" }}>
-                <p className="text-[13px] font-medium leading-relaxed" style={{ color: "#D0DAE8" }}>
+              <div className="md:px-4 md:py-4 mt-2 md:mt-0 md:rounded-r-lg" style={{ backgroundColor: "#F8FAFC" }}>
+                <p className="text-[13px] font-medium leading-relaxed" style={{ color: "#334155" }}>
                   {row.after}
                 </p>
               </div>
