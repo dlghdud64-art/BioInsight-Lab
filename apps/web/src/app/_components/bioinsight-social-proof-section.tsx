@@ -16,8 +16,8 @@ export function BioInsightSocialProofSection() {
     <section
       className="relative"
       style={{
-        background: "linear-gradient(180deg, #d0dbe8 0%, #d8e3ee 8%, #e0e9f2 18%, #e5ecf4 30%, #e9eff6 48%, #edf2f8 68%, #edf2f8 100%)",
-        borderBottom: "1px solid #E3EAF4",
+        background: "linear-gradient(180deg, #c8d4e2 0%, #d0dbe8 8%, #d8e2ee 18%, #dde6f0 30%, #e2e9f3 48%, #e7edf5 68%, #e9eff6 100%)",
+        borderBottom: "1px solid #DAE2EE",
       }}
     >
       <div className="max-w-[1240px] mx-auto px-4 py-5">
@@ -29,8 +29,8 @@ export function BioInsightSocialProofSection() {
                 <div
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-lg transition-colors"
                   style={step.highlight ? {
-                    backgroundColor: "rgba(255,255,255,0.82)",
-                    border: "1px solid rgba(218,226,238,0.95)",
+                    backgroundColor: "rgba(247,249,252,0.85)",
+                    border: "1px solid rgba(210,220,234,0.95)",
                     boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
                     backdropFilter: "blur(10px)",
                   } : undefined}

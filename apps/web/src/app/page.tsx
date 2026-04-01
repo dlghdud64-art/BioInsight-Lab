@@ -43,4 +43,31 @@ export default function HomePage() {
       {/* 4. Ops Console Preview */}
       <OpsConsolePreviewSection />
 
-     
+      {/* 4.5. Ops → CTA bridge: light mist → blue-gray 잔광 → CTA tint */}
+      <div
+        aria-hidden="true"
+        style={{
+          height: 140,
+          background:
+            "linear-gradient(180deg, #E5EBF4 0%, #d0d9e6 18%, #b0bdcf 38%, #8a9ab2 56%, #6b7d96 72%, #4a5e78 85%, #334a63 94%, #253c55 100%)",
+        }}
+      />
+
+      {/* 5. Final CTA */}
+      <FinalCTASection />
+
+      {/* 5.5. CTA → Footer bridge: light blue → navy */}
+      <div
+        aria-hidden="true"
+        style={{
+          height: 100,
+          background:
+            "linear-gradient(180deg, #D4DEE9 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #0C1524 100%)",
+        }}
+      />
+
+      {/* 6. Footer */}
+      <MainFooter />
+    </div>
+  );
+}

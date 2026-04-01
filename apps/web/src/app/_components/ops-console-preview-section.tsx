@@ -6,9 +6,9 @@ import {
 } from "lucide-react";
 
 // 카드 surface 통일 — white cards on light body
-const CARD_BG = "#FFFFFF";
-const CARD_BORDER = "#E3EAF4";
-const CARD_BORDER_HOVER = "#D0DAE8";
+const CARD_BG = "#F7F9FC";
+const CARD_BORDER = "#DAE2EE";
+const CARD_BORDER_HOVER = "#C8D2E0";
 
 const CONSOLE_LAYERS = [
   {
@@ -56,7 +56,7 @@ const SYSTEM_PROOFS = [
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#EDF2F8", borderBottom: "1px solid #E3EAF4" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#E5EBF4", borderBottom: "1px solid #DAE2EE" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#64748B" }}>

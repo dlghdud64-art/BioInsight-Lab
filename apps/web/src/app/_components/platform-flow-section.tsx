@@ -37,7 +37,7 @@ const COMPARISON_ROWS = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#F3F6FB", borderBottom: "1px solid #E3EAF4" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#EBF0F7", borderBottom: "1px solid #DAE2EE" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#64748B" }}>
@@ -52,7 +52,7 @@ export function PlatformFlowSection() {
         </div>
 
         {/* Decision table header */}
-        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #E3EAF4" }}>
+        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#F7F9FC", borderBottom: "1px solid #DAE2EE" }}>
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#64748B" }}>단계</span>
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#94A3B8" }}>기존 방식</span>
           <span />
@@ -65,9 +65,9 @@ export function PlatformFlowSection() {
             <div
               key={row.step}
               className="rounded-lg p-4 md:p-0 md:grid md:grid-cols-[140px_1fr_40px_1fr] md:items-center transition-colors overflow-hidden"
-              style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4" }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = "#D0DAE8"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#E3EAF4"; }}
+              style={{ backgroundColor: "#F7F9FC", border: "1px solid #DAE2EE" }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#C8D2E0"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#DAE2EE"; }}
             >
               {/* Step */}
               <div className="md:px-5 md:py-4">

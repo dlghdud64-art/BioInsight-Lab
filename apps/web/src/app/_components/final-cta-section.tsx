@@ -22,15 +22,15 @@ export function FinalCTASection() {
   return (
     <section
       className="py-20 md:py-28"
-      style={{ backgroundColor: "#EAF1FB" }}
+      style={{ backgroundColor: "#D8E2EE" }}
     >
       <div className="mx-auto max-w-[1120px] px-5 md:px-8">
         <div
           className="rounded-2xl px-8 pt-12 pb-10 md:px-20 md:pt-16 md:pb-14"
           style={{
-            backgroundColor: "#FFFFFF",
-            border: "1px solid #E3EAF4",
-            boxShadow: "0 1px 4px rgba(0,0,0,0.03), 0 4px 20px rgba(37,99,235,0.04)",
+            backgroundColor: "#F7FAFD",
+            border: "1px solid #D0DAE8",
+            boxShadow: "0 1px 4px rgba(15,23,42,0.04), 0 4px 20px rgba(51,65,85,0.06)",
           }}
         >
           <div className="text-center max-w-2xl mx-auto">
