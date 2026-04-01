@@ -24,15 +24,8 @@ export default function HomePage() {
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
-      {/* 1.5. Hero → Content bridge: navy → blue-gray → muted slate (공기감 전이) */}
-      <div
-        aria-hidden="true"
-        style={{
-          height: 200,
-          background:
-            "linear-gradient(180deg, #071a33 0%, #0c2240 12%, #132e50 26%, #1e3d5e 40%, #2c4f6e 54%, #3e6380 66%, #54788f 76%, #6d8ea0 84%, #88a3b3 90%, #a3b8c6 95%, #c0cdd8 100%)",
-        }}
-      />
+      {/* 1.5. Hero → Content seam: hard cut with thin separator */}
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
       {/* 2. Trust Strip */}
       <BioInsightSocialProofSection />
@@ -43,28 +36,13 @@ export default function HomePage() {
       {/* 4. Ops Console Preview */}
       <OpsConsolePreviewSection />
 
-      {/* 4.5. Ops → CTA bridge: light surface → muted blue-gray (자연 조명 변화) */}
-      <div
-        aria-hidden="true"
-        style={{
-          height: 160,
-          background:
-            "linear-gradient(180deg, #DCE5F0 0%, #d2dce8 10%, #c5d0de 22%, #b5c2d2 36%, #a2b1c4 50%, #8fa0b6 62%, #7c8fa7 74%, #697f98 84%, #566f8a 92%, #47607a 100%)",
-        }}
-      />
+      {/* 4.5. Ops → CTA seam */}
 
       {/* 5. Final CTA */}
       <FinalCTASection />
 
-      {/* 5.5. CTA → Footer bridge: muted slate → navy (채도 낮은 전이) */}
-      <div
-        aria-hidden="true"
-        style={{
-          height: 120,
-          background:
-            "linear-gradient(180deg, #DCE5F0 0%, #c0cdd8 12%, #a0b0c0 26%, #8498ac 40%, #687f96 54%, #506880 66%, #3b536c 78%, #283f58 88%, #182d45 95%, #071A33 100%)",
-        }}
-      />
+      {/* 5.5. CTA → Footer seam */}
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#D7E0EB" }} />
 
       {/* 6. Footer */}
       <MainFooter />

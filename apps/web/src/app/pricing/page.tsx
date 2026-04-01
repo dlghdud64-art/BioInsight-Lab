@@ -257,7 +257,7 @@ export default function PricingPage() {
       <section
         className="pt-14 pb-10 md:pt-20 md:pb-14"
         style={{
-          background: "linear-gradient(180deg, #071A33 0%, #0D2A50 40%, #1A2D4D 70%, #3A4F6E 90%, #EAF1F8 100%)",
+          backgroundColor: "#071A33",
         }}
       >
         <div className="container mx-auto px-4 pt-6 md:pt-10">
@@ -722,15 +722,8 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* ── Light → Footer Bridge (채도 낮은 청회색 전이) ── */}
-      <div
-        aria-hidden="true"
-        style={{
-          height: 120,
-          background:
-            "linear-gradient(180deg, #DCE5F0 0%, #c0cdd8 12%, #a0b0c0 26%, #8498ac 40%, #687f96 54%, #506880 66%, #3b536c 78%, #283f58 88%, #182d45 95%, #071A33 100%)",
-        }}
-      />
+      {/* ── CTA → Footer seam ── */}
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#D7E0EB" }} />
 
       {/* ── 하단 고정 결제 요약 바 ── */}
       <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm" style={{ backgroundColor: "rgba(246,249,252,0.95)", borderTop: "1px solid #D7E0EB" }}>

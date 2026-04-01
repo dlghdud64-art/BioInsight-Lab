@@ -170,14 +170,8 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* ══ 1.5. Hero → Body Bridge ════════════════════════════════════ */}
-        <div
-          aria-hidden="true"
-          style={{
-            height: 80,
-            background: "linear-gradient(180deg, #071A33 0%, #0A1E38 30%, #0E1D32 100%)",
-          }}
-        />
+        {/* ══ 1.5. Hero → Body seam ════════════════════════════════════ */}
+        <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
         {/* ══ 2. 운영 병목 증거 — 숫자 기반 ═══════════════════════════════ */}
         <section className="py-8 md:py-12" style={{ backgroundColor: "#0E1D32" }}>
@@ -434,28 +428,14 @@ export default function IntroPage() {
           </div>
         </section>
 
-        {/* ══ 5.5. Dark → Light Bridge (desaturated blue-gray mist) ═════ */}
-        <div
-          aria-hidden="true"
-          style={{
-            height: 120,
-            background:
-              "linear-gradient(180deg, #0E1D32 0%, #162A42 20%, #2A4560 40%, #3E5D78 55%, #54748F 68%, #6D8AA0 78%, #88A0B3 86%, #A3B5C6 93%, #C0CDD8 100%)",
-          }}
-        />
+        {/* ══ 5.5. Dark → CTA seam ═════════════════════════════════════ */}
+        <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
         {/* ══ 6. Final CTA ═══════════════════════════════════════════════ */}
         <FinalCTASection />
 
-        {/* ══ 6.5. Light → Footer Bridge ═════════════════════════════════ */}
-        <div
-          aria-hidden="true"
-          style={{
-            height: 80,
-            background:
-              "linear-gradient(180deg, #C0CDD8 0%, #9DAEC2 15%, #7E92AB 30%, #5F7690 45%, #475E78 58%, #334A64 70%, #233A52 82%, #182D45 92%, #071A33 100%)",
-          }}
-        />
+        {/* ══ 6.5. CTA → Footer seam ════════════════════════════════════ */}
+        <div aria-hidden="true" style={{ height: 1, backgroundColor: "#D7E0EB" }} />
       </div>
       <MainFooter />
     </MainLayout>

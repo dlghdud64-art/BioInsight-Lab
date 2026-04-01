@@ -179,32 +179,8 @@ export function BioInsightHeroSection() {
       {/* Background — 4-layer controlled depth structure */}
       <div className="absolute inset-0 z-0 pointer-events-none">
 
-        {/* Layer B: Directional depth — 상단 8~28%만 살짝 밝고 나머지 균일 */}
-        <div className="absolute inset-0" style={{
-          background: "linear-gradient(180deg, #0d2a50 0%, #091e3e 18%, #071a33 32%, #071a33 100%)"
-        }} />
-
-        {/* Layer C: Signal glow — 헤드라인/CTA 뒤에만, 현재 크기의 40% + 낮은 opacity */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2"
-          style={{
-            top: "18%",
-            width: "320px",
-            height: "260px",
-            background: "radial-gradient(ellipse at center, rgba(47,109,246,0.10) 0%, rgba(47,109,246,0.04) 50%, transparent 75%)",
-            filter: "blur(35px)",
-          }}
-        />
-
-        {/* Layer D: Bottom boundary — white bloom 없음, 얇은 dark separator만 */}
-        {/* ── Atmospheric mist: hero 하단을 "끝"이 아니라 "입구"로 ── */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-[28vh]"
-          style={{
-            background:
-              "linear-gradient(180deg, rgba(7,26,51,0) 0%, rgba(10,28,52,0.06) 20%, rgba(18,38,62,0.14) 42%, rgba(35,55,80,0.24) 64%, rgba(55,75,100,0.34) 82%, rgba(75,95,118,0.42) 100%)",
-          }}
-        />
+        {/* Layer B: Solid navy — no gradient, uniform depth */}
+        <div className="absolute inset-0" style={{ backgroundColor: "#071a33" }} />
 
         {/* Plexus — opacity 낮춰서 gradient와 경쟁 안 하게 */}
         <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.22 }}>

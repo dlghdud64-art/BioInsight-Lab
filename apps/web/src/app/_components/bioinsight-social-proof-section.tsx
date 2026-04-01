@@ -16,7 +16,8 @@ export function BioInsightSocialProofSection() {
     <section
       className="relative"
       style={{
-        background: "linear-gradient(180deg, #c8d4e2 0%, #d0dbe8 8%, #d8e2ee 18%, #DCE5F0 30%, #e2e9f3 48%, #e7edf5 68%, #EAF1F8 100%)",
+        backgroundColor: "#DCE5F0",
+        borderTop: "1px solid #D7E0EB",
         borderBottom: "1px solid #D7E0EB",
       }}
     >
