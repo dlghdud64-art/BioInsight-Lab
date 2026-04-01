@@ -53,7 +53,7 @@ export function MainFooter() {
   ];
 
   return (
-    <footer style={{ backgroundColor: "#0C1018", borderTop: "1px solid #252D38" }}>
+    <footer style={{ backgroundColor: "#0E1219", borderTop: "1px solid #252D38" }}>
       <div className="mx-auto max-w-6xl px-4 py-12">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">
