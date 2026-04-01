@@ -222,7 +222,7 @@ export function CompareReviewWorkWindow({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-slate-600/40 rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-slate-600/40 rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
 
         {/* ═══ HEADER — Identity + Mode Switch ═══ */}
         <div className="px-5 py-3.5 border-b border-slate-600/30 bg-[#262930]">

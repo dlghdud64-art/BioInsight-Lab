@@ -77,10 +77,10 @@ export function ApprovalHandoffGate({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
 
         {/* ═══ A. Gate Header ═══ */}
-        <div className="px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-3">
               <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isHandedOff ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "ready" ? "bg-emerald-600/15 border-emerald-500/25" : gateState.gateStatus === "blocked" ? "bg-red-600/15 border-red-500/25" : "bg-amber-600/15 border-amber-500/25"}`}>
@@ -162,7 +162,7 @@ export function ApprovalHandoffGate({
                 <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Approval Payload Preview</span>
                 <span className="text-[8px] text-slate-600">(읽기 전용 — 실제 수정은 검토 화면에서)</span>
               </div>
-              <div className="rounded-md border border-bd/40 bg-[#252729] divide-y divide-bd/20">
+              <div className="rounded-md border border-bd/40 bg-[#252A33] divide-y divide-bd/20">
                 {[
                   { label: "선택 옵션", value: preview.selectedOptionSummary },
                   { label: "공급사", value: preview.vendorSummary },
@@ -191,7 +191,7 @@ export function ApprovalHandoffGate({
         </div>
 
         {/* ═══ D. Sticky Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           {/* Blocker reason when disabled */}
           {gateState.gateStatus === "blocked" && blockers.length > 0 && (
             <div className="text-[9px] text-red-400 mb-2">

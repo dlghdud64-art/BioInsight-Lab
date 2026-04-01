@@ -224,9 +224,9 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-2xl shadow-2xl w-full max-w-[1160px] max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-2xl shadow-2xl w-full max-w-[1160px] max-h-[88vh] overflow-hidden flex flex-col">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/25">
               <FileSpreadsheet className="h-5 w-5 text-blue-400" />
@@ -321,7 +321,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
           {step === "mapping" && stagingState && (
             <div className="space-y-5">
               {/* File info */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#252729] border border-bd/40">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#252A33] border border-bd/40">
                 <FileText className="h-4 w-4 text-slate-400" />
                 <div className="flex-1 min-w-0">
                   <span className="text-sm text-slate-200 font-medium truncate block">{stagingState.fileName}</span>
@@ -347,7 +347,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                 </h3>
                 <div className="space-y-1.5">
                   {stagingState.columnMappings.map((m, i) => (
-                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-bd/30 bg-[#252729]/60">
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-bd/30 bg-[#252A33]/60">
                       <div className="flex-1 min-w-0">
                         <span className="text-xs text-slate-300 font-medium">{m.sourceColumn}</span>
                       </div>
@@ -408,7 +408,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   <span className="text-[9px] text-slate-500 block">저신뢰</span>
                   <span className="text-lg font-bold text-amber-400">{stagingState.lowConfidenceCount}</span>
                 </div>
-                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252729] text-center">
+                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252A33] text-center">
                   <span className="text-[9px] text-slate-500 block">미매핑</span>
                   <span className="text-lg font-bold text-slate-500">{stagingState.unmappedCount}</span>
                 </div>
@@ -489,7 +489,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                       row.operatorDecision === "rejected" ? "border-red-500/20 bg-red-600/[0.02] opacity-60" :
                       hasErrors ? "border-red-500/25 bg-red-600/[0.03]" :
                       hasWarnings ? "border-amber-500/15 bg-amber-600/[0.02]" :
-                      "border-bd/30 bg-[#252729]/60"
+                      "border-bd/30 bg-[#252A33]/60"
                     }`}>
                       {/* Row summary */}
                       <div className="flex items-center gap-3 px-3 py-2.5 cursor-pointer" onClick={() => setExpandedRows(prev => { const s = new Set(prev); s.has(row.rowIndex) ? s.delete(row.rowIndex) : s.add(row.rowIndex); return s; })}>
@@ -596,7 +596,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   <span className="text-[9px] text-slate-500 block">제외</span>
                   <span className="text-lg font-bold text-red-400">{stagingState.rejectedCount}</span>
                 </div>
-                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252729] text-center">
+                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252A33] text-center">
                   <span className="text-[9px] text-slate-500 block">전체</span>
                   <span className="text-lg font-bold text-slate-300">{stagingState.totalRowCount}</span>
                 </div>
@@ -609,7 +609,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
         </div>
 
         {/* ── Dock ── */}
-        <div className="px-6 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-6 py-3 border-t border-bd bg-[#181E28]">
           {/* Status strip */}
           {stagingState && step !== "apply" && (
             <div className="flex items-center gap-3 text-[10px] mb-2.5">

@@ -98,9 +98,9 @@ export function QuoteNormalizationWorkbench({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         {/* ═══ 1. Identity Strip ═══ */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-orange-400" />}
@@ -132,15 +132,15 @@ export function QuoteNormalizationWorkbench({
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">라인 매핑 상태</span>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
                 <span className="text-[9px] text-slate-500 block">매핑 완료</span>
                 <span className={`text-lg font-bold tabular-nums ${mappedCount > 0 ? "text-emerald-400" : "text-slate-600"}`}>{mappedCount}</span>
               </div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
                 <span className="text-[9px] text-slate-500 block">미매핑 견적 라인</span>
                 <span className={`text-lg font-bold tabular-nums ${unmappedCount > 0 ? "text-amber-400" : "text-slate-600"}`}>{unmappedCount}</span>
               </div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
                 <span className="text-[9px] text-slate-500 block">미커버 요청 라인</span>
                 <span className={`text-lg font-bold tabular-nums ${uncoveredCount > 0 ? "text-red-400" : "text-slate-600"}`}>{uncoveredCount}</span>
               </div>
@@ -185,7 +185,7 @@ export function QuoteNormalizationWorkbench({
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">정리된 상업 조건</span>
             <div className="mt-2 border border-bd/40 rounded-md overflow-hidden">
               {/* Header */}
-              <div className="grid grid-cols-6 bg-[#252729] border-b border-bd/40 px-3 py-1.5">
+              <div className="grid grid-cols-6 bg-[#252A33] border-b border-bd/40 px-3 py-1.5">
                 {["품목", "단가", "납기", "MOQ", "재고", "상태"].map((h) => (
                   <span key={h} className="text-[9px] text-slate-500 font-medium">{h}</span>
                 ))}
@@ -244,7 +244,7 @@ export function QuoteNormalizationWorkbench({
         </div>
 
         {/* ═══ Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">매핑 <span className="text-slate-300 font-medium">{mappedCount}/{normState.expectedRequestLineCount}</span></span>
             <span className="text-slate-600">·</span>

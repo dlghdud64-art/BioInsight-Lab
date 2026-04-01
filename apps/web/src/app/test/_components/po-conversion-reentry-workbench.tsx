@@ -40,8 +40,8 @@ export function PoConversionReentryWorkbench({ open, onClose, handoff, onDraftRe
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-teal-400" />}
@@ -72,7 +72,7 @@ export function PoConversionReentryWorkbench({ open, onClose, handoff, onDraftRe
             <div className="flex items-center gap-1.5 mb-2"><Lock className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Locked Approval Fields</span></div>
             <div className="grid grid-cols-2 gap-1.5">
               {["Vendor Identity", "Quote Lineage", "Line Coverage", "Qty/Pack Basis", "Price Basis"].map(f => (
-                <div key={f} className="px-3 py-1.5 rounded-md border border-bd/40 bg-[#252729] flex items-center gap-2"><Lock className="h-3 w-3 text-slate-600 shrink-0" /><span className="text-[10px] text-slate-400">{f}</span></div>
+                <div key={f} className="px-3 py-1.5 rounded-md border border-bd/40 bg-[#252A33] flex items-center gap-2"><Lock className="h-3 w-3 text-slate-600 shrink-0" /><span className="text-[10px] text-slate-400">{f}</span></div>
               ))}
             </div>
           </div>
@@ -93,7 +93,7 @@ export function PoConversionReentryWorkbench({ open, onClose, handoff, onDraftRe
                 return (
                   <div key={item.key}>
                     <label className="text-[10px] text-slate-400 flex items-center gap-1 mb-1"><Icon className="h-3 w-3" />{item.label}{item.critical ? " *" : ""}</label>
-                    <Input placeholder={item.label} value={value} onChange={e => updateField(item.key, e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+                    <Input placeholder={item.label} value={value} onChange={e => updateField(item.key, e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
                   </div>
                 );
               })}
@@ -113,7 +113,7 @@ export function PoConversionReentryWorkbench({ open, onClose, handoff, onDraftRe
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Locked <span className="text-slate-300 font-medium">{reentryState.lockedApprovalFieldCount}</span></span>
             <span className="text-slate-600">·</span>

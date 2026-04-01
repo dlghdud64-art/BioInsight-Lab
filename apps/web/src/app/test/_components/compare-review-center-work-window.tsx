@@ -156,10 +156,10 @@ export function CompareReviewCenterWorkWindow({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
 
         {/* ═══ Review Status Bar ═══ */}
-        <div className="px-5 py-2.5 border-b border-bd/60 bg-[#252729] flex items-center justify-between">
+        <div className="px-5 py-2.5 border-b border-bd/60 bg-[#252A33] flex items-center justify-between">
           <div className="flex items-center gap-3">
             {reviewState.reopenMeta.isReopened && (
               <span className="text-[9px] px-2 py-0.5 rounded bg-amber-600/15 text-amber-300 font-medium border border-amber-500/20">
@@ -218,7 +218,7 @@ export function CompareReviewCenterWorkWindow({
             return (
               <div
                 key={opt.optionId}
-                className={`rounded-md border transition-all cursor-pointer ${isSelected ? "border-blue-500/30 bg-blue-600/[0.04]" : opt.reviewStatus === "shortlisted" ? "border-emerald-500/20 bg-emerald-600/[0.02]" : opt.reviewStatus === "excluded" ? "border-bd/40 bg-[#252729] opacity-60" : "border-bd/40 bg-[#252729]"}`}
+                className={`rounded-md border transition-all cursor-pointer ${isSelected ? "border-blue-500/30 bg-blue-600/[0.04]" : opt.reviewStatus === "shortlisted" ? "border-emerald-500/20 bg-emerald-600/[0.02]" : opt.reviewStatus === "excluded" ? "border-bd/40 bg-[#252A33] opacity-60" : "border-bd/40 bg-[#252A33]"}`}
                 onClick={() => setSelectedOptionId(isSelected ? null : opt.optionId)}
               >
                 {/* Row header */}
@@ -333,7 +333,7 @@ export function CompareReviewCenterWorkWindow({
         </div>
 
         {/* ═══ Sticky Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-emerald-400 font-medium">SL {shortlistedCount}</span>
             <span className="text-slate-600">·</span>

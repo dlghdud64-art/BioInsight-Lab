@@ -127,9 +127,9 @@ export function QuoteCompareReviewWorkbench({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* ═══ Identity Strip ═══ */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isDecisionRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-violet-600/15 border-violet-500/25"}`}>
               {isDecisionRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <GitCompare className="h-4 w-4 text-violet-400" />}
@@ -161,21 +161,21 @@ export function QuoteCompareReviewWorkbench({
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">핵심 차이</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
               {diffSummary.lowestPrice && (
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
                   <div className="flex items-center gap-1.5 mb-1"><TrendingDown className="h-3 w-3 text-emerald-400" /><span className="text-[9px] text-slate-500">가격 우위</span></div>
                   <span className="text-[11px] text-slate-200 font-medium block">{diffSummary.lowestPrice.label}</span>
                   <span className="text-[10px] text-slate-400">{diffSummary.lowestPrice.delta}</span>
                 </div>
               )}
               {diffSummary.fastestLeadTime && (
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
                   <div className="flex items-center gap-1.5 mb-1"><Clock className="h-3 w-3 text-blue-400" /><span className="text-[9px] text-slate-500">납기 우위</span></div>
                   <span className="text-[11px] text-slate-200 font-medium block">{diffSummary.fastestLeadTime.label}</span>
                   <span className="text-[10px] text-slate-400">{diffSummary.fastestLeadTime.delta}</span>
                 </div>
               )}
               {diffSummary.bestStock && (
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
                   <div className="flex items-center gap-1.5 mb-1"><Package className="h-3 w-3 text-emerald-400" /><span className="text-[9px] text-slate-500">재고</span></div>
                   <span className="text-[11px] text-slate-200 font-medium">{diffSummary.bestStock.label}</span>
                 </div>
@@ -188,7 +188,7 @@ export function QuoteCompareReviewWorkbench({
               )}
             </div>
             {diffSummary.operatorCheckpoints.length > 0 && (
-              <div className="mt-2 px-3 py-2 rounded bg-[#252729] border border-bd/30">
+              <div className="mt-2 px-3 py-2 rounded bg-[#252A33] border border-bd/30">
                 {diffSummary.operatorCheckpoints.map((cp, i) => (
                   <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400">
                     <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />{cp}
@@ -204,7 +204,7 @@ export function QuoteCompareReviewWorkbench({
             <div className="mt-2 border border-bd/40 rounded-md overflow-x-auto">
               <table className="w-full text-[10px]">
                 <thead>
-                  <tr className="bg-[#252729] border-b border-bd/40">
+                  <tr className="bg-[#252A33] border-b border-bd/40">
                     <th className="px-3 py-2 text-left text-slate-500 font-medium">항목</th>
                     {normalizedQuotes.map((q) => (
                       <th key={q.id} className="px-3 py-2 text-left text-slate-300 font-medium border-l border-bd/30">{q.vendorTargetId}</th>
@@ -243,7 +243,7 @@ export function QuoteCompareReviewWorkbench({
                 const isExcluded = compareState.excludedVendorIds.includes(vid);
                 const isFollowup = compareState.followupVendorIds.includes(vid);
                 return (
-                  <div key={q.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : isFollowup ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={q.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border transition-all ${isShortlisted ? "border-emerald-500/25 bg-emerald-600/[0.04]" : isExcluded ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : isFollowup ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <span className="text-[11px] text-slate-200 font-medium block truncate">{vid}</span>
@@ -297,7 +297,7 @@ export function QuoteCompareReviewWorkbench({
         </div>
 
         {/* ═══ Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">shortlist <span className="text-slate-300 font-medium">{compareState.shortlistVendorIds.length}</span></span>
             <span className="text-slate-600">·</span>

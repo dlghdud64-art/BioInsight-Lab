@@ -37,8 +37,8 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-indigo-600/15 border-indigo-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-indigo-400" />}
@@ -72,7 +72,7 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
                 <div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Inbound Window</span></div>
                 <span className={`text-[10px] font-medium ${prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-amber-300"}`}>{prepState.expectedInboundWindowStatus}</span>
               </div>
-              <div className={`px-3 py-2 rounded-md border ${prepState.partialReceivingReentryStatus === "full" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+              <div className={`px-3 py-2 rounded-md border ${prepState.partialReceivingReentryStatus === "full" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">Partial Receiving</span></div>
                 <span className="text-[10px] font-medium text-slate-200">{prepState.partialReceivingReentryStatus}</span>
               </div>
@@ -119,7 +119,7 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Inbound <span className={prepState.expectedInboundWindowStatus === "confirmed" ? "text-emerald-300" : "text-amber-300"}>{prepState.expectedInboundWindowStatus}</span></span>
             <span className="text-slate-600">·</span>

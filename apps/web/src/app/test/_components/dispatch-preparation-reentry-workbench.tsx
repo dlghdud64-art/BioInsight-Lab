@@ -38,8 +38,8 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-cyan-600/15 border-cyan-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Truck className="h-4 w-4 text-cyan-400" />}
@@ -68,9 +68,9 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
           {/* Recipient */}
           <div>
             <div className="flex items-center gap-1.5 mb-2"><Mail className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Recipient Revalidation</span></div>
-            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
               <label className="text-[10px] text-slate-400 block mb-1">Primary Recipient</label>
-              <Input placeholder="이메일 주소" value={reentryState.primaryRecipient} onChange={e => setReentryState(prev => prev ? { ...prev, primaryRecipient: e.target.value, recipientCount: e.target.value ? 1 : 0 } : prev)} className="h-7 text-[10px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+              <Input placeholder="이메일 주소" value={reentryState.primaryRecipient} onChange={e => setReentryState(prev => prev ? { ...prev, primaryRecipient: e.target.value, recipientCount: e.target.value ? 1 : 0 } : prev)} className="h-7 text-[10px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
             </div>
           </div>
 
@@ -80,7 +80,7 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
               <span className="text-[9px] text-slate-500 block">Payload Delta</span>
               <span className={`text-[10px] font-medium ${reentryState.payloadDeltaStatus === "reviewed" ? "text-emerald-300" : "text-amber-300"}`}>{reentryState.payloadDeltaStatus === "reviewed" ? "검토 완료" : "미검토"}</span>
             </div>
-            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] text-center">
+            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <div className="flex items-center justify-center gap-1 mb-0.5"><Paperclip className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">첨부</span></div>
               <span className="text-[10px] text-slate-200 font-medium">{reentryState.attachmentBundleCount}개</span>
             </div>
@@ -108,7 +108,7 @@ export function DispatchPreparationReentryWorkbench({ open, onClose, handoff, on
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Recipient <span className="text-slate-300 font-medium">{reentryState.recipientCount}</span></span>
             <span className="text-slate-600">·</span>

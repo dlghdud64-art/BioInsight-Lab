@@ -46,8 +46,8 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-sky-600/15 border-sky-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Mail className="h-4 w-4 text-sky-400" />}
@@ -74,7 +74,7 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           {/* Acknowledgment status */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Acknowledgment 상태</span>
-            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentReentryStatus === "no_response" ? "border-slate-700/40 bg-[#252729]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+            <div className={`mt-2 flex items-center gap-3 px-3 py-3 rounded-md border ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : trackingState.acknowledgmentReentryStatus === "no_response" ? "border-slate-700/40 bg-[#252A33]" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
               <div className={`w-2.5 h-2.5 rounded-full ${trackingState.acknowledgmentReentryStatus === "acknowledged" ? "bg-emerald-400" : trackingState.acknowledgmentReentryStatus === "no_response" ? "bg-slate-500" : "bg-amber-400"}`} />
               <div className="flex-1">
                 <span className={`text-[12px] font-semibold ${ackLabel.color}`}>{ackLabel.label}</span>
@@ -96,7 +96,7 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           )}
 
           {/* Supplier Confirmation readiness */}
-          <div className={`px-3 py-2.5 rounded-md border ${validation?.canOpenSupplierConfirmationReentry ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+          <div className={`px-3 py-2.5 rounded-md border ${validation?.canOpenSupplierConfirmationReentry ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
             <span className="text-[9px] text-slate-500 block mb-0.5">Supplier Confirmation Re-entry Readiness</span>
             {validation?.canOpenSupplierConfirmationReentry ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">진입 가능</span></div> : <span className="text-[10px] text-slate-500">{validation?.recommendedNextAction || "대기 중"}</span>}
           </div>
@@ -113,7 +113,7 @@ export function PoSentReentryTrackingWorkbench({ open, onClose, handoff, onAckno
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className={ackLabel.color}>{ackLabel.label}</span>
             <span className="text-slate-600">·</span>

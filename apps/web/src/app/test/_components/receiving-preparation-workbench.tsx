@@ -37,8 +37,8 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-indigo-600/15 border-indigo-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-indigo-400" />}
@@ -60,8 +60,8 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">예상 입고</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">ETA</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">수량</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">ETA</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">수량</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></div>
             </div>
           </div>
 
@@ -101,7 +101,7 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5"><span className="text-slate-500">{validation?.recommendedNextAction || ""}</span></div>
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToConfirmation}><ArrowLeft className="h-3 w-3 mr-1" />Supplier Confirmation</Button>

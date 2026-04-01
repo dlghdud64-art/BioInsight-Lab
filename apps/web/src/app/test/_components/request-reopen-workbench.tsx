@@ -49,9 +49,9 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
   const totalLines = reopenState.reusedRequestLineIds.length + reopenState.rewrittenRequestLineIds.length;
 
   return (
-    <div className="flex flex-col h-full bg-[#1e2024]">
+    <div className="flex flex-col h-full bg-[#1C2028]">
       {/* ── Decision Header ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729] shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33] shrink-0">
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-emerald-600/15 border-emerald-500/25"}`}>
             {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <FileText className="h-4 w-4 text-emerald-400" />}
@@ -83,7 +83,7 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
           <div className="grid grid-cols-3 gap-2">
             <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">재사용</span><span className="text-lg font-bold text-emerald-400">{reopenState.reusedVendorTargetIds.length}</span></div>
             <div className="px-3 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">추가</span><span className="text-lg font-bold text-blue-400">{reopenState.addedVendorTargetIds.length}</span></div>
-            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">제외</span><span className="text-lg font-bold text-slate-500">{reopenState.excludedVendorTargetIds.length}</span></div>
+            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">제외</span><span className="text-lg font-bold text-slate-500">{reopenState.excludedVendorTargetIds.length}</span></div>
           </div>
         </div>
 
@@ -91,15 +91,15 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
         <div>
           <div className="flex items-center gap-1.5 mb-2"><Pencil className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Request Line Reuse / Rewrite</span></div>
           <div className="grid grid-cols-2 gap-2">
-            <div className={`px-3 py-2.5 rounded-md border ${reopenState.reusedRequestLineIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"} text-center`}><span className="text-[9px] text-slate-500 block">재사용</span><span className={`text-lg font-bold ${reopenState.reusedRequestLineIds.length > 0 ? "text-emerald-400" : "text-slate-600"}`}>{reopenState.reusedRequestLineIds.length}</span></div>
-            <div className={`px-3 py-2.5 rounded-md border ${reopenState.rewrittenRequestLineIds.length > 0 ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252729]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${reopenState.rewrittenRequestLineIds.length > 0 ? "text-amber-400" : "text-slate-600"}`}>{reopenState.rewrittenRequestLineIds.length}</span></div>
+            <div className={`px-3 py-2.5 rounded-md border ${reopenState.reusedRequestLineIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재사용</span><span className={`text-lg font-bold ${reopenState.reusedRequestLineIds.length > 0 ? "text-emerald-400" : "text-slate-600"}`}>{reopenState.reusedRequestLineIds.length}</span></div>
+            <div className={`px-3 py-2.5 rounded-md border ${reopenState.rewrittenRequestLineIds.length > 0 ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"} text-center`}><span className="text-[9px] text-slate-500 block">재작성</span><span className={`text-lg font-bold ${reopenState.rewrittenRequestLineIds.length > 0 ? "text-amber-400" : "text-slate-600"}`}>{reopenState.rewrittenRequestLineIds.length}</span></div>
           </div>
         </div>
 
         {/* Condition delta */}
         <div>
           <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Condition Delta</span>
-          <div className="mt-2 px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+          <div className="mt-2 px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
             <span className="text-[10px] text-slate-300">{reopenState.requestConditionDeltaSummary || "미정의 — 조건 변경 사항을 지정하세요"}</span>
           </div>
         </div>
@@ -121,7 +121,7 @@ export function RequestReopenWorkbench({ open, onClose, handoff, onReopenRecorde
       </div>
 
       {/* ── Sticky Dock ── */}
-      <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f] shrink-0">
+      <div className="px-5 py-3 border-t border-bd bg-[#181E28] shrink-0">
         <div className="flex items-center gap-3 text-[10px] mb-2.5">
           <span className="text-slate-500">Vendor <span className="text-slate-300 font-medium">{totalVendors}</span></span>
           <span className="text-slate-600">·</span>

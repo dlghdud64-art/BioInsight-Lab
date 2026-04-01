@@ -191,7 +191,7 @@ export default function DashboardSupportPage() {
                           className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-blue-500/50 bg-blue-500/[0.08] ring-1 ring-blue-500/30"
-                              : "border-[#2c2f35] bg-[#22252a] hover:border-[#3a3d44] hover:bg-[#282b31]"
+                              : "border-[#2c2f35] bg-[#22252a] hover:border-[#3a3d44] hover:bg-[#2A3240]"
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
@@ -218,7 +218,7 @@ export default function DashboardSupportPage() {
                     placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
                     value={relatedResource}
                     onChange={(e) => setRelatedResource(e.target.value)}
-                    className="border-[#2c2f35] bg-[#282b31] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
                   />
                   <p className="text-[11px] text-slate-500">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
                 </div>
@@ -239,7 +239,7 @@ export default function DashboardSupportPage() {
                               : opt.value === "medium"
                               ? "border-amber-500/30 bg-amber-500/[0.06] ring-1 ring-amber-500/20"
                               : "border-blue-500/30 bg-blue-500/[0.06] ring-1 ring-blue-500/20"
-                            : "border-[#2c2f35] bg-[#22252a] hover:bg-[#282b31]"
+                            : "border-[#2c2f35] bg-[#22252a] hover:bg-[#2A3240]"
                         }`}
                       >
                         <span className={`text-xs font-semibold ${
@@ -263,7 +263,7 @@ export default function DashboardSupportPage() {
                     placeholder="이슈를 간단히 요약해주세요"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="border-[#2c2f35] bg-[#282b31] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
                   />
                 </div>
 
@@ -277,7 +277,7 @@ export default function DashboardSupportPage() {
                     placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    className="min-h-[160px] resize-none border-[#2c2f35] bg-[#282b31] text-sm text-slate-200 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="min-h-[160px] resize-none border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
                   />
                 </div>
 
@@ -348,7 +348,7 @@ export default function DashboardSupportPage() {
                 {MOCK_TICKETS.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="rounded-lg border border-[#2c2f35] bg-[#22252a] px-3.5 py-3 hover:bg-[#282b31] transition-colors cursor-pointer"
+                    className="rounded-lg border border-[#2c2f35] bg-[#22252a] px-3.5 py-3 hover:bg-[#2A3240] transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <span className="text-[10px] font-mono text-slate-600">{ticket.id}</span>

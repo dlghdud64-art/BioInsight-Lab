@@ -44,9 +44,9 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
   const isRecorded = !!decisionSnapshot;
 
   return (
-    <div className="flex flex-col h-full bg-[#1e2024]">
+    <div className="flex flex-col h-full bg-[#1C2028]">
       {/* ── Decision Header ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729] shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33] shrink-0">
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-blue-600/15 border-blue-500/25"}`}>
             {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <GitCompare className="h-4 w-4 text-blue-400" />}
@@ -81,7 +81,7 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
                   { label: "Shortlist 로직", reuse: baselineDecision.reuseShortlistLogic },
                   { label: "제외 로직", reuse: baselineDecision.reuseExclusionLogic },
                 ].map(item => (
-                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <span className="text-[9px] text-slate-500 block">{item.label}</span>
                     <span className={`text-[10px] font-medium ${item.reuse ? "text-emerald-300" : "text-slate-500"}`}>{item.reuse ? "재사용" : "초기화"}</span>
                   </div>
@@ -111,10 +111,10 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
             <div>
               <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">핵심 차이</span>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><TrendingDown className="h-3 w-3 text-emerald-400" /><span className="text-[9px] text-slate-500">가격</span></div><span className="text-[10px] text-slate-200">{diffSummary.priceDeltaSummary}</span></div>
-                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-blue-400" /><span className="text-[9px] text-slate-500">납기</span></div><span className="text-[10px] text-slate-200">{diffSummary.leadTimeDeltaSummary}</span></div>
-                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-400" /><span className="text-[9px] text-slate-500">규격</span></div><span className="text-[10px] text-slate-200">{diffSummary.specFitDeltaSummary}</span></div>
-                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-400" /><span className="text-[9px] text-slate-500">재고</span></div><span className="text-[10px] text-slate-200">{diffSummary.availabilityDeltaSummary}</span></div>
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><TrendingDown className="h-3 w-3 text-emerald-400" /><span className="text-[9px] text-slate-500">가격</span></div><span className="text-[10px] text-slate-200">{diffSummary.priceDeltaSummary}</span></div>
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-blue-400" /><span className="text-[9px] text-slate-500">납기</span></div><span className="text-[10px] text-slate-200">{diffSummary.leadTimeDeltaSummary}</span></div>
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-400" /><span className="text-[9px] text-slate-500">규격</span></div><span className="text-[10px] text-slate-200">{diffSummary.specFitDeltaSummary}</span></div>
+                <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-400" /><span className="text-[9px] text-slate-500">재고</span></div><span className="text-[10px] text-slate-200">{diffSummary.availabilityDeltaSummary}</span></div>
               </div>
             </div>
           )}
@@ -128,7 +128,7 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
                 const isEx = reopenState.excludedIds.includes(id);
                 const isRc = reopenState.requestCandidateIds.includes(id);
                 return (
-                  <div key={id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${isSl ? "border-emerald-500/20 bg-emerald-600/[0.03]" : isEx ? "border-bd/40 bg-[#252729] opacity-50" : isRc ? "border-blue-500/20 bg-blue-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${isSl ? "border-emerald-500/20 bg-emerald-600/[0.03]" : isEx ? "border-bd/40 bg-[#252A33] opacity-50" : isRc ? "border-blue-500/20 bg-blue-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <span className="text-[11px] text-slate-200 font-medium flex-1">{id}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button size="sm" variant={isSl ? "default" : "ghost"} className={`h-6 px-2 text-[9px] ${isSl ? "bg-emerald-600/15 text-emerald-400 border border-emerald-500/25" : "text-slate-500 border border-bd/30"}`} onClick={() => toggleShortlist(id)} disabled={isRecorded}><Check className="h-3 w-3 mr-0.5" />SL</Button>
@@ -154,7 +154,7 @@ export function CompareReopenWorkbench({ open, onClose, handoff, onDecisionRecor
         </div>
 
       {/* ── Sticky Dock ── */}
-      <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f] shrink-0">
+      <div className="px-5 py-3 border-t border-bd bg-[#181E28] shrink-0">
         <div className="flex items-center gap-3 text-[10px] mb-2.5">
           <span className="text-slate-500">SL <span className="text-emerald-300 font-medium">{reopenState.shortlistIds.length}</span></span>
           <span className="text-slate-600">·</span>

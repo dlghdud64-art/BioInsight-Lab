@@ -54,8 +54,8 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-rose-600/15 border-rose-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Clipboard className="h-4 w-4 text-rose-400" />}
@@ -83,9 +83,9 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">실제 입고</span>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">입고 시점</span><span className={`text-[10px] font-medium ${execState.actualReceiptTimestamp ? "text-slate-200" : "text-slate-600"}`}>{execState.actualReceiptTimestamp ? "기록됨" : "미기록"}</span></div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">수량</span><span className={`text-[10px] font-medium ${execState.actualReceivedQtySummary ? "text-slate-200" : "text-slate-600"}`}>{execState.actualReceivedQtySummary || "미기록"}</span></div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">라인</span><span className="text-[10px] font-medium text-slate-200">{execState.receivedLineCount}/{execState.expectedLineCount}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">입고 시점</span><span className={`text-[10px] font-medium ${execState.actualReceiptTimestamp ? "text-slate-200" : "text-slate-600"}`}>{execState.actualReceiptTimestamp ? "기록됨" : "미기록"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">수량</span><span className={`text-[10px] font-medium ${execState.actualReceivedQtySummary ? "text-slate-200" : "text-slate-600"}`}>{execState.actualReceivedQtySummary || "미기록"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">라인</span><span className="text-[10px] font-medium text-slate-200">{execState.receivedLineCount}/{execState.expectedLineCount}</span></div>
             </div>
             {!execState.actualReceiptTimestamp && (
               <Button size="sm" variant="ghost" className="w-full h-7 text-[9px] text-blue-400 hover:text-blue-300 border border-blue-500/20 mt-2" onClick={simulateFullReceipt}>전량 입고 시뮬레이션</Button>
@@ -118,7 +118,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
                 { label: "보관 위치", status: cl.storageCaptureStatus, value: cl.storageLocation },
                 { label: "입고 문서", status: cl.receivingDocStatus, value: cl.receivingDocReference },
               ].map(item => (
-                <div key={item.label} className={`px-3 py-2 rounded-md border ${item.status === "captured" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                <div key={item.label} className={`px-3 py-2 rounded-md border ${item.status === "captured" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : item.status === "blocked" ? "border-red-500/15 bg-red-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                   <span className="text-[9px] text-slate-500 block">{item.label}</span>
                   <span className={`text-[10px] font-medium ${item.status === "captured" ? "text-emerald-300" : item.status === "blocked" ? "text-red-300" : "text-slate-500"}`}>{item.value || (item.status === "captured" ? "기록됨" : item.status === "not_required" ? "불필요" : "미기록")}</span>
                 </div>
@@ -138,7 +138,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
           )}
 
           {/* Inventory readiness */}
-          <div className={`px-3 py-2.5 rounded-md border ${validation?.canOpenInventoryIntake ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+          <div className={`px-3 py-2.5 rounded-md border ${validation?.canOpenInventoryIntake ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
             <span className="text-[9px] text-slate-500 block mb-0.5">Inventory Intake Readiness</span>
             {validation?.canOpenInventoryIntake ? <div className="flex items-center gap-1"><Check className="h-3 w-3 text-emerald-400" /><span className="text-[10px] text-emerald-300">진입 가능</span></div> : <span className="text-[10px] text-slate-500">{validation?.recommendedNextAction || "대기 중"}</span>}
           </div>
@@ -151,7 +151,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">수신 <span className="text-slate-300 font-medium">{execState.receivedLineCount}/{execState.expectedLineCount}</span></span>
             <span className="text-slate-600">·</span>

@@ -51,8 +51,8 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-blue-600/15 border-blue-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <RefreshCw className="h-4 w-4 text-blue-400" />}
@@ -89,7 +89,7 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
                 const isSelected = reentryState.selectedReentryRoute === route;
                 return (
                   <button key={route} type="button" onClick={() => !isRecorded && selectRoute(route)} disabled={isRecorded}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-md border text-left transition-all ${isSelected ? "border-blue-500/30 bg-blue-600/[0.06]" : "border-bd/40 bg-[#252729] hover:bg-[#2a2c30]"}`}>
+                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-md border text-left transition-all ${isSelected ? "border-blue-500/30 bg-blue-600/[0.06]" : "border-bd/40 bg-[#252A33] hover:bg-[#2a2c30]"}`}>
                     <Icon className={`h-4 w-4 shrink-0 ${isSelected ? config.color : "text-slate-500"}`} />
                     <div className="flex-1">
                       <span className={`text-[11px] font-medium block ${isSelected ? "text-slate-100" : "text-slate-300"}`}>{config.label}</span>
@@ -112,7 +112,7 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
                   { label: "비교 기준", reuse: baselinePlan.reuseCompareBasis },
                   { label: "요청 라인 구조", reuse: baselinePlan.reuseRequestLineStructure },
                 ].map(item => (
-                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <span className="text-[9px] text-slate-500 block">{item.label}</span>
                     <span className={`text-[10px] font-medium ${item.reuse ? "text-emerald-300" : "text-slate-500"}`}>{item.reuse ? "재사용" : "초기화"}</span>
                   </div>
@@ -143,7 +143,7 @@ export function ProcurementReentryWorkbench({ open, onClose, handoff, onReentryR
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             {reentryState.selectedReentryRoute && <span className={ROUTE_CONFIG[reentryState.selectedReentryRoute].color}>{ROUTE_CONFIG[reentryState.selectedReentryRoute].label}</span>}
             <span className="text-slate-600">·</span>

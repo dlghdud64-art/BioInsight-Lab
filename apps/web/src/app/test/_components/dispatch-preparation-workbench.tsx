@@ -48,8 +48,8 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-cyan-600/15 border-cyan-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Truck className="h-4 w-4 text-cyan-400" />}
@@ -73,11 +73,11 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
           <div>
             <div className="flex items-center gap-1.5 mb-2"><Mail className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">수신자</span></div>
             {prepState.recipients.map((r, i) => (
-              <div key={r.recipientId} className="flex items-center gap-3 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] mb-1">
+              <div key={r.recipientId} className="flex items-center gap-3 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] mb-1">
                 <Building2 className="h-3.5 w-3.5 text-slate-500 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <span className="text-[11px] text-slate-200 font-medium block">{r.displayName}</span>
-                  <Input placeholder="이메일 주소" value={i === 0 ? recipientEmail : ""} onChange={e => i === 0 && setRecipientEmail(e.target.value)} className="mt-1 h-7 text-[10px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+                  <Input placeholder="이메일 주소" value={i === 0 ? recipientEmail : ""} onChange={e => i === 0 && setRecipientEmail(e.target.value)} className="mt-1 h-7 text-[10px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
                 </div>
                 <span className={`text-[9px] px-1.5 py-0.5 rounded ${recipientEmail ? "bg-emerald-600/10 text-emerald-400" : "bg-slate-700/50 text-slate-500"}`}>{recipientEmail ? "유효" : "미입력"}</span>
               </div>
@@ -87,18 +87,18 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
           {/* Outbound */}
           <div>
             <div className="flex items-center gap-1.5 mb-2"><FileText className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">발송 내용</span></div>
-            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] mb-2">
+            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] mb-2">
               <span className="text-[9px] text-slate-500 block mb-0.5">PO 요약</span>
               <span className="text-[10px] text-slate-300">{prepState.outboundPackage.poSummary || "—"}</span>
             </div>
-            <Input placeholder="공급사 전달 메모" value={supplierNote} onChange={e => setSupplierNote(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+            <Input placeholder="공급사 전달 메모" value={supplierNote} onChange={e => setSupplierNote(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
           </div>
 
           {/* Attachment */}
           <div>
             <div className="flex items-center gap-1.5 mb-2"><Paperclip className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">첨부</span></div>
             {prepState.attachmentBundle.map(att => (
-              <div key={att.attachmentId} className={`flex items-center gap-3 px-3 py-2 rounded-md border mb-1 ${att.included ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+              <div key={att.attachmentId} className={`flex items-center gap-3 px-3 py-2 rounded-md border mb-1 ${att.included ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <Check className={`h-3 w-3 shrink-0 ${att.included ? "text-emerald-400" : "text-slate-600"}`} />
                 <span className="text-[10px] text-slate-200">{att.name}</span>
                 <span className="text-[9px] text-slate-500">{att.type === "po_document" ? "필수" : "선택"}</span>
@@ -131,7 +131,7 @@ export function DispatchPreparationWorkbench({ open, onClose, handoff, onPrepRec
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">수신자 <span className="text-slate-300 font-medium">{prepState.recipients.length}</span></span>
             <span className="text-slate-600">·</span>

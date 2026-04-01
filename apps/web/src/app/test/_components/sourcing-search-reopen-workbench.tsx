@@ -55,8 +55,8 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-blue-600/15 border-blue-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Search className="h-4 w-4 text-blue-400" />}
@@ -88,11 +88,11 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
             <div className="space-y-2">
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">검색 키워드</label>
-                <Input placeholder="시약명, CAS No., 카탈로그 번호" value={keyword} onChange={e => setKeyword(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+                <Input placeholder="시약명, CAS No., 카탈로그 번호" value={keyword} onChange={e => setKeyword(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
               </div>
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">카테고리</label>
-                <Input placeholder="카테고리 (예: Antibody, Reagent)" value={category} onChange={e => setCategory(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isRecorded} />
+                <Input placeholder="카테고리 (예: Antibody, Reagent)" value={category} onChange={e => setCategory(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isRecorded} />
               </div>
             </div>
           </div>
@@ -101,11 +101,11 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
           <div>
             <div className="flex items-center gap-1.5 mb-2"><Filter className="h-3 w-3 text-slate-500" /><span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Filter · Priority</span></div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">재고 선호</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.inStockPreference ? "선호" : "무관"}</span></div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">납기 우선순위</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.leadTimePreference}</span></div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">가격 민감도</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.priceSensitivity}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">재고 선호</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.inStockPreference ? "선호" : "무관"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">납기 우선순위</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.leadTimePreference}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">가격 민감도</span><span className="text-[10px] text-slate-300">{reopenState.filterSeed.priceSensitivity}</span></div>
             </div>
-            <div className="mt-2 px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+            <div className="mt-2 px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
               <div className="flex items-center gap-1.5 mb-0.5"><Zap className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">긴급도</span></div>
               <span className="text-[10px] text-slate-300 font-medium">{reopenState.prioritySignal.urgency} — {reopenState.prioritySignal.reorderQtyBasis}</span>
             </div>
@@ -120,7 +120,7 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
                 const isSelected = selectedStrategy === strat.id;
                 return (
                   <button key={strat.id} type="button" onClick={() => !isRecorded && setSelectedStrategy(strat.id)} disabled={isRecorded}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border text-left transition-all ${isSelected ? "border-blue-500/30 bg-blue-600/[0.06]" : "border-bd/40 bg-[#252729] hover:bg-[#2a2c30]"}`}>
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-md border text-left transition-all ${isSelected ? "border-blue-500/30 bg-blue-600/[0.06]" : "border-bd/40 bg-[#252A33] hover:bg-[#2a2c30]"}`}>
                     <div className="flex-1 min-w-0">
                       <span className={`text-[11px] font-medium block ${isSelected ? "text-slate-100" : "text-slate-300"}`}>{strat.label}</span>
                       <span className="text-[9px] text-slate-500">{strat.rationale}</span>
@@ -144,7 +144,7 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
                   { label: "카테고리·규격", reuse: baselineDecision.reuseCategoryAndSpecBaseline },
                   { label: "공급사 힌트", reuse: baselineDecision.reusePreferredVendorHints },
                 ].map(item => (
-                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={item.label} className={`px-3 py-2 rounded-md border text-center ${item.reuse ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <span className="text-[9px] text-slate-500 block">{item.label}</span>
                     <span className={`text-[10px] font-medium ${item.reuse ? "text-emerald-300" : "text-slate-500"}`}>{item.reuse ? "재사용" : "초기화"}</span>
                   </div>
@@ -169,7 +169,7 @@ export function SourcingSearchReopenWorkbench({ open, onClose, handoff, onReopen
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Query: <span className="text-slate-300 font-medium">{keyword || category || "미지정"}</span></span>
             <span className="text-slate-600">·</span>

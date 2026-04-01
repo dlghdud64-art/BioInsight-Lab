@@ -42,8 +42,8 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-amber-600/15 border-amber-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <ShieldCheck className="h-4 w-4 text-amber-400" />}
@@ -101,7 +101,7 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
                 const isApproved = reentryState.approvedCandidateIds.includes(id);
                 const isBlocked = reentryState.blockedApprovalCandidateIds.includes(id);
                 return (
-                  <div key={id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${isApproved ? "border-emerald-500/20 bg-emerald-600/[0.03]" : isBlocked ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={id} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${isApproved ? "border-emerald-500/20 bg-emerald-600/[0.03]" : isBlocked ? "border-red-500/15 bg-red-600/[0.03] opacity-60" : "border-bd/40 bg-[#252A33]"}`}>
                     <span className="text-[11px] text-slate-200 font-medium flex-1">{id}</span>
                     <div className="flex items-center gap-1 shrink-0">
                       <Button size="sm" variant={isApproved ? "default" : "ghost"} className={`h-6 px-2 text-[9px] ${isApproved ? "bg-emerald-600/15 text-emerald-400 border border-emerald-500/25" : "text-slate-500 border border-bd/30"}`} onClick={() => toggleApproved(id)} disabled={isRecorded}><Check className="h-3 w-3 mr-0.5" />승인</Button>
@@ -125,7 +125,7 @@ export function ApprovalReentryWorkbench({ open, onClose, handoff, onDecisionRec
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Approved <span className="text-emerald-300 font-medium">{reentryState.approvedCandidateIds.length}</span></span>
             <span className="text-slate-600">·</span>

@@ -53,7 +53,7 @@ export function SourcingContextRail({
   return (
     <div className="flex flex-col h-full">
       {/* Rail 헤더 — sticky */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-bd bg-[#2a2d33] z-10">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-bd bg-[#2F3540] z-10">
         <span className="text-xs font-semibold uppercase tracking-wider text-slate-300">
           제품 상세
         </span>

@@ -367,7 +367,7 @@ export default function SearchPage() {
   const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#3a3d46' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#3A4150' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
 
@@ -469,7 +469,7 @@ export default function SearchPage() {
           </div>
 
           {/* C. Right Context Rail — persistent panel */}
-          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2a2d33] flex-col overflow-hidden">
+          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2F3540] flex-col overflow-hidden">
             {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
             {aiCompareReadiness.active ? (
               <div className="px-3 py-2 border-b border-bd/50">
@@ -514,7 +514,7 @@ export default function SearchPage() {
               </div>
             ) : hasSearched && products.length >= 2 && compareIds.length < 2 ? (
               <div className="px-3 py-2 border-b border-bd/50">
-                <div className="rounded-md border border-slate-700/40 bg-[#252729] px-3 py-2 flex items-center gap-2">
+                <div className="rounded-md border border-slate-700/40 bg-[#252A33] px-3 py-2 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
                   <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 AI 비교 판단이 활성화됩니다</span>
                 </div>
@@ -553,7 +553,7 @@ export default function SearchPage() {
         </div>
         ) : (
         /* ═══ Stage Shell — request/quote/post-quote 단계 배경 ═══ */
-        <div className="flex-1 overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#32353c' }}>
+        <div className="flex-1 overflow-hidden flex items-center justify-center" style={{ backgroundColor: '#333B48' }}>
           <div className="max-w-lg w-full px-6">
             {/* Stage header */}
             <div className="text-center mb-6">
@@ -570,7 +570,7 @@ export default function SearchPage() {
 
             {/* Handoff context — 이전 선택 맥락 */}
             {(quoteItems.length > 0 || compareIds.length > 0 || searchQuery) && (
-              <div className="rounded-lg border border-bd bg-[#282b31] px-4 py-3 mb-4 space-y-2">
+              <div className="rounded-lg border border-bd bg-[#2A3240] px-4 py-3 mb-4 space-y-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">이전 선택 맥락</p>
                 <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
                   {searchQuery && (
@@ -593,7 +593,7 @@ export default function SearchPage() {
             )}
 
             {/* Next action */}
-            <div className="rounded-lg border border-bd bg-[#282b31] px-4 py-3 mb-4">
+            <div className="rounded-lg border border-bd bg-[#2A3240] px-4 py-3 mb-4">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">다음 액션</p>
               <p className="text-xs text-slate-300 leading-relaxed">
                 {stageOwner === "request"
@@ -708,7 +708,7 @@ export default function SearchPage() {
 
           {/* Right guide rail — 비로그인 안내 */}
           {!session?.user && (
-            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2a2d33] flex-col items-center justify-center text-center px-6">
+            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2F3540] flex-col items-center justify-center text-center px-6">
               <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
                 <Search className="h-6 w-6 text-blue-400/60" />
               </div>
@@ -730,7 +730,7 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
       {hasSearched && !!session?.user && isSourcingOwner && (
-        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#4e515b' }}>
+        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#455264' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
@@ -1546,7 +1546,7 @@ export default function SearchPage() {
           <div className="absolute inset-0 bg-black/15" />
           {/* Anchored decision layer — right edge, rail과 연결된 느낌 */}
           <div
-            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-[#1e2024] border-l border-blue-500/20 shadow-2xl shadow-black/50 flex flex-col overflow-hidden"
+            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-[#1C2028] border-l border-blue-500/20 shadow-2xl shadow-black/50 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Layer header — strong AI branding */}
@@ -1608,13 +1608,13 @@ export default function SearchPage() {
                 <div className="space-y-4">
                   {/* Delta summary — numbers first */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
                       <span className="text-[9px] text-slate-500 block mb-0.5">추가 후보</span>
                       <span className="text-base font-bold tabular-nums text-slate-100">
                         {products.filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0).slice(0, 3).length}개
                       </span>
                     </div>
-                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
                       <span className="text-[9px] text-slate-500 block mb-0.5">현재 비교</span>
                       <span className="text-base font-bold tabular-nums text-slate-100">{compareIds.length}개</span>
                     </div>
@@ -1655,7 +1655,7 @@ export default function SearchPage() {
                   </div>
 
                   {/* Next action */}
-                  <div className="flex items-center gap-2 text-[10px] px-2.5 py-2 rounded bg-[#252729] border border-bd/30">
+                  <div className="flex items-center gap-2 text-[10px] px-2.5 py-2 rounded bg-[#252A33] border border-bd/30">
                     <span className="text-slate-500">다음 단계</span>
                     <span className="text-slate-300 font-medium">{previewOption.nextAction}</span>
                   </div>
@@ -1666,7 +1666,7 @@ export default function SearchPage() {
             </div>
 
             {/* Action area — preview / apply separation */}
-            <div className="px-4 py-3.5 border-t border-bd/60 bg-[#1a1c1f]">
+            <div className="px-4 py-3.5 border-t border-bd/60 bg-[#181E28]">
               {isStrategyStale ? (
                 <div className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-1.5">
@@ -1764,9 +1764,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-bd bg-[#2e3138]">
+    <div className="shrink-0 border-b border-bd bg-[#2A3240]">
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#2e3138]">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#2A3240]">
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard" className="flex items-center">
             <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
@@ -1787,7 +1787,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
       <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-[#33363d] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#393c44] transition-all">
+          <div className="flex items-center flex-1 bg-[#2F3848] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#354050] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"

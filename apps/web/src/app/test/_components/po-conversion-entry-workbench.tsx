@@ -100,9 +100,9 @@ export function PoConversionEntryWorkbench({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         {/* ═══ Identity Strip ═══ */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isDraftRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-indigo-600/15 border-indigo-500/25"}`}>
               {isDraftRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-indigo-400" />}
@@ -146,7 +146,7 @@ export function PoConversionEntryWorkbench({
             </div>
             <div className="space-y-1">
               {convState.lockedFields.map((field) => (
-                <div key={field.fieldId} className="flex items-center gap-3 px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                <div key={field.fieldId} className="flex items-center gap-3 px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
                   <Lock className="h-3 w-3 text-slate-600 shrink-0" />
                   <div className="flex-1 min-w-0">
                     <span className="text-[10px] text-slate-400 block">{field.fieldLabel}</span>
@@ -168,35 +168,35 @@ export function PoConversionEntryWorkbench({
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">결제 조건 *</label>
-                  <Input placeholder="예: NET 30" value={paymentTerm} onChange={(e) => setPaymentTerm(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input placeholder="예: NET 30" value={paymentTerm} onChange={(e) => setPaymentTerm(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">청구 참조 *</label>
-                  <Input placeholder="예: PROJ-2024-001" value={billingRef} onChange={(e) => setBillingRef(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input placeholder="예: PROJ-2024-001" value={billingRef} onChange={(e) => setBillingRef(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">납품 요청일 *</label>
-                  <Input type="date" value={deliveryTarget} onChange={(e) => setDeliveryTarget(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input type="date" value={deliveryTarget} onChange={(e) => setDeliveryTarget(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">배송지 참조</label>
-                  <Input placeholder="예: 연구실 A동 3층" value={shipTo} onChange={(e) => setShipTo(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input placeholder="예: 연구실 A동 3층" value={shipTo} onChange={(e) => setShipTo(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
               </div>
               <div>
                 <label className="text-[10px] text-slate-400 block mb-1">입고 지시 *</label>
-                <Input placeholder="예: 인수 검수 후 입고 / 냉장 보관 필요" value={receivingInst} onChange={(e) => setReceivingInst(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                <Input placeholder="예: 인수 검수 후 입고 / 냉장 보관 필요" value={receivingInst} onChange={(e) => setReceivingInst(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">내부 PO 메모</label>
-                  <Input placeholder="내부 참고용" value={internalNote} onChange={(e) => setInternalNote(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input placeholder="내부 참고용" value={internalNote} onChange={(e) => setInternalNote(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-400 block mb-1">공급사 전달 메모</label>
-                  <Input placeholder="공급사에 전달할 내용" value={supplierNote} onChange={(e) => setSupplierNote(e.target.value)} className="h-8 text-[11px] bg-[#1e2024] border-bd/40" disabled={isDraftRecorded} />
+                  <Input placeholder="공급사에 전달할 내용" value={supplierNote} onChange={(e) => setSupplierNote(e.target.value)} className="h-8 text-[11px] bg-[#1C2028] border-bd/40" disabled={isDraftRecorded} />
                 </div>
               </div>
             </div>
@@ -249,7 +249,7 @@ export function PoConversionEntryWorkbench({
         </div>
 
         {/* ═══ Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">승인 공급사 <span className="text-slate-300 font-medium">{convState.approvedVendorIds.length}</span></span>
             <span className="text-slate-600">·</span>

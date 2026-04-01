@@ -88,9 +88,9 @@ export function PoCreatedDetailWorkbench({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
         {/* ═══ Identity Strip ═══ */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-teal-400" />}
@@ -125,11 +125,11 @@ export function PoCreatedDetailWorkbench({
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">PO 헤더</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
                 <div className="flex items-center gap-1.5 mb-0.5"><Building2 className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">공급사</span></div>
                 <span className="text-[11px] text-slate-200 font-medium">{basis.vendorIds.join(", ") || "—"}</span>
               </div>
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
                 <div className="flex items-center gap-1.5 mb-0.5"><Lock className="h-3 w-3 text-slate-600" /><span className="text-[9px] text-slate-500">PO ID</span></div>
                 <span className="text-[11px] text-slate-200 font-medium">{createdState.poCreatedObjectId || createdState.poConversionDraftObjectId}</span>
               </div>
@@ -150,7 +150,7 @@ export function PoCreatedDetailWorkbench({
                 const Icon = item.icon;
                 const isMissing = !item.value;
                 return (
-                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${isMissing && item.critical ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+                  <div key={item.label} className={`flex items-center gap-3 px-3 py-2 rounded-md border ${isMissing && item.critical ? "border-amber-500/20 bg-amber-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                     <Icon className={`h-3.5 w-3.5 shrink-0 ${isMissing ? "text-amber-400" : "text-slate-500"}`} />
                     <div className="flex-1 min-w-0">
                       <span className="text-[9px] text-slate-500 block">{item.label}{item.critical ? " *" : ""}</span>
@@ -164,13 +164,13 @@ export function PoCreatedDetailWorkbench({
               {(basis.internalNote || basis.supplierNote) && (
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   {basis.internalNote && (
-                    <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                    <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
                       <span className="text-[9px] text-slate-500 block">내부 메모</span>
                       <span className="text-[10px] text-slate-300">{basis.internalNote}</span>
                     </div>
                   )}
                   {basis.supplierNote && (
-                    <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]">
+                    <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]">
                       <span className="text-[9px] text-slate-500 block">공급사 전달 메모</span>
                       <span className="text-[10px] text-slate-300">{basis.supplierNote}</span>
                     </div>
@@ -230,7 +230,7 @@ export function PoCreatedDetailWorkbench({
         </div>
 
         {/* ═══ Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">공급사 <span className="text-slate-300 font-medium">{createdState.createdVendorCount}</span></span>
             <span className="text-slate-600">·</span>

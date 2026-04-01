@@ -113,8 +113,8 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               top: "3.75rem",
               width: "min(88vw, 340px)",
               maxHeight: "78vh",
-              backgroundColor: "#131A24",
-              border: "1px solid #2A3648",
+              backgroundColor: "#0D1A2D",
+              border: "1px solid #1E3050",
               boxShadow: "0 20px 48px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3)",
               animation: "mobileMenuIn 180ms cubic-bezier(0.16,1,0.3,1) forwards",
             }}
@@ -122,7 +122,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             {/* ── 헤더: 로고 + 닫기 ── */}
             <div
               className="flex items-center justify-between px-4 py-3.5 flex-shrink-0"
-              style={{ borderBottom: "1px solid #1E2A3A" }}
+              style={{ borderBottom: "1px solid #162640" }}
             >
               <span className="text-[15px] font-bold tracking-tight text-slate-100">LabAxis</span>
               <button
@@ -140,7 +140,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
               {session?.user ? (
                 <>
                   {/* 프로필 */}
-                  <div className="px-4 py-3.5" style={{ borderBottom: "1px solid #1E2A3A" }}>
+                  <div className="px-4 py-3.5" style={{ borderBottom: "1px solid #162640" }}>
                     <div className="flex items-center gap-3">
                       <div
                         className="h-9 w-9 rounded-full flex items-center justify-center flex-shrink-0"
@@ -173,26 +173,26 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                         onClick={close}
                         className="flex items-center gap-3 px-3 rounded-xl transition-colors"
                         style={{ paddingTop: 11, paddingBottom: 11, color: primary ? "#F1F5F9" : "#94A3B8" }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1C2535")}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" style={{ color: primary ? "#2563EB" : "#4A5E78" }} />
+                        <Icon className="h-4 w-4 flex-shrink-0" style={{ color: primary ? "#2563EB" : "#3D5570" }} />
                         <span className="text-sm font-medium">{label}</span>
                       </Link>
                     ))}
                   </nav>
 
                   {/* 지원 */}
-                  <div className="px-2 pb-2" style={{ borderTop: "1px solid #1E2A3A", paddingTop: 6 }}>
+                  <div className="px-2 pb-2" style={{ borderTop: "1px solid #162640", paddingTop: 6 }}>
                     <Link
                       href="/support"
                       onClick={close}
                       className="flex items-center gap-3 px-3 rounded-xl transition-colors"
                       style={{ paddingTop: 11, paddingBottom: 11, color: "#94A3B8" }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1C2535")}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
                       onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                     >
-                      <Headset className="h-4 w-4 flex-shrink-0" style={{ color: "#4A5E78" }} />
+                      <Headset className="h-4 w-4 flex-shrink-0" style={{ color: "#3D5570" }} />
                       <span className="text-sm font-medium">고객 지원 및 문의</span>
                     </Link>
                   </div>
@@ -212,23 +212,23 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                         onClick={close}
                         className="flex items-center gap-3 px-3 rounded-xl transition-colors"
                         style={{ paddingTop: 11, paddingBottom: 11, color: "#E2E8F0" }}
-                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1C2535")}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
                         onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                       >
-                        <Icon className="h-4 w-4 flex-shrink-0" style={{ color: "#4A5E78" }} />
+                        <Icon className="h-4 w-4 flex-shrink-0" style={{ color: "#3D5570" }} />
                         <span className="text-sm font-medium">{label}</span>
                       </Link>
                     ))}
                   </nav>
 
                   {/* 로그인 */}
-                  <div className="px-2 pb-2" style={{ borderTop: "1px solid #1E2A3A", paddingTop: 6 }}>
+                  <div className="px-2 pb-2" style={{ borderTop: "1px solid #162640", paddingTop: 6 }}>
                     <Link
                       href="/auth/signin"
                       onClick={close}
                       className="flex items-center gap-3 px-3 rounded-xl transition-colors"
                       style={{ paddingTop: 11, paddingBottom: 11, color: "#94A3B8" }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#1C2535")}
+                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
                       onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
                     >
                       <span className="text-sm font-medium">로그인</span>
@@ -239,7 +239,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             </div>
 
             {/* ── 하단 sticky CTA ── */}
-            <div className="flex-shrink-0 px-3 py-3" style={{ borderTop: "1px solid #1E2A3A" }}>
+            <div className="flex-shrink-0 px-3 py-3" style={{ borderTop: "1px solid #162640" }}>
               {session?.user ? (
                 <button
                   type="button"

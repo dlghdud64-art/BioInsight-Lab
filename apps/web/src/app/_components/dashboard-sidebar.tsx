@@ -218,11 +218,14 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   className={cn(
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-el text-white"
-                      : "text-slate-400 hover:bg-el hover:text-slate-300"
+                      ? "text-white"
+                      : "text-slate-400 hover:text-slate-300"
                   )}
+                  style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
+                  onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
+                  onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-cyan-400" : "text-slate-400")} />
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-400")} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -234,7 +237,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <div className="space-y-6">
           {sidebarGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
-              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#455264" }}>
                 {group.label}
               </h3>
               <nav className="space-y-1">
@@ -251,14 +254,17 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       className={cn(
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "bg-el text-white"
-                          : "text-slate-400 hover:bg-el hover:text-slate-200"
+                          ? "text-white"
+                          : "text-slate-400 hover:text-slate-200"
                       )}
+                      style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
+                      onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
+                      onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                     >
                       <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs bg-blue-100 text-blue-700 px-1.5 md:px-2 py-0.5 rounded">
+                        <span className="ml-auto text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(37,99,235,0.12)", color: "#60A5FA" }}>
                           {item.badge}
                         </span>
                       )}
@@ -273,7 +279,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
           <div className="mt-8 pt-6 border-t border-bd">
-            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#455264" }}>
               시스템 관리
             </p>
             <nav className="space-y-1">
@@ -289,9 +295,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     className={cn(
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "bg-el text-white"
-                        : "text-slate-400 hover:bg-el hover:text-slate-200"
+                        ? "text-white"
+                        : "text-slate-400 hover:text-slate-200"
                     )}
+                    style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
+                    onMouseEnter={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
+                    onMouseLeave={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                   >
                     <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
                     <span className="truncate whitespace-nowrap">{item.title}</span>
@@ -331,7 +340,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-el/50 border border-bs/50 hover:bg-el hover:border-bd transition-all duration-300 group"
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 group"
+          style={{ backgroundColor: "rgba(13,42,80,0.25)", borderColor: "rgba(37,99,235,0.15)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(13,42,80,0.4)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(13,42,80,0.25)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.15)"; }}
         >
           <Home className="h-4 w-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
           <span className="text-xs font-bold tracking-wider text-slate-400 group-hover:text-blue-400 truncate whitespace-nowrap">

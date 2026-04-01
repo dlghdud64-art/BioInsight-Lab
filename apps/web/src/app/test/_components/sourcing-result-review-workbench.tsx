@@ -43,9 +43,9 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
   const isRecorded = !!reviewObject;
 
   return (
-    <div className="flex flex-col h-full bg-[#1e2024]">
+    <div className="flex flex-col h-full bg-[#1C2028]">
       {/* ── Decision Header ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729] shrink-0">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33] shrink-0">
         <div className="flex items-center gap-3">
           <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-violet-600/15 border-violet-500/25"}`}>
             {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Search className="h-4 w-4 text-violet-400" />}
@@ -78,7 +78,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
               <div className="mt-2 grid grid-cols-4 gap-2">
                 <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">High Fit</span><span className="text-lg font-bold text-emerald-400">{triage.highFitCount}</span></div>
                 <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Medium</span><span className="text-lg font-bold text-amber-400">{triage.mediumFitCount}</span></div>
-                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">Excluded</span><span className="text-lg font-bold text-slate-500">{triage.excludedCount}</span></div>
+                <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">Excluded</span><span className="text-lg font-bold text-slate-500">{triage.excludedCount}</span></div>
                 <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Bias</span><span className="text-lg font-bold text-amber-400">{triage.baselineBiasCount}</span></div>
               </div>
             </div>
@@ -94,7 +94,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
                   <div className="px-3 py-2.5 rounded-md border border-blue-500/20 bg-blue-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Exact Match</span><span className="text-lg font-bold text-blue-400">{groupPlan.exactMatchCandidateIds.length}</span></div>
                   <div className="px-3 py-2.5 rounded-md border border-violet-500/20 bg-violet-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Equivalent</span><span className="text-lg font-bold text-violet-400">{groupPlan.equivalentCandidateIds.length}</span></div>
                   <div className="px-3 py-2.5 rounded-md border border-emerald-500/20 bg-emerald-600/[0.03] text-center"><span className="text-[9px] text-slate-500 block">Substitute</span><span className="text-lg font-bold text-emerald-400">{groupPlan.substituteCandidateIds.length}</span></div>
-                  <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729] text-center"><span className="text-[9px] text-slate-500 block">Blocked</span><span className="text-lg font-bold text-slate-500">{groupPlan.blockedCandidateIds.length}</span></div>
+                  <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33] text-center"><span className="text-[9px] text-slate-500 block">Blocked</span><span className="text-lg font-bold text-slate-500">{groupPlan.blockedCandidateIds.length}</span></div>
                 </div>
               </div>
             );
@@ -109,9 +109,9 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
               <div>
                 <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Delta-First Compare</span>
                 <div className="mt-2 grid grid-cols-3 gap-2">
-                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">가격</span><span className="text-[10px] text-slate-200">{deltaSummary.priceDeltaSummary}</span></div>
-                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">납기</span><span className="text-[10px] text-slate-200">{deltaSummary.leadTimeDeltaSummary}</span></div>
-                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729]"><span className="text-[9px] text-slate-500 block">규격</span><span className="text-[10px] text-slate-200">{deltaSummary.specFitDeltaSummary}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">가격</span><span className="text-[10px] text-slate-200">{deltaSummary.priceDeltaSummary}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">납기</span><span className="text-[10px] text-slate-200">{deltaSummary.leadTimeDeltaSummary}</span></div>
+                  <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><span className="text-[9px] text-slate-500 block">규격</span><span className="text-[10px] text-slate-200">{deltaSummary.specFitDeltaSummary}</span></div>
                 </div>
               </div>
             );
@@ -129,7 +129,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
                 {reviewState.candidateDecisions.map(cd => {
                   const config = DECISION_CONFIG[cd.decisionType];
                   return (
-                    <div key={cd.candidateId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "compare_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "request_direct" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : cd.decisionType === "excluded" ? "border-bd/40 bg-[#252729] opacity-60" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
+                    <div key={cd.candidateId} className={`flex items-center gap-3 px-3 py-2.5 rounded-md border ${cd.decisionType === "compare_candidate" ? "border-blue-500/20 bg-blue-600/[0.03]" : cd.decisionType === "request_direct" ? "border-emerald-500/20 bg-emerald-600/[0.03]" : cd.decisionType === "excluded" ? "border-bd/40 bg-[#252A33] opacity-60" : "border-amber-500/20 bg-amber-600/[0.03]"}`}>
                       {cd.decisionType === "compare_candidate" ? <GitCompare className="h-3.5 w-3.5 text-blue-400 shrink-0" /> : cd.decisionType === "request_direct" ? <FileText className="h-3.5 w-3.5 text-emerald-400 shrink-0" /> : cd.decisionType === "excluded" ? <Minus className="h-3.5 w-3.5 text-slate-500 shrink-0" /> : <Eye className="h-3.5 w-3.5 text-amber-400 shrink-0" />}
                       <div className="flex-1 min-w-0">
                         <span className="text-[11px] text-slate-200 font-medium block truncate">{cd.candidateName}</span>
@@ -150,11 +150,11 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
           {/* Assembly summary */}
           {plan && (plan.compareCandidateIds.length > 0 || plan.requestDirectCandidateIds.length > 0) && (
             <div className="grid grid-cols-2 gap-2">
-              <div className={`px-3 py-2.5 rounded-md border ${plan.compareCandidateIds.length >= 2 ? "border-blue-500/20 bg-blue-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${plan.compareCandidateIds.length >= 2 ? "border-blue-500/20 bg-blue-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Compare Reopen</span>
                 <span className={`text-[10px] font-medium ${plan.compareCandidateIds.length >= 2 ? "text-blue-300" : "text-slate-500"}`}>{plan.compareCandidateIds.length}개 후보 {plan.compareCandidateIds.length >= 2 ? "— 준비됨" : "— 부족"}</span>
               </div>
-              <div className={`px-3 py-2.5 rounded-md border ${plan.requestDirectCandidateIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252729]"}`}>
+              <div className={`px-3 py-2.5 rounded-md border ${plan.requestDirectCandidateIds.length > 0 ? "border-emerald-500/20 bg-emerald-600/[0.03]" : "border-bd/40 bg-[#252A33]"}`}>
                 <span className="text-[9px] text-slate-500 block mb-0.5">Request Reopen</span>
                 <span className={`text-[10px] font-medium ${plan.requestDirectCandidateIds.length > 0 ? "text-emerald-300" : "text-slate-500"}`}>{plan.requestDirectCandidateIds.length}개 후보 {plan.requestDirectCandidateIds.length > 0 ? "— 준비됨" : "— 없음"}</span>
               </div>
@@ -175,7 +175,7 @@ export function SourcingResultReviewWorkbench({ open, onClose, handoff, onReview
         </div>
 
       {/* ── Sticky Dock ── */}
-      <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f] shrink-0">
+      <div className="px-5 py-3 border-t border-bd bg-[#181E28] shrink-0">
         <div className="flex items-center gap-3 text-[10px] mb-2.5">
           <span className="text-slate-500">Compare <span className="text-blue-300 font-medium">{plan?.compareCandidateIds.length || 0}</span></span>
           <span className="text-slate-600">·</span>

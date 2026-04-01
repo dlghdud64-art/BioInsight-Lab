@@ -85,10 +85,10 @@ export function PoCreatedWorkbenchV2({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
 
         {/* ═══ A. Created PO Header ═══ */}
-        <div className="px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-3">
               <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRouted ? "bg-emerald-600/15 border-emerald-500/25" : isHold ? "bg-amber-600/15 border-amber-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
@@ -122,7 +122,7 @@ export function PoCreatedWorkbenchV2({
           {/* ═══ B. Canonical PO Summary (read-only) ═══ */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Canonical PO Summary</span>
-            <div className="mt-2 rounded-md border border-bd/40 bg-[#252729] divide-y divide-bd/20">
+            <div className="mt-2 rounded-md border border-bd/40 bg-[#252A33] divide-y divide-bd/20">
               {[
                 { icon: Building2, label: "공급사", value: `${poRecord.vendorId} · ${poRecord.vendorOrderContact || "연락처 미확인"}` },
                 { icon: MapPin, label: "배송지", value: poRecord.shipTo || "미지정" },
@@ -184,7 +184,7 @@ export function PoCreatedWorkbenchV2({
               placeholder="created PO에 대한 검토 메모를 남기세요"
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
-              className="h-8 text-[11px] bg-[#1e2024] border-bd/40"
+              className="h-8 text-[11px] bg-[#1C2028] border-bd/40"
               disabled={isRouted}
             />
           </div>
@@ -199,7 +199,7 @@ export function PoCreatedWorkbenchV2({
         </div>
 
         {/* ═══ Sticky Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           {readiness?.status === "blocked" && readiness.blockers.length > 0 && (
             <div className="text-[9px] text-red-400 mb-2">이동 불가: {readiness.blockers[0]}</div>
           )}

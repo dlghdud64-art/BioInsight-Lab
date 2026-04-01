@@ -17,8 +17,8 @@ export function StockReleaseReentryWorkbench({ open, onClose, receivingExecReent
   const isRecorded = !!obj;
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3"><div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-green-600/15 border-green-500/25"}`}>{isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-green-400" />}</div><div><h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Stock Release Re-entry 완료" : "Available Stock Release Re-entry"}</h2><div className="flex items-center gap-2 text-[10px] mt-0.5"><span className="text-slate-400">Releasable: <span className={state.releasableQtySummary ? "text-emerald-300" : "text-slate-500"}>{state.releasableQtySummary || "미확인"}</span></span><span className="text-slate-600">·</span><span className="text-slate-400">Eligibility: <span className={state.releaseEligibilityStatus === "ready" ? "text-emerald-300" : "text-amber-300"}>{state.releaseEligibilityStatus}</span></span></div></div></div>
           <button type="button" onClick={onClose} className="h-7 w-7 flex items-center justify-center rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05]"><X className="h-4 w-4" /></button>
         </div>
@@ -32,7 +32,7 @@ export function StockReleaseReentryWorkbench({ open, onClose, receivingExecReent
           {validation && validation.warnings.length > 0 && !isRecorded && validation.warnings.map((w, i) => <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-md bg-amber-600/[0.04] border border-amber-500/10"><AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" /><span className="text-[10px] text-amber-300">{w}</span></div>)}
           {isRecorded && <div className="px-3 py-3 rounded-md bg-emerald-600/[0.06] border border-emerald-500/15"><div className="flex items-center gap-2"><Check className="h-4 w-4 text-emerald-400" /><span className="text-[11px] text-emerald-300 font-medium">Stock Release Re-entry 저장 완료</span></div><span className="text-[10px] text-slate-400 block mt-1">Reorder Decision Re-entry로 진행할 수 있습니다.</span></div>}
         </div>
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5"><span className="text-slate-500">{validation?.recommendedNextAction || ""}</span></div>
           <div className="flex gap-2">
             <Button size="sm" variant="ghost" className="h-8 px-3 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onReturnToReceivingExecReentry}><ArrowLeft className="h-3 w-3 mr-1" />Rcv Exec Re</Button>

@@ -37,8 +37,8 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-teal-600/15 border-teal-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Package className="h-4 w-4 text-teal-400" />}
@@ -67,7 +67,7 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
           {/* Regenerated PO identity */}
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">Regenerated PO</span>
-            <div className="mt-2 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+            <div className="mt-2 px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
               <span className="text-[11px] text-slate-200 font-medium block">{reentryState.regeneratedPoId}</span>
               <span className="text-[9px] text-slate-500">Approved Candidates: {reentryState.approvedCandidateIds.join(", ") || "—"}</span>
             </div>
@@ -116,7 +116,7 @@ export function PoCreatedReentryWorkbench({ open, onClose, handoff, onCreatedRec
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">PO <span className="text-slate-300 font-medium">{reentryState.regeneratedPoId}</span></span>
             <span className="text-slate-600">·</span>

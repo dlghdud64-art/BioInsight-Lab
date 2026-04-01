@@ -37,8 +37,8 @@ export function SendConfirmationReentryWorkbench({ open, onClose, handoff, onRee
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className={`flex items-center justify-center w-7 h-7 rounded-lg border ${isRecorded ? "bg-emerald-600/15 border-emerald-500/25" : "bg-orange-600/15 border-orange-500/25"}`}>
               {isRecorded ? <Check className="h-4 w-4 text-emerald-400" /> : <Send className="h-4 w-4 text-orange-400" />}
@@ -75,11 +75,11 @@ export function SendConfirmationReentryWorkbench({ open, onClose, handoff, onRee
 
           {/* Payload + Attachment */}
           <div className="grid grid-cols-2 gap-2">
-            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
               <span className="text-[9px] text-slate-500 block mb-0.5">Payload</span>
               <span className="text-[10px] text-slate-300">{reentryState.finalPayloadSummary || "—"}</span>
             </div>
-            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252729]">
+            <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
               <div className="flex items-center gap-1 mb-0.5"><Paperclip className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">첨부</span></div>
               <span className="text-[10px] text-slate-200 font-medium">{reentryState.attachmentBundleCount}개</span>
             </div>
@@ -101,7 +101,7 @@ export function SendConfirmationReentryWorkbench({ open, onClose, handoff, onRee
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Recipient <span className="text-slate-300 font-medium">{reentryState.finalRecipient || "—"}</span></span>
             <span className="text-slate-600">·</span>

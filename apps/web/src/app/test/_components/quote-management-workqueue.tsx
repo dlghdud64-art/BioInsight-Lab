@@ -120,9 +120,9 @@ export function QuoteManagementWorkqueue({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1e2024] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-[#1C2028] border border-bd rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* ═══ 1. Identity Strip ═══ */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252729]">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-[#252A33]">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-violet-600/15 border border-violet-500/25">
               <FileText className="h-4 w-4 text-violet-400" />
@@ -150,19 +150,19 @@ export function QuoteManagementWorkqueue({
         {/* ═══ 2. Response Status Summary ═══ */}
         <div className="px-5 py-3 border-b border-bd/40">
           <div className="grid grid-cols-4 gap-2">
-            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">미응답</span>
               <span className={`text-lg font-bold tabular-nums ${noResponseCount > 0 ? "text-slate-300" : "text-slate-600"}`}>{noResponseCount}</span>
             </div>
-            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">수신 완료</span>
               <span className={`text-lg font-bold tabular-nums ${receivedCount > 0 ? "text-blue-400" : "text-slate-600"}`}>{receivedCount}</span>
             </div>
-            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">정리 필요</span>
               <span className={`text-lg font-bold tabular-nums ${normalizationCount > 0 ? "text-orange-400" : "text-slate-600"}`}>{normalizationCount}</span>
             </div>
-            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252729] text-center">
+            <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33] text-center">
               <span className="text-[9px] text-slate-500 block">비교 준비</span>
               <span className={`text-lg font-bold tabular-nums ${compareReadyCount > 0 ? "text-emerald-400" : "text-slate-600"}`}>{compareReadyCount}</span>
             </div>
@@ -180,7 +180,7 @@ export function QuoteManagementWorkqueue({
               return (
                 <div
                   key={row.rowId}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-md border cursor-pointer transition-all ${isSelected ? "border-violet-500/30 bg-violet-600/[0.04]" : "border-bd/40 bg-[#252729] hover:bg-[#2a2c30]"}`}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-md border cursor-pointer transition-all ${isSelected ? "border-violet-500/30 bg-violet-600/[0.04]" : "border-bd/40 bg-[#252A33] hover:bg-[#2a2c30]"}`}
                   onClick={() => setSelectedRowId(isSelected ? null : row.rowId)}
                 >
                   {/* Status dot */}
@@ -247,7 +247,7 @@ export function QuoteManagementWorkqueue({
         </div>
 
         {/* ═══ 5. Action Dock ═══ */}
-        <div className="px-5 py-3 border-t border-bd bg-[#1a1c1f]">
+        <div className="px-5 py-3 border-t border-bd bg-[#181E28]">
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">응답 <span className="text-slate-300 font-medium">{receivedCount}/{rows.length}</span></span>
             <span className="text-slate-600">·</span>
