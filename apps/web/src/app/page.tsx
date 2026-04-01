@@ -24,8 +24,15 @@ export default function HomePage() {
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
-      {/* 1.5. Hero → Content bridge band */}
-      <div style={{ height: 80, background: "linear-gradient(180deg, #081936 0%, #162640 25%, #3A4A62 50%, #8B9AB0 75%, #EDF2F8 100%)" }} />
+      {/* 1.5. Hero → Content bridge: navy → slate-blue → mist gray-blue → section tint */}
+      <div
+        aria-hidden="true"
+        style={{
+          height: 180,
+          background:
+            "linear-gradient(180deg, #071a33 0%, #0a2040 10%, #102b4a 22%, #1a3858 36%, #284868 50%, #3d5d7e 62%, #5a7896 74%, #7e96ae 84%, #a3b5c8 91%, #c4d0dd 96%, #dbe4ed 100%)",
+        }}
+      />
 
       {/* 2. Trust Strip */}
       <BioInsightSocialProofSection />
@@ -36,11 +43,4 @@ export default function HomePage() {
       {/* 4. Ops Console Preview */}
       <OpsConsolePreviewSection />
 
-      {/* 5. Final CTA */}
-      <FinalCTASection />
-
-      {/* Footer */}
-      <MainFooter />
-    </div>
-  );
-}
+     

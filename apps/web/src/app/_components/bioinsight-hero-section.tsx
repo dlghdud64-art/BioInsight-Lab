@@ -197,14 +197,14 @@ export function BioInsightHeroSection() {
         />
 
         {/* Layer D: Bottom boundary — white bloom 없음, 얇은 dark separator만 */}
+        {/* ── Atmospheric mist: hero 하단을 "끝"이 아니라 "입구"로 ── */}
         <div
-          className="absolute inset-x-0 bottom-0 h-[24vh]"
+          className="absolute inset-x-0 bottom-0 h-[28vh]"
           style={{
             background:
-              "linear-gradient(180deg, rgba(7,26,51,0) 0%, rgba(14,33,57,0.08) 34%, rgba(44,64,87,0.18) 62%, rgba(128,145,166,0.28) 100%)",
+              "linear-gradient(180deg, rgba(7,26,51,0) 0%, rgba(10,28,52,0.06) 20%, rgba(18,38,62,0.14) 42%, rgba(35,55,80,0.24) 64%, rgba(55,75,100,0.34) 82%, rgba(75,95,118,0.42) 100%)",
           }}
         />
-        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(255,255,255,0.04)" }} />
 
         {/* Plexus — opacity 낮춰서 gradient와 경쟁 안 하게 */}
         <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.22 }}>

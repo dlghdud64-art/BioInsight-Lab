@@ -13,8 +13,14 @@ const PIPELINE_STEPS = [
 
 export function BioInsightSocialProofSection() {
   return (
-    <section style={{ backgroundColor: "#EDF2F8", borderBottom: "1px solid #E3EAF4" }}>
-      <div className="max-w-[1240px] mx-auto px-4 py-4">
+    <section
+      className="relative"
+      style={{
+        background: "linear-gradient(180deg, #d0dbe8 0%, #d8e3ee 8%, #e0e9f2 18%, #e5ecf4 30%, #e9eff6 48%, #edf2f8 68%, #edf2f8 100%)",
+        borderBottom: "1px solid #E3EAF4",
+      }}
+    >
+      <div className="max-w-[1240px] mx-auto px-4 py-5">
         <div className="flex items-center justify-center gap-1 md:gap-0 overflow-x-auto">
           {PIPELINE_STEPS.map((step, i) => {
             const Icon = step.icon;
@@ -22,7 +28,12 @@ export function BioInsightSocialProofSection() {
               <div key={step.num} className="flex items-center shrink-0">
                 <div
                   className="flex items-center gap-2 px-3 md:px-4 py-2.5 rounded-lg transition-colors"
-                  style={step.highlight ? { backgroundColor: "#FFFFFF" } : undefined}
+                  style={step.highlight ? {
+                    backgroundColor: "rgba(255,255,255,0.82)",
+                    border: "1px solid rgba(218,226,238,0.95)",
+                    boxShadow: "0 8px 24px rgba(15,23,42,0.05)",
+                    backdropFilter: "blur(10px)",
+                  } : undefined}
                 >
                   <div
                     className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0"
@@ -41,18 +52,4 @@ export function BioInsightSocialProofSection() {
                       {step.label}
                     </p>
                     <p className="text-[10px] leading-none mt-0.5 hidden md:block" style={{ color: "#94A3B8" }}>
-                      {step.desc}
-                    </p>
-                  </div>
-                </div>
-                {i < PIPELINE_STEPS.length - 1 && (
-                  <ChevronRight className="h-3 w-3 shrink-0 mx-0.5" style={{ color: "#B0BCCC" }} />
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-}
+                     
