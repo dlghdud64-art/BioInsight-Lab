@@ -20,7 +20,7 @@ const FinalCTASection = dynamic(
 
 export default function HomePage() {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#020617" }}>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#071A33" }}>
       {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
       <BioInsightHeroSection />
 
@@ -49,7 +49,7 @@ export default function HomePage() {
         style={{
           height: 140,
           background:
-            "linear-gradient(180deg, #E5EBF4 0%, #d0d9e6 18%, #b0bdcf 38%, #8a9ab2 56%, #6b7d96 72%, #4a5e78 85%, #334a63 94%, #253c55 100%)",
+            "linear-gradient(180deg, #DCE5F0 0%, #c8d3e2 14%, #b0bdcf 32%, #8a9ab2 50%, #6b7d96 66%, #4a5e78 80%, #334a63 92%, #253c55 100%)",
         }}
       />
 
@@ -62,7 +62,7 @@ export default function HomePage() {
         style={{
           height: 100,
           background:
-            "linear-gradient(180deg, #D4DEE9 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #0C1524 100%)",
+            "linear-gradient(180deg, #DCE5F0 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #071A33 100%)",
         }}
       />
 

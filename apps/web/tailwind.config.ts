@@ -22,14 +22,34 @@ const config: Config = {
         sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
       },
       colors: {
-        // ── 전역 surface hierarchy (dark-only, 직접 hex) ──
-        sh: "#2a2c2f",       // shell — neutral graphite (~18%)
-        pg: "#303236",       // page — work area (~21%)
-        pn: "#393b3f",       // panel — card/section (~24%)
-        el: "#434548",       // elevated — input/search/empty (~27%)
-        st: "#4d4f53",       // strong — hover/active surface (~31%)
-        bd: "#4d4f53",       // border default
-        bs: "#5a5c60",       // border strong (~36%)
+        // ── LabAxis Color System v1 ──
+        // Brand Depth
+        "brand-900": "var(--brand-900)",
+        "brand-800": "var(--brand-800)",
+        "brand-700": "var(--brand-700)",
+        // Product Surface
+        "product-900": "var(--product-900)",
+        "product-800": "var(--product-800)",
+        "product-700": "var(--product-700)",
+        "product-600": "var(--product-600)",
+        "product-500": "var(--product-500)",
+        // Light Bridge
+        "bridge-300": "var(--bridge-300)",
+        "bridge-200": "var(--bridge-200)",
+        "bridge-100": "var(--bridge-100)",
+        // Action Blue
+        "action-500": "var(--action-500)",
+        "action-400": "var(--action-400)",
+        "action-300": "var(--action-300)",
+
+        // ── 전역 surface hierarchy (product dark, CSS vars 참조) ──
+        sh: "var(--surface-shell)",       // shell — blue-charcoal base
+        pg: "var(--surface-page)",        // page — work area
+        pn: "var(--surface-panel)",       // panel — card/section
+        el: "var(--surface-elevated)",    // elevated — input/search
+        st: "var(--surface-strong)",      // strong — hover/active
+        bd: "var(--border-default)",      // border default
+        bs: "var(--border-strong)",       // border strong
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

@@ -81,14 +81,37 @@ div.quote-table td.no-column-cell {
    ============================================ */
 @layer base {
   :root {
-    /* LabAxis Surface Hierarchy — dark-only */
-    --surface-shell: #242628;
-    --surface-page: #2b2d30;
-    --surface-panel: #333538;
-    --surface-elevated: #3c3e42;
-    --surface-strong: #46484c;
-    --border-default: #46484c;
-    --border-strong: #535559;
+    /* ── LabAxis Color System v1 ── */
+    /* Brand Depth — 로그인 좌측, 히어로, 소개·요금 상단, 푸터 */
+    --brand-900: #071A33;
+    --brand-800: #0D2A50;
+    --brand-700: #173251;
+    /* Product Surface — 대시보드, 소싱, 앱 내부 (blue-charcoal) */
+    --product-900: #1C2028;
+    --product-800: #252A33;
+    --product-700: #2F3540;
+    --product-600: #3A4150;
+    --product-500: #455264;
+    /* Light Bridge — 소개 하단, 요금 본문, CTA 구역 */
+    --bridge-300: #DCE5F0;
+    --bridge-200: #EAF1F8;
+    --bridge-100: #F6F9FC;
+    /* Action Blue */
+    --action-500: #2563EB;
+    --action-400: #3B82F6;
+    --action-300: #60A5FA;
+    /* Line */
+    --line-dark: rgba(255,255,255,0.08);
+    --line-light: #D7E0EB;
+
+    /* LabAxis Surface Hierarchy — product dark (기존 호환) */
+    --surface-shell: #1C2028;
+    --surface-page: #252A33;
+    --surface-panel: #2F3540;
+    --surface-elevated: #3A4150;
+    --surface-strong: #455264;
+    --border-default: #3A4150;
+    --border-strong: #455264;
 
     /* shadcn/ui semantic tokens (HSL) — neutral graphite, minimal tint */
     --background: 220 3% 14%;

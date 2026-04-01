@@ -37,7 +37,7 @@ const COMPARISON_ROWS = [
 
 export function PlatformFlowSection() {
   return (
-    <section className="py-20 md:py-28" style={{ backgroundColor: "#EBF0F7", borderBottom: "1px solid #DAE2EE" }}>
+    <section className="py-20 md:py-28" style={{ backgroundColor: "#EAF1F8", borderBottom: "1px solid #D7E0EB" }}>
       <div className="max-w-[1240px] mx-auto px-4 md:px-6">
         <div className="mb-10">
           <p className="text-[11px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#64748B" }}>
@@ -52,7 +52,7 @@ export function PlatformFlowSection() {
         </div>
 
         {/* Decision table header */}
-        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#F7F9FC", borderBottom: "1px solid #DAE2EE" }}>
+        <div className="hidden md:grid md:grid-cols-[140px_1fr_40px_1fr] items-center px-5 py-3 mb-1.5 rounded-t-lg" style={{ backgroundColor: "#F6F9FC", borderBottom: "1px solid #D7E0EB" }}>
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#64748B" }}>단계</span>
           <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#94A3B8" }}>기존 방식</span>
           <span />
@@ -65,9 +65,9 @@ export function PlatformFlowSection() {
             <div
               key={row.step}
               className="rounded-lg p-4 md:p-0 md:grid md:grid-cols-[140px_1fr_40px_1fr] md:items-center transition-colors overflow-hidden"
-              style={{ backgroundColor: "#F7F9FC", border: "1px solid #DAE2EE" }}
+              style={{ backgroundColor: "#F6F9FC", border: "1px solid #D7E0EB" }}
               onMouseEnter={e => { e.currentTarget.style.borderColor = "#C8D2E0"; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = "#DAE2EE"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#D7E0EB"; }}
             >
               {/* Step */}
               <div className="md:px-5 md:py-4">

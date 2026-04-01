@@ -16,8 +16,8 @@ export function BioInsightSocialProofSection() {
     <section
       className="relative"
       style={{
-        background: "linear-gradient(180deg, #c8d4e2 0%, #d0dbe8 8%, #d8e2ee 18%, #dde6f0 30%, #e2e9f3 48%, #e7edf5 68%, #e9eff6 100%)",
-        borderBottom: "1px solid #DAE2EE",
+        background: "linear-gradient(180deg, #c8d4e2 0%, #d0dbe8 8%, #d8e2ee 18%, #DCE5F0 30%, #e2e9f3 48%, #e7edf5 68%, #EAF1F8 100%)",
+        borderBottom: "1px solid #D7E0EB",
       }}
     >
       <div className="max-w-[1240px] mx-auto px-4 py-5">

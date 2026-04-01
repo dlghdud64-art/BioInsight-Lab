@@ -211,13 +211,13 @@ export default function PricingPage() {
   };
 
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#F3F6FB" }}>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#EAF1F8" }}>
       <MainHeader />
       {/* ── Hero: compact pricing hero ── */}
       <section
         className="pt-14 pb-10 md:pt-20 md:pb-14"
         style={{
-          background: "linear-gradient(180deg, #020617 0%, #0B1A33 40%, #1A2D4D 70%, #3A4F6E 90%, #F3F6FB 100%)",
+          background: "linear-gradient(180deg, #071A33 0%, #0D2A50 40%, #1A2D4D 70%, #3A4F6E 90%, #EAF1F8 100%)",
         }}
       >
         <div className="container mx-auto px-4 pt-6 md:pt-10">
@@ -271,7 +271,7 @@ export default function PricingPage() {
       </section>
 
       {/* ── Content surface ── */}
-      <div style={{ backgroundColor: "#F3F6FB" }}>
+      <div style={{ backgroundColor: "#EAF1F8" }}>
         <div className="container mx-auto px-4 py-6 md:py-12">
           <div className="max-w-7xl mx-auto">
 
@@ -306,12 +306,12 @@ export default function PricingPage() {
                         isRecommended && "md:scale-105 z-10"
                       )}
                       style={{
-                        backgroundColor: "#FFFFFF",
+                        backgroundColor: "#F6F9FC",
                         border: isSelected
                           ? "2px solid rgba(37,99,235,0.5)"
                           : isRecommended
                           ? "2px solid rgba(37,99,235,0.35)"
-                          : "1px solid #E3EAF4",
+                          : "1px solid #D7E0EB",
                         boxShadow: isSelected
                           ? "0 0 0 3px rgba(37,99,235,0.15), 0 4px 20px rgba(37,99,235,0.08)"
                           : isRecommended
@@ -332,7 +332,7 @@ export default function PricingPage() {
                         <div className="hidden md:flex justify-center mb-3">
                           <div
                             className="p-3 rounded-full transition-colors"
-                            style={{ backgroundColor: isSelected || isRecommended ? plan.iconBgSelected : "#F3F6FB" }}
+                            style={{ backgroundColor: isSelected || isRecommended ? plan.iconBgSelected : "#EAF1F8" }}
                           >
                             <Icon
                               className="h-6 w-6"
@@ -409,7 +409,7 @@ export default function PricingPage() {
                             style={
                               plan.id === "business"
                                 ? { backgroundColor: "#2F6BFF", color: "#FFFFFF", boxShadow: "0 1px 8px rgba(47,107,255,0.22)" }
-                                : { backgroundColor: "#F3F6FB", color: "#0F1728", border: "1px solid #E3EAF4" }
+                                : { backgroundColor: "#EAF1F8", color: "#0F1728", border: "1px solid #D7E0EB" }
                             }
                             onClick={(e) => handlePrimaryAction(e, plan.id)}
                           >
@@ -436,7 +436,7 @@ export default function PricingPage() {
               </div>
 
               {/* ── 도입 기준 가이드 ── */}
-              <div className="mb-6 md:mb-10 rounded-2xl px-5 py-5 md:px-8 md:py-7" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4" }}>
+              <div className="mb-6 md:mb-10 rounded-2xl px-5 py-5 md:px-8 md:py-7" style={{ backgroundColor: "#F6F9FC", border: "1px solid #D7E0EB" }}>
                 <h3 className="text-sm md:text-base font-bold mb-3" style={{ color: "#0F1728" }}>어떤 플랜이 맞을까요?</h3>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-5 text-xs md:text-sm" style={{ color: "#556070" }}>
                   <div>
@@ -475,9 +475,9 @@ export default function PricingPage() {
 
                 {/* ── 모바일 테이블 ── */}
                 <div className="md:hidden overflow-x-auto -mx-4 px-4">
-                  <table className="w-full text-[11px]" style={{ backgroundColor: "#FFFFFF" }}>
+                  <table className="w-full text-[11px]" style={{ backgroundColor: "#F6F9FC" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid #E3EAF4", backgroundColor: "#FFFFFF" }}>
+                      <tr style={{ borderBottom: "1px solid #D7E0EB", backgroundColor: "#F6F9FC" }}>
                         <th className="text-left py-2 pr-2 font-semibold w-[40%]" style={{ color: "#556070" }}>기능</th>
                         <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#7B8796" }}>Free</th>
                         <th className="text-center py-2 px-1 font-semibold w-[15%]" style={{ color: "#7B8796" }}>Team</th>
@@ -489,7 +489,7 @@ export default function PricingPage() {
                       {comparisonFeatures.map((item, index) => {
                         if ("isCategoryHeader" in item && item.isCategoryHeader) {
                           return (
-                            <tr key={`mcat-${index}`} style={{ borderTop: "1px solid #E3EAF4", backgroundColor: item.tier === "business" ? "rgba(37,99,235,0.04)" : "#F3F6FB" }}>
+                            <tr key={`mcat-${index}`} style={{ borderTop: "1px solid #D7E0EB", backgroundColor: item.tier === "business" ? "rgba(37,99,235,0.04)" : "#EAF1F8" }}>
                               <td colSpan={5} className="py-1.5 px-1">
                                 <div className="flex items-center gap-1">
                                   <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: item.tier === "business" ? "#2563EB" : item.tier === "enterprise" ? "#7C3AED" : "#64748B" }}>{item.label}</span>
@@ -521,12 +521,12 @@ export default function PricingPage() {
                 </div>
 
                 {/* ── 데스크톱 테이블 ── */}
-                <Card className="overflow-hidden hidden md:block" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4", borderRadius: "12px" }}>
+                <Card className="overflow-hidden hidden md:block" style={{ backgroundColor: "#F6F9FC", border: "1px solid #D7E0EB", borderRadius: "12px" }}>
                   <CardContent className="p-0">
                     <div className="overflow-x-auto">
                       <Table>
                         <TableHeader>
-                          <TableRow style={{ backgroundColor: "#FFFFFF", borderBottom: "1px solid #E3EAF4" }}>
+                          <TableRow style={{ backgroundColor: "#F6F9FC", borderBottom: "1px solid #D7E0EB" }}>
                             <TableHead className="font-semibold w-[280px] py-3 pl-5" style={{ color: "#556070" }}>기능</TableHead>
                             <TableHead className="text-center font-semibold py-3" style={{ color: "#7B8796" }}>Starter</TableHead>
                             <TableHead className="text-center font-semibold py-3" style={{ color: "#7B8796" }}>Team</TableHead>
@@ -542,7 +542,7 @@ export default function PricingPage() {
                               return (
                                 <TableRow
                                   key={`cat-${index}`}
-                                  style={{ borderTop: "1px solid #E3EAF4", backgroundColor: isBusinessTier ? "rgba(37,99,235,0.04)" : "#F8FAFC" }}
+                                  style={{ borderTop: "1px solid #D7E0EB", backgroundColor: isBusinessTier ? "rgba(37,99,235,0.04)" : "#F8FAFC" }}
                                 >
                                   <TableCell colSpan={5} className="py-2 pl-5">
                                     <div className="flex items-center gap-2">
@@ -582,9 +582,9 @@ export default function PricingPage() {
         </div>
 
       {/* ── Conversion band ── */}
-      <section style={{ backgroundColor: "#EAF1FB" }}>
+      <section style={{ backgroundColor: "#DCE5F0" }}>
         <div className="mx-auto max-w-[1120px] px-4 py-12 md:py-16">
-          <div className="rounded-2xl px-8 pt-12 pb-10 md:px-20 md:pt-16 md:pb-14 text-center" style={{ backgroundColor: "#FFFFFF", border: "1px solid #E3EAF4", boxShadow: "0 1px 8px rgba(37,99,235,0.04)" }}>
+          <div className="rounded-2xl px-8 pt-12 pb-10 md:px-20 md:pt-16 md:pb-14 text-center" style={{ backgroundColor: "#F6F9FC", border: "1px solid #D7E0EB", boxShadow: "0 1px 4px rgba(15,23,42,0.04), 0 4px 20px rgba(51,65,85,0.06)" }}>
             <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: "#2563EB" }}>Get Started</p>
             <h2 className="text-xl md:text-[28px] font-bold mb-3" style={{ color: "#0F1728", lineHeight: 1.3 }}>
               도입 문의 또는 무료 체험으로 시작하세요
@@ -617,8 +617,18 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* ── Light → Footer Bridge ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          height: 100,
+          background:
+            "linear-gradient(180deg, #DCE5F0 0%, #a8b8cc 18%, #7e92ab 36%, #5a7190 54%, #3d5574 70%, #253c55 84%, #182d45 94%, #071A33 100%)",
+        }}
+      />
+
       {/* ── 하단 고정 결제 요약 바 ── */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm" style={{ backgroundColor: "rgba(255,255,255,0.95)", borderTop: "1px solid #E3EAF4" }}>
+      <div className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-sm" style={{ backgroundColor: "rgba(246,249,252,0.95)", borderTop: "1px solid #D7E0EB" }}>
         {/* ── 모바일 바 ── */}
         <div className="md:hidden flex items-center justify-between px-3 py-2 gap-2">
           <div className="flex items-center gap-2 min-w-0">
