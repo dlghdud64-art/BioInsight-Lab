@@ -174,13 +174,33 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden border-b border-[#1A2840]" style={{ background: "linear-gradient(180deg, #06142E 0%, #0A214A 50%, #081936 100%)" }}>
+    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden" style={{ background: "#071a33" }}>
 
-      {/* Background */}
+      {/* Background — 4-layer controlled depth structure */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vh] bg-blue-500/10 rounded-full blur-[100px] z-10" />
-        <div className="absolute inset-0 z-10" style={{ background: "radial-gradient(circle at 50% 34%, rgba(78,138,255,0.22) 0%, rgba(78,138,255,0.12) 24%, rgba(78,138,255,0.00) 56%), radial-gradient(circle at 50% 42%, rgba(37,99,235,0.14) 0%, rgba(37,99,235,0.00) 62%), radial-gradient(circle at center, transparent 0%, #081936 92%)" }} />
-        <div className="absolute inset-0 z-0 pointer-events-none opacity-40">
+
+        {/* Layer B: Directional depth — 상단 8~28%만 살짝 밝고 나머지 균일 */}
+        <div className="absolute inset-0" style={{
+          background: "linear-gradient(180deg, #0d2a50 0%, #091e3e 18%, #071a33 32%, #071a33 100%)"
+        }} />
+
+        {/* Layer C: Signal glow — 헤드라인/CTA 뒤에만, 현재 크기의 40% + 낮은 opacity */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{
+            top: "18%",
+            width: "320px",
+            height: "260px",
+            background: "radial-gradient(ellipse at center, rgba(47,109,246,0.10) 0%, rgba(47,109,246,0.04) 50%, transparent 75%)",
+            filter: "blur(35px)",
+          }}
+        />
+
+        {/* Layer D: Bottom boundary — white bloom 없음, 얇은 dark separator만 */}
+        <div className="absolute bottom-0 left-0 right-0 h-px" style={{ background: "rgba(255,255,255,0.05)" }} />
+
+        {/* Plexus — opacity 낮춰서 gradient와 경쟁 안 하게 */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.22 }}>
           <PlexusCanvas />
         </div>
       </div>
@@ -239,9 +259,9 @@ export function BioInsightHeroSection() {
       {/* Hero */}
       <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 text-center w-full">
         <p className="text-blue-400 font-extrabold text-[10px] md:text-[11px] tracking-[0.25em] mb-4 md:mb-6 uppercase">Biotech Procurement Operations Platform</p>
-        <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6" style={{ filter: "drop-shadow(0 0 40px rgba(255,255,255,0.2))" }}>
+        <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6">
           구매 요청부터 입고·재고까지,<br />
-          <span className="text-blue-500" style={{ filter: "drop-shadow(0 0 25px rgba(59,130,246,0.4))" }}>운영 상태를 한눈에</span>
+          <span className="text-blue-400">운영 상태를 한눈에</span>
         </h1>
         <p className="text-sm md:text-lg text-slate-300 mb-3 md:mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
           검색부터 비교, 요청, 입고, 재고까지 하나의 운영 흐름으로 연결합니다.<br className="hidden sm:block" />AI는 각 단계에서 필요한 후보 정리와 다음 작업 준비를 돕습니다.
@@ -252,7 +272,7 @@ export function BioInsightHeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-400 shadow-[0_0_25px_rgba(59,130,246,0.4)]">
+            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-500/50 shadow-[0_2px_12px_rgba(37,99,235,0.25)]">
               {isLoggedIn ? "소싱 워크벤치 열기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
