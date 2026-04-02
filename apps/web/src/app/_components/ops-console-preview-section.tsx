@@ -1,62 +1,60 @@
 "use client";
 
-import {
-  ListChecks, LayoutDashboard, BarChart3, Wrench,
-  UserCheck, ArrowRightLeft, AlertTriangle, Timer,
-} from "lucide-react";
-
 /*
- * ── Proof Surface: Workbench Teaser ─────────────────────────────────
- *  Role: 실제 운영면의 구조를 보여주는 surface preview
- *  Tone: dark content surface — marketing card가 아닌 workbench teaser
- *  Card structure: 작업 유형 → 주 판단 포인트 → 주요 객체 → 다음 액션
+ * ── Workbench Preview ──────────────────────────────────────────────
+ *  Role: 실제 제품 작업면의 일부를 잘라서 보여주는 preview
+ *  Tone: "기능이 많다"가 아니라 "작업면이 강하다"
+ *  Style: 테이블/리스트 형태의 product surface mockup
+ *  NOT: feature card / marketing description
  * ────────────────────────────────────────────────────────────────────
  */
 
-const WORKBENCH_LAYERS = [
+/* 각 workbench는 실제 제품 화면의 핵심 구간을 시뮬레이션 */
+const WORKBENCH_PREVIEWS = [
   {
-    icon: ListChecks,
-    role: "검색·비교 담당자",
-    title: "작업 큐 정리",
-    judgment: "어떤 후보를 먼저 검토할 것인가",
-    objects: "검색 결과 · 비교 대상 · 요청 준비 항목",
-    action: "후보 정리 → 비교표 생성 → 견적 요청 전환",
-    accent: true,
+    surface: "검색 워크벤치",
+    description: "후보를 구조화해서 비교 가능한 상태로",
+    columns: ["제품명", "벤더", "규격", "단가", "납기"],
+    rows: [
+      ["PBS Buffer 10X", "Sigma-Aldrich", "1L", "₩45,000", "2일"],
+      ["PBS Solution 10X", "Thermo Fisher", "1L", "₩42,300", "3일"],
+      ["PBS Tablet 100T", "MP Biomedicals", "100T", "₩38,500", "5일"],
+    ],
+    action: "3건 선택 → 비교표 생성",
   },
   {
-    icon: LayoutDashboard,
-    role: "구매 운영 담당자",
-    title: "일일 검토·판단",
-    judgment: "비용·납기·규격 중 어떤 기준이 우선인가",
-    objects: "비교 후보 · 견적 회신 · 승인 대기 건",
-    action: "검토 완료 → 승인 요청 → 발주 전환",
-    accent: true,
+    surface: "비교 판단면",
+    description: "스펙·가격·납기 delta를 한 화면에서 판단",
+    columns: ["항목", "Sigma", "Thermo", "MP Bio"],
+    rows: [
+      ["단가", "₩45,000", "₩42,300 ✦", "₩38,500 ✦✦"],
+      ["납기", "2일 ✦✦", "3일 ✦", "5일"],
+      ["순도", "≥99.0%", "≥99.0%", "≥98.5%"],
+    ],
+    action: "최적 후보 확정 → 견적 요청",
   },
   {
-    icon: BarChart3,
-    role: "운영 관리자",
-    title: "통제·누락 점검",
-    judgment: "어디서 병목이 생기고 있는가",
-    objects: "SLA 준수율 · 지연 건 · 팀 워크로드",
-    action: "병목 식별 → 에스컬레이션 → 기준 조정",
-    accent: false,
+    surface: "요청·견적 흐름",
+    description: "비교 결과에서 바로 handoff — 수기 전환 없음",
+    columns: ["견적 대상", "벤더", "수량", "상태"],
+    rows: [
+      ["PBS Buffer 10X", "Sigma-Aldrich", "5L", "회신 대기"],
+      ["PBS Solution 10X", "Thermo Fisher", "5L", "견적 수신"],
+      ["DMEM High Glucose", "Gibco", "6×500mL", "승인 대기"],
+    ],
+    action: "견적 확정 → 승인 요청 → 발주 전환",
   },
   {
-    icon: Wrench,
-    role: "프로세스 설계자",
-    title: "반복 흐름 개선",
-    judgment: "어떤 워크플로를 표준화할 것인가",
-    objects: "반복 요청 패턴 · 승인 단계 · 자동화 후보",
-    action: "패턴 분석 → 워크플로 정의 → 점진 적용",
-    accent: false,
+    surface: "입고·재고 운영면",
+    description: "발주–입고–재고가 하나의 source of truth",
+    columns: ["품목", "Lot#", "입고일", "수량", "위치"],
+    rows: [
+      ["PBS Buffer 10X", "SLCH8734", "04-01", "5L", "냉장-A2"],
+      ["DMEM High Gluc.", "2587441", "04-02", "6×500mL", "냉장-B1"],
+      ["FBS Premium", "S18923", "03-28", "500mL", "냉동-C3"],
+    ],
+    action: "입고 확인 → Lot 등록 → 재고 자동 갱신",
   },
-];
-
-const SYSTEM_EVIDENCE = [
-  { icon: UserCheck,      text: "배정 → 승인 → 수주·입고까지 상태 추적" },
-  { icon: ArrowRightLeft, text: "비교·견적·발주가 하나의 작업 흐름으로 연결" },
-  { icon: AlertTriangle,  text: "SLA·예외·병목이 같은 화면에서 드러남" },
-  { icon: Timer,          text: "요청 준비 항목을 바로 검토, 다음 단계로 전환" },
 ];
 
 export function OpsConsolePreviewSection() {
@@ -64,74 +62,86 @@ export function OpsConsolePreviewSection() {
     <section className="py-12 md:py-16" style={{ backgroundColor: "#0E1D32", borderTop: "1px solid #162A42" }}>
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
         <div className="mb-6 md:mb-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#60A5FA" }}>
-            Operations Console
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-1.5"
+            style={{ color: "#60A5FA" }}
+          >
+            Workbench Preview
           </p>
           <h2 className="text-lg md:text-xl font-bold text-white tracking-tight mb-1.5">
-            역할별 작업면 — 각자의 판단이 빨라지는 구조
+            각 운영면의 실제 작업 구조
           </h2>
           <p className="text-[11px] md:text-xs max-w-lg" style={{ color: "#6A7A8E" }}>
-            검색 결과 정리에서 끝나지 않고, 비교 검토·요청 준비·누락 점검·운영 판단까지 이어지는 작업 흐름.
+            기능 목록이 아닌, 각 작업면에서 실제로 보는 화면의 핵심 구간.
           </p>
         </div>
 
-        {/* Workbench teaser cards — 2×2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 mb-4">
-          {WORKBENCH_LAYERS.map((layer) => {
-            const Icon = layer.icon;
-            return (
-              <div
-                key={layer.title}
-                className="rounded-lg p-4 transition-colors"
-                style={{ backgroundColor: "#0A1828", border: "1px solid #162A42" }}
-              >
-                {/* Role tag + icon + title */}
-                <div className="flex items-center gap-2.5 mb-2.5">
-                  <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0" style={{ backgroundColor: "#142840" }}>
-                    <Icon className="h-3.5 w-3.5" style={{ color: layer.accent ? "#2563EB" : "#4A5E78" }} strokeWidth={1.8} />
-                  </div>
-                  <div>
-                    <p className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>{layer.role}</p>
-                    <p className="text-[12px] font-bold text-white leading-tight">{layer.title}</p>
-                  </div>
-                </div>
-
-                {/* Judgment point — what decision gets faster */}
-                <div className="rounded px-2.5 py-2 mb-2" style={{ backgroundColor: "#0D1428", border: "1px solid #1A2D48" }}>
-                  <p className="text-[9px] font-bold uppercase mb-0.5" style={{ color: "#4A5E78" }}>판단 포인트</p>
-                  <p className="text-[11px] font-medium" style={{ color: "#C8D4E5" }}>{layer.judgment}</p>
-                </div>
-
-                {/* Objects + Action — operational, not descriptive */}
-                <div className="flex flex-col gap-1">
-                  <p className="text-[10px]" style={{ color: "#5A6A7E" }}>
-                    <span className="font-semibold" style={{ color: "#6A7A8E" }}>객체</span>  {layer.objects}
-                  </p>
-                  <p className="text-[10px]" style={{ color: "#5A6A7E" }}>
-                    <span className="font-semibold" style={{ color: "#6A7A8E" }}>흐름</span>  {layer.action}
-                  </p>
+        {/* 2×2 workbench preview grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {WORKBENCH_PREVIEWS.map((wb) => (
+            <div
+              key={wb.surface}
+              className="rounded-lg overflow-hidden"
+              style={{ backgroundColor: "#0A1828", border: "1px solid #162A42" }}
+            >
+              {/* Surface header bar — 실제 제품 화면의 title bar 느낌 */}
+              <div className="px-3.5 py-2.5 flex items-center justify-between" style={{ borderBottom: "1px solid #162A42" }}>
+                <div>
+                  <span className="text-[11px] font-bold text-white">{wb.surface}</span>
+                  <span className="text-[10px] ml-2" style={{ color: "#5A6A7E" }}>{wb.description}</span>
                 </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* System evidence — compact strip */}
-        <div className="rounded-lg px-4 py-3.5" style={{ backgroundColor: "#0A1828", border: "1px solid #162A42" }}>
-          <p className="text-[9px] font-bold uppercase tracking-widest mb-2.5" style={{ color: "#4A5E78" }}>
-            System Evidence
-          </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {SYSTEM_EVIDENCE.map((proof) => {
-              const Icon = proof.icon;
-              return (
-                <div key={proof.text} className="flex items-start gap-2">
-                  <Icon className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" style={{ color: "#4A5E78" }} strokeWidth={1.8} />
-                  <span className="text-[11px] leading-relaxed" style={{ color: "#8A99AF" }}>{proof.text}</span>
-                </div>
-              );
-            })}
-          </div>
+              {/* Mini table — 제품 화면 절단 preview */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-[10px]">
+                  <thead>
+                    <tr style={{ backgroundColor: "#081222" }}>
+                      {wb.columns.map((col) => (
+                        <th
+                          key={col}
+                          className="px-2.5 py-1.5 text-left font-semibold whitespace-nowrap"
+                          style={{ color: "#4A5E78" }}
+                        >
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wb.rows.map((row, i) => (
+                      <tr
+                        key={i}
+                        style={{
+                          backgroundColor: i % 2 === 0 ? "transparent" : "#081222",
+                          borderTop: "1px solid #0F1F35",
+                        }}
+                      >
+                        {row.map((cell, j) => (
+                          <td
+                            key={j}
+                            className="px-2.5 py-1.5 whitespace-nowrap"
+                            style={{
+                              color: cell.includes("✦") ? "#60A5FA" : "#8A99AF",
+                              fontWeight: j === 0 ? 600 : 400,
+                            }}
+                          >
+                            {cell}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Action flow strip — 이 화면에서 다음으로 넘어가는 흐름 */}
+              <div className="px-3.5 py-2 flex items-center gap-1.5" style={{ backgroundColor: "#081222", borderTop: "1px solid #0F1F35" }}>
+                <span className="text-[9px] font-bold uppercase" style={{ color: "#4A5E78" }}>Next</span>
+                <span className="text-[10px]" style={{ color: "#60A5FA" }}>{wb.action}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

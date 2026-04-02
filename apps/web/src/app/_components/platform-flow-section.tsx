@@ -12,12 +12,12 @@ import { ArrowRight } from "lucide-react";
  */
 
 const DELTA_ROWS = [
-  { step: "검색",    before: "벤더 10곳 개별 방문, 수기 후보 정리",           after: "통합 검색 → 한 화면에서 후보 비교" },
-  { step: "비교",    before: "엑셀 수기 스펙·가격 정리, 팀 공유 불가",       after: "비교 워크스페이스에서 팀 단위 실시간 판단" },
-  { step: "견적",    before: "벤더별 양식·이메일 개별 요청, 회신 추적 불가",  after: "비교 결과에서 바로 견적 요청 생성·전송" },
-  { step: "발주",    before: "승인 프로세스 구두·문서 기반, 누락 빈번",       after: "승인 라인 → 발주 전환까지 한 흐름 연결" },
-  { step: "입고",    before: "입고 확인 수기 처리, 수량·Lot 누락",            after: "입고 즉시 반영, 부분 입고·이슈 처리" },
-  { step: "재고",    before: "구매 후 수동 등록, Lot·유효기간 관리 어려움",    after: "요청–발주–입고–재고 이력 하나로 연결" },
+  { step: "검색",  tag: "병목 제거",     before: "벤더 10곳 개별 방문 → 후보 정리까지 30분+",      after: "통합 검색 → 후보 즉시 구조화" },
+  { step: "비교",  tag: "판단 속도",     before: "엑셀 수기 정리, 공유 불가 → 판단 지연",           after: "delta-first 비교면에서 팀 단위 실시간 판단" },
+  { step: "견적",  tag: "handoff 제거",  before: "이메일·전화 개별 요청, 회신 추적 불가",           after: "비교 결과에서 바로 견적 요청 — 수기 handoff 없음" },
+  { step: "발주",  tag: "연결",          before: "승인 구두·문서 기반, 누락 빈번",                  after: "승인 라인 → 발주까지 한 흐름, 이탈 없음" },
+  { step: "입고",  tag: "truth 반영",    before: "수기 확인, 수량·Lot 누락",                        after: "입고 즉시 반영 → 재고 source of truth 갱신" },
+  { step: "재고",  tag: "이력 연결",     before: "구매 후 수동 등록, Lot·유효기간 사각지대",         after: "요청–발주–입고–재고 이력 하나로 연결" },
 ];
 
 export function PlatformFlowSection() {
@@ -26,21 +26,22 @@ export function PlatformFlowSection() {
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
         <div className="mb-6 md:mb-8">
           <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#60A5FA" }}>
-            Operational Delta
+            Operating Delta
           </p>
           <h2 className="text-lg md:text-xl font-bold text-white tracking-tight mb-1.5">
-            각 단계에서 무엇이 달라지는가
+            병목 제거 · handoff 감소 · truth 연결 · 판단 속도
           </h2>
           <p className="text-[11px] md:text-xs max-w-lg" style={{ color: "#6A7A8E" }}>
-            6단계 운영 파이프라인의 기존 병목이 어떻게 해소되는지.
+            6단계 구매 파이프라인 — 각 단계의 기존 병목이 어떻게 해소되는가.
           </p>
         </div>
 
         {/* Desktop: delta matrix */}
         <div className="hidden md:block">
           {/* Header */}
-          <div className="grid grid-cols-[80px_1fr_32px_1fr] items-center px-4 py-2 mb-1 rounded-t-lg" style={{ backgroundColor: "#142840" }}>
+          <div className="grid grid-cols-[64px_72px_1fr_28px_1fr] items-center px-4 py-2 mb-1 rounded-t-lg" style={{ backgroundColor: "#142840" }}>
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>단계</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>핵심</span>
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>기존 방식</span>
             <span />
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#60A5FA" }}>LabAxis</span>
@@ -50,7 +51,7 @@ export function PlatformFlowSection() {
           {DELTA_ROWS.map((row, i) => (
             <div
               key={row.step}
-              className="grid grid-cols-[80px_1fr_32px_1fr] items-center group transition-colors"
+              className="grid grid-cols-[64px_72px_1fr_28px_1fr] items-center group transition-colors"
               style={{
                 backgroundColor: i % 2 === 0 ? "#0A1828" : "#0D1E35",
                 borderBottom: i < DELTA_ROWS.length - 1 ? "1px solid #162A42" : undefined,
@@ -62,8 +63,13 @@ export function PlatformFlowSection() {
                 <span className="text-[11px] font-bold text-white">{row.step}</span>
               </div>
 
+              {/* Tag — what this delta achieves */}
+              <div className="py-3">
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" style={{ backgroundColor: "#142840", color: "#60A5FA" }}>{row.tag}</span>
+              </div>
+
               {/* Before — muted, subdued */}
-              <div className="px-4 py-3">
+              <div className="px-3 py-3">
                 <p className="text-[11px] leading-relaxed" style={{ color: "#5A6A7E", textDecoration: "line-through", textDecorationColor: "#3A4A5E" }}>{row.before}</p>
               </div>
 
@@ -73,7 +79,7 @@ export function PlatformFlowSection() {
               </div>
 
               {/* After — clear, strong */}
-              <div className="px-4 py-3">
+              <div className="px-3 py-3">
                 <p className="text-[12px] font-medium leading-relaxed" style={{ color: "#C8D4E5" }}>{row.after}</p>
               </div>
             </div>
@@ -86,6 +92,7 @@ export function PlatformFlowSection() {
             <div key={row.step} className="rounded-lg p-3" style={{ backgroundColor: "#0A1828", border: "1px solid #162A42" }}>
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: "#142840", color: "#60A5FA" }}>{row.step}</span>
+                <span className="text-[9px] font-semibold" style={{ color: "#4A5E78" }}>{row.tag}</span>
               </div>
               <p className="text-[10px] mb-1.5" style={{ color: "#5A6A7E", textDecoration: "line-through", textDecorationColor: "#3A4A5E" }}>{row.before}</p>
               <div className="flex items-start gap-1.5">

@@ -19,36 +19,39 @@ const FinalCTASection = dynamic(
 );
 
 /*
- * ── Landing Page — Surface Grammar ────────────────────────────────
- *  A. Flagship Surface  (#071A33)  Hero — 선언과 진입
- *  B. Bridge Surface    (#0B1E35)  병목 증거 → proof 연결
- *  C. Proof Surfaces    (#0E1D32)  Operational Delta + Workbench Teaser
- *  D. Conversion Surface(#0A1525)  행동 전환 CTA
- *  스크롤 방향: 브랜딩 → 운영 → 행동 (점점 구체적, 점점 운영적)
+ * ── Landing Page — Capability Architecture ────────────────────────
+ *  1. Flagship    (#071A33)  Hero — 선언과 진입
+ *  2. Capability   (#0B1E35)  4개 운영 surface 압축 제시
+ *  3. Delta Proof  (#0E1D32)  6단계 파이프라인 병목→해소
+ *  4. Workbench    (#0E1D32)  실제 작업면 절단 preview
+ *  5. Conversion   (#0A1525)  행동 전환 CTA
+ *
+ *  스크롤 방향: 선언 → 역량 구조 → 운영 증거 → 작업면 → 행동
+ *  "hero 아래 = capability architecture, not feature grid"
  * ────────────────────────────────────────────────────────────────────
  */
 export default function HomePage() {
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: "#071A33" }}>
-      {/* A. Flagship Surface — Hero */}
+      {/* 1. Flagship — Hero 선언 */}
       <BioInsightHeroSection />
 
-      {/* A→B seam */}
+      {/* 1→2 seam */}
       <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
-      {/* B. Bridge Surface — 병목 증거 + 절감 요약 */}
+      {/* 2. Capability Band — 4개 운영 surface가 책임지는 구간 */}
       <BioInsightSocialProofSection />
 
-      {/* C-1. Proof Surface — Operational Delta Matrix */}
+      {/* 3. Operating Delta — 6단계 파이프라인 병목 제거 증거 */}
       <PlatformFlowSection />
 
-      {/* C-2. Proof Surface — Workbench Teaser Cards */}
+      {/* 4. Workbench Preview — 각 작업면의 실제 구조 */}
       <OpsConsolePreviewSection />
 
-      {/* D. Conversion Surface — CTA */}
+      {/* 5. Conversion — 행동 전환 CTA */}
       <FinalCTASection />
 
-      {/* D→Footer seam */}
+      {/* 5→Footer seam */}
       <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
       {/* Footer */}
