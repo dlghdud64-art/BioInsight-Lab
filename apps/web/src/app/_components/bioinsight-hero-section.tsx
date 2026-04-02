@@ -247,8 +247,8 @@ function PlexusCanvas() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 160) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(255,255,255,${0.5 - (dist / 160) * 0.5})`;
-            ctx.lineWidth = 1.2; ctx.stroke();
+            ctx.strokeStyle = `rgba(255,255,255,${0.55 - (dist / 160) * 0.55})`;
+            ctx.lineWidth = 1.3; ctx.stroke();
           }
         }
         if (adjMouseY !== -9999) {
@@ -256,8 +256,8 @@ function PlexusCanvas() {
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 200) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
-            ctx.strokeStyle = `rgba(96,165,250,${0.6 - (distm / 200) * 0.6})`;
-            ctx.lineWidth = 1.5; ctx.stroke();
+            ctx.strokeStyle = `rgba(96,165,250,${0.7 - (distm / 200) * 0.7})`;
+            ctx.lineWidth = 1.6; ctx.stroke();
           }
         }
       }
@@ -301,8 +301,8 @@ export function BioInsightHeroSection() {
         {/* Layer B: Solid navy — no gradient, uniform depth */}
         <div className="absolute inset-0" style={{ backgroundColor: "#071a33" }} />
 
-        {/* Plexus — opacity 낮춰서 gradient와 경쟁 안 하게 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.22 }}>
+        {/* Plexus — structured signal field (dark OS 위에 살아 있는 network) */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.30 }}>
           <PlexusCanvas />
         </div>
       </div>
@@ -363,7 +363,7 @@ export function BioInsightHeroSection() {
         <p className="text-blue-400 font-extrabold text-[10px] md:text-[11px] tracking-[0.25em] mb-4 md:mb-6 uppercase">Biotech Procurement Operations Platform</p>
         <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6">
           구매 요청부터 입고·재고까지,<br />
-          <span className="text-blue-400">구매 흐름을 한곳에서</span>
+          <span style={{ color: "#60A5FA", textShadow: "0 0 24px rgba(96,165,250,0.3)" }}>구매 흐름을 한곳에서</span>
         </h1>
         <p className="text-sm md:text-lg text-slate-300 mb-3 md:mb-4 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
           검색부터 비교, 요청, 입고, 재고까지 하나의 흐름으로 연결합니다.<br className="hidden sm:block" />AI가 검색 결과와 공급사 옵션을 정리하고, 팀은 필요한 검토와 다음 단계에 집중할 수 있습니다.
@@ -374,7 +374,7 @@ export function BioInsightHeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-500/50 shadow-[0_2px_12px_rgba(37,99,235,0.25)]">
+            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-400/40 shadow-[0_2px_20px_rgba(37,99,235,0.35),0_0_40px_rgba(96,165,250,0.12)]">
               {isLoggedIn ? "소싱 워크벤치 열기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
@@ -398,7 +398,7 @@ export function BioInsightHeroSection() {
               return (
                 <div key={step.label} className="flex items-center">
                   <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
-                    <div className="w-14 h-14 rounded-xl bg-[#0E1B30] border border-[#1E3455] flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] hover:border-slate-300 transition-colors">
+                    <div className="w-14 h-14 rounded-xl bg-[#0E1B30] border border-[#1E3455] flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5),0_0_8px_rgba(37,99,235,0.1)] hover:border-blue-400/40 hover:shadow-[0_0_20px_rgba(37,99,235,0.2)] transition-all">
                       <Icon className="h-6 w-6 text-white drop-shadow-lg" strokeWidth={1.8} />
                     </div>
                     <span className="text-sm font-bold text-white drop-shadow-md">{step.label}</span>
