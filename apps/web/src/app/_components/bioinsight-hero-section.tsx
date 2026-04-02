@@ -293,7 +293,7 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full min-h-[90vh] flex flex-col overflow-hidden" style={{ background: "#071a33" }}>
+    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#071a33" }}>
 
       {/* Background — 4-layer controlled depth structure */}
       <div className="absolute inset-0 z-0 pointer-events-none">
@@ -360,13 +360,12 @@ export function BioInsightHeroSection() {
 
       {/* Hero */}
       <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 text-center w-full">
-        <p className="text-blue-400 font-extrabold text-[10px] md:text-[11px] tracking-[0.25em] mb-4 md:mb-6 uppercase">Biotech Procurement Operations Platform</p>
         <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6">
           구매 요청부터 입고·재고까지,<br />
           <span style={{ color: "#60A5FA", textShadow: "0 0 32px rgba(96,165,250,0.45), 0 0 64px rgba(59,130,246,0.15)" }}>구매 흐름을 한곳에서</span>
         </h1>
-        <p className="text-sm md:text-lg text-slate-300 mb-8 md:mb-10 font-medium leading-relaxed max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-          AI가 후보를 정리하고, 팀은 검토와 판단에 집중합니다.
+        <p className="text-sm md:text-lg text-slate-300 mb-8 md:mb-10 font-medium max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+          검색부터 입고·재고까지, 연구 구매 운영을 하나의 흐름으로 연결합니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
@@ -383,42 +382,6 @@ export function BioInsightHeroSection() {
               <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[14px] sm:text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
             </Link>
           )}
-        </div>
-
-        {/* Pipeline */}
-        <div className="mt-10 sm:mt-16 w-full max-w-4xl mx-auto border-t border-slate-700/80 pt-6 sm:pt-10">
-          <p className="text-slate-400 font-bold text-[10px] sm:text-[11px] tracking-widest uppercase mb-4 sm:mb-6">End-to-End Operations Pipeline</p>
-          <div className="hidden md:flex items-center justify-center gap-0">
-            {PIPELINE_STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.label} className="flex items-center">
-                  <div className="flex flex-col items-center gap-1.5 px-3 py-2 rounded-md hover:bg-white/5 transition-colors cursor-pointer">
-                    <div className="w-14 h-14 rounded-xl bg-[#0E1B30] border border-blue-500/25 flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5),0_0_12px_rgba(37,99,235,0.15)] hover:border-blue-400/50 hover:shadow-[0_0_24px_rgba(37,99,235,0.3)] transition-all">
-                      <Icon className="h-6 w-6 text-white drop-shadow-lg" strokeWidth={1.8} />
-                    </div>
-                    <span className="text-sm font-bold text-white drop-shadow-md">{step.label}</span>
-                    <span className="text-[10px] text-slate-300 font-medium whitespace-nowrap">{step.sub}</span>
-                  </div>
-                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-5 w-5 text-slate-500 flex-shrink-0 mx-2 md:mx-6" />}
-                </div>
-              );
-            })}
-          </div>
-          <div className="md:hidden flex items-center justify-center gap-1.5 px-2 overflow-x-auto">
-            {PIPELINE_STEPS.map((step, idx) => {
-              const Icon = step.icon;
-              return (
-                <div key={step.label} className="flex items-center shrink-0">
-                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-[#0E1B30] border border-[#1E3455]">
-                    <Icon className="h-3.5 w-3.5 text-white" strokeWidth={1.8} />
-                    <span className="text-[11px] font-semibold text-slate-200 whitespace-nowrap">{step.label}</span>
-                  </div>
-                  {idx < PIPELINE_STEPS.length - 1 && <ChevronRight className="h-3 w-3 text-slate-500 shrink-0 mx-0.5" />}
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </section>

@@ -103,21 +103,18 @@ const COLOR_MAP = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-10 md:py-14" style={{ backgroundColor: "#0E1D32", borderTop: "1px solid #162A42" }}>
+    <section className="py-10 md:py-16" style={{ backgroundColor: "#060E1C", borderTop: "1px solid #0A1628" }}>
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
 
-        {/* Section header */}
-        <div className="mb-6 md:mb-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#60A5FA" }}>
-            Product Proof — 실제 운영 화면
-          </p>
-          <h2 className="text-lg md:text-xl font-bold text-white tracking-tight">
+        {/* Section header — 제목 1줄만 */}
+        <div className="mb-5 md:mb-6 text-center">
+          <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
             발주 전환 큐에서 선택안 확정과 발주 준비가 이어집니다
           </h2>
         </div>
 
-        {/* Console container */}
-        <div className="rounded-xl overflow-hidden" style={{ backgroundColor: "#081628", border: "1px solid #162A42" }}>
+        {/* Console container — hero와 구분되는 lifted panel */}
+        <div className="rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]" style={{ backgroundColor: "#0B1929", border: "1px solid #1A2D48" }}>
 
           {/* ── KPI Strip ── */}
           <div className="px-5 py-3 flex flex-wrap items-center gap-4" style={{ backgroundColor: "#071222", borderBottom: "1px solid #0F1F35" }}>
@@ -298,10 +295,7 @@ export function OpsConsolePreviewSection() {
           </div>
         </div>
 
-        {/* Caption */}
-        <p className="text-[10px] text-center mt-3" style={{ color: "#3A4A5E" }}>
-          실제 LabAxis 발주 전환 큐 화면을 축약한 목업입니다
-        </p>
+        {/* Caption removed — mockup speaks for itself */}
       </div>
     </section>
   );

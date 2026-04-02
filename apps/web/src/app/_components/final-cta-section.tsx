@@ -41,16 +41,10 @@ export function FinalCTASection() {
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
-        {/* Header — action oriented */}
-        <div className="text-center mb-8">
-          <p
-            className="text-[10px] font-bold uppercase tracking-widest mb-2"
-            style={{ color: "#60A5FA" }}
-          >
-            Get Started
-          </p>
-          <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
-            실제 운영 흐름은 이렇게 시작됩니다
+        {/* Header — minimal */}
+        <div className="text-center mb-6">
+          <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
+            시약 검색부터 발주 전환까지, 하나의 흐름으로
           </h2>
         </div>
 

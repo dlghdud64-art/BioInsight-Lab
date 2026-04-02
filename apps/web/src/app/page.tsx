@@ -1,61 +1,75 @@
 import { MainFooter } from "./_components/main-footer";
 import { BioInsightHeroSection } from "./_components/bioinsight-hero-section";
-import { BioInsightSocialProofSection } from "./_components/bioinsight-social-proof-section";
 import dynamic from "next/dynamic";
-
-const PlatformFlowSection = dynamic(
-  () => import("./_components/platform-flow-section").then((mod) => ({ default: mod.PlatformFlowSection })),
-  { loading: () => <div className="h-96 w-full bg-el" /> }
-);
 
 const OpsConsolePreviewSection = dynamic(
   () => import("./_components/ops-console-preview-section").then((mod) => ({ default: mod.OpsConsolePreviewSection })),
-  { loading: () => <div className="h-64 w-full bg-el" /> }
+  { loading: () => <div className="h-64 w-full" style={{ backgroundColor: "#060E1C" }} /> }
+);
+
+const BioInsightSocialProofSection = dynamic(
+  () => import("./_components/bioinsight-social-proof-section").then((mod) => ({ default: mod.BioInsightSocialProofSection })),
+  { loading: () => <div className="h-48 w-full bg-el" /> }
+);
+
+const PlatformFlowSection = dynamic(
+  () => import("./_components/platform-flow-section").then((mod) => ({ default: mod.PlatformFlowSection })),
+  { loading: () => <div className="h-48 w-full bg-el" /> }
 );
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-64 w-full bg-el" /> }
+  { loading: () => <div className="h-48 w-full bg-el" /> }
 );
 
 /*
- * ── Landing Page — Product Operating Surface ──────────────────────
- *  1. Flagship    (#071A33)  Hero — 선언 + signal blue 강화
- *       headline glow 45%, CTA shadow 45%, pipeline active nodes, plexus 0.35
- *  2. Architecture Strip (#0B1E35)  3 프레임 — action strip + 3 token
- *       Sourcing & Compare → Request & PO Handoff → Receive & Stock
- *  3. Delta Proof  (#0E1D32)  5행 한줄 매트릭스 — 병목 → 해소
- *  4. Live Preview (#0E1D32)  실제 화면 split — 후보 리스트 + AI 선택안 rail
- *  5. Action Surface (#0A1525)  운영 흐름 예시 → CTA 종속
+ * ── Landing Page — Product-Proof First ──────────────────────────────
+ *  구조: 메시지 → 제품 → 신뢰 → 최소 설명
+ *  원칙: "설명을 읽기 전에 제품이 먼저 보일 것"
  *
- *  원칙: "텍스트를 읽기 전에 운영 체인이 먼저 보일 것"
+ *  1. Hero          headline + 1줄 sub + CTA 2개
+ *  2. Product Proof hero-attached surface — 발주 전환 큐 mockup
+ *  3. Trust Strip   고객사 로고만
+ *  4. Architecture  1줄 제목 + 3 token strip
+ *  5. Delta         1행 1줄 매트릭스
+ *  6. CTA           최종 action
+ *  7. Footer        legal / support
  * ────────────────────────────────────────────────────────────────────
  */
 export default function HomePage() {
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: "#071A33" }}>
-      {/* 1. Flagship — Hero 선언 (signal blue 강화) */}
+      {/* 1. Hero — headline + CTA */}
       <BioInsightHeroSection />
 
-      {/* 1→2 seam */}
-      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
-
-      {/* 2. Architecture Strip — action strip + 3 token */}
-      <BioInsightSocialProofSection />
-
-      {/* 3. Delta Proof — 5행 한줄 매트릭스 */}
-      <PlatformFlowSection />
-
-      {/* 4. Live Action Preview — split: 후보 + AI 선택안 */}
+      {/* 2. Product Proof Surface — hero에서 바로 이어지는 제품 증명 */}
       <OpsConsolePreviewSection />
 
-      {/* 5. Action Surface — 운영 흐름 예시 → CTA */}
+      {/* 3. Trust Strip — 로고만 */}
+      <section className="py-8 md:py-10" style={{ backgroundColor: "#081628", borderTop: "1px solid #0F1F35", borderBottom: "1px solid #162A42" }}>
+        <div className="max-w-[1100px] mx-auto px-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-center mb-6" style={{ color: "#3A5068" }}>
+            혁신적인 바이오 기업과 연구소들이 선택했습니다
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-8 md:gap-14">
+            {["SAMSUNG BIO", "CELLTRION", "SK bioscience", "KAIST", "서울대 의대"].map((name) => (
+              <span key={name} className="text-[14px] md:text-[16px] font-extrabold tracking-tight" style={{ color: "#2A3A50" }}>{name}</span>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 4. Architecture Strip — 3 token만 */}
+      <BioInsightSocialProofSection />
+
+      {/* 5. Delta — 1행 1줄 매트릭스 */}
+      <PlatformFlowSection />
+
+      {/* 6. CTA */}
       <FinalCTASection />
 
-      {/* 5→Footer seam */}
+      {/* 7. Footer */}
       <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
-
-      {/* Footer */}
       <MainFooter />
     </div>
   );
