@@ -19,8 +19,9 @@ import Link from "next/link";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 
 // ═══════════════════════════════════════════════════════════════════
-//  PO Conversion & Purchase Execution Surface
-//  역할: 공급사 회신 완료 → AI 선택안 제안 → 운영자 확정 → 발주 전환
+//  PO Conversion Queue (발주 전환 큐)
+//  역할: 회신 완료 이후, 어떤 건을 발주로 넘길지 정리하는 전환 큐
+//  범위: 구매 운영 전체가 아님 — 선택안 확정 / 발주 전환 직전 상태만
 //  LabAxis 내부에서 승인을 처리하지 않음 (내부 그룹웨어가 승인 책임)
 //  approval은 외부 상태 참고 badge로만 표시
 // ═══════════════════════════════════════════════════════════════════
@@ -53,6 +54,8 @@ interface PurchaseExecutionItem {
   externalApprovalStatus: ExternalApprovalStatus;
   conversionStatus: ConversionStatus;
   blockerType: BlockerType;
+  blockerReason: string;          // 현재 왜 막혀 있는지 1줄
+  nextStage: string;              // 이 건의 다음 단계
   currentPreferredOption?: string;
   aiRecommendationStatus: AiRecStatus;
   aiOptions: AiOption[];
@@ -99,6 +102,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "approved",
     conversionStatus: "ready_for_po",
     blockerType: "none",
+    blockerReason: "차단 없음 — 즉시 발주 가능",
+    nextStage: "공급사 발송 준비",
     currentPreferredOption: "opt-a1",
     aiRecommendationStatus: "recommended",
     aiOptions: [
@@ -119,6 +124,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "approved",
     conversionStatus: "review_required",
     blockerType: "price_gap",
+    blockerReason: "최저가와 선호 공급사 간 가격/납기 충돌",
+    nextStage: "선택안 확정 후 발주 전환",
     currentPreferredOption: undefined,
     aiRecommendationStatus: "review_needed",
     aiOptions: [
@@ -139,6 +146,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "unknown",
     conversionStatus: "hold",
     blockerType: "partial_reply",
+    blockerReason: "핵심 공급사 2곳 미회신 — 비교 불완전",
+    nextStage: "추가 회신 확보 후 선택안 검토",
     currentPreferredOption: undefined,
     aiRecommendationStatus: "hold",
     aiOptions: [
@@ -159,6 +168,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "approved",
     conversionStatus: "confirmed",
     blockerType: "none",
+    blockerReason: "차단 없음 — 선택안 확정 완료",
+    nextStage: "PO 생성 → 공급사 발송",
     currentPreferredOption: "opt-d1",
     aiRecommendationStatus: "recommended",
     aiOptions: [
@@ -179,6 +190,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "pending",
     conversionStatus: "review_required",
     blockerType: "approval_unknown",
+    blockerReason: "외부 승인 결과 미도착 — 승인 확인 후 진행 가능",
+    nextStage: "외부 승인 확인 → 발주 전환",
     currentPreferredOption: "opt-e1",
     aiRecommendationStatus: "recommended",
     aiOptions: [
@@ -199,6 +212,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "approved",
     conversionStatus: "review_required",
     blockerType: "none",
+    blockerReason: "대체품 40% 절감안 검토 필요",
+    nextStage: "대체품 확정 또는 기존 유지 결정",
     currentPreferredOption: undefined,
     aiRecommendationStatus: "review_needed",
     aiOptions: [
@@ -219,6 +234,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "approved",
     conversionStatus: "ready_for_po",
     blockerType: "none",
+    blockerReason: "차단 없음 — 기존 거래처 유지, 가격 변동 없음",
+    nextStage: "PO 생성 → 공급사 발송",
     currentPreferredOption: "opt-g1",
     aiRecommendationStatus: "recommended",
     aiOptions: [
@@ -239,6 +256,8 @@ const MOCK_DATA: PurchaseExecutionItem[] = [
     externalApprovalStatus: "unknown",
     conversionStatus: "review_required",
     blockerType: "lead_time",
+    blockerReason: "추천안 납기 21일 — 긴급안과 정품 중 결정 필요",
+    nextStage: "납기/가격 트레이드오프 결정 후 선택안 확정",
     currentPreferredOption: undefined,
     aiRecommendationStatus: "review_needed",
     aiOptions: [
@@ -271,6 +290,7 @@ export default function PurchasesPage() {
   const [queueTab, setQueueTab] = useState<QueueTab>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<string | null>(null);
+  const [workWindowPhase, setWorkWindowPhase] = useState<number>(0); // 0-based phase index
 
   // ── 필터링 ──
   const filteredItems = useMemo(() => {
@@ -323,10 +343,10 @@ export default function PurchasesPage() {
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div className="min-w-0">
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-100">
-            발주 전환 및 구매 실행
+            발주 전환 큐
           </h2>
           <p className="text-sm text-slate-400 mt-0.5">
-            공급사 회신 이후 선택안을 확정하고, 발주 전환과 후속 조치를 처리하세요.
+            회신 완료 건의 선택안을 확정하고 발주로 넘깁니다.
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -342,7 +362,7 @@ export default function PurchasesPage() {
       {/* ══ 2. 운영 현황 KPI ══ */}
       <div className="rounded-lg border border-bd bg-pn p-4 mb-4">
         <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
-          발주 전환 현황
+          전환 큐 현황
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button type="button" onClick={() => setQueueTab("review")}
@@ -469,24 +489,31 @@ export default function PurchasesPage() {
                     <h3 className="font-semibold text-slate-100 text-sm leading-snug truncate mb-1">{item.requestTitle}</h3>
                     <p className="text-xs text-slate-400 mb-1 truncate">{item.itemSummary}</p>
 
-                    {/* AI 추천 인라인 */}
-                    <p className="text-[11px] flex items-center gap-1 mb-2">
-                      <Sparkles className={`h-3 w-3 shrink-0 ${ai.className}`} />
-                      <span className={ai.className}>{ai.label}</span>
-                      {bestOption && (
-                        <span className="text-slate-500 ml-1">· {bestOption.supplierName} {formatPrice(bestOption.price)}</span>
-                      )}
-                    </p>
+                    {/* 현재 막힘 + 다음 단계 — 운영 판단성 */}
+                    <div className="flex flex-col gap-0.5 mb-2">
+                      <p className="text-[11px] text-slate-500 leading-snug">
+                        <span className={item.blockerType !== "none" ? "text-amber-400/80" : "text-slate-500"}>막힘:</span>{" "}
+                        <span className={item.blockerType !== "none" ? "text-amber-400/70" : "text-slate-500"}>{item.blockerReason}</span>
+                      </p>
+                      <p className="text-[11px] text-slate-500 leading-snug">
+                        <span className="text-blue-400/70">다음:</span>{" "}
+                        <span className="text-slate-400">{item.nextStage}</span>
+                      </p>
+                    </div>
 
-                    {/* 메타 */}
-                    <div className="flex flex-wrap gap-x-3 gap-y-1">
+                    {/* 메타 — 핵심 수치만 */}
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 items-center">
+                      <span className={`text-[11px] flex items-center gap-1 ${ai.className}`}>
+                        <Sparkles className="h-3 w-3 shrink-0" />{ai.label}
+                      </span>
                       <span className={`text-[11px] flex items-center gap-1 ${item.supplierReplies === item.totalSuppliers ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
                         <Truck className="h-3 w-3" />회신 {item.supplierReplies}/{item.totalSuppliers}
                       </span>
                       <span className="text-[11px] text-slate-200 font-medium">{formatPrice(item.totalBudget)}</span>
+                      {bestOption && <span className="text-[10px] text-slate-500">추천: {bestOption.supplierName}</span>}
                       {item.selectedOptionId && (
                         <span className="text-[11px] text-purple-400 flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3" />선택안 확정
+                          <CheckCircle2 className="h-3 w-3" />확정
                         </span>
                       )}
                     </div>
@@ -596,19 +623,35 @@ export default function PurchasesPage() {
                   </div>
                 </div>
 
-                {/* C. 현재 상태 + Blocker */}
+                {/* C. 발주 Readiness — blocker/next stage 중심 */}
                 <div className="px-4 py-3 border-b border-bd/50">
-                  <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">전환 상태</div>
+                  <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">발주 Readiness</div>
+
+                  {/* Blocker box */}
+                  <div className={`rounded-md px-3 py-2 mb-2 ${
+                    selectedItem.blockerType === "none"
+                      ? "bg-emerald-600/5 border border-emerald-600/20"
+                      : "bg-amber-600/5 border border-amber-600/20"
+                  }`}>
+                    <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: selectedItem.blockerType === "none" ? "#34D399" : "#FBBF24" }}>
+                      {selectedItem.blockerType === "none" ? "차단 없음" : "현재 막힘"}
+                    </p>
+                    <p className={`text-[11px] leading-snug ${selectedItem.blockerType === "none" ? "text-emerald-400/80" : "text-amber-400/80"}`}>
+                      {selectedItem.blockerReason}
+                    </p>
+                  </div>
+
+                  {/* Next stage box */}
+                  <div className="rounded-md px-3 py-2 mb-3 bg-blue-600/5 border border-blue-600/20">
+                    <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5 text-blue-400">다음 단계</p>
+                    <p className="text-[11px] text-blue-400/80 leading-snug">{selectedItem.nextStage}</p>
+                  </div>
+
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-xs"><span className="text-slate-400">발주 가능</span><span className={selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "text-emerald-400" : "text-amber-400"}>{selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "가능" : "조건 해소 필요"}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">차단 요인</span><span className={selectedItem.blockerType === "none" ? "text-emerald-400" : "text-amber-400"}>{selectedItem.blockerType === "none" ? "없음" : selectedItem.blockerType === "price_gap" ? "가격 차이 검토" : selectedItem.blockerType === "lead_time" ? "납기 이슈" : selectedItem.blockerType === "partial_reply" ? "일부 미회신" : selectedItem.blockerType === "moq_issue" ? "MOQ 조건" : "외부 승인 미확인"}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className={selectedItem.externalApprovalStatus === "approved" ? "text-emerald-400" : selectedItem.externalApprovalStatus === "pending" ? "text-amber-400" : "text-slate-500"}>{ext.label}</span></div>
                     <div className="flex justify-between text-xs"><span className="text-slate-400">선택안</span><span className={selectedItem.selectedOptionId ? "text-purple-400" : "text-slate-500"}>{selectedItem.selectedOptionId ? "확정됨" : "미확정"}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-200">{na.label}</span></div>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-2 leading-snug">
-                    내부 승인 상태는 참고만 하고, LabAxis에서는 선택안 확정과 발주 실행에 집중합니다.
-                  </p>
                 </div>
 
               </div>{/* end scrollable body */}
@@ -622,7 +665,7 @@ export default function PurchasesPage() {
                       : "border-bd text-slate-300"
                   }`}
                   variant={selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "default" : "outline"}
-                  onClick={() => setActiveWorkWindow(selectedItem.nextAction)}>
+                  onClick={() => { setWorkWindowPhase(0); setActiveWorkWindow(selectedItem.nextAction); }}>
                   {na.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
                 </Button>
                 <div className="flex gap-1.5">
@@ -638,103 +681,315 @@ export default function PurchasesPage() {
 
       </div>{/* end flex container */}
 
-      {/* ═══ Center Work Window ═══ */}
+      {/* ═══ Center Work Window — 선택안 확정 → 발주 생성 → 공급사 발송 → 다음 handoff ═══ */}
       {activeWorkWindow && selectedItem && (() => {
         const na = NEXT_ACTION_MAP[selectedItem.nextAction];
         const cs = CONVERSION_STATUS_MAP[selectedItem.conversionStatus];
         const bestOption = selectedItem.aiOptions.find(o => o.recommendationLevel === "primary");
 
+        const HANDOFF_PHASES = [
+          { key: "select",   label: "선택안 확정",   icon: <Sparkles className="h-3 w-3" /> },
+          { key: "po_prep",  label: "PO 생성 준비",  icon: <FileCheck2 className="h-3 w-3" /> },
+          { key: "dispatch", label: "공급사 발송",    icon: <Truck className="h-3 w-3" /> },
+          { key: "handoff",  label: "다음 Handoff",  icon: <ArrowRight className="h-3 w-3" /> },
+        ];
+
+        // 현재 item 상태에 따른 시작 phase
+        const initialPhase = selectedItem.selectedOptionId
+          ? (selectedItem.conversionStatus === "confirmed" || selectedItem.conversionStatus === "ready_for_po" ? 1 : 0)
+          : 0;
+
+        const phase = Math.max(workWindowPhase, initialPhase);
+
+        const isLastPhase = phase >= HANDOFF_PHASES.length - 1;
+        const primaryLabel = isLastPhase ? "완료 — 발주 큐로 이동" : `다음: ${HANDOFF_PHASES[Math.min(phase + 1, HANDOFF_PHASES.length - 1)].label}`;
+
         return (
           <CenterWorkWindow
             open={true}
-            onClose={() => setActiveWorkWindow(null)}
-            title={na.railCtaLabel}
+            onClose={() => { setActiveWorkWindow(null); setWorkWindowPhase(0); }}
+            title={HANDOFF_PHASES[phase].label}
             subtitle={`${selectedItem.requestTitle} · ${cs.label}`}
             phase="ready"
             primaryAction={{
-              label: selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed"
-                ? "발주 전환 시작"
-                : "선택안 확정",
+              label: primaryLabel,
               onClick: () => {
-                console.log("[Purchases] work_window_action", { id: selectedItem.id, action: activeWorkWindow });
-                setActiveWorkWindow(null);
+                if (isLastPhase) {
+                  console.log("[Purchases] handoff_complete", { id: selectedItem.id });
+                  setActiveWorkWindow(null);
+                  setWorkWindowPhase(0);
+                } else {
+                  setWorkWindowPhase(phase + 1);
+                }
               },
             }}
-            secondaryAction={{ label: "닫기", onClick: () => setActiveWorkWindow(null) }}
+            secondaryAction={phase > initialPhase
+              ? { label: "이전 단계", onClick: () => setWorkWindowPhase(phase - 1) }
+              : { label: "닫기", onClick: () => { setActiveWorkWindow(null); setWorkWindowPhase(0); } }
+            }
           >
             <div className="space-y-4">
-              {/* Work window context header */}
-              <div className="rounded-lg border border-bd bg-pn p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${cs.bg} ${cs.text} ${cs.border}`}>{cs.label}</span>
-                </div>
-                <h4 className="text-sm font-semibold text-slate-100 mb-1">{selectedItem.requestTitle}</h4>
-                <p className="text-xs text-slate-400">{selectedItem.itemSummary}</p>
+
+              {/* ── Phase indicator strip ── */}
+              <div className="flex items-center gap-0 overflow-x-auto scrollbar-hide">
+                {HANDOFF_PHASES.map((ph, i) => (
+                  <div key={ph.key} className="flex items-center flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => { if (i >= initialPhase) setWorkWindowPhase(i); }}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
+                        i === phase
+                          ? "bg-blue-600/15 text-blue-400 border border-blue-600/30"
+                          : i < phase
+                          ? "text-emerald-400/70 border border-emerald-600/20 bg-emerald-600/5"
+                          : "text-slate-500 border border-transparent"
+                      }`}
+                    >
+                      {i < phase ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : ph.icon}
+                      <span className="hidden sm:inline">{ph.label}</span>
+                      <span className="sm:hidden">{i + 1}</span>
+                    </button>
+                    {i < HANDOFF_PHASES.length - 1 && (
+                      <ChevronRight className="h-3 w-3 mx-0.5 text-slate-600 flex-shrink-0" />
+                    )}
+                  </div>
+                ))}
               </div>
 
-              {/* AI 선택안 3개 상세 */}
-              <div className="rounded-lg border border-bd bg-pn p-4">
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  <span className="text-xs font-semibold text-slate-200">AI가 회신 결과를 바탕으로 선택안 3개를 준비했습니다</span>
+              {/* ── Context header (always visible) ── */}
+              <div className="rounded-lg border border-bd bg-pn p-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${cs.bg} ${cs.text} ${cs.border}`}>{cs.label}</span>
+                  {selectedItem.blockerType !== "none" && (
+                    <span className="text-[10px] px-2 py-0.5 rounded border border-amber-600/20 bg-amber-600/5 text-amber-400">
+                      {selectedItem.blockerReason}
+                    </span>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  {selectedItem.aiOptions.map((opt) => {
-                    const isPrimary = opt.recommendationLevel === "primary";
-                    const isConfirmed = selectedItem.selectedOptionId === opt.id;
-                    return (
-                      <div key={opt.id} className={`rounded-lg border p-3 ${
-                        isConfirmed ? "border-blue-600/40 bg-blue-600/5"
-                        : isPrimary ? "border-emerald-600/30 bg-emerald-600/5"
-                        : "border-bd/50"
-                      }`}>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              isPrimary ? "bg-emerald-600/20 text-emerald-400" : "bg-el text-slate-400"
-                            }`}>{opt.label}</span>
-                            <span className="text-sm font-medium text-slate-200">{opt.supplierName}</span>
-                            {isConfirmed && <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-600/30">확정</Badge>}
+                <h4 className="text-sm font-semibold text-slate-100">{selectedItem.requestTitle}</h4>
+                <p className="text-[11px] text-slate-400 mt-0.5">{selectedItem.itemSummary} · 예산 {formatPrice(selectedItem.totalBudget)}</p>
+              </div>
+
+              {/* ════ Phase 0: 선택안 확정 ════ */}
+              {phase === 0 && (
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs font-semibold text-slate-200">AI 선택안 3개 — 하나를 확정하세요</span>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedItem.aiOptions.map((opt) => {
+                        const isPrimary = opt.recommendationLevel === "primary";
+                        const isConfirmed = selectedItem.selectedOptionId === opt.id;
+                        return (
+                          <div key={opt.id} className={`rounded-lg border p-3 cursor-pointer transition-colors hover:bg-el/50 ${
+                            isConfirmed ? "border-blue-600/40 bg-blue-600/5"
+                            : isPrimary ? "border-emerald-600/30 bg-emerald-600/5"
+                            : "border-bd/50"
+                          }`}>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                                  isPrimary ? "bg-emerald-600/20 text-emerald-400" : "bg-el text-slate-400"
+                                }`}>{opt.label}</span>
+                                <span className="text-sm font-medium text-slate-200">{opt.supplierName}</span>
+                                {isConfirmed && <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-600/30">확정</Badge>}
+                              </div>
+                              <span className="text-sm font-bold text-slate-100">{formatPrice(opt.price)}</span>
+                            </div>
+                            <div className="flex gap-3 text-xs text-slate-400 mb-1">
+                              <span>납기 {opt.leadDays}일</span>
+                              {opt.moq && <span>MOQ {opt.moq}</span>}
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {opt.rationale.map((r, ri) => (
+                                <span key={ri} className="text-[10px] px-1.5 py-0.5 rounded bg-el text-slate-500 border border-bd/30">{r}</span>
+                              ))}
+                            </div>
                           </div>
-                          <span className="text-sm font-bold text-slate-100">{formatPrice(opt.price)}</span>
-                        </div>
-                        <div className="flex gap-3 text-xs text-slate-400 mb-1">
-                          <span>납기 {opt.leadDays}일</span>
-                          {opt.moq && <span>MOQ {opt.moq}</span>}
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {opt.rationale.map((r, i) => (
-                            <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-el text-slate-500 border border-bd/30">{r}</span>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                        );
+                      })}
+                    </div>
+                  </div>
+                  {bestOption && (
+                    <p className="text-[11px] text-slate-500 px-1">
+                      AI 추천: <span className="text-emerald-400 font-medium">{bestOption.supplierName}</span> ({formatPrice(bestOption.price)}, 납기 {bestOption.leadDays}일)
+                    </p>
+                  )}
                 </div>
-              </div>
+              )}
 
-              {/* 발주 전환 체크리스트 */}
-              {(selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed") && (
-                <div className="rounded-lg border border-bd bg-pn p-4">
-                  <span className="text-xs font-semibold text-slate-200 mb-2 block">발주 전환 체크리스트</span>
-                  <div className="space-y-1.5">
-                    {[
-                      { label: "선택안 확정", done: !!selectedItem.selectedOptionId },
-                      { label: "외부 승인 완료", done: selectedItem.externalApprovalStatus === "approved" },
-                      { label: "가격·납기 조건 확인", done: selectedItem.blockerType === "none" },
-                      { label: "발주 정보 입력 준비", done: false },
-                    ].map((check) => (
-                      <div key={check.label} className="flex items-center gap-2 text-xs">
-                        {check.done
-                          ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                          : <div className="h-3.5 w-3.5 rounded-full border border-bd" />
-                        }
-                        <span className={check.done ? "text-slate-300" : "text-slate-500"}>{check.label}</span>
+              {/* ════ Phase 1: PO 생성 준비 ════ */}
+              {phase === 1 && (
+                <div className="space-y-3">
+                  {/* 확정된 선택안 요약 */}
+                  {bestOption && (
+                    <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/5 p-3">
+                      <div className="flex items-center gap-2 mb-1">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <span className="text-xs font-semibold text-emerald-400">확정 선택안</span>
                       </div>
-                    ))}
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-200">{bestOption.supplierName}</span>
+                        <span className="text-sm font-bold text-slate-100">{formatPrice(bestOption.price)}</span>
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-0.5">납기 {bestOption.leadDays}일 · {bestOption.rationale.join(" · ")}</p>
+                    </div>
+                  )}
+
+                  {/* PO 체크리스트 */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <FileCheck2 className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs font-semibold text-slate-200">PO 생성 체크리스트</span>
+                    </div>
+                    <div className="space-y-2">
+                      {[
+                        { label: "선택안 확정 완료", done: !!selectedItem.selectedOptionId, detail: selectedItem.selectedOptionId ? "확정됨" : "미확정" },
+                        { label: "외부 승인 상태 확인", done: selectedItem.externalApprovalStatus === "approved", detail: selectedItem.externalApprovalStatus === "approved" ? "승인 완료" : selectedItem.externalApprovalStatus === "pending" ? "대기 중" : "미확인" },
+                        { label: "가격·납기 조건 확인", done: selectedItem.blockerType === "none", detail: selectedItem.blockerType === "none" ? "조건 충족" : selectedItem.blockerReason },
+                        { label: "배송지 정보 확인", done: false, detail: "입력 필요" },
+                        { label: "PO 번호 생성 준비", done: false, detail: "자동 생성 예정" },
+                      ].map((check) => (
+                        <div key={check.label} className="flex items-center gap-2.5">
+                          {check.done
+                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
+                            : <div className="h-3.5 w-3.5 rounded-full border border-bd flex-shrink-0" />
+                          }
+                          <div className="flex-1 min-w-0">
+                            <span className={`text-xs ${check.done ? "text-slate-300" : "text-slate-500"}`}>{check.label}</span>
+                          </div>
+                          <span className={`text-[10px] flex-shrink-0 ${check.done ? "text-emerald-400/70" : "text-slate-500"}`}>{check.detail}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Blocker 경고 (해당 시) */}
+                  {selectedItem.blockerType !== "none" && (
+                    <div className="rounded-lg border border-amber-600/20 bg-amber-600/5 p-3">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+                        <span className="text-xs font-semibold text-amber-400">차단 사항</span>
+                      </div>
+                      <p className="text-[11px] text-amber-400/80">{selectedItem.blockerReason}</p>
+                      <p className="text-[10px] text-slate-500 mt-1">해소 후 다음 단계로 진행하세요.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ════ Phase 2: 공급사 발송 준비 ════ */}
+              {phase === 2 && (
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <Truck className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs font-semibold text-slate-200">공급사 발송 정보</span>
+                    </div>
+                    <div className="space-y-2">
+                      {bestOption && (
+                        <div className="flex justify-between text-xs">
+                          <span className="text-slate-400">발주 대상</span>
+                          <span className="text-slate-200 font-medium">{bestOption.supplierName}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">품목</span>
+                        <span className="text-slate-200">{selectedItem.itemSummary}</span>
+                      </div>
+                      {bestOption && (
+                        <>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-400">단가</span>
+                            <span className="text-slate-200 font-medium">{formatPrice(bestOption.price)}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-slate-400">예상 납기</span>
+                            <span className="text-slate-200">{bestOption.leadDays}일</span>
+                          </div>
+                        </>
+                      )}
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-400">예산</span>
+                        <span className="text-slate-200">{formatPrice(selectedItem.totalBudget)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 발송 준비 상태 */}
+                  <div className="rounded-lg border border-bd bg-pn p-4">
+                    <span className="text-xs font-semibold text-slate-200 mb-2 block">발송 준비 체크</span>
+                    <div className="space-y-2">
+                      {[
+                        { label: "PO 문서 생성", done: false },
+                        { label: "공급사 연락처 확인", done: true },
+                        { label: "발송 메일/팩스 준비", done: false },
+                        { label: "내부 기록 저장", done: false },
+                      ].map((check) => (
+                        <div key={check.label} className="flex items-center gap-2 text-xs">
+                          {check.done
+                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                            : <div className="h-3.5 w-3.5 rounded-full border border-bd" />
+                          }
+                          <span className={check.done ? "text-slate-300" : "text-slate-500"}>{check.label}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* ════ Phase 3: 다음 Handoff ════ */}
+              {phase === 3 && (
+                <div className="space-y-3">
+                  <div className="rounded-lg border border-blue-600/20 bg-blue-600/5 p-4">
+                    <div className="flex items-center gap-1.5 mb-3">
+                      <ArrowRight className="h-3.5 w-3.5 text-blue-400" />
+                      <span className="text-xs font-semibold text-blue-400">발주 완료 후 다음 흐름</span>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-blue-600/15 border border-blue-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-blue-400">1</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-slate-200">발주 큐로 자동 이관</p>
+                          <p className="text-[11px] text-slate-500">PO 발송 후 입고 추적 큐로 넘어갑니다</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-slate-600/15 border border-slate-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-slate-400">2</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-slate-300">입고 확인 대기</p>
+                          <p className="text-[11px] text-slate-500">공급사 배송 → 입고 확인 → 재고 반영</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-5 h-5 rounded-full bg-slate-600/15 border border-slate-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-slate-400">3</span>
+                        </div>
+                        <div>
+                          <p className="text-xs font-medium text-slate-300">운영 기록 완료</p>
+                          <p className="text-[11px] text-slate-500">소싱 → 비교 → 발주 → 입고 이력이 자동 기록됩니다</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 현재 건 요약 */}
+                  <div className="rounded-lg border border-bd bg-pn p-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">이 건의 다음 단계</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-medium text-blue-400">{selectedItem.nextStage}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
             </div>
           </CenterWorkWindow>
         );
