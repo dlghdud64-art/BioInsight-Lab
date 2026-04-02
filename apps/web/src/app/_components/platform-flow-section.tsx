@@ -3,21 +3,21 @@
 import { ArrowRight } from "lucide-react";
 
 /*
- * ── Proof Surface: Operational Delta Matrix ─────────────────────────
- *  Role: "기존 방식 vs LabAxis"를 증거 표면으로 제시
- *  Tone: dark content surface — hero와 같은 제품군
- *  Style: 비교표가 아닌 structured delta proof
- *  기존 방식 = muted/subdued, LabAxis = 선명/강조
+ * ── Operating Delta Proof ──────────────────────────────────────────
+ *  Role: 각 단계의 "기존 병목 → LabAxis 해소 → 다음 단계 연결"을 증명
+ *  Tone: dark content surface — capability band와 동일 제품군
+ *  Column: 단계 / 핵심 / 기존 방식의 병목 / LabAxis에서 바로 바뀌는 점
+ *  읽기 방향: 병목 인지 → 해소 확인 → 다음 단계 연결 납득
  * ────────────────────────────────────────────────────────────────────
  */
 
 const DELTA_ROWS = [
-  { step: "검색",  tag: "병목 제거",     before: "벤더 10곳 개별 방문 → 후보 정리까지 30분+",      after: "통합 검색 → 후보 즉시 구조화" },
-  { step: "비교",  tag: "판단 속도",     before: "엑셀 수기 정리, 공유 불가 → 판단 지연",           after: "delta-first 비교면에서 팀 단위 실시간 판단" },
-  { step: "견적",  tag: "handoff 제거",  before: "이메일·전화 개별 요청, 회신 추적 불가",           after: "비교 결과에서 바로 견적 요청 — 수기 handoff 없음" },
-  { step: "발주",  tag: "연결",          before: "승인 구두·문서 기반, 누락 빈번",                  after: "승인 라인 → 발주까지 한 흐름, 이탈 없음" },
-  { step: "입고",  tag: "truth 반영",    before: "수기 확인, 수량·Lot 누락",                        after: "입고 즉시 반영 → 재고 source of truth 갱신" },
-  { step: "재고",  tag: "이력 연결",     before: "구매 후 수동 등록, Lot·유효기간 사각지대",         after: "요청–발주–입고–재고 이력 하나로 연결" },
+  { step: "검색",  tag: "병목 제거",     before: "여러 사이트를 개별 확인, 후보 정리까지 30분+",     after: "비교 가능한 후보군으로 바로 구조화" },
+  { step: "비교",  tag: "판단 속도",     before: "수기로 표 정리, 팀 공유 불가 → 판단 지연",         after: "delta-first 판단면에서 즉시 shortlist" },
+  { step: "견적",  tag: "handoff 제거",  before: "메신저·메일로 재정리 후 개별 요청",                after: "선택 결과에서 바로 요청 객체 생성" },
+  { step: "발주",  tag: "흐름 연결",     before: "승인과 이력 분리, 누락·지연 빈번",                after: "요청–승인–발주 흐름이 하나로 연결" },
+  { step: "입고",  tag: "truth 반영",    before: "입고와 lot 추적 분리, 수량 누락",                 after: "입고 확인 즉시 재고·lot 반영" },
+  { step: "재고",  tag: "이력 연결",     before: "구매 기록과 재고 기록 분리, 사각지대",             after: "요청–발주–입고–재고 이력 하나로 연결" },
 ];
 
 export function PlatformFlowSection() {
@@ -26,13 +26,13 @@ export function PlatformFlowSection() {
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
         <div className="mb-6 md:mb-8">
           <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: "#60A5FA" }}>
-            Operating Delta
+            Operational Delta
           </p>
           <h2 className="text-lg md:text-xl font-bold text-white tracking-tight mb-1.5">
-            병목 제거 · handoff 감소 · truth 연결 · 판단 속도
+            각 단계에서 실제로 달라지는 운영 방식
           </h2>
-          <p className="text-[11px] md:text-xs max-w-lg" style={{ color: "#6A7A8E" }}>
-            6단계 구매 파이프라인 — 각 단계의 기존 병목이 어떻게 해소되는가.
+          <p className="text-[11px] md:text-xs max-w-2xl" style={{ color: "#6A7A8E" }}>
+            기존 방식의 병목은 검색, 비교, 요청, 입고가 서로 분리되어 있다는 점입니다. LabAxis는 각 단계를 하나의 운영 흐름으로 연결합니다.
           </p>
         </div>
 
@@ -42,9 +42,9 @@ export function PlatformFlowSection() {
           <div className="grid grid-cols-[64px_72px_1fr_28px_1fr] items-center px-4 py-2 mb-1 rounded-t-lg" style={{ backgroundColor: "#142840" }}>
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>단계</span>
             <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>핵심</span>
-            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>기존 방식</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>기존 방식의 병목</span>
             <span />
-            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#60A5FA" }}>LabAxis</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#60A5FA" }}>LabAxis에서 바로 바뀌는 점</span>
           </div>
 
           {/* Rows */}

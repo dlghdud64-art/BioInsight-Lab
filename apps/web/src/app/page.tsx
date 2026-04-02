@@ -21,13 +21,17 @@ const FinalCTASection = dynamic(
 /*
  * ── Landing Page — Capability Architecture ────────────────────────
  *  1. Flagship    (#071A33)  Hero — 선언과 진입
- *  2. Capability   (#0B1E35)  4개 운영 surface 압축 제시
- *  3. Delta Proof  (#0E1D32)  6단계 파이프라인 병목→해소
- *  4. Workbench    (#0E1D32)  실제 작업면 절단 preview
+ *  2. Capability   (#0B1E35)  2×2 rich card — 4개 운영 surface
+ *       검색 워크벤치 / 비교 판단면 / 요청·견적 작업면 / 입고·재고 운영면
+ *       각 카드: 단계 라벨 → 정의 → 처리 객체 → 핵심 판단 → handoff
+ *  3. Delta Proof  (#0E1D32)  6단계 파이프라인 — 기존 병목 → LabAxis 해소
+ *       컬럼: 단계 / 핵심 / 기존 방식의 병목 / LabAxis에서 바로 바뀌는 점
+ *  4. Workbench    (#0E1D32)  3카드 — 판단 포인트 · 객체 · 다음 액션
+ *       작업 큐 정리 / 일일 검토·판단 / 입고 후 운영 연결
  *  5. Conversion   (#0A1525)  행동 전환 CTA
  *
  *  스크롤 방향: 선언 → 역량 구조 → 운영 증거 → 작업면 → 행동
- *  "hero 아래 = capability architecture, not feature grid"
+ *  원칙: "기능 카드 금지 — operating capability architecture만 허용"
  * ────────────────────────────────────────────────────────────────────
  */
 export default function HomePage() {
