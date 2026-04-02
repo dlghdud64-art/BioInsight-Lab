@@ -41,7 +41,7 @@ export default function HomePage() {
       <FinalCTASection />
 
       {/* 4. Footer */}
-      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#24456A" }} />
       <MainFooter />
     </div>
   );

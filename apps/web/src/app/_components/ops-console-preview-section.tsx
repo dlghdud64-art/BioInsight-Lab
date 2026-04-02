@@ -110,7 +110,7 @@ const BADGE = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="py-10 md:py-16" style={{ backgroundColor: "#060E1C", borderTop: "1px solid #0A1628" }}>
+    <section className="py-10 md:py-16" style={{ backgroundColor: "#0F2340", borderTop: "1px solid #1A3358" }}>
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
 
         {/* 제목 1줄만 */}
@@ -121,10 +121,10 @@ export function OpsConsolePreviewSection() {
         </div>
 
         {/* Console panel — hero와 분리되는 lifted surface */}
-        <div className="rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]" style={{ backgroundColor: "#0B1929", border: "1px solid #1A2D48" }}>
+        <div className="rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.35)]" style={{ backgroundColor: "#132C4E", border: "1px solid #1E3A5C" }}>
 
           {/* ── KPI Strip — 실제 구현 KPI 그대로 ── */}
-          <div className="px-5 py-3 flex flex-wrap items-center gap-4" style={{ backgroundColor: "#071222", borderBottom: "1px solid #0F1F35" }}>
+          <div className="px-5 py-3 flex flex-wrap items-center gap-4" style={{ backgroundColor: "#0E2440", borderBottom: "1px solid #1A3358" }}>
             <span className="text-[9px] font-bold uppercase tracking-wider mr-1" style={{ color: "#4A5E78" }}>전환 큐 현황</span>
             <div className="flex items-center gap-1.5">
               <ListChecks className="h-3 w-3 text-blue-500" />
@@ -148,19 +148,19 @@ export function OpsConsolePreviewSection() {
           <div className="flex flex-col md:flex-row">
 
             {/* Left: Queue rows */}
-            <div className="flex-1 md:border-r" style={{ borderColor: "#162A42" }}>
-              <div className="px-4 py-2" style={{ borderBottom: "1px solid #0F1F35" }}>
+            <div className="flex-1 md:border-r" style={{ borderColor: "#1E3A5C" }}>
+              <div className="px-4 py-2" style={{ borderBottom: "1px solid #1A3358" }}>
                 <div className="flex items-center gap-3">
                   {["전체 8", "선택안 검토 4", "발주 가능 3", "보류 1"].map((tab, i) => (
                     <span key={tab}
                       className={`text-[10px] font-medium px-2 py-1 rounded cursor-default ${i === 0 ? "text-slate-200" : "text-slate-500"}`}
-                      style={i === 0 ? { backgroundColor: "#142840" } : undefined}
+                      style={i === 0 ? { backgroundColor: "#1A3358" } : undefined}
                     >{tab}</span>
                   ))}
                 </div>
               </div>
 
-              <div className="divide-y" style={{ borderColor: "#0F1F35" }}>
+              <div className="divide-y" style={{ borderColor: "#1A3358" }}>
                 {QUEUE_ITEMS.map((item) => (
                   <div key={item.id}
                     className="px-4 py-3 cursor-default"
@@ -216,7 +216,7 @@ export function OpsConsolePreviewSection() {
                   </div>
                 ))}
 
-                <div className="px-4 py-2 text-center" style={{ backgroundColor: "rgba(7,18,34,0.5)" }}>
+                <div className="px-4 py-2 text-center" style={{ backgroundColor: "rgba(14,36,64,0.5)" }}>
                   <span className="text-[10px] text-slate-600">+ 5건 더 보기</span>
                 </div>
               </div>
@@ -224,7 +224,7 @@ export function OpsConsolePreviewSection() {
 
             {/* Right: Rail — AI 3옵션, 실제 구현 구조 그대로 */}
             <div className="md:w-[300px] flex-shrink-0 hidden md:block">
-              <div className="px-4 py-2.5" style={{ borderBottom: "1px solid #0F1F35" }}>
+              <div className="px-4 py-2.5" style={{ borderBottom: "1px solid #1A3358" }}>
                 <div className="flex items-center gap-1.5 mb-0.5">
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${BADGE.emerald}`}>발주 전환 가능</span>
                   <span className={`text-[9px] px-1.5 py-0.5 rounded border ${BADGE.emerald}`}>외부 승인 완료</span>
@@ -240,7 +240,7 @@ export function OpsConsolePreviewSection() {
                 </div>
               </div>
 
-              <div className="divide-y" style={{ borderColor: "#0F1F35" }}>
+              <div className="divide-y" style={{ borderColor: "#1A3358" }}>
                 {RAIL_OPTIONS.map((opt) => (
                   <div key={opt.supplier}
                     className="px-3 py-2.5"
@@ -250,7 +250,7 @@ export function OpsConsolePreviewSection() {
                       <div className="flex items-center gap-1.5">
                         <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
                           style={{
-                            backgroundColor: opt.selected ? "#1E3A5C" : "#142840",
+                            backgroundColor: opt.selected ? "#1E3A5C" : "#1A3358",
                             color: opt.selected ? "#60A5FA" : "#5A6A7E",
                           }}>{opt.level}</span>
                         <span className={`text-[11px] font-medium ${opt.selected ? "text-white" : ""}`}
@@ -261,9 +261,9 @@ export function OpsConsolePreviewSection() {
                         style={{ color: opt.selected ? undefined : "#6A7A8E" }}>{opt.price}</span>
                     </div>
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="text-[9px] px-1 py-0.5 rounded" style={{ backgroundColor: "#0D1E35", color: "#5A6A7E", border: "1px solid #1A2D48" }}>납기 {opt.lead}</span>
+                      <span className="text-[9px] px-1 py-0.5 rounded" style={{ backgroundColor: "#152D50", color: "#5A6A7E", border: "1px solid #1E3A5C" }}>납기 {opt.lead}</span>
                       {opt.tags.slice(0, 2).map((t) => (
-                        <span key={t} className="text-[9px] px-1 py-0.5 rounded" style={{ backgroundColor: "#0D1E35", color: "#5A6A7E", border: "1px solid #1A2D48" }}>{t}</span>
+                        <span key={t} className="text-[9px] px-1 py-0.5 rounded" style={{ backgroundColor: "#152D50", color: "#5A6A7E", border: "1px solid #1E3A5C" }}>{t}</span>
                       ))}
                     </div>
                   </div>
@@ -271,7 +271,7 @@ export function OpsConsolePreviewSection() {
               </div>
 
               {/* Rail CTA — railCtaLabel 그대로 */}
-              <div className="px-3 py-3" style={{ borderTop: "1px solid #0F1F35" }}>
+              <div className="px-3 py-3" style={{ borderTop: "1px solid #1A3358" }}>
                 <button className="w-full text-[11px] font-semibold px-4 py-2 rounded-md flex items-center justify-center gap-1.5"
                   style={{ backgroundColor: "#2563EB", color: "#FFFFFF", boxShadow: "0 0 16px rgba(37,99,235,0.25)" }}>
                   발주 전환 시작 <ArrowRight className="h-3 w-3" />

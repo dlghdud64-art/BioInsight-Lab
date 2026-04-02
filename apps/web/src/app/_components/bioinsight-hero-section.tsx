@@ -301,12 +301,12 @@ export function BioInsightHeroSection() {
         {/* Layer B: Solid navy — no gradient, uniform depth */}
         <div className="absolute inset-0" style={{ backgroundColor: "#071a33" }} />
 
-        {/* Plexus — structured signal field, headline 근처에서 약해지도록 opacity 낮춤 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.2 }}>
+        {/* Plexus — restrained, headline 가독성 우선 */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.15 }}>
           <PlexusCanvas />
         </div>
-        {/* 중앙 headline 가독성 보호 — 중앙부 추가 dimming */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(7,26,51,0.7) 0%, transparent 70%)" }} />
+        {/* 중앙 headline 보호 — 넓은 dimming으로 텍스트 대비 확보 */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 70% 60% at 50% 50%, rgba(7,26,51,0.85) 0%, rgba(7,26,51,0.3) 60%, transparent 85%)" }} />
       </div>
 
       {/* Nav */}
