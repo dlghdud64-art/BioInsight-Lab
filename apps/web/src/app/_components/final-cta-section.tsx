@@ -15,10 +15,10 @@ import { useRouter } from "next/navigation";
 
 const FLOW_STEPS = [
   { label: "시약 검색", active: false },
-  { label: "후보 12건 구조화", active: false },
-  { label: "AI 선택안 3개 준비", active: true },
+  { label: "후보 정리", active: false },
+  { label: "비교·선택안 확정", active: true },
   { label: "요청 생성", active: false },
-  { label: "발주 전환 대기", active: false },
+  { label: "발주 준비", active: false },
 ];
 
 export function FinalCTASection() {

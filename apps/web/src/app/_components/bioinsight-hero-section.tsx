@@ -301,10 +301,12 @@ export function BioInsightHeroSection() {
         {/* Layer B: Solid navy — no gradient, uniform depth */}
         <div className="absolute inset-0" style={{ backgroundColor: "#071a33" }} />
 
-        {/* Plexus — structured signal field (dark OS 위에 살아 있는 network) */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.35 }}>
+        {/* Plexus — structured signal field, headline 근처에서 약해지도록 opacity 낮춤 */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.2 }}>
           <PlexusCanvas />
         </div>
+        {/* 중앙 headline 가독성 보호 — 중앙부 추가 dimming */}
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 60% 50% at 50% 50%, rgba(7,26,51,0.7) 0%, transparent 70%)" }} />
       </div>
 
       {/* Nav */}
@@ -360,12 +362,12 @@ export function BioInsightHeroSection() {
 
       {/* Hero */}
       <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 text-center w-full">
-        <h1 className="text-2xl md:text-5xl lg:text-[54px] font-extrabold tracking-tight leading-[1.3] text-white mb-4 md:mb-6">
-          구매 요청부터 입고·재고까지,<br />
-          <span style={{ color: "#60A5FA", textShadow: "0 0 32px rgba(96,165,250,0.45), 0 0 64px rgba(59,130,246,0.15)" }}>구매 흐름을 한곳에서</span>
+        <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
+          연구 구매 운영을<br />
+          <span className="text-white">하나의 흐름으로 연결합니다</span>
         </h1>
-        <p className="text-sm md:text-lg text-slate-300 mb-8 md:mb-10 font-medium max-w-2xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
-          검색부터 입고·재고까지, 연구 구매 운영을 하나의 흐름으로 연결합니다.
+        <p className="text-sm md:text-base text-slate-400 mb-8 md:mb-10 font-medium max-w-xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+          후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면에서 이어집니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">

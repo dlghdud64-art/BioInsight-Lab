@@ -6,70 +6,78 @@ import {
 } from "lucide-react";
 
 /*
- * ── Product Proof — 발주 전환 큐 목업 ────────────────────────────
- *  Role: hero 직후, "이 제품이 실제로 무엇을 하는지" 3초 안에 증명
- *  Source: /dashboard/purchases 실제 UI를 homepage proof용으로 축약
- *  Layout: KPI strip + queue rows(3건) + 선택된 항목 rail(우측)
- *  원칙: "Show, Don't Tell" — 마케팅 카피 없이 운영 화면 자체가 증거
+ * ── Product Proof — 발주 전환 큐 실제 구현 기반 축약 ──────────────
+ *  원칙: 현재 구현 화면의 naming/state/button을 그대로 사용
+ *  실제 앱에 없는 구조, 상태, 액션을 추가하지 않음
+ *  decorative composition이 아니라 현재 제품의 compressed proof
  * ────────────────────────────────────────────────────────────────────
  */
 
-// 축약 목업 데이터 — 실제 purchases page에서 3건만 추출
+// 실제 purchases page CONVERSION_STATUS_MAP / NEXT_ACTION_MAP에서 그대로 가져온 데이터
 const QUEUE_ITEMS = [
   {
     id: "pe-001",
     title: "PCR 튜브 (0.2mL) 회신 완료",
     summary: "PCR Tubes 0.2mL, Flat Cap, 1000ea/pk",
-    status: { label: "발주 전환 가능", color: "emerald" as const },
-    approval: { label: "승인 완료", color: "emerald" as const },
-    blocker: null,
-    ai: { label: "AI 추천 완료", icon: "✓", color: "emerald" as const },
+    statusLabel: "발주 전환 가능",
+    statusColor: "emerald" as const,
+    approvalLabel: "외부 승인 완료",
+    blockerType: null as string | null,
+    blockerReason: null as string | null,
+    aiLabel: "AI 추천 완료",
+    aiColor: "emerald" as const,
     replies: "3/3",
     price: "₩185,000",
     recommended: "BioKorea",
-    cta: "발주 전환 준비",
+    ctaLabel: "발주 전환 준비",  // NEXT_ACTION_MAP.prepare_po.ctaLabel
     ctaPrimary: true,
     daysAgo: 5,
     selected: true,
   },
   {
     id: "pe-002",
-    title: "Premium FBS 가격/납기 검토 필요",
+    title: "Premium FBS 회신 완료",
     summary: "FBS, Heat Inactivated, 500mL",
-    status: { label: "선택안 검토 필요", color: "blue" as const },
-    approval: { label: "승인 완료", color: "emerald" as const },
-    blocker: { label: "가격 차이", reason: "최저가와 선호 공급사 간 가격/납기 충돌" },
-    ai: { label: "AI 검토 필요", icon: "△", color: "amber" as const },
+    statusLabel: "선택안 검토 필요",
+    statusColor: "blue" as const,
+    approvalLabel: "외부 승인 완료",
+    blockerType: "가격 차이",
+    blockerReason: "최저가와 선호 공급사 간 가격/납기 충돌",
+    aiLabel: "AI 검토 필요",
+    aiColor: "amber" as const,
     replies: "3/3",
     price: "₩580,000",
     recommended: "GibcoKR",
-    cta: "선택안 검토",
+    ctaLabel: "선택안 검토",  // NEXT_ACTION_MAP.review_selection.ctaLabel
     ctaPrimary: false,
     daysAgo: 8,
     selected: false,
   },
   {
     id: "pe-006",
-    title: "Trypsin-EDTA 대체품 40% 절감안",
+    title: "Trypsin-EDTA (0.25%) 대체품 추천",
     summary: "Trypsin-EDTA 0.25%, 100mL × 6",
-    status: { label: "선택안 검토 필요", color: "blue" as const },
-    approval: { label: "승인 완료", color: "emerald" as const },
-    blocker: null,
-    ai: { label: "AI 검토 필요", icon: "△", color: "amber" as const },
+    statusLabel: "선택안 검토 필요",
+    statusColor: "blue" as const,
+    approvalLabel: "외부 승인 완료",
+    blockerType: null,
+    blockerReason: null,
+    aiLabel: "AI 검토 필요",
+    aiColor: "amber" as const,
     replies: "3/3",
     price: "₩145,000",
     recommended: "Welgene",
-    cta: "선택안 검토",
+    ctaLabel: "선택안 검토",
     ctaPrimary: false,
     daysAgo: 4,
     selected: false,
   },
 ];
 
-// 선택된 항목(pe-001)의 AI 3옵션
+// 선택된 항목(pe-001)의 AI 3옵션 — 실제 구현 그대로
 const RAIL_OPTIONS = [
   {
-    level: "추천",
+    level: "추천",  // recommendationLevel: primary → "추천"
     supplier: "BioKorea",
     price: "₩185,000",
     lead: "3일",
@@ -77,7 +85,7 @@ const RAIL_OPTIONS = [
     selected: true,
   },
   {
-    level: "대체",
+    level: "대체",  // recommendationLevel: alternate → "대체"
     supplier: "LabSource",
     price: "₩198,000",
     lead: "5일",
@@ -85,7 +93,7 @@ const RAIL_OPTIONS = [
     selected: false,
   },
   {
-    level: "보수",
+    level: "보수",  // recommendationLevel: conservative → "보수"
     supplier: "SciSupply",
     price: "₩210,000",
     lead: "2일",
@@ -94,11 +102,10 @@ const RAIL_OPTIONS = [
   },
 ];
 
-const COLOR_MAP = {
-  emerald: { badge: "bg-emerald-600/10 text-emerald-400 border-emerald-600/25", dot: "#34d399" },
-  blue: { badge: "bg-blue-600/10 text-blue-400 border-blue-600/25", dot: "#60a5fa" },
-  amber: { badge: "bg-amber-600/10 text-amber-400 border-amber-600/25", dot: "#fbbf24" },
-  slate: { badge: "bg-slate-600/10 text-slate-400 border-slate-600/25", dot: "#94a3b8" },
+const BADGE = {
+  emerald: "bg-emerald-600/10 text-emerald-400 border-emerald-600/25",
+  blue: "bg-blue-600/10 text-blue-400 border-blue-600/25",
+  amber: "bg-amber-600/10 text-amber-400 border-amber-600/25",
 } as const;
 
 export function OpsConsolePreviewSection() {
@@ -106,30 +113,30 @@ export function OpsConsolePreviewSection() {
     <section className="py-10 md:py-16" style={{ backgroundColor: "#060E1C", borderTop: "1px solid #0A1628" }}>
       <div className="max-w-[1100px] mx-auto px-4 md:px-6">
 
-        {/* Section header — 제목 1줄만 */}
+        {/* 제목 1줄만 */}
         <div className="mb-5 md:mb-6 text-center">
           <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
-            발주 전환 큐에서 선택안 확정과 발주 준비가 이어집니다
+            발주 전환 큐 — 선택안 확정에서 발주 준비까지
           </h2>
         </div>
 
-        {/* Console container — hero와 구분되는 lifted panel */}
-        <div className="rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.4)]" style={{ backgroundColor: "#0B1929", border: "1px solid #1A2D48" }}>
+        {/* Console panel — hero와 분리되는 lifted surface */}
+        <div className="rounded-xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)]" style={{ backgroundColor: "#0B1929", border: "1px solid #1A2D48" }}>
 
-          {/* ── KPI Strip ── */}
+          {/* ── KPI Strip — 실제 구현 KPI 그대로 ── */}
           <div className="px-5 py-3 flex flex-wrap items-center gap-4" style={{ backgroundColor: "#071222", borderBottom: "1px solid #0F1F35" }}>
             <span className="text-[9px] font-bold uppercase tracking-wider mr-1" style={{ color: "#4A5E78" }}>전환 큐 현황</span>
             <div className="flex items-center gap-1.5">
               <ListChecks className="h-3 w-3 text-blue-500" />
-              <span className="text-[11px] font-semibold text-blue-400">선택안 확정 4건</span>
+              <span className="text-[11px] font-semibold text-blue-400">선택안 확정 필요 4건</span>
             </div>
             <div className="flex items-center gap-1.5">
               <CircleCheck className="h-3 w-3 text-emerald-500" />
-              <span className="text-[11px] font-semibold text-emerald-400">발주 가능 3건</span>
+              <span className="text-[11px] font-semibold text-emerald-400">발주 전환 가능 3건</span>
             </div>
             <div className="flex items-center gap-1.5">
               <AlertTriangle className="h-3 w-3 text-amber-500" />
-              <span className="text-[11px] font-semibold text-amber-400">추가 확인 1건</span>
+              <span className="text-[11px] font-semibold text-amber-400">추가 검토 필요 1건</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Clock className="h-3 w-3 text-slate-500" />
@@ -146,11 +153,7 @@ export function OpsConsolePreviewSection() {
                 <div className="flex items-center gap-3">
                   {["전체 8", "선택안 검토 4", "발주 가능 3", "보류 1"].map((tab, i) => (
                     <span key={tab}
-                      className={`text-[10px] font-medium px-2 py-1 rounded cursor-default ${
-                        i === 0
-                          ? "text-slate-200"
-                          : "text-slate-500"
-                      }`}
+                      className={`text-[10px] font-medium px-2 py-1 rounded cursor-default ${i === 0 ? "text-slate-200" : "text-slate-500"}`}
                       style={i === 0 ? { backgroundColor: "#142840" } : undefined}
                     >{tab}</span>
                   ))}
@@ -158,96 +161,82 @@ export function OpsConsolePreviewSection() {
               </div>
 
               <div className="divide-y" style={{ borderColor: "#0F1F35" }}>
-                {QUEUE_ITEMS.map((item) => {
-                  const statusC = COLOR_MAP[item.status.color];
-                  const approvalC = COLOR_MAP[item.approval.color];
-                  const aiC = COLOR_MAP[item.ai.color];
-
-                  return (
-                    <div key={item.id}
-                      className="px-4 py-3 cursor-default"
-                      style={{ backgroundColor: item.selected ? "rgba(37,99,235,0.04)" : "transparent" }}
-                    >
-                      {/* Status badges */}
-                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${statusC.badge}`}>{item.status.label}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded border ${approvalC.badge}`}>{item.approval.label}</span>
-                        {item.blocker && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded border bg-amber-600/10 text-amber-400 border-amber-600/20 flex items-center gap-0.5">
-                            <AlertTriangle className="h-2 w-2" />{item.blocker.label}
-                          </span>
-                        )}
-                        <span className="text-[9px] text-slate-600 ml-auto">{item.daysAgo}일 전</span>
-                      </div>
-
-                      {/* Title + meta */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0 flex-1">
-                          <p className={`text-[12px] font-semibold leading-snug truncate ${item.selected ? "text-white" : "text-slate-300"}`}>{item.title}</p>
-                          <p className="text-[10px] text-slate-500 truncate mb-1.5">{item.summary}</p>
-
-                          {/* Blocker reason (if exists) */}
-                          {item.blocker && (
-                            <p className="text-[10px] text-amber-400/70 leading-snug mb-1">
-                              막힘: {item.blocker.reason}
-                            </p>
-                          )}
-
-                          {/* Meta line */}
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className={`text-[10px] flex items-center gap-0.5 ${aiC.badge.includes("emerald") ? "text-emerald-400" : "text-amber-400"}`}>
-                              <Sparkles className="h-2.5 w-2.5" />{item.ai.label}
-                            </span>
-                            <span className="text-[10px] text-emerald-400 flex items-center gap-0.5">
-                              <Truck className="h-2.5 w-2.5" />회신 {item.replies}
-                            </span>
-                            <span className="text-[10px] text-slate-200 font-medium">{item.price}</span>
-                            <span className="text-[9px] text-slate-500">추천: {item.recommended}</span>
-                          </div>
-                        </div>
-
-                        {/* Row CTA */}
-                        <button className={`text-[10px] font-semibold px-3 py-1.5 rounded-md flex items-center gap-1 whitespace-nowrap flex-shrink-0 mt-1 ${
-                          item.ctaPrimary
-                            ? "text-white"
-                            : "text-slate-300"
-                        }`} style={{
-                          backgroundColor: item.ctaPrimary ? "#2563EB" : "transparent",
-                          border: item.ctaPrimary ? "none" : "1px solid #1E3A5C",
-                          boxShadow: item.ctaPrimary ? "0 0 12px rgba(37,99,235,0.2)" : "none",
-                        }}>
-                          {item.cta}<ChevronRight className="h-2.5 w-2.5" />
-                        </button>
-                      </div>
+                {QUEUE_ITEMS.map((item) => (
+                  <div key={item.id}
+                    className="px-4 py-3 cursor-default"
+                    style={{ backgroundColor: item.selected ? "rgba(37,99,235,0.04)" : "transparent" }}
+                  >
+                    {/* Status badges — 실제 구현과 동일한 badge text */}
+                    <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                      <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded border ${BADGE[item.statusColor]}`}>{item.statusLabel}</span>
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded border ${BADGE.emerald}`}>{item.approvalLabel}</span>
+                      {item.blockerType && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded border bg-amber-600/10 text-amber-400 border-amber-600/20 flex items-center gap-0.5">
+                          <AlertTriangle className="h-2 w-2" />{item.blockerType}
+                        </span>
+                      )}
+                      <span className="text-[9px] text-slate-600 ml-auto">{item.daysAgo}일 전</span>
                     </div>
-                  );
-                })}
 
-                {/* Fade hint: more items */}
+                    {/* Title + meta */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className={`text-[12px] font-semibold leading-snug truncate ${item.selected ? "text-white" : "text-slate-300"}`}>{item.title}</p>
+                        <p className="text-[10px] text-slate-500 truncate mb-1.5">{item.summary}</p>
+
+                        {item.blockerReason && (
+                          <p className="text-[10px] text-amber-400/70 leading-snug mb-1">
+                            막힘: {item.blockerReason}
+                          </p>
+                        )}
+
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className={`text-[10px] flex items-center gap-0.5 ${item.aiColor === "emerald" ? "text-emerald-400" : "text-amber-400"}`}>
+                            <Sparkles className="h-2.5 w-2.5" />{item.aiLabel}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 flex items-center gap-0.5">
+                            <Truck className="h-2.5 w-2.5" />회신 {item.replies}
+                          </span>
+                          <span className="text-[10px] text-slate-200 font-medium">{item.price}</span>
+                          <span className="text-[9px] text-slate-500">추천: {item.recommended}</span>
+                        </div>
+                      </div>
+
+                      {/* Row CTA — 실제 구현 ctaLabel 그대로 */}
+                      <button className={`text-[10px] font-semibold px-3 py-1.5 rounded-md flex items-center gap-1 whitespace-nowrap flex-shrink-0 mt-1 ${
+                        item.ctaPrimary ? "text-white" : "text-slate-300"
+                      }`} style={{
+                        backgroundColor: item.ctaPrimary ? "#2563EB" : "transparent",
+                        border: item.ctaPrimary ? "none" : "1px solid #1E3A5C",
+                        boxShadow: item.ctaPrimary ? "0 0 12px rgba(37,99,235,0.2)" : "none",
+                      }}>
+                        {item.ctaLabel}<ChevronRight className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
                 <div className="px-4 py-2 text-center" style={{ backgroundColor: "rgba(7,18,34,0.5)" }}>
                   <span className="text-[10px] text-slate-600">+ 5건 더 보기</span>
                 </div>
               </div>
             </div>
 
-            {/* Right: Rail — 선택된 항목의 AI 3옵션 */}
+            {/* Right: Rail — AI 3옵션, 실제 구현 구조 그대로 */}
             <div className="md:w-[300px] flex-shrink-0 hidden md:block">
-              <div className="px-4 py-2.5 flex items-center gap-2" style={{ borderBottom: "1px solid #0F1F35" }}>
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border bg-emerald-600/10 text-emerald-400 border-emerald-600/25">발주 전환 가능</span>
-                    <span className="text-[9px] px-1.5 py-0.5 rounded border bg-emerald-600/10 text-emerald-400 border-emerald-600/20">승인 완료</span>
-                  </div>
-                  <p className="text-[11px] font-semibold text-white truncate">PCR 튜브 (0.2mL) 회신 완료</p>
-                  <p className="text-[10px] text-slate-500 truncate">PCR Tubes 0.2mL, Flat Cap, 1000ea/pk</p>
+              <div className="px-4 py-2.5" style={{ borderBottom: "1px solid #0F1F35" }}>
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${BADGE.emerald}`}>발주 전환 가능</span>
+                  <span className={`text-[9px] px-1.5 py-0.5 rounded border ${BADGE.emerald}`}>외부 승인 완료</span>
                 </div>
+                <p className="text-[11px] font-semibold text-white truncate">PCR 튜브 (0.2mL) 회신 완료</p>
+                <p className="text-[10px] text-slate-500 truncate">PCR Tubes 0.2mL, Flat Cap, 1000ea/pk</p>
               </div>
 
-              {/* AI 3 options */}
               <div className="px-3 pt-2 pb-1">
                 <div className="flex items-center gap-1 mb-2">
                   <Sparkles className="h-3 w-3" style={{ color: "#60A5FA" }} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>AI 선택안 비교</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: "#4A5E78" }}>AI 선택안</span>
                 </div>
               </div>
 
@@ -281,7 +270,7 @@ export function OpsConsolePreviewSection() {
                 ))}
               </div>
 
-              {/* Rail action dock */}
+              {/* Rail CTA — railCtaLabel 그대로 */}
               <div className="px-3 py-3" style={{ borderTop: "1px solid #0F1F35" }}>
                 <button className="w-full text-[11px] font-semibold px-4 py-2 rounded-md flex items-center justify-center gap-1.5"
                   style={{ backgroundColor: "#2563EB", color: "#FFFFFF", boxShadow: "0 0 16px rgba(37,99,235,0.25)" }}>
@@ -294,8 +283,6 @@ export function OpsConsolePreviewSection() {
             </div>
           </div>
         </div>
-
-        {/* Caption removed — mockup speaks for itself */}
       </div>
     </section>
   );
