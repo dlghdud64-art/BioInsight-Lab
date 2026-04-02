@@ -96,7 +96,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
         <>
           {/* 배경 딤 — 원래 페이지가 약간 보이게 */}
           <div
-            className="fixed inset-0 z-50"
+            className="fixed inset-0 z-[999]"
             style={{ backgroundColor: "rgba(0,0,0,0.38)", backdropFilter: "blur(1px)" }}
             onClick={close}
             aria-hidden="true"
@@ -108,7 +108,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             role="dialog"
             aria-modal="true"
             aria-label="사이트 메뉴"
-            className="fixed right-3 z-50 flex flex-col overflow-hidden rounded-2xl"
+            className="fixed right-3 z-[1000] flex flex-col overflow-hidden rounded-2xl"
             style={{
               top: "3.75rem",
               width: "min(88vw, 340px)",
