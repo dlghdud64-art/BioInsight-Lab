@@ -70,7 +70,7 @@ function MobileMenu() {
         <>
           {/* Dim backdrop */}
           <div
-            className="fixed inset-0 z-[120]"
+            className="fixed inset-0 z-[999]"
             style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
             onClick={close}
             aria-hidden="true"
@@ -81,7 +81,7 @@ function MobileMenu() {
             role="dialog"
             aria-modal="true"
             aria-label="사이트 메뉴"
-            className="fixed inset-0 z-[121] flex flex-col"
+            className="fixed inset-0 z-[1000] flex flex-col"
             style={{
               backgroundColor: "#081A33",
               paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
