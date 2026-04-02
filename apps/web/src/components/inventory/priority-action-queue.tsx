@@ -250,11 +250,11 @@ export function PriorityActionQueue({
           return (
             <div
               key={item.id}
-              className="px-4 py-3 hover:bg-el transition-colors cursor-pointer group"
+              className="px-4 py-2.5 hover:bg-el transition-colors cursor-pointer group"
               onClick={() => onItemClick?.(item)}
             >
-              {/* Row 1: Risk + Product + Category badge */}
-              <div className="flex items-center gap-2 mb-1.5">
+              {/* Line 1: Risk dot + Product + Risk badge */}
+              <div className="flex items-center gap-2 mb-1">
                 <span className={`h-2 w-2 rounded-full shrink-0 ${riskCfg.dot}`} />
                 <span className="text-sm font-semibold text-slate-200 truncate flex-1">
                   {item.productName}
@@ -267,45 +267,26 @@ export function PriorityActionQueue({
                 </Badge>
               </div>
 
-              {/* Row 2: Category icon + reason */}
-              <div className="flex items-start gap-2 ml-4">
-                <CatIcon className={`h-3.5 w-3.5 shrink-0 mt-0.5 ${catCfg.color}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-slate-400 leading-relaxed">
-                    <span className={`font-medium ${catCfg.color}`}>{catCfg.label}</span>
-                    <span className="mx-1.5 text-slate-600">|</span>
-                    {item.reason}
-                  </p>
-                  {item.lotNumber && (
-                    <p className="text-[10px] text-slate-600 font-mono mt-0.5">
-                      Lot: {item.lotNumber}
-                    </p>
-                  )}
-                </div>
+              {/* Line 2: 상태 + 리스크 1줄 + lot (축약) */}
+              <div className="flex items-center gap-1.5 ml-4 text-[11px]">
+                <CatIcon className={`h-3 w-3 shrink-0 ${catCfg.color}`} />
+                <span className={`font-medium ${catCfg.color}`}>{catCfg.label}</span>
+                <span className="text-slate-600">·</span>
+                <span className="text-slate-400 truncate">{item.reason}</span>
+                {item.lotNumber && (
+                  <span className="text-slate-600 font-mono shrink-0 hidden sm:inline">Lot {item.lotNumber}</span>
+                )}
               </div>
 
-              {/* Row 3: AI 추천 근거 */}
-              <div className="mt-1.5 ml-4 rounded-md bg-pn/60 border border-bd/50 px-2.5 py-1.5">
-                <p className="text-[10px] text-slate-500 leading-relaxed flex items-start gap-1.5">
-                  <Sparkles className="h-3 w-3 shrink-0 mt-px text-amber-500/70" />
-                  <span>
-                    <span className="font-semibold text-slate-400">추천 근거</span>
-                    <span className="mx-1 text-slate-700">—</span>
-                    {item.rationale}
-                  </span>
-                </p>
-              </div>
-
-              {/* Row 4: Recommended action + quick action */}
-              <div className="flex items-center justify-between mt-2 ml-4">
-                <p className="text-[11px] text-slate-500 flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-slate-600" />
-                  권장: {item.recommendedAction}
-                </p>
+              {/* Line 3: 권장 액션 + CTA (항상 표시) */}
+              <div className="flex items-center justify-between mt-1.5 ml-4">
+                <span className="text-[10px] text-slate-500">
+                  권장: <span className="text-slate-400 font-medium">{item.recommendedAction}</span>
+                </span>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-6 px-2 text-[11px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
                   onClick={(e) => {
                     e.stopPropagation();
                     onAction?.(item);

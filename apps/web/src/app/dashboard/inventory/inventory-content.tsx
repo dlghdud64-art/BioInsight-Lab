@@ -1535,22 +1535,24 @@ function InventoryPageContent() {
 
             {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
-            {/* KPI Summary Strip — dark cockpit theme */}
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl border border-bd bg-pn px-4 py-3">
+            {/* KPI Judgment Strip — 오늘 처리 우선순위 중심 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {/* 1. 오늘 처리 대상 — 가장 강한 대비 */}
+              <div className="rounded-xl border border-red-500/30 bg-red-950/15 px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-slate-500">전체 재고</span>
-                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-950/200/10">
-                    <Package className="h-3 w-3 text-blue-400" />
+                  <span className="text-[11px] font-bold text-red-400/90">오늘 처리 대상</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-500/15">
+                    <Zap className="h-3 w-3 text-red-400" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-slate-100">
-                  {totalInventoryCount}
+                <div className="text-2xl font-bold tracking-tight text-red-400">
+                  {issuesCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
               </div>
 
-              <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
+              {/* 2. 부족/품절 — amber/red signal */}
+              <div className="rounded-xl border border-amber-500/25 bg-amber-950/10 px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-medium text-amber-400/80">부족/품절</span>
                   <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
@@ -1563,6 +1565,7 @@ function InventoryPageContent() {
                 </div>
               </div>
 
+              {/* 3. 만료 임박 — amber signal */}
               <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-medium text-amber-400/80">만료 임박</span>
@@ -1573,6 +1576,20 @@ function InventoryPageContent() {
                 <div className="text-2xl font-bold tracking-tight text-amber-400">
                   {expiringSoonCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
+                </div>
+              </div>
+
+              {/* 4. 전체 재고 — muted neutral */}
+              <div className="rounded-xl border border-bd bg-pn px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-slate-500">전체 재고</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-el">
+                    <Package className="h-3 w-3 text-slate-400" />
+                  </div>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-slate-300">
+                  {totalInventoryCount}
+                  <span className="ml-1 text-sm font-normal text-slate-500">건</span>
                 </div>
               </div>
             </div>
@@ -1602,16 +1619,14 @@ function InventoryPageContent() {
               }}
             />
 
-            {/* 조치 필요 항목 */}
-            <Card className="shadow-sm border-bd bg-pn">
-              <CardHeader>
-                <CardTitle className="flex items-center text-lg text-slate-100">
-                  <Zap className="mr-2 h-5 w-5 text-amber-400" />
+            {/* 조치 필요 항목 — execution strip */}
+            <Card className="shadow-sm border-amber-500/15 bg-pn">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center text-sm font-bold text-slate-100">
+                  <Zap className="mr-2 h-4 w-4 text-amber-400" />
                   조치 필요 항목
+                  <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-amber-500/30 bg-amber-500/10 text-amber-400">{issuesCount}건</Badge>
                 </CardTitle>
-                <CardDescription className="text-slate-500">
-                  재고 부족, 유효기간 임박, 위치 미지정 항목입니다. 아래 조치 버튼으로 바로 처리하세요.
-                </CardDescription>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -1699,50 +1714,27 @@ function InventoryPageContent() {
                             }}
                             className="flex-1 min-w-0 text-left"
                           >
-                            {/* Row 1: 이슈 유형 배지 + 품목명 + 보조 배지 */}
-                            <div className="flex items-center gap-2 flex-wrap">
+                            {/* Line 1: 배지 + 품목명 + D-day */}
+                            <div className="flex items-center gap-2">
                               <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
-                              <h5 className="text-sm font-bold text-slate-100 truncate">
+                              <h5 className="text-sm font-bold text-slate-100 truncate flex-1">
                                 {inv.product.name}
                               </h5>
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
-                                <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
-                                  issueType === "expired"
-                                    ? "bg-red-500/10 text-red-400"
-                                    : "bg-amber-500/10 text-amber-400"
-                                }`}>{daysLeft}</Badge>
+                                <span className={`text-[10px] font-bold shrink-0 ${issueType === "expired" ? "text-red-400" : "text-amber-400"}`}>{daysLeft}</span>
                               )}
                             </div>
-                            {/* Row 2: 보조 정보 */}
-                            <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1 text-xs text-slate-500  text-slate-400">
-                              {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-400  text-slate-300">{inv.lotNumber}</span></span>}
-                              {inv.location ? (
-                                <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
-                                  <span className="whitespace-nowrap">{inv.location}</span>
-                                </>
-                              ) : issueType !== "no_location" ? (
-                                <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
-                                  <span className="whitespace-nowrap text-amber-500">위치 미지정</span>
-                                </>
-                              ) : null}
-                              <span className="text-slate-300  text-slate-400">·</span>
-                              <span className="whitespace-nowrap">
-                                <span className={`font-semibold ${
-                                  inv.currentQuantity === 0 ? "text-red-400" :
-                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
-                                  "text-slate-300"
-                                }`}>{inv.currentQuantity}</span> {inv.unit}
-                                {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
-                              </span>
-                              {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && (
-                                <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
-                                  <span className="whitespace-nowrap">{format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
-                                </>
-                              )}
-                            </div>
+                            {/* Line 2: 핵심 수치 1줄 (축약) */}
+                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                              <span className={`font-semibold ${
+                                inv.currentQuantity === 0 ? "text-red-400" :
+                                (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
+                                "text-slate-300"
+                              }`}>{inv.currentQuantity}</span> {inv.unit}
+                              {inv.safetyStock != null && <span className="text-slate-500"> / 안전재고 {inv.safetyStock}</span>}
+                              {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && <span className="text-slate-500"> · {format(new Date(inv.expiryDate), "MM.dd")} 만료</span>}
+                              {!inv.location && issueType !== "no_location" && <span className="text-amber-500"> · 위치 없음</span>}
+                            </p>
                           </button>
                           {/* ── 이슈 유형별 조치 액션 ── */}
                           <div className="flex gap-1.5 flex-shrink-0 items-start pt-0.5">
