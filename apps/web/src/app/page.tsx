@@ -18,33 +18,40 @@ const FinalCTASection = dynamic(
   { loading: () => <div className="h-64 w-full bg-el" /> }
 );
 
+/*
+ * ── Landing Page — Surface Grammar ────────────────────────────────
+ *  A. Flagship Surface  (#071A33)  Hero — 선언과 진입
+ *  B. Bridge Surface    (#0B1E35)  병목 증거 → proof 연결
+ *  C. Proof Surfaces    (#0E1D32)  Operational Delta + Workbench Teaser
+ *  D. Conversion Surface(#0A1525)  행동 전환 CTA
+ *  스크롤 방향: 브랜딩 → 운영 → 행동 (점점 구체적, 점점 운영적)
+ * ────────────────────────────────────────────────────────────────────
+ */
 export default function HomePage() {
   return (
     <div className="w-full min-h-screen" style={{ backgroundColor: "#071A33" }}>
-      {/* 1. Plexus Hero — full viewport, 자체 nav 포함 */}
+      {/* A. Flagship Surface — Hero */}
       <BioInsightHeroSection />
 
-      {/* 1.5. Hero → Content seam: hard cut with thin separator */}
+      {/* A→B seam */}
       <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
-      {/* 2. Trust Strip */}
+      {/* B. Bridge Surface — 병목 증거 + 절감 요약 */}
       <BioInsightSocialProofSection />
 
-      {/* 3. Platform Flow */}
+      {/* C-1. Proof Surface — Operational Delta Matrix */}
       <PlatformFlowSection />
 
-      {/* 4. Ops Console Preview */}
+      {/* C-2. Proof Surface — Workbench Teaser Cards */}
       <OpsConsolePreviewSection />
 
-      {/* 4.5. Ops → CTA seam */}
-
-      {/* 5. Final CTA */}
+      {/* D. Conversion Surface — CTA */}
       <FinalCTASection />
 
-      {/* 5.5. CTA → Footer seam */}
-      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#D7E0EB" }} />
+      {/* D→Footer seam */}
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1E3050" }} />
 
-      {/* 6. Footer */}
+      {/* Footer */}
       <MainFooter />
     </div>
   );
