@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 /*
- * ── Conversion Surface ─────────────────────────────────────────────
- *  Role: Proof 흐름의 종착점 — 운영 판단 후 행동 전환
- *  Tone: dark product surface 유지, proof보다 한 단계 깊은 배경
- *  NOT: light B2B 전환 — dark surface grammar를 끝까지 유지
+ * ── Final Action Surface ───────────────────────────────────────────
+ *  Role: generic CTA 카드가 아니라, 실제 운영 흐름 예시 중심 surface
+ *  CTA는 surface의 결과로만 배치
  * ────────────────────────────────────────────────────────────────────
  */
+
+const FLOW_STEPS = [
+  { label: "시약 검색", active: false },
+  { label: "후보 12건 구조화", active: false },
+  { label: "AI 선택안 3개 준비", active: true },
+  { label: "요청 생성", active: false },
+  { label: "발주 전환 대기", active: false },
+];
 
 export function FinalCTASection() {
   const { data: session } = useSession();
@@ -29,72 +36,104 @@ export function FinalCTASection() {
 
   return (
     <section
-      className="py-16 md:py-20"
+      className="py-14 md:py-18"
       style={{ backgroundColor: "#0A1525", borderTop: "1px solid #162A42" }}
     >
-      <div className="mx-auto max-w-[1100px] px-5 md:px-8">
-        <div
-          className="rounded-xl px-8 pt-10 pb-8 md:px-16 md:pt-14 md:pb-12"
-          style={{
-            backgroundColor: "#0D1E35",
-            border: "1px solid #1E3050",
-          }}
-        >
-          <div className="text-center max-w-2xl mx-auto">
-            <p
-              className="text-[10px] font-bold uppercase tracking-widest mb-3"
-              style={{ color: "#60A5FA" }}
-            >
-              Get Started
-            </p>
-            <h2
-              className="text-xl md:text-2xl font-bold tracking-tight leading-tight mb-3 text-white"
-            >
-              구매 운영을 체계화하세요
-            </h2>
-            <p
-              className="text-[12px] md:text-[13px] leading-relaxed mb-8"
-              style={{ color: "#8A99AF" }}
-            >
-              필요한 후보와 다음 단계를 먼저 정리해,
-              팀이 더 빠르게 검토하고 진행할 수 있게 돕습니다.
-            </p>
+      <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6">
-              <Button
-                className="w-full sm:w-auto h-11 px-9 font-bold text-[14px] flex items-center justify-center gap-2 rounded-lg"
-                style={{
-                  backgroundColor: "#2563EB",
-                  color: "#FFFFFF",
-                  boxShadow: "0 1px 8px rgba(37,99,235,0.22)",
-                }}
-                onClick={handleConsoleClick}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1D4ED8"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#2563EB"; }}
-              >
-                운영 콘솔 시작하기
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-              <Link href="/support" className="w-full sm:w-auto">
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-auto h-10 px-7 font-medium text-[13px] rounded-lg"
+        {/* Header — action oriented */}
+        <div className="text-center mb-8">
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-2"
+            style={{ color: "#60A5FA" }}
+          >
+            Get Started
+          </p>
+          <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+            실제 운영 흐름은 이렇게 시작됩니다
+          </h2>
+        </div>
+
+        {/* Flow strip — the centerpiece */}
+        <div
+          className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
+          style={{ backgroundColor: "#0D1E35", border: "1px solid #1E3050" }}
+        >
+          {/* Horizontal flow (desktop) */}
+          <div className="hidden md:flex items-center justify-center gap-0">
+            {FLOW_STEPS.map((step, i) => (
+              <div key={step.label} className="flex items-center">
+                <div
+                  className="px-4 py-2 rounded-md text-[12px] font-medium"
                   style={{
-                    borderColor: "#1E3050",
-                    color: "#8A99AF",
-                    backgroundColor: "transparent",
+                    backgroundColor: step.active ? "rgba(37,99,235,0.12)" : "transparent",
+                    color: step.active ? "#60A5FA" : "#6A7A8E",
+                    border: step.active ? "1px solid #1E3A5C" : "1px solid #162A42",
+                    boxShadow: step.active ? "0 0 16px rgba(37,99,235,0.15)" : "none",
                   }}
                 >
-                  도입 문의
-                </Button>
-              </Link>
-            </div>
+                  {step.label}
+                </div>
+                {i < FLOW_STEPS.length - 1 && (
+                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#2A4060" }} />
+                )}
+              </div>
+            ))}
+          </div>
 
-            <p className="text-[11px]" style={{ color: "#4A5E78" }}>
-              연구실·바이오팀의 반복 구매 운영에 최적화된 플랫폼입니다.
-            </p>
+          {/* Vertical flow (mobile) */}
+          <div className="md:hidden space-y-2">
+            {FLOW_STEPS.map((step, i) => (
+              <div key={step.label} className="flex items-center gap-2">
+                <div
+                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: step.active ? "#60A5FA" : "#2A4060" }}
+                />
+                <span
+                  className="text-[12px] font-medium"
+                  style={{ color: step.active ? "#60A5FA" : "#6A7A8E" }}
+                >
+                  {step.label}
+                </span>
+                {i < FLOW_STEPS.length - 1 && (
+                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#2A4060" }} />
+                )}
+              </div>
+            ))}
           </div>
         </div>
+
+        {/* CTA — subordinate to the flow */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <Button
+            className="w-full sm:w-auto h-11 px-8 font-bold text-[14px] flex items-center justify-center gap-2 rounded-lg border border-blue-400/50"
+            style={{
+              backgroundColor: "#2563EB",
+              color: "#FFFFFF",
+              boxShadow: "0 2px 24px rgba(37,99,235,0.4), 0 0 48px rgba(96,165,250,0.12)",
+            }}
+            onClick={handleConsoleClick}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1D4ED8"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#2563EB"; }}
+          >
+            소싱 워크벤치 열기
+            <Search className="h-4 w-4" />
+          </Button>
+          <Link href="/support" className="w-full sm:w-auto">
+            <Button
+              variant="outline"
+              className="w-full sm:w-auto h-10 px-7 font-medium text-[13px] rounded-lg"
+              style={{
+                borderColor: "#1E3050",
+                color: "#8A99AF",
+                backgroundColor: "transparent",
+              }}
+            >
+              도입 문의
+            </Button>
+          </Link>
+        </div>
+
       </div>
     </section>
   );
