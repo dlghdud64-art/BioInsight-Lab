@@ -42,39 +42,158 @@ function MobileMenu() {
   const queryClient = useQueryClient();
   const isLoggedIn = !!session?.user;
   const [open, setOpen] = useState(false);
+
+  // Body scroll lock
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [open]);
+
+  // ESC to close
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const close = () => setOpen(false);
+
   return (
     <>
-      <button onClick={() => setOpen(true)} className="p-2 text-slate-300 hover:text-white" aria-label="메뉴">
+      <button onClick={() => setOpen(true)} className="p-2 text-slate-300 hover:text-white touch-manipulation" aria-label="메뉴" aria-expanded={open}>
         <Menu className="h-5 w-5" />
       </button>
       {open && (
-        <div className="fixed inset-0 z-50 bg-[#06142E]/95 backdrop-blur-md flex flex-col">
-          <div className="flex justify-between items-center px-6 py-5">
-            <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
-            <button onClick={() => setOpen(false)} className="p-2 text-slate-300 hover:text-white" aria-label="닫기">
-              <X className="h-5 w-5" />
-            </button>
+        <>
+          {/* Dim backdrop */}
+          <div
+            className="fixed inset-0 z-[120]"
+            style={{ backgroundColor: "rgba(0,0,0,0.55)", backdropFilter: "blur(2px)" }}
+            onClick={close}
+            aria-hidden="true"
+          />
+
+          {/* Full-screen menu sheet — independent surface */}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="사이트 메뉴"
+            className="fixed inset-0 z-[121] flex flex-col"
+            style={{
+              backgroundColor: "#081A33",
+              paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
+              paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
+            }}
+          >
+            {/* ── Header: Logo + Close ── */}
+            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #1E3050" }}>
+              <span className="text-lg font-bold tracking-tight text-slate-100">LabAxis</span>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="메뉴 닫기"
+                className="w-11 h-11 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors touch-manipulation"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* ── Navigation items — left-aligned, independent scroll ── */}
+            <nav className="flex-1 overflow-y-auto overscroll-contain px-5 py-6">
+              {isLoggedIn ? (
+                <div className="flex flex-col gap-1">
+                  {([
+                    { href: "/dashboard", icon: LayoutDashboard, label: "대시보드", primary: true },
+                    { href: "/app/search", icon: Search, label: "검색", primary: false },
+                    { href: "/dashboard/settings", icon: Settings, label: "계정 설정", primary: false },
+                  ] as const).map(({ href, icon: Icon, label, primary }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={close}
+                      className="flex items-center gap-3.5 px-3 py-3 rounded-xl transition-colors"
+                      style={{ color: primary ? "#F1F5F9" : "#C8D4E5" }}
+                    >
+                      <Icon className="h-4.5 w-4.5 flex-shrink-0" style={{ color: primary ? "#2563EB" : "#4A5E78" }} strokeWidth={1.8} />
+                      <span className="text-[16px] font-semibold">{label}</span>
+                    </Link>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  {([
+                    { href: "/intro", label: "제품 소개" },
+                    { href: "/pricing", label: "요금 & 도입" },
+                    { href: "/support", label: "고객 지원 및 문의" },
+                  ] as const).map(({ href, label }) => (
+                    <Link
+                      key={href}
+                      href={href}
+                      onClick={close}
+                      className="flex items-center px-3 py-3.5 rounded-xl transition-colors"
+                      style={{ color: "#C8D4E5" }}
+                    >
+                      <span className="text-[16px] font-semibold">{label}</span>
+                    </Link>
+                  ))}
+                  <div className="my-3" style={{ borderTop: "1px solid #1E3050" }} />
+                  <Link
+                    href="/auth/signin"
+                    onClick={close}
+                    className="flex items-center px-3 py-3 rounded-xl transition-colors"
+                    style={{ color: "#8A99AF" }}
+                  >
+                    <span className="text-[15px] font-medium">로그인</span>
+                  </Link>
+                </div>
+              )}
+            </nav>
+
+            {/* ── Footer dock: sticky CTA ── */}
+            <div className="flex-shrink-0 px-5 pb-2" style={{ borderTop: "1px solid #1E3050", paddingTop: 16 }}>
+              {isLoggedIn ? (
+                <button
+                  type="button"
+                  onClick={() => { close(); resetWorkbenchSessionOnLogout(); invalidateWorkbenchQueryCache(queryClient); signOut({ callbackUrl: "/" }); }}
+                  className="w-full py-3 text-left px-3 text-[15px] font-medium rounded-xl transition-colors"
+                  style={{ color: "#F87171" }}
+                >
+                  로그아웃
+                </button>
+              ) : (
+                <div className="flex flex-col gap-2.5">
+                  <Link href="/search" onClick={close}>
+                    <button
+                      type="button"
+                      className="w-full h-12 rounded-xl text-[15px] font-bold text-white transition-colors"
+                      style={{ backgroundColor: "#2563EB" }}
+                    >
+                      무료로 시작하기
+                    </button>
+                  </Link>
+                  <Link href="/support" onClick={close}>
+                    <button
+                      type="button"
+                      className="w-full h-11 rounded-xl text-[14px] font-medium transition-colors"
+                      style={{ color: "#8A99AF", border: "1px solid #1E3050" }}
+                    >
+                      도입 문의하기
+                    </button>
+                  </Link>
+                </div>
+              )}
+
+              {/* Policy links */}
+              <div className="flex items-center justify-center gap-4 mt-4 pb-1">
+                <Link href="/terms" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>이용약관</Link>
+                <Link href="/privacy" onClick={close} className="text-[11px]" style={{ color: "#4A5E78" }}>개인정보처리방침</Link>
+              </div>
+            </div>
           </div>
-          <nav className="flex-1 flex flex-col items-center justify-center gap-6">
-            <Link href="/intro" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">서비스 소개</Link>
-            <Link href="/pricing" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">요금 & 도입</Link>
-            {isLoggedIn ? (
-              <>
-                <Link href="/dashboard" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">대시보드</Link>
-                <Link href="/app/search" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">검색</Link>
-                <Link href="/dashboard/settings" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">계정 설정</Link>
-                <button onClick={() => { setOpen(false); resetWorkbenchSessionOnLogout(); invalidateWorkbenchQueryCache(queryClient); signOut({ callbackUrl: "/" }); }} className="text-lg font-medium text-red-400 hover:text-red-300 mt-4">로그아웃</button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/signin" onClick={() => setOpen(false)} className="text-lg font-medium text-slate-200 hover:text-white">로그인</Link>
-                <Link href="/search" onClick={() => setOpen(false)}>
-                  <Button className="mt-4 px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg">무료로 시작하기</Button>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
+        </>
       )}
     </>
   );
