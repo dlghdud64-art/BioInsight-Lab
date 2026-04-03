@@ -34,7 +34,7 @@ export function FinalCTASection() {
   return (
     <section
       className="py-14 md:py-18"
-      style={{ backgroundColor: "#1E2A3D", borderTop: "1px solid #304060" }}
+      style={{ backgroundColor: "#0B1120", borderTop: "1px solid #1C2A42" }}
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
