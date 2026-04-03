@@ -314,24 +314,24 @@ export function BioInsightHeroSection() {
   return (
     <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#0A2248" }}>
 
-      {/* Background — plexus가 잘리지 않도록 overflow-visible, 개별 레이어만 clip */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      {/* Background — plexus + gradient가 목업 영역까지 확장 (bottom: -400px) */}
+      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-400px" }}>
 
-        {/* Base: brighter cobalt gradient */}
+        {/* Base: cobalt gradient — 목업 뒤까지 이어짐 */}
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 120% 100% at 50% 0%, #0D3570 0%, #0A2248 50%, #061840 100%)",
+          background: "linear-gradient(to bottom, #0D3570 0%, #0A2248 40%, #081C3E 70%, #0B1120 100%)",
         }} />
 
-        {/* Plexus — cluster hierarchy */}
+        {/* Plexus — 목업 영역까지 포함 */}
         <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.55 }}>
           <PlexusCanvas />
         </div>
 
         {/* Central light field — focal axis behind headline */}
-        <div className="absolute inset-0 pointer-events-none" style={{
+        <div className="absolute inset-x-0 top-0 bottom-[400px] pointer-events-none" style={{
           background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(60,120,220,0.3) 0%, rgba(40,80,180,0.08) 55%, transparent 100%)",
         }} />
-        <div className="absolute inset-0 pointer-events-none" style={{
+        <div className="absolute inset-x-0 top-0 bottom-[400px] pointer-events-none" style={{
           background: "radial-gradient(ellipse 30% 26% at 50% 33%, rgba(120,175,255,0.14) 0%, transparent 70%)",
         }} />
       </div>
