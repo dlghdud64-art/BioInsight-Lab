@@ -114,12 +114,12 @@ export function OpsConsolePreviewSection() {
           className="relative"
           style={{ marginTop: "clamp(-280px, -24vh, -160px)" }}
         >
-          {/* ── Back-glow: 모니터 뒤 빛번짐 ── */}
+          {/* ── Back-glow: 모니터 뒤 빛번짐 — 강화 ── */}
           <div
-            className="absolute -inset-4 md:-inset-6 rounded-3xl pointer-events-none"
+            className="absolute -inset-8 md:-inset-12 rounded-3xl pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse 70% 50% at 50% 30%, rgba(56,120,220,0.12) 0%, rgba(40,90,180,0.04) 50%, transparent 100%)",
-              filter: "blur(20px)",
+              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(56,130,240,0.22) 0%, rgba(40,100,200,0.08) 45%, transparent 100%)",
+              filter: "blur(32px)",
             }}
           />
 
@@ -128,8 +128,8 @@ export function OpsConsolePreviewSection() {
             className="relative rounded-2xl overflow-hidden"
             style={{
               backgroundColor: "#111827",
-              border: "1px solid rgba(255,255,255,0.1)",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(140,180,255,0.18)",
+              boxShadow: "0 0 0 1px rgba(100,160,255,0.06), 0 8px 32px rgba(30,80,180,0.25), 0 30px 70px rgba(0,0,0,0.5)",
             }}
           >
             {/* ── Window title bar (macOS style) ── */}
