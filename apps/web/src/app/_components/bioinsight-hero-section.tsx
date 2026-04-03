@@ -385,7 +385,7 @@ export function BioInsightHeroSection() {
       </nav>
 
       {/* Hero */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 sm:pb-20 text-center w-full">
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-28 sm:pb-36 text-center w-full">
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>
