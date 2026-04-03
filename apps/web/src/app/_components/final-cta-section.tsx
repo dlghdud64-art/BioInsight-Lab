@@ -37,7 +37,7 @@ export function FinalCTASection() {
   return (
     <section
       className="py-14 md:py-18"
-      style={{ backgroundColor: "#142A48", borderTop: "1px solid #1E3A5C" }}
+      style={{ backgroundColor: "#0A0F16", borderTop: "1px solid #1A2030" }}
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
@@ -51,7 +51,7 @@ export function FinalCTASection() {
         {/* Flow strip — the centerpiece */}
         <div
           className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
-          style={{ backgroundColor: "#1A3358", border: "1px solid #24456A" }}
+          style={{ backgroundColor: "#111820", border: "1px solid #1E2530" }}
         >
           {/* Horizontal flow (desktop) */}
           <div className="hidden md:flex items-center justify-center gap-0">
@@ -60,16 +60,15 @@ export function FinalCTASection() {
                 <div
                   className="px-4 py-2 rounded-md text-[12px] font-medium"
                   style={{
-                    backgroundColor: step.active ? "rgba(37,99,235,0.12)" : "transparent",
-                    color: step.active ? "#60A5FA" : "#6A7A8E",
-                    border: step.active ? "1px solid #1E3A5C" : "1px solid #1E3A5C",
-                    boxShadow: step.active ? "0 0 16px rgba(37,99,235,0.15)" : "none",
+                    backgroundColor: step.active ? "rgba(255,255,255,0.06)" : "transparent",
+                    color: step.active ? "#E2E8F0" : "#5A6478",
+                    border: step.active ? "1px solid #2A3340" : "1px solid #1E2530",
                   }}
                 >
                   {step.label}
                 </div>
                 {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#345580" }} />
+                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#2A3340" }} />
                 )}
               </div>
             ))}
@@ -81,16 +80,16 @@ export function FinalCTASection() {
               <div key={step.label} className="flex items-center gap-2">
                 <div
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: step.active ? "#60A5FA" : "#345580" }}
+                  style={{ backgroundColor: step.active ? "#E2E8F0" : "#2A3340" }}
                 />
                 <span
                   className="text-[12px] font-medium"
-                  style={{ color: step.active ? "#60A5FA" : "#6A7A8E" }}
+                  style={{ color: step.active ? "#E2E8F0" : "#6A7A8E" }}
                 >
                   {step.label}
                 </span>
                 {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#345580" }} />
+                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#2A3340" }} />
                 )}
               </div>
             ))}
@@ -100,11 +99,11 @@ export function FinalCTASection() {
         {/* CTA — subordinate to the flow */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button
-            className="w-full sm:w-auto h-11 px-8 font-bold text-[14px] flex items-center justify-center gap-2 rounded-lg border border-blue-400/50"
+            className="w-full sm:w-auto h-11 px-8 font-bold text-[14px] flex items-center justify-center gap-2 rounded-lg border border-blue-500/25"
             style={{
               backgroundColor: "#2563EB",
               color: "#FFFFFF",
-              boxShadow: "0 2px 24px rgba(37,99,235,0.4), 0 0 48px rgba(96,165,250,0.12)",
+              boxShadow: "0 2px 8px rgba(37,99,235,0.15)",
             }}
             onClick={handleConsoleClick}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1D4ED8"; }}
@@ -118,7 +117,7 @@ export function FinalCTASection() {
               variant="outline"
               className="w-full sm:w-auto h-10 px-7 font-medium text-[13px] rounded-lg"
               style={{
-                borderColor: "#24456A",
+                borderColor: "#1E2530",
                 color: "#8A99AF",
                 backgroundColor: "transparent",
               }}

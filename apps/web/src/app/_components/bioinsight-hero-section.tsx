@@ -83,13 +83,13 @@ function MobileMenu() {
             aria-label="사이트 메뉴"
             className="fixed inset-0 z-[1000] flex flex-col"
             style={{
-              backgroundColor: "#081A33",
+              backgroundColor: "#080C14",
               paddingTop: "max(env(safe-area-inset-top, 0px), 12px)",
               paddingBottom: "max(env(safe-area-inset-bottom, 0px), 12px)",
             }}
           >
             {/* ── Header: Logo + Close ── */}
-            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #1E3050" }}>
+            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0" style={{ borderBottom: "1px solid #1A2030" }}>
               <span className="text-lg font-bold tracking-tight text-slate-100">LabAxis</span>
               <button
                 type="button"
@@ -139,7 +139,7 @@ function MobileMenu() {
                       <span className="text-[16px] font-semibold">{label}</span>
                     </Link>
                   ))}
-                  <div className="my-3" style={{ borderTop: "1px solid #1E3050" }} />
+                  <div className="my-3" style={{ borderTop: "1px solid #1A2030" }} />
                   <Link
                     href="/auth/signin"
                     onClick={close}
@@ -153,7 +153,7 @@ function MobileMenu() {
             </nav>
 
             {/* ── Footer dock: sticky CTA ── */}
-            <div className="flex-shrink-0 px-5 pb-2" style={{ borderTop: "1px solid #1E3050", paddingTop: 16 }}>
+            <div className="flex-shrink-0 px-5 pb-2" style={{ borderTop: "1px solid #1A2030", paddingTop: 16 }}>
               {isLoggedIn ? (
                 <button
                   type="button"
@@ -178,7 +178,7 @@ function MobileMenu() {
                     <button
                       type="button"
                       className="w-full h-11 rounded-xl text-[14px] font-medium transition-colors"
-                      style={{ color: "#8A99AF", border: "1px solid #1E3050" }}
+                      style={{ color: "#8A99AF", border: "1px solid #1A2030" }}
                     >
                       도입 문의하기
                     </button>
@@ -247,8 +247,8 @@ function PlexusCanvas() {
           const dist = Math.sqrt(dx * dx + dy * dy);
           if (dist < 160) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(255,255,255,${0.55 - (dist / 160) * 0.55})`;
-            ctx.lineWidth = 1.3; ctx.stroke();
+            ctx.strokeStyle = `rgba(180,195,210,${0.5 - (dist / 160) * 0.5})`;
+            ctx.lineWidth = 1.0; ctx.stroke();
           }
         }
         if (adjMouseY !== -9999) {
@@ -256,8 +256,8 @@ function PlexusCanvas() {
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 200) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
-            ctx.strokeStyle = `rgba(96,165,250,${0.7 - (distm / 200) * 0.7})`;
-            ctx.lineWidth = 1.6; ctx.stroke();
+            ctx.strokeStyle = `rgba(96,165,250,${0.45 - (distm / 200) * 0.45})`;
+            ctx.lineWidth = 1.2; ctx.stroke();
           }
         }
       }
@@ -271,7 +271,7 @@ function PlexusCanvas() {
         if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(255,255,255,1)"; ctx.fill();
+        ctx.fillStyle = "rgba(180,195,210,0.85)"; ctx.fill();
       }
       animId = requestAnimationFrame(draw);
     };
@@ -293,20 +293,20 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#071a33" }}>
+    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#06090F" }}>
 
-      {/* Background — 4-layer controlled depth structure */}
+      {/* Background — navy-black base + network frame */}
       <div className="absolute inset-0 z-0 pointer-events-none">
 
-        {/* Layer B: Solid navy — no gradient, uniform depth */}
-        <div className="absolute inset-0" style={{ backgroundColor: "#071a33" }} />
+        {/* Base: near-black cool tone, 파란 기운 최소화 */}
+        <div className="absolute inset-0" style={{ backgroundColor: "#06090F" }} />
 
-        {/* Plexus — 전체 네트워크 존재감 유지, deeptech identity */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.45 }}>
+        {/* Plexus — 전체 네트워크 프레임 유지, deeptech identity */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.38 }}>
           <PlexusCanvas />
         </div>
         {/* 중앙 headline 뒤만 선택적 감쇄 — 외곽 네트워크는 그대로 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 38% 32% at 50% 55%, rgba(7,26,51,0.75) 0%, rgba(7,26,51,0.25) 70%, transparent 100%)" }} />
+        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 36% 30% at 50% 55%, rgba(6,9,15,0.8) 0%, rgba(6,9,15,0.2) 70%, transparent 100%)" }} />
       </div>
 
       {/* Nav */}
@@ -335,7 +335,7 @@ export function BioInsightHeroSection() {
             <>
               <Link href="/auth/signin" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">로그인</Link>
               <Link href="/search">
-                <Button variant="outline" className="text-[#EAF2FF] hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(91,132,230,0.14)", borderColor: "rgba(121,165,255,0.24)" }}>무료로 시작하기</Button>
+                <Button variant="outline" className="text-slate-200 hover:text-white text-sm font-medium px-5 py-2.5 rounded-md" style={{ backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.10)" }}>무료로 시작하기</Button>
               </Link>
             </>
           )}
@@ -371,17 +371,17 @@ export function BioInsightHeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-400/50 shadow-[0_2px_24px_rgba(37,99,235,0.45),0_0_48px_rgba(96,165,250,0.18)]">
+            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-500/30 shadow-[0_2px_12px_rgba(37,99,235,0.2)]">
               {isLoggedIn ? "소싱 워크벤치 열기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           {isLoggedIn ? (
             <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[14px] sm:text-[15px] rounded-lg shadow-lg">대시보드</Button>
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0D1117] hover:bg-[#151B24] text-slate-200 border-[#1E2530] hover:border-[#2A3340] font-bold text-[14px] sm:text-[15px] rounded-lg">대시보드</Button>
             </Link>
           ) : (
             <Link href="/support" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0E1B30] hover:bg-[#152436] text-white border-[#22344D] hover:border-[#2D496A] font-bold text-[14px] sm:text-[15px] rounded-lg shadow-lg">도입 문의하기</Button>
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0D1117] hover:bg-[#151B24] text-slate-200 border-[#1E2530] hover:border-[#2A3340] font-bold text-[14px] sm:text-[15px] rounded-lg">도입 문의하기</Button>
             </Link>
           )}
         </div>
