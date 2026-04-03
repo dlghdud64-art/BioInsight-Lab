@@ -312,10 +312,10 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full flex flex-col" style={{ background: "#0A2248" }}>
+    <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#0A2248" }}>
 
-      {/* Background — lifted cobalt blue field (명도 상향) */}
-      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+      {/* Background — plexus가 잘리지 않도록 overflow-visible, 개별 레이어만 clip */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
 
         {/* Base: brighter cobalt gradient */}
         <div className="absolute inset-0" style={{
@@ -388,7 +388,7 @@ export function BioInsightHeroSection() {
       </nav>
 
       {/* Hero — H1 → sub → CTA → deep blue field so mockup floats in hero territory */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-28 text-center w-full">
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24 sm:pb-40 text-center w-full">
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>

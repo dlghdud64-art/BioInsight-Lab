@@ -88,11 +88,11 @@ const BADGE = {
 } as const;
 
 const C = {
-  base: "#141C2E",
-  elevated: "#1C2840",
-  sunken: "#101828",
-  divider: "#243552",
-  dividerSubtle: "#1C2A42",
+  base: "#1E293B",
+  elevated: "#2A3A52",
+  sunken: "#172033",
+  divider: "#334155",
+  dividerSubtle: "#2A3A52",
   text1: "#F1F5F9",
   text2: "#CBD5E1",
   text3: "#8296B0",
@@ -102,20 +102,18 @@ const C = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="relative pt-12 md:pt-16" style={{ backgroundColor: "#0B1120" }}>
+    <section className="relative" style={{ backgroundColor: "#0B1120" }}>
 
       <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-36" style={{ maxWidth: 1140 }}>
 
-        {/* ── 섹션 레이블 ── */}
-        <p className="text-center text-[13px] font-semibold tracking-wide uppercase mb-6 md:mb-8" style={{ color: "#4B7BF5" }}>
-          Product Preview
-        </p>
-
         {/*
          * ════ App Window Container ════
-         * 겹치기 없음 — proof band 안에 독립 배치
+         * hero 경계에 걸침 — negative margin으로 히어로 blue zone에 상단 진입
          */}
-        <div className="relative">
+        <div
+          className="relative"
+          style={{ marginTop: "-120px" }}
+        >
           {/* ── Back-glow: 강한 청색 광원 ── */}
           <div
             className="absolute -inset-10 md:-inset-16 rounded-3xl pointer-events-none"
@@ -125,19 +123,19 @@ export function OpsConsolePreviewSection() {
             }}
           />
 
-          {/* ── Window frame — 밝은 테두리로 확실한 구분 ── */}
+          {/* ── Window frame — 밝은 내부 + 확실한 테두리 ── */}
           <div
             className="relative rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: "#0D1424",
-              border: "1.5px solid rgba(120,170,255,0.35)",
-              boxShadow: "0 0 0 1px rgba(80,140,255,0.08), 0 0 60px rgba(50,120,240,0.18), 0 16px 48px rgba(10,40,120,0.35), 0 40px 80px rgba(0,0,0,0.45)",
+              backgroundColor: "#1E293B",
+              border: "1.5px solid rgba(140,180,255,0.30)",
+              boxShadow: "0 0 0 1px rgba(80,140,255,0.08), 0 0 60px rgba(50,120,240,0.15), 0 16px 48px rgba(10,40,120,0.30), 0 40px 80px rgba(0,0,0,0.45)",
             }}
           >
             {/* ── Window title bar (macOS style) ── */}
             <div
               className="flex items-center px-4 py-2.5 gap-3"
-              style={{ backgroundColor: "#070C16", borderBottom: "1px solid rgba(120,170,255,0.15)" }}
+              style={{ backgroundColor: "#0F172A", borderBottom: "1px solid rgba(140,180,255,0.12)" }}
             >
               {/* Traffic lights */}
               <div className="flex items-center gap-1.5">
@@ -252,7 +250,7 @@ export function OpsConsolePreviewSection() {
               </div>
 
               {/* Right: Rail */}
-              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#161F34" }}>
+              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#253348" }}>
                 <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
