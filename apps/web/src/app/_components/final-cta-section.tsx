@@ -103,7 +103,7 @@ export function FinalCTASection() {
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#2563EB"; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#3B82F6"; }}
           >
-            소싱 워크벤치 열기
+            시약·장비 검색 시작하기
             <Search className="h-4 w-4" />
           </Button>
           <Link href="/support" className="w-full sm:w-auto">
