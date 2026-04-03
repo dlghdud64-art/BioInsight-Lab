@@ -169,7 +169,7 @@ function MobileMenu() {
                     <button
                       type="button"
                       className="w-full h-12 rounded-xl text-[15px] font-bold text-white transition-colors"
-                      style={{ backgroundColor: "#2563EB" }}
+                      style={{ backgroundColor: "#3580FF" }}
                     >
                       무료로 시작하기
                     </button>
@@ -217,21 +217,28 @@ function PlexusCanvas() {
     const parent = canvas.parentElement;
     if (!parent) return;
     let animId: number;
-    let particles: { x: number; y: number; vx: number; vy: number; r: number }[] = [];
+    let particles: { x: number; y: number; vx: number; vy: number; r: number; cluster: boolean }[] = [];
     let mouse = { x: -9999, y: -9999 };
 
     const init = () => {
       canvas.width = parent.clientWidth;
       canvas.height = parent.clientHeight;
-      const count = Math.floor((canvas.width * canvas.height) / 15000);
+      const count = Math.floor((canvas.width * canvas.height) / 12000);
       particles = [];
+      const cx = canvas.width / 2, cy = canvas.height / 2;
       for (let i = 0; i < count; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        // cluster = outer 30% of each edge → stronger visibility
+        const distFromCenter = Math.sqrt((x - cx) ** 2 + (y - cy) ** 2);
+        const maxDist = Math.sqrt(cx * cx + cy * cy);
+        const isCluster = distFromCenter > maxDist * 0.45;
         particles.push({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          r: Math.random() * 2.0 + 1.0,
+          x, y,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          r: isCluster ? Math.random() * 2.2 + 1.2 : Math.random() * 1.6 + 0.8,
+          cluster: isCluster,
         });
       }
     };
@@ -239,28 +246,37 @@ function PlexusCanvas() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const rect = canvas.getBoundingClientRect();
       const adjMouseY = mouse.y !== -9999 ? mouse.y - rect.top : -9999;
+      // Lines
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
         for (let j = i + 1; j < particles.length; j++) {
           const p2 = particles[j];
           const dx = p.x - p2.x, dy = p.y - p2.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 160) {
+          if (dist < 150) {
+            const bothCluster = p.cluster && p2.cluster;
+            const alpha = bothCluster
+              ? 0.45 - (dist / 150) * 0.35
+              : 0.22 - (dist / 150) * 0.18;
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(180,195,210,${0.5 - (dist / 160) * 0.5})`;
-            ctx.lineWidth = 1.0; ctx.stroke();
+            ctx.strokeStyle = bothCluster
+              ? `rgba(120,170,230,${alpha})`
+              : `rgba(100,150,210,${alpha})`;
+            ctx.lineWidth = bothCluster ? 1.1 : 0.7; ctx.stroke();
           }
         }
+        // Mouse interaction lines
         if (adjMouseY !== -9999) {
           const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 200) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
-            ctx.strokeStyle = `rgba(96,165,250,${0.45 - (distm / 200) * 0.45})`;
+            ctx.strokeStyle = `rgba(80,160,255,${0.5 - (distm / 200) * 0.5})`;
             ctx.lineWidth = 1.2; ctx.stroke();
           }
         }
       }
+      // Nodes
       for (const p of particles) {
         if (adjMouseY !== -9999) {
           const dxm = p.x - mouse.x, dym = p.y - adjMouseY;
@@ -271,7 +287,10 @@ function PlexusCanvas() {
         if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
         if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(180,195,210,0.85)"; ctx.fill();
+        ctx.fillStyle = p.cluster
+          ? "rgba(130,180,240,0.9)"
+          : "rgba(100,150,210,0.6)";
+        ctx.fill();
       }
       animId = requestAnimationFrame(draw);
     };
@@ -293,24 +312,29 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#06090F" }}>
+    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#041A3E" }}>
 
-      {/* Background — navy-black base + network frame */}
+      {/* Background — deep cobalt blue field + alive network structure */}
       <div className="absolute inset-0 z-0 pointer-events-none">
 
-        {/* Base: near-black cool tone, 파란 기운 최소화 */}
-        <div className="absolute inset-0" style={{ backgroundColor: "#06090F" }} />
+        {/* Base: multi-layer blue depth */}
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 120% 100% at 50% 0%, #062B63 0%, #041A3E 50%, #031544 100%)",
+        }} />
 
-        {/* Plexus — 전체 네트워크 프레임 유지, deeptech identity */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.38 }}>
+        {/* Plexus — cluster hierarchy, outer stronger, center softer */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.65 }}>
           <PlexusCanvas />
         </div>
-        {/* 중앙 headline 뒤만 선택적 감쇄 — 외곽 네트워크는 그대로 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(ellipse 36% 30% at 50% 55%, rgba(6,9,15,0.8) 0%, rgba(6,9,15,0.2) 70%, transparent 100%)" }} />
+
+        {/* Center readability — soft blue atmospheric haze, not dark mask */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 40% 35% at 50% 55%, rgba(6,35,90,0.6) 0%, rgba(4,26,62,0.15) 70%, transparent 100%)",
+        }} />
       </div>
 
       {/* Nav */}
-      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/5">
+      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/8">
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
         </Link>
@@ -325,7 +349,7 @@ export function BioInsightHeroSection() {
             <>
               <Link href="/app/search" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">검색</Link>
               <Link href="/dashboard">
-                <Button className="text-sm font-semibold px-5 py-2.5 rounded-md bg-blue-600 hover:bg-blue-500 text-white flex items-center gap-1.5">
+                <Button className="text-sm font-semibold px-5 py-2.5 rounded-md text-white flex items-center gap-1.5" style={{ backgroundColor: "#3580FF" }}>
                   <LayoutDashboard className="h-3.5 w-3.5" />대시보드
                 </Button>
               </Link>
@@ -347,13 +371,13 @@ export function BioInsightHeroSection() {
             <div className="w-16 h-7 rounded-md bg-white/5 animate-pulse" />
           ) : isLoggedIn ? (
             <Link href="/dashboard">
-              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md flex items-center gap-1">
+              <Button size="sm" className="text-xs px-3 py-1.5 text-white rounded-md flex items-center gap-1" style={{ backgroundColor: "#3580FF" }}>
                 <LayoutDashboard className="h-3 w-3" />대시보드
               </Button>
             </Link>
           ) : (
             <Link href="/search">
-              <Button size="sm" className="text-xs px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md">시작하기</Button>
+              <Button size="sm" className="text-xs px-3 py-1.5 text-white rounded-md" style={{ backgroundColor: "#3580FF" }}>시작하기</Button>
             </Link>
           )}
           <MobileMenu />
@@ -371,17 +395,17 @@ export function BioInsightHeroSection() {
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
           <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-blue-600 hover:bg-blue-500 text-white font-bold text-[14px] sm:text-[15px] rounded-lg border border-blue-500/30 shadow-[0_2px_12px_rgba(37,99,235,0.2)]">
+            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-white font-bold text-[14px] sm:text-[15px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3580FF", borderColor: "rgba(60,140,255,0.3)", border: "1px solid rgba(60,140,255,0.3)" }}>
               {isLoggedIn ? "소싱 워크벤치 열기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
             </Button>
           </Link>
           {isLoggedIn ? (
             <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0D1117] hover:bg-[#151B24] text-slate-200 border-[#1E2530] hover:border-[#2A3340] font-bold text-[14px] sm:text-[15px] rounded-lg">대시보드</Button>
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-slate-200 font-bold text-[14px] sm:text-[15px] rounded-lg" style={{ backgroundColor: "rgba(6,35,90,0.5)", borderColor: "rgba(100,160,230,0.2)" }}>대시보드</Button>
             </Link>
           ) : (
             <Link href="/support" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 bg-[#0D1117] hover:bg-[#151B24] text-slate-200 border-[#1E2530] hover:border-[#2A3340] font-bold text-[14px] sm:text-[15px] rounded-lg">도입 문의하기</Button>
+              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-slate-200 font-bold text-[14px] sm:text-[15px] rounded-lg" style={{ backgroundColor: "rgba(6,35,90,0.5)", borderColor: "rgba(100,160,230,0.2)" }}>도입 문의하기</Button>
             </Link>
           )}
         </div>
