@@ -102,7 +102,7 @@ const C = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="relative" style={{ backgroundColor: "#0B1120" }}>
+    <section className="relative" style={{ background: "linear-gradient(to bottom, transparent 0%, rgba(22,33,54,0.55) 28%, #162136 52%)" }}>
 
       <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-36" style={{ maxWidth: 1140 }}>
 

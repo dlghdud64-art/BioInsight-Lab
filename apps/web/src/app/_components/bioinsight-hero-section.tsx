@@ -314,8 +314,8 @@ export function BioInsightHeroSection() {
   return (
     <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#0A2248" }}>
 
-      {/* Background — plexus + gradient가 목업 영역까지 확장 (bottom: -400px) */}
-      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-400px" }}>
+      {/* Background — plexus + gradient가 목업 영역까지 확장 (bottom: -600px) */}
+      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-600px" }}>
 
         {/* Base: cobalt gradient — 목업 뒤까지 이어짐 */}
         <div className="absolute inset-0" style={{
@@ -333,6 +333,11 @@ export function BioInsightHeroSection() {
         }} />
         <div className="absolute inset-x-0 top-0 bottom-[400px] pointer-events-none" style={{
           background: "radial-gradient(ellipse 30% 26% at 50% 33%, rgba(120,175,255,0.14) 0%, transparent 70%)",
+        }} />
+        {/* Mockup center attenuation — masks network behind mockup body */}
+        <div className="absolute pointer-events-none" style={{
+          top: "55%", bottom: 0, left: "15%", right: "15%",
+          background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(22,33,54,0.72) 0%, transparent 100%)",
         }} />
       </div>
 
@@ -393,7 +398,7 @@ export function BioInsightHeroSection() {
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>
         </h1>
-        <p className="text-sm md:text-base text-slate-300/90 mb-7 md:mb-9 font-medium max-w-xl" style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.6))" }}>
+        <p className="text-sm md:text-base text-slate-100 mb-7 md:mb-9 font-medium max-w-xl">
           후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면에서 이어집니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">

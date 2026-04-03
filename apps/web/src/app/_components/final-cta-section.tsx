@@ -34,7 +34,7 @@ export function FinalCTASection() {
   return (
     <section
       className="py-14 md:py-18"
-      style={{ backgroundColor: "#0B1120", borderTop: "1px solid #1C2A42" }}
+      style={{ backgroundColor: "#1A2840", borderTop: "1px solid #2A3F58" }}
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
@@ -46,7 +46,7 @@ export function FinalCTASection() {
 
         <div
           className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
-          style={{ backgroundColor: "#243044", border: "1px solid #344968" }}
+          style={{ backgroundColor: "#0F1A2C", border: "1px solid #2A3F58" }}
         >
           {/* Horizontal flow (desktop) */}
           <div className="hidden md:flex items-center justify-center gap-0">
@@ -56,14 +56,14 @@ export function FinalCTASection() {
                   className="px-4 py-2 rounded-md text-[12px] font-medium"
                   style={{
                     backgroundColor: step.active ? "rgba(255,255,255,0.08)" : "transparent",
-                    color: step.active ? "#F1F5F9" : "#8296B0",
-                    border: step.active ? "1px solid #4A6080" : "1px solid #344968",
+                    color: step.active ? "#F1F5F9" : "#A8BDD0",
+                    border: step.active ? "1px solid #5A7A9A" : "1px solid #3A5570",
                   }}
                 >
                   {step.label}
                 </div>
                 {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#3A4D65" }} />
+                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#4A6A80" }} />
                 )}
               </div>
             ))}
