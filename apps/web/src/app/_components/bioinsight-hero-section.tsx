@@ -312,29 +312,27 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full flex flex-col" style={{ background: "#041A3E" }}>
+    <section className="relative w-full flex flex-col" style={{ background: "#0A2248" }}>
 
-      {/* Background — deep cobalt blue field + alive network structure */}
+      {/* Background — lifted cobalt blue field (명도 상향) */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
 
-        {/* Base: multi-layer blue depth — edges deep, center lifted */}
+        {/* Base: brighter cobalt gradient */}
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 120% 100% at 50% 0%, #062B63 0%, #041A3E 50%, #031544 100%)",
+          background: "radial-gradient(ellipse 120% 100% at 50% 0%, #0D3570 0%, #0A2248 50%, #061840 100%)",
         }} />
 
-        {/* Plexus — cluster hierarchy, outer stronger, center softer */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.65 }}>
+        {/* Plexus — cluster hierarchy */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.55 }}>
           <PlexusCanvas />
         </div>
 
-        {/* ── Central light field — cold blue-white haze, focal axis ── */}
-        {/* Primary: headline-centered bright core */}
+        {/* Central light field — focal axis behind headline */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 44% 40% at 50% 38%, rgba(50,100,200,0.35) 0%, rgba(30,70,160,0.12) 50%, transparent 100%)",
+          background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(60,120,220,0.3) 0%, rgba(40,80,180,0.08) 55%, transparent 100%)",
         }} />
-        {/* Secondary: tighter white-blue nucleus for text readability */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 28% 24% at 50% 35%, rgba(100,160,240,0.18) 0%, transparent 70%)",
+          background: "radial-gradient(ellipse 30% 26% at 50% 33%, rgba(120,175,255,0.14) 0%, transparent 70%)",
         }} />
       </div>
 
@@ -389,8 +387,8 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero — tight vertical rhythm: H1 → sub → CTA → (mockup starts below) */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-10 sm:pb-14 text-center w-full">
+      {/* Hero — H1 → sub → CTA → breathing room → mockup below */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-28 text-center w-full">
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>
