@@ -387,8 +387,8 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero — H1 → sub → CTA → breathing room → mockup below */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-28 text-center w-full">
+      {/* Hero — H1 → sub → CTA → deep blue field so mockup floats in hero territory */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 text-center w-full" style={{ paddingBottom: "clamp(200px, 30vh, 360px)" }}>
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>

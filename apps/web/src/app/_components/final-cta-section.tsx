@@ -34,7 +34,7 @@ export function FinalCTASection() {
   return (
     <section
       className="py-14 md:py-18"
-      style={{ backgroundColor: "#141B28", borderTop: "1px solid #2A3750" }}
+      style={{ backgroundColor: "#1E2A3D", borderTop: "1px solid #304060" }}
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
@@ -46,7 +46,7 @@ export function FinalCTASection() {
 
         <div
           className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
-          style={{ backgroundColor: "#1C2536", border: "1px solid #2A3750" }}
+          style={{ backgroundColor: "#243044", border: "1px solid #344968" }}
         >
           {/* Horizontal flow (desktop) */}
           <div className="hidden md:flex items-center justify-center gap-0">
@@ -56,8 +56,8 @@ export function FinalCTASection() {
                   className="px-4 py-2 rounded-md text-[12px] font-medium"
                   style={{
                     backgroundColor: step.active ? "rgba(255,255,255,0.08)" : "transparent",
-                    color: step.active ? "#F1F5F9" : "#6B7D95",
-                    border: step.active ? "1px solid #3A4D65" : "1px solid #2A3750",
+                    color: step.active ? "#F1F5F9" : "#8296B0",
+                    border: step.active ? "1px solid #4A6080" : "1px solid #344968",
                   }}
                 >
                   {step.label}
@@ -75,16 +75,16 @@ export function FinalCTASection() {
               <div key={step.label} className="flex items-center gap-2">
                 <div
                   className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: step.active ? "#F1F5F9" : "#3A4D65" }}
+                  style={{ backgroundColor: step.active ? "#F1F5F9" : "#4A6080" }}
                 />
                 <span
                   className="text-[12px] font-medium"
-                  style={{ color: step.active ? "#F1F5F9" : "#8296B0" }}
+                  style={{ color: step.active ? "#F1F5F9" : "#94A8C0" }}
                 >
                   {step.label}
                 </span>
                 {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#3A4D65" }} />
+                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#4A6080" }} />
                 )}
               </div>
             ))}
@@ -111,8 +111,8 @@ export function FinalCTASection() {
               variant="outline"
               className="w-full sm:w-auto h-10 px-7 font-medium text-[13px] rounded-lg"
               style={{
-                borderColor: "#2A3750",
-                color: "#8296B0",
+                borderColor: "#344968",
+                color: "#94A8C0",
                 backgroundColor: "transparent",
               }}
             >

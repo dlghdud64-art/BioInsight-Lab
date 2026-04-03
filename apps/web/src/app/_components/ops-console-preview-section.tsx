@@ -102,18 +102,17 @@ const C = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="relative" style={{ backgroundColor: "#141B28" }}>
-      <div className="relative mx-auto px-4 md:px-6 pb-10 md:pb-14" style={{ maxWidth: 1140 }}>
+    <section className="relative" style={{ backgroundColor: "#1A2235" }}>
+      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-32" style={{ maxWidth: 1140 }}>
 
         {/*
          * ════ App Window Container ════
-         * 1. Back-glow: 화면이 켜져 있는 느낌
-         * 2. Window chrome: title bar + traffic lights
-         * 3. App content: 내부 UI
+         * 목업 상단 ~70%가 hero blue zone에, 하단 ~30%가 proof band에 걸침
+         * clamp: 모바일 180px ~ 데스크톱 320px overlap
          */}
         <div
           className="relative"
-          style={{ marginTop: "-100px" }}
+          style={{ marginTop: "clamp(-280px, -24vh, -160px)" }}
         >
           {/* ── Back-glow: 모니터 뒤 빛번짐 ── */}
           <div
