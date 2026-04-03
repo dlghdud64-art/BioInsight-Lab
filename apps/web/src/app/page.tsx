@@ -30,7 +30,7 @@ const FinalCTASection = dynamic(
  */
 export default function HomePage() {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#1A2235" }}>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#111A2A" }}>
       {/* 1. Hero — headline + CTA (blue field) */}
       <BioInsightHeroSection />
 

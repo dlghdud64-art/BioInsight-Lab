@@ -88,11 +88,11 @@ const BADGE = {
 } as const;
 
 const C = {
-  base: "#1C2536",
-  elevated: "#243044",
-  sunken: "#161E2C",
-  divider: "#2A3750",
-  dividerSubtle: "#243040",
+  base: "#141C2E",
+  elevated: "#1C2840",
+  sunken: "#101828",
+  divider: "#243552",
+  dividerSubtle: "#1C2A42",
   text1: "#F1F5F9",
   text2: "#CBD5E1",
   text3: "#8296B0",
@@ -102,40 +102,46 @@ const C = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="relative" style={{ backgroundColor: "#1A2235" }}>
-      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-32" style={{ maxWidth: 1140 }}>
+    <section className="relative" style={{ backgroundColor: "#111A2A" }}>
+
+      {/* ── Proof band 상단: hero→proof 색 전환 그라데이션 ── */}
+      <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{
+        background: "linear-gradient(to bottom, #0A2248 0%, #111A2A 100%)",
+      }} />
+
+      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-36" style={{ maxWidth: 1140 }}>
 
         {/*
          * ════ App Window Container ════
-         * 목업 상단 ~70%가 hero blue zone에, 하단 ~30%가 proof band에 걸침
-         * clamp: 모바일 180px ~ 데스크톱 320px overlap
+         * 목업을 hero-proof 경계 아래에 자연스럽게 배치
+         * overlap 줄여서 proof band 영역에 확실히 위치
          */}
         <div
           className="relative"
-          style={{ marginTop: "clamp(-280px, -24vh, -160px)" }}
+          style={{ marginTop: "clamp(-160px, -14vh, -80px)" }}
         >
-          {/* ── Back-glow: 모니터 뒤 빛번짐 — 강화 ── */}
+          {/* ── Back-glow: 강한 청색 광원 ── */}
           <div
-            className="absolute -inset-8 md:-inset-12 rounded-3xl pointer-events-none"
+            className="absolute -inset-10 md:-inset-16 rounded-3xl pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(56,130,240,0.22) 0%, rgba(40,100,200,0.08) 45%, transparent 100%)",
-              filter: "blur(32px)",
+              background: "radial-gradient(ellipse 90% 70% at 50% 35%, rgba(56,140,255,0.35) 0%, rgba(40,100,220,0.12) 40%, transparent 100%)",
+              filter: "blur(40px)",
             }}
           />
 
-          {/* ── Window frame ── */}
+          {/* ── Window frame — 확실한 테두리 구분 ── */}
           <div
             className="relative rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: "#111827",
-              border: "1px solid rgba(140,180,255,0.18)",
-              boxShadow: "0 0 0 1px rgba(100,160,255,0.06), 0 8px 32px rgba(30,80,180,0.25), 0 30px 70px rgba(0,0,0,0.5)",
+              backgroundColor: "#0F1629",
+              border: "1.5px solid rgba(100,160,255,0.30)",
+              boxShadow: "0 0 0 1px rgba(80,140,255,0.10), 0 0 40px rgba(50,120,240,0.15), 0 12px 40px rgba(20,60,150,0.30), 0 40px 80px rgba(0,0,0,0.5)",
             }}
           >
             {/* ── Window title bar (macOS style) ── */}
             <div
               className="flex items-center px-4 py-2.5 gap-3"
-              style={{ backgroundColor: "#0D1420", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ backgroundColor: "#080E1A", borderBottom: "1px solid rgba(100,160,255,0.12)" }}
             >
               {/* Traffic lights */}
               <div className="flex items-center gap-1.5">
@@ -250,7 +256,7 @@ export function OpsConsolePreviewSection() {
               </div>
 
               {/* Right: Rail */}
-              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#1E2840" }}>
+              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#161F34" }}>
                 <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
