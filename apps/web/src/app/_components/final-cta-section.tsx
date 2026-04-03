@@ -37,7 +37,7 @@ export function FinalCTASection() {
   return (
     <section
       className="py-14 md:py-18"
-      style={{ backgroundColor: "#0A0F18", borderTop: "1px solid #1A2535" }}
+      style={{ backgroundColor: "#0E1118", borderTop: "1px solid #1C2535" }}
     >
       <div className="mx-auto max-w-[1000px] px-5 md:px-8">
 
@@ -51,7 +51,7 @@ export function FinalCTASection() {
         {/* Flow strip — the centerpiece */}
         <div
           className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
-          style={{ backgroundColor: "#111820", border: "1px solid #1E2530" }}
+          style={{ backgroundColor: "#141C28", border: "1px solid #222E40" }}
         >
           {/* Horizontal flow (desktop) */}
           <div className="hidden md:flex items-center justify-center gap-0">

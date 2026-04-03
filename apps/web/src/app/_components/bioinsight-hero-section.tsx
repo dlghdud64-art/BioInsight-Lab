@@ -312,12 +312,12 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full min-h-[70vh] flex flex-col overflow-hidden" style={{ background: "#041A3E" }}>
+    <section className="relative w-full flex flex-col" style={{ background: "#041A3E" }}>
 
       {/* Background — deep cobalt blue field + alive network structure */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
 
-        {/* Base: multi-layer blue depth */}
+        {/* Base: multi-layer blue depth — edges deep, center lifted */}
         <div className="absolute inset-0" style={{
           background: "radial-gradient(ellipse 120% 100% at 50% 0%, #062B63 0%, #041A3E 50%, #031544 100%)",
         }} />
@@ -327,9 +327,14 @@ export function BioInsightHeroSection() {
           <PlexusCanvas />
         </div>
 
-        {/* Center readability — soft blue atmospheric haze, not dark mask */}
+        {/* ── Central light field — cold blue-white haze, focal axis ── */}
+        {/* Primary: headline-centered bright core */}
         <div className="absolute inset-0 pointer-events-none" style={{
-          background: "radial-gradient(ellipse 40% 35% at 50% 55%, rgba(6,35,90,0.6) 0%, rgba(4,26,62,0.15) 70%, transparent 100%)",
+          background: "radial-gradient(ellipse 44% 40% at 50% 38%, rgba(50,100,200,0.35) 0%, rgba(30,70,160,0.12) 50%, transparent 100%)",
+        }} />
+        {/* Secondary: tighter white-blue nucleus for text readability */}
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: "radial-gradient(ellipse 28% 24% at 50% 35%, rgba(100,160,240,0.18) 0%, transparent 70%)",
         }} />
       </div>
 
@@ -384,13 +389,13 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-5xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-28 sm:pb-36 text-center w-full">
+      {/* Hero — tight vertical rhythm: H1 → sub → CTA → (mockup starts below) */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-10 sm:pb-14 text-center w-full">
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>
         </h1>
-        <p className="text-sm md:text-base text-slate-400 mb-8 md:mb-10 font-medium max-w-xl" style={{ filter: "drop-shadow(0 1px 3px rgba(0,0,0,0.5))" }}>
+        <p className="text-sm md:text-base text-slate-300/90 mb-7 md:mb-9 font-medium max-w-xl" style={{ filter: "drop-shadow(0 1px 4px rgba(0,0,0,0.6))" }}>
           후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면에서 이어집니다.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
