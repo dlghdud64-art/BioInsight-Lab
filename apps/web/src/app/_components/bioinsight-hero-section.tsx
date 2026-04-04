@@ -340,10 +340,10 @@ export function BioInsightHeroSection() {
           background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0.3) 50%, transparent 100%)",
         }} />
 
-        {/* Bottom fade — proof band로 자연 소멸 */}
+        {/* Bottom fade — proof band로 깨끗하게 전환, support 침범 X */}
         <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{
-          height: "30%",
-          background: "linear-gradient(to bottom, transparent 0%, rgba(30,41,59,0.6) 60%, #1e293b 100%)",
+          height: "20%",
+          background: "linear-gradient(to bottom, transparent 0%, rgba(30,41,59,0.5) 70%, #1e293b 100%)",
         }} />
       </div>
 
@@ -421,12 +421,13 @@ export function BioInsightHeroSection() {
 
         {/* ── Hero Mockup — 제품이 주인공 ── */}
         <div className="relative w-full" style={{ maxWidth: 1100 }}>
-          {/* Back-glow */}
+          {/* Back-glow — 좌우 유지, 하단 bleed 최소화 */}
           <div
-            className="absolute -inset-6 md:-inset-10 rounded-3xl pointer-events-none"
+            className="absolute -inset-x-6 md:-inset-x-10 -top-6 md:-top-10 rounded-3xl pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.4) 0%, transparent 100%)",
-              filter: "blur(30px)",
+              bottom: "-12px",
+              background: "radial-gradient(ellipse 80% 50% at 50% 35%, rgba(0,0,0,0.35) 0%, transparent 100%)",
+              filter: "blur(24px)",
             }}
           />
 
@@ -436,7 +437,7 @@ export function BioInsightHeroSection() {
             style={{
               backgroundColor: "#0F172A",
               border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)",
+              boxShadow: "0 12px 40px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.25)",
             }}
           >
             {/* Title bar */}
@@ -478,8 +479,8 @@ export function BioInsightHeroSection() {
         </div>
       </div>
 
-      {/* Hero 하단 여유 — proof band로 이어지는 공간 */}
-      <div className="h-16 md:h-24" />
+      {/* Hero 하단 여유 — mockup shadow 끝나고 support heading 전까지 breathing room */}
+      <div className="h-20 md:h-32" />
     </section>
   );
 }

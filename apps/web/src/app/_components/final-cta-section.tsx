@@ -58,14 +58,14 @@ const FEATURES = [
 export function FinalCTASection() {
   return (
     <section style={{ backgroundColor: "#334155" }}>
-      <div className="mx-auto max-w-[1100px] px-5 md:px-8 py-16 md:py-24">
+      <div className="mx-auto max-w-[1100px] px-5 md:px-8 pt-20 md:pt-28 pb-16 md:pb-24">
 
-        {/* Heading */}
+        {/* Heading — mockup 영향권 밖 safe zone */}
         <div className="text-center mb-10 md:mb-14">
-          <h2 className="text-lg md:text-2xl font-bold text-white tracking-tight mb-3">
+          <h2 className="text-xl md:text-[28px] font-bold tracking-tight mb-3" style={{ color: "#F8FAFC" }}>
             제품 흐름 한눈에 보기
           </h2>
-          <p className="text-sm md:text-[15px] font-medium" style={{ color: "#CBD5E1" }}>
+          <p className="text-sm md:text-[15px] font-medium" style={{ color: "#E2E8F0" }}>
             검색부터 재고 운영까지, 하나의 워크벤치에서 끊기지 않고 이어집니다.
           </p>
         </div>
@@ -87,10 +87,10 @@ export function FinalCTASection() {
               >
                 <f.icon className="h-5 w-5" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
               </div>
-              <p className="text-[13px] md:text-sm font-semibold text-white mb-1">
+              <p className="text-[13px] md:text-sm font-semibold mb-1" style={{ color: "#F1F5F9" }}>
                 {f.title}
               </p>
-              <p className="text-[11px] md:text-xs leading-relaxed" style={{ color: "#94A3B8" }}>
+              <p className="text-[11px] md:text-xs leading-relaxed" style={{ color: "#B0BEC5" }}>
                 {f.desc}
               </p>
             </div>
