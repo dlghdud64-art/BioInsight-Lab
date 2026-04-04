@@ -57,8 +57,12 @@ const FEATURES = [
 
 export function FinalCTASection() {
   return (
-    <section style={{ backgroundColor: "#334155" }}>
-      <div className="mx-auto max-w-[1100px] px-5 md:px-8 pt-20 md:pt-28 pb-16 md:pb-24">
+    <section className="relative" style={{ backgroundColor: "#334155" }}>
+      {/* Readability shield — hero 잔여 effect 차단 */}
+      <div className="absolute inset-x-0 top-0 h-24 pointer-events-none" style={{
+        background: "linear-gradient(to bottom, #334155 0%, #334155 100%)",
+      }} />
+      <div className="relative mx-auto max-w-[1100px] px-5 md:px-8 pt-20 md:pt-28 pb-16 md:pb-24">
 
         {/* Heading — mockup 영향권 밖 safe zone */}
         <div className="text-center mb-10 md:mb-14">
