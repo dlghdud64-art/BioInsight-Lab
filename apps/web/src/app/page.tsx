@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-48 w-full" style={{ backgroundColor: "#0F1C30" }} /> }
+  { loading: () => <div className="h-48 w-full" style={{ backgroundColor: "#0E1B2E" }} /> }
 );
 
 /*

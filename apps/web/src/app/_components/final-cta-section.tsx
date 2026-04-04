@@ -206,7 +206,7 @@ function InventoryOpsMockupContent() {
 export function FinalCTASection() {
   return (
     <section className="relative" style={{
-      background: "linear-gradient(to bottom, #0F1C30 0%, #132440 40%, #162844 70%, #0C1628 100%)",
+      background: "linear-gradient(to bottom, #0E1B2E 0%, #122038 40%, #152540 70%, #0B1526 100%)",
     }}>
       {/* Top separation — hero와 이어지는 미세한 경계 */}
       <div className="absolute inset-x-0 top-0 h-px" style={{
@@ -251,12 +251,12 @@ export function FinalCTASection() {
               className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
                 backgroundColor: C.base,
-                border: "1px solid rgba(148,163,184,0.18)",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 16px 48px rgba(0,0,0,0.45), 0 6px 20px rgba(0,0,0,0.3), 0 0 24px rgba(59,130,246,0.06)",
+                border: "1px solid rgba(148,163,184,0.22)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 20px 56px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35), 0 0 32px rgba(59,130,246,0.10), 0 0 64px rgba(59,130,246,0.05)",
               }}
             >
               {/* Top edge highlight */}
-              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.16) 50%, transparent 90%)" }} />
+              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.22) 50%, transparent 95%)" }} />
 
               {/* Title bar */}
               <div

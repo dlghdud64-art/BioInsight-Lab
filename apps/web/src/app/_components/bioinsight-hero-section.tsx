@@ -334,10 +334,10 @@ export function BioInsightHeroSection() {
           background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(40,90,180,0.18) 0%, rgba(30,60,140,0.05) 55%, transparent 100%)",
         }} />
 
-        {/* Bottom fade — support band(#0F1C30)로 자연스럽게 전환 */}
+        {/* Bottom fade — support band(#0E1B2E)로 자연스럽게 전환 */}
         <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{
           height: "40%",
-          background: "linear-gradient(to bottom, transparent 0%, #0F1C30 100%)",
+          background: "linear-gradient(to bottom, transparent 0%, #0E1B2E 100%)",
         }} />
       </div>
 
