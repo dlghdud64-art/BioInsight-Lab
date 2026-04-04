@@ -274,9 +274,9 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            4. 역할별 변화 — lifted slate plane (다른 명도 단계)
+            4. 역할별 변화 — support plane (slatePlane보다 반 단계 밝음)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-24" style={{ backgroundColor: S.slatePlane }}>
+        <section className="py-24" style={{ backgroundColor: "#172038" }}>
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4">도입 후 달라지는 운영 흐름</h2>
@@ -344,9 +344,9 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            5. 조직 운영 관리 — Bento Grid (slatePanel base)
+            5. 조직 운영 관리 — Bento Grid (slatePanel보다 반 단계 밝음)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-28" style={{ backgroundColor: S.slatePanel }}>
+        <section className="py-28" style={{ backgroundColor: "#1e274a" }}>
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-14 gap-8">
               <div className="max-w-2xl">
