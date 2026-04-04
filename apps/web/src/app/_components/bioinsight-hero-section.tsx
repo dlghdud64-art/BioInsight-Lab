@@ -314,22 +314,35 @@ export function BioInsightHeroSection() {
   return (
     <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#081425" }}>
 
-      {/* Background — deep navy + subtle network */}
-      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-200px" }}>
+      {/* Background — deep navy + network extending into proof zone */}
+      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-500px" }}>
 
-        {/* Base gradient */}
+        {/* Base gradient — hero → proof 영역까지 자연 전환 */}
         <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 120% 80% at 50% 0%, #0C2240 0%, #081425 60%, #060F1E 100%)",
+          background: "linear-gradient(to bottom, #0C2240 0%, #081425 35%, #081425 55%, #0A1A30 75%, #152236 100%)",
         }} />
 
-        {/* Plexus — 은은하게 (스펙: 중앙 가독성을 해치지 않는 수준) */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.35 }}>
+        {/* Plexus — 목업 상단 1/3까지 이어짐 */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
           <PlexusCanvas />
         </div>
 
         {/* Central light field — headline 뒤 focal axis */}
-        <div className="absolute inset-x-0 top-0 bottom-[200px] pointer-events-none" style={{
+        <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
+          height: "60%",
           background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(40,90,180,0.2) 0%, rgba(30,60,140,0.06) 55%, transparent 100%)",
+        }} />
+
+        {/* Mockup center attenuation — 목업 뒤 중심부만 약화 */}
+        <div className="absolute pointer-events-none" style={{
+          top: "60%", bottom: 0, left: "10%", right: "10%",
+          background: "radial-gradient(ellipse 60% 50% at 50% 30%, rgba(15,23,42,0.8) 0%, rgba(15,23,42,0.3) 50%, transparent 100%)",
+        }} />
+
+        {/* Bottom fade — proof band로 자연 소멸 */}
+        <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{
+          height: "30%",
+          background: "linear-gradient(to bottom, transparent 0%, rgba(30,41,59,0.6) 60%, #1e293b 100%)",
         }} />
       </div>
 
