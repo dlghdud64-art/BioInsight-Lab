@@ -10,17 +10,17 @@ import Link from "next/link";
 
 /* ── Surface palette ───────────────────────────────────────────── */
 /*
-  명도 위계:
-  hero/footer     → deep navy (bg)
-  lifted sections → slatePlane / slatePanel (blue-gray lifted)
-  cards           → slateCard / slateCardHigh (panel 위의 카드)
-  text            → onSurface / onSurfaceVariant / outline
+  Section 명도 리듬 (wave — deep→up→down→up→down→deep):
+  1. Hero      #0c1324  — deepest dark field
+  2. Support   #151d32  — lifted (숨통)
+  3. Flow      #101828  — pushed back (S2보다 눌림)
+  4. Roles     #172038  — lifted again (support plane)
+  5. Governance#121b2e  — pressed down (card가 주인공)
+  6. Closure   #0c1324  — dark close field
 
-  signal color 역할:
-  blue (#adc6ff / #4d8eff) → CTA fill, active/selected state ONLY
-  CHECK_COLOR (#8da4c2)    → capability indicator, check, muted accent
-  amber (#ffb95f)          → warning, tertiary accent
-  NO GREEN — 초록색은 퍼블릭 페이지 컬러 문법에 포함되지 않음
+  Cards: slateCard / slateCardHigh (section 위에 올라가는 object)
+  Signal: blue = CTA only, CHECK_COLOR = muted accent, amber = tertiary
+  NO GREEN
 */
 const S = {
   /* deep navy base */
@@ -121,9 +121,9 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            2. 연결 포인트 — LIFTED SLATE PLANE
+            2. 연결 포인트 — LIFTED (hero에서 숨통 트임)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-24 relative overflow-hidden" style={{ backgroundColor: S.slatePlane }}>
+        <section className="py-24 relative overflow-hidden" style={{ backgroundColor: "#151d32" }}>
           <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at top, rgba(77,142,255,0.05), transparent 40%)" }} />
           <div className="max-w-7xl mx-auto px-6 relative z-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -207,9 +207,9 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            3. 6단계 운영 흐름 — slightly lighter slate plane
+            3. 6단계 운영 흐름 — PUSHED BACK (S2보다 눌림)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-28 overflow-hidden" style={{ backgroundColor: S.slatePanel }}>
+        <section className="py-28 overflow-hidden" style={{ backgroundColor: "#101828" }}>
           <div className="max-w-7xl mx-auto px-6">
             <div className="text-center mb-16">
               <h2 className="text-4xl font-bold mb-4 tracking-tight">하나로 연결된 연구 구매 운영 흐름</h2>
@@ -343,9 +343,9 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            5. 조직 운영 관리 — Bento Grid
+            5. 조직 운영 관리 — PRESSED DOWN (S4보다 눌림, card가 주인공)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-28" style={{ backgroundColor: "#1e274a" }}>
+        <section className="py-28" style={{ backgroundColor: "#121b2e" }}>
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-14 gap-8">
               <div className="max-w-2xl">
