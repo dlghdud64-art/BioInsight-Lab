@@ -1,126 +1,101 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { ArrowRight, Search } from "lucide-react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import {
+  Search, GitCompare, FileText, ShoppingCart,
+  PackageCheck, Warehouse, ClipboardList, History,
+} from "lucide-react";
 
 /*
- * ── Final Action Surface — 스펙: Supporting Section (slate 계열) ──
+ * ── Product Overview Section ─────────────────────────────────────
+ *  dark proof → LIFTED support layer → dark footer
+ *  아이콘 기반 제품 흐름 요약. CTA 반복 없음.
+ * ─────────────────────────────────────────────────────────────────
  */
 
-const FLOW_STEPS = [
-  { label: "시약 검색", active: false },
-  { label: "후보 정리", active: false },
-  { label: "비교·선택안 확정", active: true },
-  { label: "요청 생성", active: false },
-  { label: "발주 준비", active: false },
+const FEATURES = [
+  {
+    icon: Search,
+    title: "시약·장비 검색",
+    desc: "이건 찾으면 바로 비교·견적까지 연결",
+  },
+  {
+    icon: ClipboardList,
+    title: "후보 정리",
+    desc: "후보제품을 리스트로 정리·관리",
+  },
+  {
+    icon: GitCompare,
+    title: "비교·선택안 확정",
+    desc: "사양·가격·납기를 한눈에 비교",
+  },
+  {
+    icon: FileText,
+    title: "요청 생성",
+    desc: "견적·구매요청서를 자동으로 생성",
+  },
+  {
+    icon: ShoppingCart,
+    title: "발주 준비",
+    desc: "PO 전환부터 공급사 발송 준비까지",
+  },
+  {
+    icon: PackageCheck,
+    title: "입고 반영",
+    desc: "입고 확인·검수 기록을 즉시 반영",
+  },
+  {
+    icon: Warehouse,
+    title: "재고 운영",
+    desc: "실시간 재고 조회·위치 추적",
+  },
+  {
+    icon: History,
+    title: "운영 이력 관리",
+    desc: "전체 흐름의 변경·승인 이력 관리",
+  },
 ];
 
 export function FinalCTASection() {
-  const { data: session } = useSession();
-  const router = useRouter();
-  const isLoggedIn = !!session?.user;
-
-  const handleConsoleClick = () => {
-    if (isLoggedIn) {
-      router.push("/dashboard");
-    } else {
-      router.push("/auth/signin?callbackUrl=%2Fdashboard");
-    }
-  };
-
   return (
-    <section
-      className="py-14 md:py-18"
-      style={{ backgroundColor: "#1e293b", borderTop: "1px solid rgba(255,255,255,0.06)" }}
-    >
-      <div className="mx-auto max-w-[1000px] px-5 md:px-8">
+    <section style={{ backgroundColor: "#334155" }}>
+      <div className="mx-auto max-w-[1100px] px-5 md:px-8 py-16 md:py-24">
 
-        <div className="text-center mb-6">
-          <h2 className="text-base md:text-lg font-bold text-white tracking-tight">
-            시약 검색부터 발주 전환까지, 하나의 흐름으로
+        {/* Heading */}
+        <div className="text-center mb-10 md:mb-14">
+          <h2 className="text-lg md:text-2xl font-bold text-white tracking-tight mb-3">
+            제품 흐름 한눈에 보기
           </h2>
+          <p className="text-sm md:text-[15px] font-medium" style={{ color: "#CBD5E1" }}>
+            검색부터 재고 운영까지, 하나의 워크벤치에서 끊기지 않고 이어집니다.
+          </p>
         </div>
 
-        <div
-          className="rounded-xl px-5 md:px-8 py-6 md:py-8 mb-8"
-          style={{ backgroundColor: "#0F172A", border: "1px solid rgba(255,255,255,0.08)" }}
-        >
-          {/* Horizontal flow (desktop) */}
-          <div className="hidden md:flex items-center justify-center gap-0">
-            {FLOW_STEPS.map((step, i) => (
-              <div key={step.label} className="flex items-center">
-                <div
-                  className="px-4 py-2 rounded-md text-[12px] font-medium"
-                  style={{
-                    backgroundColor: step.active ? "rgba(255,255,255,0.08)" : "transparent",
-                    color: step.active ? "#F1F5F9" : "#94A3B8",
-                    border: step.active ? "1px solid rgba(255,255,255,0.15)" : "1px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  {step.label}
-                </div>
-                {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-3 w-3 mx-2 flex-shrink-0" style={{ color: "#475569" }} />
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Vertical flow (mobile) */}
-          <div className="md:hidden space-y-2">
-            {FLOW_STEPS.map((step, i) => (
-              <div key={step.label} className="flex items-center gap-2">
-                <div
-                  className="w-1.5 h-1.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: step.active ? "#F1F5F9" : "#475569" }}
-                />
-                <span
-                  className="text-[12px] font-medium"
-                  style={{ color: step.active ? "#F1F5F9" : "#94A3B8" }}
-                >
-                  {step.label}
-                </span>
-                {i < FLOW_STEPS.length - 1 && (
-                  <ArrowRight className="h-2.5 w-2.5 ml-auto" style={{ color: "#475569" }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          <Button
-            className="w-full sm:w-auto h-11 px-8 font-bold text-[14px] flex items-center justify-center gap-2 rounded-lg border border-blue-500/25"
-            style={{
-              backgroundColor: "#3B82F6",
-              color: "#FFFFFF",
-              boxShadow: "0 2px 12px rgba(59,130,246,0.2)",
-            }}
-            onClick={handleConsoleClick}
-            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#2563EB"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#3B82F6"; }}
-          >
-            시약·장비 검색 시작하기
-            <Search className="h-4 w-4" />
-          </Button>
-          <Link href="/support" className="w-full sm:w-auto">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto h-10 px-7 font-medium text-[13px] rounded-lg"
+        {/* Icon Grid: 4col x 2row (desktop), 2col x 4row (mobile) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+          {FEATURES.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-xl px-4 py-5 md:py-6 flex flex-col items-center text-center"
               style={{
-                borderColor: "rgba(255,255,255,0.10)",
-                color: "#94A3B8",
-                backgroundColor: "transparent",
+                backgroundColor: "#2B3749",
+                border: "1px solid rgba(255,255,255,0.06)",
               }}
             >
-              도입 문의
-            </Button>
-          </Link>
+              <div
+                className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
+                style={{ backgroundColor: "rgba(59,130,246,0.12)" }}
+              >
+                <f.icon className="h-5 w-5" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
+              </div>
+              <p className="text-[13px] md:text-sm font-semibold text-white mb-1">
+                {f.title}
+              </p>
+              <p className="text-[11px] md:text-xs leading-relaxed" style={{ color: "#94A3B8" }}>
+                {f.desc}
+              </p>
+            </div>
+          ))}
         </div>
-
       </div>
     </section>
   );
