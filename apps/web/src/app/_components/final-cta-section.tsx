@@ -16,11 +16,11 @@ import {
 
 /* ── Color tokens — proof용, 목업 1보다 약간 밝은 surface ── */
 const C = {
-  base: "#182438",
-  elevated: "#22334E",
-  sunken: "#131E30",
-  divider: "#2A3F5A",
-  dividerSubtle: "#213450",
+  base: "#111D2F",
+  elevated: "#1A2940",
+  sunken: "#0D1724",
+  divider: "#223350",
+  dividerSubtle: "#1A2C42",
   text1: "#F8FAFC",
   text2: "#DAE4EE",
   text3: "#95ABBD",
@@ -206,11 +206,11 @@ function InventoryOpsMockupContent() {
 export function FinalCTASection() {
   return (
     <section className="relative" style={{
-      background: "linear-gradient(to bottom, #1E2E45 0%, #253752 40%, #2C3F58 70%, #1A2A40 100%)",
+      background: "linear-gradient(to bottom, #0F1C30 0%, #132440 40%, #162844 70%, #0C1628 100%)",
     }}>
-      {/* Top separation — hero 아래에서 올라온 surface 느낌 */}
+      {/* Top separation — hero와 이어지는 미세한 경계 */}
       <div className="absolute inset-x-0 top-0 h-px" style={{
-        background: "linear-gradient(90deg, transparent 20%, rgba(148,163,184,0.2) 50%, transparent 80%)",
+        background: "linear-gradient(90deg, transparent 25%, rgba(148,163,184,0.10) 50%, transparent 75%)",
       }} />
 
       <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 pt-14 md:pt-20 pb-20 md:pb-32">
