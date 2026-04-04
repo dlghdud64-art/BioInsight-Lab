@@ -334,10 +334,10 @@ export function BioInsightHeroSection() {
           background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(40,90,180,0.18) 0%, rgba(30,60,140,0.05) 55%, transparent 100%)",
         }} />
 
-        {/* Bottom fade — support band(#334155)로 깨끗하게 전환 */}
+        {/* Bottom fade — support band(#1E2E45)로 자연스럽게 전환 */}
         <div className="absolute inset-x-0 bottom-0 pointer-events-none" style={{
           height: "40%",
-          background: "linear-gradient(to bottom, transparent 0%, #334155 100%)",
+          background: "linear-gradient(to bottom, transparent 0%, #1E2E45 100%)",
         }} />
       </div>
 
@@ -473,8 +473,8 @@ export function BioInsightHeroSection() {
         </div>
       </div>
 
-      {/* Hero 하단 여유 — mockup 끝 → support heading 사이 넉넉한 breathing room */}
-      <div className="h-24 md:h-40" />
+      {/* Hero 하단 여유 — support 시작까지 리듬감 유지하되 narrative drop 방지 */}
+      <div className="h-14 md:h-20" />
     </section>
   );
 }
