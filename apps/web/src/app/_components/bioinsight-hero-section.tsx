@@ -312,32 +312,24 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#0A2248" }}>
+    <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#081425" }}>
 
-      {/* Background — plexus + gradient가 목업 영역까지 확장 (bottom: -600px) */}
-      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-600px" }}>
+      {/* Background — deep navy + subtle network */}
+      <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-200px" }}>
 
-        {/* Base: cobalt gradient — 목업 뒤까지 이어짐 */}
+        {/* Base gradient */}
         <div className="absolute inset-0" style={{
-          background: "linear-gradient(to bottom, #0D3570 0%, #0A2248 40%, #081C3E 70%, #0B1120 100%)",
+          background: "radial-gradient(ellipse 120% 80% at 50% 0%, #0C2240 0%, #081425 60%, #060F1E 100%)",
         }} />
 
-        {/* Plexus — 목업 영역까지 포함 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.55 }}>
+        {/* Plexus — 은은하게 (스펙: 중앙 가독성을 해치지 않는 수준) */}
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.35 }}>
           <PlexusCanvas />
         </div>
 
-        {/* Central light field — focal axis behind headline */}
-        <div className="absolute inset-x-0 top-0 bottom-[400px] pointer-events-none" style={{
-          background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(60,120,220,0.3) 0%, rgba(40,80,180,0.08) 55%, transparent 100%)",
-        }} />
-        <div className="absolute inset-x-0 top-0 bottom-[400px] pointer-events-none" style={{
-          background: "radial-gradient(ellipse 30% 26% at 50% 33%, rgba(120,175,255,0.14) 0%, transparent 70%)",
-        }} />
-        {/* Mockup center attenuation — masks network behind mockup body */}
-        <div className="absolute pointer-events-none" style={{
-          top: "55%", bottom: 0, left: "15%", right: "15%",
-          background: "radial-gradient(ellipse 70% 60% at 50% 40%, rgba(22,33,54,0.72) 0%, transparent 100%)",
+        {/* Central light field — headline 뒤 focal axis */}
+        <div className="absolute inset-x-0 top-0 bottom-[200px] pointer-events-none" style={{
+          background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(40,90,180,0.2) 0%, rgba(30,60,140,0.06) 55%, transparent 100%)",
         }} />
       </div>
 
@@ -392,8 +384,8 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero — H1 → sub → CTA → deep blue field so mockup floats in hero territory */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-24 sm:pb-40 text-center w-full">
+      {/* Hero content */}
+      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-32 text-center w-full">
         <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
           연구 구매 운영을<br />
           <span className="text-white">하나의 흐름으로 연결합니다</span>

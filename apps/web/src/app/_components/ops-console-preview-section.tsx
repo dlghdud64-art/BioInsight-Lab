@@ -88,11 +88,11 @@ const BADGE = {
 } as const;
 
 const C = {
-  base: "#1E293B",
-  elevated: "#2A3A52",
-  sunken: "#172033",
-  divider: "#334155",
-  dividerSubtle: "#2A3A52",
+  base: "#0F172A",
+  elevated: "#1A2540",
+  sunken: "#0B1120",
+  divider: "#1E2D45",
+  dividerSubtle: "#172238",
   text1: "#F1F5F9",
   text2: "#CBD5E1",
   text3: "#8296B0",
@@ -102,40 +102,38 @@ const C = {
 
 export function OpsConsolePreviewSection() {
   return (
-    <section className="relative" style={{ background: "linear-gradient(to bottom, transparent 0%, rgba(22,33,54,0.55) 28%, #162136 52%)" }}>
+    <section className="relative pt-10 md:pt-14" style={{ backgroundColor: "#1e293b" }}>
 
-      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-36" style={{ maxWidth: 1140 }}>
+      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-32" style={{ maxWidth: 1140 }}>
 
         {/*
          * ════ App Window Container ════
-         * hero 경계에 걸침 — negative margin으로 히어로 blue zone에 상단 진입
+         * Lifted surface (#1e293b) 위에 어두운 목업 윈도우가 올라감
+         * hero (#081425) → proof (#1e293b) 명도 차로 자연스러운 구분
          */}
-        <div
-          className="relative"
-          style={{ marginTop: "-120px" }}
-        >
-          {/* ── Back-glow: 강한 청색 광원 ── */}
+        <div className="relative">
+          {/* ── Back-glow: 목업 뒤 깊이감 ── */}
           <div
-            className="absolute -inset-10 md:-inset-16 rounded-3xl pointer-events-none"
+            className="absolute -inset-6 md:-inset-10 rounded-3xl pointer-events-none"
             style={{
-              background: "radial-gradient(ellipse 90% 70% at 50% 35%, rgba(56,140,255,0.30) 0%, rgba(40,100,220,0.10) 40%, transparent 100%)",
-              filter: "blur(44px)",
+              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.35) 0%, transparent 100%)",
+              filter: "blur(30px)",
             }}
           />
 
-          {/* ── Window frame — 밝은 내부 + 확실한 테두리 ── */}
+          {/* ── Window frame — 어두운 앱 윈도우 on lifted surface ── */}
           <div
             className="relative rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: "#1E293B",
-              border: "1.5px solid rgba(140,180,255,0.30)",
-              boxShadow: "0 0 0 1px rgba(80,140,255,0.08), 0 0 60px rgba(50,120,240,0.15), 0 16px 48px rgba(10,40,120,0.30), 0 40px 80px rgba(0,0,0,0.45)",
+              backgroundColor: "#0F172A",
+              border: "1px solid rgba(255,255,255,0.12)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
             }}
           >
             {/* ── Window title bar (macOS style) ── */}
             <div
               className="flex items-center px-4 py-2.5 gap-3"
-              style={{ backgroundColor: "#0F172A", borderBottom: "1px solid rgba(140,180,255,0.12)" }}
+              style={{ backgroundColor: "#080E1A", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
             >
               {/* Traffic lights */}
               <div className="flex items-center gap-1.5">
@@ -250,7 +248,7 @@ export function OpsConsolePreviewSection() {
               </div>
 
               {/* Right: Rail */}
-              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#253348" }}>
+              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#131D30" }}>
                 <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"

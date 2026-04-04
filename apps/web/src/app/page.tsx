@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 const OpsConsolePreviewSection = dynamic(
   () => import("./_components/ops-console-preview-section").then((mod) => ({ default: mod.OpsConsolePreviewSection })),
-  { loading: () => <div className="h-64 w-full" style={{ backgroundColor: "#141B28" }} /> }
+  { loading: () => <div className="h-64 w-full" style={{ backgroundColor: "#1e293b" }} /> }
 );
 
 const FinalCTASection = dynamic(
@@ -30,7 +30,7 @@ const FinalCTASection = dynamic(
  */
 export default function HomePage() {
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#0B1120" }}>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#020617" }}>
       {/* 1. Hero — headline + CTA (blue field) */}
       <BioInsightHeroSection />
 
@@ -42,7 +42,7 @@ export default function HomePage() {
       <FinalCTASection />
 
       {/* 4. Footer */}
-      <div aria-hidden="true" style={{ height: 1, backgroundColor: "#1C2A42" }} />
+      <div aria-hidden="true" style={{ height: 1, backgroundColor: "rgba(255,255,255,0.06)" }} />
       <MainFooter />
     </div>
   );
