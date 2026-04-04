@@ -168,7 +168,7 @@ export function buildDraftMessage(quote: ResolveInput["quote"]): string {
   }
 
   lines.push("");
-  lines.push("납기, 재고, MOQ, 단가를 포함하여 회신 부탁드립니다.");
+  lines.push("납기, 재고, 최소 주문 수량, 단가를 포함하여 회신 부탁드립니다.");
   lines.push("");
   lines.push("감사합니다.");
 

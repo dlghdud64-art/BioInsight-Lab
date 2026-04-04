@@ -52,7 +52,7 @@ interface FlowItem {
 
 const MOCK_ITEMS: Record<string, FlowItem[]> = {
   incoming: [
-    { name: "Anti-CD3 Antibody", lot: "25A-001", qty: 5, status: "발주 완료", reason: "배송 중 — ETA 3/20" },
+    { name: "Anti-CD3 Antibody", lot: "25A-001", qty: 5, status: "발주 완료", reason: "배송 중 — 도착 예정 3/20" },
     { name: "RPMI 1640 Medium", lot: "-", qty: 10, status: "발주 확인", reason: "공급사 확인 대기" },
     { name: "Pipette Tips (1000µl)", lot: "-", qty: 20, status: "발주 완료", reason: "내일 도착 예정" },
   ],

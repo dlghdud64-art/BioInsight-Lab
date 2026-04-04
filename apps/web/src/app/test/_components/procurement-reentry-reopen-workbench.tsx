@@ -8,7 +8,7 @@ import type { ProcurementReentryReopenHandoff } from "@/lib/ai/reorder-decision-
 const ROUTE_CONFIG: Record<ReopenRoute, { label: string; icon: any; color: string; desc: string }> = {
   search_reopen: { label: "소싱 탐색 재개", icon: Search, color: "text-blue-400", desc: "새로운 공급사·제품 검색부터 시작" },
   compare_reopen: { label: "비교 검토 재개", icon: GitCompare, color: "text-violet-400", desc: "기존 후보 기반 비교 재검토" },
-  request_reopen: { label: "요청 재생성", icon: FileText, color: "text-emerald-400", desc: "기존 구조로 RFQ 재발행" },
+  request_reopen: { label: "요청 재생성", icon: FileText, color: "text-emerald-400", desc: "기존 구조로 견적 요청 재발행" },
   watch_only: { label: "Watch 유지", icon: Eye, color: "text-amber-400", desc: "즉시 재진입 없이 모니터링" },
   blocked_from_procurement_reopen: { label: "재진입 차단", icon: AlertTriangle, color: "text-red-400", desc: "재진입 조건 미충족" },
 };

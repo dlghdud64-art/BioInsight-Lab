@@ -30,7 +30,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
   const validation = useMemo(() => confState ? validateSupplierConfirmationBeforeRecord(confState) : null, [confState]);
 
   const simulateConfirm = useCallback(() => {
-    setConfState(prev => prev ? { ...prev, confirmedQtyStatus: "confirmed", confirmedEtaStatus: "confirmed", confirmedCommercialStatus: "confirmed", uncertaintyCount: 0, substatus: "ready_for_receiving_preparation", confirmedTerms: { ...prev.confirmedTerms, confirmedQtySummary: "요청 수량 전량 확정", confirmedEtaWindow: "7영업일 내 출고", confirmedLineCoverage: "전체 라인 커버", confirmedStockStatus: "재고 확보", confirmedMoqStatus: "MOQ 충족" } } : prev);
+    setConfState(prev => prev ? { ...prev, confirmedQtyStatus: "confirmed", confirmedEtaStatus: "confirmed", confirmedCommercialStatus: "confirmed", uncertaintyCount: 0, substatus: "ready_for_receiving_preparation", confirmedTerms: { ...prev.confirmedTerms, confirmedQtySummary: "요청 수량 전량 확정", confirmedEtaWindow: "7영업일 내 출고", confirmedLineCoverage: "전체 라인 커버", confirmedStockStatus: "재고 확보", confirmedMoqStatus: "최소 주문 수량 충족" } } : prev);
   }, []);
 
   const recordConfirmation = useCallback(() => {
@@ -56,7 +56,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Qty: <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">ETA: <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
+                <span className="text-slate-400">납기: <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">불확실성 <span className="text-slate-200 font-medium">{confState.uncertaintyCount}</span></span>
               </div>
@@ -78,7 +78,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
             <div className="mt-2 space-y-1.5">
               {([
                 { label: "수량", status: confState.confirmedQtyStatus, value: confState.confirmedTerms.confirmedQtySummary, icon: Package },
-                { label: "납기 (ETA)", status: confState.confirmedEtaStatus, value: confState.confirmedTerms.confirmedEtaWindow, icon: Clock },
+                { label: "납기", status: confState.confirmedEtaStatus, value: confState.confirmedTerms.confirmedEtaWindow, icon: Clock },
                 { label: "재고", status: confState.confirmedCommercialStatus, value: confState.confirmedTerms.confirmedStockStatus, icon: Building2 },
               ] as const).map(item => {
                 const Icon = item.icon;
@@ -133,7 +133,7 @@ export function SupplierConfirmationWorkbench({ open, onClose, handoff, onConfir
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Qty <span className={FIELD_LABELS[confState.confirmedQtyStatus].color}>{FIELD_LABELS[confState.confirmedQtyStatus].label}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">ETA <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
+            <span className="text-slate-500">납기 <span className={FIELD_LABELS[confState.confirmedEtaStatus].color}>{FIELD_LABELS[confState.confirmedEtaStatus].label}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>

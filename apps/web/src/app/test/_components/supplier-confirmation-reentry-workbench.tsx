@@ -50,7 +50,7 @@ export function SupplierConfirmationReentryWorkbench({ open, onClose, handoff, o
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
                 <span className="text-slate-400">Qty: <span className={FIELD_LABELS[confState.confirmedQtyReentryStatus].color}>{FIELD_LABELS[confState.confirmedQtyReentryStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">ETA: <span className={FIELD_LABELS[confState.confirmedEtaReentryStatus].color}>{FIELD_LABELS[confState.confirmedEtaReentryStatus].label}</span></span>
+                <span className="text-slate-400">납기: <span className={FIELD_LABELS[confState.confirmedEtaReentryStatus].color}>{FIELD_LABELS[confState.confirmedEtaReentryStatus].label}</span></span>
                 <span className="text-slate-600">·</span>
                 {confState.clarificationOpenCount > 0 ? <span className="text-amber-400">Clarification {confState.clarificationOpenCount}</span> : <span className="text-emerald-400">해결됨</span>}
               </div>
@@ -72,7 +72,7 @@ export function SupplierConfirmationReentryWorkbench({ open, onClose, handoff, o
             <div className="mt-2 space-y-1.5">
               {([
                 { label: "수량", status: confState.confirmedQtyReentryStatus, icon: Package },
-                { label: "납기 (ETA)", status: confState.confirmedEtaReentryStatus, icon: Clock },
+                { label: "납기", status: confState.confirmedEtaReentryStatus, icon: Clock },
                 { label: "상업 조건", status: confState.confirmedCommercialReentryStatus, icon: Shield },
               ] as const).map(item => {
                 const Icon = item.icon;
@@ -117,7 +117,7 @@ export function SupplierConfirmationReentryWorkbench({ open, onClose, handoff, o
           <div className="flex items-center gap-3 text-[10px] mb-2.5">
             <span className="text-slate-500">Qty <span className={FIELD_LABELS[confState.confirmedQtyReentryStatus].color}>{FIELD_LABELS[confState.confirmedQtyReentryStatus].label}</span></span>
             <span className="text-slate-600">·</span>
-            <span className="text-slate-500">ETA <span className={FIELD_LABELS[confState.confirmedEtaReentryStatus].color}>{FIELD_LABELS[confState.confirmedEtaReentryStatus].label}</span></span>
+            <span className="text-slate-500">납기 <span className={FIELD_LABELS[confState.confirmedEtaReentryStatus].color}>{FIELD_LABELS[confState.confirmedEtaReentryStatus].label}</span></span>
             <span className="text-slate-600">·</span>
             <span className="text-slate-500">{validation?.recommendedNextAction || ""}</span>
           </div>

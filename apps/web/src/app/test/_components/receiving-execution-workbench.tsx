@@ -76,7 +76,7 @@ export function ReceivingExecutionWorkbench({ open, onClose, handoff, onExecutio
           {/* Preparation basis */}
           <div className="px-3 py-2 rounded-md bg-blue-600/[0.04] border border-blue-500/15">
             <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">입고 준비 근거</span>
-            <span className="text-[10px] text-blue-200">ETA: {handoff.confirmedEtaWindow || "미확정"} · Qty: {handoff.confirmedQtySummary || "미확정"}</span>
+            <span className="text-[10px] text-blue-200">납기: {handoff.confirmedEtaWindow || "미확정"} · 수량: {handoff.confirmedQtySummary || "미확정"}</span>
           </div>
 
           {/* Actual receipt summary */}

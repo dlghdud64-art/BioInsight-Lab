@@ -186,7 +186,7 @@ export function QuoteNormalizationWorkbench({
             <div className="mt-2 border border-bd/40 rounded-md overflow-hidden">
               {/* Header */}
               <div className="grid grid-cols-6 bg-[#252A33] border-b border-bd/40 px-3 py-1.5">
-                {["품목", "단가", "납기", "MOQ", "재고", "상태"].map((h) => (
+                {["품목", "단가", "납기", "최소 주문", "재고", "상태"].map((h) => (
                   <span key={h} className="text-[9px] text-slate-500 font-medium">{h}</span>
                 ))}
               </div>

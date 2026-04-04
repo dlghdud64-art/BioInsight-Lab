@@ -412,7 +412,7 @@ function VendorSection({ vendors }: { vendors: RecommendedVendor[] }) {
               )}
               {vendor.moq != null && (
                 <span>
-                  MOQ{" "}
+                  최소 주문{" "}
                   <span className="font-medium text-slate-300">
                     {vendor.moq}
                   </span>

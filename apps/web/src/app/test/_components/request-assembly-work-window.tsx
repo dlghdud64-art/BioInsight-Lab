@@ -480,7 +480,7 @@ export function RequestAssemblyWorkWindow({
                   <div className="px-4 py-3 rounded-lg border border-slate-600/25 bg-[#2a2e35]">
                     <span className="text-xs font-medium text-slate-400 block mb-2">확인 요청 사항</span>
                     <div className="flex flex-wrap gap-1.5">
-                      {["납기", "재고", "MOQ", "단가"].map((item) => (
+                      {["납기", "재고", "최소 주문 수량", "단가"].map((item) => (
                         <span key={item} className="text-xs px-2 py-1 rounded-md bg-slate-700/50 text-slate-200 border border-slate-600/20">{item}</span>
                       ))}
                     </div>

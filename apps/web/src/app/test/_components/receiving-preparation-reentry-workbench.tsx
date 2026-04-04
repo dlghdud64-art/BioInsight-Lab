@@ -61,7 +61,7 @@ export function ReceivingPreparationReentryWorkbench({ open, onClose, handoff, o
           {/* Confirmation re-entry basis */}
           <div className="px-3 py-2 rounded-md bg-blue-600/[0.04] border border-blue-500/15">
             <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-0.5">Supplier Confirm Re-entry 근거</span>
-            <span className="text-[10px] text-blue-200">Qty: {handoff.confirmedQtyReentrySummary} · ETA: {handoff.confirmedEtaWindowSummary} · Commercial: {handoff.confirmedCommercialReentrySummary}</span>
+            <span className="text-[10px] text-blue-200">수량: {handoff.confirmedQtyReentrySummary} · 납기: {handoff.confirmedEtaWindowSummary} · 상업 조건: {handoff.confirmedCommercialReentrySummary}</span>
           </div>
 
           {/* Inbound expectation */}

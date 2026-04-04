@@ -75,8 +75,8 @@ export function exportVendorResponsesToCSV(data: VendorResponsesExportData): str
       `${vendorLabel}_단가`,
       `${vendorLabel}_통화`,
       `${vendorLabel}_납기(일)`,
-      `${vendorLabel}_MOQ`,
-      `${vendorLabel}_벤더SKU`,
+      `${vendorLabel}_최소주문수량`,
+      `${vendorLabel}_공급사품목코드`,
       `${vendorLabel}_비고`
     );
   });

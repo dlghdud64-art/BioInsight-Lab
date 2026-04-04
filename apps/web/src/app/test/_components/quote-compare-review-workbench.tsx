@@ -182,7 +182,7 @@ export function QuoteCompareReviewWorkbench({
               )}
               {diffSummary.moqWarning && (
                 <div className="px-3 py-2.5 rounded-md border border-amber-500/20 bg-amber-600/[0.03]">
-                  <div className="flex items-center gap-1.5 mb-1"><AlertTriangle className="h-3 w-3 text-amber-400" /><span className="text-[9px] text-slate-500">MOQ</span></div>
+                  <div className="flex items-center gap-1.5 mb-1"><AlertTriangle className="h-3 w-3 text-amber-400" /><span className="text-[9px] text-slate-500">최소 주문</span></div>
                   <span className="text-[11px] text-amber-300 font-medium">{diffSummary.moqWarning.label}</span>
                 </div>
               )}
@@ -212,7 +212,7 @@ export function QuoteCompareReviewWorkbench({
                   </tr>
                 </thead>
                 <tbody>
-                  {["단가", "납기", "MOQ", "재고", "대체"].map((field) => (
+                  {["단가", "납기", "최소 주문", "재고", "대체"].map((field) => (
                     <tr key={field} className="border-b border-bd/20 last:border-b-0">
                       <td className="px-3 py-1.5 text-slate-500">{field}</td>
                       {normalizedQuotes.map((q) => {
@@ -220,7 +220,7 @@ export function QuoteCompareReviewWorkbench({
                         if (!line) return <td key={q.id} className="px-3 py-1.5 text-slate-600 border-l border-bd/20">—</td>;
                         const val = field === "단가" ? (line.normalizedUnitPrice ? `₩${line.normalizedUnitPrice.toLocaleString("ko-KR")}` : "누락")
                           : field === "납기" ? (line.normalizedLeadTimeDays ? `${line.normalizedLeadTimeDays}일` : "누락")
-                          : field === "MOQ" ? (line.normalizedMOQ ?? "누락")
+                          : field === "최소 주문" ? (line.normalizedMOQ ?? "누락")
                           : field === "재고" ? (line.normalizedStockAvailability === "in_stock" ? "있음" : line.normalizedStockAvailability === "unknown" ? "미확인" : "없음")
                           : line.substituteOffered ? "제안 있음" : "—";
                         const isMissing = typeof val === "string" && val === "누락";

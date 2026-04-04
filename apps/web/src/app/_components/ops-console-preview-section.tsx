@@ -77,7 +77,7 @@ const QUEUE_ITEMS = [
 
 const RAIL_OPTIONS = [
   { level: "추천", supplier: "BioKorea", price: "₩185,000", lead: "3일", tags: ["최저가", "납기 최단", "기존 거래처"], selected: true },
-  { level: "대체", supplier: "LabSource", price: "₩198,000", lead: "5일", tags: ["MOQ 5팩 이상", "단가 7% 높음"], selected: false },
+  { level: "대체", supplier: "LabSource", price: "₩198,000", lead: "5일", tags: ["최소 주문 5팩 이상", "단가 7% 높음"], selected: false },
   { level: "보수", supplier: "SciSupply", price: "₩210,000", lead: "2일", tags: ["납기 2일", "긴급 시 유리"], selected: false },
 ];
 

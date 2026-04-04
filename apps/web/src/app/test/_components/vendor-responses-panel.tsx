@@ -390,7 +390,7 @@ export function VendorResponsesPanel({ quoteId }: VendorResponsesPanelProps) {
                               단가
                             </TableHead>
                             <TableHead className="text-xs text-center">납기(일)</TableHead>
-                            <TableHead className="text-xs text-center">MOQ</TableHead>
+                            <TableHead className="text-xs text-center">최소 주문</TableHead>
                           </React.Fragment>
                         ))}
                       </TableRow>

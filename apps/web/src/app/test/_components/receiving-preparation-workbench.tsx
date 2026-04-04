@@ -46,7 +46,7 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
             <div>
               <h2 className="text-sm font-semibold text-slate-100">{isRecorded ? "Receiving Preparation 완료" : "Receiving Preparation"}</h2>
               <div className="flex items-center gap-2 text-[10px] mt-0.5">
-                <span className="text-slate-400">ETA: <span className="text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></span>
+                <span className="text-slate-400">납기: <span className="text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></span>
                 <span className="text-slate-600">·</span>
                 <span className="text-slate-400">Qty: <span className="text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></span>
               </div>
@@ -60,7 +60,7 @@ export function ReceivingPreparationWorkbench({ open, onClose, handoff, onPrepRe
           <div>
             <span className="text-[9px] font-medium text-slate-500 uppercase tracking-wider">예상 입고</span>
             <div className="mt-2 grid grid-cols-2 gap-2">
-              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">ETA</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></div>
+              <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Clock className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">도착 예정</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedEtaWindow || "미확정"}</span></div>
               <div className="px-3 py-2 rounded-md border border-bd/40 bg-[#252A33]"><div className="flex items-center gap-1.5 mb-0.5"><Package className="h-3 w-3 text-slate-500" /><span className="text-[9px] text-slate-500">수량</span></div><span className="text-[11px] text-slate-200 font-medium">{prepState.confirmedQtySummary || "미확정"}</span></div>
             </div>
           </div>

@@ -82,7 +82,7 @@ function buildDefaultDraft(quoteSummary?: string): string {
       ? `아래 품목에 대한 견적을 요청드립니다: ${quoteSummary}`
       : "첨부 품목에 대한 견적을 요청드립니다.",
     "",
-    "납기, 재고, MOQ, 단가를 포함하여 회신 부탁드립니다.",
+    "납기, 재고, 최소 주문 수량, 단가를 포함하여 회신 부탁드립니다.",
     "",
     "감사합니다.",
   ].join("\n");
