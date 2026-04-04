@@ -10,6 +10,7 @@ import {
   Search, GitCompare, FileText, ShoppingCart, PackageCheck,
   Warehouse, ChevronRight, Menu, X, LayoutDashboard, User, LogOut, Settings,
 } from "lucide-react";
+import { OpsConsoleMockupContent } from "./ops-console-preview-section";
 
 function AccountMenu({ userName }: { userName?: string | null }) {
   const [open, setOpen] = useState(false);
@@ -397,32 +398,88 @@ export function BioInsightHeroSection() {
         </div>
       </nav>
 
-      {/* Hero content */}
-      <div className="relative z-20 flex-1 flex flex-col items-center justify-center max-w-[860px] mx-auto px-4 sm:px-6 pt-14 sm:pt-20 pb-20 sm:pb-32 text-center w-full">
-        <h1 className="text-2xl md:text-5xl lg:text-[50px] font-extrabold tracking-tight leading-[1.25] text-white mb-4 md:mb-5">
-          연구 구매 운영을<br />
-          <span className="text-white">하나의 흐름으로 연결합니다</span>
+      {/* Hero content — 텍스트 최소화, 목업 주인공 */}
+      <div className="relative z-20 flex flex-col items-center max-w-[960px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16 text-center w-full">
+        <h1 className="text-2xl md:text-[44px] lg:text-[50px] font-extrabold tracking-tight leading-[1.2] text-white mb-3 md:mb-4">
+          연구 구매 운영을<br />하나의 흐름으로 연결합니다
         </h1>
-        <p className="text-sm md:text-base text-slate-100 mb-7 md:mb-9 font-medium max-w-xl">
-          후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면에서 이어집니다.
+        <p className="text-sm md:text-[15px] text-slate-300 mb-6 md:mb-7 font-medium max-w-lg">
+          검색부터 재고 운영까지, 한 화면에서 끊기지 않고 이어집니다.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto px-2 sm:px-0">
-          <Link href={isLoggedIn ? "/app/search" : "/search"} className="w-full sm:w-auto">
-            <Button className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-white font-bold text-[14px] sm:text-[15px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3580FF", borderColor: "rgba(60,140,255,0.3)", border: "1px solid rgba(60,140,255,0.3)" }}>
-              {isLoggedIn ? "시약·장비 검색 시작하기" : "무료로 시작하기"}<Search className="ml-2 h-4 w-4" />
+        <div className="flex flex-row gap-3 mb-10 md:mb-12">
+          <Link href={isLoggedIn ? "/app/search" : "/search"}>
+            <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
+              {isLoggedIn ? "워크벤치 열기" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </Link>
-          {isLoggedIn ? (
-            <Link href="/dashboard" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-slate-200 font-bold text-[14px] sm:text-[15px] rounded-lg" style={{ backgroundColor: "rgba(6,35,90,0.5)", borderColor: "rgba(100,160,230,0.2)" }}>대시보드</Button>
-            </Link>
-          ) : (
-            <Link href="/support" className="w-full sm:w-auto">
-              <Button variant="outline" className="w-full sm:w-auto h-11 sm:h-12 px-6 sm:px-8 text-slate-200 font-bold text-[14px] sm:text-[15px] rounded-lg" style={{ backgroundColor: "rgba(6,35,90,0.5)", borderColor: "rgba(100,160,230,0.2)" }}>도입 문의하기</Button>
-            </Link>
-          )}
+          <Link href={isLoggedIn ? "/dashboard" : "/support"}>
+            <Button variant="outline" className="h-10 sm:h-11 px-6 sm:px-7 text-slate-300 font-semibold text-[13px] sm:text-[14px] rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.10)" }}>
+              {isLoggedIn ? "대시보드" : "도입 문의"}
+            </Button>
+          </Link>
+        </div>
+
+        {/* ── Hero Mockup — 제품이 주인공 ── */}
+        <div className="relative w-full" style={{ maxWidth: 1100 }}>
+          {/* Back-glow */}
+          <div
+            className="absolute -inset-6 md:-inset-10 rounded-3xl pointer-events-none"
+            style={{
+              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.4) 0%, transparent 100%)",
+              filter: "blur(30px)",
+            }}
+          />
+
+          {/* Window frame */}
+          <div
+            className="relative rounded-xl md:rounded-2xl overflow-hidden"
+            style={{
+              backgroundColor: "#0F172A",
+              border: "1px solid rgba(255,255,255,0.10)",
+              boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3)",
+            }}
+          >
+            {/* Title bar */}
+            <div
+              className="flex items-center px-3 md:px-4 py-2 gap-3"
+              style={{ backgroundColor: "#080E1A", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+            >
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
+                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
+              </div>
+              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 발주 대기 · 배치프로세싱</span>
+              <div className="ml-auto hidden sm:flex items-center gap-2">
+                <span className="text-[9px] md:text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6EE7B7" }}>● LIVE</span>
+              </div>
+            </div>
+
+            {/* KPI bar — "작동 중" 인상 */}
+            <div
+              className="grid grid-cols-3 gap-px"
+              style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+            >
+              {[
+                { label: "발주 대기", value: "12건", color: "#3B82F6" },
+                { label: "금주 처리", value: "₩2,450,000", color: "#10B981" },
+                { label: "승인 대기", value: "센터장 결재 중", color: "#F59E0B" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3" style={{ backgroundColor: "#0F172A" }}>
+                  <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#64748B" }}>{kpi.label}</p>
+                  <p className="text-[12px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Inline mockup content */}
+            <OpsConsoleMockupContent />
+          </div>
         </div>
       </div>
+
+      {/* Hero 하단 여유 — proof band로 이어지는 공간 */}
+      <div className="h-16 md:h-24" />
     </section>
   );
 }

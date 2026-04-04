@@ -100,72 +100,12 @@ const C = {
   accent: "#3B82F6",
 } as const;
 
-export function OpsConsolePreviewSection() {
+/*
+ * ── Mockup content: hero에서 inline으로 사용 ──
+ */
+export function OpsConsoleMockupContent() {
   return (
-    <section className="relative pt-10 md:pt-14" style={{ backgroundColor: "#1e293b" }}>
-
-      <div className="relative mx-auto px-4 md:px-6 pb-20 md:pb-32" style={{ maxWidth: 1140 }}>
-
-        {/*
-         * ════ App Window Container ════
-         * Lifted surface (#1e293b) 위에 어두운 목업 윈도우가 올라감
-         * hero (#081425) → proof (#1e293b) 명도 차로 자연스러운 구분
-         */}
-        <div className="relative">
-          {/* ── Back-glow: 목업 뒤 깊이감 ── */}
-          <div
-            className="absolute -inset-6 md:-inset-10 rounded-3xl pointer-events-none"
-            style={{
-              background: "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(0,0,0,0.35) 0%, transparent 100%)",
-              filter: "blur(30px)",
-            }}
-          />
-
-          {/* ── Window frame — 어두운 앱 윈도우 on lifted surface ── */}
-          <div
-            className="relative rounded-2xl overflow-hidden"
-            style={{
-              backgroundColor: "#0F172A",
-              border: "1px solid rgba(255,255,255,0.12)",
-              boxShadow: "0 25px 60px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05)",
-            }}
-          >
-            {/* ── Window title bar (macOS style) ── */}
-            <div
-              className="flex items-center px-4 py-2.5 gap-3"
-              style={{ backgroundColor: "#080E1A", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
-            >
-              {/* Traffic lights */}
-              <div className="flex items-center gap-1.5">
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
-              </div>
-              {/* Tab / title */}
-              <div className="flex items-center gap-2 ml-2">
-                <span className="text-[11px] font-semibold" style={{ color: "#CBD5E1" }}>LabAxis</span>
-                <span className="text-[10px]" style={{ color: "#5E7490" }}>—</span>
-                <span className="text-[10px]" style={{ color: "#5E7490" }}>발주 대기 · 배치프로세싱</span>
-              </div>
-              {/* Right: KPI chips */}
-              <div className="ml-auto hidden sm:flex items-center gap-3">
-                <div className="flex items-center gap-1">
-                  <ListChecks className="h-3 w-3 text-blue-400" />
-                  <span className="text-[10px] font-medium text-blue-300">확정 4</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <CircleCheck className="h-3 w-3 text-emerald-400" />
-                  <span className="text-[10px] font-medium text-emerald-300">전환 3</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3 text-amber-400" />
-                  <span className="text-[10px] font-medium text-amber-300">검토 1</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── App content area ── */}
-            <div className="flex flex-col md:flex-row" style={{ backgroundColor: C.base }}>
+    <div className="flex flex-col md:flex-row" style={{ backgroundColor: C.base }}>
 
               {/* Left: Queue */}
               <div className="flex-1 md:border-r" style={{ borderColor: C.divider }}>
@@ -310,9 +250,10 @@ export function OpsConsolePreviewSection() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
   );
+}
+
+/* Legacy export — page.tsx에서 아직 import할 수 있도록 유지 */
+export function OpsConsolePreviewSection() {
+  return null;
 }
