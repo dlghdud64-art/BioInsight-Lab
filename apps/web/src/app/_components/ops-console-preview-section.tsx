@@ -88,15 +88,15 @@ const BADGE = {
 } as const;
 
 const C = {
-  base: "#0F172A",
-  elevated: "#1A2540",
-  sunken: "#0B1120",
-  divider: "#1E2D45",
-  dividerSubtle: "#172238",
-  text1: "#F1F5F9",
-  text2: "#CBD5E1",
-  text3: "#8296B0",
-  text4: "#5E7490",
+  base: "#141E33",
+  elevated: "#1E2B44",
+  sunken: "#0F1829",
+  divider: "#253650",
+  dividerSubtle: "#1C2C44",
+  text1: "#F8FAFC",
+  text2: "#D4DEE8",
+  text3: "#8FA4BC",
+  text4: "#6A829C",
   accent: "#3B82F6",
 } as const;
 
@@ -146,26 +146,20 @@ export function OpsConsoleMockupContent() {
 
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[12px] font-semibold leading-snug truncate"
-                            style={{ color: item.selected ? C.text1 : C.text2 }}
+                          <p className="text-[12px] font-bold leading-snug truncate"
+                            style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
                           >{item.title}</p>
-                          <p className="text-[10px] truncate mb-1.5" style={{ color: C.text4 }}>{item.summary}</p>
-
-                          {item.blockerReason && (
-                            <p className="text-[10px] leading-snug mb-1" style={{ color: BADGE.amber.text }}>
-                              막힘: {item.blockerReason}
-                            </p>
-                          )}
+                          <p className="text-[10px] truncate mb-1" style={{ color: C.text3 }}>{item.summary}</p>
 
                           <div className="flex flex-wrap items-center gap-2">
-                            <span className={`text-[10px] flex items-center gap-0.5 ${item.aiColor === "emerald" ? "text-emerald-300" : "text-amber-300"}`}>
+                            <span className="text-[11px] font-bold" style={{ color: "#FFFFFF" }}>{item.price}</span>
+                            <span className={`text-[9px] flex items-center gap-0.5 font-medium ${item.aiColor === "emerald" ? "text-emerald-300" : "text-amber-300"}`}>
                               <Sparkles className="h-2.5 w-2.5" />{item.aiLabel}
                             </span>
-                            <span className="text-[10px] text-emerald-300 flex items-center gap-0.5">
+                            <span className="text-[9px] text-emerald-300 flex items-center gap-0.5">
                               <Truck className="h-2.5 w-2.5" />회신 {item.replies}
                             </span>
-                            <span className="text-[10px] font-semibold" style={{ color: C.text1 }}>{item.price}</span>
-                            <span className="text-[9px]" style={{ color: C.text4 }}>추천: {item.recommended}</span>
+                            <span className="text-[9px] font-medium" style={{ color: C.text3 }}>추천: {item.recommended}</span>
                           </div>
                         </div>
 
@@ -188,7 +182,7 @@ export function OpsConsoleMockupContent() {
               </div>
 
               {/* Right: Rail */}
-              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#131D30" }}>
+              <div className="md:w-[290px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#182438" }}>
                 <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
@@ -222,12 +216,12 @@ export function OpsConsoleMockupContent() {
                               backgroundColor: opt.selected ? "rgba(59,130,246,0.15)" : C.dividerSubtle,
                               color: opt.selected ? "#93C5FD" : C.text4,
                             }}>{opt.level}</span>
-                          <span className="text-[11px] font-medium"
-                            style={{ color: opt.selected ? C.text1 : C.text4 }}>{opt.supplier}</span>
+                          <span className="text-[11px] font-semibold"
+                            style={{ color: opt.selected ? "#FFFFFF" : C.text3 }}>{opt.supplier}</span>
                           {opt.selected && <CheckCircle2 className="h-3 w-3 text-blue-400" />}
                         </div>
-                        <span className="text-[11px] font-semibold"
-                          style={{ color: opt.selected ? C.text1 : C.text4 }}>{opt.price}</span>
+                        <span className="text-[11px] font-bold"
+                          style={{ color: opt.selected ? "#FFFFFF" : C.text3 }}>{opt.price}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <span className="text-[9px] px-1 py-0.5 rounded" style={{ backgroundColor: C.sunken, color: C.text3, border: `1px solid ${C.dividerSubtle}` }}>납기 {opt.lead}</span>

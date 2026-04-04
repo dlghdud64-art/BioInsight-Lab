@@ -425,26 +425,29 @@ export function BioInsightHeroSection() {
             }}
           />
 
-          {/* Window frame */}
+          {/* Window frame — hero 배경에서 확실히 분리 */}
           <div
             className="relative rounded-xl md:rounded-2xl overflow-hidden"
             style={{
-              backgroundColor: "#0F172A",
-              border: "1px solid rgba(255,255,255,0.10)",
-              boxShadow: "0 12px 40px rgba(0,0,0,0.45), 0 4px 16px rgba(0,0,0,0.25)",
+              backgroundColor: "#131B2E",
+              border: "1px solid rgba(255,255,255,0.14)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
             }}
           >
+            {/* Top edge highlight — 오브젝트 상단 빛 */}
+            <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.18) 50%, transparent 90%)" }} />
+
             {/* Title bar */}
             <div
               className="flex items-center px-3 md:px-4 py-2 gap-3"
-              style={{ backgroundColor: "#080E1A", borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+              style={{ backgroundColor: "#0C1322", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
             >
               <div className="flex items-center gap-1.5">
                 <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
                 <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
                 <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
               </div>
-              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 발주 대기 · 배치프로세싱</span>
+              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 발주 전환 큐 · 선택안 확정</span>
               <div className="ml-auto hidden sm:flex items-center gap-2">
                 <span className="text-[9px] md:text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6EE7B7" }}>● LIVE</span>
               </div>
@@ -456,11 +459,11 @@ export function BioInsightHeroSection() {
               style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
             >
               {[
-                { label: "발주 대기", value: "12건", color: "#3B82F6" },
+                { label: "전환 대기", value: "12건", color: "#3B82F6" },
                 { label: "금주 처리", value: "₩2,450,000", color: "#10B981" },
-                { label: "승인 대기", value: "센터장 결재 중", color: "#F59E0B" },
+                { label: "검토 필요", value: "선택안 3건", color: "#F59E0B" },
               ].map((kpi) => (
-                <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3" style={{ backgroundColor: "#0F172A" }}>
+                <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3" style={{ backgroundColor: "#131B2E" }}>
                   <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#64748B" }}>{kpi.label}</p>
                   <p className="text-[12px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
                 </div>
