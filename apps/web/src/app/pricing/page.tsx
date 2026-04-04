@@ -118,7 +118,7 @@ export default function PricingPage() {
             {/* Starter */}
             <PlanCard
               name="Starter"
-              desc="개인 연구자 또는 단일 실험실의 시작 운영"
+              desc="개인 단위 검색과 기본 기록 시작"
               price="Free"
               period="/월"
               features={["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"]}
@@ -129,10 +129,10 @@ export default function PricingPage() {
             {/* Team */}
             <PlanCard
               name="Team"
-              desc="소규모 랩의 협업과 요청 공유를 위한 운영 시작"
+              desc="팀 단위 공유와 비교·요청 연결 시작"
               price={fmt(Math.round(TEAM_MONTHLY * discount))}
               period="/월"
-              features={["최대 5인 협업", "비교 결과 및 요청 이력 공유", "입고·재고 상태 공동 확인"]}
+              features={["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"]}
               cta="무료 체험 시작"
               ctaStyle="outline"
             />
@@ -140,10 +140,10 @@ export default function PricingPage() {
             {/* Business — featured */}
             <PlanCard
               name="Business"
-              desc="팀 단위를 넘어 실제 운영 큐와 입고·재고 관리까지 연결"
+              desc="요청, 발주 준비, 입고·재고까지 운영 연결"
               price={fmt(Math.round(BUSINESS_MONTHLY * discount))}
               period="/월"
-              features={["비교·요청 생성 워크플로우", "발주 준비 큐와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"]}
+              features={["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"]}
               cta="플랜 선택"
               ctaStyle="primary"
               featured
@@ -152,9 +152,9 @@ export default function PricingPage() {
             {/* Enterprise */}
             <PlanCard
               name="Enterprise"
-              desc="보안·연동·멀티 사이트 운영이 필요한 조직"
+              desc="조직 기준, 보안, 내부 시스템 연결까지 확장"
               price="별도 문의"
-              features={["SSO · SAML · 보안 정책 적용", "ERP / LIMS / 내부 시스템 연동", "다기관 운영과 전담 지원"]}
+              features={["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"]}
               cta="도입 상담"
               ctaStyle="primaryOutline"
             />
@@ -169,13 +169,13 @@ export default function PricingPage() {
             border: "1px solid rgba(255,255,255,0.08)",
             color: S.onSurfaceVariant,
           }}>
-            도입 구조는 단순 저장 용량보다 <span className="font-semibold" style={{ color: S.onSurface }}>운영 범위</span> 기준으로 나뉩니다. 검색과 비교 중심으로 시작한 뒤, 요청·발주 준비·입고·재고 운영으로 확장할 수 있습니다.
+            도입 구조는 단순 저장 용량보다 <span className="font-semibold" style={{ color: S.onSurface }}>도입 범위</span> 기준으로 나뉩니다. 검색과 비교 중심으로 시작한 뒤, 요청·발주 준비·입고·재고 운영으로 확장할 수 있습니다.
           </div>
         </section>
 
         {/* ══ Comparison table ═════════════════════════════════════════ */}
         <section className="max-w-7xl mx-auto px-6 md:px-8 mb-28">
-          <h2 className="text-3xl font-bold mb-12 text-center">운영 범위 비교</h2>
+          <h2 className="text-3xl font-bold mb-12 text-center">도입 범위 비교</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-left border-separate border-spacing-0 rounded-2xl overflow-hidden" style={{
               background: "rgba(25,31,49,0.76)",
@@ -193,12 +193,13 @@ export default function PricingPage() {
               </thead>
               <tbody>
                 {[
-                  { feature: "검색·후보 정리", starter: "기본", team: "공유 가능", business: "조직 공용", enterprise: "멀티 사이트", odd: false },
-                  { feature: "비교·요청 생성", starter: "—", team: "기본", business: "운영형 워크플로우", enterprise: "고급 정책 적용", odd: true },
-                  { feature: "발주 준비 / 운영 큐", starter: "—", team: "—", business: "✓", enterprise: "✓", odd: false },
-                  { feature: "입고 반영 / 재고 운영", starter: "기본 재고 등록", team: "공유 상태 확인", business: "✓", enterprise: "✓", odd: true },
-                  { feature: "예산 / 권한 기준", starter: "—", team: "기본 권한", business: "운영 기준 적용", enterprise: "고급 정책·감사", odd: false },
-                  { feature: "시스템 연동 / SSO", starter: "—", team: "기본 API", business: "확장 API", enterprise: "ERP / LIMS / SSO", odd: true },
+                  { feature: "검색·후보 정리", starter: "기본", team: "팀 공유 가능", business: "조직 공용", enterprise: "멀티 조직/사이트", odd: false },
+                  { feature: "비교·선택안 정리", starter: "—", team: "기본 비교", business: "운영형 비교 흐름", enterprise: "조직 기준 반영", odd: true },
+                  { feature: "요청 생성·기록 공유", starter: "—", team: "요청 초안/공유", business: "운영형 요청 관리", enterprise: "조직 기준 연동", odd: false },
+                  { feature: "발주 준비·운영 큐", starter: "—", team: "—", business: "포함", enterprise: "포함", odd: true },
+                  { feature: "입고 반영·재고 운영", starter: "기본 재고 등록", team: "상태 공유", business: "운영 반영", enterprise: "조직 단위 운영", odd: false },
+                  { feature: "예산·권한 기준", starter: "—", team: "기본 권한", business: "운영 기준 적용", enterprise: "고급 정책/감사", odd: true },
+                  { feature: "외부 시스템 연결", starter: "—", team: "기본 연결", business: "확장 연결", enterprise: "내부 시스템 맞춤 연동", odd: false },
                 ].map((row) => (
                   <tr key={row.feature} className="transition-colors hover:brightness-110" style={{ backgroundColor: row.odd ? S.containerLowest : "transparent", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
                     <td className="p-6 font-medium">{row.feature}</td>
@@ -257,8 +258,8 @@ export default function PricingPage() {
                 <div className="flex flex-col gap-3 text-sm">
                   {[
                     { stage: "현재", label: "검색·비교·요청 공유 중심" },
-                    { stage: "확장 시점", label: "발주 준비 큐 · 입고 반영 · 재고 운영" },
-                    { stage: "Enterprise 필요 조건", label: "SSO / 내부 시스템 연동 / 멀티 사이트 운영" },
+                    { stage: "다음 단계에서 필요한 범위", label: "발주 준비 · 입고 반영 · 재고 운영 연결" },
+                    { stage: "내부 시스템 연결이 필요한 경우", label: "조직 보안 기준 · 내부 시스템 연동 · 멀티 사이트 운영" },
                   ].map((s) => (
                     <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: `${S.containerLowest}B3`, border: "1px solid rgba(255,255,255,0.05)" }}>
                       <p className="text-[11px] mb-1" style={{ color: S.outline }}>{s.stage}</p>
