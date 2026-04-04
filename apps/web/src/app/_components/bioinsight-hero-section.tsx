@@ -398,7 +398,7 @@ export function BioInsightHeroSection() {
           연구 구매 운영을<br />하나의 흐름으로 연결합니다
         </h1>
         <p className="text-sm md:text-[15px] text-slate-300 mb-6 md:mb-7 font-medium max-w-lg">
-          검색부터 재고 운영까지, 한 화면에서 끊기지 않고 이어집니다.
+          후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면 흐름으로 이어집니다.
         </p>
         <div className="flex flex-row gap-3 mb-10 md:mb-12">
           <Link href={isLoggedIn ? "/app/search" : "/search"}>

@@ -1,104 +1,280 @@
 "use client";
 
 import {
-  Search, GitCompare, FileText, ShoppingCart,
-  PackageCheck, Warehouse, ClipboardList, History,
+  PackageCheck, AlertTriangle, Clock, RotateCcw,
+  MapPin, Thermometer, ChevronRight, ArrowRight,
 } from "lucide-react";
 
 /*
- * ── Product Overview Section ─────────────────────────────────────
- *  dark proof → LIFTED support layer → dark footer
- *  아이콘 기반 제품 흐름 요약. CTA 반복 없음.
- * ─────────────────────────────────────────────────────────────────
+ * ── Support Proof Section ───────────────────────────────────────
+ *  목업 2: 입고 반영과 재고 운영 (operations closure layer)
+ *  hero 목업 1(발주 전환 큐)과 역할 분리:
+ *    목업 1 = action (결정·확정·발주 준비)
+ *    목업 2 = closure (입고·재고 truth·부족·재주문)
+ * ────────────────────────────────────────────────────────────────
  */
 
-const FEATURES = [
+/* ── Color tokens — proof용, 목업 1보다 약간 밝은 surface ── */
+const C = {
+  base: "#162032",
+  elevated: "#1F2D46",
+  sunken: "#111B2C",
+  divider: "#263850",
+  dividerSubtle: "#1E304A",
+  text1: "#F8FAFC",
+  text2: "#D4DEE8",
+  text3: "#8FA4BC",
+  text4: "#6A829C",
+  accent: "#3B82F6",
+} as const;
+
+const BADGE = {
+  red:    { bg: "rgba(239,68,68,0.14)", text: "#FCA5A5", border: "rgba(239,68,68,0.3)" },
+  amber:  { bg: "rgba(245,158,11,0.14)", text: "#FCD34D", border: "rgba(245,158,11,0.3)" },
+  blue:   { bg: "rgba(59,130,246,0.14)", text: "#93C5FD", border: "rgba(59,130,246,0.3)" },
+  emerald:{ bg: "rgba(16,185,129,0.14)", text: "#6EE7B7", border: "rgba(16,185,129,0.3)" },
+} as const;
+
+const INVENTORY_ITEMS = [
   {
-    icon: Search,
-    title: "시약·장비 검색",
-    desc: "이건 찾으면 바로 비교·견적까지 연결",
+    id: "inv-001",
+    title: "Gibco FBS (500mL)",
+    status: "만료 임박",
+    statusColor: "red" as const,
+    sub: "남은 12일 · 잔량 2병",
+    action: "재주문 검토",
+    selected: true,
   },
   {
-    icon: ClipboardList,
-    title: "후보 정리",
-    desc: "후보제품을 리스트로 정리·관리",
+    id: "inv-002",
+    title: "DMEM Medium (500mL)",
+    status: "재주문 필요",
+    statusColor: "amber" as const,
+    sub: "안전재고 미만 · 잔량 1병",
+    action: "재주문 검토",
+    selected: false,
   },
   {
-    icon: GitCompare,
-    title: "비교·선택안 확정",
-    desc: "사양·가격·납기를 한눈에 비교",
-  },
-  {
-    icon: FileText,
-    title: "요청 생성",
-    desc: "견적·구매요청서를 자동으로 생성",
-  },
-  {
-    icon: ShoppingCart,
-    title: "발주 준비",
-    desc: "PO 전환부터 공급사 발송 준비까지",
-  },
-  {
-    icon: PackageCheck,
-    title: "입고 반영",
-    desc: "입고 확인·검수 기록을 즉시 반영",
-  },
-  {
-    icon: Warehouse,
-    title: "재고 운영",
-    desc: "실시간 재고 조회·위치 추적",
-  },
-  {
-    icon: History,
-    title: "운영 이력 관리",
-    desc: "전체 흐름의 변경·승인 이력 관리",
+    id: "inv-003",
+    title: "PBS Solution (1L)",
+    status: "입고 미처리",
+    statusColor: "blue" as const,
+    sub: "입고 3건 · Lot 정보 미입력",
+    action: "입고 반영",
+    selected: false,
   },
 ];
+
+const RAIL_DETAIL = {
+  product: "Gibco FBS (500mL)",
+  lot: "LOT-2026-0387",
+  expiry: "2026-04-16",
+  location: "냉장고 A-03",
+  remaining: "2병 (500mL × 2)",
+  lastReceived: "2026-03-22",
+};
+
+function InventoryOpsMockupContent() {
+  return (
+    <div className="flex flex-col md:flex-row" style={{ backgroundColor: C.base }}>
+
+      {/* Left: Inventory list */}
+      <div className="flex-1 md:border-r" style={{ borderColor: C.divider }}>
+        {/* KPI strip */}
+        <div className="grid grid-cols-4 gap-px" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+          {[
+            { label: "부족/품절", value: "5", color: "#EF4444" },
+            { label: "만료 임박", value: "2", color: "#F59E0B" },
+            { label: "재주문 필요", value: "4", color: "#3B82F6" },
+            { label: "입고 대기", value: "1", color: "#10B981" },
+          ].map((kpi) => (
+            <div key={kpi.label} className="px-2.5 md:px-3 py-2" style={{ backgroundColor: C.base }}>
+              <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>
+              <p className="text-[12px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Tabs */}
+        <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.dividerSubtle}`, borderTop: `1px solid ${C.dividerSubtle}` }}>
+          <div className="flex items-center gap-1">
+            {["전체 24", "조치 필요 7", "만료 임박 2", "정상 15"].map((tab, i) => (
+              <span key={tab}
+                className="text-[10px] font-medium px-2 py-1 rounded-md cursor-default"
+                style={{
+                  color: i === 0 ? C.text1 : C.text4,
+                  backgroundColor: i === 0 ? C.elevated : "transparent",
+                }}
+              >{tab}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Rows */}
+        <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
+          {INVENTORY_ITEMS.map((item) => (
+            <div key={item.id}
+              className="px-4 py-3 cursor-default"
+              style={{ backgroundColor: item.selected ? C.elevated : C.base }}
+            >
+              <div className="flex items-center gap-1.5 mb-1">
+                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: BADGE[item.statusColor].bg, color: BADGE[item.statusColor].text, border: `1px solid ${BADGE[item.statusColor].border}` }}
+                >{item.status}</span>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[12px] font-bold leading-snug truncate"
+                    style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
+                  >{item.title}</p>
+                  <p className="text-[10px] mt-0.5" style={{ color: C.text3 }}>{item.sub}</p>
+                </div>
+
+                <button className="text-[10px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 whitespace-nowrap flex-shrink-0"
+                  style={{
+                    backgroundColor: item.selected ? C.accent : "transparent",
+                    color: item.selected ? "#FFFFFF" : C.text2,
+                    border: item.selected ? "none" : `1px solid ${C.divider}`,
+                  }}>
+                  {item.action}<ChevronRight className="h-2.5 w-2.5" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right: Detail rail */}
+      <div className="md:w-[280px] flex-shrink-0 hidden md:block" style={{ backgroundColor: "#1A2840" }}>
+        {/* Selected item header */}
+        <div className="px-4 py-2.5" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+            style={{ backgroundColor: BADGE.red.bg, color: BADGE.red.text, border: `1px solid ${BADGE.red.border}` }}
+          >만료 임박</span>
+          <p className="text-[11px] font-semibold mt-1 truncate" style={{ color: C.text1 }}>{RAIL_DETAIL.product}</p>
+        </div>
+
+        {/* Detail fields */}
+        <div className="px-4 py-3 space-y-2.5">
+          {[
+            { icon: PackageCheck, label: "Lot", value: RAIL_DETAIL.lot },
+            { icon: Clock, label: "유효기간", value: RAIL_DETAIL.expiry, highlight: true },
+            { icon: MapPin, label: "보관 위치", value: RAIL_DETAIL.location },
+            { icon: Thermometer, label: "잔량", value: RAIL_DETAIL.remaining },
+          ].map((field) => (
+            <div key={field.label} className="flex items-start gap-2">
+              <field.icon className="h-3 w-3 mt-0.5 flex-shrink-0" style={{ color: C.text4 }} strokeWidth={1.8} />
+              <div className="min-w-0">
+                <p className="text-[9px] font-medium" style={{ color: C.text4 }}>{field.label}</p>
+                <p className="text-[11px] font-semibold" style={{ color: field.highlight ? "#FCA5A5" : "#FFFFFF" }}>{field.value}</p>
+              </div>
+            </div>
+          ))}
+          <div className="flex items-start gap-2">
+            <RotateCcw className="h-3 w-3 mt-0.5 flex-shrink-0" style={{ color: C.text4 }} strokeWidth={1.8} />
+            <div className="min-w-0">
+              <p className="text-[9px] font-medium" style={{ color: C.text4 }}>최근 입고</p>
+              <p className="text-[11px] font-semibold" style={{ color: "#FFFFFF" }}>{RAIL_DETAIL.lastReceived}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="px-3 py-2.5 space-y-1.5" style={{ borderTop: `1px solid ${C.dividerSubtle}` }}>
+          <button className="w-full text-[11px] font-semibold px-3 py-2 rounded-lg flex items-center justify-center gap-1.5 text-white"
+            style={{ backgroundColor: C.accent }}>
+            재주문 검토 <ArrowRight className="h-3 w-3" />
+          </button>
+          <div className="flex gap-1.5">
+            <button className="flex-1 text-[10px] font-medium px-2 py-1.5 rounded-lg text-center"
+              style={{ color: C.text2, border: `1px solid ${C.divider}` }}>
+              입고 반영
+            </button>
+            <button className="flex-1 text-[10px] font-medium px-2 py-1.5 rounded-lg text-center"
+              style={{ color: C.text2, border: `1px solid ${C.divider}` }}>
+              Lot 수정
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 export function FinalCTASection() {
   return (
     <section className="relative" style={{ backgroundColor: "#334155" }}>
-      {/* Readability shield — hero 잔여 effect 차단 */}
+      {/* Readability shield */}
       <div className="absolute inset-x-0 top-0 h-24 pointer-events-none" style={{
         background: "linear-gradient(to bottom, #334155 0%, #334155 100%)",
       }} />
-      <div className="relative mx-auto max-w-[1100px] px-5 md:px-8 pt-20 md:pt-28 pb-16 md:pb-24">
 
-        {/* Heading — mockup 영향권 밖 safe zone */}
-        <div className="text-center mb-10 md:mb-14">
-          <h2 className="text-xl md:text-[28px] font-bold tracking-tight mb-3" style={{ color: "#F8FAFC" }}>
-            제품 흐름 한눈에 보기
-          </h2>
-          <p className="text-sm md:text-[15px] font-medium" style={{ color: "#E2E8F0" }}>
-            검색부터 재고 운영까지, 하나의 워크벤치에서 끊기지 않고 이어집니다.
-          </p>
-        </div>
+      <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 pt-20 md:pt-28 pb-16 md:pb-24">
 
-        {/* Icon Grid: 4col x 2row (desktop), 2col x 4row (mobile) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-          {FEATURES.map((f) => (
+        {/* 좌측 텍스트 + 우측 목업 */}
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 items-center">
+
+          {/* Left: Copy */}
+          <div className="lg:w-[340px] flex-shrink-0 text-center lg:text-left">
+            <h2 className="text-xl md:text-[28px] font-bold tracking-tight mb-4 leading-tight" style={{ color: "#F8FAFC" }}>
+              입고 이후 재고 운영까지<br />끊기지 않습니다
+            </h2>
+            <p className="text-sm md:text-[15px] font-medium mb-8 leading-relaxed" style={{ color: "#E2E8F0" }}>
+              입고 반영, Lot·유효기간 관리, 부족 판단과 재주문 검토를 하나의 흐름으로 이어갑니다.
+            </p>
+
+            {/* Supporting points */}
+            <div className="flex flex-col gap-3">
+              {[
+                { icon: PackageCheck, text: "입고 즉시 재고 반영" },
+                { icon: Clock, text: "Lot / 유효기간 추적" },
+                { icon: AlertTriangle, text: "부족·재주문 판단" },
+              ].map((pt) => (
+                <div key={pt.text} className="flex items-center gap-2.5 justify-center lg:justify-start">
+                  <div className="w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: "rgba(59,130,246,0.12)" }}>
+                    <pt.icon className="h-3.5 w-3.5" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
+                  </div>
+                  <span className="text-[13px] font-medium" style={{ color: "#D4DEE8" }}>{pt.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: Mockup 2 — 재고 운영 */}
+          <div className="flex-1 min-w-0 w-full">
             <div
-              key={f.title}
-              className="rounded-xl px-4 py-5 md:py-6 flex flex-col items-center text-center"
+              className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
-                backgroundColor: "#2B3749",
-                border: "1px solid rgba(255,255,255,0.06)",
+                backgroundColor: C.base,
+                border: "1px solid rgba(255,255,255,0.12)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 12px 40px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.25)",
               }}
             >
+              {/* Top edge highlight */}
+              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.15) 50%, transparent 90%)" }} />
+
+              {/* Title bar */}
               <div
-                className="w-10 h-10 rounded-lg flex items-center justify-center mb-3"
-                style={{ backgroundColor: "rgba(59,130,246,0.12)" }}
+                className="flex items-center px-3 md:px-4 py-2 gap-3"
+                style={{ backgroundColor: "#0E1726", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <f.icon className="h-5 w-5" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
+                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
+                </div>
+                <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 재고 운영 · 입고 반영</span>
+                <div className="ml-auto hidden sm:flex items-center gap-2">
+                  <span className="text-[9px] md:text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6EE7B7" }}>● LIVE</span>
+                </div>
               </div>
-              <p className="text-[13px] md:text-sm font-semibold mb-1" style={{ color: "#F1F5F9" }}>
-                {f.title}
-              </p>
-              <p className="text-[11px] md:text-xs leading-relaxed" style={{ color: "#B0BEC5" }}>
-                {f.desc}
-              </p>
+
+              <InventoryOpsMockupContent />
             </div>
-          ))}
+          </div>
         </div>
       </div>
     </section>
