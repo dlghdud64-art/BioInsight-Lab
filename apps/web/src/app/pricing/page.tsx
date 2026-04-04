@@ -106,9 +106,9 @@ export default function PricingPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left text-sm">
                 {[
                   { stage: "1단계", label: "검색·후보 정리" },
-                  { stage: "2단계", label: "비교·요청 생성" },
-                  { stage: "3단계", label: "발주 준비·입고 반영" },
-                  { stage: "4단계", label: "재고 운영·권한·연동" },
+                  { stage: "2단계", label: "비교·선택안 정리" },
+                  { stage: "3단계", label: "요청 생성·발주 준비" },
+                  { stage: "4단계", label: "입고 반영·재고 운영" },
                 ].map((s) => (
                   <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
                     <p className="text-[11px] mb-1" style={{ color: S.secondary }}>{s.stage}</p>
@@ -143,7 +143,7 @@ export default function PricingPage() {
               price={fmt(Math.round(BUSINESS_MONTHLY * discount))}
               period="/월"
               features={["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"]}
-              cta="플랜 선택"
+              cta="도입 시작"
               featured
             />
             <PlanCard
@@ -168,8 +168,8 @@ export default function PricingPage() {
         </section>
 
         {/* ══ Comparison table — STATE MATRIX ═════════════════════════ */}
-        <section className="max-w-7xl mx-auto px-6 md:px-8 mb-28" style={{ backgroundColor: S.slatePlane, marginTop: 0 }}>
-          <div className="py-20 -mx-6 md:-mx-8 px-6 md:px-8" style={{ backgroundColor: S.slatePlane }}>
+        <section className="py-20" style={{ backgroundColor: S.slatePlane }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8">
             <h2 className="text-3xl font-bold mb-12 text-center">도입 범위 비교</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-left border-separate border-spacing-0 rounded-2xl overflow-hidden" style={{
@@ -187,9 +187,9 @@ export default function PricingPage() {
                 </thead>
                 <tbody>
                   {([
-                    { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", enterprise: "check" },
-                    { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", enterprise: "check" },
-                    { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", enterprise: "check" },
+                    { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
+                    { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
+                    { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
                     { feature: "발주 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
                     { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
                     { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
