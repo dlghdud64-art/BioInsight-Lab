@@ -109,11 +109,11 @@ export function OpsConsoleMockupContent() {
 
               {/* Left: Queue */}
               <div className="flex-1 md:border-r" style={{ borderColor: C.divider }}>
-                <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
-                  <div className="flex items-center gap-1">
+                <div className="px-3 md:px-4 py-2 overflow-x-auto" style={{ borderBottom: `1px solid ${C.dividerSubtle}` }}>
+                  <div className="flex items-center gap-1 min-w-max">
                     {["전체 8", "선택안 검토 4", "발주 가능 3", "보류 1"].map((tab, i) => (
                       <span key={tab}
-                        className="text-[10px] font-medium px-2 py-1 rounded-md cursor-default"
+                        className="text-[9px] md:text-[10px] font-medium px-1.5 md:px-2 py-1 rounded-md cursor-default whitespace-nowrap"
                         style={{
                           color: i === 0 ? C.text1 : C.text4,
                           backgroundColor: i === 0 ? C.elevated : "transparent",
@@ -126,50 +126,37 @@ export function OpsConsoleMockupContent() {
                 <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
                   {QUEUE_ITEMS.map((item) => (
                     <div key={item.id}
-                      className="px-4 py-3 cursor-default"
+                      className="px-3 md:px-4 py-2.5 md:py-3 cursor-default"
                       style={{ backgroundColor: item.selected ? C.elevated : C.base }}
                     >
-                      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <span className="text-[8px] md:text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                           style={{ backgroundColor: BADGE[item.statusColor].bg, color: BADGE[item.statusColor].text, border: `1px solid ${BADGE[item.statusColor].border}` }}
                         >{item.statusLabel}</span>
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full"
-                          style={{ backgroundColor: BADGE.emerald.bg, color: BADGE.emerald.text, border: `1px solid ${BADGE.emerald.border}` }}
-                        >{item.approvalLabel}</span>
                         {item.blockerType && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
+                          <span className="text-[8px] md:text-[9px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5"
                             style={{ backgroundColor: BADGE.amber.bg, color: BADGE.amber.text, border: `1px solid ${BADGE.amber.border}` }}
                           ><AlertTriangle className="h-2 w-2" />{item.blockerType}</span>
                         )}
-                        <span className="text-[9px] ml-auto" style={{ color: C.text4 }}>{item.daysAgo}일 전</span>
                       </div>
 
-                      <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start justify-between gap-2 md:gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-[12px] font-bold leading-snug truncate"
+                          <p className="text-[11px] md:text-[12px] font-bold leading-snug truncate"
                             style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
                           >{item.title}</p>
-                          <p className="text-[10px] truncate mb-1" style={{ color: C.text3 }}>{item.summary}</p>
-
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-[11px] font-bold" style={{ color: "#FFFFFF" }}>{item.price}</span>
-                            <span className={`text-[9px] flex items-center gap-0.5 font-medium ${item.aiColor === "emerald" ? "text-emerald-300" : "text-amber-300"}`}>
-                              <Sparkles className="h-2.5 w-2.5" />{item.aiLabel}
-                            </span>
-                            <span className="text-[9px] text-emerald-300 flex items-center gap-0.5">
-                              <Truck className="h-2.5 w-2.5" />회신 {item.replies}
-                            </span>
-                            <span className="text-[9px] font-medium" style={{ color: C.text3 }}>추천: {item.recommended}</span>
-                          </div>
+                          <p className="text-[9px] md:text-[10px] mt-0.5" style={{ color: C.text3 }}>
+                            회신 {item.replies} · {item.price}
+                          </p>
                         </div>
 
-                        <button className="text-[10px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 whitespace-nowrap flex-shrink-0 mt-0.5"
+                        <button className="text-[9px] md:text-[10px] font-semibold px-2 md:px-3 py-1 md:py-1.5 rounded-lg flex items-center gap-0.5 md:gap-1 whitespace-nowrap flex-shrink-0 mt-0.5"
                           style={{
                             backgroundColor: item.ctaPrimary ? C.accent : "transparent",
                             color: item.ctaPrimary ? "#FFFFFF" : C.text2,
                             border: item.ctaPrimary ? "none" : `1px solid ${C.divider}`,
                           }}>
-                          {item.ctaLabel}<ChevronRight className="h-2.5 w-2.5" />
+                          {item.ctaLabel}<ChevronRight className="h-2 w-2 md:h-2.5 md:w-2.5" />
                         </button>
                       </div>
                     </div>

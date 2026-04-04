@@ -80,27 +80,27 @@ function InventoryOpsMockupContent() {
 
       {/* Left: Inventory list */}
       <div className="flex-1 md:border-r" style={{ borderColor: C.divider }}>
-        {/* KPI strip */}
-        <div className="grid grid-cols-4 gap-px" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
+        {/* KPI strip — 모바일 2x2, 데스크톱 4col */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
           {[
             { label: "부족/품절", value: "5", color: "#EF4444" },
             { label: "만료 임박", value: "2", color: "#F59E0B" },
             { label: "재주문 필요", value: "4", color: "#3B82F6" },
             { label: "입고 대기", value: "1", color: "#10B981" },
           ].map((kpi) => (
-            <div key={kpi.label} className="px-2.5 md:px-3 py-2" style={{ backgroundColor: C.base }}>
-              <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>
-              <p className="text-[12px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
+            <div key={kpi.label} className="px-2 md:px-3 py-1.5 md:py-2" style={{ backgroundColor: C.base }}>
+              <p className="text-[7px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>
+              <p className="text-[11px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
             </div>
           ))}
         </div>
 
-        {/* Tabs */}
-        <div className="px-4 py-2" style={{ borderBottom: `1px solid ${C.dividerSubtle}`, borderTop: `1px solid ${C.dividerSubtle}` }}>
-          <div className="flex items-center gap-1">
+        {/* Tabs — 모바일 스크롤 가능 */}
+        <div className="px-3 md:px-4 py-2 overflow-x-auto" style={{ borderBottom: `1px solid ${C.dividerSubtle}`, borderTop: `1px solid ${C.dividerSubtle}` }}>
+          <div className="flex items-center gap-1 min-w-max">
             {["전체 24", "조치 필요 7", "만료 임박 2", "정상 15"].map((tab, i) => (
               <span key={tab}
-                className="text-[10px] font-medium px-2 py-1 rounded-md cursor-default"
+                className="text-[9px] md:text-[10px] font-medium px-1.5 md:px-2 py-1 rounded-md cursor-default whitespace-nowrap"
                 style={{
                   color: i === 0 ? C.text1 : C.text4,
                   backgroundColor: i === 0 ? C.elevated : "transparent",
@@ -114,30 +114,30 @@ function InventoryOpsMockupContent() {
         <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
           {INVENTORY_ITEMS.map((item) => (
             <div key={item.id}
-              className="px-4 py-3 cursor-default"
+              className="px-3 md:px-4 py-2.5 md:py-3 cursor-default"
               style={{ backgroundColor: item.selected ? C.elevated : C.base }}
             >
               <div className="flex items-center gap-1.5 mb-1">
-                <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
+                <span className="text-[8px] md:text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                   style={{ backgroundColor: BADGE[item.statusColor].bg, color: BADGE[item.statusColor].text, border: `1px solid ${BADGE[item.statusColor].border}` }}
                 >{item.status}</span>
               </div>
 
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-2 md:gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12px] font-bold leading-snug truncate"
+                  <p className="text-[11px] md:text-[12px] font-bold leading-snug truncate"
                     style={{ color: item.selected ? "#FFFFFF" : C.text1 }}
                   >{item.title}</p>
-                  <p className="text-[10px] mt-0.5" style={{ color: C.text3 }}>{item.sub}</p>
+                  <p className="text-[9px] md:text-[10px] mt-0.5" style={{ color: C.text3 }}>{item.sub}</p>
                 </div>
 
-                <button className="text-[10px] font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1 whitespace-nowrap flex-shrink-0"
+                <button className="text-[9px] md:text-[10px] font-semibold px-2 md:px-3 py-1 md:py-1.5 rounded-lg flex items-center gap-0.5 md:gap-1 whitespace-nowrap flex-shrink-0"
                   style={{
                     backgroundColor: item.selected ? C.accent : "transparent",
                     color: item.selected ? "#FFFFFF" : C.text2,
                     border: item.selected ? "none" : `1px solid ${C.divider}`,
                   }}>
-                  {item.action}<ChevronRight className="h-2.5 w-2.5" />
+                  {item.action}<ChevronRight className="h-2 w-2 md:h-2.5 md:w-2.5" />
                 </button>
               </div>
             </div>
@@ -249,27 +249,19 @@ export function FinalCTASection() {
               className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
                 backgroundColor: C.base,
-                border: "1px solid rgba(255,255,255,0.12)",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.05), 0 12px 40px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.25)",
+                border: "1px solid rgba(148,163,184,0.14)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 12px 40px rgba(0,0,0,0.4), 0 4px 16px rgba(0,0,0,0.25), 0 0 20px rgba(59,130,246,0.05)",
               }}
             >
               {/* Top edge highlight */}
-              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.15) 50%, transparent 90%)" }} />
+              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 15%, rgba(255,255,255,0.12) 50%, transparent 85%)" }} />
 
-              {/* Title bar */}
+              {/* Title bar — 장식 없는 단순 bar */}
               <div
-                className="flex items-center px-3 md:px-4 py-2 gap-3"
+                className="flex items-center px-3 md:px-4 py-2"
                 style={{ backgroundColor: "#0E1726", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
               >
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
-                  <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
-                </div>
-                <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 재고 운영 · 입고 반영</span>
-                <div className="ml-auto hidden sm:flex items-center gap-2">
-                  <span className="text-[9px] md:text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6EE7B7" }}>● LIVE</span>
-                </div>
+                <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#7A8BA3" }}>LabAxis — 재고 운영</span>
               </div>
 
               <InventoryOpsMockupContent />

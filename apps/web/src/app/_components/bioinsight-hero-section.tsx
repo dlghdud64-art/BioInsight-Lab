@@ -413,44 +413,41 @@ export function BioInsightHeroSection() {
           </Link>
         </div>
 
+        {/* ── Mockup 1 캡션 ── */}
+        <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5" style={{ color: "#94A3B8" }}>
+          선택안 확정부터 발주 준비까지 한 화면에서 이어집니다
+        </p>
+
         {/* ── Hero Mockup — 제품이 주인공 ── */}
         <div className="relative w-full" style={{ maxWidth: 1100 }}>
-          {/* Back-glow — 상단+좌우만, 하단 bleed 없음 */}
+          {/* Shadow + restrained blue halo — enterprise object 분리감 */}
           <div
-            className="absolute -inset-x-4 md:-inset-x-8 -top-4 md:-top-8 rounded-2xl pointer-events-none"
+            className="absolute -inset-x-3 md:-inset-x-6 -top-3 md:-top-6 rounded-2xl pointer-events-none"
             style={{
               bottom: "0",
-              background: "radial-gradient(ellipse 70% 40% at 50% 30%, rgba(0,0,0,0.3) 0%, transparent 100%)",
-              filter: "blur(20px)",
+              background: "radial-gradient(ellipse 80% 50% at 50% 40%, rgba(30,60,120,0.15) 0%, transparent 100%)",
+              filter: "blur(16px)",
             }}
           />
 
-          {/* Window frame — hero 배경에서 확실히 분리 */}
+          {/* Product frame — 정제된 운영형 오브젝트 */}
           <div
             className="relative rounded-xl md:rounded-2xl overflow-hidden"
             style={{
               backgroundColor: "#131B2E",
-              border: "1px solid rgba(255,255,255,0.14)",
-              boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 16px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3)",
+              border: "1px solid rgba(148,163,184,0.16)",
+              boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 16px 48px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3), 0 0 24px rgba(59,130,246,0.06)",
             }}
           >
             {/* Top edge highlight — 오브젝트 상단 빛 */}
             <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.18) 50%, transparent 90%)" }} />
 
-            {/* Title bar */}
+            {/* Title bar — 장식 없는 단순 bar */}
             <div
-              className="flex items-center px-3 md:px-4 py-2 gap-3"
+              className="flex items-center px-3 md:px-4 py-2"
               style={{ backgroundColor: "#0C1322", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <div className="flex items-center gap-1.5">
-                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FF5F57" }} />
-                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#FEBC2E" }} />
-                <div className="w-2 h-2 md:w-2.5 md:h-2.5 rounded-full" style={{ backgroundColor: "#28C840" }} />
-              </div>
-              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#94A3B8" }}>LabAxis — 발주 전환 큐 · 선택안 확정</span>
-              <div className="ml-auto hidden sm:flex items-center gap-2">
-                <span className="text-[9px] md:text-[10px] font-medium px-1.5 py-0.5 rounded" style={{ backgroundColor: "rgba(16,185,129,0.12)", color: "#6EE7B7" }}>● LIVE</span>
-              </div>
+              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#7A8BA3" }}>LabAxis — 발주 전환 큐</span>
             </div>
 
             {/* KPI bar — "작동 중" 인상 */}
