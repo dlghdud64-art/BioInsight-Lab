@@ -4,16 +4,16 @@ import dynamic from "next/dynamic";
 
 const FinalCTASection = dynamic(
   () => import("./_components/final-cta-section").then((mod) => ({ default: mod.FinalCTASection })),
-  { loading: () => <div className="h-48 w-full" style={{ backgroundColor: "#0E1B2E" }} /> }
+  { loading: () => <div className="h-48 w-full" style={{ backgroundColor: "#060e1e" }} /> }
 );
 
 /*
  * ── Landing Page ──────────────────────────────────────────────────
- *  색상 리듬: dark hero (with mockup) → LIFTED support → dark footer
+ *  색상 리듬: dark hero → dark closure (card floats) → dark footer
  *
- *  1. Hero (#081425)       headline + CTA + inline mockup (제품이 주인공)
- *  2. Support (#334155)    제품 흐름 아이콘 그리드
- *  3. Footer (#020617)     dark close layer
+ *  1. Hero (#081425)       headline + CTA + inline mockup
+ *  2. Closure (#060e1e)    dark field + floating closure card
+ *  3. Footer (#040c1a)     dark close layer
  * ────────────────────────────────────────────────────────────────────
  */
 export default function HomePage() {

@@ -206,11 +206,16 @@ function InventoryOpsMockupContent() {
 export function FinalCTASection() {
   return (
     <section className="relative" style={{
-      background: "linear-gradient(to bottom, #0E1B2E 0%, #122038 40%, #152540 70%, #0B1526 100%)",
+      background: "linear-gradient(to bottom, #060e1e 0%, #081425 50%, #050d1b 100%)",
     }}>
       {/* Top separation — hero와 이어지는 미세한 경계 */}
       <div className="absolute inset-x-0 top-0 h-px" style={{
-        background: "linear-gradient(90deg, transparent 25%, rgba(148,163,184,0.10) 50%, transparent 75%)",
+        background: "linear-gradient(90deg, transparent 25%, rgba(148,163,184,0.08) 50%, transparent 75%)",
+      }} />
+
+      {/* Restrained center halo — closure card를 띄워주는 은은한 빛 */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: "radial-gradient(ellipse 600px 400px at 58% 55%, rgba(59,130,246,0.04), transparent 70%)",
       }} />
 
       <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 pt-14 md:pt-20 pb-20 md:pb-32">
@@ -236,27 +241,27 @@ export function FinalCTASection() {
               ].map((pt) => (
                 <div key={pt.text} className="flex items-center gap-2 justify-center lg:justify-start">
                   <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "rgba(59,130,246,0.10)" }}>
+                    style={{ backgroundColor: "rgba(59,130,246,0.08)" }}>
                     <pt.icon className="h-3 w-3" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-[12px] md:text-[13px] font-medium" style={{ color: "#B8C7D9" }}>{pt.text}</span>
+                  <span className="text-[12px] md:text-[13px] font-medium" style={{ color: "#8A9AB5" }}>{pt.text}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Right: Mockup 2 — scale 확대, 운영 closure proof */}
+          {/* Right: Mockup 2 — closure card, dark field 위에 떠 있는 object */}
           <div className="flex-1 min-w-0 w-full">
             <div
               className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
                 backgroundColor: C.base,
-                border: "1px solid rgba(148,163,184,0.22)",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.06), 0 20px 56px rgba(0,0,0,0.5), 0 8px 24px rgba(0,0,0,0.35), 0 0 32px rgba(59,130,246,0.10), 0 0 64px rgba(59,130,246,0.05)",
+                border: "1px solid rgba(148,163,184,0.18)",
+                boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4), 0 0 40px rgba(59,130,246,0.06)",
               }}
             >
-              {/* Top edge highlight */}
-              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.22) 50%, transparent 95%)" }} />
+              {/* Top edge highlight — card를 띄워주는 얇은 하이라이트 */}
+              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 8%, rgba(255,255,255,0.18) 50%, transparent 92%)" }} />
 
               {/* Title bar */}
               <div
@@ -271,6 +276,11 @@ export function FinalCTASection() {
           </div>
         </div>
       </div>
+
+      {/* Bottom dark falloff — footer로 자연스럽게 닫히는 gradient */}
+      <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none" style={{
+        background: "linear-gradient(to bottom, transparent, #050d1b)",
+      }} />
     </section>
   );
 }
