@@ -145,7 +145,11 @@ div.quote-table td.no-column-cell {
     --border-default: #3A4150;
     --border-strong: #455264;
 
-    /* ── shadcn/ui compat tokens (HSL) ─────────────────────────── */
+    /* ── shadcn/ui Library Compat (HSL) ──────────────────────────
+       ⚠ 아래 토큰은 shadcn/ui 컴포넌트 라이브러리 내부 전용입니다.
+         직접 bg-primary / text-secondary 등으로 호출하지 마세요.
+         Public → public-* 토큰, App → app-* 토큰, 상태 → status-* 토큰만 사용.
+       ─────────────────────────────────────────────────────────── */
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
     --card: 217 33% 17%;

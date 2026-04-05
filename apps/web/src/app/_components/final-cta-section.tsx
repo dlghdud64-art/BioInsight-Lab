@@ -32,7 +32,6 @@ const BADGE = {
   red:    { bg: "rgba(239,68,68,0.14)", text: "#FCA5A5", border: "rgba(239,68,68,0.3)" },
   amber:  { bg: "rgba(245,158,11,0.14)", text: "#FCD34D", border: "rgba(245,158,11,0.3)" },
   blue:   { bg: "rgba(59,130,246,0.14)", text: "#93C5FD", border: "rgba(59,130,246,0.3)" },
-  emerald:{ bg: "rgba(16,185,129,0.14)", text: "#6EE7B7", border: "rgba(16,185,129,0.3)" },
 } as const;
 
 const INVENTORY_ITEMS = [
@@ -86,7 +85,7 @@ function InventoryOpsMockupContent() {
             { label: "부족/품절", value: "5", color: "#EF4444" },
             { label: "만료 임박", value: "2", color: "#F59E0B" },
             { label: "재주문 필요", value: "4", color: "#3B82F6" },
-            { label: "입고 대기", value: "1", color: "#10B981" },
+            { label: "입고 대기", value: "1", color: "#3B82F6" },
           ].map((kpi) => (
             <div key={kpi.label} className="px-2 md:px-3 py-1.5 md:py-2" style={{ backgroundColor: C.base }}>
               <p className="text-[7px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>

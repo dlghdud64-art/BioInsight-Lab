@@ -11,8 +11,7 @@ import Link from "next/link";
 /*
   signal color 역할:
   blue (#adc6ff / #4d8eff) → CTA fill, active/selected state ONLY
-  emerald (#4edea3)        → capability, readiness, availability, check
-  amber (#ffb95f)          → warning, tertiary accent
+  muted accent (#8da4c2) → capability indicator, soft icon, stage label
 */
 const S = {
   bg: "#0c1324",
@@ -34,10 +33,9 @@ const S = {
   primaryContainer: "#4d8eff",
   onPrimary: "#002e6a",
   onPrimaryContainer: "#00285d",
-  secondary: "#4edea3",
-  secondaryContainer: "#00a572",
-  tertiary: "#ffb95f",
 } as const;
+
+const MUTED_ACCENT = "#8da4c2";
 
 const TEAM_MONTHLY = 129_000;
 const BUSINESS_MONTHLY = 349_000;
@@ -58,13 +56,13 @@ export default function PricingPage() {
         {/* ══ Hero — deep navy field ═════════════════════════════════ */}
         <section className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-8 text-center relative overflow-hidden">
           <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(circle at 50% 18%, rgba(78,222,163,0.12), transparent 32%), radial-gradient(circle at 50% 100%, rgba(78,222,163,0.05), transparent 40%)",
+            background: "radial-gradient(circle at 50% 18%, rgba(59,130,246,0.10), transparent 32%), radial-gradient(circle at 50% 100%, rgba(59,130,246,0.04), transparent 40%)",
           }} />
 
           <div className="relative z-10 max-w-4xl mx-auto">
-            {/* Pill — emerald capability signal */}
+            {/* Pill */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] mb-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}30`, color: S.onSurfaceVariant }}>
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: S.secondary }} />
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: S.primaryContainer }} />
               운영 범위에 맞는 단계적 도입
             </div>
 
@@ -86,13 +84,13 @@ export default function PricingPage() {
                 style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.08)" }}
               >
                 <div className="w-5 h-5 rounded-full transition-all" style={{
-                  backgroundColor: S.secondary,
+                  backgroundColor: S.primaryContainer,
                   transform: annual ? "translateX(28px)" : "translateX(0)",
                 }} />
               </button>
               <span className="font-medium" style={{ color: annual ? S.onSurface : S.outline }}>연간</span>
               {annual && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(78,222,163,0.08)", color: S.secondary, border: "1px solid rgba(78,222,163,0.15)" }}>
+                <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(59,130,246,0.08)", color: S.primary, border: "1px solid rgba(59,130,246,0.15)" }}>
                   연간 결제 10% 할인
                 </span>
               )}
@@ -111,7 +109,7 @@ export default function PricingPage() {
                   { stage: "4단계", label: "입고 반영·재고 운영" },
                 ].map((s) => (
                   <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <p className="text-[11px] mb-1" style={{ color: S.secondary }}>{s.stage}</p>
+                    <p className="text-[11px] mb-1" style={{ color: MUTED_ACCENT }}>{s.stage}</p>
                     <p className="font-semibold">{s.label}</p>
                   </div>
                 ))}
@@ -215,11 +213,11 @@ export default function PricingPage() {
             backgroundColor: S.slatePanel,
             border: `1px solid ${S.outlineVariant}20`,
           }}>
-            <div className="absolute inset-0 opacity-8 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 35%, rgba(78,222,163,0.1) 0%, transparent 70%)" }} />
+            <div className="absolute inset-0 opacity-8 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 35%, rgba(59,130,246,0.06) 0%, transparent 70%)" }} />
 
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
               <div className="text-left">
-                <p className="text-sm font-semibold tracking-wide mb-4" style={{ color: S.secondary }}>도입 설계</p>
+                <p className="text-sm font-semibold tracking-wide mb-4" style={{ color: MUTED_ACCENT }}>도입 설계</p>
                 <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
                   조직 운영에 맞는<br />도입 범위를 함께 설계합니다.
                 </h2>
@@ -246,7 +244,7 @@ export default function PricingPage() {
                     <p className="text-xs mb-1" style={{ color: S.onSurfaceVariant }}>추천 도입 흐름</p>
                     <h3 className="text-xl font-bold">Team → Business 확장</h3>
                   </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(78,222,163,0.08)", color: S.secondary, border: "1px solid rgba(78,222,163,0.15)" }}>운영 기준</span>
+                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: S.slateCardHigh, color: S.onSurfaceVariant, border: `1px solid ${S.outlineVariant}40` }}>운영 기준</span>
                 </div>
                 <div className="flex flex-col gap-3 text-sm">
                   {[
@@ -255,7 +253,7 @@ export default function PricingPage() {
                     { stage: "내부 시스템 연결이 필요한 경우", label: "조직 보안 기준 · 내부 시스템 연동 · 멀티 사이트 운영" },
                   ].map((s) => (
                     <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <p className="text-[11px] mb-1" style={{ color: S.secondary }}>{s.stage}</p>
+                      <p className="text-[11px] mb-1" style={{ color: MUTED_ACCENT }}>{s.stage}</p>
                       <p className="font-semibold">{s.label}</p>
                     </div>
                   ))}
@@ -290,7 +288,7 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
   if (value === "check") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: S.secondary }} />
+        <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: MUTED_ACCENT }} />
         {label && <span className={`text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? S.onSurface : S.onSurfaceVariant }}>{label}</span>}
       </span>
     );
@@ -315,22 +313,22 @@ function PlanCard({
       className={`p-8 rounded-2xl flex flex-col transition-all relative ${featured ? "scale-[1.02] z-10" : "hover:translate-y-[-4px]"}`}
       style={{
         backgroundColor: S.slateCard,
-        border: featured ? "1px solid rgba(78,222,163,0.25)" : `1px solid ${S.outlineVariant}20`,
+        border: featured ? "1px solid rgba(59,130,246,0.25)" : `1px solid ${S.outlineVariant}20`,
         boxShadow: featured ? "0 20px 48px rgba(0,0,0,0.25)" : "0 12px 32px rgba(0,0,0,0.15)",
       }}
     >
       {/* Top edge highlight for featured */}
       {featured && (
         <>
-          <div className="absolute inset-x-[14px] top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(78,222,163,0.4), transparent)", opacity: 0.9 }} />
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]" style={{ backgroundColor: S.secondaryContainer, color: S.onSurface }}>
+          <div className="absolute inset-x-[14px] top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.4), transparent)", opacity: 0.9 }} />
+          <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]" style={{ backgroundColor: S.slateCardHigh, color: S.onSurface, border: `1px solid ${S.outlineVariant}40` }}>
             가장 많이 선택
           </div>
         </>
       )}
 
       <div className="mb-8">
-        <h3 className="text-xl font-bold mb-2" style={{ color: featured ? S.secondary : S.onSurface }}>{name}</h3>
+        <h3 className="text-xl font-bold mb-2" style={{ color: featured ? S.primary : S.onSurface }}>{name}</h3>
         <p className="text-sm h-12" style={{ color: S.onSurfaceVariant }}>{desc}</p>
       </div>
 
@@ -342,7 +340,7 @@ function PlanCard({
       <ul className="flex flex-col gap-4 mb-12 flex-grow text-sm">
         {features.map((f) => (
           <li key={f} className="flex items-start gap-2">
-            <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: S.secondary }} />
+            <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: MUTED_ACCENT }} />
             <span>{f}</span>
           </li>
         ))}

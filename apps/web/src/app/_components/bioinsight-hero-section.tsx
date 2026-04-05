@@ -457,8 +457,8 @@ export function BioInsightHeroSection() {
             >
               {[
                 { label: "전환 대기", value: "12건", color: "#3B82F6" },
-                { label: "금주 처리", value: "₩2,450,000", color: "#10B981" },
-                { label: "검토 필요", value: "선택안 3건", color: "#F59E0B" },
+                { label: "금주 처리", value: "₩2,450,000", color: "#93C5FD" },
+                { label: "검토 필요", value: "선택안 3건", color: "#CBD5E1" },
               ].map((kpi) => (
                 <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3" style={{ backgroundColor: "#131B2E" }}>
                   <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#64748B" }}>{kpi.label}</p>

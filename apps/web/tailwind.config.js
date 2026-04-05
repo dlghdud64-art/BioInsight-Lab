@@ -45,7 +45,11 @@ module.exports = {
         "status-danger": "var(--status-danger)",
         "status-info": "var(--status-info)",
 
-        /* ══ shadcn/ui compat (기존 컴포넌트 호환) ═════════════════ */
+        /* ══ shadcn/ui Library Compat ═════════════════════════════
+           ⚠ 아래 토큰은 shadcn/ui 컴포넌트 내부 전용.
+             직접 bg-primary / text-secondary로 호출 금지.
+             Public → public-*, App → app-*, 상태 → status-* 만 사용.
+           ═══════════════════════════════════════════════════════ */
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {
