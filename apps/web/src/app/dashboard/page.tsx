@@ -525,7 +525,7 @@ export default function DashboardPage() {
         </div>
 
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
-        <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
           <CardContent className="p-3 space-y-3">
             {/* 즉시 처리 */}
             {urgentItems.length > 0 && (
@@ -565,7 +565,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 알림 */}
-        <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -590,7 +590,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 처리 이력 (축소) */}
-        <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
@@ -700,7 +700,7 @@ export default function DashboardPage() {
           </div>
 
           {/* 최근 처리 이력 */}
-          <Card className="overflow-hidden bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+          <Card className="overflow-hidden bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
@@ -733,7 +733,6 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
-        </div>
 
           {/* 지출 추이 */}
           {stats.monthlySpendingChart.length > 1 && (
@@ -801,7 +800,7 @@ export default function DashboardPage() {
         <div className="md:col-span-2 space-y-4">
 
           {/* 즉시 처리 + 추천 작업 */}
-          <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
             <CardContent className="p-4 space-y-4">
               {/* 즉시 처리 */}
               {urgentItems.length > 0 && (
@@ -857,7 +856,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 최근 알림 */}
-          <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -882,7 +881,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 견적 처리 현황 */}
-          <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl">
+          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
             <CardHeader className="pb-2 p-4">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-semibold text-white">견적 처리 현황</CardTitle>
@@ -916,17 +915,12 @@ export default function DashboardPage() {
                 </span>
               </Link>
 
-              <Link href="/dashboard/analytics" className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg hover:bg-white/[0.04] transition-colors group">
-                <TrendingUp className="h-3.5 w-3.5 text-blue-400 flex-shrink-0" />
-                <span className="text-xs text-slate-400 group-hover:text-blue-400">지출 분석 상세 보기</span>
-                <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-blue-400 transition-colors" />
-              </Link>
             </CardContent>
           </Card>
 
           {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (
-            <Card className="bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl border-l-2 border-l-red-500">
+            <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl border-l-2 border-l-red-500">
               <CardHeader className="pb-1 p-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xs font-semibold text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
