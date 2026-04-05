@@ -601,4 +601,7 @@ export default function IntroPage() {
         </section>
 
       </div>
-   
+      <MainFooter />
+    </MainLayout>
+  );
+}
