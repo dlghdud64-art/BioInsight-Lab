@@ -3,189 +3,159 @@ import { MainHeader } from "../_components/main-header";
 import { MainFooter } from "../_components/main-footer";
 import {
   Search, GitCompare, FileText, ShoppingCart, ClipboardCheck, Warehouse,
-  ArrowRight, Shield, Wallet, History,
-  BarChart3, Microscope, Users,
+  ArrowRight, ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 
-/* ── Public page palette ──────────────────────────────────────────
-  Public Role Token 체계:
-  - brand-field = hero / flagship (가장 깊은 배경)
-  - support-plane = lifted section wrapper
-  - surface-card = floating object
-  - close-layer = footer / 닫힘 장면
-  - primary-action = CTA / active / selected (blue ONLY)
-  - text-strong / body / muted = 정보 위계
-  - border-soft / strong = 경계
-
-  금지: status-* (success/warning/danger) → public에서 주연 사용 불가
-  금지: green / amber / red → large surface / wrapper / title emphasis 불가
-  허용 강조색: blue (CTA/active 전용) + white (headline)
+/* ── Dual palette ────────────────────────────────────────────────
+  Dark (hero + closing CTA):
+    deep navy brand-field → restrained blue haze → dark CTA
+  Light (editorial body):
+    near-white → soft gray-blue → white card → spacing/tonal shift
+  Blue = CTA / active only. No green, no amber, no semantic color.
 ────────────────────────────────────────────────────────────────── */
-const S = {
+const D = {
   bg: "#0c1324",
-  containerLowest: "#070d1f",
-  slatePlane: "#131a2e",
-  slatePanel: "#1a2240",
-  slateCard: "#1e2848",
-  slateCardHigh: "#243050",
-  containerLow: "#151b2d",
-  container: "#191f31",
-  containerHigh: "#23293c",
-  containerHighest: "#2e3447",
-  bright: "#33394c",
-  onSurface: "#dce1fb",
-  onSurfaceVariant: "#c2c6d6",
-  outline: "#8c909f",
-  outlineVariant: "#424754",
+  card: "#1a2240",
+  cardHigh: "#243050",
+  text1: "#dce1fb",
+  text2: "#c2c6d6",
+  text3: "#8c909f",
+  border: "#424754",
   primary: "#adc6ff",
-  primaryContainer: "#4d8eff",
+  primaryFill: "#4d8eff",
   onPrimary: "#002e6a",
-  onPrimaryContainer: "#00285d",
 } as const;
 
-/* muted blue-gray for capability indicators / progress / check */
-const MUTED_ACCENT = "#8da4c2";
+const L = {
+  bg: "#F8FAFC",
+  bgSoft: "#F1F5F9",
+  bgMuted: "#E8ECF2",
+  card: "#FFFFFF",
+  text1: "#0F172A",
+  text2: "#334155",
+  text3: "#64748B",
+  text4: "#94A3B8",
+  border: "#E2E8F0",
+  borderStrong: "#CBD5E1",
+  blue: "#3B82F6",
+  blueHover: "#2563EB",
+  blueSoft: "#DBEAFE",
+  blueText: "#1D4ED8",
+} as const;
 
 export default function IntroPage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="w-full" style={{ backgroundColor: S.bg, color: S.onSurface }}>
+      <div className="w-full">
 
         {/* ══════════════════════════════════════════════════════════════
-            1. Hero — deep navy field
+            A. Hero — dark anchor
            ══════════════════════════════════════════════════════════════ */}
-        <section className="relative min-h-[760px] flex items-center justify-center overflow-hidden px-6">
+        <section className="relative pt-32 pb-24 md:pt-40 md:pb-32 overflow-hidden" style={{ backgroundColor: D.bg, color: D.text1 }}>
           <div className="absolute inset-0 z-0 pointer-events-none">
-            <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, rgba(39,95,208,0.14) 0%, rgba(12,19,36,0) 68%)" }} />
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full blur-[140px]" style={{ backgroundColor: "rgba(77,142,255,0.04)" }} />
-            <div className="absolute top-24 right-[-120px] w-[360px] h-[360px] rounded-full blur-[110px]" style={{ backgroundColor: "rgba(77,142,255,0.03)" }} />
+            <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, rgba(39,95,208,0.12) 0%, transparent 65%)" }} />
           </div>
 
-          <div className="relative z-10 max-w-5xl text-center">
-            <div className="inline-flex items-center px-3 py-1 mb-8 rounded-full text-sm font-medium tracking-wide" style={{ backgroundColor: S.containerHighest, border: `1px solid ${S.outlineVariant}30`, color: S.onSurfaceVariant }}>
-              <span className="w-2 h-2 rounded-full mr-2 animate-pulse" style={{ backgroundColor: S.primaryContainer }} />
-              연구 구매 운영을 위한 새로운 기준
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.08]" style={{ color: S.onSurface }}>
-              시약·장비 검색부터<br />
-              구매 운영까지 <span style={{ color: S.primary }}>한 곳에서</span>
-            </h1>
-
-            <p className="text-xl md:text-2xl max-w-3xl mx-auto mb-12 leading-relaxed" style={{ color: S.onSurfaceVariant }}>
-              시약·장비 검색, 후보 정리, 비교·선택, 요청 생성, 발주 준비까지<br className="hidden md:block" />
-              분리된 구매 작업을 한 화면 흐름으로 정리합니다.
+          <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+            <p className="text-sm font-medium tracking-wide mb-6" style={{ color: D.text3 }}>
+              연구 구매 운영 플랫폼
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-14">
+            <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-bold tracking-tight mb-6 leading-[1.12]">
+              시약·장비 검색부터<br />
+              구매 운영까지 <span style={{ color: D.primary }}>한 곳에서</span>
+            </h1>
+
+            <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed" style={{ color: D.text2 }}>
+              검색, 후보 정리, 비교·선택, 요청, 발주 준비까지<br className="hidden md:block" />
+              분리된 구매 작업을 하나의 흐름으로 정리합니다.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link href="/search">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg font-bold rounded-xl shadow-lg transition-all hover:shadow-xl active:scale-95" style={{ backgroundColor: S.primary, color: S.onPrimary, boxShadow: "0 8px 32px rgba(77,142,255,0.18)" }}>
+                <button className="w-full sm:w-auto px-7 py-3.5 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-95" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
                   제품 시작하기
                 </button>
               </Link>
               <Link href="/support">
-                <button className="w-full sm:w-auto px-8 py-4 text-lg font-bold rounded-xl transition-all hover:brightness-110 active:scale-95" style={{ backgroundColor: S.containerHighest, color: S.onSurface, border: `1px solid ${S.outlineVariant}30` }}>
+                <button className="w-full sm:w-auto px-7 py-3.5 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-95" style={{ color: D.text1, border: `1px solid ${D.border}40` }}>
                   도입 문의
                 </button>
               </Link>
             </div>
-
-            {/* Operating cue 카드 패널 */}
-            <div className="max-w-3xl mx-auto rounded-3xl overflow-hidden" style={{ backgroundColor: "rgba(26,34,64,0.82)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 80px rgba(12,25,52,0.55)" }}>
-              <div className="grid sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                {[
-                  { num: "01", title: "검색 → 후보 정리", desc: "같은 화면에서 다음 비교 단계로 연결" },
-                  { num: "02", title: "비교·선택 → 요청 생성", desc: "선택안 기준과 결정 기록을 이어서 유지", active: true },
-                  { num: "03", title: "발주 준비 → 입고·재고 연결", desc: "운영 상태가 다음 반영 단계로 끊기지 않음" },
-                ].map((cue) => (
-                  <div key={cue.num} className="px-5 py-4 text-left" style={{ backgroundColor: cue.active ? "rgba(173,198,255,0.03)" : "transparent" }}>
-                    <div className="text-[11px] uppercase tracking-[0.18em] mb-2" style={{ color: S.outline }}>운영 cue {cue.num}</div>
-                    <div className="text-sm font-semibold" style={{ color: S.onSurface }}>{cue.title}</div>
-                    <div className="mt-1 text-xs" style={{ color: S.onSurfaceVariant }}>{cue.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            2. 연결 포인트 — LIFTED SLATE PLANE
+            B. Section 1 — 왜 이 제품이 필요한가 (light editorial)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-24 relative overflow-hidden" style={{ backgroundColor: S.slatePlane }}>
-          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at top, rgba(77,142,255,0.05), transparent 40%)" }} />
-          <div className="max-w-7xl mx-auto px-6 relative z-10">
+        <section className="py-20 md:py-28" style={{ backgroundColor: L.bg, color: L.text1 }}>
+          <div className="max-w-6xl mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+              {/* Left: editorial copy */}
               <div>
-                <h2 className="text-4xl font-bold mb-6 leading-tight">
-                  연구와 구매 사이의<br /><span className="text-white">끊기는 흐름을 줄입니다</span>
-                </h2>
-                <p className="text-lg mb-12 leading-relaxed" style={{ color: S.onSurfaceVariant }}>
-                  검색, 비교, 요청, 입고와 재고 기록이 분리될수록 같은 품목을 다시 찾고 같은 결정을 반복하게 됩니다. LabAxis는 반복 작업을 줄이고 구매 운영의 맥락을 이어서 볼 수 있게 정리합니다.
+                <p className="text-sm font-semibold tracking-wide mb-4" style={{ color: L.blue }}>
+                  왜 LabAxis인가
                 </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                  <div className="p-6 rounded-2xl" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(173,198,255,0.15)", boxShadow: "0 16px 48px rgba(0,0,0,0.22)" }}>
-                    <p className="text-sm mb-2 font-medium" style={{ color: S.primary }}>검색 반복 감소</p>
-                    <p className="text-2xl font-bold leading-tight" style={{ color: S.onSurface }}>후보 정리까지<br />연결</p>
-                  </div>
-                  <div className="p-6 rounded-2xl" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}20` }}>
-                    <p className="text-sm mb-2" style={{ color: S.outline }}>비교 준비 단축</p>
-                    <p className="text-2xl font-bold leading-tight" style={{ color: S.onSurface }}>선택안 검토로<br />이어짐</p>
-                  </div>
-                  <div className="p-6 rounded-2xl" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}20` }}>
-                    <p className="text-sm mb-2" style={{ color: S.outline }}>입고 이후 추적</p>
-                    <p className="text-2xl font-bold leading-tight" style={{ color: S.onSurface }}>재고 운영까지<br />유지</p>
-                  </div>
+                <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight tracking-tight" style={{ color: L.text1 }}>
+                  검색부터 재고까지,<br />
+                  끊기던 구매 흐름을<br />
+                  하나로 이어줍니다.
+                </h2>
+                <p className="text-lg leading-relaxed mb-8" style={{ color: L.text2 }}>
+                  시약과 장비를 검색할 때 이미 시작된 구매 맥락이, 비교·선택·요청·입고 과정을 거치며 끊기고, 같은 품목을 다시 찾는 일이 반복됩니다. LabAxis는 이 전체 흐름을 하나의 화면 안에서 이어줍니다.
+                </p>
+                <div className="flex flex-col gap-4">
+                  {[
+                    { label: "검색 → 후보 정리", desc: "같은 화면에서 바로 다음 비교 단계로" },
+                    { label: "비교·선택 → 요청", desc: "선택 기준과 결정 기록이 이어서 유지" },
+                    { label: "발주 → 입고·재고", desc: "운영 상태가 다음 반영까지 끊기지 않음" },
+                  ].map((item) => (
+                    <div key={item.label} className="flex items-start gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full mt-2.5 flex-shrink-0" style={{ backgroundColor: L.blue }} />
+                      <div>
+                        <span className="font-semibold" style={{ color: L.text1 }}>{item.label}</span>
+                        <span className="mx-2" style={{ color: L.text4 }}>—</span>
+                        <span style={{ color: L.text3 }}>{item.desc}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Right: progress bar panel */}
-              <div className="p-8 md:p-10 rounded-3xl" style={{ backgroundColor: S.slatePanel, border: `1px solid ${S.outlineVariant}25`, boxShadow: "0 22px 60px rgba(0,0,0,0.25)" }}>
-                <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-xl font-bold">LabAxis 운영 연결 포인트</h3>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold tracking-wide" style={{ backgroundColor: "rgba(173,198,255,0.1)", color: S.primary }}>연결됨</span>
-                </div>
-
-                <div className="flex flex-col gap-7">
-                  <div>
-                    <div className="flex justify-between mb-2 gap-4">
-                      <span className="font-medium" style={{ color: S.onSurface }}>검색 → 후보 정리</span>
-                      <span className="font-bold whitespace-nowrap" style={{ color: S.primary }}>한 화면 연결</span>
+              {/* Right: structured visual — flow connection diagram */}
+              <div className="rounded-2xl p-6 md:p-8" style={{ backgroundColor: L.card, border: `1px solid ${L.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <p className="text-xs font-semibold tracking-wide mb-6" style={{ color: L.text4 }}>LabAxis 연결 구조</p>
+                <div className="flex flex-col gap-0">
+                  {[
+                    { step: "검색", action: "후보 저장", connected: true },
+                    { step: "비교·선택", action: "선택안 확정", connected: true },
+                    { step: "요청 생성", action: "요청안 작성", connected: true },
+                    { step: "발주 준비", action: "전환·검토", connected: true },
+                    { step: "입고 반영", action: "lot·수령 기록", connected: true },
+                    { step: "재고 운영", action: "추적·재주문", connected: false },
+                  ].map((row, i) => (
+                    <div key={row.step}>
+                      <div className="flex items-center gap-4 py-3.5">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0"
+                          style={{ backgroundColor: L.blueSoft, color: L.blueText }}>
+                          {String(i + 1).padStart(2, "0")}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="font-semibold text-sm" style={{ color: L.text1 }}>{row.step}</span>
+                        </div>
+                        <span className="text-sm flex-shrink-0" style={{ color: L.text3 }}>{row.action}</span>
+                        <ChevronRight className="h-3.5 w-3.5 flex-shrink-0" style={{ color: L.text4 }} />
+                      </div>
+                      {row.connected && (
+                        <div className="ml-4 h-4 flex items-center">
+                          <div className="w-px h-full" style={{ backgroundColor: L.borderStrong }} />
+                        </div>
+                      )}
                     </div>
-                    <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: S.slateCardHigh }}>
-                      <div className="h-full rounded-full" style={{ width: "89%", backgroundColor: S.primaryContainer }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-2 gap-4">
-                      <span className="font-medium" style={{ color: S.onSurfaceVariant }}>비교 → 요청 생성</span>
-                      <span className="font-bold whitespace-nowrap" style={{ color: "rgba(173,198,255,0.7)" }}>결정 기록 유지</span>
-                    </div>
-                    <div className="h-2 w-full rounded-full overflow-hidden" style={{ backgroundColor: S.slateCardHigh }}>
-                      <div className="h-full rounded-full" style={{ width: "79%", backgroundColor: "rgba(77,142,255,0.6)" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between mb-2 gap-4">
-                      <span className="font-medium" style={{ color: S.outline }}>입고 → 재고 반영</span>
-                      <span className="font-bold whitespace-nowrap" style={{ color: "rgba(173,198,255,0.5)" }}>lot/기한 추적</span>
-                    </div>
-                    <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: S.slateCardHigh }}>
-                      <div className="h-full rounded-full" style={{ width: "72%", background: "linear-gradient(to right, rgba(77,142,255,0.35), transparent)" }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-10 rounded-2xl p-4" style={{ backgroundColor: "rgba(173,198,255,0.04)", border: "1px solid rgba(173,198,255,0.1)" }}>
-                  <div className="flex items-start gap-3">
-                    <BarChart3 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: S.onSurfaceVariant }} />
-                    <p className="text-sm font-medium" style={{ color: S.onSurfaceVariant }}>
-                      AI 보조 레이어가 후보 정리, 비교 준비, 요청 생성 전환을 돕고 작업 흐름을 끊기지 않게 이어줍니다.
-                    </p>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -193,116 +163,137 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            3. 6단계 운영 흐름
+            C. Section 2 — 제품 흐름 (soft gray-blue)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-28 overflow-hidden" style={{ backgroundColor: S.slatePanel }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4 tracking-tight">하나로 연결된 연구 구매 운영 흐름</h2>
-              <p className="max-w-2xl mx-auto text-lg" style={{ color: S.onSurfaceVariant }}>
-                검색과 선택은 의사결정 흐름으로, 발주 준비 이후는 운영 반영 흐름으로 이어집니다.
+        <section className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1 }}>
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-14">
+              <p className="text-sm font-semibold tracking-wide mb-3" style={{ color: L.blue }}>제품 흐름</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                두 흐름이 하나의 구조 안에서 이어집니다
+              </h2>
+              <p className="max-w-2xl mx-auto text-lg" style={{ color: L.text2 }}>
+                앞단 의사결정과 뒷단 운영 반영이 같은 맥락 위에서 연결됩니다.
               </p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-8">
-              <div className="rounded-3xl p-7" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}20`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] mb-2" style={{ color: S.outline }}>decision flow</div>
-                    <h3 className="text-2xl font-bold">앞단 의사결정 흐름</h3>
-                  </div>
-                  <span className="text-xs" style={{ color: S.onSurfaceVariant }}>검색 · 비교·선택 · 요청 생성</span>
+            {/* Two-row flow strip */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Decision flow */}
+              <div className="rounded-2xl p-6" style={{ backgroundColor: L.card, border: `1px solid ${L.border}` }}>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: L.blue }} />
+                  <span className="text-xs font-bold tracking-wide uppercase" style={{ color: L.text4 }}>앞단 의사결정</span>
                 </div>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-4">
                   {[
-                    { num: "01", icon: Search, title: "통합 검색", desc: "품목, 제조사, 카탈로그 기준 탐색" },
-                    { num: "02", icon: GitCompare, title: "비교·선택", desc: "대체품, 가격, 조건 비교 정리" },
-                    { num: "03", icon: FileText, title: "요청 생성", desc: "선택안 기준으로 요청안 작성" },
+                    { icon: Search, title: "통합 검색", desc: "품목·제조사·카탈로그 기준으로 탐색" },
+                    { icon: GitCompare, title: "비교·선택", desc: "대체품, 가격, 조건을 나란히 비교" },
+                    { icon: FileText, title: "요청 생성", desc: "선택안 기준으로 요청안 작성" },
                   ].map((step) => (
-                    <div key={step.num} className="rounded-2xl p-5" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div className="text-xs mb-3" style={{ color: S.outline }}>{step.num}</div>
-                      <step.icon className="h-7 w-7 mb-3" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                      <div className="font-bold mb-1">{step.title}</div>
-                      <div className="text-xs" style={{ color: S.onSurfaceVariant }}>{step.desc}</div>
+                    <div key={step.title} className="flex items-start gap-4 p-4 rounded-xl" style={{ backgroundColor: L.bgSoft }}>
+                      <step.icon className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: L.text4 }} strokeWidth={1.5} />
+                      <div>
+                        <p className="font-semibold text-sm mb-0.5" style={{ color: L.text1 }}>{step.title}</p>
+                        <p className="text-sm" style={{ color: L.text3 }}>{step.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="rounded-3xl p-7" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}20`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-[0.18em] mb-2" style={{ color: S.outline }}>operation flow</div>
-                    <h3 className="text-2xl font-bold">뒷단 운영 반영 흐름</h3>
-                  </div>
-                  <span className="text-xs" style={{ color: S.onSurfaceVariant }}>발주 준비 · 입고 반영 · 재고 운영</span>
+              {/* Operation flow */}
+              <div className="rounded-2xl p-6" style={{ backgroundColor: L.card, border: `1px solid ${L.border}` }}>
+                <div className="flex items-center gap-2 mb-5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: L.borderStrong }} />
+                  <span className="text-xs font-bold tracking-wide uppercase" style={{ color: L.text4 }}>뒷단 운영 반영</span>
                 </div>
-                <div className="grid sm:grid-cols-3 gap-4">
+                <div className="flex flex-col gap-4">
                   {[
-                    { num: "04", icon: ShoppingCart, title: "발주 준비", desc: "전환 가능 상태와 검토 항목 확인" },
-                    { num: "05", icon: ClipboardCheck, title: "입고 반영", desc: "수령 정보와 lot 기록 연결" },
-                    { num: "06", icon: Warehouse, title: "재고 운영", desc: "부족, 만료, 재주문 판단 유지" },
+                    { icon: ShoppingCart, title: "발주 준비", desc: "전환 상태와 검토 항목 확인" },
+                    { icon: ClipboardCheck, title: "입고 반영", desc: "수령 정보와 lot 기록 연결" },
+                    { icon: Warehouse, title: "재고 운영", desc: "부족, 만료, 재주문 판단 유지" },
                   ].map((step) => (
-                    <div key={step.num} className="rounded-2xl p-5" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div className="text-xs mb-3" style={{ color: S.outline }}>{step.num}</div>
-                      <step.icon className="h-7 w-7 mb-3" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                      <div className="font-bold mb-1">{step.title}</div>
-                      <div className="text-xs" style={{ color: S.onSurfaceVariant }}>{step.desc}</div>
+                    <div key={step.title} className="flex items-start gap-4 p-4 rounded-xl" style={{ backgroundColor: L.bgSoft }}>
+                      <step.icon className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: L.text4 }} strokeWidth={1.5} />
+                      <div>
+                        <p className="font-semibold text-sm mb-0.5" style={{ color: L.text1 }}>{step.title}</p>
+                        <p className="text-sm" style={{ color: L.text3 }}>{step.desc}</p>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
+            </div>
+
+            {/* Connecting line between the two */}
+            <div className="flex items-center justify-center mt-6 gap-3">
+              <div className="h-px flex-1 max-w-[120px]" style={{ backgroundColor: L.borderStrong }} />
+              <span className="text-xs font-medium px-3 py-1.5 rounded-full" style={{ color: L.text3, backgroundColor: L.card, border: `1px solid ${L.border}` }}>
+                하나의 맥락으로 이어짐
+              </span>
+              <div className="h-px flex-1 max-w-[120px]" style={{ backgroundColor: L.borderStrong }} />
             </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            4. 역할별 변화
+            D. Section 3 — 역할별 before/after (lighter neutral)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-24" style={{ backgroundColor: "#172038" }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">도입 후 달라지는 운영 흐름</h2>
-              <p style={{ color: S.onSurfaceVariant }}>역할마다 반복 업무는 줄이고 다음 작업으로 이어지는 연결성은 강화합니다.</p>
+        <section className="py-20 md:py-28" style={{ backgroundColor: L.bg, color: L.text1 }}>
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="text-center mb-14">
+              <p className="text-sm font-semibold tracking-wide mb-3" style={{ color: L.blue }}>도입 전후 비교</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                역할마다 달라지는 운영 흐름
+              </h2>
+              <p className="text-lg" style={{ color: L.text2 }}>
+                반복 업무는 줄이고, 다음 작업으로 이어지는 연결성을 강화합니다.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col gap-8">
               {[
                 {
                   role: "연구원",
-                  title: "후보 정리가 빨라집니다",
-                  before: "여러 벤더를 따로 열고 품목을 수기로 모아 비교 준비",
+                  before: "여러 벤더 사이트를 따로 열고 품목을 수기로 모아 비교 준비",
                   after: "검색 결과에서 후보를 바로 정리하고 다음 비교 단계로 이동",
+                  summary: "후보 정리 시간 단축",
                 },
                 {
                   role: "구매 담당",
-                  title: "요청 준비가 연결됩니다",
                   before: "비교 결과를 다시 정리하고 전화·이메일로 요청 초안 수동 작성",
-                  after: "선택안 기준으로 요청안을 만들고 발주 준비 상태까지 이어서 확인",
+                  after: "선택안 기준으로 요청안을 만들고 발주 준비까지 이어서 확인",
+                  summary: "요청 준비 흐름 연결",
                 },
                 {
                   role: "운영 관리자",
-                  title: "구매 이력과 재고 상태를 함께 추적합니다",
                   before: "구매 이력, 입고 상태, 재고 공백을 각각 다른 문서에서 확인",
-                  after: "선택 기록, 입고 반영, 재고 상태를 같은 흐름에서 추적하고 다음 조치까지 연결",
+                  after: "선택 기록, 입고 반영, 재고 상태를 같은 흐름에서 추적",
+                  summary: "운영 추적 일원화",
                 },
               ].map((card) => (
-                <div key={card.role} className="p-8 rounded-2xl relative overflow-hidden group" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18` }}>
-                  <div className="absolute top-0 right-0 w-32 h-32 rounded-bl-full transition-all" style={{ backgroundColor: "rgba(173,198,255,0.03)" }} />
-
-                  <span className="inline-block px-3 py-1 rounded-md text-xs font-bold mb-6 relative z-10" style={{ backgroundColor: "rgba(173,198,255,0.1)", color: S.primary }}>
-                    {card.role}
-                  </span>
-                  <h4 className="text-2xl font-bold mb-4 relative z-10 leading-snug">{card.title}</h4>
-
-                  <div className="flex flex-col gap-4 relative z-10">
-                    <div className="p-4 rounded-xl" style={{ backgroundColor: "rgba(255,255,255,0.03)", borderLeft: `2px solid ${S.outlineVariant}` }}>
-                      <p className="text-xs mb-1" style={{ color: S.outline }}>이전</p>
-                      <p className="text-sm">{card.before}</p>
+                <div key={card.role} className="rounded-2xl p-6 md:p-8" style={{ backgroundColor: L.card, border: `1px solid ${L.border}` }}>
+                  <div className="flex flex-col md:flex-row md:items-start gap-6 md:gap-10">
+                    {/* Role tag + summary */}
+                    <div className="md:w-[180px] flex-shrink-0">
+                      <span className="inline-block px-2.5 py-1 rounded-md text-xs font-bold mb-2"
+                        style={{ backgroundColor: L.blueSoft, color: L.blueText }}>
+                        {card.role}
+                      </span>
+                      <p className="text-sm font-semibold" style={{ color: L.text1 }}>{card.summary}</p>
                     </div>
-                    <div className="p-4 rounded-xl" style={{ backgroundColor: "rgba(141,164,194,0.04)", borderLeft: `2px solid ${MUTED_ACCENT}` }}>
-                      <p className="text-xs mb-1" style={{ color: MUTED_ACCENT }}>LabAxis 이후</p>
-                      <p className="text-sm font-bold">{card.after}</p>
+
+                    {/* Before / After side by side */}
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="rounded-xl p-4" style={{ backgroundColor: L.bgSoft }}>
+                        <p className="text-[11px] font-semibold tracking-wide uppercase mb-2" style={{ color: L.text4 }}>이전</p>
+                        <p className="text-sm leading-relaxed" style={{ color: L.text2 }}>{card.before}</p>
+                      </div>
+                      <div className="rounded-xl p-4" style={{ backgroundColor: L.blueSoft }}>
+                        <p className="text-[11px] font-semibold tracking-wide uppercase mb-2" style={{ color: L.blueText }}>LabAxis 이후</p>
+                        <p className="text-sm leading-relaxed font-medium" style={{ color: L.text1 }}>{card.after}</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -312,125 +303,82 @@ export default function IntroPage() {
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            5. 조직 운영 관리 — Bento Grid
+            E. Section 4 — 조직 운영 (soft gray-blue, compact)
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-28" style={{ backgroundColor: "#1e274a" }}>
-          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-14 gap-8">
-              <div className="max-w-2xl">
-                <h2 className="text-4xl font-bold mb-4">조직 기준에 맞는 운영 관리</h2>
-                <p className="text-lg" style={{ color: S.onSurfaceVariant }}>
-                  연구실과 팀의 운영 기준에 맞춰 승인 기준, 활동 기록, 예산 기준과 운영 데이터를 한곳에서 정리합니다. 구매 흐름을 막지 않으면서 필요한 통제와 추적을 유지합니다.
-                </p>
-              </div>
-              <Link href="/intro#org-controls">
-                <button className="inline-flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-bold transition-all hover:brightness-110 active:scale-95 flex-shrink-0" style={{ backgroundColor: S.slateCard, color: S.onSurface, border: `1px solid ${S.outlineVariant}25` }}>
-                  운영 기준 보기 <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </Link>
+        <section className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1 }}>
+          <div className="max-w-6xl mx-auto px-6">
+            <div className="mb-14">
+              <p className="text-sm font-semibold tracking-wide mb-3" style={{ color: L.blue }}>운영 관리</p>
+              <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4">
+                조직 기준에 맞는 통제와 추적
+              </h2>
+              <p className="text-lg max-w-3xl" style={{ color: L.text2 }}>
+                구매 흐름을 막지 않으면서 승인 기준, 활동 기록, 예산 기준을 유지합니다.
+              </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              <div className="md:col-span-7 rounded-3xl p-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <Shield className="h-10 w-10 mb-4" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                <h3 className="text-2xl font-bold mb-3">승인 기준과 권한 정리</h3>
-                <p className="max-w-lg mb-6" style={{ color: S.onSurfaceVariant }}>
-                  조직 구조에 맞는 승인 기준과 역할별 권한을 정리해 요청과 발주 준비가 팀 운영 방식과 어긋나지 않게 맞춥니다.
-                </p>
-                <div className="flex flex-wrap gap-3 text-xs">
-                  <span className="px-3 py-2 rounded-full font-medium" style={{ backgroundColor: "rgba(173,198,255,0.08)", color: S.primary, border: "1px solid rgba(173,198,255,0.15)" }}>승인 기준 유지</span>
-                  <span className="px-3 py-2 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.04)", color: S.onSurfaceVariant, border: "1px solid rgba(255,255,255,0.06)" }}>역할별 권한 매핑</span>
-                  <span className="px-3 py-2 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.04)", color: S.onSurfaceVariant, border: "1px solid rgba(255,255,255,0.06)" }}>발주 전환 전 확인</span>
-                </div>
-              </div>
-
-              <div className="md:col-span-5 rounded-3xl p-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <History className="h-10 w-10 mb-4" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                <h3 className="text-2xl font-bold mb-3">활동 기록</h3>
-                <p className="mb-6" style={{ color: S.onSurfaceVariant }}>
-                  요청, 선택, 승인, 변경 이력을 남겨 팀 내 공유와 사후 확인에 필요한 기준을 유지합니다.
-                </p>
-                <div className="h-1 w-full rounded-full" style={{ background: `linear-gradient(to right, ${S.primaryContainer}, rgba(77,142,255,0.3), transparent)` }} />
-              </div>
-
-              <div className="md:col-span-4 rounded-3xl p-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <Wallet className="h-10 w-10 mb-4" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                <h3 className="text-2xl font-bold mb-3">예산 기준 연결</h3>
-                <p className="mb-6" style={{ color: S.onSurfaceVariant }}>
-                  과제별 예산 기준과 구매 이력을 연결해 초과 사용 위험이나 기준 이탈 여부를 빠르게 확인합니다.
-                </p>
-                <div className="h-1 w-2/3 rounded-full" style={{ background: `linear-gradient(to right, rgba(77,142,255,0.6), transparent)` }} />
-              </div>
-
-              <div className="md:col-span-8 rounded-3xl p-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18`, boxShadow: "0 18px 48px rgba(0,0,0,0.2)" }}>
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 h-full">
-                  <div className="max-w-md">
-                    <BarChart3 className="h-10 w-10 mb-4" style={{ color: S.onSurfaceVariant }} strokeWidth={1.5} />
-                    <h3 className="text-2xl font-bold mb-3">운영 데이터 가시화</h3>
-                    <p style={{ color: S.onSurfaceVariant }}>
-                      품목별 구매 빈도, 공급사 비교, 입고 이후 재고 흐름을 함께 보며 다음 구매 판단에 필요한 근거를 쌓습니다.
-                    </p>
-                  </div>
-                  <div className="flex-1 grid sm:grid-cols-3 gap-3 text-sm">
-                    {[
-                      { label: "빈도", value: "품목별 구매 빈도" },
-                      { label: "비교", value: "공급사 조건 비교" },
-                      { label: "운영", value: "입고 이후 재고 흐름" },
-                    ].map((m) => (
-                      <div key={m.label} className="rounded-2xl p-4" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div className="text-xs mb-2" style={{ color: S.outline }}>{m.label}</div>
-                        <div className="font-semibold" style={{ color: S.onSurface }}>{m.value}</div>
-                      </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {[
+                {
+                  title: "승인 기준과 권한",
+                  desc: "조직 구조에 맞는 승인 기준과 역할별 권한을 정리합니다. 요청과 발주 준비가 팀 운영 방식과 어긋나지 않게 맞춥니다.",
+                  tags: ["승인 기준 유지", "역할별 권한", "발주 전환 전 확인"],
+                },
+                {
+                  title: "활동 기록과 이력",
+                  desc: "요청, 선택, 승인, 변경 이력을 남겨 팀 내 공유와 사후 확인에 필요한 기준을 유지합니다.",
+                  tags: ["이력 추적", "변경 감사", "팀 공유"],
+                },
+                {
+                  title: "예산 기준 연결",
+                  desc: "과제별 예산 기준과 구매 이력을 연결해 초과 사용 위험이나 기준 이탈을 빠르게 확인합니다.",
+                  tags: ["과제별 예산", "초과 알림", "기준 이탈 감지"],
+                },
+                {
+                  title: "운영 데이터 가시화",
+                  desc: "품목별 구매 빈도, 공급사 비교, 입고 이후 재고 흐름을 함께 보며 다음 구매 판단 근거를 쌓습니다.",
+                  tags: ["구매 빈도", "공급사 비교", "재고 흐름"],
+                },
+              ].map((item) => (
+                <div key={item.title} className="rounded-2xl p-6" style={{ backgroundColor: L.card, border: `1px solid ${L.border}` }}>
+                  <h3 className="text-lg font-bold mb-2" style={{ color: L.text1 }}>{item.title}</h3>
+                  <p className="text-sm leading-relaxed mb-4" style={{ color: L.text2 }}>{item.desc}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {item.tags.map((tag) => (
+                      <span key={tag} className="text-xs px-2.5 py-1 rounded-md" style={{ backgroundColor: L.bgSoft, color: L.text3, border: `1px solid ${L.border}` }}>
+                        {tag}
+                      </span>
                     ))}
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           </div>
         </section>
 
         {/* ══════════════════════════════════════════════════════════════
-            6. Final CTA — dark close field
+            F. Closing CTA — dark close
            ══════════════════════════════════════════════════════════════ */}
-        <section className="py-24 relative overflow-hidden" style={{ backgroundColor: S.bg }}>
-          <div className="absolute inset-0" style={{ background: "radial-gradient(circle at center, rgba(77,142,255,0.06), transparent 55%)" }} />
-          <div className="relative z-10 max-w-7xl mx-auto px-6">
-            <div className="max-w-4xl mx-auto rounded-[2rem] p-10 md:p-14 text-center" style={{ backgroundColor: "rgba(26,34,64,0.75)", backdropFilter: "blur(18px)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 24px 80px rgba(12,25,52,0.55)" }}>
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold tracking-wide mb-6" style={{ backgroundColor: "rgba(173,198,255,0.08)", color: S.primary }}>
-                입고 이후 운영 closure
-              </div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-                입고 이후 재고 운영까지<br />끊기지 않습니다.
-              </h2>
-              <p className="text-lg md:text-xl max-w-2xl mx-auto mb-10" style={{ color: S.onSurfaceVariant }}>
-                입고 반영, lot·유효기간 추적, 부족 판단과 재주문 검토까지 같은 운영 흐름 안에서 이어집니다.
-              </p>
-
-              <div className="grid sm:grid-cols-3 gap-4 text-left mb-10">
-                {[
-                  { num: "01", text: "입고 정보와 재고 상태 연결" },
-                  { num: "02", text: "lot·유효기간·위치 추적" },
-                  { num: "03", text: "부족 판단과 재주문 검토 전환" },
-                ].map((item) => (
-                  <div key={item.num} className="rounded-2xl px-5 py-5" style={{ backgroundColor: S.slateCard, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="text-xs mb-2" style={{ color: S.outline }}>{item.num}</div>
-                    <div className="font-semibold" style={{ color: S.onSurface }}>{item.text}</div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/pricing">
-                  <button className="w-full sm:w-auto px-10 py-5 text-lg font-bold rounded-xl shadow-2xl transition-all hover:translate-y-[-2px] active:scale-95" style={{ backgroundColor: S.primary, color: S.onPrimary, boxShadow: "0 12px 40px rgba(77,142,255,0.2)" }}>
-                    요금 &amp; 플랜 보기
-                  </button>
-                </Link>
-                <Link href="/support">
-                  <button className="w-full sm:w-auto px-10 py-5 text-lg font-bold rounded-xl transition-all hover:brightness-110 active:scale-95" style={{ backgroundColor: S.containerHighest, color: S.onSurface, border: `1px solid ${S.outlineVariant}` }}>
-                    도입 상담 신청
-                  </button>
-                </Link>
-              </div>
+        <section className="py-20 md:py-28 relative overflow-hidden" style={{ backgroundColor: D.bg, color: D.text1 }}>
+          <div className="absolute inset-0 pointer-events-none" style={{ background: "radial-gradient(circle at center, rgba(59,130,246,0.05), transparent 55%)" }} />
+          <div className="relative z-10 max-w-3xl mx-auto px-6 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-5 tracking-tight">
+              지금 시작할 수 있습니다.
+            </h2>
+            <p className="text-lg mb-10" style={{ color: D.text2 }}>
+              검색부터 재고 운영까지, 조직에 맞는 범위부터 도입하세요.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Link href="/pricing">
+                <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-95" style={{ backgroundColor: D.primary, color: D.onPrimary }}>
+                  요금 &amp; 플랜 보기
+                </button>
+              </Link>
+              <Link href="/support">
+                <button className="w-full sm:w-auto px-8 py-4 text-base font-bold rounded-xl transition-all hover:brightness-110 active:scale-95 flex items-center gap-2" style={{ color: D.text1, border: `1px solid ${D.border}40` }}>
+                  도입 상담 <ArrowRight className="h-4 w-4" />
+                </button>
+              </Link>
             </div>
           </div>
         </section>
