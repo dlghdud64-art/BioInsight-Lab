@@ -1096,9 +1096,9 @@ function InventoryPageContent() {
         {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
         <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex flex-col space-y-0.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">Inventory Management</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">재고 관리</h1>
             <p className="text-muted-foreground text-xs hidden sm:block">
-              Check and manage all reagents and equipment in the lab at a glance.
+              실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -1137,7 +1137,7 @@ function InventoryPageContent() {
             {/* ── 1차 액션: Add Item · Reflect Purchase ── */}
             <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm">
               <Plus className="h-4 w-4 mr-1.5" />
-              Add Item
+              품목 추가
             </Button>
             <Button
               variant="outline"
@@ -1145,7 +1145,7 @@ function InventoryPageContent() {
               className="h-9 px-3 text-sm"
             >
               <PackagePlus className="h-4 w-4 mr-1.5" />
-              Reflect Purchase
+              구매 반영
             </Button>
 
             {/* ── 2차 액션: Print Label · Import · Export ── */}
@@ -1155,7 +1155,7 @@ function InventoryPageContent() {
               className="h-9 px-3 text-sm"
             >
               <Printer className="h-4 w-4 mr-1.5" />
-              Print Label
+              라벨 인쇄
             </Button>
             <Button
               variant="outline"
@@ -1163,11 +1163,11 @@ function InventoryPageContent() {
               className="h-9 px-3 text-sm hidden md:inline-flex"
             >
               <Upload className="h-4 w-4 mr-1.5" />
-              Import
+              가져오기
             </Button>
             <Button variant="outline" className="h-9 px-3 text-sm hidden md:inline-flex">
               <Download className="h-4 w-4 mr-1.5" />
-              Export
+              내보내기
             </Button>
 
             {/* ── 더보기 (모바일 + 라벨 데이터 내보내기 등 보조 기능) ── */}
@@ -1239,14 +1239,14 @@ function InventoryPageContent() {
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "manage" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
             >
               <ListFilter className="w-3.5 h-3.5" />
-              Item Management
+              품목 관리
             </button>
             <button
               onClick={() => setActiveInventoryTab("overview")}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "overview" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
-              Operation Status
+              운영 현황
               {issuesCount > 0 && (
                 <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1.5 text-[10px] ml-0.5">
                   {issuesCount}
@@ -1258,14 +1258,14 @@ function InventoryPageContent() {
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "storage-location" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
             >
               <MapPin className="w-3.5 h-3.5" />
-              Storage Location
+              보관 위치
             </button>
             <button
               onClick={() => setActiveInventoryTab("flow")}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "flow" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
             >
               <Truck className="w-3.5 h-3.5" />
-              In/Out Flow
+              입출고 흐름
             </button>
           </div>
 
@@ -1289,11 +1289,11 @@ function InventoryPageContent() {
                 {/* Location 필터 */}
                 <Select value={locationFilter} onValueChange={setLocationFilter}>
                   <SelectTrigger className="w-[150px] shrink-0">
-                    <SelectValue placeholder="All Locations" />
+                    <SelectValue placeholder="전체 위치" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    <SelectItem value="none">Unassigned</SelectItem>
+                    <SelectItem value="all">전체 위치</SelectItem>
+                    <SelectItem value="none">위치 미지정</SelectItem>
                     {uniqueLocations.map((loc) => (
                       <SelectItem key={loc} value={loc}>{loc}</SelectItem>
                     ))}
@@ -1302,16 +1302,16 @@ function InventoryPageContent() {
                 {/* Status 필터 */}
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px] shrink-0">
-                    <SelectValue placeholder="All Status" />
+                    <SelectValue placeholder="전체 상태" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="low">Low / Reorder</SelectItem>
-                    <SelectItem value="expiring">Expiring Soon</SelectItem>
-                    <SelectItem value="incoming">Incoming</SelectItem>
-                    <SelectItem value="lot_issue">LOT Issue</SelectItem>
-                    <SelectItem value="recent">Recently Changed</SelectItem>
-                    <SelectItem value="normal">Normal</SelectItem>
+                    <SelectItem value="all">전체 상태</SelectItem>
+                    <SelectItem value="low">부족 / 재주문</SelectItem>
+                    <SelectItem value="expiring">만료 임박</SelectItem>
+                    <SelectItem value="incoming">입고 대기</SelectItem>
+                    <SelectItem value="lot_issue">LOT 이슈</SelectItem>
+                    <SelectItem value="recent">최근 변경</SelectItem>
+                    <SelectItem value="normal">정상</SelectItem>
                   </SelectContent>
                 </Select>
                 {/* 모바일 필터 버튼 */}
@@ -4069,4 +4069,4 @@ export function InventoryContent() {
       <InventoryPageContent />
     </Suspense>
   );
-}
+}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
