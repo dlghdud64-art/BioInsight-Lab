@@ -7,6 +7,45 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        /* ══ 1. Public Role Tokens ══════════════════════════════════ */
+        "public-brand-field-strong": "var(--public-brand-field-strong)",
+        "public-brand-field-soft": "var(--public-brand-field-soft)",
+        "public-support-plane-1": "var(--public-support-plane-1)",
+        "public-support-plane-2": "var(--public-support-plane-2)",
+        "public-surface-card-1": "var(--public-surface-card-1)",
+        "public-surface-card-2": "var(--public-surface-card-2)",
+        "public-close-layer": "var(--public-close-layer)",
+        "public-primary-action": "var(--public-primary-action)",
+        "public-primary-action-hover": "var(--public-primary-action-hover)",
+        "public-text-strong": "var(--public-text-strong)",
+        "public-text-body": "var(--public-text-body)",
+        "public-text-muted": "var(--public-text-muted)",
+        "public-border-soft": "var(--public-border-soft)",
+        "public-border-strong": "var(--public-border-strong)",
+        "public-network-line": "var(--public-network-line)",
+        "public-hero-haze": "var(--public-hero-haze)",
+
+        /* ══ 2. App Surface Tokens ═════════════════════════════════ */
+        "app-bg": "var(--app-bg)",
+        "app-panel-1": "var(--app-panel-1)",
+        "app-panel-2": "var(--app-panel-2)",
+        "app-panel-3": "var(--app-panel-3)",
+        "app-rail-bg": "var(--app-rail-bg)",
+        "app-dock-bg": "var(--app-dock-bg)",
+        "app-workbench-bg": "var(--app-workbench-bg)",
+        "app-table-row": "var(--app-table-row)",
+        "app-table-row-hover": "var(--app-table-row-hover)",
+        "app-table-row-active": "var(--app-table-row-active)",
+        "app-focus-ring": "var(--app-focus-ring)",
+        "app-divider": "var(--app-divider)",
+
+        /* ══ 3. Semantic Tokens ════════════════════════════════════ */
+        "status-success": "var(--status-success)",
+        "status-warning": "var(--status-warning)",
+        "status-danger": "var(--status-danger)",
+        "status-info": "var(--status-info)",
+
+        /* ══ shadcn/ui compat (기존 컴포넌트 호환) ═════════════════ */
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         card: {

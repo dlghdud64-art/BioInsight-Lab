@@ -73,70 +73,100 @@ div.quote-table td.no-column-cell {
 }
 
 /* ============================================
-   LabAxis Design System (B2B SaaS) — Dark-only
-   - Surface hierarchy: shell → page → panel → elevated → strong
-   - Radius: 0.5rem (모던, 과하지 않은 둥글기)
-   - Primary: Deep Blue (신뢰감, CTA/accent 전용)
-   - Card: border-default + shadow-sm
+   LabAxis Design System v2 — Role-based Token System
+   ─────────────────────────────────────────────
+   3계층 구조:
+     1. Public Role Tokens  — landing / intro / pricing 전용
+     2. App Surface Tokens  — dashboard / workbench / 운영면 전용
+     3. Semantic Tokens      — 상태(success/warning/danger/info) 전용
+
+   Usage Rules:
+     • Public: brand-field / support-plane / surface-card / close-layer scene grammar
+     • App:    bg / panel / rail / dock / workbench / row 역할
+     • Semantic: text / badge / label / icon / small accent에만 사용
+     • Semantic은 대면적 배경·wrapper fill 금지
+     • blue는 CTA / active / selected에만 사용
+     • raw color utility (bg-green-500, text-blue-400 등) 금지
    ============================================ */
 @layer base {
   :root {
-    /* ── LabAxis Color System v1 ── */
-    /* Brand Depth — 로그인 좌측, 히어로, 소개·요금 상단, 푸터 */
-    --brand-900: #071A33;
-    --brand-800: #0D2A50;
-    --brand-700: #173251;
-    /* Product Surface — 대시보드, 소싱, 앱 내부 (blue-charcoal) */
-    --product-900: #1C2028;
-    --product-800: #252A33;
-    --product-700: #2F3540;
-    --product-600: #3A4150;
-    --product-500: #455264;
-    /* Light Bridge — 소개 하단, 요금 본문, CTA 구역 */
-    --bridge-300: #DCE5F0;
-    --bridge-200: #EAF1F8;
-    --bridge-100: #F6F9FC;
-    /* Action Blue */
-    --action-500: #2563EB;
-    --action-400: #3B82F6;
-    --action-300: #60A5FA;
-    /* Line */
-    --line-dark: rgba(255,255,255,0.08);
-    --line-light: #D7E0EB;
+    /* ══ 1. Public Role Tokens ══════════════════════════════════════ */
+    /* brand-field = hero / flagship scene */
+    --public-brand-field-strong: #0F172A;
+    --public-brand-field-soft: #13203A;
+    /* support-plane = intro/pricing/support section의 lifted wrapper */
+    --public-support-plane-1: #1E293B;
+    --public-support-plane-2: #24324A;
+    /* surface-card = mockup wrapper / consult box / floating object */
+    --public-surface-card-1: #162033;
+    --public-surface-card-2: #1B2640;
+    /* close-layer = footer / 마지막 닫힘 장면 */
+    --public-close-layer: #0B0F19;
+    /* primary-action = CTA / active / selected */
+    --public-primary-action: #3B82F6;
+    --public-primary-action-hover: #2563EB;
+    /* text hierarchy */
+    --public-text-strong: #F8FAFC;
+    --public-text-body: #CBD5E1;
+    --public-text-muted: #94A3B8;
+    /* border / line */
+    --public-border-soft: rgba(255, 255, 255, 0.08);
+    --public-border-strong: rgba(255, 255, 255, 0.14);
+    --public-network-line: rgba(148, 163, 184, 0.18);
+    /* hero haze */
+    --public-hero-haze: rgba(59, 130, 246, 0.16);
 
-    /* LabAxis Surface Hierarchy — product dark (기존 호환) */
-    --surface-shell: #1C2028;
-    --surface-page: #252A33;
-    --surface-panel: #2F3540;
+    /* ══ 2. App Surface Tokens ═════════════════════════════════════ */
+    --app-bg: #111827;
+    --app-panel-1: #182233;
+    --app-panel-2: #1F2937;
+    --app-panel-3: #273449;
+    --app-rail-bg: #1F2937;
+    --app-dock-bg: #0F172A;
+    --app-workbench-bg: #030712;
+    --app-table-row: #1E293B;
+    --app-table-row-hover: #26364D;
+    --app-table-row-active: #334155;
+    --app-focus-ring: #3B82F6;
+    --app-divider: rgba(255, 255, 255, 0.08);
+
+    /* ══ 3. Semantic Tokens ════════════════════════════════════════ */
+    --status-success: #10B981;
+    --status-warning: #F59E0B;
+    --status-danger: #EF4444;
+    --status-info: #3B82F6;
+
+    /* ── App Surface Hierarchy (기존 bg-sh/pg/pn/el/st 호환) ───── */
+    --surface-shell: var(--app-bg);
+    --surface-page: var(--app-panel-2);
+    --surface-panel: var(--app-panel-3);
     --surface-elevated: #3A4150;
     --surface-strong: #455264;
     --border-default: #3A4150;
     --border-strong: #455264;
 
-    /* shadcn/ui semantic tokens (HSL) — neutral graphite, minimal tint */
-    --background: 220 3% 14%;
-    --foreground: 0 0% 93%;
-    --card: 220 3% 19%;
-    --card-foreground: 0 0% 93%;
-    --popover: 220 3% 16%;
-    --popover-foreground: 0 0% 93%;
-    /* Primary: muted blue accent (채도 낮춤) */
-    --primary: 221 70% 50%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 2% 22%;
-    --secondary-foreground: 0 0% 93%;
-    --muted: 220 2% 22%;
-    --muted-foreground: 220 2% 55%;
-    --accent: 220 2% 22%;
-    --accent-foreground: 0 0% 95%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 240 4% 24%;
-    --input: 240 4% 20%;
-    --ring: 221.2 83.2% 53.3%;
-    /* Radius: 통일된 둥글기 (0.5rem = 8px) */
+    /* ── shadcn/ui compat tokens (HSL) ─────────────────────────── */
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 217 33% 17%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 11%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222 47% 11%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%;
     --radius: 0.5rem;
-    --chart-1: 221.2 83.2% 53.3%;
+    --chart-1: 217 91% 60%;
     --chart-2: 173 58% 39%;
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
@@ -208,11 +238,11 @@ div.quote-table td.no-column-cell {
   display: none;  /* Chrome, Safari and Opera */
 }
 
-/* ── Surface hierarchy utilities ── */
+/* ── App surface hierarchy utilities (기존 호환) ── */
 @layer utilities {
-  .bg-sh { background-color: var(--surface-shell); }
-  .bg-pg { background-color: var(--surface-page); }
-  .bg-pn { background-color: var(--surface-panel); }
+  .bg-sh { background-color: var(--app-bg); }
+  .bg-pg { background-color: var(--app-panel-2); }
+  .bg-pn { background-color: var(--app-panel-3); }
   .bg-el { background-color: var(--surface-elevated); }
   .bg-st { background-color: var(--surface-strong); }
   .border-bd { border-color: var(--border-default); }
@@ -220,6 +250,6 @@ div.quote-table td.no-column-cell {
   .divide-bd > :not([hidden]) ~ :not([hidden]) { border-color: var(--border-default); }
   .hover\:bg-el:hover { background-color: var(--surface-elevated); }
   .hover\:bg-st:hover { background-color: var(--surface-strong); }
-  .hover\:bg-pn:hover { background-color: var(--surface-panel); }
-  .bg-sh\/95 { background-color: color-mix(in srgb, var(--surface-shell) 95%, transparent); }
+  .hover\:bg-pn:hover { background-color: var(--app-panel-3); }
+  .bg-sh\/95 { background-color: color-mix(in srgb, var(--app-bg) 95%, transparent); }
 }

@@ -206,7 +206,7 @@ function InventoryOpsMockupContent() {
 export function FinalCTASection() {
   return (
     <section className="relative" style={{
-      background: "linear-gradient(to bottom, #060e1e 0%, #081425 50%, #050d1b 100%)",
+      background: `linear-gradient(to bottom, var(--public-close-layer) 0%, var(--public-brand-field-strong) 50%, var(--public-close-layer) 100%)`,
     }}>
       {/* Top separation — hero와 이어지는 미세한 경계 */}
       <div className="absolute inset-x-0 top-0 h-px" style={{

@@ -53,7 +53,7 @@ export function MainFooter() {
   ];
 
   return (
-    <footer style={{ backgroundColor: "#040c1a" }}>
+    <footer className="bg-public-close-layer">
       <div className="mx-auto max-w-6xl px-4 pt-12 pb-10">
         {/* 상단: 로고 + 링크 그리드 */}
         <div className="grid gap-8 md:grid-cols-[minmax(0,1.4fr)_minmax(0,2fr)]">

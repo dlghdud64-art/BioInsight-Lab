@@ -313,7 +313,7 @@ export function BioInsightHeroSection() {
   const isAuthLoading = status === "loading";
 
   return (
-    <section className="relative w-full flex flex-col overflow-visible" style={{ background: "#081425" }}>
+    <section className="relative w-full flex flex-col overflow-visible bg-public-brand-field-strong" style={{ background: "var(--public-brand-field-strong)" }}>
 
       {/* Background — hero 영역 내에서만 유효, support section 침범 금지 */}
       <div className="absolute z-0 pointer-events-none" style={{ top: 0, left: 0, right: 0, bottom: "-200px" }}>
