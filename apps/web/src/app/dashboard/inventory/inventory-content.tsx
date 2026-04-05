@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -1092,15 +1093,15 @@ function InventoryPageContent() {
       <div className="hidden md:flex gap-0">
       {/* Main content area */}
       <div className={`flex-1 min-w-0 space-y-4 sm:space-y-6 transition-all ${contextPanelOpen ? "max-w-[calc(100%-420px)]" : "max-w-7xl mx-auto"}`}>
-        {/* 상단 타이틀 및 액션 버튼 */}
-        <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
-          <div className="flex flex-col space-y-1 sm:space-y-2">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-100">재고 관리</h1>
-            <p className="text-muted-foreground text-sm hidden sm:block">
-              연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
+        {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
+        <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
+          <div className="flex flex-col space-y-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">Inventory Management</h1>
+            <p className="text-muted-foreground text-xs hidden sm:block">
+              Check and manage all reagents and equipment in the lab at a glance.
             </p>
           </div>
-          <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3 w-full">
+          <div className="flex items-center gap-2 flex-shrink-0">
             <AddInventoryModal
               open={isDialogOpen}
               onOpenChange={(open) => {
@@ -1133,41 +1134,40 @@ function InventoryPageContent() {
               }}
             />
 
-            {/* ── 1차 액션: 재고 등록 · 구매 반영 ── */}
-            <Button onClick={() => setIsDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              재고 등록
+            {/* ── 1차 액션: Add Item · Reflect Purchase ── */}
+            <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm">
+              <Plus className="h-4 w-4 mr-1.5" />
+              Add Item
             </Button>
             <Button
               variant="outline"
               onClick={() => router.push("/dashboard/purchases")}
+              className="h-9 px-3 text-sm"
             >
-              <PackagePlus className="h-4 w-4 mr-2" />
-              구매 반영
+              <PackagePlus className="h-4 w-4 mr-1.5" />
+              Reflect Purchase
             </Button>
 
-            {/* ── 2차 액션: 라벨 인쇄 · 재고 파일 가져오기 · 내보내기 ── */}
+            {/* ── 2차 액션: Print Label · Import · Export ── */}
             <Button
               variant="outline"
-              onClick={() => {
-                // 전체 재고 라벨 인쇄 (PC 프린터 print dialog)
-                handleBulkLabelPrint();
-              }}
+              onClick={() => handleBulkLabelPrint()}
+              className="h-9 px-3 text-sm"
             >
-              <Printer className="h-4 w-4 mr-0 sm:mr-2" />
-              <span className="hidden sm:inline">라벨 인쇄</span>
+              <Printer className="h-4 w-4 mr-1.5" />
+              Print Label
             </Button>
             <Button
               variant="outline"
               onClick={() => setIsImportStagingOpen(true)}
-              className="hidden md:inline-flex"
+              className="h-9 px-3 text-sm hidden md:inline-flex"
             >
-              <Upload className="h-4 w-4 mr-2" />
-              재고 파일 가져오기
+              <Upload className="h-4 w-4 mr-1.5" />
+              Import
             </Button>
-            <Button variant="outline" className="hidden md:inline-flex">
-              <Download className="h-4 w-4 mr-2" />
-              내보내기
+            <Button variant="outline" className="h-9 px-3 text-sm hidden md:inline-flex">
+              <Download className="h-4 w-4 mr-1.5" />
+              Export
             </Button>
 
             {/* ── 더보기 (모바일 + 라벨 데이터 내보내기 등 보조 기능) ── */}
@@ -1231,137 +1231,103 @@ function InventoryPageContent() {
           </div>
         </div>
 
-        {/* 통합 카드: 탭 + 검색/필터/리스트 */}
+        {/* 탭 바 — 카드 밖, 독립 탭 네비게이션 (스크린샷 레이아웃) */}
+        <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
+          <div className="flex items-center gap-1 mb-4">
+            <button
+              onClick={() => setActiveInventoryTab("manage")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "manage" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+            >
+              <ListFilter className="w-3.5 h-3.5" />
+              Item Management
+            </button>
+            <button
+              onClick={() => setActiveInventoryTab("overview")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "overview" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+              Operation Status
+              {issuesCount > 0 && (
+                <span className="inline-flex h-5 min-w-[20px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1.5 text-[10px] ml-0.5">
+                  {issuesCount}
+                </span>
+              )}
+            </button>
+            <button
+              onClick={() => setActiveInventoryTab("storage-location")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "storage-location" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              Storage Location
+            </button>
+            <button
+              onClick={() => setActiveInventoryTab("flow")}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "flow" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              In/Out Flow
+            </button>
+          </div>
+
+        {/* 통합 카드: 콘텐츠 */}
         <div className="rounded-xl border border-bd/50 bg-pn shadow-sm overflow-hidden">
-          <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
-            {/* 상단 통합 헤더 */}
-            <div className="p-4 border-b border-bd bg-el/50">
-              <TabsList className="flex bg-el p-1 rounded-xl w-fit">
-                <TabsTrigger
-                  value="manage"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
-                >
-                  <ListFilter className="w-4 h-4" />
-                  <span className="hidden sm:inline">품목 </span>관리
-                </TabsTrigger>
-                <TabsTrigger
-                  value="overview"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
-                >
-                  <LayoutGrid className="w-4 h-4" />
-                  운영 현황
-                  {issuesCount > 0 ? (
-                    <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-950/50 text-rose-400 font-medium px-1.5 text-[11px] shadow-sm ring-2 ring-[#09090b]/50  bg-rose-950/50  text-rose-400 animate-in zoom-in-95 duration-300 ml-2">
-                      {issuesCount}
-                    </span>
-                  ) : null}
-                </TabsTrigger>
-                {/* Lot 추적은 품목 컨텍스트에서 drill-down으로 진입 — 1급 탭에서 제거 */}
-                <TabsTrigger
-                  value="storage-location"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
-                >
-                  <MapPin className="w-4 h-4" />
-                  <span className="hidden sm:inline">저장 </span>위치
-                </TabsTrigger>
-                <TabsTrigger
-                  value="flow"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
-                >
-                  <Truck className="w-4 h-4" />
-                  <span className="hidden sm:inline">입고/사용 </span>흐름
-                </TabsTrigger>
-              </TabsList>
-            </div>
+          <div className="w-full">
 
             {/* 하단 통합 콘텐츠 */}
             {/* 1. 품목 관리 (item-level 운영 surface) */}
-            <TabsContent value="manage" className="m-0 p-6 space-y-4">
-              <div className="flex flex-col gap-3 rounded-lg border border-bs bg-el/30 p-3">
-                {/* 모바일: 검색 + 필터 버튼 */}
-                <div className="md:hidden flex items-center gap-2">
-                  <div className="flex-1">
-                    <InventorySearch
-                      value={searchQuery}
-                      onChange={setSearchQuery}
-                      isLoading={isLoading}
-                    />
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setFilterSheetOpen(true)}
-                    className="h-9 px-2.5 gap-1.5 text-xs shrink-0 border-bs"
-                  >
-                    <Filter className="h-3.5 w-3.5" />
-                    필터
-                    {activeFilterCount > 0 && (
-                      <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] font-bold bg-blue-900/50 text-blue-300  bg-blue-900  text-blue-300">
-                        {activeFilterCount}
-                      </Badge>
-                    )}
-                  </Button>
-                </div>
-                {/* 모바일: 필터 요약 텍스트 */}
-                {activeFilterCount > 0 && (
-                  <div className="md:hidden text-[11px] text-slate-500  text-slate-400 px-0.5">
-                    {[
-                      locationFilter !== "all" && `위치 1`,
-                      statusFilter !== "all" && `상태 1`,
-                      categoryFilter !== "all" && `카테고리 1`,
-                    ].filter(Boolean).join(" · ")}
-                  </div>
-                )}
-
-                {/* 데스크탑: 검색 + 필터 셀렉트 */}
-                <div className="hidden md:block">
+            <TabsContent value="manage" className="m-0 p-4 space-y-4">
+              {/* 검색 + 필터 한 줄 가로 배치 (스크린샷 레이아웃) */}
+              <div className="flex items-center gap-3">
+                {/* 검색창 — 가장 넓게 */}
+                <div className="flex-1 min-w-0">
                   <InventorySearch
                     value={searchQuery}
                     onChange={setSearchQuery}
                     isLoading={isLoading}
                   />
                 </div>
-                <div className="hidden md:flex items-center gap-2 flex-wrap">
-                  <Select value={locationFilter} onValueChange={setLocationFilter}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="위치별" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체 위치</SelectItem>
-                      <SelectItem value="none">위치 미지정</SelectItem>
-                      {uniqueLocations.map((loc) => (
-                        <SelectItem key={loc} value={loc}>
-                          {loc}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[150px]">
-                      <SelectValue placeholder="상태별" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체 상태</SelectItem>
-                      <SelectItem value="low">부족 / 재주문 필요</SelectItem>
-                      <SelectItem value="expiring">만료 임박</SelectItem>
-                      <SelectItem value="incoming">입고 대기</SelectItem>
-                      <SelectItem value="lot_issue">LOT 불일치</SelectItem>
-                      <SelectItem value="recent">최근 변경</SelectItem>
-                      <SelectItem value="normal">정상</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                    <SelectTrigger className="w-[140px]">
-                      <SelectValue placeholder="카테고리별" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">전체 카테고리</SelectItem>
-                      <SelectItem value="reagent">시약</SelectItem>
-                      <SelectItem value="equipment">장비</SelectItem>
-                      <SelectItem value="consumable">소모품</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {/* Location 필터 */}
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                  <SelectTrigger className="w-[150px] shrink-0">
+                    <SelectValue placeholder="All Locations" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Locations</SelectItem>
+                    <SelectItem value="none">Unassigned</SelectItem>
+                    {uniqueLocations.map((loc) => (
+                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {/* Status 필터 */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-[140px] shrink-0">
+                    <SelectValue placeholder="All Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="low">Low / Reorder</SelectItem>
+                    <SelectItem value="expiring">Expiring Soon</SelectItem>
+                    <SelectItem value="incoming">Incoming</SelectItem>
+                    <SelectItem value="lot_issue">LOT Issue</SelectItem>
+                    <SelectItem value="recent">Recently Changed</SelectItem>
+                    <SelectItem value="normal">Normal</SelectItem>
+                  </SelectContent>
+                </Select>
+                {/* 모바일 필터 버튼 */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFilterSheetOpen(true)}
+                  className="md:hidden h-9 px-2.5 gap-1.5 text-xs shrink-0"
+                >
+                  <Filter className="h-3.5 w-3.5" />
+                  {activeFilterCount > 0 && (
+                    <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] font-bold">
+                      {activeFilterCount}
+                    </Badge>
+                  )}
+                </Button>
               </div>
 
               {/* 모바일 필터 바텀시트 */}
@@ -2180,8 +2146,9 @@ function InventoryPageContent() {
             <TabsContent value="flow" className="m-0 p-4 sm:p-6 space-y-5">
               <InventoryFlowView />
             </TabsContent>
-          </Tabs>
-        </div>
+          </div>{/* end 통합 카드 */}
+        </div>{/* end rounded card */}
+        </Tabs>{/* end Tabs */}
 
         </div>{/* end main content */}
 
@@ -3436,6 +3403,24 @@ function InventoryPageContent() {
         </div>
       </div>
 
+      {/* Framer Motion 토스트 알림 (재고 등록/수정 시) */}
+      <AnimatePresence>
+        {createOrUpdateMutation.isSuccess && (
+          <motion.div
+            key="inventory-toast"
+            initial={{ opacity: 0, y: 60 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 60 }}
+            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border border-white/10 px-4 py-3 shadow-2xl"
+            style={{ backgroundColor: "#1a1f2e" }}
+          >
+            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
+            <span className="text-sm font-medium text-slate-100">재고가 등록되었습니다.</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 재고 운영 AI 보조 패널 */}
       <InventoryAiAssistantPanel
         open={aiPanel.isOpen}
@@ -3514,6 +3499,11 @@ function InventoryCard({
   };
 
   return (
+    <motion.div
+      whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.03)" }}
+      transition={{ duration: 0.18, ease: "easeOut" }}
+      className="rounded-xl"
+    >
     <Card className={
       hasRestockRequest
         ? "border-red-500 bg-red-950/10 ring-2 ring-red-200"
@@ -3708,6 +3698,7 @@ function InventoryCard({
         </div>
       </CardContent>
     </Card>
+    </motion.div>
   );
 }
 
