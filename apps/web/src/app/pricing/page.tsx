@@ -4,38 +4,38 @@ import { useState } from "react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainFooter } from "@/app/_components/main-footer";
 import { MainLayout } from "@/app/_components/main-layout";
-import { CheckCircle2, ArrowRight, Minus } from "lucide-react";
+import { CheckCircle2, ArrowRight, Minus, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { motion } from "framer-motion";
+import type { ReactNode } from "react";
 
-/* ── Surface palette (shared with intro) ───────────────────────── */
-/*
-  signal color 역할:
-  blue (#adc6ff / #4d8eff) → CTA fill, active/selected state ONLY
-  muted accent (#8da4c2) → capability indicator, soft icon, stage label
-*/
-const S = {
-  bg: "#0c1324",
-  containerLowest: "#070d1f",
-  slatePlane: "#131a2e",
-  slatePanel: "#1a2240",
-  slateCard: "#1e2848",
-  slateCardHigh: "#243050",
-  containerLow: "#151b2d",
-  container: "#191f31",
-  containerHigh: "#23293c",
-  containerHighest: "#2e3447",
-  bright: "#33394c",
-  onSurface: "#dce1fb",
-  onSurfaceVariant: "#c2c6d6",
-  outline: "#8c909f",
-  outlineVariant: "#424754",
-  primary: "#adc6ff",
-  primaryContainer: "#4d8eff",
-  onPrimary: "#002e6a",
-  onPrimaryContainer: "#00285d",
+/* ── Light palette — 인트로 editorial과 동일 톤 ───────────────── */
+const P = {
+  bg: "#FFFFFF",
+  bgSoft: "#F0F4F8",
+  bgMuted: "#E8EDF3",
+  text1: "#0F172A",
+  text2: "#334155",
+  text3: "#64748B",
+  text4: "#94A3B8",
+  border: "#E2E8F0",
+  blue: "#3B82F6",
+  blueHover: "#2563EB",
+  blueSoft: "#DBEAFE",
+  blueText: "#1D4ED8",
+  green: "#10B981",
+  greenSoft: "#D1FAE5",
+  greenText: "#065F46",
 } as const;
 
-const MUTED_ACCENT = "#8da4c2";
+/* Featured card — dark navy */
+const D = {
+  bg: "#0F172A",
+  surface: "#1E293B",
+  text1: "#F1F5F9",
+  text2: "#94A3B8",
+  border: "rgba(59,130,246,0.25)",
+} as const;
 
 const TEAM_MONTHLY = 129_000;
 const BUSINESS_MONTHLY = 349_000;
@@ -44,6 +44,43 @@ function fmt(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
 }
 
+/* ── Scroll animation wrapper ──────────────────────────────────── */
+function Reveal({ children, delay = 0, y = 30, className = "" }: {
+  children: ReactNode; delay?: number; y?: number; className?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.6, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ── FAQ data ─────────────────────────────────────────────────── */
+const FAQ_DATA = [
+  {
+    q: "우리 조직에 맞는 플랜을 어떻게 선택하나요?",
+    a: "현재 운영 범위를 기준으로 추천드립니다. 대부분의 연구실은 Team 또는 Business 플랜으로 시작합니다. 도입 상담을 통해 최적의 시작점을 함께 설계해드립니다.",
+  },
+  {
+    q: "플랜을 업그레이드하거나 변경할 수 있나요?",
+    a: "네, 운영 범위가 확장되면 언제든 플랜을 변경할 수 있습니다. 고객 지원팀에 문의해 주세요.",
+  },
+  {
+    q: "무료 체험은 어떻게 진행되나요?",
+    a: "Team 플랜은 14일 무료 체험이 가능합니다. 신용카드 등록 없이 바로 시작할 수 있으며, 체험 기간이 끝나면 자동으로 Starter 플랜으로 전환됩니다.",
+  },
+  {
+    q: "Enterprise 도입은 어떤 절차로 진행되나요?",
+    a: "도입 상담 → 운영 범위 설계 → 보안 검토 → 시스템 연동 → 파일럿 운영 순서로 진행됩니다. 전담 매니저가 전체 과정을 지원합니다.",
+  },
+];
+
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const discount = annual ? 0.9 : 1;
@@ -51,215 +88,191 @@ export default function PricingPage() {
   return (
     <MainLayout>
       <MainHeader />
-      <div className="w-full" style={{ backgroundColor: S.bg, color: S.onSurface }}>
+      <div className="w-full" style={{ backgroundColor: P.bg }}>
 
-        {/* ══ Hero — deep navy field ═════════════════════════════════ */}
-        <section className="pt-32 pb-24 max-w-7xl mx-auto px-6 md:px-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: "radial-gradient(circle at 50% 18%, rgba(59,130,246,0.10), transparent 32%), radial-gradient(circle at 50% 100%, rgba(59,130,246,0.04), transparent 40%)",
-          }} />
-
-          <div className="relative z-10 max-w-4xl mx-auto">
-            {/* Pill */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[13px] mb-8" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}30`, color: S.onSurfaceVariant }}>
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: S.primaryContainer }} />
-              운영 범위에 맞는 단계적 도입
-            </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-7xl font-bold tracking-tighter mb-8 leading-[1.1]">
-              우리 조직에 맞는 도입 구조
-            </h1>
-
-            <p className="text-lg md:text-xl max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: S.onSurfaceVariant }}>
-              시약·장비 검색부터 비교·요청 생성, 발주 준비, 입고 반영, 재고 운영까지.<br className="hidden md:block" />
-              현재 팀의 운영 범위에 맞는 플랜으로 시작하고 필요한 단계에 맞춰 확장할 수 있습니다.
-            </p>
+        {/* ══ Hero — white, clean ════════════════════════════════════ */}
+        <section className="pt-32 pb-16 md:pt-40 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
+          <div className="max-w-4xl mx-auto px-6">
+            <Reveal>
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 leading-[1.1]" style={{ color: P.text1 }}>
+                Flexible Plans for Every Lab
+              </h1>
+              <p className="text-base md:text-lg max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: P.text3 }}>
+                시약·장비 검색부터 비교·요청 생성, 발주 준비, 입고 반영, 재고 운영까지.<br className="hidden md:block" />
+                현재 팀의 운영 범위에 맞는 플랜으로 시작하고 필요한 단계에 맞춰 확장할 수 있습니다.
+              </p>
+            </Reveal>
 
             {/* Toggle */}
-            <div className="flex items-center justify-center gap-4 mb-10">
-              <span className="font-medium" style={{ color: !annual ? S.onSurface : S.outline }}>월간</span>
-              <button
-                onClick={() => setAnnual(!annual)}
-                className="w-14 h-7 rounded-full p-1 flex items-center relative transition-colors"
-                style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.08)" }}
-              >
-                <div className="w-5 h-5 rounded-full transition-all" style={{
-                  backgroundColor: S.primaryContainer,
-                  transform: annual ? "translateX(28px)" : "translateX(0)",
-                }} />
-              </button>
-              <span className="font-medium" style={{ color: annual ? S.onSurface : S.outline }}>연간</span>
-              {annual && (
-                <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: "rgba(59,130,246,0.08)", color: S.primary, border: "1px solid rgba(59,130,246,0.15)" }}>
-                  연간 결제 10% 할인
-                </span>
-              )}
-            </div>
-
-            {/* Stage indicator — slightly lifted */}
-            <div className="max-w-4xl mx-auto mb-14 rounded-2xl px-5 py-4" style={{
-              backgroundColor: S.slateCard,
-              border: `1px solid ${S.outlineVariant}20`,
-            }}>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-left text-sm">
-                {[
-                  { stage: "1단계", label: "검색·후보 정리" },
-                  { stage: "2단계", label: "비교·선택안 정리" },
-                  { stage: "3단계", label: "요청 생성·발주 준비" },
-                  { stage: "4단계", label: "입고 반영·재고 운영" },
-                ].map((s) => (
-                  <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <p className="text-[11px] mb-1" style={{ color: MUTED_ACCENT }}>{s.stage}</p>
-                    <p className="font-semibold">{s.label}</p>
-                  </div>
-                ))}
+            <Reveal delay={0.1}>
+              <div className="flex items-center justify-center gap-4 mb-4">
+                <span className="text-sm font-medium" style={{ color: !annual ? P.text1 : P.text4 }}>월간</span>
+                <button
+                  onClick={() => setAnnual(!annual)}
+                  className="w-14 h-7 rounded-full p-1 flex items-center relative transition-colors"
+                  style={{ backgroundColor: annual ? P.blue : P.bgMuted, border: `1px solid ${P.border}` }}
+                >
+                  <div className="w-5 h-5 rounded-full transition-all shadow-sm" style={{
+                    backgroundColor: annual ? "#FFFFFF" : P.text4,
+                    transform: annual ? "translateX(28px)" : "translateX(0)",
+                  }} />
+                </button>
+                <span className="text-sm font-medium" style={{ color: annual ? P.text1 : P.text4 }}>연간</span>
+                {annual && (
+                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: P.blueSoft, color: P.blueText }}>
+                    10% 할인
+                  </span>
+                )}
               </div>
-            </div>
-          </div>
-
-          {/* ── Plan cards ─────────────────────────────────────────── */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch text-left relative z-10">
-            <PlanCard
-              name="Starter"
-              desc="개인 단위 검색과 기본 기록 시작"
-              price="Free"
-              period="/월"
-              features={["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"]}
-              cta="시작하기"
-            />
-            <PlanCard
-              name="Team"
-              desc="팀 단위 공유와 비교·요청 연결 시작"
-              price={fmt(Math.round(TEAM_MONTHLY * discount))}
-              period="/월"
-              features={["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"]}
-              cta="무료 체험 시작"
-            />
-            <PlanCard
-              name="Business"
-              desc="요청, 발주 준비, 입고·재고까지 운영 연결"
-              price={fmt(Math.round(BUSINESS_MONTHLY * discount))}
-              period="/월"
-              features={["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"]}
-              cta="도입 시작"
-              featured
-            />
-            <PlanCard
-              name="Enterprise"
-              desc="조직 기준, 보안, 내부 시스템 연결까지 확장"
-              price="별도 문의"
-              features={["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"]}
-              cta="도입 상담"
-            />
+            </Reveal>
           </div>
         </section>
 
-        {/* ══ Info banner ══════════════════════════════════════════════ */}
-        <section className="max-w-7xl mx-auto px-6 md:px-8 mb-10">
-          <div className="rounded-2xl px-5 py-4 text-sm" style={{
-            backgroundColor: S.slateCard,
-            border: `1px solid ${S.outlineVariant}20`,
-            color: S.onSurfaceVariant,
-          }}>
-            도입 구조는 단순 저장 용량보다 <span className="font-semibold" style={{ color: S.onSurface }}>도입 범위</span> 기준으로 나뉩니다. 검색과 비교 중심으로 시작한 뒤, 요청·발주 준비·입고·재고 운영으로 확장할 수 있습니다.
-          </div>
-        </section>
-
-        {/* ══ Comparison table — STATE MATRIX ═════════════════════════ */}
-        <section className="py-20" style={{ backgroundColor: S.slatePlane }}>
+        {/* ══ Plan cards ════════════════════════════════════════════ */}
+        <section className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
-            <h2 className="text-3xl font-bold mb-12 text-center">도입 범위 비교</h2>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-0 rounded-2xl overflow-hidden" style={{
-                backgroundColor: S.slateCard,
-                border: `1px solid ${S.outlineVariant}20`,
-              }}>
-                <thead>
-                  <tr style={{ backgroundColor: S.slateCardHigh }}>
-                    <th className="p-5 text-xs uppercase tracking-wider" style={{ color: S.outline }}>운영 항목</th>
-                    <th className="p-5 text-center">Starter</th>
-                    <th className="p-5 text-center">Team</th>
-                    <th className="p-5 text-center" style={{ color: S.onSurface }}>Business</th>
-                    <th className="p-5 text-center">Enterprise</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {([
-                    { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
-                    { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
-                    { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
-                    { feature: "발주 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
-                    { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
-                    { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
-                    { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
-                  ] as TableRow[]).map((row, i) => (
-                    <tr key={row.feature} style={{ backgroundColor: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.015)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                      <td className="p-5 font-medium">{row.feature}</td>
-                      <td className="p-5 text-center"><CellValue value={row.starter} /></td>
-                      <td className="p-5 text-center"><CellValue value={row.team} /></td>
-                      <td className="p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
-                      <td className="p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
+              {[
+                {
+                  name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
+                  price: "Free", period: "",
+                  features: ["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"],
+                  cta: "Start for Free", featured: false,
+                },
+                {
+                  name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
+                  price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
+                  features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
+                  cta: "Contact Sales", featured: true,
+                },
+                {
+                  name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
+                  price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
+                  features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
+                  cta: "Request Demo", featured: false,
+                },
+                {
+                  name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
+                  price: "Custom", period: "",
+                  features: ["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
+                  cta: "Contact Us", featured: false,
+                },
+              ].map((plan, i) => (
+                <Reveal key={plan.name} delay={i * 0.08}>
+                  <PlanCard {...plan} />
+                </Reveal>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* ══ Bottom CTA — 도입 설계 (slatePanel) ═════════════════════ */}
-        <section className="max-w-7xl mx-auto px-6 md:px-8 pb-24">
-          <div className="relative overflow-hidden rounded-3xl p-8 md:p-12" style={{
-            backgroundColor: S.slatePanel,
-            border: `1px solid ${S.outlineVariant}20`,
-          }}>
-            <div className="absolute inset-0 opacity-8 pointer-events-none" style={{ background: "radial-gradient(circle at 50% 35%, rgba(59,130,246,0.06) 0%, transparent 70%)" }} />
+        {/* ══ Custom solution banner ═══════════════════════════════ */}
+        <section className="py-12 md:py-16" style={{ backgroundColor: P.bg }}>
+          <div className="max-w-5xl mx-auto px-6 md:px-8">
+            <Reveal>
+              <div className="rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6" style={{ backgroundColor: P.bgSoft, border: `1px solid ${P.border}` }}>
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: P.text1 }}>Need a custom solution?</h3>
+                  <p className="text-sm md:text-base" style={{ color: P.text3 }}>
+                    조직 운영에 맞는 도입 범위를 함께 설계합니다. 검색·비교 중심으로 시작하고, 요청·발주·입고·재고 운영까지 확장할 수 있습니다.
+                  </p>
+                </div>
+                <Link href="/support" className="flex-shrink-0">
+                  <button className="px-8 py-3.5 rounded-xl font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] flex items-center gap-2 whitespace-nowrap" style={{ backgroundColor: P.green }}>
+                    Consultation Request <ArrowRight className="h-4 w-4" />
+                  </button>
+                </Link>
+              </div>
+            </Reveal>
+          </div>
+        </section>
 
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-              <div className="text-left">
-                <p className="text-sm font-semibold tracking-wide mb-4" style={{ color: MUTED_ACCENT }}>도입 설계</p>
-                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 leading-tight">
-                  조직 운영에 맞는<br />도입 범위를 함께 설계합니다.
+        {/* ══ Comparison table ═════════════════════════════════════ */}
+        <section className="py-16 md:py-20" style={{ backgroundColor: P.bgSoft, borderTop: `1px solid ${P.border}` }}>
+          <div className="max-w-7xl mx-auto px-6 md:px-8">
+            <Reveal>
+              <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>도입 범위 비교</h2>
+            </Reveal>
+            <Reveal delay={0.1}>
+              <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <table className="w-full text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
+                  <thead>
+                    <tr style={{ backgroundColor: P.bgSoft }}>
+                      <th className="p-5 text-xs uppercase tracking-wider font-bold" style={{ color: P.text4 }}>운영 항목</th>
+                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text2 }}>Starter</th>
+                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text1 }}>Team</th>
+                      <th className="p-5 text-center text-sm font-bold" style={{ color: P.text1 }}>Business</th>
+                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text2 }}>Enterprise</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {([
+                      { feature: "검색·후보 정리", starter: "기본", team: "팀 공유", business: "check", businessLabel: "조직 공용", enterprise: "check", enterpriseLabel: "멀티 조직" },
+                      { feature: "비교·선택안 정리", starter: "none", team: "기본", business: "check", businessLabel: "운영형 비교", enterprise: "check", enterpriseLabel: "조직 기준" },
+                      { feature: "요청 생성·기록 공유", starter: "none", team: "초안·공유", business: "check", businessLabel: "운영형 관리", enterprise: "check", enterpriseLabel: "조직 기준" },
+                      { feature: "발주 준비·운영 큐", starter: "none", team: "none", business: "check", enterprise: "check" },
+                      { feature: "입고 반영·재고 운영", starter: "기본 등록", team: "상태 공유", business: "check", businessLabel: "운영 반영", enterprise: "check", enterpriseLabel: "조직 운영" },
+                      { feature: "예산·권한 기준", starter: "none", team: "기본 권한", business: "check", businessLabel: "운영 기준", enterprise: "check", enterpriseLabel: "정책/감사" },
+                      { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
+                    ] as TableRow[]).map((row, i) => (
+                      <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: i % 2 === 0 ? P.bg : P.bgSoft }}>
+                        <td className="p-5 font-medium text-sm" style={{ color: P.text1 }}>{row.feature}</td>
+                        <td className="p-5 text-center"><CellValue value={row.starter} /></td>
+                        <td className="p-5 text-center"><CellValue value={row.team} /></td>
+                        <td className="p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
+                        <td className="p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Reveal>
+          </div>
+        </section>
+
+        {/* ══ FAQ ═══════════════════════════════════════════════════ */}
+        <section className="py-16 md:py-20" style={{ backgroundColor: P.bg }}>
+          <div className="max-w-3xl mx-auto px-6 md:px-8">
+            <Reveal>
+              <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>
+                Frequently Asked Questions
+              </h2>
+            </Reveal>
+            <div className="flex flex-col gap-4">
+              {FAQ_DATA.map((faq, i) => (
+                <Reveal key={faq.q} delay={i * 0.06}>
+                  <FAQItem question={faq.q} answer={faq.a} />
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ══ Bottom CTA — 도입 설계 ════════════════════════════════ */}
+        <section className="py-16 md:py-20" style={{ backgroundColor: P.bgSoft, borderTop: `1px solid ${P.border}` }}>
+          <div className="max-w-5xl mx-auto px-6 md:px-8">
+            <Reveal>
+              <div className="text-center">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: P.text1 }}>
+                  조직 운영에 맞는 도입 범위를 함께 설계합니다
                 </h2>
-                <p className="text-lg mb-8 max-w-2xl leading-relaxed" style={{ color: S.onSurfaceVariant }}>
-                  검색·비교 중심으로 먼저 시작하고, 이후 요청·발주 준비·입고·재고 운영까지 확장할 수 있습니다. 현재 팀 구조와 운영 기준에 맞는 범위부터 함께 정리해드립니다.
+                <p className="text-base mb-8 max-w-2xl mx-auto" style={{ color: P.text3 }}>
+                  검색·비교 중심으로 먼저 시작하고, 이후 요청·발주 준비·입고·재고 운영까지 확장할 수 있습니다.
                 </p>
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link href="/support">
-                    <button className="px-8 py-4 rounded-xl font-bold text-lg transition-all hover:brightness-110 active:scale-95" style={{ backgroundColor: S.primary, color: S.onPrimary }}>
+                    <button className="px-8 py-4 rounded-xl font-bold text-white transition-all hover:brightness-110 active:scale-[0.98]" style={{ backgroundColor: P.blue }}>
                       도입 상담 신청
                     </button>
                   </Link>
-                  <Link href="/pricing">
-                    <button className="font-bold flex items-center gap-2 transition-colors hover:opacity-80" style={{ color: S.onSurface }}>
-                      요금표 검토하기 <ArrowRight className="h-4 w-4" />
+                  <Link href="/search">
+                    <button className="px-8 py-4 rounded-xl font-bold transition-all hover:brightness-95 active:scale-[0.98] flex items-center gap-2" style={{ color: P.text1, border: `1px solid ${P.border}`, backgroundColor: P.bg }}>
+                      무료로 시작하기 <ArrowRight className="h-4 w-4" />
                     </button>
                   </Link>
                 </div>
               </div>
-
-              <div className="rounded-2xl p-5 md:p-6" style={{ backgroundColor: S.slateCard, border: `1px solid ${S.outlineVariant}18`, boxShadow: "0 22px 48px rgba(0,0,0,0.2)" }}>
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <p className="text-xs mb-1" style={{ color: S.onSurfaceVariant }}>추천 도입 흐름</p>
-                    <h3 className="text-xl font-bold">Team → Business 확장</h3>
-                  </div>
-                  <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ backgroundColor: S.slateCardHigh, color: S.onSurfaceVariant, border: `1px solid ${S.outlineVariant}40` }}>운영 기준</span>
-                </div>
-                <div className="flex flex-col gap-3 text-sm">
-                  {[
-                    { stage: "현재", label: "검색·비교·요청 공유 중심" },
-                    { stage: "다음 단계에서 필요한 범위", label: "발주 준비 · 입고 반영 · 재고 운영 연결" },
-                    { stage: "내부 시스템 연결이 필요한 경우", label: "조직 보안 기준 · 내부 시스템 연동 · 멀티 사이트 운영" },
-                  ].map((s) => (
-                    <div key={s.stage} className="rounded-xl px-4 py-3" style={{ backgroundColor: S.slateCardHigh, border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <p className="text-[11px] mb-1" style={{ color: MUTED_ACCENT }}>{s.stage}</p>
-                      <p className="font-semibold">{s.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -280,23 +293,23 @@ type TableRow = {
   enterpriseLabel?: string;
 };
 
-/* ── Cell Value Component — state matrix rendering ───────────── */
+/* ── Cell Value Component ──────────────────────────────────────── */
 function CellValue({ value, label, highlight }: { value: string; label?: string; highlight?: boolean }) {
   if (value === "none") {
-    return <Minus className="h-4 w-4 mx-auto" style={{ color: S.outlineVariant }} />;
+    return <Minus className="h-4 w-4 mx-auto" style={{ color: P.text4 }} />;
   }
   if (value === "check") {
     return (
       <span className="inline-flex items-center gap-1.5">
-        <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: MUTED_ACCENT }} />
-        {label && <span className={`text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? S.onSurface : S.onSurfaceVariant }}>{label}</span>}
+        <CheckCircle2 className="h-[18px] w-[18px] flex-shrink-0" style={{ color: P.green }} />
+        {label && <span className={`text-sm ${highlight ? "font-semibold" : ""}`} style={{ color: highlight ? P.text1 : P.text2 }}>{label}</span>}
       </span>
     );
   }
-  return <span className="text-sm" style={{ color: S.outline }}>{value}</span>;
+  return <span className="text-sm" style={{ color: P.text4 }}>{value}</span>;
 }
 
-/* ── Plan Card Component ──────────────────────────────────────── */
+/* ── Plan Card Component — light design ──────────────────────── */
 function PlanCard({
   name, desc, price, period, features, cta, featured,
 }: {
@@ -308,54 +321,105 @@ function PlanCard({
   cta: string;
   featured?: boolean;
 }) {
+  if (featured) {
+    return (
+      <div className="relative">
+        {/* MOST POPULAR badge */}
+        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest text-white whitespace-nowrap" style={{ backgroundColor: P.blue }}>
+          MOST POPULAR
+        </div>
+        <div
+          className="p-8 rounded-3xl flex flex-col h-full"
+          style={{
+            backgroundColor: D.bg,
+            border: `1px solid ${D.border}`,
+            boxShadow: "0 20px 48px rgba(0,0,0,0.15)",
+          }}
+        >
+          <div className="mb-6">
+            <h3 className="text-xl font-bold mb-2" style={{ color: D.text1 }}>{name}</h3>
+            <p className="text-sm" style={{ color: D.text2 }}>{desc}</p>
+          </div>
+          <div className="mb-6">
+            <span className="text-4xl font-bold" style={{ color: D.text1 }}>{price}</span>
+            {period && <span className="text-sm" style={{ color: D.text2 }}>{period}</span>}
+          </div>
+          <ul className="flex flex-col gap-3.5 mb-10 flex-grow text-sm">
+            {features.map((f) => (
+              <li key={f} className="flex items-start gap-2.5">
+                <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+                <span style={{ color: D.text1 }}>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <Link href="/support">
+            <button className="w-full py-3.5 rounded-xl font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: P.blue }}>
+              {cta} <ArrowRight className="h-4 w-4" />
+            </button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div
-      className={`p-8 rounded-2xl flex flex-col transition-all relative ${featured ? "scale-[1.02] z-10" : "hover:translate-y-[-4px]"}`}
+      className="p-8 rounded-3xl flex flex-col h-full transition-all hover:translate-y-[-4px]"
       style={{
-        backgroundColor: S.slateCard,
-        border: featured ? "1px solid rgba(59,130,246,0.25)" : `1px solid ${S.outlineVariant}20`,
-        boxShadow: featured ? "0 20px 48px rgba(0,0,0,0.25)" : "0 12px 32px rgba(0,0,0,0.15)",
+        backgroundColor: P.bg,
+        border: `1px solid ${P.border}`,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
     >
-      {/* Top edge highlight for featured */}
-      {featured && (
-        <>
-          <div className="absolute inset-x-[14px] top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(59,130,246,0.4), transparent)", opacity: 0.9 }} />
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full text-[11px] font-bold uppercase tracking-[0.18em]" style={{ backgroundColor: S.slateCardHigh, color: S.onSurface, border: `1px solid ${S.outlineVariant}40` }}>
-            가장 많이 선택
-          </div>
-        </>
-      )}
-
-      <div className="mb-8">
-        <h3 className="text-xl font-bold mb-2" style={{ color: featured ? S.primary : S.onSurface }}>{name}</h3>
-        <p className="text-sm h-12" style={{ color: S.onSurfaceVariant }}>{desc}</p>
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-2" style={{ color: P.text1 }}>{name}</h3>
+        <p className="text-sm" style={{ color: P.text3 }}>{desc}</p>
       </div>
-
-      <div className="mb-7">
-        <span className="text-4xl font-bold">{price}</span>
-        {period && <span className="text-sm" style={{ color: S.onSurfaceVariant }}>{period}</span>}
+      <div className="mb-6">
+        <span className="text-4xl font-bold" style={{ color: P.text1 }}>{price}</span>
+        {period && <span className="text-sm" style={{ color: P.text3 }}>{period}</span>}
       </div>
-
-      <ul className="flex flex-col gap-4 mb-12 flex-grow text-sm">
+      <ul className="flex flex-col gap-3.5 mb-10 flex-grow text-sm">
         {features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: MUTED_ACCENT }} />
-            <span>{f}</span>
+          <li key={f} className="flex items-start gap-2.5">
+            <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+            <span style={{ color: P.text2 }}>{f}</span>
           </li>
         ))}
       </ul>
+      <Link href={name === "Starter" ? "/search" : "/support"}>
+        <button className="w-full py-3.5 rounded-xl font-bold transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2" style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}>
+          {cta} <ArrowRight className="h-4 w-4" />
+        </button>
+      </Link>
+    </div>
+  );
+}
 
+/* ── FAQ Accordion Item ────────────────────────────────────────── */
+function FAQItem({ question, answer }: { question: string; answer: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition-colors"
+      style={{ border: `1px solid ${open ? P.blue : P.border}`, backgroundColor: P.bg }}
+    >
       <button
-        className="w-full py-4 rounded-xl font-bold transition-all active:scale-[0.98]"
-        style={
-          featured
-            ? { backgroundColor: S.primary, color: S.onPrimary, boxShadow: "0 8px 24px rgba(77,142,255,0.15)" }
-            : { border: `1px solid ${S.outlineVariant}40`, color: S.onSurface, backgroundColor: S.slateCardHigh }
-        }
+        type="button"
+        className="w-full px-6 py-5 text-left flex items-center justify-between gap-4"
+        onClick={() => setOpen(!open)}
       >
-        {cta}
+        <span className="font-bold text-base" style={{ color: P.text1 }}>{question}</span>
+        <ChevronDown
+          className="h-5 w-5 flex-shrink-0 transition-transform"
+          style={{ color: P.text4, transform: open ? "rotate(180deg)" : "rotate(0)" }}
+        />
       </button>
+      {open && (
+        <div className="px-6 pb-5">
+          <p className="text-sm leading-relaxed" style={{ color: P.text3 }}>{answer}</p>
+        </div>
+      )}
     </div>
   );
 }
