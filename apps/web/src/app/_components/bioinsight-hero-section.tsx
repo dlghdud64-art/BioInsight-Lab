@@ -341,8 +341,16 @@ export function BioInsightHeroSection() {
         }} />
       </div>
 
-      {/* Nav */}
-      <nav className="relative z-20 flex justify-between items-center px-6 lg:px-12 py-5 max-w-[1400px] mx-auto w-full border-b border-white/8">
+      {/* Nav — fixed, 스크롤해도 항상 상단 고정 */}
+      <nav
+        className="fixed top-0 left-0 right-0 z-50 border-b border-white/8"
+        style={{
+          backgroundColor: "rgba(11,17,32,0.85)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+        }}
+      >
+        <div className="flex justify-between items-center px-6 lg:px-12 py-4 max-w-[1400px] mx-auto w-full">
         <Link href="/" className="flex items-center gap-2 cursor-pointer">
           <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
         </Link>
@@ -390,7 +398,11 @@ export function BioInsightHeroSection() {
           )}
           <MobileMenu />
         </div>
+        </div>
       </nav>
+
+      {/* Nav spacer — fixed nav 높이만큼 밀어줌 */}
+      <div className="h-16" />
 
       {/* Hero content — 텍스트 최소화, 목업 주인공 */}
       <div className="relative z-20 flex flex-col items-center max-w-[960px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16 text-center w-full">
