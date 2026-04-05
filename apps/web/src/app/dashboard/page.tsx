@@ -286,10 +286,12 @@ export default function DashboardPage() {
     insight: string; action?: string; risk: string; className?: string;
   }) => (
     <Link href={config.href}>
-      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
+      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
         <CardContent className="p-3.5 md:p-4 flex flex-col gap-1.5">
-          <div className="flex items-center gap-1.5">
-            {config.icon}
+          <div className="flex items-center gap-2">
+            <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+              {config.icon}
+            </span>
             <span className="text-[10px] md:text-xs font-semibold text-slate-100 uppercase tracking-wider">{config.label}</span>
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white leading-tight">{config.value}</div>
@@ -485,7 +487,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
-            icon: <Package className="h-3 w-3 text-slate-400" />,
+            icon: <Package className="h-3 w-3 text-emerald-400" />,
             label: "등록 품목",
             value: stats.totalInventory.toLocaleString("ko-KR"),
             insight: getInventoryInsight(),
@@ -494,7 +496,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/inventory?filter=low",
-            icon: <AlertTriangle className="h-3 w-3 text-red-400" />,
+            icon: <AlertTriangle className="h-3 w-3 text-amber-400" />,
             label: "재고 부족",
             value: stats.lowStockAlerts,
             insight: getStockInsight(),
@@ -503,7 +505,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/purchases",
-            icon: <DollarSign className="h-3 w-3 text-slate-400" />,
+            icon: <DollarSign className="h-3 w-3 text-blue-400" />,
             label: "이번 달 지출",
             value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
             insight: getSpendingInsight(),
@@ -512,7 +514,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/quotes?status=PENDING",
-            icon: <FileText className="h-3 w-3 text-slate-400" />,
+            icon: <FileText className="h-3 w-3 text-violet-400" />,
             label: "진행 중 견적",
             value: stats.activeQuotes,
             insight: getQuoteInsight(),
@@ -625,7 +627,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             {renderKpiCard({
               href: "/dashboard/inventory",
-              icon: <Package className="h-3.5 w-3.5 text-slate-400" />,
+              icon: <Package className="h-3.5 w-3.5 text-emerald-400" />,
               label: "등록 품목",
               value: stats.totalInventory.toLocaleString("ko-KR"),
               insight: getInventoryInsight(),
@@ -634,7 +636,7 @@ export default function DashboardPage() {
             })}
             {renderKpiCard({
               href: "/dashboard/inventory?filter=low",
-              icon: <AlertTriangle className="h-3.5 w-3.5 text-red-400" />,
+              icon: <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />,
               label: "재고 부족",
               value: stats.lowStockAlerts,
               insight: getStockInsight(),
@@ -642,10 +644,12 @@ export default function DashboardPage() {
               risk: stockRisk,
             })}
             <Link href="/dashboard/purchases">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <DollarSign className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                      <DollarSign className="h-3.5 w-3.5 text-blue-400" />
+                    </span>
                     <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">이번 달 지출</span>
                   </div>
                   <div className="text-xl font-bold text-white leading-tight">
@@ -666,10 +670,12 @@ export default function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/quotes?status=PENDING">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#32353a] border-white/[0.10] shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <FileText className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                      <FileText className="h-3.5 w-3.5 text-violet-400" />
+                    </span>
                     <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">진행 중 견적</span>
                   </div>
                   <div className="text-2xl font-bold text-white">{stats.activeQuotes}</div>
