@@ -256,4 +256,8 @@ div.quote-table td.no-column-cell {
   .hover\:bg-st:hover { background-color: var(--surface-strong); }
   .hover\:bg-pn:hover { background-color: var(--app-panel-3); }
   .bg-sh\/95 { background-color: color-mix(in srgb, var(--app-bg) 95%, transparent); }
+
+  /* 스크롤바 숨김 — 모바일 네비 가로 스크롤용 */
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 }
