@@ -12,7 +12,6 @@ import {
   CheckCircle2, Clock,
 } from "lucide-react";
 import Link from "next/link";
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { getGuestKey } from "@/lib/guest-key";
 import dynamic_import from "next/dynamic";
@@ -734,66 +733,6 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          {/* 지출 추이 */}
-          {stats.monthlySpendingChart.length > 1 && (
-            <Card className="overflow-hidden bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
-              <CardHeader className="p-4 pb-2">
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-sm font-semibold text-white">월별 지출 추이</CardTitle>
-                  <Link href="/dashboard/analytics" className="flex items-center text-xs text-slate-500 hover:text-slate-100 font-medium transition-colors">
-                    상세 분석 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-                  </Link>
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="h-[180px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={stats.monthlySpendingChart} margin={{ top: 8, right: 4, left: -20, bottom: 0 }}>
-                      <defs>
-                        <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                      <XAxis
-                        dataKey="month"
-                        tick={{ fontSize: 11, fill: "#8A99AF" }}
-                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 10, fill: "#8A99AF" }}
-                        axisLine={false}
-                        tickLine={false}
-                        tickFormatter={(v: number) => v >= 1000000 ? `${(v / 1000000).toFixed(0)}M` : v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
-                      />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1a1f2e",
-                          border: "1px solid rgba(255,255,255,0.1)",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                          color: "#e2e8f0",
-                        }}
-                        formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
-                        labelStyle={{ color: "#94a3b8", fontSize: "11px" }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="amount"
-                        stroke="#3b82f6"
-                        strokeWidth={2.5}
-                        fill="url(#colorAmount)"
-                        dot={{ r: 3, fill: "#3b82f6", strokeWidth: 0 }}
-                        activeDot={{ r: 5, fill: "#3b82f6", stroke: "#1e3a5f", strokeWidth: 2 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          )}
         </div>
 
         {/* -- 우측 운영 패널 (2col) -- */}
