@@ -22,7 +22,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <OpsStoreProvider>
-      <div className="flex h-screen overflow-hidden bg-sh">
+      <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
         <DashboardSidebar
           isMobileOpen={isMobileMenuOpen}
           onMobileOpenChange={setIsMobileMenuOpen}

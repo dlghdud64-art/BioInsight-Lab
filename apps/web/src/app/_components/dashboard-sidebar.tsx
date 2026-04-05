@@ -117,18 +117,18 @@ const dashboardLinks = [
 
 // 사이드바 아이콘 색상 매핑 (active = 밝은 tint, inactive = 약한 tint)
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
-  "/dashboard":              { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
-  "/dashboard/analytics":    { active: "text-cyan-400",   inactive: "text-cyan-600/70" },
-  "/dashboard/quotes":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/purchases":    { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/reports":      { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/budget":       { active: "text-blue-400",   inactive: "text-blue-500/60" },
-  "/dashboard/inventory":    { active: "text-teal-400",   inactive: "text-teal-500/60" },
-  "/dashboard/organizations":{ active: "text-violet-400", inactive: "text-violet-500/60" },
-  "/dashboard/safety":       { active: "text-amber-400",  inactive: "text-amber-500/60" },
-  "/dashboard/settings":     { active: "text-slate-300",  inactive: "text-slate-500" },
-  "/dashboard/activity-logs":{ active: "text-slate-300",  inactive: "text-slate-500" },
-  "/dashboard/audit":        { active: "text-slate-300",  inactive: "text-slate-500" },
+  "/dashboard":              { active: "text-cyan-600",   inactive: "text-cyan-500/70" },
+  "/dashboard/analytics":    { active: "text-cyan-600",   inactive: "text-cyan-500/70" },
+  "/dashboard/quotes":       { active: "text-blue-600",   inactive: "text-blue-400/70" },
+  "/dashboard/purchases":    { active: "text-blue-600",   inactive: "text-blue-400/70" },
+  "/dashboard/reports":      { active: "text-blue-600",   inactive: "text-blue-400/70" },
+  "/dashboard/budget":       { active: "text-blue-600",   inactive: "text-blue-400/70" },
+  "/dashboard/inventory":    { active: "text-teal-600",   inactive: "text-teal-400/70" },
+  "/dashboard/organizations":{ active: "text-violet-600", inactive: "text-violet-400/70" },
+  "/dashboard/safety":       { active: "text-amber-600",  inactive: "text-amber-400/70" },
+  "/dashboard/settings":     { active: "text-slate-700",  inactive: "text-slate-400" },
+  "/dashboard/activity-logs":{ active: "text-slate-700",  inactive: "text-slate-400" },
+  "/dashboard/audit":        { active: "text-slate-700",  inactive: "text-slate-400" },
 };
 
 interface DashboardSidebarProps {
@@ -176,12 +176,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
-      <div className="h-16 hidden lg:flex items-center px-4 border-b border-bd flex-shrink-0">
+      <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 flex-shrink-0">
         <Link
           href="/"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
-          <span className="text-xl font-bold tracking-tight text-slate-100">LabAxis</span>
+          <span className="text-xl font-bold tracking-tight text-slate-900">LabAxis</span>
         </Link>
       </div>
 
@@ -189,19 +189,19 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       <div className="flex-1 overflow-y-auto p-3 md:p-4 pt-16 lg:pt-8">
         {/* 모바일/태블릿 헤더 */}
         <div className="flex items-center justify-between mb-6 lg:hidden">
-          <h2 className="text-xs font-semibold text-slate-100">메뉴</h2>
+          <h2 className="text-xs font-semibold text-slate-900">메뉴</h2>
             <Button
             variant="ghost"
             size="icon"
             onClick={() => setIsMobileOpen(false)}
-            className="h-7 w-7 text-slate-400"
+            className="h-7 w-7 text-slate-500"
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
         
         {/* 데스크톱 헤더 */}
-        <h2 className="hidden lg:block text-xs lg:text-sm font-semibold text-slate-100 mb-6">메뉴</h2>
+        <h2 className="hidden lg:block text-xs lg:text-sm font-semibold text-slate-900 mb-6">메뉴</h2>
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
@@ -218,14 +218,14 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   className={cn(
                     "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                     isActive
-                      ? "text-white"
-                      : "text-slate-400 hover:text-slate-300"
+                      ? "text-blue-700 font-semibold"
+                      : "text-slate-600 hover:text-slate-900"
                   )}
-                  style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
-                  onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
+                  style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
+                  onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)"; } : undefined}
                   onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-400" : "text-slate-400")} />
+                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -237,7 +237,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         <div className="space-y-6">
           {sidebarGroups.map((group, groupIndex) => (
             <div key={groupIndex}>
-              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#455264" }}>
+              <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#64748B" }}>
                 {group.label}
               </h3>
               <nav className="space-y-1">
@@ -254,17 +254,17 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       className={cn(
                         "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "text-white"
-                          : "text-slate-400 hover:text-slate-200"
+                          ? "text-blue-700 font-semibold"
+                          : "text-slate-600 hover:text-slate-900"
                       )}
-                      style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
+                      style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
                       onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
                       onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                     >
                       <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
-                        <span className="ml-auto text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(37,99,235,0.12)", color: "#60A5FA" }}>
+                        <span className="ml-auto text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(37,99,235,0.08)", color: "#2563EB" }}>
                           {item.badge}
                         </span>
                       )}
@@ -278,15 +278,15 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 관리자 전용 메뉴 (시스템 관리) */}
         {isAdminOrOwner && (
-          <div className="mt-8 pt-6 border-t border-bd">
-            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#455264" }}>
+          <div className="mt-8 pt-6 border-t border-slate-200">
+            <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#64748B" }}>
               시스템 관리
             </p>
             <nav className="space-y-1">
               {adminMenuItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
-                const tint = ICON_TINT[item.href] || { active: "text-slate-300", inactive: "text-slate-500" };
+                const tint = ICON_TINT[item.href] || { active: "text-slate-700", inactive: "text-slate-400" };
                 return (
                   <Link
                     key={item.href}
@@ -295,11 +295,11 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     className={cn(
                       "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "text-white"
-                        : "text-slate-400 hover:text-slate-200"
+                        ? "text-blue-700 font-semibold"
+                        : "text-slate-600 hover:text-slate-900"
                     )}
-                    style={isActive ? { backgroundColor: "rgba(37,99,235,0.12)", borderLeft: "2px solid #2563EB" } : undefined}
-                    onMouseEnter={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
+                    style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
+                    onMouseEnter={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)"; } : undefined}
                     onMouseLeave={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                   >
                     <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
@@ -312,7 +312,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         )}
 
         {/* 웹사이트 기본 링크 (서비스 소개 / 요금제 / 고객 지원) */}
-        <div className="mt-8 pt-6 border-t border-bd">
+        <div className="mt-8 pt-6 border-t border-slate-200">
           <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
             LabAxis
           </p>
@@ -326,7 +326,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                 key={item.href}
                 href={item.href}
                 onClick={() => setIsMobileOpen(false)}
-                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-400 hover:bg-el hover:text-slate-300 transition-colors"
+                className="flex items-center px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
               >
                 <span className="truncate whitespace-nowrap">{item.title}</span>
               </Link>
@@ -336,17 +336,17 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       </div>
 
       {/* 하단 고정 영역 (서비스 홈으로) - 브랜드 컬러 강조 */}
-      <div className="mt-auto p-4 border-t border-bd flex-shrink-0">
+      <div className="mt-auto p-4 border-t border-slate-200 flex-shrink-0">
         <Link
           href="/"
           onClick={() => setIsMobileOpen(false)}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-300 group"
-          style={{ backgroundColor: "rgba(13,42,80,0.25)", borderColor: "rgba(37,99,235,0.15)" }}
-          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(13,42,80,0.4)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.3)"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(13,42,80,0.25)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.15)"; }}
+          style={{ backgroundColor: "rgba(37,99,235,0.04)", borderColor: "rgba(37,99,235,0.15)" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.08)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.3)"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.04)"; e.currentTarget.style.borderColor = "rgba(37,99,235,0.15)"; }}
         >
-          <Home className="h-4 w-4 text-slate-400 group-hover:text-blue-400 transition-colors" />
-          <span className="text-xs font-bold tracking-wider text-slate-400 group-hover:text-blue-400 truncate whitespace-nowrap">
+          <Home className="h-4 w-4 text-slate-500 group-hover:text-blue-600 transition-colors" />
+          <span className="text-xs font-bold tracking-wider text-slate-500 group-hover:text-blue-600 truncate whitespace-nowrap">
             서비스 홈으로
           </span>
         </Link>
@@ -357,7 +357,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   return (
     <>
       {/* ── 데스크탑 고정 사이드바 (lg 이상) ── */}
-      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-sh border-r border-bd z-30">
+      <aside className="hidden lg:flex lg:flex-col fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-30">
         <SidebarContent />
       </aside>
 
@@ -370,7 +370,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
       )}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-sh border-r border-bd z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
+          "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
