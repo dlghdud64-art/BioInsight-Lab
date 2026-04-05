@@ -90,8 +90,11 @@ export default function PricingPage() {
       <MainHeader />
       <div className="w-full" style={{ backgroundColor: P.bg }}>
 
+        {/* ══ Header spacer — MainHeader(h-14, z-40) 위에 배경 보장 ══ */}
+        <div className="h-14" style={{ backgroundColor: "#0B1120" }} />
+
         {/* ══ Hero — white, clean ════════════════════════════════════ */}
-        <section className="pt-32 pb-16 md:pt-40 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
+        <section className="pt-16 pb-16 md:pt-24 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 leading-[1.1]" style={{ color: P.text1 }}>
@@ -329,31 +332,31 @@ function PlanCard({
           MOST POPULAR
         </div>
         <div
-          className="p-8 rounded-3xl flex flex-col h-full"
+          className="p-9 md:p-10 rounded-3xl flex flex-col h-full"
           style={{
             backgroundColor: D.bg,
             border: `1px solid ${D.border}`,
             boxShadow: "0 20px 48px rgba(0,0,0,0.15)",
           }}
         >
-          <div className="mb-6">
-            <h3 className="text-xl font-bold mb-2" style={{ color: D.text1 }}>{name}</h3>
-            <p className="text-sm" style={{ color: D.text2 }}>{desc}</p>
+          <div className="mb-7">
+            <h3 className="text-2xl font-bold mb-2" style={{ color: D.text1 }}>{name}</h3>
+            <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: D.text2 }}>{desc}</p>
           </div>
-          <div className="mb-6">
-            <span className="text-4xl font-bold" style={{ color: D.text1 }}>{price}</span>
-            {period && <span className="text-sm" style={{ color: D.text2 }}>{period}</span>}
+          <div className="mb-8">
+            <span className="text-[42px] font-bold leading-none" style={{ color: D.text1 }}>{price}</span>
+            {period && <span className="text-sm ml-1" style={{ color: D.text2 }}>{period}</span>}
           </div>
-          <ul className="flex flex-col gap-3.5 mb-10 flex-grow text-sm">
+          <ul className="flex flex-col gap-4 mb-12 flex-grow">
             {features.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+              <li key={f} className="flex items-start gap-2.5 text-[15px]">
+                <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
                 <span style={{ color: D.text1 }}>{f}</span>
               </li>
             ))}
           </ul>
           <Link href="/support">
-            <button className="w-full py-3.5 rounded-xl font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: P.blue }}>
+            <button className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: P.blue }}>
               {cta} <ArrowRight className="h-4 w-4" />
             </button>
           </Link>
@@ -364,31 +367,31 @@ function PlanCard({
 
   return (
     <div
-      className="p-8 rounded-3xl flex flex-col h-full transition-all hover:translate-y-[-4px]"
+      className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all hover:translate-y-[-4px]"
       style={{
         backgroundColor: P.bg,
         border: `1px solid ${P.border}`,
         boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
       }}
     >
-      <div className="mb-6">
-        <h3 className="text-xl font-bold mb-2" style={{ color: P.text1 }}>{name}</h3>
-        <p className="text-sm" style={{ color: P.text3 }}>{desc}</p>
+      <div className="mb-7">
+        <h3 className="text-2xl font-bold mb-2" style={{ color: P.text1 }}>{name}</h3>
+        <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: P.text3 }}>{desc}</p>
       </div>
-      <div className="mb-6">
-        <span className="text-4xl font-bold" style={{ color: P.text1 }}>{price}</span>
-        {period && <span className="text-sm" style={{ color: P.text3 }}>{period}</span>}
+      <div className="mb-8">
+        <span className="text-[42px] font-bold leading-none" style={{ color: P.text1 }}>{price}</span>
+        {period && <span className="text-sm ml-1" style={{ color: P.text3 }}>{period}</span>}
       </div>
-      <ul className="flex flex-col gap-3.5 mb-10 flex-grow text-sm">
+      <ul className="flex flex-col gap-4 mb-12 flex-grow">
         {features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5">
-            <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+          <li key={f} className="flex items-start gap-2.5 text-[15px]">
+            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
             <span style={{ color: P.text2 }}>{f}</span>
           </li>
         ))}
       </ul>
       <Link href={name === "Starter" ? "/search" : "/support"}>
-        <button className="w-full py-3.5 rounded-xl font-bold transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2" style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}>
+        <button className="w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2" style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}>
           {cta} <ArrowRight className="h-4 w-4" />
         </button>
       </Link>

@@ -224,7 +224,7 @@ function PlexusCanvas() {
     const init = () => {
       canvas.width = parent.clientWidth;
       canvas.height = parent.clientHeight;
-      const count = Math.floor((canvas.width * canvas.height) / 12000);
+      const count = Math.floor((canvas.width * canvas.height) / 9000);
       particles = [];
       const cx = canvas.width / 2, cy = canvas.height / 2;
       for (let i = 0; i < count; i++) {
@@ -238,7 +238,7 @@ function PlexusCanvas() {
           x, y,
           vx: (Math.random() - 0.5) * 0.4,
           vy: (Math.random() - 0.5) * 0.4,
-          r: isCluster ? Math.random() * 2.2 + 1.2 : Math.random() * 1.6 + 0.8,
+          r: isCluster ? Math.random() * 2.5 + 1.4 : Math.random() * 1.8 + 1.0,
           cluster: isCluster,
         });
       }
@@ -257,13 +257,13 @@ function PlexusCanvas() {
           if (dist < 150) {
             const bothCluster = p.cluster && p2.cluster;
             const alpha = bothCluster
-              ? 0.45 - (dist / 150) * 0.35
-              : 0.22 - (dist / 150) * 0.18;
+              ? 0.55 - (dist / 150) * 0.40
+              : 0.30 - (dist / 150) * 0.22;
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y);
             ctx.strokeStyle = bothCluster
-              ? `rgba(120,170,230,${alpha})`
-              : `rgba(100,150,210,${alpha})`;
-            ctx.lineWidth = bothCluster ? 1.1 : 0.7; ctx.stroke();
+              ? `rgba(130,180,240,${alpha})`
+              : `rgba(110,160,220,${alpha})`;
+            ctx.lineWidth = bothCluster ? 1.3 : 0.9; ctx.stroke();
           }
         }
         // Mouse interaction lines
@@ -272,8 +272,8 @@ function PlexusCanvas() {
           const distm = Math.sqrt(dxm * dxm + dym * dym);
           if (distm < 200) {
             ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(mouse.x, adjMouseY);
-            ctx.strokeStyle = `rgba(80,160,255,${0.5 - (distm / 200) * 0.5})`;
-            ctx.lineWidth = 1.2; ctx.stroke();
+            ctx.strokeStyle = `rgba(90,170,255,${0.6 - (distm / 200) * 0.55})`;
+            ctx.lineWidth = 1.4; ctx.stroke();
           }
         }
       }
@@ -289,8 +289,8 @@ function PlexusCanvas() {
         if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
         ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fillStyle = p.cluster
-          ? "rgba(130,180,240,0.9)"
-          : "rgba(100,150,210,0.6)";
+          ? "rgba(140,190,250,1.0)"
+          : "rgba(120,170,230,0.75)";
         ctx.fill();
       }
       animId = requestAnimationFrame(draw);
@@ -332,14 +332,20 @@ export function BioInsightHeroSection() {
         }} />
 
         {/* Plexus — hero 상단~중단까지 */}
-        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.4 }}>
+        <div className="absolute inset-0 pointer-events-none" style={{ opacity: 0.6 }}>
           <PlexusCanvas />
         </div>
 
         {/* Central light field — headline 뒤 focal axis */}
         <div className="absolute inset-x-0 top-0 pointer-events-none" style={{
-          height: "55%",
-          background: "radial-gradient(ellipse 50% 45% at 50% 36%, rgba(40,90,180,0.18) 0%, rgba(30,60,140,0.05) 55%, transparent 100%)",
+          height: "60%",
+          background: "radial-gradient(ellipse 55% 50% at 50% 34%, rgba(50,110,220,0.28) 0%, rgba(35,80,180,0.10) 50%, transparent 100%)",
+        }} />
+
+        {/* Secondary glow — 하단 네트워크 보강 */}
+        <div className="absolute inset-x-0 top-[30%] pointer-events-none" style={{
+          height: "40%",
+          background: "radial-gradient(ellipse 60% 40% at 50% 50%, rgba(60,130,240,0.12) 0%, transparent 70%)",
         }} />
 
         {/* Bottom fade — support band(#0E1B2E)로 자연스럽게 전환 */}
