@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
@@ -783,7 +783,13 @@ export default function AnalyticsPage() {
                     </div>
                     {hasMonthlyData ? (
                       <ResponsiveContainer width="100%" height={180}>
-                        <BarChart data={monthlySpending} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                        <AreaChart data={monthlySpending} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+                          <defs>
+                            <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                           <XAxis
                             dataKey="month"
@@ -800,11 +806,17 @@ export default function AnalyticsPage() {
                             }
                           />
                           <Tooltip
-                            contentStyle={{ borderRadius: "4px", border: "1px solid #334155", backgroundColor: "#1e293b", color: "#e2e8f0" }}
+                            contentStyle={{ borderRadius: "8px", border: "1px solid rgba(255,255,255,0.1)", backgroundColor: "#1a1f2e", color: "#e2e8f0" }}
                             formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
                           />
-                          <Bar dataKey="amount" fill="#3b82f6" radius={[2, 2, 0, 0]} barSize={28} />
-                        </BarChart>
+                          <Area
+                            type="monotone"
+                            dataKey="amount"
+                            stroke="#3b82f6"
+                            strokeWidth={3}
+                            fill="url(#colorAmount)"
+                          />
+                        </AreaChart>
                       </ResponsiveContainer>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-[180px] gap-2.5">
