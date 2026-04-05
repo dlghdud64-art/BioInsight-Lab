@@ -17,7 +17,7 @@ import { getGuestKey } from "@/lib/guest-key";
 import dynamic_import from "next/dynamic";
 const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-queue-inbox").then(m => m.WorkQueueInbox), {
   ssr: false,
-  loading: () => <div className="h-16 rounded-xl bg-el animate-pulse" />,
+  loading: () => <div className="h-16 rounded-xl bg-slate-200 animate-pulse" />,
 });
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
@@ -48,11 +48,11 @@ export default function DashboardPage() {
   if (status === "loading") {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
-        <div className="h-6 w-48 rounded bg-el animate-pulse" />
-        <div className="h-[72px] rounded-xl bg-el animate-pulse" />
+        <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
+        <div className="h-[72px] rounded-xl bg-slate-200 animate-pulse" />
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-el animate-pulse" />
+            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-200 animate-pulse" />
           ))}
         </div>
       </div>
@@ -144,11 +144,11 @@ export default function DashboardPage() {
   const renderNotificationIcon = (type: string) => {
     switch (type) {
       case "alert":
-        return <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0 mt-0.5" />;
+        return <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />;
       case "quote":
         return <FileText className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />;
       case "delivery":
-        return <Truck className="h-4 w-4 text-green-400 flex-shrink-0 mt-0.5" />;
+        return <Truck className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />;
       default:
         return null;
     }
@@ -203,7 +203,7 @@ export default function DashboardPage() {
   if (stats.lowStockAlerts > 0) {
     urgentItems.push({
       id: "u-low",
-      icon: <AlertTriangle className="h-4 w-4 text-red-400" />,
+      icon: <AlertTriangle className="h-4 w-4 text-red-500" />,
       label: `재고 부족 ${stats.lowStockAlerts}건`,
       desc: "안전재고 이하 품목 -- 발주 검토",
       href: "/dashboard/inventory?filter=low",
@@ -213,7 +213,7 @@ export default function DashboardPage() {
   if (stats.respondedQuotes > 0) {
     urgentItems.push({
       id: "u-responded",
-      icon: <CheckCircle2 className="h-4 w-4 text-green-400" />,
+      icon: <CheckCircle2 className="h-4 w-4 text-green-600" />,
       label: `견적 응답 ${stats.respondedQuotes}건`,
       desc: "공급사 응답 수신 -- 검토 후 확정",
       href: "/dashboard/quotes?status=RESPONDED",
@@ -286,18 +286,18 @@ export default function DashboardPage() {
     insight: string; action?: string; risk: string; className?: string;
   }) => (
     <Link href={config.href}>
-      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
+      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-white border border-slate-200 shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
         <CardContent className="p-3.5 md:p-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-50">
               {config.icon}
             </span>
-            <span className="text-[10px] md:text-xs font-semibold text-slate-100 uppercase tracking-wider">{config.label}</span>
+            <span className="text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider">{config.label}</span>
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-white leading-tight">{config.value}</div>
-          <p className="text-[10px] md:text-[11px] text-slate-200 leading-tight truncate">{config.insight}</p>
+          <div className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{config.value}</div>
+          <p className="text-[10px] md:text-[11px] text-slate-500 leading-tight truncate">{config.insight}</p>
           {config.action && (
-            <p className="text-[10px] md:text-[11px] text-blue-400 font-medium mt-0.5">{config.action} →</p>
+            <p className="text-[10px] md:text-[11px] text-blue-600 font-medium mt-0.5">{config.action} →</p>
           )}
         </CardContent>
       </Card>
@@ -305,14 +305,14 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 md:space-y-5 overflow-x-hidden">
+    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 md:space-y-5 overflow-x-hidden" style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
 
       {/* --- 페이지 헤더 --- */}
       <div className="flex flex-col space-y-1 min-w-0">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-white">
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
           대시보드
         </h2>
-        <p className="text-sm text-slate-100">
+        <p className="text-sm text-slate-500">
           {session?.user?.name ? `${session.user.name}님, ` : ""}
           {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
         </p>
@@ -323,7 +323,7 @@ export default function DashboardPage() {
 
       {/* --- Empty State (보조 섹션) --- */}
       {!hasAnyData && !statsLoading && (
-        <div className="rounded-lg border border-white/[0.05] border-dashed p-4 md:p-5 bg-white/[0.01]">
+        <div className="rounded-lg border border-slate-200 border-dashed p-4 md:p-5 bg-white">
           <p className="text-[10px] font-medium text-slate-600 uppercase tracking-widest mb-3">시작하기</p>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {[
@@ -332,12 +332,12 @@ export default function DashboardPage() {
               { step: "3", label: "견적 요청", desc: "공급사 견적 요청", href: "/app/quote", icon: <FileText className="h-3.5 w-3.5 text-slate-500" /> },
               { step: "4", label: "재고 연결", desc: "입고 후 연결", href: "/dashboard/inventory", icon: <Package className="h-3.5 w-3.5 text-slate-500" /> },
             ].map((item) => (
-              <Link key={item.step} href={item.href} className="group border border-white/[0.05] rounded-md p-2.5 hover:bg-white/[0.03] transition-colors">
+              <Link key={item.step} href={item.href} className="group border border-slate-200 rounded-md p-2.5 hover:bg-slate-50 transition-colors">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[9px] font-bold text-slate-600 bg-white/[0.05] rounded px-1 py-0.5">{item.step}</span>
+                  <span className="text-[9px] font-bold text-slate-600 bg-slate-100 rounded px-1 py-0.5">{item.step}</span>
                   {item.icon}
                 </div>
-                <p className="text-[11px] font-medium text-slate-300">{item.label}</p>
+                <p className="text-[11px] font-medium text-slate-700">{item.label}</p>
                 <p className="text-[10px] text-slate-600 mt-0.5">{item.desc}</p>
               </Link>
             ))}
@@ -346,8 +346,8 @@ export default function DashboardPage() {
       )}
 
       {/* --- 1순위: 오늘의 우선 작업 --- */}
-      <div className="rounded-xl border border-white/[0.10] bg-[#2c2e32] shadow-sm overflow-hidden">
-        <div className="px-4 py-3 border-b border-white/[0.08] flex items-center justify-between">
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {hasActionItems ? (
               <>
@@ -355,12 +355,12 @@ export default function DashboardPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                 </span>
-                <h3 className="text-sm font-semibold text-white">오늘의 우선 작업</h3>
+                <h3 className="text-sm font-semibold text-slate-900">오늘의 우선 작업</h3>
               </>
             ) : (
               <>
                 <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <h3 className="text-sm font-semibold text-slate-200">운영 상태 정상</h3>
+                <h3 className="text-sm font-semibold text-slate-700">운영 상태 정상</h3>
               </>
             )}
           </div>
@@ -368,14 +368,14 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2">
               {stats.activeQuotes > 0 && (
                 <Link href="/dashboard/quotes?status=PENDING">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-900/50 text-blue-400 hover:bg-el/50">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50">
                     견적 검토하기
                   </Button>
                 </Link>
               )}
               {stats.lowStockAlerts > 0 && (
                 <Link href="/dashboard/inventory?filter=low">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-red-900/50 text-red-400 hover:bg-red-950/30">
+                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-red-200 text-red-600 hover:bg-red-50">
                     재고 확인하기
                   </Button>
                 </Link>
@@ -384,45 +384,45 @@ export default function DashboardPage() {
           )}
         </div>
         {hasActionItems ? (
-          <div className="divide-y divide-white/[0.04] sm:divide-y-0 sm:grid sm:divide-x sm:divide-white/[0.04]" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
+          <div className="divide-y divide-slate-100 sm:divide-y-0 sm:grid sm:divide-x sm:divide-slate-100" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
             {stats.lowStockAlerts > 0 && (
-              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors group">
-                <AlertTriangle className="h-4 w-4 text-red-400 flex-shrink-0" />
+              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+                <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">{stats.lowStockAlerts}건 재고 부족</p>
-                  <p className="text-xs text-slate-300">즉시 발주 검토 필요</p>
+                  <p className="text-sm font-semibold text-slate-900">{stats.lowStockAlerts}건 재고 부족</p>
+                  <p className="text-xs text-slate-500">즉시 발주 검토 필요</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </Link>
             )}
             {stats.activeQuotes > 0 && (
-              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors group">
-                <FileText className="h-4 w-4 text-blue-400 flex-shrink-0" />
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+                <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">{stats.activeQuotes}건 견적 대기</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm font-semibold text-slate-900">{stats.activeQuotes}건 견적 대기</p>
+                  <p className="text-xs text-slate-500">
                     {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신 -- 검토 필요` : "공급사 응답 대기 중"}
                   </p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </Link>
             )}
             {stats.expiringCount > 0 && (
-              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors group">
-                <Calendar className="h-4 w-4 text-amber-400 flex-shrink-0" />
+              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+                <Calendar className="h-4 w-4 text-amber-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">{stats.expiringCount}건 유통기한 임박</p>
-                  <p className="text-xs text-slate-300">30일 이내 만료 예정</p>
+                  <p className="text-sm font-semibold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
+                  <p className="text-xs text-slate-500">30일 이내 만료 예정</p>
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </Link>
             )}
             {stats.undecidedCompareCount > 0 && (
-              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-white/[0.04] transition-colors group">
-                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-400" : "text-slate-400"}`} />
+              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+                <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-500" : "text-slate-400"}`} />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-white">{stats.undecidedCompareCount}건 비교 판정 대기</p>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-sm font-semibold text-slate-900">{stats.undecidedCompareCount}건 비교 판정 대기</p>
+                  <p className="text-xs text-slate-500">
                     {stats.compareStats.slaBreachedCount > 0
                       ? `SLA 초과 ${stats.compareStats.slaBreachedCount}건 -- 즉시 처리 필요`
                       : "비교 결과를 검토하고 판정하세요"}
@@ -469,13 +469,13 @@ export default function DashboardPage() {
                     </p>
                   )}
                 </div>
-                <ChevronRight className="h-4 w-4 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </Link>
             )}
           </div>
         ) : (
           <div className="px-4 py-3">
-            <p className="text-sm text-slate-300">현재 즉시 처리가 필요한 항목이 없습니다. 아래 빠른 실행에서 업무를 시작하세요.</p>
+            <p className="text-sm text-slate-500">현재 즉시 처리가 필요한 항목이 없습니다. 아래 빠른 실행에서 업무를 시작하세요.</p>
           </div>
         )}
       </div>
@@ -524,18 +524,18 @@ export default function DashboardPage() {
         </div>
 
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
-        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
           <CardContent className="p-3 space-y-3">
             {/* 즉시 처리 */}
             {urgentItems.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">즉시 처리</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">즉시 처리</p>
                 {urgentItems.map((item) => (
-                  <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-el transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                  <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-white">{item.label}</p>
-                      <p className="text-[10px] text-slate-300">{item.desc}</p>
+                      <p className="text-xs font-semibold text-slate-900">{item.label}</p>
+                      <p className="text-[10px] text-slate-500">{item.desc}</p>
                     </div>
                     <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
                   </Link>
@@ -545,14 +545,14 @@ export default function DashboardPage() {
 
             {/* 상태 기반 추천 */}
             <div className="space-y-1.5">
-              {urgentItems.length > 0 && <div className="border-t border-bd" />}
-              <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">다음 작업</p>
+              {urgentItems.length > 0 && <div className="border-t border-slate-200" />}
+              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">다음 작업</p>
               <div className="space-y-1">
                 {recommendedActions.map((action) => (
-                  <Link key={action.id} href={action.href} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-white/[0.04] transition-colors">
+                  <Link key={action.id} href={action.href} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors">
                     {action.icon}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-white" : "text-slate-300"}`}>{action.label}</p>
+                      <p className={`text-xs font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-600"}`}>{action.label}</p>
                       <p className="text-[10px] text-slate-400 truncate">{action.desc}</p>
                     </div>
                     <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
@@ -564,7 +564,7 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 알림 */}
-        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -573,14 +573,14 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="p-3 pt-0 space-y-1">
             {notifications.map((n) => (
-              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-el/50" : "hover:bg-el"}`}>
+              <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2 rounded-lg transition-colors ${n.unread ? "bg-blue-50/50" : "hover:bg-slate-50"}`}>
                 {renderNotificationIcon(n.type)}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-0.5">
-                    <p className="font-medium text-xs text-white truncate">{n.title}</p>
+                    <p className="font-medium text-xs text-slate-900 truncate">{n.title}</p>
                     {n.unread && <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>}
                   </div>
-                  <p className="text-[10px] text-slate-300 line-clamp-1">{n.content}</p>
+                  <p className="text-[10px] text-slate-500 line-clamp-1">{n.content}</p>
                 </div>
                 <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 mt-1" />
               </Link>
@@ -589,10 +589,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 처리 이력 (축소) */}
-        <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-900">최근 처리 이력</CardTitle>
               <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
             </div>
           </CardHeader>
@@ -601,13 +601,13 @@ export default function DashboardPage() {
               <p className="text-xs text-slate-500 py-2">아직 처리된 운영 이력이 없습니다</p>
             ) : (
               stats.recentPurchases.slice(0, 3).map((p, i) => (
-                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-bd/30 last:border-0">
+                <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 last:border-0">
                   <Beaker className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-100 truncate">{p.itemName || "품목명 미등록"}</p>
-                    <p className="text-[10px] text-slate-300">{formatPurchaseDate(p.purchasedAt)}</p>
+                    <p className="text-xs font-medium text-slate-900 truncate">{p.itemName || "품목명 미등록"}</p>
+                    <p className="text-[10px] text-slate-500">{formatPurchaseDate(p.purchasedAt)}</p>
                   </div>
-                  <span className="text-xs font-semibold text-slate-300 flex-shrink-0">
+                  <span className="text-xs font-semibold text-slate-700 flex-shrink-0">
                     {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
                   </span>
                 </div>
@@ -644,42 +644,42 @@ export default function DashboardPage() {
               risk: stockRisk,
             })}
             <Link href="/dashboard/purchases">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-white border-slate-200 shadow-sm rounded-xl ${riskBorder(spendingRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-50">
                       <DollarSign className="h-3.5 w-3.5 text-blue-400" />
                     </span>
-                    <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">이번 달 지출</span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">이번 달 지출</span>
                   </div>
-                  <div className="text-xl font-bold text-white leading-tight">
+                  <div className="text-xl font-bold text-slate-900 leading-tight">
                     {stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—"}
                   </div>
                   {stats.monthlySpending > 0 ? (
                     <div className={`flex items-center text-[11px] font-medium w-fit px-1.5 py-0.5 rounded ${
                       stats.monthOverMonthChange >= 0
-                        ? "text-red-400 bg-red-900/20"
-                        : "text-emerald-400 bg-emerald-900/20"
+                        ? "text-red-600 bg-red-50"
+                        : "text-emerald-600 bg-emerald-50"
                     }`}>
                       {stats.monthOverMonthChange >= 0 ? "▲" : "▼"} {Math.abs(stats.monthOverMonthChange).toFixed(1)}% 전월 대비
                     </div>
                   ) : (
-                    <p className="text-[11px] text-slate-300 leading-tight">{getSpendingInsight()}</p>
+                    <p className="text-[11px] text-slate-500 leading-tight">{getSpendingInsight()}</p>
                   )}
                 </CardContent>
               </Card>
             </Link>
             <Link href="/dashboard/quotes?status=PENDING">
-              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
+              <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-white border-slate-200 shadow-sm rounded-xl ${riskBorder(quoteRisk)}`}>
                 <CardContent className="p-4 flex flex-col gap-1">
                   <div className="flex items-center gap-1.5">
-                    <span className="flex items-center justify-center w-6 h-6 rounded-lg" style={{ backgroundColor: "rgba(255,255,255,0.06)" }}>
+                    <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-50">
                       <FileText className="h-3.5 w-3.5 text-violet-400" />
                     </span>
-                    <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">진행 중 견적</span>
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">진행 중 견적</span>
                   </div>
-                  <div className="text-2xl font-bold text-white">{stats.activeQuotes}</div>
-                  <p className="text-[11px] text-slate-300 leading-tight">{getQuoteInsight()}</p>
+                  <div className="text-2xl font-bold text-slate-900">{stats.activeQuotes}</div>
+                  <p className="text-[11px] text-slate-500 leading-tight">{getQuoteInsight()}</p>
                   {stats.opsFunnel.totalQuotes > 0 && (
                     <p className="text-[10px] text-slate-500 mt-0.5">
                       {"견적 "}{stats.opsFunnel.totalQuotes}
@@ -699,11 +699,11 @@ export default function DashboardPage() {
           </div>
 
           {/* 최근 처리 이력 */}
-          <Card className="overflow-hidden bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+          <Card className="overflow-hidden bg-white border-slate-200 shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
-                <CardTitle className="text-sm font-semibold text-white">최근 처리 이력</CardTitle>
-                <Link href="/dashboard/purchases" className="flex items-center text-xs text-slate-500 hover:text-slate-100 font-medium transition-colors">
+                <CardTitle className="text-sm font-semibold text-slate-900">최근 처리 이력</CardTitle>
+                <Link href="/dashboard/purchases" className="flex items-center text-xs text-slate-500 hover:text-slate-900 font-medium transition-colors">
                   전체 보기 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
                 </Link>
               </div>
@@ -712,18 +712,18 @@ export default function DashboardPage() {
               {stats.recentPurchases.length === 0 ? (
                 <div className="flex items-center gap-3 py-4 text-center justify-center">
                   <Package className="h-5 w-5 text-slate-500" />
-                  <p className="text-sm text-slate-300">아직 처리된 운영 이력이 없습니다</p>
+                  <p className="text-sm text-slate-500">아직 처리된 운영 이력이 없습니다</p>
                 </div>
               ) : (
-                <div className="space-y-0 divide-y divide-bd/50">
+                <div className="space-y-0 divide-y divide-slate-100">
                   {stats.recentPurchases.slice(0, 5).map((p, i) => (
                     <div key={p.id || `p-${i}`} className="flex items-center gap-3 py-2.5 first:pt-1">
                       <Beaker className="h-4 w-4 text-blue-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-100 truncate">{p.itemName || "품목명 미등록"}</p>
+                        <p className="text-sm font-medium text-slate-900 truncate">{p.itemName || "품목명 미등록"}</p>
                         <p className="text-[11px] text-slate-400">{p.vendorName || "공급사 미지정"} · {formatPurchaseDate(p.purchasedAt)}</p>
                       </div>
-                      <span className="text-sm font-semibold text-slate-300 flex-shrink-0">
+                      <span className="text-sm font-semibold text-slate-700 flex-shrink-0">
                         {p.amount ? `₩${p.amount.toLocaleString("ko-KR")}` : "—"}
                       </span>
                     </div>
@@ -739,21 +739,21 @@ export default function DashboardPage() {
         <div className="md:col-span-2 space-y-4">
 
           {/* 즉시 처리 + 추천 작업 */}
-          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+          <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
             <CardContent className="p-4 space-y-4">
               {/* 즉시 처리 */}
               {urgentItems.length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">즉시 처리</p>
+                  <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">즉시 처리</p>
                   <div className="space-y-1">
                     {urgentItems.map((item) => (
-                      <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-white/[0.04] transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                      <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                         {item.icon}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-semibold text-white">{item.label}</p>
-                          <p className="text-[10px] text-slate-300">{item.desc}</p>
+                          <p className="text-xs font-semibold text-slate-900">{item.label}</p>
+                          <p className="text-[10px] text-slate-500">{item.desc}</p>
                         </div>
-                        <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                        <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
                       </Link>
                     ))}
                   </div>
@@ -762,32 +762,32 @@ export default function DashboardPage() {
 
               {/* 상태 기반 추천 */}
               <div className="space-y-2">
-                {urgentItems.length > 0 && <div className="border-t border-bd" />}
-                <p className="text-[10px] font-semibold text-slate-300 uppercase tracking-wider">다음 작업</p>
+                {urgentItems.length > 0 && <div className="border-t border-slate-200" />}
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">다음 작업</p>
                 <div className="space-y-0.5">
                   {recommendedActions.map((action) => (
-                    <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors group">
+                    <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group">
                       {action.icon}
                       <div className="flex-1 min-w-0">
-                        <span className={`block text-sm font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-white" : "text-slate-300"}`}>{action.label}</span>
+                        <span className={`block text-sm font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-600"}`}>{action.label}</span>
                         <span className="block text-[11px] text-slate-400 leading-snug">{action.desc}</span>
                       </div>
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-300 transition-colors" />
+                      <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
                     </Link>
                   ))}
                 </div>
                 {/* 보조 기능 */}
-                <div className="pt-2 border-t border-bd space-y-0.5">
+                <div className="pt-2 border-t border-slate-200 space-y-0.5">
                   <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2 pb-1">보조 기능</p>
-                  <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors group">
+                  <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors group">
                     <Package className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-400 group-hover:text-slate-200">재고 관리</span>
-                    <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-300 transition-colors" />
+                    <span className="text-sm text-slate-400 group-hover:text-slate-900">재고 관리</span>
+                    <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-600 transition-colors" />
                   </Link>
-                  <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-white/[0.04] transition-colors group">
+                  <Link href="/dashboard/inventory" className="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors group">
                     <TrendingDown className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="text-sm text-slate-400 group-hover:text-slate-200">재고 차감</span>
-                    <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-300 transition-colors" />
+                    <span className="text-sm text-slate-400 group-hover:text-slate-900">재고 차감</span>
+                    <ChevronRight className="h-3 w-3 text-slate-500 ml-auto group-hover:text-slate-600 transition-colors" />
                   </Link>
                 </div>
               </div>
@@ -795,7 +795,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* 최근 알림 */}
-          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+          <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
             <CardHeader className="pb-2">
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
@@ -804,52 +804,52 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-1.5 pt-0">
               {notifications.map((n) => (
-                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-el/50 hover:bg-el/70" : "hover:bg-el"}`}>
+                <Link key={n.id} href={n.href} className={`flex items-start gap-2.5 p-2.5 rounded-lg transition-colors group ${n.unread ? "bg-blue-50/50 hover:bg-slate-50/70" : "hover:bg-slate-50"}`}>
                   {renderNotificationIcon(n.type)}
                   <div className="flex-1 min-w-0 overflow-hidden">
                     <div className="flex items-center gap-1.5 mb-0.5">
-                      <p className="font-medium text-xs text-white truncate">{n.title}</p>
+                      <p className="font-medium text-xs text-slate-900 truncate">{n.title}</p>
                       {n.unread && <Badge variant="default" className="h-3.5 px-1 text-[9px] bg-blue-600 flex-shrink-0">새</Badge>}
                     </div>
-                    <p className="text-[11px] text-slate-300 line-clamp-1">{n.content}</p>
+                    <p className="text-[11px] text-slate-500 line-clamp-1">{n.content}</p>
                   </div>
-                  <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 mt-1 group-hover:text-slate-300 transition-colors" />
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 mt-1 group-hover:text-slate-600 transition-colors" />
                 </Link>
               ))}
             </CardContent>
           </Card>
 
           {/* 견적 처리 현황 */}
-          <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl">
+          <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
             <CardHeader className="pb-2 p-4">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold text-white">견적 처리 현황</CardTitle>
+                <CardTitle className="text-sm font-semibold text-slate-900">견적 처리 현황</CardTitle>
                 <Link href="/dashboard/quotes"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
               </div>
             </CardHeader>
             <CardContent className="p-4 pt-0 space-y-2">
-              <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 p-2.5 rounded-lg border border-green-900/40 bg-green-950/20 hover:bg-green-950/40 transition-colors group">
-                <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
+              <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 p-2.5 rounded-lg border border-green-200 bg-green-50 hover:bg-green-100 transition-colors group">
+                <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white">응답 수신</p>
-                  <p className="text-[10px] text-slate-300">
+                  <p className="text-xs font-semibold text-slate-900">응답 수신</p>
+                  <p className="text-[10px] text-slate-500">
                     {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 -- 검토 후 벤더 확정하세요` : "대기 중인 응답 없음"}
                   </p>
                 </div>
-                <span className={`text-sm font-bold flex-shrink-0 ${stats.respondedQuotes > 0 ? "text-green-400" : "text-slate-400"}`}>
+                <span className={`text-sm font-bold flex-shrink-0 ${stats.respondedQuotes > 0 ? "text-green-700" : "text-slate-400"}`}>
                   {stats.respondedQuotes}
                 </span>
               </Link>
 
-              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-bd hover:bg-white/[0.04] transition-colors group">
+              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors group">
                 <Clock className="h-4 w-4 text-amber-400 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white">응답 대기</p>
-                  <p className="text-[10px] text-slate-300">
+                  <p className="text-xs font-semibold text-slate-900">응답 대기</p>
+                  <p className="text-[10px] text-slate-500">
                     {stats.activeQuotes > 0 ? `${stats.activeQuotes}건 공급사 응답 대기 중` : "대기 중인 견적 없음"}
                   </p>
                 </div>
-                <span className={`text-sm font-bold flex-shrink-0 ${stats.activeQuotes > 0 ? "text-amber-400" : "text-slate-400"}`}>
+                <span className={`text-sm font-bold flex-shrink-0 ${stats.activeQuotes > 0 ? "text-amber-600" : "text-slate-400"}`}>
                   {stats.activeQuotes}
                 </span>
               </Link>
@@ -859,22 +859,22 @@ export default function DashboardPage() {
 
           {/* 부족 재고 목록 (조건부) */}
           {stats.lowStockItems.length > 0 && (
-            <Card className="bg-[#1A2332] border-white/[0.08] shadow-sm rounded-xl border-l-2 border-l-red-500">
+            <Card className="bg-white border-slate-200 shadow-sm rounded-xl border-l-2 border-l-red-500">
               <CardHeader className="pb-1 p-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xs font-semibold text-red-400 flex items-center gap-1.5 uppercase tracking-wider">
+                  <CardTitle className="text-xs font-semibold text-red-500 flex items-center gap-1.5 uppercase tracking-wider">
                     <AlertTriangle className="h-3.5 w-3.5" />
                     부족 재고 ({stats.lowStockItems.length})
                   </CardTitle>
-                  <Link href="/dashboard/inventory?filter=low"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2 text-red-400">발주 검토</Button></Link>
+                  <Link href="/dashboard/inventory?filter=low"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2 text-red-500">발주 검토</Button></Link>
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-1.5">
                 {stats.lowStockItems.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-bd/30 last:border-0">
+                  <div key={item.id} className="flex items-center justify-between py-1.5 border-b border-slate-100 last:border-0">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-slate-100 truncate">{item.productName}</p>
-                      <p className="text-[10px] text-red-400">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
+                      <p className="text-sm font-medium text-slate-900 truncate">{item.productName}</p>
+                      <p className="text-[10px] text-red-500">{item.currentQuantity}/{item.safetyStock} {item.unit}</p>
                     </div>
                     <span className="relative flex h-2 w-2 ml-2 flex-shrink-0">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -889,16 +889,16 @@ export default function DashboardPage() {
       </div>
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-sh/95 backdrop-blur-sm border-t border-bd px-4 py-2.5">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Link href="/app/search" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-pg border-bd text-slate-300 hover:bg-el">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50">
               <Search className="h-3.5 w-3.5" />
               시약 검색
             </Button>
           </Link>
           <Link href="/dashboard/inventory" className="flex-1">
-            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 border-bd text-slate-300 hover:bg-el">
+            <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 border-slate-200 text-slate-700 hover:bg-slate-50">
               <Plus className="h-3.5 w-3.5" />
               재고 등록
             </Button>
