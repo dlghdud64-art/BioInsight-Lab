@@ -345,7 +345,7 @@ function PlanCard({
             <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: D.text2 }}>{desc}</p>
           </div>
           <div className="mb-8">
-            <span className="text-[42px] font-bold leading-none" style={{ color: D.text1 }}>{price}</span>
+            <span className="text-[30px] font-bold leading-none" style={{ color: D.text1 }}>{price}</span>
             {period && <span className="text-sm ml-1" style={{ color: D.text2 }}>{period}</span>}
           </div>
           <ul className="flex flex-col gap-4 mb-12 flex-grow">
@@ -380,7 +380,7 @@ function PlanCard({
         <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: P.text3 }}>{desc}</p>
       </div>
       <div className="mb-8">
-        <span className="text-[42px] font-bold leading-none" style={{ color: P.text1 }}>{price}</span>
+        <span className="text-[30px] font-bold leading-none" style={{ color: P.text1 }}>{price}</span>
         {period && <span className="text-sm ml-1" style={{ color: P.text3 }}>{period}</span>}
       </div>
       <ul className="flex flex-col gap-4 mb-12 flex-grow">
