@@ -311,6 +311,14 @@ export function BioInsightHeroSection() {
   const { data: session, status } = useSession();
   const isLoggedIn = !!session?.user;
   const isAuthLoading = status === "loading";
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
     <section className="relative w-full flex flex-col overflow-visible bg-public-brand-field-strong" style={{ background: "var(--public-brand-field-strong)" }}>
@@ -341,13 +349,14 @@ export function BioInsightHeroSection() {
         }} />
       </div>
 
-      {/* Nav — fixed, 스크롤해도 항상 상단 고정 */}
+      {/* Nav — fixed, 스크롤 전 투명 → 스크롤 후 blur 배경 */}
       <nav
-        className="fixed top-0 left-0 right-0 z-50 border-b border-white/8"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
         style={{
-          backgroundColor: "rgba(11,17,32,0.85)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
+          backgroundColor: scrolled ? "rgba(11,17,32,0.92)" : "transparent",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          WebkitBackdropFilter: scrolled ? "blur(12px)" : "none",
+          borderBottom: scrolled ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent",
         }}
       >
         <div className="flex justify-between items-center px-6 lg:px-12 py-4 max-w-[1400px] mx-auto w-full">

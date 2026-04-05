@@ -221,79 +221,87 @@ function InventoryOpsMockupContent() {
 }
 
 
+/* ── Light palette — 인트로 editorial과 동일 톤 ───────────────── */
+const LT = {
+  bg: "#F0F4F8",
+  text1: "#0F172A",
+  text2: "#334155",
+  text3: "#64748B",
+  blue: "#3B82F6",
+  blueSoft: "#DBEAFE",
+  blueText: "#1D4ED8",
+  border: "#E2E8F0",
+} as const;
+
 export function FinalCTASection() {
   return (
-    <section className="relative" style={{
-      background: "linear-gradient(to bottom, #0B1120 0%, #0E1B2E 40%, #0B1120 100%)",
+    <section className="relative py-20 md:py-28" style={{
+      backgroundColor: LT.bg,
+      borderTop: `1px solid ${LT.border}`,
     }}>
-      {/* Top separation — hero와 이어지는 미세한 경계 */}
-      <div className="absolute inset-x-0 top-0 h-px" style={{
-        background: "linear-gradient(90deg, transparent 25%, rgba(148,163,184,0.08) 50%, transparent 75%)",
-      }} />
 
-      {/* Restrained center halo — closure card를 띄워주는 은은한 빛 */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        background: "radial-gradient(ellipse 600px 400px at 58% 55%, rgba(59,130,246,0.04), transparent 70%)",
-      }} />
+      <div className="relative mx-auto max-w-[1200px] px-5 md:px-8">
 
-      {/* Dot grid — 인트로와 동일한 톤 */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: "radial-gradient(rgba(148,163,184,0.08) 1px, transparent 1px)",
-        backgroundSize: "32px 32px",
-      }} />
-
-      <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 pt-14 md:pt-20 pb-20 md:pb-32">
-
-        {/* 좌측 텍스트 + 우측 목업 — 간격 좁히고 한 장면으로 */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
-
-          {/* Left: Copy — 압축, mockup 설명자 역할 */}
-          <Reveal className="lg:w-[300px] flex-shrink-0 text-center lg:text-left">
-            <h2 className="text-xl md:text-[26px] font-bold tracking-tight mb-3 leading-tight" style={{ color: "#F8FAFC" }}>
-              입고 이후 재고 운영까지<br className="hidden lg:block" /> 끊기지 않습니다
+        {/* 섹션 타이틀 */}
+        <Reveal>
+          <div className="text-center mb-12 md:mb-16">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: LT.blueSoft }}>
+                <PackageCheck className="h-5 w-5" style={{ color: LT.blueText }} strokeWidth={1.8} />
+              </div>
+              <span className="text-sm font-bold tracking-wide" style={{ color: LT.blue }}>Inventory Operations</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3" style={{ color: LT.text1 }}>
+              입고 이후 재고 운영까지 끊기지 않습니다
             </h2>
-            <p className="text-[13px] md:text-sm font-medium mb-6 leading-relaxed" style={{ color: "#CBD5E1" }}>
+            <p className="text-base" style={{ color: LT.text3 }}>
               입고 반영, Lot·유효기간 관리, 부족 판단과 재주문까지 이어집니다.
             </p>
+          </div>
+        </Reveal>
 
-            {/* Supporting points — compact */}
-            <div className="flex flex-col gap-2.5">
+        {/* 좌측 텍스트 + 우측 목업 */}
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-14 items-center">
+
+          {/* Left: Supporting points */}
+          <Reveal className="lg:w-[300px] flex-shrink-0">
+            <div className="flex flex-col gap-4">
               {[
-                { icon: PackageCheck, text: "입고 즉시 재고 반영" },
-                { icon: Clock, text: "Lot / 유효기간 추적" },
-                { icon: AlertTriangle, text: "부족·재주문 판단" },
+                { icon: PackageCheck, title: "입고 즉시 재고 반영", desc: "입고 확인과 동시에 재고 수량이 자동 갱신됩니다." },
+                { icon: Clock, title: "Lot / 유효기간 추적", desc: "Lot 번호와 유효기간을 기록하고 만료 임박 시 알림합니다." },
+                { icon: AlertTriangle, title: "부족·재주문 판단", desc: "안전재고 미만 품목을 감지하고 재주문 검토를 이어줍니다." },
               ].map((pt, i) => (
                 <motion.div
-                  key={pt.text}
+                  key={pt.title}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
-                  className="flex items-center gap-2 justify-center lg:justify-start"
+                  transition={{ duration: 0.5, delay: 0.2 + i * 0.1 }}
+                  className="rounded-xl p-4 flex items-start gap-3"
+                  style={{ backgroundColor: "#FFFFFF", border: `1px solid ${LT.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}
                 >
-                  <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: "rgba(59,130,246,0.08)" }}>
-                    <pt.icon className="h-3 w-3" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
+                  <div className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: LT.blueSoft }}>
+                    <pt.icon className="h-4 w-4" style={{ color: LT.blueText }} strokeWidth={1.8} />
                   </div>
-                  <span className="text-[12px] md:text-[13px] font-medium" style={{ color: "#8A9AB5" }}>{pt.text}</span>
+                  <div>
+                    <p className="font-semibold text-sm mb-0.5" style={{ color: LT.text1 }}>{pt.title}</p>
+                    <p className="text-xs" style={{ color: LT.text3 }}>{pt.desc}</p>
+                  </div>
                 </motion.div>
               ))}
             </div>
           </Reveal>
 
-          {/* Right: Mockup 2 — closure card, dark field 위에 떠 있는 object */}
+          {/* Right: Mockup 2 — dark card on light field */}
           <Reveal delay={0.2} className="flex-1 min-w-0 w-full">
             <div
               className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
                 backgroundColor: C.base,
                 border: "1px solid rgba(148,163,184,0.18)",
-                boxShadow: "0 0 0 1px rgba(255,255,255,0.04), 0 24px 64px rgba(0,0,0,0.6), 0 12px 32px rgba(0,0,0,0.4), 0 0 40px rgba(59,130,246,0.06)",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08)",
               }}
             >
-              {/* Top edge highlight — card를 띄워주는 얇은 하이라이트 */}
-              <div className="absolute inset-x-0 top-0 h-px pointer-events-none" style={{ background: "linear-gradient(90deg, transparent 8%, rgba(255,255,255,0.18) 50%, transparent 92%)" }} />
-
               {/* Title bar */}
               <div
                 className="flex items-center px-3 md:px-4 py-2"
@@ -307,11 +315,6 @@ export function FinalCTASection() {
           </Reveal>
         </div>
       </div>
-
-      {/* Bottom dark falloff — footer로 자연스럽게 닫히는 gradient */}
-      <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none" style={{
-        background: "linear-gradient(to bottom, transparent, #0B1120)",
-      }} />
     </section>
   );
 }
