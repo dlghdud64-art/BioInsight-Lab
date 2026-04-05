@@ -4,6 +4,25 @@ import {
   PackageCheck, AlertTriangle, Clock, RotateCcw,
   MapPin, Thermometer, ChevronRight, ArrowRight,
 } from "lucide-react";
+import { motion } from "framer-motion";
+import type { ReactNode } from "react";
+
+/* ── Scroll animation wrapper ──────────────────────────────────── */
+function Reveal({ children, delay = 0, y = 40, className = "" }: {
+  children: ReactNode; delay?: number; y?: number; className?: string;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-60px" }}
+      transition={{ duration: 0.7, delay, ease: [0.25, 0.1, 0.25, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
 
 /*
  * ── Support Proof Section ───────────────────────────────────────
@@ -205,7 +224,7 @@ function InventoryOpsMockupContent() {
 export function FinalCTASection() {
   return (
     <section className="relative" style={{
-      background: `linear-gradient(to bottom, var(--public-close-layer) 0%, var(--public-brand-field-strong) 50%, var(--public-close-layer) 100%)`,
+      background: "linear-gradient(to bottom, #0B1120 0%, #0E1B2E 40%, #0B1120 100%)",
     }}>
       {/* Top separation — hero와 이어지는 미세한 경계 */}
       <div className="absolute inset-x-0 top-0 h-px" style={{
@@ -217,13 +236,19 @@ export function FinalCTASection() {
         background: "radial-gradient(ellipse 600px 400px at 58% 55%, rgba(59,130,246,0.04), transparent 70%)",
       }} />
 
+      {/* Dot grid — 인트로와 동일한 톤 */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "radial-gradient(rgba(148,163,184,0.08) 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+      }} />
+
       <div className="relative mx-auto max-w-[1200px] px-5 md:px-8 pt-14 md:pt-20 pb-20 md:pb-32">
 
         {/* 좌측 텍스트 + 우측 목업 — 간격 좁히고 한 장면으로 */}
         <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 items-center">
 
           {/* Left: Copy — 압축, mockup 설명자 역할 */}
-          <div className="lg:w-[300px] flex-shrink-0 text-center lg:text-left">
+          <Reveal className="lg:w-[300px] flex-shrink-0 text-center lg:text-left">
             <h2 className="text-xl md:text-[26px] font-bold tracking-tight mb-3 leading-tight" style={{ color: "#F8FAFC" }}>
               입고 이후 재고 운영까지<br className="hidden lg:block" /> 끊기지 않습니다
             </h2>
@@ -237,20 +262,27 @@ export function FinalCTASection() {
                 { icon: PackageCheck, text: "입고 즉시 재고 반영" },
                 { icon: Clock, text: "Lot / 유효기간 추적" },
                 { icon: AlertTriangle, text: "부족·재주문 판단" },
-              ].map((pt) => (
-                <div key={pt.text} className="flex items-center gap-2 justify-center lg:justify-start">
+              ].map((pt, i) => (
+                <motion.div
+                  key={pt.text}
+                  initial={{ opacity: 0, x: -20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+                  className="flex items-center gap-2 justify-center lg:justify-start"
+                >
                   <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
                     style={{ backgroundColor: "rgba(59,130,246,0.08)" }}>
                     <pt.icon className="h-3 w-3" style={{ color: "#60A5FA" }} strokeWidth={1.8} />
                   </div>
                   <span className="text-[12px] md:text-[13px] font-medium" style={{ color: "#8A9AB5" }}>{pt.text}</span>
-                </div>
+                </motion.div>
               ))}
             </div>
-          </div>
+          </Reveal>
 
           {/* Right: Mockup 2 — closure card, dark field 위에 떠 있는 object */}
-          <div className="flex-1 min-w-0 w-full">
+          <Reveal delay={0.2} className="flex-1 min-w-0 w-full">
             <div
               className="relative rounded-xl md:rounded-2xl overflow-hidden"
               style={{
@@ -272,13 +304,13 @@ export function FinalCTASection() {
 
               <InventoryOpsMockupContent />
             </div>
-          </div>
+          </Reveal>
         </div>
       </div>
 
       {/* Bottom dark falloff — footer로 자연스럽게 닫히는 gradient */}
       <div className="absolute inset-x-0 bottom-0 h-24 pointer-events-none" style={{
-        background: "linear-gradient(to bottom, transparent, #050d1b)",
+        background: "linear-gradient(to bottom, transparent, #0B1120)",
       }} />
     </section>
   );

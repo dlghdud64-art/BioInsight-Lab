@@ -27,13 +27,14 @@ const D = {
 
 const L = {
   bg: "#FFFFFF",
-  bgSoft: "#F8FAFC",
-  bgMuted: "#F1F5F9",
+  bgSoft: "#F0F4F8",     /* 톤 구분 강화: #F8FAFC → #F0F4F8 (white와 확실히 구별) */
+  bgMuted: "#E8EDF3",
   text1: "#0F172A",
   text2: "#334155",
   text3: "#64748B",
   text4: "#94A3B8",
   border: "#E2E8F0",
+  borderSoft: "#D6DEE8",  /* soft gray 섹션용 카드 보더 */
   blue: "#3B82F6",
   blueSoft: "#DBEAFE",
   blueText: "#1D4ED8",
@@ -331,7 +332,7 @@ export default function IntroPage() {
         </section>
 
         {/* ══ C. 제품 구조 설명 — soft gray + 2-column editorial ═══════ */}
-        <section id="structure" className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1 }}>
+        <section id="structure" className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1, borderTop: `1px solid ${L.border}` }}>
           <div className="max-w-6xl mx-auto px-6">
 
             {/* C-1: 연구 & 구매 */}
@@ -462,7 +463,7 @@ export default function IntroPage() {
         </section>
 
         {/* ══ E. 데이터 가시화 — soft gray + mockup card ═══════════════ */}
-        <section id="data" className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1 }}>
+        <section id="data" className="py-20 md:py-28" style={{ backgroundColor: L.bgSoft, color: L.text1, borderTop: `1px solid ${L.border}` }}>
           <div className="max-w-6xl mx-auto px-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
               <Reveal>
