@@ -264,12 +264,12 @@ export default function IntroPage() {
 
               {/* Operation Flow card */}
               <div className="rounded-2xl p-6 md:p-7" style={{
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "linear-gradient(135deg, #1B3048 0%, #162538 100%)",
+                border: "1px solid rgba(148,163,184,0.15)",
                 boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
               }}>
-                <h3 className="text-xl font-bold mb-2" style={{ color: D.text1 }}>운영 반영 흐름</h3>
-                <p className="text-sm mb-5" style={{ color: D.text2 }}>
+                <h3 className="text-xl font-bold mb-2" style={{ color: "#E2E8F0" }}>운영 반영 흐름</h3>
+                <p className="text-sm mb-5" style={{ color: "rgba(148,163,184,0.8)" }}>
                   요청, 발주 준비, 입고, 재고까지 운영 흐름을 이어줍니다.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -277,8 +277,8 @@ export default function IntroPage() {
                     { icon: ShoppingCart, title: "발주 준비" },
                     { icon: Warehouse, title: "재고 운영" },
                   ].map((s) => (
-                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <s.icon className="h-5 w-5 mb-2" style={{ color: D.text2 }} strokeWidth={1.8} />
+                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                      <s.icon className="h-5 w-5 mb-2" style={{ color: "#94A3B8" }} strokeWidth={1.8} />
                       <p className="text-sm font-semibold" style={{ color: D.text1 }}>{s.title}</p>
                     </div>
                   ))}
