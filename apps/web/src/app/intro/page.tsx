@@ -240,13 +240,13 @@ export default function IntroPage() {
               className="grid grid-cols-1 md:grid-cols-2 gap-5"
             >
               {/* Decision Flow card */}
-              <div className="rounded-2xl p-6 md:p-7" style={{
-                background: "linear-gradient(135deg, #1E3A5F 0%, #1A2E4A 100%)",
-                border: "1px solid rgba(59,130,246,0.2)",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              <div className="rounded-2xl p-6 md:p-8" style={{
+                background: "linear-gradient(135deg, #1A3058 0%, #243D6A 100%)",
+                border: "1px solid rgba(59,130,246,0.35)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.35), 0 0 40px rgba(59,130,246,0.08)",
               }}>
-                <h3 className="text-xl font-bold mb-2" style={{ color: D.primarySoft }}>의사결정 흐름</h3>
-                <p className="text-sm mb-5" style={{ color: "rgba(148,163,184,0.8)" }}>
+                <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#93C5FD" }}>의사결정 흐름</h3>
+                <p className="text-sm mb-5" style={{ color: "rgba(203,213,225,0.85)" }}>
                   검색, 비교, 선택까지 의사결정에 필요한 흐름을 연결합니다.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -254,22 +254,22 @@ export default function IntroPage() {
                     { icon: Search, title: "통합 검색" },
                     { icon: GitCompare, title: "비교·선택" },
                   ].map((s) => (
-                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <s.icon className="h-5 w-5 mb-2" style={{ color: D.primarySoft }} strokeWidth={1.8} />
-                      <p className="text-sm font-semibold" style={{ color: D.text1 }}>{s.title}</p>
+                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.2)" }}>
+                      <s.icon className="h-5 w-5 mb-2" style={{ color: "#93C5FD" }} strokeWidth={1.8} />
+                      <p className="text-sm font-semibold" style={{ color: "#F1F5F9" }}>{s.title}</p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Operation Flow card */}
-              <div className="rounded-2xl p-6 md:p-7" style={{
-                background: "linear-gradient(135deg, #1B3048 0%, #162538 100%)",
-                border: "1px solid rgba(148,163,184,0.15)",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              <div className="rounded-2xl p-6 md:p-8" style={{
+                background: "linear-gradient(135deg, #1B3048 0%, #223B5A 100%)",
+                border: "1px solid rgba(148,163,184,0.25)",
+                boxShadow: "0 20px 60px rgba(0,0,0,0.35), 0 0 40px rgba(100,150,200,0.06)",
               }}>
-                <h3 className="text-xl font-bold mb-2" style={{ color: "#E2E8F0" }}>운영 반영 흐름</h3>
-                <p className="text-sm mb-5" style={{ color: "rgba(148,163,184,0.8)" }}>
+                <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: "#E2E8F0" }}>운영 반영 흐름</h3>
+                <p className="text-sm mb-5" style={{ color: "rgba(203,213,225,0.85)" }}>
                   요청, 발주 준비, 입고, 재고까지 운영 흐름을 이어줍니다.
                 </p>
                 <div className="grid grid-cols-2 gap-3">
@@ -277,9 +277,9 @@ export default function IntroPage() {
                     { icon: ShoppingCart, title: "발주 준비" },
                     { icon: Warehouse, title: "재고 운영" },
                   ].map((s) => (
-                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                      <s.icon className="h-5 w-5 mb-2" style={{ color: "#94A3B8" }} strokeWidth={1.8} />
-                      <p className="text-sm font-semibold" style={{ color: D.text1 }}>{s.title}</p>
+                    <div key={s.title} className="rounded-xl p-4" style={{ backgroundColor: "rgba(148,163,184,0.1)", border: "1px solid rgba(148,163,184,0.18)" }}>
+                      <s.icon className="h-5 w-5 mb-2" style={{ color: "#CBD5E1" }} strokeWidth={1.8} />
+                      <p className="text-sm font-semibold" style={{ color: "#F1F5F9" }}>{s.title}</p>
                     </div>
                   ))}
                 </div>
@@ -482,34 +482,82 @@ export default function IntroPage() {
               </Reveal>
 
               <Reveal delay={0.15}>
-                {/* Mockup chart card */}
+                {/* Mockup chart card — 운영 지표 대시보드 */}
                 <div className="rounded-2xl overflow-hidden" style={{ backgroundColor: L.bg, border: `1px solid ${L.border}`, boxShadow: "0 4px 16px rgba(0,0,0,0.06)" }}>
                   {/* Title bar */}
-                  <div className="flex items-center gap-2 px-5 py-3" style={{ borderBottom: `1px solid ${L.border}` }}>
+                  <div className="flex items-center justify-between px-5 py-3" style={{ borderBottom: `1px solid ${L.border}` }}>
                     <div className="flex gap-1.5">
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#EF4444" }} />
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#F59E0B" }} />
                       <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#22C55E" }} />
                     </div>
+                    <span className="text-[10px] font-medium" style={{ color: L.text4 }}>품목별 구매 빈도 · 최근 8주</span>
                   </div>
-                  {/* Chart mockup */}
-                  <div className="p-6">
-                    <div className="flex items-end gap-2 h-32">
-                      {[35, 50, 42, 65, 55, 78, 70, 85].map((h, i) => (
-                        <motion.div
-                          key={i}
-                          className="flex-1 rounded-t-md"
-                          style={{ backgroundColor: i >= 6 ? L.blue : L.blueSoft }}
-                          initial={{ height: 0 }}
-                          whileInView={{ height: `${h}%` }}
-                          viewport={{ once: true }}
-                          transition={{ duration: 0.6, delay: 0.3 + i * 0.08, ease: "easeOut" }}
-                        />
+
+                  {/* KPI summary row */}
+                  <div className="grid grid-cols-3 gap-px" style={{ backgroundColor: L.border }}>
+                    {[
+                      { label: "총 구매 건수", value: "142건", change: "+18%" },
+                      { label: "재주문 품목", value: "23종", change: "반복률 62%" },
+                      { label: "평균 리드타임", value: "4.2일", change: "-1.3일" },
+                    ].map((kpi) => (
+                      <div key={kpi.label} className="px-4 py-3" style={{ backgroundColor: L.bg }}>
+                        <p className="text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: L.text4 }}>{kpi.label}</p>
+                        <p className="text-sm font-bold" style={{ color: L.text1 }}>{kpi.value}</p>
+                        <p className="text-[10px] font-medium" style={{ color: L.blue }}>{kpi.change}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chart area */}
+                  <div className="px-6 pt-5 pb-4">
+                    {/* Y-axis + bars */}
+                    <div className="flex gap-3">
+                      <div className="flex flex-col justify-between h-32 text-[9px] font-medium pr-1" style={{ color: L.text4 }}>
+                        <span>40건</span>
+                        <span>20건</span>
+                        <span>0</span>
+                      </div>
+                      <div className="flex items-end gap-2 h-32 flex-1">
+                        {[
+                          { h: 35, label: "1주" },
+                          { h: 50, label: "2주" },
+                          { h: 42, label: "3주" },
+                          { h: 65, label: "4주" },
+                          { h: 55, label: "5주" },
+                          { h: 78, label: "6주" },
+                          { h: 70, label: "7주" },
+                          { h: 88, label: "8주" },
+                        ].map((bar, i) => (
+                          <div key={i} className="flex-1 flex flex-col items-center">
+                            <motion.div
+                              className="w-full rounded-t-md"
+                              style={{ backgroundColor: i >= 6 ? L.blue : L.blueSoft }}
+                              initial={{ height: 0 }}
+                              whileInView={{ height: `${bar.h}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.6, delay: 0.3 + i * 0.08, ease: "easeOut" }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {/* X-axis labels */}
+                    <div className="flex ml-8 mt-2">
+                      {["1주", "2주", "3주", "4주", "5주", "6주", "7주", "8주"].map((w) => (
+                        <span key={w} className="flex-1 text-center text-[9px] font-medium" style={{ color: L.text4 }}>{w}</span>
                       ))}
                     </div>
-                    <div className="flex items-center justify-between mt-4 text-xs" style={{ color: L.text4 }}>
-                      <span>3월 1주</span>
-                      <span>3월 4주</span>
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 mt-4 pt-3" style={{ borderTop: `1px solid ${L.border}` }}>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: L.blueSoft }} />
+                        <span className="text-[10px] font-medium" style={{ color: L.text4 }}>일반 구매</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: L.blue }} />
+                        <span className="text-[10px] font-medium" style={{ color: L.text4 }}>반복 재주문</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -553,7 +601,4 @@ export default function IntroPage() {
         </section>
 
       </div>
-      <MainFooter />
-    </MainLayout>
-  );
-}
+   

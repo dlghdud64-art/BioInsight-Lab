@@ -31,7 +31,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-40 bg-pg/80 backdrop-blur-md border-b border-bs h-14">
+      <header className="fixed top-0 left-0 w-full z-40 backdrop-blur-md border-b border-bs h-14" style={{ backgroundColor: "rgba(11,17,32,0.95)" }}>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
           {/* ── LEFT: 로고 ── */}
@@ -46,6 +46,12 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             <nav className="hidden md:flex items-center gap-0.5 mr-1">
               {session?.user ? (
                 <>
+                  <Link href="/intro" className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
+                    서비스 소개
+                  </Link>
+                  <Link href="/pricing" className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
+                    요금 &amp; 도입
+                  </Link>
                   <Link href="/app/search" className="px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
                     검색
                   </Link>

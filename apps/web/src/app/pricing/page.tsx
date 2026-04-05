@@ -140,25 +140,25 @@ export default function PricingPage() {
                   name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
                   price: "Free", period: "",
                   features: ["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"],
-                  cta: "Start for Free", featured: false,
+                  cta: "Start for Free", href: "/search", featured: false,
                 },
                 {
                   name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
                   price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
                   features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
-                  cta: "Contact Sales", featured: true,
+                  cta: "14일 무료 체험", href: "/search", featured: true,
                 },
                 {
                   name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
                   price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
                   features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
-                  cta: "Request Demo", featured: false,
+                  cta: "무료 체험 시작", href: "/search", featured: false,
                 },
                 {
                   name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
                   price: "Custom", period: "",
                   features: ["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
-                  cta: "Contact Us", featured: false,
+                  cta: "도입 상담", href: "/support", featured: false,
                 },
               ].map((plan, i) => (
                 <Reveal key={plan.name} delay={i * 0.08}>
@@ -314,7 +314,7 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
 
 /* ── Plan Card Component — light design ──────────────────────── */
 function PlanCard({
-  name, desc, price, period, features, cta, featured,
+  name, desc, price, period, features, cta, featured, href,
 }: {
   name: string;
   desc: string;
@@ -322,6 +322,7 @@ function PlanCard({
   period?: string;
   features: string[];
   cta: string;
+  href: string;
   featured?: boolean;
 }) {
   if (featured) {
@@ -355,7 +356,7 @@ function PlanCard({
               </li>
             ))}
           </ul>
-          <Link href="/support">
+          <Link href={href}>
             <button className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: P.blue }}>
               {cta} <ArrowRight className="h-4 w-4" />
             </button>
@@ -390,7 +391,7 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      <Link href={name === "Starter" ? "/search" : "/support"}>
+      <Link href={href}>
         <button className="w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2" style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}>
           {cta} <ArrowRight className="h-4 w-4" />
         </button>
