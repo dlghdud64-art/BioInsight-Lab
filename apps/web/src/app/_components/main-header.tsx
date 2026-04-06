@@ -31,7 +31,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
 
   return (
     <>
-      <header className="fixed top-0 left-0 w-full z-40 backdrop-blur-md h-14" style={{ backgroundColor: "rgba(11,17,32,0.95)", borderBottom: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 1px 3px rgba(0,0,0,0.3)" }}>
+      <header className="fixed top-0 left-0 w-full z-40 backdrop-blur-md h-14" style={{ backgroundColor: "rgba(11,17,32,0.95)", boxShadow: "0 1px 4px rgba(0,0,0,0.4)" }}>
         <div className="w-full flex h-14 items-center justify-between px-4 md:max-w-6xl md:mx-auto">
 
           {/* ── LEFT: 로고 ── */}
