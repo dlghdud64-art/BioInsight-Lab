@@ -260,4 +260,51 @@ div.quote-table td.no-column-cell {
   /* 스크롤바 숨김 — 모바일 네비 가로 스크롤용 */
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* ── Stagger Animation Keyframes ── */
+  @keyframes stagger-fade-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes stagger-fade-left {
+    from { opacity: 0; transform: translateX(-16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes stagger-fade-right {
+    from { opacity: 0; transform: translateX(16px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes stagger-scale-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-stagger-up {
+    opacity: 0;
+    animation: stagger-fade-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .animate-stagger-left {
+    opacity: 0;
+    animation: stagger-fade-left 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .animate-stagger-right {
+    opacity: 0;
+    animation: stagger-fade-right 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+  .animate-stagger-scale {
+    opacity: 0;
+    animation: stagger-scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  /* prefers-reduced-motion: 접근성 — 모션 감소 선호 시 비활성화 */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-stagger-up,
+    .animate-stagger-left,
+    .animate-stagger-right,
+    .animate-stagger-scale {
+      opacity: 1;
+      animation: none;
+      transform: none;
+    }
+  }
 }

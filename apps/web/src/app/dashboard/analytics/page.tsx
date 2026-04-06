@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { StaggerItem } from "@/components/ui/stagger-container";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, AreaChart, Area,
@@ -270,7 +271,7 @@ export default function AnalyticsPage() {
             <div className="space-y-3">
               {/* Primary blocker callout */}
               {topBlocker && (
-                <div className="rounded-lg border border-bd bg-pn px-5 py-4">
+                <div className="rounded-lg border border-bd bg-pn px-5 py-4 animate-stagger-up" style={{ animationDelay: "0ms" }}>
                   <div className="flex items-start gap-3">
                     <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5" />
                     <div>
@@ -283,10 +284,11 @@ export default function AnalyticsPage() {
               )}
               {/* Readiness blocks */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                {readinessItems.map((item) => (
+                {readinessItems.map((item, idx) => (
                   <div
                     key={item.label}
-                    className="rounded-lg border border-bd bg-pn px-4 py-3 hover:shadow-md transition-shadow"
+                    className="rounded-lg border border-bd bg-pn px-4 py-3 hover:shadow-md transition-shadow animate-stagger-up"
+                    style={{ animationDelay: `${80 + idx * 60}ms` }}
                   >
                     <div className="flex items-center gap-2 mb-2">
                       <div className={`w-2 h-2 rounded-full shrink-0 ${item.ready ? "bg-emerald-400" : "bg-amber-400"}`} style={{ boxShadow: item.ready ? "0 0 8px rgba(52,211,153,0.5)" : "0 0 8px rgba(251,191,36,0.6)" }} />
@@ -354,7 +356,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
 
               {/* 예산 소진율 */}
-              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "0ms" }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
                     <Gauge className="h-4 w-4 text-slate-500" />
@@ -383,7 +385,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* 승인 대기 금액 */}
-              <Link href="/dashboard/purchases" className="block group">
+              <Link href="/dashboard/purchases" className="block group animate-stagger-up" style={{ animationDelay: "60ms" }}>
                 <div className="rounded-md border border-bd bg-pn p-4 h-full hover:shadow-md transition-shadow">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
@@ -407,7 +409,7 @@ export default function AnalyticsPage() {
               </Link>
 
               {/* 이번 달 지출 총액 — PRIMARY */}
-              <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4 hover:shadow-md transition-shadow">
+              <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "120ms" }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
                     <CreditCard className="h-4 w-4 text-blue-500" />
@@ -425,7 +427,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* 전월 대비 변동 */}
-              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "180ms" }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
                     {monthChange !== null && monthChange < 0
@@ -448,7 +450,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* 잔여 예산 */}
-              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "240ms" }}>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
                     <Wallet className="h-4 w-4 text-slate-500" />
@@ -499,7 +501,7 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
               {/* Panel 1: 카테고리별 초과 위험 */}
-              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "0ms" }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
@@ -572,7 +574,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 2: 공급사 집중도 */}
-              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "80ms" }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
@@ -644,7 +646,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 3: 이상 지출 탐지 */}
-              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "160ms" }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
@@ -756,7 +758,7 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 4: 재주문 예상 항목 */}
-              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow animate-stagger-up" style={{ animationDelay: "240ms" }}>
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">

@@ -421,14 +421,14 @@ export function BioInsightHeroSection() {
 
       {/* Hero content — 텍스트 최소화, 목업 주인공 */}
       <div className="relative z-20 flex flex-col items-center max-w-[960px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16 text-center w-full">
-        <h1 className="text-2xl md:text-[44px] lg:text-[50px] font-extrabold tracking-tight leading-[1.2] text-white mb-3 md:mb-4">
+        <h1 className="text-2xl md:text-[44px] lg:text-[50px] font-extrabold tracking-tight leading-[1.2] text-white mb-3 md:mb-4 animate-stagger-up" style={{ animationDelay: "0ms" }}>
           파편화된 연구실 구매,<br />이제 LabAxis 하나로 끝내세요
         </h1>
-        <p className="text-sm md:text-[15px] text-slate-300 mb-6 md:mb-7 font-medium max-w-lg">
+        <p className="text-sm md:text-[15px] text-slate-300 mb-6 md:mb-7 font-medium max-w-lg animate-stagger-up" style={{ animationDelay: "80ms" }}>
           엑셀, 이메일, 전화로 흩어져 있던 시약 검색부터 재고 관리까지.<br className="hidden md:block" />
           연구에만 집중할 수 있는 환경을 만듭니다.
         </p>
-        <div className="flex flex-row gap-3 mb-10 md:mb-12">
+        <div className="flex flex-row gap-3 mb-10 md:mb-12 animate-stagger-up" style={{ animationDelay: "160ms" }}>
           <Link href={isLoggedIn ? "/app/search" : "/search"}>
             <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
               {isLoggedIn ? "워크벤치 시작" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
@@ -442,7 +442,7 @@ export function BioInsightHeroSection() {
         </div>
 
         {/* ── Mockup 1 캡션 ── */}
-        <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5" style={{ color: "#94A3B8" }}>
+        <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5 animate-stagger-up" style={{ color: "#94A3B8", animationDelay: "240ms" }}>
           수십 개의 견적 비교부터 AI 발주 추천까지, 한 화면에서
         </p>
 
@@ -487,8 +487,8 @@ export function BioInsightHeroSection() {
                 { label: "전환 대기", value: "12건", color: "#3B82F6" },
                 { label: "금주 처리", value: "₩2,450,000", color: "#93C5FD" },
                 { label: "검토 필요", value: "선택안 3건", color: "#CBD5E1" },
-              ].map((kpi) => (
-                <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3" style={{ backgroundColor: "#131B2E" }}>
+              ].map((kpi, idx) => (
+                <div key={kpi.label} className="px-3 md:px-5 py-2.5 md:py-3 animate-stagger-scale" style={{ backgroundColor: "#131B2E", animationDelay: `${300 + idx * 100}ms` }}>
                   <p className="text-[8px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: "#64748B" }}>{kpi.label}</p>
                   <p className="text-[12px] md:text-[14px] font-bold" style={{ color: kpi.color }}>{kpi.value}</p>
                 </div>

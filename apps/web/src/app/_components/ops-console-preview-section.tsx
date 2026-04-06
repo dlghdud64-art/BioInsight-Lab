@@ -124,10 +124,10 @@ export function OpsConsoleMockupContent() {
                 </div>
 
                 <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
-                  {QUEUE_ITEMS.map((item) => (
+                  {QUEUE_ITEMS.map((item, idx) => (
                     <div key={item.id}
-                      className="px-3 md:px-4 py-2.5 md:py-3 cursor-default"
-                      style={{ backgroundColor: item.selected ? C.elevated : C.base }}
+                      className="px-3 md:px-4 py-2.5 md:py-3 cursor-default animate-stagger-left"
+                      style={{ backgroundColor: item.selected ? C.elevated : C.base, animationDelay: `${idx * 80}ms` }}
                     >
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                         <span className="text-[8px] md:text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
@@ -191,10 +191,10 @@ export function OpsConsoleMockupContent() {
                 </div>
 
                 <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
-                  {RAIL_OPTIONS.map((opt) => (
+                  {RAIL_OPTIONS.map((opt, idx) => (
                     <div key={opt.supplier}
-                      className="px-3 py-2.5"
-                      style={{ backgroundColor: opt.selected ? C.elevated : "transparent" }}
+                      className="px-3 py-2.5 animate-stagger-right"
+                      style={{ backgroundColor: opt.selected ? C.elevated : "transparent", animationDelay: `${200 + idx * 80}ms` }}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-1.5">

@@ -443,21 +443,26 @@ export default function SearchPage() {
                   <span className="ml-2 text-xs text-slate-400">검색 중...</span>
                 </div>
               ) : products.length > 0 ? (
-                products.map((product: any) => (
-                  <SourcingResultRow
+                products.map((product: any, idx: number) => (
+                  <div
                     key={product.id}
-                    product={product}
-                    isInCompare={compareIds.includes(product.id)}
-                    isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
-                    isSelected={railProduct?.id === product.id}
-                    compareSessionCount={compareStatuses[product.id]?.activeCount}
-                    onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
-                    onToggleRequest={() => handleProtectedAction(() => {
-                      const existing = quoteItems.find((q: any) => q.productId === product.id);
-                      if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
-                    })}
-                    onSelect={() => setActiveResultId(product.id)}
-                  />
+                    className="animate-stagger-up"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <SourcingResultRow
+                      product={product}
+                      isInCompare={compareIds.includes(product.id)}
+                      isInRequest={quoteItems.some((q: any) => q.productId === product.id)}
+                      isSelected={railProduct?.id === product.id}
+                      compareSessionCount={compareStatuses[product.id]?.activeCount}
+                      onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
+                      onToggleRequest={() => handleProtectedAction(() => {
+                        const existing = quoteItems.find((q: any) => q.productId === product.id);
+                        if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
+                      })}
+                      onSelect={() => setActiveResultId(product.id)}
+                    />
+                  </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center text-center py-16">
