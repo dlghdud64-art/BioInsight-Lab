@@ -363,8 +363,8 @@ export default function SearchPage() {
       });
       setActiveSourcingStrategy(optionFrame);
       closeStrategyOverlay();
-      // Auto-open compare review center work window after AI apply
-      setWorkWindowMode("compare-review");
+      // Auto-open AI comparison modal after AI apply
+      setComparisonModalOpen(true);
     }
   };
 
@@ -554,10 +554,10 @@ export default function SearchPage() {
                     <Button
                       size="sm"
                       className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
-                      onClick={() => handleProtectedAction(() => setWorkWindowMode("compare-review"))}
+                      onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}
                     >
                       <PenLine className="h-3 w-3 mr-1" />
-                      비교 검토 시작
+                      AI 비교 분석
                     </Button>
                     {shouldShowSourcingStrip && (
                       <Button
