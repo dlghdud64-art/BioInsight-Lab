@@ -139,7 +139,7 @@ export default function PricingPage() {
                 {
                   name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
                   price: "Free", period: "",
-                  features: ["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"],
+                  features: ["시약·장비 검색 및 후보 저장", "기본 비교 기록", "기본 재고 등록"],
                   cta: "무료 플랜 시작하기", href: "/search", featured: false,
                 },
                 {
@@ -157,7 +157,7 @@ export default function PricingPage() {
                 {
                   name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
                   price: "Custom", period: "",
-                  features: ["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
+                  features: ["조직 보안 정책·접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
                   cta: "도입 상담하기", href: "/support", featured: false,
                 },
               ].map((plan, i) => (
