@@ -97,7 +97,7 @@ export default function PricingPage() {
         <section className="pt-16 pb-16 md:pt-24 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 leading-[1.1]" style={{ color: P.text1 }}>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-5 leading-[1.1] whitespace-nowrap" style={{ color: P.text1 }}>
                 연구실 규모에 맞는 플랜을 선택하세요
               </h1>
               <p className="text-base md:text-lg max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: P.text3 }}>
