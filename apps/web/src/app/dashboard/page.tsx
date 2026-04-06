@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
 import dynamic_import from "next/dynamic";
 const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-queue-inbox").then(m => m.WorkQueueInbox), {
@@ -698,7 +699,86 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          {/* 최근 처리 이력 */}
+          {/* 월별 지출 추이 차트 */}
+          <Card className="overflow-hidden bg-white border-slate-200 shadow-sm rounded-xl">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  <CardTitle className="text-sm font-semibold text-slate-900">월별 지출 추이</CardTitle>
+                  {stats.monthOverMonthChange !== 0 && stats.monthlySpending > 0 && (
+                    <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+                      stats.monthOverMonthChange >= 0
+                        ? "text-red-600 bg-red-50"
+                        : "text-emerald-600 bg-emerald-50"
+                    }`}>
+                      {stats.monthOverMonthChange >= 0 ? <TrendingUp className="h-3 w-3 mr-0.5" /> : <TrendingDown className="h-3 w-3 mr-0.5" />}
+                      {Math.abs(stats.monthOverMonthChange).toFixed(1)}%
+                    </span>
+                  )}
+                </div>
+                <Link href="/dashboard/analytics" className="flex items-center text-xs text-slate-500 hover:text-slate-900 font-medium transition-colors">
+                  상세 분석 <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+                </Link>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-2">
+              {stats.monthlySpendingChart.length > 0 ? (
+                <ResponsiveContainer width="100%" height={200}>
+                  <AreaChart data={stats.monthlySpendingChart} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="dashSpendGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                    <XAxis
+                      dataKey="month"
+                      tick={{ fill: "#64748b", fontSize: 11 }}
+                      axisLine={false} tickLine={false}
+                    />
+                    <YAxis
+                      tick={{ fill: "#94a3b8", fontSize: 10 }}
+                      axisLine={false} tickLine={false}
+                      tickFormatter={(v: number) =>
+                        v >= 1000000 ? `${(v / 1000000).toFixed(0)}M`
+                          : v >= 1000 ? `${(v / 1000).toFixed(0)}K`
+                          : String(v)
+                      }
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff", color: "#1e293b", fontSize: "12px" }}
+                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="amount"
+                      stroke="#3b82f6"
+                      strokeWidth={2.5}
+                      fill="url(#dashSpendGrad)"
+                      dot={{ r: 3, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                      activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[200px] gap-3">
+                  <div className="w-12 h-12 rounded-full bg-slate-50 flex items-center justify-center">
+                    <TrendingUp className="h-6 w-6 text-slate-300" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-slate-500">지출 데이터 수집 중</p>
+                    <p className="text-xs text-slate-400 mt-1">구매가 등록되면 월별 추이 차트가 자동으로 표시됩니다</p>
+                  </div>
+                  <Link href="/dashboard/purchases" className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                    구매 등록하기 <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* 최근 처리 이력 (축소) */}
           <Card className="overflow-hidden bg-white border-slate-200 shadow-sm rounded-xl">
             <CardHeader className="p-4 pb-2">
               <div className="flex justify-between items-center">
@@ -710,14 +790,14 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="p-4 pt-0">
               {stats.recentPurchases.length === 0 ? (
-                <div className="flex items-center gap-3 py-4 text-center justify-center">
-                  <Package className="h-5 w-5 text-slate-500" />
+                <div className="flex items-center gap-3 py-3 text-center justify-center">
+                  <Package className="h-5 w-5 text-slate-300" />
                   <p className="text-sm text-slate-500">아직 처리된 운영 이력이 없습니다</p>
                 </div>
               ) : (
                 <div className="space-y-0 divide-y divide-slate-100">
-                  {stats.recentPurchases.slice(0, 5).map((p, i) => (
-                    <div key={p.id || `p-${i}`} className="flex items-center gap-3 py-2.5 first:pt-1">
+                  {stats.recentPurchases.slice(0, 4).map((p, i) => (
+                    <div key={p.id || `p-${i}`} className="flex items-center gap-3 py-2 first:pt-0">
                       <Beaker className="h-4 w-4 text-blue-400 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-slate-900 truncate">{p.itemName || "품목명 미등록"}</p>
