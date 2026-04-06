@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { StaggerItem } from "@/components/ui/stagger-container";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, AreaChart, Area,
+  PieChart, Pie, Cell, AreaChart, Area, LineChart, Line,
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
@@ -1055,6 +1055,108 @@ export default function AnalyticsPage() {
                 <ArrowRight className="h-3 w-3 text-slate-600 mt-0.5 flex-shrink-0" />
               </div>
             </Link>
+          </div>
+        </div>
+
+        {/* ═══════════════════════════════════════════════════
+            BOTTOM: 예상 지출 추이 (Line Chart — 샘플/실데이터)
+           ═══════════════════════════════════════════════════ */}
+        <div className="rounded-lg border border-bd bg-pn">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-bd">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-xl bg-slate-50 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-blue-500" />
+              </div>
+              <p className="text-sm font-semibold text-slate-700">월별 지출 추이</p>
+            </div>
+            {!hasMonthlyData && (
+              <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">샘플 데이터</span>
+            )}
+          </div>
+
+          <div className="px-5 pb-5 pt-4 relative">
+            {(() => {
+              const SAMPLE_DATA = [
+                { month: "1월", amount: 720000 },
+                { month: "2월", amount: 1800000 },
+                { month: "3월", amount: 1350000 },
+                { month: "4월", amount: 2100000 },
+                { month: "5월", amount: 2600000 },
+                { month: "6월", amount: 3200000 },
+              ];
+              const chartData = hasMonthlyData ? monthlySpending : SAMPLE_DATA;
+              const isEmpty = !hasMonthlyData;
+
+              return (
+                <div className="relative">
+                  <div style={{ opacity: isEmpty ? 0.35 : 1 }} className="transition-opacity duration-500">
+                    <ResponsiveContainer width="100%" height={240}>
+                      <LineChart data={chartData} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="lineGradient" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="#3b82f6" />
+                            <stop offset="100%" stopColor="#8b5cf6" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis
+                          dataKey="month"
+                          tick={{ fill: "#64748b", fontSize: 11 }}
+                          axisLine={false}
+                          tickLine={false}
+                        />
+                        <YAxis
+                          tick={{ fill: "#64748b", fontSize: 10 }}
+                          axisLine={false}
+                          tickLine={false}
+                          tickFormatter={(v: number) =>
+                            v >= 10000
+                              ? `₩${(v / 10000).toFixed(0)}만`
+                              : `₩${v.toLocaleString("ko-KR")}`
+                          }
+                        />
+                        {!isEmpty && (
+                          <Tooltip
+                            contentStyle={{
+                              borderRadius: "8px",
+                              border: "1px solid #e2e8f0",
+                              backgroundColor: "#ffffff",
+                              color: "#1e293b",
+                              fontSize: "12px",
+                            }}
+                            formatter={(value: number) => [
+                              `₩${value.toLocaleString("ko-KR")}`,
+                              "지출액",
+                            ]}
+                          />
+                        )}
+                        <Line
+                          type="monotone"
+                          dataKey="amount"
+                          stroke="url(#lineGradient)"
+                          strokeWidth={2.5}
+                          dot={{ r: 4, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                          activeDot={{ r: 6, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
+                          isAnimationActive={true}
+                          animationDuration={1500}
+                          animationEasing="ease-out"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  {/* Empty state overlay */}
+                  {isEmpty && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                      <p className="text-xs font-medium text-slate-500">예상 지출 추이 (샘플 데이터)</p>
+                      <p className="text-[11px] text-slate-400 mt-1 text-center leading-relaxed">
+                        실제 구매가 축적되면 월별 수치가 차트로 자동 갱신됩니다
+                      </p>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </div>
         </div>
 
