@@ -126,7 +126,7 @@ function MobileMenu() {
               ) : (
                 <div className="flex flex-col gap-1">
                   {([
-                    { href: "/intro", label: "제품 소개" },
+                    { href: "/", label: "제품 소개" },
                     { href: "/pricing", label: "요금 & 도입" },
                     { href: "/support", label: "고객 지원 및 문의" },
                   ] as const).map(({ href, label }) => (
@@ -372,7 +372,7 @@ export function BioInsightHeroSection() {
 
         {/* Desktop nav links — session-aware, loading-safe */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
+          <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
           {isAuthLoading ? (
             <div className="w-24 h-8 rounded-md bg-white/5 animate-pulse" />
@@ -422,15 +422,16 @@ export function BioInsightHeroSection() {
       {/* Hero content — 텍스트 최소화, 목업 주인공 */}
       <div className="relative z-20 flex flex-col items-center max-w-[960px] mx-auto px-4 sm:px-6 pt-12 sm:pt-16 text-center w-full">
         <h1 className="text-2xl md:text-[44px] lg:text-[50px] font-extrabold tracking-tight leading-[1.2] text-white mb-3 md:mb-4">
-          연구 구매 운영을<br />하나의 흐름으로 연결합니다
+          파편화된 연구실 구매,<br />이제 LabAxis 하나로 끝내세요
         </h1>
         <p className="text-sm md:text-[15px] text-slate-300 mb-6 md:mb-7 font-medium max-w-lg">
-          후보 정리, 비교, 요청, 발주 준비, 입고 반영까지 한 화면 흐름으로 이어집니다.
+          엑셀, 이메일, 전화로 흩어져 있던 시약 검색부터 재고 관리까지.<br className="hidden md:block" />
+          연구에만 집중할 수 있는 환경을 만듭니다.
         </p>
         <div className="flex flex-row gap-3 mb-10 md:mb-12">
           <Link href={isLoggedIn ? "/app/search" : "/search"}>
             <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
-              {isLoggedIn ? "워크벤치 열기" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
+              {isLoggedIn ? "워크벤치 시작" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </Link>
           <Link href={isLoggedIn ? "/dashboard" : "/support"}>
@@ -442,7 +443,7 @@ export function BioInsightHeroSection() {
 
         {/* ── Mockup 1 캡션 ── */}
         <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5" style={{ color: "#94A3B8" }}>
-          선택안 확정부터 발주 준비까지 한 화면에서 이어집니다
+          수십 개의 견적 비교부터 AI 발주 추천까지, 한 화면에서
         </p>
 
         {/* ── Hero Mockup — 제품이 주인공 ── */}

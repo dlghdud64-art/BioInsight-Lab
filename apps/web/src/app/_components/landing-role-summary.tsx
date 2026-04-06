@@ -62,7 +62,7 @@ export function LandingRoleSummary() {
         </div>
 
         <div className="mt-8 text-center">
-          <a href="/intro" className="text-xs text-[#6b7280] hover:text-blue-400 transition-colors">
+          <a href="/" className="text-xs text-[#6b7280] hover:text-blue-400 transition-colors">
             역할별 상세 가치 보기 →
           </a>
         </div>

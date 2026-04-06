@@ -318,7 +318,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
           </p>
           <nav className="space-y-1">
             {[
-              { title: "서비스 소개", href: "/intro" },
+              { title: "서비스 소개", href: "/" },
               { title: "요금 & 도입", href: "/pricing" },
               { title: "고객 지원 및 문의", href: "/support" },
             ].map((item) => (

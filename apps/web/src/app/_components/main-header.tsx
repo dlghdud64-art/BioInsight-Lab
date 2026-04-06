@@ -46,7 +46,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
             <nav className="hidden md:flex items-center gap-1.5 mr-2">
               {session?.user ? (
                 <>
-                  <Link href="/intro" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
+                  <Link href="/" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
                     서비스 소개
                   </Link>
                   <Link href="/pricing" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
@@ -62,7 +62,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                 </>
               ) : (
                 <>
-                  <Link href="/intro" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
+                  <Link href="/" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
                     서비스 소개
                   </Link>
                   <Link href="/pricing" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
@@ -208,7 +208,7 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   {/* 비로그인 — 3개 primary nav */}
                   <nav className="px-2 py-2">
                     {([
-                      { href: "/intro",    icon: Info,    label: "서비스 소개" },
+                      { href: "/",    icon: Info,    label: "서비스 소개" },
                       { href: "/pricing",  icon: Phone,   label: "요금 & 도입" },
                       { href: "/support",  icon: Headset, label: "고객 지원 및 문의" },
                     ] as const).map(({ href, icon: Icon, label }) => (

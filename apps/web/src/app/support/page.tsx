@@ -343,7 +343,7 @@ export default function SupportPage() {
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {[
-                { href: "/intro", label: "서비스 소개" },
+                { href: "/", label: "서비스 소개" },
                 { href: "/pricing", label: "요금 & 도입" },
                 { href: "/auth/signin", label: "로그인" },
                 { href: "/privacy", label: "개인정보처리방침" },

@@ -129,7 +129,7 @@ export function LandingHeroSection() {
 
         {/* "제품 흐름 자세히 보기" link */}
         <div className="mt-6 text-center">
-          <Link href="/intro" className="text-xs text-[#6b7280] hover:text-blue-400 transition-colors">
+          <Link href="/" className="text-xs text-[#6b7280] hover:text-blue-400 transition-colors">
             제품 흐름 자세히 보기 →
           </Link>
         </div>
