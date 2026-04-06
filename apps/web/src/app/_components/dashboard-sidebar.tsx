@@ -27,8 +27,32 @@ import {
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   badge?: string;
+}
+
+// ── 아이콘 박스 컨테이너 ──────────────────────────────────
+// B2B SaaS 트렌드: 아이콘 뒤 부드러운 사각형 배경으로 시인성 강화
+function IconBox({ icon: Icon, isActive, tint }: {
+  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  isActive: boolean;
+  tint: { active: string; inactive: string };
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0 transition-colors duration-150",
+        isActive
+          ? "bg-blue-100"
+          : "bg-slate-100 group-hover/nav:bg-slate-200/80"
+      )}
+    >
+      <Icon
+        className={cn("h-[18px] w-[18px]", isActive ? tint.active : tint.inactive)}
+        strokeWidth={2.25}
+      />
+    </span>
+  );
 }
 
 interface SidebarGroup {
@@ -205,10 +229,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
-          <nav className="space-y-1">
+          <nav className="space-y-0.5">
             {dashboardLinks.map((item) => {
-              const Icon = item.icon;
               const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
+              const tint = ICON_TINT[item.href] || { active: "text-blue-600", inactive: "text-slate-400" };
 
               return (
                 <Link
@@ -216,16 +240,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                   href={item.href}
                   onClick={() => setIsMobileOpen(false)}
                   className={cn(
-                    "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                    "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                     isActive
-                      ? "text-blue-700 font-semibold"
-                      : "text-slate-600 hover:text-slate-900"
+                      ? "text-blue-700 font-semibold bg-blue-50/80"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                   )}
-                  style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
-                  onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)"; } : undefined}
-                  onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                 >
-                  <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
+                  <IconBox icon={item.icon} isActive={isActive} tint={tint} />
                   <span className="truncate whitespace-nowrap">{item.title}</span>
                 </Link>
               );
@@ -240,11 +261,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
               <h3 className="text-xs font-bold uppercase tracking-wider mb-2 px-2 md:px-3 mt-6 first:mt-0" style={{ color: "#64748B" }}>
                 {group.label}
               </h3>
-              <nav className="space-y-1">
+              <nav className="space-y-0.5">
                 {group.items.map((item) => {
-                  const Icon = item.icon;
                   const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
-                  const tint = ICON_TINT[item.href] || { active: "text-blue-400", inactive: "text-slate-500" };
+                  const tint = ICON_TINT[item.href] || { active: "text-blue-600", inactive: "text-slate-500" };
 
                   return (
                     <Link
@@ -252,16 +272,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                       href={item.href}
                       onClick={() => setIsMobileOpen(false)}
                       className={cn(
-                        "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                        "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                         isActive
-                          ? "text-blue-700 font-semibold"
-                          : "text-slate-600 hover:text-slate-900"
+                          ? "text-blue-700 font-semibold bg-blue-50/80"
+                          : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                       )}
-                      style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
-                      onMouseEnter={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "rgba(37,99,235,0.06)"; } : undefined}
-                      onMouseLeave={!isActive ? (e) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                     >
-                      <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
+                      <IconBox icon={item.icon} isActive={isActive} tint={tint} />
                       <span className="truncate whitespace-nowrap">{item.title}</span>
                       {item.badge && (
                         <span className="ml-auto text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded" style={{ backgroundColor: "rgba(37,99,235,0.08)", color: "#2563EB" }}>
@@ -282,9 +299,8 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
             <p className="mb-2 px-2 md:px-3 text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#64748B" }}>
               시스템 관리
             </p>
-            <nav className="space-y-1">
+            <nav className="space-y-0.5">
               {adminMenuItems.map((item) => {
-                const Icon = item.icon;
                 const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
                 const tint = ICON_TINT[item.href] || { active: "text-slate-700", inactive: "text-slate-400" };
                 return (
@@ -293,16 +309,13 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     className={cn(
-                      "flex items-center gap-3 px-2 md:px-3 py-2 rounded-md text-xs md:text-sm font-medium transition-colors",
+                      "group/nav flex items-center gap-2.5 px-2 md:px-2.5 py-1.5 rounded-lg text-xs md:text-sm font-medium transition-colors",
                       isActive
-                        ? "text-blue-700 font-semibold"
-                        : "text-slate-600 hover:text-slate-900"
+                        ? "text-blue-700 font-semibold bg-blue-50/80"
+                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
                     )}
-                    style={isActive ? { backgroundColor: "rgba(37,99,235,0.08)", borderLeft: "2px solid #2563EB" } : undefined}
-                    onMouseEnter={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "rgba(0,0,0,0.04)"; } : undefined}
-                    onMouseLeave={!isActive ? (e: React.MouseEvent<HTMLAnchorElement>) => { e.currentTarget.style.backgroundColor = "transparent"; } : undefined}
                   >
-                    <Icon className={cn("h-4 w-4 flex-shrink-0", isActive ? tint.active : tint.inactive)} />
+                    <IconBox icon={item.icon} isActive={isActive} tint={tint} />
                     <span className="truncate whitespace-nowrap">{item.title}</span>
                   </Link>
                 );

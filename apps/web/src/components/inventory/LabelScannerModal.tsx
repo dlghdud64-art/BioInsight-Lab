@@ -546,9 +546,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   if (isMobile) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0">
+        <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0 bg-white text-slate-900">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-base">스마트 입고 (AI 스캔)</SheetTitle>
+            <SheetTitle className="text-base font-bold text-slate-900">스마트 입고 (AI 스캔)</SheetTitle>
           </SheetHeader>
           {content}
         </SheetContent>
@@ -558,9 +558,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 backdrop-blur-sm">
+      <DialogContent className="max-w-md p-0 gap-0 bg-white text-slate-900 border-slate-200">
         <DialogHeader className="px-4 pt-4 pb-2">
-          <DialogTitle className="text-base flex items-center gap-2">
+          <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />
             스마트 입고 (AI 스캔)
           </DialogTitle>
