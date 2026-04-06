@@ -70,9 +70,9 @@ export function ReceivingPrepGovernanceWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">예상 입고</h3>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div><span className="text-slate-500 text-xs">라인</span><p className="text-slate-200">{surface.expectedLineCount}건</p></div>
-            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-100">{surface.expectedTotalAmount.toLocaleString()}원</p></div>
-            <div><span className="text-slate-500 text-xs">예정일</span><p className="text-slate-200">{surface.expectedDeliveryDate ? new Date(surface.expectedDeliveryDate).toLocaleDateString("ko-KR") : "미정"}</p></div>
+            <div><span className="text-slate-500 text-xs">라인</span><p className="text-slate-700">{surface.expectedLineCount}건</p></div>
+            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-900">{surface.expectedTotalAmount.toLocaleString()}원</p></div>
+            <div><span className="text-slate-500 text-xs">예정일</span><p className="text-slate-700">{surface.expectedDeliveryDate ? new Date(surface.expectedDeliveryDate).toLocaleDateString("ko-KR") : "미정"}</p></div>
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export function ReceivingPrepGovernanceWorkbench({
           {state.confirmationChecklist.map(item => (
             <div key={item.key} className="flex items-center gap-2 text-xs">
               <span className={cn("h-1.5 w-1.5 rounded-full", item.confirmed ? "bg-emerald-400" : item.required ? "bg-red-400" : "bg-slate-600")} />
-              <span className={item.confirmed ? "text-slate-300" : item.required ? "text-red-300" : "text-slate-500"}>{item.label}</span>
+              <span className={item.confirmed ? "text-slate-600" : item.required ? "text-red-300" : "text-slate-500"}>{item.label}</span>
               {item.required && !item.confirmed && <span className="text-[9px] text-red-500 ml-auto">필수</span>}
             </div>
           ))}
@@ -117,8 +117,8 @@ export function ReceivingPrepGovernanceWorkbench({
         {/* Site/handling */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-2 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">수령 사이트</h4>
-          <div><span className="text-slate-500">사이트</span><p className="text-slate-300">{state.receivingSite || "미지정"}</p></div>
-          <div><span className="text-slate-500">보관</span><p className="text-slate-300">{state.storageLocation || "미지정"}</p></div>
+          <div><span className="text-slate-500">사이트</span><p className="text-slate-600">{state.receivingSite || "미지정"}</p></div>
+          <div><span className="text-slate-500">보관</span><p className="text-slate-600">{state.storageLocation || "미지정"}</p></div>
           {state.requiresColdChain && <p className="text-blue-400">콜드체인 필수</p>}
           {state.requiresHazardHandling && <p className="text-amber-400">위험물 취급</p>}
           {state.handlingInstructions && <p className="text-slate-400">{state.handlingInstructions}</p>}
@@ -127,9 +127,9 @@ export function ReceivingPrepGovernanceWorkbench({
         {/* Shipment */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-2 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">배송 정보</h4>
-          <div><span className="text-slate-500">참조번호</span><p className="text-slate-300 font-mono">{state.shipmentReference || "—"}</p></div>
-          <div><span className="text-slate-500">운송장</span><p className="text-slate-300 font-mono">{state.trackingNumber || "—"}</p></div>
-          <div><span className="text-slate-500">운송사</span><p className="text-slate-300">{state.carrier || "—"}</p></div>
+          <div><span className="text-slate-500">참조번호</span><p className="text-slate-600 font-mono">{state.shipmentReference || "—"}</p></div>
+          <div><span className="text-slate-500">운송장</span><p className="text-slate-600 font-mono">{state.trackingNumber || "—"}</p></div>
+          <div><span className="text-slate-500">운송사</span><p className="text-slate-600">{state.carrier || "—"}</p></div>
         </div>
 
         {/* Chain linkage */}
@@ -147,7 +147,7 @@ export function ReceivingPrepGovernanceWorkbench({
           <span className="text-xs text-slate-500">{surface.nextAction}</span>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {surface.canCancel && (
-              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-300 transition-colors">취소</button>
+              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenConfirmation && (
               <button onClick={onReopenConfirmation} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">공급사 확인 재열기</button>
@@ -216,11 +216,11 @@ export function ReceivingExecutionGovernanceWorkbench({
             surface.statusColor === "blue" ? "bg-blue-400" : "bg-slate-500"
           )} />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-200">{surface.primaryMessage}</p>
+            <p className="text-sm font-medium text-slate-700">{surface.primaryMessage}</p>
             <p className="text-xs text-slate-500 mt-0.5">{surface.nextAction}</p>
           </div>
           <div className="ml-auto shrink-0 text-right">
-            <p className="text-lg font-bold tabular-nums text-slate-100">{surface.completeness}%</p>
+            <p className="text-lg font-bold tabular-nums text-slate-900">{surface.completeness}%</p>
             <p className="text-[10px] text-slate-500">완료</p>
           </div>
         </div>
@@ -242,7 +242,7 @@ export function ReceivingExecutionGovernanceWorkbench({
             <tbody>
               {surface.lineDelta.map(line => (
                 <tr key={line.lineId} className="border-b border-slate-800/50">
-                  <td className="px-3 py-1.5 text-slate-200">{line.itemName}</td>
+                  <td className="px-3 py-1.5 text-slate-700">{line.itemName}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{line.expected}</td>
                   <td className="px-3 py-1.5 text-center text-slate-600">→</td>
                   <td className={cn("px-3 py-1.5 text-right tabular-nums font-medium", MATCH_COLOR[line.match])}>{line.received}</td>
@@ -250,7 +250,7 @@ export function ReceivingExecutionGovernanceWorkbench({
                   <td className="px-3 py-1.5 text-slate-500">{line.issues.length > 0 ? line.issues.join(", ") : "—"}</td>
                   {surface.canRecordLine && (
                     <td className="px-3 py-1.5 text-center">
-                      <button onClick={() => onRecordLine?.(line.lineId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-0.5 text-[10px] text-slate-300 transition-colors">기록</button>
+                      <button onClick={() => onRecordLine?.(line.lineId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-0.5 text-[10px] text-slate-600 transition-colors">기록</button>
                     </td>
                   )}
                 </tr>
@@ -279,13 +279,13 @@ export function ReceivingExecutionGovernanceWorkbench({
                     )}>{disc.severity}</span>
                     <span className="text-xs text-slate-400">{disc.type.replace(/_/g, " ")}</span>
                   </div>
-                  <p className="text-xs text-slate-300">{disc.detail}</p>
+                  <p className="text-xs text-slate-600">{disc.detail}</p>
                   {disc.resolution !== "pending" && (
                     <p className="text-[10px] text-slate-500">처리: {disc.resolution} — {disc.resolutionNote}</p>
                   )}
                 </div>
                 {disc.resolution === "pending" && onResolveDiscrepancy && (
-                  <button onClick={() => onResolveDiscrepancy(disc.discrepancyId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-1 text-[10px] text-slate-300 transition-colors shrink-0 ml-3">처리</button>
+                  <button onClick={() => onResolveDiscrepancy(disc.discrepancyId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-1 text-[10px] text-slate-600 transition-colors shrink-0 ml-3">처리</button>
                 )}
               </div>
             ))}
@@ -299,8 +299,8 @@ export function ReceivingExecutionGovernanceWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-2 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">입고 요약</h4>
           <div className="grid grid-cols-2 gap-2">
-            <div><span className="text-slate-500">예상</span><p className="text-slate-200 tabular-nums">{surface.expectedLineCount}건</p></div>
-            <div><span className="text-slate-500">수령</span><p className="text-slate-200 tabular-nums">{surface.receivedLineCount}건</p></div>
+            <div><span className="text-slate-500">예상</span><p className="text-slate-700 tabular-nums">{surface.expectedLineCount}건</p></div>
+            <div><span className="text-slate-500">수령</span><p className="text-slate-700 tabular-nums">{surface.receivedLineCount}건</p></div>
             <div><span className="text-slate-500">수락</span><p className="text-emerald-400 tabular-nums">{surface.acceptedCount}</p></div>
             <div><span className="text-slate-500">거부</span><p className="text-red-400 tabular-nums">{surface.rejectedCount}</p></div>
             <div><span className="text-slate-500">대기</span><p className="text-slate-400 tabular-nums">{surface.pendingCount}</p></div>
@@ -311,7 +311,7 @@ export function ReceivingExecutionGovernanceWorkbench({
         {/* Site info */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">수령 사이트</h4>
-          <p className="text-slate-300">{state.receivingSite}</p>
+          <p className="text-slate-600">{state.receivingSite}</p>
           <p className="text-slate-400">{state.storageLocation}</p>
         </div>
 
@@ -330,7 +330,7 @@ export function ReceivingExecutionGovernanceWorkbench({
           <span className="text-xs text-slate-500">{surface.nextAction}</span>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {surface.canCancel && (
-              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-300 transition-colors">취소</button>
+              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenPrep && (
               <button onClick={onReopenPrep} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">Receiving Prep 재열기</button>

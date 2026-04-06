@@ -270,7 +270,7 @@ export default function InboxPage() {
     <div className="p-4 md:p-8 pt-4 md:pt-6 max-w-[1400px] mx-auto w-full">
       {/* ── 헤더 ── */}
       <div className="mb-5">
-        <h1 className="text-xl md:text-2xl font-bold text-slate-100">
+        <h1 className="text-xl md:text-2xl font-bold text-slate-900">
           운영 작업함
         </h1>
         <p className="text-sm text-slate-500 mt-0.5">
@@ -285,7 +285,7 @@ export default function InboxPage() {
             key: "total",
             label: "처리 대기",
             count: stats.totalOpen,
-            color: "text-slate-300",
+            color: "text-slate-600",
           },
           {
             key: "blocker",
@@ -344,7 +344,7 @@ export default function InboxPage() {
                 "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
                 moduleFilter === opt.key
                   ? "bg-blue-500/20 text-blue-400"
-                  : "bg-el text-slate-400 hover:text-slate-300",
+                  : "bg-el text-slate-400 hover:text-slate-600",
               )}
             >
               {opt.label}
@@ -364,7 +364,7 @@ export default function InboxPage() {
                 "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
                 stateFilter === opt.key
                   ? "bg-blue-500/20 text-blue-400"
-                  : "bg-el text-slate-400 hover:text-slate-300",
+                  : "bg-el text-slate-400 hover:text-slate-600",
               )}
             >
               {opt.label}
@@ -384,7 +384,7 @@ export default function InboxPage() {
                 "px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-colors",
                 ownerFilter === opt.key
                   ? "bg-teal-500/20 text-teal-400"
-                  : "bg-el text-slate-400 hover:text-slate-300",
+                  : "bg-el text-slate-400 hover:text-slate-600",
               )}
             >
               {opt.label}
@@ -395,7 +395,7 @@ export default function InboxPage() {
         {hasActiveFilters && (
           <button
             onClick={resetFilters}
-            className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+            className="ml-auto flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600 transition-colors"
           >
             <RotateCcw className="h-3 w-3" />
             필터 초기화
@@ -619,7 +619,7 @@ function InboxRow({
             e.stopPropagation();
             onNavigate();
           }}
-          className="text-slate-500 hover:text-slate-300 transition-colors p-0.5"
+          className="text-slate-500 hover:text-slate-600 transition-colors p-0.5"
           title="상세 페이지 이동"
         >
           <ExternalLink className="h-3.5 w-3.5" />
@@ -667,7 +667,7 @@ function ContextPanel({
           </div>
           <button
             onClick={onClose}
-            className="text-slate-500 hover:text-slate-300 p-0.5"
+            className="text-slate-500 hover:text-slate-600 p-0.5"
           >
             <X className="h-4 w-4" />
           </button>
@@ -703,7 +703,7 @@ function ContextPanel({
           {item.owner && (
             <div>
               <span className="text-slate-500">담당자: </span>
-              <span className="text-slate-300">{item.owner}</span>
+              <span className="text-slate-600">{item.owner}</span>
             </div>
           )}
           {(() => {
@@ -740,7 +740,7 @@ function ContextPanel({
                 <div key={b.summaryKey} className="space-y-0.5">
                   <div className="flex items-center gap-2 text-xs">
                     <span className={`w-1.5 h-1.5 rounded-full ${SEVERITY_DOT_COLORS[b.severity]} shrink-0`} />
-                    <span className="text-slate-300">{b.whyBlocked}</span>
+                    <span className="text-slate-600">{b.whyBlocked}</span>
                   </div>
                   <div className="pl-3.5 text-[10px] space-y-0.5">
                     <p className="text-blue-400/80">→ {b.whatCanResolveIt}</p>

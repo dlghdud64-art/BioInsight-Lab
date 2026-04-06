@@ -301,7 +301,7 @@ export function InventoryTable({
       <div className="md:hidden">
         {sortedGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <Package className="h-12 w-12 text-slate-200  text-slate-700 mb-4" />
+            <Package className="h-12 w-12 text-slate-700  text-slate-700 mb-4" />
             <p className="text-sm text-muted-foreground mb-4 text-center">{emptyMessage}</p>
             {emptyAction && (
               <Button onClick={emptyAction} size="sm">{emptyActionLabel}</Button>
@@ -327,7 +327,7 @@ export function InventoryTable({
                     {/* 1행: 품목명 + 상태 배지 */}
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <h3
-                        className="text-sm font-bold text-slate-100 line-clamp-1 flex-1 min-w-0 cursor-pointer"
+                        className="text-sm font-bold text-slate-900 line-clamp-1 flex-1 min-w-0 cursor-pointer"
                         onClick={() => onDetailClick?.(group.lots[0])}
                       >
                         {group.productName}
@@ -341,7 +341,7 @@ export function InventoryTable({
                         <span className={`font-bold text-sm ${
                           groupStatus === "부족" ? "text-amber-400" :
                           groupStatus === "주의" ? "text-amber-400" :
-                          "text-slate-100"
+                          "text-slate-900"
                         }`}>
                           총 {group.totalQuantity}
                         </span>
@@ -349,7 +349,7 @@ export function InventoryTable({
                       </span>
                       {group.earliestExpiry && (
                         <>
-                          <span className="text-slate-300  text-slate-600">·</span>
+                          <span className="text-slate-600  text-slate-600">·</span>
                           <span className={`flex items-center gap-0.5 ${
                             isExpired(group.earliestExpiry) ? "text-red-500" :
                             isExpiringSoon(group.earliestExpiry) ? "text-amber-500" :
@@ -362,7 +362,7 @@ export function InventoryTable({
                           </span>
                         </>
                       )}
-                      <span className="text-slate-300  text-slate-600">·</span>
+                      <span className="text-slate-600  text-slate-600">·</span>
                       <span className="text-[11px]">Lot {group.lotCount}개</span>
                     </div>
 
@@ -458,10 +458,10 @@ export function InventoryTable({
                             {/* 1행: Lot 번호 + 수량 + 상태 */}
                             <div className="flex items-center justify-between gap-2 mb-1.5">
                               <div className="flex items-center gap-2 min-w-0">
-                                <span className="font-mono text-xs font-bold text-slate-200 truncate max-w-[120px]">
+                                <span className="font-mono text-xs font-bold text-slate-700 truncate max-w-[120px]">
                                   {lot.lotNumber || "Lot 미지정"}
                                 </span>
-                                <span className="text-xs font-semibold text-slate-300 shrink-0">
+                                <span className="text-xs font-semibold text-slate-600 shrink-0">
                                   {lot.currentQuantity}<span className="text-slate-400 font-normal ml-0.5">{lot.unit}</span>
                                 </span>
                               </div>
@@ -586,7 +586,7 @@ export function InventoryTable({
               <TableRow>
                 <TableCell colSpan={7} className="h-[400px]">
                   <div className="flex flex-col items-center justify-center h-full">
-                    <Package className="h-12 w-12 text-slate-200  text-slate-700 mb-4" />
+                    <Package className="h-12 w-12 text-slate-700  text-slate-700 mb-4" />
                     <p className="text-muted-foreground mb-4">{emptyMessage}</p>
                     {emptyAction && (
                       <Button onClick={emptyAction} size="sm">{emptyActionLabel}</Button>
@@ -640,7 +640,7 @@ export function InventoryTable({
                       <TableCell>
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-sm text-slate-100 truncate">
+                            <span className="font-bold text-sm text-slate-900 truncate">
                               {group.productName}
                             </span>
                             {isExpanded && (
@@ -661,7 +661,7 @@ export function InventoryTable({
                         <span className={`font-bold text-base ${
                           groupStatus === "부족" ? "text-amber-400" :
                           groupStatus === "주의" ? "text-amber-400" :
-                          "text-slate-100"
+                          "text-slate-900"
                         }`}>
                           {group.totalQuantity}
                         </span>
@@ -887,7 +887,7 @@ export function InventoryTable({
                               {/* Lot 정보 */}
                               <TableCell>
                                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
-                                  <span className="font-mono font-semibold text-slate-300 whitespace-nowrap shrink-0">
+                                  <span className="font-mono font-semibold text-slate-600 whitespace-nowrap shrink-0">
                                     {lot.lotNumber || "Lot 미지정"}
                                   </span>
                                   <StorageConditionTag cond={lot.storageCondition} />
@@ -901,7 +901,7 @@ export function InventoryTable({
 
                               {/* 수량 */}
                               <TableCell className="text-right whitespace-nowrap">
-                                <span className="font-semibold text-slate-200">{lot.currentQuantity}</span>
+                                <span className="font-semibold text-slate-700">{lot.currentQuantity}</span>
                                 <span className="text-xs text-slate-500 ml-1">{lot.unit}</span>
                               </TableCell>
 

@@ -69,7 +69,7 @@ export function OverviewSectionHeader({ title, helperText, action }: SectionHead
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-2">
-        <h2 className="text-sm font-bold text-slate-100">{title}</h2>
+        <h2 className="text-sm font-bold text-slate-900">{title}</h2>
         {helperText && (
           <span className="text-[10px] text-slate-500 hidden md:inline">{helperText}</span>
         )}

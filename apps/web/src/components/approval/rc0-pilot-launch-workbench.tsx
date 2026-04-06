@@ -98,7 +98,7 @@ function DockAction({
     return (
       <div className="flex items-center gap-2">
         <button onClick={handleClick} className="rounded bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500">확인</button>
-        <button onClick={() => setConfirming(false)} className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600">취소</button>
+        <button onClick={() => setConfirming(false)} className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-600">취소</button>
         <span className="text-xs text-slate-500">{action.label} — 이 작업을 실행하시겠습니까?</span>
       </div>
     );
@@ -112,7 +112,7 @@ function DockAction({
         canAct
           ? isLaunch
             ? "bg-emerald-600 text-white hover:bg-emerald-500"
-            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+            : "bg-slate-700 text-slate-600 hover:bg-slate-600"
           : "cursor-not-allowed bg-slate-800 text-slate-600"
       }`}
       title={action.disabledReason ?? (!roleAllowed ? `권한 필요: ${action.requiredRoles.join(", ")}` : undefined)}
@@ -150,23 +150,23 @@ export function RC0PilotLaunchWorkbench({
         {/* Scope summary */}
         <SectionCard title="RC0 범위">
           <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
-            <div><span className="text-slate-500">Stage</span><div className="text-slate-300">{center.scopeSummary.stages}개</div></div>
-            <div><span className="text-slate-500">Domain</span><div className="text-slate-300">{center.scopeSummary.domains}개</div></div>
-            <div><span className="text-slate-500">PO 제한</span><div className="text-slate-300">{center.scopeSummary.poLimit}건</div></div>
-            <div><span className="text-slate-500">기간</span><div className="text-slate-300">{center.scopeSummary.durationDays}일</div></div>
-            <div><span className="text-slate-500">시작</span><div className="text-slate-300">{center.scopeSummary.startDate.slice(0, 10)}</div></div>
-            <div><span className="text-slate-500">종료</span><div className="text-slate-300">{center.scopeSummary.endDate.slice(0, 10)}</div></div>
+            <div><span className="text-slate-500">Stage</span><div className="text-slate-600">{center.scopeSummary.stages}개</div></div>
+            <div><span className="text-slate-500">Domain</span><div className="text-slate-600">{center.scopeSummary.domains}개</div></div>
+            <div><span className="text-slate-500">PO 제한</span><div className="text-slate-600">{center.scopeSummary.poLimit}건</div></div>
+            <div><span className="text-slate-500">기간</span><div className="text-slate-600">{center.scopeSummary.durationDays}일</div></div>
+            <div><span className="text-slate-500">시작</span><div className="text-slate-600">{center.scopeSummary.startDate.slice(0, 10)}</div></div>
+            <div><span className="text-slate-500">종료</span><div className="text-slate-600">{center.scopeSummary.endDate.slice(0, 10)}</div></div>
           </div>
         </SectionCard>
 
         {/* 5-section readiness checklist */}
         <SectionCard title="런치 조건 체크리스트">
           <div className="space-y-2">
-            <div className="flex items-center gap-2"><StatusDot ok={center.scopeSummary.stages > 0} /><span className="text-xs text-slate-300">RC0 범위 확정</span></div>
-            <div className="flex items-center gap-2"><StatusDot ok={center.scenarioSummary.verified === center.scenarioSummary.total} /><span className="text-xs text-slate-300">시나리오 검증 완료 ({center.scenarioSummary.verified}/{center.scenarioSummary.total})</span></div>
-            <div className="flex items-center gap-2"><StatusDot ok={center.signoffSummary.completed === center.signoffSummary.total} /><span className="text-xs text-slate-300">서명 완료 ({center.signoffSummary.completed}/{center.signoffSummary.total})</span></div>
-            <div className="flex items-center gap-2"><StatusDot ok={center.monitoringSummary.points > 0} /><span className="text-xs text-slate-300">모니터링 구성 ({center.monitoringSummary.points}개 포인트)</span></div>
-            <div className="flex items-center gap-2"><StatusDot ok={center.drillSummary.conducted && center.drillSummary.result === "pass"} /><span className="text-xs text-slate-300">롤백 리허설 {center.drillSummary.result} ({center.drillSummary.passedSteps}/{center.drillSummary.totalSteps})</span></div>
+            <div className="flex items-center gap-2"><StatusDot ok={center.scopeSummary.stages > 0} /><span className="text-xs text-slate-600">RC0 범위 확정</span></div>
+            <div className="flex items-center gap-2"><StatusDot ok={center.scenarioSummary.verified === center.scenarioSummary.total} /><span className="text-xs text-slate-600">시나리오 검증 완료 ({center.scenarioSummary.verified}/{center.scenarioSummary.total})</span></div>
+            <div className="flex items-center gap-2"><StatusDot ok={center.signoffSummary.completed === center.signoffSummary.total} /><span className="text-xs text-slate-600">서명 완료 ({center.signoffSummary.completed}/{center.signoffSummary.total})</span></div>
+            <div className="flex items-center gap-2"><StatusDot ok={center.monitoringSummary.points > 0} /><span className="text-xs text-slate-600">모니터링 구성 ({center.monitoringSummary.points}개 포인트)</span></div>
+            <div className="flex items-center gap-2"><StatusDot ok={center.drillSummary.conducted && center.drillSummary.result === "pass"} /><span className="text-xs text-slate-600">롤백 리허설 {center.drillSummary.result} ({center.drillSummary.passedSteps}/{center.drillSummary.totalSteps})</span></div>
           </div>
         </SectionCard>
 

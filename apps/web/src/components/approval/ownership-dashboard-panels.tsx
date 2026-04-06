@@ -51,7 +51,7 @@ export function OwnerBacklogPanel({ owners, onOwnerClick, className }: OwnerBack
           >
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-slate-200">{owner.ownerName}</span>
+                <span className="text-xs font-medium text-slate-700">{owner.ownerName}</span>
                 <span className="text-[10px] text-slate-500">{owner.ownerRole}</span>
               </div>
               <span className={cn("text-[9px] font-medium px-1.5 py-0.5 rounded tabular-nums", LOAD_COLORS[owner.loadLevel])}>
@@ -59,7 +59,7 @@ export function OwnerBacklogPanel({ owners, onOwnerClick, className }: OwnerBack
               </span>
             </div>
             <div className="flex gap-3 text-[10px]">
-              <span className="text-slate-400">대기 <span className="tabular-nums text-slate-200">{owner.pendingCount}</span></span>
+              <span className="text-slate-400">대기 <span className="tabular-nums text-slate-700">{owner.pendingCount}</span></span>
               {owner.slaBreachCount > 0 && <span className="text-red-400">SLA초과 {owner.slaBreachCount}</span>}
               {owner.escalationCount > 0 && <span className="text-amber-400">에스컬 {owner.escalationCount}</span>}
               <span className="text-slate-600">평균 {Math.round(owner.avgLeadTimeMinutes / 60)}h</span>
@@ -153,7 +153,7 @@ export function OverloadedOwnerPanel({ data, onRebalanceClick, className }: Over
         {data.recommendedRebalance.map((rec) => (
           <div key={rec.fromOwnerId} className="rounded bg-amber-500/5 p-2 space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-200">{rec.fromOwnerName}</span>
+              <span className="text-xs text-slate-700">{rec.fromOwnerName}</span>
               {rec.excessCount > 0 && (
                 <span className="text-[10px] text-amber-400">+{rec.excessCount}건 초과</span>
               )}

@@ -486,8 +486,8 @@ function LineExecutionTable({ lines }: { lines: ReceivingLineExecution[] }) {
               return (
                 <tr key={line.id} className="border-b border-slate-800 hover:bg-slate-800/20">
                   <td className="px-3 py-2 text-slate-500 font-mono">{line.lineNumber}</td>
-                  <td className="px-3 py-2 text-slate-200 max-w-[200px] truncate">{line.itemLabel}</td>
-                  <td className="px-3 py-2 text-slate-300 font-mono">{line.orderedVsReceived}</td>
+                  <td className="px-3 py-2 text-slate-700 max-w-[200px] truncate">{line.itemLabel}</td>
+                  <td className="px-3 py-2 text-slate-600 font-mono">{line.orderedVsReceived}</td>
                   <td className={`px-3 py-2 ${condCls}`}>{line.conditionLabel}</td>
                   <td className={`px-3 py-2 ${docCls}`}>{line.documentLabel}</td>
                   <td className={`px-3 py-2 ${insCls}`}>{line.inspectionLabel}</td>
@@ -563,9 +563,9 @@ function LotDetailSurface({
               {lots.map((lot) => (
                 <tr key={lot.id} className="border-b border-slate-800 hover:bg-slate-800/20">
                   <td className="px-3 py-2 text-slate-500 font-mono">{lot.lineNumber}</td>
-                  <td className="px-3 py-2 text-slate-300 max-w-[140px] truncate">{lot.itemName}</td>
-                  <td className="px-3 py-2 text-slate-200 font-mono">{lot.lotNumber}</td>
-                  <td className="px-3 py-2 text-slate-300 font-mono">
+                  <td className="px-3 py-2 text-slate-600 max-w-[140px] truncate">{lot.itemName}</td>
+                  <td className="px-3 py-2 text-slate-700 font-mono">{lot.lotNumber}</td>
+                  <td className="px-3 py-2 text-slate-600 font-mono">
                     {lot.quantity} {lot.unit}
                   </td>
                   <td className={`px-3 py-2 ${EXPIRY_TONE_COLOR[lot.expiryTone]}`}>{lot.expiryLabel}</td>
@@ -734,11 +734,11 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
         </div>
         <div className="space-y-1.5">
           <Link href="/dashboard/inventory" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-            <div className="flex items-center gap-2"><Package className="h-3 w-3 text-slate-500" /><span className="text-slate-300">재고 위치 관리</span></div>
+            <div className="flex items-center gap-2"><Package className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재고 위치 관리</span></div>
             <ChevronRight className="h-3 w-3 text-slate-600" />
           </Link>
           <Link href="/dashboard/stock-risk" className="flex items-center justify-between text-xs py-1 hover:bg-slate-800/30 rounded px-1 -mx-1 transition-colors">
-            <div className="flex items-center gap-2"><AlertCircle className="h-3 w-3 text-slate-500" /><span className="text-slate-300">재주문 후보 확인</span></div>
+            <div className="flex items-center gap-2"><AlertCircle className="h-3 w-3 text-slate-500" /><span className="text-slate-600">재주문 후보 확인</span></div>
             <ChevronRight className="h-3 w-3 text-slate-600" />
           </Link>
           {expiringLots.length > 0 && (
@@ -764,7 +764,7 @@ function InventoryReleaseHandoffPanel({ model }: { model: ReceivingExecutionMode
               이동 <ArrowRight className="h-3 w-3" />
             </div>
           </div>
-          <div className="text-sm text-slate-200 mb-1">{handoff.label}</div>
+          <div className="text-sm text-slate-700 mb-1">{handoff.label}</div>
           {handoff.nextOwner && (
             <div className="text-xs text-slate-500">인수: {handoff.nextOwner}</div>
           )}
@@ -803,7 +803,7 @@ function StatCell({
       : tone === "warning"
         ? "text-amber-400"
         : "text-red-400"
-    : "text-slate-200";
+    : "text-slate-700";
 
   return (
     <div>
@@ -870,7 +870,7 @@ function ReceivingInputPanel({
         {activeLine && (
           <div className="rounded border border-slate-700 bg-slate-900/60 p-3 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-slate-200">{activeLine.itemLabel}</span>
+              <span className="text-xs font-medium text-slate-700">{activeLine.itemLabel}</span>
               <span className="text-[10px] text-slate-500">발주 {activeLine.orderedVsReceived}</span>
             </div>
 
@@ -884,7 +884,7 @@ function ReceivingInputPanel({
                   value={receivedQty[activeLine.id] ?? ""}
                   onChange={e => setReceivedQty(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
                   placeholder="0"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
                 />
               </div>
               <div>
@@ -894,7 +894,7 @@ function ReceivingInputPanel({
                   value={newLotNumber}
                   onChange={e => setNewLotNumber(e.target.value)}
                   placeholder="LOT-2026-001"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
                 />
               </div>
               <div>
@@ -903,7 +903,7 @@ function ReceivingInputPanel({
                   type="date"
                   value={newLotExpiry}
                   onChange={e => setNewLotExpiry(e.target.value)}
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
                 />
               </div>
               <div>
@@ -913,7 +913,7 @@ function ReceivingInputPanel({
                   value={newLotLocation}
                   onChange={e => setNewLotLocation(e.target.value)}
                   placeholder="연구동 B1 냉장고"
-                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                  className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
                 />
               </div>
             </div>
@@ -924,7 +924,7 @@ function ReceivingInputPanel({
               <select
                 value={discrepancies[activeLine.id] ?? ""}
                 onChange={e => setDiscrepancies(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
-                className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-200 focus:border-blue-600 focus:outline-none"
+                className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
               >
                 <option value="">이슈 없음</option>
                 <option value="shortage">수량 부족</option>
@@ -953,7 +953,7 @@ function ReceivingInputPanel({
               )}
               <button
                 onClick={() => setActiveLineId(null)}
-                className="h-7 px-2 text-[10px] text-slate-500 hover:text-slate-300"
+                className="h-7 px-2 text-[10px] text-slate-500 hover:text-slate-600"
               >
                 닫기
               </button>

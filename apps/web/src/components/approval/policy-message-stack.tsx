@@ -46,7 +46,7 @@ export function PolicyMessageStack({
   return (
     <div className={cn("space-y-2", className)}>
       {/* Primary message */}
-      <p className="text-sm font-medium text-slate-200">{primaryMessage}</p>
+      <p className="text-sm font-medium text-slate-700">{primaryMessage}</p>
 
       {/* Blockers */}
       {hasBlockers && (

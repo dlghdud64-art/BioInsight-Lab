@@ -139,7 +139,7 @@ export function CenterWorkWindow({
         {/* Slot 1: Title Bar */}
         <div className={WORK_WINDOW_LAYOUT.titleBar}>
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold text-slate-100 truncate">{title}</h2>
+            <h2 className="text-sm font-semibold text-slate-900 truncate">{title}</h2>
             {subtitle && (
               <p className="text-xs text-slate-400 truncate mt-0.5">{subtitle}</p>
             )}
@@ -147,7 +147,7 @@ export function CenterWorkWindow({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-slate-400 hover:text-slate-200 shrink-0"
+            className="h-7 w-7 p-0 text-slate-400 hover:text-slate-700 shrink-0"
             onClick={onClose}
             disabled={phase === "executing"}
           >
@@ -188,7 +188,7 @@ export function CenterWorkWindow({
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-slate-400 hover:text-slate-200"
+                className="text-xs text-slate-400 hover:text-slate-700"
                 onClick={secondaryAction.onClick}
                 disabled={phase === "executing"}
               >
@@ -220,7 +220,7 @@ export function CenterWorkWindow({
           <div className={WORK_WINDOW_LAYOUT.successOverlay}>
             <div className="flex flex-col items-center gap-2">
               <CheckCircle2 className="h-8 w-8 text-emerald-400" />
-              <p className="text-sm font-medium text-slate-100">{successMessage}</p>
+              <p className="text-sm font-medium text-slate-900">{successMessage}</p>
             </div>
           </div>
         )}

@@ -142,7 +142,7 @@ export function InventoryFlowView() {
                   </div>
                   <button
                     onClick={() => setDismissedInsights((prev) => new Set([...prev, insight.id]))}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-300 flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-600 flex-shrink-0"
                     title="닫기"
                   >
                     ×
@@ -173,9 +173,9 @@ export function InventoryFlowView() {
                 >
                   <div className="flex items-center gap-1.5 mb-2">
                     <Icon className={`h-3.5 w-3.5 ${stage.color}`} />
-                    <span className="text-[10px] font-bold text-slate-300 truncate">{stage.label}</span>
+                    <span className="text-[10px] font-bold text-slate-600 truncate">{stage.label}</span>
                   </div>
-                  <div className="text-lg font-bold text-slate-100">{stage.itemCount}</div>
+                  <div className="text-lg font-bold text-slate-900">{stage.itemCount}</div>
                   <div className="text-[10px] text-slate-500">{stage.lotCount} lots</div>
                   {stage.needsAttention && (
                     <Badge className="mt-1.5 h-4 px-1 text-[9px] bg-amber-500/10 text-amber-400 border-0">
@@ -216,7 +216,7 @@ export function InventoryFlowView() {
                 return (
                   <>
                     <Icon className={`h-4 w-4 ${stage.color}`} />
-                    <h3 className="text-sm font-bold text-slate-100">{stage.label}</h3>
+                    <h3 className="text-sm font-bold text-slate-900">{stage.label}</h3>
                     <Badge variant="secondary" className="text-[10px] bg-el">{items.length}건</Badge>
                   </>
                 );
@@ -234,7 +234,7 @@ export function InventoryFlowView() {
               {items.map((item, i) => (
                 <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-el hover:bg-st transition-colors">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-200 truncate">{item.name}</p>
+                    <p className="text-xs font-medium text-slate-700 truncate">{item.name}</p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
                       {item.lot !== "-" && `Lot ${item.lot} · `}{item.status}
                     </p>
@@ -261,8 +261,8 @@ export function InventoryFlowView() {
             <div key={s.label} className="rounded-lg border border-bd bg-pn p-3 flex items-center gap-3">
               <s.icon className={`h-4 w-4 ${s.color}`} />
               <div>
-                <p className="text-xs font-medium text-slate-300">{s.label}</p>
-                <p className="text-lg font-bold text-slate-100">{s.count}건</p>
+                <p className="text-xs font-medium text-slate-600">{s.label}</p>
+                <p className="text-lg font-bold text-slate-900">{s.count}건</p>
               </div>
             </div>
           ))}

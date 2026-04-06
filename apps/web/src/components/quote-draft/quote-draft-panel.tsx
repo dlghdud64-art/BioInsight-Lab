@@ -111,7 +111,7 @@ export function QuoteDraftPanel({
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 bg-el border border-bd border-dashed rounded-xl text-center">
         <FileText className="h-8 w-8 text-slate-500 mb-3" />
-        <p className="text-sm font-medium text-slate-300 mb-1">
+        <p className="text-sm font-medium text-slate-600 mb-1">
           아직 견적 초안에 담긴 항목이 없습니다
         </p>
         <p className="text-xs text-slate-500">
@@ -127,8 +127,8 @@ export function QuoteDraftPanel({
       <div className="flex flex-col gap-3 pb-4 border-b border-bd">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-slate-100">견적 요청 초안</h3>
-            <Badge variant="secondary" className="bg-el text-slate-300 text-[10px]">{stats.total}</Badge>
+            <h3 className="text-sm font-bold text-slate-900">견적 요청 초안</h3>
+            <Badge variant="secondary" className="bg-el text-slate-600 text-[10px]">{stats.total}</Badge>
           </div>
           <div className="flex items-center gap-2 text-[10px] text-slate-500">
             <span>제출 가능 <strong className="text-emerald-400">{stats.ready}</strong></span>
@@ -147,7 +147,7 @@ export function QuoteDraftPanel({
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                filter === f.key ? "bg-el text-slate-100" : "text-slate-500 hover:text-slate-300 hover:bg-st"
+                filter === f.key ? "bg-el text-slate-900" : "text-slate-500 hover:text-slate-600 hover:bg-st"
               }`}
             >
               {f.label}
@@ -181,7 +181,7 @@ export function QuoteDraftPanel({
                   </span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded ${src.cls}`}>{src.label}</span>
                 </div>
-                <p className="text-sm font-medium text-slate-200 truncate">{item.parsedItemName}</p>
+                <p className="text-sm font-medium text-slate-700 truncate">{item.parsedItemName}</p>
                 <div className="flex items-center justify-between mt-1">
                   <span className="text-xs text-slate-400">
                     {[item.manufacturer, item.catalogNumber].filter(Boolean).join(" · ") || "제품 정보"}
@@ -217,13 +217,13 @@ export function QuoteDraftPanel({
                     {SOURCE_BADGE[selectedItem.sourceType].label}
                   </span>
                 </div>
-                <h4 className="text-base font-bold text-slate-100">{selectedItem.parsedItemName}</h4>
+                <h4 className="text-base font-bold text-slate-900">{selectedItem.parsedItemName}</h4>
               </div>
 
               {/* 선택 제품 */}
               <div className="bg-el rounded-lg p-3">
                 <p className="text-[10px] text-slate-500 mb-1">선택 제품</p>
-                <p className="text-sm text-slate-200">
+                <p className="text-sm text-slate-700">
                   {[selectedItem.manufacturer, selectedItem.catalogNumber].filter(Boolean).join(" · ") || selectedItem.selectedProductId}
                 </p>
                 {selectedItem.spec && <p className="text-xs text-slate-400 mt-0.5">{selectedItem.spec}</p>}
@@ -295,7 +295,7 @@ export function QuoteDraftPanel({
               {/* 원문/근거 */}
               <div className="bg-el rounded-lg p-3">
                 <p className="text-[10px] text-slate-500 mb-1">원문</p>
-                <p className="text-xs text-slate-300">{selectedItem.sourceContext}</p>
+                <p className="text-xs text-slate-600">{selectedItem.sourceContext}</p>
                 {selectedItem.evidenceSummary && (
                   <p className="text-xs text-slate-400 mt-1">{selectedItem.evidenceSummary}</p>
                 )}

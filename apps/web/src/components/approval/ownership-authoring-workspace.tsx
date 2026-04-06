@@ -72,7 +72,7 @@ export function OwnershipAuthoringWorkspace({
       <div className="flex-1 min-w-0 space-y-4">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-100">Ownership 관리</h2>
+          <h2 className="text-sm font-semibold text-slate-900">Ownership 관리</h2>
           <span className="text-xs text-slate-500">
             활성 {activeRecords.length} · 비활성 {inactiveRecords.length}
           </span>
@@ -105,7 +105,7 @@ export function OwnershipAuthoringWorkspace({
                 >
                   <div className="flex items-center justify-between mb-0.5">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-slate-200">{record.ownerName}</span>
+                      <span className="text-xs font-medium text-slate-700">{record.ownerName}</span>
                       <span className="text-[10px] text-slate-500">{record.ownerRole}</span>
                     </div>
                     <span className="text-[10px] text-slate-500">
@@ -160,7 +160,7 @@ export function OwnershipAuthoringWorkspace({
               ].map(({ label, owner }) => (
                 <div key={label} className="flex items-center justify-between">
                   <span className="text-slate-500">{label}</span>
-                  <span className={owner.resolvedBy === "unresolved" ? "text-red-400" : "text-slate-200"}>
+                  <span className={owner.resolvedBy === "unresolved" ? "text-red-400" : "text-slate-700"}>
                     {owner.resolvedBy === "unresolved" ? "미지정" : owner.ownerName}
                   </span>
                 </div>
@@ -183,11 +183,11 @@ export function OwnershipAuthoringWorkspace({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">유형</span>
-                <span className="text-slate-200">{OWNERSHIP_TYPE_LABELS[selectedRecord.ownershipType]}</span>
+                <span className="text-slate-700">{OWNERSHIP_TYPE_LABELS[selectedRecord.ownershipType]}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Scope</span>
-                <span className="text-slate-200">{selectedRecord.scopeType}: {selectedRecord.scopeLabel}</span>
+                <span className="text-slate-700">{selectedRecord.scopeType}: {selectedRecord.scopeLabel}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">시작일</span>
@@ -205,7 +205,7 @@ export function OwnershipAuthoringWorkspace({
               </div>
               <div className="pt-1 border-t border-slate-800">
                 <span className="text-slate-500">사유</span>
-                <p className="text-slate-300 mt-0.5">{selectedRecord.reason}</p>
+                <p className="text-slate-600 mt-0.5">{selectedRecord.reason}</p>
               </div>
             </div>
           </div>
@@ -230,7 +230,7 @@ export function OwnershipAuthoringWorkspace({
               </button>
             )}
             {selectedRecord && onUpdate && (
-              <button onClick={() => onUpdate(selectedRecord.recordId)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={() => onUpdate(selectedRecord.recordId)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 수정
               </button>
             )}

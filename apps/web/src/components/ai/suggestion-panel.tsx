@@ -82,7 +82,7 @@ export function SuggestionPanel({ suggestion, variant, onPrimaryAction, onDismis
         </div>
 
         <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-medium text-slate-200 truncate block">{suggestion.title}</span>
+          <span className="text-[10px] font-medium text-slate-700 truncate block">{suggestion.title}</span>
         </div>
 
         <span className={`text-[9px] px-1.5 py-0.5 rounded border shrink-0 ${confConfig.color}`}>
@@ -104,7 +104,7 @@ export function SuggestionPanel({ suggestion, variant, onPrimaryAction, onDismis
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
+            className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-600"
             onClick={onDismiss}
           >
             <X className="h-3 w-3" />

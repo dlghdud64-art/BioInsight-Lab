@@ -188,14 +188,14 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
       {/* ═══ Header ═══ */}
       <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
         <div className="flex items-center gap-2">
-          <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
+          <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
           <div className="w-px h-5 bg-bd" />
           <span className="text-xs md:text-sm font-medium text-slate-400">예산 통제</span>
           <div className="w-px h-4 bg-bd" />
           <span className="text-xs text-slate-500 truncate max-w-[200px]">{budget.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-400 hover:text-slate-200" onClick={handleExcelDownload}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-400 hover:text-slate-700" onClick={handleExcelDownload}>
             <FileSpreadsheet className="h-3 w-3 mr-1" />내보내기
           </Button>
           <Link href="/dashboard/budget">
@@ -222,7 +222,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">총액</div>
-              <div className="text-lg font-bold text-slate-200 tabular-nums">{formatAmt(ctrl.total)}</div>
+              <div className="text-lg font-bold text-slate-700 tabular-nums">{formatAmt(ctrl.total)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">예약 (Reserved)</div>
@@ -234,7 +234,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">집행 (Actual)</div>
-              <div className="text-lg font-bold text-slate-100 tabular-nums">{formatAmt(ctrl.actual)}</div>
+              <div className="text-lg font-bold text-slate-900 tabular-nums">{formatAmt(ctrl.actual)}</div>
             </div>
             <div>
               <div className="text-[10px] uppercase tracking-wider text-slate-500 mb-0.5">가용 (Available)</div>
@@ -268,7 +268,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Block A: 연결된 구매 활동 (chain linked items) */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">연결된 구매 활동</span>
+                <span className="text-xs font-medium text-slate-700">연결된 구매 활동</span>
               </div>
               {MOCK_LINKED_ACTIVITIES.length === 0 ? (
                 <div className="px-4 py-10 text-center">
@@ -280,12 +280,12 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                   </p>
                   <div className="flex items-center justify-center gap-2">
                     <Link href="/dashboard/quotes">
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-200">
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-700">
                         <Send className="h-3 w-3 mr-1" />견적 보기
                       </Button>
                     </Link>
                     <Link href="/dashboard/orders">
-                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-200">
+                      <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-700">
                         <FileCheck className="h-3 w-3 mr-1" />발주 보기
                       </Button>
                     </Link>
@@ -301,7 +301,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Block B: 예산 차단/경고 (blockers) */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">통제 상태</span>
+                <span className="text-xs font-medium text-slate-700">통제 상태</span>
               </div>
               <div className="p-4 space-y-2">
                 {/* Threshold guard */}
@@ -313,7 +313,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                         ? <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                         : <AlertCircle className="h-3.5 w-3.5 text-red-400" />
                     }
-                    <span className="text-slate-300">경고 임계치 ({policy.warningThreshold}%)</span>
+                    <span className="text-slate-600">경고 임계치 ({policy.warningThreshold}%)</span>
                   </div>
                   <span className={`text-[10px] ${ctrl.burnRate < policy.warningThreshold ? "text-emerald-400" : ctrl.burnRate < policy.hardBlock ? "text-amber-400" : "text-red-400"}`}>
                     {ctrl.burnRate < policy.warningThreshold ? "정상" : ctrl.burnRate < policy.hardBlock ? "주의 구간" : "초과 차단"}
@@ -327,7 +327,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                       ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                       : <AlertCircle className="h-3.5 w-3.5 text-red-400" />
                     }
-                    <span className="text-slate-300">초과 차단 ({policy.hardBlock}%)</span>
+                    <span className="text-slate-600">초과 차단 ({policy.hardBlock}%)</span>
                   </div>
                   <span className={`text-[10px] ${ctrl.burnRate < policy.hardBlock ? "text-emerald-400" : "text-red-400"}`}>
                     {ctrl.burnRate < policy.hardBlock ? "차단 없음" : "신규 발주 차단"}
@@ -342,7 +342,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                         ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
                         : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
                       }
-                      <span className="text-slate-300">소진 예측</span>
+                      <span className="text-slate-600">소진 예측</span>
                     </div>
                     <span className={`text-[10px] ${ctrl.forecastExhaustDays > ctrl.remainingDays ? "text-emerald-400" : "text-amber-400"}`}>
                       {ctrl.forecastExhaustDays > ctrl.remainingDays
@@ -364,7 +364,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Block C: 집행 내역 (chain 연결 후 실데이터로 교체) */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">예산 영향 이력</span>
+                <span className="text-xs font-medium text-slate-700">예산 영향 이력</span>
               </div>
               <div className="px-4 py-8 text-center">
                 <Clock className="h-7 w-7 mx-auto text-slate-600 mb-2" />
@@ -381,28 +381,28 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Budget Rules */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">통제 규칙</span>
+                <span className="text-xs font-medium text-slate-700">통제 규칙</span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">경고 임계치</span>
-                  <span className="text-slate-200">{policy.warningThreshold}%</span>
+                  <span className="text-slate-700">{policy.warningThreshold}%</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">초과 차단</span>
-                  <span className="text-slate-200">{policy.hardBlock}%</span>
+                  <span className="text-slate-700">{policy.hardBlock}%</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">편차 허용</span>
-                  <span className="text-slate-200">±{policy.varianceThreshold}%</span>
+                  <span className="text-slate-700">±{policy.varianceThreshold}%</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">승인 필요</span>
-                  <span className="text-slate-200">{policy.approvalRequired ? "필요" : "불필요"}</span>
+                  <span className="text-slate-700">{policy.approvalRequired ? "필요" : "불필요"}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">카테고리 제한</span>
-                  <span className="text-slate-200">{policy.categoryRestrictions.length > 0 ? policy.categoryRestrictions.join(", ") : "없음"}</span>
+                  <span className="text-slate-700">{policy.categoryRestrictions.length > 0 ? policy.categoryRestrictions.join(", ") : "없음"}</span>
                 </div>
               </div>
             </div>
@@ -410,37 +410,37 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Budget Info */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">예산 정보</span>
+                <span className="text-xs font-medium text-slate-700">예산 정보</span>
               </div>
               <div className="p-4 space-y-3">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">소유자</span>
-                  <span className="text-slate-200">{budget.targetDepartment || "미지정"}</span>
+                  <span className="text-slate-700">{budget.targetDepartment || "미지정"}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">프로젝트</span>
-                  <span className="text-slate-200">{budget.projectName || "미지정"}</span>
+                  <span className="text-slate-700">{budget.projectName || "미지정"}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">기간</span>
-                  <span className="text-slate-200">{startStr} ~ {endStr}</span>
+                  <span className="text-slate-700">{startStr} ~ {endStr}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">경과</span>
-                  <span className="text-slate-200">{ctrl.elapsedDays}일 / {ctrl.totalDays}일</span>
+                  <span className="text-slate-700">{ctrl.elapsedDays}일 / {ctrl.totalDays}일</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">일평균 소진</span>
-                  <span className="text-slate-200 tabular-nums">{formatK(Math.round(ctrl.dailyBurn))}/일</span>
+                  <span className="text-slate-700 tabular-nums">{formatK(Math.round(ctrl.dailyBurn))}/일</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-400">통화</span>
-                  <span className="text-slate-200">{budget.currency}</span>
+                  <span className="text-slate-700">{budget.currency}</span>
                 </div>
                 {budget.description && (
                   <div className="pt-2 border-t border-bd">
                     <div className="text-[10px] text-slate-500 mb-1">설명</div>
-                    <p className="text-xs text-slate-300 leading-relaxed">{budget.description}</p>
+                    <p className="text-xs text-slate-600 leading-relaxed">{budget.description}</p>
                   </div>
                 )}
               </div>
@@ -449,7 +449,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             {/* Exception / Override History (placeholder) */}
             <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
               <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-                <span className="text-xs font-medium text-slate-200">예외/조정 이력</span>
+                <span className="text-xs font-medium text-slate-700">예외/조정 이력</span>
               </div>
               <div className="px-4 py-6 text-center">
                 <p className="text-[10px] text-slate-500">

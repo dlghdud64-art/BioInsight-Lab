@@ -86,7 +86,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
         className="w-full flex items-center gap-1.5 px-2.5 py-1.5 text-left hover:bg-el transition-colors"
       >
         <Sparkles className="h-3 w-3 text-slate-400 shrink-0" />
-        <p className="text-[11px] text-slate-300 leading-snug line-clamp-1 flex-1 min-w-0">
+        <p className="text-[11px] text-slate-600 leading-snug line-clamp-1 flex-1 min-w-0">
           {getInsightText()}
         </p>
         <Badge variant="secondary" className="bg-el text-slate-400 border-bd text-[9px] px-1.5 py-0 shrink-0">
@@ -103,7 +103,7 @@ export function AIInsightCard({ query, productCount, isLoading, queryAnalysis }:
           <div className="flex flex-wrap items-center gap-1 pt-1.5">
             <span className="text-[10px] font-medium text-slate-400 mr-0.5">비교 기준</span>
             {getComparisonCriteria().slice(0, 4).map((c, i) => (
-              <Badge key={i} variant="outline" className="text-[10px] text-slate-300 border-bd px-1.5 py-0">
+              <Badge key={i} variant="outline" className="text-[10px] text-slate-600 border-bd px-1.5 py-0">
                 {c}
               </Badge>
             ))}

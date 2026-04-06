@@ -68,7 +68,7 @@ export function ApproverRequirementCard({
       <div className="space-y-1.5 text-xs">
         <div className="flex items-center justify-between">
           <span className="text-slate-500">필요 역할</span>
-          <span className="text-slate-200 font-medium">{roleLabel} 이상</span>
+          <span className="text-slate-700 font-medium">{roleLabel} 이상</span>
         </div>
 
         <div className="flex items-center justify-between">

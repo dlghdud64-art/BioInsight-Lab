@@ -32,7 +32,7 @@ export function InventorySearch({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-el  hover:text-slate-300 transition-colors pointer-events-auto"
+            className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-el  hover:text-slate-600 transition-colors pointer-events-auto"
             aria-label="검색어 지우기"
           >
             <X className="h-4 w-4" />

@@ -68,7 +68,7 @@ export function OrientationStrip({ entityLabel, entityId, className }: Orientati
       {orientation.returnAction && (
         <Link
           href={orientation.returnAction.href}
-          className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors mr-2 shrink-0"
+          className="flex items-center gap-1 text-slate-400 hover:text-slate-700 transition-colors mr-2 shrink-0"
         >
           <ArrowLeft className="h-3 w-3" />
           <span className="hidden sm:inline">{orientation.returnAction.label}</span>
@@ -90,7 +90,7 @@ export function OrientationStrip({ entityLabel, entityId, className }: Orientati
       {orientation.entityLabel && (
         <>
           <ChevronRight className="h-3 w-3 text-slate-600 shrink-0" />
-          <span className="text-slate-300 font-medium truncate max-w-[200px]">
+          <span className="text-slate-600 font-medium truncate max-w-[200px]">
             {orientation.entityLabel}
           </span>
         </>

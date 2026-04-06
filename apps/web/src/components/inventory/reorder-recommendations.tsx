@@ -106,7 +106,7 @@ export function ReorderRecommendations({
       <CardHeader className="pb-3">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <CardTitle className="text-base md:text-lg font-semibold text-slate-100">재주문 추천</CardTitle>
+            <CardTitle className="text-base md:text-lg font-semibold text-slate-900">재주문 추천</CardTitle>
             <CardDescription className="text-xs md:text-sm text-gray-500">
               자주 주문한 제품을 기반으로 재주문이 필요한 품목을 알려드려요.
             </CardDescription>

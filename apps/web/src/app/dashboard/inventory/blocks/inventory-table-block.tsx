@@ -89,7 +89,7 @@ export function InventoryTableBlock() {
       {filtered.length === 0 ? (
         <div className="p-8 text-center">
           <Package className="h-10 w-10 text-slate-500 mx-auto mb-3" />
-          <p className="text-sm font-medium text-slate-300">
+          <p className="text-sm font-medium text-slate-600">
             {search ? "검색 결과가 없습니다" : "등록된 품목이 없습니다"}
           </p>
           <p className="text-xs text-slate-500 mt-1">
@@ -116,12 +116,12 @@ export function InventoryTableBlock() {
                 return (
                   <tr key={inv.id} className="hover:bg-el/40 transition-colors">
                     <td className="py-2.5 px-3">
-                      <p className="font-medium text-slate-200 text-sm truncate max-w-[200px]">{inv.product.name}</p>
+                      <p className="font-medium text-slate-700 text-sm truncate max-w-[200px]">{inv.product.name}</p>
                       <p className="text-[11px] text-slate-500 truncate">
                         {inv.product.brand}{inv.product.catalogNumber ? ` · ${inv.product.catalogNumber}` : ""}
                       </p>
                     </td>
-                    <td className="py-2.5 px-3 text-right text-sm font-medium text-slate-200">
+                    <td className="py-2.5 px-3 text-right text-sm font-medium text-slate-700">
                       {inv.currentQuantity} <span className="text-slate-500 text-xs">{inv.unit}</span>
                     </td>
                     <td className="py-2.5 px-3 hidden md:table-cell">

@@ -102,7 +102,7 @@ export function OrgOverviewHub({
     return (
       <div className="flex flex-col items-center justify-center py-20 px-6 bg-el border border-bd border-dashed rounded-xl text-center max-w-lg mx-auto">
         <Shield className="h-10 w-10 text-slate-500 mb-4" />
-        <h3 className="text-base font-bold text-slate-200 mb-2">아직 운영 작업이 시작되지 않았습니다</h3>
+        <h3 className="text-base font-bold text-slate-700 mb-2">아직 운영 작업이 시작되지 않았습니다</h3>
         <p className="text-sm text-slate-400 mb-6 leading-relaxed">
           직접 검색 또는 업로드 해석으로 검토 큐를 만들면<br />비교와 견적 작업이 이어집니다
         </p>
@@ -126,7 +126,7 @@ export function OrgOverviewHub({
                 <Icon className="h-4 w-4 text-slate-500" />
                 <span className="text-[11px] font-medium text-slate-400">{label}</span>
               </div>
-              <div className="text-2xl font-bold text-slate-100 mb-1">{count}</div>
+              <div className="text-2xl font-bold text-slate-900 mb-1">{count}</div>
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-500 truncate">{desc}</span>
                 <span className={`text-[10px] font-medium ${status.cls}`}>{status.label}</span>
@@ -138,7 +138,7 @@ export function OrgOverviewHub({
 
       {/* ── 2. Step Funnel ── */}
       <div>
-        <h3 className="text-sm font-bold text-slate-100 mb-3">작업 흐름 요약</h3>
+        <h3 className="text-sm font-bold text-slate-900 mb-3">작업 흐름 요약</h3>
         <div className="grid md:grid-cols-3 gap-3">
           {[
             { title: "검토 큐", count: funnel.step1Total, desc: "입력 해석과 항목 검토가 진행 중입니다", sub: `검토 필요 ${funnel.step1NeedsReview} · 실패 ${funnel.step1MatchFailed}`, href: "/app/search", cta: "검토 큐 열기" },
@@ -147,8 +147,8 @@ export function OrgOverviewHub({
           ].map((step) => (
             <div key={step.title} className="bg-pn border border-bd rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-medium text-slate-300">{step.title}</span>
-                <span className="text-xl font-bold text-slate-100">{step.count}</span>
+                <span className="text-xs font-medium text-slate-600">{step.title}</span>
+                <span className="text-xl font-bold text-slate-900">{step.count}</span>
               </div>
               <p className="text-[11px] text-slate-500 mb-2">{step.desc}</p>
               <p className="text-[10px] text-slate-500 mb-3">{step.sub}</p>
@@ -163,7 +163,7 @@ export function OrgOverviewHub({
       {/* ── 3. Alerts ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-100">운영 경고</h3>
+          <h3 className="text-sm font-bold text-slate-900">운영 경고</h3>
           <span className="text-[10px] text-slate-500">우선 확인이 필요한 항목만 표시합니다</span>
         </div>
         {alerts.length === 0 ? (
@@ -181,11 +181,11 @@ export function OrgOverviewHub({
                     {alert.priority === "high" ? "긴급" : alert.priority === "medium" ? "주의" : "안내"}
                   </span>
                   <div>
-                    <p className="text-xs font-medium text-slate-200">{alert.title}</p>
+                    <p className="text-xs font-medium text-slate-700">{alert.title}</p>
                     <p className="text-[10px] text-slate-500">{alert.description}</p>
                   </div>
                 </div>
-                <Button asChild variant="ghost" size="sm" className="h-7 text-[11px] text-slate-400 hover:text-slate-200">
+                <Button asChild variant="ghost" size="sm" className="h-7 text-[11px] text-slate-400 hover:text-slate-700">
                   <Link href={alert.linkHref}>{alert.linkLabel} <ArrowRight className="h-3 w-3 ml-1" /></Link>
                 </Button>
               </div>
@@ -197,7 +197,7 @@ export function OrgOverviewHub({
       {/* ── 4. Work Queue ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-100">지금 처리할 작업</h3>
+          <h3 className="text-sm font-bold text-slate-900">지금 처리할 작업</h3>
           <span className="text-[10px] text-slate-500">바로 처리 가능한 항목부터 보여줍니다</span>
         </div>
         {workQueue.length === 0 ? (
@@ -207,8 +207,8 @@ export function OrgOverviewHub({
             {workQueue.map((section) => (
               <div key={section.id} className="bg-pn border border-bd rounded-xl p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-slate-200">{section.title}</span>
-                  <Badge variant="secondary" className="bg-el text-slate-300 text-[10px]">{section.count}</Badge>
+                  <span className="text-xs font-medium text-slate-700">{section.title}</span>
+                  <Badge variant="secondary" className="bg-el text-slate-600 text-[10px]">{section.count}</Badge>
                 </div>
                 <p className="text-[10px] text-slate-500 mb-2">{section.description}</p>
                 {section.items.length > 0 && (
@@ -216,7 +216,7 @@ export function OrgOverviewHub({
                     {section.items.map((item, i) => (
                       <div key={i} className="flex items-center justify-between text-[10px]">
                         <span className="text-slate-400">{item.label}</span>
-                        <span className="text-slate-300 font-medium">{item.count}건</span>
+                        <span className="text-slate-600 font-medium">{item.count}건</span>
                       </div>
                     ))}
                   </div>
@@ -233,7 +233,7 @@ export function OrgOverviewHub({
       {/* ── 5. Approval Inbox ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-100">승인 대기함</h3>
+          <h3 className="text-sm font-bold text-slate-900">승인 대기함</h3>
           <span className="text-[10px] text-slate-500">조직 차원의 승인과 검토가 필요한 요청입니다</span>
         </div>
         {approvalInbox.pendingCount === 0 && approvalInbox.myRequestsCount === 0 ? (
@@ -242,22 +242,22 @@ export function OrgOverviewHub({
           <div className="grid md:grid-cols-3 gap-3">
             <div className="bg-pn border border-bd rounded-xl p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-slate-200">내가 처리할 승인</span>
-                <span className="text-lg font-bold text-slate-100">{approvalInbox.pendingCount}</span>
+                <span className="text-xs font-medium text-slate-700">내가 처리할 승인</span>
+                <span className="text-lg font-bold text-slate-900">{approvalInbox.pendingCount}</span>
               </div>
               <p className="text-[10px] text-slate-500 mb-3">구매 또는 운영 승인 후 진행할 수 있습니다</p>
               <Button variant="outline" size="sm" className="h-7 text-[11px] w-full border-bd">전체 승인 요청 보기</Button>
             </div>
             <div className="bg-pn border border-bd rounded-xl p-4">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-medium text-slate-200">내가 올린 요청</span>
-                <span className="text-lg font-bold text-slate-100">{approvalInbox.myRequestsCount}</span>
+                <span className="text-xs font-medium text-slate-700">내가 올린 요청</span>
+                <span className="text-lg font-bold text-slate-900">{approvalInbox.myRequestsCount}</span>
               </div>
               <p className="text-[10px] text-slate-500 mb-3">현재 승인 대기 중입니다</p>
               <Button variant="outline" size="sm" className="h-7 text-[11px] w-full border-bd">내 요청 보기</Button>
             </div>
             <div className="bg-pn border border-bd rounded-xl p-4">
-              <span className="text-xs font-medium text-slate-200 block mb-2">최근 승인 결과</span>
+              <span className="text-xs font-medium text-slate-700 block mb-2">최근 승인 결과</span>
               {approvalInbox.recentDecisions.length === 0 ? (
                 <p className="text-[10px] text-slate-500">최근 승인/반려 기록 없음</p>
               ) : (
@@ -280,7 +280,7 @@ export function OrgOverviewHub({
       {/* ── 6. Activity Feed ── */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-slate-100">최근 운영 활동</h3>
+          <h3 className="text-sm font-bold text-slate-900">최근 운영 활동</h3>
           <span className="text-[10px] text-slate-500">검토, 비교, 제출, 승인 이력을 시간순으로 보여줍니다</span>
         </div>
         {activityFeed.length === 0 ? (
@@ -290,7 +290,7 @@ export function OrgOverviewHub({
             {activityFeed.slice(0, 8).map((item) => (
               <div key={item.id} className="px-4 py-2.5 flex items-center justify-between">
                 <div>
-                  <p className="text-xs text-slate-200">{item.action}</p>
+                  <p className="text-xs text-slate-700">{item.action}</p>
                   <p className="text-[10px] text-slate-500">{item.actor} · {new Date(item.time).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" })}</p>
                 </div>
               </div>
@@ -301,7 +301,7 @@ export function OrgOverviewHub({
 
       {/* ── 7. 빠른 이동 ── */}
       <div>
-        <h3 className="text-sm font-bold text-slate-100 mb-3">빠른 이동</h3>
+        <h3 className="text-sm font-bold text-slate-900 mb-3">빠른 이동</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
           {[
             { href: "/app/search", label: "Step 1 검토 큐 열기" },

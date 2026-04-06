@@ -81,7 +81,7 @@ export function InventoryAiAssistantPanel({
       >
         {/* ═══ 1. 헤더 ═══ */}
         <SheetHeader className="px-5 pt-5 pb-3 border-b border-bd/50 flex-shrink-0">
-          <SheetTitle className="text-base font-bold text-slate-100">
+          <SheetTitle className="text-base font-bold text-slate-900">
             {state === "empty" && "재고 운영 도우미"}
             {state === "loading" && "재고 운영 도우미"}
             {state === "success" && "재고 운영 도우미"}
@@ -229,7 +229,7 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
       <div className="rounded-full bg-red-950/30 p-4 mb-4">
         <TriangleAlert className="h-8 w-8 text-red-500" />
       </div>
-      <p className="text-sm font-medium text-slate-300">
+      <p className="text-sm font-medium text-slate-600">
         재고 조치 정보를 준비하지 못했습니다
       </p>
       <p className="text-xs text-slate-500 mt-1.5 max-w-[260px]">
@@ -308,7 +308,7 @@ function StockSummarySection({
 
   return (
     <div className="p-5">
-      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+      <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">
         재고 위험 요약
       </h4>
 
@@ -316,7 +316,7 @@ function StockSummarySection({
       {item && (
         <div className="flex items-center gap-2 mb-3">
           <Beaker className="h-4 w-4 text-slate-400" />
-          <span className="text-sm font-medium text-slate-200 truncate">
+          <span className="text-sm font-medium text-slate-700 truncate">
             {item.productName}
           </span>
           {item.brand && (
@@ -349,7 +349,7 @@ function StockSummarySection({
           {item.location && (
             <div className="flex items-center gap-2 text-[11px] text-slate-400">
               <MapPin className="h-3.5 w-3.5 text-slate-400" />
-              <span>보관 위치: <span className="font-medium text-slate-300">{item.location}</span></span>
+              <span>보관 위치: <span className="font-medium text-slate-600">{item.location}</span></span>
             </div>
           )}
           {stockStatus.expiringLotCount > 0 && (
@@ -391,7 +391,7 @@ function IssueWarningsSection({
     <div className={`p-5 ${isShortage ? "bg-red-950/10" : "bg-amber-950/10"}`}>
       <div className="flex items-center gap-2 mb-3">
         <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           확인 필요한 재고 이슈
         </h4>
         <Badge
@@ -431,7 +431,7 @@ function IssueWarningsSection({
                 />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-xs font-medium text-slate-300">
+                    <p className="text-xs font-medium text-slate-600">
                       {issue.message}
                     </p>
                     <Badge
@@ -499,7 +499,7 @@ function ReorderSection({
   return (
     <div className={`p-5 ${isHighlighted ? "bg-orange-950/10" : ""}`}>
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           재발주 우선순위
         </h4>
         <Badge variant="outline" className={`text-[10px] h-4 px-1.5 ${urg.color}`}>
@@ -511,7 +511,7 @@ function ReorderSection({
         {/* 권장 수량 */}
         <div className="flex items-center justify-between mb-3">
           <span className="text-xs text-slate-400">권장 발주 수량</span>
-          <span className="text-base font-bold text-slate-200">
+          <span className="text-base font-bold text-slate-700">
             {recommendation.recommendedQty}
             <span className="text-xs font-normal text-slate-400 ml-0.5">ea</span>
           </span>
@@ -522,7 +522,7 @@ function ReorderSection({
           {recommendation.estimatedMonthlyUsage != null && (
             <div className="flex justify-between text-slate-400">
               <span>월 예상 사용량</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-600">
                 {Math.round(recommendation.estimatedMonthlyUsage)}ea
               </span>
             </div>
@@ -533,7 +533,7 @@ function ReorderSection({
               <span className={`font-medium ${
                 recommendation.estimatedDepletionDays <= 7
                   ? "text-red-400"
-                  : "text-slate-300"
+                  : "text-slate-600"
               }`}>
                 {recommendation.estimatedDepletionDays}일 후
               </span>
@@ -542,7 +542,7 @@ function ReorderSection({
           {recommendation.leadTimeDays != null && (
             <div className="flex justify-between text-slate-400">
               <span>예상 리드타임</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-600">
                 {recommendation.leadTimeDays}일
               </span>
             </div>
@@ -550,7 +550,7 @@ function ReorderSection({
           {recommendation.suggestedVendor && (
             <div className="flex justify-between text-slate-400">
               <span>추천 벤더</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-600">
                 {recommendation.suggestedVendor}
               </span>
             </div>
@@ -558,7 +558,7 @@ function ReorderSection({
           {recommendation.recentUnitPrice != null && (
             <div className="flex justify-between text-slate-400">
               <span>최근 단가 참고</span>
-              <span className="font-medium text-slate-300">
+              <span className="font-medium text-slate-600">
                 ₩{recommendation.recentUnitPrice.toLocaleString()}
               </span>
             </div>
@@ -628,7 +628,7 @@ function LotExpirySection({
     <div className={`p-5 ${isHighlighted ? "bg-amber-950/10" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
         <CalendarClock className="h-4 w-4 text-amber-500" />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           Lot 및 유효기간 확인
         </h4>
       </div>
@@ -653,7 +653,7 @@ function LotExpirySection({
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <FlaskConical className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-xs font-medium text-slate-200">
+                  <span className="text-xs font-medium text-slate-700">
                     Lot #{lot.lotNumber}
                   </span>
                 </div>
@@ -740,7 +740,7 @@ function BusinessImpactSection({
     <div className={`p-5 ${isHighlighted ? "bg-pn/20" : ""}`}>
       <div className="flex items-center gap-2 mb-3">
         <TrendingDown className="h-4 w-4 text-slate-500" />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           운영 영향
         </h4>
       </div>
@@ -756,7 +756,7 @@ function BusinessImpactSection({
               <div className="flex items-start gap-2">
                 <IconComp className="h-3.5 w-3.5 mt-0.5 text-slate-500 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-300">
+                  <p className="text-xs font-medium text-slate-600">
                     {impact.message}
                   </p>
                   {impact.detail && (

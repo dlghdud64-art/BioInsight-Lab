@@ -100,7 +100,7 @@ export function UpgradeModal({
           <DialogDescription className="text-sm text-slate-600">
             {message.description}
             {currentCount !== undefined && (
-              <span className="block mt-2 font-medium text-slate-100">
+              <span className="block mt-2 font-medium text-slate-900">
                 현재 사용량: {currentCount} / {limit}
               </span>
             )}
@@ -138,7 +138,7 @@ export function UpgradeModal({
                 <div className="flex items-start gap-3">
                   <Users className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-100 mb-1">
+                    <p className="text-sm font-medium text-slate-900 mb-1">
                       관리자에게 업그레이드 요청
                     </p>
                     <p className="text-xs text-slate-600">
@@ -163,7 +163,7 @@ export function UpgradeModal({
                 <div className="flex items-start gap-3">
                   <LogIn className="h-5 w-5 text-slate-600 mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-100 mb-1">
+                    <p className="text-sm font-medium text-slate-900 mb-1">
                       로그인 또는 팀 만들기
                     </p>
                     <p className="text-xs text-slate-600">

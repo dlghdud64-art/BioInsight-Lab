@@ -179,7 +179,7 @@ export function StorageLocationView() {
       {/* ── Priority Alerts ── */}
       {priorityAlerts.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-slate-300 flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-slate-600 flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-amber-400" />
             우선 조치 알림
           </h3>
@@ -230,7 +230,7 @@ export function StorageLocationView() {
                 <div className="flex items-center gap-2">
                   <span className={zone.iconColor}>{zone.icon}</span>
                   <div>
-                    <div className="text-sm font-bold text-slate-200">{zone.label}</div>
+                    <div className="text-sm font-bold text-slate-700">{zone.label}</div>
                     <div className="text-[11px] text-slate-500">{zone.tempRange}</div>
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export function StorageLocationView() {
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <Package className="w-3 h-3 text-slate-500" />
                   <span className="text-slate-400">보관</span>
-                  <span className="font-bold text-slate-200 ml-auto">{zone.totalItems}</span>
+                  <span className="font-bold text-slate-700 ml-auto">{zone.totalItems}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <Clock className="w-3 h-3 text-amber-500" />
@@ -288,7 +288,7 @@ export function StorageLocationView() {
           <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-pn/50">
             <div className="flex items-center gap-2">
               <span className={activeZone.iconColor}>{activeZone.icon}</span>
-              <h3 className="text-sm font-bold text-slate-200">
+              <h3 className="text-sm font-bold text-slate-700">
                 {activeZone.label}
                 <span className="text-slate-500 font-normal ml-2">({activeZone.tempRange})</span>
               </h3>
@@ -298,7 +298,7 @@ export function StorageLocationView() {
             </div>
             <button
               onClick={() => setSelectedZone(null)}
-              className="text-xs text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-xs text-slate-500 hover:text-slate-600 transition-colors"
             >
               닫기
             </button>
@@ -326,7 +326,7 @@ export function StorageLocationView() {
                     {/* Name + Catalog */}
                     <td className="px-5 py-3">
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-slate-200 font-medium text-[13px]">{item.name}</span>
+                        <span className="text-slate-700 font-medium text-[13px]">{item.name}</span>
                         <span className="text-[11px] text-slate-500">{item.catalogNumber}</span>
                       </div>
                     </td>
@@ -336,7 +336,7 @@ export function StorageLocationView() {
 
                     {/* Quantity */}
                     <td className="px-3 py-3 text-center">
-                      <span className="text-slate-200 font-medium">{item.quantity}</span>
+                      <span className="text-slate-700 font-medium">{item.quantity}</span>
                       <span className="text-slate-500 text-[11px] ml-1">{item.unit}</span>
                     </td>
 
@@ -409,7 +409,7 @@ export function StorageLocationView() {
           {/* Zone-level summary footer */}
           <div className="flex items-center gap-4 px-5 py-3 border-t border-bd bg-pn/30 text-[11px] text-slate-500">
             <span>
-              총 <span className="text-slate-300 font-medium">{activeZone.totalItems}</span>건
+              총 <span className="text-slate-600 font-medium">{activeZone.totalItems}</span>건
             </span>
             {activeZone.expiringItems > 0 && (
               <span>

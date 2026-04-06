@@ -146,7 +146,7 @@ export function PilotActivationWorkbench({
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">포함 단계</h4>
           <div className="flex flex-wrap gap-1">
             {surface.rail.includedStageLabels.map(label => (
-              <span key={label} className="text-[9px] bg-slate-800 text-slate-300 rounded px-1.5 py-0.5">{label}</span>
+              <span key={label} className="text-[9px] bg-slate-800 text-slate-600 rounded px-1.5 py-0.5">{label}</span>
             ))}
           </div>
         </div>
@@ -191,7 +191,7 @@ export function PilotActivationWorkbench({
           </span>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {onExport && (
-              <button onClick={onExport} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">내보내기</button>
+              <button onClick={onExport} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">내보내기</button>
             )}
             {surface.dock.actions.find(a => a.actionKey === "cancel_pilot")?.enabled && isAuthorized && (
               <button onClick={() => setConfirmAction("cancel")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors">취소</button>
@@ -235,7 +235,7 @@ function ChecklistItemRow({ item, editable, onCheck, onUncheck }: {
       >
         {item.checked && <span className="text-white text-[8px]">✓</span>}
       </button>
-      <span className={cn("text-xs", item.checked ? "text-slate-400 line-through" : "text-slate-200")}>
+      <span className={cn("text-xs", item.checked ? "text-slate-400 line-through" : "text-slate-700")}>
         {item.description}
       </span>
       {item.required && !item.checked && (
@@ -271,9 +271,9 @@ function ConfirmationDialog({ action, onConfirm, onDismiss }: {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       <div className="w-96 rounded-lg border border-slate-700 bg-slate-900 p-6 space-y-4 shadow-xl">
         <h3 className={cn("text-sm font-medium", msg.severity === "danger" ? "text-red-400" : "text-amber-400")}>{msg.title}</h3>
-        <p className="text-xs text-slate-300 leading-relaxed">{msg.description}</p>
+        <p className="text-xs text-slate-600 leading-relaxed">{msg.description}</p>
         <div className="flex justify-end gap-2">
-          <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-300 transition-colors">취소</button>
+          <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
           <button onClick={onConfirm} className={cn(
             "rounded px-4 py-1.5 text-xs font-medium text-white transition-colors",
             msg.severity === "danger" ? "bg-red-600 hover:bg-red-500" : "bg-blue-600 hover:bg-blue-500",
@@ -366,7 +366,7 @@ export function PilotMonitoringWorkbench({
               <div key={s.signalId} className="flex items-center justify-between text-[10px]">
                 <div className="flex items-center gap-2">
                   <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", s.passed ? "bg-emerald-400" : s.severity === "critical" ? "bg-red-400" : "bg-amber-400")} />
-                  <span className="text-slate-300">{s.name}</span>
+                  <span className="text-slate-600">{s.name}</span>
                 </div>
                 <span className="tabular-nums text-slate-500">{s.score}</span>
               </div>
@@ -390,7 +390,7 @@ export function PilotMonitoringWorkbench({
             <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">최근 이벤트</h4>
             {health.recentCriticalEvents.slice(0, 5).map((evt, i) => (
               <div key={i} className="flex items-center justify-between text-[10px]">
-                <span className="text-slate-300">{evt.detail}</span>
+                <span className="text-slate-600">{evt.detail}</span>
                 <span className="text-slate-600 shrink-0 ml-2">{evt.domain}</span>
               </div>
             ))}
@@ -469,10 +469,10 @@ export function PilotMonitoringWorkbench({
           </span>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {isAuthorizedFor("open_dashboard") && (
-              <button onClick={() => onOpenDashboard?.(undefined as any)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">대시보드</button>
+              <button onClick={() => onOpenDashboard?.(undefined as any)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">대시보드</button>
             )}
             {isAuthorizedFor("open_audit_review") && (
-              <button onClick={() => onOpenAuditReview?.(undefined as any)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">감사</button>
+              <button onClick={() => onOpenAuditReview?.(undefined as any)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">감사</button>
             )}
             {isAuthorizedFor("cancel_pilot") && (
               <button onClick={() => setConfirmAction("cancel")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors">취소</button>

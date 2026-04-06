@@ -86,7 +86,7 @@ export function CompareQueuePanel({
     return (
       <div className="flex flex-col items-center justify-center py-16 px-6 bg-el border border-bd border-dashed rounded-xl text-center">
         <GitCompare className="h-8 w-8 text-slate-500 mb-3" />
-        <p className="text-sm font-medium text-slate-300 mb-1">
+        <p className="text-sm font-medium text-slate-600 mb-1">
           아직 비교 큐에 담긴 항목이 없습니다
         </p>
         <p className="text-xs text-slate-500">
@@ -102,8 +102,8 @@ export function CompareQueuePanel({
       <div className="flex flex-col gap-3 pb-4 border-b border-bd">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-bold text-slate-100">제품 비교</h3>
-            <Badge variant="secondary" className="bg-el text-slate-300 text-[10px]">
+            <h3 className="text-sm font-bold text-slate-900">제품 비교</h3>
+            <Badge variant="secondary" className="bg-el text-slate-600 text-[10px]">
               {stats.total}
             </Badge>
           </div>
@@ -124,8 +124,8 @@ export function CompareQueuePanel({
               onClick={() => setFilter(f.key)}
               className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
                 filter === f.key
-                  ? "bg-el text-slate-100"
-                  : "text-slate-500 hover:text-slate-300 hover:bg-st"
+                  ? "bg-el text-slate-900"
+                  : "text-slate-500 hover:text-slate-600 hover:bg-st"
               }`}
             >
               {f.label}
@@ -166,7 +166,7 @@ export function CompareQueuePanel({
                     후보 {item.candidateProducts.length}개
                   </span>
                 </div>
-                <p className="text-sm font-medium text-slate-200 truncate">{item.parsedItemName}</p>
+                <p className="text-sm font-medium text-slate-700 truncate">{item.parsedItemName}</p>
                 <p className="text-xs text-slate-500 truncate">{item.normalizedNeed}</p>
                 <div className="flex items-center justify-between mt-1.5">
                   <span className="text-[11px] text-slate-400">
@@ -198,7 +198,7 @@ export function CompareQueuePanel({
                     {SOURCE_BADGE[selectedItem.sourceType].label}
                   </span>
                 </div>
-                <h4 className="text-base font-bold text-slate-100">{selectedItem.parsedItemName}</h4>
+                <h4 className="text-base font-bold text-slate-900">{selectedItem.parsedItemName}</h4>
                 <p className="text-xs text-slate-400 mt-0.5">{selectedItem.normalizedNeed}</p>
                 {selectedItem.spec && (
                   <p className="text-xs text-slate-500 mt-0.5">
@@ -210,7 +210,7 @@ export function CompareQueuePanel({
               {/* 원문/source context */}
               <div className="bg-el rounded-lg p-3">
                 <p className="text-[10px] text-slate-500 mb-1">원문</p>
-                <p className="text-xs text-slate-300">{selectedItem.sourceContext}</p>
+                <p className="text-xs text-slate-600">{selectedItem.sourceContext}</p>
               </div>
 
               {/* 후보 비교 카드 */}
@@ -231,7 +231,7 @@ export function CompareQueuePanel({
                         }`}
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-slate-200">{candidate.productName}</span>
+                          <span className="text-sm font-medium text-slate-700">{candidate.productName}</span>
                           <Badge
                             variant="outline"
                             className={`text-[9px] ${
@@ -254,7 +254,7 @@ export function CompareQueuePanel({
                           className={`mt-2 h-7 text-[11px] ${
                             isSelected
                               ? "bg-blue-600 hover:bg-blue-500 text-white"
-                              : "border-bd text-slate-400 hover:text-slate-200"
+                              : "border-bd text-slate-400 hover:text-slate-700"
                           }`}
                           onClick={(e) => {
                             e.stopPropagation();
@@ -284,7 +284,7 @@ export function CompareQueuePanel({
                     if (!prod) return null;
                     return (
                       <>
-                        <p className="text-sm font-medium text-slate-200">{prod.productName}</p>
+                        <p className="text-sm font-medium text-slate-700">{prod.productName}</p>
                         <p className="text-xs text-slate-400">
                           {[prod.brand, prod.catalogNumber].filter(Boolean).join(" · ")}
                         </p>

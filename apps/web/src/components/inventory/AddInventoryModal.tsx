@@ -211,7 +211,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               </h4>
 
               <div className="grid gap-2">
-                <Label htmlFor="productName" className="font-semibold text-slate-300">
+                <Label htmlFor="productName" className="font-semibold text-slate-600">
                   품목명 <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -248,7 +248,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="lotNo" className="font-semibold text-slate-300">
+                  <Label htmlFor="lotNo" className="font-semibold text-slate-600">
                     Lot 번호
                   </Label>
                   <Input
@@ -301,7 +301,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="currentQuantity" className="font-semibold text-slate-300">
+                  <Label htmlFor="currentQuantity" className="font-semibold text-slate-600">
                     현재 재고량 <span className="text-red-500">*</span>
                   </Label>
                   <Input
@@ -410,7 +410,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="testPurpose" className="font-semibold text-slate-300">
+                <Label htmlFor="testPurpose" className="font-semibold text-slate-600">
                   시험항목 (용도)
                 </Label>
                 <Input

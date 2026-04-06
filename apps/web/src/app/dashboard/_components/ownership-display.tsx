@@ -44,7 +44,7 @@ export function OwnershipStrip({ ownership }: OwnershipStripProps) {
       {(currentOwnerName || currentOwnerRole) && (
         <span className="text-slate-500">
           담당:{' '}
-          <span className="text-slate-200 font-medium">
+          <span className="text-slate-700 font-medium">
             {currentOwnerName ?? currentOwnerRole}
           </span>
           {currentOwnerName && currentOwnerRole && (
@@ -172,7 +172,7 @@ export function DecisionOwnerContext({ ownership }: DecisionOwnerContextProps) {
       {/* Who should act */}
       <div className="text-slate-400">
         실행 주체:{' '}
-        <span className="text-slate-200 font-medium">
+        <span className="text-slate-700 font-medium">
           {currentOwnerName ?? currentOwnerRole ?? '미할당'}
         </span>
       </div>

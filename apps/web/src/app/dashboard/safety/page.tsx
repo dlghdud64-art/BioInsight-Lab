@@ -128,7 +128,7 @@ const CLASSIFICATION_STYLE: Record<OperationalClassification, { label: string; b
   immediate_action: { label: "즉시 조치", bg: "bg-red-950/40", text: "text-red-300", border: "border-red-800/60" },
   document_remediation: { label: "문서 보완", bg: "bg-amber-950/40", text: "text-amber-300", border: "border-amber-800/60" },
   review_required: { label: "검토 필요", bg: "bg-blue-950/40", text: "text-blue-300", border: "border-blue-800/60" },
-  monitor_only: { label: "모니터링", bg: "bg-slate-800/40", text: "text-slate-300", border: "border-slate-700/60" },
+  monitor_only: { label: "모니터링", bg: "bg-slate-800/40", text: "text-slate-600", border: "border-slate-700/60" },
   compliant: { label: "정상", bg: "bg-emerald-950/40", text: "text-emerald-300", border: "border-emerald-800/60" },
 };
 
@@ -338,13 +338,13 @@ export default function SafetyManagerPage() {
         </div>
 
         {/* ═══ A. AI Mission Brief ═══ */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#1a1c20] overflow-hidden">
-          <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-2">
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+          <div className="px-4 py-3 border-b border-slate-200 flex items-center gap-2">
             <span className="relative flex h-2 w-2 flex-shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
             </span>
-            <span className="text-[11px] font-bold text-slate-300 uppercase tracking-widest">오늘의 안전 판단</span>
+            <span className="text-[11px] font-bold text-slate-600 uppercase tracking-widest">오늘의 안전 판단</span>
           </div>
           <div className="px-4 py-3.5">
             {/* Brief summary strip */}
@@ -398,13 +398,13 @@ export default function SafetyManagerPage() {
             return (
               <button key={opt.frame} type="button" onClick={() => setActiveFrame(opt.frame)}
                 className={`text-left px-4 py-3.5 rounded-xl border-2 transition-all ${
-                  isActive ? `${colors.bg} ${colors.border} ring-1 ring-offset-0 ring-white/5` : "border-white/[0.06] hover:border-white/[0.12] bg-[#1a1c20]"
+                  isActive ? `${colors.bg} ${colors.border} ring-1 ring-offset-0 ring-slate-200` : "border-slate-200 hover:border-slate-300 bg-white"
                 }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <FrameIcon className={`h-4 w-4 ${isActive ? colors.text : "text-slate-600"}`} />
                   <span className={`text-[13px] font-bold ${isActive ? colors.text : "text-slate-400"}`}>{opt.title}</span>
                 </div>
-                <p className={`text-[11px] leading-relaxed mb-2.5 ${isActive ? "text-slate-300" : "text-slate-600"}`}>{opt.subtitle}</p>
+                <p className={`text-[11px] leading-relaxed mb-2.5 ${isActive ? "text-slate-600" : "text-slate-600"}`}>{opt.subtitle}</p>
                 <div className="flex items-center gap-3 text-[10px]">
                   <span className={`px-1.5 py-0.5 rounded ${isActive ? colors.accent + " " + colors.text : "bg-white/[0.04] text-slate-600"}`}>
                     조치 {opt.immediateCount + opt.remediationCount}
@@ -414,10 +414,10 @@ export default function SafetyManagerPage() {
                   </span>
                 </div>
                 {isActive && (
-                  <div className="mt-2.5 pt-2.5 border-t border-white/[0.06] grid grid-cols-2 gap-2 text-[10px]">
+                  <div className="mt-2.5 pt-2.5 border-t border-slate-200 grid grid-cols-2 gap-2 text-[10px]">
                     <div>
                       <span className="text-slate-500 block mb-0.5">장점</span>
-                      <span className="text-slate-300">{opt.advantage}</span>
+                      <span className="text-slate-600">{opt.advantage}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 block mb-0.5">리스크</span>
@@ -432,8 +432,8 @@ export default function SafetyManagerPage() {
 
         {/* ═══ C. AI Recommended Queue ═══ */}
         {decision.queue.length > 0 && (
-          <div className="rounded-xl border border-white/[0.08] bg-[#1a1c20] overflow-hidden">
-            <div className="px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+          <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">AI 권장 처리 큐</span>
               <span className="text-[10px] text-slate-600">{activeOption?.title} 기준</span>
             </div>
@@ -442,7 +442,7 @@ export default function SafetyManagerPage() {
                 const style = CLASSIFICATION_STYLE[q.classification];
                 return (
                   <button key={q.id} type="button" onClick={() => setSelectedItemId(q.id)}
-                    className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors ${selectedItemId === q.id ? "bg-white/[0.04]" : "hover:bg-white/[0.02]"}`}>
+                    className={`w-full text-left flex items-center gap-3 px-4 py-3 transition-colors ${selectedItemId === q.id ? "bg-white/[0.04]" : "hover:bg-slate-50"}`}>
                     <span className="text-[11px] font-mono text-slate-600 w-4 flex-shrink-0 text-right">{i + 1}</span>
                     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${style.bg} ${style.text} ${style.border} flex-shrink-0`}>
                       {style.label}
@@ -469,10 +469,10 @@ export default function SafetyManagerPage() {
           <div className="flex-1 min-w-0 space-y-3">
 
             {/* Filter bar */}
-            <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 border rounded-lg border-white/[0.06] bg-[#1a1c20]">
+            <div className="flex flex-wrap items-center justify-between gap-2 py-2.5 px-3 border rounded-lg border-slate-200 bg-white">
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Select value={riskFilter} onValueChange={setRiskFilter}>
-                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-white/[0.08] bg-transparent"><SelectValue placeholder="위험 등급" /></SelectTrigger>
+                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-slate-200 bg-transparent"><SelectValue placeholder="위험 등급" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">위험 등급 전체</SelectItem>
                     <SelectItem value="high">고위험</SelectItem>
@@ -481,7 +481,7 @@ export default function SafetyManagerPage() {
                   </SelectContent>
                 </Select>
                 <Select value={msdsFilter} onValueChange={setMsdsFilter}>
-                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-white/[0.08] bg-transparent"><SelectValue placeholder="MSDS 상태" /></SelectTrigger>
+                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-slate-200 bg-transparent"><SelectValue placeholder="MSDS 상태" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">MSDS 상태 전체</SelectItem>
                     <SelectItem value="registered">등록됨</SelectItem>
@@ -489,7 +489,7 @@ export default function SafetyManagerPage() {
                   </SelectContent>
                 </Select>
                 <Select value={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-white/[0.08] bg-transparent"><SelectValue placeholder="보관 장소" /></SelectTrigger>
+                  <SelectTrigger className="w-[110px] sm:w-[130px] h-8 text-xs border-slate-200 bg-transparent"><SelectValue placeholder="보관 장소" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">보관 장소 전체</SelectItem>
                     {LOCATIONS.map((loc) => <SelectItem key={loc} value={loc}>{loc}</SelectItem>)}
@@ -498,7 +498,7 @@ export default function SafetyManagerPage() {
               </div>
               <div className="relative w-full sm:w-56">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-                <Input className="pl-8 h-8 text-xs border-white/[0.08] bg-transparent" placeholder="물질명 / CAS 검색"
+                <Input className="pl-8 h-8 text-xs border-slate-200 bg-transparent" placeholder="물질명 / CAS 검색"
                   value={searchQuery} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)} />
               </div>
             </div>
@@ -508,7 +508,7 @@ export default function SafetyManagerPage() {
             {/* Item list with classification state */}
             <div className="space-y-1.5">
               {filteredItems.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-sm rounded-xl border border-white/[0.06] bg-[#1a1c20]">
+                <div className="text-center py-12 text-slate-500 text-sm rounded-xl border border-slate-200 bg-white">
                   조건에 맞는 데이터가 없습니다.
                 </div>
               ) : (
@@ -520,7 +520,7 @@ export default function SafetyManagerPage() {
                   return (
                     <button key={item.id} type="button" onClick={() => setSelectedItemId(item.id)}
                       className={`w-full text-left p-3.5 rounded-lg border-l-4 border transition-all ${getBorderColor(item.level)} ${
-                        isSelected ? "bg-white/[0.05] border-white/[0.12]" : "border-white/[0.06] hover:bg-white/[0.02] bg-[#1a1c20]"
+                        isSelected ? "bg-slate-100 border-slate-300" : "border-slate-200 hover:bg-slate-50 bg-white"
                       }`}>
                       {/* Row 1: Classification + Name + Badges */}
                       <div className="flex items-center gap-2 flex-wrap">
@@ -532,8 +532,8 @@ export default function SafetyManagerPage() {
                         <div className="flex gap-1 flex-shrink-0">
                           {item.icons.map((icon: string) => <GHSPictogram key={icon} type={icon} />)}
                         </div>
-                        <span className="text-[13px] font-bold text-slate-100 truncate">{item.name}</span>
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-el text-slate-400 border-white/[0.08] font-mono">{item.cas}</Badge>
+                        <span className="text-[13px] font-bold text-slate-900 truncate">{item.name}</span>
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-el text-slate-400 border-slate-200 font-mono">{item.cas}</Badge>
                       </div>
 
                       {/* Row 2: Meta */}
@@ -569,9 +569,9 @@ export default function SafetyManagerPage() {
           {/* ── Right Rail: AI Explanation + Action Handoff ── */}
           {selectedClassified && (
             <div className="hidden lg:block w-80 flex-shrink-0 sticky top-20 self-start">
-              <div className="rounded-xl border border-white/[0.08] bg-[#1a1c20] overflow-hidden">
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                 {/* Rail header */}
-                <div className="px-4 py-3 border-b border-white/[0.06] flex items-center justify-between">
+                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
                   <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">판단 근거</span>
                   <button type="button" onClick={() => setSelectedItemId(null)} className="text-slate-600 hover:text-slate-400 transition-colors">
                     <X className="h-3.5 w-3.5" />
@@ -603,7 +603,7 @@ export default function SafetyManagerPage() {
                   <div className="space-y-2">
                     <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.05]">
                       <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5">추천 이유</span>
-                      <p className="text-[12px] text-slate-300 leading-relaxed">{selectedClassified.priorityReason}</p>
+                      <p className="text-[12px] text-slate-600 leading-relaxed">{selectedClassified.priorityReason}</p>
                     </div>
 
                     {/* Blockers */}
@@ -648,7 +648,7 @@ export default function SafetyManagerPage() {
                   </div>
 
                   {/* Action handoff dock */}
-                  <div className="pt-3 border-t border-white/[0.06] space-y-2">
+                  <div className="pt-3 border-t border-slate-200 space-y-2">
                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">실행</span>
                     {!selectedClassified.hasMsds && (
                       <Button variant="outline" size="sm" className="w-full h-8 text-[12px] text-amber-400 border-amber-800/40 hover:bg-amber-950/30 justify-start gap-2"

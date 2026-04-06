@@ -415,7 +415,7 @@ export function InventoryContextPanel({
                 </Badge>
               )}
             </div>
-            <h2 className="text-base font-bold text-slate-100 leading-tight truncate">
+            <h2 className="text-base font-bold text-slate-900 leading-tight truncate">
               {item.productName}
             </h2>
             <p className="text-xs text-slate-500 mt-0.5 flex items-center gap-1.5">
@@ -427,7 +427,7 @@ export function InventoryContextPanel({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-slate-700/50 shrink-0"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-slate-700/50 shrink-0"
             onClick={onClose}
           >
             <X className="h-4 w-4" />
@@ -447,7 +447,7 @@ export function InventoryContextPanel({
                     ? "text-red-400"
                     : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
                       ? "text-amber-400"
-                      : "text-slate-200"
+                      : "text-slate-700"
                 }`}
               >
                 {item.currentQuantity}
@@ -456,23 +456,23 @@ export function InventoryContextPanel({
             </InfoRow>
             <InfoRow label="안전재고">
               {item.safetyStock !== null ? (
-                <span className="text-slate-300">{item.safetyStock} {item.unit}</span>
+                <span className="text-slate-600">{item.safetyStock} {item.unit}</span>
               ) : (
                 <span className="text-slate-600">미설정</span>
               )}
             </InfoRow>
             <InfoRow label="카테고리">
-              <span className="text-slate-300">{item.category || "시약"}</span>
+              <span className="text-slate-600">{item.category || "시약"}</span>
             </InfoRow>
             <InfoRow label="보관 조건">
-              <span className="text-slate-300 flex items-center gap-1">
+              <span className="text-slate-600 flex items-center gap-1">
                 <Thermometer className="h-3 w-3 text-slate-500" />
                 {formatStorageCondition(item.storageCondition)}
               </span>
             </InfoRow>
             <InfoRow label="위치">
               {item.location ? (
-                <span className="text-slate-300 flex items-center gap-1">
+                <span className="text-slate-600 flex items-center gap-1">
                   <MapPin className="h-3 w-3 text-slate-500" />
                   {item.location}
                 </span>
@@ -481,7 +481,7 @@ export function InventoryContextPanel({
               )}
             </InfoRow>
             <InfoRow label="시험항목">
-              <span className="text-slate-300 text-[11px]">{item.testPurpose || "-"}</span>
+              <span className="text-slate-600 text-[11px]">{item.testPurpose || "-"}</span>
             </InfoRow>
           </div>
         </section>
@@ -496,7 +496,7 @@ export function InventoryContextPanel({
                 className="rounded-lg border border-bd bg-pn px-3 py-2.5"
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono text-xs font-semibold text-slate-300">
+                  <span className="font-mono text-xs font-semibold text-slate-600">
                     {lot.lotNumber}
                   </span>
                   <Badge className={`text-[10px] px-1.5 py-0 border-none ${LOT_STATUS_STYLE[lot.status]}`}>
@@ -536,7 +536,7 @@ export function InventoryContextPanel({
                 onClick={onLotDrillDown}
                 className="w-full mt-2 flex items-center justify-between px-3 py-2 rounded-lg border border-bd bg-pn hover:bg-el transition-colors group"
               >
-                <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-300">
+                <span className="text-[11px] font-medium text-slate-400 group-hover:text-slate-600">
                   Lot 전체 추적 보기
                 </span>
                 <ChevronRight className="h-3.5 w-3.5 text-slate-600 group-hover:text-blue-400 transition-colors" />
@@ -562,7 +562,7 @@ export function InventoryContextPanel({
                     {risk.severity === "critical" ? "긴급" : risk.severity === "high" ? "높음" : risk.severity === "medium" ? "보통" : "낮음"}
                   </Badge>
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-slate-200">{risk.label}</p>
+                    <p className="text-xs font-semibold text-slate-700">{risk.label}</p>
                     <p className="text-[11px] text-slate-500 mt-0.5">{risk.detail}</p>
                   </div>
                 </div>
@@ -587,7 +587,7 @@ export function InventoryContextPanel({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <p className="text-xs font-semibold text-slate-300">{flow.label}</p>
+                      <p className="text-xs font-semibold text-slate-600">{flow.label}</p>
                       {flow.date && (
                         <span className="text-[10px] text-slate-600">{flow.date}</span>
                       )}
@@ -618,7 +618,7 @@ export function InventoryContextPanel({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] text-slate-300 font-medium">{tx.label}</span>
+                    <span className="text-[11px] text-slate-600 font-medium">{tx.label}</span>
                     <span className="text-[10px] text-slate-600">{tx.date}</span>
                   </div>
                   <span className="text-[10px] text-slate-500">{tx.detail}</span>
@@ -635,18 +635,18 @@ export function InventoryContextPanel({
             <div className="mt-2.5 rounded-lg border border-bd bg-pn px-3 py-2.5 space-y-1.5">
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">일평균 사용량</span>
-                <span className="text-slate-300 font-medium">{item.averageDailyUsage} {item.unit}/일</span>
+                <span className="text-slate-600 font-medium">{item.averageDailyUsage} {item.unit}/일</span>
               </div>
               <div className="flex items-center justify-between text-[11px]">
                 <span className="text-slate-500">예상 소진일</span>
                 <span className={`font-medium ${
-                  (item.currentQuantity / item.averageDailyUsage) <= (item.leadTimeDays ?? 14) ? "text-red-400" : "text-slate-300"
+                  (item.currentQuantity / item.averageDailyUsage) <= (item.leadTimeDays ?? 14) ? "text-red-400" : "text-slate-600"
                 }`}>{Math.ceil(item.currentQuantity / item.averageDailyUsage)}일 후</span>
               </div>
               {item.leadTimeDays && (
                 <div className="flex items-center justify-between text-[11px]">
                   <span className="text-slate-500">공급 리드타임</span>
-                  <span className="text-slate-300 font-medium">{item.leadTimeDays}일</span>
+                  <span className="text-slate-600 font-medium">{item.leadTimeDays}일</span>
                 </div>
               )}
               {item.leadTimeDays && item.averageDailyUsage > 0 && (
@@ -676,7 +676,7 @@ export function InventoryContextPanel({
                 className={`rounded-lg border border-bd bg-pn px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <p className="text-xs font-bold text-slate-200">{action.label}</p>
+                  <p className="text-xs font-bold text-slate-700">{action.label}</p>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -713,7 +713,7 @@ export function InventoryContextPanel({
             </div>
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-500">수정자</span>
-              <span className="text-slate-300">김연구원</span>
+              <span className="text-slate-600">김연구원</span>
             </div>
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-slate-500">변경 내용</span>
@@ -735,7 +735,7 @@ export function InventoryContextPanel({
           if (isExpired) {
             return (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
                 <Button size="sm" className="flex-1 h-8 text-xs bg-red-600 hover:bg-red-500 text-white font-medium" onClick={() => onDispose?.(item)}>
                   <AlertTriangle className="h-3 w-3 mr-1" />폐기 검토
                 </Button>
@@ -745,7 +745,7 @@ export function InventoryContextPanel({
           if (isExpiring) {
             return (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onDispose?.(item)}>폐기/검토</Button>
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onDispose?.(item)}>폐기/검토</Button>
                 <Button size="sm" className="flex-1 h-8 text-xs bg-amber-600 hover:bg-amber-500 text-white font-medium" onClick={() => onReorder?.(item)}>
                   <Sparkles className="h-3 w-3 mr-1" />재주문 + 교체
                 </Button>
@@ -755,7 +755,7 @@ export function InventoryContextPanel({
           if (isOut || isLow) {
             return (
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
+                <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
                 <Button size="sm" className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => onReorder?.(item)}>
                   <ShoppingCart className="h-3 w-3 mr-1" />재주문
                 </Button>
@@ -765,8 +765,8 @@ export function InventoryContextPanel({
           // 정상
           return (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onEdit?.(item)}>정보 수정</Button>
-              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-300" onClick={() => onReorder?.(item)}>
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
+              <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onReorder?.(item)}>
                 <Sparkles className="h-3 w-3 mr-1" />재발주 검토
               </Button>
             </div>

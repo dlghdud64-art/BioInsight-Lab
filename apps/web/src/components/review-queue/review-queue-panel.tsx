@@ -236,7 +236,7 @@ export function ReviewQueuePanel({
       <div className="flex items-center justify-between px-4 py-3 border-b border-bd">
         <div className="flex items-center gap-2">
           <h3 className="text-sm font-semibold text-st">검토 큐</h3>
-          <span className="text-xs bg-el text-slate-300 rounded-full px-2 py-0.5 font-medium">
+          <span className="text-xs bg-el text-slate-600 rounded-full px-2 py-0.5 font-medium">
             {stats.total}
           </span>
         </div>
@@ -262,8 +262,8 @@ export function ReviewQueuePanel({
               onClick={() => setFilter(f.key)}
               className={`text-xs px-2.5 py-1 rounded-md transition-colors ${
                 filter === f.key
-                  ? "bg-el text-slate-100 font-medium"
-                  : "text-slate-400 hover:text-slate-300 hover:bg-el/50"
+                  ? "bg-el text-slate-900 font-medium"
+                  : "text-slate-400 hover:text-slate-600 hover:bg-el/50"
               }`}
             >
               {f.label}
@@ -278,7 +278,7 @@ export function ReviewQueuePanel({
               onClick={() => setSort(s.key)}
               className={`text-[11px] px-2 py-0.5 rounded transition-colors ${
                 sort === s.key
-                  ? "bg-el text-slate-200 font-medium"
+                  ? "bg-el text-slate-700 font-medium"
                   : "text-slate-500 hover:text-slate-400"
               }`}
             >
@@ -291,7 +291,7 @@ export function ReviewQueuePanel({
       {/* ── Bulk action bar (sticky) ── */}
       {selectedIds.size > 0 && (
         <div className="sticky top-0 z-10 flex items-center gap-2 px-4 py-2 bg-sh border-b border-bd">
-          <span className="text-xs text-slate-300 font-medium">
+          <span className="text-xs text-slate-600 font-medium">
             {selectedIds.size}건 선택됨
           </span>
           <div className="flex-1" />
@@ -303,13 +303,13 @@ export function ReviewQueuePanel({
           </button>
           <button
             onClick={onSendToCompare}
-            className="text-[11px] px-3 py-1 rounded border border-bd text-slate-300 hover:bg-el transition-colors"
+            className="text-[11px] px-3 py-1 rounded border border-bd text-slate-600 hover:bg-el transition-colors"
           >
             비교에 담기
           </button>
           <button
             onClick={handleBulkExclude}
-            className="text-[11px] px-3 py-1 rounded text-slate-500 hover:text-slate-300 hover:bg-el transition-colors"
+            className="text-[11px] px-3 py-1 rounded text-slate-500 hover:text-slate-600 hover:bg-el transition-colors"
           >
             제외
           </button>
@@ -368,7 +368,7 @@ export function ReviewQueuePanel({
                 {/* 요청 품목 (2줄) */}
                 <div className="min-w-0">
                   <div
-                    className={`text-slate-100 font-medium truncate text-xs ${
+                    className={`text-slate-900 font-medium truncate text-xs ${
                       item.status === "excluded" ? "line-through" : ""
                     }`}
                   >
@@ -381,7 +381,7 @@ export function ReviewQueuePanel({
 
                 {/* 추천 후보 */}
                 <div className="min-w-0">
-                  <div className="text-slate-200 text-xs truncate">
+                  <div className="text-slate-700 text-xs truncate">
                     {item.selectedProduct?.productName ??
                       item.matchCandidates[0]?.productName ??
                       "-"}
@@ -463,13 +463,13 @@ export function ReviewQueuePanel({
         <button
           disabled={quoteReadyCount === 0}
           onClick={onSendToQuote}
-          className="text-sm font-medium py-2 px-4 rounded-lg border border-bd text-slate-300 hover:bg-el disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="text-sm font-medium py-2 px-4 rounded-lg border border-bd text-slate-600 hover:bg-el disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
           견적 초안 만들기
         </button>
         <button
           onClick={handleClearExcluded}
-          className="text-sm text-slate-500 hover:text-slate-300 py-2 px-3 transition-colors"
+          className="text-sm text-slate-500 hover:text-slate-600 py-2 px-3 transition-colors"
         >
           제외 항목 정리
         </button>
@@ -516,7 +516,7 @@ function RowActions({
           >
             승인
           </button>
-          <button className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 hover:bg-el transition-colors">
+          <button className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-700 hover:bg-el transition-colors">
             수정
           </button>
         </div>
@@ -532,7 +532,7 @@ function RowActions({
           </button>
           <button
             onClick={onExclude}
-            className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 hover:bg-el transition-colors"
+            className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-700 hover:bg-el transition-colors"
           >
             수정
           </button>
@@ -540,7 +540,7 @@ function RowActions({
       );
     case "match_failed":
       return (
-        <button className="text-[11px] px-2.5 py-1 rounded border border-bd text-slate-300 hover:bg-el transition-colors">
+        <button className="text-[11px] px-2.5 py-1 rounded border border-bd text-slate-600 hover:bg-el transition-colors">
           수동 검색
         </button>
       );
@@ -560,7 +560,7 @@ function RowActions({
       return (
         <button
           onClick={onRestore}
-          className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-200 hover:bg-el transition-colors"
+          className="text-[11px] px-2.5 py-1 rounded text-slate-400 hover:text-slate-700 hover:bg-el transition-colors"
         >
           복구
         </button>
@@ -595,7 +595,7 @@ function ExpandPanel({
         <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">
           원문 입력
         </div>
-        <div className="bg-el rounded p-3 text-xs text-slate-300 font-mono break-all">
+        <div className="bg-el rounded p-3 text-xs text-slate-600 font-mono break-all">
           {item.rawInput}
         </div>
       </div>
@@ -644,7 +644,7 @@ function ExpandPanel({
                   className="accent-blue-500"
                 />
                 <div className="flex-1 min-w-0">
-                  <div className="text-xs text-slate-200 truncate">
+                  <div className="text-xs text-slate-700 truncate">
                     {c.productName}
                   </div>
                   <div className="flex items-center gap-2 text-[10px] text-slate-500">
@@ -667,7 +667,7 @@ function ExpandPanel({
                 </span>
                 <button
                   onClick={() => onSelectProduct(c)}
-                  className="text-[10px] px-2 py-1 rounded border border-bd text-slate-300 hover:bg-el transition-colors whitespace-nowrap"
+                  className="text-[10px] px-2 py-1 rounded border border-bd text-slate-600 hover:bg-el transition-colors whitespace-nowrap"
                 >
                   이 후보 선택
                 </button>
@@ -708,7 +708,7 @@ function ExpandPanel({
         {(item.status === "confirmed" || item.status === "approved") && (
           <button
             onClick={onSendToQuote}
-            className="text-xs px-3 py-1.5 rounded border border-bd text-slate-300 hover:bg-el transition-colors"
+            className="text-xs px-3 py-1.5 rounded border border-bd text-slate-600 hover:bg-el transition-colors"
           >
             견적 보내기
           </button>
@@ -733,7 +733,7 @@ function Field({ label, value }: { label: string; value: string | null }) {
   return (
     <div>
       <div className="text-[10px] text-slate-500 mb-0.5">{label}</div>
-      <div className="text-slate-300 truncate">{value ?? "-"}</div>
+      <div className="text-slate-600 truncate">{value ?? "-"}</div>
     </div>
   );
 }

@@ -405,7 +405,7 @@ export default function FAQPage() {
     <div className="flex-1 pt-2 md:pt-4 max-w-4xl mx-auto w-full">
       {/* ── 헤더 ── */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           자주 묻는 질문
         </h1>
         <p className="text-sm text-slate-400 leading-relaxed">
@@ -420,7 +420,7 @@ export default function FAQPage() {
           placeholder="질문 검색 (예: PDF 분석, 안전재고, 해지, 하루 한 번 요약)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-el border-bd text-slate-100 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-el border-bd text-slate-900 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
@@ -440,7 +440,7 @@ export default function FAQPage() {
               className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                 isActive
                   ? "bg-blue-600 text-white"
-                  : "bg-pn border border-bd text-slate-400 hover:text-slate-200 hover:border-bd"
+                  : "bg-pn border border-bd text-slate-400 hover:text-slate-700 hover:border-bd"
               }`}
             >
               <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -468,14 +468,14 @@ export default function FAQPage() {
           <div className="flex gap-2">
             <button
               onClick={expandAll}
-              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors"
             >
               모두 펼치기
             </button>
             <span className="text-slate-600">|</span>
             <button
               onClick={collapseAll}
-              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors"
             >
               모두 접기
             </button>
@@ -488,7 +488,7 @@ export default function FAQPage() {
         {filteredFaqs.length === 0 ? (
           <div className="rounded-xl bg-pn border border-bd py-16 text-center">
             <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
+            <p className="text-sm font-medium text-slate-600 mb-1">검색 결과가 없습니다</p>
             <p className="text-xs text-slate-500 mb-4">
               다른 키워드로 검색하거나 카테고리를 변경해보세요.
             </p>
@@ -545,8 +545,8 @@ export default function FAQPage() {
                     <p
                       className={`text-sm font-medium leading-snug transition-colors ${
                         isExpanded
-                          ? "text-slate-100"
-                          : "text-slate-300 group-hover:text-slate-100"
+                          ? "text-slate-900"
+                          : "text-slate-600 group-hover:text-slate-900"
                       }`}
                     >
                       {faq.question}
@@ -571,7 +571,7 @@ export default function FAQPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="gap-1.5 text-xs border-bd text-slate-400 bg-transparent hover:bg-el hover:text-slate-200"
+                            className="gap-1.5 text-xs border-bd text-slate-400 bg-transparent hover:bg-el hover:text-slate-700"
                           >
                             <BookOpen className="h-3 w-3" />
                             {faq.guideLink.label}
@@ -607,7 +607,7 @@ export default function FAQPage() {
             <MessageSquare className="h-4 w-4 text-blue-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-200">
+            <p className="text-sm font-semibold text-slate-700">
               원하는 답변을 찾지 못하셨나요?
             </p>
             <p className="text-xs text-slate-500 mt-0.5">
@@ -620,7 +620,7 @@ export default function FAQPage() {
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn hover:text-slate-100"
+              className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-pn hover:text-slate-900"
             >
               <BookOpen className="h-3.5 w-3.5" />
               이용 가이드

@@ -95,7 +95,7 @@ export function ReorderDecisionGovernanceWorkbench({
         <div className={cn("flex items-center gap-3 px-4 py-2.5 rounded border", STATUS_BG[surface.statusColor])}>
           <span className={cn("h-2 w-2 rounded-full shrink-0", STATUS_DOT[surface.statusColor])} />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-200">{surface.primaryMessage}</p>
+            <p className="text-sm font-medium text-slate-700">{surface.primaryMessage}</p>
             <p className="text-xs text-slate-500 mt-0.5">{surface.nextAction}</p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export function ReorderDecisionGovernanceWorkbench({
         {/* Gap + supply indicators */}
         <div className="grid grid-cols-4 gap-3">
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-center">
-            <p className="text-lg font-bold tabular-nums text-slate-100">{surface.originalOrdered}</p>
+            <p className="text-lg font-bold tabular-nums text-slate-900">{surface.originalOrdered}</p>
             <p className="text-[10px] text-slate-500">주문</p>
           </div>
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-center">
@@ -149,7 +149,7 @@ export function ReorderDecisionGovernanceWorkbench({
               <tbody>
                 {surface.lineDecisions.map(line => (
                   <tr key={line.lineId} className="border-b border-slate-800/50">
-                    <td className="px-3 py-1.5 text-slate-200">{line.itemName}</td>
+                    <td className="px-3 py-1.5 text-slate-700">{line.itemName}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{line.ordered}</td>
                     <td className="px-3 py-1.5 text-right tabular-nums text-emerald-400">{line.released}</td>
                     <td className={cn("px-3 py-1.5 text-right tabular-nums font-medium", line.gap > 0 ? "text-red-400" : "text-slate-400")}>{line.gap}</td>
@@ -160,7 +160,7 @@ export function ReorderDecisionGovernanceWorkbench({
                     {!surface.isTerminal && (
                       <td className="px-3 py-1.5 text-center">
                         {line.decision === "pending" && (
-                          <button onClick={() => onEvaluateLine?.(line.lineId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-0.5 text-[10px] text-slate-300 transition-colors">판단</button>
+                          <button onClick={() => onEvaluateLine?.(line.lineId)} className="rounded bg-slate-800 hover:bg-slate-700 px-2 py-0.5 text-[10px] text-slate-600 transition-colors">판단</button>
                         )}
                       </td>
                     )}
@@ -204,11 +204,11 @@ export function ReorderDecisionGovernanceWorkbench({
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">공급 상태</h4>
           {state.supplyContext ? (
             <div className="space-y-1">
-              <div className="flex justify-between"><span className="text-slate-500">가용</span><span className="text-slate-200 tabular-nums">{state.supplyContext.currentAvailableStock}개</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">예상 수요</span><span className="text-slate-200 tabular-nums">{state.supplyContext.projectedDemand}개</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">입고 대기</span><span className="text-slate-200 tabular-nums">{state.supplyContext.openInboundQuantity}개</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">안전재고</span><span className="text-slate-200 tabular-nums">{state.supplyContext.safetyStockLevel}개</span></div>
-              <div className="flex justify-between"><span className="text-slate-500">리드타임</span><span className="text-slate-200">{state.supplyContext.supplierLeadTimeDays}일</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">가용</span><span className="text-slate-700 tabular-nums">{state.supplyContext.currentAvailableStock}개</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">예상 수요</span><span className="text-slate-700 tabular-nums">{state.supplyContext.projectedDemand}개</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">입고 대기</span><span className="text-slate-700 tabular-nums">{state.supplyContext.openInboundQuantity}개</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">안전재고</span><span className="text-slate-700 tabular-nums">{state.supplyContext.safetyStockLevel}개</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">리드타임</span><span className="text-slate-700">{state.supplyContext.supplierLeadTimeDays}일</span></div>
               <div className="flex justify-between"><span className="text-slate-500">커버리지</span><span className={cn("tabular-nums font-medium", state.coverageStatus === "critical" ? "text-red-400" : state.coverageStatus === "low" ? "text-amber-400" : "text-emerald-400")}>{state.supplyContext.daysOfCoverageRemaining}일</span></div>
             </div>
           ) : (
@@ -219,7 +219,7 @@ export function ReorderDecisionGovernanceWorkbench({
         {/* Re-entry path */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">재진입 경로</h4>
-          <p className={cn("font-medium", state.reentryPath !== "not_determined" ? "text-slate-200" : "text-slate-500")}>
+          <p className={cn("font-medium", state.reentryPath !== "not_determined" ? "text-slate-700" : "text-slate-500")}>
             {state.reentryPath === "same_supplier" ? "동일 공급사" : state.reentryPath === "alternate_supplier" ? "대체 공급사" : state.reentryPath === "substitute" ? "대체품" : state.reentryPath === "mixed" ? "혼합 경로" : "미결정"}
           </p>
         </div>
@@ -238,7 +238,7 @@ export function ReorderDecisionGovernanceWorkbench({
           <span className="text-xs text-slate-500">{surface.nextAction}</span>
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {surface.canCancel && (
-              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-300 transition-colors">취소</button>
+              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenStockRelease && (
               <button onClick={onReopenStockRelease} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">Stock Release 재열기</button>

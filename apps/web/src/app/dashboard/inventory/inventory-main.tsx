@@ -962,7 +962,7 @@ export function InventoryMain() {
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">재고 관리</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">재고 관리</h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
@@ -1055,7 +1055,7 @@ export function InventoryMain() {
         {/* 상단 타이틀 및 액션 버튼 */}
         <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
           <div className="flex flex-col space-y-1 sm:space-y-2">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-100">재고 관리</h1>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900">재고 관리</h1>
             <p className="text-muted-foreground text-sm hidden sm:block">
               연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
@@ -1191,14 +1191,14 @@ export function InventoryMain() {
               <TabsList className="flex bg-el p-1 rounded-xl w-fit">
                 <TabsTrigger
                   value="manage"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <ListFilter className="w-4 h-4" />
                   <span className="hidden sm:inline">시약 </span>관리
                 </TabsTrigger>
                 <TabsTrigger
                   value="overview"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <LayoutGrid className="w-4 h-4" />
                   운영 현황
@@ -1210,21 +1210,21 @@ export function InventoryMain() {
                 </TabsTrigger>
                 <TabsTrigger
                   value="lot-tracking"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <GitBranch className="w-4 h-4" />
                   <span className="hidden sm:inline">Lot </span>추적
                 </TabsTrigger>
                 <TabsTrigger
                   value="storage-location"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <MapPin className="w-4 h-4" />
                   <span className="hidden sm:inline">저장 </span>위치
                 </TabsTrigger>
                 <TabsTrigger
                   value="flow"
-                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-300 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
                 >
                   <Truck className="w-4 h-4" />
                   <span className="hidden sm:inline">입고/사용 </span>흐름
@@ -1494,7 +1494,7 @@ export function InventoryMain() {
                     <Package className="h-3 w-3 text-blue-400" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-slate-100">
+                <div className="text-2xl font-bold tracking-tight text-slate-900">
                   {totalInventoryCount}
                   <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
@@ -1652,7 +1652,7 @@ export function InventoryMain() {
                             {/* Row 1: 이슈 유형 배지 + 품목명 + 보조 배지 */}
                             <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
-                              <h5 className="text-sm font-bold text-slate-100 truncate">
+                              <h5 className="text-sm font-bold text-slate-900 truncate">
                                 {inv.product.name}
                               </h5>
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
@@ -1665,30 +1665,30 @@ export function InventoryMain() {
                             </div>
                             {/* Row 2: 보조 정보 */}
                             <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1 text-xs text-slate-500  text-slate-400">
-                              {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-400  text-slate-300">{inv.lotNumber}</span></span>}
+                              {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-400  text-slate-600">{inv.lotNumber}</span></span>}
                               {inv.location ? (
                                 <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
+                                  <span className="text-slate-600  text-slate-400">·</span>
                                   <span className="whitespace-nowrap">{inv.location}</span>
                                 </>
                               ) : issueType !== "no_location" ? (
                                 <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
+                                  <span className="text-slate-600  text-slate-400">·</span>
                                   <span className="whitespace-nowrap text-amber-500">위치 미지정</span>
                                 </>
                               ) : null}
-                              <span className="text-slate-300  text-slate-400">·</span>
+                              <span className="text-slate-600  text-slate-400">·</span>
                               <span className="whitespace-nowrap">
                                 <span className={`font-semibold ${
                                   inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
                                   (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-400  text-orange-400" :
-                                  "text-slate-300"
+                                  "text-slate-600"
                                 }`}>{inv.currentQuantity}</span> {inv.unit}
                                 {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
                               </span>
                               {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && (
                                 <>
-                                  <span className="text-slate-300  text-slate-400">·</span>
+                                  <span className="text-slate-600  text-slate-400">·</span>
                                   <span className="whitespace-nowrap">{format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
                                 </>
                               )}
@@ -1780,7 +1780,7 @@ export function InventoryMain() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-slate-700 shrink-0"
+                                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-slate-700 shrink-0"
                                 >
                                   <MoreVertical className="h-3.5 w-3.5" />
                                 </Button>
@@ -1930,7 +1930,7 @@ export function InventoryMain() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 mx-auto mb-4">
                   <GitBranch className="h-6 w-6 text-violet-400" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-200 mb-2">Lot 추적</h3>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">Lot 추적</h3>
                 <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
                   Lot별 입고/사용/폐기 이력을 시간순으로 추적합니다.
                   동일 제품의 여러 Lot을 한눈에 비교하고, Lot별 상태를 실시간으로 확인할 수 있습니다.
@@ -1938,7 +1938,7 @@ export function InventoryMain() {
                 <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-lg mx-auto">
                   <div className="rounded-lg border border-bd bg-el px-3 py-2.5">
                     <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">활성 Lot</p>
-                    <p className="text-xl font-bold text-slate-200">{displayInventories.filter((i) => i.lotNumber).length}</p>
+                    <p className="text-xl font-bold text-slate-700">{displayInventories.filter((i) => i.lotNumber).length}</p>
                   </div>
                   <div className="rounded-lg border border-amber-500/20 bg-el px-3 py-2.5">
                     <p className="text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">임박 Lot</p>
@@ -2074,7 +2074,7 @@ export function InventoryMain() {
                   {selectedItem && (
                     <div className="rounded-lg border border-blue-800 bg-blue-950/20  border-blue-800  bg-blue-950/20 p-3">
                       <h4 className="text-xs font-semibold text-blue-400  text-blue-400 mb-1.5">매칭된 기존 재고</h4>
-                      <p className="text-sm font-medium text-slate-200  text-slate-200">{selectedItem.product.name}</p>
+                      <p className="text-sm font-medium text-slate-700  text-slate-700">{selectedItem.product.name}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         현재 {selectedItem.currentQuantity} {selectedItem.unit} · {selectedItem.product.brand} · {selectedItem.product.catalogNumber}
                       </p>
@@ -2138,7 +2138,7 @@ export function InventoryMain() {
 
                   {/* 재고 반영 방식 선택 */}
                   <div className="rounded-lg border border-bs p-3">
-                    <h4 className="text-xs font-semibold text-slate-300 mb-2">재고 반영 방식</h4>
+                    <h4 className="text-xs font-semibold text-slate-600 mb-2">재고 반영 방식</h4>
                     <div className="space-y-2">
                       <label className="flex items-center gap-2.5 cursor-pointer">
                         <input
@@ -2149,7 +2149,7 @@ export function InventoryMain() {
                           className="w-4 h-4 text-emerald-600"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-200  text-slate-200">기존 재고에 합산</span>
+                          <span className="text-sm font-medium text-slate-700  text-slate-700">기존 재고에 합산</span>
                           <p className="text-[10px] text-slate-400">같은 Product에 수량 추가</p>
                         </div>
                       </label>
@@ -2162,7 +2162,7 @@ export function InventoryMain() {
                           className="w-4 h-4 text-emerald-600"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-200  text-slate-200">새 Lot로 추가</span>
+                          <span className="text-sm font-medium text-slate-700  text-slate-700">새 Lot로 추가</span>
                           <p className="text-[10px] text-slate-400">InventoryRestock 이력 생성</p>
                         </div>
                       </label>
@@ -2264,7 +2264,7 @@ export function InventoryMain() {
                   </SheetTitle>
                   <SheetDescription className="flex items-center gap-2 text-sm text-slate-400  text-slate-400 mt-0.5">
                     <span>{selectedItem.product.brand ?? "-"}</span>
-                    <span className="text-slate-300  text-slate-400">|</span>
+                    <span className="text-slate-600  text-slate-400">|</span>
                     <span className="font-mono text-xs">
                       {selectedItem.product.catalogNumber ?? "-"}
                     </span>
@@ -2282,7 +2282,7 @@ export function InventoryMain() {
                     </div>
                     <div className="rounded-md bg-pn/50 px-3 py-2">
                       <p className="text-[10px] text-slate-500  text-slate-400">유효 기한</p>
-                      <p className="text-sm font-bold text-slate-100 mt-0.5">
+                      <p className="text-sm font-bold text-slate-900 mt-0.5">
                         {selectedItem.expiryDate
                           ? format(new Date(selectedItem.expiryDate), "yyyy.MM.dd", { locale: ko })
                           : "-"}
@@ -2292,7 +2292,7 @@ export function InventoryMain() {
 
                   {/* ── 기본 정보 + 관리 정보: 2단 그리드 배치 ── */}
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       기본 정보
                     </h4>
@@ -2317,7 +2317,7 @@ export function InventoryMain() {
                   </div>
 
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       관리 정보
                     </h4>
@@ -2343,11 +2343,11 @@ export function InventoryMain() {
 
                   {/* ── 특이사항: min-h 축소 ── */}
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <FileText className="mr-1.5 h-3 w-3 text-slate-400" />
                       특이사항
                     </h4>
-                    <div className="rounded-md border border-blue-900 bg-blue-950/30 px-3 py-2 text-xs leading-relaxed text-slate-300 min-h-[40px]">
+                    <div className="rounded-md border border-blue-900 bg-blue-950/30 px-3 py-2 text-xs leading-relaxed text-slate-600 min-h-[40px]">
                       {selectedItem.notes || "등록된 특이사항이 없습니다."}
                     </div>
                   </div>
@@ -2357,7 +2357,7 @@ export function InventoryMain() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <BellRing className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-100">안전 재고 기준</span>
+                        <span className="text-xs font-semibold text-slate-900">안전 재고 기준</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Input
@@ -2414,7 +2414,7 @@ export function InventoryMain() {
                   {/* 입고 이력 토글 섹션 */}
                   <div className="border-t border-bd  border-bd pt-4">
                     <button
-                      className="flex w-full items-center justify-between text-sm font-medium text-slate-300 hover:text-slate-100 transition-colors"
+                      className="flex w-full items-center justify-between text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                       onClick={() => setShowRestockHistory((v) => !v)}
                     >
                       <span className="flex items-center gap-2">
@@ -2690,7 +2690,7 @@ export function InventoryMain() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="font-mono font-semibold text-slate-300">
+                        <span className="font-mono font-semibold text-slate-600">
                           {lot.lotNumber || "Lot 미지정"}
                         </span>
                         <span className="text-xs text-slate-400">·</span>
@@ -3211,7 +3211,7 @@ export function InventoryMain() {
             <PackagePlus className="h-3.5 w-3.5" />
             재고 등록
           </Button>
-          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-el text-slate-100 hover:bg-slate-200 shadow-sm" onClick={openQRScanner}>
+          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-el text-slate-900 hover:bg-slate-200 shadow-sm" onClick={openQRScanner}>
             <TrendingDown className="h-3.5 w-3.5" />
             재고 차감
           </Button>
@@ -3824,7 +3824,7 @@ function TeamInventoryCard({
             className={`flex-1 ${
               isLocationMissing
                 ? "text-amber-400 font-semibold"
-                : "text-slate-300"
+                : "text-slate-600"
             }`}
           >
             {inventory.location || "미지정"}

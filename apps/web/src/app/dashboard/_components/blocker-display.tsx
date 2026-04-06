@@ -40,7 +40,7 @@ function BlockerSeveritySection({
           <div className="flex items-start gap-2 text-xs">
             <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0 mt-1`} />
             <div className="min-w-0 space-y-0.5">
-              <p className="text-slate-300">{b.whatIsBlocked}</p>
+              <p className="text-slate-600">{b.whatIsBlocked}</p>
               <p className="text-slate-500 text-[11px]">{b.whyBlocked}</p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[10px]">
                 {/* Resolution hint */}
@@ -150,7 +150,7 @@ export function AggregatedBlockerStrip({
             .map((b) => (
               <div key={b.summaryKey} className="flex items-center gap-2 text-xs">
                 <span className={`w-1.5 h-1.5 rounded-full ${SEVERITY_DOT_COLORS[b.severity]} shrink-0`} />
-                <span className="text-slate-300 truncate">{b.whatIsBlocked}</span>
+                <span className="text-slate-600 truncate">{b.whatIsBlocked}</span>
               </div>
             ))}
           {blockerView.totalCount > 3 && (

@@ -50,9 +50,9 @@ export function DispatchPrepWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">발송 대상</h3>
           <div className="grid grid-cols-3 gap-3 text-sm">
-            <div><span className="text-slate-500 text-xs">PO 번호</span><p className="text-slate-200 font-mono">{poNumber}</p></div>
-            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-200">{vendorName}</p></div>
-            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-100">{totalAmount.toLocaleString()}원</p></div>
+            <div><span className="text-slate-500 text-xs">PO 번호</span><p className="text-slate-700 font-mono">{poNumber}</p></div>
+            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-700">{vendorName}</p></div>
+            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-900">{totalAmount.toLocaleString()}원</p></div>
           </div>
         </div>
 
@@ -102,7 +102,7 @@ export function DispatchPrepWorkbench({
                 )}>
                   {item.confirmed ? "✓" : item.required ? "!" : "·"}
                 </span>
-                <span className={item.confirmed ? "text-slate-300" : item.required ? "text-red-300" : "text-slate-500"}>
+                <span className={item.confirmed ? "text-slate-600" : item.required ? "text-red-300" : "text-slate-500"}>
                   {item.label}
                 </span>
                 {item.required && !item.confirmed && <span className="text-[9px] text-red-400/70">필수</span>}
@@ -167,7 +167,7 @@ export function DispatchPrepWorkbench({
             {onCancelPrep && <button onClick={onCancelPrep} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">취소</button>}
             {onReopenConversion && <button onClick={onReopenConversion} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">PO 전환 재열기</button>}
             {onRequestCorrection && state.readiness === "blocked" && (
-              <button onClick={() => onRequestCorrection(state.hardBlockers[0]?.remediationAction || "")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">보정 요청</button>
+              <button onClick={() => onRequestCorrection(state.hardBlockers[0]?.remediationAction || "")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">보정 요청</button>
             )}
             {onScheduleSend && state.readiness === "ready_to_send" && state.allConfirmed && (
               <button onClick={() => onScheduleSend("")} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">예약 발송</button>

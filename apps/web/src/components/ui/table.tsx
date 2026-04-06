@@ -91,7 +91,7 @@ const TableCell = React.forwardRef<
 >(({ className, style, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn("px-3 py-2 align-middle [&:has([role=checkbox])]:pr-0 text-slate-100", className)}
+    className={cn("px-3 py-2 align-middle [&:has([role=checkbox])]:pr-0 text-slate-900", className)}
     style={{
       writingMode: 'horizontal-tb',
       textOrientation: 'mixed',

@@ -47,7 +47,7 @@ export function PolicyExplanationCard({ payload, compact = false, className }: P
       </div>
 
       {/* Operator-safe summary */}
-      <p className="text-sm font-medium text-slate-200">{payload.operatorSafeSummary}</p>
+      <p className="text-sm font-medium text-slate-700">{payload.operatorSafeSummary}</p>
 
       {!compact && (
         <>
@@ -93,7 +93,7 @@ export function PolicyExplanationCard({ payload, compact = false, className }: P
                   <div key={i} className="flex items-center gap-1.5 text-[10px]">
                     <WinningScopeBadge scopeType={rule.scopeType} />
                     <span className="text-slate-400">{rule.domain}</span>
-                    <span className="text-slate-300">{rule.detail}</span>
+                    <span className="text-slate-600">{rule.detail}</span>
                   </div>
                 ))}
               </div>
@@ -242,13 +242,13 @@ export function WhyThisEffectPanel({ payload, className }: WhyThisEffectPanelPro
         {/* Why this effect */}
         <div className="flex items-start gap-2">
           <span className="text-slate-500 shrink-0">Effect:</span>
-          <span className="text-slate-200">{payload.whyThisEffect}</span>
+          <span className="text-slate-700">{payload.whyThisEffect}</span>
         </div>
 
         {/* Why this approval path */}
         <div className="flex items-start gap-2">
           <span className="text-slate-500 shrink-0">경로:</span>
-          <span className="text-slate-200">{payload.whyThisApprovalPath}</span>
+          <span className="text-slate-700">{payload.whyThisApprovalPath}</span>
         </div>
 
         {/* Conflict summary */}

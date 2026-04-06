@@ -90,7 +90,7 @@ export function RecommendedActionsPanel({
                 </div>
               </div>
 
-              <p className="text-xs font-medium text-slate-200">{action.title}</p>
+              <p className="text-xs font-medium text-slate-700">{action.title}</p>
               <p className="text-[10px] text-slate-500">{action.description}</p>
 
               {/* Owner badge if available */}
@@ -104,7 +104,7 @@ export function RecommendedActionsPanel({
                   <button
                     key={link.linkId}
                     onClick={() => onActionClick?.(link)}
-                    className="rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300 transition-colors"
+                    className="rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-0.5 text-[10px] text-slate-600 transition-colors"
                   >
                     {link.label}
                   </button>
@@ -169,7 +169,7 @@ export function OwnerBadge({ owner, compact = false, className }: OwnerBadgeProp
         <span className={cn("text-xs", colors.split(" ")[0])}>
           {OWNERSHIP_ICONS[owner.ownershipType]}
         </span>
-        <span className="text-xs font-medium text-slate-200">
+        <span className="text-xs font-medium text-slate-700">
           {isUnresolved ? "미지정" : owner.ownerName}
         </span>
         <span className="text-[10px] text-slate-500">{owner.ownerRole}</span>
@@ -248,7 +248,7 @@ export function ActionHandoffStrip({ links, onLinkClick, className }: ActionHand
             "rounded px-2 py-0.5 text-[10px] font-medium transition-colors border",
             link.priority === "critical" && "bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20",
             link.priority === "high" && "bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20",
-            link.priority === "medium" && "bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700",
+            link.priority === "medium" && "bg-slate-800 text-slate-600 border-slate-700 hover:bg-slate-700",
             link.priority === "low" && "bg-slate-800/50 text-slate-400 border-slate-800 hover:bg-slate-800",
           )}
         >

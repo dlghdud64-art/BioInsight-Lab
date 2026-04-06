@@ -87,12 +87,12 @@ export function ProductCard({
                 onError={() => setImgError(true)}
               />
             ) : (
-              <FlaskConical className="h-8 w-8 text-slate-300" />
+              <FlaskConical className="h-8 w-8 text-slate-600" />
             )}
           </div>
           <div className="flex-1 min-w-0">
             <Link href={`/products/${product.id}`} className="block">
-              <h3 className="text-base font-bold text-slate-100 leading-tight line-clamp-2 hover:text-blue-400 transition-colors">
+              <h3 className="text-base font-bold text-slate-900 leading-tight line-clamp-2 hover:text-blue-400 transition-colors">
                 {product.name}
               </h3>
             </Link>
@@ -160,7 +160,7 @@ export function ProductCard({
             <Button
               variant="ghost"
               size="sm"
-              className="text-slate-400 hover:text-slate-200 hover:bg-el rounded h-9 w-9 p-0"
+              className="text-slate-400 hover:text-slate-700 hover:bg-el rounded h-9 w-9 p-0"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();

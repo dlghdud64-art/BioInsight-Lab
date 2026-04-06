@@ -101,7 +101,7 @@ export default function CollaborationPage() {
   return (
     <div className="flex-1 space-y-6 p-8 pt-6 max-w-6xl mx-auto w-full">
       <div className="flex flex-col space-y-2 mb-8">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-100">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           협업 네트워크
         </h2>
         <p className="text-muted-foreground">
@@ -120,7 +120,7 @@ export default function CollaborationPage() {
 
       {/* 공유 시약 리스트 */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-slate-100 flex items-center">
+        <h3 className="text-lg font-semibold text-slate-900 flex items-center">
           <Share2 className="w-5 h-5 mr-2 text-blue-600 text-blue-400" />
           현재 대여/공유 가능한 시약
         </h3>
@@ -145,7 +145,7 @@ export default function CollaborationPage() {
                       {item.available}
                     </span>
                   </div>
-                  <h4 className="text-lg font-bold text-slate-100">
+                  <h4 className="text-lg font-bold text-slate-900">
                     {item.name}
                   </h4>
                   <p className="text-sm text-slate-400 font-mono">

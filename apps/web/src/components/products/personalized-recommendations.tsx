@@ -123,7 +123,7 @@ export function PersonalizedRecommendations({
                   <div className="flex-1">
                     <Link
                       href={`/products/${product.id}`}
-                      className="font-semibold text-slate-100 hover:text-blue-600 transition-colors"
+                      className="font-semibold text-slate-900 hover:text-blue-600 transition-colors"
                     >
                       {product.name}
                     </Link>

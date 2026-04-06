@@ -398,7 +398,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
                             </span>
                           )}
                           {reagent.estimatedUsage && (
-                            <span className="font-medium text-slate-100">
+                            <span className="font-medium text-slate-900">
                               추천 주문량: {Math.ceil(reagent.estimatedUsage * experimentRounds)} {reagent.unit || "개"} ({experimentRounds}회 기준)
                             </span>
                           )}

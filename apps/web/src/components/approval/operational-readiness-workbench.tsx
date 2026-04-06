@@ -69,7 +69,7 @@ function VerdictHeader({ verdict, score }: { verdict: OperationalVerdict; score:
           <p className="mt-1 text-sm text-slate-400">{display.description}</p>
         </div>
         <div className="text-right">
-          <span className="text-2xl font-bold text-slate-200">{score}</span>
+          <span className="text-2xl font-bold text-slate-700">{score}</span>
           <span className="text-sm text-slate-500">/100</span>
         </div>
       </div>
@@ -88,7 +88,7 @@ function CategoryRow({ cat }: {
     <div className="flex items-center justify-between border-b border-slate-700/50 py-2 last:border-0">
       <div className="flex items-center gap-2">
         <span className={`text-sm font-mono ${statusColor}`}>{statusIcon}</span>
-        <span className="text-sm text-slate-300">{cat.categoryLabel}</span>
+        <span className="text-sm text-slate-600">{cat.categoryLabel}</span>
       </div>
       <div className="flex items-center gap-3">
         {cat.blockerCount > 0 && (
@@ -117,7 +117,7 @@ function IssueList({ title, issues, color }: { title: string; issues: GateIssue[
           <div key={issue.issueId} className="rounded bg-slate-800/50 px-3 py-2">
             <div className="flex items-center gap-2">
               <span className={`text-xs font-mono ${SEVERITY_COLOR[issue.severity]}`}>[{issue.severityLabel}]</span>
-              <span className="text-sm text-slate-300">{issue.summary}</span>
+              <span className="text-sm text-slate-600">{issue.summary}</span>
             </div>
             <p className="mt-0.5 text-xs text-slate-500">{issue.detail}</p>
           </div>
@@ -209,7 +209,7 @@ function DockAction({
         </button>
         <button
           onClick={handleCancel}
-          className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600"
+          className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-600"
         >
           취소
         </button>
@@ -224,7 +224,7 @@ function DockAction({
       disabled={!canAct}
       className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
         canAct
-          ? highlightClass || "bg-slate-700 text-slate-300 hover:bg-slate-600"
+          ? highlightClass || "bg-slate-700 text-slate-600 hover:bg-slate-600"
           : "cursor-not-allowed bg-slate-800 text-slate-600"
       }`}
       title={action.disabledReason ?? (!roleAllowed ? `권한 필요: ${action.requiredRoles.join(", ")}` : undefined)}
@@ -276,9 +276,9 @@ export function OperationalReadinessWorkbench({
         <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3">
           <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500">릴리즈 후보 요약</h4>
           <div className="mt-2 flex gap-6 text-xs text-slate-400">
-            <span>수용 판정: <strong className="text-slate-300">{center.releaseCandidateSummary.acceptanceVerdict}</strong></span>
-            <span>런타임 점수: <strong className="text-slate-300">{center.releaseCandidateSummary.runtimeScore}</strong></span>
-            <span>롤백 신뢰도: <strong className="text-slate-300">{center.releaseCandidateSummary.rollbackConfidence}</strong></span>
+            <span>수용 판정: <strong className="text-slate-600">{center.releaseCandidateSummary.acceptanceVerdict}</strong></span>
+            <span>런타임 점수: <strong className="text-slate-600">{center.releaseCandidateSummary.runtimeScore}</strong></span>
+            <span>롤백 신뢰도: <strong className="text-slate-600">{center.releaseCandidateSummary.rollbackConfidence}</strong></span>
           </div>
         </div>
       </div>
@@ -301,11 +301,11 @@ export function OperationalReadinessWorkbench({
           <div className="mt-1 space-y-1 text-xs text-slate-400">
             <div className="flex justify-between">
               <span>전체 스냅샷</span>
-              <span className="text-slate-300">{rail.complianceSummary.total}건</span>
+              <span className="text-slate-600">{rail.complianceSummary.total}건</span>
             </div>
             <div className="flex justify-between">
               <span>미준수</span>
-              <span className={rail.complianceSummary.nonCompliant > 0 ? "text-red-400" : "text-slate-300"}>
+              <span className={rail.complianceSummary.nonCompliant > 0 ? "text-red-400" : "text-slate-600"}>
                 {rail.complianceSummary.nonCompliant}건
               </span>
             </div>
@@ -317,10 +317,10 @@ export function OperationalReadinessWorkbench({
           <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3">
             <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500">파일럿 범위</h4>
             <div className="mt-1 space-y-1 text-xs text-slate-400">
-              <div className="flex justify-between"><span>스테이지</span><span className="text-slate-300">{rail.pilotScope.stages}개</span></div>
-              <div className="flex justify-between"><span>도메인</span><span className="text-slate-300">{rail.pilotScope.domains}개</span></div>
-              <div className="flex justify-between"><span>PO 제한</span><span className="text-slate-300">{rail.pilotScope.poLimit === 0 ? "무제한" : `${rail.pilotScope.poLimit}건`}</span></div>
-              <div className="flex justify-between"><span>기간</span><span className="text-slate-300">{rail.pilotScope.durationDays}일</span></div>
+              <div className="flex justify-between"><span>스테이지</span><span className="text-slate-600">{rail.pilotScope.stages}개</span></div>
+              <div className="flex justify-between"><span>도메인</span><span className="text-slate-600">{rail.pilotScope.domains}개</span></div>
+              <div className="flex justify-between"><span>PO 제한</span><span className="text-slate-600">{rail.pilotScope.poLimit === 0 ? "무제한" : `${rail.pilotScope.poLimit}건`}</span></div>
+              <div className="flex justify-between"><span>기간</span><span className="text-slate-600">{rail.pilotScope.durationDays}일</span></div>
             </div>
           </div>
         )}
@@ -329,9 +329,9 @@ export function OperationalReadinessWorkbench({
         <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3">
           <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500">롤백 준비도</h4>
           <div className="mt-1 space-y-1 text-xs text-slate-400">
-            <div className="flex justify-between"><span>권고</span><span className="text-slate-300">{rail.rollbackReadiness.recommendation}</span></div>
-            <div className="flex justify-between"><span>트리거</span><span className="text-slate-300">{rail.rollbackReadiness.triggerCount}건</span></div>
-            <div className="flex justify-between"><span>신뢰도</span><span className="text-slate-300">{rail.rollbackReadiness.confidence}</span></div>
+            <div className="flex justify-between"><span>권고</span><span className="text-slate-600">{rail.rollbackReadiness.recommendation}</span></div>
+            <div className="flex justify-between"><span>트리거</span><span className="text-slate-600">{rail.rollbackReadiness.triggerCount}건</span></div>
+            <div className="flex justify-between"><span>신뢰도</span><span className="text-slate-600">{rail.rollbackReadiness.confidence}</span></div>
           </div>
         </div>
 
@@ -351,7 +351,7 @@ export function OperationalReadinessWorkbench({
             </div>
             <div className="flex justify-between mt-1">
               <span>시나리오</span>
-              <span className="text-slate-300">{rail.acceptanceSummary.passed}/{rail.acceptanceSummary.total} 통과</span>
+              <span className="text-slate-600">{rail.acceptanceSummary.passed}/{rail.acceptanceSummary.total} 통과</span>
             </div>
           </div>
         </div>

@@ -69,12 +69,12 @@ export default function CategoryAnalyticsPage() {
       <div className="mb-6">
         <Link
           href="/dashboard/analytics"
-          className="text-sm text-slate-500 hover:text-slate-100  hover:text-slate-100 flex items-center mb-4 transition-colors"
+          className="text-sm text-slate-500 hover:text-slate-900  hover:text-slate-900 flex items-center mb-4 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           지출 분석 홈으로
         </Link>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-100">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           카테고리별 지출 분석
         </h2>
         <p className="text-muted-foreground mt-2">
@@ -188,11 +188,11 @@ export default function CategoryAnalyticsPage() {
                         <Icon className="w-5 h-5" style={{ color }} />
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-100 truncate">{item.name}</p>
+                        <p className="font-semibold text-slate-900 truncate">{item.name}</p>
                         <p className="text-xs text-slate-400">{item.value}% 비중</p>
                       </div>
                     </div>
-                    <span className="font-bold text-slate-100 ml-4 whitespace-nowrap">
+                    <span className="font-bold text-slate-900 ml-4 whitespace-nowrap">
                       {formatCurrency(item.amount)}
                     </span>
                   </div>

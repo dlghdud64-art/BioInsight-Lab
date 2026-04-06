@@ -49,7 +49,7 @@ export function ReentryContextStrip({ context, onReturn }: ReentryContextStripPr
                   onReturn();
                 }
               }}
-              className="flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors shrink-0"
+              className="flex items-center gap-1 text-slate-500 hover:text-slate-600 transition-colors shrink-0"
             >
               <span>←</span>
               <span>복귀</span>
@@ -71,7 +71,7 @@ export function ReentryContextStrip({ context, onReturn }: ReentryContextStripPr
       {/* Row 2: Item hints + constraints */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
         {context.requestedItemHints.slice(0, 2).map((hint, i) => (
-          <span key={i} className="text-slate-300">
+          <span key={i} className="text-slate-600">
             {hint.itemName}
             {hint.quantity ? ` × ${hint.quantity}${hint.unit ? ` ${hint.unit}` : ''}` : ''}
           </span>
@@ -137,7 +137,7 @@ export function ReentryDecisionPanel({ context }: ReentryDecisionPanelProps) {
       {/* Readiness */}
       <div className="flex items-center gap-2">
         <span className={`w-2 h-2 rounded-full ${readinessColor}`} />
-        <span className="text-slate-300">{decision.reasonSummary}</span>
+        <span className="text-slate-600">{decision.reasonSummary}</span>
       </div>
 
       {/* Blocked reasons */}
@@ -227,7 +227,7 @@ export function ReentryActionButton({ context, compact = false }: ReentryActionB
     <div className="flex items-center gap-2">
       <a
         href={command.href}
-        className="rounded bg-slate-700 hover:bg-slate-600 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors"
+        className="rounded bg-slate-700 hover:bg-slate-600 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors"
       >
         {command.label}
       </a>
@@ -263,7 +263,7 @@ export function QuoteBootstrapBanner({ bootstrap }: QuoteBootstrapBannerProps) {
 
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
         {bootstrap.itemHints.slice(0, 3).map((hint, i) => (
-          <span key={i} className="text-slate-300">
+          <span key={i} className="text-slate-600">
             {hint.itemName}
             {hint.quantity ? ` × ${hint.quantity}${hint.unit ? ` ${hint.unit}` : ''}` : ''}
           </span>

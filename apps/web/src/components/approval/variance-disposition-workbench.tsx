@@ -109,11 +109,11 @@ export function VarianceDispositionWorkbench({
           <div className="grid grid-cols-4 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">예상 수량</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalExpectedQty}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalExpectedQty}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">입고 수량</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalReceivedQty}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalReceivedQty}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">차이</span>
@@ -123,7 +123,7 @@ export function VarianceDispositionWorkbench({
             </div>
             <div>
               <span className="text-slate-500 text-xs">Variance %</span>
-              <p className={cn("text-sm font-semibold tabular-nums", totalVariancePercent > 10 ? "text-red-400" : totalVariancePercent > 5 ? "text-amber-400" : "text-slate-200")}>
+              <p className={cn("text-sm font-semibold tabular-nums", totalVariancePercent > 10 ? "text-red-400" : totalVariancePercent > 5 ? "text-amber-400" : "text-slate-700")}>
                 {totalVariancePercent.toFixed(1)}%
               </p>
             </div>
@@ -146,9 +146,9 @@ export function VarianceDispositionWorkbench({
             <tbody>
               {lines.map((line) => (
                 <tr key={line.lineId} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                  <td className="px-3 py-1.5 text-slate-300">{line.lineId}</td>
+                  <td className="px-3 py-1.5 text-slate-600">{line.lineId}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{line.expectedQty}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-200">{line.receivedQty}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-700">{line.receivedQty}</td>
                   <td className={cn("px-3 py-1.5 text-right tabular-nums", line.varianceQty < 0 ? "text-red-400" : "text-emerald-400")}>
                     {line.varianceQty}
                   </td>
@@ -160,7 +160,7 @@ export function VarianceDispositionWorkbench({
                       <select
                         value={line.disposition}
                         onChange={(e) => onLineDisposition(line.lineId, e.target.value as VarianceLineItem["disposition"])}
-                        className="rounded bg-slate-950 border border-slate-700 px-1.5 py-0.5 text-xs text-slate-200 focus:border-blue-600 focus:outline-none"
+                        className="rounded bg-slate-950 border border-slate-700 px-1.5 py-0.5 text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
                       >
                         {Object.entries(DISPOSITION_LABELS).map(([key, label]) => (
                           <option key={key} value={key}>{label}</option>
@@ -195,7 +195,7 @@ export function VarianceDispositionWorkbench({
           <div className="text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-slate-500">전체</span>
-              <span className="text-slate-200">{lines.length}건</span>
+              <span className="text-slate-700">{lines.length}건</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">결정 완료</span>

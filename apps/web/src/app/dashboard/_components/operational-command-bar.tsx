@@ -43,7 +43,7 @@ function ConfirmDialog({
         </button>
         <button
           onClick={onCancel}
-          className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-600 transition-colors"
+          className="rounded bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-600 transition-colors"
         >
           취소
         </button>
@@ -107,7 +107,7 @@ function CommandButton({
           <button
             onClick={handleClick}
             disabled={!command.canExecute}
-            className="text-xs text-slate-400 hover:text-slate-200 underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="text-xs text-slate-400 hover:text-slate-700 underline-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {command.label}
           </button>
@@ -187,7 +187,7 @@ export function OperationalCommandBar({ surface, ownership, blockerView }: Opera
         <span
           className={`w-2 h-2 rounded-full ${surface.isReady ? 'bg-emerald-400' : 'bg-amber-400'}`}
         />
-        <span className="text-slate-300">{surface.readinessSummary}</span>
+        <span className="text-slate-600">{surface.readinessSummary}</span>
       </div>
 
       {/* Owner context in decision panel */}

@@ -46,14 +46,14 @@ export function SourcingFlowStrip({ flowContext, className }: SourcingFlowStripP
         {flowContext.returnRoute && (
           <Link
             href={flowContext.returnRoute}
-            className="flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors shrink-0"
+            className="flex items-center gap-1 text-slate-400 hover:text-slate-700 transition-colors shrink-0"
           >
             <ArrowLeft className="h-3 w-3" />
             <span className="hidden sm:inline">원본으로</span>
           </Link>
         )}
         <span className="text-slate-500">출처:</span>
-        <span className="text-slate-300 font-medium truncate">{orientation.sourceLabel}</span>
+        <span className="text-slate-600 font-medium truncate">{orientation.sourceLabel}</span>
         {flowContext.sourceSummary && (
           <>
             <ChevronRight className="h-3 w-3 text-slate-600 shrink-0" />
@@ -109,7 +109,7 @@ export function SourcingFlowStrip({ flowContext, className }: SourcingFlowStripP
       {flowContext.requestedItemSummary && (
         <div className="flex items-center gap-2 mt-2 text-xs">
           <span className="text-slate-500">요청 품목:</span>
-          <span className="text-slate-300 truncate">{flowContext.requestedItemSummary}</span>
+          <span className="text-slate-600 truncate">{flowContext.requestedItemSummary}</span>
           <span
             className={cn(
               'ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded shrink-0',

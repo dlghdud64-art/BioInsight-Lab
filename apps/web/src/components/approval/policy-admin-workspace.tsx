@@ -77,7 +77,7 @@ export function PolicyAdminWorkspace({
         {/* Policy set header */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-slate-100">{policySet.description}</h3>
+            <h3 className="text-sm font-semibold text-slate-900">{policySet.description}</h3>
             <span className="text-[10px] text-slate-500">
               {policySet.domain} · {policySet.scopeType}:{policySet.scopeLabel}
             </span>
@@ -104,7 +104,7 @@ export function PolicyAdminWorkspace({
               return (
                 <div key={v.versionId} className="px-3 py-2 hover:bg-slate-800/30 flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-slate-300">v{v.versionNumber}</span>
+                    <span className="text-xs font-mono text-slate-600">v{v.versionNumber}</span>
                     <PolicyStatusBadge status={statusConfig.badge} label={statusConfig.label} hideIcon />
                     <span className="text-xs text-slate-500">{v.ruleCount}개 규칙</span>
                   </div>
@@ -121,7 +121,7 @@ export function PolicyAdminWorkspace({
         {changeDiff && changeDiff.totalChanges > 0 && (
           <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
             <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">변경 사항</h4>
-            <p className="text-sm text-slate-300">{changeDiff.summary}</p>
+            <p className="text-sm text-slate-600">{changeDiff.summary}</p>
             <div className="space-y-1 text-xs">
               {changeDiff.addedRules.length > 0 && (
                 <div className="text-emerald-400">+ {changeDiff.addedRules.length}개 규칙 추가</div>
@@ -144,7 +144,7 @@ export function PolicyAdminWorkspace({
               value={reviewComment}
               onChange={e => setReviewComment(e.target.value)}
               placeholder="검토 의견을 입력하세요..."
-              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
+              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
               rows={3}
             />
           </div>
@@ -159,7 +159,7 @@ export function PolicyAdminWorkspace({
           <button
             onClick={onRunSimulation}
             disabled={!draftVersion}
-            className="w-full rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors disabled:opacity-40"
+            className="w-full rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors disabled:opacity-40"
           >
             영향 미리보기
           </button>
@@ -197,7 +197,7 @@ export function PolicyAdminWorkspace({
             </button>
           )}
           {canEdit && onSaveDraft && (
-            <button onClick={onSaveDraft} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+            <button onClick={onSaveDraft} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
               Draft 저장
             </button>
           )}

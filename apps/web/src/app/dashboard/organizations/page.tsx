@@ -303,13 +303,13 @@ export default function OrganizationsPage() {
   /* ================================================================ */
 
   return (
-    <div className="min-h-screen bg-sh text-slate-100">
+    <div className="min-h-screen bg-sh text-slate-900">
       <div className="mx-auto w-full max-w-7xl p-3 sm:p-4 md:p-8 space-y-5">
 
         {/* -- Page header ------------------------------------------ */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-semibold text-slate-100">조직 포트폴리오</h1>
+            <h1 className="text-lg font-semibold text-slate-900">조직 포트폴리오</h1>
             <p className="text-xs text-slate-500 mt-0.5">소속 조직 운영 현황 및 관리</p>
           </div>
           <Button
@@ -445,7 +445,7 @@ export default function OrganizationsPage() {
                             className="w-full text-left rounded border border-bd bg-st/30 hover:bg-el/50 p-2.5 transition-colors group"
                           >
                             <div className="flex items-center justify-between mb-1.5">
-                              <span className="text-xs font-medium text-slate-200 truncate max-w-[180px]">
+                              <span className="text-xs font-medium text-slate-700 truncate max-w-[180px]">
                                 {org.name}
                               </span>
                               <ChevronRight className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
@@ -477,7 +477,7 @@ export default function OrganizationsPage() {
                     onClick={() => setIsOpen(true)}
                     variant="outline"
                     size="sm"
-                    className="h-7 text-xs border-bd text-slate-300 hover:bg-el"
+                    className="h-7 text-xs border-bd text-slate-600 hover:bg-el"
                   >
                     <Plus className="mr-1 h-3 w-3" /> 조직 만들기
                   </Button>
@@ -519,7 +519,7 @@ function OrgCard({
         <div className="min-w-0 flex-1">
           {/* Name + role + plan */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm font-medium text-slate-100 truncate">{org.name}</span>
+            <span className="text-sm font-medium text-slate-900 truncate">{org.name}</span>
             {roleBadge(org.role)}
             {planBadge(org.plan)}
           </div>
@@ -556,7 +556,7 @@ function OrgCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-el"
             onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             title="멤버 관리"
           >
@@ -565,7 +565,7 @@ function OrgCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-el"
             onClick={() => router.push(`/dashboard/activity-logs`)}
             title="활동 보기"
           >
@@ -574,7 +574,7 @@ function OrgCard({
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-el"
+            className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-el"
             onClick={() => router.push(`/dashboard/organizations/${org.id}`)}
             title="설정"
           >
@@ -633,7 +633,7 @@ function StatCell({
   return (
     <div className="rounded border border-bd bg-st/30 p-2 text-center">
       <div className="flex items-center justify-center gap-1 mb-1">{icon}</div>
-      <div className={`text-base font-semibold ${highlight ? "text-orange-400" : "text-slate-100"}`}>
+      <div className={`text-base font-semibold ${highlight ? "text-orange-400" : "text-slate-900"}`}>
         {value}
       </div>
       <div className="text-[10px] text-slate-500 uppercase tracking-wider">{label}</div>
@@ -670,7 +670,7 @@ function EmptyState({ onOpen }: { onOpen: () => void }) {
   return (
     <div className="rounded-md border border-bd bg-pn flex flex-col items-center justify-center py-16 px-6">
       <Building2 className="h-10 w-10 text-slate-700 mb-4" />
-      <h3 className="mb-2 text-base font-medium text-slate-200">
+      <h3 className="mb-2 text-base font-medium text-slate-700">
         조직을 만들어 팀 운영을 시작하세요
       </h3>
       <p className="mb-5 text-sm text-slate-500 text-center max-w-md">

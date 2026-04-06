@@ -59,7 +59,7 @@ export function OrganizationOverviewPage({ vm, blockStates }: OrganizationOvervi
         {/* 시작 가이드 */}
         <div className="flex flex-col items-center justify-center py-16 px-6 bg-el border border-bd border-dashed rounded-xl text-center max-w-lg mx-auto">
           <Shield className="h-10 w-10 text-slate-500 mb-4" />
-          <h3 className="text-base font-bold text-slate-200 mb-2">아직 운영 작업이 시작되지 않았습니다</h3>
+          <h3 className="text-base font-bold text-slate-700 mb-2">아직 운영 작업이 시작되지 않았습니다</h3>
           <p className="text-sm text-slate-400 mb-6 leading-relaxed">
             직접 검색 또는 업로드 해석으로 검토 큐를 만들면<br />비교와 견적 작업이 이어집니다
           </p>

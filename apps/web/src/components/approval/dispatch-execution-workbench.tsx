@@ -108,7 +108,7 @@ export function DispatchExecutionWorkbench({
             pulse={surface.status === "sending" || surface.status === "queued_to_send"}
           />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-200">{surface.primaryMessage}</p>
+            <p className="text-sm font-medium text-slate-700">{surface.primaryMessage}</p>
             <p className="text-[10px] text-slate-500 mt-0.5">{surface.statusLabel}</p>
           </div>
         </div>
@@ -131,15 +131,15 @@ export function DispatchExecutionWorkbench({
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div>
                 <span className="text-slate-500 text-xs">PO 번호</span>
-                <p className="text-slate-200 font-mono">{payloadSnapshot.poNumber}</p>
+                <p className="text-slate-700 font-mono">{payloadSnapshot.poNumber}</p>
               </div>
               <div>
                 <span className="text-slate-500 text-xs">공급사</span>
-                <p className="text-slate-200">{payloadSnapshot.vendorName}</p>
+                <p className="text-slate-700">{payloadSnapshot.vendorName}</p>
               </div>
               <div>
                 <span className="text-slate-500 text-xs">금액</span>
-                <p className="text-sm font-semibold tabular-nums text-slate-100">{payloadSnapshot.totalAmount.toLocaleString()}원</p>
+                <p className="text-sm font-semibold tabular-nums text-slate-900">{payloadSnapshot.totalAmount.toLocaleString()}원</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 text-xs text-slate-400">
@@ -165,15 +165,15 @@ export function DispatchExecutionWorkbench({
             <div className="grid grid-cols-3 gap-3 text-sm">
               <div>
                 <span className="text-slate-500 text-xs">PO 번호</span>
-                <p className="text-slate-200 font-mono">{poNumber}</p>
+                <p className="text-slate-700 font-mono">{poNumber}</p>
               </div>
               <div>
                 <span className="text-slate-500 text-xs">공급사</span>
-                <p className="text-slate-200">{vendorName}</p>
+                <p className="text-slate-700">{vendorName}</p>
               </div>
               <div>
                 <span className="text-slate-500 text-xs">금액</span>
-                <p className="text-sm font-semibold tabular-nums text-slate-100">{totalAmount.toLocaleString()}원</p>
+                <p className="text-sm font-semibold tabular-nums text-slate-900">{totalAmount.toLocaleString()}원</p>
               </div>
             </div>
           </div>
@@ -201,15 +201,15 @@ export function DispatchExecutionWorkbench({
           <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">연결 정보</h5>
           <div className="flex justify-between">
             <span className="text-slate-500">실행 ID</span>
-            <span className="text-slate-300 font-mono text-[10px]">{state.executionId}</span>
+            <span className="text-slate-600 font-mono text-[10px]">{state.executionId}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Dispatch Prep</span>
-            <span className="text-slate-300 font-mono text-[10px]">{state.dispatchPreparationStateId}</span>
+            <span className="text-slate-600 font-mono text-[10px]">{state.dispatchPreparationStateId}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">PO Created</span>
-            <span className="text-slate-300 font-mono text-[10px]">{state.poCreatedObjectId}</span>
+            <span className="text-slate-600 font-mono text-[10px]">{state.poCreatedObjectId}</span>
           </div>
           {state.payloadSnapshotId && (
             <div className="flex justify-between">

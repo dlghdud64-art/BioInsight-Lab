@@ -239,7 +239,7 @@ export function InventoryQRCode({
 
             {/* Lot 정보 */}
             <div className="w-full bg-pg rounded-lg p-3 space-y-1 text-sm">
-              <p className="font-semibold text-slate-200 leading-tight">{productName}</p>
+              <p className="font-semibold text-slate-700 leading-tight">{productName}</p>
               {lotNumber && <p className="text-slate-500 text-xs">Lot: {lotNumber}</p>}
               {catalogNumber && <p className="text-slate-500 text-xs">Cat#: {catalogNumber}</p>}
               {location && <p className="text-slate-500 text-xs">위치: {location}</p>}

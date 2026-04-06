@@ -113,7 +113,7 @@ export default function PurchaseOrderLandingPage() {
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-lg font-bold text-slate-100">발주 관리</h1>
+            <h1 className="text-lg font-bold text-slate-900">발주 관리</h1>
             <p className="text-xs text-slate-500 mt-0.5">{orientation.role}</p>
           </div>
           <p className="text-xs text-slate-400 max-w-xs text-right">
@@ -138,7 +138,7 @@ export default function PurchaseOrderLandingPage() {
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/60 border border-slate-700/50 text-xs hover:border-slate-600 transition-colors"
               >
                 <span className="text-slate-500">{meta.label}</span>
-                <span className="font-mono font-medium text-slate-200 tabular-nums">
+                <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
               </Link>
@@ -204,7 +204,7 @@ export default function PurchaseOrderLandingPage() {
                   className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
                       ? "border-blue-500 text-blue-300"
-                      : "border-transparent text-slate-500 hover:text-slate-300"
+                      : "border-transparent text-slate-500 hover:text-slate-600"
                   }`}
                 >
                   {tab.label}
@@ -255,7 +255,7 @@ export default function PurchaseOrderLandingPage() {
                     className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-200">
+                      <span className="text-sm font-medium text-slate-700">
                         {ds.label}
                       </span>
                       <span className="text-xs font-mono text-teal-400 tabular-nums">
@@ -302,7 +302,7 @@ function PriorityCard({
         <span
           className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
         />
-        <span className="text-xs font-mono text-slate-300 truncate">
+        <span className="text-xs font-mono text-slate-600 truncate">
           {item.title}
         </span>
       </div>
@@ -357,7 +357,7 @@ function ActionableRow({
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-200 font-mono truncate">
+          <span className="text-sm text-slate-700 font-mono truncate">
             {item.title}
           </span>
           <span

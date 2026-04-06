@@ -90,7 +90,7 @@ export function ReorderTriggerWorkbench({
             <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">재주문 평가 결과</h3>
             <span className={cn("text-sm font-semibold", config.color)}>{config.label}</span>
           </div>
-          <p className="text-sm text-slate-300">{evaluationReason}</p>
+          <p className="text-sm text-slate-600">{evaluationReason}</p>
         </div>
 
         {/* Inventory metrics */}
@@ -99,18 +99,18 @@ export function ReorderTriggerWorkbench({
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
               <span className="text-slate-500 text-xs">가용 재고</span>
-              <p className="text-lg font-semibold tabular-nums text-slate-100">{totalAvailableQty}</p>
+              <p className="text-lg font-semibold tabular-nums text-slate-900">{totalAvailableQty}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">안전 재고</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{safetyStockQty}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{safetyStockQty}</p>
               <p className={cn("text-xs tabular-nums", vsSafety >= 0 ? "text-emerald-400" : "text-red-400")}>
                 {vsSafety >= 0 ? `+${vsSafety}` : vsSafety}
               </p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">재주문점</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{reorderPointQty}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{reorderPointQty}</p>
               <p className={cn("text-xs tabular-nums", vsReorderPoint >= 0 ? "text-emerald-400" : "text-amber-400")}>
                 {vsReorderPoint >= 0 ? `+${vsReorderPoint}` : vsReorderPoint}
               </p>
@@ -126,11 +126,11 @@ export function ReorderTriggerWorkbench({
           <div className="text-xs space-y-1">
             <div className="flex justify-between">
               <span className="text-slate-500">일평균 사용량</span>
-              <span className="text-slate-200 tabular-nums">{averageDailyUsage}</span>
+              <span className="text-slate-700 tabular-nums">{averageDailyUsage}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">리드타임</span>
-              <span className="text-slate-200 tabular-nums">{leadTimeDays}일</span>
+              <span className="text-slate-700 tabular-nums">{leadTimeDays}일</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">공급 일수</span>
@@ -160,7 +160,7 @@ export function ReorderTriggerWorkbench({
           />
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {onDismiss && !procurementReentryRecommended && (
-              <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 확인
               </button>
             )}

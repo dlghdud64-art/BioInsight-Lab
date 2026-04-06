@@ -440,7 +440,7 @@ export default function GuidePage() {
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
       {/* ── 헤더 ── */}
       <div className="mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-100 tracking-tight mb-1">
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           이용 가이드
         </h1>
         <p className="text-sm text-slate-400 leading-relaxed">
@@ -455,7 +455,7 @@ export default function GuidePage() {
           placeholder="가이드 검색 (예: 견적 요청, 재고, PDF 분석)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-el border-bd text-slate-100 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-el border-bd text-slate-900 placeholder:text-slate-500 focus:border-bd focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
@@ -463,7 +463,7 @@ export default function GuidePage() {
       <div className="rounded-xl bg-pn border border-bd p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-4 w-4 text-amber-400" />
-          <h2 className="text-sm font-semibold text-slate-100">최근 업데이트</h2>
+          <h2 className="text-sm font-semibold text-slate-900">최근 업데이트</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {RECENT_UPDATES.map((update, i) => (
@@ -478,7 +478,7 @@ export default function GuidePage() {
                 </Badge>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-200 leading-snug">{update.title}</p>
+                <p className="text-xs font-medium text-slate-700 leading-snug">{update.title}</p>
                 <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{update.desc}</p>
               </div>
             </div>
@@ -508,7 +508,7 @@ export default function GuidePage() {
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
                       ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
-                      : "text-slate-400 hover:text-slate-200 hover:bg-pn border border-transparent"
+                      : "text-slate-400 hover:text-slate-700 hover:bg-pn border border-transparent"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
@@ -524,7 +524,7 @@ export default function GuidePage() {
             <div className="border-t border-bd mt-4 pt-4 space-y-1">
               <Link
                 href="/dashboard/faq"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-700 hover:bg-pn transition-colors"
               >
                 <HelpCircle className="h-3.5 w-3.5 text-slate-500" />
                 자주 묻는 질문
@@ -532,7 +532,7 @@ export default function GuidePage() {
               </Link>
               <Link
                 href="/dashboard/support"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-200 hover:bg-pn transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-700 hover:bg-pn transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
                 1:1 문의하기
@@ -558,7 +558,7 @@ export default function GuidePage() {
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     isActive
                       ? "bg-blue-600 text-white"
-                      : "bg-pn border border-bd text-slate-400 hover:text-slate-200"
+                      : "bg-pn border border-bd text-slate-400 hover:text-slate-700"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -597,7 +597,7 @@ export default function GuidePage() {
               <HelpCircle className="h-4 w-4 text-blue-400" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-slate-200">추가 도움이 필요하신가요?</p>
+              <p className="text-sm font-semibold text-slate-700">추가 도움이 필요하신가요?</p>
               <p className="text-xs text-slate-500 mt-0.5">FAQ를 확인하거나 1:1 문의를 남겨주세요.</p>
             </div>
           </div>
@@ -606,7 +606,7 @@ export default function GuidePage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn hover:text-slate-100"
+                className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-pn hover:text-slate-900"
               >
                 <HelpCircle className="h-3.5 w-3.5" />
                 자주 묻는 질문
@@ -639,7 +639,7 @@ function GuideContent({
     return (
       <div className="rounded-xl bg-pn border border-bd py-16 text-center">
         <Search className="h-8 w-8 text-slate-600 mx-auto mb-3" />
-        <p className="text-sm font-medium text-slate-300 mb-1">검색 결과가 없습니다</p>
+        <p className="text-sm font-medium text-slate-600 mb-1">검색 결과가 없습니다</p>
         <p className="text-xs text-slate-500">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
       </div>
     );
@@ -651,7 +651,7 @@ function GuideContent({
       {!searchQuery && activeCategoryMeta && (
         <div className="flex items-center gap-2 mb-1">
           <activeCategoryMeta.icon className="h-4 w-4 text-blue-400" />
-          <h2 className="text-sm font-semibold text-slate-200">{activeCategoryMeta.label}</h2>
+          <h2 className="text-sm font-semibold text-slate-700">{activeCategoryMeta.label}</h2>
           <Badge className="text-[10px] px-1.5 py-0 bg-el border-bd text-slate-500">
             {entries.length}개 가이드
           </Badge>
@@ -680,7 +680,7 @@ function GuideContent({
 
                 <div className="flex-1 min-w-0">
                   {/* 타이틀 */}
-                  <h3 className="text-sm font-semibold text-slate-100 mb-2">{entry.title}</h3>
+                  <h3 className="text-sm font-semibold text-slate-900 mb-2">{entry.title}</h3>
 
                   {/* 정보 그리드 */}
                   <div className="space-y-2 mb-3">
@@ -688,7 +688,7 @@ function GuideContent({
                       <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">
                         기능
                       </span>
-                      <p className="text-xs text-slate-300 leading-relaxed">{entry.what}</p>
+                      <p className="text-xs text-slate-600 leading-relaxed">{entry.what}</p>
                     </div>
                     <div className="flex items-start gap-2">
                       <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">
@@ -730,7 +730,7 @@ function GuideContent({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-el hover:text-slate-100 hover:border-blue-500/30"
+                      className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-el hover:text-slate-900 hover:border-blue-500/30"
                     >
                       {entry.link.label}
                       <ArrowRight className="h-3 w-3" />
@@ -750,13 +750,13 @@ function GuideContent({
 function MobileSupportFooter() {
   return (
     <div className="rounded-xl bg-pn border border-bd px-4 py-4 mt-6 mb-4">
-      <p className="text-sm font-semibold text-slate-200 mb-3">추가 도움이 필요하신가요?</p>
+      <p className="text-sm font-semibold text-slate-700 mb-3">추가 도움이 필요하신가요?</p>
       <div className="flex flex-col gap-2">
         <Link href="/dashboard/faq">
           <Button
             variant="outline"
             size="sm"
-            className="gap-1.5 text-xs border-bd text-slate-300 bg-transparent hover:bg-pn w-full"
+            className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-pn w-full"
           >
             <HelpCircle className="h-3.5 w-3.5" />
             자주 묻는 질문

@@ -53,7 +53,7 @@ export function NextActionHint({
             "font-medium",
             variant === "blocked" && "text-red-300",
             variant === "urgent" && "text-amber-300",
-            variant === "default" && "text-slate-300",
+            variant === "default" && "text-slate-600",
           )}
         >
           {message}

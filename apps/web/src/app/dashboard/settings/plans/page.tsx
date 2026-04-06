@@ -602,7 +602,7 @@ function PlansPageContent() {
                 <div className="flex items-center gap-4">
                   <Label
                     htmlFor="team-select"
-                    className="text-sm font-medium text-slate-300 whitespace-nowrap"
+                    className="text-sm font-medium text-slate-600 whitespace-nowrap"
                   >
                     조직 선택
                   </Label>
@@ -812,8 +812,8 @@ function PlansPageContent() {
                 className={cn(
                   "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200",
                   !isAnnual
-                    ? "bg-pn text-white  bg-pn  text-slate-100 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700  hover:text-slate-300"
+                    ? "bg-pn text-white  bg-pn  text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700  hover:text-slate-600"
                 )}
               >
                 월간 결제
@@ -824,8 +824,8 @@ function PlansPageContent() {
                 className={cn(
                   "px-5 py-2 text-sm font-medium rounded-full transition-all duration-200 flex items-center gap-2",
                   isAnnual
-                    ? "bg-pn text-white  bg-pn  text-slate-100 shadow-sm"
-                    : "text-slate-500 hover:text-slate-700  hover:text-slate-300"
+                    ? "bg-pn text-white  bg-pn  text-slate-900 shadow-sm"
+                    : "text-slate-500 hover:text-slate-700  hover:text-slate-600"
                 )}
               >
                 연간 결제
@@ -974,7 +974,7 @@ function PlansPageContent() {
                                   : "text-green-500"
                             )}
                           />
-                          <span className="text-sm text-slate-300 leading-tight">
+                          <span className="text-sm text-slate-600 leading-tight">
                             {feature}
                           </span>
                         </div>
@@ -994,7 +994,7 @@ function PlansPageContent() {
                           className={cn(
                             "w-full shadow-sm hover:shadow-md transition-all",
                             btnInfo.isDowngrade
-                              ? "bg-slate-200 bg-st text-slate-300 hover:bg-slate-300  hover:bg-slate-600"
+                              ? "bg-slate-200 bg-st text-slate-600 hover:bg-slate-300  hover:bg-slate-600"
                               : isBusiness
                                 ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white"
                                 : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -1061,7 +1061,7 @@ function PlansPageContent() {
                   {ENTERPRISE_INFO.features.map((feature) => (
                     <div key={feature} className="flex items-start gap-2.5">
                       <Check className="h-4 w-4 flex-shrink-0 mt-0.5 text-slate-500" />
-                      <span className="text-sm text-slate-300 leading-tight">
+                      <span className="text-sm text-slate-600 leading-tight">
                         {feature}
                       </span>
                     </div>
@@ -1100,7 +1100,7 @@ function PlansPageContent() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-bd border-bs bg-pg bg-el/50">
-                      <th className="text-left py-3 px-4 font-semibold text-slate-300 w-[220px]">
+                      <th className="text-left py-3 px-4 font-semibold text-slate-600 w-[220px]">
                         기능
                       </th>
                       <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
@@ -1152,7 +1152,7 @@ function PlansPageContent() {
                             )}
                           />
                         ) : (
-                          <span className="text-slate-300  text-slate-600 text-lg leading-none">
+                          <span className="text-slate-600  text-slate-600 text-lg leading-none">
                             —
                           </span>
                         );
@@ -1164,7 +1164,7 @@ function PlansPageContent() {
                         >
                           <td className="py-2.5 px-4">
                             <div>
-                              <span className="font-medium text-slate-300">
+                              <span className="font-medium text-slate-600">
                                 {feat.label}
                               </span>
                               <p className="text-xs text-slate-400 text-slate-500 mt-0.5">
@@ -1192,7 +1192,7 @@ function PlansPageContent() {
             <CardContent className="py-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-slate-300">
+                  <p className="text-sm font-medium text-slate-600">
                     플랜 선택이 어려우신가요?
                   </p>
                   <p className="text-xs text-slate-400 mt-0.5">

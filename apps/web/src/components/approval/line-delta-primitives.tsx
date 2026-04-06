@@ -38,12 +38,12 @@ export function LineDeltaSummaryStrip({
     <div className={cn("flex items-center gap-4 px-3 py-2 rounded bg-slate-900 border border-slate-800 text-xs", className)}>
       <div className="flex items-center gap-1.5">
         <span className="text-slate-500">예상</span>
-        <span className="text-slate-200 font-semibold tabular-nums">{expectedQty}{unit}</span>
+        <span className="text-slate-700 font-semibold tabular-nums">{expectedQty}{unit}</span>
       </div>
       <span className="text-slate-700">→</span>
       <div className="flex items-center gap-1.5">
         <span className="text-slate-500">입고</span>
-        <span className="text-slate-200 font-semibold tabular-nums">{receivedQty}{unit}</span>
+        <span className="text-slate-700 font-semibold tabular-nums">{receivedQty}{unit}</span>
       </div>
       <span className="text-slate-700">=</span>
       <div className="flex items-center gap-1.5">

@@ -128,7 +128,7 @@ export default function TeamAnalyticsView() {
             <Users className="h-4 w-4 text-blue-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전체 팀</span>
           </div>
-          <div className="text-xl font-bold text-slate-100">{totalTeams}개</div>
+          <div className="text-xl font-bold text-slate-900">{totalTeams}개</div>
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
@@ -137,7 +137,7 @@ export default function TeamAnalyticsView() {
             <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
           </div>
-          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 text-amber-400" : "text-slate-100"}`}>
+          <div className={`text-xl font-bold ${riskTeams > 0 ? "text-amber-700 text-amber-400" : "text-slate-900"}`}>
             {riskTeams}개
           </div>
           <p className="text-xs text-slate-400 mt-1">소진율 75% 이상</p>
@@ -148,7 +148,7 @@ export default function TeamAnalyticsView() {
             <TrendingUp className="h-4 w-4 text-purple-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">최고 지출 팀</span>
           </div>
-          <div className="text-lg font-bold text-slate-100 truncate">{topSpendingTeam.name}</div>
+          <div className="text-lg font-bold text-slate-900 truncate">{topSpendingTeam.name}</div>
           <p className="text-xs text-slate-400 mt-1">₩{topSpendingTeam.spent.toLocaleString("ko-KR")}</p>
         </div>
 
@@ -157,7 +157,7 @@ export default function TeamAnalyticsView() {
             <ArrowUpRight className="h-4 w-4 text-rose-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">전월 대비 증가</span>
           </div>
-          <div className="text-xl font-bold text-slate-100">{increasedTeams}개 팀</div>
+          <div className="text-xl font-bold text-slate-900">{increasedTeams}개 팀</div>
           <p className="text-xs text-slate-400 mt-1">이번 달 지출 증가</p>
         </div>
       </div>
@@ -168,7 +168,7 @@ export default function TeamAnalyticsView() {
           <CardHeader className="pb-2 p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
-              <CardTitle className="text-sm font-semibold text-slate-200">예산 위험 팀 현황</CardTitle>
+              <CardTitle className="text-sm font-semibold text-slate-700">예산 위험 팀 현황</CardTitle>
             </div>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -182,7 +182,7 @@ export default function TeamAnalyticsView() {
                     ) : (
                       <Shield className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-amber-500" />
                     )}
-                    <span className="text-sm text-slate-300 leading-snug">
+                    <span className="text-sm text-slate-600 leading-snug">
                       <span className="font-medium">{team.name}</span>
                       {" — "}
                       예산 소진율 {team.burnRate}%
@@ -205,7 +205,7 @@ export default function TeamAnalyticsView() {
         {/* 팀별 사용액 비교 */}
         <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
           <CardHeader className="pb-2 p-4">
-            <CardTitle className="text-sm font-semibold text-slate-200">팀별 사용액 비교</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-700">팀별 사용액 비교</CardTitle>
             <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">배정 예산 대비 현재 사용액</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -243,7 +243,7 @@ export default function TeamAnalyticsView() {
         {/* 팀별 예산 소진율 비교 */}
         <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
           <CardHeader className="pb-2 p-4">
-            <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 소진율</CardTitle>
+            <CardTitle className="text-sm font-semibold text-slate-700">팀별 예산 소진율</CardTitle>
             <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">소진율 기준 내림차순 정렬</p>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -280,7 +280,7 @@ export default function TeamAnalyticsView() {
       {/* ══ 4. 팀별 분석 테이블 ══ */}
       <Card className="rounded-xl border-bd/60 border-bd/50 shadow-sm bg-pn">
         <CardHeader className="p-4 pb-0">
-          <CardTitle className="text-sm font-semibold text-slate-200">팀별 예산 집행 현황</CardTitle>
+          <CardTitle className="text-sm font-semibold text-slate-700">팀별 예산 집행 현황</CardTitle>
           <p className="text-[11px] text-slate-400 text-slate-500 mt-0.5">
             전체 {totalTeams}개 팀 중 {riskTeams}개 팀이 주의 이상 상태
           </p>
@@ -308,14 +308,14 @@ export default function TeamAnalyticsView() {
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                          <span className="font-medium text-slate-200 text-sm">{team.name}</span>
+                          <span className="font-medium text-slate-700 text-sm">{team.name}</span>
                         </div>
                       </TableCell>
                       <TableCell className="py-2.5 text-right text-sm text-slate-400">
                         ₩{team.budget.toLocaleString("ko-KR")}
                       </TableCell>
                       <TableCell className="py-2.5 text-right">
-                        <span className="font-semibold text-slate-200 text-sm">
+                        <span className="font-semibold text-slate-700 text-sm">
                           ₩{team.spent.toLocaleString("ko-KR")}
                         </span>
                       </TableCell>

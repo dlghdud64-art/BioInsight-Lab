@@ -322,7 +322,7 @@ export function AnalyticsDashboard() {
                     {index + 1}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm text-slate-100">{insight.message}</p>
+                    <p className="text-sm text-slate-900">{insight.message}</p>
                     {insight.badge && (
                       <Badge variant="outline" className="mt-2 text-xs">
                         {insight.badge}

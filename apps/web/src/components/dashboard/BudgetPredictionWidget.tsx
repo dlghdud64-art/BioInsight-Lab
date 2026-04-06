@@ -182,7 +182,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
             <Loader2 className="relative h-4 w-4 text-blue-500 animate-spin" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-200">AI가 데이터 학습 중입니다</p>
+            <p className="text-sm font-semibold text-slate-700">AI가 데이터 학습 중입니다</p>
             <p className="text-xs text-slate-400 mt-0.5">
               예산을 등록하면 AI 소진 예측 분석이 시작됩니다.
             </p>
@@ -240,7 +240,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="px-2 py-1.5 rounded-full bg-pg bg-el/60 border border-bd/80 border-bs/80 text-[11px] text-slate-300">
+                <div className="px-2 py-1.5 rounded-full bg-pg bg-el/60 border border-bd/80 border-bs/80 text-[11px] text-slate-600">
                   {effectiveBudgets[0]?.budgetName}
                 </div>
               )}
@@ -262,7 +262,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               <TrendingDown className="h-3.5 w-3.5 text-slate-400" />
               <p className="text-xs text-slate-400">
                 월평균{" "}
-                <span className="text-slate-200 font-medium">
+                <span className="text-slate-700 font-medium">
                   {formatKRW(selectedBudget.avgMonthlyBurnRate)}
                 </span>{" "}
                 소진 중 &middot; 잔여{" "}
@@ -277,11 +277,11 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span>
                   사용 예산{" "}
-                  <span className="font-semibold text-slate-100">
+                  <span className="font-semibold text-slate-900">
                     {formatKRW(selectedBudget.totalSpent)}
                   </span>
                 </span>
-                <span className={`font-semibold ${usageRate >= 80 ? "text-red-600 text-red-400" : "text-slate-100"}`}>
+                <span className={`font-semibold ${usageRate >= 80 ? "text-red-600 text-red-400" : "text-slate-900"}`}>
                   {usageRate}%
                 </span>
               </div>
@@ -336,7 +336,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
         {!selectedBudget.hasWarning && (
           <div className="mx-3 sm:mx-4 rounded-lg bg-pg bg-el/50 border border-bd border-bs px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0 mt-0.5" />
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
             </p>
           </div>

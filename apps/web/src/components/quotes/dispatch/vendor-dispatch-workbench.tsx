@@ -285,7 +285,7 @@ export function VendorRequestModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-pg border-slate-600/40">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-slate-100">
+          <DialogTitle className="flex items-center gap-2 text-slate-900">
             <Send className="h-5 w-5 text-blue-400" />
             공급사 발송 검토
           </DialogTitle>
@@ -331,7 +331,7 @@ export function VendorRequestModal({
                   ) : (
                     <X className="h-3 w-3 text-red-400" />
                   )}
-                  <span className={`text-xs ${check.ready ? "text-slate-500" : "text-slate-300"}`}>
+                  <span className={`text-xs ${check.ready ? "text-slate-500" : "text-slate-600"}`}>
                     {check.label}
                   </span>
                 </div>
@@ -351,7 +351,7 @@ export function VendorRequestModal({
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-semibold text-slate-200">
+                <span className="text-sm font-semibold text-slate-700">
                   선별된 공급사 후보
                 </span>
                 {includedCount > 0 && (
@@ -385,7 +385,7 @@ export function VendorRequestModal({
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-slate-300">공급사 후보 선별 실패</p>
+                    <p className="text-sm text-slate-600">공급사 후보 선별 실패</p>
                     <p className="text-xs text-slate-500 mt-1">
                       해당 품목에 매칭되는 공급사가 없거나, 플랫폼 공급사 DB에 연락 채널이 등록되지 않았습니다.
                     </p>
@@ -422,14 +422,14 @@ export function VendorRequestModal({
                     placeholder="이메일"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-100 flex-1"
+                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-900 flex-1"
                   />
                   <Input
                     type="text"
                     placeholder="공급사명"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-100 w-36"
+                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-900 w-36"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -447,7 +447,7 @@ export function VendorRequestModal({
                     size="sm"
                     onClick={addManualVendor}
                     disabled={!manualEmail.trim()}
-                    className="h-7 text-xs bg-slate-600 hover:bg-slate-500 text-slate-200"
+                    className="h-7 text-xs bg-slate-600 hover:bg-slate-500 text-slate-700"
                   >
                     추가
                   </Button>
@@ -465,7 +465,7 @@ export function VendorRequestModal({
                 className="flex items-center gap-2 w-full text-left group"
               >
                 <Mail className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-xs font-medium text-slate-400 group-hover:text-slate-300">
+                <span className="text-xs font-medium text-slate-400 group-hover:text-slate-600">
                   전달 메시지 미리보기
                 </span>
                 <span className="text-xs text-slate-600">·</span>
@@ -480,7 +480,7 @@ export function VendorRequestModal({
                       <Textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        className="text-xs min-h-[100px] bg-pg border-slate-600/30 text-slate-100"
+                        className="text-xs min-h-[100px] bg-pg border-slate-600/30 text-slate-900"
                         autoFocus
                       />
                       <div className="flex justify-end mt-2">
@@ -532,7 +532,7 @@ export function VendorRequestModal({
                   const v = parseInt(e.target.value) || 14;
                   setExpiresInDays(Math.max(1, Math.min(90, v)));
                 }}
-                className="h-7 text-xs w-16 text-center bg-sh border-bd text-slate-100"
+                className="h-7 text-xs w-16 text-center bg-sh border-bd text-slate-900"
               />
               <span className="text-xs text-slate-500">일 (1~90)</span>
             </div>
@@ -557,7 +557,7 @@ export function VendorRequestModal({
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-slate-200 border border-slate-600/30"
+            className="text-slate-400 hover:text-slate-700 border border-slate-600/30"
           >
             취소
           </Button>
@@ -609,7 +609,7 @@ function SupplierReviewCard({
   return (
     <div className={`rounded-lg border px-3.5 py-2.5 transition-all ${
       supplier.included
-        ? "border-slate-600/40 bg-[#2a2e35]"
+        ? "border-slate-600/40 bg-slate-50"
         : "border-slate-600/15 bg-sh opacity-40"
     }`}>
       <div className="flex items-center gap-3">
@@ -628,7 +628,7 @@ function SupplierReviewCard({
 
         {/* Supplier info — compact single-row */}
         <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-100 truncate">
+          <span className="text-sm font-medium text-slate-900 truncate">
             {supplier.vendorName}
           </span>
           <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${CONFIDENCE_COLOR[supplier.confidence]}`}>

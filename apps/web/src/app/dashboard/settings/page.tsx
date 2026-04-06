@@ -465,7 +465,7 @@ function SettingsPageContent() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="space-y-1 mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">설정</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">설정</h2>
           <p className="text-sm text-slate-400 hidden sm:block">
             계정 정보와 연구실 워크스페이스 환경을 관리합니다.
           </p>
@@ -488,11 +488,11 @@ function SettingsPageContent() {
                     className={cn(
                       "w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors",
                       isActive
-                        ? "bg-el text-slate-100"
-                        : "text-slate-400 hover:bg-el/50 hover:text-slate-200"
+                        ? "bg-el text-slate-900"
+                        : "text-slate-400 hover:bg-el/50 hover:text-slate-700"
                     )}
                   >
-                    <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-slate-100" : "text-slate-500")} />
+                    <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-slate-900" : "text-slate-500")} />
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium leading-tight">{item.label}</div>
                       <div className="text-[11px] text-slate-500 leading-tight mt-0.5">{item.sublabel}</div>
@@ -512,7 +512,7 @@ function SettingsPageContent() {
                 {/* Profile info */}
                 <div className="bg-pn border border-bd rounded-lg">
                   <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2 text-slate-100 font-semibold">
+                    <div className="flex items-center gap-2 text-slate-900 font-semibold">
                       <User className="h-4 w-4" />
                       프로필 정보
                     </div>
@@ -522,15 +522,15 @@ function SettingsPageContent() {
                     <div className="flex items-center gap-4">
                       <Avatar className="h-20 w-20">
                         <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
-                        <AvatarFallback className="bg-el text-slate-300 text-lg font-semibold">
+                        <AvatarFallback className="bg-el text-slate-600 text-lg font-semibold">
                           {getInitials()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit border-bs bg-el text-slate-300">
+                        <Badge variant="secondary" className="w-fit border-bs bg-el text-slate-600">
                           {roleLabel}
                         </Badge>
-                        <Button type="button" variant="outline" size="sm" className="border-bs text-slate-300 hover:bg-el">
+                        <Button type="button" variant="outline" size="sm" className="border-bs text-slate-600 hover:bg-el">
                           <Upload className="h-4 w-4 mr-2" />
                           사진 변경
                         </Button>
@@ -543,7 +543,7 @@ function SettingsPageContent() {
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">기본 정보</h4>
                       <div className="grid gap-5 max-w-md">
                         <div className="grid gap-1.5">
-                          <Label htmlFor="name" className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                          <Label htmlFor="name" className="text-sm font-medium text-slate-600 flex items-center gap-2">
                             <User className="h-3.5 w-3.5 text-slate-500" />
                             이름
                           </Label>
@@ -552,17 +552,17 @@ function SettingsPageContent() {
                             value={profileName}
                             onChange={(e) => setProfileName(e.target.value)}
                             placeholder="이름을 입력하세요"
-                            className="bg-sh border-bs text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600 focus:ring-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
-                          <Label htmlFor="phone" className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                          <Label htmlFor="phone" className="text-sm font-medium text-slate-600 flex items-center gap-2">
                             <Phone className="h-3.5 w-3.5 text-slate-500" />
                             휴대폰 번호
                           </Label>
                           <div className="flex gap-2">
                             <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[100px] bg-sh border-bs text-slate-300">
+                              <SelectTrigger className="w-[100px] bg-sh border-bs text-slate-600">
                                 <SelectValue placeholder="국가" />
                               </SelectTrigger>
                               <SelectContent>
@@ -578,20 +578,20 @@ function SettingsPageContent() {
                               value={profilePhone}
                               onChange={(e) => setProfilePhone(e.target.value)}
                               placeholder="010-0000-0000"
-                              className="flex-1 bg-sh border-bs text-slate-100 placeholder:text-slate-600 focus:ring-slate-600"
+                              className="flex-1 bg-sh border-bs text-slate-900 placeholder:text-slate-600 focus:ring-slate-600"
                             />
                           </div>
                           <p className="text-[11px] text-slate-500">긴급 알림 및 본인 확인용으로 사용됩니다.</p>
                         </div>
                         <div className="grid gap-1.5">
-                          <Label htmlFor="bio" className="text-sm font-medium text-slate-300">소개</Label>
+                          <Label htmlFor="bio" className="text-sm font-medium text-slate-600">소개</Label>
                           <Textarea
                             id="bio"
                             value={profileBio}
                             onChange={(e) => setProfileBio(e.target.value)}
                             placeholder="자기소개를 입력하세요"
                             rows={3}
-                            className="bg-sh border-bs text-slate-100 placeholder:text-slate-600"
+                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
                           />
                         </div>
                       </div>
@@ -603,18 +603,18 @@ function SettingsPageContent() {
                       <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">연락처</h4>
                       <div className="grid gap-5 max-w-md">
                         <div className="grid gap-1.5">
-                          <Label htmlFor="url" className="text-sm font-medium text-slate-300">URL</Label>
+                          <Label htmlFor="url" className="text-sm font-medium text-slate-600">URL</Label>
                           <Input
                             id="url"
                             value={profileUrl}
                             onChange={(e) => setProfileUrl(e.target.value)}
                             placeholder="https://example.com"
                             type="url"
-                            className="bg-sh border-bs text-slate-100 placeholder:text-slate-600"
+                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
                           />
                         </div>
                         <div className="grid gap-1.5">
-                          <Label htmlFor="email" className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                          <Label htmlFor="email" className="text-sm font-medium text-slate-600 flex items-center gap-2">
                             <Mail className="h-3.5 w-3.5 text-slate-500" />
                             이메일
                           </Label>
@@ -634,7 +634,7 @@ function SettingsPageContent() {
                 {/* Password */}
                 <div className="bg-pn border border-bd rounded-lg">
                   <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2 text-slate-100 font-semibold">
+                    <div className="flex items-center gap-2 text-slate-900 font-semibold">
                       <Lock className="h-4 w-4" />
                       비밀번호
                     </div>
@@ -643,21 +643,21 @@ function SettingsPageContent() {
                   <div className="p-6">
                     <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button variant="outline" className="border-bs text-slate-300 hover:bg-el">
+                        <Button variant="outline" className="border-bs text-slate-600 hover:bg-el">
                           <Lock className="h-4 w-4 mr-2" />
                           비밀번호 변경
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="bg-pn border-bd">
                         <DialogHeader>
-                          <DialogTitle className="text-slate-100">비밀번호 변경</DialogTitle>
+                          <DialogTitle className="text-slate-900">비밀번호 변경</DialogTitle>
                           <DialogDescription className="text-slate-400">
                             보안을 위해 주기적으로 비밀번호를 변경해주세요.
                           </DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handlePasswordChange} className="space-y-4">
                           <div className="space-y-2">
-                            <Label htmlFor="dialogCurrentPassword" className="text-slate-300">현재 비밀번호</Label>
+                            <Label htmlFor="dialogCurrentPassword" className="text-slate-600">현재 비밀번호</Label>
                             <Input
                               id="dialogCurrentPassword"
                               type="password"
@@ -665,11 +665,11 @@ function SettingsPageContent() {
                               onChange={(e) => setCurrentPassword(e.target.value)}
                               placeholder="현재 비밀번호를 입력하세요"
                               required
-                              className="bg-sh border-bs text-slate-100"
+                              className="bg-sh border-bs text-slate-900"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="dialogNewPassword" className="text-slate-300">새 비밀번호</Label>
+                            <Label htmlFor="dialogNewPassword" className="text-slate-600">새 비밀번호</Label>
                             <Input
                               id="dialogNewPassword"
                               type="password"
@@ -677,11 +677,11 @@ function SettingsPageContent() {
                               onChange={(e) => setNewPassword(e.target.value)}
                               placeholder="새 비밀번호를 입력하세요"
                               required
-                              className="bg-sh border-bs text-slate-100"
+                              className="bg-sh border-bs text-slate-900"
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="dialogConfirmPassword" className="text-slate-300">비밀번호 확인</Label>
+                            <Label htmlFor="dialogConfirmPassword" className="text-slate-600">비밀번호 확인</Label>
                             <Input
                               id="dialogConfirmPassword"
                               type="password"
@@ -689,7 +689,7 @@ function SettingsPageContent() {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               placeholder="새 비밀번호를 다시 입력하세요"
                               required
-                              className="bg-sh border-bs text-slate-100"
+                              className="bg-sh border-bs text-slate-900"
                             />
                           </div>
                           {newPassword && newPassword !== confirmPassword && (
@@ -699,7 +699,7 @@ function SettingsPageContent() {
                             <Button
                               type="button"
                               variant="outline"
-                              className="border-bs text-slate-300"
+                              className="border-bs text-slate-600"
                               onClick={() => {
                                 setIsPasswordDialogOpen(false);
                                 setCurrentPassword("");
@@ -711,7 +711,7 @@ function SettingsPageContent() {
                             </Button>
                             <Button
                               type="submit"
-                              className="bg-el text-slate-100 hover:bg-slate-200"
+                              className="bg-el text-slate-900 hover:bg-slate-200"
                               disabled={profileMutation.isPending || !newPassword || newPassword !== confirmPassword || !currentPassword}
                             >
                               {profileMutation.isPending ? (
@@ -741,7 +741,7 @@ function SettingsPageContent() {
                         <Bell className="h-4 w-4 text-blue-400" />
                       </div>
                       <div>
-                        <h3 className="text-[15px] font-semibold text-slate-100">전달 방식</h3>
+                        <h3 className="text-[15px] font-semibold text-slate-900">전달 방식</h3>
                         <p className="text-xs text-slate-400 mt-0.5">
                           이벤트 알림을 즉시 받거나 하루 단위 요약으로 받을 수 있습니다
                         </p>
@@ -759,7 +759,7 @@ function SettingsPageContent() {
                           "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
                           notificationFrequency === "immediate"
                             ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-bd bg-el hover:border-[#353a45]"
+                            : "border-bd bg-el hover:border-slate-200"
                         )}
                       >
                         <div className={cn(
@@ -774,7 +774,7 @@ function SettingsPageContent() {
                           <div className="flex items-center gap-2">
                             <span className={cn(
                               "text-sm font-semibold",
-                              notificationFrequency === "immediate" ? "text-slate-100" : "text-slate-300"
+                              notificationFrequency === "immediate" ? "text-slate-900" : "text-slate-600"
                             )}>
                               즉시 알림
                             </span>
@@ -809,7 +809,7 @@ function SettingsPageContent() {
                           "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
                           notificationFrequency === "daily"
                             ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-bd bg-el hover:border-[#353a45]"
+                            : "border-bd bg-el hover:border-slate-200"
                         )}
                       >
                         <div className={cn(
@@ -824,7 +824,7 @@ function SettingsPageContent() {
                           <div className="flex items-center gap-2">
                             <span className={cn(
                               "text-sm font-semibold",
-                              notificationFrequency === "daily" ? "text-slate-100" : "text-slate-300"
+                              notificationFrequency === "daily" ? "text-slate-900" : "text-slate-600"
                             )}>
                               하루 한 번 요약
                             </span>
@@ -862,7 +862,7 @@ function SettingsPageContent() {
                         <Mail className="h-4 w-4 text-slate-400" />
                       </div>
                       <div>
-                        <h3 className="text-[15px] font-semibold text-slate-100">알림 항목별 채널 설정</h3>
+                        <h3 className="text-[15px] font-semibold text-slate-900">알림 항목별 채널 설정</h3>
                         <p className="text-xs text-slate-400 mt-0.5">
                           각 알림의 수신 채널과 전달 방식을 개별적으로 설정할 수 있습니다
                         </p>
@@ -919,7 +919,7 @@ function SettingsPageContent() {
                                   )} />
                                   <div className="min-w-0">
                                     <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium text-slate-200">{n.label}</span>
+                                      <span className="text-sm font-medium text-slate-700">{n.label}</span>
                                       {isCritical && (
                                         <span className="flex h-4 items-center rounded bg-amber-500/15 px-1.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider">
                                           즉시
@@ -974,10 +974,10 @@ function SettingsPageContent() {
                                         <SelectItem value="default" className="text-xs text-slate-400">
                                           기본값
                                         </SelectItem>
-                                        <SelectItem value="immediate" className="text-xs text-slate-300">
+                                        <SelectItem value="immediate" className="text-xs text-slate-600">
                                           즉시
                                         </SelectItem>
-                                        <SelectItem value="daily" className="text-xs text-slate-300">
+                                        <SelectItem value="daily" className="text-xs text-slate-600">
                                           요약
                                         </SelectItem>
                                       </SelectContent>
@@ -1055,7 +1055,7 @@ function SettingsPageContent() {
                           <div className="bg-pn border border-bd rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">현재 플랜</div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xl font-bold text-slate-100">{displayName}</span>
+                              <span className="text-xl font-bold text-slate-900">{displayName}</span>
                               <Badge
                                 variant="outline"
                                 className={cn(
@@ -1073,7 +1073,7 @@ function SettingsPageContent() {
                           {/* Next billing date */}
                           <div className="bg-pn border border-bd rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">다음 결제일</div>
-                            <div className="text-xl font-bold text-slate-100">
+                            <div className="text-xl font-bold text-slate-900">
                               {subscription?.currentPeriodEnd
                                 ? new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
                                 : isFree ? "-" : "-"}
@@ -1083,7 +1083,7 @@ function SettingsPageContent() {
                           {/* Billing amount */}
                           <div className="bg-pn border border-bd rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">월 결제 금액</div>
-                            <div className="text-xl font-bold text-slate-100">
+                            <div className="text-xl font-bold text-slate-900">
                               {priceDisplay || "무료"}
                             </div>
                           </div>
@@ -1093,7 +1093,7 @@ function SettingsPageContent() {
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">좌석 수</div>
                             <div className="flex items-center gap-2">
                               <Users className="h-4 w-4 text-slate-500" />
-                              <span className="text-lg font-bold text-slate-100">
+                              <span className="text-lg font-bold text-slate-900">
                                 {billingData?.seats?.used ?? 1} / {billingData?.seats?.total ?? (isFree ? 1 : "무제한")}
                               </span>
                             </div>
@@ -1103,7 +1103,7 @@ function SettingsPageContent() {
                           {/* Billing contact */}
                           <div className="bg-pn border border-bd rounded-lg p-5">
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 담당자</div>
-                            <div className="text-sm font-medium text-slate-200">
+                            <div className="text-sm font-medium text-slate-700">
                               {billingData?.billingContact?.name ?? session?.user?.name ?? "-"}
                             </div>
                             <p className="text-xs text-slate-500 mt-1">
@@ -1116,7 +1116,7 @@ function SettingsPageContent() {
                             <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 수단</div>
                             <div className="flex items-center gap-2">
                               <CreditCard className="h-4 w-4 text-slate-500" />
-                              <span className="text-sm font-medium text-slate-200">
+                              <span className="text-sm font-medium text-slate-700">
                                 {billingData?.paymentMethod?.display ?? (isFree ? "등록된 수단 없음" : "Visa ****1234")}
                               </span>
                             </div>
@@ -1126,7 +1126,7 @@ function SettingsPageContent() {
                         {/* Invoices */}
                         <div className="bg-pn border border-bd rounded-lg">
                           <div className="px-6 py-4 border-b border-bd flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-slate-100 font-semibold text-sm">
+                            <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
                               <Receipt className="h-4 w-4" />
                               최근 청구서
                             </div>
@@ -1156,15 +1156,15 @@ function SettingsPageContent() {
                                 <TableBody>
                                   {(invoices.length > 0 ? invoices : allInvoices).map((invoice: { id: string; date?: string; paidAt?: string; periodStart?: string; description?: string; amount?: number; amountDue?: number; amountPaid?: number; status?: string; invoicePdfUrl?: string }) => (
                                     <TableRow key={invoice.id} className="border-bd/50 hover:bg-el/30">
-                                      <TableCell className="text-slate-300 text-sm">
+                                      <TableCell className="text-slate-600 text-sm">
                                         {invoice.date
                                           ? new Date(invoice.date).toLocaleDateString("ko-KR")
                                           : invoice.paidAt
                                             ? new Date(invoice.paidAt).toLocaleDateString("ko-KR")
                                             : "-"}
                                       </TableCell>
-                                      <TableCell className="text-slate-300 text-sm">{invoice.description || "구독 결제"}</TableCell>
-                                      <TableCell className="text-slate-300 text-sm">
+                                      <TableCell className="text-slate-600 text-sm">{invoice.description || "구독 결제"}</TableCell>
+                                      <TableCell className="text-slate-600 text-sm">
                                         {(invoice.amount ?? invoice.amountPaid ?? invoice.amountDue ?? 0).toLocaleString("ko-KR")}원
                                       </TableCell>
                                       <TableCell>
@@ -1176,7 +1176,7 @@ function SettingsPageContent() {
                                         <Button
                                           variant="ghost"
                                           size="sm"
-                                          className="text-slate-400 hover:text-slate-200 h-7 px-2"
+                                          className="text-slate-400 hover:text-slate-700 h-7 px-2"
                                           onClick={() => {
                                             if (invoice.invoicePdfUrl) {
                                               window.open(invoice.invoicePdfUrl, "_blank");
@@ -1200,7 +1200,7 @@ function SettingsPageContent() {
                         {/* Action row */}
                         <div className="flex flex-col sm:flex-row gap-3">
                           <Button
-                            className="bg-el text-slate-100 hover:bg-slate-200 font-medium"
+                            className="bg-el text-slate-900 hover:bg-slate-200 font-medium"
                             onClick={() => router.push("/dashboard/settings/plans")}
                           >
                             플랜 변경
@@ -1225,7 +1225,7 @@ function SettingsPageContent() {
                 <Dialog open={isCancelOpen} onOpenChange={(open) => { if (!open) resetCancelFlow(); }}>
                   <DialogContent className="bg-pn border-bd max-w-lg">
                     <DialogHeader>
-                      <DialogTitle className="text-slate-100">
+                      <DialogTitle className="text-slate-900">
                         {cancelStep === 1 && "구독 해지"}
                         {cancelStep === 2 && "의견을 남겨주세요"}
                         {cancelStep === 3 && "잠깐, 이런 방법은 어떨까요?"}
@@ -1251,8 +1251,8 @@ function SettingsPageContent() {
                               className={cn(
                                 "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left text-sm transition-colors",
                                 cancelReason === r.value
-                                  ? "border-slate-600 bg-el text-slate-100"
-                                  : "border-bd text-slate-400 hover:border-bs hover:text-slate-300"
+                                  ? "border-slate-600 bg-el text-slate-900"
+                                  : "border-bd text-slate-400 hover:border-bs hover:text-slate-600"
                               )}
                             >
                               <div className={cn(
@@ -1269,7 +1269,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2 pt-4">
                             <Button variant="ghost" className="text-slate-400" onClick={resetCancelFlow}>취소</Button>
                             <Button
-                              className="bg-el text-slate-100 hover:bg-slate-200"
+                              className="bg-el text-slate-900 hover:bg-slate-200"
                               disabled={!cancelReason}
                               onClick={() => setCancelStep(2)}
                             >
@@ -1287,12 +1287,12 @@ function SettingsPageContent() {
                             onChange={(e) => setCancelFeedback(e.target.value)}
                             placeholder="어떤 점이 아쉬우셨나요? 자유롭게 작성해 주세요. (선택사항)"
                             rows={4}
-                            className="bg-sh border-bs text-slate-100 placeholder:text-slate-600"
+                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
                           />
                           <div className="flex justify-end gap-2">
                             <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(1)}>이전</Button>
                             <Button
-                              className="bg-el text-slate-100 hover:bg-slate-200"
+                              className="bg-el text-slate-900 hover:bg-slate-200"
                               onClick={() => setCancelStep(3)}
                             >
                               다음
@@ -1308,12 +1308,12 @@ function SettingsPageContent() {
                             const offer = getSaveOffer(cancelReason);
                             return (
                               <div className="bg-el/60 border border-bs rounded-lg p-5 space-y-3">
-                                <h4 className="text-sm font-semibold text-slate-200">{offer.title}</h4>
+                                <h4 className="text-sm font-semibold text-slate-700">{offer.title}</h4>
                                 <p className="text-sm text-slate-400">{offer.description}</p>
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="border-slate-600 text-slate-300 hover:bg-slate-700"
+                                  className="border-slate-600 text-slate-600 hover:bg-slate-700"
                                   onClick={() => {
                                     resetCancelFlow();
                                     if (cancelReason === "price") {
@@ -1346,27 +1346,27 @@ function SettingsPageContent() {
                           <div className="bg-red-950/20 border border-red-900/40 rounded-lg p-4 space-y-3">
                             <div className="flex items-start gap-2">
                               <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-                              <div className="text-sm text-slate-300 space-y-2">
+                              <div className="text-sm text-slate-600 space-y-2">
                                 <div className="flex justify-between">
                                   <span className="text-slate-400">해지일</span>
-                                  <span className="text-slate-200">현재 결제 주기 종료 시</span>
+                                  <span className="text-slate-700">현재 결제 주기 종료 시</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400">사용 가능 기간</span>
-                                  <span className="text-slate-200">결제 주기 종료까지 모든 기능 이용 가능</span>
+                                  <span className="text-slate-700">결제 주기 종료까지 모든 기능 이용 가능</span>
                                 </div>
                                 <div className="h-px bg-red-900/30" />
                                 <div className="flex justify-between">
                                   <span className="text-slate-400">데이터</span>
-                                  <span className="text-slate-200">읽기 전용 보관 (30일)</span>
+                                  <span className="text-slate-700">읽기 전용 보관 (30일)</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400">팀원 권한</span>
-                                  <span className="text-slate-200">해지 후 접근 불가</span>
+                                  <span className="text-slate-700">해지 후 접근 불가</span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-slate-400">재구독</span>
-                                  <span className="text-slate-200">언제든 가능</span>
+                                  <span className="text-slate-700">언제든 가능</span>
                                 </div>
                               </div>
                             </div>
@@ -1374,7 +1374,7 @@ function SettingsPageContent() {
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="outline"
-                              className="border-bs text-slate-300"
+                              className="border-bs text-slate-600"
                               onClick={resetCancelFlow}
                             >
                               취소
@@ -1429,7 +1429,7 @@ function SettingsPageContent() {
                           ? "bg-emerald-700 hover:bg-emerald-800 text-white"
                           : saveError
                             ? "bg-red-700 hover:bg-red-800 text-white"
-                            : "bg-el hover:bg-slate-200 text-slate-100"
+                            : "bg-el hover:bg-slate-200 text-slate-900"
                       )}
                       onClick={() => {
                         setSaveSuccess(false);

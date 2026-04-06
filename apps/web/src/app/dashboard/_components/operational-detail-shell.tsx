@@ -106,7 +106,7 @@ export function InboxContextStrip({
     <div className="flex items-center gap-3 rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-xs">
       <a
         href={returnHref}
-        className="flex items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors shrink-0"
+        className="flex items-center gap-1 text-slate-500 hover:text-slate-600 transition-colors shrink-0"
       >
         <span>←</span>
         <span>작업함</span>
@@ -124,7 +124,7 @@ export function InboxContextStrip({
         )}
         {owner && (
           <span className="text-slate-500">
-            담당: <span className="text-slate-300">{owner}</span>
+            담당: <span className="text-slate-600">{owner}</span>
           </span>
         )}
       </div>
@@ -141,7 +141,7 @@ const STATUS_TONE_STYLES: Record<OperationalHeaderProps['statusTone'], string> =
   warning: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   danger: 'bg-red-500/10 text-red-400 border-red-500/20',
   success: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-  neutral: 'bg-slate-700 text-slate-300 border-slate-600',
+  neutral: 'bg-slate-700 text-slate-600 border-slate-600',
 };
 
 export function OperationalHeader({
@@ -161,7 +161,7 @@ export function OperationalHeader({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-semibold text-slate-100 truncate">{title}</h1>
+            <h1 className="text-base font-semibold text-slate-900 truncate">{title}</h1>
             <span className="text-xs text-slate-500 shrink-0">{reference}</span>
           </div>
           {subStatus && (
@@ -183,7 +183,7 @@ export function OperationalHeader({
               ? 'text-red-400'
               : d.tone === 'due_soon'
                 ? 'text-amber-400'
-                : 'text-slate-300';
+                : 'text-slate-600';
           return (
             <span key={d.label} className="text-slate-500">
               {d.label}: <span className={dateTone}>{d.value}</span>
@@ -192,7 +192,7 @@ export function OperationalHeader({
         })}
         {keyParties?.map((p) => (
           <span key={p.label} className="text-slate-500">
-            {p.label}: <span className="text-slate-300">{p.value}</span>
+            {p.label}: <span className="text-slate-600">{p.value}</span>
           </span>
         ))}
         {riskBadges?.map((badge) => (
@@ -251,7 +251,7 @@ export function BlockerReviewStrip({
         {blockers.map((b, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 shrink-0" />
-            <span className="text-slate-300">{b.label}</span>
+            <span className="text-slate-600">{b.label}</span>
             {b.actionable && (
               <span className="text-blue-400 text-[10px]">조치 가능</span>
             )}
@@ -260,7 +260,7 @@ export function BlockerReviewStrip({
         {reviewPoints.map((r, i) => (
           <div key={i} className="flex items-center gap-2 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
-            <span className="text-slate-300">{r.label}</span>
+            <span className="text-slate-600">{r.label}</span>
           </div>
         ))}
         {warnings.map((w, i) => (
@@ -280,7 +280,7 @@ export function BlockerReviewStrip({
 
 const ACTION_VARIANT_STYLES: Record<DecisionPanelAction['variant'], string> = {
   primary: 'bg-blue-600 hover:bg-blue-500 text-white',
-  secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-200',
+  secondary: 'bg-slate-700 hover:bg-slate-600 text-slate-700',
   danger: 'bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-500/20',
 };
 
@@ -304,7 +304,7 @@ export function DecisionPanelShell({
         <span
           className={`w-2 h-2 rounded-full ${readinessReady ? 'bg-emerald-400' : 'bg-amber-400'}`}
         />
-        <span className="text-slate-300">{readinessSummary}</span>
+        <span className="text-slate-600">{readinessSummary}</span>
       </div>
 
       {/* Blocked reasons */}
@@ -402,7 +402,7 @@ export function LinkedEntityMetaRail({
                   {link.value}
                 </a>
               ) : (
-                <span className="text-slate-300">{link.value}</span>
+                <span className="text-slate-600">{link.value}</span>
               )}
             </div>
           ))}
@@ -420,7 +420,7 @@ export function LinkedEntityMetaRail({
                   {entity.value}
                 </a>
               ) : (
-                <span className="text-slate-300">{entity.value}</span>
+                <span className="text-slate-600">{entity.value}</span>
               )}
             </div>
           ))}
@@ -494,7 +494,7 @@ export function DetailStateFallback({
   return (
     <div className="flex flex-col items-center justify-center min-h-[300px] rounded border border-slate-800 bg-slate-900/50 p-8 text-center">
       <div className="text-3xl mb-3">{config.icon}</div>
-      <h2 className="text-sm font-semibold text-slate-200 mb-1">{config.title}</h2>
+      <h2 className="text-sm font-semibold text-slate-700 mb-1">{config.title}</h2>
       <p className="text-xs text-slate-400 max-w-sm mb-4">
         {message ?? config.defaultMessage}
       </p>
@@ -510,7 +510,7 @@ export function DetailStateFallback({
         {onReset && (
           <button
             onClick={onReset}
-            className="rounded bg-slate-700 px-4 py-2 text-xs font-medium text-slate-200 hover:bg-slate-600 transition-colors"
+            className="rounded bg-slate-700 px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-600 transition-colors"
           >
             초기화
           </button>

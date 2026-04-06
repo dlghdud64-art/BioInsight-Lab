@@ -75,7 +75,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
           "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-sm font-medium transition-colors touch-manipulation",
           active
             ? "bg-blue-950/30 text-blue-400"
-            : "text-slate-300 hover:bg-slate-800/50",
+            : "text-slate-600 hover:bg-slate-800/50",
         )}
       >
         <item.icon className="h-5 w-5 flex-shrink-0" />
@@ -91,7 +91,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-slate-900 border-t border-slate-800"
       >
         <SheetHeader className="pb-2">
-          <SheetTitle className="text-base font-bold text-slate-100">
+          <SheetTitle className="text-base font-bold text-slate-900">
             전체 메뉴
           </SheetTitle>
         </SheetHeader>

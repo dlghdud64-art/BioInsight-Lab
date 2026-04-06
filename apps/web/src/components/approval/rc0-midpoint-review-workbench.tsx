@@ -141,7 +141,7 @@ export default function RC0MidpointReviewWorkbench({
       <div className="w-full lg:w-80 space-y-3 overflow-y-auto">
         {/* Time Window */}
         <RailSection title="시간 경과">
-          <div className="text-sm text-slate-300">
+          <div className="text-sm text-slate-600">
             <span>{rail.daysElapsed}일 경과</span>
             <span className="text-slate-500"> / {rail.daysPlanned}일 예정</span>
           </div>
@@ -152,7 +152,7 @@ export default function RC0MidpointReviewWorkbench({
 
         {/* Compliance Summary */}
         <RailSection title="컴플라이언스">
-          <div className="text-sm text-slate-300 space-y-1">
+          <div className="text-sm text-slate-600 space-y-1">
             <div>준수: {rail.complianceSummary.compliant}건</div>
             <div>조건부: {rail.complianceSummary.conditionallyCompliant}건</div>
             <div>미준수: {rail.complianceSummary.nonCompliant}건</div>
@@ -165,7 +165,7 @@ export default function RC0MidpointReviewWorkbench({
         {/* Blocker Type Distribution */}
         {Object.keys(rail.blockerTypeDistribution).length > 0 && (
           <RailSection title="블로커 유형 분포">
-            <div className="text-sm text-slate-300 space-y-1">
+            <div className="text-sm text-slate-600 space-y-1">
               {Object.entries(rail.blockerTypeDistribution).map(([type, count]) => (
                 <div key={type} className="flex justify-between">
                   <span>{type}</span>
@@ -179,7 +179,7 @@ export default function RC0MidpointReviewWorkbench({
         {/* Actor Concentration */}
         {rail.actorConcentrationSummary.length > 0 && (
           <RailSection title="Actor 편중">
-            <div className="text-sm text-slate-300 space-y-1">
+            <div className="text-sm text-slate-600 space-y-1">
               {rail.actorConcentrationSummary.map(a => (
                 <div key={a.actor} className="flex justify-between">
                   <span>{a.actor}</span>
@@ -275,16 +275,16 @@ function ProjectionComparison({
 }) {
   return (
     <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-4">
-      <div className="text-sm font-medium text-slate-200 mb-3">현재 vs Projection</div>
+      <div className="text-sm font-medium text-slate-700 mb-3">현재 vs Projection</div>
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
           <div className="text-xs text-slate-400 mb-1">현재</div>
-          <div className="text-slate-300">{currentVerdict}</div>
+          <div className="text-slate-600">{currentVerdict}</div>
           <div className="text-slate-400 text-xs">{currentPath}</div>
         </div>
         <div>
           <div className="text-xs text-slate-400 mb-1">7일 시점 예상</div>
-          <div className="text-slate-200">{projectedVerdict}</div>
+          <div className="text-slate-700">{projectedVerdict}</div>
           <div className="text-slate-400 text-xs">{projectedPath}</div>
         </div>
       </div>
@@ -320,7 +320,7 @@ function NonComplianceSummaryCard({
         </div>
         <span className="text-xs text-slate-400">{expanded ? "접기" : "펼치기"}</span>
       </div>
-      <div className="mt-2 text-xs text-slate-300 space-y-1">
+      <div className="mt-2 text-xs text-slate-600 space-y-1">
         <div>반복 위험 높음: {summary.highRepeatRisk}건</div>
         {summary.topRootCause && (
           <div>주요 원인: {ROOT_CAUSE_LABEL[summary.topRootCause]}</div>
@@ -331,7 +331,7 @@ function NonComplianceSummaryCard({
           {cases.map(c => (
             <div key={c.caseId} className="bg-slate-800/60 rounded p-2 text-xs">
               <div className="flex justify-between">
-                <span className="text-slate-200">{c.caseId} / {c.poNumber}</span>
+                <span className="text-slate-700">{c.caseId} / {c.poNumber}</span>
                 <span className={c.repeatRisk === "high" ? "text-red-400" : c.repeatRisk === "medium" ? "text-amber-400" : "text-green-400"}>
                   {c.repeatRisk}
                 </span>
@@ -358,7 +358,7 @@ function BlockerPatternCard({
       <div className="text-sm font-medium text-amber-300">
         Soft Blocker 패턴
       </div>
-      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-300">
+      <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-slate-600">
         <div>총 blocker: {summary.total}건</div>
         <div>반복 패턴: {summary.repeatedPatterns}건</div>
         <div>Actor 편중: {summary.actorConcentrations}건</div>
@@ -375,7 +375,7 @@ function DwellRiskCard({
 }) {
   return (
     <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-4">
-      <div className="text-sm font-medium text-slate-200">
+      <div className="text-sm font-medium text-slate-700">
         진행중 Case 체류 현황
       </div>
       <div className="mt-2 grid grid-cols-4 gap-2 text-xs text-center">
@@ -409,12 +409,12 @@ function ActionPlanCard({ plan }: { plan: MidpointActionPlan }) {
 
   return (
     <div className="rounded-lg border border-slate-700/50 bg-slate-800/50 p-4">
-      <div className="text-sm font-medium text-slate-200 mb-3">조치 계획</div>
+      <div className="text-sm font-medium text-slate-700 mb-3">조치 계획</div>
       {plan.immediateActions.length > 0 && (
         <div className="mb-2">
           <div className="text-xs text-red-400 mb-1">즉시 조치</div>
           {plan.immediateActions.map((a, i) => (
-            <div key={i} className="text-xs text-slate-300 ml-2">• {a}</div>
+            <div key={i} className="text-xs text-slate-600 ml-2">• {a}</div>
           ))}
         </div>
       )}
@@ -422,7 +422,7 @@ function ActionPlanCard({ plan }: { plan: MidpointActionPlan }) {
         <div className="mb-2">
           <div className="text-xs text-amber-400 mb-1">7일 전 완료</div>
           {plan.beforeDay7Actions.map((a, i) => (
-            <div key={i} className="text-xs text-slate-300 ml-2">• {a}</div>
+            <div key={i} className="text-xs text-slate-600 ml-2">• {a}</div>
           ))}
         </div>
       )}
@@ -430,7 +430,7 @@ function ActionPlanCard({ plan }: { plan: MidpointActionPlan }) {
         <div>
           <div className="text-xs text-blue-400 mb-1">Evidence 수집</div>
           {plan.evidenceCollectionActions.map((a, i) => (
-            <div key={i} className="text-xs text-slate-300 ml-2">• {a}</div>
+            <div key={i} className="text-xs text-slate-600 ml-2">• {a}</div>
           ))}
         </div>
       )}
@@ -463,7 +463,7 @@ function DockButton({
       disabled={!action.enabled}
       className={`w-full text-left text-sm px-3 py-2 rounded border transition-colors ${
         action.enabled
-          ? "border-slate-600 bg-slate-700/50 text-slate-200 hover:bg-slate-600/50"
+          ? "border-slate-600 bg-slate-700/50 text-slate-700 hover:bg-slate-600/50"
           : "border-slate-800 bg-slate-900/30 text-slate-600 cursor-not-allowed"
       }`}
     >

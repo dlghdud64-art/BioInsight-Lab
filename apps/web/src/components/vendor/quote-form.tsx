@@ -129,7 +129,7 @@ export function QuoteForm({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-slate-100">견적 입력</h2>
+          <h2 className="text-lg font-semibold text-slate-900">견적 입력</h2>
           <p className="text-sm text-slate-600 mt-1">
             각 품목의 단가와 납기를 입력해주세요
           </p>

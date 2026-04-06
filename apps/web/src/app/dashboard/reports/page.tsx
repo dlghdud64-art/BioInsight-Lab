@@ -298,19 +298,19 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
         <div className="space-y-1">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">판단형 리포트</p>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100 leading-tight">구매 분석 콘솔</h2>
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">구매 분석 콘솔</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="border-bd bg-pn text-slate-300 hover:bg-el hover:text-slate-100">
+              <Button variant="outline" size="sm" className="border-bd bg-pn text-slate-600 hover:bg-el hover:text-slate-900">
                 <CloudUpload className="h-4 w-4 mr-1.5" />
                 <span className="hidden sm:inline">데이터 </span>가져오기
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl bg-pn border-bd">
               <DialogHeader>
-                <DialogTitle className="text-slate-100">구매 내역 CSV Import</DialogTitle>
+                <DialogTitle className="text-slate-900">구매 내역 CSV Import</DialogTitle>
                 <DialogDescription className="text-slate-400">
                   CSV 또는 Excel 파일을 업로드하여 구매 내역을 import합니다.
                 </DialogDescription>
@@ -339,13 +339,13 @@ export default function ReportsPage() {
                   {selectedFile ? (
                     <>
                       <FileText className="h-10 w-10 text-blue-400 mb-3" />
-                      <p className="text-sm font-semibold text-slate-100 mb-1">{selectedFile.name}</p>
+                      <p className="text-sm font-semibold text-slate-900 mb-1">{selectedFile.name}</p>
                       <p className="text-xs text-slate-400">파일이 선택되었습니다. 아래 버튼을 클릭하여 업로드하세요.</p>
                     </>
                   ) : (
                     <>
                       <CloudUpload className="h-10 w-10 text-slate-500 mb-3" />
-                      <p className="text-sm font-semibold text-slate-100 mb-1">여기를 클릭하거나 파일을 드래그하세요</p>
+                      <p className="text-sm font-semibold text-slate-900 mb-1">여기를 클릭하거나 파일을 드래그하세요</p>
                       <p className="text-xs text-slate-400">CSV, Excel 파일 지원</p>
                     </>
                   )}
@@ -362,7 +362,7 @@ export default function ReportsPage() {
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"
-                    className="border-bs text-slate-300"
+                    className="border-bs text-slate-600"
                     onClick={() => {
                       setIsImportDialogOpen(false);
                       setSelectedFile(null);
@@ -384,13 +384,13 @@ export default function ReportsPage() {
           <Button
             variant="outline"
             size="sm"
-            className="border-bd bg-pn text-slate-300 hover:bg-el hover:text-slate-100"
+            className="border-bd bg-pn text-slate-600 hover:bg-el hover:text-slate-900"
             onClick={() => queryClient.invalidateQueries({ queryKey: ["reports"] })}
           >
             <RefreshCcw className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">갱신</span>
           </Button>
-          <Button size="sm" className="bg-el text-slate-200 hover:bg-slate-700">
+          <Button size="sm" className="bg-el text-slate-700 hover:bg-slate-700">
             <FileDown className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">내보내기</span>
           </Button>
@@ -416,7 +416,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="category" className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리</label>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger id="category" className="bg-el border-bs text-slate-200">
+              <SelectTrigger id="category" className="bg-el border-bs text-slate-700">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -430,7 +430,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="team" className="text-xs font-medium uppercase tracking-wider text-slate-500">팀 / 조직</label>
             <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-              <SelectTrigger id="team" className="bg-el border-bs text-slate-200">
+              <SelectTrigger id="team" className="bg-el border-bs text-slate-700">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -443,7 +443,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="vendor" className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더</label>
             <Select value={selectedVendor} onValueChange={setSelectedVendor}>
-              <SelectTrigger id="vendor" className="bg-el border-bs text-slate-200">
+              <SelectTrigger id="vendor" className="bg-el border-bs text-slate-700">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -457,7 +457,7 @@ export default function ReportsPage() {
           <div className="space-y-1">
             <label htmlFor="budget" className="text-xs font-medium uppercase tracking-wider text-slate-500">예산</label>
             <Select value={selectedBudget} onValueChange={setSelectedBudget}>
-              <SelectTrigger id="budget" className="bg-el border-bs text-slate-200">
+              <SelectTrigger id="budget" className="bg-el border-bs text-slate-700">
                 <SelectValue placeholder="전체" />
               </SelectTrigger>
               <SelectContent>
@@ -492,13 +492,13 @@ export default function ReportsPage() {
         <div className="bg-pn border border-dashed border-bs rounded-lg min-h-[400px] flex items-center justify-center">
           <div className="text-center py-16">
             <BarChart2 className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-            <p className="text-sm font-medium text-slate-300 mb-1">데이터가 없습니다</p>
+            <p className="text-sm font-medium text-slate-600 mb-1">데이터가 없습니다</p>
             <p className="text-xs text-slate-500 mb-4">필터를 설정하거나 CSV 파일을 업로드하여 리포트를 생성하세요.</p>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setIsImportDialogOpen(true)}
-              className="border-bs text-slate-300 hover:bg-el"
+              className="border-bs text-slate-600 hover:bg-el"
             >
               <CloudUpload className="h-4 w-4 mr-1.5" />
               데이터 가져오기
@@ -525,7 +525,7 @@ export default function ReportsPage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">지출 변화 원인</span>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-100 leading-tight">
+                  <p className="text-lg font-bold text-slate-900 leading-tight">
                     {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
                     {insights.trendDelta > 0 && <ArrowUpRight className="inline h-4 w-4 text-red-400 ml-1" />}
                     {insights.trendDelta < 0 && <ArrowDownRight className="inline h-4 w-4 text-emerald-400 ml-1" />}
@@ -546,7 +546,7 @@ export default function ReportsPage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">이상치 감지</span>
                 </div>
                 <div>
-                  <p className={`text-lg font-bold leading-tight ${insights.outlierCount > 0 ? "text-amber-400" : "text-slate-100"}`}>
+                  <p className={`text-lg font-bold leading-tight ${insights.outlierCount > 0 ? "text-amber-400" : "text-slate-900"}`}>
                     {insights.outlierCount}건
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
@@ -565,7 +565,7 @@ export default function ReportsPage() {
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">비용 집중 구간</span>
                 </div>
                 <div>
-                  <p className={`text-lg font-bold leading-tight ${insights.concentrationPct >= 60 ? "text-amber-400" : "text-slate-100"}`}>
+                  <p className={`text-lg font-bold leading-tight ${insights.concentrationPct >= 60 ? "text-amber-400" : "text-slate-900"}`}>
                     {insights.concentrationPct}%
                   </p>
                   <p className="text-xs text-slate-400 mt-1">
@@ -610,7 +610,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리별 분석</p>
                 <Link href="/dashboard/purchases">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     카테고리 검토 →
                   </Button>
                 </Link>
@@ -652,7 +652,7 @@ export default function ReportsPage() {
                     const pct = totalAmount > 0 ? Math.round((cat.value / totalAmount) * 100) : 0;
                     return (
                       <div key={cat.name} className="flex items-center justify-between text-xs">
-                        <span className="text-slate-300 truncate mr-2">{cat.name}</span>
+                        <span className="text-slate-600 truncate mr-2">{cat.name}</span>
                         <div className="flex items-center gap-2">
                           <div className="w-20 h-1.5 bg-el rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
@@ -671,7 +671,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">공급사별 분석</p>
                 <Link href="/app/compare">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     벤더 비교 →
                   </Button>
                 </Link>
@@ -714,7 +714,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">기간별 추이</p>
                 <Link href="/dashboard/purchases">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     구매내역 필터 →
                   </Button>
                 </Link>
@@ -744,7 +744,7 @@ export default function ReportsPage() {
                   <Activity className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>
                     최근 월 대비{" "}
-                    <span className={insights.trendDelta > 0 ? "text-red-400 font-medium" : insights.trendDelta < 0 ? "text-emerald-400 font-medium" : "text-slate-300"}>
+                    <span className={insights.trendDelta > 0 ? "text-red-400 font-medium" : insights.trendDelta < 0 ? "text-emerald-400 font-medium" : "text-slate-600"}>
                       {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
                     </span>
                     {" "}변동
@@ -758,7 +758,7 @@ export default function ReportsPage() {
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 대비 실적</p>
                 <Link href="/dashboard/budget">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el h-7 px-2">
+                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     예산 관리 →
                   </Button>
                 </Link>
@@ -768,7 +768,7 @@ export default function ReportsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">사용 금액</span>
-                      <span className="text-slate-200 font-mono">
+                      <span className="text-slate-700 font-mono">
                         {formatCurrency(budgetUsage.used)} / {formatCurrency(budgetUsage.total)}
                       </span>
                     </div>
@@ -798,11 +798,11 @@ export default function ReportsPage() {
                   <div className="grid grid-cols-2 gap-3 w-full mt-3">
                     <div className="bg-el rounded-md p-3 text-center">
                       <p className="text-xs text-slate-500 mb-1">총 지출</p>
-                      <p className="text-sm font-bold text-slate-100 font-mono">{formatCurrency(totalAmount, "KRW")}</p>
+                      <p className="text-sm font-bold text-slate-900 font-mono">{formatCurrency(totalAmount, "KRW")}</p>
                     </div>
                     <div className="bg-el rounded-md p-3 text-center">
                       <p className="text-xs text-slate-500 mb-1">건수 / 거래처</p>
-                      <p className="text-sm font-bold text-slate-100 font-mono">{itemCount}건 / {vendorCount}개</p>
+                      <p className="text-sm font-bold text-slate-900 font-mono">{itemCount}건 / {vendorCount}개</p>
                     </div>
                   </div>
                 </div>
@@ -837,17 +837,17 @@ export default function ReportsPage() {
                       const isOutlier = unitPrice > insights.avgUnitPrice * 2 && insights.avgUnitPrice > 0;
                       return (
                         <TableRow key={index} className="border-b border-bd/50 hover:bg-el/30">
-                          <TableCell className="py-3 text-xs text-slate-300">
+                          <TableCell className="py-3 text-xs text-slate-600">
                             {formatDate(item.date || item.purchaseDate, { format: "date" })}
                           </TableCell>
-                          <TableCell className="py-3 text-xs text-slate-200">{item.productName || item.product || "-"}</TableCell>
+                          <TableCell className="py-3 text-xs text-slate-700">{item.productName || item.product || "-"}</TableCell>
                           <TableCell className="py-3 text-xs text-slate-400">{item.vendorName || item.vendor || "-"}</TableCell>
-                          <TableCell className="py-3 text-xs text-slate-300 text-right">{item.quantity ?? "-"}</TableCell>
-                          <TableCell className={`py-3 text-xs text-right font-mono ${isOutlier ? "text-amber-400" : "text-slate-300"}`}>
+                          <TableCell className="py-3 text-xs text-slate-600 text-right">{item.quantity ?? "-"}</TableCell>
+                          <TableCell className={`py-3 text-xs text-right font-mono ${isOutlier ? "text-amber-400" : "text-slate-600"}`}>
                             {formatCurrency(unitPrice, "KRW")}
                             {isOutlier && <AlertTriangle className="inline h-3 w-3 ml-1" />}
                           </TableCell>
-                          <TableCell className="py-3 text-xs text-right font-mono font-medium text-slate-100">
+                          <TableCell className="py-3 text-xs text-right font-mono font-medium text-slate-900">
                             {formatCurrency(item.totalAmount || item.amount || 0, "KRW")}
                           </TableCell>
                         </TableRow>

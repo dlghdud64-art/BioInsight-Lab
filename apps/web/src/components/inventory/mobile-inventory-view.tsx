@@ -254,7 +254,7 @@ function MobilePriorityQueue({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-bold text-slate-200">
+        <h3 className="text-sm font-bold text-slate-700">
           오늘 처리할 재고 작업
           <span className="ml-1.5 text-xs font-normal text-slate-500">{urgentItems.length}건</span>
         </h3>
@@ -276,7 +276,7 @@ function MobilePriorityQueue({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 mb-1">
                     <span className={`inline-block h-1.5 w-1.5 rounded-full ${statusCfg.dotCls}`} />
-                    <span className="text-sm font-semibold text-slate-100 truncate">{inv.product.name}</span>
+                    <span className="text-sm font-semibold text-slate-900 truncate">{inv.product.name}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px] text-slate-500">
                     <span>{inv.currentQuantity} {inv.unit}</span>
@@ -312,7 +312,7 @@ function MobilePriorityQueue({
         <button
           type="button"
           onClick={() => setExpanded((v) => !v)}
-          className="w-full flex items-center justify-center gap-1 py-2 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          className="w-full flex items-center justify-center gap-1 py-2 text-xs text-slate-500 hover:text-slate-600 transition-colors"
         >
           {expanded ? "접기" : `더보기 (+${urgentItems.length - 3}건)`}
           <ChevronDown className={`h-3 w-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
@@ -345,7 +345,7 @@ function MobileItemCard({
     >
       {/* Row 1: Name + Status */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <h4 className="text-sm font-semibold text-slate-100 leading-snug line-clamp-2 flex-1">
+        <h4 className="text-sm font-semibold text-slate-900 leading-snug line-clamp-2 flex-1">
           {inv.product.name}
         </h4>
         <Badge className={`text-[10px] px-1.5 py-0 border shrink-0 ${statusCfg.badgeCls}`}>
@@ -361,7 +361,7 @@ function MobileItemCard({
           <span className={`font-semibold ${
             status === "danger" ? "text-red-400" :
             status === "low" ? "text-orange-400" :
-            "text-slate-200"
+            "text-slate-700"
           }`}>
             {inv.currentQuantity}
           </span>
@@ -476,7 +476,7 @@ function MobileDetailSheet({
               </Badge>
             )}
           </div>
-          <SheetTitle className="text-lg font-bold text-slate-100 leading-snug">
+          <SheetTitle className="text-lg font-bold text-slate-900 leading-snug">
             {inv.product.name}
           </SheetTitle>
           {inv.product.brand && (
@@ -497,28 +497,28 @@ function MobileDetailSheet({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div>
                 <span className="text-slate-600">Lot #</span>
-                <p className="font-mono font-medium text-slate-300 mt-0.5">{inv.lotNumber || "-"}</p>
+                <p className="font-mono font-medium text-slate-600 mt-0.5">{inv.lotNumber || "-"}</p>
               </div>
               <div>
                 <span className="text-slate-600">수량</span>
-                <p className="font-medium text-slate-300 mt-0.5">
+                <p className="font-medium text-slate-600 mt-0.5">
                   <span className={
                     status === "danger" ? "text-red-400" :
                     status === "low" ? "text-orange-400" :
-                    "text-slate-200"
+                    "text-slate-700"
                   }>{inv.currentQuantity}</span> {inv.unit}
                   {inv.safetyStock != null && <span className="text-slate-600 ml-1">/ 안전 {inv.safetyStock}</span>}
                 </p>
               </div>
               <div>
                 <span className="text-slate-600">유효기간</span>
-                <p className="font-medium text-slate-300 mt-0.5">
+                <p className="font-medium text-slate-600 mt-0.5">
                   {inv.expiryDate ? format(new Date(inv.expiryDate), "yyyy.MM.dd") : "-"}
                 </p>
               </div>
               <div>
                 <span className="text-slate-600">상태</span>
-                <p className="font-medium text-slate-300 mt-0.5">{inv.inUseOrUnopened || "-"}</p>
+                <p className="font-medium text-slate-600 mt-0.5">{inv.inUseOrUnopened || "-"}</p>
               </div>
             </div>
           </section>
@@ -532,11 +532,11 @@ function MobileDetailSheet({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div>
                 <span className="text-slate-600">보관 위치</span>
-                <p className="font-medium text-slate-300 mt-0.5">{inv.location || "미지정"}</p>
+                <p className="font-medium text-slate-600 mt-0.5">{inv.location || "미지정"}</p>
               </div>
               <div>
                 <span className="text-slate-600">보관 조건</span>
-                <p className="font-medium text-slate-300 mt-0.5">
+                <p className="font-medium text-slate-600 mt-0.5">
                   {inv.storageCondition ? getStorageConditionLabel(inv.storageCondition) : "-"}
                 </p>
               </div>
@@ -552,19 +552,19 @@ function MobileDetailSheet({
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
               <div>
                 <span className="text-slate-600">공급사</span>
-                <p className="font-medium text-slate-300 mt-0.5">{inv.vendor || "-"}</p>
+                <p className="font-medium text-slate-600 mt-0.5">{inv.vendor || "-"}</p>
               </div>
               <div>
                 <span className="text-slate-600">납기</span>
-                <p className="font-medium text-slate-300 mt-0.5">{inv.deliveryPeriod || "-"}</p>
+                <p className="font-medium text-slate-600 mt-0.5">{inv.deliveryPeriod || "-"}</p>
               </div>
               <div>
                 <span className="text-slate-600">최소 주문</span>
-                <p className="font-medium text-slate-300 mt-0.5">{inv.minOrderQty ?? "-"} {inv.minOrderQty ? inv.unit : ""}</p>
+                <p className="font-medium text-slate-600 mt-0.5">{inv.minOrderQty ?? "-"} {inv.minOrderQty ? inv.unit : ""}</p>
               </div>
               <div>
                 <span className="text-slate-600">용도</span>
-                <p className="font-medium text-slate-300 mt-0.5 line-clamp-1">{inv.testPurpose || "-"}</p>
+                <p className="font-medium text-slate-600 mt-0.5 line-clamp-1">{inv.testPurpose || "-"}</p>
               </div>
             </div>
           </section>
@@ -590,7 +590,7 @@ function MobileDetailSheet({
               </div>
               <div>
                 <span className="text-slate-600">자동 재주문</span>
-                <p className="font-medium text-slate-300 mt-0.5">
+                <p className="font-medium text-slate-600 mt-0.5">
                   {inv.autoReorderEnabled ? "활성화" : "비활성화"}
                 </p>
               </div>
@@ -738,7 +738,7 @@ export function MobileInventoryView({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="품목명, 제조사, Lot..."
-          className="w-full h-10 rounded-xl border border-bd bg-pn px-4 text-sm text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+          className="w-full h-10 rounded-xl border border-bd bg-pn px-4 text-sm text-slate-700 placeholder:text-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
         />
       </div>
 

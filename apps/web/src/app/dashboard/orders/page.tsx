@@ -119,12 +119,12 @@ function POConversionContent() {
       <div className="shrink-0">
         <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
           <div className="flex items-center gap-2">
-            <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-200 tracking-tight">LabAxis</span></Link>
+            <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
             <div className="w-px h-5 bg-bd" />
             <span className="text-xs md:text-sm font-medium text-slate-400">발주 실행</span>
           </div>
           <div className="flex items-center gap-3">
-            {selected && <span className="text-lg font-bold tabular-nums text-slate-100 hidden sm:block">₩{activeTotal.toLocaleString("ko-KR")}</span>}
+            {selected && <span className="text-lg font-bold tabular-nums text-slate-900 hidden sm:block">₩{activeTotal.toLocaleString("ko-KR")}</span>}
             <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${
               canCreate ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/30" : "text-amber-400 bg-amber-600/10 border-amber-600/30"
             }`}>
@@ -158,8 +158,8 @@ function POConversionContent() {
           {/* Block A: Line Item 확정 */}
           <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
             <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between" style={{ backgroundColor: '#434548' }}>
-              <span className="text-xs font-medium text-slate-200">발주 대상 품목 ({activeItems.length}/{selected.items.length}건)</span>
-              <span className="text-xs tabular-nums text-slate-100 font-semibold">₩{activeTotal.toLocaleString("ko-KR")}</span>
+              <span className="text-xs font-medium text-slate-700">발주 대상 품목 ({activeItems.length}/{selected.items.length}건)</span>
+              <span className="text-xs tabular-nums text-slate-900 font-semibold">₩{activeTotal.toLocaleString("ko-KR")}</span>
             </div>
             <table className="w-full text-xs">
               <thead>
@@ -179,11 +179,11 @@ function POConversionContent() {
                   const excluded = excludedItems.has(key);
                   return (
                     <tr key={idx} className={`border-b border-bd/30 last:border-0 ${excluded ? "opacity-40" : ""}`}>
-                      <td className="px-4 py-2 text-slate-200 truncate max-w-[200px]">{item.name}</td>
+                      <td className="px-4 py-2 text-slate-700 truncate max-w-[200px]">{item.name}</td>
                       <td className="px-2 py-2 text-slate-500 font-mono">{item.catalogNumber}</td>
-                      <td className="px-2 py-2 text-slate-200 tabular-nums text-right">×{item.quantity}</td>
+                      <td className="px-2 py-2 text-slate-700 tabular-nums text-right">×{item.quantity}</td>
                       <td className="px-2 py-2 text-slate-400 tabular-nums text-right">₩{item.unitPrice.toLocaleString("ko-KR")}</td>
-                      <td className="px-2 py-2 text-slate-100 tabular-nums text-right font-medium">₩{item.lineTotal.toLocaleString("ko-KR")}</td>
+                      <td className="px-2 py-2 text-slate-900 tabular-nums text-right font-medium">₩{item.lineTotal.toLocaleString("ko-KR")}</td>
                       <td className="px-2 py-2 text-slate-400 text-center">{item.leadTime}</td>
                       <td className="px-2 py-2 text-center">
                         <button onClick={() => setExcludedItems(prev => {
@@ -202,7 +202,7 @@ function POConversionContent() {
           {/* Block B: 발주 조건 확정 */}
           <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
             <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-              <span className="text-xs font-medium text-slate-200">발주 조건</span>
+              <span className="text-xs font-medium text-slate-700">발주 조건</span>
             </div>
             <div className="p-4 space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -225,14 +225,14 @@ function POConversionContent() {
           {/* Block C: 정책/문서/예산 가드 */}
           <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
             <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
-              <span className="text-xs font-medium text-slate-200">전환 가드</span>
+              <span className="text-xs font-medium text-slate-700">전환 가드</span>
             </div>
             <div className="p-4 space-y-2">
               {/* Approval guard */}
               <div className="flex items-center justify-between px-3 py-2 rounded border border-bd bg-pn">
                 <div className="flex items-center gap-2 text-xs">
                   {approvalCleared ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
-                  <span className="text-slate-300">승인 확인</span>
+                  <span className="text-slate-600">승인 확인</span>
                 </div>
                 <span className={`text-[10px] ${approvalCleared ? "text-emerald-400" : "text-red-400"}`}>
                   {selected.approvalPolicy === "none" ? "승인 불필요" : selected.approvalStatus === "externally_approved" ? "외부 승인 확인됨" : "외부 승인 대기"}
@@ -242,7 +242,7 @@ function POConversionContent() {
               <div className="flex items-center justify-between px-3 py-2 rounded border border-bd bg-pn">
                 <div className="flex items-center gap-2 text-xs">
                   {activeItems.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
-                  <span className="text-slate-300">발주 대상</span>
+                  <span className="text-slate-600">발주 대상</span>
                 </div>
                 <span className={`text-[10px] ${activeItems.length > 0 ? "text-emerald-400" : "text-red-400"}`}>{activeItems.length}건 확정</span>
               </div>
@@ -283,9 +283,9 @@ function POConversionContent() {
 
           {/* Block D: 최종 전환 요약 */}
           <div className="rounded-lg border border-emerald-600/20 bg-emerald-600/5 px-4 py-3">
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               <strong className="text-emerald-400">{selected.vendor}</strong> 기준 {activeItems.length}개 품목,
-              총 <strong className="text-slate-100">₩{activeTotal.toLocaleString("ko-KR")}</strong>,
+              총 <strong className="text-slate-900">₩{activeTotal.toLocaleString("ko-KR")}</strong>,
               납기 {selected.expectedDelivery},
               {canCreate ? " 발주 실행 가능" : " 실행 조건 확인 필요"}
             </p>
@@ -297,15 +297,15 @@ function POConversionContent() {
         <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#353739' }}>
           <div className="px-5 py-4 border-b border-bd">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">선택 근거</div>
-            <p className="text-xs text-slate-300">{selected.selectionReason}</p>
+            <p className="text-xs text-slate-600">{selected.selectionReason}</p>
           </div>
           <div className="px-5 py-3 border-b border-bd">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">발주 요약</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">공급사</span><span className="text-slate-200 font-medium">{selected.vendor}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">품목</span><span className="text-slate-200">{activeItems.length}건</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">총액</span><span className="text-slate-200 tabular-nums font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">납기</span><span className="text-slate-200">{selected.expectedDelivery}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">공급사</span><span className="text-slate-700 font-medium">{selected.vendor}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">품목</span><span className="text-slate-700">{activeItems.length}건</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">총액</span><span className="text-slate-700 tabular-nums font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">납기</span><span className="text-slate-700">{selected.expectedDelivery}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인</span>
                 <span className={approvalCleared ? "text-emerald-400" : "text-amber-400"}>
                   {selected.approvalPolicy === "none" ? "불필요" : approvalCleared ? "확인됨" : "외부 대기"}
@@ -348,7 +348,7 @@ function POConversionContent() {
               <span className={`text-[10px] ${canCreate ? "text-emerald-400" : "text-amber-400"}`}>
                 {canCreate ? "생성 가능" : `${unresolvedBlockers.length}건 확인`}
               </span>
-              <span className="text-xs tabular-nums text-slate-100 font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span>
+              <span className="text-xs tabular-nums text-slate-900 font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span>
             </div>
             <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40" disabled={!canCreate}>
               PO 생성

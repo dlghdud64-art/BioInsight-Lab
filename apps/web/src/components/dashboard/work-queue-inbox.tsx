@@ -142,14 +142,14 @@ export function WorkQueueInbox() {
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.10] bg-[#2c2e32] shadow-sm">
+    <div className="rounded-xl border border-white/[0.10] bg-slate-50 shadow-sm">
       {/* ── Compact Briefing Strip ── */}
       {activeItems.length === 0 ? (
         /* Empty: one-line operational brief */
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
             <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-            <span className="text-[13px] font-medium text-slate-200">현재 처리 필요 항목 없음</span>
+            <span className="text-[13px] font-medium text-slate-700">현재 처리 필요 항목 없음</span>
             <span className="text-[11px] text-slate-500 hidden sm:inline">· 운영 상태 정상</span>
           </div>
           <Button
@@ -168,7 +168,7 @@ export function WorkQueueInbox() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
               </span>
-              <span className="text-[13px] font-medium text-slate-200">처리 대기 {activeItems.length}건</span>
+              <span className="text-[13px] font-medium text-slate-700">처리 대기 {activeItems.length}건</span>
               <span className="text-[11px] text-slate-500 hidden sm:inline">
                 · {activeItems[0] ? (ACTIVITY_LABEL[activeItems[0].lastActivity ?? ""] || activeItems[0].description?.slice(0, 30) || "검토 필요") : ""}
               </span>
@@ -205,7 +205,7 @@ export function WorkQueueInbox() {
             {activeItems.length > 2 && (
               <button
                 onClick={() => router.push("/dashboard/work-queue")}
-                className="w-full text-center py-1.5 text-[11px] text-slate-500 hover:text-slate-300 font-medium transition-colors"
+                className="w-full text-center py-1.5 text-[11px] text-slate-500 hover:text-slate-600 font-medium transition-colors"
               >
                 +{activeItems.length - 2}건 더 보기
               </button>
@@ -296,7 +296,7 @@ function WorkQueueCard({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="text-sm font-medium text-slate-100 truncate">
+              <span className="text-sm font-medium text-slate-900 truncate">
                 {item.title}
               </span>
               <Badge variant="secondary" className={cn("text-[10px] px-1.5 py-0 leading-4", statusBadge.color)}>

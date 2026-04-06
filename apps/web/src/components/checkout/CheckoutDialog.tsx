@@ -79,14 +79,14 @@ function StepIndicator({
               </div>
               <span
                 className={`text-xs font-medium hidden sm:inline ${
-                  isActive ? "text-slate-100" : "text-slate-400"
+                  isActive ? "text-slate-900" : "text-slate-400"
                 }`}
               >
                 {getStepLabel(step)}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <ChevronRight className="h-3.5 w-3.5 text-slate-300 mx-1" />
+              <ChevronRight className="h-3.5 w-3.5 text-slate-600 mx-1" />
             )}
           </div>
         );
@@ -105,7 +105,7 @@ function OrderSummary({
 }) {
   return (
     <div className="bg-pg rounded-lg p-4 space-y-3">
-      <h3 className="text-sm font-semibold text-slate-100">주문 요약</h3>
+      <h3 className="text-sm font-semibold text-slate-900">주문 요약</h3>
       <Separator />
 
       {/* 플랜 비교 */}
@@ -239,7 +239,7 @@ function ConfirmStep({
       {(preview.featureChanges.gained.length > 0 ||
         preview.featureChanges.lost.length > 0) && (
         <div className="space-y-3">
-          <h4 className="text-sm font-medium text-slate-100">기능 변경 사항</h4>
+          <h4 className="text-sm font-medium text-slate-900">기능 변경 사항</h4>
           {preview.featureChanges.gained.length > 0 && (
             <div className="space-y-1.5">
               {preview.featureChanges.gained.map((feature) => (
@@ -448,7 +448,7 @@ function ReviewStep({
     <div className="space-y-4">
       {/* 변경 요약 */}
       <div className="p-3 rounded-lg bg-pg border border-bd space-y-2">
-        <h4 className="text-sm font-medium text-slate-100">변경 요약</h4>
+        <h4 className="text-sm font-medium text-slate-900">변경 요약</h4>
         <div className="grid grid-cols-2 gap-y-1.5 text-xs">
           <span className="text-slate-500">플랜</span>
           <span className="font-medium text-right">
@@ -477,7 +477,7 @@ function ReviewStep({
 
       {/* 청구 정보 요약 */}
       <div className="p-3 rounded-lg bg-pg border border-bd space-y-2">
-        <h4 className="text-sm font-medium text-slate-100">청구 정보</h4>
+        <h4 className="text-sm font-medium text-slate-900">청구 정보</h4>
         <div className="grid grid-cols-2 gap-y-1.5 text-xs">
           <span className="text-slate-500">회사명</span>
           <span className="font-medium text-right">{billingInfo.companyName}</span>
@@ -527,7 +527,7 @@ function CompleteStep({
         <CheckCircle2 className="h-6 w-6 text-emerald-600" />
       </div>
       <div>
-        <h3 className="text-lg font-semibold text-slate-100">
+        <h3 className="text-lg font-semibold text-slate-900">
           플랜 변경이 완료되었습니다
         </h3>
         <p className="text-sm text-slate-500 mt-1">

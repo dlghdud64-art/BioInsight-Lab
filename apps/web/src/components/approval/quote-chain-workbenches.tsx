@@ -45,7 +45,7 @@ export function QuoteChainProgressStrip({ surface, onStageClick, visibilityMode 
   return (
     <div className={cn("flex items-center gap-1 px-3 py-2 rounded bg-slate-900 border border-slate-800 overflow-x-auto", className)}>
       <div className="flex items-center gap-0.5 text-[10px] text-slate-500 shrink-0 mr-2">
-        <span className="tabular-nums font-medium text-slate-300">{surface.overallProgress}%</span>
+        <span className="tabular-nums font-medium text-slate-600">{surface.overallProgress}%</span>
       </div>
       {filteredStages.map((stage, idx) => {
         const isCompleted = surface.completedStages.includes(stage.stage);
@@ -120,12 +120,12 @@ export function QuoteApprovalWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">견적 승인 요청</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-200">{vendorName}</p></div>
-            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-100">{totalAmount.toLocaleString()}원</p></div>
-            <div><span className="text-slate-500 text-xs">라인</span><p className="text-slate-200">{lineCount}건</p></div>
-            <div><span className="text-slate-500 text-xs">견적 참조</span><p className="text-slate-300 text-xs font-mono">{quoteRef}</p></div>
-            <div><span className="text-slate-500 text-xs">요청자</span><p className="text-slate-200">{requestedBy}</p></div>
-            <div><span className="text-slate-500 text-xs">요청일</span><p className="text-slate-200">{new Date(requestedAt).toLocaleDateString("ko-KR")}</p></div>
+            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-700">{vendorName}</p></div>
+            <div><span className="text-slate-500 text-xs">금액</span><p className="text-sm font-semibold tabular-nums text-slate-900">{totalAmount.toLocaleString()}원</p></div>
+            <div><span className="text-slate-500 text-xs">라인</span><p className="text-slate-700">{lineCount}건</p></div>
+            <div><span className="text-slate-500 text-xs">견적 참조</span><p className="text-slate-600 text-xs font-mono">{quoteRef}</p></div>
+            <div><span className="text-slate-500 text-xs">요청자</span><p className="text-slate-700">{requestedBy}</p></div>
+            <div><span className="text-slate-500 text-xs">요청일</span><p className="text-slate-700">{new Date(requestedAt).toLocaleDateString("ko-KR")}</p></div>
           </div>
         </div>
 
@@ -143,7 +143,7 @@ export function QuoteApprovalWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
           <label className="text-xs font-medium uppercase tracking-wider text-slate-500">결정 사유</label>
           <textarea value={reason} onChange={e => setReason(e.target.value)} placeholder="승인/거부 사유..."
-            className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none" rows={3} />
+            className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none" rows={3} />
         </div>
       </div>
 
@@ -154,7 +154,7 @@ export function QuoteApprovalWorkbench({
         {surface.approvalInfo && (
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs">
             <span className="text-slate-500">승인 기준:</span>
-            <p className="text-slate-300 mt-0.5">{surface.approvalInfo.reason}</p>
+            <p className="text-slate-600 mt-0.5">{surface.approvalInfo.reason}</p>
           </div>
         )}
       </div>
@@ -209,8 +209,8 @@ export function POConversionWorkbench({
         <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">PO 전환</h3>
           <div className="grid grid-cols-2 gap-3 text-sm">
-            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-200">{vendorName}</p></div>
-            <div><span className="text-slate-500 text-xs">총액</span><p className="text-sm font-semibold tabular-nums text-slate-100">{totalAmount.toLocaleString()}원</p></div>
+            <div><span className="text-slate-500 text-xs">공급사</span><p className="text-slate-700">{vendorName}</p></div>
+            <div><span className="text-slate-500 text-xs">총액</span><p className="text-sm font-semibold tabular-nums text-slate-900">{totalAmount.toLocaleString()}원</p></div>
           </div>
         </div>
 
@@ -224,7 +224,7 @@ export function POConversionWorkbench({
             </tr></thead>
             <tbody>
               {lineItems.map((item, i) => (
-                <tr key={i} className="border-b border-slate-800/50"><td className="px-3 py-1.5 text-slate-200">{item.name}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{item.qty}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{item.unitPrice.toLocaleString()}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-200">{item.total.toLocaleString()}</td></tr>
+                <tr key={i} className="border-b border-slate-800/50"><td className="px-3 py-1.5 text-slate-700">{item.name}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{item.qty}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{item.unitPrice.toLocaleString()}</td><td className="px-3 py-1.5 text-right tabular-nums text-slate-700">{item.total.toLocaleString()}</td></tr>
               ))}
             </tbody>
           </table>

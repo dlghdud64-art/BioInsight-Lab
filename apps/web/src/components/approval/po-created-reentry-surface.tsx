@@ -135,15 +135,15 @@ export function POCreatedReentrySurface({
           <div className="grid grid-cols-3 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">PO 번호</span>
-              <p className="text-slate-200 font-mono">{poNumber || state.poCreatedObjectId || "미할당"}</p>
+              <p className="text-slate-700 font-mono">{poNumber || state.poCreatedObjectId || "미할당"}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">공급사</span>
-              <p className="text-slate-200">{vendorName}</p>
+              <p className="text-slate-700">{vendorName}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">금액</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalAmount.toLocaleString()}원</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalAmount.toLocaleString()}원</p>
             </div>
           </div>
         </div>
@@ -154,27 +154,27 @@ export function POCreatedReentrySurface({
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="flex justify-between">
               <span className="text-slate-500">Status</span>
-              <span className="text-slate-300">{state.poCreatedStatus.replace(/_/g, " ")}</span>
+              <span className="text-slate-600">{state.poCreatedStatus.replace(/_/g, " ")}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">Substatus</span>
-              <span className="text-slate-300">{state.substatus.replace(/_/g, " ")}</span>
+              <span className="text-slate-600">{state.substatus.replace(/_/g, " ")}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">공급사 수</span>
-              <span className="text-slate-300 tabular-nums">{state.createdVendorCount}</span>
+              <span className="text-slate-600 tabular-nums">{state.createdVendorCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">라인 수</span>
-              <span className="text-slate-300 tabular-nums">{state.createdLineCount}</span>
+              <span className="text-slate-600 tabular-nums">{state.createdLineCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">상업 필드</span>
-              <span className="text-slate-300 tabular-nums">{state.createdCommercialFieldCount}</span>
+              <span className="text-slate-600 tabular-nums">{state.createdCommercialFieldCount}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">운영 필드</span>
-              <span className="text-slate-300 tabular-nums">{state.createdOperationalFieldCount}</span>
+              <span className="text-slate-600 tabular-nums">{state.createdOperationalFieldCount}</span>
             </div>
           </div>
           {state.missingFieldCount > 0 && (
@@ -214,15 +214,15 @@ export function POCreatedReentrySurface({
           <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Created Basis</h5>
           <div className="flex justify-between">
             <span className="text-slate-500">결제 조건</span>
-            <span className="text-slate-300">{state.createdBasis.paymentTerm || "미설정"}</span>
+            <span className="text-slate-600">{state.createdBasis.paymentTerm || "미설정"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">납품 대상</span>
-            <span className="text-slate-300 truncate ml-2">{state.createdBasis.deliveryTarget || "미설정"}</span>
+            <span className="text-slate-600 truncate ml-2">{state.createdBasis.deliveryTarget || "미설정"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">배송처</span>
-            <span className="text-slate-300 truncate ml-2">{state.createdBasis.shipToReference || "미설정"}</span>
+            <span className="text-slate-600 truncate ml-2">{state.createdBasis.shipToReference || "미설정"}</span>
           </div>
         </div>
 
@@ -249,7 +249,7 @@ export function POCreatedReentrySurface({
               </button>
             )}
             {onHold && decisionOptions.canHold && (
-              <button onClick={onHold} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={onHold} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 보류
               </button>
             )}

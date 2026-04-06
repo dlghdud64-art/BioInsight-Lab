@@ -19,9 +19,9 @@ export function EmptyState({
   return (
     <div className={cn("text-center py-12", className)}>
       {Icon && (
-        <Icon className="h-12 w-12 mx-auto text-slate-300 mb-3" />
+        <Icon className="h-12 w-12 mx-auto text-slate-600 mb-3" />
       )}
-      <p className="text-sm font-medium text-slate-100 mb-1">
+      <p className="text-sm font-medium text-slate-900 mb-1">
         {title}
       </p>
       {description && (

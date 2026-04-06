@@ -239,7 +239,7 @@ function InventoryScanContent() {
                       <p className="text-xs text-blue-500">{inventory.unit || "개"} (현재)</p>
                     </div>
                     <div className="bg-el rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-slate-300">
+                      <p className="text-2xl font-bold text-slate-600">
                         {inventory.safetyStock ?? "—"}
                       </p>
                       <p className="text-xs text-slate-500">안전 재고</p>

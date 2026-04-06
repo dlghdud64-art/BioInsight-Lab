@@ -50,9 +50,9 @@ function statColor(key: keyof TodayHeaderStats): string {
     case "myWorkCount":
       return "text-blue-300";
     case "teamWorkCount":
-      return "text-slate-300";
+      return "text-slate-600";
     default:
-      return "text-slate-300";
+      return "text-slate-600";
   }
 }
 
@@ -94,7 +94,7 @@ export function TodayHubStrip() {
     <div className="bg-slate-900 border border-slate-800 rounded-lg p-3 space-y-2">
       {/* Header stats strip */}
       <div className="flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-slate-300 shrink-0">
+        <span className="text-xs font-semibold text-slate-600 shrink-0">
           운영 현황
         </span>
         <span className="text-slate-700">|</span>
@@ -146,7 +146,7 @@ export function TodayHubStrip() {
               <span className="text-[10px] text-slate-500">
                 {DASHBOARD_ITEM_TYPE_LABELS[item.itemType]}
               </span>
-              <span className="text-slate-200 font-medium truncate">
+              <span className="text-slate-700 font-medium truncate">
                 {item.title}
               </span>
               <span className="text-slate-500 ml-auto shrink-0 text-[10px]">

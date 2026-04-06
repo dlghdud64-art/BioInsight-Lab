@@ -103,7 +103,7 @@ function TermChangeRow({ change }: { change: SupplierProposedChange }) {
       <div className="mt-1 flex items-center gap-2">
         <span className="text-slate-500">{change.originalValue}</span>
         <span className="text-slate-600">→</span>
-        <span className="text-slate-200">{change.proposedValue}</span>
+        <span className="text-slate-700">{change.proposedValue}</span>
       </div>
       {change.changeReason && (
         <p className="text-[10px] text-slate-500 mt-1">{change.changeReason}</p>
@@ -134,7 +134,7 @@ export function SupplierConfirmationWorkbench({
             pulse={surface.status === "awaiting_response"}
           />
           <div className="min-w-0">
-            <p className="text-sm font-medium text-slate-200">{surface.primaryMessage}</p>
+            <p className="text-sm font-medium text-slate-700">{surface.primaryMessage}</p>
             {surface.deadlineMessage && (
               <p className={cn("text-[10px] mt-0.5", surface.isOverdue ? "text-red-400" : "text-slate-500")}>
                 {surface.deadlineMessage}
@@ -208,7 +208,7 @@ export function SupplierConfirmationWorkbench({
         {state.responseSnapshot?.supplierMessage && (
           <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
             <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">공급사 메시지</h4>
-            <p className="text-xs text-slate-300">{state.responseSnapshot.supplierMessage}</p>
+            <p className="text-xs text-slate-600">{state.responseSnapshot.supplierMessage}</p>
           </div>
         )}
 
@@ -220,7 +220,7 @@ export function SupplierConfirmationWorkbench({
               value={notes}
               onChange={e => setNotes(e.target.value)}
               placeholder="수락/보정 사유..."
-              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
+              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
               rows={3}
             />
           </div>
@@ -234,15 +234,15 @@ export function SupplierConfirmationWorkbench({
           <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">발송 기준</h5>
           <div className="flex justify-between">
             <span className="text-slate-500">PO 번호</span>
-            <span className="text-slate-300 font-mono">{poNumber}</span>
+            <span className="text-slate-600 font-mono">{poNumber}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">공급사</span>
-            <span className="text-slate-300">{vendorName}</span>
+            <span className="text-slate-600">{vendorName}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">발송 금액</span>
-            <span className="text-slate-300 tabular-nums">{totalAmount.toLocaleString()}원</span>
+            <span className="text-slate-600 tabular-nums">{totalAmount.toLocaleString()}원</span>
           </div>
           <div className="flex justify-between">
             <span className="text-slate-500">Payload Snapshot</span>
@@ -273,15 +273,15 @@ export function SupplierConfirmationWorkbench({
             <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">응답 정보</h5>
             <div className="flex justify-between">
               <span className="text-slate-500">응답자</span>
-              <span className="text-slate-300">{state.responseSnapshot.respondedBy}</span>
+              <span className="text-slate-600">{state.responseSnapshot.respondedBy}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">채널</span>
-              <span className="text-slate-300">{state.responseSnapshot.responseChannel}</span>
+              <span className="text-slate-600">{state.responseSnapshot.responseChannel}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500">수신 시각</span>
-              <span className="text-slate-300 text-[10px]">
+              <span className="text-slate-600 text-[10px]">
                 {new Date(state.responseSnapshot.receivedAt).toLocaleString("ko-KR")}
               </span>
             </div>
@@ -327,7 +327,7 @@ export function SupplierConfirmationWorkbench({
               </button>
             )}
             {onRequestCorrection && surface.canRequestCorrection && (
-              <button onClick={() => onRequestCorrection(notes)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={() => onRequestCorrection(notes)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 보정 요청
               </button>
             )}

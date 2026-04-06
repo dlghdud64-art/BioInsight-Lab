@@ -250,7 +250,7 @@ function ScannerContent() {
     return (
       <div className="flex flex-col gap-5 py-2 px-2">
         <div className="bg-slate-800 rounded-xl p-4">
-          <p className="font-semibold text-slate-200 text-sm">
+          <p className="font-semibold text-slate-700 text-sm">
             {inventoryResult.product.name}
           </p>
           <p className="text-xs text-slate-500 mt-0.5">
@@ -261,7 +261,7 @@ function ScannerContent() {
 
         <div className="space-y-3">
           <div>
-            <label className="text-sm font-medium text-slate-300 mb-1 block">
+            <label className="text-sm font-medium text-slate-600 mb-1 block">
               사용 수량 *
             </label>
             <div className="flex items-center gap-2">
@@ -286,7 +286,7 @@ function ScannerContent() {
           </div>
 
           <div>
-            <label className="text-sm font-medium text-slate-300 mb-1 block">
+            <label className="text-sm font-medium text-slate-600 mb-1 block">
               메모 (선택)
             </label>
             <Input
@@ -346,7 +346,7 @@ function ScannerContent() {
 
         {/* 제품 기본 정보 */}
         <div>
-          <h3 className="font-bold text-slate-100 text-base leading-snug">
+          <h3 className="font-bold text-slate-900 text-base leading-snug">
             {inventoryResult.product.name}
           </h3>
           <p className="text-sm text-slate-500 mt-0.5">
@@ -366,7 +366,7 @@ function ScannerContent() {
             </p>
           </div>
           <div className="bg-slate-800 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-slate-300">
+            <p className="text-2xl font-bold text-slate-600">
               {inventoryResult.safetyStock ?? "—"}
             </p>
             <p className="text-xs text-slate-500">안전 재고</p>

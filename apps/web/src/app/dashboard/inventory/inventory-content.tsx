@@ -1003,7 +1003,7 @@ function InventoryPageContent() {
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
-          <h1 className="text-xl font-bold tracking-tight text-slate-100">재고 관리</h1>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">재고 관리</h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
@@ -1096,7 +1096,7 @@ function InventoryPageContent() {
         {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
         <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex flex-col space-y-0.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-100">재고 관리</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">재고 관리</h1>
             <p className="text-muted-foreground text-xs hidden sm:block">
               실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.
             </p>
@@ -1236,14 +1236,14 @@ function InventoryPageContent() {
           <div className="flex items-center gap-1 mb-4">
             <button
               onClick={() => setActiveInventoryTab("manage")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "manage" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "manage" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-white/5"}`}
             >
               <ListFilter className="w-3.5 h-3.5" />
               품목 관리
             </button>
             <button
               onClick={() => setActiveInventoryTab("overview")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "overview" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "overview" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-white/5"}`}
             >
               <LayoutGrid className="w-3.5 h-3.5" />
               운영 현황
@@ -1255,14 +1255,14 @@ function InventoryPageContent() {
             </button>
             <button
               onClick={() => setActiveInventoryTab("storage-location")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "storage-location" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "storage-location" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-white/5"}`}
             >
               <MapPin className="w-3.5 h-3.5" />
               보관 위치
             </button>
             <button
               onClick={() => setActiveInventoryTab("flow")}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "flow" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-200 hover:bg-white/5"}`}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeInventoryTab === "flow" ? "bg-blue-600 text-white shadow-sm" : "text-slate-400 hover:text-slate-700 hover:bg-white/5"}`}
             >
               <Truck className="w-3.5 h-3.5" />
               입출고 흐름
@@ -1553,7 +1553,7 @@ function InventoryPageContent() {
                     <Package className="h-3 w-3 text-slate-400" />
                   </div>
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-slate-300">
+                <div className="text-2xl font-bold tracking-tight text-slate-600">
                   {totalInventoryCount}
                   <span className="ml-1 text-sm font-normal text-slate-500">건</span>
                 </div>
@@ -1588,7 +1588,7 @@ function InventoryPageContent() {
             {/* 조치 필요 항목 — execution strip */}
             <Card className="shadow-sm border-amber-500/15 bg-pn">
               <CardHeader className="pb-3">
-                <CardTitle className="flex items-center text-sm font-bold text-slate-100">
+                <CardTitle className="flex items-center text-sm font-bold text-slate-900">
                   <Zap className="mr-2 h-4 w-4 text-amber-400" />
                   조치 필요 항목
                   <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-amber-500/30 bg-amber-500/10 text-amber-400">{issuesCount}건</Badge>
@@ -1683,7 +1683,7 @@ function InventoryPageContent() {
                             {/* Line 1: 배지 + 품목명 + D-day */}
                             <div className="flex items-center gap-2">
                               <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
-                              <h5 className="text-sm font-bold text-slate-100 truncate flex-1">
+                              <h5 className="text-sm font-bold text-slate-900 truncate flex-1">
                                 {inv.product.name}
                               </h5>
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
@@ -1695,7 +1695,7 @@ function InventoryPageContent() {
                               <span className={`font-semibold ${
                                 inv.currentQuantity === 0 ? "text-red-400" :
                                 (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
-                                "text-slate-300"
+                                "text-slate-600"
                               }`}>{inv.currentQuantity}</span> {inv.unit}
                               {inv.safetyStock != null && <span className="text-slate-500"> / 안전재고 {inv.safetyStock}</span>}
                               {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && <span className="text-slate-500"> · {format(new Date(inv.expiryDate), "MM.dd")} 만료</span>}
@@ -1788,7 +1788,7 @@ function InventoryPageContent() {
                                 <Button
                                   size="sm"
                                   variant="ghost"
-                                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-300 hover:bg-slate-700 shrink-0"
+                                  className="h-7 w-7 p-0 text-slate-500 hover:text-slate-600 hover:bg-slate-700 shrink-0"
                                 >
                                   <MoreVertical className="h-3.5 w-3.5" />
                                 </Button>
@@ -2259,7 +2259,7 @@ function InventoryPageContent() {
                   {selectedItem && (
                     <div className="rounded-lg border border-blue-800 bg-blue-950/20  border-blue-800  bg-blue-950/20 p-3">
                       <h4 className="text-xs font-semibold text-blue-400  text-blue-400 mb-1.5">매칭된 기존 재고</h4>
-                      <p className="text-sm font-medium text-slate-200  text-slate-200">{selectedItem.product.name}</p>
+                      <p className="text-sm font-medium text-slate-700  text-slate-700">{selectedItem.product.name}</p>
                       <p className="text-xs text-slate-500 mt-0.5">
                         현재 {selectedItem.currentQuantity} {selectedItem.unit} · {selectedItem.product.brand} · {selectedItem.product.catalogNumber}
                       </p>
@@ -2323,7 +2323,7 @@ function InventoryPageContent() {
 
                   {/* 재고 반영 방식 선택 */}
                   <div className="rounded-lg border border-bs p-3">
-                    <h4 className="text-xs font-semibold text-slate-300 mb-2">재고 반영 방식</h4>
+                    <h4 className="text-xs font-semibold text-slate-600 mb-2">재고 반영 방식</h4>
                     <div className="space-y-2">
                       <label className="flex items-center gap-2.5 cursor-pointer">
                         <input
@@ -2334,7 +2334,7 @@ function InventoryPageContent() {
                           className="w-4 h-4 text-emerald-600"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-200  text-slate-200">기존 재고에 합산</span>
+                          <span className="text-sm font-medium text-slate-700  text-slate-700">기존 재고에 합산</span>
                           <p className="text-[10px] text-slate-400">같은 Product에 수량 추가</p>
                         </div>
                       </label>
@@ -2347,7 +2347,7 @@ function InventoryPageContent() {
                           className="w-4 h-4 text-emerald-600"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-200  text-slate-200">새 Lot로 추가</span>
+                          <span className="text-sm font-medium text-slate-700  text-slate-700">새 Lot로 추가</span>
                           <p className="text-[10px] text-slate-400">InventoryRestock 이력 생성</p>
                         </div>
                       </label>
@@ -2449,7 +2449,7 @@ function InventoryPageContent() {
                   </SheetTitle>
                   <SheetDescription className="flex items-center gap-2 text-sm text-slate-400  text-slate-400 mt-0.5">
                     <span>{selectedItem.product.brand ?? "-"}</span>
-                    <span className="text-slate-300  text-slate-400">|</span>
+                    <span className="text-slate-600  text-slate-400">|</span>
                     <span className="font-mono text-xs">
                       {selectedItem.product.catalogNumber ?? "-"}
                     </span>
@@ -2467,7 +2467,7 @@ function InventoryPageContent() {
                     </div>
                     <div className="rounded-md bg-pn/50 px-3 py-2">
                       <p className="text-[10px] text-slate-500  text-slate-400">유효 기한</p>
-                      <p className="text-sm font-bold text-slate-100 mt-0.5">
+                      <p className="text-sm font-bold text-slate-900 mt-0.5">
                         {selectedItem.expiryDate
                           ? format(new Date(selectedItem.expiryDate), "yyyy.MM.dd", { locale: ko })
                           : "-"}
@@ -2477,7 +2477,7 @@ function InventoryPageContent() {
 
                   {/* ── 기본 정보 + 관리 정보: 2단 그리드 배치 ── */}
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       기본 정보
                     </h4>
@@ -2502,7 +2502,7 @@ function InventoryPageContent() {
                   </div>
 
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <Info className="mr-1.5 h-3 w-3 text-slate-400" />
                       관리 정보
                     </h4>
@@ -2528,11 +2528,11 @@ function InventoryPageContent() {
 
                   {/* ── 특이사항: min-h 축소 ── */}
                   <div>
-                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-300 uppercase tracking-wide">
+                    <h4 className="mb-1.5 flex items-center text-xs font-semibold text-slate-600 uppercase tracking-wide">
                       <FileText className="mr-1.5 h-3 w-3 text-slate-400" />
                       특이사항
                     </h4>
-                    <div className="rounded-md border border-blue-900 bg-blue-950/30 px-3 py-2 text-xs leading-relaxed text-slate-300 min-h-[40px]">
+                    <div className="rounded-md border border-blue-900 bg-blue-950/30 px-3 py-2 text-xs leading-relaxed text-slate-600 min-h-[40px]">
                       {selectedItem.notes || "등록된 특이사항이 없습니다."}
                     </div>
                   </div>
@@ -2542,7 +2542,7 @@ function InventoryPageContent() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="flex items-center gap-1.5">
                         <BellRing className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                        <span className="text-xs font-semibold text-slate-100">안전 재고 기준</span>
+                        <span className="text-xs font-semibold text-slate-900">안전 재고 기준</span>
                       </div>
                       <div className="flex items-center gap-1.5">
                         <Input
@@ -2599,7 +2599,7 @@ function InventoryPageContent() {
                   {/* 입고 이력 토글 섹션 */}
                   <div className="border-t border-bd  border-bd pt-4">
                     <button
-                      className="flex w-full items-center justify-between text-sm font-medium text-slate-300 hover:text-slate-100 transition-colors"
+                      className="flex w-full items-center justify-between text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
                       onClick={() => setShowRestockHistory((v) => !v)}
                     >
                       <span className="flex items-center gap-2">
@@ -2875,7 +2875,7 @@ function InventoryPageContent() {
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 text-sm">
-                        <span className="font-mono font-semibold text-slate-300">
+                        <span className="font-mono font-semibold text-slate-600">
                           {lot.lotNumber || "Lot 미지정"}
                         </span>
                         <span className="text-xs text-slate-400">·</span>
@@ -3396,7 +3396,7 @@ function InventoryPageContent() {
             <PackagePlus className="h-3.5 w-3.5" />
             재고 등록
           </Button>
-          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-el text-slate-100 hover:bg-slate-200 shadow-sm" onClick={openQRScanner}>
+          <Button size="sm" className="flex-1 h-11 text-xs gap-1.5 bg-el text-slate-900 hover:bg-slate-200 shadow-sm" onClick={openQRScanner}>
             <TrendingDown className="h-3.5 w-3.5" />
             재고 차감
           </Button>
@@ -3416,7 +3416,7 @@ function InventoryPageContent() {
             style={{ backgroundColor: "#1a1f2e" }}
           >
             <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-            <span className="text-sm font-medium text-slate-100">재고가 등록되었습니다.</span>
+            <span className="text-sm font-medium text-slate-900">재고가 등록되었습니다.</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -4033,7 +4033,7 @@ function TeamInventoryCard({
             className={`flex-1 ${
               isLocationMissing
                 ? "text-amber-400 font-semibold"
-                : "text-slate-300"
+                : "text-slate-600"
             }`}
           >
             {inventory.location || "미지정"}

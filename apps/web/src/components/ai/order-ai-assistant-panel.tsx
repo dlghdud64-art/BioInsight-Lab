@@ -80,7 +80,7 @@ export function OrderAiAssistantPanel({
         >
           {/* ═══ 1. 헤더 ═══ */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-bd/50 flex-shrink-0">
-            <SheetTitle className="text-base font-bold text-slate-100">
+            <SheetTitle className="text-base font-bold text-slate-900">
               {state === "empty" && "주문 추적 도우미"}
               {state === "loading" && "주문 추적 도우미"}
               {state === "success" && "주문 추적 도우미"}
@@ -264,7 +264,7 @@ function ErrorState({
       <div className="rounded-full bg-red-950/30 p-4 mb-4">
         <TriangleAlert className="h-8 w-8 text-red-500" />
       </div>
-      <p className="text-sm font-medium text-slate-300">
+      <p className="text-sm font-medium text-slate-600">
         주문 분석에 실패했습니다
       </p>
       <p className="text-xs text-slate-500 mt-1.5 max-w-[260px]">
@@ -343,12 +343,12 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
 
   return (
     <div className="p-5">
-      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+      <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">
         주문 요약
       </h4>
 
       {/* 제목 */}
-      <p className="text-sm font-medium text-slate-200 mb-3">
+      <p className="text-sm font-medium text-slate-700 mb-3">
         {order.quoteTitle}
       </p>
 
@@ -380,19 +380,19 @@ function OrderSummarySection({ order }: { order: OrderAiPanelData["order"] }) {
         {order.vendorName && (
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <Building2 className="h-3.5 w-3.5 text-slate-400" />
-            <span>벤더: <span className="font-medium text-slate-300">{order.vendorName}</span></span>
+            <span>벤더: <span className="font-medium text-slate-600">{order.vendorName}</span></span>
           </div>
         )}
         {order.expectedDelivery && (
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <CalendarClock className="h-3.5 w-3.5 text-slate-400" />
-            <span>배송 예정: <span className="font-medium text-slate-300">{formatDate(order.expectedDelivery)}</span></span>
+            <span>배송 예정: <span className="font-medium text-slate-600">{formatDate(order.expectedDelivery)}</span></span>
           </div>
         )}
         {order.itemCount > 0 && (
           <div className="flex items-center gap-2 text-[11px] text-slate-400">
             <Package className="h-3.5 w-3.5 text-slate-400" />
-            <span>품목: <span className="font-medium text-slate-300">{order.itemCount}건</span></span>
+            <span>품목: <span className="font-medium text-slate-600">{order.itemCount}건</span></span>
           </div>
         )}
       </div>
@@ -421,7 +421,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
     <div className={`p-5 ${errors.length > 0 ? "bg-red-950/10" : "bg-amber-950/10"}`}>
       <div className="flex items-center gap-2 mb-3">
         <ShieldAlert className={`h-4 w-4 ${errors.length > 0 ? "text-red-500" : "text-amber-500"}`} />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           확인 필요한 이슈
         </h4>
         <Badge
@@ -460,7 +460,7 @@ function IssueWarningsSection({ issues }: { issues: OrderIssue[] }) {
                   }`}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-300">
+                  <p className="text-xs font-medium text-slate-600">
                     {issue.message}
                   </p>
                   {issue.detail && (
@@ -504,7 +504,7 @@ function FollowUpDraftSection({
   return (
     <div className="p-5">
       <div className="flex items-center justify-between mb-3">
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           Follow-up 이메일 초안
         </h4>
       </div>
@@ -534,7 +534,7 @@ function FollowUpDraftSection({
       <div className="rounded-lg border border-bd bg-pn/30 p-3.5 mb-3">
         <div className="flex items-center gap-2 mb-2">
           <Mail className="h-3.5 w-3.5 text-slate-400" />
-          <span className="text-xs font-medium text-slate-300 truncate">
+          <span className="text-xs font-medium text-slate-600 truncate">
             {draft.emailSubject}
           </span>
         </div>
@@ -595,7 +595,7 @@ function FollowUpDraftSection({
 function VendorResponseSection({ responses }: { responses: VendorResponseSummary[] }) {
   return (
     <div className="p-5">
-      <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">
+      <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider mb-3">
         벤더 회신 요약
       </h4>
 
@@ -608,7 +608,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Building2 className="h-3.5 w-3.5 text-slate-400" />
-                <span className="text-sm font-medium text-slate-200">
+                <span className="text-sm font-medium text-slate-700">
                   {resp.vendorName}
                 </span>
               </div>
@@ -631,7 +631,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
                   </span>
                   <div className="flex items-center gap-2 text-slate-400">
                     {item.unitPrice != null && (
-                      <span className="font-medium text-slate-300">
+                      <span className="font-medium text-slate-600">
                         ₩{item.unitPrice.toLocaleString()}
                       </span>
                     )}
@@ -658,7 +658,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
               {resp.overallLeadTime != null && (
                 <span>
                   납기{" "}
-                  <span className="font-medium text-slate-300">
+                  <span className="font-medium text-slate-600">
                     {resp.overallLeadTime}일
                   </span>
                 </span>
@@ -666,7 +666,7 @@ function VendorResponseSection({ responses }: { responses: VendorResponseSummary
               {resp.totalQuoted != null && (
                 <span>
                   총액{" "}
-                  <span className="font-medium text-slate-300">
+                  <span className="font-medium text-slate-600">
                     ₩{resp.totalQuoted.toLocaleString()}
                   </span>
                 </span>
@@ -710,7 +710,7 @@ function StatusTransitionSection({
     <div className="p-5">
       <div className="flex items-center gap-2 mb-3">
         <ArrowRightLeft className="h-4 w-4 text-blue-500" />
-        <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+        <h4 className="text-xs font-semibold text-slate-600 uppercase tracking-wider">
           상태 변경 제안
         </h4>
       </div>
@@ -731,7 +731,7 @@ function StatusTransitionSection({
         </div>
 
         {/* 사유 */}
-        <p className="text-xs text-slate-300 mb-2">
+        <p className="text-xs text-slate-600 mb-2">
           {proposal.reason}
         </p>
 

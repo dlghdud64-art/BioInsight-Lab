@@ -311,7 +311,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             {selectedFile ? (
               <>
                 <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
-                <h3 className="text-lg font-semibold mb-2 text-slate-100">
+                <h3 className="text-lg font-semibold mb-2 text-slate-900">
                   {selectedFile.name}
                 </h3>
                 <p className="text-sm text-gray-600 mb-4">
@@ -321,7 +321,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
             ) : (
               <>
                 <CloudUpload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-                <h3 className="text-lg font-semibold mb-2 text-slate-100">
+                <h3 className="text-lg font-semibold mb-2 text-slate-900">
                   여기를 클릭하거나 파일을 드래그하세요
                 </h3>
                 <p className="text-sm text-gray-500 mb-4">
@@ -338,7 +338,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
                 e.stopPropagation();
                 downloadSampleTemplate();
               }}
-              className="text-xs text-gray-500 hover:text-slate-300 underline"
+              className="text-xs text-gray-500 hover:text-slate-600 underline"
             >
               양식이 필요하신가요? 샘플 파일 다운로드
             </button>

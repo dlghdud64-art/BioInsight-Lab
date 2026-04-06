@@ -99,15 +99,15 @@ export function ReceivingWorkbench({
           <div className="grid grid-cols-4 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">총 라인</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{lines.length}건</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{lines.length}건</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">예상 수량</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalExpected}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalExpected}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">입고 수량</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalReceived}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalReceived}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">미완료</span>
@@ -136,10 +136,10 @@ export function ReceivingWorkbench({
             <tbody>
               {lines.map((line) => (
                 <tr key={line.lineId} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                  <td className="px-3 py-1.5 text-slate-300">{line.lineId}</td>
-                  <td className="px-3 py-1.5 text-slate-200 max-w-[120px] truncate">{line.productIdentity}</td>
+                  <td className="px-3 py-1.5 text-slate-600">{line.lineId}</td>
+                  <td className="px-3 py-1.5 text-slate-700 max-w-[120px] truncate">{line.productIdentity}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-slate-400">{line.expectedQty}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-200">{line.receivedQty}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-700">{line.receivedQty}</td>
                   <td className="px-3 py-1.5 text-slate-400">{line.unit}</td>
                   <td className="px-3 py-1.5 text-slate-400 font-mono text-[10px]">{line.lotNumber || "—"}</td>
                   <td className="px-3 py-1.5 text-slate-400">{line.expiryDate || "—"}</td>

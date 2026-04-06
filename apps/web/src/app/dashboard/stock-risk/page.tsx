@@ -85,7 +85,7 @@ const RISK_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 const URGENCY_BADGE: Record<string, { label: string; className: string }> = {
-  low: { label: "낮음", className: "bg-slate-700/60 text-slate-300 border-slate-600" },
+  low: { label: "낮음", className: "bg-slate-700/60 text-slate-600 border-slate-600" },
   medium: { label: "보통", className: "bg-blue-900/40 text-blue-300 border-blue-700" },
   high: { label: "높음", className: "bg-amber-900/40 text-amber-300 border-amber-700" },
   critical: { label: "긴급", className: "bg-red-900/40 text-red-300 border-red-700" },
@@ -231,7 +231,7 @@ export default function StockRiskPage() {
       <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-lg font-bold text-slate-100">재고 위험 관리</h1>
+            <h1 className="text-lg font-bold text-slate-900">재고 위험 관리</h1>
             <p className="text-xs text-slate-500 mt-0.5">{orientation.role}</p>
           </div>
           <p className="text-xs text-slate-400 max-w-xs text-right">
@@ -256,7 +256,7 @@ export default function StockRiskPage() {
                 className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/60 border border-slate-700/50 text-xs hover:border-slate-600 transition-colors"
               >
                 <span className="text-slate-500">{meta.label}</span>
-                <span className="font-mono font-medium text-slate-200 tabular-nums">
+                <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
               </Link>
@@ -277,7 +277,7 @@ export default function StockRiskPage() {
               <ArrowRight className="h-3 w-3" />
             </>
           )}
-          <span className="text-slate-300 font-medium">{orientation.stages}</span>
+          <span className="text-slate-600 font-medium">{orientation.stages}</span>
         </div>
       </div>
 
@@ -323,7 +323,7 @@ export default function StockRiskPage() {
                   className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
                       ? "border-blue-500 text-blue-300"
-                      : "border-transparent text-slate-500 hover:text-slate-300"
+                      : "border-transparent text-slate-500 hover:text-slate-600"
                   }`}
                 >
                   {tab.label}
@@ -370,7 +370,7 @@ export default function StockRiskPage() {
                     className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-slate-200">
+                      <span className="text-sm font-medium text-slate-700">
                         {ds.label}
                       </span>
                       <span className="text-xs font-mono text-teal-400 tabular-nums">
@@ -397,7 +397,7 @@ export default function StockRiskPage() {
 
       <div className="border-t border-slate-800 pt-5 space-y-4">
         <div className="flex items-start justify-between">
-          <h2 className="text-sm font-semibold text-slate-300">상세 재고 현황</h2>
+          <h2 className="text-sm font-semibold text-slate-600">상세 재고 현황</h2>
         </div>
 
         {/* Ownership strip */}
@@ -425,7 +425,7 @@ export default function StockRiskPage() {
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 detailTab === tab.key
                   ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-300"
+                  : "border-transparent text-slate-500 hover:text-slate-600"
               }`}
             >
               {tab.label}
@@ -480,12 +480,12 @@ export default function StockRiskPage() {
                             key={sp.id}
                             className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
                           >
-                            <td className="px-4 py-3 text-slate-200">{sp.inventoryItemId}</td>
+                            <td className="px-4 py-3 text-slate-700">{sp.inventoryItemId}</td>
                             <td className="px-4 py-3 text-slate-400 text-xs">{sp.locationId ?? "-"}</td>
                             <td className="px-4 py-3 text-right">
                               <span
                                 className={`font-mono ${
-                                  ratio < 0.5 ? "text-red-400" : ratio < 1 ? "text-amber-400" : "text-slate-200"
+                                  ratio < 0.5 ? "text-red-400" : ratio < 1 ? "text-amber-400" : "text-slate-700"
                                 }`}
                               >
                                 {sp.availableQuantity}
@@ -502,7 +502,7 @@ export default function StockRiskPage() {
                                     ? "text-red-400"
                                     : coverageDays <= 21
                                       ? "text-amber-400"
-                                      : "text-slate-300"
+                                      : "text-slate-600"
                                 }`}
                               >
                                 {coverageDays}일
@@ -555,18 +555,18 @@ export default function StockRiskPage() {
                             key={rr.id}
                             className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
                           >
-                            <td className="px-4 py-3 text-slate-200">{rr.inventoryItemId}</td>
+                            <td className="px-4 py-3 text-slate-700">{rr.inventoryItemId}</td>
                             <td className="px-4 py-3 text-slate-400">{rr.recommendationType.replace(/_/g, " ")}</td>
                             <td className="px-4 py-3">
                               <Badge variant="outline" className={`text-xs ${uBadge.className}`}>
                                 {uBadge.label}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-slate-300">
+                            <td className="px-4 py-3 text-slate-600">
                               {rr.recommendedOrderQuantity} {rr.recommendedUnit}
                             </td>
                             <td className="px-4 py-3 text-slate-400">{rr.preferredVendorId ?? "-"}</td>
-                            <td className="px-4 py-3 text-right font-mono text-slate-300">
+                            <td className="px-4 py-3 text-right font-mono text-slate-600">
                               {rr.budgetImpactEstimate
                                 ? `₩${rr.budgetImpactEstimate.amount.toLocaleString("ko-KR")}`
                                 : "-"}
@@ -666,7 +666,7 @@ export default function StockRiskPage() {
                             key={ea.id}
                             className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
                           >
-                            <td className="px-4 py-3 text-slate-200">{ea.inventoryItemId}</td>
+                            <td className="px-4 py-3 text-slate-700">{ea.inventoryItemId}</td>
                             <td className="px-4 py-3 font-mono text-slate-400">{ea.lotNumber}</td>
                             <td className="px-4 py-3">
                               <Badge
@@ -687,7 +687,7 @@ export default function StockRiskPage() {
                                 {ea.daysToExpiry}일
                               </span>
                             </td>
-                            <td className="px-4 py-3 text-slate-300">
+                            <td className="px-4 py-3 text-slate-600">
                               {ea.affectedQuantity} {ea.unit}
                             </td>
                             <td className="px-4 py-3">
@@ -698,7 +698,7 @@ export default function StockRiskPage() {
                                     ? "bg-green-900/40 text-green-300 border-green-700"
                                     : ea.status === "in_progress"
                                       ? "bg-amber-900/40 text-amber-300 border-amber-700"
-                                      : "bg-slate-700/60 text-slate-300 border-slate-600"
+                                      : "bg-slate-700/60 text-slate-600 border-slate-600"
                                 }`}
                               >
                                 {ea.status === "completed"
@@ -762,7 +762,7 @@ function PriorityCard({
         <span
           className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
         />
-        <span className="text-xs font-mono text-slate-300 truncate">
+        <span className="text-xs font-mono text-slate-600 truncate">
           {item.title}
         </span>
       </div>
@@ -817,7 +817,7 @@ function ActionableRow({
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-200 font-mono truncate">
+          <span className="text-sm text-slate-700 font-mono truncate">
             {item.title}
           </span>
           <span

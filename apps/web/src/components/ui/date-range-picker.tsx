@@ -236,7 +236,7 @@ export function DateRangePicker({
                   key={p.key}
                   type="button"
                   onClick={() => handlePreset(p.key)}
-                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-bd border-bs bg-pn bg-el text-slate-300 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700  hover:bg-blue-950/30  hover:text-blue-400 transition-colors"
+                  className="px-3 py-1.5 rounded-full text-xs font-medium border border-bd border-bs bg-pn bg-el text-slate-600 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-700  hover:bg-blue-950/30  hover:text-blue-400 transition-colors"
                 >
                   {p.label}
                 </button>
@@ -287,7 +287,7 @@ export function DateRangePicker({
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
-              <span className="text-sm font-semibold text-slate-300">
+              <span className="text-sm font-semibold text-slate-600">
                 {format(mobileMonth, "yyyy년 M월", { locale: ko })}
               </span>
               <Button
@@ -309,13 +309,13 @@ export function DateRangePicker({
               <p className="text-xs text-slate-500">
                 {mobileTempDate?.from ? (
                   <>
-                    <span className="font-medium text-slate-300">
+                    <span className="font-medium text-slate-600">
                       {format(mobileTempDate.from, "MM.dd", { locale: ko })}
                     </span>
                     {mobileTempDate.to ? (
                       <>
                         {" ~ "}
-                        <span className="font-medium text-slate-300">
+                        <span className="font-medium text-slate-600">
                           {format(mobileTempDate.to, "MM.dd", { locale: ko })}
                         </span>
                       </>

@@ -53,7 +53,7 @@ export function BioInsightLogo({
       {showText && (
         <div className="leading-tight">
           <div className="flex items-baseline gap-0">
-            <span className={cn(textClass, isDark ? "text-white" : "text-slate-100")}>
+            <span className={cn(textClass, isDark ? "text-white" : "text-slate-900")}>
               LabAxis
             </span>
           </div>

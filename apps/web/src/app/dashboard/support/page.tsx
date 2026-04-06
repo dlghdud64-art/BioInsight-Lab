@@ -37,12 +37,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 
 const FEATURE_CATEGORIES = [
-  { value: "search", label: "시약·장비 검색", icon: Search, color: "text-slate-400 bg-[#23262b]" },
-  { value: "quote", label: "견적 요청·비교", icon: ShoppingCart, color: "text-slate-400 bg-[#23262b]" },
-  { value: "inventory", label: "재고 관리", icon: Package, color: "text-slate-400 bg-[#23262b]" },
-  { value: "purchase", label: "구매 운영·이력", icon: BarChart3, color: "text-slate-400 bg-[#23262b]" },
-  { value: "team", label: "팀·조직 관리", icon: Users, color: "text-slate-400 bg-[#23262b]" },
-  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-400 bg-[#23262b]" },
+  { value: "search", label: "시약·장비 검색", icon: Search, color: "text-slate-400 bg-slate-100" },
+  { value: "quote", label: "견적 요청·비교", icon: ShoppingCart, color: "text-slate-400 bg-slate-100" },
+  { value: "inventory", label: "재고 관리", icon: Package, color: "text-slate-400 bg-slate-100" },
+  { value: "purchase", label: "구매 운영·이력", icon: BarChart3, color: "text-slate-400 bg-slate-100" },
+  { value: "team", label: "팀·조직 관리", icon: Users, color: "text-slate-400 bg-slate-100" },
+  { value: "account", label: "계정·결제", icon: Settings, color: "text-slate-400 bg-slate-100" },
 ];
 
 const PRIORITY_OPTIONS = [
@@ -165,9 +165,9 @@ export default function DashboardSupportPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         {/* ── 좌측: 문의 작성 ── */}
         <div className="space-y-5">
-          <div className="rounded-xl border border-[#2c2f35] bg-[#1c1e22] shadow-sm">
-            <div className="px-5 py-4 border-b border-[#2c2f35]">
-              <h2 className="text-[15px] font-semibold text-slate-100 flex items-center gap-2">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="px-5 py-4 border-b border-slate-200">
+              <h2 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
                 <LifeBuoy className="h-4 w-4 text-slate-400" />
                 문의 작성
               </h2>
@@ -176,7 +176,7 @@ export default function DashboardSupportPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* 관련 기능 선택 */}
                 <div className="space-y-2.5">
-                  <Label className="text-xs font-semibold text-slate-200">
+                  <Label className="text-xs font-semibold text-slate-700">
                     관련 기능 <span className="text-red-400/80 text-[10px]">필수</span>
                   </Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -191,7 +191,7 @@ export default function DashboardSupportPage() {
                           className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-blue-500/50 bg-blue-500/[0.08] ring-1 ring-blue-500/30"
-                              : "border-[#2c2f35] bg-[#22252a] hover:border-[#3a3d44] hover:bg-[#2A3240]"
+                              : "border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-50"
                           }`}
                         >
                           <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${
@@ -199,7 +199,7 @@ export default function DashboardSupportPage() {
                           }`}>
                             <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-blue-400" : ""}`} />
                           </div>
-                          <span className={`text-xs font-medium ${isSelected ? "text-blue-300" : "text-slate-300"}`}>
+                          <span className={`text-xs font-medium ${isSelected ? "text-blue-300" : "text-slate-600"}`}>
                             {cat.label}
                           </span>
                         </button>
@@ -210,7 +210,7 @@ export default function DashboardSupportPage() {
 
                 {/* 관련 리소스 연결 */}
                 <div className="space-y-2">
-                  <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-200">
+                  <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">
                     관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span>
                   </Label>
                   <Input
@@ -218,14 +218,14 @@ export default function DashboardSupportPage() {
                     placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
                     value={relatedResource}
                     onChange={(e) => setRelatedResource(e.target.value)}
-                    className="border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-slate-100"
                   />
                   <p className="text-[11px] text-slate-500">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
                 </div>
 
                 {/* 우선순위 */}
                 <div className="space-y-2.5">
-                  <Label className="text-xs font-semibold text-slate-200">우선순위</Label>
+                  <Label className="text-xs font-semibold text-slate-700">우선순위</Label>
                   <div className="flex gap-2">
                     {PRIORITY_OPTIONS.map((opt) => (
                       <button
@@ -239,7 +239,7 @@ export default function DashboardSupportPage() {
                               : opt.value === "medium"
                               ? "border-amber-500/30 bg-amber-500/[0.06] ring-1 ring-amber-500/20"
                               : "border-blue-500/30 bg-blue-500/[0.06] ring-1 ring-blue-500/20"
-                            : "border-[#2c2f35] bg-[#22252a] hover:bg-[#2A3240]"
+                            : "border-slate-200 bg-slate-50 hover:bg-slate-50"
                         }`}
                       >
                         <span className={`text-xs font-semibold ${
@@ -255,7 +255,7 @@ export default function DashboardSupportPage() {
 
                 {/* 제목 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-200">
+                  <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-700">
                     제목 <span className="text-red-400/80 text-[10px]">필수</span>
                   </Label>
                   <Input
@@ -263,13 +263,13 @@ export default function DashboardSupportPage() {
                     placeholder="이슈를 간단히 요약해주세요"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 h-10 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-slate-100"
                   />
                 </div>
 
                 {/* 내용 */}
                 <div className="space-y-2">
-                  <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-200">
+                  <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-700">
                     상세 내용 <span className="text-red-400/80 text-[10px]">필수</span>
                   </Label>
                   <Textarea
@@ -277,18 +277,18 @@ export default function DashboardSupportPage() {
                     placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
                     value={body}
                     onChange={(e) => setBody(e.target.value)}
-                    className="min-h-[160px] resize-none border-[#2c2f35] bg-[#2A3240] text-sm text-slate-200 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500/40 focus:bg-[#2c2f35]"
+                    className="min-h-[160px] resize-none border-slate-200 bg-slate-50 text-sm text-slate-700 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500 focus:bg-slate-100"
                   />
                 </div>
 
                 {/* 첨부파일 */}
                 <div className="space-y-2">
-                  <Label className="text-xs font-semibold text-slate-200">
+                  <Label className="text-xs font-semibold text-slate-700">
                     첨부파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개)</span>
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {attachments.map((file, idx) => (
-                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-[#2c2f35] bg-[#22252a] px-2.5 py-1.5 text-xs text-slate-300">
+                      <div key={idx} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">
                         <FileText className="h-3 w-3 text-slate-500" />
                         <span className="max-w-[120px] truncate">{file.name}</span>
                         <span className="text-[10px] text-slate-500">({(file.size / 1024).toFixed(0)}KB)</span>
@@ -298,7 +298,7 @@ export default function DashboardSupportPage() {
                       </div>
                     ))}
                     {attachments.length < 5 && (
-                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-[#3a3d44] bg-[#22252a] px-3 py-1.5 text-xs text-slate-500 hover:border-slate-500 hover:text-slate-400 cursor-pointer transition-colors">
+                      <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-500 hover:text-slate-400 cursor-pointer transition-colors">
                         <Paperclip className="h-3 w-3" />
                         파일 추가
                         <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
@@ -309,7 +309,7 @@ export default function DashboardSupportPage() {
                 </div>
 
                 {/* 제출 */}
-                <div className="pt-3 border-t border-[#2c2f35]">
+                <div className="pt-3 border-t border-slate-200">
                   <Button
                     type="submit"
                     className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-semibold h-10 px-6 gap-2 text-sm"
@@ -330,15 +330,15 @@ export default function DashboardSupportPage() {
         {/* ── 우측: 문의 이력 + 안내 ── */}
         <div className="space-y-5">
           {/* 문의 이력 */}
-          <div className="rounded-xl border border-[#2c2f35] bg-[#1a1c20] shadow-sm">
-            <div className="px-4 py-3 border-b border-[#2c2f35] flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-slate-700 flex items-center gap-2">
                 <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
                 내 문의 이력
               </h3>
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="text-[11px] text-slate-500 hover:text-slate-300 font-medium transition-colors"
+                className="text-[11px] text-slate-500 hover:text-slate-600 font-medium transition-colors"
               >
                 {showHistory ? "접기" : "전체 보기"}
               </button>
@@ -348,13 +348,13 @@ export default function DashboardSupportPage() {
                 {MOCK_TICKETS.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="rounded-lg border border-[#2c2f35] bg-[#22252a] px-3.5 py-3 hover:bg-[#2A3240] transition-colors cursor-pointer"
+                    className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-3 hover:bg-slate-50 transition-colors cursor-pointer"
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <span className="text-[10px] font-mono text-slate-600">{ticket.id}</span>
                       {getStatusBadge(ticket.status)}
                     </div>
-                    <p className="text-[13px] font-medium text-slate-200 leading-snug mb-2">{ticket.title}</p>
+                    <p className="text-[13px] font-medium text-slate-700 leading-snug mb-2">{ticket.title}</p>
                     <div className="flex items-center gap-3 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1">
                         <Clock className="h-2.5 w-2.5" />
@@ -364,14 +364,14 @@ export default function DashboardSupportPage() {
                       <span>{getCategoryLabel(ticket.category)}</span>
                     </div>
                     {ticket.status === "answered" && (
-                      <div className="mt-2.5 pt-2 border-t border-[#2c2f35] flex items-center gap-1.5 text-[11px] text-emerald-400/80 font-medium">
+                      <div className="mt-2.5 pt-2 border-t border-slate-200 flex items-center gap-1.5 text-[11px] text-emerald-400/80 font-medium">
                         <CheckCircle2 className="h-3 w-3" />
                         {ticket.answeredAt} 답변 완료
                         <ChevronRight className="h-3 w-3 ml-auto text-slate-600" />
                       </div>
                     )}
                     {ticket.status === "in_progress" && (
-                      <div className="mt-2.5 pt-2 border-t border-[#2c2f35] flex items-center gap-1.5 text-[11px] text-blue-400/80 font-medium">
+                      <div className="mt-2.5 pt-2 border-t border-slate-200 flex items-center gap-1.5 text-[11px] text-blue-400/80 font-medium">
                         <AlertCircle className="h-3 w-3" />
                         담당자 확인 중
                       </div>
@@ -388,30 +388,30 @@ export default function DashboardSupportPage() {
           </div>
 
           {/* 운영 안내 */}
-          <div className="rounded-xl border border-[#2c2f35] bg-[#1a1c20] shadow-sm">
-            <div className="px-4 py-3 border-b border-[#2c2f35]">
-              <h3 className="text-sm font-semibold text-slate-200">지원 안내</h3>
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="px-4 py-3 border-b border-slate-200">
+              <h3 className="text-sm font-semibold text-slate-700">지원 안내</h3>
             </div>
             <div className="px-4 py-3 space-y-3.5">
               <div className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-[#23262b] flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
                   <Clock className="h-3.5 w-3.5 text-slate-500" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-300">응답 시간</p>
+                  <p className="text-xs font-medium text-slate-600">응답 시간</p>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">평일 09:00–18:00 접수 기준, 당일 내 1차 확인</p>
                 </div>
               </div>
               <div className="flex items-start gap-2.5">
-                <div className="w-7 h-7 rounded-md bg-[#23262b] flex items-center justify-center flex-shrink-0">
+                <div className="w-7 h-7 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0">
                   <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-300">처리 프로세스</p>
+                  <p className="text-xs font-medium text-slate-600">처리 프로세스</p>
                   <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">접수 → 담당자 배정 → 확인 → 답변 → 완료</p>
                 </div>
               </div>
-              <div className="border-t border-[#2c2f35] pt-3">
+              <div className="border-t border-slate-200 pt-3">
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   긴급 이슈는 우선순위 '높음'으로 접수해주세요.
                   도입·요금 관련 문의는 <a href="/support" className="text-blue-400/80 hover:text-blue-300 hover:underline">도입 문의 페이지</a>를 이용해주세요.

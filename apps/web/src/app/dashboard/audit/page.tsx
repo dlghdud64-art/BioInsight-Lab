@@ -64,7 +64,7 @@ export default function AuditTrailPage() {
             <div className="flex flex-col items-center gap-4 text-center">
               <ShieldAlert className="h-12 w-12 text-amber-600" />
               <div>
-                <h3 className="font-semibold text-slate-100">접근 권한이 없습니다</h3>
+                <h3 className="font-semibold text-slate-900">접근 권한이 없습니다</h3>
                 <p className="text-sm text-slate-600 mt-1">
                   감사 증적은 관리자(Admin) 계정만 열람할 수 있습니다.
                 </p>
@@ -159,7 +159,7 @@ export default function AuditTrailPage() {
             <Lock className="h-4 w-4" />
             <span className="font-semibold tracking-tight text-sm">보안 및 컴플라이언스</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             감사 증적 (Audit Trail)
             <Lock className="h-6 w-6 text-slate-500" />
           </h2>
@@ -169,7 +169,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-pn hover:bg-el text-white  bg-el  text-slate-100  hover:bg-slate-200"
+            className="bg-pn hover:bg-el text-white  bg-el  text-slate-900  hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
@@ -201,13 +201,13 @@ export default function AuditTrailPage() {
                 className="hover:bg-pg  hover:bg-pn/50"
               >
                 <TableCell>
-                  <div className="font-mono text-sm font-medium text-slate-100">
+                  <div className="font-mono text-sm font-medium text-slate-900">
                     {log.time}
                   </div>
                   <div className="text-xs text-slate-400 mt-0.5">{log.id}</div>
                 </TableCell>
                 <TableCell>
-                  <div className="font-medium text-slate-100">{log.user}</div>
+                  <div className="font-medium text-slate-900">{log.user}</div>
                   <div className="text-xs text-slate-400 mt-0.5">
                     IP: {log.ip}
                   </div>
@@ -219,7 +219,7 @@ export default function AuditTrailPage() {
                   >
                     {log.action}
                   </Badge>
-                  <div className="text-sm font-medium text-slate-100">
+                  <div className="text-sm font-medium text-slate-900">
                     {log.target}
                   </div>
                 </TableCell>

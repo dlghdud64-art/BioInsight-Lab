@@ -122,7 +122,7 @@ export function TimelineRail({
                       <span className={`text-[10px] font-medium ${config.color}`}>{config.label}</span>
                       {event.severity === "critical" && <AlertCircle className="h-2.5 w-2.5 text-red-400" />}
                     </div>
-                    <p className="text-[11px] text-slate-300 leading-snug line-clamp-2">{event.summary}</p>
+                    <p className="text-[11px] text-slate-600 leading-snug line-clamp-2">{event.summary}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[9px] text-slate-500">{event.actor}</span>
                       <span className="text-[9px] text-slate-600">·</span>
@@ -152,7 +152,7 @@ export function TimelineRail({
               <div key={ev.evidenceId} className="flex items-center justify-between text-xs py-1">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <FileText className="h-3 w-3 text-slate-500 shrink-0" />
-                  <span className="text-slate-300 truncate">{ev.title}</span>
+                  <span className="text-slate-600 truncate">{ev.title}</span>
                 </div>
                 <Badge variant="secondary" className="text-[9px] bg-pn text-slate-500 border-bd shrink-0">
                   {EVIDENCE_TYPE_LABEL[ev.evidenceType] ?? ev.evidenceType}

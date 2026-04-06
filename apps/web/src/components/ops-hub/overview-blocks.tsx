@@ -39,7 +39,7 @@ export function BlockWrapper({ title, helperText, state, children, minHeight }: 
   return (
     <section style={{ minHeight: minHeight ? `${minHeight}px` : undefined }}>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-bold text-slate-100">{title}</h3>
+        <h3 className="text-sm font-bold text-slate-900">{title}</h3>
         {helperText && <span className="text-[10px] text-slate-500">{helperText}</span>}
       </div>
 
@@ -92,7 +92,7 @@ export function OverviewKpiGrid({ kpis }: { kpis: OverviewKpiCardViewModel[] }) 
       {kpis.map((k) => (
         <div key={k.key} className="bg-pn border border-bd rounded-xl p-3.5">
           <span className="text-[11px] font-medium text-slate-400 block mb-2">{k.title}</span>
-          <div className="text-2xl font-bold text-slate-100 mb-1">{k.value}</div>
+          <div className="text-2xl font-bold text-slate-900 mb-1">{k.value}</div>
           <div className="flex items-center justify-between">
             <span className="text-[10px] text-slate-500 truncate pr-2">{k.description}</span>
             <span className={`text-[10px] font-medium shrink-0 ${TONE_COLORS[k.tone]}`}>{k.statusLabel}</span>
@@ -110,13 +110,13 @@ export function OverviewKpiGrid({ kpis }: { kpis: OverviewKpiCardViewModel[] }) 
 export function StepFunnelBlock({ stages }: { stages: StepFunnelStageViewModel[] }) {
   return (
     <section>
-      <h3 className="text-sm font-bold text-slate-100 mb-3">작업 흐름 요약</h3>
+      <h3 className="text-sm font-bold text-slate-900 mb-3">작업 흐름 요약</h3>
       <div className="grid md:grid-cols-3 gap-3">
         {stages.map((s) => (
           <div key={s.key} className="bg-pn border border-bd rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-slate-300">{s.title}</span>
-              <span className="text-xl font-bold text-slate-100">{s.count}</span>
+              <span className="text-xs font-medium text-slate-600">{s.title}</span>
+              <span className="text-xl font-bold text-slate-900">{s.count}</span>
             </div>
             <p className="text-[11px] text-slate-500 mb-1">{s.description}</p>
             <p className="text-[10px] text-slate-500 mb-3">{s.subStatus}</p>
@@ -152,11 +152,11 @@ export function AlertsBlockContent({ items }: { items: AlertItemViewModel[] }) {
                 {alert.severityLabel}
               </span>
               <div>
-                <p className="text-xs font-medium text-slate-200">{alert.title}</p>
+                <p className="text-xs font-medium text-slate-700">{alert.title}</p>
                 <p className="text-[10px] text-slate-500">{alert.description}</p>
               </div>
             </div>
-            <Button asChild variant="ghost" size="sm" className="h-7 text-[11px] text-slate-400 hover:text-slate-200">
+            <Button asChild variant="ghost" size="sm" className="h-7 text-[11px] text-slate-400 hover:text-slate-700">
               <Link href={alert.linkHref}>{alert.ctaLabel} <ArrowRight className="h-3 w-3 ml-1" /></Link>
             </Button>
           </div>
@@ -176,8 +176,8 @@ export function WorkQueueBlockContent({ sections }: { sections: WorkQueueSection
       {sections.map((s) => (
         <div key={s.id} className="bg-pn border border-bd rounded-xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-medium text-slate-200">{s.title}</span>
-            <Badge variant="secondary" className="bg-el text-slate-300 text-[10px]">{s.count}</Badge>
+            <span className="text-xs font-medium text-slate-700">{s.title}</span>
+            <Badge variant="secondary" className="bg-el text-slate-600 text-[10px]">{s.count}</Badge>
           </div>
           <p className="text-[10px] text-slate-500 mb-2">{s.description}</p>
           {s.details.length > 0 && (
@@ -185,7 +185,7 @@ export function WorkQueueBlockContent({ sections }: { sections: WorkQueueSection
               {s.details.map((d, i) => (
                 <div key={i} className="flex items-center justify-between text-[10px]">
                   <span className="text-slate-400">{d.label}</span>
-                  <span className="text-slate-300 font-medium">{d.count}건</span>
+                  <span className="text-slate-600 font-medium">{d.count}건</span>
                 </div>
               ))}
             </div>
@@ -208,22 +208,22 @@ export function ApprovalInboxBlockContent({ inbox }: { inbox: ApprovalInboxBlock
     <div className="grid md:grid-cols-3 gap-3">
       <div className="bg-pn border border-bd rounded-xl p-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-200">내가 처리할 승인</span>
-          <span className="text-lg font-bold text-slate-100">{inbox.pendingCount}</span>
+          <span className="text-xs font-medium text-slate-700">내가 처리할 승인</span>
+          <span className="text-lg font-bold text-slate-900">{inbox.pendingCount}</span>
         </div>
         <p className="text-[10px] text-slate-500 mb-3">{inbox.pendingDescription}</p>
         <Button variant="outline" size="sm" className="h-7 text-[11px] w-full border-bd">전체 승인 요청 보기</Button>
       </div>
       <div className="bg-pn border border-bd rounded-xl p-4">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-slate-200">내가 올린 요청</span>
-          <span className="text-lg font-bold text-slate-100">{inbox.myRequestsCount}</span>
+          <span className="text-xs font-medium text-slate-700">내가 올린 요청</span>
+          <span className="text-lg font-bold text-slate-900">{inbox.myRequestsCount}</span>
         </div>
         <p className="text-[10px] text-slate-500 mb-3">{inbox.myRequestsDescription}</p>
         <Button variant="outline" size="sm" className="h-7 text-[11px] w-full border-bd">내 요청 보기</Button>
       </div>
       <div className="bg-pn border border-bd rounded-xl p-4">
-        <span className="text-xs font-medium text-slate-200 block mb-2">최근 승인 결과</span>
+        <span className="text-xs font-medium text-slate-700 block mb-2">최근 승인 결과</span>
         {inbox.recentDecisions.length === 0 ? (
           <p className="text-[10px] text-slate-500">최근 승인/반려 기록 없음</p>
         ) : (
@@ -250,7 +250,7 @@ export function ActivityFeedBlockContent({ items }: { items: ActivityFeedItemVie
     <div className="bg-pn border border-bd rounded-xl divide-y divide-bd">
       {items.slice(0, 8).map((item) => (
         <div key={item.id} className="px-4 py-2.5">
-          <p className="text-xs text-slate-200">{item.action}</p>
+          <p className="text-xs text-slate-700">{item.action}</p>
           <p className="text-[10px] text-slate-500">{item.actor} · {item.timeFormatted}</p>
         </div>
       ))}
@@ -265,7 +265,7 @@ export function ActivityFeedBlockContent({ items }: { items: ActivityFeedItemVie
 export function QuickLinksBlock({ links }: { links: QuickLinkItemViewModel[] }) {
   return (
     <section>
-      <h3 className="text-sm font-bold text-slate-100 mb-3">빠른 이동</h3>
+      <h3 className="text-sm font-bold text-slate-900 mb-3">빠른 이동</h3>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
         {links.map((link) => (
           <Button key={link.href} asChild variant="outline" size="sm" className="h-8 text-[11px] border-bd justify-start">

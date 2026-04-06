@@ -281,12 +281,12 @@ export default function QuoteDetailPage() {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-slate-100">{vc.vendorName}</span>
+                    <span className="text-sm font-semibold text-slate-900">{vc.vendorName}</span>
                     <span className={cn(
                       "inline-flex px-2 py-0.5 rounded text-[11px] font-medium",
                       vc.statusTone === "success" ? "bg-emerald-500/10 text-emerald-400"
                         : vc.statusTone === "warning" ? "bg-amber-500/10 text-amber-400"
-                          : "bg-slate-700 text-slate-300",
+                          : "bg-slate-700 text-slate-600",
                     )}>
                       {vc.responseStatusLabel}
                     </span>
@@ -351,13 +351,13 @@ export default function QuoteDetailPage() {
                   {comparisonRows.map((row) => (
                     <tr key={row.requestItemId} className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/30 transition-colors">
                       <td className="px-3 py-2.5">
-                        <p className="text-slate-100 font-medium">{row.itemLabel}</p>
+                        <p className="text-slate-900 font-medium">{row.itemLabel}</p>
                         {row.issueSummary && <p className="text-amber-400 mt-0.5 text-[10px]">{row.issueSummary}</p>}
                       </td>
                       {row.vendorColumns.map((vc) => (
                         <td key={vc.vendorId} className="px-3 py-2.5">
                           <div className="space-y-1">
-                            {vc.priceLabel && <p className="text-slate-100 font-medium">{vc.priceLabel}</p>}
+                            {vc.priceLabel && <p className="text-slate-900 font-medium">{vc.priceLabel}</p>}
                             {vc.leadTimeLabel && (
                               <p className="text-slate-400 flex items-center gap-1">
                                 <Truck className="h-3 w-3" />

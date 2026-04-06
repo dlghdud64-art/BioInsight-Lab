@@ -143,24 +143,24 @@ export function ExceptionApprovalWorkbench({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">예외 ID</span>
-              <p className="text-slate-300 text-xs font-mono">{exceptionRecordId}</p>
+              <p className="text-slate-600 text-xs font-mono">{exceptionRecordId}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">발생 단계</span>
-              <p className="text-slate-200">{sourceStage}</p>
+              <p className="text-slate-700">{sourceStage}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">유형</span>
-              <p className="text-slate-200">{exceptionType}</p>
+              <p className="text-slate-700">{exceptionType}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">요청자</span>
-              <p className="text-slate-200">{requestedBy}</p>
+              <p className="text-slate-700">{requestedBy}</p>
             </div>
           </div>
           <div>
             <span className="text-slate-500 text-xs">상세</span>
-            <p className="text-sm text-slate-300 mt-0.5">{exceptionDetail}</p>
+            <p className="text-sm text-slate-600 mt-0.5">{exceptionDetail}</p>
           </div>
         </div>
 
@@ -170,17 +170,17 @@ export function ExceptionApprovalWorkbench({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">복구 액션</span>
-              <p className="text-slate-200">{recoveryAction || "미설정"}</p>
+              <p className="text-slate-700">{recoveryAction || "미설정"}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">사유</span>
-              <p className="text-slate-200">{recoveryReason || "—"}</p>
+              <p className="text-slate-700">{recoveryReason || "—"}</p>
             </div>
             {targetAction === "exception_return_to_stage" && (
               <>
                 <div>
                   <span className="text-slate-500 text-xs">복귀 대상</span>
-                  <p className={returnTargetAllowed ? "text-slate-200" : "text-red-400"}>
+                  <p className={returnTargetAllowed ? "text-slate-700" : "text-red-400"}>
                     {returnToStage || "미지정"}
                     {!returnTargetAllowed && " (불허)"}
                   </p>
@@ -201,7 +201,7 @@ export function ExceptionApprovalWorkbench({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="승인/거부 사유를 입력하세요..."
-            className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
+            className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
             rows={3}
           />
         </div>
@@ -274,7 +274,7 @@ export function ExceptionApprovalWorkbench({
           )}
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {canEscalate && (
-              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 에스컬레이션
               </button>
             )}

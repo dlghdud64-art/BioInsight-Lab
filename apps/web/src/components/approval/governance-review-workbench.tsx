@@ -94,19 +94,19 @@ export function GovernanceReviewWorkbench({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">Action</span>
-              <p className="text-slate-200">{cr.action}</p>
+              <p className="text-slate-700">{cr.action}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">영향 범위</span>
-              <p className="text-slate-200">{cr.affectedCount}건</p>
+              <p className="text-slate-700">{cr.affectedCount}건</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">작성자</span>
-              <p className="text-slate-200">{cr.authorId}</p>
+              <p className="text-slate-700">{cr.authorId}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">적용 시점</span>
-              <p className="text-slate-200">{cr.effectiveDate === "immediate" ? "즉시" : new Date(cr.effectiveDate).toLocaleDateString("ko-KR")}</p>
+              <p className="text-slate-700">{cr.effectiveDate === "immediate" ? "즉시" : new Date(cr.effectiveDate).toLocaleDateString("ko-KR")}</p>
             </div>
           </div>
           <p className="text-xs text-slate-400">{cr.changeDetail}</p>
@@ -180,7 +180,7 @@ export function GovernanceReviewWorkbench({
           <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">코멘트</label>
             <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="검토 의견..."
-              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none" rows={3} />
+              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none" rows={3} />
           </div>
         )}
       </div>
@@ -190,14 +190,14 @@ export function GovernanceReviewWorkbench({
         {explanation && (
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5 text-xs">
             <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">판단 근거</h4>
-            <p className="text-slate-300">{explanation.whyThisChange}</p>
+            <p className="text-slate-600">{explanation.whyThisChange}</p>
             <p className="text-slate-400">{explanation.whyApprovalNeeded}</p>
             <p className="text-slate-500">{explanation.escalationPathDiff}</p>
           </div>
         )}
 
         {onRunSimulation && (
-          <button onClick={onRunSimulation} className="w-full rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+          <button onClick={onRunSimulation} className="w-full rounded bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
             영향 시뮬레이션
           </button>
         )}

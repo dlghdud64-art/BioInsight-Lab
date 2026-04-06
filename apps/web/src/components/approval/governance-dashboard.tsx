@@ -33,7 +33,7 @@ export function GovernanceDashboard({ metrics, className }: GovernanceDashboardP
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-slate-100">Approval Governance</h2>
+          <h2 className="text-base font-semibold text-slate-900">Approval Governance</h2>
           <p className="text-xs text-slate-500 mt-0.5">{metrics.periodLabel}</p>
         </div>
         <span className="text-[10px] text-slate-600">
@@ -124,7 +124,7 @@ function KPIStrip({ metrics }: { metrics: ApprovalMetric[] }) {
               "text-lg font-semibold tabular-nums",
               m.status === "critical" && "text-red-400",
               m.status === "warning" && "text-amber-400",
-              m.status === "healthy" && "text-slate-100",
+              m.status === "healthy" && "text-slate-900",
             )}>
               {typeof m.value === "number" && m.value > 999
                 ? `${(m.value / 60).toFixed(0)}h`
@@ -165,7 +165,7 @@ function DomainBreakdownPanel({ domains }: { domains: DomainMetrics[] }) {
         {domains.map((d) => (
           <div key={d.domain} className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300">{DOMAIN_LABELS[d.domain] || d.domain}</span>
+              <span className="text-xs text-slate-600">{DOMAIN_LABELS[d.domain] || d.domain}</span>
               <span className="text-xs tabular-nums text-slate-400">
                 {d.pendingCount}건 대기
               </span>
@@ -218,8 +218,8 @@ function TopBlockersPanel({ blockers }: { blockers: BlockerFrequency[] }) {
         {blockers.map((b, i) => (
           <div key={i} className="space-y-1">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-300 max-w-[200px] truncate">{b.blockerReason}</span>
-              <span className="text-xs tabular-nums font-medium text-slate-200">{b.count}건</span>
+              <span className="text-xs text-slate-600 max-w-[200px] truncate">{b.blockerReason}</span>
+              <span className="text-xs tabular-nums font-medium text-slate-700">{b.count}건</span>
             </div>
             <div className="flex items-center gap-2">
               {/* Progress bar */}

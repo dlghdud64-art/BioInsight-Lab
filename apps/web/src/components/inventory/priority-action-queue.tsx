@@ -191,7 +191,7 @@ export function PriorityActionQueue({
             <Flame className="h-3.5 w-3.5 text-amber-400" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-100">
+            <h3 className="text-sm font-bold text-slate-900">
               오늘 처리할 재고 작업
             </h3>
             <p className="text-[11px] text-slate-500">
@@ -214,8 +214,8 @@ export function PriorityActionQueue({
           onClick={() => setSelectedCategory("all")}
           className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
             selectedCategory === "all"
-              ? "bg-slate-600/50 text-slate-200"
-              : "bg-el text-slate-500 hover:text-slate-300"
+              ? "bg-slate-600/50 text-slate-700"
+              : "bg-el text-slate-500 hover:text-slate-600"
           }`}
         >
           전체 {queueItems.length}
@@ -230,8 +230,8 @@ export function PriorityActionQueue({
               onClick={() => setSelectedCategory(cat === selectedCategory ? "all" : cat)}
               className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
                 selectedCategory === cat
-                  ? "bg-slate-600/50 text-slate-200"
-                  : "bg-el text-slate-500 hover:text-slate-300"
+                  ? "bg-slate-600/50 text-slate-700"
+                  : "bg-el text-slate-500 hover:text-slate-600"
               }`}
             >
               {cfg.label} {count}
@@ -256,7 +256,7 @@ export function PriorityActionQueue({
               {/* Line 1: Risk dot + Product + Risk badge */}
               <div className="flex items-center gap-2 mb-1">
                 <span className={`h-2 w-2 rounded-full shrink-0 ${riskCfg.dot}`} />
-                <span className="text-sm font-semibold text-slate-200 truncate flex-1">
+                <span className="text-sm font-semibold text-slate-700 truncate flex-1">
                   {item.productName}
                 </span>
                 <Badge

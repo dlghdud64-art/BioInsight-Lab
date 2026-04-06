@@ -108,7 +108,7 @@ export function InventorySummaryBlock() {
               <Icon className={`h-4 w-4 ${card.color}`} />
               <span className="text-xs font-medium text-slate-400">{card.label}</span>
             </div>
-            <p className="text-2xl font-bold text-slate-100">{card.value}</p>
+            <p className="text-2xl font-bold text-slate-900">{card.value}</p>
             <p className="text-[11px] text-slate-500 mt-1">{card.desc}</p>
           </Link>
         );

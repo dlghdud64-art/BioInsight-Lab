@@ -29,7 +29,7 @@ export function ExtractionResultItem({ item }: ExtractionResultItemProps) {
         <div className="flex-1 min-w-0 space-y-2">
           {/* Header: Name + Category */}
           <div className="flex items-start gap-2">
-            <h4 className="font-semibold text-sm text-slate-100 flex-1">
+            <h4 className="font-semibold text-sm text-slate-900 flex-1">
               {item.name}
             </h4>
             {item.category && (
@@ -80,7 +80,7 @@ export function ExtractionResultItem({ item }: ExtractionResultItemProps) {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Info className="h-4 w-4 text-blue-600" />
-                    <div className="font-semibold text-sm text-slate-100">
+                    <div className="font-semibold text-sm text-slate-900">
                       AI 추출 근거
                     </div>
                   </div>

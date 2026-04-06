@@ -21,7 +21,7 @@ export default function BillingPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 페이지 헤더 */}
         <div className="flex flex-col space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-100">정산 및 세금계산서</h2>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">정산 및 세금계산서</h2>
           <p className="text-muted-foreground">
             여러 벤더의 구매 내역을 LabAxis 단일 세금계산서로 한 번에 처리하세요.
           </p>
@@ -102,7 +102,7 @@ export default function BillingPage() {
                 <p className="text-sm text-muted-foreground">결제 기한: 2026.03.10</p>
                 <p className="mt-1 text-2xl font-bold">₩ 12,450,000</p>
               </div>
-              <Button className="w-fit bg-pn text-white hover:bg-el  bg-el  text-slate-100  hover:bg-slate-200">
+              <Button className="w-fit bg-pn text-white hover:bg-el  bg-el  text-slate-900  hover:bg-slate-200">
                 <Download className="mr-2 h-4 w-4" />
                 계산서 다운로드
               </Button>

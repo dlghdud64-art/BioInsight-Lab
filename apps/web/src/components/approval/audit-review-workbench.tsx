@@ -100,7 +100,7 @@ export function AuditReviewWorkbench({
                 className={cn(
                   "w-full rounded px-3 py-1.5 text-xs text-left transition-colors",
                   action.enabled
-                    ? "bg-slate-800/60 text-slate-300 hover:bg-slate-700/60 hover:text-slate-100"
+                    ? "bg-slate-800/60 text-slate-600 hover:bg-slate-700/60 hover:text-slate-900"
                     : "bg-slate-800/20 text-slate-600 cursor-not-allowed",
                 )}
               >
@@ -126,7 +126,7 @@ function POChainReportCenter({ report }: { report: POChainReport }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-slate-200">PO 체인 감사 보고서</h3>
+          <h3 className="text-sm font-semibold text-slate-700">PO 체인 감사 보고서</h3>
           <p className="text-xs text-slate-500 mt-0.5">
             {auditSummary.poNumber} · {auditSummary.caseId}
           </p>
@@ -169,7 +169,7 @@ function POChainReportCenter({ report }: { report: POChainReport }) {
       {/* Longest stage */}
       {report.longestStage && (
         <div className="text-xs text-slate-500">
-          가장 오래 머문 단계: <span className="text-slate-300">{report.longestStage.stageLabel}</span>
+          가장 오래 머문 단계: <span className="text-slate-600">{report.longestStage.stageLabel}</span>
           {" "}({formatDuration(report.longestStage.durationMs)})
         </div>
       )}
@@ -196,7 +196,7 @@ function PeriodReportCenter({ report }: { report: PeriodReport }) {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h3 className="text-sm font-semibold text-slate-200">기간 운영 보고서</h3>
+        <h3 className="text-sm font-semibold text-slate-700">기간 운영 보고서</h3>
         <p className="text-xs text-slate-500 mt-0.5">
           {report.periodStart.slice(0, 10)} ~ {report.periodEnd.slice(0, 10)}
         </p>
@@ -213,7 +213,7 @@ function PeriodReportCenter({ report }: { report: PeriodReport }) {
       {/* Bottleneck */}
       {report.bottleneckStage && (
         <div className="text-xs text-slate-500">
-          병목 단계: <span className="text-slate-300">{report.bottleneckStage.stageLabel}</span>
+          병목 단계: <span className="text-slate-600">{report.bottleneckStage.stageLabel}</span>
           {" "}({report.bottleneckStage.count}건)
         </div>
       )}
@@ -236,7 +236,7 @@ function PeriodReportCenter({ report }: { report: PeriodReport }) {
       {/* Actor summary */}
       {report.mostActiveActor && (
         <div className="text-xs text-slate-500">
-          최다 활동: <span className="text-slate-300">{report.mostActiveActor.actor}</span>
+          최다 활동: <span className="text-slate-600">{report.mostActiveActor.actor}</span>
           {" "}({report.mostActiveActor.decisionCount}건)
         </div>
       )}
@@ -252,7 +252,7 @@ function ComplianceSummaryCard({ summary }: {
       <p className="text-xs text-slate-500 mb-2 font-medium tracking-wide uppercase">준수 현황</p>
       <div className="grid grid-cols-2 gap-2 text-xs">
         <div className="text-slate-400">전체 스냅샷</div>
-        <div className="text-right text-slate-300">{summary.totalSnapshots}</div>
+        <div className="text-right text-slate-600">{summary.totalSnapshots}</div>
         <div className="text-emerald-400">준수</div>
         <div className="text-right text-emerald-300">{summary.compliantCount}</div>
         <div className="text-red-400">비준수</div>
@@ -296,7 +296,7 @@ function VerdictBadge({ verdict }: { verdict: ComplianceVerdict }) {
 function KPICard({ label, value, highlight }: { label: string; value: number | string; highlight?: boolean }) {
   return (
     <div className="rounded border border-slate-700/30 bg-slate-800/30 px-2.5 py-2 text-center">
-      <div className={cn("text-base font-semibold", highlight ? "text-red-400" : "text-slate-200")}>
+      <div className={cn("text-base font-semibold", highlight ? "text-red-400" : "text-slate-700")}>
         {value}
       </div>
       <div className="text-[10px] text-slate-500 mt-0.5">{label}</div>

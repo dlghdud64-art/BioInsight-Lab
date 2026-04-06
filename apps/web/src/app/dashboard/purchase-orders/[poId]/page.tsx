@@ -76,7 +76,7 @@ const STATUS_TONES: Record<string, OperationalHeaderProps["statusTone"]> = {
 
 // ── Step status styling ──
 const STEP_TONE_STYLES: Record<string, string> = {
-  neutral: "bg-slate-700/60 text-slate-300 border-slate-600",
+  neutral: "bg-slate-700/60 text-slate-600 border-slate-600",
   info: "bg-blue-900/40 text-blue-300 border-blue-700",
   warning: "bg-amber-900/40 text-amber-300 border-amber-700",
   danger: "bg-red-900/40 text-red-300 border-red-700",
@@ -366,7 +366,7 @@ function UpstreamContextStrip({ model }: { model: POExecutionModel }) {
   const { origin } = model;
   return (
     <div className="flex items-center gap-3 flex-wrap text-xs rounded border border-slate-800 bg-slate-900/50 px-3 py-2">
-      <span className="rounded bg-slate-700 px-2 py-0.5 text-slate-300 font-medium">
+      <span className="rounded bg-slate-700 px-2 py-0.5 text-slate-600 font-medium">
         {origin.sourceLabel}
       </span>
       <span className="text-slate-500">→</span>
@@ -445,7 +445,7 @@ function CollapsibleSection({
   children: React.ReactNode;
 }) {
   const toneCls: Record<string, string> = {
-    neutral: "bg-slate-700/60 text-slate-300",
+    neutral: "bg-slate-700/60 text-slate-600",
     info: "bg-blue-900/30 text-blue-300",
     warning: "bg-amber-900/30 text-amber-300",
     danger: "bg-red-900/30 text-red-300",
@@ -483,7 +483,7 @@ function ApprovalExecutionSurface({ model }: { model: POExecutionModel }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className={cn("w-2 h-2 rounded-full", READINESS_DOT[ap.overallTone === "success" ? "ready" : ap.overallTone === "danger" ? "blocked" : "needs_review"])} />
-          <span className="text-sm font-medium text-slate-200">{ap.overallLabel}</span>
+          <span className="text-sm font-medium text-slate-700">{ap.overallLabel}</span>
           <span className="text-xs text-slate-500">{ap.completedCount}/{ap.totalCount}</span>
         </div>
         {ap.needsEscalation && (
@@ -545,14 +545,14 @@ function ApprovalExecutionSurface({ model }: { model: POExecutionModel }) {
                 )}
               >
                 <td className="px-3 py-2 text-slate-500 font-mono">{step.order}</td>
-                <td className="px-3 py-2 text-slate-200">{step.typeLabel}</td>
+                <td className="px-3 py-2 text-slate-700">{step.typeLabel}</td>
                 <td className="px-3 py-2">
                   <span className={cn("inline-flex items-center gap-1 px-1.5 py-0.5 rounded border text-[10px] font-medium", STEP_TONE_STYLES[step.statusTone])}>
                     {step.statusLabel}
                     {step.isOverdue && <Clock className="h-2.5 w-2.5 text-red-400" />}
                   </span>
                 </td>
-                <td className="px-3 py-2 text-slate-300">
+                <td className="px-3 py-2 text-slate-600">
                   <span className="inline-flex items-center gap-1">
                     <User className="h-3 w-3 text-slate-500" />
                     {step.assignees.join(", ")}
@@ -609,13 +609,13 @@ function LineExecutionTable({ lines }: { lines: LineExecutionSummary[] }) {
           {lines.map((line) => (
             <tr key={line.id} className="border-b border-slate-800 last:border-b-0">
               <td className="px-3 py-2 text-slate-500 font-mono">{line.lineNumber}</td>
-              <td className="px-3 py-2 text-slate-200">
+              <td className="px-3 py-2 text-slate-700">
                 {line.itemLabel}
                 {line.substituteFlag && (
                   <span className="ml-1 text-[10px] text-orange-400">[대체]</span>
                 )}
               </td>
-              <td className="px-3 py-2 text-slate-300 font-mono whitespace-nowrap">{line.orderedSummary}</td>
+              <td className="px-3 py-2 text-slate-600 font-mono whitespace-nowrap">{line.orderedSummary}</td>
               <td className="px-3 py-2 text-slate-400 whitespace-nowrap">{line.expectedDelivery ?? "—"}</td>
               <td className="px-3 py-2">
                 <span className={cn("font-medium", FULFILLMENT_TONE_STYLES[line.fulfillmentTone])}>
@@ -659,10 +659,10 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <span className={cn("w-2 h-2 rounded-full", READINESS_DOT[a.phase === "acknowledged" ? "ready" : a.phase === "ack_pending" || a.phase === "viewed" ? "needs_review" : a.phase === "declined" ? "blocked" : "needs_review"])} />
-          <span className="text-sm font-medium text-slate-200">{a.phaseLabel}</span>
+          <span className="text-sm font-medium text-slate-700">{a.phaseLabel}</span>
         </div>
         {a.vendorRef && (
-          <span className="text-xs text-slate-500">공급사 참조: <span className="text-slate-300">{a.vendorRef}</span></span>
+          <span className="text-xs text-slate-500">공급사 참조: <span className="text-slate-600">{a.vendorRef}</span></span>
         )}
       </div>
 
@@ -670,10 +670,10 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
       {(a.promisedShipLabel || a.promisedDeliveryLabel) && (
         <div className="flex items-center gap-4 text-xs">
           {a.promisedShipLabel && (
-            <span className="text-slate-500">출하 예정: <span className="text-slate-300">{a.promisedShipLabel}</span></span>
+            <span className="text-slate-500">출하 예정: <span className="text-slate-600">{a.promisedShipLabel}</span></span>
           )}
           {a.promisedDeliveryLabel && (
-            <span className="text-slate-500">납품 예정: <span className="text-slate-300">{a.promisedDeliveryLabel}</span></span>
+            <span className="text-slate-500">납품 예정: <span className="text-slate-600">{a.promisedDeliveryLabel}</span></span>
           )}
         </div>
       )}
@@ -692,7 +692,7 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
       {/* Follow-up info */}
       {a.followUpOwner && !a.waitingExternalLabel && (
         <div className="text-xs text-slate-500">
-          후속 담당: <span className="text-slate-300">{a.followUpOwner}</span>
+          후속 담당: <span className="text-slate-600">{a.followUpOwner}</span>
           {a.followUpAction && <> · <span className="text-blue-400">{a.followUpAction}</span></>}
         </div>
       )}
@@ -730,19 +730,19 @@ function AcknowledgementSurface({ model }: { model: POExecutionModel }) {
               {a.lineConfirmations.map((lc) => (
                 <tr key={lc.poLineId} className="border-b border-slate-800 last:border-b-0">
                   <td className="px-3 py-2 text-slate-500 font-mono">{lc.lineNumber}</td>
-                  <td className="px-3 py-2 text-slate-200">{lc.itemName}</td>
+                  <td className="px-3 py-2 text-slate-700">{lc.itemName}</td>
                   <td className="px-3 py-2">
                     <span className={cn(
                       "px-1.5 py-0.5 rounded text-[10px] font-medium",
                       lc.status === "confirmed" ? "bg-emerald-900/30 text-emerald-300" :
                       lc.status === "backordered" ? "bg-amber-900/30 text-amber-300" :
                       lc.status === "declined" ? "bg-red-900/30 text-red-300" :
-                      "bg-slate-700/60 text-slate-300",
+                      "bg-slate-700/60 text-slate-600",
                     )}>
                       {lc.statusLabel}
                     </span>
                   </td>
-                  <td className="px-3 py-2 text-slate-300 font-mono">
+                  <td className="px-3 py-2 text-slate-600 font-mono">
                     {lc.confirmedQty ?? "—"}
                     {lc.backorderQty ? <span className="text-amber-400 ml-1">(+{lc.backorderQty} 대기)</span> : ""}
                   </td>
@@ -781,7 +781,7 @@ function ReceivingHandoffPanel({ model }: { model: POExecutionModel }) {
         </div>
         {rh.nextOwner && (
           <span className="text-xs text-slate-500">
-            다음 담당: <span className="text-slate-300">{rh.nextOwner}</span>
+            다음 담당: <span className="text-slate-600">{rh.nextOwner}</span>
           </span>
         )}
       </div>
@@ -812,7 +812,7 @@ function ReceivingHandoffPanel({ model }: { model: POExecutionModel }) {
           {rh.lineReadiness.map((lr) => (
             <div key={lr.lineNumber} className="flex items-center gap-2 text-xs">
               <span className={cn("w-1.5 h-1.5 rounded-full", lr.ready ? "bg-emerald-400" : "bg-slate-500")} />
-              <span className="text-slate-300">{lr.lineNumber}. {lr.itemName}</span>
+              <span className="text-slate-600">{lr.lineNumber}. {lr.itemName}</span>
               {lr.reason && <span className="text-slate-500">{lr.reason}</span>}
             </div>
           ))}

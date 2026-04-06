@@ -64,7 +64,7 @@ export default function BudgetDetailPage() {
           <Card className="border-bd border-bs">
             <CardContent className="py-12 text-center">
               <Wallet className="h-12 w-12 mx-auto text-muted-foreground text-slate-500 mb-4" />
-              <p className="text-slate-300 mb-2">예산을 찾을 수 없습니다.</p>
+              <p className="text-slate-600 mb-2">예산을 찾을 수 없습니다.</p>
               <p className="text-sm text-muted-foreground text-slate-400 mb-4">
                 해당 예산이 삭제되었거나 접근 권한이 없을 수 있습니다.
               </p>
@@ -155,7 +155,7 @@ export default function BudgetDetailPage() {
               <CardTitle className="text-white text-base">설명</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground text-slate-300">
+              <p className="text-sm text-muted-foreground text-slate-600">
                 {budget.description}
               </p>
             </CardContent>

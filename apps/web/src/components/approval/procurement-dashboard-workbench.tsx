@@ -131,7 +131,7 @@ function KPIStrip({
     <div className="flex items-center gap-4 text-xs">
       <div className="flex items-center gap-1.5">
         <span className="text-slate-400">활성</span>
-        <span className="font-mono font-medium text-slate-200">{totalActive}</span>
+        <span className="font-mono font-medium text-slate-700">{totalActive}</span>
       </div>
       {totalCritical > 0 && (
         <div className="flex items-center gap-1.5">
@@ -187,9 +187,9 @@ function PanelCard({
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-medium text-slate-300">{panel.label}</span>
+        <span className="text-xs font-medium text-slate-600">{panel.label}</span>
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-sm font-medium text-slate-200">{panel.count}</span>
+          <span className="font-mono text-sm font-medium text-slate-700">{panel.count}</span>
           {isStale && (
             <span className="text-amber-400 text-xs" title={panel.staleReason ?? undefined}>⚠</span>
           )}
@@ -239,7 +239,7 @@ function PanelCard({
               tabIndex={onItemClick ? 0 : undefined}
             >
               <div className="flex items-center justify-between">
-                <span className="font-mono text-slate-300 truncate max-w-[120px]">
+                <span className="font-mono text-slate-600 truncate max-w-[120px]">
                   {item.primaryLabel}
                 </span>
                 <span className={cn("text-xs", SEVERITY_TEXT[item.severity])}>
@@ -275,7 +275,7 @@ function ChainTimelineRow({
   return (
     <div className="rounded-lg border border-slate-700/30 bg-slate-900/30 p-2">
       <div className="flex items-center justify-between mb-1.5">
-        <span className="font-mono text-xs text-slate-300">{timeline.poNumber}</span>
+        <span className="font-mono text-xs text-slate-600">{timeline.poNumber}</span>
         <div className="flex items-center gap-2">
           <span className={cn("text-xs font-medium", HEALTH_COLOR[timeline.overallHealth])}>
             {HEALTH_LABEL[timeline.overallHealth]}
@@ -337,7 +337,7 @@ export function ProcurementDashboardWorkbench({
         <div className="flex-1 overflow-y-auto p-4 space-y-4">
           {/* KPI Strip */}
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium text-slate-200">구매 운영 현황</h2>
+            <h2 className="text-sm font-medium text-slate-700">구매 운영 현황</h2>
             <KPIStrip
               totalActive={surface.totalActiveCount}
               totalCritical={surface.totalCriticalCount}
@@ -467,8 +467,8 @@ export function ProcurementDashboardWorkbench({
             className={cn(
               "rounded px-2 py-1 text-xs transition-colors",
               context.activeView === "panels"
-                ? "bg-slate-700 text-slate-200"
-                : "text-slate-500 hover:text-slate-300",
+                ? "bg-slate-700 text-slate-700"
+                : "text-slate-500 hover:text-slate-600",
             )}
             onClick={() => onViewChange?.("panels")}
           >
@@ -478,8 +478,8 @@ export function ProcurementDashboardWorkbench({
             className={cn(
               "rounded px-2 py-1 text-xs transition-colors",
               context.activeView === "chain_timeline"
-                ? "bg-slate-700 text-slate-200"
-                : "text-slate-500 hover:text-slate-300",
+                ? "bg-slate-700 text-slate-700"
+                : "text-slate-500 hover:text-slate-600",
             )}
             onClick={() => onViewChange?.("chain_timeline")}
           >
@@ -490,14 +490,14 @@ export function ProcurementDashboardWorkbench({
         <div className="flex items-center gap-2">
           {surface.isFiltered && (
             <button
-              className="rounded border border-slate-600/30 bg-transparent px-2 py-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+              className="rounded border border-slate-600/30 bg-transparent px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
               onClick={onFilterReset}
             >
               필터 초기화
             </button>
           )}
           <button
-            className="rounded border border-slate-600/30 bg-transparent px-2 py-1 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            className="rounded border border-slate-600/30 bg-transparent px-2 py-1 text-xs text-slate-400 hover:text-slate-700 transition-colors"
             onClick={() => onRefresh?.()}
           >
             새로고침

@@ -127,19 +127,19 @@ export function StockReleaseApprovalWorkbench({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">요청자</span>
-              <p className="text-slate-200">{requestedBy}</p>
+              <p className="text-slate-700">{requestedBy}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">총 릴리스 수량</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">{totalReleasableQty}</p>
+              <p className="text-sm font-semibold tabular-nums text-slate-900">{totalReleasableQty}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">라인 수</span>
-              <p className="text-slate-200">{releaseLines.length}건</p>
+              <p className="text-slate-700">{releaseLines.length}건</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">Disposition</span>
-              <p className="text-slate-200">{dispositionSummary}</p>
+              <p className="text-slate-700">{dispositionSummary}</p>
             </div>
           </div>
         </div>
@@ -159,8 +159,8 @@ export function StockReleaseApprovalWorkbench({
             <tbody>
               {releaseLines.map((line) => (
                 <tr key={line.lineId} className="border-b border-slate-800/50 hover:bg-slate-800/30">
-                  <td className="px-3 py-1.5 text-slate-300">{line.lineId}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-200">{line.releasableQty}</td>
+                  <td className="px-3 py-1.5 text-slate-600">{line.lineId}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums text-slate-700">{line.releasableQty}</td>
                   <td className="px-3 py-1.5 text-slate-400">{line.locationAssigned || "—"}</td>
                   <td className="px-3 py-1.5 text-slate-400">{line.binAssigned || "—"}</td>
                   <td className="px-3 py-1.5">
@@ -186,7 +186,7 @@ export function StockReleaseApprovalWorkbench({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="승인/거부 사유를 입력하세요..."
-              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
+              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
               rows={3}
             />
           </div>
@@ -239,7 +239,7 @@ export function StockReleaseApprovalWorkbench({
           )}
           <div className="flex items-center gap-2 shrink-0 ml-4">
             {canEscalate && (
-              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors">
+              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 에스컬레이션
               </button>
             )}

@@ -46,7 +46,7 @@ const CATEGORY_TINT: Record<Exclude<Category, "all">, { read: string; unread: st
   org:       { read: "text-slate-500", unread: "text-violet-400" },
   safety:    { read: "text-slate-500", unread: "text-amber-400" },
   billing:   { read: "text-slate-500", unread: "text-blue-400" },
-  system:    { read: "text-slate-500", unread: "text-slate-300" },
+  system:    { read: "text-slate-500", unread: "text-slate-600" },
 };
 
 /* ── 알림 타입 ── */
@@ -276,11 +276,11 @@ export default function NotificationsPage() {
     <div className="min-h-full bg-pg p-6 md:p-8 space-y-5">
       {/* ── 헤더 ── */}
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-100">알림</h1>
+        <h1 className="text-xl font-semibold text-slate-900">알림</h1>
         <Button
           variant="ghost"
           size="sm"
-          className="text-xs text-slate-400 hover:text-slate-200 hover:bg-el"
+          className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el"
           disabled={unreadCount === 0}
           onClick={markAllRead}
         >
@@ -298,7 +298,7 @@ export default function NotificationsPage() {
             className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
               activeCategory === cat.value
                 ? "bg-blue-600 text-white"
-                : "bg-el text-slate-400 hover:text-slate-200"
+                : "bg-el text-slate-400 hover:text-slate-700"
             }`}
           >
             {cat.label}
@@ -336,7 +336,7 @@ export default function NotificationsPage() {
 
                 {/* 텍스트 */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-sm leading-snug ${n.read ? "text-slate-400" : "text-slate-200"}`}>
+                  <p className={`text-sm leading-snug ${n.read ? "text-slate-400" : "text-slate-700"}`}>
                     {n.title}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5 truncate">

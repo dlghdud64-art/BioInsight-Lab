@@ -211,7 +211,7 @@ export function AiActionInbox() {
       <div className="rounded-xl border border-bd bg-pn shadow-sm overflow-hidden">
         <div className="px-4 py-6 text-center">
           <CheckCircle2 className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
-          <p className="text-sm font-medium text-slate-300">
+          <p className="text-sm font-medium text-slate-600">
             지금 바로 확인할 AI 작업이 없습니다
           </p>
           <p className="text-xs text-slate-400 text-slate-500 mt-1">
@@ -300,7 +300,7 @@ export function AiActionInbox() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
             </span>
-            <h3 className="text-xs font-semibold text-slate-300">
+            <h3 className="text-xs font-semibold text-slate-600">
               AI 작업함
             </h3>
             <Badge
@@ -341,7 +341,7 @@ export function AiActionInbox() {
                   {/* 내용 */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <h4 className="text-sm font-medium text-slate-200 truncate">
+                      <h4 className="text-sm font-medium text-slate-700 truncate">
                         {item.title || config.title}
                       </h4>
                       <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 flex-shrink-0 ${config.badgeClass}`}>

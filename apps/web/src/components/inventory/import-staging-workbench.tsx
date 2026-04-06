@@ -224,9 +224,9 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1C2028] border border-bd rounded-2xl shadow-2xl w-full max-w-[1160px] max-h-[88vh] overflow-hidden flex flex-col">
+      <div className="bg-white border border-bd rounded-2xl shadow-2xl w-full max-w-[1160px] max-h-[88vh] overflow-hidden flex flex-col">
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-bd bg-[#252A33]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-bd bg-slate-50">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-600/15 border border-blue-500/25">
               <FileSpreadsheet className="h-5 w-5 text-blue-400" />
@@ -250,17 +250,17 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
               </div>
               {/* Breadcrumb */}
               <div className="flex items-center gap-1.5 text-[11px] text-slate-500 mt-0.5">
-                <span className={step === "upload" ? "text-blue-400 font-medium" : stagingState ? "text-slate-300" : ""}>파일 업로드</span>
+                <span className={step === "upload" ? "text-blue-400 font-medium" : stagingState ? "text-slate-600" : ""}>파일 업로드</span>
                 <ChevronRight className="h-3 w-3" />
-                <span className={step === "mapping" ? "text-blue-400 font-medium" : step === "review" || step === "apply" ? "text-slate-300" : ""}>AI 매핑 검토</span>
+                <span className={step === "mapping" ? "text-blue-400 font-medium" : step === "review" || step === "apply" ? "text-slate-600" : ""}>AI 매핑 검토</span>
                 <ChevronRight className="h-3 w-3" />
-                <span className={step === "review" ? "text-blue-400 font-medium" : step === "apply" ? "text-slate-300" : ""}>데이터 검토</span>
+                <span className={step === "review" ? "text-blue-400 font-medium" : step === "apply" ? "text-slate-600" : ""}>데이터 검토</span>
                 <ChevronRight className="h-3 w-3" />
                 <span className={step === "apply" ? "text-emerald-400 font-medium" : ""}>적용</span>
               </div>
             </div>
           </div>
-          <button type="button" onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-300 hover:bg-white/[0.05]">
+          <button type="button" onClick={onClose} className="h-8 w-8 flex items-center justify-center rounded-lg text-slate-500 hover:text-slate-600 hover:bg-white/[0.05]">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -271,7 +271,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
           {step === "upload" && (
             <div className="space-y-4">
               <section>
-                <h3 className="text-[15px] font-semibold text-slate-100 flex items-center gap-2 mb-3">
+                <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2 mb-3">
                   <Upload className="h-4 w-4 text-blue-400" />
                   파일 선택
                 </h3>
@@ -297,7 +297,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                         <Sparkles className="h-5 w-5 text-blue-400" />
                       </div>
                       <div>
-                        <p className="text-sm text-slate-200 font-medium">파일을 드래그하거나 클릭하여 선택</p>
+                        <p className="text-sm text-slate-700 font-medium">파일을 드래그하거나 클릭하여 선택</p>
                         <p className="text-xs text-slate-500 mt-1">XLSX, XLS, CSV · AI가 자동으로 컬럼을 분석하고 매핑합니다</p>
                       </div>
                     </div>
@@ -321,10 +321,10 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
           {step === "mapping" && stagingState && (
             <div className="space-y-5">
               {/* File info */}
-              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-[#252A33] border border-bd/40">
+              <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-slate-50 border border-bd/40">
                 <FileText className="h-4 w-4 text-slate-400" />
                 <div className="flex-1 min-w-0">
-                  <span className="text-sm text-slate-200 font-medium truncate block">{stagingState.fileName}</span>
+                  <span className="text-sm text-slate-700 font-medium truncate block">{stagingState.fileName}</span>
                   <span className="text-[11px] text-slate-500">{stagingState.totalRowCount}행 · {(stagingState.fileSize / 1024).toFixed(1)}KB</span>
                 </div>
                 <Select value={stagingState.importMode} onValueChange={(v: ImportMode) => setStagingState(prev => prev ? { ...prev, importMode: v } : prev)}>
@@ -341,15 +341,15 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
 
               {/* AI Mapping Results */}
               <section>
-                <h3 className="text-[15px] font-semibold text-slate-100 flex items-center gap-2 mb-3">
+                <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2 mb-3">
                   <Sparkles className="h-4 w-4 text-blue-400" />
                   AI 컬럼 매핑 결과
                 </h3>
                 <div className="space-y-1.5">
                   {stagingState.columnMappings.map((m, i) => (
-                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-bd/30 bg-[#252A33]/60">
+                    <div key={i} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-bd/30 bg-slate-50/60">
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs text-slate-300 font-medium">{m.sourceColumn}</span>
+                        <span className="text-xs text-slate-600 font-medium">{m.sourceColumn}</span>
                       </div>
                       <ArrowRight className="h-3 w-3 text-slate-600 shrink-0" />
                       <div className="w-[140px]">
@@ -408,7 +408,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   <span className="text-[9px] text-slate-500 block">저신뢰</span>
                   <span className="text-lg font-bold text-amber-400">{stagingState.lowConfidenceCount}</span>
                 </div>
-                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252A33] text-center">
+                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-slate-50 text-center">
                   <span className="text-[9px] text-slate-500 block">미매핑</span>
                   <span className="text-lg font-bold text-slate-500">{stagingState.unmappedCount}</span>
                 </div>
@@ -450,7 +450,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
           {(step === "review" || (step === "mapping" && stagingState)) && stagingState && step !== "apply" && (
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-[15px] font-semibold text-slate-100 flex items-center gap-2">
+                <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">
                   <Search className="h-4 w-4 text-blue-400" />
                   데이터 검토
                 </h3>
@@ -489,18 +489,18 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                       row.operatorDecision === "rejected" ? "border-red-500/20 bg-red-600/[0.02] opacity-60" :
                       hasErrors ? "border-red-500/25 bg-red-600/[0.03]" :
                       hasWarnings ? "border-amber-500/15 bg-amber-600/[0.02]" :
-                      "border-bd/30 bg-[#252A33]/60"
+                      "border-bd/30 bg-slate-50/60"
                     }`}>
                       {/* Row summary */}
                       <div className="flex items-center gap-3 px-3 py-2.5 cursor-pointer" onClick={() => setExpandedRows(prev => { const s = new Set(prev); s.has(row.rowIndex) ? s.delete(row.rowIndex) : s.add(row.rowIndex); return s; })}>
                         {isExpanded ? <ChevronDown className="h-3 w-3 text-slate-500 shrink-0" /> : <ChevronRight className="h-3 w-3 text-slate-500 shrink-0" />}
                         <span className="text-[10px] text-slate-600 font-mono w-6">#{row.rowIndex + 1}</span>
-                        <span className="text-sm text-slate-200 font-medium flex-1 min-w-0 truncate">
+                        <span className="text-sm text-slate-700 font-medium flex-1 min-w-0 truncate">
                           {row.mappedData.productName || <span className="text-red-400 italic">제품명 없음</span>}
                         </span>
                         {row.mappedData.catalogNumber && <span className="text-[11px] text-slate-500 font-mono hidden sm:inline">{row.mappedData.catalogNumber}</span>}
                         {row.mappedData.quantity !== null && (
-                          <span className="text-xs text-slate-300">{row.mappedData.quantity} {row.mappedData.unit || ""}</span>
+                          <span className="text-xs text-slate-600">{row.mappedData.quantity} {row.mappedData.unit || ""}</span>
                         )}
                         {/* Badges */}
                         <div className="flex items-center gap-1 shrink-0">
@@ -541,12 +541,12 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                       {isExpanded && (
                         <div className="px-3 pb-3 pt-1 border-t border-bd/20 space-y-2">
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1.5 text-[11px]">
-                            {row.mappedData.brand && <div><span className="text-slate-500">제조사:</span> <span className="text-slate-300">{row.mappedData.brand}</span></div>}
-                            {row.mappedData.lotNumber && <div><span className="text-slate-500">Lot:</span> <span className="text-slate-300 font-mono">{row.mappedData.lotNumber}</span></div>}
-                            {row.mappedData.expiryDate && <div><span className="text-slate-500">유효기한:</span> <span className="text-slate-300">{row.mappedData.expiryDate}</span></div>}
-                            {row.mappedData.location && <div><span className="text-slate-500">위치:</span> <span className="text-slate-300">{row.mappedData.location}</span></div>}
-                            {row.mappedData.safetyStock !== null && <div><span className="text-slate-500">안전재고:</span> <span className="text-slate-300">{row.mappedData.safetyStock}</span></div>}
-                            {row.mappedData.notes && <div className="col-span-2"><span className="text-slate-500">비고:</span> <span className="text-slate-300">{row.mappedData.notes}</span></div>}
+                            {row.mappedData.brand && <div><span className="text-slate-500">제조사:</span> <span className="text-slate-600">{row.mappedData.brand}</span></div>}
+                            {row.mappedData.lotNumber && <div><span className="text-slate-500">Lot:</span> <span className="text-slate-600 font-mono">{row.mappedData.lotNumber}</span></div>}
+                            {row.mappedData.expiryDate && <div><span className="text-slate-500">유효기한:</span> <span className="text-slate-600">{row.mappedData.expiryDate}</span></div>}
+                            {row.mappedData.location && <div><span className="text-slate-500">위치:</span> <span className="text-slate-600">{row.mappedData.location}</span></div>}
+                            {row.mappedData.safetyStock !== null && <div><span className="text-slate-500">안전재고:</span> <span className="text-slate-600">{row.mappedData.safetyStock}</span></div>}
+                            {row.mappedData.notes && <div className="col-span-2"><span className="text-slate-500">비고:</span> <span className="text-slate-600">{row.mappedData.notes}</span></div>}
                           </div>
                           {row.issues.length > 0 && (
                             <div className="space-y-1">
@@ -596,9 +596,9 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   <span className="text-[9px] text-slate-500 block">제외</span>
                   <span className="text-lg font-bold text-red-400">{stagingState.rejectedCount}</span>
                 </div>
-                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-[#252A33] text-center">
+                <div className="px-3 py-2.5 rounded-lg border border-bd/40 bg-slate-50 text-center">
                   <span className="text-[9px] text-slate-500 block">전체</span>
-                  <span className="text-lg font-bold text-slate-300">{stagingState.totalRowCount}</span>
+                  <span className="text-lg font-bold text-slate-600">{stagingState.totalRowCount}</span>
                 </div>
               </div>
               {stagingState.importAuditId && (
@@ -609,17 +609,17 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
         </div>
 
         {/* ── Dock ── */}
-        <div className="px-6 py-3 border-t border-bd bg-[#181E28]">
+        <div className="px-6 py-3 border-t border-bd bg-white">
           {/* Status strip */}
           {stagingState && step !== "apply" && (
             <div className="flex items-center gap-3 text-[10px] mb-2.5">
-              <span className="text-slate-500">전체 <span className="text-slate-300 font-medium">{stagingState.totalRowCount}</span></span>
+              <span className="text-slate-500">전체 <span className="text-slate-600 font-medium">{stagingState.totalRowCount}</span></span>
               <span className="text-slate-600">·</span>
               <span className="text-slate-500">승인 <span className="text-emerald-400 font-medium">{stagingState.approvedCount}</span></span>
               <span className="text-slate-600">·</span>
               <span className="text-slate-500">제외 <span className="text-red-400 font-medium">{stagingState.rejectedCount}</span></span>
               <span className="text-slate-600">·</span>
-              <span className="text-slate-500">미결정 <span className="text-slate-300 font-medium">{stagingState.pendingDecisionCount}</span></span>
+              <span className="text-slate-500">미결정 <span className="text-slate-600 font-medium">{stagingState.pendingDecisionCount}</span></span>
               {validation && <span className="text-slate-600">·</span>}
               {validation && <span className="text-slate-500">{validation.recommendedNextAction}</span>}
             </div>
@@ -627,14 +627,14 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
 
           <div className="flex gap-2">
             {step === "upload" && (
-              <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-300 border border-bd/40" onClick={onClose}>
+              <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-600 border border-bd/40" onClick={onClose}>
                 닫기
               </Button>
             )}
 
             {step === "mapping" && (
               <>
-                <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-300 border border-bd/40" onClick={() => { setStep("upload"); setStagingState(null); }}>
+                <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-600 border border-bd/40" onClick={() => { setStep("upload"); setStagingState(null); }}>
                   <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                   다시 선택
                 </Button>
@@ -647,7 +647,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
 
             {step === "review" && (
               <>
-                <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-300 border border-bd/40" onClick={() => setStep("mapping")}>
+                <Button size="sm" variant="ghost" className="h-10 px-4 text-sm text-slate-400 hover:text-slate-600 border border-bd/40" onClick={() => setStep("mapping")}>
                   매핑 수정
                 </Button>
                 <Button

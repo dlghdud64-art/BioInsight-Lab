@@ -67,7 +67,7 @@ export function PageShell({
       {/* ── Header ── */}
       <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-lg font-bold text-slate-100">{title}</h1>
+          <h1 className="text-lg font-bold text-slate-900">{title}</h1>
           {description && (
             <p className="text-xs text-slate-400 mt-0.5">{description}</p>
           )}

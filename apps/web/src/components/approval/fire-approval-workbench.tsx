@@ -127,25 +127,25 @@ export function FireApprovalWorkbench({
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">요청자</span>
-              <p className="text-slate-200">{requestedBy}</p>
+              <p className="text-slate-700">{requestedBy}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">요청 시각</span>
-              <p className="text-slate-200">{new Date(requestedAt).toLocaleString("ko-KR")}</p>
+              <p className="text-slate-700">{new Date(requestedAt).toLocaleString("ko-KR")}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">대상</span>
-              <p className="text-slate-200">{objectSummary}</p>
+              <p className="text-slate-700">{objectSummary}</p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">금액</span>
-              <p className="text-sm font-semibold tabular-nums text-slate-100">
+              <p className="text-sm font-semibold tabular-nums text-slate-900">
                 {totalAmount.toLocaleString()}원
               </p>
             </div>
             <div>
               <span className="text-slate-500 text-xs">영향 라인</span>
-              <p className="text-slate-200">{affectedLineCount}건</p>
+              <p className="text-slate-700">{affectedLineCount}건</p>
             </div>
           </div>
         </div>
@@ -175,7 +175,7 @@ export function FireApprovalWorkbench({
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="승인/거부 사유를 입력하세요..."
-              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-200 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
+              className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none"
               rows={3}
             />
           </div>
@@ -275,7 +275,7 @@ export function FireApprovalWorkbench({
             {canEscalate && (
               <button
                 onClick={() => onEscalate?.(reason)}
-                className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors"
+                className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
               >
                 에스컬레이션
               </button>

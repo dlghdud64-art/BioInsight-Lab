@@ -51,7 +51,7 @@ export function TeamSiteBreakdownPanel({ breakdown, onDrilldown, className }: Te
             className="w-full text-left rounded border border-slate-800/50 hover:border-slate-700 bg-slate-900/30 hover:bg-slate-800/30 p-2.5 transition-colors"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-slate-200">{record.dimensionLabel}</span>
+              <span className="text-xs font-medium text-slate-700">{record.dimensionLabel}</span>
               <div className="flex items-center gap-2">
                 <RiskBadge level={record.riskLevel} score={record.riskScore} />
                 <span className="text-xs tabular-nums text-slate-400">{record.pendingCount}건</span>
@@ -113,7 +113,7 @@ export function EscalationHotspotPanel({ data, onDrilldown, className }: Escalat
             className="w-full text-left rounded border border-slate-800/50 hover:border-slate-700 p-2 transition-colors"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs text-slate-200">{DOMAIN_LABELS[hotspot.domain] || hotspot.domain}</span>
+              <span className="text-xs text-slate-700">{DOMAIN_LABELS[hotspot.domain] || hotspot.domain}</span>
               <span className="text-xs tabular-nums font-medium text-amber-400">{hotspot.escalationCount}건 ({hotspot.escalationRate}%)</span>
             </div>
             {hotspot.sourceBreakdown.length > 0 && (
@@ -173,7 +173,7 @@ export function ReapprovalLoopPanel({ data, onDrilldown, className }: Reapproval
               onClick={() => onDrilldown?.(r.caseId)}
               className="w-full text-left flex items-center justify-between rounded hover:bg-slate-800/30 px-2 py-1 text-xs transition-colors"
             >
-              <span className="text-slate-300 font-mono text-[10px]">{r.caseId.slice(0, 12)}</span>
+              <span className="text-slate-600 font-mono text-[10px]">{r.caseId.slice(0, 12)}</span>
               <span className="text-amber-400 tabular-nums">{r.totalLoops}회</span>
             </button>
           ))}
