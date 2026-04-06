@@ -15,14 +15,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
     }
@@ -64,7 +63,7 @@ export async function POST(req: NextRequest) {
     } | null = null;
 
     if (parsed.catalogNo) {
-      const product = await prisma.product.findFirst({
+      const product = await db.product.findFirst({
         where: {
           catalogNumber: {
             equals: parsed.catalogNo,
@@ -86,7 +85,7 @@ export async function POST(req: NextRequest) {
 
     // catalogNo로 못 찾으면 CAS Number로 시도
     if (!matchedProduct && parsed.casNumber) {
-      const product = await prisma.product.findFirst({
+      const product = await db.product.findFirst({
         where: {
           casNumber: {
             equals: parsed.casNumber,
@@ -115,7 +114,7 @@ export async function POST(req: NextRequest) {
     } | null = null;
 
     if (matchedProduct && parsed.lotNo) {
-      const inventory = await prisma.inventory.findFirst({
+      const inventory = await db.inventory.findFirst({
         where: {
           productId: matchedProduct.id,
           lotNumber: {
