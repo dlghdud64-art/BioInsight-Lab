@@ -431,7 +431,7 @@ export function BioInsightHeroSection() {
         <div className="flex flex-row gap-3 mb-10 md:mb-12 animate-stagger-up" style={{ animationDelay: "160ms" }}>
           <Link href={isLoggedIn ? "/app/search" : "/search"}>
             <Button className="h-10 sm:h-11 px-6 sm:px-7 text-white font-bold text-[13px] sm:text-[14px] rounded-lg shadow-[0_2px_16px_rgba(60,130,255,0.25)]" style={{ backgroundColor: "#3B82F6", border: "1px solid rgba(60,140,255,0.3)" }}>
-              {isLoggedIn ? "워크벤치 시작" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
+              {isLoggedIn ? "소싱 시작" : "무료로 시작하기"}<Search className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </Link>
           <Link href={isLoggedIn ? "/dashboard" : "/support"}>
