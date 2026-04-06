@@ -20,7 +20,7 @@ export function MainFooter() {
       title: "서비스",
       links: [
         { label: "홈", href: "/", onClick: null },
-        { label: "서비스 소개", href: "/", onClick: null },
+        { label: "서비스 소개", href: "/intro", onClick: null },
         { label: "요금제", href: "/pricing", onClick: null },
       ],
     },

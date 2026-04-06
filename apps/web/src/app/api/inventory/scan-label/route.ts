@@ -1,23 +1,27 @@
 /**
  * POST /api/inventory/scan-label
  *
- * 시약 라벨 텍스트를 파싱하여 구조화된 데이터를 반환합니다.
- * 현재: 정규식 기반 파서 사용
- * 향후: Cloud Vision OCR + LLM(OpenAI/Claude) 파싱으로 업그레이드 가능
+ * 시약 라벨 이미지/텍스트를 파싱하여 구조화된 데이터를 반환합니다.
+ *
+ * - imageBase64가 있으면: Gemini 멀티모달로 직접 파싱 (OCR + 구조화 한 번에)
+ * - text만 있으면: 정규식 기반 파서로 파싱 (fallback)
  *
  * Request body:
- *   - text: string (OCR 또는 수동 입력된 라벨 텍스트)
- *   - imageBase64?: string (향후 서버사이드 OCR용 이미지 데이터)
+ *   - text?: string (수동 입력된 라벨 텍스트)
+ *   - imageBase64?: string (촬영/업로드된 라벨 이미지 data URI)
  *
  * Response:
  *   - parsed: LabelParseResult
- *   - matchedProduct?: { id, name, brand, catalogNumber } (DB 매칭 결과)
+ *   - matchedProduct?: { id, name, brand, catalogNumber }
+ *   - matchedInventory?: { id, lotNumber, currentQuantity, unit }
+ *   - suggestions: { isNewProduct, isNewLot, isExistingLot, action }
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { parseReagentLabel } from "@/lib/ocr/label-parser";
+import { parseWithGemini } from "@/lib/ocr/gemini-label-parser";
 
 export async function POST(req: NextRequest) {
   try {
@@ -36,23 +40,28 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ── OCR 단계 (향후 확장 포인트) ──
-    // 현재: 클라이언트에서 텍스트를 직접 전송
-    // 향후: imageBase64가 있으면 서버사이드 OCR 수행
-    let ocrText = text ?? "";
-
-    if (!ocrText && imageBase64) {
-      // TODO: Cloud Vision API 또는 Tesseract.js 서버사이드 OCR 연동
-      // const ocrResult = await cloudVisionOCR(imageBase64);
-      // ocrText = ocrResult.text;
-      return NextResponse.json(
-        { error: "서버사이드 OCR은 아직 준비 중입니다. 텍스트 입력을 이용해주세요." },
-        { status: 501 }
-      );
-    }
-
     // ── 파싱 단계 ──
-    const parsed = parseReagentLabel(ocrText);
+    // 이미지가 있으면 Gemini 멀티모달, 없으면 정규식 fallback
+    let parsed;
+
+    if (imageBase64) {
+      try {
+        parsed = await parseWithGemini(imageBase64);
+      } catch (geminiErr) {
+        console.error("[scan-label] Gemini parse failed, falling back to regex:", geminiErr);
+        // Gemini 실패 시 텍스트가 있으면 정규식 fallback
+        if (text) {
+          parsed = parseReagentLabel(text);
+        } else {
+          return NextResponse.json(
+            { error: "AI 라벨 분석에 실패했습니다. 텍스트를 직접 입력해주세요." },
+            { status: 422 }
+          );
+        }
+      }
+    } else {
+      parsed = parseReagentLabel(text!);
+    }
 
     // ── DB 매칭 단계: catalogNo로 기존 제품 검색 ──
     let matchedProduct: {
@@ -146,10 +155,10 @@ export async function POST(req: NextRequest) {
         isNewLot: matchedProduct && !matchedInventory,
         isExistingLot: !!matchedInventory,
         action: matchedInventory
-          ? "restock"  // 기존 lot에 입고 추가
+          ? "restock"
           : matchedProduct
-            ? "new_lot" // 기존 제품, 새 lot 등록
-            : "new_product", // 새 제품 + 재고 등록
+            ? "new_lot"
+            : "new_product",
       },
     });
   } catch (error) {

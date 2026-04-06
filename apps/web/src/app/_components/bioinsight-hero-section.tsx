@@ -126,7 +126,7 @@ function MobileMenu() {
               ) : (
                 <div className="flex flex-col gap-1">
                   {([
-                    { href: "/", label: "제품 소개" },
+                    { href: "/intro", label: "제품 소개" },
                     { href: "/pricing", label: "요금 & 도입" },
                     { href: "/support", label: "고객 지원 및 문의" },
                   ] as const).map(({ href, label }) => (
@@ -372,7 +372,7 @@ export function BioInsightHeroSection() {
 
         {/* Desktop nav links — session-aware, loading-safe */}
         <div className="hidden md:flex items-center gap-6">
-          <Link href="/" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
+          <Link href="/intro" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">서비스 소개</Link>
           <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">요금 & 도입</Link>
           {isAuthLoading ? (
             <div className="w-24 h-8 rounded-md bg-white/5 animate-pulse" />

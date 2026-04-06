@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check } from "lucide-react";
+import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
@@ -93,6 +93,7 @@ import { generateSearchSummary, type SearchSummaryLine } from "@/lib/ai/suggesti
 import { buildSourcingStrategyOptionSet } from "@/lib/ai/decision-option-builders";
 import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
 import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDraft, type SourcingStrategyOptionLocal } from "@/lib/ai/sourcing-operating-layer";
+import { LabelScannerModal } from "@/components/inventory/LabelScannerModal";
 
 export default function SearchPage() {
   const {
@@ -1741,6 +1742,7 @@ const STAGE_LABELS: Record<string, string> = {
 function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn, stageOwner = "sourcing", onBackToSourcing }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean; stageOwner?: string; onBackToSourcing?: () => void }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
+  const [labelScanOpen, setLabelScanOpen] = useState(false);
 
   useEffect(() => { setLocalQuery(searchQuery); }, [searchQuery]);
 
@@ -1806,6 +1808,28 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
             </Button>
           </div>
         </form>
+
+        {/* AI 라벨 스캔 버튼 */}
+        <button
+          onClick={() => setLabelScanOpen(true)}
+          className="flex items-center gap-1 text-[10px] px-2 py-1.5 rounded bg-blue-600/10 text-blue-400 hover:bg-blue-600/20 hover:text-blue-300 transition-colors shrink-0"
+        >
+          <Camera className="h-3 w-3" />
+          <span className="hidden sm:inline">AI 라벨 스캔</span>
+        </button>
+        <LabelScannerModal
+          open={labelScanOpen}
+          onOpenChange={setLabelScanOpen}
+          onScanComplete={(result) => {
+            // 스캔 결과에서 제품명 또는 카탈로그 번호를 검색어로 설정
+            const q = result.parsed.catalogNo || result.parsed.productName || result.parsed.casNumber || "";
+            if (q) {
+              setLocalQuery(q);
+              setSearchQuery(q);
+              if (isLoggedIn) runSearch();
+            }
+          }}
+        />
 
         {/* Utility controls — ghost, 검색 버튼보다 약하게 */}
         <div className="flex items-center gap-1 shrink-0">
