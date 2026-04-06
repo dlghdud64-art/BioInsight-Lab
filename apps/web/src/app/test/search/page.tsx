@@ -367,7 +367,7 @@ export default function SearchPage() {
   const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#3A4150' }}>
+    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
       <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
 
@@ -385,10 +385,10 @@ export default function SearchPage() {
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
             {/* ═══ 3행: Operating Status Bar — 순수 상태 표시 ═══ */}
-            <div className="px-4 py-1.5 border-b border-bd/60 flex items-baseline gap-3 text-[11px]">
+            <div className="px-4 py-1.5 border-b border-slate-200 flex items-baseline gap-3 text-[11px]">
               {/* 결과 수 */}
-              <span className="text-slate-300">
-                {isSearchLoading ? "검색 중..." : <><span className="font-semibold text-slate-200">{products.length}</span>건</>}
+              <span className="text-slate-600">
+                {isSearchLoading ? "검색 중..." : <><span className="font-semibold text-slate-800">{products.length}</span>건</>}
               </span>
               {activeFilterCount > 0 && (
                 <span className="text-slate-400">필터 {activeFilterCount}개</span>
@@ -396,10 +396,10 @@ export default function SearchPage() {
               {/* 비교/견적 후보 + 다음 행동 */}
               <span className="text-slate-500 hidden sm:inline">|</span>
               {compareIds.length > 0 && (
-                <span className="text-blue-400 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
+                <span className="text-blue-600 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
               )}
               {quoteItems.length > 0 && (
-                <span className="text-emerald-400 font-medium hidden sm:inline">견적 후보 {quoteItems.length}</span>
+                <span className="text-emerald-600 font-medium hidden sm:inline">견적 후보 {quoteItems.length}</span>
               )}
               <span className="text-slate-400 hidden md:inline">
                 {(() => {
@@ -416,18 +416,18 @@ export default function SearchPage() {
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
             {!shouldShowSourcingStrip && aiShouldShow && (
               <div className="px-4 pt-1.5">
-                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-600/20 bg-blue-600/5">
-                  <span className="text-[10px] font-semibold text-blue-400 shrink-0">AI 제안</span>
-                  <span className="text-[10px] text-slate-300 flex-1 truncate">{aiSearchSummary[0]?.text}</span>
+                <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-200 bg-blue-50">
+                  <span className="text-[10px] font-semibold text-blue-600 shrink-0">AI 제안</span>
+                  <span className="text-[10px] text-slate-600 flex-1 truncate">{aiSearchSummary[0]?.text}</span>
                   <div className="flex items-center gap-1 shrink-0">
                     {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
-                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-300 hover:bg-blue-600/10 border border-blue-600/20"
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 border border-blue-200"
                         onClick={() => handleProtectedAction(() => {
                           products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3)
                             .forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
                         })}>비교 후보 담기</Button>
                     )}
-                    <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-300"
+                    <Button size="sm" variant="ghost" className="h-6 px-1.5 text-[10px] text-slate-500 hover:text-slate-600"
                       onClick={() => setAiDismissedHash(aiContextHash)}><X className="h-3 w-3" /></Button>
                   </div>
                 </div>
@@ -461,7 +461,7 @@ export default function SearchPage() {
               ) : (
                 <div className="flex flex-col items-center text-center py-16">
                   <Package className="h-7 w-7 text-slate-500 mb-2" strokeWidth={1.5} />
-                  <p className="text-sm text-slate-300 mb-1">검색 결과가 없습니다</p>
+                  <p className="text-sm text-slate-600 mb-1">검색 결과가 없습니다</p>
                   <p className="text-xs text-slate-500">다른 키워드로 검색해보세요</p>
                 </div>
               )}
@@ -469,24 +469,24 @@ export default function SearchPage() {
           </div>
 
           {/* C. Right Context Rail — persistent panel */}
-          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2F3540] flex-col overflow-hidden">
+          <div className="hidden lg:flex w-[360px] shrink-0 border-l border-slate-200 bg-white flex-col overflow-hidden">
             {/* ═══ AI 비교 판단 상태 strip — 작업 상태 바 (추천 카드 아님) ═══ */}
             {aiCompareReadiness.active ? (
-              <div className="px-3 py-2 border-b border-bd/50">
-                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-500/20 bg-blue-600/[0.04]" : aiCompareReadiness.mode === "mixed_warning" ? "border-amber-500/20 bg-amber-600/[0.04]" : "border-red-500/15 bg-red-600/[0.03]"}`}>
+              <div className="px-3 py-2 border-b border-slate-200">
+                <div className={`rounded-md border px-3 py-2.5 ${aiCompareReadiness.mode === "direct" ? "border-blue-200 bg-blue-50" : aiCompareReadiness.mode === "mixed_warning" ? "border-amber-200 bg-amber-50" : "border-red-200 bg-red-50"}`}>
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-400" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-400" : "bg-red-400"}`} />
-                      <span className="text-[10px] font-semibold text-slate-200">AI 비교 판단 활성</span>
+                      <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-500" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-500" : "bg-red-400"}`} />
+                      <span className="text-[10px] font-semibold text-slate-800">AI 비교 판단 활성</span>
                     </div>
-                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-600/15 text-blue-300" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-600/15 text-amber-300" : "bg-red-600/15 text-red-300"}`}>
+                    <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-50 text-blue-600" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-600/15 text-amber-300" : "bg-red-600/15 text-red-300"}`}>
                       {compareIds.length}개 선택
                     </span>
                   </div>
                   <div className="text-[10px] text-slate-400 mb-2">{aiCompareReadiness.label}</div>
                   <div className="flex items-center gap-1.5 text-[10px]">
                     {shouldShowSourcingStrip && (
-                      <span className="text-blue-300">판단안 3개 준비됨</span>
+                      <span className="text-blue-600">판단안 3개 준비됨</span>
                     )}
                   </div>
                   {/* Primary CTA: 비교 검토 시작 */}
@@ -503,7 +503,7 @@ export default function SearchPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-[10px] text-slate-400 hover:text-blue-300 border border-bd/30"
+                        className="h-7 px-2 text-[10px] text-slate-400 hover:text-blue-600 border border-slate-200"
                         onClick={() => handleProtectedAction(openStrategyOverlay)}
                       >
                         <Sparkles className="h-3 w-3" />
@@ -513,8 +513,8 @@ export default function SearchPage() {
                 </div>
               </div>
             ) : hasSearched && products.length >= 2 && compareIds.length < 2 ? (
-              <div className="px-3 py-2 border-b border-bd/50">
-                <div className="rounded-md border border-slate-700/40 bg-[#252A33] px-3 py-2 flex items-center gap-2">
+              <div className="px-3 py-2 border-b border-slate-200">
+                <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
                   <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 AI 비교 판단이 활성화됩니다</span>
                 </div>
@@ -540,10 +540,10 @@ export default function SearchPage() {
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
-                <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
-                  <GitCompare className="h-6 w-6 text-blue-400/60" />
+                <div className="w-12 h-12 rounded-xl bg-el border border-slate-200 flex items-center justify-center mb-4">
+                  <GitCompare className="h-6 w-6 text-blue-600/60" />
                 </div>
-                <p className="text-sm font-semibold text-slate-200 mb-1.5">제품을 선택해 비교를 시작하세요</p>
+                <p className="text-sm font-semibold text-slate-800 mb-1.5">제품을 선택해 비교를 시작하세요</p>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">
                   선택한 제품은 비교 목록에 모아<br />가격, 규격, 제조사를 함께 검토할 수 있습니다.
                 </p>
@@ -557,8 +557,8 @@ export default function SearchPage() {
           <div className="max-w-lg w-full px-6">
             {/* Stage header */}
             <div className="text-center mb-6">
-              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 border ${stageOwner === "request" ? "bg-emerald-600/10 border-emerald-500/20" : stageOwner === "quote" ? "bg-blue-600/10 border-blue-500/20" : "bg-orange-600/10 border-orange-500/20"}`}>
-                {stageOwner === "request" ? <FileText className="h-5 w-5 text-emerald-400" /> : stageOwner === "quote" ? <Package className="h-5 w-5 text-blue-400" /> : <Package className="h-5 w-5 text-orange-400" />}
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3 border ${stageOwner === "request" ? "bg-emerald-600/10 border-emerald-500/20" : stageOwner === "quote" ? "bg-blue-50 border-blue-200" : "bg-orange-600/10 border-orange-500/20"}`}>
+                {stageOwner === "request" ? <FileText className="h-5 w-5 text-emerald-600" /> : stageOwner === "quote" ? <Package className="h-5 w-5 text-blue-600" /> : <Package className="h-5 w-5 text-orange-400" />}
               </div>
               <p className="text-sm font-bold text-slate-100 mb-1">
                 {stageOwner === "request" ? "견적 요청 단계" : stageOwner === "quote" ? "견적 관리 단계" : "구매 실행 단계"}
@@ -570,17 +570,17 @@ export default function SearchPage() {
 
             {/* Handoff context — 이전 선택 맥락 */}
             {(quoteItems.length > 0 || compareIds.length > 0 || searchQuery) && (
-              <div className="rounded-lg border border-bd bg-[#2A3240] px-4 py-3 mb-4 space-y-2">
+              <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 mb-4 space-y-2">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">이전 선택 맥락</p>
                 <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs">
                   {searchQuery && (
-                    <span className="text-slate-300">검색: <span className="font-medium text-slate-200">{searchQuery}</span></span>
+                    <span className="text-slate-600">검색: <span className="font-medium text-slate-800">{searchQuery}</span></span>
                   )}
                   {compareIds.length > 0 && (
-                    <span className="text-blue-400">비교 후보 <span className="font-semibold">{compareIds.length}건</span></span>
+                    <span className="text-blue-600">비교 후보 <span className="font-semibold">{compareIds.length}건</span></span>
                   )}
                   {quoteItems.length > 0 && (
-                    <span className="text-emerald-400">견적 후보 <span className="font-semibold">{quoteItems.length}건</span></span>
+                    <span className="text-emerald-600">견적 후보 <span className="font-semibold">{quoteItems.length}건</span></span>
                   )}
                 </div>
                 {quoteItems.length > 0 && (
@@ -593,9 +593,9 @@ export default function SearchPage() {
             )}
 
             {/* Next action */}
-            <div className="rounded-lg border border-bd bg-[#2A3240] px-4 py-3 mb-4">
+            <div className="rounded-lg border border-slate-200 bg-white px-4 py-3 mb-4">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-2">다음 액션</p>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="text-xs text-slate-600 leading-relaxed">
                 {stageOwner === "request"
                   ? "워크벤치 상단의 작업 창에서 요청서 조립 · 검토 · 제출을 진행하세요."
                   : stageOwner === "quote"
@@ -608,7 +608,7 @@ export default function SearchPage() {
               <button
                 type="button"
                 onClick={() => setWorkWindowMode(null)}
-                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                className="text-xs text-blue-600 hover:text-blue-600 transition-colors"
               >
                 소싱 검색으로 돌아가기
               </button>
@@ -622,11 +622,11 @@ export default function SearchPage() {
           {/* Center: search entry */}
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center max-w-lg px-6">
-              <div className="w-14 h-14 rounded-xl bg-el border border-bd flex items-center justify-center mx-auto mb-5">
-                <Search className="h-7 w-7 text-blue-400" />
+              <div className="w-14 h-14 rounded-xl bg-el border border-slate-200 flex items-center justify-center mx-auto mb-5">
+                <Search className="h-7 w-7 text-blue-600" />
               </div>
               <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
-              <p className="text-sm text-slate-300 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
+              <p className="text-sm text-slate-600 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
               <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
 
               {/* 예시 검색어 chip */}
@@ -644,7 +644,7 @@ export default function SearchPage() {
                         setIsLoginPromptOpen(true);
                       }
                     }}
-                    className="text-xs px-2.5 py-1 rounded-md bg-el border border-bd text-slate-400 hover:bg-st hover:text-slate-300 transition-all cursor-pointer"
+                    className="text-xs px-2.5 py-1 rounded-md bg-el border border-slate-200 text-slate-400 hover:bg-st hover:text-slate-600 transition-all cursor-pointer"
                   >
                     {term}
                   </button>
@@ -656,7 +656,7 @@ export default function SearchPage() {
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">검색 가능한 키</p>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
                   {["시약명", "CAS No.", "제조사", "카탈로그 번호", "규격"].map((key) => (
-                    <span key={key} className="text-[11px] px-2 py-0.5 rounded bg-el border border-bd text-slate-400">{key}</span>
+                    <span key={key} className="text-[11px] px-2 py-0.5 rounded bg-el border border-slate-200 text-slate-400">{key}</span>
                   ))}
                 </div>
               </div>
@@ -674,10 +674,10 @@ export default function SearchPage() {
                     ].map((item) => {
                       const Icon = item.icon;
                       return (
-                        <div key={item.label} className="flex items-start gap-2 px-3 py-2 rounded-md bg-el/50 border border-bd text-left">
-                          <Icon className="h-3.5 w-3.5 text-blue-400/70 mt-0.5 shrink-0" />
+                        <div key={item.label} className="flex items-start gap-2 px-3 py-2 rounded-md bg-el/50 border border-slate-200 text-left">
+                          <Icon className="h-3.5 w-3.5 text-blue-600/70 mt-0.5 shrink-0" />
                           <div>
-                            <p className="text-[11px] font-medium text-slate-300">{item.label}</p>
+                            <p className="text-[11px] font-medium text-slate-600">{item.label}</p>
                             <p className="text-[10px] text-slate-500">{item.desc}</p>
                           </div>
                         </div>
@@ -689,11 +689,11 @@ export default function SearchPage() {
 
               {session?.user ? (
                 <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                  <Link href="/protocol/bom" className="hover:text-slate-300 transition-colors">BOM 등록</Link>
+                  <Link href="/protocol/bom" className="hover:text-slate-600 transition-colors">BOM 등록</Link>
                   <span>·</span>
-                  <Link href="/dashboard/inventory" className="hover:text-slate-300 transition-colors">재고 확인</Link>
+                  <Link href="/dashboard/inventory" className="hover:text-slate-600 transition-colors">재고 확인</Link>
                   <span>·</span>
-                  <Link href="/app/compare" className="hover:text-slate-300 transition-colors">비교 목록</Link>
+                  <Link href="/app/compare" className="hover:text-slate-600 transition-colors">비교 목록</Link>
                 </div>
               ) : (
                 <Button
@@ -708,11 +708,11 @@ export default function SearchPage() {
 
           {/* Right guide rail — 비로그인 안내 */}
           {!session?.user && (
-            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-bd bg-[#2F3540] flex-col items-center justify-center text-center px-6">
-              <div className="w-12 h-12 rounded-xl bg-el border border-bd flex items-center justify-center mb-4">
-                <Search className="h-6 w-6 text-blue-400/60" />
+            <div className="hidden lg:flex w-[360px] shrink-0 border-l border-slate-200 bg-white flex-col items-center justify-center text-center px-6">
+              <div className="w-12 h-12 rounded-xl bg-el border border-slate-200 flex items-center justify-center mb-4">
+                <Search className="h-6 w-6 text-blue-600/60" />
               </div>
-              <p className="text-sm font-semibold text-slate-200 mb-1.5">로그인 후 검색 결과를 확인하세요</p>
+              <p className="text-sm font-semibold text-slate-800 mb-1.5">로그인 후 검색 결과를 확인하세요</p>
               <p className="text-xs text-slate-400 leading-relaxed mb-5">
                 제품 비교, 견적 요청, 요청서 작성,<br />운영 이력 관리는 로그인 후 사용할 수 있습니다.
               </p>
@@ -730,14 +730,14 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
       {hasSearched && !!session?.user && isSourcingOwner && (
-        <div className="border-t-2 border-bd shrink-0" style={{ backgroundColor: '#455264' }}>
+        <div className="border-t-2 border-slate-200 shrink-0" style={{ backgroundColor: '#455264' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-400" : "text-slate-500"}`} />
+                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-600" : "text-slate-500"}`} />
                 <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-100" : "text-slate-400"}`}>비교</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600/15 text-blue-400" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-50 text-blue-600" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
               </div>
               {compareIds.length > 0 ? (
                 <>
@@ -747,11 +747,11 @@ export default function SearchPage() {
                       AI 비교 검토 시작
                     </Button>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-amber-400">
+                    <span className="inline-flex items-center gap-1 text-xs text-amber-600">
                       <AlertTriangle className="h-3 w-3" />2개 이상 필요
                     </span>
                   )}
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => clearCompare()}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-500" onClick={() => clearCompare()}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
@@ -766,19 +766,19 @@ export default function SearchPage() {
             {/* Request segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-400" : "text-slate-500"}`} />
+                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-600" : "text-slate-500"}`} />
                 <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-100" : "text-slate-400"}`}>견적</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-400" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-600" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
               </div>
               {quoteItems.length > 0 ? (
                 <>
                   {requestReadiness.summary.review > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400">
+                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
                       <AlertTriangle className="h-3 w-3" />검토 {requestReadiness.summary.review}
                     </span>
                   )}
                   {requestReadiness.summary.blocked > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-400">
+                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-500">
                       <AlertCircle className="h-3 w-3" />차단 {requestReadiness.summary.blocked}
                     </span>
                   )}
@@ -794,7 +794,7 @@ export default function SearchPage() {
                       견적 요청서 만들기
                     </Button>
                   )}
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-400" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
+                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-500" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
@@ -824,7 +824,7 @@ export default function SearchPage() {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 px-3 text-xs text-slate-500 hover:text-red-400"
+                  className="h-7 px-3 text-xs text-slate-500 hover:text-red-500"
                   onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
                 >
                   전체 해제
@@ -1546,15 +1546,15 @@ export default function SearchPage() {
           <div className="absolute inset-0 bg-black/15" />
           {/* Anchored decision layer — right edge, rail과 연결된 느낌 */}
           <div
-            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-[#1C2028] border-l border-blue-500/20 shadow-2xl shadow-black/50 flex flex-col overflow-hidden"
+            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-white border-l border-blue-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Layer header — strong AI branding */}
-            <div className="px-4 py-3.5 border-b border-bd/60 bg-blue-600/[0.04]">
+            <div className="px-4 py-3.5 border-b border-slate-200 bg-blue-50">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-2">
                   <div className="flex items-center justify-center w-6 h-6 rounded-md bg-blue-600/20 border border-blue-500/30">
-                    <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   <div>
                     <span className="text-[12px] font-semibold text-slate-100">AI 비교 구성안</span>
@@ -1563,26 +1563,26 @@ export default function SearchPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   {isStrategyStale && (
-                    <span className="text-[9px] text-amber-400 px-1.5 py-0.5 rounded bg-amber-600/10 border border-amber-500/20">갱신 필요</span>
+                    <span className="text-[9px] text-amber-600 px-1.5 py-0.5 rounded bg-amber-50 border border-amber-200">갱신 필요</span>
                   )}
                   <button
                     type="button"
                     onClick={closeStrategyOverlay}
-                    className="h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-slate-300 hover:bg-white/[0.05] transition-colors"
+                    className="h-6 w-6 flex items-center justify-center rounded text-slate-500 hover:text-slate-600 hover:bg-white/[0.05] transition-colors"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
               <div className="flex items-center gap-2 text-[10px]">
-                <span className="text-slate-400">현재 선택 <span className="text-slate-200 font-medium">{compareIds.length}개</span></span>
+                <span className="text-slate-400">현재 선택 <span className="text-slate-800 font-medium">{compareIds.length}개</span></span>
                 <span className="text-slate-600">·</span>
-                <span className="text-slate-400">판단안 <span className="text-blue-300 font-medium">3개</span></span>
+                <span className="text-slate-400">판단안 <span className="text-blue-600 font-medium">3개</span></span>
               </div>
             </div>
 
             {/* Segmented tabs — 비용/납기/규격 */}
-            <div className="px-3 py-2.5 border-b border-bd/40 flex gap-1.5">
+            <div className="px-3 py-2.5 border-b border-slate-200 flex gap-1.5">
               {sourcingOptions.map((opt) => {
                 const label = opt.frame === "conservative" ? "비용 우선" : opt.frame === "balanced" ? "납기·가격 균형" : "규격 신뢰";
                 const isActive = previewStrategy === opt.frame;
@@ -1592,7 +1592,7 @@ export default function SearchPage() {
                     type="button"
                     onClick={() => setPreviewStrategy(opt.frame as any)}
                     className={`flex-1 text-center px-2 py-2 rounded-md text-[10px] font-medium transition-all ${isActive
-                      ? "bg-blue-600/15 text-blue-300 border border-blue-500/30 shadow-sm shadow-blue-500/10"
+                      ? "bg-blue-50 text-blue-600 border border-blue-500/30 shadow-sm shadow-blue-500/10"
                       : "text-slate-500 hover:text-slate-400 hover:bg-white/[0.03] border border-transparent"
                     }`}
                   >
@@ -1608,13 +1608,13 @@ export default function SearchPage() {
                 <div className="space-y-4">
                   {/* Delta summary — numbers first */}
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
+                    <div className="px-3 py-2.5 rounded-md border border-slate-200 bg-slate-50">
                       <span className="text-[9px] text-slate-500 block mb-0.5">추가 후보</span>
                       <span className="text-base font-bold tabular-nums text-slate-100">
                         {products.filter((p: any) => !compareIds.includes(p.id) && p.vendors?.[0]?.priceInKRW > 0).slice(0, 3).length}개
                       </span>
                     </div>
-                    <div className="px-3 py-2.5 rounded-md border border-bd/40 bg-[#252A33]">
+                    <div className="px-3 py-2.5 rounded-md border border-slate-200 bg-slate-50">
                       <span className="text-[9px] text-slate-500 block mb-0.5">현재 비교</span>
                       <span className="text-base font-bold tabular-nums text-slate-100">{compareIds.length}개</span>
                     </div>
@@ -1626,8 +1626,8 @@ export default function SearchPage() {
                     <div className="mt-1.5 space-y-1">
                       {previewOption.strengths.slice(0, 3).map((s: string, i: number) => (
                         <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-emerald-600/[0.05] border border-emerald-500/10">
-                          <Check className="h-3 w-3 text-emerald-400 mt-0.5 shrink-0" />
-                          <span className="text-[10px] text-slate-300 leading-relaxed">{s}</span>
+                          <Check className="h-3 w-3 text-emerald-600 mt-0.5 shrink-0" />
+                          <span className="text-[10px] text-slate-600 leading-relaxed">{s}</span>
                         </div>
                       ))}
                     </div>
@@ -1640,7 +1640,7 @@ export default function SearchPage() {
                       <div className="mt-1.5 space-y-1">
                         {previewOption.risks.slice(0, 2).map((r, i: number) => (
                           <div key={i} className="flex items-start gap-2 px-2.5 py-1.5 rounded bg-amber-600/[0.05] border border-amber-500/10">
-                            <AlertTriangle className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />
+                            <AlertTriangle className="h-3 w-3 text-amber-600 mt-0.5 shrink-0" />
                             <span className="text-[10px] text-slate-400 leading-relaxed">{typeof r === "string" ? r : r.label}</span>
                           </div>
                         ))}
@@ -1650,14 +1650,14 @@ export default function SearchPage() {
 
                   {/* Rationale */}
                   <div className="px-3 py-2.5 rounded-md bg-blue-600/[0.06] border border-blue-500/15">
-                    <span className="text-[9px] font-medium text-blue-400 uppercase tracking-wider block mb-1">추천 이유</span>
+                    <span className="text-[9px] font-medium text-blue-600 uppercase tracking-wider block mb-1">추천 이유</span>
                     <span className="text-[10px] text-blue-200 leading-relaxed">{previewOption.rationale}</span>
                   </div>
 
                   {/* Next action */}
-                  <div className="flex items-center gap-2 text-[10px] px-2.5 py-2 rounded bg-[#252A33] border border-bd/30">
+                  <div className="flex items-center gap-2 text-[10px] px-2.5 py-2 rounded bg-slate-50 border border-slate-200">
                     <span className="text-slate-500">다음 단계</span>
-                    <span className="text-slate-300 font-medium">{previewOption.nextAction}</span>
+                    <span className="text-slate-600 font-medium">{previewOption.nextAction}</span>
                   </div>
                 </div>
               ) : (
@@ -1666,21 +1666,21 @@ export default function SearchPage() {
             </div>
 
             {/* Action area — preview / apply separation */}
-            <div className="px-4 py-3.5 border-t border-bd/60 bg-[#181E28]">
+            <div className="px-4 py-3.5 border-t border-slate-200 bg-slate-50">
               {isStrategyStale ? (
                 <div className="text-center space-y-2">
                   <div className="flex items-center justify-center gap-1.5">
-                    <AlertTriangle className="h-3 w-3 text-amber-400" />
-                    <span className="text-[10px] text-amber-400">선택 상태가 변경되었습니다</span>
+                    <AlertTriangle className="h-3 w-3 text-amber-600" />
+                    <span className="text-[10px] text-amber-600">선택 상태가 변경되었습니다</span>
                   </div>
-                  <Button size="sm" className="w-full h-8 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300"
+                  <Button size="sm" className="w-full h-8 text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-600"
                     onClick={closeStrategyOverlay}>
                     닫기
                   </Button>
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <Button size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-slate-400 hover:text-slate-300 border border-bd/40"
+                  <Button size="sm" variant="ghost" className="flex-1 h-8 text-[10px] text-slate-400 hover:text-slate-600 border border-slate-200"
                     onClick={closeStrategyOverlay}>
                     닫기
                   </Button>

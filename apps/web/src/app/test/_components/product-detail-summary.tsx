@@ -87,9 +87,9 @@ export function ProductDetailSummary({
   return (
     <div className="space-y-0">
       {/* 제품 이미지 + 기본 정보 */}
-      <div className="px-4 py-3 border-b border-bd/50">
+      <div className="px-4 py-3 border-b border-slate-200">
         <div className="flex items-start gap-3">
-          <div className={`${imgSize} shrink-0 rounded-md border border-bd bg-el overflow-hidden flex items-center justify-center`}>
+          <div className={`${imgSize} shrink-0 rounded-md border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center`}>
             {!imgError ? (
               <img
                 src={imageSrc}
@@ -102,11 +102,11 @@ export function ProductDetailSummary({
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-slate-100 leading-tight line-clamp-2">
+            <h3 className="text-sm font-semibold text-slate-900 leading-tight line-clamp-2">
               {data.name}
             </h3>
             {data.vendorName && (
-              <p className="text-xs text-slate-400 mt-0.5 truncate">{data.vendorName}</p>
+              <p className="text-xs text-slate-500 mt-0.5 truncate">{data.vendorName}</p>
             )}
             <div className="flex items-center gap-1.5 mt-0.5">
               {data.catalogNumber && (
@@ -124,17 +124,17 @@ export function ProductDetailSummary({
       </div>
 
       {/* 가격 */}
-      <div className="px-4 py-3 border-b border-bd/50">
+      <div className="px-4 py-3 border-b border-slate-200">
         <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1.5">가격</div>
         {data.unitPrice ? (
           <div className="flex items-baseline gap-1.5">
-            <span className={`${variant === "compact" ? "text-base" : "text-lg"} font-bold tabular-nums text-slate-100`}>
+            <span className={`${variant === "compact" ? "text-base" : "text-lg"} font-bold tabular-nums text-slate-900`}>
               <PriceDisplay price={data.unitPrice} currency="KRW" />
             </span>
             <span className="text-[10px] text-slate-500">(VAT 별도)</span>
           </div>
         ) : (
-          <span className="text-sm text-slate-400">가격 문의 필요</span>
+          <span className="text-sm text-slate-500">가격 문의 필요</span>
         )}
         <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-500">
           <Calendar className="h-3 w-3" />
@@ -143,35 +143,35 @@ export function ProductDetailSummary({
       </div>
 
       {/* 스펙 */}
-      <div className="px-4 py-3 border-b border-bd/50">
+      <div className="px-4 py-3 border-b border-slate-200">
         <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1.5">스펙</div>
         <div className="space-y-1.5">
           {data.specification && (
             <div className="flex items-start gap-2 text-xs">
               <Box className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
               <span className="text-slate-500">용량</span>
-              <span className="text-slate-300 ml-auto truncate max-w-[140px]">{data.specification}</span>
+              <span className="text-slate-600 ml-auto truncate max-w-[140px]">{data.specification}</span>
             </div>
           )}
           {data.storageCondition && (
             <div className="flex items-start gap-2 text-xs">
               <Thermometer className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
               <span className="text-slate-500">보관</span>
-              <span className="text-slate-300 ml-auto truncate max-w-[140px]">{data.storageCondition}</span>
+              <span className="text-slate-600 ml-auto truncate max-w-[140px]">{data.storageCondition}</span>
             </div>
           )}
           {data.grade && (
             <div className="flex items-start gap-2 text-xs">
               <Package className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
               <span className="text-slate-500">Grade</span>
-              <span className="text-slate-300 ml-auto truncate max-w-[140px]">{data.grade}</span>
+              <span className="text-slate-600 ml-auto truncate max-w-[140px]">{data.grade}</span>
             </div>
           )}
           {data.category && (
             <div className="flex items-start gap-2 text-xs">
               <ClipboardList className="h-3.5 w-3.5 text-slate-500 shrink-0 mt-0.5" />
               <span className="text-slate-500">분류</span>
-              <span className="text-slate-300 ml-auto">
+              <span className="text-slate-600 ml-auto">
                 {PRODUCT_CATEGORIES[data.category as keyof typeof PRODUCT_CATEGORIES] || data.category}
               </span>
             </div>
@@ -183,24 +183,24 @@ export function ProductDetailSummary({
       </div>
 
       {/* 소싱 상태 */}
-      <div className="px-4 py-3 border-b border-bd/50">
+      <div className="px-4 py-3 border-b border-slate-200">
         <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-1.5">소싱 상태</div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <GitCompare className="h-3 w-3 text-blue-400" />
-              <span className="text-slate-400">비교 목록</span>
+              <GitCompare className="h-3 w-3 text-blue-600" />
+              <span className="text-slate-500">비교 목록</span>
             </div>
-            <span className={isInCompare ? "text-blue-400 font-medium" : "text-slate-500"}>
+            <span className={isInCompare ? "text-blue-600 font-medium" : "text-slate-500"}>
               {isInCompare ? `포함됨 (${compareCount})` : "미포함"}
             </span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
-              <FileText className="h-3 w-3 text-emerald-400" />
-              <span className="text-slate-400">견적 요청</span>
+              <FileText className="h-3 w-3 text-emerald-600" />
+              <span className="text-slate-500">견적 요청</span>
             </div>
-            <span className={isInRequest ? "text-emerald-400 font-medium" : "text-slate-500"}>
+            <span className={isInRequest ? "text-emerald-600 font-medium" : "text-slate-500"}>
               {isInRequest ? `포함됨 (${requestCount})` : "미포함"}
             </span>
           </div>
@@ -209,10 +209,10 @@ export function ProductDetailSummary({
 
       {/* 액션 바 — 비교 primary, 견적 secondary */}
       {(onToggleCompare || onToggleRequest) && (
-        <div className="px-4 py-3 border-b border-bd/50 space-y-1.5">
+        <div className="px-4 py-3 border-b border-slate-200 space-y-1.5">
           {onToggleCompare && (
             isInCompare ? (
-              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-blue-600/12 text-blue-400/80 border border-blue-600/20">
+              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-blue-50 text-blue-600 border border-blue-200">
                 <Check className="h-3 w-3" />비교 후보에 포함됨
               </div>
             ) : (
@@ -227,14 +227,14 @@ export function ProductDetailSummary({
           )}
           {onToggleRequest && (
             isInRequest ? (
-              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-slate-500/10 text-slate-400 border border-slate-500/15">
+              <div className="w-full h-7 px-3 rounded text-xs font-medium inline-flex items-center gap-1.5 bg-slate-500/10 text-slate-500 border border-slate-500/15">
                 <Check className="h-3 w-3" />견적 후보에 포함됨
               </div>
             ) : (
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full h-7 text-xs font-medium border-bd text-slate-400 hover:text-slate-200"
+                className="w-full h-7 text-xs font-medium border-slate-200 text-slate-500 hover:text-slate-700"
                 onClick={onToggleRequest}
               >
                 <FileText className="h-3 w-3 mr-1.5" />견적 후보에 추가
@@ -249,7 +249,7 @@ export function ProductDetailSummary({
         <div className="px-4 py-2">
           <Link
             href={`/products/${data.id}`}
-            className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors py-1"
+            className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors py-1"
           >
             <ExternalLink className="h-3 w-3" />
             전체 상세 페이지
