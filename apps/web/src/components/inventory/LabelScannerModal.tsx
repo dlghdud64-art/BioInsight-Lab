@@ -558,7 +558,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0 bg-white text-slate-900 border-slate-200">
+      <DialogContent className="max-w-md p-0 gap-0 bg-white text-slate-900 border-slate-200 z-[60]">
         <DialogHeader className="px-4 pt-4 pb-2">
           <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
             <ScanLine className="h-4 w-4 text-blue-600" />

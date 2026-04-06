@@ -1936,7 +1936,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
             if (q) {
               setLocalQuery(q);
               setSearchQuery(q);
-              if (!!session?.user) runSearch();
+              if (isLoggedIn) runSearch();
             }
           }}
         />

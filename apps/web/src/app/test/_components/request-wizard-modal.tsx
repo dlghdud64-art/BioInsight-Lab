@@ -166,7 +166,7 @@ export function RequestWizardModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
+      <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0 z-[60]">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">

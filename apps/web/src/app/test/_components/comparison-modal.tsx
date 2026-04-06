@@ -100,16 +100,18 @@ export function ComparisonModal({
 
   // 비교 대상 제품만 필터
   const compareProducts = products.filter((p) => compareIds.includes(p.id));
+  const compareKey = compareIds.slice().sort().join(",");
 
-  const fetchAnalysis = useCallback(async () => {
-    if (compareProducts.length === 0) return;
+  const fetchAnalysis = async () => {
+    const targets = products.filter((p) => compareIds.includes(p.id));
+    if (targets.length === 0) return;
     setLoading(true);
     setError(null);
     try {
       const res = await fetch("/api/ai/compare-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ products: compareProducts }),
+        body: JSON.stringify({ products: targets }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "분석 실패");
@@ -119,21 +121,20 @@ export function ComparisonModal({
     } finally {
       setLoading(false);
     }
-  }, [compareProducts.map((p) => p.id).join(",")]);
+  };
 
   useEffect(() => {
-    if (open && compareProducts.length > 0 && !result) {
+    if (open && compareIds.length > 0) {
+      setResult(null);
+      setError(null);
       fetchAnalysis();
     }
-  }, [open]);
-
-  // 모달 닫힐 때 결과 초기화
-  useEffect(() => {
     if (!open) {
       setResult(null);
       setError(null);
     }
-  }, [open]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, compareKey]);
 
   const handleOpenRequestWizard = () => {
     onOpenChange(false);
@@ -142,7 +143,7 @@ export function ComparisonModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl bg-white border-slate-200 p-0 gap-0">
+      <DialogContent className="max-w-4xl bg-white border-slate-200 p-0 gap-0 z-[60]">
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-slate-100">
           <div className="flex items-center gap-2 text-xs text-slate-400 mb-2">
