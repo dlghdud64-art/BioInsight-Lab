@@ -197,15 +197,15 @@ export default function PricingPage() {
               <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>도입 범위 비교</h2>
             </Reveal>
             <Reveal delay={0.1}>
-              <div className="overflow-x-auto rounded-2xl" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
-                <table className="w-full text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
+              <div className="overflow-x-auto rounded-2xl -mx-2 px-2 md:mx-0 md:px-0" style={{ border: `1px solid ${P.border}`, boxShadow: "0 1px 3px rgba(0,0,0,0.04)" }}>
+                <table className="w-full min-w-[640px] text-left border-separate border-spacing-0" style={{ backgroundColor: P.bg }}>
                   <thead>
                     <tr style={{ backgroundColor: P.bgSoft }}>
-                      <th className="p-5 text-xs uppercase tracking-wider font-bold" style={{ color: P.text4 }}>운영 항목</th>
-                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text2 }}>Starter</th>
-                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text1 }}>Team</th>
-                      <th className="p-5 text-center text-sm font-bold" style={{ color: P.text1 }}>Business</th>
-                      <th className="p-5 text-center text-sm font-semibold" style={{ color: P.text2 }}>Enterprise</th>
+                      <th className="p-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Starter</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Team</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Business</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -219,11 +219,11 @@ export default function PricingPage() {
                       { feature: "외부 시스템 연결", starter: "none", team: "기본", business: "check", businessLabel: "확장", enterprise: "check", enterpriseLabel: "내부 연동" },
                     ] as TableRow[]).map((row, i) => (
                       <tr key={row.feature} style={{ borderTop: `1px solid ${P.border}`, backgroundColor: i % 2 === 0 ? P.bg : P.bgSoft }}>
-                        <td className="p-5 font-medium text-sm" style={{ color: P.text1 }}>{row.feature}</td>
-                        <td className="p-5 text-center"><CellValue value={row.starter} /></td>
-                        <td className="p-5 text-center"><CellValue value={row.team} /></td>
-                        <td className="p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
-                        <td className="p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
+                        <td className="p-3 md:p-5 font-medium text-xs md:text-sm whitespace-nowrap" style={{ color: P.text1 }}>{row.feature}</td>
+                        <td className="p-3 md:p-5 text-center"><CellValue value={row.starter} /></td>
+                        <td className="p-3 md:p-5 text-center"><CellValue value={row.team} /></td>
+                        <td className="p-3 md:p-5 text-center"><CellValue value={row.business} label={row.businessLabel} highlight /></td>
+                        <td className="p-3 md:p-5 text-center"><CellValue value={row.enterprise} label={row.enterpriseLabel} /></td>
                       </tr>
                     ))}
                   </tbody>
