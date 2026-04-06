@@ -169,7 +169,7 @@ export default function AuditTrailPage() {
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-pn hover:bg-el text-white  bg-el  text-slate-900  hover:bg-slate-200"
+            className="bg-el text-slate-900 hover:bg-slate-200"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />

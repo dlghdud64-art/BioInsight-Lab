@@ -102,7 +102,7 @@ export default function BillingPage() {
                 <p className="text-sm text-muted-foreground">결제 기한: 2026.03.10</p>
                 <p className="mt-1 text-2xl font-bold">₩ 12,450,000</p>
               </div>
-              <Button className="w-fit bg-pn text-white hover:bg-el  bg-el  text-slate-900  hover:bg-slate-200">
+              <Button className="w-fit bg-el text-slate-900 hover:bg-slate-200">
                 <Download className="mr-2 h-4 w-4" />
                 계산서 다운로드
               </Button>

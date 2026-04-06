@@ -112,7 +112,7 @@ export default function BudgetDetailPage() {
 
         <Card className="border-bd border-bs bg-pn/50">
           <CardHeader>
-            <CardTitle className="text-white">
+            <CardTitle className="text-slate-900">
               사용 현황
             </CardTitle>
             <CardDescription className="text-muted-foreground text-slate-400">
@@ -121,7 +121,7 @@ export default function BudgetDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-wrap gap-x-4 gap-y-1 items-center min-w-0">
-              <div className="text-sm md:text-base font-semibold text-white truncate min-w-0">
+              <div className="text-sm md:text-base font-semibold text-slate-900 truncate min-w-0">
                 ₩ {(usage?.totalSpent ?? 0).toLocaleString("ko-KR")} / ₩{" "}
                 {budget.amount.toLocaleString("ko-KR")}
               </div>
@@ -129,7 +129,7 @@ export default function BudgetDetailPage() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs md:text-sm">
                 <span className="text-muted-foreground text-slate-400">예산 사용률</span>
-                <span className="font-medium text-white">
+                <span className="font-medium text-slate-900">
                   {usageRate.toFixed(1)}%
                 </span>
               </div>
@@ -152,7 +152,7 @@ export default function BudgetDetailPage() {
         {budget.description && (
           <Card className="border-bd border-bs bg-pn/50">
             <CardHeader>
-              <CardTitle className="text-white text-base">설명</CardTitle>
+              <CardTitle className="text-slate-900 text-base">설명</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground text-slate-600">
