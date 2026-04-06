@@ -72,8 +72,8 @@ const FAQ_DATA = [
     a: "네, 운영 범위가 확장되면 언제든 플랜을 변경할 수 있습니다. 고객 지원팀에 문의해 주세요.",
   },
   {
-    q: "무료 체험은 어떻게 진행되나요?",
-    a: "Team 플랜은 14일 무료 체험이 가능합니다. 신용카드 등록 없이 바로 시작할 수 있으며, 체험 기간이 끝나면 자동으로 Starter 플랜으로 전환됩니다.",
+    q: "바로 시작할 수 있나요?",
+    a: "Starter 플랜은 가입 즉시 무료로 이용할 수 있습니다. Team 및 Business 플랜은 결제 후 바로 활성화되며, 추가 설정 없이 팀원을 초대할 수 있습니다.",
   },
   {
     q: "Enterprise 도입은 어떤 절차로 진행되나요?",
@@ -98,7 +98,7 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
               <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-5 leading-[1.1]" style={{ color: P.text1 }}>
-                Flexible Plans for Every Lab
+                연구실 규모에 맞는 플랜을 선택하세요
               </h1>
               <p className="text-base md:text-lg max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: P.text3 }}>
                 시약·장비 검색부터 비교·요청 생성, 발주 준비, 입고 반영, 재고 운영까지.<br className="hidden md:block" />
@@ -140,25 +140,25 @@ export default function PricingPage() {
                   name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
                   price: "Free", period: "",
                   features: ["시약·장비 검색과 기본 후보 저장", "기본 비교 기록", "기본 재고 등록"],
-                  cta: "Start for Free", href: "/search", featured: false,
+                  cta: "무료 플랜 시작하기", href: "/search", featured: false,
                 },
                 {
                   name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
                   price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
                   features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
-                  cta: "14일 무료 체험", href: "/search", featured: true,
+                  cta: "플랜 선택하기", href: "/search", featured: true,
                 },
                 {
                   name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
                   price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
                   features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
-                  cta: "무료 체험 시작", href: "/search", featured: false,
+                  cta: "플랜 선택하기", href: "/search", featured: false,
                 },
                 {
                   name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
                   price: "Custom", period: "",
                   features: ["조직 보안 정책과 접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
-                  cta: "도입 상담", href: "/support", featured: false,
+                  cta: "도입 상담하기", href: "/support", featured: false,
                 },
               ].map((plan, i) => (
                 <Reveal key={plan.name} delay={i * 0.08}>
@@ -175,14 +175,14 @@ export default function PricingPage() {
             <Reveal>
               <div className="rounded-2xl p-8 md:p-10 flex flex-col md:flex-row items-center justify-between gap-6" style={{ backgroundColor: P.bgSoft, border: `1px solid ${P.border}` }}>
                 <div>
-                  <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: P.text1 }}>Need a custom solution?</h3>
+                  <h3 className="text-xl md:text-2xl font-bold mb-2" style={{ color: P.text1 }}>맞춤형 솔루션이 필요하신가요?</h3>
                   <p className="text-sm md:text-base" style={{ color: P.text3 }}>
                     조직 운영에 맞는 도입 범위를 함께 설계합니다. 검색·비교 중심으로 시작하고, 요청·발주·입고·재고 운영까지 확장할 수 있습니다.
                   </p>
                 </div>
                 <Link href="/support" className="flex-shrink-0">
                   <button className="px-8 py-3.5 rounded-xl font-bold text-white transition-all hover:brightness-110 active:scale-[0.98] flex items-center gap-2 whitespace-nowrap" style={{ backgroundColor: P.green }}>
-                    Consultation Request <ArrowRight className="h-4 w-4" />
+                    도입 상담 신청 <ArrowRight className="h-4 w-4" />
                   </button>
                 </Link>
               </div>
@@ -238,7 +238,7 @@ export default function PricingPage() {
           <div className="max-w-3xl mx-auto px-6 md:px-8">
             <Reveal>
               <h2 className="text-3xl md:text-4xl font-bold mb-12 text-center" style={{ color: P.text1 }}>
-                Frequently Asked Questions
+                자주 묻는 질문
               </h2>
             </Reveal>
             <div className="flex flex-col gap-4">
@@ -333,7 +333,7 @@ function PlanCard({
           MOST POPULAR
         </div>
         <div
-          className="p-9 md:p-10 rounded-3xl flex flex-col h-full"
+          className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
           style={{
             backgroundColor: D.bg,
             border: `1px solid ${D.border}`,
@@ -368,7 +368,7 @@ function PlanCard({
 
   return (
     <div
-      className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all hover:translate-y-[-4px]"
+      className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
       style={{
         backgroundColor: P.bg,
         border: `1px solid ${P.border}`,
