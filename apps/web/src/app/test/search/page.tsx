@@ -626,7 +626,7 @@ export default function SearchPage() {
               <div className="w-14 h-14 rounded-xl bg-el border border-slate-200 flex items-center justify-center mx-auto mb-5">
                 <Search className="h-7 w-7 text-blue-600" />
               </div>
-              <h2 className="text-lg font-bold text-white mb-2">시약·장비를 검색하세요</h2>
+              <h2 className="text-lg font-bold text-slate-900 mb-2">시약·장비를 검색하세요</h2>
               <p className="text-sm text-slate-600 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
               <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
 
@@ -1766,9 +1766,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-bd bg-[#0B1120]">
+    <div className="shrink-0 border-b border-white/[0.06] bg-[#0B1120]">
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#0B1120]">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-white/[0.06] bg-[#0B1120]">
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard" className="flex items-center">
             <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
@@ -1789,7 +1789,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
       <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-[#162032] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#1A2A40] transition-all">
+          <div className="flex items-center flex-1 bg-[#162032] border border-white/[0.08] rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#1A2A40] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"
