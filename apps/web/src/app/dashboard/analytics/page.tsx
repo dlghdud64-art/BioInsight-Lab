@@ -15,7 +15,7 @@ import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
   ChevronRight, BarChart2, Gauge, AlertTriangle, RotateCcw,
   CreditCard, Users, ExternalLink, RefreshCw, Clock, Wallet,
-  ArrowRight, Layers,
+  ArrowRight, Layers, Sparkles, Loader2,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
 
@@ -123,6 +123,24 @@ type AnalyticsView = "overview" | "team";
 // ── 메인 페이지 ──────────────────────────────────────────
 export default function AnalyticsPage() {
   const [currentView, setCurrentView] = useState<AnalyticsView>("overview");
+  const [aiInsight, setAiInsight] = useState<{ summary: string; dataPoints: number; analyzedAt: string } | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
+  const runAiAnalysis = async () => {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await fetch("/api/analytics/ai-insight", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI 분석 실패");
+      setAiInsight({ summary: data.summary, dataPoints: data.dataPoints ?? 0, analyzedAt: data.analyzedAt ?? new Date().toISOString() });
+    } catch (err: unknown) {
+      setAiError(err instanceof Error ? err.message : "AI 분석 중 오류 발생");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const { data, isLoading, isError } = useQuery<AnalyticsDashboardData>({
     queryKey: ["analytics-dashboard"],
@@ -697,10 +715,43 @@ export default function AnalyticsPage() {
                   );
                 })()}
 
-                <div className="mt-4 pt-3 border-t border-bd">
+                {/* AI 분석 결과 */}
+                {aiInsight && (
+                  <div className="mt-3 rounded-lg border border-violet-200 bg-violet-50/50 p-3.5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Sparkles className="h-3.5 w-3.5 text-violet-500" />
+                      <span className="text-xs font-semibold text-violet-600">AI 분석 결과</span>
+                      <span className="text-xs text-slate-400 ml-auto">{aiInsight.dataPoints}건 분석</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiInsight.summary}</p>
+                    <p className="text-xs text-slate-400 mt-2">
+                      {new Date(aiInsight.analyzedAt).toLocaleString("ko-KR")} 기준 · Gemini 2.0 Flash
+                    </p>
+                  </div>
+                )}
+
+                {aiError && (
+                  <div className="mt-3 rounded-lg border border-red-200 bg-red-50/50 px-3.5 py-2.5">
+                    <p className="text-xs text-red-500">{aiError}</p>
+                  </div>
+                )}
+
+                <div className="mt-4 pt-3 border-t border-bd flex items-center justify-between">
                   <Link href="/dashboard/purchases" className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium transition-colors">
                     구매내역 보기 <ArrowRight className="h-3 w-3" />
                   </Link>
+                  <button
+                    onClick={runAiAnalysis}
+                    disabled={aiLoading}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-md bg-violet-50 text-violet-600 border border-violet-200 hover:bg-violet-100 hover:border-violet-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {aiLoading ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-3 w-3" />
+                    )}
+                    {aiLoading ? "분석 중..." : "AI 분석 실행"}
+                  </button>
                 </div>
               </div>
 
