@@ -94,6 +94,8 @@ import { buildSourcingStrategyOptionSet } from "@/lib/ai/decision-option-builder
 import type { DecisionOption, DecisionOptionSet } from "@/lib/ai/decision-option-set";
 import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDraft, type SourcingStrategyOptionLocal } from "@/lib/ai/sourcing-operating-layer";
 import { LabelScannerModal } from "@/components/inventory/LabelScannerModal";
+import { ComparisonModal } from "../_components/comparison-modal";
+import { RequestWizardModal } from "../_components/request-wizard-modal";
 
 export default function SearchPage() {
   const {
@@ -178,6 +180,8 @@ export default function SearchPage() {
   const [compareSeedDraft, setCompareSeedDraft] = useState<CompareSeedDraft | null>(null);
   // ── Strategy overlay state (compact trigger + anchored overlay) ──
   const [isStrategyOverlayOpen, setIsStrategyOverlayOpen] = useState(false);
+  const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
+  const [requestWizardOpen, setRequestWizardOpen] = useState(false);
   const [previewStrategy, setPreviewStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
   const [preSelectionSnapshot, setPreSelectionSnapshot] = useState<string[] | null>(null);
 
@@ -798,9 +802,9 @@ export default function SearchPage() {
               {compareIds.length > 0 ? (
                 <>
                   {compareReady ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("compare-review"))}>
+                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
                       <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                      AI 비교 검토 시작
+                      AI 비교 분석
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-600">
@@ -845,7 +849,7 @@ export default function SearchPage() {
                       견적 요청 조립
                     </Button>
                   ) : (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request"))}>
+                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setRequestWizardOpen(true))}>
                       <FileText className="h-3.5 w-3.5 mr-1.5" />
                       견적 요청서 만들기
                     </Button>
@@ -1908,8 +1912,32 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
             if (q) {
               setLocalQuery(q);
               setSearchQuery(q);
-              if (isLoggedIn) runSearch();
+              if (!!session?.user) runSearch();
             }
+          }}
+        />
+
+        {/* ═══ AI 비교 분석 모달 ═══ */}
+        <ComparisonModal
+          open={comparisonModalOpen}
+          onOpenChange={setComparisonModalOpen}
+          compareIds={compareIds}
+          products={products}
+          onOpenRequestWizard={() => {
+            setComparisonModalOpen(false);
+            setRequestWizardOpen(true);
+          }}
+        />
+
+        {/* ═══ 견적 요청 위저드 모달 ═══ */}
+        <RequestWizardModal
+          open={requestWizardOpen}
+          onOpenChange={setRequestWizardOpen}
+          products={products}
+          quoteItems={quoteItems}
+          compareIds={compareIds}
+          onSubmitSuccess={() => {
+            quoteItems.forEach((item: any) => removeQuoteItem(item.id));
           }}
         />
       </div>
