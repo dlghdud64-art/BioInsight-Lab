@@ -10,7 +10,7 @@ import {
   Package,
   ShoppingCart,
   Heart,
-  Scale,
+  PenLine,
   ExternalLink,
   ClipboardCopy,
   Languages,
@@ -1012,7 +1012,7 @@ export default function ProductDetailPage() {
                           }
                         }}
                       >
-                          <Scale className="w-4 h-4" />
+                          <PenLine className="w-4 h-4" />
                           바로 비교
                         </Button>
                         <Button
@@ -1278,7 +1278,7 @@ function AlternativeProductsSection({
                       });
                     }}
                   >
-                    <Scale className="h-3 w-3 mr-1" />
+                    <PenLine className="h-3 w-3 mr-1" />
                     {isInCompare ? "비교 제거" : "비교 추가"}
                   </Button>
                 </CardContent>

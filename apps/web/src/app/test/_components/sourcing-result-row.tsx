@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
-  Scale, FlaskConical, FileText, ChevronRight, Check,
+  PenLine, FlaskConical, FileText, ChevronRight, Check,
   AlertTriangle,
 } from "lucide-react";
 
@@ -171,7 +171,7 @@ export function SourcingResultRow({
     >
       <div className="flex items-start gap-3 px-3 py-2.5">
         {/* Thumbnail */}
-        <div className="w-10 h-10 shrink-0 rounded border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center mt-0.5">
+        <div className="w-12 h-12 shrink-0 rounded border border-slate-200 bg-slate-50 overflow-hidden flex items-center justify-center mt-0.5">
           {!imgError ? (
             <img src={imageSrc} alt={product.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
           ) : (
@@ -182,11 +182,11 @@ export function SourcingResultRow({
         {/* 3-tier content */}
         <div className="flex-1 min-w-0">
           {/* 1행: 제품명 */}
-          <p className="text-[13px] font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
+          <p className="text-sm font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
 
           {/* 2행: 정적 메타 */}
           {staticMeta && (
-            <p className="text-[11px] font-medium text-slate-500 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
+            <p className="text-xs font-medium text-slate-500 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
           )}
 
           {/* 3행: 동적 운영 신호 */}
@@ -196,7 +196,7 @@ export function SourcingResultRow({
                 <span
                   key={idx}
                   className={`inline-flex items-center shrink-0 border rounded-full font-semibold leading-5 ${CHIP_STYLES[sig.color]}`}
-                  style={{ fontSize: "11px", height: "20px", paddingLeft: "8px", paddingRight: "8px" }}
+                  style={{ fontSize: "12px", height: "22px", paddingLeft: "10px", paddingRight: "10px" }}
                 >
                   {sig.label}
                 </span>
@@ -208,15 +208,15 @@ export function SourcingResultRow({
         {/* Price column — desktop */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
           {unitPrice ? (
-            <span className="text-sm font-bold tabular-nums text-slate-900 whitespace-nowrap tracking-tight">
+            <span className="text-base font-bold tabular-nums text-slate-900 whitespace-nowrap tracking-tight">
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
-            <span className="text-xs font-semibold text-amber-600 flex items-center gap-0.5">
-              <AlertTriangle className="h-3 w-3" />견적 필요
+            <span className="text-sm font-semibold text-amber-600 flex items-center gap-0.5">
+              <AlertTriangle className="h-3.5 w-3.5" />견적 필요
             </span>
           )}
-          <span className="text-[10px] text-slate-400">
+          <span className="text-xs text-slate-400">
             {isInRequest ? "견적 후보" : isInCompare ? "비교 후보" : unitPrice ? "VAT 별도" : ""}
           </span>
         </div>
@@ -228,18 +228,18 @@ export function SourcingResultRow({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 cursor-default"
+              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 cursor-default"
               onClick={() => { onToggleCompare(); toast.info("비교 후보에서 제거되었습니다."); }}
             >
-              <Check className="h-3 w-3" />비교 후보
+              <Check className="h-3.5 w-3.5" />비교 후보
             </motion.button>
           ) : (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors"
+              className="h-8 px-3 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors inline-flex items-center"
               onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
-              <Scale className="h-3 w-3 mr-1" />비교 추가
+              <PenLine className="h-3.5 w-3.5 mr-1" />비교 추가
             </motion.button>
           )}
           {/* Secondary: 견적 */}
@@ -247,18 +247,18 @@ export function SourcingResultRow({
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
+              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
               onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}
             >
-              <Check className="h-3 w-3" />견적 후보
+              <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
           ) : (
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors"
+              className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors inline-flex items-center"
               onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
-              <FileText className="h-3 w-3 mr-1" />견적 담기
+              <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
         </div>
@@ -267,39 +267,39 @@ export function SourcingResultRow({
       </div>
 
       {/* Mobile bottom: price + CTA */}
-      <div className={`flex items-center justify-between px-3 pb-2 pt-0 sm:hidden ${previewDim}`} onClick={(e) => e.stopPropagation()}>
-        <div className="text-xs">
+      <div className={`flex items-center justify-between px-3 pb-2.5 pt-0 sm:hidden ${previewDim}`} onClick={(e) => e.stopPropagation()}>
+        <div className="text-sm">
           {unitPrice ? (
             <span className="font-semibold tabular-nums text-slate-900"><PriceDisplay price={unitPrice} currency="KRW" /></span>
           ) : (
-            <span className="text-amber-600 text-[10px]">견적 필요</span>
+            <span className="text-amber-600 text-xs">견적 필요</span>
           )}
         </div>
         <div className="flex items-center gap-1.5">
           {isInCompare ? (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200"
+              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200"
               onClick={() => { onToggleCompare(); toast.info("비교 후보에서 제거되었습니다."); }}>
-              <Check className="h-3 w-3" />비교 후보
+              <Check className="h-3.5 w-3.5" />비교 후보
             </motion.button>
           ) : (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-600 border border-slate-200"
+              className="h-8 px-3 rounded-md text-sm font-medium text-slate-600 border border-slate-200 inline-flex items-center"
               onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
-              <Scale className="h-3 w-3 mr-1" />비교 추가
+              <PenLine className="h-3.5 w-3.5 mr-1" />비교 추가
             </motion.button>
           )}
           {isInRequest ? (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200"
+              className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200"
               onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}>
-              <Check className="h-3 w-3" />견적 후보
+              <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
           ) : (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
-              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 border border-slate-200"
+              className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 border border-slate-200 inline-flex items-center"
               onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
-              <FileText className="h-3 w-3 mr-1" />견적 담기
+              <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
         </div>

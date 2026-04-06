@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, ShoppingCart, Scale, Thermometer, Box, FlaskConical } from "lucide-react";
+import { Package, ShoppingCart, PenLine, Thermometer, Box, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -155,12 +155,12 @@ export function ProductCard({
             )}
           </div>
 
-          {/* 버튼 그룹: 견적 담기(Primary) / 비교함(보조) */}
+          {/* 버튼 그룹: 비교 추가 / 견적 담기 */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
-              className="text-slate-400 hover:text-slate-700 hover:bg-el rounded h-9 w-9 p-0"
+              className="h-9 px-3 text-sm font-medium text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50 transition-colors"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -170,14 +170,15 @@ export function ProductCard({
                 });
               }}
             >
-              <Scale className="h-4 w-4" />
+              <PenLine className="h-3.5 w-3.5 mr-1.5" />
+              비교 추가
             </Button>
             <Link href={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
               <Button
                 size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 py-2 px-4 text-sm font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm rounded h-9 px-3 text-sm font-medium"
               >
-                <ShoppingCart className="h-4 w-4 mr-1.5" />
+                <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
                 견적 담기
               </Button>
             </Link>

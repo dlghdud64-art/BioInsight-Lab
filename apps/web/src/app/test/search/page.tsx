@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, GitCompare, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera } from "lucide-react";
+import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
@@ -385,33 +385,62 @@ export default function SearchPage() {
         <div className="flex-1 overflow-hidden flex">
           {/* B. Result Workbench List — main scrollable canvas */}
           <div className="flex-1 overflow-y-auto">
-            {/* ═══ 3행: Operating Status Bar — 순수 상태 표시 ═══ */}
-            <div className="px-4 py-1.5 border-b border-slate-200 flex items-baseline gap-3 text-[11px]">
-              {/* 결과 수 */}
-              <span className="text-slate-600">
-                {isSearchLoading ? "검색 중..." : <><span className="font-semibold text-slate-800">{products.length}</span>건</>}
-              </span>
-              {activeFilterCount > 0 && (
-                <span className="text-slate-400">필터 {activeFilterCount}개</span>
-              )}
-              {/* 비교/견적 후보 + 다음 행동 */}
-              <span className="text-slate-500 hidden sm:inline">|</span>
-              {compareIds.length > 0 && (
-                <span className="text-blue-600 font-medium hidden sm:inline">비교 후보 {compareIds.length}</span>
-              )}
-              {quoteItems.length > 0 && (
-                <span className="text-emerald-600 font-medium hidden sm:inline">견적 후보 {quoteItems.length}</span>
-              )}
-              <span className="text-slate-400 hidden md:inline">
-                {(() => {
-                  if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
-                  if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
-                  if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
-                  if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
-                  if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
-                  return "";
-                })()}
-              </span>
+            {/* ═══ 3행: Operating Status Bar — 흰 배경, 결과 수 + 후보 + 필터/재고 ═══ */}
+            <div className="px-4 md:px-6 py-2.5 border-b border-slate-200 bg-white flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 text-sm">
+                {/* 결과 수 */}
+                <span className="text-slate-700 font-medium">
+                  {isSearchLoading ? "검색 중..." : <><span className="font-bold text-slate-900">{products.length}</span>건</>}
+                </span>
+                {activeFilterCount > 0 && (
+                  <span className="text-slate-400 text-xs">필터 {activeFilterCount}개</span>
+                )}
+                {/* 비교/견적 후보 + 다음 행동 */}
+                {(compareIds.length > 0 || quoteItems.length > 0) && (
+                  <span className="text-slate-300 hidden sm:inline">|</span>
+                )}
+                {compareIds.length > 0 && (
+                  <span className="text-blue-600 font-semibold text-sm hidden sm:inline">비교 후보 {compareIds.length}</span>
+                )}
+                {quoteItems.length > 0 && (
+                  <span className="text-emerald-600 font-semibold text-sm hidden sm:inline">견적 후보 {quoteItems.length}</span>
+                )}
+                <span className="text-slate-400 text-xs hidden md:inline">
+                  {(() => {
+                    if (compareIds.length === 0 && quoteItems.length === 0) return "선택된 후보가 없습니다";
+                    if (compareIds.length === 1 && quoteItems.length === 0) return "비교 시작 전 후보를 1개 더 선택하세요";
+                    if (compareIds.length >= 2 && quoteItems.length === 0) return "동일 규격 비교가 가능합니다";
+                    if (compareIds.length === 0 && quoteItems.length > 0) return "요청서 생성으로 이어갈 수 있습니다";
+                    if (compareIds.length >= 1 && quoteItems.length >= 1) return "비교 후 요청 전환이 적절합니다";
+                    return "";
+                  })()}
+                </span>
+              </div>
+              {/* 필터 / 재고 — 흰 배경 오른쪽 */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
+                      <SlidersHorizontal className="h-3.5 w-3.5" />
+                      필터
+                      {activeFilterCount > 0 && (
+                        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] text-white font-medium">{activeFilterCount}</span>
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[280px] p-4">
+                    <SearchPanel />
+                  </SheetContent>
+                </Sheet>
+                {isLoggedIn && hasSearched && searchQuery && (
+                  <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
+                    <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
+                      <Package className="h-3.5 w-3.5" />
+                      재고
+                    </button>
+                  </Link>
+                )}
+              </div>
             </div>
 
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
@@ -523,7 +552,7 @@ export default function SearchPage() {
                       className="flex-1 h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white font-medium"
                       onClick={() => handleProtectedAction(() => setWorkWindowMode("compare-review"))}
                     >
-                      <GitCompare className="h-3 w-3 mr-1" />
+                      <PenLine className="h-3 w-3 mr-1" />
                       비교 검토 시작
                     </Button>
                     {shouldShowSourcingStrip && (
@@ -568,7 +597,7 @@ export default function SearchPage() {
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-center px-6">
                 <div className="w-12 h-12 rounded-xl bg-el border border-slate-200 flex items-center justify-center mb-4">
-                  <GitCompare className="h-6 w-6 text-blue-600/60" />
+                  <PenLine className="h-6 w-6 text-blue-600/60" />
                 </div>
                 <p className="text-sm font-semibold text-slate-800 mb-1.5">제품을 선택해 비교를 시작하세요</p>
                 <p className="text-xs text-slate-400 leading-relaxed mb-4">
@@ -694,7 +723,7 @@ export default function SearchPage() {
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">로그인 후 가능한 작업</p>
                   <div className="grid grid-cols-2 gap-2 max-w-xs mx-auto">
                     {[
-                      { icon: GitCompare, label: "비교", desc: "후보 나란히 비교" },
+                      { icon: PenLine, label: "비교", desc: "후보 나란히 비교" },
                       { icon: FileText, label: "견적 요청", desc: "요청서 생성·전송" },
                       { icon: Package, label: "재고 연결", desc: "입고·Lot 추적" },
                       { icon: Search, label: "운영 이력", desc: "검색·구매 이력 관리" },
@@ -762,7 +791,7 @@ export default function SearchPage() {
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
-                <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-600" : "text-slate-500"}`} />
+                <PenLine className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-600" : "text-slate-500"}`} />
                 <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-100" : "text-slate-400"}`}>비교</span>
                 <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-500"}`}>{compareIds.length}</Badge>
               </div>
@@ -1792,42 +1821,39 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-white/10" style={{ backgroundColor: '#0f172a' }}>
-      {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-white/10" style={{ backgroundColor: '#0f172a' }}>
-        <div className="flex items-center gap-2 shrink-0">
+    <div className="shrink-0">
+      {/* ── 1행: LabAxis 소싱 + 검색바 + 유틸리티 — 한 줄 ── */}
+      <div className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-2.5 md:py-3" style={{ backgroundColor: '#0f172a' }}>
+        <div className="flex items-center gap-1.5 shrink-0">
           <Link href="/dashboard" className="flex items-center">
-            <span className="text-base md:text-lg font-bold text-white tracking-tight">LabAxis</span>
+            <span className="text-lg font-bold text-white tracking-tight">LabAxis</span>
           </Link>
-          <span className="text-slate-500 text-xs">/</span>
           {stageOwner !== "sourcing" ? (
             <>
-              <button type="button" onClick={onBackToSourcing} className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">소싱</button>
-              <span className="text-slate-500 text-xs">/</span>
-              <span className="text-xs font-semibold text-slate-200">{STAGE_LABELS[stageOwner] || stageOwner}</span>
+              <span className="text-slate-500 text-sm ml-1">소싱</span>
+              <span className="text-slate-600 text-sm">/</span>
+              <span className="text-sm font-semibold text-slate-200">{STAGE_LABELS[stageOwner] || stageOwner}</span>
             </>
           ) : (
-            <span className="text-xs font-semibold text-slate-300">소싱</span>
+            <span className="text-sm font-semibold text-slate-400 ml-1">소싱</span>
           )}
         </div>
-      </div>
 
-      {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2" style={{ backgroundColor: '#0f172a' }}>
-        <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-slate-50 border border-slate-200 rounded-lg focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white transition-all">
-            <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 ml-2.5 md:ml-3 shrink-0" />
+        {/* 검색 인풋 — 인라인 */}
+        <form onSubmit={handleSubmit} className="flex items-center flex-1 min-w-0">
+          <div className="flex items-center flex-1 bg-white border border-white/20 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
+            <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
             <Input
               type="text"
               value={localQuery}
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
               placeholder="시약명 / CAS / 제조사 / 카탈로그 번호"
-              className="h-8 md:h-9 px-2 text-xs md:text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
+              className="h-10 px-2.5 text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             />
             <Button
               type="submit"
               size="sm"
-              className="h-6 md:h-7 px-3 md:px-4 mr-1 md:mr-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] md:text-xs font-semibold rounded-md shrink-0"
+              className="h-7 px-4 mr-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-md shrink-0"
               disabled={!localQuery.trim()}
             >
               검색
@@ -1835,38 +1861,16 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           </div>
         </form>
 
-        {/* AI 라벨 스캔 버튼 */}
-        <button
-          onClick={() => setLabelScanOpen(true)}
-          className="flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50 transition-colors shrink-0"
-        >
-          <Camera className="h-3 w-3" />
-          <span className="hidden sm:inline">AI 라벨 스캔</span>
-        </button>
-        <LabelScannerModal
-          open={labelScanOpen}
-          onOpenChange={setLabelScanOpen}
-          onScanComplete={(result) => {
-            // 스캔 결과에서 제품명 또는 카탈로그 번호를 검색어로 설정
-            const q = result.parsed.catalogNo || result.parsed.productName || result.parsed.casNumber || "";
-            if (q) {
-              setLocalQuery(q);
-              setSearchQuery(q);
-              if (isLoggedIn) runSearch();
-            }
-          }}
-        />
-
-        {/* Utility controls — ghost, 검색 버튼보다 약하게 */}
-        <div className="flex items-center gap-1 shrink-0">
+        {/* 유틸리티 — 필터 + AI 라벨 스캔 */}
+        <div className="flex items-center gap-1.5 shrink-0">
           {/* Filter — desktop: Sheet trigger */}
           <Sheet>
             <SheetTrigger asChild>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors">
-                <SlidersHorizontal className="h-3 w-3" />
+              <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 border border-white/20 transition-colors">
+                <SlidersHorizontal className="h-3.5 w-3.5" />
                 필터
                 {activeFilterCount > 0 && (
-                  <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white font-medium">{activeFilterCount}</span>
+                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] text-white font-medium">{activeFilterCount}</span>
                 )}
               </button>
             </SheetTrigger>
@@ -1878,24 +1882,36 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           {/* Filter — mobile */}
           <button
             onClick={onOpenFilter}
-            className="md:hidden inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors"
+            className="md:hidden inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 border border-white/20 transition-colors"
           >
-            <SlidersHorizontal className="h-3 w-3" />
+            <SlidersHorizontal className="h-3.5 w-3.5" />
             {activeFilterCount > 0 && (
-              <span className="flex h-3.5 min-w-3.5 items-center justify-center rounded-full bg-blue-600 px-1 text-[9px] text-white">{activeFilterCount}</span>
+              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] text-white">{activeFilterCount}</span>
             )}
           </button>
 
-          {/* Inventory link — desktop only */}
-          {isLoggedIn && hasSearched && searchQuery && (
-            <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors">
-                <TrendingDown className="h-3 w-3" />
-                재고
-              </button>
-            </Link>
-          )}
+          {/* AI 라벨 스캔 */}
+          <button
+            onClick={() => setLabelScanOpen(true)}
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
+          >
+            <Camera className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">AI 라벨 스캔</span>
+          </button>
         </div>
+
+        <LabelScannerModal
+          open={labelScanOpen}
+          onOpenChange={setLabelScanOpen}
+          onScanComplete={(result) => {
+            const q = result.parsed.catalogNo || result.parsed.productName || result.parsed.casNumber || "";
+            if (q) {
+              setLocalQuery(q);
+              setSearchQuery(q);
+              if (isLoggedIn) runSearch();
+            }
+          }}
+        />
       </div>
     </div>
   );
