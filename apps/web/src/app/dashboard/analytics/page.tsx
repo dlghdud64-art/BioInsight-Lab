@@ -910,6 +910,9 @@ export default function AnalyticsPage() {
                             stroke="#3b82f6"
                             strokeWidth={3}
                             fill="url(#colorAmount)"
+                            isAnimationActive={true}
+                            animationDuration={1500}
+                            animationEasing="ease-out"
                           />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -947,6 +950,9 @@ export default function AnalyticsPage() {
                               dataKey="value"
                               strokeWidth={1}
                               stroke="#f8fafc"
+                              isAnimationActive={true}
+                              animationDuration={1200}
+                              animationEasing="ease-out"
                             >
                               {categorySpending.map((_, index) => (
                                 <Cell key={`cell-${index}`} fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]} />

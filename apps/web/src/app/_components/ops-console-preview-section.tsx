@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
+import { Reorder } from "framer-motion";
 import {
   ArrowRight, CheckCircle2, Sparkles, AlertTriangle,
-  ListChecks, CircleCheck, Clock, Truck, ChevronRight,
+  ListChecks, CircleCheck, Clock, Truck, ChevronRight, GripVertical,
 } from "lucide-react";
 
 /*
@@ -104,6 +106,8 @@ const C = {
  * ── Mockup content: hero에서 inline으로 사용 ──
  */
 export function OpsConsoleMockupContent() {
+  const [queue, setQueue] = useState(QUEUE_ITEMS);
+
   return (
     <div className="flex flex-col md:flex-row" style={{ backgroundColor: C.base }}>
 
@@ -123,13 +127,15 @@ export function OpsConsoleMockupContent() {
                   </div>
                 </div>
 
-                <div className="divide-y" style={{ borderColor: C.dividerSubtle }}>
-                  {QUEUE_ITEMS.map((item, idx) => (
-                    <div key={item.id}
-                      className="px-3 md:px-4 py-2.5 md:py-3 cursor-default animate-stagger-left"
+                <Reorder.Group axis="y" values={queue} onReorder={setQueue} className="divide-y" style={{ borderColor: C.dividerSubtle }}>
+                  {queue.map((item, idx) => (
+                    <Reorder.Item key={item.id} value={item}
+                      className="px-3 md:px-4 py-2.5 md:py-3 cursor-grab active:cursor-grabbing animate-stagger-left"
                       style={{ backgroundColor: item.selected ? C.elevated : C.base, animationDelay: `${idx * 80}ms` }}
+                      whileDrag={{ scale: 1.02, boxShadow: "0 8px 24px rgba(0,0,0,0.4)", zIndex: 10 }}
                     >
                       <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <GripVertical className="h-3 w-3 flex-shrink-0 opacity-30" style={{ color: C.text4 }} />
                         <span className="text-[8px] md:text-[9px] font-semibold px-1.5 py-0.5 rounded-full"
                           style={{ backgroundColor: BADGE[item.statusColor].bg, color: BADGE[item.statusColor].text, border: `1px solid ${BADGE[item.statusColor].border}` }}
                         >{item.statusLabel}</span>
@@ -159,13 +165,13 @@ export function OpsConsoleMockupContent() {
                           {item.ctaLabel}<ChevronRight className="h-2 w-2 md:h-2.5 md:w-2.5" />
                         </button>
                       </div>
-                    </div>
+                    </Reorder.Item>
                   ))}
+                </Reorder.Group>
 
                   <div className="px-4 py-2 text-center" style={{ backgroundColor: C.sunken }}>
                     <span className="text-[10px]" style={{ color: C.text4 }}>+ 5건 더 보기</span>
                   </div>
-                </div>
               </div>
 
               {/* Right: Rail */}

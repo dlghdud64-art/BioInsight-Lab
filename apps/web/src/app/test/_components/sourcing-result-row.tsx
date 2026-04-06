@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
-  GitCompare, FlaskConical, FileText, ChevronRight, Check,
+  Scale, FlaskConical, FileText, ChevronRight, Check,
   AlertTriangle,
 } from "lucide-react";
 
@@ -180,7 +180,7 @@ export function SourcingResultRow({
         {/* 3-tier content */}
         <div className="flex-1 min-w-0">
           {/* 1행: 제품명 */}
-          <p className="text-sm font-semibold text-slate-900 line-clamp-1 leading-tight">{product.name}</p>
+          <p className="text-[13px] font-bold text-slate-900 line-clamp-1 leading-tight tracking-tight">{product.name}</p>
 
           {/* 2행: 정적 메타 */}
           {staticMeta && (
@@ -206,15 +206,15 @@ export function SourcingResultRow({
         {/* Price column — desktop */}
         <div className="shrink-0 hidden md:flex flex-col items-end gap-0.5 mr-1">
           {unitPrice ? (
-            <span className="text-sm font-semibold tabular-nums text-slate-800 whitespace-nowrap">
+            <span className="text-sm font-bold tabular-nums text-slate-900 whitespace-nowrap tracking-tight">
               <PriceDisplay price={unitPrice} currency="KRW" />
             </span>
           ) : (
-            <span className="text-xs text-amber-600 flex items-center gap-0.5">
+            <span className="text-xs font-semibold text-amber-600 flex items-center gap-0.5">
               <AlertTriangle className="h-3 w-3" />견적 필요
             </span>
           )}
-          <span className="text-[10px] text-slate-500">
+          <span className="text-[10px] text-slate-400">
             {isInRequest ? "견적 후보" : isInCompare ? "비교 후보" : unitPrice ? "VAT 별도" : ""}
           </span>
         </div>
@@ -224,29 +224,29 @@ export function SourcingResultRow({
           {/* Primary: 비교 */}
           {isInCompare ? (
             <button
-              className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20 cursor-default"
+              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 cursor-default"
               onClick={onToggleCompare}
             >
               <Check className="h-3 w-3" />비교 후보
             </button>
           ) : (
             <Button variant="ghost" size="sm"
-              className="h-7 px-2.5 rounded text-xs font-medium text-slate-900 hover:text-blue-300 hover:bg-blue-600/10 border border-slate-200 hover:border-blue-300"
+              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors"
               onClick={onToggleCompare}>
-              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+              <Scale className="h-3 w-3 mr-1" />비교 추가
             </Button>
           )}
           {/* Secondary: 견적 */}
           {isInRequest ? (
             <button
-              className="h-7 px-2 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-100 text-slate-500 border border-slate-200 cursor-default"
+              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
               onClick={onToggleRequest}
             >
               <Check className="h-3 w-3" />견적 후보
             </button>
           ) : (
             <Button variant="ghost" size="sm"
-              className="h-7 px-2 rounded text-xs font-medium text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors"
               onClick={onToggleRequest}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
             </Button>
@@ -267,20 +267,20 @@ export function SourcingResultRow({
         </div>
         <div className="flex items-center gap-1.5">
           {isInCompare ? (
-            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-blue-600/12 text-blue-400/80 border border-blue-600/20" onClick={onToggleCompare}>
+            <button className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200" onClick={onToggleCompare}>
               <Check className="h-3 w-3" />비교 후보
             </button>
           ) : (
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-500 border border-slate-200" onClick={onToggleCompare}>
-              <GitCompare className="h-3 w-3 mr-1" />비교 추가
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-600 border border-slate-200" onClick={onToggleCompare}>
+              <Scale className="h-3 w-3 mr-1" />비교 추가
             </Button>
           )}
           {isInRequest ? (
-            <button className="h-7 px-2.5 rounded text-xs font-medium inline-flex items-center gap-1 bg-slate-100 text-slate-500 border border-slate-200" onClick={onToggleRequest}>
+            <button className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200" onClick={onToggleRequest}>
               <Check className="h-3 w-3" />견적 후보
             </button>
           ) : (
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded text-xs font-medium text-slate-500 border border-slate-200" onClick={onToggleRequest}>
+            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 border border-slate-200" onClick={onToggleRequest}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
             </Button>
           )}
