@@ -1766,9 +1766,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-bd bg-[#2A3240]">
+    <div className="shrink-0 border-b border-bd bg-[#0B1120]">
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#2A3240]">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-bd bg-[#0B1120]">
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard" className="flex items-center">
             <span className="text-base md:text-lg font-bold text-slate-100 tracking-tight">LabAxis</span>
@@ -1789,7 +1789,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
       <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="flex items-center flex-1 bg-[#2F3848] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#354050] transition-all">
+          <div className="flex items-center flex-1 bg-[#162032] border border-bd rounded-md md:rounded-lg focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/30 focus-within:bg-[#1A2A40] transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-500 ml-2.5 md:ml-3 shrink-0" />
             <Input
               type="text"

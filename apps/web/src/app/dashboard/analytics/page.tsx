@@ -13,8 +13,8 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
-  ChevronRight, BarChart2,
-  CreditCard, Users, ExternalLink, RefreshCw, Clock,
+  ChevronRight, BarChart2, Gauge,
+  CreditCard, Users, ExternalLink, RefreshCw, Clock, Wallet,
   ArrowRight,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
@@ -257,8 +257,8 @@ export default function AnalyticsPage() {
                     <div className="w-2 h-2 rounded-full bg-amber-400 shrink-0 mt-1.5" />
                     <div>
                       <p className="text-sm font-bold text-slate-700">분석 제한: {topBlocker.label}</p>
-                      <p className="text-sm text-slate-400 mt-1">{topBlocker.tip}</p>
-                      <p className="text-xs text-slate-9000 mt-2">현재 값: <span className="font-semibold text-slate-600">{topBlocker.value}</span> — 이 항목이 해결되면 인사이트가 활성화됩니다</p>
+                      <p className="text-sm text-slate-500 mt-1">{topBlocker.tip}</p>
+                      <p className="text-xs text-slate-500 mt-2">현재 값: <span className="font-semibold text-slate-600">{topBlocker.value}</span> — 이 항목이 해결되면 인사이트가 활성화됩니다</p>
                     </div>
                   </div>
                 </div>
@@ -275,7 +275,7 @@ export default function AnalyticsPage() {
                       <p className="text-xs font-semibold text-slate-400">{item.label}</p>
                     </div>
                     <p className="text-lg font-bold text-slate-700">{item.value}</p>
-                    <p className="text-xs text-slate-9000 mt-1 leading-relaxed">{item.tip}</p>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.tip}</p>
                   </div>
                 ))}
               </div>
@@ -301,7 +301,7 @@ export default function AnalyticsPage() {
             <div className="rounded-md border border-bd bg-pn px-4 py-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5 min-w-0">
-                  <span className="text-xs font-semibold text-slate-9000 uppercase tracking-wider shrink-0">오늘의 우선 확인</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider shrink-0">오늘의 우선 확인</span>
                   <span className="text-sm text-slate-600">{focusAction.label}</span>
                 </div>
                 <Link href={focusAction.href} className="shrink-0 ml-3">
@@ -336,10 +336,11 @@ export default function AnalyticsPage() {
               {/* 예산 소진율 */}
               <div className="rounded-md border border-bd bg-pn p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-9000">예산 소진율</p>
+                  <Gauge className="h-3.5 w-3.5 text-slate-400" />
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 소진율</p>
                   <div className={`w-1.5 h-1.5 rounded-full ${budgetStatus === "danger" ? "bg-red-400" : budgetStatus === "warning" ? "bg-amber-400" : "bg-emerald-400"}`} />
                 </div>
-                <div className="text-xl font-bold text-slate-900">
+                <div className="text-2xl font-extrabold text-slate-900">
                   {budget.total > 0 ? `${budget.usageRate}%` : "미등록"}
                 </div>
                 {budget.total > 0 && (
@@ -350,7 +351,7 @@ export default function AnalyticsPage() {
                         style={{ width: `${Math.min(100, budget.usageRate)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-slate-9000 mt-1">
+                    <p className="text-xs text-slate-500 mt-1">
                       {budgetStatus === "danger" ? "즉시 검토 필요" : budgetStatus === "warning" ? "주의 구간" : "정상 운영"}
                     </p>
                   </div>
@@ -362,46 +363,53 @@ export default function AnalyticsPage() {
                 <div className="rounded-md border border-bd bg-pn p-4 h-full group-hover:border-bs transition-colors">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-1.5">
-                      <p className="text-xs font-medium uppercase tracking-wider text-slate-9000">승인 대기 금액</p>
+                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                      <p className="text-xs font-medium uppercase tracking-wider text-slate-500">승인 대기 금액</p>
                       {pendingApprovalIsEstimate && (
                         <span className="text-xs px-1 py-0.5 rounded bg-amber-600/10 text-amber-400/70 border border-amber-600/20 font-medium">추정</span>
                       )}
                     </div>
                     <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
                   </div>
-                  <div className="text-xl font-bold text-slate-900">
+                  <div className="text-2xl font-extrabold text-slate-900">
                     {pendingApprovalAmount > 0 ? `₩${pendingApprovalAmount.toLocaleString("ko-KR")}` : "₩0"}
                   </div>
-                  <p className="text-xs text-slate-400 mt-1">{pendingApprovalIsEstimate ? "실제 승인 내역 연동 전 추정치입니다" : "클릭하여 구매내역 확인"}</p>
+                  <p className="text-xs text-slate-500 mt-1">{pendingApprovalIsEstimate ? "실제 승인 내역 연동 전 추정치입니다" : "클릭하여 구매내역 확인"}</p>
                 </div>
               </Link>
 
               {/* 이번 달 지출 총액 — PRIMARY */}
               <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">이번 달 지출</p>
-                <div className="text-2xl font-extrabold text-slate-900">
-                  {currentMonth ? `₩${currentMonth.amount.toLocaleString("ko-KR")}` : <span className="text-slate-9000">미수집</span>}
+                <div className="flex items-center gap-1.5 mb-2">
+                  <CreditCard className="h-3.5 w-3.5 text-blue-400" />
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">이번 달 지출</p>
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5">
+                <div className="text-2xl font-extrabold text-slate-900">
+                  {currentMonth ? `₩${currentMonth.amount.toLocaleString("ko-KR")}` : <span className="text-slate-500">미수집</span>}
+                </div>
+                <p className="text-xs text-slate-500 mt-1.5">
                   {currentMonth ? `${currentMonth.month} 기준` : "아직 수집된 지출 데이터 없음"}
                 </p>
               </div>
 
               {/* 전월 대비 변동 */}
               <div className="rounded-md border border-bd bg-pn p-4">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-9000 mb-2">전월 대비</p>
+                <div className="flex items-center gap-1.5 mb-2">
+                  <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">전월 대비</p>
+                </div>
                 <div className="flex items-center gap-1.5">
                   {monthChange !== null && monthChange > 0 ? (
                     <TrendingUp className="h-4 w-4 text-slate-400" />
                   ) : monthChange !== null && monthChange < 0 ? (
                     <TrendingDown className="h-4 w-4 text-slate-400" />
                   ) : null}
-                  <span className="text-xl font-bold text-slate-900">
+                  <span className="text-2xl font-extrabold text-slate-900">
                     {monthChange !== null ? `${monthChange > 0 ? "+" : ""}${monthChange}%` : "--"}
                   </span>
                   {monthChange !== null && monthChange > 20 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                 </div>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                   {monthChange !== null ? (monthChange > 20 ? "급증 주의" : monthChange < -10 ? "절감 추세" : "변동폭 정상") : "비교 가능한 월별 데이터 부족"}
                 </p>
               </div>
@@ -409,13 +417,14 @@ export default function AnalyticsPage() {
               {/* 잔여 예산 */}
               <div className="rounded-md border border-bd bg-pn p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-9000">잔여 예산</p>
+                  <Wallet className="h-3.5 w-3.5 text-slate-400" />
+                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">잔여 예산</p>
                   {budget.total > 0 && budget.remaining <= 0 && <div className="w-1.5 h-1.5 rounded-full bg-red-400" />}
                 </div>
                 <div className="text-2xl font-extrabold text-slate-900">
                   {budget.total > 0 ? `₩${budget.remaining.toLocaleString("ko-KR")}` : "미등록"}
                 </div>
-                <p className="text-xs text-slate-400 mt-1.5">
+                <p className="text-xs text-slate-500 mt-1.5">
                   {budget.total > 0
                     ? (() => {
                         const monthsLeft = 12 - (new Date().getMonth() + 1);
@@ -482,7 +491,7 @@ export default function AnalyticsPage() {
                                 <CategoryIcon category={cat.category} />
                                 <span className="text-sm text-slate-600">{cat.category}</span>
                               </div>
-                              <span className="text-xs text-slate-400">₩{cat.totalAmount.toLocaleString("ko-KR")}</span>
+                              <span className="text-xs text-slate-500">₩{cat.totalAmount.toLocaleString("ko-KR")}</span>
                             </div>
                             <div className="mt-1 h-1 bg-el rounded-full overflow-hidden">
                               <div
@@ -492,7 +501,7 @@ export default function AnalyticsPage() {
                             </div>
                           </div>
                           <span className={`text-xs font-semibold flex-shrink-0 ${
-                            riskLevel === "danger" ? "text-red-400" : riskLevel === "warning" ? "text-amber-400" : "text-slate-9000"
+                            riskLevel === "danger" ? "text-red-400" : riskLevel === "warning" ? "text-amber-400" : "text-slate-500"
                           }`}>
                             {cat.pct}%
                           </span>
@@ -505,8 +514,8 @@ export default function AnalyticsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                     </div>
-                    <p className="text-xs text-slate-400">카테고리 매핑이 {categoryMappingRate}%로 편중 분석을 시작할 수 없습니다</p>
-                    <p className="text-xs text-slate-9000">구매 내역에서 카테고리를 보완하면 초과 위험 분석이 활성화됩니다</p>
+                    <p className="text-xs text-slate-500">카테고리 매핑이 {categoryMappingRate}%로 편중 분석을 시작할 수 없습니다</p>
+                    <p className="text-xs text-slate-500">구매 내역에서 카테고리를 보완하면 초과 위험 분석이 활성화됩니다</p>
                     <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                       구매 내역에서 카테고리 보완 <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -528,7 +537,7 @@ export default function AnalyticsPage() {
                     {vendorConcentration > 50 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                   </div>
                   {vendorConcentration > 50 && (
-                    <span className="text-xs text-slate-400 font-medium">주의</span>
+                    <span className="text-xs text-slate-500 font-medium">주의</span>
                   )}
                 </div>
 
@@ -546,7 +555,7 @@ export default function AnalyticsPage() {
                               <span className="text-sm truncate text-slate-600">
                                 {v.vendor}
                               </span>
-                              <span className="text-xs text-slate-400 flex-shrink-0 ml-2">
+                              <span className="text-xs text-slate-500 flex-shrink-0 ml-2">
                                 ₩{v.totalAmount.toLocaleString("ko-KR")}
                               </span>
                             </div>
@@ -564,7 +573,7 @@ export default function AnalyticsPage() {
                       );
                     })}
                     {vendorConcentration > 50 && (
-                      <p className="text-xs text-slate-400 mt-2 pl-7">
+                      <p className="text-xs text-slate-500 mt-2 pl-7">
                         상위 1개 공급사가 전체 지출의 {vendorConcentration}%를 차지합니다. 분산 검토를 권장합니다.
                       </p>
                     )}
@@ -574,8 +583,8 @@ export default function AnalyticsPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                     </div>
-                    <p className="text-xs text-slate-400">최근 30일 공급사 데이터가 {vendorItems.length}건으로 집중도 분석이 불완전합니다</p>
-                    <p className="text-xs text-slate-9000">공급사 매핑이 충분해지면 의존 위험과 분산 필요 공급사를 보여줍니다</p>
+                    <p className="text-xs text-slate-500">최근 30일 공급사 데이터가 {vendorItems.length}건으로 집중도 분석이 불완전합니다</p>
+                    <p className="text-xs text-slate-500">공급사 매핑이 충분해지면 의존 위험과 분산 필요 공급사를 보여줍니다</p>
                     <Link href="/dashboard/purchases" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">
                       구매 내역 확인 <ArrowRight className="h-3 w-3" />
                     </Link>
@@ -630,12 +639,12 @@ export default function AnalyticsPage() {
                             {recent90dCount >= 10 ? "정상" : "준비중"}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-400">
+                        <p className="text-xs text-slate-500">
                           {recent90dCount >= 10
                             ? "최근 90일 데이터에서 이상 패턴이 감지되지 않았습니다"
                             : `최근 90일 구매 데이터가 ${recent90dCount}건 미만이라 이상 지출 탐지가 제한됩니다`}
                         </p>
-                        <p className="text-xs text-slate-400">반복 구매와 고액 단건 지출이 축적되면 비정상 패턴을 자동 탐지합니다</p>
+                        <p className="text-xs text-slate-500">반복 구매와 고액 단건 지출이 축적되면 비정상 패턴을 자동 탐지합니다</p>
                       </div>
                     );
                   }
@@ -647,11 +656,11 @@ export default function AnalyticsPage() {
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-sm text-slate-700 truncate">{a.item}</p>
-                              <p className="text-xs text-slate-400">{a.vendor}</p>
+                              <p className="text-xs text-slate-500">{a.vendor}</p>
                             </div>
                             <div className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0 mt-1.5" />
                           </div>
-                          <p className="text-xs text-slate-400 mt-1">{a.reason}</p>
+                          <p className="text-xs text-slate-500 mt-1">{a.reason}</p>
                         </div>
                       ))}
                     </div>
@@ -687,13 +696,13 @@ export default function AnalyticsPage() {
                   if (reorderCandidates.length === 0 && repeatItems.length > 0) {
                     return (
                       <div className="space-y-2.5">
-                        <p className="text-sm text-slate-9000 py-2">반복 구매 품목 모두 최근 주문 완료</p>
+                        <p className="text-sm text-slate-500 py-2">반복 구매 품목 모두 최근 주문 완료</p>
                         {repeatItems.slice(0, 3).map((item, i) => (
                           <div key={i} className="flex items-center gap-3 rounded bg-el/50 px-3 py-2">
                             <CategoryIcon category={item.category} />
                             <div className="flex-1 min-w-0">
                               <p className="text-sm text-slate-600 truncate">{item.item}</p>
-                              <p className="text-xs text-slate-400">{item.count}회 구매 | {item.vendor}</p>
+                              <p className="text-xs text-slate-500">{item.count}회 구매 | {item.vendor}</p>
                             </div>
                             <Clock className="h-3 w-3 text-slate-600" />
                           </div>
@@ -708,8 +717,8 @@ export default function AnalyticsPage() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-medium px-1.5 py-0.5 rounded bg-el text-slate-400 border border-bd">준비중</span>
                         </div>
-                        <p className="text-xs text-slate-400">반복 구매 패턴이 {repeatItems.length}건으로 재주문 예측을 시작하기엔 부족합니다</p>
-                        <p className="text-xs text-slate-400">구매 이력과 재고 소비 패턴이 축적되면 재주문 시점을 자동 제안합니다</p>
+                        <p className="text-xs text-slate-500">반복 구매 패턴이 {repeatItems.length}건으로 재주문 예측을 시작하기엔 부족합니다</p>
+                        <p className="text-xs text-slate-500">구매 이력과 재고 소비 패턴이 축적되면 재주문 시점을 자동 제안합니다</p>
                         <Link href="/app/search" className="inline-flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300">소싱 시작하기 <ArrowRight className="h-3 w-3" /></Link>
                       </div>
                     );
@@ -722,7 +731,7 @@ export default function AnalyticsPage() {
                           <CategoryIcon category={item.category} />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-700 truncate">{item.item}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-500">
                               마지막 주문 {item.daysSinceLast}일 전 | {item.count}회 반복
                             </p>
                           </div>
@@ -755,7 +764,7 @@ export default function AnalyticsPage() {
           <div className="flex items-center justify-between px-5 py-4 border-b border-bd">
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-600">상세 분석</p>
             {!hasMonthlyData && !hasCategoryData && (
-              <span className="text-xs text-slate-400">데이터가 축적되면 차트가 자동 채워집니다</span>
+              <span className="text-xs text-slate-500">데이터가 축적되면 차트가 자동 채워집니다</span>
             )}
           </div>
 
@@ -776,7 +785,7 @@ export default function AnalyticsPage() {
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-medium text-slate-400">월별 지출 변화</h4>
                       <Link href="/dashboard/purchases">
-                        <span className="text-xs text-slate-400 hover:text-slate-400 transition-colors flex items-center gap-1">
+                        <span className="text-xs text-slate-500 hover:text-slate-400 transition-colors flex items-center gap-1">
                           상세 <ChevronRight className="h-3 w-3" />
                         </span>
                       </Link>
@@ -820,9 +829,9 @@ export default function AnalyticsPage() {
                       </ResponsiveContainer>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-[180px] gap-2.5">
-                        <BarChart2 className="h-8 w-8 text-slate-9000" />
+                        <BarChart2 className="h-8 w-8 text-slate-500" />
                         <p className="text-sm font-medium text-slate-400">분석 준비 필요</p>
-                        <p className="text-xs text-slate-400 text-center leading-relaxed">최근 구매 데이터가 {recent90dCount}건입니다.<br />10건 이상 축적되면 월별 추이가 표시됩니다.</p>
+                        <p className="text-xs text-slate-500 text-center leading-relaxed">최근 구매 데이터가 {recent90dCount}건입니다.<br />10건 이상 축적되면 월별 추이가 표시됩니다.</p>
                       </div>
                     )}
                   </div>
@@ -832,7 +841,7 @@ export default function AnalyticsPage() {
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-xs font-medium text-slate-400">카테고리별 비중</h4>
                       <Link href="/dashboard/budget">
-                        <span className="text-xs text-slate-400 hover:text-slate-400 transition-colors flex items-center gap-1">
+                        <span className="text-xs text-slate-500 hover:text-slate-400 transition-colors flex items-center gap-1">
                           예산 검토 <ChevronRight className="h-3 w-3" />
                         </span>
                       </Link>
@@ -874,9 +883,9 @@ export default function AnalyticsPage() {
                                   className="w-2 h-2 rounded-full flex-shrink-0"
                                   style={{ backgroundColor: CATEGORY_COLORS[index % CATEGORY_COLORS.length] }}
                                 />
-                                <span className="text-xs text-slate-400">{cat.name}</span>
+                                <span className="text-xs text-slate-500">{cat.name}</span>
                               </div>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-slate-500">
                                 ₩{cat.amount.toLocaleString("ko-KR")}
                               </span>
                             </div>
@@ -885,9 +894,9 @@ export default function AnalyticsPage() {
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center h-[180px] gap-2.5">
-                        <CreditCard className="h-8 w-8 text-slate-9000" />
+                        <CreditCard className="h-8 w-8 text-slate-500" />
                         <p className="text-sm font-medium text-slate-400">카테고리 분류 필요</p>
-                        <p className="text-xs text-slate-400 text-center leading-relaxed">카테고리 매핑 {categoryMappingRate}%입니다.<br />50% 이상이면 비중 차트가 표시됩니다.</p>
+                        <p className="text-xs text-slate-500 text-center leading-relaxed">카테고리 매핑 {categoryMappingRate}%입니다.<br />50% 이상이면 비중 차트가 표시됩니다.</p>
                       </div>
                     )}
                   </div>
@@ -907,11 +916,11 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-slate-700">예산 위험 검토</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {budgetStatus === "danger" ? "소진율 90% 이상 — 즉시 검토 필요" : budgetStatus === "warning" ? "소진율 75% 이상 — 주의 구간 진입" : budget.total > 0 ? "현재 정상 범위 — 추이 확인" : "예산 등록 후 모니터링 가능"}
                   </p>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-slate-9000 mt-0.5 flex-shrink-0" />
+                <ArrowRight className="h-3.5 w-3.5 text-slate-500 mt-0.5 flex-shrink-0" />
               </div>
             </Link>
             <Link href="/dashboard/purchases" className="block">
@@ -921,7 +930,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-600">공급사 의존 점검</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {vendorConcentration > 50 ? `상위 1개 공급사 ${vendorConcentration}% — 분산 검토 필요` : vendorItems.length > 0 ? `${vendorItems.length}개 공급사 — 집중도 정상` : "공급사 데이터 축적 후 점검 가능"}
                   </p>
                 </div>
@@ -935,7 +944,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-600">재주문 후보 검토</p>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {repeatItems.length > 0 ? `반복 구매 ${repeatItems.length}건 — 재주문 시점 확인` : "반복 구매 데이터 축적 후 예측 시작"}
                   </p>
                 </div>
@@ -949,7 +958,7 @@ export default function AnalyticsPage() {
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-slate-600">견적 비교 열기</p>
-                  <p className="text-xs text-slate-400 mt-0.5">견적 워크큐에서 비교 검토 및 발주 전환 진행</p>
+                  <p className="text-xs text-slate-500 mt-0.5">견적 워크큐에서 비교 검토 및 발주 전환 진행</p>
                 </div>
                 <ArrowRight className="h-3 w-3 text-slate-600 mt-0.5 flex-shrink-0" />
               </div>
