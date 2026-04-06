@@ -16,7 +16,11 @@ import {
   ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
   AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
   AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
+  Loader2,
 } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
@@ -362,6 +366,42 @@ function QuotesPageContent() {
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
+  const [aiCompareOpen, setAiCompareOpen] = useState(false);
+  const [aiCompareLoading, setAiCompareLoading] = useState(false);
+  const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
+  const [aiCompareError, setAiCompareError] = useState<string | null>(null);
+
+  // ── AI 견적서 비교 실행 ──
+  const runAiQuoteCompare = useCallback(async () => {
+    if (!quotes || quotes.length === 0) return;
+    setAiCompareLoading(true);
+    setAiCompareError(null);
+    setAiCompareResult(null);
+    setAiCompareOpen(true);
+    try {
+      // 비교 가능한 견적에서 공급사별 데이터 추출
+      const quotePayload = quotes
+        .filter((q: Quote) => q.status !== "CANCELLED")
+        .slice(0, 5)
+        .map((q: Quote) => ({
+          vendor: q.items?.[0]?.product?.brand || "미지정 공급사",
+          items: q.items?.map((item) => `${item.product?.name || "품목"} x${item.quantity || 1}`).join(", ") || q.title,
+          rawText: `${q.title} — ${q.items?.length || 0}건 품목`,
+        }));
+      const res = await fetch("/api/ai/quote-compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotes: quotePayload }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI 비교 분석 실패");
+      setAiCompareResult(data.data);
+    } catch (err: unknown) {
+      setAiCompareError(err instanceof Error ? err.message : "AI 비교 분석 중 오류 발생");
+    } finally {
+      setAiCompareLoading(false);
+    }
+  }, [quotes]);
 
   // ── 견적 발송 성공 후 갱신 ──
   const handleSendSuccess = useCallback(() => {
@@ -540,6 +580,19 @@ function QuotesPageContent() {
           <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* AI 견적서 비교 버튼 */}
+          <button
+            onClick={runAiQuoteCompare}
+            disabled={aiCompareLoading || !quotes || quotes.length < 2}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {aiCompareLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            AI 견적서 비교
+          </button>
           <AiActionButton label="견적 요청 초안 만들기" icon={FileText} generateEndpoint="/api/ai-actions/generate/quote-draft"
             generatePayload={{ items: quotes?.slice(0, 3).flatMap((q: Quote) => q.items?.map(item => ({ productName: item.product?.name || "품목", quantity: item.quantity || 1 })) || []) || [] }}
             variant="outline" size="sm" className="h-9 text-sm hidden sm:flex" />
@@ -1177,6 +1230,100 @@ function QuotesPageContent() {
           </div>
         </CenterWorkWindow>
       )}
+
+      {/* ═══ AI 견적서 비교 모달 ═══ */}
+      <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>
+        <DialogContent className="max-w-2xl bg-white border-slate-200 p-0 gap-0">
+          <div className="px-6 pt-6 pb-4 border-b border-slate-100">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
+                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                </div>
+                AI 견적서 비교 분석
+              </DialogTitle>
+              <DialogDescription className="text-sm text-slate-500 mt-1">
+                등록된 견적의 공급사별 조건을 비교하고 협상 포인트를 제안합니다
+              </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
+            {aiCompareLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <p className="text-sm text-slate-500">견적 데이터를 분석하고 있습니다...</p>
+              </div>
+            )}
+
+            {aiCompareError && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+                <p className="text-sm text-red-600">{aiCompareError}</p>
+                <button onClick={runAiQuoteCompare} className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
+              </div>
+            )}
+
+            {aiCompareResult && (
+              <>
+                {/* 공급사별 비교 테이블 */}
+                {aiCompareResult.comparison.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
+                    <div className="rounded-lg border border-slate-200 overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 text-slate-600">
+                            <th className="text-left px-3 py-2 font-medium">공급사</th>
+                            <th className="text-left px-3 py-2 font-medium">가격</th>
+                            <th className="text-left px-3 py-2 font-medium">납기</th>
+                            <th className="text-left px-3 py-2 font-medium">배송비</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                          {aiCompareResult.comparison.map((row, i) => (
+                            <tr key={i} className="hover:bg-slate-50/50">
+                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
+                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* 추천 */}
+                {aiCompareResult.recommendation && (
+                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      <span className="text-sm font-semibold text-blue-900">추천</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
+                  </div>
+                )}
+
+                {/* 협상 가이드 */}
+                {aiCompareResult.negotiationGuide && (
+                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-900">협상 포인트</span>
+                    </div>
+                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
+          <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
+            <Button variant="outline" size="sm" onClick={() => setAiCompareOpen(false)}>닫기</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

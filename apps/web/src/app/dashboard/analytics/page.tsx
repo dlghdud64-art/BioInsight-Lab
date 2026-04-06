@@ -223,31 +223,77 @@ export default function AnalyticsPage() {
               : "예산 운영 현황과 지출 위험 신호를 모니터링합니다."}
           </p>
         </div>
-        <div className="flex items-center gap-1 bg-pn border border-bd rounded-md p-0.5 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* AI 예산 이상 탐지 버튼 */}
           <button
-            onClick={() => setCurrentView("overview")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-              currentView === "overview"
-                ? "bg-el text-slate-900"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
+            onClick={runAiAnalysis}
+            disabled={aiLoading}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <BarChart2 className="h-3.5 w-3.5" />
-            전체 현황
+            {aiLoading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Sparkles className="h-4 w-4" />
+            )}
+            {aiLoading ? "분석 중..." : "AI 예산 이상 탐지"}
           </button>
-          <button
-            onClick={() => setCurrentView("team")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-              currentView === "team"
-                ? "bg-el text-slate-900"
-                : "text-slate-400 hover:text-slate-600"
-            }`}
-          >
-            <Users className="h-3.5 w-3.5" />
-            팀별 분석
-          </button>
+
+          {/* 뷰 전환 */}
+          <div className="flex items-center gap-1 bg-pn border border-bd rounded-md p-0.5">
+            <button
+              onClick={() => setCurrentView("overview")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                currentView === "overview"
+                  ? "bg-el text-slate-900"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <BarChart2 className="h-3.5 w-3.5" />
+              전체 현황
+            </button>
+            <button
+              onClick={() => setCurrentView("team")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+                currentView === "team"
+                  ? "bg-el text-slate-900"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
+            >
+              <Users className="h-3.5 w-3.5" />
+              팀별 분석
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* ══ AI 스마트 분석 리포트 (헤더 바로 아래) ══ */}
+      {aiInsight && (
+        <div className="rounded-xl border border-blue-200 bg-gradient-to-r from-blue-50/80 to-indigo-50/50 p-5 animate-stagger-up">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Sparkles className="h-4.5 w-4.5 text-blue-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 mb-1.5">
+                <h3 className="text-sm font-bold text-slate-900">AI 스마트 분석 리포트</h3>
+                <span className="text-xs text-slate-400">{aiInsight.dataPoints}건 분석</span>
+                <span className="text-xs text-slate-400 ml-auto">
+                  {new Date(aiInsight.analyzedAt).toLocaleString("ko-KR")} 기준
+                </span>
+              </div>
+              <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiInsight.summary}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {aiError && !aiLoading && (
+        <div className="rounded-xl border border-red-200 bg-red-50/50 px-5 py-3.5 flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
+          <p className="text-sm text-red-600">{aiError}</p>
+          <button onClick={runAiAnalysis} className="ml-auto text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
+        </div>
+      )}
 
       {/* 오류 상태 */}
       {isError && (
