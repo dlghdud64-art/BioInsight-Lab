@@ -124,6 +124,50 @@ function InventoryPageContent() {
     if (f) setStatusFilter(f);
   }, [searchParams]);
 
+  // 라벨 스캔 결과로 AddInventoryModal 자동 오픈 + 프리필
+  useEffect(() => {
+    const fromScan = searchParams.get("from");
+    if (fromScan !== "label-scan") return;
+
+    const productId = searchParams.get("productId");
+    const productName = searchParams.get("productName");
+    const brand = searchParams.get("brand");
+    const catalogNumber = searchParams.get("catalogNumber");
+    const lotNumber = searchParams.get("lotNumber");
+    const expiryDate = searchParams.get("expiryDate");
+    const quantity = searchParams.get("quantity");
+
+    // 매칭된 DB 제품 또는 스캔된 제품 정보로 프리필
+    if (productName) {
+      setEditingInventory({
+        productId: productId || `manual-${Date.now()}`,
+        product: {
+          id: productId || `manual-${Date.now()}`,
+          name: productName,
+          brand: brand ?? null,
+          catalogNumber: catalogNumber ?? null,
+        },
+        currentQuantity: 0,
+        unit: "개",
+        safetyStock: null,
+        minOrderQty: null,
+        location: null,
+        expiryDate: expiryDate ?? null,
+        notes: null,
+        lotNumber: lotNumber ?? null,
+      } as any);
+    }
+
+    setIsDialogOpen(true);
+
+    // URL 정리 (파라미터 제거)
+    const url = new URL(window.location.href);
+    ["from", "productId", "productName", "brand", "catalogNumber", "lotNumber", "expiryDate", "quantity", "casNumber", "action"].forEach(
+      (key) => url.searchParams.delete(key)
+    );
+    router.replace(url.pathname + url.search, { scroll: false });
+  }, [searchParams]);
+
   // purchase-receiving 모드 진입 (구매 → 재고 반영 플로우)
   useEffect(() => {
     const prId = searchParams.get("purchase-receiving");
@@ -4069,4 +4113,4 @@ export function InventoryContent() {
       <InventoryPageContent />
     </Suspense>
   );
-}                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+}

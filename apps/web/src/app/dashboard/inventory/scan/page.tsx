@@ -20,10 +20,12 @@ import {
   CheckCircle2,
   Loader2,
   Search,
+  ScanLine,
 } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
+import { LabelScannerModal } from "@/components/inventory/LabelScannerModal";
 
 /**
  * /dashboard/inventory/scan
@@ -37,6 +39,10 @@ function InventoryScanContent() {
   const { toast } = useToast();
 
   const inventoryId = searchParams.get("id");
+
+  // ─── 스캔 모드 ─────────────────────────────────────────────────────
+  const [scanMode, setScanMode] = useState<"qr" | "label">("qr");
+  const [labelScannerOpen, setLabelScannerOpen] = useState(false);
 
   // ─── 카메라 스캐너 상태 ───────────────────────────────────────────────
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -146,6 +152,30 @@ function InventoryScanContent() {
     return () => { stopScanner(); };
   }, [stopScanner]);
 
+  // ─── 라벨 스캔 결과 처리 → 재고 등록 페이지로 전달 ──────────────────
+  const handleLabelScanComplete = useCallback((result: any) => {
+    const params = new URLSearchParams();
+    if (result.matchedProduct) {
+      params.set("productId", result.matchedProduct.id);
+      params.set("productName", result.matchedProduct.name);
+      if (result.matchedProduct.brand) params.set("brand", result.matchedProduct.brand);
+      if (result.matchedProduct.catalogNumber) params.set("catalogNumber", result.matchedProduct.catalogNumber);
+    } else if (result.parsed) {
+      if (result.parsed.productName) params.set("productName", result.parsed.productName);
+      if (result.parsed.brand) params.set("brand", result.parsed.brand);
+      if (result.parsed.catalogNo) params.set("catalogNumber", result.parsed.catalogNo);
+    }
+    if (result.parsed?.lotNo) params.set("lotNumber", result.parsed.lotNo);
+    if (result.parsed?.expirationDate) params.set("expiryDate", result.parsed.expirationDate);
+    if (result.parsed?.quantity) params.set("quantity", result.parsed.quantity);
+    if (result.parsed?.casNumber) params.set("casNumber", result.parsed.casNumber);
+    params.set("from", "label-scan");
+    if (result.suggestions?.action) params.set("action", result.suggestions.action);
+
+    router.push(`/dashboard/inventory?${params.toString()}`);
+    toast({ title: "라벨 스캔 완료", description: "입고 폼에 정보가 자동 입력됩니다." });
+  }, [router, toast]);
+
   // ─── 인증 대기 ───────────────────────────────────────────────────────
   if (status === "loading") {
     return (
@@ -184,10 +214,10 @@ function InventoryScanContent() {
 
           {/* 에러 */}
           {inventoryError && (
-            <Card className="border-red-800 bg-red-900/20">
+            <Card className="border-red-200 bg-red-50">
               <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
                 <AlertTriangle className="h-8 w-8 text-red-500" />
-                <p className="font-semibold text-red-400">재고를 찾을 수 없습니다</p>
+                <p className="font-semibold text-red-700">재고를 찾을 수 없습니다</p>
                 <p className="text-xs text-red-500">ID: {inventoryId}</p>
                 <Button variant="outline" size="sm" onClick={() => router.push("/dashboard/inventory/scan")}>
                   다시 스캔
@@ -232,8 +262,8 @@ function InventoryScanContent() {
                 <CardContent className="space-y-3">
                   {/* 핵심 수치 */}
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-blue-900/20 rounded-lg p-3 text-center">
-                      <p className="text-2xl font-bold text-blue-400">
+                    <div className="bg-blue-50 rounded-lg p-3 text-center">
+                      <p className="text-2xl font-bold text-blue-600">
                         {inventory.currentQuantity}
                       </p>
                       <p className="text-xs text-blue-500">{inventory.unit || "개"} (현재)</p>
@@ -249,19 +279,19 @@ function InventoryScanContent() {
                   {/* 메타 정보 */}
                   <div className="space-y-2 text-sm">
                     {inventory.location && (
-                      <div className="flex items-center gap-2 text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-500">
                         <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>{inventory.location}</span>
                       </div>
                     )}
                     {inventory.lotNumber && (
-                      <div className="flex items-center gap-2 text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-500">
                         <Package className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>Lot: {inventory.lotNumber}</span>
                       </div>
                     )}
                     {inventory.expiryDate && (
-                      <div className="flex items-center gap-2 text-slate-400">
+                      <div className="flex items-center gap-2 text-slate-500">
                         <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
                         <span>
                           유효기한:{" "}
@@ -316,120 +346,177 @@ function InventoryScanContent() {
     );
   }
 
-  // ─── ID 없을 때 — 카메라 스캐너 뷰 ────────────────────────────────────
+  // ─── ID 없을 때 — 스캐너 뷰 ────────────────────────────────────
   return (
-    <div className="min-h-screen bg-pn flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* 헤더 */}
-      <div className="flex items-center gap-3 p-4 text-white">
+      <div className="flex items-center gap-3 p-4 border-b border-slate-200 bg-white">
         <Link href="/dashboard/inventory">
-          <Button variant="ghost" size="sm" className="text-white hover:bg-pn/10 gap-1 pl-0">
+          <Button variant="ghost" size="sm" className="gap-1 pl-0 text-slate-600">
             <ArrowLeft className="h-4 w-4" />
             재고 목록
           </Button>
         </Link>
         <div className="flex-1 text-center">
-          <span className="text-sm font-medium">QR 스캔</span>
+          <span className="text-sm font-semibold text-slate-900">재고 스캔</span>
         </div>
         <div className="w-20" />
       </div>
 
-      {/* 카메라 뷰파인더 */}
-      <div className="relative flex-1 flex flex-col items-center justify-center gap-6 px-4">
-        {/* 비디오 + 오버레이 */}
-        <div className="relative w-full max-w-sm">
-          <div className="relative bg-black rounded-2xl overflow-hidden aspect-square shadow-2xl">
-            <video
-              ref={videoRef}
-              className={`w-full h-full object-cover ${scanning ? "" : "hidden"}`}
-              autoPlay
-              playsInline
-              muted
-            />
-            {!scanning && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/60">
-                <CameraOff className="h-16 w-16" />
-                <p className="text-sm">카메라가 꺼져 있습니다</p>
-              </div>
-            )}
-            {/* 스캔 가이드 오버레이 */}
-            {scanning && (
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                <div className="w-48 h-48 border-2 border-white/70 rounded-xl relative">
-                  {/* 모서리 강조 */}
-                  <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
-                  <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
-                  <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
-                  <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-4 border-r-4 border-blue-400 rounded-br-lg" />
-                  {/* 스캔 라인 애니메이션 */}
-                  <div className="absolute inset-x-0 top-1/2 h-0.5 bg-blue-400/70 animate-pulse" />
+      {/* 모드 토글 */}
+      <div className="flex items-center gap-1 mx-auto mt-4 p-1 bg-slate-100 rounded-lg">
+        <button
+          onClick={() => { setScanMode("qr"); setLabelScannerOpen(false); }}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            scanMode === "qr"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <QrCode className="h-4 w-4" />
+          QR 스캔
+        </button>
+        <button
+          onClick={() => { setScanMode("label"); stopScanner(); setLabelScannerOpen(true); }}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+            scanMode === "label"
+              ? "bg-white text-slate-900 shadow-sm"
+              : "text-slate-500 hover:text-slate-700"
+          }`}
+        >
+          <ScanLine className="h-4 w-4" />
+          라벨 스캔
+        </button>
+      </div>
+
+      {/* QR 스캔 모드 */}
+      {scanMode === "qr" && (
+        <div className="relative flex-1 flex flex-col items-center justify-center gap-6 px-4">
+          {/* 비디오 + 오버레이 */}
+          <div className="relative w-full max-w-sm">
+            <div className="relative bg-black rounded-2xl overflow-hidden aspect-square shadow-2xl">
+              <video
+                ref={videoRef}
+                className={`w-full h-full object-cover ${scanning ? "" : "hidden"}`}
+                autoPlay
+                playsInline
+                muted
+              />
+              {!scanning && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white/60">
+                  <CameraOff className="h-16 w-16" />
+                  <p className="text-sm">카메라가 꺼져 있습니다</p>
                 </div>
-              </div>
+              )}
+              {/* 스캔 가이드 오버레이 */}
+              {scanning && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="w-48 h-48 border-2 border-white/70 rounded-xl relative">
+                    <div className="absolute -top-0.5 -left-0.5 w-6 h-6 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
+                    <div className="absolute -top-0.5 -right-0.5 w-6 h-6 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
+                    <div className="absolute -bottom-0.5 -left-0.5 w-6 h-6 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-6 h-6 border-b-4 border-r-4 border-blue-400 rounded-br-lg" />
+                    <div className="absolute inset-x-0 top-1/2 h-0.5 bg-blue-400/70 animate-pulse" />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* 에러 메시지 */}
+          {cameraError && (
+            <div className="w-full max-w-sm bg-red-50 border border-red-200 rounded-xl p-3 text-red-600 text-sm text-center">
+              {cameraError}
+            </div>
+          )}
+
+          {/* 스캔 버튼 */}
+          <div className="flex gap-3">
+            {!scanning ? (
+              <Button
+                size="lg"
+                onClick={startScanner}
+                className="gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl h-12"
+              >
+                <Camera className="h-5 w-5" />
+                카메라 시작
+              </Button>
+            ) : (
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={stopScanner}
+                className="gap-2 px-8 rounded-xl h-12"
+              >
+                <CameraOff className="h-5 w-5" />
+                중지
+              </Button>
             )}
           </div>
-        </div>
 
-        {/* 에러 메시지 */}
-        {cameraError && (
-          <div className="w-full max-w-sm bg-red-900/50 border border-red-700 rounded-xl p-3 text-red-300 text-sm text-center">
-            {cameraError}
+          {/* 안내 텍스트 */}
+          <p className="text-slate-500 text-xs text-center max-w-xs">
+            재고 라벨의 QR 코드를 카메라에 가져다 대세요.<br />
+            자동으로 인식됩니다.
+          </p>
+
+          {/* 구분선 */}
+          <div className="flex items-center gap-3 w-full max-w-sm">
+            <div className="flex-1 h-px bg-slate-200" />
+            <span className="text-slate-500 text-xs">또는 ID 직접 입력</span>
+            <div className="flex-1 h-px bg-slate-200" />
           </div>
-        )}
 
-        {/* 스캔 버튼 */}
-        <div className="flex gap-3">
-          {!scanning ? (
+          {/* 수동 ID 입력 */}
+          <div className="flex gap-2 w-full max-w-sm">
+            <Input
+              placeholder="재고 ID 또는 카탈로그 번호"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+              className="rounded-xl"
+            />
             <Button
-              size="lg"
-              onClick={startScanner}
-              className="gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl h-12"
-            >
-              <Camera className="h-5 w-5" />
-              카메라 시작
-            </Button>
-          ) : (
-            <Button
-              size="lg"
               variant="outline"
-              onClick={stopScanner}
-              className="gap-2 border-white/30 text-white hover:bg-pn/10 px-8 rounded-xl h-12"
+              onClick={handleManualSearch}
+              className="rounded-xl px-4"
             >
-              <CameraOff className="h-5 w-5" />
-              중지
+              <Search className="h-4 w-4" />
             </Button>
-          )}
+          </div>
         </div>
+      )}
 
-        {/* 안내 텍스트 */}
-        <p className="text-white/50 text-xs text-center max-w-xs">
-          재고 라벨의 QR 코드를 카메라에 가져다 대세요.<br />
-          자동으로 인식됩니다.
-        </p>
-
-        {/* 구분선 */}
-        <div className="flex items-center gap-3 w-full max-w-sm">
-          <div className="flex-1 h-px bg-pn/20" />
-          <span className="text-white/40 text-xs">또는 ID 직접 입력</span>
-          <div className="flex-1 h-px bg-pn/20" />
-        </div>
-
-        {/* 수동 ID 입력 */}
-        <div className="flex gap-2 w-full max-w-sm">
-          <Input
-            placeholder="재고 ID 또는 카탈로그 번호"
-            value={manualId}
-            onChange={(e) => setManualId(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-            className="bg-pn/10 border-white/20 text-white placeholder:text-white/40 rounded-xl"
-          />
+      {/* 라벨 스캔 모드 안내 (모달이 주 인터페이스) */}
+      {scanMode === "label" && !labelScannerOpen && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-6 px-4">
+          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
+            <ScanLine className="h-8 w-8 text-blue-600" />
+          </div>
+          <div className="text-center">
+            <h3 className="text-lg font-bold text-slate-900">시약 라벨 스캔</h3>
+            <p className="text-sm text-slate-500 mt-1">
+              시약 라벨을 촬영하거나 텍스트를 입력하면<br />
+              입고 폼이 자동으로 채워집니다
+            </p>
+          </div>
           <Button
-            variant="outline"
-            onClick={handleManualSearch}
-            className="border-white/30 text-white hover:bg-pn/10 rounded-xl px-4"
+            size="lg"
+            onClick={() => setLabelScannerOpen(true)}
+            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white px-8 rounded-xl h-12"
           >
-            <Search className="h-4 w-4" />
+            <ScanLine className="h-5 w-5" />
+            라벨 스캔 시작
           </Button>
         </div>
-      </div>
+      )}
+
+      {/* 라벨 스캐너 모달 */}
+      <LabelScannerModal
+        open={labelScannerOpen}
+        onOpenChange={setLabelScannerOpen}
+        onScanComplete={handleLabelScanComplete}
+      />
     </div>
   );
 }
