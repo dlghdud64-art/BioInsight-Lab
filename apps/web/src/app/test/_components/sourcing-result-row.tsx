@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { PriceDisplay } from "@/components/products/price-display";
 import {
@@ -223,33 +225,41 @@ export function SourcingResultRow({
         <div className={`shrink-0 hidden sm:flex items-center gap-1.5 ${previewDim}`} onClick={(e) => e.stopPropagation()}>
           {/* Primary: 비교 */}
           {isInCompare ? (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200 cursor-default"
-              onClick={onToggleCompare}
+              onClick={() => { onToggleCompare(); toast.info("비교 후보에서 제거되었습니다."); }}
             >
               <Check className="h-3 w-3" />비교 후보
-            </button>
+            </motion.button>
           ) : (
-            <Button variant="ghost" size="sm"
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors"
-              onClick={onToggleCompare}>
+              onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
               <Scale className="h-3 w-3 mr-1" />비교 추가
-            </Button>
+            </motion.button>
           )}
           {/* Secondary: 견적 */}
           {isInRequest ? (
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
-              onClick={onToggleRequest}
+              onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}
             >
               <Check className="h-3 w-3" />견적 후보
-            </button>
+            </motion.button>
           ) : (
-            <Button variant="ghost" size="sm"
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.95 }}
               className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors"
-              onClick={onToggleRequest}>
+              onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
-            </Button>
+            </motion.button>
           )}
         </div>
 
@@ -267,22 +277,30 @@ export function SourcingResultRow({
         </div>
         <div className="flex items-center gap-1.5">
           {isInCompare ? (
-            <button className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200" onClick={onToggleCompare}>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-blue-50 text-blue-600 border border-blue-200"
+              onClick={() => { onToggleCompare(); toast.info("비교 후보에서 제거되었습니다."); }}>
               <Check className="h-3 w-3" />비교 후보
-            </button>
+            </motion.button>
           ) : (
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-600 border border-slate-200" onClick={onToggleCompare}>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-600 border border-slate-200"
+              onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
               <Scale className="h-3 w-3 mr-1" />비교 추가
-            </Button>
+            </motion.button>
           )}
           {isInRequest ? (
-            <button className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200" onClick={onToggleRequest}>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+              className="h-7 px-2.5 rounded-md text-xs font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200"
+              onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}>
               <Check className="h-3 w-3" />견적 후보
-            </button>
+            </motion.button>
           ) : (
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 border border-slate-200" onClick={onToggleRequest}>
+            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+              className="h-7 px-2.5 rounded-md text-xs font-medium text-slate-500 border border-slate-200"
+              onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
               <FileText className="h-3 w-3 mr-1" />견적 담기
-            </Button>
+            </motion.button>
           )}
         </div>
       </div>

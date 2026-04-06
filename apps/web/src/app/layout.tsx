@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { LocaleProvider } from "@/components/layout/locale-provider";
 import { QRScannerProviderWrapper } from "@/providers/qr-scanner-provider";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { Analytics } from "@vercel/analytics/react";
 
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
@@ -87,6 +88,7 @@ export default function RootLayout({
                   {children}
                 </QRScannerProviderWrapper>
                 <Toaster />
+                <SonnerToaster position="top-center" richColors closeButton />
                 <CompareFlowGuard />
 
                 <Analytics />
