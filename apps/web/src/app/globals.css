@@ -116,19 +116,19 @@ div.quote-table td.no-column-cell {
     /* hero haze */
     --public-hero-haze: rgba(59, 130, 246, 0.16);
 
-    /* ══ 2. App Surface Tokens ═════════════════════════════════════ */
-    --app-bg: #111827;
-    --app-panel-1: #182233;
-    --app-panel-2: #1F2937;
-    --app-panel-3: #273449;
-    --app-rail-bg: #1F2937;
-    --app-dock-bg: #0F172A;
-    --app-workbench-bg: #030712;
-    --app-table-row: #1E293B;
-    --app-table-row-hover: #26364D;
-    --app-table-row-active: #334155;
+    /* ══ 2. App Surface Tokens (Light Theme) ═══════════════════════ */
+    --app-bg: #F8FAFC;
+    --app-panel-1: #FFFFFF;
+    --app-panel-2: #FFFFFF;
+    --app-panel-3: #FFFFFF;
+    --app-rail-bg: #FFFFFF;
+    --app-dock-bg: #F1F5F9;
+    --app-workbench-bg: #F8FAFC;
+    --app-table-row: #FFFFFF;
+    --app-table-row-hover: #F8FAFC;
+    --app-table-row-active: #F1F5F9;
     --app-focus-ring: #3B82F6;
-    --app-divider: rgba(255, 255, 255, 0.08);
+    --app-divider: rgba(0, 0, 0, 0.06);
 
     /* ══ 3. Semantic Tokens ════════════════════════════════════════ */
     --status-success: #10B981;
@@ -140,34 +140,34 @@ div.quote-table td.no-column-cell {
     --surface-shell: var(--app-bg);
     --surface-page: var(--app-panel-2);
     --surface-panel: var(--app-panel-3);
-    --surface-elevated: #3A4150;
-    --surface-strong: #455264;
-    --border-default: #3A4150;
-    --border-strong: #455264;
+    --surface-elevated: #F1F5F9;
+    --surface-strong: #E2E8F0;
+    --border-default: #E2E8F0;
+    --border-strong: #CBD5E1;
 
     /* ── shadcn/ui Library Compat (HSL) ──────────────────────────
        ⚠ 아래 토큰은 shadcn/ui 컴포넌트 라이브러리 내부 전용입니다.
          직접 bg-primary / text-secondary 등으로 호출하지 마세요.
          Public → public-* 토큰, App → app-* 토큰, 상태 → status-* 토큰만 사용.
        ─────────────────────────────────────────────────────────── */
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
     --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222 47% 11%;
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
     --ring: 217 91% 60%;
     --radius: 0.5rem;
     --chart-1: 217 91% 60%;
@@ -192,7 +192,7 @@ div.quote-table td.no-column-cell {
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
     background-color: var(--surface-shell);
-    color: #f1f5f9;
+    color: #0f172a;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }

@@ -49,13 +49,13 @@ function isDelayed(q: Quote): boolean {
 }
 
 const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-400",     border: "border-red-600/30" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-600/10",  text: "text-purple-400",  border: "border-purple-600/30" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-400",    border: "border-blue-600/30" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-400",   border: "border-amber-600/30" },
+  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-600",     border: "border-red-600/30" },
+  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
+  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-600",    border: "border-blue-600/30" },
+  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-600",   border: "border-amber-600/30" },
   요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/30" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-400",     border: "border-red-600/20" },
+  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
+  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-600",     border: "border-red-600/20" },
 };
 
 function getOpStatus(q: Quote) {
@@ -249,7 +249,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           {opStatus.label}
         </span>
         {signals.blocker && (
-          <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">
+          <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-600 border border-amber-600/20">
             <AlertTriangle className="h-2.5 w-2.5" />{signals.blocker.length > 25 ? signals.blocker.substring(0, 25) + "…" : signals.blocker}
           </span>
         )}
@@ -259,7 +259,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
       <div className="flex items-start gap-3">
         <div className="flex-1 min-w-0">
           {/* 제목 */}
-          <h3 className="font-semibold text-slate-100 text-sm leading-snug truncate mb-1">{quote.title}</h3>
+          <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{quote.title}</h3>
 
           {/* Decision summary sentence */}
           <p className="text-xs text-slate-400 leading-relaxed mb-1 line-clamp-2">{signals.summary}</p>
@@ -276,15 +276,15 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
             <span className="text-[11px] text-slate-500 flex items-center gap-1">
               <Package className="h-3 w-3" />{itemCount}건
             </span>
-            <span className={`text-[11px] flex items-center gap-1 ${responseCount > 0 ? "text-blue-400 font-medium" : "text-slate-500"}`}>
+            <span className={`text-[11px] flex items-center gap-1 ${responseCount > 0 ? "text-blue-600 font-medium" : "text-slate-500"}`}>
               <Send className="h-3 w-3" />{responseCount > 0 ? `회신 ${responseCount}` : "미회신"}
             </span>
             {minPrice !== null && (
-              <span className="text-[11px] text-slate-200 font-medium">₩{minPrice.toLocaleString("ko-KR")}</span>
+              <span className="text-[11px] text-slate-700 font-medium">₩{minPrice.toLocaleString("ko-KR")}</span>
             )}
             <span className="text-[11px] text-slate-500">{daysSinceCreated === 0 ? "오늘" : `${daysSinceCreated}일 전`}</span>
             {quote.deliveryDate && (
-              <span className={`text-[11px] flex items-center gap-1 ${delayed ? "text-red-400 font-semibold" : "text-slate-500"}`}>
+              <span className={`text-[11px] flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
                 <Clock className="h-3 w-3" />납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
               </span>
             )}
@@ -315,7 +315,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           return (
             <div key={label} className="flex items-center gap-0.5 flex-1 min-w-0">
               <div className={`h-1 flex-1 rounded-full ${active ? (current ? "bg-blue-500" : "bg-emerald-600/40") : "bg-bd/30"}`} />
-              {current && <span className="text-[8px] text-blue-400 shrink-0 hidden sm:inline">{label}</span>}
+              {current && <span className="text-[8px] text-blue-600 shrink-0 hidden sm:inline">{label}</span>}
             </div>
           );
         })}
@@ -524,7 +524,7 @@ function QuotesPageContent() {
       {/* ── 헤더 ── */}
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-100">견적 운영 워크큐</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
           <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -544,8 +544,8 @@ function QuotesPageContent() {
       {/* ── Page-level fatal error (primary fetch 실패 시만) ── */}
       {isError && !quotesData && (
         <div className="rounded-xl border border-red-600/20 bg-red-600/5 p-6 text-center space-y-3">
-          <AlertCircle className="h-8 w-8 text-red-400 mx-auto" />
-          <p className="text-sm text-slate-200 font-medium">견적 운영 워크큐를 불러오지 못했습니다</p>
+          <AlertCircle className="h-8 w-8 text-red-600 mx-auto" />
+          <p className="text-sm text-slate-700 font-medium">견적 운영 워크큐를 불러오지 못했습니다</p>
           <p className="text-xs text-slate-500">기본 목록 데이터를 확인하지 못했습니다. 일시적 문제일 수 있습니다.</p>
           <div className="flex justify-center gap-2 pt-1">
             <Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700" onClick={() => refetch()}>다시 시도</Button>
@@ -557,9 +557,9 @@ function QuotesPageContent() {
       {/* ── KPI Control Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: <Clock className="h-4 w-4 text-amber-400" />, filter: "SENT", color: "amber" },
+          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: <Clock className="h-4 w-4 text-amber-600" />, filter: "SENT", color: "amber" },
           { label: "비교 검토 필요", ...summaryStats.compareReview, icon: <RefreshCw className="h-4 w-4 text-purple-400" />, filter: "RESPONDED", color: "purple" },
-          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: <AlertCircle className="h-4 w-4 text-red-400" />, filter: "DEADLINE_TODAY", color: "red" },
+          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: <AlertCircle className="h-4 w-4 text-red-600" />, filter: "DEADLINE_TODAY", color: "red" },
           { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "COMPLETED", color: "emerald" },
         ].map(({ label, count, insight, icon, filter, color }) => {
           const isActive = statusFilter === filter;
@@ -570,7 +570,7 @@ function QuotesPageContent() {
                 {icon}
                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
               </div>
-              <div className="text-2xl font-bold text-slate-100 mb-1">{isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}</div>
+              <div className="text-2xl font-bold text-slate-900 mb-1">{isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}</div>
               <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{isLoading ? "집계 확인 중" : insight}</p>
             </button>
           );
@@ -607,7 +607,7 @@ function QuotesPageContent() {
             return (
               <button key={chip.key} onClick={() => setModeChip(isActive ? null : chip.key)}
                 className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all ${
-                  isActive ? "bg-blue-600/10 text-blue-400 border-blue-600/30" : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-300"
+                  isActive ? "bg-blue-600/10 text-blue-600 border-blue-600/30" : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
                 }`}>
                 {chip.label}
                 {chipCount > 0 && <span className={`text-[9px] ${isActive ? "text-blue-300" : "text-slate-600"}`}>{chipCount}</span>}
@@ -615,7 +615,7 @@ function QuotesPageContent() {
             );
           })}
           {modeChip && (
-            <button onClick={() => setModeChip(null)} className="text-[11px] text-slate-500 hover:text-slate-300 ml-1">초기화</button>
+            <button onClick={() => setModeChip(null)} className="text-[11px] text-slate-500 hover:text-slate-900 ml-1">초기화</button>
           )}
         </div>
       </div>
@@ -652,9 +652,9 @@ function QuotesPageContent() {
       {!isLoading && urgentQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <h2 className="text-sm font-semibold text-slate-200">즉시 처리 필요</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-400 text-[11px] font-bold">{urgentQuotes.length}</span>
+            <AlertCircle className="h-4 w-4 text-red-600" />
+            <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-600 text-[11px] font-bold">{urgentQuotes.length}</span>
           </div>
           {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
         </div>
@@ -664,9 +664,9 @@ function QuotesPageContent() {
       {!isLoading && inProgressQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-amber-400" />
-            <h2 className="text-sm font-semibold text-slate-200">진행 중</h2>
-            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-400 text-[11px] font-bold">{inProgressQuotes.length}</span>
+            <Clock className="h-4 w-4 text-amber-600" />
+            <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
+            <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-600 text-[11px] font-bold">{inProgressQuotes.length}</span>
           </div>
           {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
         </div>
@@ -677,7 +677,7 @@ function QuotesPageContent() {
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-            <span className="text-sm font-semibold text-slate-200">완료 / 취소</span>
+            <span className="text-sm font-semibold text-slate-700">완료 / 취소</span>
             <span className="text-xs text-slate-500">({completedQuotes.length}건)</span>
             <span className="ml-1 text-xs text-slate-500 group-open:hidden">▶</span>
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
@@ -694,17 +694,17 @@ function QuotesPageContent() {
           {(searchQuery || statusFilter !== "all" || modeChip) ? (
             <>
               <Filter className="h-8 w-8 text-slate-600" />
-              <p className="text-sm text-slate-300">현재 조건에 맞는 견적 케이스가 없습니다</p>
+              <p className="text-sm text-slate-700">현재 조건에 맞는 견적 케이스가 없습니다</p>
               <p className="text-xs text-slate-500">필터를 완화하거나 다른 상태군을 선택해 보세요</p>
               <div className="flex gap-2 mt-2">
-                <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); setModeChip(null); }} className="text-xs text-blue-400 hover:underline">필터 초기화</button>
+                <button onClick={() => { setSearchQuery(""); setStatusFilter("all"); setModeChip(null); }} className="text-xs text-blue-600 hover:underline">필터 초기화</button>
                 <button onClick={() => setStatusFilter("all")} className="text-xs text-slate-400 hover:underline">전체 보기</button>
               </div>
             </>
           ) : (
             <>
               <Package className="h-8 w-8 text-slate-600" />
-              <p className="text-sm text-slate-300">현재 처리 중인 견적 케이스가 없습니다</p>
+              <p className="text-sm text-slate-700">현재 처리 중인 견적 케이스가 없습니다</p>
               <p className="text-xs text-slate-500">새 견적 요청을 만들거나, 소싱 워크벤치에서 시작할 수 있습니다</p>
               <div className="flex gap-2 mt-2">
                 <Link href="/app/search"><Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">새 요청 만들기</Button></Link>
@@ -740,12 +740,12 @@ function QuotesPageContent() {
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <Link href={`/quotes/${selectedQuote.id}`}>
-                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" title="전체 상세 열기"><ExternalLink className="h-3 w-3" /></Button>
+                  <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-900" title="전체 상세 열기"><ExternalLink className="h-3 w-3" /></Button>
                 </Link>
-                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-300" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}><X className="h-3.5 w-3.5" /></Button>
+                <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-slate-500 hover:text-slate-900" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}><X className="h-3.5 w-3.5" /></Button>
               </div>
             </div>
-            <h3 className="text-sm font-semibold text-slate-100 truncate mb-1">{selectedQuote.title}</h3>
+            <h3 className="text-sm font-semibold text-slate-900 truncate mb-1">{selectedQuote.title}</h3>
             <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · {sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</p>
             <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
           </div>
@@ -757,9 +757,9 @@ function QuotesPageContent() {
           <div className="px-4 py-3 border-b border-bd/50">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">운영 요약</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-200 font-medium">{selectedSignals.status}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-400"}>{selectedSignals.blocker}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-200">{selectedSignals.nextAction}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-700">{selectedSignals.nextAction}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.compareReady}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">발주 전환 가능</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
             </div>
@@ -771,9 +771,9 @@ function QuotesPageContent() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs">
                 <span className="text-slate-400">수신 견적</span>
-                <span className={`font-medium ${sqResponseCount > 0 ? "text-blue-400" : "text-slate-200"}`}>{sqResponseCount}건{sqResponseCount > 0 && selectedQuote.status === "SENT" ? " (새 회신)" : ""}</span>
+                <span className={`font-medium ${sqResponseCount > 0 ? "text-blue-600" : "text-slate-700"}`}>{sqResponseCount}건{sqResponseCount > 0 && selectedQuote.status === "SENT" ? " (새 회신)" : ""}</span>
               </div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-amber-400" : "text-slate-500"}>{selectedQuote.status === "SENT" ? `${selectedQuote.items.length - sqResponseCount}건` : "—"}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">회신 대기</span><span className={selectedQuote.status === "SENT" && sqResponseCount === 0 ? "text-amber-600" : "text-slate-500"}>{selectedQuote.status === "SENT" ? `${selectedQuote.items.length - sqResponseCount}건` : "—"}</span></div>
               {/* 가격 범위 — 회신이 있을 때만 */}
               {(() => {
                 const prices = (selectedQuote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
@@ -785,12 +785,12 @@ function QuotesPageContent() {
                   <>
                     <div className="flex justify-between text-xs">
                       <span className="text-slate-400">가격 범위</span>
-                      <span className="text-slate-200 font-medium">₩{min.toLocaleString("ko-KR")}{prices.length >= 2 ? ` ~ ₩${max.toLocaleString("ko-KR")}` : ""}</span>
+                      <span className="text-slate-700 font-medium">₩{min.toLocaleString("ko-KR")}{prices.length >= 2 ? ` ~ ₩${max.toLocaleString("ko-KR")}` : ""}</span>
                     </div>
                     {prices.length >= 2 && (
                       <div className="flex justify-between text-xs">
                         <span className="text-slate-400">가격 차이</span>
-                        <span className={`font-medium ${spread > 20 ? "text-amber-400" : "text-slate-300"}`}>{spread}%</span>
+                        <span className={`font-medium ${spread > 20 ? "text-amber-600" : "text-slate-700"}`}>{spread}%</span>
                       </div>
                     )}
                   </>
@@ -815,7 +815,7 @@ function QuotesPageContent() {
             <div className="mt-2 space-y-1">
               {selectedQuote.items.slice(0, 3).map(item => (
                 <div key={item.id} className="flex justify-between text-[11px]">
-                  <span className="text-slate-300 truncate max-w-[200px]">{item.product.name}</span>
+                  <span className="text-slate-700 truncate max-w-[200px]">{item.product.name}</span>
                   <span className="text-slate-500 shrink-0">×{item.quantity}</span>
                 </div>
               ))}
@@ -827,7 +827,7 @@ function QuotesPageContent() {
                 <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">공급사별 회신</div>
                 {(selectedQuote.responses ?? []).slice(0, 4).map(resp => (
                   <div key={resp.id} className="flex justify-between text-[11px]">
-                    <span className="text-slate-300 truncate max-w-[140px]">{resp.vendor.name}</span>
+                    <span className="text-slate-700 truncate max-w-[140px]">{resp.vendor.name}</span>
                     <span className="text-slate-400">{typeof resp.totalPrice === "number" && resp.totalPrice > 0 ? `₩${resp.totalPrice.toLocaleString("ko-KR")}` : "가격 미제출"}</span>
                   </div>
                 ))}
@@ -842,24 +842,24 @@ function QuotesPageContent() {
             <div className="space-y-1.5">
               <div className="flex items-start gap-2 text-[11px]">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                <div><span className="text-slate-300">요청 생성</span><span className="text-slate-500 ml-1.5">{sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</span></div>
+                <div><span className="text-slate-700">요청 생성</span><span className="text-slate-500 ml-1.5">{sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</span></div>
               </div>
               {selectedQuote.status !== "PENDING" && (
                 <div className="flex items-start gap-2 text-[11px]">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-300">견적 요청 발송</span></div>
+                  <div><span className="text-slate-700">견적 요청 발송</span></div>
                 </div>
               )}
               {sqResponseCount > 0 && (
                 <div className="flex items-start gap-2 text-[11px]">
                   <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-300">회신 {sqResponseCount}건 도착</span></div>
+                  <div><span className="text-slate-700">회신 {sqResponseCount}건 도착</span></div>
                 </div>
               )}
               {selectedQuote.status === "RESPONDED" && (
                 <div className="flex items-start gap-2 text-[11px]">
                   <span className="h-1.5 w-1.5 rounded-full bg-purple-400 mt-1.5 shrink-0" />
-                  <div><span className="text-slate-300">비교 검토 필요</span></div>
+                  <div><span className="text-slate-700">비교 검토 필요</span></div>
                 </div>
               )}
               {selectedQuote.status === "PENDING" && (
@@ -874,7 +874,7 @@ function QuotesPageContent() {
           {/* E. Decision summary + AI */}
           <div className="px-4 py-3 border-b border-bd/50">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">판단 요약</div>
-            <p className="text-xs text-slate-300 leading-relaxed">{selectedSignals.summary}</p>
+            <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
             {selectedSignals.aiRecommendation && (
               <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1.5">
                 <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />{selectedSignals.aiRecommendation}
@@ -888,8 +888,8 @@ function QuotesPageContent() {
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인 정책</span><span className="text-slate-500">없음</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className="text-slate-500">불필요</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-200">{selectedSignals.handoffTarget}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-400"}>{selectedSignals.handoffStatus}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
           </div>
 
@@ -897,7 +897,7 @@ function QuotesPageContent() {
 
           {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
-            <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-300"}`}
+            <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
               onClick={() => {
                 if (selectedSignals.actionKey) {
                   console.log("[QuoteQueue] quote_rail_cta_clicked", { caseId: selectedQuote.id, actionKey: selectedSignals.actionKey, uiState: selectedSignals.railState });
@@ -963,14 +963,14 @@ function QuotesPageContent() {
                 </span>
                 <span className="text-xs text-slate-400">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
               </div>
-              <h3 className="text-sm font-semibold text-slate-100 mb-1">{selectedQuote.title}</h3>
+              <h3 className="text-sm font-semibold text-slate-900 mb-1">{selectedQuote.title}</h3>
               <p className="text-xs text-slate-400">{selectedSignals.summary}</p>
             </div>
 
             {/* Action-specific content */}
             {activeWorkWindow === "followup_send" && (
               <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-200">재요청 / 추가 회신 확보</p>
+                <p className="text-xs font-medium text-slate-700">재요청 / 추가 회신 확보</p>
                 <p className="text-xs text-slate-400">미응답 공급사에 재요청하거나 추가 공급사를 탐색합니다.</p>
                 <div className="text-xs text-slate-500">현재 회신: {selectedQuote.responses?.length ?? 0}건</div>
               </div>
@@ -992,10 +992,10 @@ function QuotesPageContent() {
                   <div className="rounded-lg border border-bd bg-pn p-4">
                     <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">비교 현황</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
-                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{sqrc}</p><p className="text-[11px] text-slate-500">수신 견적</p></div>
-                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{validQuotes}</p><p className="text-[11px] text-slate-500">유효 견적</p></div>
-                      <div><p className="text-lg font-bold tabular-nums text-slate-100">{selectedQuote.items.length}</p><p className="text-[11px] text-slate-500">품목</p></div>
-                      <div><p className={`text-lg font-bold ${hasSelection ? "text-emerald-400" : "text-amber-400"}`}>{hasSelection ? "확정" : "미확정"}</p><p className="text-[11px] text-slate-500">선택안</p></div>
+                      <div><p className="text-lg font-bold tabular-nums text-slate-900">{sqrc}</p><p className="text-[11px] text-slate-500">수신 견적</p></div>
+                      <div><p className="text-lg font-bold tabular-nums text-slate-900">{validQuotes}</p><p className="text-[11px] text-slate-500">유효 견적</p></div>
+                      <div><p className="text-lg font-bold tabular-nums text-slate-900">{selectedQuote.items.length}</p><p className="text-[11px] text-slate-500">품목</p></div>
+                      <div><p className={`text-lg font-bold ${hasSelection ? "text-emerald-400" : "text-amber-600"}`}>{hasSelection ? "확정" : "미확정"}</p><p className="text-[11px] text-slate-500">선택안</p></div>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-snug">
                       {validQuotes >= 2 ? "비교 자체는 가능하지만 선택안 확정이 남아 있습니다" : "유효 견적이 부족해 비교 후보가 안정적으로 만들어지지 않았습니다"}
@@ -1013,10 +1013,10 @@ function QuotesPageContent() {
                             <div key={r.id} className={`rounded border p-3 ${isRecommended ? "border-blue-600/30 bg-blue-600/5" : "border-bd"}`}>
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-2">
-                                  <span className="text-xs font-medium text-slate-200">{r.vendor.name || "공급사"}</span>
-                                  {isRecommended && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-400 border border-blue-600/20">추천</span>}
+                                  <span className="text-xs font-medium text-slate-700">{r.vendor.name || "공급사"}</span>
+                                  {isRecommended && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-600/15 text-blue-600 border border-blue-600/20">추천</span>}
                                 </div>
-                                {r.totalPrice && <span className="text-xs font-semibold tabular-nums text-slate-100">₩{r.totalPrice.toLocaleString("ko-KR")}</span>}
+                                {r.totalPrice && <span className="text-xs font-semibold tabular-nums text-slate-900">₩{r.totalPrice.toLocaleString("ko-KR")}</span>}
                               </div>
                               <p className="text-[11px] text-slate-500">
                                 {isRecommended ? "가격 우위 · 기존 거래처" : "대안 후보"}
@@ -1039,11 +1039,11 @@ function QuotesPageContent() {
                         {blockers.map((b, idx) => (
                           <div key={idx} className="rounded border border-amber-600/20 bg-amber-600/5 px-3 py-2">
                             <div className="flex items-center gap-2 text-xs mb-0.5">
-                              <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                              <AlertTriangle className="h-3 w-3 text-amber-600 shrink-0" />
                               <span className="text-amber-300 font-medium">{b.label}</span>
                             </div>
                             <p className="text-[11px] text-slate-400 pl-5">{b.reason}</p>
-                            <p className="text-[11px] text-blue-400 pl-5 mt-0.5">해소 액션: {b.action}</p>
+                            <p className="text-[11px] text-blue-600 pl-5 mt-0.5">해소 액션: {b.action}</p>
                           </div>
                         ))}
                       </div>
@@ -1054,7 +1054,7 @@ function QuotesPageContent() {
                     )}
                     <div className="flex justify-between text-xs pt-2 border-t border-bd/50">
                       <span className="text-slate-400">다음 목적지</span>
-                      <span className="text-slate-200">{canConfirm ? "승인 패키지 준비 또는 발주 전환" : "조건 해소 후 확정"}</span>
+                      <span className="text-slate-700">{canConfirm ? "승인 패키지 준비 또는 발주 전환" : "조건 해소 후 확정"}</span>
                     </div>
                   </div>
                 </div>
@@ -1074,19 +1074,19 @@ function QuotesPageContent() {
                     <div className="grid grid-cols-2 gap-3 mb-3">
                       <div>
                         <p className="text-[11px] text-slate-500">선택안</p>
-                        <p className="text-xs text-slate-200 font-medium">{bestVendor?.vendor.name ?? "미확정"}</p>
+                        <p className="text-xs text-slate-700 font-medium">{bestVendor?.vendor.name ?? "미확정"}</p>
                       </div>
                       <div>
                         <p className="text-[11px] text-slate-500">예상 금액</p>
-                        <p className="text-xs text-slate-200 font-medium tabular-nums">{bestPrice ? `₩${bestPrice.toLocaleString("ko-KR")}` : "미정"}</p>
+                        <p className="text-xs text-slate-700 font-medium tabular-nums">{bestPrice ? `₩${bestPrice.toLocaleString("ko-KR")}` : "미정"}</p>
                       </div>
                       <div>
                         <p className="text-[11px] text-slate-500">품목</p>
-                        <p className="text-xs text-slate-200">{selectedQuote.items.length}건</p>
+                        <p className="text-xs text-slate-700">{selectedQuote.items.length}건</p>
                       </div>
                       <div>
                         <p className="text-[11px] text-slate-500">공급사</p>
-                        <p className="text-xs text-slate-200">{sqrc}곳 회신</p>
+                        <p className="text-xs text-slate-700">{sqrc}곳 회신</p>
                       </div>
                     </div>
                     <p className="text-[11px] text-slate-500 leading-snug">현재 선택안은 확정되었고 외부 승인 패키지 전달 준비 단계입니다</p>
@@ -1098,7 +1098,7 @@ function QuotesPageContent() {
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">선택안 확정</span>
-                        <span className={bestPrice ? "text-emerald-400" : "text-amber-400"}>{bestPrice ? "준비 완료" : "확인 필요"}</span>
+                        <span className={bestPrice ? "text-emerald-400" : "text-amber-600"}>{bestPrice ? "준비 완료" : "확인 필요"}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">문서 상태</span>
@@ -1110,7 +1110,7 @@ function QuotesPageContent() {
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">승인 정책</span>
-                        <span className="text-slate-200">외부 승인 필요</span>
+                        <span className="text-slate-700">외부 승인 필요</span>
                       </div>
                     </div>
                   </div>
@@ -1121,15 +1121,15 @@ function QuotesPageContent() {
                     <div className="space-y-1.5">
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">전달 채널</span>
-                        <span className="text-slate-200">외부 전자결재</span>
+                        <span className="text-slate-700">외부 전자결재</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">현재 상태</span>
-                        <span className="text-amber-400">승인 준비 중</span>
+                        <span className="text-amber-600">승인 준비 중</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-400">승인 완료 후</span>
-                        <span className="text-slate-200">발주 전환 준비</span>
+                        <span className="text-slate-700">발주 전환 준비</span>
                       </div>
                     </div>
                   </div>
@@ -1138,7 +1138,7 @@ function QuotesPageContent() {
             })()}
             {activeWorkWindow === "po_conversion" && (
               <div className="rounded-lg border border-bd bg-pn p-4 space-y-3">
-                <p className="text-xs font-medium text-slate-200">발주 전환 준비</p>
+                <p className="text-xs font-medium text-slate-700">발주 전환 준비</p>
                 <p className="text-xs text-slate-400">line item을 확정하고 발주 조건을 검토한 뒤 PO를 생성합니다.</p>
                 <div className="text-xs text-slate-500">품목: {selectedQuote.items.length}건</div>
               </div>

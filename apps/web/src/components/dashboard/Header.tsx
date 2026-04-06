@@ -210,7 +210,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-bd bg-pg/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 h-14 md:h-16 border-b border-slate-800/50 backdrop-blur-sm" style={{ backgroundColor: "rgba(17,24,39,0.97)" }}>
       <div className="flex h-full items-center justify-between gap-2 px-4 sm:px-6 lg:px-8">
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
@@ -254,7 +254,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-pn border-bs focus:bg-pn w-full min-w-0 text-slate-100"
+              className="pl-9 h-9 bg-[#273449] border-[#455264] focus:bg-[#273449] w-full min-w-0 text-slate-100"
             />
           </div>
 
@@ -285,9 +285,9 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-pn shadow-2xl shadow-black/40 border border-bd ring-1 ring-black/20">
+            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-[#1F2937] shadow-2xl shadow-black/40 border border-[#374151] ring-1 ring-black/20">
               {/* 헤더 */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-bd">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-[#374151]">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-semibold text-slate-200">알림</span>
                   {unreadCount > 0 && (
@@ -320,7 +320,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                       key={n.id}
                       type="button"
                       onClick={() => handleNotificationClick(n)}
-                      className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-el transition-colors"
+                      className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-[#273449] transition-colors"
                     >
                       {/* unread 파란 점 */}
                       <div className="flex items-center gap-2 pt-0.5">
@@ -341,7 +341,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </div>
 
               {/* 푸터 */}
-              <div className="border-t border-bd px-4 py-2.5 text-center">
+              <div className="border-t border-[#374151] px-4 py-2.5 text-center">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
@@ -365,7 +365,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 <HelpCircle className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-pn border-bd shadow-2xl shadow-black/40">
+            <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-[#1F2937] border-[#374151] shadow-2xl shadow-black/40">
               <DropdownMenuItem asChild>
                 <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <BookOpen className="mr-2 h-4 w-4" />
@@ -391,8 +391,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <div className="hidden lg:block">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-2 pl-3 border-l border-bs flex-shrink-0 px-3 py-2 rounded-lg hover:bg-el transition-colors cursor-pointer min-h-[44px]">
-                <Avatar className="h-8 w-8 border border-bs">
+              <button className="flex items-center gap-2 pl-3 border-l border-[#455264] flex-shrink-0 px-3 py-2 rounded-lg hover:bg-[#273449] transition-colors cursor-pointer min-h-[44px]">
+                <Avatar className="h-8 w-8 border border-[#455264]">
                   <AvatarImage src={user?.image || undefined} alt={user?.name || "User"} />
                   <AvatarFallback className="bg-blue-900/50 text-blue-400 text-xs font-semibold">
                     {user?.name
@@ -415,7 +415,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </div>
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2 !bg-pn border-bd shadow-2xl shadow-black/40">
+            <DropdownMenuContent align="end" className="w-72 min-w-[280px] p-2 !bg-[#1F2937] border-[#374151] shadow-2xl shadow-black/40">
               <DropdownMenuLabel className="p-3">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium text-slate-100">{user?.name || "사용자"}</p>
@@ -462,7 +462,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-el mobile-menu-button lg:hidden -mr-1"
+              className="h-11 w-11 flex-shrink-0 text-slate-400 hover:bg-[#273449] mobile-menu-button lg:hidden -mr-1"
               onClick={onMenuClick}
               aria-label="메뉴 열기"
             >
