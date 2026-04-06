@@ -67,21 +67,21 @@ interface PurchaseExecutionItem {
 
 // ── 상태 라벨 맵 ──
 const CONVERSION_STATUS_MAP: Record<ConversionStatus, { label: string; bg: string; text: string; border: string }> = {
-  review_required:  { label: "선택안 검토 필요", bg: "bg-blue-600/10",    text: "text-blue-400",    border: "border-blue-600/30" },
-  ready_for_po:     { label: "발주 전환 가능",   bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/30" },
-  hold:             { label: "보류",             bg: "bg-amber-600/10",   text: "text-amber-400",   border: "border-amber-600/30" },
-  confirmed:        { label: "선택안 확정",       bg: "bg-purple-600/10",  text: "text-purple-400",  border: "border-purple-600/30" },
+  review_required:  { label: "선택안 검토 필요", bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
+  ready_for_po:     { label: "발주 전환 가능",   bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
+  hold:             { label: "보류",             bg: "bg-amber-50",   text: "text-amber-600",   border: "border-amber-200" },
+  confirmed:        { label: "선택안 확정",       bg: "bg-purple-50",  text: "text-purple-600",  border: "border-purple-200" },
 };
 
 const EXTERNAL_APPROVAL_MAP: Record<ExternalApprovalStatus, { label: string; className: string }> = {
-  approved: { label: "외부 승인 완료", className: "text-emerald-400 bg-emerald-600/10 border-emerald-600/20" },
-  pending:  { label: "외부 승인 대기", className: "text-amber-400 bg-amber-600/10 border-amber-600/20" },
-  unknown:  { label: "외부 승인 미확인", className: "text-slate-400 bg-slate-600/10 border-slate-600/20" },
+  approved: { label: "외부 승인 완료", className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+  pending:  { label: "외부 승인 대기", className: "text-amber-600 bg-amber-50 border-amber-200" },
+  unknown:  { label: "외부 승인 미확인", className: "text-slate-500 bg-slate-50 border-slate-200" },
 };
 
 const AI_STATUS_MAP: Record<AiRecStatus, { label: string; icon: string; className: string }> = {
-  recommended:   { label: "AI 추천 완료", icon: "✓", className: "text-emerald-400" },
-  review_needed: { label: "AI 검토 필요", icon: "△", className: "text-amber-400" },
+  recommended:   { label: "AI 추천 완료", icon: "✓", className: "text-emerald-600" },
+  review_needed: { label: "AI 검토 필요", icon: "△", className: "text-amber-600" },
   hold:          { label: "AI 판단 보류", icon: "—", className: "text-slate-500" },
 };
 
@@ -345,7 +345,7 @@ export default function PurchasesPage() {
           <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
             발주 전환 큐
           </h2>
-          <p className="text-sm text-slate-400 mt-0.5">
+          <p className="text-sm text-slate-500 mt-0.5">
             회신 완료 건의 선택안을 확정하고 발주로 넘깁니다.
           </p>
         </div>
@@ -367,34 +367,34 @@ export default function PurchasesPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <button type="button" onClick={() => setQueueTab("review")}
             className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-el transition-colors ${
-              kpis.reviewNeeded > 0 ? "border-blue-900/50 bg-blue-950/20" : "border-bd bg-el/50"
+              kpis.reviewNeeded > 0 ? "border-blue-200 bg-blue-50" : "border-bd bg-el/50"
             }`}>
             <ListChecks className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
             <div className="min-w-0">
               <p className="text-xs text-slate-500 font-medium">선택안 확정 필요</p>
-              <p className={`text-lg font-bold mt-0.5 ${kpis.reviewNeeded > 0 ? "text-blue-400" : "text-slate-900"}`}>{kpis.reviewNeeded}건</p>
+              <p className={`text-lg font-bold mt-0.5 ${kpis.reviewNeeded > 0 ? "text-blue-600" : "text-slate-900"}`}>{kpis.reviewNeeded}건</p>
             </div>
           </button>
 
           <button type="button" onClick={() => setQueueTab("ready")}
             className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-el transition-colors ${
-              kpis.readyForPo > 0 ? "border-emerald-900/50 bg-emerald-950/20" : "border-bd bg-el/50"
+              kpis.readyForPo > 0 ? "border-emerald-200 bg-emerald-50" : "border-bd bg-el/50"
             }`}>
             <CircleCheck className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
             <div className="min-w-0">
               <p className="text-xs text-slate-500 font-medium">발주 전환 가능</p>
-              <p className={`text-lg font-bold mt-0.5 ${kpis.readyForPo > 0 ? "text-emerald-400" : "text-slate-900"}`}>{kpis.readyForPo}건</p>
+              <p className={`text-lg font-bold mt-0.5 ${kpis.readyForPo > 0 ? "text-emerald-600" : "text-slate-900"}`}>{kpis.readyForPo}건</p>
             </div>
           </button>
 
           <button type="button" onClick={() => setQueueTab("check")}
             className={`flex items-start gap-3 rounded-md border p-3 text-left hover:bg-el transition-colors ${
-              kpis.checkNeeded > 0 ? "border-amber-900/50 bg-amber-950/20" : "border-bd bg-el/50"
+              kpis.checkNeeded > 0 ? "border-amber-200 bg-amber-50" : "border-bd bg-el/50"
             }`}>
             <AlertTriangle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
             <div className="min-w-0">
               <p className="text-xs text-slate-500 font-medium">추가 검토 필요</p>
-              <p className={`text-lg font-bold mt-0.5 ${kpis.checkNeeded > 0 ? "text-amber-400" : "text-slate-900"}`}>{kpis.checkNeeded}건</p>
+              <p className={`text-lg font-bold mt-0.5 ${kpis.checkNeeded > 0 ? "text-amber-600" : "text-slate-900"}`}>{kpis.checkNeeded}건</p>
             </div>
           </button>
 
@@ -433,7 +433,7 @@ export default function PurchasesPage() {
           ))}
         </div>
         <div className="relative flex-1 min-w-0 sm:max-w-[280px] sm:ml-auto">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
           <Input placeholder="품목명 검색" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9 h-8 text-xs border-bd" />
         </div>
@@ -447,7 +447,7 @@ export default function PurchasesPage() {
           {filteredItems.length === 0 && (
             <div className="rounded-xl border border-bd bg-pn p-8 text-center">
               <Package className="h-8 w-8 text-slate-600 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">회신 완료 건부터 선택안 검토와 발주 전환 준비를 시작할 수 있습니다.</p>
+              <p className="text-sm text-slate-500">회신 완료 건부터 선택안 검토와 발주 전환 준비를 시작할 수 있습니다.</p>
             </div>
           )}
 
@@ -462,7 +462,7 @@ export default function PurchasesPage() {
             return (
               <div key={item.id}
                 className={`bg-pn rounded-xl border transition-colors p-4 cursor-pointer ${
-                  isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
+                  isSelected ? "border-blue-300 ring-1 ring-blue-200 bg-blue-50"
                   : "border-bd/80 hover:border-bd"
                 }`}
                 onClick={() => setSelectedId(item.id)}>
@@ -476,7 +476,7 @@ export default function PurchasesPage() {
                     {ext.label}
                   </span>
                   {item.blockerType !== "none" && (
-                    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-amber-600/10 text-amber-400 border border-amber-600/20">
+                    <span className="inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 border border-amber-200">
                       <AlertTriangle className="h-2.5 w-2.5" />
                       {item.blockerType === "price_gap" ? "가격 차이" : item.blockerType === "lead_time" ? "납기 이슈" : item.blockerType === "partial_reply" ? "일부 회신" : item.blockerType === "moq_issue" ? "MOQ 조건" : "확인 필요"}
                     </span>
@@ -487,17 +487,17 @@ export default function PurchasesPage() {
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{item.requestTitle}</h3>
-                    <p className="text-xs text-slate-400 mb-1 truncate">{item.itemSummary}</p>
+                    <p className="text-xs text-slate-500 mb-1 truncate">{item.itemSummary}</p>
 
                     {/* 현재 막힘 + 다음 단계 — 운영 판단성 */}
                     <div className="flex flex-col gap-0.5 mb-2">
                       <p className="text-[11px] text-slate-500 leading-snug">
-                        <span className={item.blockerType !== "none" ? "text-amber-400/80" : "text-slate-500"}>막힘:</span>{" "}
-                        <span className={item.blockerType !== "none" ? "text-amber-400/70" : "text-slate-500"}>{item.blockerReason}</span>
+                        <span className={item.blockerType !== "none" ? "text-amber-600" : "text-slate-500"}>막힘:</span>{" "}
+                        <span className={item.blockerType !== "none" ? "text-amber-600" : "text-slate-500"}>{item.blockerReason}</span>
                       </p>
                       <p className="text-[11px] text-slate-500 leading-snug">
-                        <span className="text-blue-400/70">다음:</span>{" "}
-                        <span className="text-slate-400">{item.nextStage}</span>
+                        <span className="text-blue-500">다음:</span>{" "}
+                        <span className="text-slate-500">{item.nextStage}</span>
                       </p>
                     </div>
 
@@ -506,13 +506,13 @@ export default function PurchasesPage() {
                       <span className={`text-[11px] flex items-center gap-1 ${ai.className}`}>
                         <Sparkles className="h-3 w-3 shrink-0" />{ai.label}
                       </span>
-                      <span className={`text-[11px] flex items-center gap-1 ${item.supplierReplies === item.totalSuppliers ? "text-emerald-400 font-medium" : "text-slate-500"}`}>
+                      <span className={`text-[11px] flex items-center gap-1 ${item.supplierReplies === item.totalSuppliers ? "text-emerald-600 font-medium" : "text-slate-500"}`}>
                         <Truck className="h-3 w-3" />회신 {item.supplierReplies}/{item.totalSuppliers}
                       </span>
                       <span className="text-[11px] text-slate-700 font-medium">{formatPrice(item.totalBudget)}</span>
                       {bestOption && <span className="text-[10px] text-slate-500">추천: {bestOption.supplierName}</span>}
                       {item.selectedOptionId && (
-                        <span className="text-[11px] text-purple-400 flex items-center gap-1">
+                        <span className="text-[11px] text-purple-600 flex items-center gap-1">
                           <CheckCircle2 className="h-3 w-3" />확정
                         </span>
                       )}
@@ -572,7 +572,7 @@ export default function PurchasesPage() {
                 {/* A. AI 선택안 3개 */}
                 <div className="px-4 py-3 border-b border-bd/50">
                   <div className="flex items-center gap-1.5 mb-2">
-                    <Sparkles className="h-3 w-3 text-blue-400" />
+                    <Sparkles className="h-3 w-3 text-blue-600" />
                     <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">AI 선택안</span>
                     <span className={`text-[10px] ml-auto ${ai.className}`}>{ai.label}</span>
                   </div>
@@ -582,19 +582,19 @@ export default function PurchasesPage() {
                       const isPrimary = opt.recommendationLevel === "primary";
                       return (
                         <div key={opt.id} className={`rounded-lg border p-2.5 ${
-                          isSelected ? "border-blue-600/40 bg-blue-600/5"
-                          : isPrimary ? "border-emerald-600/30 bg-emerald-600/5"
+                          isSelected ? "border-blue-300 bg-blue-50"
+                          : isPrimary ? "border-emerald-200 bg-emerald-50"
                           : "border-bd/50 bg-el/30"
                         }`}>
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-1.5">
                               <span className={`text-[10px] font-bold px-1 py-0.5 rounded ${
-                                isPrimary ? "bg-emerald-600/20 text-emerald-400" : "bg-el text-slate-400"
+                                isPrimary ? "bg-emerald-100 text-emerald-600" : "bg-el text-slate-500"
                               }`}>
                                 {opt.recommendationLevel === "primary" ? "추천" : opt.recommendationLevel === "alternate" ? "대체" : "보수"}
                               </span>
                               <span className="text-xs font-medium text-slate-700">{opt.supplierName}</span>
-                              {isSelected && <CheckCircle2 className="h-3 w-3 text-blue-400" />}
+                              {isSelected && <CheckCircle2 className="h-3 w-3 text-blue-600" />}
                             </div>
                             <span className="text-xs font-semibold text-slate-900">{formatPrice(opt.price)}</span>
                           </div>
@@ -615,11 +615,11 @@ export default function PurchasesPage() {
                 <div className="px-4 py-3 border-b border-bd/50">
                   <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">가격 · 납기 비교</div>
                   <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">가격 범위</span><span className="text-slate-700 font-medium">{formatPrice(minPrice)} ~ {formatPrice(maxPrice)}</span></div>
-                    {spread > 0 && <div className="flex justify-between text-xs"><span className="text-slate-400">가격 차이</span><span className={spread > 20 ? "text-amber-400 font-medium" : "text-slate-600"}>{spread}%</span></div>}
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">회신 현황</span><span className={selectedItem.supplierReplies === selectedItem.totalSuppliers ? "text-emerald-400 font-medium" : "text-amber-400"}>{selectedItem.supplierReplies}/{selectedItem.totalSuppliers} 완료</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">예산</span><span className="text-slate-700">{formatPrice(selectedItem.totalBudget)}</span></div>
-                    {bestOption && <div className="flex justify-between text-xs"><span className="text-slate-400">추천 공급사</span><span className="text-emerald-400 font-medium">{bestOption.supplierName}</span></div>}
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">가격 범위</span><span className="text-slate-700 font-medium">{formatPrice(minPrice)} ~ {formatPrice(maxPrice)}</span></div>
+                    {spread > 0 && <div className="flex justify-between text-xs"><span className="text-slate-500">가격 차이</span><span className={spread > 20 ? "text-amber-600 font-medium" : "text-slate-600"}>{spread}%</span></div>}
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">회신 현황</span><span className={selectedItem.supplierReplies === selectedItem.totalSuppliers ? "text-emerald-600 font-medium" : "text-amber-600"}>{selectedItem.supplierReplies}/{selectedItem.totalSuppliers} 완료</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">예산</span><span className="text-slate-700">{formatPrice(selectedItem.totalBudget)}</span></div>
+                    {bestOption && <div className="flex justify-between text-xs"><span className="text-slate-500">추천 공급사</span><span className="text-emerald-600 font-medium">{bestOption.supplierName}</span></div>}
                   </div>
                 </div>
 
@@ -630,27 +630,27 @@ export default function PurchasesPage() {
                   {/* Blocker box */}
                   <div className={`rounded-md px-3 py-2 mb-2 ${
                     selectedItem.blockerType === "none"
-                      ? "bg-emerald-600/5 border border-emerald-600/20"
-                      : "bg-amber-600/5 border border-amber-600/20"
+                      ? "bg-emerald-50 border border-emerald-200"
+                      : "bg-amber-50 border border-amber-200"
                   }`}>
                     <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5" style={{ color: selectedItem.blockerType === "none" ? "#34D399" : "#FBBF24" }}>
                       {selectedItem.blockerType === "none" ? "차단 없음" : "현재 막힘"}
                     </p>
-                    <p className={`text-[11px] leading-snug ${selectedItem.blockerType === "none" ? "text-emerald-400/80" : "text-amber-400/80"}`}>
+                    <p className={`text-[11px] leading-snug ${selectedItem.blockerType === "none" ? "text-emerald-600" : "text-amber-600"}`}>
                       {selectedItem.blockerReason}
                     </p>
                   </div>
 
                   {/* Next stage box */}
-                  <div className="rounded-md px-3 py-2 mb-3 bg-blue-600/5 border border-blue-600/20">
-                    <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5 text-blue-400">다음 단계</p>
-                    <p className="text-[11px] text-blue-400/80 leading-snug">{selectedItem.nextStage}</p>
+                  <div className="rounded-md px-3 py-2 mb-3 bg-blue-50 border border-blue-200">
+                    <p className="text-[9px] font-bold uppercase tracking-wider mb-0.5 text-blue-600">다음 단계</p>
+                    <p className="text-[11px] text-blue-600 leading-snug">{selectedItem.nextStage}</p>
                   </div>
 
                   <div className="space-y-1.5">
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">발주 가능</span><span className={selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "text-emerald-400" : "text-amber-400"}>{selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "가능" : "조건 해소 필요"}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className={selectedItem.externalApprovalStatus === "approved" ? "text-emerald-400" : selectedItem.externalApprovalStatus === "pending" ? "text-amber-400" : "text-slate-500"}>{ext.label}</span></div>
-                    <div className="flex justify-between text-xs"><span className="text-slate-400">선택안</span><span className={selectedItem.selectedOptionId ? "text-purple-400" : "text-slate-500"}>{selectedItem.selectedOptionId ? "확정됨" : "미확정"}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">발주 가능</span><span className={selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "text-emerald-600" : "text-amber-600"}>{selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "가능" : "조건 해소 필요"}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">외부 승인</span><span className={selectedItem.externalApprovalStatus === "approved" ? "text-emerald-600" : selectedItem.externalApprovalStatus === "pending" ? "text-amber-600" : "text-slate-500"}>{ext.label}</span></div>
+                    <div className="flex justify-between text-xs"><span className="text-slate-500">선택안</span><span className={selectedItem.selectedOptionId ? "text-purple-600" : "text-slate-500"}>{selectedItem.selectedOptionId ? "확정됨" : "미확정"}</span></div>
                   </div>
                 </div>
 
@@ -670,7 +670,7 @@ export default function PurchasesPage() {
                 </Button>
                 <div className="flex gap-1.5">
                   <Link href={`/quotes/${selectedItem.id}`} className="flex-1">
-                    <Button size="sm" variant="outline" className="w-full h-7 text-[11px] text-slate-400 border-bd">전체 상세 열기</Button>
+                    <Button size="sm" variant="outline" className="w-full h-7 text-[11px] text-slate-500 border-bd">전체 상세 열기</Button>
                   </Link>
                   <Button size="sm" variant="ghost" className="flex-1 h-7 text-[11px] text-slate-500" onClick={closeRail}>닫기</Button>
                 </div>
@@ -739,13 +739,13 @@ export default function PurchasesPage() {
                       onClick={() => { if (i >= initialPhase) setWorkWindowPhase(i); }}
                       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-medium transition-colors ${
                         i === phase
-                          ? "bg-blue-600/15 text-blue-400 border border-blue-600/30"
+                          ? "bg-blue-100 text-blue-600 border border-blue-200"
                           : i < phase
-                          ? "text-emerald-400/70 border border-emerald-600/20 bg-emerald-600/5"
+                          ? "text-emerald-600 border border-emerald-200 bg-emerald-50"
                           : "text-slate-500 border border-transparent"
                       }`}
                     >
-                      {i < phase ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : ph.icon}
+                      {i < phase ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : ph.icon}
                       <span className="hidden sm:inline">{ph.label}</span>
                       <span className="sm:hidden">{i + 1}</span>
                     </button>
@@ -761,13 +761,13 @@ export default function PurchasesPage() {
                 <div className="flex items-center gap-2 mb-1">
                   <span className={`text-[10px] font-semibold px-2 py-0.5 rounded border ${cs.bg} ${cs.text} ${cs.border}`}>{cs.label}</span>
                   {selectedItem.blockerType !== "none" && (
-                    <span className="text-[10px] px-2 py-0.5 rounded border border-amber-600/20 bg-amber-600/5 text-amber-400">
+                    <span className="text-[10px] px-2 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-600">
                       {selectedItem.blockerReason}
                     </span>
                   )}
                 </div>
                 <h4 className="text-sm font-semibold text-slate-900">{selectedItem.requestTitle}</h4>
-                <p className="text-[11px] text-slate-400 mt-0.5">{selectedItem.itemSummary} · 예산 {formatPrice(selectedItem.totalBudget)}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">{selectedItem.itemSummary} · 예산 {formatPrice(selectedItem.totalBudget)}</p>
               </div>
 
               {/* ════ Phase 0: 선택안 확정 ════ */}
@@ -775,7 +775,7 @@ export default function PurchasesPage() {
                 <div className="space-y-3">
                   <div className="rounded-lg border border-bd bg-pn p-4">
                     <div className="flex items-center gap-1.5 mb-3">
-                      <Sparkles className="h-3.5 w-3.5 text-blue-400" />
+                      <Sparkles className="h-3.5 w-3.5 text-blue-600" />
                       <span className="text-xs font-semibold text-slate-700">AI 선택안 3개 — 하나를 확정하세요</span>
                     </div>
                     <div className="space-y-2">
@@ -784,21 +784,21 @@ export default function PurchasesPage() {
                         const isConfirmed = selectedItem.selectedOptionId === opt.id;
                         return (
                           <div key={opt.id} className={`rounded-lg border p-3 cursor-pointer transition-colors hover:bg-el/50 ${
-                            isConfirmed ? "border-blue-600/40 bg-blue-600/5"
-                            : isPrimary ? "border-emerald-600/30 bg-emerald-600/5"
+                            isConfirmed ? "border-blue-300 bg-blue-50"
+                            : isPrimary ? "border-emerald-200 bg-emerald-50"
                             : "border-bd/50"
                           }`}>
                             <div className="flex items-center justify-between mb-1.5">
                               <div className="flex items-center gap-2">
                                 <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                  isPrimary ? "bg-emerald-600/20 text-emerald-400" : "bg-el text-slate-400"
+                                  isPrimary ? "bg-emerald-100 text-emerald-600" : "bg-el text-slate-500"
                                 }`}>{opt.label}</span>
                                 <span className="text-sm font-medium text-slate-700">{opt.supplierName}</span>
-                                {isConfirmed && <Badge variant="outline" className="text-[10px] text-blue-400 border-blue-600/30">확정</Badge>}
+                                {isConfirmed && <Badge variant="outline" className="text-[10px] text-blue-600 border-blue-200">확정</Badge>}
                               </div>
                               <span className="text-sm font-bold text-slate-900">{formatPrice(opt.price)}</span>
                             </div>
-                            <div className="flex gap-3 text-xs text-slate-400 mb-1">
+                            <div className="flex gap-3 text-xs text-slate-500 mb-1">
                               <span>납기 {opt.leadDays}일</span>
                               {opt.moq && <span>MOQ {opt.moq}</span>}
                             </div>
@@ -814,7 +814,7 @@ export default function PurchasesPage() {
                   </div>
                   {bestOption && (
                     <p className="text-[11px] text-slate-500 px-1">
-                      AI 추천: <span className="text-emerald-400 font-medium">{bestOption.supplierName}</span> ({formatPrice(bestOption.price)}, 납기 {bestOption.leadDays}일)
+                      AI 추천: <span className="text-emerald-600 font-medium">{bestOption.supplierName}</span> ({formatPrice(bestOption.price)}, 납기 {bestOption.leadDays}일)
                     </p>
                   )}
                 </div>
@@ -825,23 +825,23 @@ export default function PurchasesPage() {
                 <div className="space-y-3">
                   {/* 확정된 선택안 요약 */}
                   {bestOption && (
-                    <div className="rounded-lg border border-emerald-600/30 bg-emerald-600/5 p-3">
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
                       <div className="flex items-center gap-2 mb-1">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                        <span className="text-xs font-semibold text-emerald-400">확정 선택안</span>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                        <span className="text-xs font-semibold text-emerald-600">확정 선택안</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-slate-700">{bestOption.supplierName}</span>
                         <span className="text-sm font-bold text-slate-900">{formatPrice(bestOption.price)}</span>
                       </div>
-                      <p className="text-[11px] text-slate-400 mt-0.5">납기 {bestOption.leadDays}일 · {bestOption.rationale.join(" · ")}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">납기 {bestOption.leadDays}일 · {bestOption.rationale.join(" · ")}</p>
                     </div>
                   )}
 
                   {/* PO 체크리스트 */}
                   <div className="rounded-lg border border-bd bg-pn p-4">
                     <div className="flex items-center gap-1.5 mb-3">
-                      <FileCheck2 className="h-3.5 w-3.5 text-blue-400" />
+                      <FileCheck2 className="h-3.5 w-3.5 text-blue-600" />
                       <span className="text-xs font-semibold text-slate-700">PO 생성 체크리스트</span>
                     </div>
                     <div className="space-y-2">
@@ -854,13 +854,13 @@ export default function PurchasesPage() {
                       ].map((check) => (
                         <div key={check.label} className="flex items-center gap-2.5">
                           {check.done
-                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400 flex-shrink-0" />
+                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
                             : <div className="h-3.5 w-3.5 rounded-full border border-bd flex-shrink-0" />
                           }
                           <div className="flex-1 min-w-0">
                             <span className={`text-xs ${check.done ? "text-slate-600" : "text-slate-500"}`}>{check.label}</span>
                           </div>
-                          <span className={`text-[10px] flex-shrink-0 ${check.done ? "text-emerald-400/70" : "text-slate-500"}`}>{check.detail}</span>
+                          <span className={`text-[10px] flex-shrink-0 ${check.done ? "text-emerald-600" : "text-slate-500"}`}>{check.detail}</span>
                         </div>
                       ))}
                     </div>
@@ -868,12 +868,12 @@ export default function PurchasesPage() {
 
                   {/* Blocker 경고 (해당 시) */}
                   {selectedItem.blockerType !== "none" && (
-                    <div className="rounded-lg border border-amber-600/20 bg-amber-600/5 p-3">
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-                        <span className="text-xs font-semibold text-amber-400">차단 사항</span>
+                        <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                        <span className="text-xs font-semibold text-amber-600">차단 사항</span>
                       </div>
-                      <p className="text-[11px] text-amber-400/80">{selectedItem.blockerReason}</p>
+                      <p className="text-[11px] text-amber-600">{selectedItem.blockerReason}</p>
                       <p className="text-[10px] text-slate-500 mt-1">해소 후 다음 단계로 진행하세요.</p>
                     </div>
                   )}
@@ -885,34 +885,34 @@ export default function PurchasesPage() {
                 <div className="space-y-3">
                   <div className="rounded-lg border border-bd bg-pn p-4">
                     <div className="flex items-center gap-1.5 mb-3">
-                      <Truck className="h-3.5 w-3.5 text-blue-400" />
+                      <Truck className="h-3.5 w-3.5 text-blue-600" />
                       <span className="text-xs font-semibold text-slate-700">공급사 발송 정보</span>
                     </div>
                     <div className="space-y-2">
                       {bestOption && (
                         <div className="flex justify-between text-xs">
-                          <span className="text-slate-400">발주 대상</span>
+                          <span className="text-slate-500">발주 대상</span>
                           <span className="text-slate-700 font-medium">{bestOption.supplierName}</span>
                         </div>
                       )}
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-400">품목</span>
+                        <span className="text-slate-500">품목</span>
                         <span className="text-slate-700">{selectedItem.itemSummary}</span>
                       </div>
                       {bestOption && (
                         <>
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-400">단가</span>
+                            <span className="text-slate-500">단가</span>
                             <span className="text-slate-700 font-medium">{formatPrice(bestOption.price)}</span>
                           </div>
                           <div className="flex justify-between text-xs">
-                            <span className="text-slate-400">예상 납기</span>
+                            <span className="text-slate-500">예상 납기</span>
                             <span className="text-slate-700">{bestOption.leadDays}일</span>
                           </div>
                         </>
                       )}
                       <div className="flex justify-between text-xs">
-                        <span className="text-slate-400">예산</span>
+                        <span className="text-slate-500">예산</span>
                         <span className="text-slate-700">{formatPrice(selectedItem.totalBudget)}</span>
                       </div>
                     </div>
@@ -930,7 +930,7 @@ export default function PurchasesPage() {
                       ].map((check) => (
                         <div key={check.label} className="flex items-center gap-2 text-xs">
                           {check.done
-                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                            ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
                             : <div className="h-3.5 w-3.5 rounded-full border border-bd" />
                           }
                           <span className={check.done ? "text-slate-600" : "text-slate-500"}>{check.label}</span>
@@ -944,15 +944,15 @@ export default function PurchasesPage() {
               {/* ════ Phase 3: 다음 Handoff ════ */}
               {phase === 3 && (
                 <div className="space-y-3">
-                  <div className="rounded-lg border border-blue-600/20 bg-blue-600/5 p-4">
+                  <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
                     <div className="flex items-center gap-1.5 mb-3">
-                      <ArrowRight className="h-3.5 w-3.5 text-blue-400" />
-                      <span className="text-xs font-semibold text-blue-400">발주 완료 후 다음 흐름</span>
+                      <ArrowRight className="h-3.5 w-3.5 text-blue-600" />
+                      <span className="text-xs font-semibold text-blue-600">발주 완료 후 다음 흐름</span>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-blue-600/15 border border-blue-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-blue-400">1</span>
+                        <div className="w-5 h-5 rounded-full bg-blue-100 border border-blue-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-blue-600">1</span>
                         </div>
                         <div>
                           <p className="text-xs font-medium text-slate-700">발주 큐로 자동 이관</p>
@@ -960,8 +960,8 @@ export default function PurchasesPage() {
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-slate-600/15 border border-slate-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-slate-400">2</span>
+                        <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-slate-500">2</span>
                         </div>
                         <div>
                           <p className="text-xs font-medium text-slate-600">입고 확인 대기</p>
@@ -969,8 +969,8 @@ export default function PurchasesPage() {
                         </div>
                       </div>
                       <div className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-slate-600/15 border border-slate-600/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <span className="text-[10px] font-bold text-slate-400">3</span>
+                        <div className="w-5 h-5 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <span className="text-[10px] font-bold text-slate-500">3</span>
                         </div>
                         <div>
                           <p className="text-xs font-medium text-slate-600">운영 기록 완료</p>
@@ -984,7 +984,7 @@ export default function PurchasesPage() {
                   <div className="rounded-lg border border-bd bg-pn p-3">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 block">이 건의 다음 단계</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-blue-400">{selectedItem.nextStage}</span>
+                      <span className="text-xs font-medium text-blue-600">{selectedItem.nextStage}</span>
                     </div>
                   </div>
                 </div>
