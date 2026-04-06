@@ -13,9 +13,9 @@ import {
 } from "recharts";
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
-  ChevronRight, BarChart2, Gauge,
+  ChevronRight, BarChart2, Gauge, AlertTriangle, RotateCcw,
   CreditCard, Users, ExternalLink, RefreshCw, Clock, Wallet,
-  ArrowRight,
+  ArrowRight, Layers,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
 
@@ -268,14 +268,16 @@ export default function AnalyticsPage() {
                 {readinessItems.map((item) => (
                   <div
                     key={item.label}
-                    className="rounded-lg border border-bd bg-pn px-4 py-3"
+                    className="rounded-lg border border-bd bg-pn px-4 py-3 hover:shadow-md transition-shadow"
                   >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${item.ready ? "bg-emerald-400" : "bg-amber-400"}`} />
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${item.ready ? "bg-emerald-400" : "bg-amber-400"}`} style={{ boxShadow: item.ready ? "0 0 8px rgba(52,211,153,0.5)" : "0 0 8px rgba(251,191,36,0.6)" }} />
                       <p className="text-xs font-semibold text-slate-400">{item.label}</p>
                     </div>
-                    <p className="text-lg font-bold text-slate-700">{item.value}</p>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{item.tip}</p>
+                    <p className="text-2xl font-extrabold tracking-tight text-slate-700">{item.value}</p>
+                    <div className="mt-2 pt-2 border-t border-slate-100">
+                      <p className="text-xs text-slate-500 leading-relaxed">{item.tip}</p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -334,24 +336,28 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
 
               {/* 예산 소진율 */}
-              <div className="rounded-md border border-bd bg-pn p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Gauge className="h-3.5 w-3.5 text-slate-400" />
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 소진율</p>
-                  <div className={`w-1.5 h-1.5 rounded-full ${budgetStatus === "danger" ? "bg-red-400" : budgetStatus === "warning" ? "bg-amber-400" : "bg-emerald-400"}`} />
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    <Gauge className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 소진율</p>
+                    <div className={`w-2 h-2 rounded-full ${budgetStatus === "danger" ? "bg-red-400" : budgetStatus === "warning" ? "bg-amber-400" : "bg-emerald-400"}`} style={{ boxShadow: budgetStatus === "danger" ? "0 0 8px rgba(248,113,113,0.6)" : budgetStatus === "warning" ? "0 0 8px rgba(251,191,36,0.6)" : "0 0 8px rgba(52,211,153,0.5)" }} />
+                  </div>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-900">
+                <div className="text-3xl font-extrabold tracking-tight text-slate-900">
                   {budget.total > 0 ? `${budget.usageRate}%` : "미등록"}
                 </div>
                 {budget.total > 0 && (
-                  <div className="mt-2">
+                  <div className="mt-3 pt-3 border-t border-slate-100">
                     <div className="h-1 bg-el rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all bg-slate-400"
                         style={{ width: `${Math.min(100, budget.usageRate)}%` }}
                       />
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-slate-500 mt-1.5">
                       {budgetStatus === "danger" ? "즉시 검토 필요" : budgetStatus === "warning" ? "주의 구간" : "정상 운영"}
                     </p>
                   </div>
@@ -360,81 +366,96 @@ export default function AnalyticsPage() {
 
               {/* 승인 대기 금액 */}
               <Link href="/dashboard/purchases" className="block group">
-                <div className="rounded-md border border-bd bg-pn p-4 h-full group-hover:border-bs transition-colors">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <div className="rounded-md border border-bd bg-pn p-4 h-full hover:shadow-md transition-shadow">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                      <Clock className="h-4 w-4 text-slate-500" />
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-1 min-w-0">
                       <p className="text-xs font-medium uppercase tracking-wider text-slate-500">승인 대기 금액</p>
                       {pendingApprovalIsEstimate && (
                         <span className="text-xs px-1 py-0.5 rounded bg-amber-600/10 text-amber-400/70 border border-amber-600/20 font-medium">추정</span>
                       )}
                     </div>
-                    <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors" />
+                    <ExternalLink className="h-3 w-3 text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" />
                   </div>
-                  <div className="text-2xl font-extrabold text-slate-900">
+                  <div className="text-3xl font-extrabold tracking-tight text-slate-900">
                     {pendingApprovalAmount > 0 ? `₩${pendingApprovalAmount.toLocaleString("ko-KR")}` : "₩0"}
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">{pendingApprovalIsEstimate ? "실제 승인 내역 연동 전 추정치입니다" : "클릭하여 구매내역 확인"}</p>
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <p className="text-xs text-slate-500">{pendingApprovalIsEstimate ? "실제 승인 내역 연동 전 추정치입니다" : "클릭하여 구매내역 확인"}</p>
+                  </div>
                 </div>
               </Link>
 
               {/* 이번 달 지출 총액 — PRIMARY */}
-              <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <CreditCard className="h-3.5 w-3.5 text-blue-400" />
+              <div className="rounded-md border border-blue-200 bg-blue-50/30 p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="h-4 w-4 text-blue-500" />
+                  </div>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">이번 달 지출</p>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-900">
+                <div className="text-3xl font-extrabold tracking-tight text-slate-900">
                   {currentMonth ? `₩${currentMonth.amount.toLocaleString("ko-KR")}` : <span className="text-slate-500">미수집</span>}
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  {currentMonth ? `${currentMonth.month} 기준` : "아직 수집된 지출 데이터 없음"}
-                </p>
+                <div className="mt-3 pt-3 border-t border-blue-100">
+                  <p className="text-xs text-slate-500">
+                    {currentMonth ? `${currentMonth.month} 기준` : "아직 수집된 지출 데이터 없음"}
+                  </p>
+                </div>
               </div>
 
               {/* 전월 대비 변동 */}
-              <div className="rounded-md border border-bd bg-pn p-4">
-                <div className="flex items-center gap-1.5 mb-2">
-                  <TrendingUp className="h-3.5 w-3.5 text-slate-400" />
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">전월 대비</p>
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    {monthChange !== null && monthChange < 0
+                      ? <TrendingDown className="h-4 w-4 text-slate-500" />
+                      : <TrendingUp className="h-4 w-4 text-slate-500" />}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500">전월 대비</p>
+                    {monthChange !== null && monthChange > 20 && <div className="w-2 h-2 rounded-full bg-amber-400" style={{ boxShadow: "0 0 8px rgba(251,191,36,0.6)" }} />}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  {monthChange !== null && monthChange > 0 ? (
-                    <TrendingUp className="h-4 w-4 text-slate-400" />
-                  ) : monthChange !== null && monthChange < 0 ? (
-                    <TrendingDown className="h-4 w-4 text-slate-400" />
-                  ) : null}
-                  <span className="text-2xl font-extrabold text-slate-900">
-                    {monthChange !== null ? `${monthChange > 0 ? "+" : ""}${monthChange}%` : "--"}
-                  </span>
-                  {monthChange !== null && monthChange > 20 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                <div className="text-3xl font-extrabold tracking-tight text-slate-900">
+                  {monthChange !== null ? `${monthChange > 0 ? "+" : ""}${monthChange}%` : "--"}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">
-                  {monthChange !== null ? (monthChange > 20 ? "급증 주의" : monthChange < -10 ? "절감 추세" : "변동폭 정상") : "비교 가능한 월별 데이터 부족"}
-                </p>
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-xs text-slate-500">
+                    {monthChange !== null ? (monthChange > 20 ? "급증 주의" : monthChange < -10 ? "절감 추세" : "변동폭 정상") : "비교 가능한 월별 데이터 부족"}
+                  </p>
+                </div>
               </div>
 
               {/* 잔여 예산 */}
-              <div className="rounded-md border border-bd bg-pn p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Wallet className="h-3.5 w-3.5 text-slate-400" />
-                  <p className="text-xs font-medium uppercase tracking-wider text-slate-500">잔여 예산</p>
-                  {budget.total > 0 && budget.remaining <= 0 && <div className="w-1.5 h-1.5 rounded-full bg-red-400" />}
+              <div className="rounded-md border border-bd bg-pn p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                    <Wallet className="h-4 w-4 text-slate-500" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wider text-slate-500">잔여 예산</p>
+                    {budget.total > 0 && budget.remaining <= 0 && <div className="w-2 h-2 rounded-full bg-red-400" style={{ boxShadow: "0 0 8px rgba(248,113,113,0.6)" }} />}
+                  </div>
                 </div>
-                <div className="text-2xl font-extrabold text-slate-900">
+                <div className="text-3xl font-extrabold tracking-tight text-slate-900">
                   {budget.total > 0 ? `₩${budget.remaining.toLocaleString("ko-KR")}` : "미등록"}
                 </div>
-                <p className="text-xs text-slate-500 mt-1.5">
-                  {budget.total > 0
-                    ? (() => {
-                        const monthsLeft = 12 - (new Date().getMonth() + 1);
-                        if (monthsLeft > 0 && budget.remaining > 0) {
-                          return `월 ₩${Math.round(budget.remaining / monthsLeft).toLocaleString("ko-KR")} 집행 가능`;
-                        }
-                        return budget.remaining <= 0 ? "예산 소진" : "연말 마감";
-                      })()
-                    : "예산 등록 필요"}
-                </p>
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <p className="text-xs text-slate-500">
+                    {budget.total > 0
+                      ? (() => {
+                          const monthsLeft = 12 - (new Date().getMonth() + 1);
+                          if (monthsLeft > 0 && budget.remaining > 0) {
+                            return `월 ₩${Math.round(budget.remaining / monthsLeft).toLocaleString("ko-KR")} 집행 가능`;
+                          }
+                          return budget.remaining <= 0 ? "예산 소진" : "연말 마감";
+                        })()
+                      : "예산 등록 필요"}
+                  </p>
+                </div>
               </div>
             </div>
           )}
@@ -460,11 +481,14 @@ export default function AnalyticsPage() {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
 
               {/* Panel 1: 카테고리별 초과 위험 */}
-              <div className="rounded-lg border border-bd bg-pn p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                      <Layers className="h-4 w-4 text-slate-500" />
+                    </div>
                     <h3 className="text-sm font-bold text-slate-700">카테고리별 초과 위험</h3>
-                    {categoryItems.some(cat => { const u = budget.total > 0 ? Math.round((cat.totalAmount / (budget.total * cat.pct / 100)) * 100) : 0; return u >= 90; }) && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                    {categoryItems.some(cat => { const u = budget.total > 0 ? Math.round((cat.totalAmount / (budget.total * cat.pct / 100)) * 100) : 0; return u >= 90; }) && <div className="w-2 h-2 rounded-full bg-amber-400" style={{ boxShadow: "0 0 8px rgba(251,191,36,0.6)" }} />}
                   </div>
                   {categoryItems.length > 0 && (
                     <Badge className="text-xs px-1.5 py-0.5 border-0 bg-el text-slate-400 font-medium">
@@ -530,11 +554,14 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 2: 공급사 집중도 */}
-              <div className="rounded-lg border border-bd bg-pn p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                      <Users className="h-4 w-4 text-slate-500" />
+                    </div>
                     <h3 className="text-sm font-bold text-slate-700">공급사 집중도</h3>
-                    {vendorConcentration > 50 && <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
+                    {vendorConcentration > 50 && <div className="w-2 h-2 rounded-full bg-amber-400" style={{ boxShadow: "0 0 8px rgba(251,191,36,0.6)" }} />}
                   </div>
                   {vendorConcentration > 50 && (
                     <span className="text-xs text-slate-500 font-medium">주의</span>
@@ -599,9 +626,12 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 3: 이상 지출 탐지 */}
-              <div className="rounded-lg border border-bd bg-pn p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="h-4 w-4 text-slate-500" />
+                    </div>
                     <h3 className="text-sm font-bold text-slate-700">이상 지출 탐지</h3>
                   </div>
                 </div>
@@ -675,9 +705,12 @@ export default function AnalyticsPage() {
               </div>
 
               {/* Panel 4: 재주문 예상 항목 */}
-              <div className="rounded-lg border border-bd bg-pn p-5">
+              <div className="rounded-lg border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center flex-shrink-0">
+                      <RotateCcw className="h-4 w-4 text-slate-500" />
+                    </div>
                     <h3 className="text-sm font-bold text-slate-700">재주문 예상 항목</h3>
                   </div>
                 </div>
