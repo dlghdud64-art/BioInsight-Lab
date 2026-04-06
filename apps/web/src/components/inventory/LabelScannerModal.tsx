@@ -8,12 +8,14 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Camera, ScanLine, Type, CheckCircle2, AlertTriangle,
   Loader2, ChevronRight, RotateCcw, Package, FlaskConical,
-  X, Sparkles, Upload,
+  X, Sparkles, Upload, FileText, Edit,
 } from "lucide-react";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
 
@@ -31,14 +33,28 @@ interface ScanApiResponse {
   };
 }
 
+/** 편집 가능한 추출 데이터 폼 */
+export interface SmartReceiveFormData {
+  productName: string;
+  catalogNumber: string;
+  lotNumber: string;
+  expirationDate: string;
+  quantity: string;
+  brand: string;
+  casNumber: string;
+  unit: string;
+}
+
 interface LabelScannerModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** 스캔 결과를 입고 폼에 전달할 콜백 */
+  /** 스캔 결과를 입고 폼에 전달할 콜백 (기존 호환) */
   onScanComplete?: (result: ScanApiResponse) => void;
+  /** 스마트 입고: 모달 내에서 직접 입고 완료 콜백 */
+  onDirectReceive?: (data: SmartReceiveFormData, scanResult: ScanApiResponse | null) => void;
 }
 
-type ScanStep = "choose" | "scanning" | "text" | "result";
+type ScanStep = "upload" | "scanning" | "review";
 
 /* ── 모바일 판별 ── */
 function useIsMobile() {
@@ -68,35 +84,61 @@ const scanAnimationStyle = `
 }
 `;
 
-/* ── 메인 컴포넌트 ── */
-export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelScannerModalProps) {
+/* ── 빈 폼 데이터 ── */
+function emptyFormData(): SmartReceiveFormData {
+  return { productName: "", catalogNumber: "", lotNumber: "", expirationDate: "", quantity: "1", brand: "", casNumber: "", unit: "개" };
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* 메인 컴포넌트                                                  */
+/* ══════════════════════════════════════════════════════════════ */
+export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirectReceive }: LabelScannerModalProps) {
   const isMobile = useIsMobile();
-  const [step, setStep] = useState<ScanStep>("choose");
-  const [manualText, setManualText] = useState("");
+  const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<ScanApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [formData, setFormData] = useState<SmartReceiveFormData>(emptyFormData());
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [manualMode, setManualMode] = useState(false);
+  const [manualText, setManualText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* ── 리셋 ── */
   const resetState = useCallback(() => {
-    setStep("choose");
-    setManualText("");
+    setStep("upload");
     setScanResult(null);
     setError(null);
     setPreviewImage(null);
+    setFormData(emptyFormData());
+    setIsDragOver(false);
+    setManualMode(false);
+    setManualText("");
   }, []);
 
   useEffect(() => {
     if (!open) resetState();
   }, [open, resetState]);
 
-  /* ── 파일 선택/촬영 후 이미지 → Gemini 전송 ── */
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  /* ── 폼 필드 변경 ── */
+  const updateField = (key: keyof SmartReceiveFormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [key]: value }));
+  };
 
-    // 이미지를 Base64로 변환
+  /* ── ScanApiResponse → 편집 폼 데이터로 매핑 ── */
+  const mapScanToForm = (data: ScanApiResponse): SmartReceiveFormData => ({
+    productName: data.parsed.productName || data.matchedProduct?.name || "",
+    catalogNumber: data.parsed.catalogNo || data.matchedProduct?.catalogNumber || "",
+    lotNumber: data.parsed.lotNo || "",
+    expirationDate: data.parsed.expirationDate || "",
+    quantity: data.parsed.quantity || "1",
+    brand: data.parsed.brand || data.matchedProduct?.brand || "",
+    casNumber: data.parsed.casNumber || "",
+    unit: data.matchedInventory?.unit || "개",
+  });
+
+  /* ── 파일 → Gemini API 전송 ── */
+  const processFile = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async () => {
       const base64 = reader.result as string;
@@ -118,25 +160,42 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
 
         const data: ScanApiResponse = await res.json();
         setScanResult(data);
-        setStep("result");
+        setFormData(mapScanToForm(data));
+        setStep("review");
       } catch (err) {
         console.error("[LabelScanner] Gemini parse error:", err);
         setError(err instanceof Error ? err.message : "라벨 분석 중 오류가 발생했습니다");
-        setStep("choose");
+        setStep("upload");
       }
     };
     reader.readAsDataURL(file);
+  };
 
-    // input 초기화 (같은 파일 재선택 가능하게)
+  /* ── 파일 선택/촬영 ── */
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processFile(file);
     e.target.value = "";
   };
 
-  /* ── 텍스트 수동 입력 API 호출 ── */
-  const submitForParsing = async (text: string) => {
-    if (!text.trim()) {
-      setError("라벨 텍스트를 입력해주세요.");
-      return;
+  /* ── 드래그 & 드롭 ── */
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragOver(false); };
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith("image/")) {
+      await processFile(file);
+    } else {
+      setError("이미지 파일만 업로드할 수 있습니다.");
     }
+  };
+
+  /* ── 텍스트 수동 입력 → API ── */
+  const submitManualText = async () => {
+    if (!manualText.trim()) { setError("라벨 텍스트를 입력해주세요."); return; }
     setStep("scanning");
     setError(null);
     setPreviewImage(null);
@@ -145,38 +204,50 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
       const res = await fetch("/api/inventory/scan-label", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim() }),
+        body: JSON.stringify({ text: manualText.trim() }),
       });
-
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(errData.error || "파싱 실패");
       }
-
       const data: ScanApiResponse = await res.json();
       setScanResult(data);
-      setStep("result");
+      setFormData(mapScanToForm(data));
+      setStep("review");
     } catch (err) {
       console.error("[LabelScanner] Parse error:", err);
       setError(err instanceof Error ? err.message : "라벨 파싱 중 오류가 발생했습니다");
-      setStep("text");
+      setManualMode(true);
+      setStep("upload");
     }
   };
 
-  /* ── 결과 적용 ── */
-  const handleApplyResult = () => {
+  /* ── 입고 완료 (직접 처리) ── */
+  const handleDirectReceive = () => {
+    if (onDirectReceive) {
+      onDirectReceive(formData, scanResult);
+    } else if (onScanComplete && scanResult) {
+      onScanComplete(scanResult);
+    }
+    onOpenChange(false);
+  };
+
+  /* ── 기존 호환: 입고 폼에 적용 ── */
+  const handleApplyToForm = () => {
     if (scanResult && onScanComplete) {
       onScanComplete(scanResult);
     }
     onOpenChange(false);
   };
 
-  /* ── 렌더링 내용 ── */
+  /* ═══════════════════════════════════════════════════════════ */
+  /* 렌더링                                                      */
+  /* ═══════════════════════════════════════════════════════════ */
   const content = (
     <div className="flex flex-col h-full">
       <style>{scanAnimationStyle}</style>
 
-      {/* 히든 파일 인풋 (capture="environment"로 모바일 후면 카메라) */}
+      {/* 히든 파일 인풋 */}
       <input
         ref={fileInputRef}
         type="file"
@@ -186,31 +257,61 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
         className="hidden"
       />
 
-      {/* ── 선택 화면 ── */}
-      {step === "choose" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-6 p-6">
-          <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-            <ScanLine className="h-8 w-8 text-blue-600" />
+      {/* ── 탭 인디케이터 ── */}
+      <div className="flex border-b border-slate-200 px-4">
+        <button
+          className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            step === "upload" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400"
+          }`}
+          onClick={() => step !== "scanning" && setStep("upload")}
+        >
+          <Upload className="h-3.5 w-3.5" />
+          이미지 업로드
+        </button>
+        <button
+          className={`flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            step === "review" ? "border-blue-600 text-blue-600" : "border-transparent text-slate-400"
+          }`}
+          disabled={step !== "review"}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          추출된 데이터 확인
+        </button>
+      </div>
+
+      {/* ═══ Step 1: 업로드 ═══ */}
+      {step === "upload" && !manualMode && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-5 p-6">
+          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+            <ScanLine className="h-7 w-7 text-blue-600" />
           </div>
           <div className="text-center">
-            <h3 className="text-lg font-bold text-slate-900">AI 라벨 스캔</h3>
+            <h3 className="text-base font-bold text-slate-900">스마트 입고 (AI 스캔)</h3>
             <p className="text-sm text-slate-500 mt-1">
-              시약 라벨을 촬영하거나 이미지를 업로드하면<br />
-              AI가 자동으로 정보를 추출합니다
+              라벨이나 거래명세서를 촬영하면 자동으로 각고를 등록하세요.
             </p>
           </div>
 
-          {/* 이미지 업로드 영역 */}
+          {/* 드래그 & 드롭 + 클릭 업로드 영역 */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="w-full max-w-sm aspect-[4/3] rounded-xl border-2 border-dashed border-blue-300 bg-blue-50/50 hover:border-blue-400 hover:bg-blue-50 transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer"
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className={`w-full max-w-sm aspect-[4/3] rounded-xl border-2 border-dashed transition-all flex flex-col items-center justify-center gap-3 group cursor-pointer ${
+              isDragOver
+                ? "border-blue-500 bg-blue-100/50 scale-[1.02]"
+                : "border-slate-300 bg-slate-50 hover:border-blue-400 hover:bg-blue-50/50"
+            }`}
           >
-            <div className="w-14 h-14 rounded-xl bg-blue-100 group-hover:bg-blue-200 flex items-center justify-center transition-colors">
-              <Camera className="h-7 w-7 text-blue-600" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${
+              isDragOver ? "bg-blue-200" : "bg-slate-100 group-hover:bg-blue-100"
+            }`}>
+              <Upload className={`h-6 w-6 ${isDragOver ? "text-blue-600" : "text-slate-400 group-hover:text-blue-500"}`} />
             </div>
             <div className="text-center">
-              <p className="text-sm font-semibold text-blue-700">클릭하여 라벨 촬영 또는 업로드</p>
-              <p className="text-xs text-blue-500 mt-0.5">모바일: 카메라 자동 실행 / PC: 파일 선택</p>
+              <p className="text-sm font-medium text-slate-700">클릭하여 이미지 업로드 또는 촬영</p>
+              <p className="text-xs text-slate-400 mt-0.5">시약 병의 라벨이나 앱에서 선명하게 찍어주세요</p>
             </div>
           </button>
 
@@ -221,9 +322,8 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
             </div>
           )}
 
-          {/* 텍스트 직접 입력 옵션 */}
           <button
-            onClick={() => setStep("text")}
+            onClick={() => setManualMode(true)}
             className="flex items-center gap-2 text-xs text-slate-500 hover:text-slate-700 transition-colors"
           >
             <Type className="h-3.5 w-3.5" />
@@ -233,45 +333,16 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
         </div>
       )}
 
-      {/* ── 스캔 중 (레이저 애니메이션) ── */}
-      {step === "scanning" && (
-        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
-          {previewImage ? (
-            <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-slate-200">
-              <img src={previewImage} alt="스캔 중인 라벨" className="w-full object-cover" />
-              {/* 레이저 스캔 라인 */}
-              <div
-                className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_8px_2px_rgba(59,130,246,0.5)]"
-                style={{
-                  animation: "scanLine 2s ease-in-out infinite",
-                  top: "0%",
-                }}
-              />
-              {/* 스캔 오버레이 */}
-              <div className="absolute inset-0 bg-blue-600/5" />
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 text-blue-600 animate-spin" />
-            </div>
-          )}
-          <div className="text-center">
-            <p className="text-sm font-semibold text-slate-900">AI가 라벨을 분석하고 있습니다...</p>
-            <p className="text-xs text-slate-500 mt-1">제조사, 카탈로그 번호, Lot, 유통기한을 추출 중</p>
-          </div>
-        </div>
-      )}
-
-      {/* ── 텍스트 입력 화면 (fallback) ── */}
-      {step === "text" && (
-        <div className="flex-1 flex flex-col gap-4 p-4">
+      {/* ═══ 수동 텍스트 입력 모드 ═══ */}
+      {step === "upload" && manualMode && (
+        <div className="flex-1 flex flex-col gap-4 p-5">
           <div>
-            <label className="text-xs font-semibold text-slate-600 mb-1.5 block">라벨 텍스트</label>
+            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">라벨 텍스트</Label>
             <Textarea
               value={manualText}
               onChange={(e) => setManualText(e.target.value)}
-              placeholder={`라벨에 보이는 텍스트를 그대로 입력하세요\n\n예시:\nSIGMA-ALDRICH\nSodium Chloride\nCat. No. S9888-500G\nLot No. SLBC1234V\nExp: 2025-12\nCAS 7647-14-5`}
-              className="min-h-[180px] text-sm bg-white border-slate-200 focus:border-blue-400 resize-none"
+              placeholder={`라벨에 보이는 텍스트를 그대로 입력하세요\n\n예시:\nSIGMA-ALDRICH\nSodium Chloride\nCat. No. S9888-500G\nLot No. SLBC1234V\nExp: 2025-12`}
+              className="min-h-[160px] text-sm bg-white border-slate-200 focus:border-blue-400 resize-none"
             />
           </div>
 
@@ -283,11 +354,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
           )}
 
           <div className="flex items-center gap-3 mt-auto">
-            <Button variant="outline" onClick={() => { setError(null); setStep("choose"); }} className="flex-1">
+            <Button variant="outline" onClick={() => { setManualMode(false); setError(null); }} className="flex-1">
               뒤로
             </Button>
             <Button
-              onClick={() => submitForParsing(manualText)}
+              onClick={submitManualText}
               disabled={!manualText.trim()}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
@@ -298,106 +369,172 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
         </div>
       )}
 
-      {/* ── 결과 화면 ── */}
-      {step === "result" && scanResult && (
-        <div className="flex-1 flex flex-col gap-4 p-4 overflow-y-auto">
-          {/* 스캔된 이미지 미니 프리뷰 */}
-          {previewImage && (
-            <div className="relative rounded-lg overflow-hidden border border-slate-200 h-24">
-              <img src={previewImage} alt="스캔된 라벨" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-              <div className="absolute bottom-1.5 left-2 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-                <span className="text-[10px] text-white font-medium">AI 분석 완료</span>
-              </div>
+      {/* ═══ Step 2: AI 분석 중 (로딩) ═══ */}
+      {step === "scanning" && (
+        <div className="flex-1 flex flex-col items-center justify-center gap-4 p-6">
+          {previewImage ? (
+            <div className="relative w-full max-w-sm rounded-xl overflow-hidden border border-slate-200">
+              <img src={previewImage} alt="스캔 중인 라벨" className="w-full object-cover" />
+              <div
+                className="absolute left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-blue-500 to-transparent shadow-[0_0_8px_2px_rgba(59,130,246,0.5)]"
+                style={{ animation: "scanLine 2s ease-in-out infinite", top: "0%" }}
+              />
+              <div className="absolute inset-0 bg-blue-600/5" />
+            </div>
+          ) : (
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center">
+              <Loader2 className="h-7 w-7 text-blue-600 animate-spin" />
             </div>
           )}
+          <div className="text-center">
+            <p className="text-sm font-semibold text-slate-900">AI가 라벨을 분석하고 있습니다...</p>
+            <p className="text-xs text-slate-500 mt-1">제품명, 카탈로그 번호, Lot, 유효기간, 수량을 추출 중</p>
+          </div>
+        </div>
+      )}
 
-          {/* 상태 헤더 */}
+      {/* ═══ Step 3: 검토 및 수정 (편집 가능 폼) ═══ */}
+      {step === "review" && (
+        <div className="flex-1 flex flex-col gap-4 p-5 overflow-y-auto">
+          {/* 스캔 이미지 미니 프리뷰 + AI 상태 */}
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-              scanResult.matchedProduct ? "bg-emerald-100" : "bg-blue-100"
-            }`}>
-              {scanResult.matchedProduct
-                ? <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                : <FlaskConical className="h-5 w-5 text-blue-600" />
-              }
-            </div>
+            {previewImage && (
+              <div className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                <img src={previewImage} alt="스캔된 라벨" className="w-full h-full object-cover" />
+              </div>
+            )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-bold text-slate-900">
-                  {scanResult.matchedProduct ? "기존 제품 매칭됨" : "새 제품으로 등록"}
-                </p>
-                <ConfidenceBadge level={scanResult.parsed.confidence} />
+                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                <p className="text-sm font-semibold text-slate-900">AI 분석 완료</p>
+                {scanResult && <ConfidenceBadge level={scanResult.parsed.confidence} />}
               </div>
-              <p className="text-xs text-slate-500">
-                {scanResult.parsed.matchedFields}개 필드 인식됨
-                {scanResult.matchedInventory && " · 기존 Lot 재고 발견"}
+              <p className="text-xs text-slate-500 mt-0.5">
+                추출된 데이터를 확인하고 필요 시 수정하세요
               </p>
             </div>
           </div>
 
-          {/* 매칭된 제품 정보 */}
-          {scanResult.matchedProduct && (
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3">
-              <div className="flex items-center gap-2 mb-1">
+          {/* DB 매칭 정보 */}
+          {scanResult?.matchedProduct && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-3 py-2.5">
+              <div className="flex items-center gap-2">
                 <Package className="h-3.5 w-3.5 text-emerald-600" />
-                <span className="text-xs font-semibold text-emerald-700">DB 매칭 결과</span>
+                <span className="text-xs font-semibold text-emerald-700">DB 매칭: {scanResult.matchedProduct.name}</span>
               </div>
-              <p className="text-sm font-medium text-slate-900">{scanResult.matchedProduct.name}</p>
-              <p className="text-xs text-slate-500">
-                {scanResult.matchedProduct.brand} · {scanResult.matchedProduct.catalogNumber}
-              </p>
             </div>
           )}
 
-          {/* 추출된 필드 */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">추출된 정보</p>
-            <div className="rounded-lg border border-slate-200 divide-y divide-slate-100">
-              {[
-                { label: "제품명", value: scanResult.parsed.productName },
-                { label: "제조사", value: scanResult.parsed.brand },
-                { label: "카탈로그 번호", value: scanResult.parsed.catalogNo },
-                { label: "Lot 번호", value: scanResult.parsed.lotNo },
-                { label: "유통기한", value: scanResult.parsed.expirationDate },
-                { label: "CAS 번호", value: scanResult.parsed.casNumber },
-                { label: "용량", value: scanResult.parsed.quantity },
-              ].filter((f) => f.value).map((field) => (
-                <div key={field.label} className="flex items-center justify-between px-3 py-2">
-                  <span className="text-xs text-slate-500">{field.label}</span>
-                  <span className="text-sm font-medium text-slate-900">{field.value}</span>
+          {/* 동일 Lot 경고 */}
+          {scanResult?.matchedInventory && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+                <span className="text-xs text-amber-700">
+                  동일 Lot 재고 존재 (현재: {scanResult.matchedInventory.currentQuantity} {scanResult.matchedInventory.unit}) — 입고 시 추가됩니다
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* ── 편집 가능한 폼 ── */}
+          <div className="space-y-3">
+            <div>
+              <Label className="text-xs font-medium text-slate-600">제품명</Label>
+              <Input
+                value={formData.productName}
+                onChange={(e) => updateField("productName", e.target.value)}
+                placeholder="예: Sodium Chloride"
+                className="mt-1 h-9 text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-medium text-slate-600">카탈로그 번호</Label>
+                <Input
+                  value={formData.catalogNumber}
+                  onChange={(e) => updateField("catalogNumber", e.target.value)}
+                  placeholder="Cat. No."
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-slate-600">Lot 번호</Label>
+                <Input
+                  value={formData.lotNumber}
+                  onChange={(e) => updateField("lotNumber", e.target.value)}
+                  placeholder="Lot No."
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-medium text-slate-600">유효기간</Label>
+                <Input
+                  type="date"
+                  value={formData.expirationDate}
+                  onChange={(e) => updateField("expirationDate", e.target.value)}
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-slate-600">수량</Label>
+                <div className="flex gap-2 mt-1">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.quantity}
+                    onChange={(e) => updateField("quantity", e.target.value)}
+                    className="h-9 text-sm flex-1"
+                  />
+                  <Input
+                    value={formData.unit}
+                    onChange={(e) => updateField("unit", e.target.value)}
+                    placeholder="단위"
+                    className="h-9 text-sm w-16"
+                  />
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-medium text-slate-600">제조사</Label>
+                <Input
+                  value={formData.brand}
+                  onChange={(e) => updateField("brand", e.target.value)}
+                  placeholder="제조사명"
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
+              <div>
+                <Label className="text-xs font-medium text-slate-600">CAS 번호</Label>
+                <Input
+                  value={formData.casNumber}
+                  onChange={(e) => updateField("casNumber", e.target.value)}
+                  placeholder="CAS No."
+                  className="mt-1 h-9 text-sm"
+                />
+              </div>
             </div>
           </div>
 
-          {/* 기존 재고 발견 시 */}
-          {scanResult.matchedInventory && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3">
-              <div className="flex items-center gap-2 mb-1">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                <span className="text-xs font-semibold text-amber-700">동일 Lot 재고 존재</span>
-              </div>
-              <p className="text-xs text-slate-600">
-                현재 재고: {scanResult.matchedInventory.currentQuantity} {scanResult.matchedInventory.unit}
-                — 입고 처리 시 기존 수량에 추가됩니다
-              </p>
-            </div>
-          )}
-
-          {/* 액션 */}
-          <div className="flex items-center gap-3 mt-auto pt-2">
+          {/* ── 액션 버튼 ── */}
+          <div className="flex items-center gap-3 mt-auto pt-3 border-t border-slate-100">
             <Button variant="outline" onClick={resetState} className="gap-1.5">
               <RotateCcw className="h-3.5 w-3.5" />
               다시 스캔
             </Button>
             <Button
-              onClick={handleApplyResult}
+              onClick={onDirectReceive ? handleDirectReceive : handleApplyToForm}
+              disabled={!formData.productName.trim()}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white gap-2"
             >
               <CheckCircle2 className="h-4 w-4" />
-              입고 폼에 적용
+              {onDirectReceive ? "입고 완료" : "입고 폼에 적용"}
             </Button>
           </div>
         </div>
@@ -411,7 +548,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent side="bottom" className="h-[90vh] rounded-t-2xl p-0">
           <SheetHeader className="px-4 pt-4 pb-2">
-            <SheetTitle className="text-base">AI 라벨 스캔</SheetTitle>
+            <SheetTitle className="text-base">스마트 입고 (AI 스캔)</SheetTitle>
           </SheetHeader>
           {content}
         </SheetContent>
@@ -421,9 +558,12 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete }: LabelS
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md p-0 gap-0">
+      <DialogContent className="max-w-md p-0 gap-0 backdrop-blur-sm">
         <DialogHeader className="px-4 pt-4 pb-2">
-          <DialogTitle className="text-base">AI 라벨 스캔</DialogTitle>
+          <DialogTitle className="text-base flex items-center gap-2">
+            <ScanLine className="h-4 w-4 text-blue-600" />
+            스마트 입고 (AI 스캔)
+          </DialogTitle>
         </DialogHeader>
         {content}
       </DialogContent>

@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight, ScanLine } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -47,6 +47,8 @@ import {
 } from "@/lib/inventory/lot-tracking-engine";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
+import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
+const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then(m => m.LabelScannerModal), { ssr: false });
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
 const ImportStagingWorkbench = dynamic(() => import("@/components/inventory/import-staging-workbench").then(m => m.ImportStagingWorkbench), { ssr: false });
 const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-lifespan-gauge").then(m => m.StockLifespanGauge), { ssr: false });
@@ -102,6 +104,7 @@ function InventoryPageContent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
+  const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
   const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
   const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
@@ -1090,6 +1093,14 @@ function InventoryPageContent() {
                 <Printer className="h-3.5 w-3.5" />
                 라벨 인쇄
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setIsSmartReceiveOpen(true)}
+                className="flex items-center gap-2 text-xs text-blue-600"
+              >
+                <ScanLine className="h-3.5 w-3.5" />
+                스마트 입고 (AI)
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -1177,11 +1188,45 @@ function InventoryPageContent() {
                 queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
               }}
             />
+            <LabelScannerModal
+              open={isSmartReceiveOpen}
+              onOpenChange={setIsSmartReceiveOpen}
+              onDirectReceive={async (data: SmartReceiveFormData) => {
+                try {
+                  const res = await fetch("/api/inventory", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      productName: data.productName,
+                      brand: data.brand || null,
+                      catalogNumber: data.catalogNumber || null,
+                      lotNumber: data.lotNumber || null,
+                      expiryDate: data.expirationDate || null,
+                      currentQuantity: parseInt(data.quantity) || 1,
+                      unit: data.unit || "개",
+                    }),
+                  });
+                  if (!res.ok) throw new Error("입고 등록 실패");
+                  toast({ title: "입고 완료", description: `${data.productName} ${data.quantity}${data.unit} 입고 처리되었습니다.` });
+                  queryClient.invalidateQueries({ queryKey: ["inventories"] });
+                  queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+                } catch {
+                  toast({ title: "오류", description: "입고 처리 중 오류가 발생했습니다.", variant: "destructive" });
+                }
+              }}
+            />
 
-            {/* ── 1차 액션: Add Item · Reflect Purchase ── */}
+            {/* ── 1차 액션: Add Item · Smart Receive · Reflect Purchase ── */}
             <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm">
               <Plus className="h-4 w-4 mr-1.5" />
               품목 추가
+            </Button>
+            <Button
+              onClick={() => setIsSmartReceiveOpen(true)}
+              className="h-9 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <ScanLine className="h-4 w-4 mr-1.5" />
+              스마트 입고 (AI)
             </Button>
             <Button
               variant="outline"
