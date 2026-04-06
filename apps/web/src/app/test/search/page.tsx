@@ -432,7 +432,7 @@ export default function SearchPage() {
                     <SearchPanel />
                   </SheetContent>
                 </Sheet>
-                {isLoggedIn && hasSearched && searchQuery && (
+                {!!session?.user && hasSearched && searchQuery && (
                   <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
                     <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
                       <Package className="h-3.5 w-3.5" />
