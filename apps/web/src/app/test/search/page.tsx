@@ -1786,6 +1786,30 @@ export default function SearchPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ═══ AI 비교 분석 모달 ═══ */}
+      <ComparisonModal
+        open={comparisonModalOpen}
+        onOpenChange={setComparisonModalOpen}
+        compareIds={compareIds}
+        products={products}
+        onOpenRequestWizard={() => {
+          setComparisonModalOpen(false);
+          setRequestWizardOpen(true);
+        }}
+      />
+
+      {/* ═══ 견적 요청 위저드 모달 ═══ */}
+      <RequestWizardModal
+        open={requestWizardOpen}
+        onOpenChange={setRequestWizardOpen}
+        products={products}
+        quoteItems={quoteItems}
+        compareIds={compareIds}
+        onSubmitSuccess={() => {
+          quoteItems.forEach((item: any) => removeQuoteItem(item.id));
+        }}
+      />
     </div>
   );
 }
@@ -1914,30 +1938,6 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               setSearchQuery(q);
               if (!!session?.user) runSearch();
             }
-          }}
-        />
-
-        {/* ═══ AI 비교 분석 모달 ═══ */}
-        <ComparisonModal
-          open={comparisonModalOpen}
-          onOpenChange={setComparisonModalOpen}
-          compareIds={compareIds}
-          products={products}
-          onOpenRequestWizard={() => {
-            setComparisonModalOpen(false);
-            setRequestWizardOpen(true);
-          }}
-        />
-
-        {/* ═══ 견적 요청 위저드 모달 ═══ */}
-        <RequestWizardModal
-          open={requestWizardOpen}
-          onOpenChange={setRequestWizardOpen}
-          products={products}
-          quoteItems={quoteItems}
-          compareIds={compareIds}
-          onSubmitSuccess={() => {
-            quoteItems.forEach((item: any) => removeQuoteItem(item.id));
           }}
         />
       </div>
