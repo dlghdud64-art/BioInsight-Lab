@@ -757,14 +757,14 @@ export default function SearchPage() {
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
       {hasSearched && !!session?.user && isSourcingOwner && (
-        <div className="border-t-2 border-slate-200 shrink-0" style={{ backgroundColor: '#455264' }}>
+        <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
           <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
                 <GitCompare className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-600" : "text-slate-500"}`} />
                 <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-100" : "text-slate-400"}`}>비교</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-50 text-blue-600" : "bg-pn text-slate-500"}`}>{compareIds.length}</Badge>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-500"}`}>{compareIds.length}</Badge>
               </div>
               {compareIds.length > 0 ? (
                 <>
@@ -788,14 +788,14 @@ export default function SearchPage() {
             </div>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-bd" />
+            <div className="w-px h-6 bg-white/20" />
 
             {/* Request segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
                 <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-600" : "text-slate-500"}`} />
                 <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-100" : "text-slate-400"}`}>견적</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600/15 text-emerald-600" : "bg-pn text-slate-500"}`}>{quoteItems.length}</Badge>
+                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-500"}`}>{quoteItems.length}</Badge>
               </div>
               {quoteItems.length > 0 ? (
                 <>
@@ -1792,28 +1792,28 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   };
 
   return (
-    <div className="shrink-0 border-b border-slate-200 bg-white">
+    <div className="shrink-0 border-b border-white/10" style={{ backgroundColor: '#0f172a' }}>
       {/* ── 1행: 앱 헤더 ── */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-slate-100 bg-white">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 md:py-3 border-b border-white/10" style={{ backgroundColor: '#0f172a' }}>
         <div className="flex items-center gap-2 shrink-0">
           <Link href="/dashboard" className="flex items-center">
-            <span className="text-base md:text-lg font-bold text-slate-900 tracking-tight">LabAxis</span>
+            <span className="text-base md:text-lg font-bold text-white tracking-tight">LabAxis</span>
           </Link>
-          <span className="text-slate-300 text-xs">/</span>
+          <span className="text-slate-500 text-xs">/</span>
           {stageOwner !== "sourcing" ? (
             <>
-              <button type="button" onClick={onBackToSourcing} className="text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors">소싱</button>
-              <span className="text-slate-300 text-xs">/</span>
-              <span className="text-xs font-semibold text-slate-800">{STAGE_LABELS[stageOwner] || stageOwner}</span>
+              <button type="button" onClick={onBackToSourcing} className="text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors">소싱</button>
+              <span className="text-slate-500 text-xs">/</span>
+              <span className="text-xs font-semibold text-slate-200">{STAGE_LABELS[stageOwner] || stageOwner}</span>
             </>
           ) : (
-            <span className="text-xs font-semibold text-slate-600">소싱</span>
+            <span className="text-xs font-semibold text-slate-300">소싱</span>
           )}
         </div>
       </div>
 
       {/* ── 2행: 검색 바 — 입력 중심, utility controls 우측 ── */}
-      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2">
+      <div className="flex items-center gap-2 md:gap-3 px-4 md:px-6 py-2" style={{ backgroundColor: '#0f172a' }}>
         <form onSubmit={handleSubmit} className="flex items-center gap-1.5 flex-1 min-w-0">
           <div className="flex items-center flex-1 bg-slate-50 border border-slate-200 rounded-lg focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:bg-white transition-all">
             <Search className="h-3.5 w-3.5 md:h-4 md:w-4 text-slate-400 ml-2.5 md:ml-3 shrink-0" />
@@ -1838,7 +1838,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
         {/* AI 라벨 스캔 버튼 */}
         <button
           onClick={() => setLabelScanOpen(true)}
-          className="flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300 transition-colors shrink-0"
+          className="flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 hover:border-emerald-500/50 transition-colors shrink-0"
         >
           <Camera className="h-3 w-3" />
           <span className="hidden sm:inline">AI 라벨 스캔</span>
@@ -1862,7 +1862,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           {/* Filter — desktop: Sheet trigger */}
           <Sheet>
             <SheetTrigger asChild>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors">
+              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors">
                 <SlidersHorizontal className="h-3 w-3" />
                 필터
                 {activeFilterCount > 0 && (
@@ -1878,7 +1878,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           {/* Filter — mobile */}
           <button
             onClick={onOpenFilter}
-            className="md:hidden inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors"
+            className="md:hidden inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors"
           >
             <SlidersHorizontal className="h-3 w-3" />
             {activeFilterCount > 0 && (
@@ -1889,7 +1889,7 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           {/* Inventory link — desktop only */}
           {isLoggedIn && hasSearched && searchQuery && (
             <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
-              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-600 hover:text-slate-800 hover:bg-slate-100 border border-slate-200 transition-colors">
+              <button className="hidden md:inline-flex items-center gap-1 text-[10px] font-medium px-2.5 py-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-white/10 border border-white/20 transition-colors">
                 <TrendingDown className="h-3 w-3" />
                 재고
               </button>

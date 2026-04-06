@@ -48,14 +48,14 @@ function isDelayed(q: Quote): boolean {
   return new Date(q.deliveryDate) < new Date();
 }
 
-const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-600",     border: "border-red-600/30" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-600",    border: "border-blue-600/30" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-600",   border: "border-amber-600/30" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-600",     border: "border-red-600/20" },
+const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string; leftBorder: string }> = {
+  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-600",     border: "border-red-600/30",   leftBorder: "border-l-red-500" },
+  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200",   leftBorder: "border-l-purple-500" },
+  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-600",    border: "border-blue-600/30",  leftBorder: "border-l-blue-500" },
+  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-600",   border: "border-amber-600/30", leftBorder: "border-l-amber-500" },
+  요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd",           leftBorder: "border-l-slate-300" },
+  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200",  leftBorder: "border-l-emerald-500" },
+  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-600",     border: "border-red-600/20",   leftBorder: "border-l-red-300" },
 };
 
 function getOpStatus(q: Quote) {
@@ -236,7 +236,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
 
   return (
     <div
-      className={`bg-pn rounded-xl border transition-colors p-4 cursor-pointer ${
+      className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up ${opStatus.leftBorder} ${
         isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/30"
         : "border-bd/80 hover:border-bd"
@@ -245,7 +245,13 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
     >
       {/* 운영 신호 3종 — 최상단 */}
       <div className="flex items-center gap-2 mb-2 flex-wrap">
-        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
+        <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
+          {(quote.status === "SENT" || quote.status === "PENDING") && !delayed && (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+            </span>
+          )}
           {opStatus.label}
         </span>
         {signals.blocker && (
@@ -265,10 +271,10 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           <p className="text-xs text-slate-400 leading-relaxed mb-1 line-clamp-2">{signals.summary}</p>
           {/* AI inline recommendation */}
           {signals.aiRecommendation && (
-            <p className="text-[11px] text-slate-500 flex items-center gap-1 mb-2">
-              <Sparkles className="h-3 w-3 text-slate-600 shrink-0" />
-              <span className="line-clamp-1">{signals.aiRecommendation}</span>
-            </p>
+            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 rounded-md bg-violet-50 border border-violet-100">
+              <Sparkles className="h-3 w-3 text-violet-500 shrink-0 animate-pulse" />
+              <span className="text-[11px] text-violet-700 line-clamp-1">{signals.aiRecommendation}</span>
+            </div>
           )}
 
           {/* 운영형 메타 — triage 우선 */}
@@ -308,17 +314,23 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
       </div>
 
       {/* Readiness strip */}
-      <div className="flex items-center gap-0.5 mt-3 pt-2.5 border-t border-bd/50">
-        {READINESS_LABELS.map((label, idx) => {
-          const active = idx <= signals.readinessStage;
-          const current = idx === signals.readinessStage;
-          return (
-            <div key={label} className="flex items-center gap-0.5 flex-1 min-w-0">
-              <div className={`h-1 flex-1 rounded-full ${active ? (current ? "bg-blue-500" : "bg-emerald-600/40") : "bg-bd/30"}`} />
-              {current && <span className="text-[8px] text-blue-600 shrink-0 hidden sm:inline">{label}</span>}
-            </div>
-          );
-        })}
+      <div className="mt-3 pt-2.5 border-t border-bd/50">
+        <div className="flex items-center gap-1">
+          {READINESS_LABELS.map((label, idx) => {
+            const active = idx <= signals.readinessStage;
+            const current = idx === signals.readinessStage;
+            return (
+              <div key={label} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                <div className={`h-2 w-full rounded-full transition-all ${
+                  active
+                    ? current ? "bg-blue-500 shadow-sm shadow-blue-200" : "bg-emerald-500/50"
+                    : "bg-slate-100"
+                }`} />
+                <span className={`text-[8px] truncate ${current ? "text-blue-600 font-semibold" : active ? "text-emerald-600/60" : "text-slate-300"}`}>{label}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* 운영 실행 현황 */}
@@ -557,21 +569,33 @@ function QuotesPageContent() {
       {/* ── KPI Control Cards ── */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: <Clock className="h-4 w-4 text-amber-600" />, filter: "SENT", color: "amber" },
-          { label: "비교 검토 필요", ...summaryStats.compareReview, icon: <RefreshCw className="h-4 w-4 text-purple-400" />, filter: "RESPONDED", color: "purple" },
-          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: <AlertCircle className="h-4 w-4 text-red-600" />, filter: "DEADLINE_TODAY", color: "red" },
-          { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: <FileCheck2 className="h-4 w-4 text-emerald-400" />, filter: "COMPLETED", color: "emerald" },
-        ].map(({ label, count, insight, icon, filter, color }) => {
+          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
+          { label: "비교 검토 필요", ...summaryStats.compareReview, icon: RefreshCw, filter: "RESPONDED", color: "purple", iconBg: "bg-purple-50", iconText: "text-purple-600", activeBorder: "border-purple-400/50", activeRing: "ring-purple-400/20", activeBg: "bg-purple-50/50", hoverBorder: "hover:border-purple-300", hoverShadow: "hover:shadow-purple-100" },
+          { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: AlertCircle, filter: "DEADLINE_TODAY", color: "red", iconBg: "bg-red-50", iconText: "text-red-500", activeBorder: "border-red-400/50", activeRing: "ring-red-400/20", activeBg: "bg-red-50/50", hoverBorder: "hover:border-red-300", hoverShadow: "hover:shadow-red-100" },
+          { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: FileCheck2, filter: "COMPLETED", color: "emerald", iconBg: "bg-emerald-50", iconText: "text-emerald-600", activeBorder: "border-emerald-400/50", activeRing: "ring-emerald-400/20", activeBg: "bg-emerald-50/50", hoverBorder: "hover:border-emerald-300", hoverShadow: "hover:shadow-emerald-100" },
+        ].map(({ label, count, insight, icon: Icon, filter, iconBg, iconText, activeBorder, activeRing, activeBg, hoverBorder, hoverShadow }, idx) => {
           const isActive = statusFilter === filter;
+          const isZero = !isLoading && count === 0;
           return (
             <button key={label} onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-              className={`text-left rounded-xl border bg-pn p-3.5 transition-all cursor-pointer hover:border-${color}-600/30 ${isActive ? `border-${color}-600/40 bg-${color}-600/5 ring-1 ring-${color}-600/20` : "border-bd/80"}`}>
-              <div className="flex items-center gap-2 mb-1">
-                {icon}
+              className={`animate-stagger-up text-left rounded-xl border bg-pn p-3.5 transition-all duration-200 cursor-pointer group
+                ${hoverBorder} ${hoverShadow} hover:shadow-md hover:-translate-y-1
+                ${isActive ? `${activeBorder} ${activeBg} ring-1 ${activeRing}` : "border-bd/80"}
+                ${isZero && !isActive ? "opacity-50 hover:opacity-100" : ""}
+              `}
+              style={{ animationDelay: `${idx * 80}ms` }}>
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                  <Icon className={`h-4 w-4 ${iconText}`} />
+                </div>
                 <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
               </div>
-              <div className="text-2xl font-bold text-slate-900 mb-1">{isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}</div>
-              <p className="text-[11px] text-slate-500 leading-snug line-clamp-2">{isLoading ? "집계 확인 중" : insight}</p>
+              <div className={`text-3xl font-extrabold tracking-tight mb-1 ${isZero ? "text-slate-300" : "text-slate-900"}`}>
+                {isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}
+              </div>
+              <p className={`text-[11px] leading-snug line-clamp-2 ${isZero ? "text-slate-400" : "text-slate-500"}`}>
+                {isLoading ? "집계 확인 중" : insight}
+              </p>
             </button>
           );
         })}

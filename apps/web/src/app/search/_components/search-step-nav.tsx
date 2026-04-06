@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, GitCompare, FileText, Check } from "lucide-react";
+import { Search, Scale, FileText, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const steps = [
@@ -18,7 +18,7 @@ const steps = [
     id: "compare",
     label: "제품 비교",
     href: "/compare",
-    icon: GitCompare,
+    icon: Scale,
     step: 2,
     match: /^\/compare(\/.*)?$/,
   },

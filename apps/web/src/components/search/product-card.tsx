@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Package, ShoppingCart, Heart, Thermometer, Box, FlaskConical } from "lucide-react";
+import { Package, ShoppingCart, Scale, Thermometer, Box, FlaskConical } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
@@ -170,7 +170,7 @@ export function ProductCard({
                 });
               }}
             >
-              <Heart className="h-4 w-4" />
+              <Scale className="h-4 w-4" />
             </Button>
             <Link href={`/products/${product.id}`} onClick={(e) => e.stopPropagation()}>
               <Button
