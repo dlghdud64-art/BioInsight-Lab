@@ -1,12 +1,13 @@
 /**
  * 예산 통제 스토어 — Single Source of Truth
  *
- * 예산 목록, 통제 파생 상태, 필터, AI 인사이트를
- * 이 스토어에서 관리한다.
+ * Zustand + Supabase 직접 연동
+ * 예산 목록, 통제 파생 상태, 필터, AI 인사이트를 관리한다.
  *
  * Flow scope: /dashboard/budget 에서 활성.
  */
 import { create } from "zustand";
+import { supabase } from "@/lib/supabase";
 
 // ── Types ──
 export interface BudgetUsage {
@@ -44,6 +45,43 @@ export interface BudgetWithControl {
   ctrl: BudgetControl;
 }
 
+// ── Supabase row → Budget 매핑 ──
+interface SupabaseBudgetRow {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  period_start: string;
+  period_end: string;
+  organization_id?: string | null;
+  target_department?: string | null;
+  project_name?: string | null;
+  description?: string | null;
+  total_spent: number;
+  burn_rate?: number | null;
+  status?: string | null;
+}
+
+function mapRowToBudget(row: SupabaseBudgetRow): Budget {
+  return {
+    id: row.id,
+    name: row.name,
+    amount: row.amount,
+    currency: row.currency,
+    periodStart: row.period_start,
+    periodEnd: row.period_end,
+    organizationId: row.organization_id,
+    targetDepartment: row.target_department,
+    projectName: row.project_name,
+    description: row.description,
+    usage: {
+      totalSpent: row.total_spent ?? 0,
+      usageRate: row.burn_rate ?? 0,
+      remaining: Math.max(row.amount - (row.total_spent ?? 0), 0),
+    },
+  };
+}
+
 // ── Derived calculation ──
 export function deriveBudgetControl(b: Budget): BudgetControl {
   const total = b.amount;
@@ -67,7 +105,7 @@ export function deriveBudgetControl(b: Budget): BudgetControl {
   return { total, reserved, committed, actual, available, burnRate, risk };
 }
 
-// ── Monthly mock data for chart ──
+// ── Monthly chart data ──
 export interface MonthlySpending {
   month: string;
   actual: number;
@@ -76,18 +114,16 @@ export interface MonthlySpending {
 
 export function generateMonthlyData(budgets: Budget[]): MonthlySpending[] {
   const months = ["1월", "2월", "3월", "4월", "5월", "6월"];
-  const totalBudget = budgets.reduce((s, b) => s + b.amount, 0);
+  const totalBudget = budgets.reduce((s: number, b: Budget) => s + b.amount, 0);
   const monthlyBudget = Math.round(totalBudget / 12);
-  const totalSpent = budgets.reduce((s, b) => s + (b.usage?.totalSpent ?? 0), 0);
 
-  // 과거 5개월 실적 mock + 예측
   return months.map((m, i) => {
     const factor = [0.7, 0.85, 0.9, 1.05, 1.1, 0.95][i] ?? 1;
     const isCurrentOrFuture = i >= new Date().getMonth();
     return {
       month: m,
       actual: isCurrentOrFuture
-        ? Math.round(monthlyBudget * factor * 0.6) // 예측치
+        ? Math.round(monthlyBudget * factor * 0.6)
         : Math.round(monthlyBudget * factor),
       budget: monthlyBudget,
     };
@@ -126,26 +162,211 @@ interface BudgetStoreState {
   budgets: Budget[];
   isFetching: boolean;
   searchQuery: string;
+  error: string | null;
+
+  // Setters
   setBudgets: (budgets: Budget[]) => void;
   setIsFetching: (v: boolean) => void;
   setSearchQuery: (q: string) => void;
+
+  // Supabase CRUD
+  fetchBudgets: () => Promise<void>;
+  createBudget: (data: {
+    name: string;
+    amount: number;
+    currency: string;
+    periodStart: string;
+    periodEnd: string;
+    targetDepartment?: string | null;
+    projectName?: string | null;
+    description?: string | null;
+    organizationId?: string | null;
+  }) => Promise<Budget | null>;
+  updateBudget: (id: string, data: Partial<Budget>) => Promise<void>;
+  deleteBudget: (id: string) => Promise<void>;
+
+  // Local-only (optimistic)
   addBudget: (b: Budget) => void;
-  updateBudget: (id: string, data: Partial<Budget>) => void;
   removeBudget: (id: string) => void;
 }
 
-export const useBudgetStore = create<BudgetStoreState>((set) => ({
+export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
   budgets: [],
   isFetching: true,
   searchQuery: "",
+  error: null,
+
   setBudgets: (budgets) => set({ budgets }),
   setIsFetching: (isFetching) => set({ isFetching }),
   setSearchQuery: (searchQuery) => set({ searchQuery }),
   addBudget: (b) => set((state) => ({ budgets: [b, ...state.budgets] })),
-  updateBudget: (id, data) =>
-    set((state) => ({
-      budgets: state.budgets.map((b) => (b.id === id ? { ...b, ...data } : b)),
-    })),
   removeBudget: (id) =>
-    set((state) => ({ budgets: state.budgets.filter((b) => b.id !== id) })),
+    set((state) => ({ budgets: state.budgets.filter((b: Budget) => b.id !== id) })),
+
+  // ── Supabase: 전체 조회 ──
+  fetchBudgets: async () => {
+    set({ isFetching: true, error: null });
+    try {
+      // Supabase 테이블이 있으면 사용, 없으면 기존 API fallback
+      const { data, error } = await supabase
+        .from("budgets")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        // Supabase 테이블 없으면 기존 Prisma API fallback
+        console.warn("[budget-store] Supabase 조회 실패, API fallback:", error.message);
+        const res = await fetch("/api/budgets");
+        if (res.ok) {
+          const json = await res.json();
+          const list = Array.isArray(json.budgets) ? json.budgets : [];
+          set({ budgets: list, isFetching: false });
+        } else {
+          set({ isFetching: false, error: "예산 목록 조회 실패" });
+        }
+        return;
+      }
+
+      const budgets = (data as SupabaseBudgetRow[]).map(mapRowToBudget);
+      set({ budgets, isFetching: false });
+    } catch (err) {
+      console.error("[budget-store] fetchBudgets error:", err);
+      // 최종 fallback: 기존 API
+      try {
+        const res = await fetch("/api/budgets");
+        if (res.ok) {
+          const json = await res.json();
+          set({ budgets: Array.isArray(json.budgets) ? json.budgets : [], isFetching: false });
+        }
+      } catch {
+        set({ isFetching: false, error: "예산 데이터를 불러올 수 없습니다." });
+      }
+    }
+  },
+
+  // ── Supabase: 생성 ──
+  createBudget: async (data) => {
+    set({ error: null });
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const userId = userData?.user?.id;
+
+      // Supabase insert 시도
+      if (userId) {
+        const { data: inserted, error } = await supabase
+          .from("budgets")
+          .insert({
+            user_id: userId,
+            name: data.name,
+            amount: data.amount,
+            currency: data.currency,
+            period_start: data.periodStart,
+            period_end: data.periodEnd,
+            target_department: data.targetDepartment || null,
+            project_name: data.projectName || null,
+            description: data.description || null,
+            organization_id: data.organizationId || null,
+          })
+          .select()
+          .single();
+
+        if (!error && inserted) {
+          const budget = mapRowToBudget(inserted as SupabaseBudgetRow);
+          set((state) => ({ budgets: [budget, ...state.budgets] }));
+          return budget;
+        }
+        console.warn("[budget-store] Supabase insert 실패, API fallback:", error?.message);
+      }
+
+      // Fallback: 기존 Prisma API
+      const res = await fetch("/api/budgets", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        set({ error: json?.error || "예산 등록 실패" });
+        return null;
+      }
+      const apiBudget = json.budget;
+      const budget: Budget = {
+        id: apiBudget?.id ?? String(Date.now()),
+        name: apiBudget?.name ?? data.name,
+        amount: apiBudget?.amount ?? data.amount,
+        currency: apiBudget?.currency ?? data.currency,
+        periodStart: apiBudget?.periodStart ?? data.periodStart,
+        periodEnd: apiBudget?.periodEnd ?? data.periodEnd,
+        targetDepartment: data.targetDepartment,
+        projectName: apiBudget?.projectName ?? data.projectName,
+        description: apiBudget?.description ?? data.description,
+        usage: { totalSpent: 0, usageRate: 0, remaining: data.amount },
+      };
+      set((state) => ({ budgets: [budget, ...state.budgets] }));
+      return budget;
+    } catch (err) {
+      console.error("[budget-store] createBudget error:", err);
+      set({ error: "예산 등록 중 오류가 발생했습니다." });
+      return null;
+    }
+  },
+
+  // ── Supabase: 수정 ──
+  updateBudget: async (id, data) => {
+    set({ error: null });
+    // 즉시 낙관적 업데이트
+    set((state) => ({
+      budgets: state.budgets.map((b: Budget) => (b.id === id ? { ...b, ...data } : b)),
+    }));
+
+    try {
+      const updatePayload: Record<string, unknown> = {};
+      if (data.name !== undefined) updatePayload.name = data.name;
+      if (data.amount !== undefined) updatePayload.amount = data.amount;
+      if (data.currency !== undefined) updatePayload.currency = data.currency;
+      if (data.periodStart !== undefined) updatePayload.period_start = data.periodStart;
+      if (data.periodEnd !== undefined) updatePayload.period_end = data.periodEnd;
+      if (data.targetDepartment !== undefined) updatePayload.target_department = data.targetDepartment;
+      if (data.projectName !== undefined) updatePayload.project_name = data.projectName;
+      if (data.description !== undefined) updatePayload.description = data.description;
+
+      const { error } = await supabase
+        .from("budgets")
+        .update(updatePayload)
+        .eq("id", id);
+
+      if (error) {
+        console.warn("[budget-store] Supabase update 실패, API fallback:", error.message);
+        await fetch(`/api/budgets/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+      }
+    } catch (err) {
+      console.error("[budget-store] updateBudget error:", err);
+    }
+  },
+
+  // ── Supabase: 삭제 ──
+  deleteBudget: async (id) => {
+    // 낙관적 삭제
+    const prev = get().budgets;
+    set((state) => ({ budgets: state.budgets.filter((b: Budget) => b.id !== id) }));
+
+    try {
+      const { error } = await supabase.from("budgets").delete().eq("id", id);
+      if (error) {
+        console.warn("[budget-store] Supabase delete 실패, API fallback:", error.message);
+        const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          // 롤백
+          set({ budgets: prev, error: "예산 삭제 실패" });
+        }
+      }
+    } catch (err) {
+      console.error("[budget-store] deleteBudget error:", err);
+      set({ budgets: prev, error: "예산 삭제 중 오류 발생" });
+    }
+  },
 }));

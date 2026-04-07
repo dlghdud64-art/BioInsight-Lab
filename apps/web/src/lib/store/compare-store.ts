@@ -11,6 +11,7 @@
  */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { supabase } from "@/lib/supabase";
 
 interface ProductMeta {
   name: string;
@@ -43,6 +44,12 @@ interface CompareState {
   clearStash: () => void;
   /** stash에 데이터가 있는지 */
   hasStash: () => boolean;
+  /** Supabase에서 비교함 복원 */
+  fetchComparisons: () => Promise<void>;
+  /** Supabase에 비교 항목 동기화 저장 */
+  syncToSupabase: (productId: string, meta?: ProductMeta) => Promise<void>;
+  /** Supabase에서 비교 항목 삭제 */
+  removeFromSupabase: (productId: string) => Promise<void>;
 }
 
 /** 플로우 경로 판별 (search / compare / quote) */
@@ -138,6 +145,58 @@ export const useCompareStore = create<CompareState>()(
       },
       hasStash: () => {
         return get()._stashedIds.length > 0;
+      },
+
+      // ── Supabase 연동 ──
+      fetchComparisons: async () => {
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (!userData?.user?.id) return;
+          const { data, error } = await supabase
+            .from("comparisons")
+            .select("*")
+            .eq("user_id", userData.user.id)
+            .order("added_at", { ascending: false });
+          if (error || !data) return;
+          const ids = data.map((r: Record<string, unknown>) => r.product_id as string);
+          const meta: Record<string, ProductMeta> = {};
+          for (const r of data as Record<string, unknown>[]) {
+            if (r.product_name || r.product_brand) {
+              meta[r.product_id as string] = {
+                name: (r.product_name as string) || "",
+                brand: (r.product_brand as string) || undefined,
+              };
+            }
+          }
+          const { productIds: localIds, productMeta: localMeta } = get();
+          const mergedIds = Array.from(new Set([...ids, ...localIds])).slice(0, 5);
+          set({ productIds: mergedIds, productMeta: { ...meta, ...localMeta } });
+        } catch (err) {
+          console.warn("[compare-store] fetchComparisons 실패:", err);
+        }
+      },
+
+      syncToSupabase: async (productId: string, meta?: ProductMeta) => {
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (!userData?.user?.id) return;
+          await supabase.from("comparisons").upsert(
+            { user_id: userData.user.id, product_id: productId, product_name: meta?.name || null, product_brand: meta?.brand || null },
+            { onConflict: "user_id,product_id" },
+          );
+        } catch (err) {
+          console.warn("[compare-store] syncToSupabase 실패:", err);
+        }
+      },
+
+      removeFromSupabase: async (productId: string) => {
+        try {
+          const { data: userData } = await supabase.auth.getUser();
+          if (!userData?.user?.id) return;
+          await supabase.from("comparisons").delete().eq("user_id", userData.user.id).eq("product_id", productId);
+        } catch (err) {
+          console.warn("[compare-store] removeFromSupabase 실패:", err);
+        }
       },
     }),
     {
