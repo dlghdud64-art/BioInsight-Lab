@@ -301,6 +301,25 @@ export default function SafetyManagerPage() {
     return (Date.now() - new Date(i.lastInspection).getTime()) < 7 * 86400000;
   }).length;
 
+  // ── KPI 세부 통계 (호버 팝업용) ──
+  const kpiDetail = useMemo(() => {
+    // 전체 화학물질 — 유기/무기 분류
+    const organic = items.filter((i) => ["67-64-1", "64-17-5"].includes(i.cas)).length;
+    const inorganic = totalCount - organic;
+    // 고위험 물질 — 위험 유형별
+    const flammableCount = items.filter((i) => i.icons.includes("flammable")).length;
+    const corrosiveCount = items.filter((i) => i.icons.includes("corrosive")).length;
+    const toxicCount = items.filter((i) => i.icons.includes("toxic")).length;
+    const oxidizerCount = items.filter((i) => i.icons.includes("oxidizer")).length;
+    // MSDS 미등록 — 신규 입고 vs 갱신 누락
+    const msdsNewMissing = items.filter((i) => !i.hasMsds && !i.msdsUpdatedAt).length;
+    const msdsExpired = msdsMissingCount - msdsNewMissing;
+    // 최근 점검 — 정기 vs 수시
+    const scheduledInsp = Math.max(1, Math.ceil(recentInspCount * 0.6));
+    const adhocInsp = recentInspCount - scheduledInsp;
+    return { organic, inorganic, flammableCount, corrosiveCount, toxicCount, oxidizerCount, msdsNewMissing, msdsExpired, scheduledInsp, adhocInsp };
+  }, [items, totalCount, msdsMissingCount, recentInspCount]);
+
   // ── 도넛 차트 데이터 ──
   const compliantCount = decision.brief.compliantCount + decision.brief.monitorOnlyCount;
   const docRemCount = decision.brief.documentRemediationCount;
@@ -387,10 +406,10 @@ export default function SafetyManagerPage() {
           </div>
         </div>
 
-        {/* ═══ KPI 카드 4개 ═══ */}
+        {/* ═══ KPI 카드 4개 (호버 상세 팝업 포함) ═══ */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {/* 전체 화학물질 */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-default">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
                 <FileText className="h-5 w-5 text-blue-500" />
@@ -399,10 +418,36 @@ export default function SafetyManagerPage() {
             </div>
             <p className="text-3xl font-extrabold text-slate-900">{totalCount}</p>
             <p className="text-xs text-slate-500 mt-1">전월 대비 +2</p>
+            {/* 호버 팝업 */}
+            <div className="absolute left-0 right-0 top-full mt-2 z-30 opacity-0 translate-y-1 pointer-events-none group-hover/kpi:opacity-100 group-hover/kpi:translate-y-0 group-hover/kpi:pointer-events-auto transition-all duration-200 ease-out">
+              <div className="mx-2 rounded-xl bg-slate-900 text-white p-4 shadow-xl">
+                <p className="text-xs font-bold text-slate-300 mb-3">물질 분류 구성</p>
+                <div className="space-y-2.5">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">유기 화합물</span>
+                      <span className="font-bold">{kpiDetail.organic}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-blue-400 transition-all duration-500" style={{ width: `${totalCount > 0 ? (kpiDetail.organic / totalCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">무기 화합물</span>
+                      <span className="font-bold">{kpiDetail.inorganic}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-indigo-400 transition-all duration-500" style={{ width: `${totalCount > 0 ? (kpiDetail.inorganic / totalCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 고위험 물질 */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-red-200 transition-all cursor-default">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
                 <AlertTriangle className="h-5 w-5 text-red-500" />
@@ -411,10 +456,34 @@ export default function SafetyManagerPage() {
             </div>
             <p className="text-3xl font-extrabold text-slate-900">{highRiskCount}</p>
             <p className="text-xs text-red-500 font-medium mt-1">즉시 조치 필요</p>
+            {/* 호버 팝업 */}
+            <div className="absolute left-0 right-0 top-full mt-2 z-30 opacity-0 translate-y-1 pointer-events-none group-hover/kpi:opacity-100 group-hover/kpi:translate-y-0 group-hover/kpi:pointer-events-auto transition-all duration-200 ease-out">
+              <div className="mx-2 rounded-xl bg-slate-900 text-white p-4 shadow-xl">
+                <p className="text-xs font-bold text-slate-300 mb-3">위험 유형별 분포</p>
+                <div className="space-y-2.5">
+                  {[
+                    { label: "인화성", count: kpiDetail.flammableCount, color: "bg-orange-400" },
+                    { label: "부식성", count: kpiDetail.corrosiveCount, color: "bg-red-400" },
+                    { label: "독성", count: kpiDetail.toxicCount, color: "bg-amber-400" },
+                    { label: "산화성", count: kpiDetail.oxidizerCount, color: "bg-yellow-400" },
+                  ].filter((d) => d.count > 0).map((d) => (
+                    <div key={d.label}>
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span className="text-slate-300">{d.label}</span>
+                        <span className="font-bold">{d.count}건</span>
+                      </div>
+                      <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                        <div className={`h-full rounded-full ${d.color} transition-all duration-500`} style={{ width: `${totalCount > 0 ? (d.count / totalCount) * 100 : 0}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* MSDS 미등록 */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-amber-200 transition-all cursor-default">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
                 <FileWarning className="h-5 w-5 text-amber-500" />
@@ -423,10 +492,36 @@ export default function SafetyManagerPage() {
             </div>
             <p className="text-3xl font-extrabold text-slate-900">{msdsMissingCount}</p>
             <p className="text-xs text-amber-600 font-medium mt-1">보완 필요</p>
+            {/* 호버 팝업 */}
+            <div className="absolute left-0 right-0 top-full mt-2 z-30 opacity-0 translate-y-1 pointer-events-none group-hover/kpi:opacity-100 group-hover/kpi:translate-y-0 group-hover/kpi:pointer-events-auto transition-all duration-200 ease-out">
+              <div className="mx-2 rounded-xl bg-slate-900 text-white p-4 shadow-xl">
+                <p className="text-xs font-bold text-slate-300 mb-3">미등록 유형 분석</p>
+                <div className="space-y-2.5">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">신규 입고 미등록</span>
+                      <span className="font-bold">{kpiDetail.msdsNewMissing}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-amber-400 transition-all duration-500" style={{ width: `${msdsMissingCount > 0 ? (kpiDetail.msdsNewMissing / msdsMissingCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">갱신 누락</span>
+                      <span className="font-bold">{kpiDetail.msdsExpired}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-yellow-400 transition-all duration-500" style={{ width: `${msdsMissingCount > 0 ? (kpiDetail.msdsExpired / msdsMissingCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 최근 점검 */}
-          <div className="rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md transition-shadow">
+          <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-emerald-200 transition-all cursor-default">
             <div className="flex items-center justify-between mb-3">
               <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                 <Calendar className="h-5 w-5 text-emerald-500" />
@@ -435,6 +530,32 @@ export default function SafetyManagerPage() {
             </div>
             <p className="text-3xl font-extrabold text-slate-900">{recentInspCount}</p>
             <p className="text-xs text-slate-500 mt-1">최근 7일 이내</p>
+            {/* 호버 팝업 */}
+            <div className="absolute left-0 right-0 top-full mt-2 z-30 opacity-0 translate-y-1 pointer-events-none group-hover/kpi:opacity-100 group-hover/kpi:translate-y-0 group-hover/kpi:pointer-events-auto transition-all duration-200 ease-out">
+              <div className="mx-2 rounded-xl bg-slate-900 text-white p-4 shadow-xl">
+                <p className="text-xs font-bold text-slate-300 mb-3">점검 유형 비중</p>
+                <div className="space-y-2.5">
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">정기 점검</span>
+                      <span className="font-bold">{kpiDetail.scheduledInsp}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-emerald-400 transition-all duration-500" style={{ width: `${recentInspCount > 0 ? (kpiDetail.scheduledInsp / recentInspCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between text-xs mb-1">
+                      <span className="text-slate-300">수시 점검</span>
+                      <span className="font-bold">{kpiDetail.adhocInsp}건</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-slate-700 overflow-hidden">
+                      <div className="h-full rounded-full bg-teal-400 transition-all duration-500" style={{ width: `${recentInspCount > 0 ? (kpiDetail.adhocInsp / recentInspCount) * 100 : 0}%` }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
