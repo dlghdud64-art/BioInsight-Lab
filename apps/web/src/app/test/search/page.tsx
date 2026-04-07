@@ -1894,35 +1894,8 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           </div>
         </form>
 
-        {/* 유틸리티 — 필터 + AI 라벨 스캔 */}
+        {/* 유틸리티 — AI 라벨 스캔 */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* Filter — desktop: Sheet trigger */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 border border-white/20 transition-colors">
-                <SlidersHorizontal className="h-3.5 w-3.5" />
-                필터
-                {activeFilterCount > 0 && (
-                  <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] text-white font-medium">{activeFilterCount}</span>
-                )}
-              </button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-[280px] p-4">
-              <SearchPanel />
-            </SheetContent>
-          </Sheet>
-
-          {/* Filter — mobile */}
-          <button
-            onClick={onOpenFilter}
-            className="md:hidden inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 border border-white/20 transition-colors"
-          >
-            <SlidersHorizontal className="h-3.5 w-3.5" />
-            {activeFilterCount > 0 && (
-              <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-500 px-1 text-[10px] text-white">{activeFilterCount}</span>
-            )}
-          </button>
-
           {/* AI 라벨 스캔 */}
           <button
             onClick={() => setLabelScanOpen(true)}

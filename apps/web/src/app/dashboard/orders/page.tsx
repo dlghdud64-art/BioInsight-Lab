@@ -2,7 +2,8 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense } from "react";
+import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -113,14 +114,12 @@ function POConversionContent() {
   }
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+    <div className="flex flex-col overflow-hidden h-full">
 
-      {/* ═══ PO Decision Header ═══ */}
+      {/* ═══ PO Decision Sub-Header ═══ */}
       <div className="shrink-0">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
           <div className="flex items-center gap-2">
-            <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
-            <div className="w-px h-5 bg-bd" />
             <span className="text-xs md:text-sm font-medium text-slate-400">발주 실행</span>
           </div>
           <div className="flex items-center gap-3">
@@ -360,6 +359,37 @@ function POConversionContent() {
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// Phase 4: Multi-View System — View Switcher + Strategic Analytics
+// ══════════════════════════════════════════════════════════════════════════════
+
+type OrderView = "queue" | "analytics";
+
+function ViewSwitcher({ current, onChange }: { current: OrderView; onChange: (v: OrderView) => void }) {
+  return (
+    <div className="flex items-center gap-1 rounded-lg border border-bd p-0.5" style={{ backgroundColor: '#353739' }}>
+      <button
+        onClick={() => onChange("queue")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+          current === "queue" ? "bg-blue-600/10 text-blue-300 border border-blue-600/30" : "text-slate-400 border border-transparent hover:text-slate-300"
+        }`}
+      >
+        <FileText className="h-3 w-3" />
+        발주 대기열
+      </button>
+      <button
+        onClick={() => onChange("analytics")}
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
+          current === "analytics" ? "bg-violet-600/10 text-violet-300 border border-violet-600/30" : "text-slate-400 border border-transparent hover:text-slate-300"
+        }`}
+      >
+        <Package className="h-3 w-3" />
+        전략적 분석
+      </button>
+    </div>
+  );
+}
+
 export default function OrdersPage() {
   return (
     <Suspense fallback={
@@ -367,7 +397,322 @@ export default function OrdersPage() {
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
-      <POConversionContent />
+      <OrdersPageContent />
     </Suspense>
+  );
+}
+
+function OrdersPageContent() {
+  const [view, setView] = useState<OrderView>("queue");
+
+  if (view === "analytics") {
+    return <StrategicAnalyticsView onBack={() => setView("queue")} />;
+  }
+
+  return <POConversionContentWithSwitcher onViewChange={setView} />;
+}
+
+/** 기존 POConversionContent + ViewSwitcher 통합 */
+function POConversionContentWithSwitcher({ onViewChange }: { onViewChange: (v: OrderView) => void }) {
+  return (
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
+          <div className="w-px h-5 bg-bd" />
+          <ViewSwitcher current="queue" onChange={onViewChange} />
+        </div>
+      </div>
+      <div className="flex-1 overflow-hidden">
+        <Suspense fallback={null}>
+          <POConversionContent />
+        </Suspense>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// AI Agent Console — Thought Process Visualization
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface ThoughtStep {
+  id: string;
+  phase: "intent" | "ontology" | "plan" | "execute" | "done" | "error";
+  label: string;
+  detail?: string;
+  status: "running" | "done" | "error";
+  timestamp: number;
+}
+
+const PHASE_ICON: Record<ThoughtStep["phase"], string> = {
+  intent: "◆",
+  ontology: "◇",
+  plan: "▸",
+  execute: "⚙",
+  done: "✓",
+  error: "✗",
+};
+
+const PHASE_COLOR: Record<ThoughtStep["phase"], string> = {
+  intent: "text-blue-400",
+  ontology: "text-violet-400",
+  plan: "text-amber-400",
+  execute: "text-emerald-400",
+  done: "text-green-400",
+  error: "text-red-400",
+};
+
+function AgentConsoleTerminal({ steps, isRunning }: { steps: ThoughtStep[]; isRunning: boolean }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [steps]);
+
+  if (steps.length === 0) return null;
+
+  return (
+    <div
+      ref={scrollRef}
+      className="mt-2 max-h-48 overflow-y-auto rounded-md border border-slate-700/60 bg-slate-950/80 p-3 font-mono text-[11px] leading-relaxed"
+    >
+      {steps.map((step) => (
+        <div key={step.id} className="flex items-start gap-2 py-0.5">
+          <span className={cn("shrink-0 w-3 text-center", PHASE_COLOR[step.phase])}>
+            {step.status === "running" ? (
+              <span className="inline-block h-2 w-2 rounded-full bg-current animate-pulse" />
+            ) : (
+              PHASE_ICON[step.phase]
+            )}
+          </span>
+          <span className={cn("flex-1", step.status === "running" ? "text-slate-300" : "text-slate-500")}>
+            <span className={cn("font-medium", PHASE_COLOR[step.phase])}>{step.label}</span>
+            {step.detail && <span className="text-slate-600 ml-1.5">— {step.detail}</span>}
+          </span>
+          <span className="text-[9px] text-slate-700 tabular-nums shrink-0">
+            {new Date(step.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+          </span>
+        </div>
+      ))}
+      {isRunning && (
+        <div className="flex items-center gap-1.5 py-0.5 text-slate-600">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
+          <span>처리 중...</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Phase 4: Strategic Analytics View */
+function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
+  // AI Agent Console state
+  const [nlInput, setNlInput] = React.useState("");
+  const [thoughtSteps, setThoughtSteps] = React.useState<ThoughtStep[]>([]);
+  const [isAgentRunning, setIsAgentRunning] = React.useState(false);
+  const [lastResult, setLastResult] = React.useState<string | null>(null);
+
+  const addStep = React.useCallback((phase: ThoughtStep["phase"], label: string, detail?: string, status: ThoughtStep["status"] = "done") => {
+    setThoughtSteps(prev => [...prev, { id: `${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, phase, label, detail, status, timestamp: Date.now() }]);
+  }, []);
+
+  const updateLastStep = React.useCallback((updates: Partial<ThoughtStep>) => {
+    setThoughtSteps(prev => {
+      if (prev.length === 0) return prev;
+      const copy = [...prev];
+      copy[copy.length - 1] = { ...copy[copy.length - 1], ...updates };
+      return copy;
+    });
+  }, []);
+
+  async function handleNlCommand() {
+    if (!nlInput.trim() || isAgentRunning) return;
+    const command = nlInput.trim();
+    setIsAgentRunning(true);
+    setThoughtSteps([]);
+    setLastResult(null);
+
+    try {
+      // Step 1: Intent Analysis
+      addStep("intent", "의도 분석 중...", `"${command}"`, "running");
+      await new Promise(r => setTimeout(r, 500));
+
+      const { parseNaturalLanguageAction } = await import("@/lib/ontology/ai/ontology-ai-service");
+      const result = parseNaturalLanguageAction(command);
+      updateLastStep({ label: "의도 분석 완료", status: "done", detail: result.parsed ? `${result.actionType} 감지` : "미인식 명령" });
+
+      if (!result.parsed) {
+        addStep("error", "명령 인식 실패", "예: '승인 대기 중인 모든 주문 승인해줘'");
+        setLastResult("명령을 인식하지 못했습니다.");
+        return;
+      }
+
+      // Step 2: Ontology Mapping
+      addStep("ontology", "온톨로지 매핑 중...", `${result.actionType} → Object/Action 해석`, "running");
+      await new Promise(r => setTimeout(r, 600));
+      updateLastStep({
+        label: "온톨로지 매핑 완료",
+        status: "done",
+        detail: `대상: ${result.targetFilter.scope} / 필터: ${result.targetFilter.statusFilter || "전체"}`
+      });
+
+      // Step 3: Execution Plan
+      addStep("plan", "실행 계획 수립 중...", undefined, "running");
+      await new Promise(r => setTimeout(r, 400));
+
+      let planDetail = `액션: ${result.actionType}`;
+      if (result.targetFilter.vendorFilter) planDetail += ` / 벤더: ${result.targetFilter.vendorFilter}`;
+      if (result.targetFilter.amountMax) planDetail += ` / 금액 상한: ${result.targetFilter.amountMax.toLocaleString()}원`;
+      updateLastStep({ label: "실행 가능한 액션 도출", status: "done", detail: planDetail });
+
+      // Step 4: Execution (simulated)
+      const targetCount = result.targetFilter.scope === "all" ? 5 : result.targetFilter.scope === "batch" ? 3 : 1;
+      addStep("execute", `개별 항목 처리 중...`, `총 ${targetCount}건`, "running");
+      await new Promise(r => setTimeout(r, 800));
+      updateLastStep({ label: `${targetCount}건 처리 완료`, status: "done", detail: `신뢰도 ${Math.round(result.confidence * 100)}%` });
+
+      // Step 5: Done
+      addStep("done", "명령 실행 완료", `${result.actionType} — ${targetCount}건 처리됨`);
+      setLastResult(`${result.actionType}: ${targetCount}건 처리 완료 (신뢰도 ${Math.round(result.confidence * 100)}%)`);
+    } catch {
+      addStep("error", "실행 실패", "NL 파서 로드 오류");
+      setLastResult("처리 중 오류가 발생했습니다.");
+    } finally {
+      setIsAgentRunning(false);
+    }
+  }
+
+  // Mock KPI data (production: from Zustand stores)
+  const mockKPIs = React.useMemo(() => ({
+    budgets: [
+      { budgetId: "b1", budgetName: "연구 시약 예산", totalAmount: 50000000, totalSpent: 32000000, committed: 5000000, available: 13000000, burnRate: 64, periodEnd: "2026-06-30", riskLevel: "caution" as const },
+      { budgetId: "b2", budgetName: "장비 유지보수", totalAmount: 20000000, totalSpent: 18500000, committed: 0, available: 1500000, burnRate: 93, periodEnd: "2026-06-30", riskLevel: "critical" as const },
+      { budgetId: "b3", budgetName: "소모품 일반", totalAmount: 10000000, totalSpent: 3200000, committed: 1000000, available: 5800000, burnRate: 32, periodEnd: "2026-06-30", riskLevel: "safe" as const },
+    ],
+    inventoryRisks: [
+      { itemId: "i1", itemName: "FBS (Fetal Bovine Serum)", stockStatus: "low_stock", daysUntilDepletion: 12, quantity: 3, reorderPoint: 5 },
+      { itemId: "i2", itemName: "Trypsin-EDTA 0.25%", stockStatus: "out_of_stock", daysUntilDepletion: 0, quantity: 0, reorderPoint: 2 },
+      { itemId: "i3", itemName: "DMEM Medium 500ml", stockStatus: "in_stock", daysUntilDepletion: 45, quantity: 12, reorderPoint: 4 },
+      { itemId: "i4", itemName: "Acetone HPLC Grade", stockStatus: "low_stock", daysUntilDepletion: 8, quantity: 2, reorderPoint: 3 },
+    ],
+    monthlyVolume: [
+      { month: "2026-01", orderCount: 12, totalAmount: 8500000, avgProcessingDays: 5 },
+      { month: "2026-02", orderCount: 15, totalAmount: 12300000, avgProcessingDays: 4 },
+      { month: "2026-03", orderCount: 18, totalAmount: 15200000, avgProcessingDays: 4 },
+      { month: "2026-04", orderCount: 8, totalAmount: 6800000, avgProcessingDays: 3 },
+    ],
+    orderStatusDistribution: [
+      { status: "draft", label: "초안", count: 3, color: "#64748b" },
+      { status: "pending_approval", label: "승인 대기", count: 5, color: "#f59e0b" },
+      { status: "approved", label: "승인 완료", count: 4, color: "#3b82f6" },
+      { status: "po_created", label: "PO 생성", count: 2, color: "#8b5cf6" },
+      { status: "sent", label: "발송 완료", count: 6, color: "#10b981" },
+      { status: "received", label: "수령 완료", count: 8, color: "#059669" },
+    ],
+  }), []);
+
+  // Dynamic import of StrategicAnalytics
+  const [AnalyticsComponent, setAnalyticsComponent] = React.useState<React.ComponentType<any> | null>(null);
+
+  React.useEffect(() => {
+    import("@/components/ontology/strategic-analytics").then(mod => {
+      setAnalyticsComponent(() => mod.StrategicAnalytics);
+    });
+  }, []);
+
+  return (
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+      {/* Header */}
+      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+        <div className="flex items-center gap-2">
+          <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
+          <div className="w-px h-5 bg-bd" />
+          <ViewSwitcher current="analytics" onChange={(v) => { if (v === "queue") onBack(); }} />
+        </div>
+      </div>
+
+      {/* AI Agent Console */}
+      <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#353739' }}>
+        <div className="max-w-3xl">
+          {/* Command Input */}
+          <div className={cn(
+            "relative rounded-lg border transition-all duration-300",
+            isAgentRunning
+              ? "border-blue-500/50 ring-2 ring-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
+              : "border-slate-700 hover:border-slate-600"
+          )}>
+            {isAgentRunning && (
+              <div className="absolute inset-0 rounded-lg animate-pulse bg-blue-500/[0.03] pointer-events-none" />
+            )}
+            <div className="flex items-center gap-2 px-3 py-1.5">
+              <span className={cn(
+                "shrink-0 text-[10px] font-mono font-bold tracking-wider",
+                isAgentRunning ? "text-blue-400" : "text-slate-600"
+              )}>
+                {isAgentRunning ? "● AGENT" : "▸ AGENT"}
+              </span>
+              <input
+                type="text"
+                value={nlInput}
+                onChange={e => setNlInput(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") handleNlCommand(); }}
+                placeholder="자연어 명령 입력 — 예: '승인 대기 중인 모든 주문 승인해줘'"
+                disabled={isAgentRunning}
+                className="flex-1 bg-transparent text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none disabled:opacity-50"
+              />
+              <button
+                onClick={handleNlCommand}
+                disabled={isAgentRunning || !nlInput.trim()}
+                className={cn(
+                  "shrink-0 rounded px-3 py-1 text-[10px] font-medium transition-all active:scale-95",
+                  isAgentRunning
+                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
+                    : "bg-blue-600/80 hover:bg-blue-500 text-white"
+                )}
+              >
+                {isAgentRunning ? "처리 중..." : "실행"}
+              </button>
+            </div>
+          </div>
+
+          {/* Result badge */}
+          {lastResult && !isAgentRunning && thoughtSteps.length === 0 && (
+            <div className="mt-1.5 flex items-center gap-2">
+              <span className="text-[10px] text-emerald-500/80 font-medium">{lastResult}</span>
+              <button onClick={() => setLastResult(null)} className="text-slate-600 hover:text-slate-400">
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Thought Process Terminal */}
+          <AgentConsoleTerminal steps={thoughtSteps} isRunning={isAgentRunning} />
+
+          {/* Collapse terminal after done */}
+          {thoughtSteps.length > 0 && !isAgentRunning && (
+            <div className="mt-1.5 flex items-center justify-between">
+              <span className="text-[10px] text-emerald-500/80 font-medium">{lastResult}</span>
+              <button
+                onClick={() => { setThoughtSteps([]); }}
+                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                터미널 닫기
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
+        {AnalyticsComponent ? (
+          <AnalyticsComponent kpis={mockKPIs} />
+        ) : (
+          <div className="flex items-center justify-center h-40">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

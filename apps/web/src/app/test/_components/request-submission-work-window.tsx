@@ -98,8 +98,41 @@ export function RequestSubmissionWorkWindow({
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 600));
       const event = buildRequestSubmissionEvent(submissionState, draftSnapshot);
+
+      // ── DB 저장: POST /api/quotes로 견적 생성 ──
+      const lines = draftSnapshot.requestDraftLines;
+      const vendorIds = draftSnapshot.targetVendorIds;
+      const condSummary = event.submissionConditionSummary;
+
+      // 각 라인 × 각 벤더 조합으로 items 구성
+      const items = lines.map((l: { itemId: string; requestedQty: number; lineNote: string }) => ({
+        productId: l.itemId,
+        vendorId: vendorIds[0] || undefined,
+        quantity: l.requestedQty,
+        notes: l.lineNote || "",
+      }));
+
+      const quotePayload = {
+        title: condSummary.outboundSummary || `견적 요청 — ${lines.length}개 품목`,
+        message: condSummary.requesterContext || "",
+        items,
+        deliveryDate: null,
+        deliveryLocation: null,
+        specialNotes: condSummary.purpose || "",
+      };
+
+      const res = await fetch("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(quotePayload),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || `견적 저장 실패 (${res.status})`);
+      }
+
       setSubmissionEvent(event);
       onSubmissionExecuted(event);
       setSubmissionState((prev) => prev ? {

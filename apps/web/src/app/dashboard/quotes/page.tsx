@@ -16,7 +16,7 @@ import {
   ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
   AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
   AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
-  Loader2,
+  Loader2, Upload,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
@@ -31,6 +31,7 @@ import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { FileText } from "lucide-react";
+import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -370,6 +371,7 @@ function QuotesPageContent() {
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
   const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
+  const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
 
   // ── AI 견적서 비교 실행 — quotes 선언 뒤로 이동 (아래 참조) ──
 
@@ -582,6 +584,14 @@ function QuotesPageContent() {
           <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
+          {/* AI 견적서 파싱 버튼 */}
+          <button
+            onClick={() => setAiParseModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors active:scale-95"
+          >
+            <Upload className="h-4 w-4" />
+            AI 견적서 파싱
+          </button>
           {/* AI 견적서 비교 버튼 */}
           <button
             onClick={runAiQuoteCompare}
@@ -1232,6 +1242,17 @@ function QuotesPageContent() {
           </div>
         </CenterWorkWindow>
       )}
+
+      {/* ═══ AI 견적서 파싱 모달 ═══ */}
+      <AiQuoteParseModal
+        open={aiParseModalOpen}
+        onClose={() => setAiParseModalOpen(false)}
+        quoteId={selectedQuoteId}
+        onRegistered={() => {
+          refetch();
+          toast({ title: "AI 견적서 파싱 완료", description: "벤더 응답이 등록되었습니다." });
+        }}
+      />
 
       {/* ═══ AI 견적서 비교 모달 ═══ */}
       <Dialog open={aiCompareOpen} onOpenChange={setAiCompareOpen}>

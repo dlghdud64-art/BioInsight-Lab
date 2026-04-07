@@ -57,7 +57,7 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
   const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
 
   const response = await ai.models.generateContent({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.5-flash-preview-04-17",
     contents: [
       {
         role: "user",

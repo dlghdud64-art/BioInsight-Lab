@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { extractQuoteFromPDF } from "@/lib/ai/quote-extractor";
+import { parseQuotePDFWithGemini } from "@/lib/ocr/gemini-quote-parser";
 
-// pdf-parse는 Node.js 네이티브 모듈이므로 Node.js 런타임 필요
 export const runtime = "nodejs";
 
-// 파일 업로드 제한 상수 (DoS 방지)
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB (10MB에서 축소)
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
+/**
+ * POST /api/quotes/parse-pdf
+ *
+ * 견적서 PDF를 Gemini 2.5 Flash에 직접 전송하여 구조화된 JSON으로 파싱.
+ * 기존 OpenAI + pdf-parse 2단계 → Gemini 네이티브 PDF 1단계로 교체.
+ */
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -20,62 +24,48 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "PDF 파일만 업로드 가능합니다." }, { status: 400 });
     }
 
-    // 파일 크기 제한 (5MB - DoS 방지를 위해 축소)
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
         { error: `파일 크기는 ${MAX_FILE_SIZE / 1024 / 1024}MB 이하여야 합니다.` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // File을 Buffer로 변환
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // 견적서에서 정보 추출
-    const result = await extractQuoteFromPDF(buffer);
+    const result = await parseQuotePDFWithGemini(buffer);
 
-    return NextResponse.json(result);
-  } catch (error: any) {
-    console.error("Error processing quote PDF:", error);
-    const errorMessage = error?.message || "견적서 처리에 실패했습니다.";
-    console.error("Error details:", {
-      message: errorMessage,
-      stack: error?.stack,
-      name: error?.name,
+    // 기존 QuoteExtractionResult 호환 형태로도 반환
+    return NextResponse.json({
+      // 새 구조 (상세)
+      success: true,
+      ...result,
+      // 기존 호환 필드
+      items: result.parsed.items.map((item) => ({
+        productName: item.productName,
+        catalogNumber: item.catalogNumber,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        totalPrice: item.totalPrice,
+        leadTime: item.leadTimeDays,
+        minOrderQty: null,
+        notes: item.notes,
+      })),
+      vendorName: result.parsed.vendor?.name,
+      vendorEmail: result.parsed.vendor?.email,
+      vendorPhone: result.parsed.vendor?.phone,
+      quoteDate: result.parsed.quoteDate,
+      validUntil: result.parsed.validUntil,
+      totalAmount: result.parsed.totalAmount,
+      currency: result.parsed.currency,
+      notes: result.parsed.specialNotes,
     });
+  } catch (error: any) {
+    console.error("[parse-pdf] Error:", error?.message);
     return NextResponse.json(
-      { 
-        error: errorMessage,
-        details: process.env.NODE_ENV === "development" ? error?.stack : undefined
-      },
-      { status: 500 }
+      { error: error?.message || "견적서 처리에 실패했습니다." },
+      { status: 500 },
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
