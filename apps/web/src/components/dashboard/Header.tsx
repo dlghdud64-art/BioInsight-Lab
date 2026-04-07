@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
@@ -24,7 +24,7 @@ import {
   AlertTriangle, FileText, Truck, BookOpen, Headphones,
   Settings, CreditCard, LogOut,
   ShieldAlert, Clock, CheckCircle2,
-  ClipboardCheck, Menu,
+  ClipboardCheck, Menu, Package,
 } from "lucide-react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 
@@ -55,18 +55,18 @@ interface Notification {
   time: string;
 }
 
-/** 카테고리별 아이콘 + tint 매핑 */
+/** 카테고리별 아이콘 + 컬러 + 배경색 매핑 */
 const CATEGORY_CONFIG: Record<
   NotificationCategory,
-  { icon: React.ElementType; tint: string; unreadTint: string }
+  { icon: React.ElementType; tint: string; unreadTint: string; bg: string; unreadBg: string; label: string }
 > = {
-  stock_alert:       { icon: AlertTriangle, tint: "text-slate-500", unreadTint: "text-red-400" },
-  quote_arrived:     { icon: FileText,      tint: "text-slate-500", unreadTint: "text-blue-400" },
-  delivery_complete: { icon: Truck,         tint: "text-slate-500", unreadTint: "text-blue-400" },
-  approval_pending:  { icon: ClipboardCheck,tint: "text-slate-500", unreadTint: "text-blue-400" },
-  expiry_warning:    { icon: Clock,         tint: "text-slate-500", unreadTint: "text-amber-400" },
-  safety_alert:      { icon: ShieldAlert,   tint: "text-slate-500", unreadTint: "text-amber-400" },
-  system:            { icon: Bell,          tint: "text-slate-500", unreadTint: "text-slate-600" },
+  stock_alert:       { icon: AlertTriangle,  tint: "text-slate-400", unreadTint: "text-red-500",    bg: "bg-slate-100", unreadBg: "bg-red-50",    label: "재고" },
+  quote_arrived:     { icon: FileText,       tint: "text-slate-400", unreadTint: "text-blue-500",   bg: "bg-slate-100", unreadBg: "bg-blue-50",   label: "견적" },
+  delivery_complete: { icon: Package,        tint: "text-slate-400", unreadTint: "text-emerald-500",bg: "bg-slate-100", unreadBg: "bg-emerald-50", label: "입고" },
+  approval_pending:  { icon: ClipboardCheck, tint: "text-slate-400", unreadTint: "text-violet-500", bg: "bg-slate-100", unreadBg: "bg-violet-50",  label: "승인" },
+  expiry_warning:    { icon: Clock,          tint: "text-slate-400", unreadTint: "text-amber-500",  bg: "bg-slate-100", unreadBg: "bg-amber-50",   label: "만료" },
+  safety_alert:      { icon: ShieldAlert,    tint: "text-slate-400", unreadTint: "text-orange-500", bg: "bg-slate-100", unreadBg: "bg-orange-50",  label: "안전" },
+  system:            { icon: Bell,           tint: "text-slate-400", unreadTint: "text-slate-600",  bg: "bg-slate-100", unreadBg: "bg-slate-100",  label: "시스템" },
 };
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
@@ -201,12 +201,17 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
     router.push(notification.href);
   };
 
-  /** 알림 카테고리 아이콘 (bare, unread시 tint 적용) */
+  /** 알림 카테고리 아이콘 (둥근 배경 박스 + 카테고리별 색상) */
   const renderCategoryIcon = (category: NotificationCategory, isRead: boolean) => {
     const config = CATEGORY_CONFIG[category];
     const Icon = config.icon;
     const color = isRead ? config.tint : config.unreadTint;
-    return <Icon className={`h-4 w-4 flex-shrink-0 ${color}`} />;
+    const bg = isRead ? config.bg : config.unreadBg;
+    return (
+      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-lg ${bg} flex-shrink-0`}>
+        <Icon className={`h-4 w-4 ${color}`} strokeWidth={2} />
+      </span>
+    );
   };
 
   return (
@@ -270,7 +275,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </Button>
 
 
-          {/* 알림 드롭다운 — 이벤트 피드 */}
+          {/* 알림 드롭다운 — 이벤트 피드 (고도화) */}
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
             <DropdownMenuTrigger asChild>
               <Button
@@ -281,17 +286,23 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500" />
+                  <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center h-[18px] min-w-[18px] px-1 text-[10px] font-bold rounded-full bg-blue-600 text-white ring-2 ring-white">
+                    {unreadCount}
+                  </span>
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[360px] p-0 !bg-white shadow-xl shadow-slate-200/50 border border-slate-200 ring-1 ring-slate-100">
+            <DropdownMenuContent
+              align="end"
+              className="w-[380px] p-0 !bg-white shadow-2xl shadow-slate-300/40 border border-slate-200 rounded-xl overflow-hidden"
+              sideOffset={8}
+            >
               {/* 헤더 */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-slate-900">알림</span>
+              <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 bg-slate-50/50">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm font-bold text-slate-900">알림</span>
                   {unreadCount > 0 && (
-                    <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[11px] font-semibold rounded-full bg-blue-600 text-white">
+                    <span className="inline-flex items-center justify-center h-5 min-w-[20px] px-1.5 text-[11px] font-bold rounded-full bg-blue-600 text-white">
                       {unreadCount}
                     </span>
                   )}
@@ -300,7 +311,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   <button
                     type="button"
                     onClick={handleMarkAllRead}
-                    className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                    className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
                   >
                     모두 읽음
                   </button>
@@ -308,44 +319,60 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </div>
 
               {/* 알림 목록 */}
-              <div className="max-h-[400px] overflow-y-auto">
+              <div
+                className="max-h-[420px] overflow-y-auto"
+                style={{ scrollbarWidth: "thin", scrollbarColor: "#cbd5e1 transparent" }}
+              >
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <CheckCircle2 className="h-6 w-6 text-slate-500 mx-auto mb-2" />
-                    <p className="text-xs text-slate-500">새 알림이 없습니다</p>
+                  <div className="p-10 text-center">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                      <CheckCircle2 className="h-6 w-6 text-slate-400" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">새 알림이 없습니다</p>
+                    <p className="text-xs text-slate-400 mt-1">모든 알림을 확인했습니다</p>
                   </div>
                 ) : (
-                  notifications.slice(0, 8).map((n) => (
+                  notifications.slice(0, 8).map((n, idx) => (
                     <button
                       key={n.id}
                       type="button"
                       onClick={() => handleNotificationClick(n)}
-                      className="w-full text-left flex items-start gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
+                      className={`w-full text-left flex items-start gap-3 px-5 py-3.5 transition-colors relative
+                        ${!n.read ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50"}
+                        ${idx < notifications.slice(0, 8).length - 1 ? "border-b border-slate-100" : ""}
+                      `}
                     >
-                      {/* unread 파란 점 */}
-                      <div className="flex items-center gap-2 pt-0.5">
-                        {!n.read ? (
-                          <span className="w-1.5 h-1.5 bg-blue-500 rounded-full flex-shrink-0" />
-                        ) : (
-                          <span className="w-1.5 h-1.5 flex-shrink-0" />
-                        )}
-                        {renderCategoryIcon(n.category, n.read)}
+                      {/* 카테고리 아이콘 박스 */}
+                      {renderCategoryIcon(n.category, n.read)}
+
+                      {/* 텍스트 영역 */}
+                      <div className="flex-1 min-w-0 pt-0.5">
+                        <p className={`text-[13px] leading-snug line-clamp-2 ${n.read ? "text-slate-500" : "text-slate-900 font-medium"}`}>
+                          {n.text}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${!n.read ? CATEGORY_CONFIG[n.category].unreadBg + " " + CATEGORY_CONFIG[n.category].unreadTint : "bg-slate-100 text-slate-400"}`}>
+                            {CATEGORY_CONFIG[n.category].label}
+                          </span>
+                          <span className="text-[11px] text-slate-400">{n.time}</span>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-xs leading-snug line-clamp-2 ${n.read ? "text-slate-500" : "text-slate-900"}`}>{n.text}</p>
-                        <span className="text-[11px] text-slate-500 mt-0.5 block">{n.time}</span>
-                      </div>
+
+                      {/* 미독 파란 점 */}
+                      {!n.read && (
+                        <span className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                      )}
                     </button>
                   ))
                 )}
               </div>
 
               {/* 푸터 */}
-              <div className="border-t border-slate-200 px-4 py-2.5 text-center">
+              <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-3 text-center">
                 <Link
                   href="/dashboard/notifications"
                   onClick={() => setIsNotificationOpen(false)}
-                  className="text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                  className="text-xs font-semibold text-slate-500 hover:text-blue-600 transition-colors"
                 >
                   전체 알림 보기
                 </Link>
