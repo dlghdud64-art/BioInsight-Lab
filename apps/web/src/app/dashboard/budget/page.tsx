@@ -11,87 +11,96 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Calendar, Loader2, Search, ChevronRight, ArrowUpRight, ShieldAlert, Sparkles, ArrowRight, AlertTriangle, CheckCircle2, Clock, Beaker, RefreshCw } from "lucide-react";
+import {
+  Plus, Calendar, Loader2, Search, ChevronRight, ArrowUpRight,
+  ShieldAlert, Sparkles, AlertTriangle, CheckCircle2, Clock,
+  Beaker, RefreshCw, FileText, Download, TrendingUp, Info,
+} from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useToast } from "@/hooks/use-toast";
 import { usePermission } from "@/hooks/use-permission";
 import Link from "next/link";
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+} from "recharts";
+import {
+  useBudgetStore,
+  deriveBudgetControl,
+  generateMonthlyData,
+  aggregateDepartments,
+  type Budget,
+  type BudgetControl,
+  type BudgetWithControl,
+  type DepartmentSpending,
+} from "@/lib/store/budget-store";
 
-interface Budget {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  periodStart: string;
-  periodEnd: string;
-  organizationId?: string | null;
-  targetDepartment?: string | null;
-  projectName?: string | null;
-  description?: string | null;
-  usage?: {
-    totalSpent: number;
-    usageRate: number;
-    remaining: number;
-  };
-}
-
-// ── 예산 통제 파생 계산 (mock: reserved/committed는 서버 연동 전 spent 기반 추정) ──
-function deriveBudgetControl(b: Budget) {
-  const total = b.amount;
-  const actual = b.usage?.totalSpent ?? 0;
-  // 서버 연동 전 mock: reserved/committed는 0 (chain 연결 후 실데이터로 교체)
-  const reserved = 0;
-  const committed = 0;
-  const available = Math.max(total - reserved - committed - actual, 0);
-  const burnRate = total > 0 ? ((reserved + committed + actual) / total) * 100 : 0;
-
-  const now = new Date();
-  const start = new Date(b.periodStart);
-  const end = new Date(b.periodEnd);
-
-  let risk: "safe" | "warning" | "critical" | "over" | "ended" | "upcoming" = "safe";
-  if (now > end) risk = "ended";
-  else if (now < start) risk = "upcoming";
-  else if (burnRate > 100) risk = "over";
-  else if (burnRate >= 80) risk = "critical";
-  else if (burnRate >= 60) risk = "warning";
-
-  return { total, reserved, committed, actual, available, burnRate, risk };
-}
-
-const RISK_CONFIG: Record<string, { label: string; color: string; bgColor: string; borderColor: string }> = {
-  safe: { label: "정상", color: "text-emerald-400", bgColor: "bg-emerald-600/10", borderColor: "border-emerald-600/30" },
-  warning: { label: "주의", color: "text-amber-400", bgColor: "bg-amber-600/10", borderColor: "border-amber-600/30" },
-  critical: { label: "경고", color: "text-orange-400", bgColor: "bg-orange-600/10", borderColor: "border-orange-600/30" },
-  over: { label: "초과", color: "text-red-400", bgColor: "bg-red-600/10", borderColor: "border-red-600/30" },
-  ended: { label: "종료", color: "text-slate-500", bgColor: "bg-slate-600/5", borderColor: "border-slate-600/20" },
-  upcoming: { label: "예정", color: "text-blue-400", bgColor: "bg-blue-600/10", borderColor: "border-blue-600/30" },
+// ── Risk config ──
+const RISK_CONFIG: Record<string, { label: string; color: string; dotColor: string; barColor: string }> = {
+  safe:     { label: "정상", color: "text-emerald-600", dotColor: "bg-emerald-500", barColor: "bg-emerald-500" },
+  warning:  { label: "주의", color: "text-amber-600",   dotColor: "bg-amber-500",   barColor: "bg-amber-500" },
+  critical: { label: "소과", color: "text-orange-600",  dotColor: "bg-orange-500",  barColor: "bg-orange-500" },
+  over:     { label: "초과", color: "text-red-600",     dotColor: "bg-red-500",     barColor: "bg-red-500" },
+  ended:    { label: "종료", color: "text-slate-500",   dotColor: "bg-slate-400",   barColor: "bg-slate-400" },
+  upcoming: { label: "예정", color: "text-blue-600",    dotColor: "bg-blue-500",    barColor: "bg-blue-500" },
 };
 
-// Radix UI SelectItem은 value=""를 허용하지 않음 - placeholder는 SelectValue에서 처리
-const BUDGET_DEPARTMENT_OPTIONS: { value: string; label: string }[] = [
+const BUDGET_DEPARTMENT_OPTIONS = [
+  { value: "연구 본부", label: "연구 본부" },
+  { value: "공통 관리팀", label: "공통 관리팀" },
+  { value: "바이오 산학협", label: "바이오 산학협" },
   { value: "공정개발팀", label: "공정개발팀" },
   { value: "기초연구팀", label: "기초연구팀" },
   { value: "품질관리(QC)팀", label: "품질관리(QC)팀" },
   { value: "전체(공용 예산)", label: "전체(공용 예산)" },
 ];
 
-const INITIAL_BUDGETS: Budget[] = [];
+/** 한국 원화 표기: ₩12,000,000원 */
+function formatWon(n: number): string {
+  return `₩${n.toLocaleString("ko-KR")}원`;
+}
+
+/** 짧은 원화 표기 (KPI 등) */
+function formatWonShort(n: number): string {
+  if (n === 0) return "0원";
+  if (n >= 100_000_000) return `₩${(n / 100_000_000).toFixed(1)}억원`;
+  if (n >= 10_000) return `₩${(n / 10_000).toFixed(0)}만원`;
+  return `₩${n.toLocaleString("ko-KR")}원`;
+}
+
+// ── Chart custom tooltip ──
+function ChartTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-white border border-slate-200 shadow-lg rounded-lg px-3 py-2 text-xs">
+      <p className="font-medium text-slate-700 mb-1">{label}</p>
+      {payload.map((p: any) => (
+        <div key={p.dataKey} className="flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full" style={{ background: p.color }} />
+          <span className="text-slate-500">{p.dataKey === "actual" ? "실제 지출" : "예산 한도"}</span>
+          <span className="font-medium text-slate-700 ml-auto tabular-nums">
+            {formatWonShort(p.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function BudgetPage() {
   const { status } = useSession();
   const { toast } = useToast();
   const router = useRouter();
+  const { organizationId: activeOrgId } = usePermission();
+
+  // Zustand store
+  const { budgets, isFetching, searchQuery, setBudgets, setIsFetching, setSearchQuery } = useBudgetStore();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
-  const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const [isFetching, setIsFetching] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const { can, organizationId: activeOrgId, isAdminOrOwner: canEditBudget } = usePermission();
 
-  /** 예산 목록 서버에서 불러오기 (silent: true 시 로딩 UI 없이 백그라운드 갱신) */
+  // ── Fetch budgets ──
   const fetchBudgets = useCallback(async (silent = false) => {
     try {
       if (!silent) setIsFetching(true);
@@ -105,35 +114,88 @@ export default function BudgetPage() {
     } finally {
       if (!silent) setIsFetching(false);
     }
-  }, []);
+  }, [setBudgets, setIsFetching]);
 
   useEffect(() => {
     fetchBudgets();
   }, [fetchBudgets]);
 
-  // ── 통제 summary 파생 ──
-  const controlSummary = useMemo(() => {
-    const controls = budgets.map((b) => ({ budget: b, ctrl: deriveBudgetControl(b) }));
-    const active = controls.filter((c) => c.ctrl.risk !== "ended" && c.ctrl.risk !== "upcoming");
-    const atThreshold = controls.filter((c) => c.ctrl.risk === "warning" || c.ctrl.risk === "critical");
-    const overBudget = controls.filter((c) => c.ctrl.risk === "over");
-    const totalBudget = controls.reduce((s, c) => s + c.ctrl.total, 0);
-    const totalActual = controls.reduce((s, c) => s + c.ctrl.actual, 0);
-    const totalAvailable = controls.reduce((s, c) => s + c.ctrl.available, 0);
-    return { controls, active, atThreshold, overBudget, totalBudget, totalActual, totalAvailable };
-  }, [budgets]);
+  // ── Derived state ──
+  const controls: BudgetWithControl[] = useMemo(
+    () => budgets.map((b: Budget) => ({ budget: b, ctrl: deriveBudgetControl(b) })),
+    [budgets],
+  );
 
   const filteredControls = useMemo(() => {
-    if (!searchQuery.trim()) return controlSummary.controls;
+    if (!searchQuery.trim()) return controls;
     const q = searchQuery.toLowerCase();
-    return controlSummary.controls.filter((c) =>
-      c.budget.name.toLowerCase().includes(q) ||
-      c.budget.targetDepartment?.toLowerCase().includes(q) ||
-      c.budget.projectName?.toLowerCase().includes(q)
+    return controls.filter(
+      (c: BudgetWithControl) =>
+        c.budget.name.toLowerCase().includes(q) ||
+        c.budget.targetDepartment?.toLowerCase().includes(q) ||
+        c.budget.projectName?.toLowerCase().includes(q),
     );
-  }, [controlSummary.controls, searchQuery]);
+  }, [controls, searchQuery]);
 
-  /** 예산 추가/수정: API 호출 + 로컬 상태 반영 */
+  const actionKpi = useMemo(() => {
+    const immediateReview = controls.filter((c: BudgetWithControl) => c.ctrl.risk === "over").length;
+    const blockRisk = controls.filter(
+      (c: BudgetWithControl) => c.ctrl.risk === "warning" || c.ctrl.risk === "critical",
+    ).length;
+    const pendingApproval = controls.filter(
+      (c: BudgetWithControl) => c.ctrl.reserved > 0 && (c.ctrl.risk === "warning" || c.ctrl.risk === "critical"),
+    ).length;
+    const altSavings = controls.reduce((sum: number, c: BudgetWithControl) => {
+      if (c.ctrl.risk === "warning" || c.ctrl.risk === "critical" || c.ctrl.risk === "over") {
+        return sum + Math.round(c.ctrl.actual * 0.15);
+      }
+      return sum;
+    }, 0);
+    const weeklyBurn = controls.reduce((s: number, c: BudgetWithControl) => s + c.ctrl.actual, 0) > 0
+      ? Math.round(controls.reduce((s: number, c: BudgetWithControl) => s + c.ctrl.actual, 0) / 4)
+      : 0;
+    return { immediateReview, blockRisk, pendingApproval, altSavings, weeklyBurn };
+  }, [controls]);
+
+  // ── Chart data ──
+  const monthlyData = useMemo(() => generateMonthlyData(budgets), [budgets]);
+  const departmentTop3 = useMemo(() => aggregateDepartments(budgets), [budgets]);
+
+  // ── AI Insight mock ──
+  const aiInsights = useMemo(() => {
+    const insights: { icon: string; title: string; description: string; actionLabel: string; actionHref: string; color: string }[] = [];
+    const overBudgets = controls.filter((c: BudgetWithControl) => c.ctrl.risk === "over" || c.ctrl.risk === "critical");
+    if (overBudgets.length > 0) {
+      const b = overBudgets[0].budget;
+      insights.push({
+        icon: "⚠️",
+        title: "이상 지출 감지",
+        description: `"${b.name}"의 소모품 지출이 지난 3개월 평균 대비 42% 급증했습니다. 대량 발주 여부를 확인하세요.`,
+        actionLabel: "상세 분석 보기",
+        actionHref: `/dashboard/budget/${b.id}`,
+        color: "text-amber-600",
+      });
+    }
+    insights.push({
+      icon: "📉",
+      title: "절감 기회 포착",
+      description: "현재 진행 중인 5개 프로젝트의 공통 시약(PBS, Ethanol)을 통합 발주할 경우, 연간 약 ₩1.2M의 절감이 가능합니다.",
+      actionLabel: "통합 발주 제안서 확인",
+      actionHref: "/dashboard/purchases",
+      color: "text-emerald-600",
+    });
+    insights.push({
+      icon: "📊",
+      title: "소진 시점 예측",
+      description: `현재 소진 속도 유지 시, 상반기 예산은 약 2주차에 조기 소진될 것으로 예측됩니다.`,
+      actionLabel: "예산 재배정 시뮬레이션",
+      actionHref: "/dashboard/budget",
+      color: "text-red-600",
+    });
+    return insights;
+  }, [controls]);
+
+  // ── Budget CRUD ──
   const handleAddBudget = async (formData: {
     name: string;
     amount: number;
@@ -146,9 +208,8 @@ export default function BudgetPage() {
   }) => {
     setIsSubmitting(true);
     setSubmitError(null);
-
     try {
-      const cleanAmount = typeof formData.amount === 'string'
+      const cleanAmount = typeof formData.amount === "string"
         ? Number(String(formData.amount).replace(/[^0-9]/g, ""))
         : formData.amount;
 
@@ -156,208 +217,82 @@ export default function BudgetPage() {
       const url = isEdit ? `/api/budgets/${editingBudget!.id}` : "/api/budgets";
       const method = isEdit ? "PATCH" : "POST";
       const body = isEdit
-        ? {
-            name: formData.name,
-            amount: cleanAmount,
-            currency: formData.currency,
-            periodStart: formData.periodStart,
-            periodEnd: formData.periodEnd,
-            projectName: formData.projectName ?? null,
-            description: formData.description ?? null,
-          }
-        : {
-            name: formData.name,
-            amount: cleanAmount,
-            currency: formData.currency,
-            periodStart: formData.periodStart,
-            periodEnd: formData.periodEnd,
-            projectName: formData.projectName,
-            description: formData.description,
-            organizationId: activeOrgId,
-          };
+        ? { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName ?? null, description: formData.description ?? null }
+        : { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName, description: formData.description, targetDepartment: formData.targetDepartment, organizationId: activeOrgId };
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
-
       if (!res.ok) {
-        const message =
-          (json as any)?.error ||
-          (json as any)?.details ||
-          "예산 반영 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.";
-        console.error("[BudgetPage] Failed to save budget:", json);
-        setSubmitError(message);
+        setSubmitError((json as any)?.error || "예산 반영 중 오류가 발생했습니다.");
         return;
       }
 
-      const apiBudget = (json as any).budget;
-
-      const mappedBudget: Budget = {
-        id: apiBudget?.id ?? String(Date.now()),
-        name: apiBudget?.name ?? formData.name ?? "신규 예산",
-        amount: apiBudget?.amount ?? formData.amount ?? 0,
-        currency: apiBudget?.currency ?? formData.currency ?? "KRW",
-        periodStart: apiBudget?.periodStart ?? formData.periodStart,
-        periodEnd: apiBudget?.periodEnd ?? formData.periodEnd,
-        targetDepartment: formData.targetDepartment ?? null,
-        projectName: apiBudget?.projectName ?? formData.projectName ?? null,
-        description: apiBudget?.description ?? formData.description ?? null,
-        usage: {
-          totalSpent: 0,
-          usageRate: 0,
-          remaining: apiBudget?.amount ?? formData.amount ?? 0,
-        },
-      };
-
-      if (editingBudget) {
-        setBudgets((prev) =>
-          prev.map((b) =>
-            b.id === editingBudget.id
-              ? { ...mappedBudget, usage: editingBudget.usage }
-              : b
-          )
-        );
-        setIsDialogOpen(false);
-        setEditingBudget(null);
+      setIsDialogOpen(false);
+      setEditingBudget(null);
+      if (isEdit) {
         toast({ title: "예산이 수정되었습니다." });
-        fetchBudgets(true);
-        router.refresh();
       } else {
-        setBudgets((prev) => [mappedBudget, ...prev]);
-        setIsDialogOpen(false);
-        setEditingBudget(null);
-        const newId = apiBudget?.id;
+        const newId = (json as any)?.budget?.id;
         if (newId) {
           router.push(`/dashboard/budget/${newId}`);
-        } else {
-          toast({ title: "새 예산이 성공적으로 등록되었습니다." });
-          await fetchBudgets();
+          return;
         }
+        toast({ title: "새 예산이 등록되었습니다." });
       }
-    } catch (error) {
-      console.error("[BudgetPage] Unexpected error while saving budget:", error);
-      setSubmitError(
-        "통신이 일시적으로 원활하지 않습니다. 입력 내용을 보존했습니다. 잠시 후 다시 시도해주세요."
-      );
+      await fetchBudgets();
+    } catch {
+      setSubmitError("통신 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDeleteBudget = (id: string) => {
-    setBudgets((prev) => prev.filter((b) => b.id !== id));
-    toast({ title: "예산이 삭제되었습니다." });
-  };
-
-  const formatK = (n: number) => {
-    if (n >= 1_000_000) return `₩${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `₩${(n / 1_000).toFixed(0)}K`;
-    return `₩${n.toLocaleString("ko-KR")}`;
-  };
-
+  // ── Loading state ──
   if (status === "loading") {
     return (
-      <div className="w-full px-4 md:px-6 py-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">로딩 중...</p>
-          </div>
+      <div className="w-full px-4 md:px-6 py-12">
+        <div className="max-w-7xl mx-auto text-center">
+          <Loader2 className="h-6 w-6 animate-spin mx-auto text-slate-400 mb-2" />
+          <p className="text-sm text-slate-500">로딩 중...</p>
         </div>
       </div>
     );
   }
 
-  // ── 위험/검토 큐 항목 파생 ──
-  const riskQueue = useMemo(() => {
-    const items: { id: string; label: string; detail: string; severity: "critical" | "warning" | "info"; href: string }[] = [];
-    for (const { budget: b, ctrl } of controlSummary.controls) {
-      if (ctrl.risk === "over") {
-        items.push({ id: `over-${b.id}`, label: `${b.name} — 예산 초과`, detail: `소진율 ${Math.round(ctrl.burnRate)}%, 가용 ${formatK(ctrl.available)}`, severity: "critical", href: `/dashboard/budget/${b.id}` });
-      } else if (ctrl.risk === "critical") {
-        items.push({ id: `crit-${b.id}`, label: `${b.name} — 임계 구간`, detail: `소진율 ${Math.round(ctrl.burnRate)}%, 잔여 ${formatK(ctrl.available)}`, severity: "warning", href: `/dashboard/budget/${b.id}` });
-      } else if (ctrl.risk === "warning") {
-        items.push({ id: `warn-${b.id}`, label: `${b.name} — 주의 구간`, detail: `소진율 ${Math.round(ctrl.burnRate)}%`, severity: "info", href: `/dashboard/budget/${b.id}` });
-      }
-    }
-    return items;
-  }, [controlSummary.controls, formatK]);
-
-  // ── AI tri-option mock: 초과/임계 항목에 대해 3가지 결정 옵션 생성 ──
-  const aiDecisionOptions = useMemo(() => {
-    const options: Record<string, { proceed: { label: string; impact: string; risk: string }; alternative: { label: string; impact: string; risk: string }; escalate: { label: string; impact: string; risk: string } }> = {};
-    for (const { budget: b, ctrl } of controlSummary.controls) {
-      if (ctrl.risk === "over" || ctrl.risk === "critical" || ctrl.risk === "warning") {
-        const overAmount = Math.max(ctrl.actual + ctrl.reserved + ctrl.committed - ctrl.total, 0);
-        options[b.id] = {
-          proceed: {
-            label: "그대로 진행",
-            impact: ctrl.risk === "over" ? `초과 ${formatK(overAmount)} 발생` : `잔액 ${formatK(ctrl.available)} 소진 예상`,
-            risk: ctrl.risk === "over" ? "실험 지연 없음, 예산 초과 확정" : "일주일 내 임계치 도달 가능",
-          },
-          alternative: {
-            label: "대체 시약으로 절감",
-            impact: `예상 절감 ${formatK(Math.round(ctrl.actual * 0.15))}`,
-            risk: "납기 1~3일 추가, 동등 순도 확인 필요",
-          },
-          escalate: {
-            label: "승인 요청으로 예외 처리",
-            impact: "초과분 별도 승인 경로로 분리",
-            risk: "승인 소요 1~2 영업일, 실험 일정 조정 필요",
-          },
-        };
-      }
-    }
-    return options;
-  }, [controlSummary.controls]);
-
-  // ── 행동형 KPI 파생 ──
-  const actionKpi = useMemo(() => {
-    const immediateReview = controlSummary.overBudget.length;
-    const blockRisk = controlSummary.atThreshold.length;
-    const pendingApproval = controlSummary.controls.filter(c => c.ctrl.reserved > 0 && (c.ctrl.risk === "warning" || c.ctrl.risk === "critical")).length;
-    const altSavings = controlSummary.controls.reduce((sum, c) => {
-      if (c.ctrl.risk === "warning" || c.ctrl.risk === "critical" || c.ctrl.risk === "over") {
-        return sum + Math.round(c.ctrl.actual * 0.15);
-      }
-      return sum;
-    }, 0);
-    const weeklyBurn = controlSummary.totalActual > 0 ? Math.round(controlSummary.totalActual / 4) : 0;
-    return { immediateReview, blockRisk, pendingApproval, altSavings, weeklyBurn };
-  }, [controlSummary]);
-
   return (
-    <div className="min-h-screen bg-sh">
-      {/* ═══ Fix 1: Decision Header — 운영 문장 기반 ═══ */}
-      <div className="shrink-0 border-b border-bd bg-pg">
+    <div className="min-h-screen bg-slate-50">
+      {/* ═══ Header ═══ */}
+      <div className="border-b border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+          {/* Breadcrumbs */}
+          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-3">
+            <Link href="/dashboard" className="hover:text-slate-600">대시보드</Link>
+            <ChevronRight className="h-3 w-3" />
+            <span className="text-slate-700 font-medium">예산 관리</span>
+          </div>
+
           <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 mb-1.5">
-                <ShieldAlert className="h-4 w-4 text-blue-400 shrink-0" />
-                <h1 className="text-sm font-bold text-slate-900">예산 통제 워크벤치</h1>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h1 className="text-lg font-bold text-slate-900">예산 통제 워크벤치</h1>
+                <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-medium hover:bg-violet-100 transition-colors">
+                  <Sparkles className="h-3 w-3" />
+                  AI 분석 생성
+                </button>
               </div>
-              {!isFetching && budgets.length > 0 ? (
-                <p className="text-xs text-slate-400 leading-relaxed">
-                  {actionKpi.immediateReview > 0
-                    ? `초과 위험 ${actionKpi.immediateReview}건을 즉시 확인하고, 차단 대상 요청을 정리하세요.`
-                    : actionKpi.blockRisk > 0
-                    ? `임계 구간 ${actionKpi.blockRisk}건이 있습니다. 이번 주 소진 예상 ${formatK(actionKpi.weeklyBurn)}을 기준으로 요청 우선순위를 조정하세요.`
-                    : `이번 달 발주 가능 예산 ${formatK(controlSummary.totalAvailable)}을 확인하고, 요청 전 차단 항목을 정리하세요.`
-                  }
-                </p>
-              ) : !isFetching ? (
-                <p className="text-xs text-slate-400">예산을 등록하면 요청·견적·발주 흐름에서 초과 위험을 사전에 차단할 수 있습니다.</p>
-              ) : null}
+              <p className="text-xs text-slate-500 mt-1">
+                이번 달 발주 가능 예산을 확인하고, 지출 일정을 관리하세요.
+              </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" size="sm" className="h-8 text-xs border-slate-200">
+                <Download className="h-3.5 w-3.5 mr-1.5" />
+                보고서 내보내기
+              </Button>
               <Dialog open={isDialogOpen} onOpenChange={(open: boolean) => { setIsDialogOpen(open); if (!open) { setEditingBudget(null); setSubmitError(null); } }}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => setEditingBudget(null)} size="sm" className="h-7 text-xs bg-blue-600 hover:bg-blue-700">
-                    <Plus className="h-3 w-3 mr-1" />예산 등록
+                  <Button onClick={() => setEditingBudget(null)} size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -371,7 +306,7 @@ export default function BudgetPage() {
                     isSubmitting={isSubmitting}
                     submitError={submitError}
                     onClearSubmitError={() => setSubmitError(null)}
-                    onSubmit={(data) => handleAddBudget(data)}
+                    onSubmit={handleAddBudget}
                     onCancel={() => { setIsDialogOpen(false); setEditingBudget(null); }}
                   />
                 </DialogContent>
@@ -381,196 +316,167 @@ export default function BudgetPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-5">
+        {/* ═══ KPI Strip ═══ */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {[
+            {
+              icon: <AlertTriangle className="h-4 w-4" />,
+              iconColor: actionKpi.immediateReview > 0 ? "text-red-500 bg-red-50" : "text-slate-400 bg-slate-100",
+              label: "즉시 확인",
+              value: `${actionKpi.immediateReview}건`,
+              sub: actionKpi.immediateReview > 0 ? "초과 항목 검토 필요" : "초과 항목 없음",
+            },
+            {
+              icon: <Clock className="h-4 w-4" />,
+              iconColor: actionKpi.blockRisk > 0 ? "text-amber-500 bg-amber-50" : "text-slate-400 bg-slate-100",
+              label: "차단 위험",
+              value: `${actionKpi.blockRisk}건`,
+              sub: actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전",
+            },
+            {
+              icon: <CheckCircle2 className="h-4 w-4" />,
+              iconColor: actionKpi.pendingApproval > 0 ? "text-blue-500 bg-blue-50" : "text-slate-400 bg-slate-100",
+              label: "승인 대기",
+              value: `${actionKpi.pendingApproval}건`,
+              sub: "임계 구간 내 예약 건",
+            },
+            {
+              icon: <TrendingUp className="h-4 w-4" />,
+              iconColor: actionKpi.altSavings > 0 ? "text-emerald-500 bg-emerald-50" : "text-slate-400 bg-slate-100",
+              label: "절감 가능",
+              value: formatWonShort(actionKpi.altSavings),
+              sub: actionKpi.altSavings > 0 ? "절감 대상 감지" : "절감 대상 없음",
+            },
+            {
+              icon: <RefreshCw className="h-4 w-4" />,
+              iconColor: "text-slate-400 bg-slate-100",
+              label: "주간 소진",
+              value: formatWonShort(actionKpi.weeklyBurn),
+              sub: "최근 4주 평균 기준",
+            },
+          ].map((kpi) => (
+            <div key={kpi.label} className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition-shadow">
+              <div className="flex items-center gap-2 mb-2">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.iconColor}`}>
+                  {kpi.icon}
+                </div>
+              </div>
+              <p className="text-[11px] text-slate-500 mb-0.5">{kpi.label}</p>
+              <p className="text-xl font-bold text-slate-900 tabular-nums">{kpi.value}</p>
+              <p className="text-[10px] text-slate-400 mt-1">{kpi.sub}</p>
+            </div>
+          ))}
+        </div>
 
-        {/* ═══ Fix 3: 행동형 KPI Strip ═══ */}
-        {!isFetching && budgets.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-            {/* 즉시 확인 필요 */}
-            <div className={`rounded-md border p-3.5 ${actionKpi.immediateReview > 0 ? "border-amber-600/40 bg-amber-950/20" : "border-bd bg-pn"}`}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <AlertTriangle className={`h-3 w-3 ${actionKpi.immediateReview > 0 ? "text-amber-400" : "text-slate-500"}`} />
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">즉시 확인</p>
+        {/* ═══ Chart + Department TOP 3 ═══ */}
+        {budgets.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
+            {/* 월별 지출 추이 */}
+            <div className="lg:col-span-3 bg-white rounded-xl border border-slate-200 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-sm font-semibold text-slate-900">월별 지출 추이 (AI 예측 포함)</h2>
+                  <p className="text-[11px] text-slate-400 mt-0.5">최근 6개월간의 실적 지출량과 예산 한도를 비교합니다.</p>
+                </div>
+                <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> 실제 지출</span>
+                  <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-slate-300 inline-block" /> 예산 한도</span>
+                </div>
               </div>
-              <p className={`text-lg font-bold tabular-nums ${actionKpi.immediateReview > 0 ? "text-amber-300" : "text-slate-900"}`}>{actionKpi.immediateReview}건</p>
-              <p className="text-[10px] text-slate-500 mt-1">{actionKpi.immediateReview > 0 ? "예산 초과 — 요청 차단 중" : "초과 항목 없음"}</p>
-            </div>
-            {/* 요청 차단 위험 */}
-            <div className={`rounded-md border p-3.5 ${actionKpi.blockRisk > 0 ? "border-amber-600/30 bg-amber-950/10" : "border-bd bg-pn"}`}>
-              <div className="flex items-center gap-1.5 mb-1">
-                <Clock className={`h-3 w-3 ${actionKpi.blockRisk > 0 ? "text-amber-400" : "text-slate-500"}`} />
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">차단 위험</p>
+              <div className="h-52">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={monthlyData} margin={{ top: 5, right: 5, left: -10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="month" tick={{ fontSize: 11, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} tickFormatter={(v) => v >= 1_000_000 ? `₩${(v / 1_000_000).toFixed(0)}M` : `₩${(v / 1_000).toFixed(0)}K`} />
+                    <Tooltip content={<ChartTooltip />} />
+                    <Area type="monotone" dataKey="budget" stroke="#cbd5e1" strokeWidth={1.5} strokeDasharray="4 4" fill="none" dot={false} />
+                    <Area type="monotone" dataKey="actual" stroke="#3b82f6" strokeWidth={2} fill="url(#colorActual)" dot={{ r: 3, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }} activeDot={{ r: 5, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }} />
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <p className="text-lg font-bold text-slate-900 tabular-nums">{actionKpi.blockRisk}건</p>
-              <p className="text-[10px] text-slate-500 mt-1">{actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전"}</p>
             </div>
-            {/* 승인 대기 예산 */}
-            <div className="rounded-md border border-bd bg-pn p-3.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <CheckCircle2 className="h-3 w-3 text-slate-500" />
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">승인 대기</p>
-              </div>
-              <p className="text-lg font-bold text-slate-900 tabular-nums">{actionKpi.pendingApproval}건</p>
-              <p className="text-[10px] text-slate-500 mt-1">임계 구간 내 예약 건</p>
-            </div>
-            {/* 대체 가능 절감액 */}
-            <div className="rounded-md border border-bd bg-pn p-3.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <Beaker className="h-3 w-3 text-emerald-500/70" />
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">절감 가능</p>
-              </div>
-              <p className="text-lg font-bold text-slate-900 tabular-nums">{formatK(actionKpi.altSavings)}</p>
-              <p className="text-[10px] text-slate-500 mt-1">{actionKpi.altSavings > 0 ? "대체 시약 전환 시 예상" : "절감 대상 없음"}</p>
-            </div>
-            {/* 이번 주 소진 예상 */}
-            <div className="rounded-md border border-bd bg-pn p-3.5">
-              <div className="flex items-center gap-1.5 mb-1">
-                <RefreshCw className="h-3 w-3 text-slate-500" />
-                <p className="text-[10px] uppercase tracking-wider text-slate-500">주간 소진</p>
-              </div>
-              <p className="text-lg font-bold text-slate-900 tabular-nums">{formatK(actionKpi.weeklyBurn)}</p>
-              <p className="text-[10px] text-slate-500 mt-1">최근 4주 평균 기준</p>
-            </div>
-          </div>
-        )}
 
-        {/* ═══ Fix 2: 운영 흐름 연결 상태 — policy layer ═══ */}
-        {!isFetching && budgets.length > 0 && (controlSummary.overBudget.length > 0 || controlSummary.atThreshold.length > 0) && (
-          <div className="rounded-lg border border-bd bg-pn overflow-hidden">
-            <div className="px-4 py-3 border-b border-bd flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                <p className="text-xs font-semibold text-slate-700">운영 흐름 영향 분석</p>
-              </div>
-              <span className="text-[10px] text-slate-500">AI 분석 기준 — 실시간 예산 상태</span>
-            </div>
-            <div className="divide-y divide-bd">
-              {riskQueue.map((item) => {
-                const budgetEntry = controlSummary.controls.find(c =>
-                  item.id.includes(c.budget.id)
-                );
-                const aiOpts = budgetEntry ? aiDecisionOptions[budgetEntry.budget.id] : null;
-                return (
-                  <div key={item.id} className="px-4 py-3">
-                    <div className="flex items-center gap-3 mb-2.5">
-                      <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        item.severity === "critical" ? "bg-amber-400" : item.severity === "warning" ? "bg-amber-400/60" : "bg-slate-400"
-                      }`} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium text-slate-700 truncate">{item.label}</p>
-                        <p className="text-[10px] text-slate-500">{item.detail}</p>
-                      </div>
-                      <Link href={item.href} className="text-[10px] text-blue-400 font-medium flex items-center gap-0.5 shrink-0">
-                        상세 <ChevronRight className="h-3 w-3" />
-                      </Link>
-                    </div>
-                    {/* ═══ Fix 4: AI tri-option decision support ═══ */}
-                    {aiOpts && (
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 ml-4">
-                        <button className="text-left rounded border border-bd bg-sh hover:bg-el/30 px-3 py-2.5 transition-colors group">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <ArrowRight className="h-3 w-3 text-slate-400 group-hover:text-slate-700" />
-                            <span className="text-[10px] font-semibold text-slate-600">{aiOpts.proceed.label}</span>
+            {/* 부서별 예산 소진 TOP 3 + AI Insight */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="bg-white rounded-xl border border-slate-200 p-5">
+                <h2 className="text-sm font-semibold text-slate-900 mb-3">부서별 예산 소진 TOP 3</h2>
+                {departmentTop3.length > 0 ? (
+                  <div className="space-y-3">
+                    {departmentTop3.map((dept: DepartmentSpending) => {
+                      const barColor = dept.rate > 100 ? "bg-red-500" : dept.rate >= 80 ? "bg-amber-500" : "bg-emerald-500";
+                      return (
+                        <div key={dept.department}>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs text-slate-700 font-medium">{dept.department}</span>
+                            <span className={`text-xs font-bold tabular-nums ${dept.rate > 100 ? "text-red-600" : dept.rate >= 80 ? "text-amber-600" : "text-emerald-600"}`}>{dept.rate}%</span>
                           </div>
-                          <p className="text-[10px] text-slate-400 mb-0.5">{aiOpts.proceed.impact}</p>
-                          <p className="text-[10px] text-slate-500">{aiOpts.proceed.risk}</p>
-                        </button>
-                        <button className="text-left rounded border border-emerald-700/30 bg-emerald-950/10 hover:bg-emerald-950/20 px-3 py-2.5 transition-colors group">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Beaker className="h-3 w-3 text-emerald-400/70 group-hover:text-emerald-300" />
-                            <span className="text-[10px] font-semibold text-slate-600">{aiOpts.alternative.label}</span>
+                          <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+                            <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${Math.min(dept.rate, 100)}%` }} />
                           </div>
-                          <p className="text-[10px] text-emerald-400/70 mb-0.5">{aiOpts.alternative.impact}</p>
-                          <p className="text-[10px] text-slate-500">{aiOpts.alternative.risk}</p>
-                        </button>
-                        <button className="text-left rounded border border-blue-700/30 bg-blue-950/10 hover:bg-blue-950/20 px-3 py-2.5 transition-colors group">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <ShieldAlert className="h-3 w-3 text-blue-400/70 group-hover:text-blue-300" />
-                            <span className="text-[10px] font-semibold text-slate-600">{aiOpts.escalate.label}</span>
-                          </div>
-                          <p className="text-[10px] text-blue-400/70 mb-0.5">{aiOpts.escalate.impact}</p>
-                          <p className="text-[10px] text-slate-500">{aiOpts.escalate.risk}</p>
-                        </button>
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
+                ) : (
+                  <p className="text-xs text-slate-400">예산 데이터가 부족합니다.</p>
+                )}
+              </div>
+
+              <div className="bg-white rounded-xl border border-slate-200 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Sparkles className="h-4 w-4 text-violet-500" />
+                  <h3 className="text-xs font-semibold text-slate-700">AI 인사이트</h3>
+                </div>
+                <p className="text-[11px] text-slate-500 leading-relaxed">
+                  총합 판단한 소진 속도가 이례적으로 빠릅니다. 견적 비교 시 대체 시약을 함께 확인하세요.
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* ═══ Search ═══ */}
+        {/* ═══ Search Bar ═══ */}
         {budgets.length > 0 && (
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="예산명, 부서, 프로젝트로 검색..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded border border-bd bg-pn text-slate-700 placeholder:text-slate-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20"
+                className="w-full pl-10 pr-4 py-2.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </div>
-            <Link href="/dashboard/purchases" className="shrink-0">
-              <span className="text-[10px] text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1">
-                미매핑 요청 보기 <ArrowUpRight className="h-3 w-3" />
+            <Link href="/dashboard/purchases">
+              <span className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1 whitespace-nowrap">
+                미매핑 요청 보기 <ArrowUpRight className="h-3.5 w-3.5" />
               </span>
             </Link>
           </div>
         )}
 
-        {/* ═══ Content ═══ */}
+        {/* ═══ Budget Table ═══ */}
         {isFetching ? (
           <div className="space-y-2">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-16 rounded border border-bd animate-pulse bg-pn" />
+              <div key={i} className="h-16 rounded-lg border border-slate-200 animate-pulse bg-white" />
             ))}
           </div>
         ) : budgets.length === 0 ? (
-          /* ── Guided Empty State — 운영형 ── */
-          <div className="rounded-lg border border-bd bg-pn">
-            <div className="px-6 py-12 text-center">
-              <ShieldAlert className="h-10 w-10 mx-auto text-slate-500 mb-4" />
-              <p className="text-sm font-semibold text-slate-700 mb-1.5">예산이 아직 등록되지 않았습니다</p>
-              <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed mb-6">
-                예산을 등록하면 요청·견적·발주 흐름에서 예산 초과 여부를 사전에 확인하고,
-                임계치에 도달하면 자동으로 경고합니다. 팀/프로젝트별 예산을 만들고 구매 요청과 연결하세요.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={() => { setEditingBudget(null); setIsDialogOpen(true); }}>
-                  <Plus className="h-3.5 w-3.5 mr-1.5" />첫 예산 풀 만들기
-                </Button>
-                <Link href="/dashboard/purchases">
-                  <Button size="sm" variant="outline" className="border-bd text-slate-600 bg-transparent hover:bg-el">
-                    구매 요청과 예산 연결
-                  </Button>
-                </Link>
-              </div>
-            </div>
-            <div className="border-t border-bd px-6 py-4">
-              <p className="text-[10px] uppercase tracking-wider text-slate-500 mb-2.5">예산 등록 후 가능한 통제</p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="text-xs text-slate-400">
-                  <span className="font-medium text-slate-600">요청 차단</span>
-                  <span className="block mt-0.5 text-[10px] text-slate-500">예산 잔액 부족 시 요청 단계에서 자동 차단</span>
-                </div>
-                <div className="text-xs text-slate-400">
-                  <span className="font-medium text-slate-600">AI 대체 제안</span>
-                  <span className="block mt-0.5 text-[10px] text-slate-500">초과 위험 시 대체 시약·절감 옵션 자동 분석</span>
-                </div>
-                <div className="text-xs text-slate-400">
-                  <span className="font-medium text-slate-600">승인 라우팅</span>
-                  <span className="block mt-0.5 text-[10px] text-slate-500">임계치 도달 시 예외 승인 경로로 자동 분기</span>
-                </div>
-              </div>
-            </div>
-          </div>
+          <EmptyState onCreateClick={() => { setEditingBudget(null); setIsDialogOpen(true); }} />
         ) : (
-          /* ═══ Fix 5: Budget Impact Queue — 운영 건 중심 테이블 ═══ */
-          <div className="rounded-lg border border-bd overflow-hidden bg-pn">
-            <div className="hidden md:grid grid-cols-[1fr_100px_90px_80px_70px_100px_40px] gap-px px-4 py-2 border-b border-bd text-[10px] uppercase tracking-wider text-slate-500 bg-el/40">
+          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+            {/* Header */}
+            <div className="hidden md:grid grid-cols-[1fr_120px_110px_80px_60px_100px_40px] gap-2 px-5 py-3 border-b border-slate-100 text-[11px] uppercase tracking-wider text-slate-400 font-medium bg-slate-50/60">
               <span>예산 · 프로젝트/실험</span>
               <span className="text-right">현재 비용</span>
               <span className="text-right">가용 잔액</span>
@@ -579,35 +485,28 @@ export default function BudgetPage() {
               <span className="text-center">다음 행동</span>
               <span />
             </div>
-            {filteredControls.map(({ budget: b, ctrl }) => {
+            {/* Rows */}
+            {filteredControls.map(({ budget: b, ctrl }: BudgetWithControl) => {
               const riskCfg = RISK_CONFIG[ctrl.risk];
-              const hasAiOption = !!aiDecisionOptions[b.id];
-              const nextAction = ctrl.risk === "over" ? "초과 검토"
-                : ctrl.risk === "critical" ? "잔액 점검"
+              const nextAction =
+                ctrl.risk === "over" ? "지출 차단 체제 필요"
+                : ctrl.risk === "critical" ? "예산 증액 검토"
                 : ctrl.risk === "warning" ? "추이 확인"
                 : "상세 보기";
-              // 소진율 바 색상 — Fix 6: amber caution, muted green, brand blue
-              const burnBarColor = ctrl.risk === "over" ? "bg-amber-500"
-                : ctrl.risk === "critical" ? "bg-amber-400"
-                : ctrl.risk === "warning" ? "bg-amber-300/70"
-                : "bg-emerald-500/50";
+              const barColor = ctrl.risk === "over" ? "bg-red-500"
+                : ctrl.risk === "critical" ? "bg-orange-500"
+                : ctrl.risk === "warning" ? "bg-amber-400"
+                : "bg-emerald-500";
               return (
-                <Link
-                  key={b.id}
-                  href={`/dashboard/budget/${b.id}`}
-                  className="block border-b border-bd last:border-b-0 hover:bg-el/20 transition-colors"
-                >
+                <Link key={b.id} href={`/dashboard/budget/${b.id}`} className="block border-b border-slate-100 last:border-b-0 hover:bg-slate-50 transition-colors">
                   {/* Desktop */}
-                  <div className="hidden md:grid grid-cols-[1fr_100px_90px_80px_70px_100px_40px] gap-px items-center px-4 py-3">
+                  <div className="hidden md:grid grid-cols-[1fr_120px_110px_80px_60px_100px_40px] gap-2 items-center px-5 py-3.5">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          ctrl.risk === "over" ? "bg-amber-400" : ctrl.risk === "critical" ? "bg-amber-400/70" : ctrl.risk === "warning" ? "bg-amber-300/50" : ctrl.risk === "safe" ? "bg-emerald-400/50" : "bg-slate-500"
-                        }`} />
-                        <span className="text-xs font-medium text-slate-700 truncate">{b.name}</span>
-                        {hasAiOption && <Sparkles className="h-2.5 w-2.5 text-blue-400/60 shrink-0" />}
+                      <div className="flex items-center gap-2">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${riskCfg.dotColor}`} />
+                        <span className="text-sm font-medium text-slate-800 truncate">{b.name}</span>
                       </div>
-                      <div className="text-[10px] text-slate-500 truncate mt-0.5 ml-3">
+                      <div className="text-[11px] text-slate-500 truncate mt-0.5 ml-4">
                         {b.targetDepartment || "부서 미지정"}
                         {b.projectName && <> · <span className="text-slate-400">{b.projectName}</span></>}
                         {" · "}
@@ -617,89 +516,105 @@ export default function BudgetPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs text-slate-700 tabular-nums">{formatK(ctrl.actual)}</p>
-                      <p className="text-[10px] text-slate-500">/ {formatK(ctrl.total)}</p>
+                      <p className="text-sm font-semibold text-slate-800 tabular-nums">{formatWon(ctrl.actual)}</p>
+                      <p className="text-[10px] text-slate-400">/ {formatWon(ctrl.total)}</p>
                     </div>
-                    <div className="text-xs text-slate-700 text-right tabular-nums font-medium">{formatK(ctrl.available)}</div>
+                    <div className="text-sm text-slate-800 text-right tabular-nums font-medium">{formatWon(ctrl.available)}</div>
                     <div className="text-center">
-                      <div className="inline-flex items-center">
-                        <div className="w-10 h-1.5 rounded-full bg-sh overflow-hidden">
-                          <div className={`h-full rounded-full ${burnBarColor}`} style={{ width: `${Math.min(ctrl.burnRate, 100)}%` }} />
+                      <div className="inline-flex items-center gap-1.5">
+                        <div className="w-10 h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                          <div className={`h-full rounded-full ${barColor}`} style={{ width: `${Math.min(ctrl.burnRate, 100)}%` }} />
                         </div>
-                        <span className="text-[10px] text-slate-400 ml-1.5 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
+                        <span className="text-[10px] text-slate-500 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
                       </div>
                     </div>
                     <div className="text-center">
-                      <span className={`text-[10px] font-medium ${riskCfg.color}`}>{riskCfg.label}</span>
+                      <span className={`text-[11px] font-semibold ${riskCfg.color}`}>{riskCfg.label}</span>
                     </div>
                     <div className="text-center">
-                      <span className="text-[10px] text-blue-400 font-medium">{nextAction}</span>
+                      <span className="text-[11px] text-blue-600 font-medium">{nextAction}</span>
                     </div>
                     <div className="flex justify-end">
-                      <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+                      <ChevronRight className="h-4 w-4 text-slate-400" />
                     </div>
                   </div>
                   {/* Mobile */}
-                  <div className="md:hidden px-4 py-3">
+                  <div className="md:hidden px-4 py-3.5">
                     <div className="flex items-center justify-between mb-1.5">
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                          ctrl.risk === "over" ? "bg-amber-400" : ctrl.risk === "critical" ? "bg-amber-400/70" : ctrl.risk === "warning" ? "bg-amber-300/50" : "bg-emerald-400/50"
-                        }`} />
-                        <span className="text-xs font-medium text-slate-700 truncate">{b.name}</span>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className={`w-2 h-2 rounded-full shrink-0 ${riskCfg.dotColor}`} />
+                        <span className="text-sm font-medium text-slate-800 truncate">{b.name}</span>
                       </div>
-                      <span className={`text-[10px] font-medium shrink-0 ${riskCfg.color}`}>{riskCfg.label}</span>
+                      <span className={`text-[11px] font-semibold shrink-0 ${riskCfg.color}`}>{riskCfg.label}</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mb-2 ml-3">
+                    <div className="text-[11px] text-slate-500 mb-2 ml-4">
                       {b.targetDepartment || "부서 미지정"}{b.projectName && ` · ${b.projectName}`}
                     </div>
-                    <div className="flex items-center justify-between ml-3">
-                      <div className="flex items-center gap-3 text-[10px]">
-                        <span className="text-slate-400">집행 <span className="text-slate-700 tabular-nums">{formatK(ctrl.actual)}</span></span>
-                        <span className="text-slate-400">가용 <span className="text-slate-700 tabular-nums">{formatK(ctrl.available)}</span></span>
-                        <span className="text-slate-400 tabular-nums">{Math.round(ctrl.burnRate)}%</span>
+                    <div className="flex items-center justify-between ml-4 text-[11px]">
+                      <div className="flex items-center gap-3">
+                        <span className="text-slate-400">비용 <span className="text-slate-700 font-medium tabular-nums">{formatWon(ctrl.actual)}</span></span>
+                        <span className="text-slate-400">가용 <span className="text-slate-700 font-medium tabular-nums">{formatWon(ctrl.available)}</span></span>
                       </div>
-                      <span className="text-[10px] text-blue-400 font-medium">{nextAction}</span>
+                      <span className="text-blue-600 font-medium">{nextAction}</span>
                     </div>
                   </div>
                 </Link>
               );
             })}
-            {filteredControls.length === 0 && budgets.length > 0 && (
-              <div className="px-4 py-8 text-center text-xs text-slate-500">
-                검색 조건에 맞는 예산이 없습니다
-              </div>
+            {filteredControls.length === 0 && (
+              <div className="px-5 py-10 text-center text-sm text-slate-400">검색 조건에 맞는 예산이 없습니다</div>
             )}
           </div>
         )}
 
-        {/* ═══ 운영 흐름 바로가기 — 예산이 제어하는 surface ═══ */}
+        {/* ═══ Bottom Summary Strip ═══ */}
         {!isFetching && budgets.length > 0 && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Link href="/dashboard/purchases" className="block">
-              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
-                <p className="text-[10px] text-slate-600 font-medium">미매핑 요청</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">예산 미연결 요청 확인</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { label: "미매핑 요청", count: 0, sub: "예산 미연결 요청 확인", href: "/dashboard/purchases" },
+              { label: "초과 위험 감지", count: actionKpi.blockRisk + actionKpi.immediateReview, sub: "임계 구간 · 초과 건 검토", href: "/dashboard/budget" },
+              { label: "승인 대기", count: actionKpi.pendingApproval, sub: "예산 초과분 승인 요청", href: "/dashboard/purchases" },
+              { label: "발주 전환 대기", count: controls.filter((c: BudgetWithControl) => c.ctrl.risk === "safe").length, sub: "예산 확인 완료 건", href: "/dashboard/quotes" },
+            ].map((item) => (
+              <Link key={item.label} href={item.href} className="block">
+                <div className="bg-white rounded-xl border border-slate-200 px-4 py-4 hover:shadow-sm transition-shadow">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-slate-700">{item.label}</p>
+                    <span className="text-lg font-bold text-slate-900 tabular-nums">{item.count}건</span>
+                  </div>
+                  <p className="text-[11px] text-slate-400">{item.sub}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* ═══ AI 예산 이상 탐지 & 예측 ═══ */}
+        {!isFetching && budgets.length > 0 && (
+          <div className="bg-gradient-to-r from-slate-800 via-slate-900 to-slate-800 rounded-2xl p-6 text-white">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                <Sparkles className="h-5 w-5 text-amber-400" />
               </div>
-            </Link>
-            <Link href="/dashboard/quotes" className="block">
-              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
-                <p className="text-[10px] text-slate-600 font-medium">초과 위험 견적</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">임계 구간 견적 검토</p>
+              <div>
+                <h2 className="text-sm font-bold">AI 예산 이상 탐지 &amp; 예측</h2>
+                <p className="text-[11px] text-white/60">과거 지출 패턴을 분석하여 미래 예산 부족 위험을 사전에 경고합니다.</p>
               </div>
-            </Link>
-            <Link href="/dashboard/purchases" className="block">
-              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
-                <p className="text-[10px] text-slate-600 font-medium">승인 대기</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">예산 초과분 승인 요청</p>
-              </div>
-            </Link>
-            <Link href="/dashboard/quotes" className="block">
-              <div className="rounded border border-bd bg-el/30 hover:bg-el/50 px-3 py-2.5 transition-colors">
-                <p className="text-[10px] text-slate-600 font-medium">발주 전환 대기</p>
-                <p className="text-[10px] text-slate-500 mt-0.5">예산 확인 완료 건</p>
-              </div>
-            </Link>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {aiInsights.map((insight, i) => (
+                <div key={i} className="bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition-colors">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-base">{insight.icon}</span>
+                    <h3 className="text-xs font-semibold text-white">{insight.title}</h3>
+                  </div>
+                  <p className="text-[11px] text-white/70 leading-relaxed mb-3">{insight.description}</p>
+                  <Link href={insight.actionHref} className="inline-flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 font-medium">
+                    {insight.actionLabel} <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
@@ -708,9 +623,51 @@ export default function BudgetPage() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Budget Form (unchanged logic, only extracted for readability)
+// Empty State
 // ═══════════════════════════════════════════════════════════════════
+function EmptyState({ onCreateClick }: { onCreateClick: () => void }) {
+  return (
+    <div className="bg-white rounded-xl border border-slate-200">
+      <div className="px-6 py-12 text-center">
+        <ShieldAlert className="h-10 w-10 mx-auto text-slate-300 mb-4" />
+        <p className="text-base font-semibold text-slate-700 mb-1.5">예산이 아직 등록되지 않았습니다</p>
+        <p className="text-sm text-slate-500 max-w-lg mx-auto leading-relaxed mb-6">
+          예산을 등록하면 요청·견적·발주 흐름에서 예산 초과 여부를 사전에 확인하고,
+          임계치에 도달하면 자동으로 경고합니다.
+        </p>
+        <div className="flex items-center justify-center gap-3">
+          <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={onCreateClick}>
+            <Plus className="h-3.5 w-3.5 mr-1.5" />첫 예산 풀 만들기
+          </Button>
+          <Link href="/dashboard/purchases">
+            <Button size="sm" variant="outline">구매 요청과 예산 연결</Button>
+          </Link>
+        </div>
+      </div>
+      <div className="border-t border-slate-100 px-6 py-4">
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-3">예산 등록 후 가능한 통제</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="text-xs">
+            <span className="font-medium text-slate-700">요청 차단</span>
+            <span className="block mt-0.5 text-[11px] text-slate-400">예산 잔액 부족 시 요청 단계에서 자동 차단</span>
+          </div>
+          <div className="text-xs">
+            <span className="font-medium text-slate-700">AI 대체 제안</span>
+            <span className="block mt-0.5 text-[11px] text-slate-400">초과 위험 시 대체 시약·절감 옵션 자동 분석</span>
+          </div>
+          <div className="text-xs">
+            <span className="font-medium text-slate-700">승인 라우팅</span>
+            <span className="block mt-0.5 text-[11px] text-slate-400">임계치 도달 시 예외 승인 경로로 자동 분기</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
+// ═══════════════════════════════════════════════════════════════════
+// Budget Form
+// ═══════════════════════════════════════════════════════════════════
 function BudgetForm({
   budget,
   isSubmitting = false,
@@ -764,20 +721,6 @@ function BudgetForm({
     }
   };
 
-  const handlePeriodStartChange = (date: Date | undefined) => {
-    if (!date) { setPeriodStart(null); return; }
-    setPeriodStart(date);
-    if (periodEnd && date > periodEnd) setErrors((prev) => ({ ...prev, periodStart: "시작일은 종료일보다 이전이어야 합니다." }));
-    else setErrors((prev) => ({ ...prev, periodStart: "" }));
-  };
-
-  const handlePeriodEndChange = (date: Date | undefined) => {
-    if (!date) { setPeriodEnd(null); return; }
-    setPeriodEnd(date);
-    if (periodStart && date < periodStart) setErrors((prev) => ({ ...prev, periodEnd: "종료일은 시작일보다 이후여야 합니다." }));
-    else setErrors((prev) => ({ ...prev, periodEnd: "" }));
-  };
-
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!name.trim()) newErrors.name = "예산 이름을 입력해주세요.";
@@ -819,7 +762,7 @@ function BudgetForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="name">예산 이름 *</Label>
-        <Input id="name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: "" })); }} placeholder="예: 2024년 R&D 예산" required className={errors.name ? "border-red-500" : ""} />
+        <Input id="name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: "" })); }} placeholder="예: 2026 상반기 시약비" required className={errors.name ? "border-red-500" : ""} />
         {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -847,28 +790,28 @@ function BudgetForm({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <Label htmlFor="periodStart">기간 시작 *</Label>
-          <DatePicker date={periodStart || undefined} onDateChange={handlePeriodStartChange} placeholder="날짜를 선택하세요" maxDate={periodEnd || undefined} className={errors.periodStart ? "border-red-500" : ""} />
+          <DatePicker date={periodStart || undefined} onDateChange={(d: Date | undefined) => setPeriodStart(d || null)} placeholder="날짜를 선택하세요" maxDate={periodEnd || undefined} className={errors.periodStart ? "border-red-500" : ""} />
           {errors.periodStart && <p className="text-xs text-red-500 mt-1">{errors.periodStart}</p>}
         </div>
         <div>
           <Label htmlFor="periodEnd">기간 종료 *</Label>
-          <DatePicker date={periodEnd || undefined} onDateChange={handlePeriodEndChange} placeholder="날짜를 선택하세요" minDate={periodStart || undefined} className={errors.periodEnd ? "border-red-500" : ""} />
+          <DatePicker date={periodEnd || undefined} onDateChange={(d: Date | undefined) => setPeriodEnd(d || null)} placeholder="날짜를 선택하세요" minDate={periodStart || undefined} className={errors.periodEnd ? "border-red-500" : ""} />
           {errors.periodEnd && <p className="text-xs text-red-500 mt-1">{errors.periodEnd}</p>}
         </div>
       </div>
       {periodStart && periodEnd && (
-        <div className="p-3 bg-pg rounded-lg text-xs text-muted-foreground">
+        <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
           <Calendar className="h-3 w-3 inline mr-1" />
           예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")} ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
         </div>
       )}
-      <div className="space-y-2">
+      <div>
         <Label htmlFor="targetDepartment">대상 부서/팀 <span className="text-red-500">*</span></Label>
         <Select value={targetDepartment} onValueChange={(v: string) => { setTargetDepartment(v); if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" })); }}>
-          <SelectTrigger id="targetDepartment" className={errors.targetDepartment ? "border-red-500" : ""}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
+          <SelectTrigger className={errors.targetDepartment ? "border-red-500" : ""}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
           <SelectContent>
             {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value || "empty"} value={opt.value}>{opt.label}</SelectItem>
+              <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -883,13 +826,13 @@ function BudgetForm({
         <Textarea id="description" value={description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} placeholder="예산에 대한 추가 설명" rows={3} className="resize-none" />
       </div>
       {submitError && (
-        <div className="rounded-md border border-red-200 border-red-800 bg-red-50 bg-pn px-3 py-2">
-          <p className="text-xs text-red-600 text-red-400">{submitError}</p>
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
+          <p className="text-xs text-red-600">{submitError}</p>
         </div>
       )}
       <div className="flex flex-col sm:flex-row gap-2 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>취소</Button>
-        <Button type="submit" className="flex-1" disabled={isSubmitting}>
+        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
           {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />{budget ? "수정 중..." : "저장 중..."}</>) : (budget ? "예산 수정 저장" : "예산안 저장")}
         </Button>
       </div>
