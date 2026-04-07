@@ -22,6 +22,7 @@ import {
   CreditCard,
   PieChart,
   Home,
+  Sparkles,
 } from "lucide-react";
 
 interface NavItem {
@@ -65,6 +66,12 @@ const sidebarGroups: SidebarGroup[] = [
   {
     label: "구매 및 예산 (PURCHASE)",
     items: [
+      {
+        title: "스마트 소싱",
+        href: "/dashboard/smart-sourcing",
+        icon: Sparkles,
+        badge: "AI",
+      },
       {
         title: "견적 관리",
         href: "/dashboard/quotes",
@@ -139,20 +146,21 @@ const dashboardLinks = [
   },
 ];
 
-// 사이드바 아이콘 색상 매핑 (active = 밝은 tint, inactive = 약한 tint)
+// 사이드바 아이콘 색상 매핑 (active = 선명 tint, inactive = 부드러운 muted)
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
-  "/dashboard":              { active: "text-cyan-600",   inactive: "text-cyan-500/70" },
-  "/dashboard/analytics":    { active: "text-cyan-600",   inactive: "text-cyan-500/70" },
-  "/dashboard/quotes":       { active: "text-blue-600",   inactive: "text-blue-400/70" },
-  "/dashboard/purchases":    { active: "text-blue-600",   inactive: "text-blue-400/70" },
-  "/dashboard/reports":      { active: "text-blue-600",   inactive: "text-blue-400/70" },
-  "/dashboard/budget":       { active: "text-blue-600",   inactive: "text-blue-400/70" },
-  "/dashboard/inventory":    { active: "text-teal-600",   inactive: "text-teal-400/70" },
-  "/dashboard/organizations":{ active: "text-violet-600", inactive: "text-violet-400/70" },
-  "/dashboard/safety":       { active: "text-amber-600",  inactive: "text-amber-400/70" },
-  "/dashboard/settings":     { active: "text-slate-700",  inactive: "text-slate-400" },
-  "/dashboard/activity-logs":{ active: "text-slate-700",  inactive: "text-slate-400" },
-  "/dashboard/audit":        { active: "text-slate-700",  inactive: "text-slate-400" },
+  "/dashboard":              { active: "text-blue-600",    inactive: "text-slate-400" },
+  "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-slate-400" },
+  "/dashboard/smart-sourcing":{ active: "text-violet-600",  inactive: "text-slate-400" },
+  "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-slate-400" },
+  "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-slate-400" },
+  "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-slate-400" },
+  "/dashboard/budget":       { active: "text-blue-600",    inactive: "text-slate-400" },
+  "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-slate-400" },
+  "/dashboard/organizations":{ active: "text-indigo-600",  inactive: "text-slate-400" },
+  "/dashboard/safety":       { active: "text-orange-500",  inactive: "text-slate-400" },
+  "/dashboard/settings":     { active: "text-slate-600",   inactive: "text-slate-400" },
+  "/dashboard/activity-logs":{ active: "text-slate-600",   inactive: "text-slate-400" },
+  "/dashboard/audit":        { active: "text-slate-600",   inactive: "text-slate-400" },
 };
 
 interface DashboardSidebarProps {
