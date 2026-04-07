@@ -30,13 +30,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "GOOGLE_GEMINI_API_KEY가 설정되지 않았습니다." },
-        { status: 503 },
-      );
-    }
-
     const userId = session.user.id;
 
     // 워크스페이스 멤버십 조회
@@ -110,24 +103,39 @@ export async function POST() {
         })),
     };
 
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: `${ANALYSIS_PROMPT}\n\n데이터:\n${JSON.stringify(dataPayload, null, 2)}` },
-          ],
-        },
-      ],
-      config: {
-        temperature: 0.3,
-        maxOutputTokens: 600,
-      },
-    });
+    let summary: string;
 
-    const summary = response.text ?? "분석 결과를 생성하지 못했습니다.";
+    if (!GEMINI_API_KEY) {
+      // 로컬 fallback 분석
+      const topVendor = dataPayload.vendors[0];
+      const topCategory = dataPayload.categories[0];
+      const lines: string[] = [];
+      lines.push(`최근 90일간 총 ${purchases.length}건, ${totalAmount.toLocaleString()}원 지출.`);
+      if (topVendor) lines.push(`최다 공급사: ${topVendor.name} (${topVendor.pct}%, ${topVendor.amount.toLocaleString()}원).`);
+      if (topCategory) lines.push(`주요 카테고리: ${topCategory.name} (${topCategory.pct}%).`);
+      if (dataPayload.recentHighSpend.length > 0) {
+        lines.push(`고액 지출 ${dataPayload.recentHighSpend.length}건 감지 — 담당자 확인을 권장합니다.`);
+      }
+      summary = lines.join(" ");
+    } else {
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              { text: `${ANALYSIS_PROMPT}\n\n데이터:\n${JSON.stringify(dataPayload, null, 2)}` },
+            ],
+          },
+        ],
+        config: {
+          temperature: 0.3,
+          maxOutputTokens: 600,
+        },
+      });
+      summary = response.text ?? "분석 결과를 생성하지 못했습니다.";
+    }
 
     return NextResponse.json({
       summary,

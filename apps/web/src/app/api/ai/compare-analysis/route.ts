@@ -76,15 +76,32 @@ const SYSTEM_PROMPT = `당신은 바이오/화학 연구실 및 기업의 구매
   ]
 }`;
 
+/** API 키 없을 때 로컬 fallback 분석 */
+function buildLocalAnalysis(products: ProductInput[]) {
+  const cheapest = products.reduce((a, b) =>
+    (a.price ?? Infinity) < (b.price ?? Infinity) ? a : b
+  );
+  const fastest = products.find((p) => p.leadTime?.includes("1") || p.leadTime?.includes("2")) ?? products[0];
+
+  return {
+    aiSummary: `${products.length}개 제품을 비교한 결과, ${cheapest.name}이(가) 가장 경제적이며, ${fastest?.name || cheapest.name}이(가) 납기가 빠를 것으로 추정됩니다. 브랜드별 가격 편차와 납기를 종합 검토하시기 바랍니다.`,
+    scenarios: [
+      { type: "cost_first", title: "비용 우선", description: `${cheapest.name} (${cheapest.brand ?? "미상"})을 중심으로 발주 시 비용을 최소화할 수 있습니다.`, isRecommended: false },
+      { type: "balanced", title: "납기·가격 균형", description: "가격과 납기를 종합 고려하여 균형 있는 공급사 조합을 추천합니다.", isRecommended: true },
+      { type: "speed_first", title: "최단 납기", description: `${fastest?.name || "국내 재고 보유 품목"}을 우선 발주하여 최단 납기를 달성할 수 있습니다.`, isRecommended: false },
+    ],
+    productAnalysis: products.map((p) => ({
+      productId: p.id,
+      estimatedPrice: p.price ? `${p.price.toLocaleString()}원` : "가격 미확인",
+      estimatedDelivery: p.leadTime ?? "납기 미확인",
+      status: "요청 가능" as const,
+      reason: `${p.brand ?? "미상"} 제품 — 견적 요청을 통해 정확한 조건을 확인하세요.`,
+    })),
+  };
+}
+
 export async function POST(req: NextRequest) {
   try {
-    if (!GEMINI_API_KEY) {
-      return NextResponse.json(
-        { error: "GOOGLE_GEMINI_API_KEY가 설정되지 않았습니다." },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
     const { products } = body as { products: ProductInput[] };
 
@@ -97,6 +114,11 @@ export async function POST(req: NextRequest) {
 
     // 최대 5개 제한
     const capped = products.slice(0, 5);
+
+    // API 키 없으면 로컬 fallback
+    if (!GEMINI_API_KEY) {
+      return NextResponse.json({ success: true, data: buildLocalAnalysis(capped), fallback: true });
+    }
 
     const userMessage = `다음 ${capped.length}개 제품을 분석해 주세요:\n${JSON.stringify(
       capped.map((p) => ({
