@@ -371,37 +371,7 @@ function QuotesPageContent() {
   const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
 
-  // ── AI 견적서 비교 실행 ──
-  const runAiQuoteCompare = useCallback(async () => {
-    if (!quotes || quotes.length === 0) return;
-    setAiCompareLoading(true);
-    setAiCompareError(null);
-    setAiCompareResult(null);
-    setAiCompareOpen(true);
-    try {
-      // 비교 가능한 견적에서 공급사별 데이터 추출
-      const quotePayload = quotes
-        .filter((q: Quote) => q.status !== "CANCELLED")
-        .slice(0, 5)
-        .map((q: Quote) => ({
-          vendor: q.items?.[0]?.product?.brand || "미지정 공급사",
-          items: q.items?.map((item) => `${item.product?.name || "품목"} x${item.quantity || 1}`).join(", ") || q.title,
-          rawText: `${q.title} — ${q.items?.length || 0}건 품목`,
-        }));
-      const res = await fetch("/api/ai/quote-compare", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quotes: quotePayload }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "AI 비교 분석 실패");
-      setAiCompareResult(data.data);
-    } catch (err: unknown) {
-      setAiCompareError(err instanceof Error ? err.message : "AI 비교 분석 중 오류 발생");
-    } finally {
-      setAiCompareLoading(false);
-    }
-  }, [quotes]);
+  // ── AI 견적서 비교 실행 — quotes 선언 뒤로 이동 (아래 참조) ──
 
   // ── 견적 발송 성공 후 갱신 ──
   const handleSendSuccess = useCallback(() => {
@@ -485,6 +455,38 @@ function QuotesPageContent() {
   const isFilterChanging = isFetching && !isLoading;
 
   const quotes: Quote[] = quotesData?.quotes || [];
+
+  // ── AI 견적서 비교 실행 ──
+  const runAiQuoteCompare = useCallback(async () => {
+    if (!quotes || quotes.length === 0) return;
+    setAiCompareLoading(true);
+    setAiCompareError(null);
+    setAiCompareResult(null);
+    setAiCompareOpen(true);
+    try {
+      const quotePayload = quotes
+        .filter((q: Quote) => q.status !== "CANCELLED")
+        .slice(0, 5)
+        .map((q: Quote) => ({
+          vendor: (q.items?.[0]?.product as Record<string, unknown>)?.brand as string || q.items?.[0]?.product?.name || "미지정 공급사",
+          items: q.items?.map((item) => `${item.product?.name || "품목"} x${item.quantity || 1}`).join(", ") || q.title,
+          rawText: `${q.title} — ${q.items?.length || 0}건 품목`,
+        }));
+      const res = await fetch("/api/ai/quote-compare", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ quotes: quotePayload }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "AI 비교 분석 실패");
+      setAiCompareResult(data.data);
+    } catch (err: unknown) {
+      setAiCompareError(err instanceof Error ? err.message : "AI 비교 분석 중 오류 발생");
+    } finally {
+      setAiCompareLoading(false);
+    }
+  }, [quotes]);
+
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;

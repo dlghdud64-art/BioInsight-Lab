@@ -214,6 +214,13 @@ export default function QuoteDetailPage() {
     return { blockers, reviewPoints, warnings };
   })();
 
+  // Re-entry context for follow-up (when not yet converted) — commandSurface 보다 먼저 선언 필요
+  const needsFollowup = !isConverted && (hasSubstitute || hasMissingDocs || respondedCount < quoteRequest.vendorIds.length);
+  const reentryCtx = useMemo(
+    () => needsFollowup ? buildQuoteFollowupReentryContext(quoteRequest, responses) : undefined,
+    [quoteRequest, responses, needsFollowup],
+  );
+
   const commandSurface: CommandSurface = useMemo(
     () => {
       const base = buildQuoteCommandSurface({
@@ -237,13 +244,6 @@ export default function QuoteDetailPage() {
   const blockerView = useMemo(
     () => buildQuoteBlockers(quoteRequest, responses, comparison),
     [quoteRequest, responses, comparison],
-  );
-
-  // Re-entry context for follow-up (when not yet converted)
-  const needsFollowup = !isConverted && (hasSubstitute || hasMissingDocs || respondedCount < quoteRequest.vendorIds.length);
-  const reentryCtx = useMemo(
-    () => needsFollowup ? buildQuoteFollowupReentryContext(quoteRequest, responses) : undefined,
-    [quoteRequest, responses, needsFollowup],
   );
 
   const metaRail: MetaRailProps = {
