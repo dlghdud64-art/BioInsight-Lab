@@ -6,7 +6,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -58,14 +57,20 @@ export async function POST(req: NextRequest) {
 
     const userMessage = `다음 ${quotes.length}개 공급업체 견적서를 비교 분석해 주세요:\n${JSON.stringify(quotes, null, 2)}`;
 
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [{ role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + userMessage }] }],
-      config: { temperature: 0.2, maxOutputTokens: 2048 },
-    });
-
-    const rawText = response.text ?? "";
+    let rawText = "";
+    try {
+      const { GoogleGenAI } = await import("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: [{ role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + userMessage }] }],
+        config: { temperature: 0.2, maxOutputTokens: 2048 },
+      });
+      rawText = response.text ?? "";
+    } catch (importErr) {
+      console.warn("[quote-compare] @google/genai 모듈 로드 실패, 로컬 fallback 사용:", importErr);
+      return NextResponse.json({ success: true, data: buildLocalQuoteCompare(quotes), fallback: true });
+    }
     let jsonStr = rawText;
     const jsonMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

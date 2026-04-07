@@ -5,7 +5,6 @@
  * OCR + 파싱을 단일 API 호출로 처리합니다.
  */
 
-import { GoogleGenAI } from "@google/genai";
 import type { LabelParseResult } from "./label-parser";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
@@ -49,6 +48,7 @@ export async function parseWithGemini(imageBase64: string): Promise<LabelParseRe
     throw new Error("GOOGLE_GEMINI_API_KEY 환경변수가 설정되지 않았습니다.");
   }
 
+  const { GoogleGenAI } = await import("@google/genai");
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
   // data URI에서 순수 base64와 mime type 추출

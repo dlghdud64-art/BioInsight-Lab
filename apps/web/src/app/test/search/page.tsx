@@ -122,7 +122,7 @@ export default function SearchPage() {
     grade,
   } = useTestFlow();
   const { getDisplayName: getStoredName } = useCompareStore();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
@@ -216,6 +216,11 @@ export default function SearchPage() {
   })();
 
   const handleProtectedAction = (action: () => void) => {
+    // 세션 로딩 중이면 action 실행 허용 (로딩 완료 후 재검증됨)
+    if (sessionStatus === "loading") {
+      action();
+      return;
+    }
     if (!session?.user) {
       setIsLoginPromptOpen(true);
       return;

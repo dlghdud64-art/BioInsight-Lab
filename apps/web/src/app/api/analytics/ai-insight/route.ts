@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
-import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -118,23 +117,31 @@ export async function POST() {
       }
       summary = lines.join(" ");
     } else {
-      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-      const response = await ai.models.generateContent({
-        model: "gemini-2.0-flash",
-        contents: [
-          {
-            role: "user",
-            parts: [
-              { text: `${ANALYSIS_PROMPT}\n\n데이터:\n${JSON.stringify(dataPayload, null, 2)}` },
-            ],
+      try {
+        const { GoogleGenAI } = await import("@google/genai");
+        const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+        const response = await ai.models.generateContent({
+          model: "gemini-2.0-flash",
+          contents: [
+            {
+              role: "user",
+              parts: [
+                { text: `${ANALYSIS_PROMPT}\n\n데이터:\n${JSON.stringify(dataPayload, null, 2)}` },
+              ],
+            },
+          ],
+          config: {
+            temperature: 0.3,
+            maxOutputTokens: 600,
           },
-        ],
-        config: {
-          temperature: 0.3,
-          maxOutputTokens: 600,
-        },
-      });
-      summary = response.text ?? "분석 결과를 생성하지 못했습니다.";
+        });
+        summary = response.text ?? "분석 결과를 생성하지 못했습니다.";
+      } catch (importErr) {
+        console.warn("[ai-insight] @google/genai 모듈 로드 실패, 로컬 fallback 사용:", importErr);
+        const topVendor = dataPayload.vendors[0];
+        summary = `최근 90일간 총 ${purchases.length}건, ${totalAmount.toLocaleString()}원 지출. 모듈 미설치로 상세 AI 분석은 제공되지 않습니다.`;
+        if (topVendor) summary += ` 최다 공급사: ${topVendor.name} (${topVendor.pct}%).`;
+      }
     }
 
     return NextResponse.json({

@@ -6,7 +6,6 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
 
@@ -134,20 +133,25 @@ export async function POST(req: NextRequest) {
       2
     )}`;
 
-    const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: [
-        { role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + userMessage }] },
-      ],
-      config: {
-        temperature: 0.2,
-        maxOutputTokens: 2048,
-      },
-    });
-
-    const rawText = response.text ?? "";
+    let rawText = "";
+    try {
+      const { GoogleGenAI } = await import("@google/genai");
+      const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.0-flash",
+        contents: [
+          { role: "user", parts: [{ text: SYSTEM_PROMPT + "\n\n" + userMessage }] },
+        ],
+        config: {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+        },
+      });
+      rawText = response.text ?? "";
+    } catch (importErr) {
+      console.warn("[compare-analysis] @google/genai 모듈 로드 실패, 로컬 fallback 사용:", importErr);
+      return NextResponse.json({ success: true, data: buildLocalAnalysis(capped), fallback: true });
+    }
 
     // JSON 추출 (마크다운 코드블록 대응)
     let jsonStr = rawText;
