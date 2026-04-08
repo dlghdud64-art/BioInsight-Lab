@@ -267,6 +267,29 @@ export interface InvalidationRule {
  * 규칙: 각 행은 "source에서 이 이벤트가 나오면, target의 이 범위를 invalidate"
  */
 export const GOVERNANCE_INVALIDATION_RULES: InvalidationRule[] = [
+  // ── Smart Sourcing → Quote Chain (AI 분석 결과 handoff) ──
+  {
+    sourceDomain: "quote_chain",
+    sourceEventTypes: ["comparison_handed_off"],
+    targets: [
+      { targetDomain: "quote_chain", targetStage: "quote_review", scope: "state_transition_check", reason: "AI 견적 비교 결과 → 견적 요청 handoff" },
+    ],
+  },
+  {
+    sourceDomain: "quote_chain",
+    sourceEventTypes: ["bom_registered_to_queue"],
+    targets: [
+      { targetDomain: "quote_chain", targetStage: "quote_review", scope: "surface_only", reason: "BOM 품목 발주 대기열 등록" },
+    ],
+  },
+  {
+    sourceDomain: "quote_chain",
+    sourceEventTypes: ["context_stale_detected"],
+    targets: [
+      { targetDomain: "quote_chain", targetStage: "quote_review", scope: "surface_only", reason: "AI 분석 입력 변경 → 결과 stale" },
+    ],
+  },
+
   // ── Quote/Approval chain → Dispatch ──
   {
     sourceDomain: "quote_chain",

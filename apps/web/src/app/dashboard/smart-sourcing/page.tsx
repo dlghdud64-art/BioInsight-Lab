@@ -52,46 +52,20 @@ import {
   buildBomParseContextHash,
   isResultStale,
 } from "@/lib/ai/smart-sourcing-context-hash";
-
-// ═══════════════════════════════════════════════════════════════
-// Types
-// ═══════════════════════════════════════════════════════════════
-
-type Tab = "multi-vendor" | "bom-sourcing";
-
-interface VendorQuoteInput {
-  id: string;
-  vendorName: string;
-  rawText: string;
-}
-
-interface ComparisonVendor {
-  vendor: string;
-  price: number | string;
-  leadTime: string;
-  shippingFee: number | string;
-}
-
-interface ComparisonResult {
-  comparison: ComparisonVendor[];
-  recommendation: string;
-  negotiationGuide: string;
-}
-
-interface BomItem {
-  name: string;
-  catalogNumber: string | null;
-  quantity: number;
-  unit: string;
-  category: string;
-  estimatedUse: string | null;
-  brand: string | null;
-}
-
-interface BomParseResult {
-  items: BomItem[];
-  summary: string;
-}
+import { useSmartSourcingStore } from "@/lib/store/smart-sourcing-store";
+import type { VendorQuoteInput, ComparisonResult, BomParseResult, BomItem } from "@/lib/store/smart-sourcing-store";
+import {
+  QuoteChainProgressStrip,
+  buildSmartSourcingStripProps,
+  type SmartSourcingHandoffStatus,
+} from "@/components/approval/quote-chain-progress-strip";
+import {
+  emitComparisonCompleted,
+  emitVendorSelected,
+  emitComparisonHandedOff,
+  emitBomParsed,
+  emitBomRegisteredToQueue,
+} from "@/lib/ai/smart-sourcing-invalidation";
 
 // ═══════════════════════════════════════════════════════════════
 // Helpers
@@ -112,21 +86,21 @@ const CATEGORY_MAP: Record<string, { label: string; color: string }> = {
 // ═══════════════════════════════════════════════════════════════
 
 function MultiVendorTab() {
-  const [vendors, setVendors] = useState<VendorQuoteInput[]>([
-    { id: generateId(), vendorName: "", rawText: "" },
-    { id: generateId(), vendorName: "", rawText: "" },
-  ]);
-  const [productName, setProductName] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [result, setResult] = useState<ComparisonResult | null>(null);
+  // G. Zustand store — 핵심 상태를 store에서 관리
+  const {
+    vendors, productName, quantity, isAnalyzing, comparisonResult: result,
+    comparisonHandoff: handoff, resultContextHash,
+    setVendors, setProductName, setQuantity, setIsAnalyzing,
+    setComparisonResult: setResult, setComparisonHandoff: setHandoff,
+    setResultContextHash, addVendor: storeAddVendor,
+    removeVendor: storeRemoveVendor, updateVendor: storeUpdateVendor,
+  } = useSmartSourcingStore();
+
+  // 로컬 UI 상태 (persist 불필요)
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
-  const [handoff, setHandoff] = useState<QuoteComparisonHandoff | null>(null);
   // D. Work Window
   const [workWindowOpen, setWorkWindowOpen] = useState(false);
   const [workWindowPhase, setWorkWindowPhase] = useState<WorkWindowPhase>("ready");
-  // E. Context Hash — 중복 API 호출 방지 + staleness
-  const [resultContextHash, setResultContextHash] = useState<string | null>(null);
 
   const currentContextHash = useMemo(
     () => buildMultiVendorContextHash({ productName, quantity, vendors }),
@@ -139,7 +113,7 @@ function MultiVendorTab() {
       toast.error("최대 5개 공급사까지 비교 가능합니다.");
       return;
     }
-    setVendors((prev) => [...prev, { id: generateId(), vendorName: "", rawText: "" }]);
+    storeAddVendor({ id: generateId(), vendorName: "", rawText: "" });
   };
 
   const removeVendor = (id: string) => {
@@ -147,11 +121,11 @@ function MultiVendorTab() {
       toast.error("최소 2개 공급사가 필요합니다.");
       return;
     }
-    setVendors((prev) => prev.filter((v) => v.id !== id));
+    storeRemoveVendor(id);
   };
 
   const updateVendor = (id: string, field: keyof VendorQuoteInput, value: string) => {
-    setVendors((prev) => prev.map((v) => (v.id === id ? { ...v, [field]: value } : v)));
+    storeUpdateVendor(id, field, value);
   };
 
   const handleAnalyze = useCallback(async () => {
@@ -199,6 +173,8 @@ function MultiVendorTab() {
           json.data.negotiationGuide || "",
         );
         setHandoff(h);
+        // I. Invalidation 이벤트 발행
+        emitComparisonCompleted(h.id, json.data.comparison?.length ?? 0);
         // E. Context Hash 저장
         setResultContextHash(currentContextHash);
         // D. Work Window 열기
@@ -215,7 +191,7 @@ function MultiVendorTab() {
     } finally {
       setIsAnalyzing(false);
     }
-  }, [vendors, productName, result, resultIsStale, currentContextHash]);
+  }, [vendors, productName, result, resultIsStale, currentContextHash, setIsAnalyzing, setResult, setHandoff, setResultContextHash]);
 
   // 결과에서 최저가/최빠른 납기 식별
   const cheapest =
@@ -415,6 +391,15 @@ function MultiVendorTab() {
       {/* ── 분석 결과 (Work Window 내부) ── */}
       {result && (
         <div className="space-y-4">
+          {/* H. ProgressStrip — handoff 상태 시각화 */}
+          {handoff && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5 overflow-x-auto">
+              <QuoteChainProgressStrip
+                {...buildSmartSourcingStripProps(handoff.status as SmartSourcingHandoffStatus)}
+                compact={false}
+              />
+            </div>
+          )}
           {/* F. center/rail 레이아웃 */}
           <div className="flex flex-col lg:flex-row gap-4">
           {/* ── CENTER: 비교 테이블 + 추천 + handoff ── */}
@@ -554,6 +539,8 @@ function MultiVendorTab() {
                             try {
                               const updated = selectVendorInHandoff(handoff, row.vendor, `비교 분석 기반 선정: ${row.vendor}`);
                               setHandoff(updated);
+                              // I. Invalidation 이벤트 발행
+                              emitVendorSelected(handoff.id, row.vendor);
                             } catch (err) {
                               toast.error(String(err));
                             }
@@ -590,6 +577,8 @@ function MultiVendorTab() {
                             try {
                               const executed = executeHandoffToRequest(handoff);
                               setHandoff(executed);
+                              // I. Invalidation 이벤트 발행
+                              emitComparisonHandedOff(executed.id, executed.selectedVendorName ?? "");
                               toast.success(`${executed.selectedVendorName} 공급사로 견적 요청이 전달되었습니다.`);
                             } catch (err) {
                               toast.error(String(err));
@@ -657,14 +646,17 @@ function MultiVendorTab() {
 // ═══════════════════════════════════════════════════════════════
 
 function BomSourcingTab() {
-  const [bomText, setBomText] = useState("");
-  const [isParsing, setIsParsing] = useState(false);
-  const [result, setResult] = useState<BomParseResult | null>(null);
-  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [bomHandoff, setBomHandoff] = useState<BomParseHandoff | null>(null);
-  // E. Context Hash
-  const [bomResultHash, setBomResultHash] = useState<string | null>(null);
+  // G. Zustand store — 핵심 상태를 store에서 관리
+  const {
+    bomText, isParsing, bomResult: result, bomHandoff,
+    bomResultHash, selectedBomItems, isRegistering,
+    setBomText, setIsParsing, setBomResult: setResult,
+    setBomHandoff, setBomResultHash, setSelectedBomItems,
+    toggleBomItem, toggleAllBomItems, setIsRegistering,
+  } = useSmartSourcingStore();
+
+  // Set 인터페이스 호환 (기존 코드와 일관성)
+  const selectedItems = useMemo(() => new Set(selectedBomItems), [selectedBomItems]);
 
   const currentBomHash = useMemo(
     () => buildBomParseContextHash({ bomText }),
@@ -686,7 +678,7 @@ function BomSourcingTab() {
 
     setIsParsing(true);
     setResult(null);
-    setSelectedItems(new Set());
+    setSelectedBomItems([]);
 
     try {
       const res = await fetch("/api/ai/bom-parse", {
@@ -701,10 +693,12 @@ function BomSourcingTab() {
       if (json.success && json.data) {
         setResult(json.data);
         // 기본적으로 모두 선택
-        setSelectedItems(new Set(json.data.items.map((_: BomItem, i: number) => i)));
+        setSelectedBomItems(json.data.items.map((_: BomItem, i: number) => i));
         // Handoff 생성
         const h = buildBomParseHandoff(bomText, json.data.items, json.data.summary || "");
         setBomHandoff(h);
+        // I. Invalidation 이벤트 발행
+        emitBomParsed(h.id, json.data.items.length);
         // E. Context Hash 저장
         setBomResultHash(currentBomHash);
         toast.success(`${json.data.items.length}개 품목이 파싱되었습니다.`);
@@ -717,24 +711,14 @@ function BomSourcingTab() {
     } finally {
       setIsParsing(false);
     }
-  }, [bomText, result, bomResultIsStale, currentBomHash]);
+  }, [bomText, result, bomResultIsStale, currentBomHash, setIsParsing, setResult, setBomHandoff, setBomResultHash, setSelectedBomItems]);
 
   const toggleItem = (idx: number) => {
-    setSelectedItems((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
+    toggleBomItem(idx);
   };
 
   const toggleAll = () => {
-    if (!result) return;
-    if (selectedItems.size === result.items.length) {
-      setSelectedItems(new Set());
-    } else {
-      setSelectedItems(new Set(result.items.map((_, i) => i)));
-    }
+    toggleAllBomItems();
   };
 
   const handleBulkRegister = useCallback(async () => {
@@ -752,7 +736,7 @@ function BomSourcingTab() {
 
     setIsRegistering(true);
     try {
-      const items = Array.from(selectedItems).map((idx) => result.items[idx]);
+      const items = Array.from(selectedItems).map((idx: number) => result.items[idx]);
 
       const res = await fetch("/api/order-queue/bulk", {
         method: "POST",
@@ -774,11 +758,13 @@ function BomSourcingTab() {
       const json = await res.json();
 
       if (json.success) {
-        // Handoff 상태 전이
+        // G. Handoff 상태 전이 → store에 반영
         if (bomHandoff) {
           const confirmed = confirmBomItems(bomHandoff, Array.from(selectedItems));
           const registered = executeRegisterToQueue(confirmed);
           setBomHandoff(registered);
+          // I. Invalidation 이벤트 발행
+          emitBomRegisteredToQueue(registered.id, registered.registeredCount ?? 0);
         }
         toast.success(json.message || `${items.length}개 품목이 발주 대기열에 등록되었습니다.`);
       } else {
@@ -790,7 +776,7 @@ function BomSourcingTab() {
     } finally {
       setIsRegistering(false);
     }
-  }, [result, selectedItems, bomHandoff]);
+  }, [result, selectedItems, bomHandoff, setIsRegistering, setBomHandoff]);
 
   const EXAMPLE_BOM = `Gibco FBS 500ml 2병
 DMEM High Glucose 500ml 3병
@@ -868,6 +854,15 @@ PBS pH 7.4 1L 5병`;
       {/* ── 파싱 결과 ── */}
       {result && (
         <div className="space-y-4">
+          {/* H. ProgressStrip — BOM handoff 상태 시각화 */}
+          {bomHandoff && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5 overflow-x-auto">
+              <QuoteChainProgressStrip
+                {...buildSmartSourcingStripProps(bomHandoff.status as SmartSourcingHandoffStatus)}
+                compact={false}
+              />
+            </div>
+          )}
           {/* 요약 */}
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-600">
@@ -980,9 +975,10 @@ PBS pH 7.4 1L 5병`;
 // ═══════════════════════════════════════════════════════════════
 
 export default function SmartSourcingPage() {
-  const [activeTab, setActiveTab] = useState<Tab>("multi-vendor");
+  // G. Zustand store — 탭 상태도 store에서 관리
+  const { activeTab, setActiveTab } = useSmartSourcingStore();
 
-  const tabs: { key: Tab; label: string; icon: React.ElementType; desc: string }[] = [
+  const tabs: { key: typeof activeTab; label: string; icon: React.ElementType; desc: string }[] = [
     {
       key: "multi-vendor",
       label: "다중 견적 비교",
