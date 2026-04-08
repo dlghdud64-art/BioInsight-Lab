@@ -146,18 +146,20 @@ const dashboardLinks = [
   },
 ];
 
-// 사이드바 아이콘 색상 매핑 (active = 선명 tint, inactive = 부드러운 muted)
+// 사이드바 아이콘 색상 매핑 (active = 선명 tint, inactive = 같은 hue 의 muted 버전)
+// inactive 를 flat slate 로 두면 모든 항목이 회색으로 평평해지므로, active hue 의
+// 400/70 계열을 사용해 색상 정체성은 유지하되 시각 가중치만 낮춘다.
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
-  "/dashboard":              { active: "text-blue-600",    inactive: "text-slate-400" },
-  "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-slate-400" },
-  "/dashboard/smart-sourcing":{ active: "text-violet-600",  inactive: "text-slate-400" },
-  "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-slate-400" },
-  "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-slate-400" },
-  "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-slate-400" },
-  "/dashboard/budget":       { active: "text-blue-600",    inactive: "text-slate-400" },
-  "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-slate-400" },
-  "/dashboard/organizations":{ active: "text-indigo-600",  inactive: "text-slate-400" },
-  "/dashboard/safety":       { active: "text-orange-500",  inactive: "text-slate-400" },
+  "/dashboard":              { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-indigo-400/70" },
+  "/dashboard/smart-sourcing":{ active: "text-violet-600", inactive: "text-violet-400/70" },
+  "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400/70" },
+  "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },
+  "/dashboard/organizations":{ active: "text-indigo-600",  inactive: "text-indigo-400/70" },
+  "/dashboard/safety":       { active: "text-orange-500",  inactive: "text-orange-400/70" },
   "/dashboard/settings":     { active: "text-slate-600",   inactive: "text-slate-400" },
   "/dashboard/activity-logs":{ active: "text-slate-600",   inactive: "text-slate-400" },
   "/dashboard/audit":        { active: "text-slate-600",   inactive: "text-slate-400" },
