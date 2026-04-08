@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   BarChart3,
   Upload,
@@ -23,6 +23,10 @@ import {
   Package,
   Star,
   Zap,
+  AlertTriangle,
+  History,
+  BookOpen,
+  Info,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -30,6 +34,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { CenterWorkWindow, type WorkWindowPhase } from "@/components/work-window/center-work-window";
 import {
   buildQuoteComparisonHandoff,
   selectVendorInHandoff,
@@ -42,6 +47,11 @@ import {
   type QuoteComparisonHandoff,
   type BomParseHandoff,
 } from "@/lib/ai/smart-sourcing-handoff-engine";
+import {
+  buildMultiVendorContextHash,
+  buildBomParseContextHash,
+  isResultStale,
+} from "@/lib/ai/smart-sourcing-context-hash";
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -112,6 +122,17 @@ function MultiVendorTab() {
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [handoff, setHandoff] = useState<QuoteComparisonHandoff | null>(null);
+  // D. Work Window
+  const [workWindowOpen, setWorkWindowOpen] = useState(false);
+  const [workWindowPhase, setWorkWindowPhase] = useState<WorkWindowPhase>("ready");
+  // E. Context Hash — 중복 API 호출 방지 + staleness
+  const [resultContextHash, setResultContextHash] = useState<string | null>(null);
+
+  const currentContextHash = useMemo(
+    () => buildMultiVendorContextHash({ productName, quantity, vendors }),
+    [productName, quantity, vendors]
+  );
+  const resultIsStale = isResultStale(resultContextHash, currentContextHash);
 
   const addVendor = () => {
     if (vendors.length >= 5) {
@@ -140,8 +161,16 @@ function MultiVendorTab() {
       return;
     }
 
+    // E. 중복 호출 방지 — 같은 입력이면 기존 결과 재사용
+    if (result && !resultIsStale) {
+      setWorkWindowOpen(true);
+      toast.info("동일 입력에 대한 분석 결과가 이미 있습니다.");
+      return;
+    }
+
     setIsAnalyzing(true);
     setResult(null);
+    setWorkWindowPhase("loading");
 
     try {
       const res = await fetch("/api/ai/quote-compare", {
@@ -170,17 +199,23 @@ function MultiVendorTab() {
           json.data.negotiationGuide || "",
         );
         setHandoff(h);
+        // E. Context Hash 저장
+        setResultContextHash(currentContextHash);
+        // D. Work Window 열기
+        setWorkWindowPhase("ready");
+        setWorkWindowOpen(true);
         toast.success("견적 비교 분석이 완료되었습니다.");
       } else {
         throw new Error(json.error || "분석 실패");
       }
     } catch (err) {
+      setWorkWindowPhase("error");
       toast.error("견적 비교 중 오류가 발생했습니다.");
       console.error(err);
     } finally {
       setIsAnalyzing(false);
     }
-  }, [vendors, productName]);
+  }, [vendors, productName, result, resultIsStale, currentContextHash]);
 
   // 결과에서 최저가/최빠른 납기 식별
   const cheapest =
@@ -327,9 +362,64 @@ function MultiVendorTab() {
         </Button>
       </div>
 
-      {/* ── 분석 결과 ── */}
+      {/* E. Staleness 경고 */}
+      {result && resultIsStale && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs mt-4">
+          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+          <span>입력이 변경되었습니다. 분석 결과가 현재 입력과 다를 수 있습니다.</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-xs text-amber-700 hover:text-amber-900 h-6 px-2"
+            onClick={handleAnalyze}
+          >
+            재분석
+          </Button>
+        </div>
+      )}
+
+      {/* D. 결과 있으면 Work Window 열기 버튼 */}
+      {result && !workWindowOpen && (
+        <div className="mt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => { setWorkWindowPhase("ready"); setWorkWindowOpen(true); }}
+          >
+            <BarChart3 className="h-3.5 w-3.5 mr-1.5" />
+            분석 결과 보기
+          </Button>
+        </div>
+      )}
+
+      {/* D. CenterWorkWindow — 분석 결과 모달 */}
+      <CenterWorkWindow
+        open={workWindowOpen}
+        onClose={() => setWorkWindowOpen(false)}
+        title="견적 비교 분석 결과"
+        subtitle={productName ? `${productName} · ${vendors.filter((v) => v.vendorName.trim()).length}개 공급사` : undefined}
+        phase={workWindowPhase}
+        successMessage="견적 요청으로 전달되었습니다"
+        autoCloseDelay={0}
+        contextHeader={
+          handoff && handoff.status !== "comparison_complete" ? (
+            <div className="flex items-center gap-2 text-xs text-emerald-600">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              {handoff.status === "vendor_selected" ? `${handoff.selectedVendorName} 선정됨` : "견적 요청 전달 완료"}
+            </div>
+          ) : undefined
+        }
+      >
+
+      {/* ── 분석 결과 (Work Window 내부) ── */}
       {result && (
-        <div className="space-y-4 mt-6">
+        <div className="space-y-4">
+          {/* F. center/rail 레이아웃 */}
+          <div className="flex flex-col lg:flex-row gap-4">
+          {/* ── CENTER: 비교 테이블 + 추천 + handoff ── */}
+          <div className="flex-1 min-w-0 space-y-4">
+
           {/* 비교 테이블 */}
           <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
             <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50">
@@ -437,27 +527,7 @@ function MultiVendorTab() {
             </div>
           </div>
 
-          {/* AI 추천 */}
-          <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-4 md:p-5">
-            <h4 className="text-sm font-semibold text-blue-800 mb-2 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-blue-500" />
-              AI 추천
-            </h4>
-            <p className="text-sm text-blue-900/80 leading-relaxed">{result.recommendation}</p>
-          </div>
-
-          {/* 네고 포인트 */}
-          <div className="rounded-xl border border-amber-100 bg-amber-50/30 p-4 md:p-5">
-            <h4 className="text-sm font-semibold text-amber-800 mb-2 flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-amber-600" />
-              네고 포인트
-            </h4>
-            <p className="text-sm text-amber-900/80 leading-relaxed whitespace-pre-line">
-              {result.negotiationGuide}
-            </p>
-          </div>
-
-          {/* ── Handoff: 공급사 선정 → 견적 요청 ── */}
+          {/* ── Handoff: 공급사 선정 → 견적 요청 (DOCK 역할) ── */}
           {handoff && (
             <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-5">
               <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
@@ -537,8 +607,47 @@ function MultiVendorTab() {
               )}
             </div>
           )}
+
+          </div>{/* end CENTER */}
+
+          {/* ── RAIL: 컨텍스트 정보 (가이드/히스토리) ── */}
+          <div className="w-full lg:w-64 xl:w-72 flex-shrink-0 space-y-3">
+            {/* AI 추천 요약 */}
+            <div className="rounded-xl border border-blue-100 bg-blue-50/30 p-3">
+              <h4 className="text-xs font-semibold text-blue-800 mb-1.5 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+                AI 추천
+              </h4>
+              <p className="text-xs text-blue-900/80 leading-relaxed">{result.recommendation}</p>
+            </div>
+
+            {/* 네고 가이드 */}
+            <div className="rounded-xl border border-amber-100 bg-amber-50/30 p-3">
+              <h4 className="text-xs font-semibold text-amber-800 mb-1.5 flex items-center gap-1.5">
+                <TrendingDown className="h-3.5 w-3.5 text-amber-600" />
+                네고 포인트
+              </h4>
+              <p className="text-xs text-amber-900/80 leading-relaxed whitespace-pre-line">{result.negotiationGuide}</p>
+            </div>
+
+            {/* 사용 가이드 */}
+            <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-3">
+              <h4 className="text-xs font-semibold text-slate-600 mb-1.5 flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5 text-slate-400" />
+                다음 단계
+              </h4>
+              <ol className="text-xs text-slate-500 space-y-1">
+                <li>1. 공급사를 선정하세요</li>
+                <li>2. "견적 요청으로 전달"을 누르세요</li>
+                <li>3. 견적 요청 조립 단계로 이동합니다</li>
+              </ol>
+            </div>
+          </div>{/* end RAIL */}
+
+          </div>{/* end flex center/rail */}
         </div>
       )}
+      </CenterWorkWindow>
     </div>
   );
 }
@@ -554,10 +663,24 @@ function BomSourcingTab() {
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isRegistering, setIsRegistering] = useState(false);
   const [bomHandoff, setBomHandoff] = useState<BomParseHandoff | null>(null);
+  // E. Context Hash
+  const [bomResultHash, setBomResultHash] = useState<string | null>(null);
+
+  const currentBomHash = useMemo(
+    () => buildBomParseContextHash({ bomText }),
+    [bomText]
+  );
+  const bomResultIsStale = isResultStale(bomResultHash, currentBomHash);
 
   const handleParse = useCallback(async () => {
     if (!bomText.trim()) {
       toast.error("BOM 텍스트를 입력해주세요.");
+      return;
+    }
+
+    // E. 중복 호출 방지
+    if (result && !bomResultIsStale) {
+      toast.info("동일 입력에 대한 파싱 결과가 이미 있습니다.");
       return;
     }
 
@@ -582,6 +705,8 @@ function BomSourcingTab() {
         // Handoff 생성
         const h = buildBomParseHandoff(bomText, json.data.items, json.data.summary || "");
         setBomHandoff(h);
+        // E. Context Hash 저장
+        setBomResultHash(currentBomHash);
         toast.success(`${json.data.items.length}개 품목이 파싱되었습니다.`);
       } else {
         throw new Error(json.error || "파싱 실패");
@@ -592,7 +717,7 @@ function BomSourcingTab() {
     } finally {
       setIsParsing(false);
     }
-  }, [bomText]);
+  }, [bomText, result, bomResultIsStale, currentBomHash]);
 
   const toggleItem = (idx: number) => {
     setSelectedItems((prev) => {
@@ -723,6 +848,22 @@ PBS pH 7.4 1L 5병`;
           </Button>
         </div>
       </div>
+
+      {/* E. BOM Staleness 경고 */}
+      {result && bomResultIsStale && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs">
+          <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0" />
+          <span>텍스트가 변경되었습니다. 파싱 결과가 현재 입력과 다를 수 있습니다.</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="ml-auto text-xs text-amber-700 hover:text-amber-900 h-6 px-2"
+            onClick={handleParse}
+          >
+            재파싱
+          </Button>
+        </div>
+      )}
 
       {/* ── 파싱 결과 ── */}
       {result && (
