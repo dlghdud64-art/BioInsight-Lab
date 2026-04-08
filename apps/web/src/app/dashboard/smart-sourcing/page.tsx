@@ -30,6 +30,18 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import {
+  buildQuoteComparisonHandoff,
+  selectVendorInHandoff,
+  canHandoffToRequestAssembly,
+  executeHandoffToRequest,
+  buildBomParseHandoff,
+  confirmBomItems,
+  canRegisterToQueue,
+  executeRegisterToQueue,
+  type QuoteComparisonHandoff,
+  type BomParseHandoff,
+} from "@/lib/ai/smart-sourcing-handoff-engine";
 
 // ═══════════════════════════════════════════════════════════════
 // Types
@@ -99,6 +111,7 @@ function MultiVendorTab() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<ComparisonResult | null>(null);
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
+  const [handoff, setHandoff] = useState<QuoteComparisonHandoff | null>(null);
 
   const addVendor = () => {
     if (vendors.length >= 5) {
@@ -148,6 +161,15 @@ function MultiVendorTab() {
 
       if (json.success && json.data) {
         setResult(json.data);
+        // Handoff 객체 생성
+        const h = buildQuoteComparisonHandoff(
+          productName || "비교 품목",
+          quantity ? parseInt(quantity) : null,
+          json.data.comparison || [],
+          json.data.recommendation || "",
+          json.data.negotiationGuide || "",
+        );
+        setHandoff(h);
         toast.success("견적 비교 분석이 완료되었습니다.");
       } else {
         throw new Error(json.error || "분석 실패");
@@ -434,6 +456,87 @@ function MultiVendorTab() {
               {result.negotiationGuide}
             </p>
           </div>
+
+          {/* ── Handoff: 공급사 선정 → 견적 요청 ── */}
+          {handoff && (
+            <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-5">
+              <h4 className="text-sm font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <ArrowRight className="h-4 w-4 text-violet-500" />
+                다음 단계: 공급사 선정
+              </h4>
+
+              {handoff.status === "handed_off_to_request" ? (
+                <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>
+                    <strong>{handoff.selectedVendorName}</strong> 공급사로 견적 요청이 전달되었습니다.
+                  </span>
+                </div>
+              ) : (
+                <>
+                  <div className="space-y-2 mb-4">
+                    {result.comparison.map((row, i) => {
+                      const isSelected = handoff.selectedVendorName === row.vendor;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => {
+                            try {
+                              const updated = selectVendorInHandoff(handoff, row.vendor, `비교 분석 기반 선정: ${row.vendor}`);
+                              setHandoff(updated);
+                            } catch (err) {
+                              toast.error(String(err));
+                            }
+                          }}
+                          className={cn(
+                            "w-full flex items-center justify-between px-3 py-2.5 rounded-lg border text-sm transition-all text-left",
+                            "active:scale-[0.98]",
+                            isSelected
+                              ? "border-violet-300 bg-violet-50 text-violet-800"
+                              : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                          )}
+                        >
+                          <span className="font-medium">{row.vendor}</span>
+                          <span className="text-xs text-slate-400">
+                            {typeof row.price === "number" ? `${row.price.toLocaleString()}원` : row.price}
+                            {" · "}{row.leadTime}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {(() => {
+                    const check = canHandoffToRequestAssembly(handoff);
+                    return (
+                      <div className="flex items-center justify-between">
+                        {check.blockers.length > 0 && (
+                          <p className="text-xs text-slate-400">{check.blockers[0]}</p>
+                        )}
+                        <Button
+                          size="sm"
+                          disabled={!check.canHandoff}
+                          onClick={() => {
+                            try {
+                              const executed = executeHandoffToRequest(handoff);
+                              setHandoff(executed);
+                              toast.success(`${executed.selectedVendorName} 공급사로 견적 요청이 전달되었습니다.`);
+                            } catch (err) {
+                              toast.error(String(err));
+                            }
+                          }}
+                          className="ml-auto bg-violet-600 hover:bg-violet-700 text-white text-xs"
+                        >
+                          <ArrowRight className="h-3.5 w-3.5 mr-1.5" />
+                          견적 요청으로 전달
+                        </Button>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -450,6 +553,7 @@ function BomSourcingTab() {
   const [result, setResult] = useState<BomParseResult | null>(null);
   const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
   const [isRegistering, setIsRegistering] = useState(false);
+  const [bomHandoff, setBomHandoff] = useState<BomParseHandoff | null>(null);
 
   const handleParse = useCallback(async () => {
     if (!bomText.trim()) {
@@ -475,6 +579,9 @@ function BomSourcingTab() {
         setResult(json.data);
         // 기본적으로 모두 선택
         setSelectedItems(new Set(json.data.items.map((_: BomItem, i: number) => i)));
+        // Handoff 생성
+        const h = buildBomParseHandoff(bomText, json.data.items, json.data.summary || "");
+        setBomHandoff(h);
         toast.success(`${json.data.items.length}개 품목이 파싱되었습니다.`);
       } else {
         throw new Error(json.error || "파싱 실패");
@@ -508,23 +615,57 @@ function BomSourcingTab() {
   const handleBulkRegister = useCallback(async () => {
     if (!result || selectedItems.size === 0) return;
 
+    // Handoff guard 체크
+    if (bomHandoff) {
+      const confirmed = confirmBomItems(bomHandoff, Array.from(selectedItems));
+      const check = canRegisterToQueue(confirmed);
+      if (!check.canRegister) {
+        toast.error(check.blockers[0]);
+        return;
+      }
+    }
+
     setIsRegistering(true);
     try {
-      // 선택된 품목들을 발주 대기열에 등록
       const items = Array.from(selectedItems).map((idx) => result.items[idx]);
 
-      // Order Queue 또는 견적 요청으로 전환
-      // 실제 환경에서는 POST /api/order-queue/bulk 등으로 연결
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const res = await fetch("/api/order-queue/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            name: i.name,
+            catalogNumber: i.catalogNumber,
+            quantity: i.quantity,
+            unit: i.unit,
+            category: i.category,
+            brand: i.brand,
+            estimatedUse: i.estimatedUse,
+          })),
+          sourceHandoffId: bomHandoff?.id || null,
+        }),
+      });
 
-      toast.success(`${items.length}개 품목이 발주 대기열에 등록되었습니다.`);
+      const json = await res.json();
+
+      if (json.success) {
+        // Handoff 상태 전이
+        if (bomHandoff) {
+          const confirmed = confirmBomItems(bomHandoff, Array.from(selectedItems));
+          const registered = executeRegisterToQueue(confirmed);
+          setBomHandoff(registered);
+        }
+        toast.success(json.message || `${items.length}개 품목이 발주 대기열에 등록되었습니다.`);
+      } else {
+        throw new Error(json.error || "등록 실패");
+      }
     } catch (err) {
       toast.error("등록 중 오류가 발생했습니다.");
       console.error(err);
     } finally {
       setIsRegistering(false);
     }
-  }, [result, selectedItems]);
+  }, [result, selectedItems, bomHandoff]);
 
   const EXAMPLE_BOM = `Gibco FBS 500ml 2병
 DMEM High Glucose 500ml 3병
@@ -657,26 +798,35 @@ PBS pH 7.4 1L 5병`;
           {/* 일괄 등록 버튼 */}
           <div className="flex items-center justify-between pt-2">
             <p className="text-xs text-slate-500">
-              {selectedItems.size}개 품목 선택됨
+              {bomHandoff?.status === "registered_to_queue"
+                ? `${bomHandoff.registeredCount}개 품목 등록 완료`
+                : `${selectedItems.size}개 품목 선택됨`}
             </p>
-            <Button
-              size="sm"
-              onClick={handleBulkRegister}
-              disabled={isRegistering || selectedItems.size === 0}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-            >
-              {isRegistering ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
-                  등록 중...
-                </>
-              ) : (
-                <>
-                  <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
-                  발주 대기열에 일괄 등록
-                </>
-              )}
-            </Button>
+            {bomHandoff?.status === "registered_to_queue" ? (
+              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
+                <CheckCircle2 className="h-4 w-4" />
+                <span>발주 대기열에 등록되었습니다</span>
+              </div>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleBulkRegister}
+                disabled={isRegistering || selectedItems.size === 0}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+              >
+                {isRegistering ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    등록 중...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
+                    발주 대기열에 일괄 등록
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -715,7 +865,7 @@ export default function SmartSourcingPage() {
             className="text-xl md:text-2xl font-bold tracking-tight text-slate-900"
             style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}
           >
-            스마트 소싱
+            AI 견적 분석
           </h1>
           <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-semibold">
             AI

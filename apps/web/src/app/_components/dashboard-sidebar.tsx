@@ -67,7 +67,7 @@ const sidebarGroups: SidebarGroup[] = [
     label: "구매 및 예산 (PURCHASE)",
     items: [
       {
-        title: "스마트 소싱",
+        title: "AI 견적 분석",
         href: "/dashboard/smart-sourcing",
         icon: Sparkles,
         badge: "AI",
