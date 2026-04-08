@@ -13,7 +13,33 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PolicyStatusBadge, PolicyMessageStack, NextActionHint } from "./index";
+import { QuoteChainProgressStrip, type ChainStageKey } from "./quote-chain-progress-strip";
 import type { DispatchPreparationGovernanceState, DispatchPolicySurface, ConfirmationItem } from "@/lib/ai/po-dispatch-governance-engine";
+import { canCreateExecution } from "@/lib/ai/dispatch-execution-handoff";
+
+/** Rail context — approval / quote / supplier 참조 정보 */
+export interface DispatchRailContext {
+  /** 승인 근거 요약 */
+  approvalRationale: string;
+  /** 견적 후보 선정 사유 */
+  quoteShortlistReason: string;
+  /** 공급사 프로필 요약 */
+  supplierProfile: string;
+  /** 공급사 라우팅 설명 */
+  supplierRoutingExplanation: string;
+}
+
+/** Supplier-facing payload preview 데이터 */
+export interface SupplierFacingPayloadPreview {
+  recipientName: string;
+  recipientEmail: string;
+  sendChannel: string;
+  poSummaryLines: string[];
+  deliveryReference: string;
+  paymentReference: string;
+  attachmentNames: string[];
+  supplierNote: string;
+}
 
 export interface DispatchPrepWorkbenchProps {
   state: DispatchPreparationGovernanceState;
@@ -22,24 +48,47 @@ export interface DispatchPrepWorkbenchProps {
   vendorName: string;
   totalAmount: number;
   poNumber: string;
+  // Rail context (CLAUDE.md 필수)
+  railContext?: DispatchRailContext;
+  // Supplier-facing payload (CLAUDE.md: center에 preview)
+  supplierPayload?: SupplierFacingPayloadPreview;
   // Handlers
   onSendNow?: () => void;
   onScheduleSend?: (date: string) => void;
   onRequestCorrection?: (reason: string) => void;
   onReopenConversion?: () => void;
   onCancelPrep?: () => void;
+  onStageClick?: (stage: ChainStageKey) => void;
   className?: string;
 }
 
 export function DispatchPrepWorkbench({
   state, surface, vendorName, totalAmount, poNumber,
+  railContext, supplierPayload,
   onSendNow, onScheduleSend, onRequestCorrection, onReopenConversion, onCancelPrep,
+  onStageClick,
   className,
 }: DispatchPrepWorkbenchProps) {
+  // governance ↔ execution handoff boundary 단일 진입점.
+  // dock 의 Send/Schedule 활성화는 반드시 이 guard 의 allowed 결과로만 결정.
+  // (optimistic unlock 금지, POCreatedRecord.reentryAvailableActions 와 일관성 유지)
+  const sendGuard = canCreateExecution(state);
+
   return (
     <div className={cn("flex gap-4 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
+        {/* Chain progress */}
+        <QuoteChainProgressStrip
+          currentStage="dispatch_prep"
+          stageStatuses={
+            state.readiness === "blocked"
+              ? { dispatch_prep: "blocked" }
+              : undefined
+          }
+          onStageClick={onStageClick}
+        />
+
         {/* Policy strip */}
         <div className="flex items-center gap-3 px-4 py-2.5 rounded bg-slate-900 border border-slate-800">
           <PolicyStatusBadge status={surface.statusBadge} pulse={surface.statusBadge === "blocked" || surface.statusBadge === "reapproval_needed"} />
@@ -111,6 +160,53 @@ export function DispatchPrepWorkbench({
           </div>
         </div>
 
+        {/* Supplier-facing payload preview (CLAUDE.md: center 필수) */}
+        {supplierPayload && (
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+            <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">공급사 발송 내용</h4>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-slate-500">수신자</span>
+                <p className="text-slate-600">{supplierPayload.recipientName} ({supplierPayload.recipientEmail})</p>
+              </div>
+              <div>
+                <span className="text-slate-500">발송 채널</span>
+                <p className="text-slate-600">{supplierPayload.sendChannel}</p>
+              </div>
+            </div>
+            {supplierPayload.poSummaryLines.length > 0 && (
+              <div className="text-xs">
+                <span className="text-slate-500">PO 요약</span>
+                {supplierPayload.poSummaryLines.map((line, i) => (
+                  <p key={i} className="text-slate-600">{line}</p>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-slate-500">납품 참조</span>
+                <p className="text-slate-600">{supplierPayload.deliveryReference || "미지정"}</p>
+              </div>
+              <div>
+                <span className="text-slate-500">결제 참조</span>
+                <p className="text-slate-600">{supplierPayload.paymentReference || "미지정"}</p>
+              </div>
+            </div>
+            {supplierPayload.attachmentNames.length > 0 && (
+              <div className="text-xs">
+                <span className="text-slate-500">첨부</span>
+                <p className="text-slate-600">{supplierPayload.attachmentNames.join(", ")}</p>
+              </div>
+            )}
+            {supplierPayload.supplierNote && (
+              <div className="text-xs">
+                <span className="text-slate-500">공급사 전달 사항</span>
+                <p className="text-slate-600">{supplierPayload.supplierNote}</p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Locked vs Editable fields */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3">
@@ -157,6 +253,36 @@ export function DispatchPrepWorkbench({
             ))}
           </div>
         )}
+
+        {/* Approval rationale (CLAUDE.md: rail 필수) */}
+        {railContext?.approvalRationale && (
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs space-y-1">
+            <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">승인 근거</h5>
+            <p className="text-slate-600">{railContext.approvalRationale}</p>
+          </div>
+        )}
+
+        {/* Quote shortlist context (CLAUDE.md: rail 필수) */}
+        {railContext?.quoteShortlistReason && (
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs space-y-1">
+            <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">견적 선정 사유</h5>
+            <p className="text-slate-600">{railContext.quoteShortlistReason}</p>
+          </div>
+        )}
+
+        {/* Supplier profile (CLAUDE.md: rail 필수) */}
+        {railContext?.supplierProfile && (
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs space-y-1">
+            <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">공급사 프로필</h5>
+            <p className="text-slate-600">{railContext.supplierProfile}</p>
+            {railContext.supplierRoutingExplanation && (
+              <>
+                <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mt-1.5">라우팅 설명</h5>
+                <p className="text-slate-600">{railContext.supplierRoutingExplanation}</p>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ═══ DOCK ═══ */}
@@ -169,11 +295,18 @@ export function DispatchPrepWorkbench({
             {onRequestCorrection && state.readiness === "blocked" && (
               <button onClick={() => onRequestCorrection(state.hardBlockers[0]?.remediationAction || "")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">보정 요청</button>
             )}
-            {onScheduleSend && state.readiness === "ready_to_send" && state.allConfirmed && (
+            {onScheduleSend && sendGuard.allowed && (
               <button onClick={() => onScheduleSend("")} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">예약 발송</button>
             )}
-            {onSendNow && state.readiness === "ready_to_send" && (
-              <button onClick={onSendNow} disabled={!state.allConfirmed} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">발송 실행</button>
+            {onSendNow && (
+              <button
+                onClick={onSendNow}
+                disabled={!sendGuard.allowed}
+                title={sendGuard.denyReason ?? undefined}
+                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                발송 실행
+              </button>
             )}
           </div>
         </div>
