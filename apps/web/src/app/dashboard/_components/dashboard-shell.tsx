@@ -6,6 +6,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
+import { OntologyCommandOverlay } from "@/components/ontology-command-overlay/ontology-command-overlay";
 
 /**
  * DashboardShell — baseline shell wrapper.
@@ -41,6 +42,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
         <BottomNav />
         <BarcodeScanFab />
+        <OntologyCommandOverlay />
       </div>
     </OpsStoreProvider>
   );
