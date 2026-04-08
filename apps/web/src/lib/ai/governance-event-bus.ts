@@ -187,6 +187,31 @@ export function createGovernanceEventBus(): GovernanceEventBus {
 }
 
 // ══════════════════════════════════════════════
+// Global Singleton — cross-domain 공유 버스
+//
+// 여러 engine이 동일 bus instance를 공유해야 publish/subscribe가 실제로 연결된다.
+// 모듈 별로 개별 singleton을 만들면 listener가 이벤트를 받지 못한다.
+// ══════════════════════════════════════════════
+
+let _globalBus: GovernanceEventBus | null = null;
+
+/** 프로세스 전역 governance event bus. 모든 publisher/subscriber가 공유 */
+export function getGlobalGovernanceEventBus(): GovernanceEventBus {
+  if (!_globalBus) {
+    _globalBus = createGovernanceEventBus();
+  }
+  return _globalBus;
+}
+
+/** 테스트 전용: 전역 bus 리셋 */
+export function resetGlobalGovernanceEventBus(): void {
+  if (_globalBus) {
+    _globalBus.clearHistory();
+  }
+  _globalBus = null;
+}
+
+// ══════════════════════════════════════════════
 // Event Factory — 각 domain에서 GovernanceEvent 생성 도우미
 // ══════════════════════════════════════════════
 

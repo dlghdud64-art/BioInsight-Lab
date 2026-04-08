@@ -16,7 +16,8 @@
  */
 
 import {
-  createGovernanceEventBus,
+  getGlobalGovernanceEventBus,
+  resetGlobalGovernanceEventBus,
   createGovernanceEvent,
   type GovernanceEvent,
   type GovernanceDomain,
@@ -31,19 +32,17 @@ export type VendorPortalEventType =
 /** Vendor Portal은 quote_chain domain에 속함 (quote stage 인입 신호) */
 const VP_DOMAIN: GovernanceDomain = "quote_chain";
 
-// ── Singleton bus (smart-sourcing-invalidation과 동일한 패턴) ─────────
-
-let _bus: ReturnType<typeof createGovernanceEventBus> | null = null;
-
+/**
+ * 전역 shared bus 사용.
+ * 자체 singleton을 두면 listener(예: vendor-response-inbox)가 이벤트를 받지 못한다.
+ */
 function getEventBus() {
-  if (!_bus) _bus = createGovernanceEventBus();
-  return _bus;
+  return getGlobalGovernanceEventBus();
 }
 
-/** 테스트용 reset */
+/** 테스트용 reset — 전역 bus를 리셋 */
 export function resetVendorPortalEventBus(): void {
-  if (_bus) _bus.clearHistory();
-  _bus = null;
+  resetGlobalGovernanceEventBus();
 }
 
 // ── Publish ──────────────────────────────────────────────────────────

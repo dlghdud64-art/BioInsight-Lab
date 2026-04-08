@@ -13,6 +13,7 @@ import {
   useVendorPortalStore,
   type VendorRfq,
 } from "@/lib/vendor-portal/vendor-portal-store";
+import { emitVendorQuoteAcknowledged } from "@/lib/vendor-portal/vendor-portal-events";
 import { QuoteSubmitForm } from "./quote-submit-form";
 
 /**
@@ -34,9 +35,27 @@ export function VendorPortalBoard() {
   );
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
+  const [acknowledgedIds, setAcknowledgedIds] = useState<Set<string>>(new Set());
   const activeRfq = activeCaseId
     ? myRfqs.find((r) => r.procurementCaseId === activeCaseId) ?? null
     : null;
+
+  const handleOpenRfq = (rfq: VendorRfq) => {
+    setActiveCaseId(rfq.procurementCaseId);
+    // RFQ 카드 최초 진입 시 acknowledged event 1회 emit (dedupe)
+    if (rfq.status === "request_for_quote" && !acknowledgedIds.has(rfq.procurementCaseId)) {
+      emitVendorQuoteAcknowledged({
+        procurementCaseId: rfq.procurementCaseId,
+        vendorId: rfq.vendorId,
+        vendorName: rfq.vendorName,
+      });
+      setAcknowledgedIds((prev) => {
+        const next = new Set(prev);
+        next.add(rfq.procurementCaseId);
+        return next;
+      });
+    }
+  };
 
   // ── Empty / unauthorized 컨텍스트 ────────────────────────────
   if (!vendorId) {
@@ -121,7 +140,7 @@ export function VendorPortalBoard() {
                 rfq={rfq}
                 submittedTotal={submitted?.quotedTotal ?? null}
                 active={isActive}
-                onClick={() => setActiveCaseId(rfq.procurementCaseId)}
+                onClick={() => handleOpenRfq(rfq)}
               />
             );
           })}
