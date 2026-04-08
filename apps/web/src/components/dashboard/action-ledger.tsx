@@ -20,10 +20,12 @@ import {
   Truck,
   Clock,
   ShieldAlert,
+  Zap,
 } from "lucide-react";
 import type { OrderQueueItem } from "@/lib/store/order-queue-store";
 import type { Budget } from "@/lib/store/budget-store";
 import { deriveBudgetControl } from "@/lib/store/budget-store";
+import type { FastTrackAcceptanceLogEntry } from "@/lib/store/fast-track-store";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -34,7 +36,8 @@ export type LedgerEventKind =
   | "order_pending_approval"
   | "budget_critical"
   | "budget_warning"
-  | "budget_over";
+  | "budget_over"
+  | "fast_track_accepted";
 
 export interface LedgerEvent {
   id: string;
@@ -48,6 +51,8 @@ export interface LedgerEvent {
 interface ActionLedgerProps {
   orders: OrderQueueItem[];
   budgets: Budget[];
+  /** Fast-Track 수락 이력 (useFastTrackStore.acceptanceLog) — optional, 미전달 시 해당 이벤트 미노출 */
+  fastTrackAcceptances?: FastTrackAcceptanceLogEntry[];
   /** 최대 표시 건수. 기본 8건 */
   limit?: number;
   /** 로딩 상태 (skeleton 표시용) */
@@ -109,6 +114,19 @@ function buildOrderEvents(orders: OrderQueueItem[]): LedgerEvent[] {
   return events;
 }
 
+function buildFastTrackEvents(
+  entries: FastTrackAcceptanceLogEntry[],
+): LedgerEvent[] {
+  return entries.map((e) => ({
+    id: `ft-${e.id}`,
+    kind: "fast_track_accepted" as const,
+    title: `⚡ ${e.vendorName} Fast-Track 수락`,
+    detail: `사용자가 AI의 Fast-Track 권장을 수락하여 승인함 · ${e.totalAmount.toLocaleString()}원`,
+    timestamp: e.acceptedAt,
+    href: `/dashboard/orders`,
+  }));
+}
+
 function buildBudgetEvents(budgets: Budget[]): LedgerEvent[] {
   const events: LedgerEvent[] = [];
 
@@ -165,6 +183,8 @@ function eventIcon(kind: LedgerEventKind) {
       return <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />;
     case "budget_warning":
       return <DollarSign className="h-3.5 w-3.5 text-amber-500" />;
+    case "fast_track_accepted":
+      return <Zap className="h-3.5 w-3.5 text-emerald-600" />;
     default:
       return <FileText className="h-3.5 w-3.5 text-slate-500" />;
   }
@@ -174,6 +194,7 @@ function eventDotColor(kind: LedgerEventKind): string {
   switch (kind) {
     case "order_approved":
     case "order_received":
+    case "fast_track_accepted":
       return "bg-emerald-500";
     case "order_dispatch_ready":
       return "bg-violet-500";
@@ -209,15 +230,20 @@ function formatRelativeTime(iso: string): string {
 export function ActionLedger({
   orders,
   budgets,
+  fastTrackAcceptances,
   limit = 8,
   loading = false,
 }: ActionLedgerProps) {
   const events = useMemo(() => {
-    const merged = [...buildOrderEvents(orders), ...buildBudgetEvents(budgets)];
+    const merged = [
+      ...buildOrderEvents(orders),
+      ...buildBudgetEvents(budgets),
+      ...buildFastTrackEvents(fastTrackAcceptances ?? []),
+    ];
     return merged
       .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
       .slice(0, limit);
-  }, [orders, budgets, limit]);
+  }, [orders, budgets, fastTrackAcceptances, limit]);
 
   if (loading) {
     return (

@@ -46,6 +46,7 @@ import {
   type Budget,
 } from "@/lib/store/budget-store";
 import { ActionLedger } from "./action-ledger";
+import { useFastTrackStore } from "@/lib/store/fast-track-store";
 
 // ── KPI derivation (pure) ────────────────────────────────────────────
 
@@ -295,6 +296,9 @@ export function ExecutiveSummarySection() {
   const budgetsFetching = useBudgetStore((s) => s.isFetching);
   const fetchBudgets = useBudgetStore((s) => s.fetchBudgets);
 
+  // Fast-Track 수락 이력 — ActionLedger 에 한 줄씩 "⚡ ... 수락" 이벤트로 노출
+  const fastTrackAcceptances = useFastTrackStore((s) => s.acceptanceLog);
+
   useEffect(() => {
     if (orders.length === 0 && ordersFetching) {
       fetchOrders();
@@ -461,6 +465,7 @@ export function ExecutiveSummarySection() {
             <ActionLedger
               orders={orders}
               budgets={budgets}
+              fastTrackAcceptances={fastTrackAcceptances}
               limit={8}
               loading={isLoading && orders.length === 0 && budgets.length === 0}
             />

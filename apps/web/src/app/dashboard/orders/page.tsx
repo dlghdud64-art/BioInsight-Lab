@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useMemo, Suspense } from "react";
+import React, { useState, useMemo, Suspense, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
@@ -13,10 +13,21 @@ import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import {
   Search, Package, FileText, ChevronRight, CheckCircle2, AlertTriangle, AlertCircle,
-  X, ArrowLeft, ArrowRight, Truck, Clock, Send, Pause,
+  X, ArrowLeft, ArrowRight, Truck, Clock, Send, Pause, Zap,
 } from "lucide-react";
 import { getStageInfo, getNextActionLabel, canConvertToPO, type ProcurementStage, type ApprovalPolicy, type ApprovalStatus } from "@/lib/procurement-stage";
 import { evaluateGuardrails, hasBlocker, getGuardrailSummary, SEVERITY_CONFIG, type GuardrailResult } from "@/lib/guardrail";
+import { ImpactAnalysisModal, type ImpactAnalysisAPIResult } from "@/components/impact-analysis/impact-analysis-modal";
+import type { ImpactAnalysisInput } from "@/lib/ai/impact-analysis-engine";
+import { useBudgetStore, deriveBudgetControl } from "@/lib/store/budget-store";
+import { useInventoryStore } from "@/lib/store/inventory-store";
+import { useOrderQueueStore } from "@/lib/store/order-queue-store";
+import { useFastTrackStore } from "@/lib/store/fast-track-store";
+import type { FastTrackEvaluationInput } from "@/lib/ontology/fast-track/fast-track-engine";
+import {
+  getGlobalGovernanceEventBus,
+  createGovernanceEvent,
+} from "@/lib/ai/governance-event-bus";
 
 // ── PO Conversion Item (mock-compatible) ──
 interface POCandidate {
@@ -69,6 +80,47 @@ const MOCK_CANDIDATES: POCandidate[] = [
   },
 ];
 
+// ── Fast-Track evaluation input builder ─────────────────────────────────────
+// PO candidate 를 FastTrackEvaluationInput 으로 변환한다. 실 데이터에서는
+// vendor/product 레벨의 safetyProfile · 과거 구매 이력을 store 에서 읽어야 하지만,
+// 현재 화면이 MOCK_CANDIDATES 기반이므로 candidate 의 blocker 문자열을
+// 보수적으로 해석해 hazard/regulated 플래그를 유도한다.
+function candidateToFastTrackInput(
+  candidate: POCandidate,
+): FastTrackEvaluationInput {
+  const isHazardous = candidate.blockers.some(
+    (b) => b.includes("위험물") || b.toLowerCase().includes("msds"),
+  );
+  const isRegulated = candidate.blockers.some(
+    (b) => b.includes("규제") || b.includes("컴플라이언스"),
+  );
+
+  return {
+    procurementCaseId: candidate.id,
+    vendorId: candidate.vendor,
+    vendorName: candidate.vendor,
+    totalAmount: candidate.totalAmount,
+    items: candidate.items.map((i) => ({
+      productId: i.catalogNumber,
+      productName: i.name,
+      category: "reagent" as const,
+      safetyProfile: isHazardous
+        ? { hazardCodes: ["H225"], pictograms: [], ppe: [], storageClass: null }
+        : { hazardCodes: [], pictograms: [], ppe: [], storageClass: null },
+      regulatedFlag: isRegulated,
+      manualReviewRequired: false,
+    })),
+    // 정상 구매 이력 (최근 3개월 이내 3회 이상 · issue 0) — 기존 거래처 가정.
+    histories: candidate.items.map((i) => ({
+      vendorId: candidate.vendor,
+      productId: i.catalogNumber,
+      successfulOrders: 4,
+      lastOrderedAt: new Date().toISOString(),
+      issueCount: 0,
+    })),
+  };
+}
+
 function POConversionContent() {
   const { data: session, status } = useSession();
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -76,6 +128,124 @@ function POConversionContent() {
   const [poNote, setPoNote] = useState("");
   const [resolvedBlockers, setResolvedBlockers] = useState<Set<string>>(new Set());
   const [excludedItems, setExcludedItems] = useState<Set<string>>(new Set());
+  // Impact analysis modal state (Phase 5: What-if simulation)
+  const [impactModalOpen, setImpactModalOpen] = useState(false);
+  const [impactInput, setImpactInput] = useState<ImpactAnalysisInput | null>(null);
+
+  // Phase 5 store bindings — canonical truth (read-only for simulation)
+  const budgets = useBudgetStore((s) => s.budgets);
+  const inventoryItems = useInventoryStore((s) => s.items);
+  const finalizeApproval = useOrderQueueStore((s) => s.finalizeApproval);
+  const ordersFromStore = useOrderQueueStore((s) => s.orders);
+
+  // Fast-Track store — eligible 권장을 상단 섹션에 노출하기 위한 구독.
+  // recommendations selector 로 reference identity 를 안정화한다.
+  const fastTrackRecommendations = useFastTrackStore((s) => s.recommendations);
+  const bulkEvaluateFastTrack = useFastTrackStore((s) => s.bulkEvaluate);
+  const markFastTrackAccepted = useFastTrackStore((s) => s.markAccepted);
+  const dismissFastTrack = useFastTrackStore((s) => s.dismissRecommendation);
+
+  // Queue 에 후보가 들어오는 시점(즉, MOCK_CANDIDATES 배열이 바뀔 때)에
+  // 한 번 bulk 평가한다. drift 재평가는 publisher 내부에서 처리된다.
+  // (AI 호출 없음 · deterministic · 동일 입력 → 동일 출력)
+  useEffect(() => {
+    const inputs = MOCK_CANDIDATES.map(candidateToFastTrackInput);
+    bulkEvaluateFastTrack(inputs);
+  }, [bulkEvaluateFastTrack]);
+
+  // UI 체크박스 상태 — 어떤 Fast-Track 항목을 일괄 승인 대상으로 묶을지.
+  const [fastTrackSelected, setFastTrackSelected] = useState<Set<string>>(new Set());
+
+  // 현재 Queue 에 있는 candidate 중 eligible 인 것만 뽑아낸다.
+  // reentry 가드: 수락 완료(accepted) · stale · dismissed 는 자동으로 제외됨.
+  const eligibleFastTrackCandidates = useMemo(() => {
+    return MOCK_CANDIDATES.filter((c) => {
+      const rec = fastTrackRecommendations[c.id];
+      return rec?.recommendationStatus === "eligible";
+    });
+  }, [fastTrackRecommendations]);
+
+  // 일괄 승인 실행
+  const handleFastTrackBulkApprove = async () => {
+    const targets = Array.from(fastTrackSelected);
+    if (targets.length === 0) return;
+
+    // ① Fast-Track store 에 수락 이력 기록 (ActionLedger 가 즉시 반영)
+    const markEntries = targets
+      .map((id) => {
+        const c = MOCK_CANDIDATES.find((x) => x.id === id);
+        return c ? { procurementCaseId: id, vendorName: c.vendor } : null;
+      })
+      .filter((e): e is { procurementCaseId: string; vendorName: string } => e !== null);
+
+    const acceptedEntries = markFastTrackAccepted(
+      markEntries,
+      session?.user?.email ?? "unknown",
+    );
+
+    // ② canonical mutation — 기존 finalizeApproval 경유 (예산 소진 포함)
+    //    store 에 실제 order row 가 있을 때만 호출한다. (MOCK 전용 경로에서는
+    //    store 에 대응 order 가 없을 수 있으므로 존재 여부를 확인한다.)
+    for (const accepted of acceptedEntries) {
+      const matchedOrder = ordersFromStore.find(
+        (o) => o.id === accepted.procurementCaseId,
+      );
+      if (!matchedOrder) continue;
+      const activeBudget = budgets[0] ?? null;
+      try {
+        await finalizeApproval({
+          orderId: matchedOrder.id,
+          approvedBy: session?.user?.email ?? "unknown",
+          approvalComment: "⚡ Fast-Track 권장 수락 (일괄 승인)",
+          budgetId: activeBudget?.id ?? null,
+          orderAmount: accepted.totalAmount,
+        });
+      } catch {
+        // approval 실패는 조용히 swallow — 다른 이벤트 경로(에러 toast)로 노출됨
+      }
+    }
+
+    // ③ governance bus 에 Fast-Track accept 이벤트를 명시적으로 publish
+    //    (audit trail — publisher 의 transition 이벤트와 별개의 사용자 action log)
+    for (const accepted of acceptedEntries) {
+      try {
+        getGlobalGovernanceEventBus().publish(
+          createGovernanceEvent("quote_chain", "fast_track_accepted", {
+            caseId: accepted.procurementCaseId,
+            poNumber: "",
+            fromStatus: "eligible",
+            toStatus: "accepted",
+            actor: accepted.acceptedBy,
+            detail: `⚡ 사용자가 AI의 Fast-Track 권장을 수락하여 승인함 — ${accepted.vendorName}`,
+            severity: "info",
+            chainStage: "quote_shortlist",
+            affectedObjectIds: [`case:${accepted.procurementCaseId}`],
+            payload: {
+              source: "fast_track",
+              recommendationObjectId: accepted.recommendationObjectId,
+              reasonCodes: accepted.reasonCodes,
+              totalAmount: accepted.totalAmount,
+            },
+          }),
+        );
+      } catch {
+        // event bus 실패가 approval 경로를 막지 않음
+      }
+    }
+
+    // ④ 선택 초기화
+    setFastTrackSelected(new Set());
+  };
+
+  // 체크박스 토글
+  const toggleFastTrackSelected = (caseId: string) => {
+    setFastTrackSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(caseId)) next.delete(caseId);
+      else next.add(caseId);
+      return next;
+    });
+  };
 
   // In production: useQuery to fetch po_conversion_candidate items
   const candidates = MOCK_CANDIDATES;
@@ -104,6 +274,125 @@ function POConversionContent() {
 
   const guardrailBlocked = hasBlocker(guardrailResults);
   const canCreate = unresolvedBlockers.length === 0 && approvalCleared && activeItems.length > 0 && !guardrailBlocked;
+
+  // Phase 5: 발주 영향 분석 모달 트리거
+  // canonical truth는 store에서 읽어 simulation input으로 전달 (read-only).
+  const openImpactAnalysis = () => {
+    if (!selected || !canCreate) return;
+
+    // ── 예산 바인딩: useBudgetStore에서 첫 활성 예산 사용 ──
+    // 운영 단계에서는 selected ↔ budget 매핑 규칙을 도입할 예정이며,
+    // 현재는 단일 예산 컨텍스트 기준 시뮬레이션.
+    const activeBudget = budgets[0] ?? null;
+    const budgetCtx = activeBudget
+      ? (() => {
+          const ctrl = deriveBudgetControl(activeBudget);
+          return {
+            budgetId: activeBudget.id,
+            budgetName: activeBudget.name,
+            total: ctrl.total,
+            spent: ctrl.actual,
+            committed: ctrl.committed + ctrl.reserved,
+            periodEndDate: activeBudget.periodEnd,
+          };
+        })()
+      : null;
+
+    // ── 재고 바인딩: 발주 line item 중 재고에 매칭되는 첫 품목 사용 ──
+    // 여러 품목 발주 시 대표 품목 1개로 회전율 영향을 계산 (운영 단계 확장 slot).
+    const invCtx = (() => {
+      for (const line of activeItems) {
+        const matched = inventoryItems.find(
+          (it) =>
+            it.productId === line.catalogNumber ||
+            it.productName?.toLowerCase().includes(line.name.toLowerCase()),
+        );
+        if (matched) {
+          // 일 평균 소비량 추정: reorderPoint가 있으면 7일분 가정
+          const dailyConsumption =
+            matched.reorderPoint && matched.reorderPoint > 0
+              ? matched.reorderPoint / 7
+              : 1;
+          return {
+            itemId: matched.objectId,
+            currentStock: matched.availableQuantity,
+            dailyConsumption,
+            reorderPoint: matched.reorderPoint ?? 0,
+            incomingQuantity: line.quantity,
+          };
+        }
+      }
+      return null;
+    })();
+
+    setImpactInput({
+      orderId: selected.id,
+      itemName: selected.title,
+      orderAmount: activeTotal,
+      budget: budgetCtx,
+      inventory: invCtx,
+    });
+    setImpactModalOpen(true);
+  };
+
+  // 최종 승인 시 호출 — canonical truth는 여기서만 단 한 번 mutate.
+  // useOrderQueueStore.finalizeApproval은 ontology action(executeFinalizeApproval)
+  // 경유로 예산 burnRate 재계산까지 수행하므로, 별도 broad invalidation 불필요.
+  const handleConfirmImpact = async (result: ImpactAnalysisAPIResult) => {
+    if (!selected) {
+      setImpactInput(null);
+      return;
+    }
+    const matchedOrder = ordersFromStore.find((o) => o.id === selected.id);
+    const activeBudget = budgets[0] ?? null;
+
+    // 배치 4: governance event bus publish (audit ledger 기록)
+    // severity → governance severity 매핑
+    const sev = result.report.severity;
+    const governanceSeverity =
+      sev === "blocked" ? "critical" : sev === "review" ? "warning" : "info";
+    try {
+      getGlobalGovernanceEventBus().publish(
+        createGovernanceEvent("quote_chain", "impact_analysis_evaluated", {
+          caseId: selected.id,
+          poNumber: selected.id,
+          fromStatus: "po_conversion_candidate",
+          toStatus: "approval_gated",
+          actor: session?.user?.email ?? "unknown",
+          detail: result.simulation.summary.headline,
+          severity: governanceSeverity,
+          chainStage: "po_conversion",
+          affectedObjectIds: activeBudget ? [activeBudget.id] : [],
+          payload: {
+            orderAmount: activeTotal,
+            budgetDelta: result.simulation.budget?.availableDelta ?? null,
+            depletionAdvancedDays:
+              result.simulation.budget?.depletionAdvancedDays ?? null,
+            riskBefore: result.simulation.budget?.riskBefore ?? null,
+            riskAfter: result.simulation.budget?.riskAfter ?? null,
+            source: result.source,
+            recommendation: result.report.recommendation,
+          },
+        }),
+      );
+    } catch {
+      // event bus 실패는 approval 경로를 막지 않음
+    }
+
+    try {
+      await finalizeApproval({
+        orderId: matchedOrder?.id ?? selected.id,
+        approvedBy: session?.user?.email ?? "unknown",
+        approvalComment: null,
+        budgetId: activeBudget?.id ?? null,
+        orderAmount: activeTotal,
+      });
+    } catch {
+      // ontology action 내부에서 error는 store.error로 전파되므로 여기선 swallow
+    } finally {
+      setImpactInput(null);
+    }
+  };
 
   if (status === "loading") {
     return (
@@ -153,6 +442,81 @@ function POConversionContent() {
       {/* ═══ Main: Center + Evidence Rail ═══ */}
       {selected && <div className="flex-1 overflow-hidden flex">
         <div className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-4">
+
+          {/* ═══ Fast-Track 권장 섹션 — 즉시 승인 가능 ═══ */}
+          {/*
+            규칙:
+            - eligible 상태인 candidate 만 노출. stale/dismissed/accepted 는 자동 회수.
+            - 체크박스는 사용자 선택이며, AI 가 대신 승인하지 않는다.
+            - 버튼 비활성화는 선택 0건 시에만. (optimistic unlock 금지)
+          */}
+          {eligibleFastTrackCandidates.length > 0 && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-emerald-200">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Zap className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <span className="text-xs font-semibold text-emerald-900">
+                    AI 권장: 즉시 승인 가능 (Fast-Track)
+                  </span>
+                  <span className="text-[10px] text-emerald-700">
+                    · {eligibleFastTrackCandidates.length}건 · 과거 정상 구매 이력 기반
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleFastTrackBulkApprove}
+                  disabled={fastTrackSelected.size === 0}
+                  className="h-7 px-3 rounded text-[11px] font-medium bg-emerald-600 text-white hover:bg-emerald-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                >
+                  선택 항목 일괄 승인 ({fastTrackSelected.size})
+                </button>
+              </div>
+              <div className="px-3 py-2 space-y-1.5">
+                {eligibleFastTrackCandidates.map((c) => {
+                  const rec = fastTrackRecommendations[c.id];
+                  const checked = fastTrackSelected.has(c.id);
+                  const reasonLine = rec.reasons.map((r) => r.message).join(" · ");
+                  return (
+                    <div
+                      key={c.id}
+                      className="flex items-start gap-2.5 rounded-md border border-emerald-200 bg-white px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleFastTrackSelected(c.id)}
+                        className="mt-0.5 h-3.5 w-3.5 rounded border-emerald-400 text-emerald-600 focus:ring-emerald-500 focus:ring-1 shrink-0"
+                        aria-label={`${c.vendor} Fast-Track 선택`}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium text-slate-900 truncate">
+                            {c.vendor}
+                          </span>
+                          <span className="text-[10px] tabular-nums text-slate-600">
+                            ₩{c.totalAmount.toLocaleString("ko-KR")}
+                          </span>
+                          <span className="text-[10px] text-emerald-700">
+                            · 안전 점수 {(rec.safetyScore * 100).toFixed(0)}%
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[10px] text-slate-600 truncate">
+                          {reasonLine || "Fast-Track 기본 조건 충족"}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => dismissFastTrack(candidateToFastTrackInput(c), "사용자 수동 검토 요청")}
+                        className="shrink-0 text-[10px] text-slate-500 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors"
+                      >
+                        검토 경로로
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Block A: Line Item 확정 */}
           <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
@@ -324,7 +688,7 @@ function POConversionContent() {
           <div className="flex-1" />
           {/* Rail footer CTA */}
           <div className="px-5 py-4 border-t border-bd shrink-0 space-y-2" style={{ backgroundColor: '#434548' }}>
-            <Button size="sm" className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40" disabled={!canCreate}>
+            <Button size="sm" onClick={openImpactAnalysis} className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40" disabled={!canCreate}>
               <Truck className="h-3 w-3 mr-1.5" />PO 생성
             </Button>
             <div className="flex gap-2">
@@ -339,6 +703,55 @@ function POConversionContent() {
         </div>
       </div>}
 
+      {/* ═══ Phase 5: Impact Analysis Modal (What-if simulation) ═══ */}
+      <ImpactAnalysisModal
+        open={impactModalOpen}
+        onOpenChange={setImpactModalOpen}
+        input={impactInput}
+        onConfirm={handleConfirmImpact}
+        onRequestCorrection={async (result) => {
+          // 배치 5: 교정 요청 — 미해결 blocker를 강제로 unresolved로 되돌려
+          // guardrail 가드가 다시 노출되게 한다. canonical mutation은 guardrail 레벨에서만.
+          if (selected) {
+            setResolvedBlockers(new Set()); // 미해결 상태로 reset
+          }
+          getGlobalGovernanceEventBus().publish(
+            createGovernanceEvent("quote_chain", "impact_analysis_correction_requested", {
+              caseId: selected?.id ?? "unknown",
+              poNumber: selected?.id ?? "unknown",
+              fromStatus: "approval_gated",
+              toStatus: "needs_correction",
+              actor: session?.user?.email ?? "unknown",
+              detail: `교정 요청 — ${result.simulation.summary.headline}`,
+              severity: "warning",
+              chainStage: "po_conversion",
+              payload: { recommendation: result.report.recommendation },
+            }),
+          );
+          setImpactInput(null);
+        }}
+        onReopenConversion={async (result) => {
+          // 배치 5: PO 전환 재개 — excludedItems도 초기화하여 full re-entry
+          setExcludedItems(new Set());
+          setResolvedBlockers(new Set());
+          getGlobalGovernanceEventBus().publish(
+            createGovernanceEvent("quote_chain", "po_conversion_reopened_from_impact", {
+              caseId: selected?.id ?? "unknown",
+              poNumber: selected?.id ?? "unknown",
+              fromStatus: "approval_gated",
+              toStatus: "po_conversion_candidate",
+              actor: session?.user?.email ?? "unknown",
+              detail: `PO 전환 재개 — ${result.simulation.summary.headline}`,
+              severity: "warning",
+              chainStage: "po_conversion",
+              payload: { recommendation: result.report.recommendation },
+            }),
+          );
+          setImpactInput(null);
+        }}
+        headerHint={selected?.vendor}
+      />
+
       {/* ═══ Sticky Action Dock (mobile) ═══ */}
       {selected && (
         <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
@@ -349,7 +762,7 @@ function POConversionContent() {
               </span>
               <span className="text-xs tabular-nums text-slate-900 font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span>
             </div>
-            <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40" disabled={!canCreate}>
+            <Button size="sm" onClick={openImpactAnalysis} className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-40" disabled={!canCreate}>
               PO 생성
             </Button>
           </div>
