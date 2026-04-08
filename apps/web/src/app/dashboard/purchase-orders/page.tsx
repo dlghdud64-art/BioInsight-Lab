@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
@@ -23,6 +23,17 @@ import {
   Clock,
   Shield,
   Zap,
+  Sparkles,
+  Loader2,
+  TrendingDown,
+  ShieldAlert,
+  ShieldCheck,
+  DollarSign,
+  AlertTriangle,
+  CheckCircle2,
+  FlaskConical,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
@@ -329,6 +340,8 @@ function PriorityCard({
           </span>
         )}
       </div>
+      {/* AI 분석 패널 */}
+      <AiAnalysisPanel item={item} />
     </button>
   );
 }
@@ -348,38 +361,41 @@ function ActionableRow({
       : "";
 
   return (
-    <button
-      onClick={onClick}
-      className={`w-full text-left px-4 py-2.5 hover:bg-slate-800/40 transition-colors flex items-center gap-3 ${borderClass}`}
-    >
-      <span
-        className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
-      />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-700 font-mono truncate">
-            {item.title}
-          </span>
-          <span
-            className={`text-xs px-1.5 py-0.5 rounded ${BUCKET_COLORS[item.bucketKey]}`}
-          >
-            {item.nextAction}
-          </span>
+    <div className={`w-full text-left px-4 py-2.5 hover:bg-slate-800/40 transition-colors ${borderClass}`}>
+      <button
+        onClick={onClick}
+        className="w-full flex items-center gap-3"
+      >
+        <span
+          className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-slate-700 font-mono truncate">
+              {item.title}
+            </span>
+            <span
+              className={`text-xs px-1.5 py-0.5 rounded ${BUCKET_COLORS[item.bucketKey]}`}
+            >
+              {item.nextAction}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 truncate mt-0.5">
+            {item.summary}
+          </p>
         </div>
-        <p className="text-xs text-slate-500 truncate mt-0.5">
-          {item.summary}
-        </p>
-      </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {item.currentOwnerName && (
-          <span className="text-xs text-slate-600">
-            {item.currentOwnerName}
-          </span>
-        )}
-        <DueStateBadge dueState={item.dueState} />
-        <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
-      </div>
-    </button>
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {item.currentOwnerName && (
+            <span className="text-xs text-slate-600">
+              {item.currentOwnerName}
+            </span>
+          )}
+          <DueStateBadge dueState={item.dueState} />
+          <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+        </div>
+      </button>
+      <AiAnalysisPanel item={item} />
+    </div>
   );
 }
 
@@ -401,5 +417,218 @@ function DueStateBadge({
       <Clock className="h-3 w-3" />
       {dueState.label}
     </span>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// AI 분석 패널 — Budget Anomaly + Safety Check
+// ══════════════════════════════════════════════════════════════════
+
+interface BudgetAnomalyResult {
+  isAnomaly: boolean;
+  anomalyReason: string;
+  anomalySeverity: "NORMAL" | "WARNING" | "CRITICAL";
+  remainingAfterOrder: number;
+  remainingPercent: number;
+  predictedDepletionDate: string;
+  burnRateStatus: "SAFE" | "WARNING" | "CRITICAL";
+  burnRateDetail: string;
+  recommendation: string;
+}
+
+interface SafetyCheckResult {
+  isHazardous: boolean;
+  hazardClass: string;
+  ghs_pictograms: string[];
+  requiredPPE: string[];
+  storageRequirements: string;
+  regulatoryWarnings: string[];
+  handlingPrecautions: string;
+  riskLevel: "NONE" | "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+}
+
+const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
+  NONE:     { bg: "bg-slate-800/40",  text: "text-slate-400",   border: "border-slate-700" },
+  LOW:      { bg: "bg-blue-900/30",   text: "text-blue-300",    border: "border-blue-800" },
+  MEDIUM:   { bg: "bg-amber-900/30",  text: "text-amber-300",   border: "border-amber-800" },
+  HIGH:     { bg: "bg-orange-900/30", text: "text-orange-300",  border: "border-orange-800" },
+  CRITICAL: { bg: "bg-red-900/30",    text: "text-red-300",     border: "border-red-800" },
+};
+
+const BURN_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
+  SAFE:     { bg: "bg-emerald-900/30", text: "text-emerald-300", icon: "text-emerald-400" },
+  WARNING:  { bg: "bg-amber-900/30",   text: "text-amber-300",   icon: "text-amber-400" },
+  CRITICAL: { bg: "bg-red-900/30",     text: "text-red-300",     icon: "text-red-400" },
+  NORMAL:   { bg: "bg-slate-800/40",   text: "text-slate-400",   icon: "text-slate-500" },
+};
+
+function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [budgetResult, setBudgetResult] = useState<BudgetAnomalyResult | null>(null);
+  const [safetyResult, setSafetyResult] = useState<SafetyCheckResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const runAnalysis = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const [budgetRes, safetyRes] = await Promise.allSettled([
+        fetch("/api/ai/budget-anomaly", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName: item.title || "발주 품목",
+            orderAmount: 350000,
+            budgetTotal: 50000000,
+            budgetCurrent: 28000000,
+            budgetName: "연구비",
+            budgetPeriod: "2026년 상반기",
+          }),
+        }).then((r) => r.json()),
+        fetch("/api/ai/safety-check", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemName: item.title || "품목",
+            category: "REAGENT",
+          }),
+        }).then((r) => r.json()),
+      ]);
+
+      if (budgetRes.status === "fulfilled" && budgetRes.value.success) {
+        setBudgetResult(budgetRes.value.data);
+      }
+      if (safetyRes.status === "fulfilled" && safetyRes.value.success) {
+        setSafetyResult(safetyRes.value.data);
+      }
+      if (
+        (budgetRes.status === "rejected" || !budgetRes.value?.success) &&
+        (safetyRes.status === "rejected" || !safetyRes.value?.success)
+      ) {
+        setError("AI 분석에 실패했습니다.");
+      }
+    } catch {
+      setError("AI 분석 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [item.title]);
+
+  const hasResults = budgetResult || safetyResult;
+
+  return (
+    <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+      {!hasResults && !isLoading && (
+        <button
+          onClick={runAnalysis}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium hover:bg-violet-500/20 transition-colors"
+        >
+          <Sparkles className="h-3 w-3" />
+          AI 분석
+        </button>
+      )}
+
+      {isLoading && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded bg-slate-800/60 border border-slate-700/50 text-xs text-slate-400">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          예산 이상 탐지 + 안전 규제 검토 중...
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded bg-red-900/20 border border-red-800/40 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5" />
+          {error}
+        </div>
+      )}
+
+      {hasResults && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
+          {budgetResult && (
+            <div className="rounded border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <DollarSign className="h-3 w-3 text-blue-400" />
+                Budget & Anomaly
+              </div>
+
+              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.anomalySeverity]?.bg ?? "bg-slate-800/40"}`}>
+                <div className="flex items-center gap-1.5">
+                  {budgetResult.isAnomaly ? (
+                    <AlertTriangle className={`h-3 w-3 ${BURN_COLORS[budgetResult.anomalySeverity]?.icon ?? "text-slate-500"}`} />
+                  ) : (
+                    <CheckCircle2 className="h-3 w-3 text-emerald-400" />
+                  )}
+                  <span className={`text-xs ${BURN_COLORS[budgetResult.anomalySeverity]?.text ?? "text-slate-400"}`}>
+                    {budgetResult.anomalyReason}
+                  </span>
+                </div>
+              </div>
+
+              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.burnRateStatus]?.bg ?? "bg-slate-800/40"}`}>
+                <div className="flex items-center justify-between">
+                  <span className={`text-xs ${BURN_COLORS[budgetResult.burnRateStatus]?.text ?? "text-slate-400"}`}>
+                    잔여 {budgetResult.remainingPercent}%
+                  </span>
+                  <span className="text-[10px] text-slate-500">{budgetResult.predictedDepletionDate}</span>
+                </div>
+                <p className="text-[10px] text-slate-500 mt-0.5">{budgetResult.burnRateDetail}</p>
+              </div>
+
+              <p className="text-[10px] text-slate-500">{budgetResult.recommendation}</p>
+            </div>
+          )}
+
+          {safetyResult && (
+            <div className="rounded border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                <FlaskConical className="h-3 w-3 text-amber-400" />
+                Safety & Compliance
+              </div>
+
+              <div className={`rounded px-2 py-1.5 border ${RISK_COLORS[safetyResult.riskLevel]?.bg ?? "bg-slate-800/40"} ${RISK_COLORS[safetyResult.riskLevel]?.border ?? "border-slate-700"}`}>
+                <div className="flex items-center gap-1.5">
+                  {safetyResult.isHazardous ? (
+                    <ShieldAlert className={`h-3 w-3 ${RISK_COLORS[safetyResult.riskLevel]?.text ?? "text-slate-400"}`} />
+                  ) : (
+                    <ShieldCheck className="h-3 w-3 text-emerald-400" />
+                  )}
+                  <span className={`text-xs ${RISK_COLORS[safetyResult.riskLevel]?.text ?? "text-slate-400"}`}>
+                    {safetyResult.hazardClass}
+                  </span>
+                </div>
+              </div>
+
+              {safetyResult.requiredPPE.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {safetyResult.requiredPPE.map((ppe, i) => (
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/50">
+                      {ppe}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {safetyResult.regulatoryWarnings.length > 0 && (
+                <div className="space-y-0.5">
+                  {safetyResult.regulatoryWarnings.map((w, i) => (
+                    <div key={i} className="flex items-start gap-1 text-[10px] text-amber-400">
+                      <AlertTriangle className="h-2.5 w-2.5 mt-0.5 flex-shrink-0" />
+                      {w}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {safetyResult.storageRequirements && safetyResult.riskLevel !== "NONE" && (
+                <p className="text-[10px] text-slate-500">
+                  <span className="text-slate-400">보관: </span>{safetyResult.storageRequirements}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
