@@ -20,6 +20,25 @@ const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-
   ssr: false,
   loading: () => <div className="h-16 rounded-xl bg-slate-200 animate-pulse" />,
 });
+const ExecutiveSummarySection = dynamic_import(
+  () => import("@/components/dashboard/executive-summary-section").then(m => m.ExecutiveSummarySection),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[88px] rounded-lg bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+          <div className="h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+        </div>
+      </div>
+    ),
+  },
+);
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
@@ -318,6 +337,9 @@ export default function DashboardPage() {
           {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
         </p>
       </div>
+
+      {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) --- */}
+      <ExecutiveSummarySection />
 
       {/* --- AI 작업함 --- */}
       <WorkQueueInbox />
