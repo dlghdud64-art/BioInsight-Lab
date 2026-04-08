@@ -36,6 +36,10 @@ export const NOTIFICATION_EVENT_TYPES = {
   COMPARE_COMPLETED: "COMPARE_COMPLETED",
   APPROVAL_NEEDED: "APPROVAL_NEEDED",
   ESCALATION_TRIGGERED: "ESCALATION_TRIGGERED",
+  // 예산·공급사 응답·Fast-Track
+  BUDGET_WARNING: "BUDGET_WARNING",
+  VENDOR_REPLIED: "VENDOR_REPLIED",
+  FAST_TRACK_ELIGIBLE: "FAST_TRACK_ELIGIBLE",
 } as const;
 
 export type NotificationEventType =
@@ -139,6 +143,26 @@ export const EVENT_TYPE_META: Record<NotificationEventType, EventTypeMeta> = {
     label: "에스컬레이션 발생",
     entityType: "ESCALATION",
     defaultActions: ["IN_APP", "ESCALATION"],
+  },
+
+  // ── 예산·공급사 응답·Fast-Track ──
+  BUDGET_WARNING: {
+    key: "BUDGET_WARNING",
+    label: "예산 경고",
+    entityType: "BUDGET",
+    defaultActions: ["IN_APP", "QUEUE_ITEM"],
+  },
+  VENDOR_REPLIED: {
+    key: "VENDOR_REPLIED",
+    label: "공급사 응답 도착",
+    entityType: "QUOTE",
+    defaultActions: ["IN_APP", "QUEUE_ITEM"],
+  },
+  FAST_TRACK_ELIGIBLE: {
+    key: "FAST_TRACK_ELIGIBLE",
+    label: "즉시 승인 가능 권장",
+    entityType: "QUOTE",
+    defaultActions: ["IN_APP", "QUEUE_ITEM"],
   },
 };
 

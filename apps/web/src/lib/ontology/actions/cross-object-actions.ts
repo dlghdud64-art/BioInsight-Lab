@@ -12,6 +12,7 @@
  */
 
 import { supabase } from "@/lib/supabase";
+import { evaluatePolicy } from "../policy";
 import type {
   ActionResult,
   AuditTrace,
@@ -94,6 +95,30 @@ export async function checkFinalizeApprovalPreconditions(
   input: FinalizeApprovalInput,
 ): Promise<PreconditionResult> {
   const violations: PreconditionViolation[] = [];
+
+  // 0. Policy Engine Slot — 미래의 RBAC/ABAC/ReBAC 평가 진입점.
+  //    현재 dummy는 항상 allowed=true. Action 본체 수정 없이 정책 엔진만
+  //    교체할 수 있도록 자리만 잡아둔다.
+  const policy = await evaluatePolicy("FinalizeApproval", {
+    actor: input.approvedBy,
+    targetObjectId: input.orderId,
+    targetObjectType: "PurchaseOrder",
+    targetAttributes: {
+      orderAmount: input.orderAmount,
+      budgetId: input.budgetId,
+    },
+  });
+  if (!policy.allowed) {
+    violations.push({
+      code: "POLICY_DENIED",
+      message: policy.reason ?? "정책에 의해 거부됨",
+      severity: policy.severity === "soft" ? "soft" : "hard",
+      canOverride: policy.severity === "soft",
+    });
+    if (policy.severity === "hard") {
+      return preconditionFail(violations);
+    }
+  }
 
   // 1. 주문 존재 및 상태 확인
   const { data: order } = await supabase
@@ -348,6 +373,28 @@ export async function checkReceiveOrderPreconditions(
   input: ReceiveOrderInput,
 ): Promise<PreconditionResult> {
   const violations: PreconditionViolation[] = [];
+
+  // 0. Policy Engine Slot — 미래 정책 엔진 진입점. 현재 dummy.
+  const policy = await evaluatePolicy("ReceiveOrder", {
+    actor: input.receivedBy,
+    targetObjectId: input.orderId,
+    targetObjectType: "PurchaseOrder",
+    targetAttributes: {
+      receivedQuantity: input.receivedQuantity,
+      inspectionResult: input.inspectionResult,
+    },
+  });
+  if (!policy.allowed) {
+    violations.push({
+      code: "POLICY_DENIED",
+      message: policy.reason ?? "정책에 의해 거부됨",
+      severity: policy.severity === "soft" ? "soft" : "hard",
+      canOverride: policy.severity === "soft",
+    });
+    if (policy.severity === "hard") {
+      return preconditionFail(violations);
+    }
+  }
 
   const { data: order } = await supabase
     .from("order_queue")

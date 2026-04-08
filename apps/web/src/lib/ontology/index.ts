@@ -47,6 +47,13 @@ export type {
   ReceivingRecordObject,
   ReceivingInspectionResult,
   StateTransitionRule,
+  FastTrackRecommendationObject,
+  FastTrackStatus,
+  FastTrackReason,
+  FastTrackReasonCode,
+  FastTrackBlocker,
+  FastTrackBlockerCode,
+  FastTrackEvaluationSnapshot,
 } from "./types";
 
 // ── Actions ──
@@ -156,6 +163,43 @@ export type {
   ExecutionStep,
   ExecutionPlan,
 } from "./ai/ontology-ai-service";
+
+// ── Fast-Track Recommendation Engine ──
+export {
+  evaluateFastTrack,
+  detectFastTrackSnapshotDrift,
+  FAST_TRACK_THRESHOLDS,
+} from "./fast-track/fast-track-engine";
+
+export type {
+  FastTrackCandidateItem,
+  FastTrackHistoryRecord,
+  FastTrackEvaluationInput,
+} from "./fast-track/fast-track-engine";
+
+// ── Fast-Track Event Publisher ──
+export {
+  evaluateAndPublishFastTrack,
+  publishFastTrackDismissed,
+  FAST_TRACK_EVENT_TYPES,
+} from "./fast-track/fast-track-publisher";
+
+export type {
+  EvaluateAndPublishResult,
+  FastTrackEventType,
+} from "./fast-track/fast-track-publisher";
+
+// ── Policy Engine Slot (Future RBAC/ABAC/ReBAC) ──
+export {
+  evaluatePolicy,
+  evaluatePolicySync,
+} from "./policy";
+
+export type {
+  PolicyActionName,
+  PolicyContext,
+  PolicyEvaluationResult,
+} from "./policy";
 
 // ── What-if Simulation Engine (Phase 4) ──
 export {
