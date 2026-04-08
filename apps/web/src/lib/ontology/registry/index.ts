@@ -167,6 +167,26 @@ export const OBJECT_REGISTRY: readonly ObjectRegistryEntry[] = [
     ],
   },
   {
+    objectType: "FastTrackRecommendation",
+    displayName: "Fast-Track 권장",
+    description:
+      "온톨로지 그래프(과거 이력·안전성·규제) 기반으로 AI가 즉시 승인 가능성을 보증하는 computed view. " +
+      "AI는 발주를 대신 실행하지 않고, Queue 상단 '즉시 승인 가능' 섹션 노출 자격만 부여한다.",
+    governanceDomain: "quote_chain",
+    stateTransitions: [
+      { from: "not_eligible", to: "eligible", requires: ["evaluation_passed"], actionName: "EvaluateFastTrack", irreversible: false },
+      { from: "eligible", to: "accepted", requires: ["user_bulk_approval"], actionName: "AcceptFastTrackRecommendation", irreversible: false },
+      { from: "eligible", to: "dismissed", requires: ["user_dismiss"], actionName: "DismissFastTrackRecommendation", irreversible: false },
+      { from: "eligible", to: "stale", requires: ["snapshot_invalidated"], actionName: "InvalidateFastTrackRecommendation", irreversible: false },
+      { from: "stale", to: "eligible", requires: ["evaluation_passed"], actionName: "EvaluateFastTrack", irreversible: false },
+    ],
+    linkTargets: [
+      { targetType: "Quote", linkType: "fast_track_for_quote", cardinality: "one" },
+      { targetType: "Vendor", linkType: "fast_track_for_vendor", cardinality: "one" },
+      { targetType: "Product", linkType: "fast_track_covers_product", cardinality: "many" },
+    ],
+  },
+  {
     objectType: "BomParseSession",
     displayName: "BOM 파싱",
     description: "AI BOM 텍스트 파싱 세션. 비정형 품목 리스트를 구조화하여 발주 대기열에 일괄 등록.",

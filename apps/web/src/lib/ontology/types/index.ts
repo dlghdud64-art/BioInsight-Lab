@@ -38,7 +38,8 @@ export type OntologyObjectType =
   | "DispatchPackage"
   | "ReceivingRecord"
   | "QuoteComparison"
-  | "BomParseSession";
+  | "BomParseSession"
+  | "FastTrackRecommendation";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Link — 객체 간 관계 (Prisma FK 대신 명시적 그래프)
@@ -367,6 +368,103 @@ export type ReceivingInspectionResult =
   | "partial_received"
   | "rejected"
   | "damaged";
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Fast-Track Recommendation — 온톨로지 기반 즉시 승인 권장
+//
+// 고정 규칙:
+// 1. AI가 "대신 발주"하지 않는다. 오직 "이 건은 검토 없이도 안전합니다"라고 보증만 한다.
+//    최종 승인은 사용자의 명시적 [일괄 승인] 클릭이다.
+// 2. 평가 결과는 canonical computed view다. 이 객체가 있다고 해서 PO가 생성되는 게 아니라,
+//    Queue 화면에 "Fast-Track 권장" 섹션 노출 자격이 부여될 뿐이다.
+// 3. safetyScore는 deterministic이어야 하고, reasons[]에 판정 근거를 모두 명시해야 한다.
+// 4. 판정 근거가 하나라도 무효화되면(예: 예산 변동, 위험물질 재분류) 해당 Recommendation은
+//    stale로 간주되고 Queue 섹션에서 자동 회수되어야 한다.
+// 5. 수락 시 Action Ledger에 "사용자가 AI의 Fast-Track 권장을 수락하여 승인함" 로그가 남는다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+/** Fast-Track 권장 객체 — ProcurementCase/Quote 단위 computed view */
+export interface FastTrackRecommendationObject extends ObjectIdentity {
+  objectType: "FastTrackRecommendation";
+  /** 권장 대상 procurement case 식별자 (Quote/PO Draft id 등) */
+  procurementCaseId: string;
+  /** 권장 상태 */
+  recommendationStatus: FastTrackStatus;
+  /** 0.0 ~ 1.0 — deterministic 안전 점수 */
+  safetyScore: number;
+  /** 권장 여부 (threshold 통과 + blocker 없음) */
+  recommended: boolean;
+  /** 판정 근거 (사용자에게 그대로 노출 가능한 한국어) */
+  reasons: FastTrackReason[];
+  /** 권장 차단 사유 (있으면 recommended=false) */
+  blockers: FastTrackBlocker[];
+  /** 평가 시 사용된 snapshot 식별자 — 이후 변경 감지용 */
+  evaluationSnapshot: FastTrackEvaluationSnapshot;
+  /** 마지막 평가 시각 */
+  evaluatedAt: string;
+}
+
+export type FastTrackStatus =
+  /** 이 case는 Fast-Track 자격 미충족 (기본값) */
+  | "not_eligible"
+  /** 자격 충족 — Queue 상단 노출 대상 */
+  | "eligible"
+  /** 사용자가 수락하여 일괄 승인으로 실행됨 */
+  | "accepted"
+  /** snapshot 변경으로 무효화됨 — Queue에서 회수 */
+  | "stale"
+  /** 사용자가 명시적으로 거부 — 해당 case는 일반 검토 경로로 전환 */
+  | "dismissed";
+
+/** 판정 근거 단일 항목 */
+export interface FastTrackReason {
+  code: FastTrackReasonCode;
+  /** 가중치 (safetyScore 합산용, 0.0~1.0) */
+  weight: number;
+  /** 사용자 노출 메시지 */
+  message: string;
+}
+
+export type FastTrackReasonCode =
+  /** 최근 n개월 내 동일 vendor+product 정상 구매 이력 존재 */
+  | "repeat_purchase_history"
+  /** 위험물질/규제 대상 아님 (MSDS hazard code 없음) */
+  | "no_hazard_flags"
+  /** 규제 pharmacopoeia/컨트롤 품목 아님 */
+  | "no_regulatory_flags";
+
+/** 권장 차단 사유 — 하나라도 있으면 recommended=false */
+export interface FastTrackBlocker {
+  code: FastTrackBlockerCode;
+  /** 사용자 노출 메시지 */
+  message: string;
+  /** 해결 방법 힌트 */
+  remediation: string;
+}
+
+export type FastTrackBlockerCode =
+  /** 위험물질로 분류된 품목 포함 */
+  | "hazardous_item_present"
+  /** 규제 대상 품목 포함 */
+  | "regulated_item_present"
+  /** 과거 정상 구매 이력 부족 */
+  | "insufficient_history"
+  /** 수동 검토 강제 플래그 */
+  | "manual_review_required";
+
+/** 평가 snapshot — 재평가 시 drift 감지용 */
+export interface FastTrackEvaluationSnapshot {
+  /** 평가 대상 vendor id */
+  vendorId: string;
+  /** 평가 대상 product ids */
+  productIds: string[];
+  /** 평가 시점 총 금액 */
+  totalAmount: number;
+  /** 평가에 사용된 과거 구매 이력 건수 */
+  historyCount: number;
+  /** 평가에 사용된 hazard code 집합 (정렬됨) */
+  hazardCodesSeen: string[];
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // State Transition Rule — 상태 전이 제약
