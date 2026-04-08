@@ -4,6 +4,7 @@ import { useState } from "react";
 import { DashboardHeader } from "@/components/dashboard/Header";
 import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
 
 /**
@@ -39,6 +40,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <BottomNav />
+        <BarcodeScanFab />
       </div>
     </OpsStoreProvider>
   );

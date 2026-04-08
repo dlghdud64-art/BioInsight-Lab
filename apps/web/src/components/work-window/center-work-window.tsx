@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useCallback } from "react";
+import { AnimatePresence, motion, type PanInfo } from "framer-motion";
 import { X, CheckCircle2, AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { WORK_WINDOW_LAYOUT } from "@/lib/layout-system/work-window-system";
@@ -107,6 +108,7 @@ export function CenterWorkWindow({
         document.body.style.overflow = "";
       };
     }
+    return undefined;
   }, [open, handleKeyDown]);
 
   // 성공 후 자동 닫기
@@ -117,25 +119,62 @@ export function CenterWorkWindow({
     }
   }, [phase, autoCloseDelay, onClose]);
 
-  if (!open) return null;
+  // 모바일 바텀시트 swipe-to-dismiss: 임계치 이상 아래로 끌면 닫힘
+  const handleDragEnd = useCallback(
+    (_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+      if (phase === "executing") return;
+      if (info.offset.y > 120 || info.velocity.y > 600) {
+        onClose();
+      }
+    },
+    [onClose, phase],
+  );
 
   return (
-    /* Backdrop */
-    <div
-      className={WORK_WINDOW_LAYOUT.backdrop}
-      onClick={(e) => {
-        if (e.target === e.currentTarget && phase !== "executing") {
-          onClose();
-        }
-      }}
-    >
-      {/* Window container */}
-      <div
-        className={WORK_WINDOW_LAYOUT.container}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-      >
+    <AnimatePresence>
+      {open ? (
+        /* Backdrop: 모바일은 bottom 정렬, 데스크탑은 center 정렬 */
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 z-50 bg-black/60 flex items-end justify-center lg:items-center"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && phase !== "executing") {
+              onClose();
+            }
+          }}
+        >
+          {/* Window container — 모바일: 바닥에서 올라오는 full-screen sheet
+              데스크탑: 중앙 정렬 모달 */}
+          <motion.div
+            initial={{ y: "100%", opacity: 0.6 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: "100%", opacity: 0 }}
+            transition={{ type: "spring", damping: 32, stiffness: 320 }}
+            drag={phase !== "executing" ? "y" : false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.3 }}
+            onDragEnd={handleDragEnd}
+            className={[
+              // ── Mobile (<lg): full-screen bottom sheet ────────────
+              "relative w-full max-h-[92vh] h-[92vh] rounded-t-2xl",
+              "bg-pn border-t border-x border-bd shadow-2xl",
+              "overflow-hidden flex flex-col",
+              // ── Desktop (≥lg): centered modal (기존 grammar 유지) ──
+              "lg:h-auto lg:max-w-2xl lg:max-h-[85vh]",
+              "lg:rounded-xl lg:border",
+              "lg:shadow-2xl",
+            ].join(" ")}
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
+          >
+            {/* 모바일 드래그 핸들 — 데스크탑에서는 숨김 */}
+            <div className="flex justify-center pt-2 pb-1 lg:hidden">
+              <div className="h-1.5 w-10 rounded-full bg-slate-300" aria-hidden="true" />
+            </div>
         {/* Slot 1: Title Bar */}
         <div className={WORK_WINDOW_LAYOUT.titleBar}>
           <div className="min-w-0">
@@ -232,7 +271,9 @@ export function CenterWorkWindow({
             <p className="text-xs text-red-400">{errorMessage}</p>
           </div>
         )}
-      </div>
-    </div>
+          </motion.div>
+        </motion.div>
+      ) : null}
+    </AnimatePresence>
   );
 }
