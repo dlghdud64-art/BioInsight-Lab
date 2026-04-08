@@ -15,7 +15,11 @@
  */
 
 import { create } from "zustand";
-import { emitVendorQuoteSubmitted } from "./vendor-portal-events";
+import {
+  emitVendorQuoteSubmitted,
+  emitVendorPoAcknowledged,
+  emitVendorPoDisputed,
+} from "./vendor-portal-events";
 
 // ── Types ────────────────────────────────────────────────────────────
 
@@ -60,6 +64,49 @@ export interface VendorQuoteSubmission {
   /** 비고 */
   notes: string;
   submittedAt: string;
+}
+
+// ── PO confirmation types ───────────────────────────────────────────
+//
+// Vendor Portal에서 공급사가 “보낸 PO”를 확인/수락/이의제기할 수 있는 탭.
+// 캐노니컬 PO truth는 내부 po-created / dispatch / supplier-confirmation
+// 체인이 관리하며, 여기서는 외부 노출 가능한 필드만 복제해 보여준다.
+
+/** 외부 공급사가 보는 PO 상태 */
+export type VendorFacingPoStatus =
+  | "sent" // 내부에서 발송 완료, 공급사 확인 대기
+  | "acknowledged" // 공급사 수락 완료
+  | "disputed"; // 공급사 이의 제기
+
+export interface VendorPoDocument {
+  /** 연관 ProcurementCase id */
+  procurementCaseId: string;
+  /** 내부 PO 번호 (canonical) */
+  poNumber: string;
+  /** 본 PO를 받은 공급사 ID */
+  vendorId: string;
+  vendorName: string;
+  /** 외부 노출용 제목 */
+  title: string;
+  /** 발송일 */
+  sentAt: string;
+  /** 납품 요청일 */
+  requestedDeliveryDate: string | null;
+  /** 품목 요약 (외부 노출 안전 필드만) */
+  items: Array<{
+    itemId: string;
+    productName: string;
+    quantity: number;
+    unit: string;
+    unitPrice: number;
+  }>;
+  /** 합계 (원) */
+  totalAmount: number;
+  status: VendorFacingPoStatus;
+  /** 공급사가 수락/이의제기한 시각 */
+  respondedAt: string | null;
+  /** 이의 사유 (disputed일 때만) */
+  disputeReason: string | null;
 }
 
 // ── Seed RFQs (mock — 실제 환경에서는 내부 engine에서 주입) ──────────
@@ -123,11 +170,51 @@ const SEED_RFQS: VendorRfq[] = [
   },
 ];
 
+// ── Seed POs (mock — 실제 환경에서는 내부 dispatch engine에서 주입) ───
+
+const SEED_POS: VendorPoDocument[] = [
+  {
+    procurementCaseId: "pc_po_001",
+    poNumber: "PO-2026-0312",
+    vendorId: "v1",
+    vendorName: "BioReagent Korea",
+    title: "qPCR 시약 긴급 보충",
+    sentAt: "2026-04-06T06:30:00.000Z",
+    requestedDeliveryDate: "2026-04-16",
+    items: [
+      { itemId: "itp_001", productName: "SYBR Green Master Mix", quantity: 5, unit: "kit", unitPrice: 210000 },
+      { itemId: "itp_002", productName: "ROX Reference Dye", quantity: 2, unit: "vial", unitPrice: 85000 },
+    ],
+    totalAmount: 5 * 210000 + 2 * 85000,
+    status: "sent",
+    respondedAt: null,
+    disputeReason: null,
+  },
+  {
+    procurementCaseId: "pc_po_002",
+    poNumber: "PO-2026-0305",
+    vendorId: "v2",
+    vendorName: "LabSupply Plus",
+    title: "세포 배양 소모품 정기",
+    sentAt: "2026-04-04T02:15:00.000Z",
+    requestedDeliveryDate: "2026-04-14",
+    items: [
+      { itemId: "itp_010", productName: "T175 Flask, treated", quantity: 120, unit: "EA", unitPrice: 4200 },
+      { itemId: "itp_011", productName: "10% FBS, qualified", quantity: 4, unit: "bottle", unitPrice: 465000 },
+    ],
+    totalAmount: 120 * 4200 + 4 * 465000,
+    status: "sent",
+    respondedAt: null,
+    disputeReason: null,
+  },
+];
+
 // ── Store ────────────────────────────────────────────────────────────
 
 interface VendorPortalState {
   rfqs: VendorRfq[];
   submissions: VendorQuoteSubmission[];
+  pos: VendorPoDocument[];
 
   // ── Actions ──
   /** 공급사 견적 제출. 상태를 quote_received로 전환하고 governance event 발행 */
@@ -139,14 +226,31 @@ interface VendorPortalState {
     notes: string;
   }) => { success: boolean; error?: string };
 
+  /** 공급사 PO 수락 */
+  acknowledgePo: (input: {
+    procurementCaseId: string;
+    poNumber: string;
+    vendorId: string;
+  }) => { success: boolean; error?: string };
+
+  /** 공급사 PO 이의 제기 */
+  disputePo: (input: {
+    procurementCaseId: string;
+    poNumber: string;
+    vendorId: string;
+    reason: string;
+  }) => { success: boolean; error?: string };
+
   /** vendor scope 외 데이터에 접근하지 못하도록 selector */
   getRfqsForVendor: (vendorId: string) => VendorRfq[];
   getSubmissionFor: (procurementCaseId: string, vendorId: string) => VendorQuoteSubmission | null;
+  getPosForVendor: (vendorId: string) => VendorPoDocument[];
 }
 
 export const useVendorPortalStore = create<VendorPortalState>((set, get) => ({
   rfqs: SEED_RFQS,
   submissions: [],
+  pos: SEED_POS,
 
   submitQuote: (input) => {
     const state = get();
@@ -211,6 +315,90 @@ export const useVendorPortalStore = create<VendorPortalState>((set, get) => ({
     return { success: true };
   },
 
+  acknowledgePo: (input) => {
+    const state = get();
+    const target = state.pos.find(
+      (p) =>
+        p.procurementCaseId === input.procurementCaseId &&
+        p.poNumber === input.poNumber &&
+        p.vendorId === input.vendorId,
+    );
+    if (!target) {
+      return { success: false, error: "해당 PO를 찾을 수 없습니다." };
+    }
+    if (target.status !== "sent") {
+      return { success: false, error: "이미 처리된 PO입니다." };
+    }
+
+    const respondedAt = new Date().toISOString();
+    set((s) => ({
+      pos: s.pos.map((p) =>
+        p.procurementCaseId === input.procurementCaseId &&
+        p.poNumber === input.poNumber &&
+        p.vendorId === input.vendorId
+          ? { ...p, status: "acknowledged" as VendorFacingPoStatus, respondedAt }
+          : p,
+      ),
+    }));
+
+    emitVendorPoAcknowledged({
+      procurementCaseId: target.procurementCaseId,
+      vendorId: target.vendorId,
+      vendorName: target.vendorName,
+      poNumber: target.poNumber,
+      acknowledgedAt: respondedAt,
+    });
+
+    return { success: true };
+  },
+
+  disputePo: (input) => {
+    const state = get();
+    const target = state.pos.find(
+      (p) =>
+        p.procurementCaseId === input.procurementCaseId &&
+        p.poNumber === input.poNumber &&
+        p.vendorId === input.vendorId,
+    );
+    if (!target) {
+      return { success: false, error: "해당 PO를 찾을 수 없습니다." };
+    }
+    if (target.status !== "sent") {
+      return { success: false, error: "이미 처리된 PO입니다." };
+    }
+    const reason = input.reason.trim();
+    if (reason.length < 2) {
+      return { success: false, error: "이의 사유를 입력해주세요." };
+    }
+
+    const respondedAt = new Date().toISOString();
+    set((s) => ({
+      pos: s.pos.map((p) =>
+        p.procurementCaseId === input.procurementCaseId &&
+        p.poNumber === input.poNumber &&
+        p.vendorId === input.vendorId
+          ? {
+              ...p,
+              status: "disputed" as VendorFacingPoStatus,
+              respondedAt,
+              disputeReason: reason,
+            }
+          : p,
+      ),
+    }));
+
+    emitVendorPoDisputed({
+      procurementCaseId: target.procurementCaseId,
+      vendorId: target.vendorId,
+      vendorName: target.vendorName,
+      poNumber: target.poNumber,
+      reason,
+      disputedAt: respondedAt,
+    });
+
+    return { success: true };
+  },
+
   getRfqsForVendor: (vendorId) => {
     if (!vendorId) return [];
     return get().rfqs.filter((r) => r.vendorId === vendorId);
@@ -222,5 +410,10 @@ export const useVendorPortalStore = create<VendorPortalState>((set, get) => ({
         (s) => s.procurementCaseId === procurementCaseId && s.vendorId === vendorId,
       ) ?? null
     );
+  },
+
+  getPosForVendor: (vendorId) => {
+    if (!vendorId) return [];
+    return get().pos.filter((p) => p.vendorId === vendorId);
   },
 }));

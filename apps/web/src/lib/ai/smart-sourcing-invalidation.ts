@@ -22,7 +22,11 @@
  */
 
 import type { GovernanceEvent, GovernanceDomain } from "./governance-event-bus";
-import { createGovernanceEventBus, createGovernanceEvent } from "./governance-event-bus";
+import {
+  createGovernanceEvent,
+  getGlobalGovernanceEventBus,
+  resetGlobalGovernanceEventBus,
+} from "./governance-event-bus";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Smart Sourcing Event Types
@@ -42,24 +46,22 @@ export type SmartSourcingEventType =
 const SS_DOMAIN: GovernanceDomain = "quote_chain";
 
 // ══════════════════════════════════════════════════════════════════════════════
-// Event Bus 인스턴스 (싱글톤)
+// Event Bus 인스턴스 — process-wide global singleton 사용
 // ══════════════════════════════════════════════════════════════════════════════
-
-let _eventBus: ReturnType<typeof createGovernanceEventBus> | null = null;
+//
+// NOTE: 이전에는 이 모듈이 자체 `let _eventBus` 싱글톤을 들고 있었으나,
+// 그 경우 vendor portal / vendor-response-inbox / 기타 listener가 다른 인스턴스를
+// 구독하게 되어 cross-module 이벤트가 조용히 사라지는 문제가 있었음.
+// 이제 quote_chain domain을 공유하는 모든 publisher / listener가
+// 동일한 process-wide bus를 사용하도록 global helper로 위임한다.
 
 function getEventBus() {
-  if (!_eventBus) {
-    _eventBus = createGovernanceEventBus();
-  }
-  return _eventBus;
+  return getGlobalGovernanceEventBus();
 }
 
-/** 테스트용: bus 리셋 */
+/** 테스트용: bus 리셋 (global bus clear + 재생성) */
 export function resetSmartSourcingEventBus(): void {
-  if (_eventBus) {
-    _eventBus.clearHistory();
-  }
-  _eventBus = null;
+  resetGlobalGovernanceEventBus();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

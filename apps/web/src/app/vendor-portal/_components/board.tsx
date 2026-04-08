@@ -8,6 +8,7 @@ import {
   Clock,
   AlertTriangle,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import {
   useVendorPortalStore,
@@ -15,6 +16,9 @@ import {
 } from "@/lib/vendor-portal/vendor-portal-store";
 import { emitVendorQuoteAcknowledged } from "@/lib/vendor-portal/vendor-portal-events";
 import { QuoteSubmitForm } from "./quote-submit-form";
+import { VendorPoConfirmationPanel } from "./po-confirmation-panel";
+
+type VendorPortalTab = "rfq" | "po";
 
 /**
  * VendorPortalBoard
@@ -28,10 +32,24 @@ export function VendorPortalBoard() {
 
   const rfqs = useVendorPortalStore((s) => s.rfqs);
   const submissions = useVendorPortalStore((s) => s.submissions);
+  const pos = useVendorPortalStore((s) => s.pos);
+
+  const [activeTab, setActiveTab] = useState<VendorPortalTab>("rfq");
 
   const myRfqs = useMemo<VendorRfq[]>(
     () => (vendorId ? rfqs.filter((r) => r.vendorId === vendorId) : []),
     [rfqs, vendorId],
+  );
+  const myPoCount = useMemo(
+    () => (vendorId ? pos.filter((p) => p.vendorId === vendorId).length : 0),
+    [pos, vendorId],
+  );
+  const myPoPendingCount = useMemo(
+    () =>
+      vendorId
+        ? pos.filter((p) => p.vendorId === vendorId && p.status === "sent").length
+        : 0,
+    [pos, vendorId],
   );
 
   const [activeCaseId, setActiveCaseId] = useState<string | null>(null);
@@ -77,6 +95,111 @@ export function VendorPortalBoard() {
     );
   }
 
+  const pendingCount = myRfqs.filter((r) => r.status === "request_for_quote").length;
+  const submittedCount = myRfqs.filter((r) => r.status === "quote_received").length;
+
+  return (
+    <div className="space-y-5">
+      {/* ── 탭 네비게이션 ────────────────────────────────── */}
+      <div className="flex items-center gap-1 border-b border-slate-200">
+        <TabButton
+          icon={<ClipboardList className="h-3.5 w-3.5" />}
+          label="견적 요청 (RFQ)"
+          badge={pendingCount > 0 ? pendingCount : null}
+          active={activeTab === "rfq"}
+          onClick={() => setActiveTab("rfq")}
+        />
+        <TabButton
+          icon={<FileText className="h-3.5 w-3.5" />}
+          label="발주서 (PO)"
+          badge={myPoPendingCount > 0 ? myPoPendingCount : null}
+          active={activeTab === "po"}
+          onClick={() => setActiveTab("po")}
+          disabled={myPoCount === 0 && myRfqs.length > 0}
+        />
+      </div>
+
+      {activeTab === "rfq" ? (
+        <RfqTab
+          myRfqs={myRfqs}
+          vendorId={vendorId}
+          submissions={submissions}
+          pendingCount={pendingCount}
+          submittedCount={submittedCount}
+          activeCaseId={activeCaseId}
+          activeRfq={activeRfq}
+          onOpen={handleOpenRfq}
+          onClose={() => setActiveCaseId(null)}
+        />
+      ) : (
+        <VendorPoConfirmationPanel vendorId={vendorId} />
+      )}
+    </div>
+  );
+}
+
+// ── Tab button ───────────────────────────────────────────────────────
+
+function TabButton({
+  icon,
+  label,
+  badge,
+  active,
+  disabled,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  badge: number | null;
+  active: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`-mb-px inline-flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-semibold transition-colors ${
+        active
+          ? "border-slate-900 text-slate-900"
+          : "border-transparent text-slate-500 hover:text-slate-700"
+      } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
+    >
+      {icon}
+      <span>{label}</span>
+      {badge !== null ? (
+        <span className="inline-flex h-4 min-w-[16px] items-center justify-center rounded-full bg-amber-500 px-1 text-[9px] font-bold text-white">
+          {badge}
+        </span>
+      ) : null}
+    </button>
+  );
+}
+
+// ── RFQ tab content ──────────────────────────────────────────────────
+
+function RfqTab({
+  myRfqs,
+  vendorId,
+  submissions,
+  pendingCount,
+  submittedCount,
+  activeCaseId,
+  activeRfq,
+  onOpen,
+  onClose,
+}: {
+  myRfqs: VendorRfq[];
+  vendorId: string;
+  submissions: ReturnType<typeof useVendorPortalStore.getState>["submissions"];
+  pendingCount: number;
+  submittedCount: number;
+  activeCaseId: string | null;
+  activeRfq: VendorRfq | null;
+  onOpen: (rfq: VendorRfq) => void;
+  onClose: () => void;
+}) {
   if (myRfqs.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white p-8 text-center">
@@ -90,9 +213,6 @@ export function VendorPortalBoard() {
       </div>
     );
   }
-
-  const pendingCount = myRfqs.filter((r) => r.status === "request_for_quote").length;
-  const submittedCount = myRfqs.filter((r) => r.status === "quote_received").length;
 
   return (
     <div className="space-y-5">
@@ -140,7 +260,7 @@ export function VendorPortalBoard() {
                 rfq={rfq}
                 submittedTotal={submitted?.quotedTotal ?? null}
                 active={isActive}
-                onClick={() => handleOpenRfq(rfq)}
+                onClick={() => onOpen(rfq)}
               />
             );
           })}
@@ -151,7 +271,7 @@ export function VendorPortalBoard() {
             <QuoteSubmitForm
               key={activeRfq.procurementCaseId}
               rfq={activeRfq}
-              onClose={() => setActiveCaseId(null)}
+              onClose={onClose}
             />
           ) : (
             <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-10 text-center">
