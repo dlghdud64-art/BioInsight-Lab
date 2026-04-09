@@ -23,7 +23,16 @@ import { useBudgetStore, deriveBudgetControl } from "@/lib/store/budget-store";
 import { useInventoryStore } from "@/lib/store/inventory-store";
 import { useOrderQueueStore } from "@/lib/store/order-queue-store";
 import { useFastTrackStore } from "@/lib/store/fast-track-store";
+import { useProactiveFastTrackSessionStore } from "@/lib/store/proactive-fast-track-session-store";
 import type { FastTrackEvaluationInput } from "@/lib/ontology/fast-track/fast-track-engine";
+import type { FastTrackRecommendationObject } from "@/lib/ontology/types";
+import {
+  findSimilarEligible,
+  selectUnseenEligible,
+  hasUnseenEligible,
+} from "@/lib/ontology/fast-track/fast-track-similarity";
+import { ProactiveFastTrackModal } from "@/components/fast-track/proactive-fast-track-modal";
+import { SimilarApprovalInterceptModal } from "@/components/fast-track/similar-approval-intercept-modal";
 import {
   getGlobalGovernanceEventBus,
   createGovernanceEvent,
@@ -145,6 +154,14 @@ function POConversionContent() {
   const markFastTrackAccepted = useFastTrackStore((s) => s.markAccepted);
   const dismissFastTrack = useFastTrackStore((s) => s.dismissRecommendation);
 
+  // Proactive session store — entry modal 발화 guard + dismissed objectId 집합.
+  // canonical truth 가 아닌 presentation state 라서 fast-track-store 에 섞지 않는다.
+  const canShowEntryModal = useProactiveFastTrackSessionStore((s) => s.canShowEntryModal);
+  const markEntryModalShown = useProactiveFastTrackSessionStore((s) => s.markEntryModalShown);
+  const proactiveDismissed = useProactiveFastTrackSessionStore((s) => s.dismissedObjectIds);
+  const addProactiveDismissed = useProactiveFastTrackSessionStore((s) => s.addDismissed);
+  const incrementInterceptShown = useProactiveFastTrackSessionStore((s) => s.incrementInterceptShown);
+
   // Queue 에 후보가 들어오는 시점(즉, MOCK_CANDIDATES 배열이 바뀔 때)에
   // 한 번 bulk 평가한다. drift 재평가는 publisher 내부에서 처리된다.
   // (AI 호출 없음 · deterministic · 동일 입력 → 동일 출력)
@@ -153,8 +170,42 @@ function POConversionContent() {
     bulkEvaluateFastTrack(inputs);
   }, [bulkEvaluateFastTrack]);
 
+  // Proactive entry modal gating — 세션당 1회, 그리고 아직 사용자가 보지 못한
+  // eligible objectId 가 존재할 때만 자동 노출한다. drift 재평가로 objectId 가
+  // 갱신되면 자연스럽게 "unseen" 이 되어 다시 뜰 수 있다.
+  useEffect(() => {
+    const allRecs = Object.values(fastTrackRecommendations);
+    if (allRecs.length === 0) return;
+    if (!canShowEntryModal()) return;
+    if (!hasUnseenEligible(allRecs, proactiveDismissed)) return;
+    const items = selectUnseenEligible(allRecs, proactiveDismissed);
+    if (items.length === 0) return;
+    setEntryModalItems(items);
+    setEntryModalOpen(true);
+    markEntryModalShown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fastTrackRecommendations]);
+
   // UI 체크박스 상태 — 어떤 Fast-Track 항목을 일괄 승인 대상으로 묶을지.
   const [fastTrackSelected, setFastTrackSelected] = useState<Set<string>>(new Set());
+
+  // Proactive entry modal (세션당 1회) / Similar intercept modal state.
+  // canonical 이 아니므로 화면 local state 로만 유지한다.
+  const [entryModalOpen, setEntryModalOpen] = useState(false);
+  const [entryModalItems, setEntryModalItems] = useState<
+    FastTrackRecommendationObject[]
+  >([]);
+  const [interceptOpen, setInterceptOpen] = useState(false);
+  const [interceptTarget, setInterceptTarget] =
+    useState<FastTrackRecommendationObject | null>(null);
+  const [interceptSimilar, setInterceptSimilar] = useState<
+    FastTrackRecommendationObject[]
+  >([]);
+
+  // vendor name resolver — modal 들이 공통으로 사용 (MOCK_CANDIDATES 기반).
+  // 실 데이터 전환 시에는 store 의 inputSnapshot.vendorName 으로 교체한다.
+  const resolveVendorName = (caseId: string): string =>
+    MOCK_CANDIDATES.find((c) => c.id === caseId)?.vendor ?? "—";
 
   // 현재 Queue 에 있는 candidate 중 eligible 인 것만 뽑아낸다.
   // reentry 가드: 수락 완료(accepted) · stale · dismissed 는 자동으로 제외됨.
@@ -165,13 +216,25 @@ function POConversionContent() {
     });
   }, [fastTrackRecommendations]);
 
-  // 일괄 승인 실행
-  const handleFastTrackBulkApprove = async () => {
-    const targets = Array.from(fastTrackSelected);
-    if (targets.length === 0) return;
+  /**
+   * Shared Fast-Track bulk approval runner.
+   *
+   * 기존 handleFastTrackBulkApprove 의 4단계 파이프라인(markAccepted →
+   * finalizeApproval → governance bus publish → selection reset)을 그대로
+   * 재사용하되, 호출처가 여러 개(체크박스 bulk 버튼 · Proactive entry modal ·
+   * Similar intercept modal)가 되도록 caseIds 파라미터로 일반화했다.
+   *
+   * 원칙:
+   * - canonical truth mutation 은 이 함수 안의 finalizeApproval 경로로만 발생.
+   * - markFastTrackAccepted 의 objectId 기반 dedup 이 중복 accepted 로그를 막는다.
+   * - proactive session store 에도 dismissed 로 기록해서 같은 objectId 가 entry
+   *   modal 에 다시 뜨지 않게 한다.
+   */
+  const runFastTrackBulkApproval = async (caseIds: readonly string[]) => {
+    if (caseIds.length === 0) return;
 
     // ① Fast-Track store 에 수락 이력 기록 (ActionLedger 가 즉시 반영)
-    const markEntries = targets
+    const markEntries = caseIds
       .map((id) => {
         const c = MOCK_CANDIDATES.find((x) => x.id === id);
         return c ? { procurementCaseId: id, vendorName: c.vendor } : null;
@@ -184,8 +247,6 @@ function POConversionContent() {
     );
 
     // ② canonical mutation — 기존 finalizeApproval 경유 (예산 소진 포함)
-    //    store 에 실제 order row 가 있을 때만 호출한다. (MOCK 전용 경로에서는
-    //    store 에 대응 order 가 없을 수 있으므로 존재 여부를 확인한다.)
     for (const accepted of acceptedEntries) {
       const matchedOrder = ordersFromStore.find(
         (o) => o.id === accepted.procurementCaseId,
@@ -206,7 +267,6 @@ function POConversionContent() {
     }
 
     // ③ governance bus 에 Fast-Track accept 이벤트를 명시적으로 publish
-    //    (audit trail — publisher 의 transition 이벤트와 별개의 사용자 action log)
     for (const accepted of acceptedEntries) {
       try {
         getGlobalGovernanceEventBus().publish(
@@ -233,8 +293,37 @@ function POConversionContent() {
       }
     }
 
-    // ④ 선택 초기화
+    // ④ proactive session store 에 objectId 를 dismissed 로 기록 — 같은 세션에서
+    //    같은 objectId 가 entry modal 에 다시 뜨지 않게 한다.
+    addProactiveDismissed(acceptedEntries.map((e) => e.recommendationObjectId));
+
+    // ⑤ 선택 초기화 (bulk 버튼 경로에서만 의미 있음)
     setFastTrackSelected(new Set());
+  };
+
+  // 체크박스 기반 기존 bulk 승인 — 선택 1건이고 유사 건이 존재하면 intercept 를 끼운다.
+  const handleFastTrackBulkApprove = async () => {
+    const targets = Array.from(fastTrackSelected);
+    if (targets.length === 0) return;
+
+    // 선택이 정확히 1건이면 Similar Intercept 가능성을 먼저 확인한다.
+    if (targets.length === 1) {
+      const only = targets[0];
+      const target = fastTrackRecommendations[only] ?? null;
+      if (target) {
+        const all = Object.values(fastTrackRecommendations);
+        const similar = findSimilarEligible(only, all);
+        if (similar.length > 0) {
+          setInterceptTarget(target);
+          setInterceptSimilar(similar);
+          setInterceptOpen(true);
+          incrementInterceptShown();
+          return;
+        }
+      }
+    }
+
+    await runFastTrackBulkApproval(targets);
   };
 
   // 체크박스 토글
@@ -506,7 +595,7 @@ function POConversionContent() {
                       </div>
                       <button
                         type="button"
-                        onClick={() => dismissFastTrack(candidateToFastTrackInput(c), "사용자 수동 검토 요청")}
+                        onClick={() => dismissFastTrack(c.id, "사용자 수동 검토 요청")}
                         className="shrink-0 text-[10px] text-slate-500 hover:text-slate-700 px-1.5 py-0.5 rounded hover:bg-slate-100 transition-colors"
                       >
                         검토 경로로
@@ -750,6 +839,41 @@ function POConversionContent() {
           setImpactInput(null);
         }}
         headerHint={selected?.vendor}
+      />
+
+      {/* ═══ Proactive Fast-Track Entry Modal (Copilot Intercept — 세션당 1회) ═══ */}
+      <ProactiveFastTrackModal
+        open={entryModalOpen}
+        onOpenChange={setEntryModalOpen}
+        items={entryModalItems}
+        resolveVendorName={resolveVendorName}
+        onAcceptAll={async (items) => {
+          setEntryModalOpen(false);
+          await runFastTrackBulkApproval(items.map((r) => r.procurementCaseId));
+        }}
+        onDismissAll={(items) => {
+          // "내가 직접 검토하기" — canonical mutation 없이 presentation state 만 업데이트.
+          // 같은 objectId 가 이번 세션에 다시 entry modal 로 뜨지 않게 한다.
+          addProactiveDismissed(items.map((r) => r.objectId));
+          setEntryModalOpen(false);
+        }}
+      />
+
+      {/* ═══ Similar Approval Intercept Modal (Action Intercept) ═══ */}
+      <SimilarApprovalInterceptModal
+        open={interceptOpen}
+        onOpenChange={setInterceptOpen}
+        targetRec={interceptTarget}
+        similarRecs={interceptSimilar}
+        resolveVendorName={resolveVendorName}
+        onApproveTargetOnly={async (target) => {
+          setInterceptOpen(false);
+          await runFastTrackBulkApproval([target.procurementCaseId]);
+        }}
+        onApproveTogether={async (merged) => {
+          setInterceptOpen(false);
+          await runFastTrackBulkApproval(merged.map((r) => r.procurementCaseId));
+        }}
       />
 
       {/* ═══ Sticky Action Dock (mobile) ═══ */}
