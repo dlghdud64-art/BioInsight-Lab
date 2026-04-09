@@ -1,1 +1,2 @@
-cd apps/web && pnpm build || exit 1
+#!/bin/sh
+cd apps/web && npm run build || exit 1
