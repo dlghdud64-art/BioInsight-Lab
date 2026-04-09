@@ -9,7 +9,7 @@
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
     "lint": "cd apps/web && npm run lint",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "dependencies": {
     "autoprefixer": "^10.4.22",
