@@ -14,6 +14,15 @@ import { cn } from "@/lib/utils";
 import { PolicyStatusBadge, PolicyMessageStack, ApproverRequirementCard, NextActionHint } from "./index";
 import type { QuoteChainPolicySurface, QuoteChainFullSurface, QuoteChainStage } from "@/lib/ai/quote-approval-governance-engine";
 import { getStageLabel, getVisibleStages } from "@/lib/ai/governance-grammar-registry";
+import { POCreatedReentrySurface, type POCreatedReentrySurfaceProps } from "./po-created-reentry-surface";
+import { DispatchPrepWorkbench, type DispatchPrepWorkbenchProps } from "./dispatch-prep-workbench";
+
+// ══════════════════════════════════════════════
+// Re-exports — chain orchestrator는 이 파일을 단일 진입점으로 사용한다.
+// dispatch / re-entry surface 도 chain entry 로 정식 편입.
+// ══════════════════════════════════════════════
+export { POCreatedReentrySurface, DispatchPrepWorkbench };
+export type { POCreatedReentrySurfaceProps, DispatchPrepWorkbenchProps };
 
 // ══════════════════════════════════════════════
 // QuoteChainProgressStrip — 6단계 진행 공용 컴포넌트
@@ -261,4 +270,65 @@ export function POConversionWorkbench({
       </div>
     </div>
   );
+}
+
+// ══════════════════════════════════════════════
+// QuoteChainWorkbench — chain stage 기반 단일 진입점
+//
+// Quote → Approval → PO Conversion → PO Created → Dispatch Prep 까지
+// 모든 chain workbench 를 동일 governance grammar 로 라우팅한다.
+//
+// - center=decision, rail=context, dock=action 역할은 각 하위 workbench 가 보장
+// - 본 컴포넌트는 stage 에 따라 적절한 workbench 만 mount (truth re-derivation 금지)
+// - 알 수 없는 stage 는 명시적으로 null 반환 (silent fallback 금지)
+// ══════════════════════════════════════════════
+
+export type QuoteChainWorkbenchStage =
+  | "quote_approval"
+  | "po_conversion"
+  | "po_created"
+  | "dispatch_prep";
+
+export interface QuoteChainWorkbenchProps {
+  /** 현재 활성 chain stage — 이 값으로 어떤 workbench 를 mount 할지 결정 */
+  stage: QuoteChainWorkbenchStage;
+  /** stage 별 props — 활성 stage 와 일치하는 prop 만 사용된다. */
+  quoteApprovalProps?: QuoteApprovalWorkbenchProps;
+  poConversionProps?: POConversionWorkbenchProps;
+  poCreatedProps?: POCreatedReentrySurfaceProps;
+  dispatchPrepProps?: DispatchPrepWorkbenchProps;
+  className?: string;
+}
+
+/**
+ * Chain orchestrator entry point.
+ *
+ * 본 컴포넌트는 어떤 chain workbench 가 살아있는지를 알려주는 단일 진입점이다.
+ * 각 stage 의 truth/governance 결과는 호출자가 미리 빌드해서 props 로 넘겨야 한다
+ * (orchestrator 가 truth 를 다시 평가하지 않는다 — consume guard).
+ */
+export function QuoteChainWorkbench({
+  stage,
+  quoteApprovalProps,
+  poConversionProps,
+  poCreatedProps,
+  dispatchPrepProps,
+  className,
+}: QuoteChainWorkbenchProps) {
+  switch (stage) {
+    case "quote_approval":
+      if (!quoteApprovalProps) return null;
+      return <QuoteApprovalWorkbench {...quoteApprovalProps} className={className} />;
+    case "po_conversion":
+      if (!poConversionProps) return null;
+      return <POConversionWorkbench {...poConversionProps} className={className} />;
+    case "po_created":
+      if (!poCreatedProps) return null;
+      return <POCreatedReentrySurface {...poCreatedProps} className={className} />;
+    case "dispatch_prep":
+      if (!dispatchPrepProps) return null;
+      return <DispatchPrepWorkbench {...dispatchPrepProps} className={className} />;
+    default:
+      return null;
+  }
 }

@@ -258,6 +258,80 @@ describe("POCreatedRecord (unified computed view)", () => {
     expect(has(record.reentryAvailableActions, "open_dispatch_prep")).toBe(true);
   });
 
+  // ──────────────────────────────────────────────────────────────────────
+  // Batch 1 확장 시나리오 — CLAUDE.md event list 에 대응하는 재계산 계약
+  // ──────────────────────────────────────────────────────────────────────
+
+  it("R8: supplier profile 변경 → hard blocker + send 경로 차단 + reopen 은 유지", () => {
+    const record = buildRecord({
+      dispatch: {
+        supplierProfileChanged: true,
+        supplierProfileChangeDetail: "공급사 담당자/세금 정보 변경",
+      },
+    });
+
+    // supplier master 변경은 dispatch readiness 를 blocked 로 돌려야 한다
+    expect(record.dispatchReadiness).toBe("blocked");
+    expect(["not_ready", "stale"]).toContain(record.supplierFacingPayloadStatus);
+    expect(record.blockingReasons.some((b) => b.severity === "hard")).toBe(true);
+
+    // send 계열은 전부 차단, 그러나 회수/보정/재진입은 살아있어야 한다
+    expect(has(record.reentryAvailableActions, "send_now")).toBe(false);
+    expect(has(record.reentryAvailableActions, "schedule_send")).toBe(false);
+    expect(has(record.reentryAvailableActions, "reopen_po_conversion")).toBe(true);
+    expect(has(record.reentryAvailableActions, "request_correction")).toBe(true);
+  });
+
+  it("R9: policy hold 활성 → send 차단 + nextAction 이 hold 사유 전달", () => {
+    const record = buildRecord({
+      dispatch: {
+        policyHoldActive: true,
+        policyHoldReason: "연말 발주 동결",
+      },
+    });
+
+    expect(record.dispatchReadiness).toBe("blocked");
+    expect(has(record.reentryAvailableActions, "send_now")).toBe(false);
+    expect(has(record.reentryAvailableActions, "schedule_send")).toBe(false);
+    // nextAction 에 remediation 정보가 들어가야 한다 (raw reason noop 금지)
+    expect(record.nextAction.length).toBeGreaterThan(0);
+  });
+
+  it("R10: reopen 시나리오 — stale 에서 재평가하면 deterministic 하게 같은 결과가 나와야 한다", () => {
+    // stale 상태에서 record 를 한 번 만든다
+    const first = buildRecord({
+      dispatch: {
+        approvalSnapshotValid: false,
+        snapshotInvalidationReason: "승인 값 변경",
+      },
+    });
+    expect(first.dispatchReadiness).toBe("blocked");
+    expect(first.supplierFacingPayloadStatus).toBe("stale");
+
+    // 동일 입력으로 다시 빌드 — 계약상 deterministic 이어야 한다
+    const second = buildRecord({
+      dispatch: {
+        approvalSnapshotValid: false,
+        snapshotInvalidationReason: "승인 값 변경",
+      },
+    });
+
+    // id / evaluatedAt 은 Date 기반이라 제외하고, governance 핵심 필드가 일치해야 한다
+    expect(second.dispatchReadiness).toBe(first.dispatchReadiness);
+    expect(second.supplierFacingPayloadStatus).toBe(first.supplierFacingPayloadStatus);
+    expect(second.snapshotValidity).toEqual(first.snapshotValidity);
+    expect(second.reentryAvailableActions).toEqual(first.reentryAvailableActions);
+    expect(second.blockingReasons.map((b) => b.code)).toEqual(
+      first.blockingReasons.map((b) => b.code),
+    );
+
+    // reopen 후 approval 이 다시 유효해졌다고 가정 — readiness 가 재계산되어야 한다
+    const recovered = buildRecord({});
+    expect(recovered.dispatchReadiness).toBe("ready_to_send");
+    expect(recovered.supplierFacingPayloadStatus).toBe("locked");
+    expect(has(recovered.reentryAvailableActions, "send_now")).toBe(true);
+  });
+
   it("R7: scheduled 상태 — payload locked 유지, send_now는 열리지 않음", () => {
     const dispatchState = evaluateDispatchGovernance(makeDispatchInput());
     const record = buildPoCreatedRecord({

@@ -295,6 +295,27 @@ export default function PurchaseOrderDetailPage() {
         <ExecutionPhaseStrip model={model} />
 
         {/* ═══════════════════════════════════════════════════════
+            B'. Dispatch Workbench Entry (governance handoff)
+            isApproved 상태에서만 노출. 발송 워크벤치는 별도 라우트.
+            ═══════════════════════════════════════════════════════ */}
+        {isApproved && !isIssued && (
+          <Link
+            href={`/dashboard/purchase-orders/${po.id}/dispatch`}
+            className="flex items-center justify-between gap-3 rounded border border-blue-700/40 bg-blue-900/20 hover:bg-blue-900/30 px-4 py-2.5 text-xs transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <span className="rounded bg-blue-700/40 px-1.5 py-0.5 text-[10px] font-medium text-blue-200 uppercase tracking-wider">
+                발송 워크벤치
+              </span>
+              <span className="text-slate-300">
+                PO Created → Dispatch Prep — 공급사 송신 전 최종 검토 진입
+              </span>
+            </div>
+            <ArrowRight className="h-3 w-3 text-blue-300" />
+          </Link>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════
             C. Approval Execution Surface
             ═══════════════════════════════════════════════════════ */}
         {approval && (

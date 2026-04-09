@@ -32,6 +32,18 @@ export { ReorderTriggerWorkbench, type ReorderTriggerWorkbenchProps } from "./re
 // Governance Dashboard
 export { GovernanceDashboard, type GovernanceDashboardProps } from "./governance-dashboard";
 
+// Chain Progress Strip
+export { QuoteChainProgressStrip, getStageConfig, getStagesForPhase, getPhaseLabel, getUpcomingStages } from "./quote-chain-progress-strip";
+export type { QuoteChainProgressStripProps, ChainStageKey, ChainPhase, StageStatus, ChainStageConfig } from "./quote-chain-progress-strip";
+
+// PO Created Re-entry Surface
+export { POCreatedReentrySurface } from "./po-created-reentry-surface";
+export type { POCreatedReentrySurfaceProps } from "./po-created-reentry-surface";
+
+// Dispatch Prep Workbench
+export { DispatchPrepWorkbench } from "./dispatch-prep-workbench";
+export type { DispatchPrepWorkbenchProps } from "./dispatch-prep-workbench";
+
 // Policy Explainability Primitives
 export {
   PolicyExplanationCard, type PolicyExplanationCardProps,

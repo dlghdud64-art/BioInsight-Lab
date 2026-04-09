@@ -1,5 +1,22 @@
 "use client";
 
+/**
+ * @deprecated Legacy test playground workbench.
+ *
+ * 본 컴포넌트는 `po-created-reentry-engine.ts` (소문자 Po*) 기반의 구버전이며,
+ * production 경로에서는 더 이상 사용되지 않는다.
+ *
+ * 새 governance grammar 진입점:
+ *   - components/approval/po-created-reentry-surface.tsx (POCreatedReentrySurface)
+ *   - components/approval/dispatch-prep-workbench.tsx (DispatchPrepWorkbench)
+ *   - components/approval/quote-chain-workbenches.tsx (QuoteChainWorkbench orchestrator)
+ *   - app/dashboard/purchase-orders/[poId]/dispatch/page.tsx (실 mount point)
+ *
+ * 본 파일은 app/test/search/page.tsx playground 에서만 import 되어 있으며,
+ * 해당 1923라인 playground 가 신 orchestrator 로 마이그레이션되는 시점에 함께 제거된다.
+ * 신규 코드는 본 파일을 import 하지 말 것.
+ */
+
 import { useMemo, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { X, Check, AlertTriangle, ArrowRight, ArrowLeft, Package, Truck, Shield } from "lucide-react";
