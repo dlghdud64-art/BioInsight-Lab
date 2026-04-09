@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
-    "lint": "cd apps/web && npm run lint"
+    "lint": "cd apps/web && npm run lint",
+    "prepare": "husky"
   },
   "dependencies": {
     "autoprefixer": "^10.4.22",
@@ -18,6 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.19.26",
+    "husky": "^9.1.7",
     "typescript": "^5.9.3"
   }
 }
