@@ -12,6 +12,8 @@ import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-pe
 import { GovernanceDevPanel } from "@/components/dashboard/console/governance-dev-panel";
 import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
 import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
+import { useOverlayDeepLink } from "@/hooks/use-overlay-deep-link";
+import { useOverlayKeyboard } from "@/hooks/use-overlay-keyboard";
 
 /**
  * DashboardShell — baseline shell wrapper.
@@ -26,6 +28,10 @@ import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-f
  */
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Overlay deep-link + keyboard support
+  useOverlayDeepLink();
+  useOverlayKeyboard();
 
   return (
     <OpsStoreProvider>

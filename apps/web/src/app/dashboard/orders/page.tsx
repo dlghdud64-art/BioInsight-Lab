@@ -21,7 +21,7 @@ import { ImpactAnalysisModal, type ImpactAnalysisAPIResult } from "@/components/
 import type { ImpactAnalysisInput } from "@/lib/ai/impact-analysis-engine";
 import { useBudgetStore, deriveBudgetControl } from "@/lib/store/budget-store";
 import { useInventoryStore } from "@/lib/store/inventory-store";
-import { useOrderQueueStore } from "@/lib/store/order-queue-store";
+import { useOrderQueueStore, type OrderQueueItem } from "@/lib/store/order-queue-store";
 import { useFastTrackStore } from "@/lib/store/fast-track-store";
 import { useProactiveFastTrackSessionStore } from "@/lib/store/proactive-fast-track-session-store";
 import type { FastTrackEvaluationInput } from "@/lib/ontology/fast-track/fast-track-engine";
@@ -31,14 +31,17 @@ import {
   selectUnseenEligible,
   hasUnseenEligible,
 } from "@/lib/ontology/fast-track/fast-track-similarity";
+import { evaluateFastTrackGovernanceGuard } from "@/lib/ontology/fast-track/fast-track-governance-guard";
+import { resolveGuardInputs } from "@/lib/ontology/fast-track/fast-track-guard-inputs";
 import { ProactiveFastTrackModal } from "@/components/fast-track/proactive-fast-track-modal";
 import { SimilarApprovalInterceptModal } from "@/components/fast-track/similar-approval-intercept-modal";
 import {
   getGlobalGovernanceEventBus,
   createGovernanceEvent,
 } from "@/lib/ai/governance-event-bus";
+import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 
-// ── PO Conversion Item (mock-compatible) ──
+// ── PO Conversion Item ──
 interface POCandidate {
   id: string;
   title: string;
@@ -53,46 +56,93 @@ interface POCandidate {
   stage: ProcurementStage;
 }
 
-// Mock data — will be replaced with real query
-const MOCK_CANDIDATES: POCandidate[] = [
-  {
-    id: "poc-001",
-    title: "Thermo Fisher FBS 외 2건",
-    vendor: "Thermo Fisher Scientific",
-    items: [
-      { name: "Fetal Bovine Serum", catalogNumber: "10270106", quantity: 2, unitPrice: 450000, lineTotal: 900000, leadTime: "3일" },
-      { name: "DMEM Medium 500ml", catalogNumber: "11965092", quantity: 5, unitPrice: 42000, lineTotal: 210000, leadTime: "2일" },
-      { name: "Trypsin-EDTA 0.25%", catalogNumber: "25200056", quantity: 3, unitPrice: 38000, lineTotal: 114000, leadTime: "3일" },
-    ],
-    totalAmount: 1224000,
-    expectedDelivery: "2026-03-25",
-    selectionReason: "최저 총비용 + 납기 우선 + 기존 거래처",
-    blockers: [],
-    approvalPolicy: "none",
-    approvalStatus: "not_required",
-    stage: "po_conversion_candidate",
-  },
-  {
-    id: "poc-002",
-    title: "Sigma-Aldrich Acetone 외 1건",
-    vendor: "Sigma-Aldrich",
-    items: [
-      { name: "Acetone HPLC Grade 2.5L", catalogNumber: "34850", quantity: 4, unitPrice: 85000, lineTotal: 340000, leadTime: "5일" },
-    ],
-    totalAmount: 340000,
-    expectedDelivery: "2026-03-28",
-    selectionReason: "규격 완전 일치",
-    blockers: ["위험물 취급 문서 확인 필요"],
-    approvalPolicy: "none",
-    approvalStatus: "not_required",
-    stage: "po_conversion_candidate",
-  },
-];
+// ── DB fetch hook ──────────────────────────────────────────────────────────
+// MOCK_CANDIDATES → /api/po-candidates 로 전환.
+// 첫 요청 시 auto-seed 되므로 빈 배열 상태가 없다.
+function usePOCandidatesFromDB() {
+  return useQuery<POCandidate[]>({
+    queryKey: ["po-candidates", "po_conversion_candidate"],
+    queryFn: async () => {
+      const res = await fetch("/api/po-candidates?stage=po_conversion_candidate");
+      if (!res.ok) throw new Error("Failed to fetch candidates");
+      const data = await res.json();
+      return (data.candidates ?? []).map((c: any) => ({
+        id: c.id,
+        title: c.title,
+        vendor: c.vendor,
+        items: c.items ?? [],
+        totalAmount: c.totalAmount,
+        expectedDelivery: c.expectedDelivery ?? "",
+        selectionReason: c.selectionReason ?? "",
+        blockers: c.blockers ?? [],
+        approvalPolicy: c.approvalPolicy as ApprovalPolicy,
+        approvalStatus: c.approvalStatus as ApprovalStatus,
+        stage: c.stage as ProcurementStage,
+      }));
+    },
+    staleTime: 30_000,
+  });
+}
+
+// ── Selective Store Overlay ─────────────────────────────────────────────────
+// DB candidates (POCandidate 테이블) 는 presentation seed (multi-line items ·
+// blockers · selectionReason 등 order_queue 테이블에 없는 필드 보관).
+// 매칭되는 store order 가 있으면 canonical 필드(vendor/totalAmount/approvalStatus)
+// 만 overlay 한다. store 가 candidate 단계 이후로 진행된 주문은 후보 목록에서
+// 제거한다. canonical truth 를 복원하지도, mutate 하지도 않는다.
+
+/**
+ * store 가 candidate 단계를 지났다고 판단되는 status 집합.
+ * 이 상태들은 po_conversion_candidate 리스트에 더 이상 노출되지 않는다.
+ */
+const STORE_STATUSES_PAST_CANDIDATE: ReadonlySet<OrderQueueItem["status"]> = new Set([
+  "po_created",
+  "dispatch_prep",
+  "ready_to_send",
+  "sent",
+  "confirmed",
+  "received",
+  "completed",
+  "cancelled",
+  "receiving_rejected",
+] as OrderQueueItem["status"][]);
+
+/**
+ * POBusinessStatus → ApprovalStatus 보수적 매핑.
+ * store 가 더 진행된 상태만 overlay, 그 외에는 MOCK 의 approvalStatus 유지.
+ */
+function mapStoreStatusToApprovalStatus(
+  storeStatus: OrderQueueItem["status"],
+  fallback: ApprovalStatus,
+): ApprovalStatus {
+  if (storeStatus === "pending_approval") return "in_app_approval_pending";
+  if (storeStatus === "approved") return "in_app_approved";
+  return fallback;
+}
+
+/**
+ * MOCK candidate 위에 store 의 canonical 필드를 overlay.
+ * - 매칭 order 가 없으면 MOCK 을 그대로 반환.
+ * - 매칭 order 가 candidate 단계 이후라면 null 반환 → 리스트에서 제거.
+ */
+function overlayCandidateWithStoreOrder(
+  candidate: POCandidate,
+  storeOrder: OrderQueueItem | undefined,
+): POCandidate | null {
+  if (!storeOrder) return candidate;
+  if (STORE_STATUSES_PAST_CANDIDATE.has(storeOrder.status)) return null;
+  return {
+    ...candidate,
+    vendor: storeOrder.vendorName || candidate.vendor,
+    totalAmount: storeOrder.totalAmount || candidate.totalAmount,
+    approvalStatus: mapStoreStatusToApprovalStatus(storeOrder.status, candidate.approvalStatus),
+  };
+}
 
 // ── Fast-Track evaluation input builder ─────────────────────────────────────
 // PO candidate 를 FastTrackEvaluationInput 으로 변환한다. 실 데이터에서는
 // vendor/product 레벨의 safetyProfile · 과거 구매 이력을 store 에서 읽어야 하지만,
-// 현재 화면이 MOCK_CANDIDATES 기반이므로 candidate 의 blocker 문자열을
+// candidate 의 blocker 문자열을
 // 보수적으로 해석해 hazard/regulated 플래그를 유도한다.
 function candidateToFastTrackInput(
   candidate: POCandidate,
@@ -132,6 +182,7 @@ function candidateToFastTrackInput(
 
 function POConversionContent() {
   const { data: session, status } = useSession();
+  const openOverlay = useWorkbenchOverlayOpen();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [deliveryLocation, setDeliveryLocation] = useState("연구동 B1 시약실");
   const [poNote, setPoNote] = useState("");
@@ -162,25 +213,65 @@ function POConversionContent() {
   const addProactiveDismissed = useProactiveFastTrackSessionStore((s) => s.addDismissed);
   const incrementInterceptShown = useProactiveFastTrackSessionStore((s) => s.incrementInterceptShown);
 
-  // Queue 에 후보가 들어오는 시점(즉, MOCK_CANDIDATES 배열이 바뀔 때)에
+  // ── DB candidates fetch ─────────────────────────────────────────────────
+  const { data: dbCandidates = [] } = usePOCandidatesFromDB();
+
+  // ── Selective store overlay ─────────────────────────────────────────────
+  // DB candidates 위에 useOrderQueueStore 의 canonical 필드를 overlay.
+  // store 가 candidate 단계 이후로 진행된 주문은 리스트에서 제거한다.
+  // 식별자 기반 memo 로 reference 안정화 → 하위 useEffect 의 churn 방지.
+  const mergedCandidates = useMemo(() => {
+    return dbCandidates
+      .map((c) => {
+        const match = ordersFromStore.find((o) => o.id === c.id);
+        return overlayCandidateWithStoreOrder(c, match);
+      })
+      .filter((c): c is POCandidate => c !== null);
+  }, [dbCandidates, ordersFromStore]);
+
+  // bulkEvaluate 재실행 signature — 후보 id / vendor / totalAmount 변동 시에만 재평가.
+  // fast-track-store 내부 dedup 이 추가 방어선 역할.
+  const mergedCandidatesSignature = useMemo(
+    () =>
+      mergedCandidates
+        .map((c) => `${c.id}::${c.vendor}::${c.totalAmount}::${c.approvalStatus}`)
+        .join("|"),
+    [mergedCandidates],
+  );
+
+  // Queue 에 후보가 들어오는 시점(또는 overlay 로 canonical 필드가 바뀐 시점)에
   // 한 번 bulk 평가한다. drift 재평가는 publisher 내부에서 처리된다.
   // (AI 호출 없음 · deterministic · 동일 입력 → 동일 출력)
   useEffect(() => {
-    const inputs = MOCK_CANDIDATES.map(candidateToFastTrackInput);
+    const inputs = mergedCandidates.map(candidateToFastTrackInput);
     bulkEvaluateFastTrack(inputs);
-  }, [bulkEvaluateFastTrack]);
+    // mergedCandidates 자체가 아니라 signature 로 dep 을 고정해 churn 방지.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bulkEvaluateFastTrack, mergedCandidatesSignature]);
 
   // Proactive entry modal gating — 세션당 1회, 그리고 아직 사용자가 보지 못한
   // eligible objectId 가 존재할 때만 자동 노출한다. drift 재평가로 objectId 가
   // 갱신되면 자연스럽게 "unseen" 이 되어 다시 뜰 수 있다.
+  //
+  // Batch D 추가: governance guard 를 거쳐 policy hold / budget / snapshot
+  // invalidation / critical event 조건을 검증한 뒤 통과한 항목만 modal 에 노출.
   useEffect(() => {
     const allRecs = Object.values(fastTrackRecommendations);
     if (allRecs.length === 0) return;
     if (!canShowEntryModal()) return;
     if (!hasUnseenEligible(allRecs, proactiveDismissed)) return;
-    const items = selectUnseenEligible(allRecs, proactiveDismissed);
-    if (items.length === 0) return;
-    setEntryModalItems(items);
+    const unseen = selectUnseenEligible(allRecs, proactiveDismissed);
+    if (unseen.length === 0) return;
+
+    // governance guard — policy hold, budget, snapshot, critical event 실제 검증
+    // resolveGuardInputs 가 governance event bus + budget store + recommendation store 에서
+    // 실제 값을 조회해 guard input 을 조립한다. placeholder false 아님.
+    const guardInput = resolveGuardInputs(unseen, budgets, fastTrackRecommendations);
+    const guardResult = evaluateFastTrackGovernanceGuard(guardInput);
+
+    if (!guardResult.allowed || guardResult.allowedItems.length === 0) return;
+
+    setEntryModalItems(guardResult.allowedItems);
     setEntryModalOpen(true);
     markEntryModalShown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -202,19 +293,19 @@ function POConversionContent() {
     FastTrackRecommendationObject[]
   >([]);
 
-  // vendor name resolver — modal 들이 공통으로 사용 (MOCK_CANDIDATES 기반).
-  // 실 데이터 전환 시에는 store 의 inputSnapshot.vendorName 으로 교체한다.
+  // vendor name resolver — modal 들이 공통으로 사용.
+  // store overlay 후 mergedCandidates 에서 lookup → store 가 있으면 canonical vendor 반영.
   const resolveVendorName = (caseId: string): string =>
-    MOCK_CANDIDATES.find((c) => c.id === caseId)?.vendor ?? "—";
+    mergedCandidates.find((c) => c.id === caseId)?.vendor ?? "—";
 
   // 현재 Queue 에 있는 candidate 중 eligible 인 것만 뽑아낸다.
   // reentry 가드: 수락 완료(accepted) · stale · dismissed 는 자동으로 제외됨.
   const eligibleFastTrackCandidates = useMemo(() => {
-    return MOCK_CANDIDATES.filter((c) => {
+    return mergedCandidates.filter((c) => {
       const rec = fastTrackRecommendations[c.id];
       return rec?.recommendationStatus === "eligible";
     });
-  }, [fastTrackRecommendations]);
+  }, [fastTrackRecommendations, mergedCandidates]);
 
   /**
    * Shared Fast-Track bulk approval runner.
@@ -236,7 +327,7 @@ function POConversionContent() {
     // ① Fast-Track store 에 수락 이력 기록 (ActionLedger 가 즉시 반영)
     const markEntries = caseIds
       .map((id) => {
-        const c = MOCK_CANDIDATES.find((x) => x.id === id);
+        const c = mergedCandidates.find((x) => x.id === id);
         return c ? { procurementCaseId: id, vendorName: c.vendor } : null;
       })
       .filter((e): e is { procurementCaseId: string; vendorName: string } => e !== null);
@@ -337,7 +428,10 @@ function POConversionContent() {
   };
 
   // In production: useQuery to fetch po_conversion_candidate items
-  const candidates = MOCK_CANDIDATES;
+  // 현재는 MOCK presentation seed + order_queue store overlay 의 selective merge.
+  // mergedCandidates 가 비면(모든 후보가 candidate 단계를 지남) MOCK 으로 fallback —
+  // selected?. 가 계속 안전하게 평가되도록 빈 배열은 가드 처리.
+  const candidates = mergedCandidates;
   const selected = candidates.find(c => c.id === selectedId) ?? candidates[0];
 
   // Guard check — guardrail layer 기반
@@ -475,6 +569,14 @@ function POConversionContent() {
         approvalComment: null,
         budgetId: activeBudget?.id ?? null,
         orderAmount: activeTotal,
+      });
+      // PO 생성 완료 → dispatch workbench overlay 자동 열기
+      // desktop에서는 overlay, mobile에서는 full-page 이동
+      const poId = matchedOrder?.id ?? selected.id;
+      openOverlay({
+        routePath: `/dashboard/purchase-orders/${poId}/dispatch`,
+        origin: "queue",
+        mode: "progress",
       });
     } catch {
       // ontology action 내부에서 error는 store.error로 전파되므로 여기선 swallow
@@ -1098,12 +1200,26 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
       await new Promise(r => setTimeout(r, 400));
 
       let planDetail = `액션: ${result.actionType}`;
-      if (result.targetFilter.vendorFilter) planDetail += ` / 벤더: ${result.targetFilter.vendorFilter}`;
-      if (result.targetFilter.amountMax) planDetail += ` / 금액 상한: ${result.targetFilter.amountMax.toLocaleString()}원`;
+      if (result.targetFilter.statusFilter) {
+        planDetail += ` / 상태: ${result.targetFilter.statusFilter}`;
+      }
+      if (result.targetFilter.amountCondition) {
+        const { operator, value } = result.targetFilter.amountCondition;
+        const opLabel: Record<typeof operator, string> = {
+          lt: "미만", lte: "이하", gt: "초과", gte: "이상", eq: "일치",
+        };
+        planDetail += ` / 금액 ${opLabel[operator]}: ${value.toLocaleString()}원`;
+      }
       updateLastStep({ label: "실행 가능한 액션 도출", status: "done", detail: planDetail });
 
       // Step 4: Execution (simulated)
-      const targetCount = result.targetFilter.scope === "all" ? 5 : result.targetFilter.scope === "batch" ? 3 : 1;
+      // NLTargetFilter.scope 는 "all" | "selected" | "single" — "batch" 는 없다.
+      // "selected" 는 체크박스 다중 선택 → 5건, "single" → 1건, "all" → 전체로 가정.
+      const targetCount = result.targetFilter.scope === "all"
+        ? 5
+        : result.targetFilter.scope === "selected"
+          ? 3
+          : 1;
       addStep("execute", `개별 항목 처리 중...`, `총 ${targetCount}건`, "running");
       await new Promise(r => setTimeout(r, 800));
       updateLastStep({ label: `${targetCount}건 처리 완료`, status: "done", detail: `신뢰도 ${Math.round(result.confidence * 100)}%` });
