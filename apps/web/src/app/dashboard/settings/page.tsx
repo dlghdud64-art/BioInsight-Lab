@@ -6,14 +6,10 @@ import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
@@ -21,7 +17,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -31,14 +26,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   User,
@@ -50,8 +37,6 @@ import {
   Loader2,
   ChevronRight,
   Package,
-  Wallet,
-  BarChart3,
   Phone,
   CreditCard,
   Receipt,
@@ -62,33 +47,50 @@ import {
   FileText,
   AlertTriangle,
   XCircle,
-  Users,
-  ArrowRight,
-  ExternalLink,
   Zap,
-  CalendarClock,
-  ShoppingCart,
   ClipboardCheck,
   Server,
   Trash2,
   UserPlus,
   KeyRound,
   Crown,
+  Settings,
+  Brain,
+  Link2,
+  Building2,
+  Globe,
+  Fingerprint,
+  Activity,
+  Gauge,
+  Database,
+  Webhook,
+  ShieldCheck,
+  Users,
+  Eye,
+  Sliders,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-// ── Role labels ──
+// ══════════════════════════════════════════════
+// Types & Constants
+// ══════════════════════════════════════════════
+
 const ROLE_LABELS: Record<string, string> = {
-  ADMIN: "관리자",
-  USER: "사용자",
-  RESEARCHER: "연구실 관리자",
-  BUYER: "구매 담당자",
-  SUPPLIER: "공급사",
+  ADMIN: "관리자 (Admin)",
+  USER: "운영자 (Operator)",
+  RESEARCHER: "연구실 관리자 (Lab Manager)",
+  BUYER: "구매 담당자 (Procurement)",
+  SUPPLIER: "공급사 (Supplier)",
 };
 
-type SettingsSection = "profile" | "notifications" | "billing";
+type SettingsSection =
+  | "operator"
+  | "ontology"
+  | "security"
+  | "integrations"
+  | "notifications"
+  | "billing";
 
-// ── Notification config type ──
 type DeliveryMode = "immediate" | "daily";
 
 interface NotificationItem {
@@ -99,18 +101,10 @@ interface NotificationItem {
   icon: React.ElementType;
   inApp: boolean;
   email: boolean;
-  deliveryOverride: DeliveryMode | null; // null = follow global default
+  deliveryOverride: DeliveryMode | null;
 }
 
-// ── Cancel reason type ──
-type CancelReason =
-  | "price"
-  | "features"
-  | "frequency"
-  | "team"
-  | "alternative"
-  | "performance"
-  | "other";
+type CancelReason = "price" | "features" | "frequency" | "team" | "alternative" | "performance" | "other";
 
 const CANCEL_REASONS: { value: CancelReason; label: string }[] = [
   { value: "price", label: "가격 부담" },
@@ -122,46 +116,54 @@ const CANCEL_REASONS: { value: CancelReason; label: string }[] = [
   { value: "other", label: "기타" },
 ];
 
-// ── Safety-critical notification IDs: always "immediate" + badge ──
 const SAFETY_CRITICAL_IDS = new Set(["stock_low", "stock_expiry", "safety_compliance", "system_security"]);
 
 function getSaveOffer(reason: CancelReason | null): { title: string; description: string; cta: string } {
   switch (reason) {
     case "price":
-      return {
-        title: "다운그레이드 옵션이 있습니다",
-        description: "현재 플랜 대신 더 저렴한 플랜으로 변경할 수 있습니다. 핵심 기능은 유지됩니다.",
-        cta: "플랜 비교하기",
-      };
+      return { title: "다운그레이드 옵션이 있습니다", description: "현재 플랜 대신 더 저렴한 플랜으로 변경할 수 있습니다.", cta: "플랜 비교하기" };
     case "features":
-      return {
-        title: "로드맵을 확인해 보세요",
-        description: "요청하신 기능이 개발 로드맵에 포함되어 있을 수 있습니다. 최신 업데이트를 확인해 보세요.",
-        cta: "로드맵 확인",
-      };
+      return { title: "로드맵을 확인해 보세요", description: "요청하신 기능이 개발 로드맵에 포함되어 있을 수 있습니다.", cta: "로드맵 확인" };
     case "team":
-      return {
-        title: "온보딩 지원을 요청하세요",
-        description: "팀 도입에 어려움이 있으시다면, 전담 온보딩 지원을 무료로 제공해 드립니다.",
-        cta: "온보딩 지원 요청",
-      };
+      return { title: "온보딩 지원을 요청하세요", description: "팀 도입에 어려움이 있으시다면, 전담 온보딩 지원을 무료로 제공해 드립니다.", cta: "온보딩 지원 요청" };
     default:
-      return {
-        title: "지원팀에 문의해 주세요",
-        description: "해결할 수 있는 방법이 있을 수 있습니다. 지원팀이 도와드리겠습니다.",
-        cta: "지원팀 문의",
-      };
+      return { title: "지원팀에 문의해 주세요", description: "해결할 수 있는 방법이 있을 수 있습니다.", cta: "지원팀 문의" };
   }
 }
 
-// ── Demo invoices ──
 const DEMO_INVOICES = [
   { id: "inv-001", date: "2026-03-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
   { id: "inv-002", date: "2026-02-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
   { id: "inv-003", date: "2026-01-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
 ];
 
-// ── Fallback ──
+// ══════════════════════════════════════════════
+// Nav Configuration — OS-style system menu
+// ══════════════════════════════════════════════
+
+const NAV_GROUPS: { group: string; items: { id: SettingsSection; label: string; sublabel: string; icon: React.ElementType }[] }[] = [
+  {
+    group: "메뉴",
+    items: [
+      { id: "operator", label: "운영자 및 워크스페이스", sublabel: "식별 정보 및 운영 정보", icon: Fingerprint },
+      { id: "ontology", label: "온톨로지 엔진 (AI)", sublabel: "추론 및 자동화 규칙", icon: Brain },
+      { id: "security", label: "보안 및 접근 제어", sublabel: "RBAC 및 승인 라우팅", icon: ShieldCheck },
+      { id: "integrations", label: "시스템 연동 (API)", sublabel: "ERP 및 공급사 Webhook", icon: Webhook },
+    ],
+  },
+  {
+    group: "시스템",
+    items: [
+      { id: "notifications", label: "알림 관리", sublabel: "알림 채널 및 빈도", icon: Bell },
+      { id: "billing", label: "청구 및 구독", sublabel: "플랜, 결제, 청구서", icon: CreditCard },
+    ],
+  },
+];
+
+// ══════════════════════════════════════════════
+// Fallback
+// ══════════════════════════════════════════════
+
 function SettingsPageFallback() {
   return (
     <div className="flex-1 p-8 bg-sh">
@@ -182,9 +184,10 @@ function SettingsPageFallback() {
   );
 }
 
-// ═══════════════════════════════════════════════════════════════
-// Main content
-// ═══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════
+// Main Content
+// ══════════════════════════════════════════════
+
 function SettingsPageContent() {
   const { data: session } = useSession();
   const router = useRouter();
@@ -192,7 +195,7 @@ function SettingsPageContent() {
   const queryClient = useQueryClient();
   const searchParams = useSearchParams();
 
-  const [activeSection, setActiveSection] = useState<SettingsSection>("profile");
+  const [activeSection, setActiveSection] = useState<SettingsSection>("operator");
 
   // ── Profile state ──
   const [profileName, setProfileName] = useState(session?.user?.name || "");
@@ -205,30 +208,38 @@ function SettingsPageContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
+  const [operatorRole, setOperatorRole] = useState("연구실 관리자 (Lab Manager)");
+  const [workspaceName, setWorkspaceName] = useState("제1 바이오 R&D 센터");
+  const [currencyUnit, setCurrencyUnit] = useState("KRW (₩) / Metric");
+
+  // ── Ontology engine state ──
+  const [confidenceThreshold, setConfidenceThreshold] = useState(85);
+  const [anomalyDetectionSensitivity, setAnomalyDetectionSensitivity] = useState(70);
+  const [autoApprovalEnabled, setAutoApprovalEnabled] = useState(true);
+  const [autoApprovalLimit, setAutoApprovalLimit] = useState("1000000");
+  const [priceAlertThreshold, setPriceAlertThreshold] = useState(15);
+
+  // ── Security / RBAC state ──
+  const [approvalTier1, setApprovalTier1] = useState("1000000");
+  const [approvalTier2, setApprovalTier2] = useState("5000000");
+  const [approvalTier3, setApprovalTier3] = useState("10000000");
 
   // ── Notification state ──
-
   const [notifications, setNotifications] = useState<NotificationItem[]>([
-    // 1. 재고
     { id: "stock_low", category: "재고", label: "재고 부족", description: "안전 재고 수량 이하로 떨어진 품목 알림", icon: Package, inApp: true, email: true, deliveryOverride: "immediate" },
     { id: "stock_expiry", category: "재고", label: "만료 임박", description: "유효기간 7일 이내 품목 자동 알림", icon: AlertTriangle, inApp: true, email: true, deliveryOverride: "immediate" },
     { id: "stock_disposal", category: "재고", label: "폐기 검토", description: "만료·손상 품목의 폐기 절차 검토 요청", icon: Trash2, inApp: true, email: false, deliveryOverride: null },
-    // 2. 견적/구매
     { id: "quote_new", category: "견적/구매", label: "견적 도착", description: "요청한 견적에 대한 공급사 응답 도착", icon: FileText, inApp: true, email: true, deliveryOverride: null },
     { id: "quote_approval", category: "견적/구매", label: "승인 필요", description: "구매 요청 또는 견적 승인 대기 알림", icon: ClipboardCheck, inApp: true, email: true, deliveryOverride: null },
     { id: "quote_delay", category: "견적/구매", label: "공급사 응답 지연", description: "견적 요청 후 48시간 이상 미응답", icon: Clock, inApp: true, email: false, deliveryOverride: null },
-    // 3. 조직/권한
     { id: "org_invite", category: "조직/권한", label: "초대", description: "조직 또는 워크스페이스 초대 수신", icon: UserPlus, inApp: true, email: true, deliveryOverride: null },
     { id: "org_role_change", category: "조직/권한", label: "권한 변경", description: "내 역할 또는 팀원 권한 변경 알림", icon: KeyRound, inApp: true, email: false, deliveryOverride: null },
     { id: "org_owner_transfer", category: "조직/권한", label: "Owner 이전", description: "조직 소유권 이전 요청 또는 완료", icon: Crown, inApp: true, email: true, deliveryOverride: null },
-    // 4. 안전
     { id: "safety_compliance", category: "안전", label: "규정 위반", description: "보관 조건, 라벨링 등 규정 위반 경고", icon: AlertCircle, inApp: true, email: true, deliveryOverride: "immediate" },
     { id: "safety_msds", category: "안전", label: "MSDS 미등록", description: "안전보건자료 미등록 또는 누락 품목 알림", icon: Shield, inApp: true, email: true, deliveryOverride: null },
-    // 5. 결제/구독
     { id: "billing_failed", category: "결제/구독", label: "결제 실패", description: "카드 만료 또는 결제 수단 오류", icon: XCircle, inApp: true, email: true, deliveryOverride: null },
     { id: "billing_plan_change", category: "결제/구독", label: "구독 상태 변경", description: "플랜 업그레이드·다운그레이드·갱신 알림", icon: CreditCard, inApp: true, email: true, deliveryOverride: null },
     { id: "billing_cancel", category: "결제/구독", label: "해지", description: "구독 해지 예정 또는 해지 완료 안내", icon: RotateCcw, inApp: true, email: true, deliveryOverride: null },
-    // 6. 시스템
     { id: "system_pdf_fail", category: "시스템", label: "PDF 분석 실패", description: "업로드한 PDF의 자동 분석 실패 알림", icon: FileText, inApp: true, email: false, deliveryOverride: null },
     { id: "system_security", category: "시스템", label: "보안 알림", description: "비정상 로그인 시도 및 권한 변경", icon: Lock, inApp: true, email: true, deliveryOverride: "immediate" },
     { id: "system_daily_digest", category: "시스템", label: "일일 요약 메일", description: "하루 동안의 주요 활동을 정리한 요약 메일", icon: Mail, inApp: false, email: true, deliveryOverride: null },
@@ -246,11 +257,8 @@ function SettingsPageContent() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
 
-  // ── Initial notification snapshot ──
   const [initialNotifications, setInitialNotifications] = useState(() =>
-    JSON.stringify(
-      notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride }))
-    )
+    JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })))
   );
   const [initialFrequency, setInitialFrequency] = useState<DeliveryMode>("immediate");
 
@@ -268,17 +276,14 @@ function SettingsPageContent() {
   useEffect(() => {
     const tab = searchParams.get("tab");
     if (tab === "billing") setActiveSection("billing");
+    if (tab === "notifications") setActiveSection("notifications");
   }, [searchParams]);
 
   useEffect(() => {
     if (userData?.phone && typeof userData.phone === "string") {
       const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
-      if (match) {
-        setCountryCode(match[1]);
-        setProfilePhone(match[2].trim());
-      } else {
-        setProfilePhone(userData.phone);
-      }
+      if (match) { setCountryCode(match[1]); setProfilePhone(match[2].trim()); }
+      else setProfilePhone(userData.phone);
     }
   }, [userData?.phone]);
 
@@ -306,11 +311,8 @@ function SettingsPageContent() {
     onSuccess: () => {
       toast({ title: "변경사항 저장 완료", description: "설정이 성공적으로 반영되었습니다." });
       queryClient.invalidateQueries({ queryKey: ["user-profile"] });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setSaveSuccess(true);
-      setSaveError(false);
+      setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
+      setSaveSuccess(true); setSaveError(false);
       setTimeout(() => setSaveSuccess(false), 2000);
     },
     onError: (error: Error) => {
@@ -329,9 +331,7 @@ function SettingsPageContent() {
     if (profileName !== session?.user?.name) updates.name = profileName;
     if (profileEmail !== session?.user?.email) updates.email = profileEmail;
     if (fullPhone !== (savedPhone || "")) updates.phone = fullPhone;
-    if (Object.keys(updates).length > 0) {
-      profileMutation.mutate(updates);
-    }
+    if (Object.keys(updates).length > 0) profileMutation.mutate(updates);
   };
 
   const handlePasswordChange = (e: React.FormEvent) => {
@@ -342,13 +342,9 @@ function SettingsPageContent() {
     }
   };
 
-  // ── Dirty state ──
+  // ── Dirty ──
   const isProfileDirty = useMemo(() => {
-    const nameChanged = profileName !== (session?.user?.name || "");
-    const phoneChanged = fullPhone !== (savedPhone || "");
-    const bioChanged = profileBio !== "";
-    const urlChanged = profileUrl !== "";
-    return nameChanged || phoneChanged || bioChanged || urlChanged;
+    return profileName !== (session?.user?.name || "") || fullPhone !== (savedPhone || "") || profileBio !== "" || profileUrl !== "";
   }, [profileName, session?.user?.name, fullPhone, savedPhone, profileBio, profileUrl]);
 
   const isNotificationsDirty = useMemo(() => {
@@ -356,1112 +352,649 @@ function SettingsPageContent() {
     return currentSnap !== initialNotifications || notificationFrequency !== initialFrequency;
   }, [notifications, initialNotifications, notificationFrequency, initialFrequency]);
 
-  const isDirty = activeSection === "profile" ? isProfileDirty : isNotificationsDirty;
+  const isDirty = activeSection === "operator" ? isProfileDirty : activeSection === "notifications" ? isNotificationsDirty : false;
 
-  // ── Revert ──
   const handleRevert = useCallback(() => {
-    if (activeSection === "profile") {
-      setProfileName(session?.user?.name || "");
-      setProfileBio("");
-      setProfileUrl("");
+    if (activeSection === "operator") {
+      setProfileName(session?.user?.name || ""); setProfileBio(""); setProfileUrl("");
       if (userData?.phone && typeof userData.phone === "string") {
         const match = userData.phone.match(/^(\+\d+)\s*(.*)$/);
-        if (match) {
-          setCountryCode(match[1]);
-          setProfilePhone(match[2].trim());
-        } else {
-          setProfilePhone(userData.phone);
-        }
-      } else {
-        setProfilePhone("");
-      }
+        if (match) { setCountryCode(match[1]); setProfilePhone(match[2].trim()); }
+        else setProfilePhone(userData.phone);
+      } else setProfilePhone("");
     } else {
       const parsed = JSON.parse(initialNotifications) as { id: string; inApp: boolean; email: boolean; deliveryOverride: DeliveryMode | null }[];
-      setNotifications((prev) =>
-        prev.map((n) => {
-          const saved = parsed.find((s) => s.id === n.id);
-          return saved ? { ...n, inApp: saved.inApp, email: saved.email, deliveryOverride: saved.deliveryOverride } : n;
-        })
-      );
+      setNotifications((prev) => prev.map((n) => { const saved = parsed.find((s) => s.id === n.id); return saved ? { ...n, inApp: saved.inApp, email: saved.email, deliveryOverride: saved.deliveryOverride } : n; }));
       setNotificationFrequency(initialFrequency);
     }
-    setSaveSuccess(false);
-    setSaveError(false);
+    setSaveSuccess(false); setSaveError(false);
   }, [activeSection, session?.user?.name, userData?.phone, initialNotifications, initialFrequency]);
 
   const handleNotificationSave = async () => {
-    setIsSavingNotifications(true);
-    setSaveSuccess(false);
-    setSaveError(false);
+    setIsSavingNotifications(true); setSaveSuccess(false); setSaveError(false);
     try {
       await new Promise((r) => setTimeout(r, 1000));
       toast({ title: "설정 저장 완료", description: "알림 설정이 반영되었습니다." });
-      setInitialNotifications(
-        JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride })))
-      );
+      setInitialNotifications(JSON.stringify(notifications.map((n) => ({ id: n.id, inApp: n.inApp, email: n.email, deliveryOverride: n.deliveryOverride }))));
       setInitialFrequency(notificationFrequency);
-      setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 2000);
-    } catch {
-      setSaveError(true);
-      setTimeout(() => setSaveError(false), 3000);
-    } finally {
-      setIsSavingNotifications(false);
-    }
+      setSaveSuccess(true); setTimeout(() => setSaveSuccess(false), 2000);
+    } catch { setSaveError(true); setTimeout(() => setSaveError(false), 3000); }
+    finally { setIsSavingNotifications(false); }
   };
 
   const getInitials = () => {
-    if (session?.user?.name) {
-      return session.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
-    }
+    if (session?.user?.name) return session.user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
     return session?.user?.email?.[0].toUpperCase() || "U";
   };
 
   const userRole = (session?.user?.role as string) || "USER";
-  const roleLabel = ROLE_LABELS[userRole] || "사용자";
+  const roleLabel = ROLE_LABELS[userRole] || "운영자 (Operator)";
 
   const toggleNotification = (id: string, field: "inApp" | "email") => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, [field]: !n[field] } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, [field]: !n[field] } : n)));
   };
 
-  const setDeliveryOverride = (id: string, mode: DeliveryMode | null) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, deliveryOverride: mode } : n))
-    );
-  };
-
-  // Group notifications by category for rendering
   const notificationsByCategory = useMemo(() => {
     const grouped: { category: string; items: NotificationItem[] }[] = [];
     const seen = new Set<string>();
     for (const n of notifications) {
-      if (!seen.has(n.category)) {
-        seen.add(n.category);
-        grouped.push({ category: n.category, items: notifications.filter((x) => x.category === n.category) });
-      }
+      if (!seen.has(n.category)) { seen.add(n.category); grouped.push({ category: n.category, items: notifications.filter((x) => x.category === n.category) }); }
     }
     return grouped;
   }, [notifications]);
 
-  // ── Nav items ──
-  const navItems: { id: SettingsSection; label: string; sublabel: string; icon: React.ElementType }[] = [
-    { id: "profile", label: "계정", sublabel: "프로필 및 보안", icon: User },
-    { id: "notifications", label: "알림", sublabel: "알림 채널 및 빈도", icon: Bell },
-    { id: "billing", label: "청구 및 구독", sublabel: "플랜, 결제, 청구서", icon: CreditCard },
-  ];
+  const resetCancelFlow = () => { setIsCancelOpen(false); setCancelStep(1); setCancelReason(null); setCancelFeedback(""); };
 
-  // ── Cancel dialog helpers ──
-  const resetCancelFlow = () => {
-    setIsCancelOpen(false);
-    setCancelStep(1);
-    setCancelReason(null);
-    setCancelFeedback("");
-  };
+  // ══════════════════════════════════════════════
+  // Render
+  // ══════════════════════════════════════════════
 
   return (
-    <div className="w-full min-h-screen bg-sh py-4 md:py-6">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Header */}
-        <div className="space-y-1 mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900">설정</h2>
-          <p className="text-sm text-slate-400 hidden sm:block">
-            계정 정보와 연구실 워크스페이스 환경을 관리합니다.
-          </p>
+    <div className="w-full min-h-screen" style={{ backgroundColor: "#0a0f1a" }}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* ═══ Page Header ═══ */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">
+            <Settings className="h-3 w-3" />
+            SYSTEM CONFIGURATION
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-100">시스템 및 워크스페이스 설정</h1>
+              <p className="text-sm text-slate-400 mt-0.5">운영자 권한, 온톨로지 엔진 매개변수 및 외부 시스템 연동을 구성합니다.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isDirty && (
+                <Button variant="ghost" size="sm" onClick={handleRevert} className="text-xs text-slate-400 hover:text-slate-200 h-8">
+                  <RotateCcw className="h-3 w-3 mr-1" />
+                  변경사항 취소
+                </Button>
+              )}
+              <Button
+                size="sm"
+                className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
+                disabled={!isDirty || profileMutation.isPending || isSavingNotifications}
+                onClick={() => {
+                  if (activeSection === "operator") handleProfileSubmit();
+                  else if (activeSection === "notifications") handleNotificationSave();
+                }}
+              >
+                {(profileMutation.isPending || isSavingNotifications) ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />저장 중</> :
+                 saveSuccess ? <><Check className="h-3 w-3 mr-1" />저장 완료</> :
+                 "설정 저장"}
+              </Button>
+            </div>
+          </div>
         </div>
 
-        <div className="h-px bg-el mb-6" />
-
         <div className="flex flex-col lg:flex-row gap-6">
-          {/* ── Left nav panel ── */}
-          <nav className="lg:w-60 shrink-0">
-            <div className="bg-pn border border-bd rounded-lg p-2 space-y-0.5">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeSection === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActiveSection(item.id)}
-                    className={cn(
-                      "w-full flex items-center gap-3 px-3 py-3 rounded-md text-left transition-colors",
-                      isActive
-                        ? "bg-el text-slate-900"
-                        : "text-slate-400 hover:bg-el/50 hover:text-slate-700"
-                    )}
-                  >
-                    <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-slate-900" : "text-slate-500")} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium leading-tight">{item.label}</div>
-                      <div className="text-[11px] text-slate-500 leading-tight mt-0.5">{item.sublabel}</div>
-                    </div>
-                    {isActive && <ChevronRight className="h-3.5 w-3.5 text-slate-500 shrink-0" />}
-                  </button>
-                );
-              })}
-            </div>
+          {/* ═══ Left System Nav ═══ */}
+          <nav className="lg:w-64 shrink-0">
+            {NAV_GROUPS.map((group) => (
+              <div key={group.group} className="mb-4">
+                <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-2">{group.group}</div>
+                <div className="space-y-0.5">
+                  {group.items.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = activeSection === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => setActiveSection(item.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
+                          isActive
+                            ? "bg-blue-600/10 border border-blue-600/20 text-slate-100"
+                            : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent"
+                        )}
+                      >
+                        <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-medium leading-tight">{item.label}</div>
+                          <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{item.sublabel}</div>
+                        </div>
+                        {isActive && <ChevronRight className="h-3 w-3 text-blue-400 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </nav>
 
-          {/* ── Right content ── */}
-          <div className="flex-1 min-w-0 space-y-6">
-            {/* ═══ PROFILE ═══ */}
-            {activeSection === "profile" && (
-              <div className="animate-in fade-in-50 duration-300 space-y-6">
-                {/* Profile info */}
-                <div className="bg-pn border border-bd rounded-lg">
-                  <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                      <User className="h-4 w-4" />
-                      프로필 정보
-                    </div>
-                    <p className="text-sm text-slate-400 mt-1">공개적으로 표시되는 프로필 정보입니다.</p>
-                  </div>
-                  <div className="p-6 space-y-6">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-20 w-20">
-                        <AvatarImage src={session?.user?.image || undefined} alt={session?.user?.name || "User"} />
-                        <AvatarFallback className="bg-el text-slate-600 text-lg font-semibold">
-                          {getInitials()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit border-bs bg-el text-slate-600">
-                          {roleLabel}
-                        </Badge>
-                        <Button type="button" variant="outline" size="sm" className="border-bs text-slate-600 hover:bg-el">
-                          <Upload className="h-4 w-4 mr-2" />
-                          사진 변경
-                        </Button>
+          {/* ═══ Right Content ═══ */}
+          <div className="flex-1 min-w-0 space-y-5">
+
+            {/* ═══ OPERATOR & WORKSPACE ═══ */}
+            {activeSection === "operator" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                {/* Operator Identity */}
+                <SectionCard title="운영자 식별 정보 (Operator Identity)" icon={Fingerprint}>
+                  <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
+                    {/* Avatar */}
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="h-20 w-20 rounded-2xl bg-blue-600/15 border border-blue-600/20 flex items-center justify-center text-2xl font-bold text-blue-400">
+                        {getInitials()}
                       </div>
+                      <Button variant="ghost" size="sm" className="text-[10px] text-slate-400 hover:text-slate-200 h-7 px-2">
+                        <Upload className="h-3 w-3 mr-1" />
+                        식별자 이미지 변경
+                      </Button>
+                      <span className="text-[9px] text-slate-500">JPG, PNG 지원. 최대 2MB.</span>
                     </div>
 
-                    <div className="h-px bg-el" />
-
-                    <div className="space-y-5">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">기본 정보</h4>
-                      <div className="grid gap-5 max-w-md">
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="name" className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                            <User className="h-3.5 w-3.5 text-slate-500" />
-                            이름
-                          </Label>
-                          <Input
-                            id="name"
-                            value={profileName}
-                            onChange={(e) => setProfileName(e.target.value)}
-                            placeholder="이름을 입력하세요"
-                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600 focus:ring-slate-600"
-                          />
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="phone" className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                            <Phone className="h-3.5 w-3.5 text-slate-500" />
-                            휴대폰 번호
-                          </Label>
-                          <div className="flex gap-2">
-                            <Select value={countryCode} onValueChange={setCountryCode}>
-                              <SelectTrigger className="w-[100px] bg-sh border-bs text-slate-600">
-                                <SelectValue placeholder="국가" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="+82">KR (+82)</SelectItem>
-                                <SelectItem value="+1">US (+1)</SelectItem>
-                                <SelectItem value="+81">JP (+81)</SelectItem>
-                                <SelectItem value="+86">CN (+86)</SelectItem>
-                                <SelectItem value="+44">UK (+44)</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <Input
-                              id="phone"
-                              value={profilePhone}
-                              onChange={(e) => setProfilePhone(e.target.value)}
-                              placeholder="010-0000-0000"
-                              className="flex-1 bg-sh border-bs text-slate-900 placeholder:text-slate-600 focus:ring-slate-600"
-                            />
-                          </div>
-                          <p className="text-[11px] text-slate-500">긴급 알림 및 본인 확인용으로 사용됩니다.</p>
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="bio" className="text-sm font-medium text-slate-600">소개</Label>
-                          <Textarea
-                            id="bio"
-                            value={profileBio}
-                            onChange={(e) => setProfileBio(e.target.value)}
-                            placeholder="자기소개를 입력하세요"
-                            rows={3}
-                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
-                          />
-                        </div>
+                    {/* Fields */}
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FieldBlock label="운영자 성명">
+                          <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                        </FieldBlock>
+                        <FieldBlock label="직책 / 역할">
+                          <Input value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                        </FieldBlock>
                       </div>
-                    </div>
-
-                    <div className="h-px bg-el" />
-
-                    <div className="space-y-5">
-                      <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">연락처</h4>
-                      <div className="grid gap-5 max-w-md">
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="url" className="text-sm font-medium text-slate-600">URL</Label>
-                          <Input
-                            id="url"
-                            value={profileUrl}
-                            onChange={(e) => setProfileUrl(e.target.value)}
-                            placeholder="https://example.com"
-                            type="url"
-                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
-                          />
-                        </div>
-                        <div className="grid gap-1.5">
-                          <Label htmlFor="email" className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                            <Mail className="h-3.5 w-3.5 text-slate-500" />
-                            이메일
-                          </Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={profileEmail}
-                            disabled
-                            className="bg-sh/50 border-bs text-slate-500"
-                          />
-                        </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FieldBlock label="연락처">
+                          <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="010-0000-0000" className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                        </FieldBlock>
+                        <FieldBlock label="이메일 (SSO 연동)">
+                          <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-300 h-9 text-sm" />
+                        </FieldBlock>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <Badge className="bg-blue-600/15 text-blue-400 border-blue-600/20 text-[10px] font-medium">{roleLabel}</Badge>
+                        <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[10px] font-medium">Clearance: Level 3</Badge>
                       </div>
                     </div>
                   </div>
-                </div>
+                </SectionCard>
+
+                {/* Workspace Environment */}
+                <SectionCard title="워크스페이스 환경" icon={Building2}>
+                  <div className="space-y-4">
+                    <FieldBlock label="워크스페이스 명칭">
+                      <Input value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                    </FieldBlock>
+                    <FieldBlock label="기본 통화 및 단위">
+                      <Select value={currencyUnit} onValueChange={setCurrencyUnit}>
+                        <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="KRW (₩) / Metric">KRW (₩) / Metric</SelectItem>
+                          <SelectItem value="USD ($) / Metric">USD ($) / Metric</SelectItem>
+                          <SelectItem value="EUR (€) / Metric">EUR (€) / Metric</SelectItem>
+                          <SelectItem value="JPY (¥) / Metric">JPY (¥) / Metric</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FieldBlock>
+                  </div>
+                </SectionCard>
 
                 {/* Password */}
-                <div className="bg-pn border border-bd rounded-lg">
-                  <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2 text-slate-900 font-semibold">
-                      <Lock className="h-4 w-4" />
-                      비밀번호
+                <SectionCard title="보안 자격 증명" icon={Lock}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-slate-300">비밀번호</p>
+                      <p className="text-xs text-slate-500">마지막 변경: 알 수 없음</p>
                     </div>
-                    <p className="text-sm text-slate-400 mt-1">계정 보안을 위해 주기적으로 비밀번호를 변경하세요.</p>
-                  </div>
-                  <div className="p-6">
                     <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="border-bs text-slate-600 hover:bg-el">
-                          <Lock className="h-4 w-4 mr-2" />
-                          비밀번호 변경
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="bg-pn border-bd">
+                      <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300 h-8 px-3 border border-blue-600/20" onClick={() => setIsPasswordDialogOpen(true)}>
+                        <Lock className="h-3 w-3 mr-1" />
+                        비밀번호 변경
+                      </Button>
+                      <DialogContent className="bg-slate-900 border-slate-700">
                         <DialogHeader>
-                          <DialogTitle className="text-slate-900">비밀번호 변경</DialogTitle>
-                          <DialogDescription className="text-slate-400">
-                            보안을 위해 주기적으로 비밀번호를 변경해주세요.
-                          </DialogDescription>
+                          <DialogTitle className="text-slate-100">비밀번호 변경</DialogTitle>
+                          <DialogDescription className="text-slate-400">새 비밀번호를 입력하세요.</DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handlePasswordChange} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="dialogCurrentPassword" className="text-slate-600">현재 비밀번호</Label>
-                            <Input
-                              id="dialogCurrentPassword"
-                              type="password"
-                              value={currentPassword}
-                              onChange={(e) => setCurrentPassword(e.target.value)}
-                              placeholder="현재 비밀번호를 입력하세요"
-                              required
-                              className="bg-sh border-bs text-slate-900"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="dialogNewPassword" className="text-slate-600">새 비밀번호</Label>
-                            <Input
-                              id="dialogNewPassword"
-                              type="password"
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              placeholder="새 비밀번호를 입력하세요"
-                              required
-                              className="bg-sh border-bs text-slate-900"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="dialogConfirmPassword" className="text-slate-600">비밀번호 확인</Label>
-                            <Input
-                              id="dialogConfirmPassword"
-                              type="password"
-                              value={confirmPassword}
-                              onChange={(e) => setConfirmPassword(e.target.value)}
-                              placeholder="새 비밀번호를 다시 입력하세요"
-                              required
-                              className="bg-sh border-bs text-slate-900"
-                            />
-                          </div>
-                          {newPassword && newPassword !== confirmPassword && (
-                            <p className="text-sm text-red-400">비밀번호가 일치하지 않습니다.</p>
-                          )}
-                          <div className="flex justify-end gap-2 pt-4">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              className="border-bs text-slate-600"
-                              onClick={() => {
-                                setIsPasswordDialogOpen(false);
-                                setCurrentPassword("");
-                                setNewPassword("");
-                                setConfirmPassword("");
-                              }}
-                            >
-                              취소
-                            </Button>
-                            <Button
-                              type="submit"
-                              className="bg-el text-slate-900 hover:bg-slate-200"
-                              disabled={profileMutation.isPending || !newPassword || newPassword !== confirmPassword || !currentPassword}
-                            >
-                              {profileMutation.isPending ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />변경 중...</>
-                              ) : (
-                                "변경하기"
-                              )}
-                            </Button>
-                          </div>
+                        <form onSubmit={handlePasswordChange} className="space-y-4 pt-2">
+                          <FieldBlock label="현재 비밀번호">
+                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                          </FieldBlock>
+                          <FieldBlock label="새 비밀번호">
+                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                          </FieldBlock>
+                          <FieldBlock label="새 비밀번호 확인">
+                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                          </FieldBlock>
+                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={!newPassword || newPassword !== confirmPassword || !currentPassword}>
+                            변경 확인
+                          </Button>
                         </form>
                       </DialogContent>
                     </Dialog>
                   </div>
-                </div>
+                </SectionCard>
+              </div>
+            )}
+
+            {/* ═══ ONTOLOGY ENGINE (AI) ═══ */}
+            {activeSection === "ontology" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다.">
+                  <div className="space-y-6">
+                    <SliderField
+                      label="자동 승인 신뢰도 임계값 (Confidence Threshold)"
+                      description="AI가 발주를 자동 승인하는 최소 신뢰도. 이 값 이하의 판단은 수동 검토로 라우팅됩니다."
+                      value={confidenceThreshold}
+                      onChange={setConfidenceThreshold}
+                      min={50} max={100} unit="%"
+                    />
+                    <div className="h-px bg-slate-700/40" />
+                    <SliderField
+                      label="이상 탐지 민감도 (Anomaly Detection Sensitivity)"
+                      description="단가 급등, 비정상 발주량 등을 탐지하는 민감도. 높을수록 경고가 많아집니다."
+                      value={anomalyDetectionSensitivity}
+                      onChange={setAnomalyDetectionSensitivity}
+                      min={0} max={100} unit="%"
+                    />
+                    <div className="h-px bg-slate-700/40" />
+                    <SliderField
+                      label="가격 변동 알림 임계값"
+                      description="공급사 단가가 이 비율 이상 변동하면 알림을 발생시킵니다."
+                      value={priceAlertThreshold}
+                      onChange={setPriceAlertThreshold}
+                      min={5} max={50} unit="%"
+                    />
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="자동화 규칙" icon={Zap}>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-slate-200">AI 기반 자동 승인</p>
+                        <p className="text-xs text-slate-500 mt-0.5">신뢰도 임계값을 충족하고 금액 한도 내인 발주를 자동 승인합니다.</p>
+                      </div>
+                      <Switch checked={autoApprovalEnabled} onCheckedChange={setAutoApprovalEnabled} />
+                    </div>
+                    {autoApprovalEnabled && (
+                      <FieldBlock label="자동 승인 금액 한도">
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="text"
+                            value={Number(autoApprovalLimit).toLocaleString("ko-KR")}
+                            onChange={(e) => setAutoApprovalLimit(e.target.value.replace(/[^0-9]/g, ""))}
+                            className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm w-48"
+                          />
+                          <span className="text-xs text-slate-500">원 이하</span>
+                        </div>
+                      </FieldBlock>
+                    )}
+                  </div>
+                </SectionCard>
+              </div>
+            )}
+
+            {/* ═══ SECURITY & RBAC ═══ */}
+            {activeSection === "security" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다.">
+                  <div className="space-y-4">
+                    <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
+                    <div className="h-px bg-slate-700/40" />
+                    <ApprovalTierRow tier={2} label="팀장 승인" description="이 금액 이하는 팀장 승인" value={approvalTier2} onChange={setApprovalTier2} color="blue" />
+                    <div className="h-px bg-slate-700/40" />
+                    <ApprovalTierRow tier={3} label="CFO 승인" description="이 금액 초과 시 CFO 승인 필요" value={approvalTier3} onChange={setApprovalTier3} color="amber" />
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="역할 기반 접근 제어 (RBAC)" icon={Users}>
+                  <div className="space-y-3">
+                    {[
+                      { role: "Admin", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-400" },
+                      { role: "Lab Manager", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-400" },
+                      { role: "Procurement", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-400" },
+                      { role: "Viewer", permissions: "읽기 전용 / 리포트 열람", count: 5, color: "text-slate-400" },
+                    ].map((r) => (
+                      <div key={r.role} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                        <div className="flex items-center gap-3">
+                          <Shield className={cn("h-4 w-4", r.color)} />
+                          <div>
+                            <p className="text-sm font-medium text-slate-200">{r.role}</p>
+                            <p className="text-[10px] text-slate-500">{r.permissions}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-slate-700/50 text-slate-300 border-slate-600/30 text-[10px]">{r.count}명</Badge>
+                      </div>
+                    ))}
+                  </div>
+                </SectionCard>
+              </div>
+            )}
+
+            {/* ═══ INTEGRATIONS ═══ */}
+            {activeSection === "integrations" && (
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다.">
+                  <div className="space-y-3">
+                    {[
+                      { name: "SAP S/4HANA", type: "ERP 동기화", status: "connected", lastSync: "2분 전", icon: Database },
+                      { name: "Thermo Fisher B2B API", type: "공급사 카탈로그", status: "connected", lastSync: "15분 전", icon: Globe },
+                      { name: "Sigma-Aldrich Webhook", type: "공급사 주문 확인", status: "pending", lastSync: "설정 대기", icon: Webhook },
+                      { name: "Oracle NetSuite", type: "회계 연동", status: "disconnected", lastSync: "미연결", icon: Link2 },
+                    ].map((sys) => (
+                      <div key={sys.name} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                        <div className="flex items-center gap-3">
+                          <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center",
+                            sys.status === "connected" ? "bg-emerald-600/10" : sys.status === "pending" ? "bg-amber-600/10" : "bg-slate-700/30"
+                          )}>
+                            <sys.icon className={cn("h-4 w-4",
+                              sys.status === "connected" ? "text-emerald-400" : sys.status === "pending" ? "text-amber-400" : "text-slate-500"
+                            )} />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-slate-200">{sys.name}</p>
+                            <p className="text-[10px] text-slate-500">{sys.type}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <div className="text-right">
+                            <div className="flex items-center gap-1.5">
+                              <div className={cn("h-1.5 w-1.5 rounded-full",
+                                sys.status === "connected" ? "bg-emerald-400" : sys.status === "pending" ? "bg-amber-400 animate-pulse" : "bg-slate-500"
+                              )} />
+                              <span className={cn("text-[10px] font-medium",
+                                sys.status === "connected" ? "text-emerald-400" : sys.status === "pending" ? "text-amber-400" : "text-slate-500"
+                              )}>
+                                {sys.status === "connected" ? "연결됨" : sys.status === "pending" ? "대기 중" : "미연결"}
+                              </span>
+                            </div>
+                            <span className="text-[9px] text-slate-500">{sys.lastSync}</span>
+                          </div>
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700/40">
+                            {sys.status === "disconnected" ? "연결" : "설정"}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </SectionCard>
               </div>
             )}
 
             {/* ═══ NOTIFICATIONS ═══ */}
             {activeSection === "notifications" && (
-              <div className="animate-in fade-in-50 duration-300 space-y-5">
-
-                {/* ── 1. 전달 방식 (Delivery Method) ── */}
-                <div className="bg-pn border border-bd rounded-xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-blue-500/10">
-                        <Bell className="h-4 w-4 text-blue-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-[15px] font-semibold text-slate-900">전달 방식</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          이벤트 알림을 즉시 받거나 하루 단위 요약으로 받을 수 있습니다
-                        </p>
-                      </div>
-                    </div>
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <SectionCard title="전역 알림 빈도" icon={Bell}>
+                  <div className="flex items-center gap-4">
+                    <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
+                      <SelectTrigger className="w-48 bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="immediate">즉시 전송</SelectItem>
+                        <SelectItem value="daily">일일 요약</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-slate-500">안전 중요 알림은 항상 즉시 전송됩니다.</span>
                   </div>
+                </SectionCard>
 
-                  <div className="p-5">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {/* 즉시 알림 */}
-                      <button
-                        type="button"
-                        onClick={() => setNotificationFrequency("immediate")}
-                        className={cn(
-                          "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
-                          notificationFrequency === "immediate"
-                            ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-bd bg-el hover:border-slate-200"
-                        )}
-                      >
-                        <div className={cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
-                          notificationFrequency === "immediate"
-                            ? "bg-blue-500/15 text-blue-400"
-                            : "bg-st text-slate-500"
-                        )}>
-                          <Zap className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-sm font-semibold",
-                              notificationFrequency === "immediate" ? "text-slate-900" : "text-slate-600"
-                            )}>
-                              즉시 알림
-                            </span>
-                            {notificationFrequency === "immediate" && (
-                              <span className="flex h-5 items-center rounded-full bg-blue-500/15 px-2 text-[10px] font-bold text-blue-400">
-                                활성
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            발생 즉시 앱/이메일로 전달됩니다
-                          </p>
-                        </div>
-                        {/* Radio indicator */}
-                        <div className={cn(
-                          "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
-                          notificationFrequency === "immediate"
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-bs"
-                        )}>
-                          {notificationFrequency === "immediate" && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-pn" />
-                          )}
-                        </div>
-                      </button>
-
-                      {/* 하루 한 번 요약 */}
-                      <button
-                        type="button"
-                        onClick={() => setNotificationFrequency("daily")}
-                        className={cn(
-                          "relative flex items-start gap-3.5 rounded-xl border-2 p-4 text-left transition-all",
-                          notificationFrequency === "daily"
-                            ? "border-blue-500 bg-blue-500/[0.06]"
-                            : "border-bd bg-el hover:border-slate-200"
-                        )}
-                      >
-                        <div className={cn(
-                          "flex items-center justify-center h-10 w-10 rounded-lg shrink-0 transition-colors",
-                          notificationFrequency === "daily"
-                            ? "bg-blue-500/15 text-blue-400"
-                            : "bg-st text-slate-500"
-                        )}>
-                          <CalendarClock className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className={cn(
-                              "text-sm font-semibold",
-                              notificationFrequency === "daily" ? "text-slate-900" : "text-slate-600"
-                            )}>
-                              하루 한 번 요약
-                            </span>
-                            {notificationFrequency === "daily" && (
-                              <span className="flex h-5 items-center rounded-full bg-blue-500/15 px-2 text-[10px] font-bold text-blue-400">
-                                활성
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                            매일 오전 주요 알림을 요약 메일로 발송합니다
-                          </p>
-                        </div>
-                        {/* Radio indicator */}
-                        <div className={cn(
-                          "absolute top-4 right-4 h-4.5 w-4.5 rounded-full border-2 flex items-center justify-center transition-colors",
-                          notificationFrequency === "daily"
-                            ? "border-blue-500 bg-blue-500"
-                            : "border-bs"
-                        )}>
-                          {notificationFrequency === "daily" && (
-                            <div className="h-1.5 w-1.5 rounded-full bg-pn" />
-                          )}
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* ── 2. 채널별 알림 토글 테이블 ── */}
-                <div className="bg-pn border border-bd rounded-xl overflow-hidden">
-                  <div className="px-6 py-5 border-b border-bd">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-pg0/10">
-                        <Mail className="h-4 w-4 text-slate-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-[15px] font-semibold text-slate-900">알림 항목별 채널 설정</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          각 알림의 수신 채널과 전달 방식을 개별적으로 설정할 수 있습니다
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-6 pt-4 pb-2">
-                    {/* Column headers */}
-                    <div className="flex items-center mb-1">
-                      <div className="flex-1" />
-                      <div className="flex items-center gap-4 shrink-0">
-                        <span className="w-[52px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">앱 내</span>
-                        <span className="w-[52px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">이메일</span>
-                        <span className="w-[72px] text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">전달</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="px-3 pb-4">
-                    {notificationsByCategory.map((group, gi) => (
-                      <div key={group.category}>
-                        {/* Category header */}
-                        <div className="flex items-center gap-2 px-3 pt-4 pb-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400/80">
-                            {group.category}
-                          </span>
-                          <div className="flex-1 h-px bg-st" />
-                        </div>
-
-                        {/* Items */}
-                        <div className="space-y-0.5">
-                          {group.items.map((n) => {
-                            const Icon = n.icon;
-                            const isOverridden = n.deliveryOverride !== null;
-                            const isCritical = SAFETY_CRITICAL_IDS.has(n.id);
-
-                            return (
-                              <div
-                                key={n.id}
-                                className={cn(
-                                  "flex items-center justify-between py-3 px-3 rounded-lg transition-colors group",
-                                  isCritical
-                                    ? "bg-amber-500/[0.04] hover:bg-amber-500/[0.07]"
-                                    : isOverridden
-                                      ? "bg-blue-500/[0.04] hover:bg-blue-500/[0.07]"
-                                      : "hover:bg-el"
-                                )}
-                              >
-                                <div className="flex items-center gap-3 min-w-0 flex-1">
-                                  <Icon className={cn(
-                                    "h-4 w-4 shrink-0",
-                                    isCritical ? "text-amber-400/80" : isOverridden ? "text-blue-400/70" : "text-slate-500"
-                                  )} />
-                                  <div className="min-w-0">
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-sm font-medium text-slate-700">{n.label}</span>
-                                      {isCritical && (
-                                        <span className="flex h-4 items-center rounded bg-amber-500/15 px-1.5 text-[9px] font-bold text-amber-400 uppercase tracking-wider">
-                                          즉시
-                                        </span>
-                                      )}
-                                      {!isCritical && isOverridden && (
-                                        <span className="flex h-4 items-center rounded bg-blue-500/10 px-1.5 text-[9px] font-bold text-blue-400 uppercase tracking-wider">
-                                          개별
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="text-xs text-slate-500 truncate mt-0.5">{n.description}</p>
-                                  </div>
-                                </div>
-
-                                <div className="flex items-center gap-4 shrink-0">
-                                  {/* In-app toggle */}
-                                  <div className="w-[52px] flex justify-center">
-                                    <Switch
-                                      checked={n.inApp}
-                                      onCheckedChange={() => toggleNotification(n.id, "inApp")}
-                                      className="data-[state=checked]:bg-blue-500"
-                                    />
-                                  </div>
-                                  {/* Email toggle */}
-                                  <div className="w-[52px] flex justify-center">
-                                    <Switch
-                                      checked={n.email}
-                                      onCheckedChange={() => toggleNotification(n.id, "email")}
-                                      className="data-[state=checked]:bg-blue-500"
-                                    />
-                                  </div>
-                                  {/* Delivery override dropdown */}
-                                  <div className="w-[72px] flex justify-center">
-                                    <Select
-                                      value={n.deliveryOverride ?? "default"}
-                                      onValueChange={(val: string) =>
-                                        setDeliveryOverride(n.id, val === "default" ? null : val as DeliveryMode)
-                                      }
-                                    >
-                                      <SelectTrigger
-                                        className={cn(
-                                          "h-7 w-[68px] text-[10px] font-medium border px-2 rounded-md",
-                                          isOverridden
-                                            ? "border-blue-500/30 bg-blue-500/10 text-blue-400"
-                                            : "border-bd bg-el text-slate-500"
-                                        )}
-                                      >
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent className="bg-el border-bd">
-                                        <SelectItem value="default" className="text-xs text-slate-400">
-                                          기본값
-                                        </SelectItem>
-                                        <SelectItem value="immediate" className="text-xs text-slate-600">
-                                          즉시
-                                        </SelectItem>
-                                        <SelectItem value="daily" className="text-xs text-slate-600">
-                                          요약
-                                        </SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                </div>
+                {notificationsByCategory.map((group) => (
+                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon}>
+                    <div className="space-y-1">
+                      {group.items.map((n) => {
+                        const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
+                        return (
+                          <div key={n.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-800/30 transition-colors">
+                            <div className="flex-1 min-w-0 mr-4">
+                              <div className="flex items-center gap-2">
+                                <p className="text-sm font-medium text-slate-200">{n.label}</p>
+                                {isSafety && <Badge className="bg-red-600/15 text-red-400 border-red-600/20 text-[9px] py-0">즉시</Badge>}
                               </div>
-                            );
-                          })}
-                        </div>
-
-                        {/* Separator between groups (not after last) */}
-                        {gi < notificationsByCategory.length - 1 && (
-                          <div className="mx-3 mt-1" />
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Legend */}
-                  <div className="px-6 py-3.5 border-t border-bd bg-pg/50">
-                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500">
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-amber-500/50" />
-                        <span className="text-amber-400/70">즉시 = 안전-critical 항목 (즉시 전달 기본값)</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-blue-500/40" />
-                        <span className="text-blue-400/70">개별 = 항목별 전달 방식 지정됨</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <div className="h-2 w-2 rounded-full bg-st" />
-                        <span>기본값 = 상단 전달 방식 따름</span>
-                      </div>
+                              <p className="text-[10px] text-slate-500 mt-0.5">{n.description}</p>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] text-slate-500">앱</span>
+                                <Switch checked={n.inApp} onCheckedChange={() => toggleNotification(n.id, "inApp")} className="scale-75" />
+                              </div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-[9px] text-slate-500">메일</span>
+                                <Switch checked={n.email} onCheckedChange={() => toggleNotification(n.id, "email")} className="scale-75" />
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  </div>
-                </div>
-
+                  </SectionCard>
+                ))}
               </div>
             )}
 
             {/* ═══ BILLING ═══ */}
             {activeSection === "billing" && (
-              <div className="animate-in fade-in-50 duration-300 space-y-6">
-                {billingLoading ? (
-                  <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="bg-pn border border-bd rounded-lg p-6">
-                        <Skeleton className="h-5 w-32 bg-el mb-3" />
-                        <Skeleton className="h-8 w-48 bg-el" />
+              <div className="space-y-5 animate-in fade-in-50 duration-200">
+                <SectionCard title="현재 구독" icon={CreditCard}>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg font-bold text-slate-100">Business</span>
+                        <Badge className="bg-blue-600/15 text-blue-400 border-blue-600/20 text-[10px]">활성</Badge>
+                      </div>
+                      <p className="text-sm text-slate-400 mt-0.5">₩149,000 / 월</p>
+                      <p className="text-[10px] text-slate-500 mt-1">다음 갱신: 2026-05-01</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3 border border-slate-700/40">
+                        플랜 변경
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-xs text-red-400 hover:text-red-300 h-8 px-3" onClick={() => setIsCancelOpen(true)}>
+                        구독 해지
+                      </Button>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                <SectionCard title="청구서" icon={Receipt}>
+                  <div className="space-y-2">
+                    {DEMO_INVOICES.map((inv) => (
+                      <div key={inv.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                        <div className="flex items-center gap-3">
+                          <FileText className="h-4 w-4 text-slate-500" />
+                          <div>
+                            <p className="text-sm text-slate-200">{inv.description}</p>
+                            <p className="text-[10px] text-slate-500">{inv.date}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-medium text-slate-200">₩{inv.amount.toLocaleString()}</span>
+                          <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[9px]">완료</Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
-                ) : (
-                  (() => {
-                    const subscription = billingData?.subscription || {
-                      plan: "FREE",
-                      status: "active",
-                      currentPeriodEnd: null as string | null,
-                    };
-                    const planInfo = (billingData?.planInfo as Record<string, { nameKo: string; priceDisplay?: string }>) || {};
-                    const planKey = (subscription?.plan && ["FREE", "TEAM", "ORGANIZATION"].includes(subscription.plan) ? subscription.plan : "FREE") as string;
-                    const displayName = planInfo[planKey]?.nameKo ?? "무료";
-                    const priceDisplay = planInfo[planKey]?.priceDisplay ?? "";
-                    const invoices = billingData?.invoices ?? [];
-                    const hasInvoices = invoices.length > 0 || DEMO_INVOICES.length > 0;
-                    const allInvoices = invoices.length > 0 ? invoices : DEMO_INVOICES;
-                    const isFree = planKey === "FREE";
-
-                    return (
-                      <>
-                        {/* Plan overview grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                          {/* Current plan */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">현재 플랜</div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-xl font-bold text-slate-900">{displayName}</span>
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "text-[10px] font-medium",
-                                  subscription.status === "active"
-                                    ? "border-emerald-800 bg-emerald-950/40 text-emerald-400"
-                                    : "border-amber-800 bg-amber-950/40 text-amber-400"
-                                )}
-                              >
-                                {subscription.status === "active" ? "활성" : "비활성"}
-                              </Badge>
-                            </div>
-                          </div>
-
-                          {/* Next billing date */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">다음 결제일</div>
-                            <div className="text-xl font-bold text-slate-900">
-                              {subscription?.currentPeriodEnd
-                                ? new Date(subscription.currentPeriodEnd).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" })
-                                : isFree ? "-" : "-"}
-                            </div>
-                          </div>
-
-                          {/* Billing amount */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">월 결제 금액</div>
-                            <div className="text-xl font-bold text-slate-900">
-                              {priceDisplay || "무료"}
-                            </div>
-                          </div>
-
-                          {/* Seats */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">좌석 수</div>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-slate-500" />
-                              <span className="text-lg font-bold text-slate-900">
-                                {billingData?.seats?.used ?? 1} / {billingData?.seats?.total ?? (isFree ? 1 : "무제한")}
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">사용 중 / 전체</p>
-                          </div>
-
-                          {/* Billing contact */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 담당자</div>
-                            <div className="text-sm font-medium text-slate-700">
-                              {billingData?.billingContact?.name ?? session?.user?.name ?? "-"}
-                            </div>
-                            <p className="text-xs text-slate-500 mt-1">
-                              {billingData?.billingContact?.email ?? session?.user?.email ?? "-"}
-                            </p>
-                          </div>
-
-                          {/* Payment method */}
-                          <div className="bg-pn border border-bd rounded-lg p-5">
-                            <div className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">결제 수단</div>
-                            <div className="flex items-center gap-2">
-                              <CreditCard className="h-4 w-4 text-slate-500" />
-                              <span className="text-sm font-medium text-slate-700">
-                                {billingData?.paymentMethod?.display ?? (isFree ? "등록된 수단 없음" : "Visa ****1234")}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Invoices */}
-                        <div className="bg-pn border border-bd rounded-lg">
-                          <div className="px-6 py-4 border-b border-bd flex items-center justify-between">
-                            <div className="flex items-center gap-2 text-slate-900 font-semibold text-sm">
-                              <Receipt className="h-4 w-4" />
-                              최근 청구서
-                            </div>
-                          </div>
-                          <div className="overflow-x-auto">
-                            {!hasInvoices || isFree ? (
-                              <div className="px-6 py-12 text-center">
-                                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-el mb-3">
-                                  <Receipt className="h-5 w-5 text-slate-500" />
-                                </div>
-                                <p className="text-sm text-slate-400">첫 결제 이전입니다</p>
-                                <p className="text-xs text-slate-500 mt-1">
-                                  유료 플랜으로 전환하면 청구서가 여기에 표시됩니다.
-                                </p>
-                              </div>
-                            ) : (
-                              <Table>
-                                <TableHeader>
-                                  <TableRow className="border-bd hover:bg-transparent">
-                                    <TableHead className="text-slate-400 text-xs font-medium">날짜</TableHead>
-                                    <TableHead className="text-slate-400 text-xs font-medium">항목</TableHead>
-                                    <TableHead className="text-slate-400 text-xs font-medium">금액</TableHead>
-                                    <TableHead className="text-slate-400 text-xs font-medium">상태</TableHead>
-                                    <TableHead className="text-right text-slate-400 text-xs font-medium">영수증</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {(invoices.length > 0 ? invoices : allInvoices).map((invoice: { id: string; date?: string; paidAt?: string; periodStart?: string; description?: string; amount?: number; amountDue?: number; amountPaid?: number; status?: string; invoicePdfUrl?: string }) => (
-                                    <TableRow key={invoice.id} className="border-bd/50 hover:bg-el/30">
-                                      <TableCell className="text-slate-600 text-sm">
-                                        {invoice.date
-                                          ? new Date(invoice.date).toLocaleDateString("ko-KR")
-                                          : invoice.paidAt
-                                            ? new Date(invoice.paidAt).toLocaleDateString("ko-KR")
-                                            : "-"}
-                                      </TableCell>
-                                      <TableCell className="text-slate-600 text-sm">{invoice.description || "구독 결제"}</TableCell>
-                                      <TableCell className="text-slate-600 text-sm">
-                                        {(invoice.amount ?? invoice.amountPaid ?? invoice.amountDue ?? 0).toLocaleString("ko-KR")}원
-                                      </TableCell>
-                                      <TableCell>
-                                        <Badge variant="outline" className="text-[10px] border-emerald-800 bg-emerald-950/30 text-emerald-400">
-                                          {invoice.status === "paid" ? "결제 완료" : "대기"}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        <Button
-                                          variant="ghost"
-                                          size="sm"
-                                          className="text-slate-400 hover:text-slate-700 h-7 px-2"
-                                          onClick={() => {
-                                            if (invoice.invoicePdfUrl) {
-                                              window.open(invoice.invoicePdfUrl, "_blank");
-                                            } else {
-                                              toast({ title: "영수증", description: "PDF 영수증은 결제 시스템 연동 후 이용 가능합니다." });
-                                            }
-                                          }}
-                                        >
-                                          <Receipt className="h-3.5 w-3.5 mr-1" />
-                                          다운로드
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Action row */}
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Button
-                            className="bg-el text-slate-900 hover:bg-slate-200 font-medium"
-                            onClick={() => router.push("/dashboard/settings/plans")}
-                          >
-                            플랜 변경
-                            <ArrowRight className="h-4 w-4 ml-2" />
-                          </Button>
-                          {!isFree && (
-                            <Button
-                              variant="ghost"
-                              className="text-slate-400 hover:text-red-400 hover:bg-red-950/20"
-                              onClick={() => setIsCancelOpen(true)}
-                            >
-                              구독 해지
-                            </Button>
-                          )}
-                        </div>
-                      </>
-                    );
-                  })()
-                )}
-
-                {/* ── Cancel subscription dialog ── */}
-                <Dialog open={isCancelOpen} onOpenChange={(open) => { if (!open) resetCancelFlow(); }}>
-                  <DialogContent className="bg-pn border-bd max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="text-slate-900">
-                        {cancelStep === 1 && "구독 해지"}
-                        {cancelStep === 2 && "의견을 남겨주세요"}
-                        {cancelStep === 3 && "잠깐, 이런 방법은 어떨까요?"}
-                        {cancelStep === 4 && "구독 해지 확인"}
-                      </DialogTitle>
-                      <DialogDescription className="text-slate-400">
-                        {cancelStep === 1 && "해지 이유를 선택해 주세요. 서비스 개선에 도움이 됩니다."}
-                        {cancelStep === 2 && "추가로 알려주실 내용이 있다면 작성해 주세요."}
-                        {cancelStep === 3 && "해지 전에 확인해 보세요."}
-                        {cancelStep === 4 && "아래 내용을 확인 후 해지를 진행합니다."}
-                      </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="mt-4">
-                      {/* Step 1: Reason selection */}
-                      {cancelStep === 1 && (
-                        <div className="space-y-2">
-                          {CANCEL_REASONS.map((r) => (
-                            <button
-                              key={r.value}
-                              type="button"
-                              onClick={() => setCancelReason(r.value)}
-                              className={cn(
-                                "w-full flex items-center gap-3 px-4 py-3 rounded-md border text-left text-sm transition-colors",
-                                cancelReason === r.value
-                                  ? "border-slate-600 bg-el text-slate-900"
-                                  : "border-bd text-slate-400 hover:border-bs hover:text-slate-600"
-                              )}
-                            >
-                              <div className={cn(
-                                "w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center",
-                                cancelReason === r.value ? "border-slate-400" : "border-slate-600"
-                              )}>
-                                {cancelReason === r.value && (
-                                  <div className="w-2 h-2 rounded-full bg-slate-300" />
-                                )}
-                              </div>
-                              {r.label}
-                            </button>
-                          ))}
-                          <div className="flex justify-end gap-2 pt-4">
-                            <Button variant="ghost" className="text-slate-400" onClick={resetCancelFlow}>취소</Button>
-                            <Button
-                              className="bg-el text-slate-900 hover:bg-slate-200"
-                              disabled={!cancelReason}
-                              onClick={() => setCancelStep(2)}
-                            >
-                              다음
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Step 2: Free text */}
-                      {cancelStep === 2 && (
-                        <div className="space-y-4">
-                          <Textarea
-                            value={cancelFeedback}
-                            onChange={(e) => setCancelFeedback(e.target.value)}
-                            placeholder="어떤 점이 아쉬우셨나요? 자유롭게 작성해 주세요. (선택사항)"
-                            rows={4}
-                            className="bg-sh border-bs text-slate-900 placeholder:text-slate-600"
-                          />
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(1)}>이전</Button>
-                            <Button
-                              className="bg-el text-slate-900 hover:bg-slate-200"
-                              onClick={() => setCancelStep(3)}
-                            >
-                              다음
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Step 3: Save offer */}
-                      {cancelStep === 3 && (
-                        <div className="space-y-4">
-                          {(() => {
-                            const offer = getSaveOffer(cancelReason);
-                            return (
-                              <div className="bg-el/60 border border-bs rounded-lg p-5 space-y-3">
-                                <h4 className="text-sm font-semibold text-slate-700">{offer.title}</h4>
-                                <p className="text-sm text-slate-400">{offer.description}</p>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-slate-600 text-slate-600 hover:bg-slate-700"
-                                  onClick={() => {
-                                    resetCancelFlow();
-                                    if (cancelReason === "price") {
-                                      router.push("/dashboard/settings/plans");
-                                    }
-                                  }}
-                                >
-                                  {offer.cta}
-                                  <ExternalLink className="h-3.5 w-3.5 ml-1.5" />
-                                </Button>
-                              </div>
-                            );
-                          })()}
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" className="text-slate-400" onClick={() => setCancelStep(2)}>이전</Button>
-                            <Button
-                              variant="ghost"
-                              className="text-slate-400 hover:text-red-400"
-                              onClick={() => setCancelStep(4)}
-                            >
-                              그래도 해지할게요
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Step 4: Final confirmation */}
-                      {cancelStep === 4 && (
-                        <div className="space-y-4">
-                          <div className="bg-red-950/20 border border-red-900/40 rounded-lg p-4 space-y-3">
-                            <div className="flex items-start gap-2">
-                              <AlertTriangle className="h-4 w-4 text-red-400 mt-0.5 shrink-0" />
-                              <div className="text-sm text-slate-600 space-y-2">
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">해지일</span>
-                                  <span className="text-slate-700">현재 결제 주기 종료 시</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">사용 가능 기간</span>
-                                  <span className="text-slate-700">결제 주기 종료까지 모든 기능 이용 가능</span>
-                                </div>
-                                <div className="h-px bg-red-900/30" />
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">데이터</span>
-                                  <span className="text-slate-700">읽기 전용 보관 (30일)</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">팀원 권한</span>
-                                  <span className="text-slate-700">해지 후 접근 불가</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-slate-400">재구독</span>
-                                  <span className="text-slate-700">언제든 가능</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <Button
-                              variant="outline"
-                              className="border-bs text-slate-600"
-                              onClick={resetCancelFlow}
-                            >
-                              취소
-                            </Button>
-                            <Button
-                              className="bg-red-600 hover:bg-red-700 text-white"
-                              onClick={() => {
-                                toast({
-                                  title: "해지 예약 완료",
-                                  description: "현재 결제 주기가 종료되면 구독이 해지됩니다.",
-                                });
-                                resetCancelFlow();
-                              }}
-                            >
-                              <XCircle className="h-4 w-4 mr-2" />
-                              해지 확인
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                </SectionCard>
               </div>
             )}
 
-            {/* ── Bottom action bar (profile & notifications) ── */}
-            {activeSection !== "billing" && isDirty && (
-              <div className="bg-pn border border-bd rounded-lg overflow-hidden">
-                <div className="px-4 py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <p className="text-xs text-slate-500">
-                    변경된 {activeSection === "profile" ? "프로필 정보" : "알림 설정"}를 저장할 수 있습니다.
-                  </p>
-                  <div className="flex items-center gap-2 w-full sm:w-auto">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs text-slate-400 gap-1.5"
-                      onClick={handleRevert}
-                      disabled={profileMutation.isPending || isSavingNotifications}
-                    >
-                      <RotateCcw className="h-3 w-3" />
-                      되돌리기
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      className={cn(
-                        "text-xs font-semibold gap-1.5 min-w-[120px] transition-colors",
-                        saveSuccess
-                          ? "bg-emerald-700 hover:bg-emerald-800 text-white"
-                          : saveError
-                            ? "bg-red-700 hover:bg-red-800 text-white"
-                            : "bg-el hover:bg-slate-200 text-slate-900"
-                      )}
-                      onClick={() => {
-                        setSaveSuccess(false);
-                        setSaveError(false);
-                        if (activeSection === "profile") {
-                          handleProfileSubmit();
-                        } else {
-                          handleNotificationSave();
-                        }
-                      }}
-                      disabled={profileMutation.isPending || isSavingNotifications}
-                    >
-                      {(profileMutation.isPending || isSavingNotifications) ? (
-                        <><Loader2 className="h-3 w-3 animate-spin" />저장 중...</>
-                      ) : saveSuccess ? (
-                        <><Check className="h-3 w-3" />저장 완료</>
-                      ) : saveError ? (
-                        <><AlertCircle className="h-3 w-3" />저장 실패 — 다시 시도</>
-                      ) : (
-                        "변경사항 저장"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
+      </div>
+
+      {/* Cancel dialog */}
+      <Dialog open={isCancelOpen} onOpenChange={(o) => { if (!o) resetCancelFlow(); else setIsCancelOpen(true); }}>
+        <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-slate-100">구독 해지</DialogTitle>
+            <DialogDescription className="text-slate-400">해지 사유를 알려주시면 서비스 개선에 반영하겠습니다.</DialogDescription>
+          </DialogHeader>
+          {cancelStep === 1 && (
+            <div className="space-y-2 pt-2">
+              {CANCEL_REASONS.map((r) => (
+                <button
+                  key={r.value}
+                  onClick={() => { setCancelReason(r.value); setCancelStep(2); }}
+                  className={cn(
+                    "w-full text-left px-4 py-3 rounded-lg border transition-colors text-sm",
+                    cancelReason === r.value
+                      ? "border-red-600/30 bg-red-950/20 text-red-300"
+                      : "border-slate-700/40 text-slate-300 hover:bg-slate-800/50"
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {cancelStep === 2 && cancelReason && (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-lg bg-amber-950/20 border border-amber-800/30 p-4">
+                <p className="text-sm font-medium text-amber-300">{getSaveOffer(cancelReason).title}</p>
+                <p className="text-xs text-amber-400/70 mt-1">{getSaveOffer(cancelReason).description}</p>
+                <Button size="sm" className="mt-3 h-8 bg-amber-600 hover:bg-amber-500 text-white text-xs" onClick={resetCancelFlow}>
+                  {getSaveOffer(cancelReason).cta}
+                </Button>
+              </div>
+              <Button variant="ghost" size="sm" className="w-full text-xs text-red-400 hover:text-red-300" onClick={() => {
+                toast({ title: "구독 해지 요청이 접수되었습니다", description: "현재 결제 기간이 끝나면 해지됩니다." });
+                resetCancelFlow();
+              }}>
+                그래도 해지하기
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Shared Components
+// ══════════════════════════════════════════════
+
+function SectionCard({ title, icon: Icon, description, children }: {
+  title: string;
+  icon: React.ElementType;
+  description?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-700/40 overflow-hidden" style={{ backgroundColor: "rgba(15,23,42,0.6)" }}>
+      <div className="px-5 py-4 border-b border-slate-700/30">
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-slate-400" />
+          <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+        </div>
+        {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
+      </div>
+      <div className="p-5">{children}</div>
+    </div>
+  );
+}
+
+function FieldBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="space-y-1.5">
+      <Label className="text-xs font-medium text-slate-400">{label}</Label>
+      {children}
+    </div>
+  );
+}
+
+function SliderField({ label, description, value, onChange, min, max, unit }: {
+  label: string;
+  description: string;
+  value: number;
+  onChange: (v: number) => void;
+  min: number;
+  max: number;
+  unit: string;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <p className="text-sm font-medium text-slate-200">{label}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5">{description}</p>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0 ml-4">
+          <span className="text-lg font-bold text-blue-400 tabular-nums">{value}</span>
+          <span className="text-xs text-slate-500">{unit}</span>
+        </div>
+      </div>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-1.5 bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600"
+        style={{ accentColor: "#2563eb" }}
+      />
+      <div className="flex justify-between mt-1">
+        <span className="text-[9px] text-slate-500">{min}{unit}</span>
+        <span className="text-[9px] text-slate-500">{max}{unit}</span>
       </div>
     </div>
   );
 }
+
+function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
+  tier: number;
+  label: string;
+  description: string;
+  value: string;
+  onChange: (v: string) => void;
+  color: "emerald" | "blue" | "amber";
+}) {
+  const colorMap = {
+    emerald: { bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/20" },
+    blue: { bg: "bg-blue-600/10", text: "text-blue-400", border: "border-blue-600/20" },
+    amber: { bg: "bg-amber-600/10", text: "text-amber-400", border: "border-amber-600/20" },
+  };
+  const c = colorMap[color];
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className={cn("h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold", c.bg, c.text)}>
+        T{tier}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-medium text-slate-200">{label}</p>
+        <p className="text-[10px] text-slate-500">{description}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="text-xs text-slate-500">₩</span>
+        <Input
+          type="text"
+          value={Number(value).toLocaleString("ko-KR")}
+          onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+          className="bg-slate-800/50 border-slate-700 text-slate-200 h-8 text-sm w-36 text-right"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Export
+// ══════════════════════════════════════════════
 
 export default function SettingsPage() {
   return (
