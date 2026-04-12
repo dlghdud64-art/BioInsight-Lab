@@ -76,6 +76,9 @@ function resolveReadinessSurface(state: PoCreatedState, approvalValid: boolean, 
     blockers.push(`필수 필드 ${state.missingFieldCount}건 누락`);
   }
 
+  // NOTE: legacy path — record 미전달 시 최소 blocker 평가.
+  // record-driven path (resolveRecordDrivenSurface)가 governance engine과 완전 동기화되므로
+  // record prop 전달을 우선 권장.
   const isBlocked = state.poCreatedBlockedFlag || !approvalValid || !conversionValid;
   const isIncomplete = !isBlocked && state.missingFieldCount > 0;
 

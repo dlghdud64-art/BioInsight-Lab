@@ -169,6 +169,17 @@ export function DispatchPrepWorkbench({
           onStageClick={onStageClick}
         />
 
+        {/* Next required action — center top (CLAUDE.md: 항상 center top에서 읽히는지) */}
+        <div className={cn(
+          "flex items-start gap-2 px-3 md:px-4 py-2.5 rounded border text-xs",
+          surface.statusBadge === "blocked" ? "border-red-500/30 bg-red-500/5 text-red-300" :
+          surface.statusBadge === "reapproval_needed" ? "border-amber-500/30 bg-amber-500/5 text-amber-300" :
+          "border-emerald-500/30 bg-emerald-500/5 text-emerald-300"
+        )}>
+          <span className="shrink-0 mt-0.5 font-medium">{surface.statusBadge === "blocked" ? "✕" : surface.statusBadge === "reapproval_needed" ? "△" : "→"}</span>
+          <span className="font-medium">{surface.nextAction}</span>
+        </div>
+
         {/* Policy strip */}
         <div className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-2.5 rounded bg-slate-900 border border-slate-800">
           <PolicyStatusBadge status={surface.statusBadge} pulse={surface.statusBadge === "blocked" || surface.statusBadge === "reapproval_needed"} />
