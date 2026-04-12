@@ -108,7 +108,7 @@ function DockAction({
     <button
       onClick={handleClick}
       disabled={!canAct}
-      className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`min-h-[40px] flex-1 md:flex-none rounded px-3 py-1.5 text-xs font-medium transition-colors active:scale-95 ${
         canAct
           ? isLaunch
             ? "bg-emerald-600 text-white hover:bg-emerald-500"
@@ -139,12 +139,13 @@ export function RC0PilotLaunchWorkbench({
   onAction,
   className = "",
 }: RC0PilotLaunchWorkbenchProps) {
+  const [railOpen, setRailOpen] = React.useState(false);
   const { center, rail, dock } = surface;
 
   return (
-    <div className={`grid grid-cols-[1fr_320px] gap-4 ${className}`}>
+    <div className={`flex flex-col pb-20 md:pb-0 md:grid md:grid-cols-[1fr_320px] gap-4 h-full ${className}`}>
       {/* ── Center ── */}
-      <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
         <ReadinessHeader ready={center.ready} blockingReasons={center.blockingReasons} />
 
         {/* Scope summary */}
@@ -183,7 +184,15 @@ export function RC0PilotLaunchWorkbench({
       </div>
 
       {/* ── Rail ── */}
-      <div className="space-y-4">
+      <div className="mt-3 md:mt-0">
+        <button
+          className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          참고 정보 {railOpen ? "▲" : "▼"}
+        </button>
+        {railOpen && (
+          <div className="space-y-4">
         {/* Scenarios */}
         <SectionCard title="시나리오">
           <div className="space-y-1">
@@ -242,10 +251,12 @@ export function RC0PilotLaunchWorkbench({
             </div>
           </SectionCard>
         )}
+        </div>
+        )}
       </div>
 
       {/* ── Dock ── */}
-      <div className="col-span-2 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 md:static z-30 md:z-auto md:col-span-2 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3 flex-wrap md:flex-nowrap">
         {dock.actions.map((action) => (
           <DockAction
             key={action.actionKey}

@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   buildExecutionPlan,
+  setNLLocalOrderProvider,
   type ExecutionPlan,
   type ExecutionStep,
 } from "@/lib/ontology";
@@ -30,6 +31,7 @@ import {
   createGovernanceEvent,
   getGlobalGovernanceEventBus,
 } from "@/lib/ai/governance-event-bus";
+import { useOrderQueueStore } from "@/lib/store/order-queue-store";
 
 interface LedgerEntry {
   ledgerId: string;
@@ -42,6 +44,9 @@ interface LedgerEntry {
 }
 
 const LEDGER_LIMIT = 8;
+const PREVIEW_ROW_LIMIT = 5;
+const FALLBACK_MESSAGE =
+  "자연어를 이해하지 못했습니다. 예: '10만원 미만 승인 대기건 찾아줘' 처럼 다시 입력해 보세요.";
 
 function formatConfidence(conf: number): string {
   if (!conf) return "—";
@@ -68,7 +73,23 @@ export function OntologyCommandOverlay() {
   const [acknowledged, setAcknowledged] = useState<Set<number>>(new Set());
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [previewReviewed, setPreviewReviewed] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // ── Local canonical snapshot provider 주입 ─────────────────────
+  // Supabase가 비어 있는 환경에서도 파싱/미리보기가 동작하도록
+  // order-queue-store를 NL resolver에 fallback으로 연결한다.
+  useEffect(() => {
+    setNLLocalOrderProvider(() => {
+      const orders = useOrderQueueStore.getState().orders;
+      return orders.map((o) => ({
+        id: o.id,
+        status: o.status,
+        totalAmount: o.totalAmount,
+      }));
+    });
+    return () => setNLLocalOrderProvider(null);
+  }, []);
 
   // ── Global hotkey ⌘K / Ctrl+K ───────────────────────────────────
   useEffect(() => {
@@ -89,6 +110,7 @@ export function OntologyCommandOverlay() {
       setPlan(null);
       setAcknowledged(new Set());
       setNotice(null);
+      setPreviewReviewed(false);
       return;
     }
     const t = window.setTimeout(() => inputRef.current?.focus(), 40);
@@ -101,19 +123,27 @@ export function OntologyCommandOverlay() {
     if (!trimmed) {
       setPlan(null);
       setAcknowledged(new Set());
+      setPreviewReviewed(false);
       return;
     }
     setLoading(true);
     setNotice(null);
+    setPreviewReviewed(false);
     try {
       const next = await buildExecutionPlan(trimmed);
       setPlan(next);
       setAcknowledged(new Set());
-      if (next.steps.length === 0) {
-        setNotice("해석 가능한 action이 없습니다. 더 구체적으로 적어주세요.");
+      if (next.steps.length === 0 || next.totalTargetCount === 0) {
+        // 파싱 자체는 성공했지만 해석된 action/target이 없는 경우도
+        // 사용자에게는 동일하게 "이해하지 못했다"고 친절히 표시한다.
+        setNotice(FALLBACK_MESSAGE);
       }
     } catch (err) {
-      setNotice(`파싱 실패: ${(err as Error).message ?? "unknown"}`);
+      // raw JS error 메시지 노출 금지 — 콘솔에만 남기고 UI에는 fallback 표시
+      if (typeof console !== "undefined") {
+        console.warn("[ontology-command-overlay] buildExecutionPlan 실패:", err);
+      }
+      setNotice(FALLBACK_MESSAGE);
       setPlan(null);
     } finally {
       setLoading(false);
@@ -132,6 +162,31 @@ export function OntologyCommandOverlay() {
     [handleParse],
   );
 
+  // ── Preview: plan의 대상 ID를 로컬 canonical snapshot과 조인하여
+  //     사용자가 실제로 무엇이 바뀔지 미리 확인하게 한다 (dry-run gate).
+  const ordersById = useOrderQueueStore((s) => s.orders);
+  const previewRows = useMemo(() => {
+    if (!plan) return [];
+    const ids = new Set(plan.steps.flatMap((s) => s.targetIds));
+    if (ids.size === 0) return [];
+    return ordersById
+      .filter((o) => ids.has(o.id))
+      .slice(0, PREVIEW_ROW_LIMIT)
+      .map((o) => ({
+        id: o.id,
+        poNumber: o.poNumber,
+        productName: o.productName,
+        vendorName: o.vendorName,
+        totalAmount: o.totalAmount,
+        status: o.status,
+      }));
+  }, [plan, ordersById]);
+
+  const previewMoreCount = useMemo(() => {
+    if (!plan) return 0;
+    return Math.max(0, plan.totalTargetCount - previewRows.length);
+  }, [plan, previewRows.length]);
+
   // ── Precondition gate ───────────────────────────────────────────
   const blockers = useMemo<string[]>(() => {
     if (!plan) return ["자연어 명령을 먼저 해석하세요"];
@@ -139,13 +194,35 @@ export function OntologyCommandOverlay() {
     if (plan.steps.length === 0) out.push("실행 가능한 단계 없음");
     if (plan.totalTargetCount === 0) out.push("대상 객체 없음");
     if (plan.confidence < 0.7) out.push("파싱 신뢰도 낮음 (0.7 미만)");
+    if (!previewReviewed && plan.totalTargetCount > 0) {
+      out.push("추천 결과 검토 필요");
+    }
     // confirmationRequired 각 항목이 모두 ack 되어야 한다.
     const unackCount = plan.confirmationRequired.filter((_, idx) => !acknowledged.has(idx)).length;
     if (unackCount > 0) out.push(`확인 항목 ${unackCount}건 미체크`);
     return out;
-  }, [plan, acknowledged]);
+  }, [plan, acknowledged, previewReviewed]);
 
   const canExecute = blockers.length === 0;
+
+  const recommendationHeadline = useMemo(() => {
+    if (!plan || plan.steps.length === 0) return null;
+    const primary = plan.steps[0];
+    const actionLabelMap: Record<string, string> = {
+      APPROVE: "일괄 승인 준비",
+      REJECT: "일괄 반려 준비",
+      DISPATCH_NOW: "공급사 발송 준비",
+      SCHEDULE_DISPATCH: "발송 예약 준비",
+      RECEIVE_ORDER: "수령 처리 준비",
+      TRIGGER_REORDER: "재주문 준비",
+      SEND_VENDOR_EMAIL: "공급사 메일 발송 준비",
+      HOLD_FOR_REVIEW: "검토 보류 준비",
+      REQUEST_BUDGET_INCREASE: "예산 증액 요청 준비",
+      REQUEST_CORRECTION: "수정 요청 준비",
+    };
+    const verb = actionLabelMap[primary.actionType] ?? "작업 준비";
+    return `💡 추천 액션: 조건에 맞는 ${plan.totalTargetCount}건 ${verb}`;
+  }, [plan]);
 
   // ── Execute / dry-run — canonical truth는 직접 변경 X, governance event만 publish ─
   const appendLedger = useCallback((entry: LedgerEntry) => {
@@ -201,6 +278,7 @@ export function OntologyCommandOverlay() {
         setInput("");
         setPlan(null);
         setAcknowledged(new Set());
+        setPreviewReviewed(false);
       } else {
         setNotice("dry-run: 실제 변경 없이 plan만 기록했습니다.");
       }
@@ -214,12 +292,12 @@ export function OntologyCommandOverlay() {
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-slate-800">
           <div className="flex items-center justify-between gap-3">
             <DialogTitle className="text-sm font-semibold tracking-wide text-slate-100">
-              Ontology Command
+              Ontology 검색
             </DialogTitle>
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">⌘K · one-shot</span>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-500">⌘K · search</span>
           </div>
           <DialogDescription className="text-xs text-slate-400 mt-1">
-            자연어로 명령해 보세요. 파싱 결과가 확인 카드로 보이고, 확인 후에만 실행됩니다.
+            조건으로 대기 건을 검색하고 미리보기 합니다. AI의 선제 제안은 화면 상단에 자동으로 뜨니, 여기서는 직접 찾고 싶을 때만 사용하세요.
           </DialogDescription>
         </DialogHeader>
 
@@ -231,9 +309,9 @@ export function OntologyCommandOverlay() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={onInputKey}
-              placeholder="예: 승인 대기 중인 10만원 이하 주문 모두 승인해줘"
+              placeholder="예: 10만원 이하 승인 대기건 찾기"
               className="flex-1 bg-slate-900 border border-slate-800 rounded-md px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-slate-600"
-              aria-label="Ontology natural language command input"
+              aria-label="Ontology 조건 검색 입력"
             />
             <Button
               variant="outline"
@@ -249,6 +327,60 @@ export function OntologyCommandOverlay() {
             <p className="mt-2 text-[11px] text-amber-300/90">{notice}</p>
           )}
         </div>
+
+        {/* ── Recommendation headline + preview (decision dry-run) ───────────── */}
+        {plan && plan.steps.length > 0 && plan.totalTargetCount > 0 && (
+          <div className="px-5 pb-3">
+            <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2">
+              <div className="text-[12px] font-medium text-amber-200">
+                {recommendationHeadline}
+              </div>
+              {previewRows.length > 0 ? (
+                <ul className="mt-2 space-y-1">
+                  {previewRows.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex items-center justify-between gap-3 text-[11px] text-slate-200"
+                    >
+                      <span className="truncate">
+                        <span className="text-slate-400 font-mono mr-1">{row.poNumber}</span>
+                        {row.productName}
+                        <span className="text-slate-500"> · {row.vendorName}</span>
+                      </span>
+                      <span className="text-slate-300 font-mono shrink-0">
+                        {row.totalAmount.toLocaleString()}원
+                      </span>
+                    </li>
+                  ))}
+                  {previewMoreCount > 0 && (
+                    <li className="text-[10px] text-slate-400">
+                      … 외 {previewMoreCount}건
+                    </li>
+                  )}
+                </ul>
+              ) : (
+                <p className="mt-2 text-[11px] text-slate-400">
+                  대상 ID는 있지만 현재 로컬 주문 목록과 매칭되는 행이 없습니다.
+                </p>
+              )}
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  id="ontology-preview-ack"
+                  type="checkbox"
+                  checked={previewReviewed}
+                  onChange={(e) => setPreviewReviewed(e.target.checked)}
+                  className="accent-amber-400"
+                />
+                <label
+                  htmlFor="ontology-preview-ack"
+                  className="text-[11px] text-amber-100 cursor-pointer select-none"
+                >
+                  위 추천 결과를 확인했습니다
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Parsed Plan card (decision) ───────────────────── */}
         {plan && plan.steps.length > 0 && (

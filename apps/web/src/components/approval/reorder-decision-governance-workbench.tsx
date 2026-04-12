@@ -87,8 +87,10 @@ export function ReorderDecisionGovernanceWorkbench({
   onCancel, onReopenStockRelease,
   className,
 }: ReorderDecisionGovernanceWorkbenchProps) {
+  const [railOpen, setRailOpen] = React.useState(false);
+
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ── Center ── */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
@@ -131,8 +133,8 @@ export function ReorderDecisionGovernanceWorkbench({
 
         {/* Line-level reorder delta */}
         {surface.lineDecisions.length > 0 && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 overflow-hidden">
-            <table className="w-full text-xs">
+          <div className="rounded border border-slate-800 bg-slate-900/50 overflow-x-auto">
+            <table className="w-full text-xs min-w-[400px]">
               <thead>
                 <tr className="border-b border-slate-800 text-slate-500">
                   <th className="px-3 py-2 text-left font-medium">품목</th>
@@ -187,7 +189,8 @@ export function ReorderDecisionGovernanceWorkbench({
       </div>
 
       {/* ── Rail ── */}
-      <div className="w-64 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>참고 정보 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         {/* Decision summary */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-2 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">판단 요약</h4>
@@ -233,36 +236,36 @@ export function ReorderDecisionGovernanceWorkbench({
       </div>
 
       {/* ── Dock ── */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-500">{surface.nextAction}</span>
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex items-center justify-between gap-2 md:gap-0">
+          <span className="text-xs text-slate-500 hidden md:inline">{surface.nextAction}</span>
+          <div className="flex items-center gap-2 md:gap-2 shrink-0 md:ml-4 w-full md:w-auto flex-wrap md:flex-nowrap">
             {surface.canCancel && (
-              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
+              <button onClick={onCancel} className="flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors active:scale-95 min-h-[40px]">취소</button>
             )}
             {surface.canReopenStockRelease && (
-              <button onClick={onReopenStockRelease} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">Stock Release 재열기</button>
+              <button onClick={onReopenStockRelease} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">Stock Release 재열기</button>
             )}
             {surface.canSetWatch && (
-              <button onClick={onSetWatch} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">모니터링</button>
+              <button onClick={onSetWatch} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">모니터링</button>
             )}
             {surface.canMarkNoAction && (
-              <button onClick={onMarkNoAction} className="rounded border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300 transition-colors">조치 불필요</button>
+              <button onClick={onMarkNoAction} className="flex-1 md:flex-none rounded border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs text-emerald-300 transition-colors active:scale-95 min-h-[40px]">조치 불필요</button>
             )}
             {surface.canRecommendReorder && (
-              <button onClick={onRecommendReorder} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">재주문 권고</button>
+              <button onClick={onRecommendReorder} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors active:scale-95 min-h-[40px]">재주문 권고</button>
             )}
             {surface.canRequireReorder && (
-              <button onClick={onRequireReorder} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs text-red-300 transition-colors">재주문 확정</button>
+              <button onClick={onRequireReorder} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs text-red-300 transition-colors active:scale-95 min-h-[40px]">재주문 확정</button>
             )}
             {surface.canExpedite && (
-              <button onClick={onExpedite} className="rounded border border-orange-500/20 bg-orange-500/10 hover:bg-orange-500/20 px-3 py-1.5 text-xs text-orange-300 transition-colors">긴급 발주</button>
+              <button onClick={onExpedite} className="flex-1 md:flex-none rounded border border-orange-500/20 bg-orange-500/10 hover:bg-orange-500/20 px-3 py-1.5 text-xs text-orange-300 transition-colors active:scale-95 min-h-[40px]">긴급 발주</button>
             )}
             {surface.canEvaluate && (
-              <button onClick={onStartEvaluation} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">재주문 평가 시작</button>
+              <button onClick={onStartEvaluation} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">재주문 평가 시작</button>
             )}
             {surface.canProcurementReentry && (
-              <button onClick={onProcurementReentry} className="rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">구매 재진입</button>
+              <button onClick={onProcurementReentry} className="flex-1 md:flex-none rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">구매 재진입</button>
             )}
           </div>
         </div>

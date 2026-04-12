@@ -165,6 +165,84 @@ export function executeHandoffToRequest(
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
+// 1.x  Adapter: QuoteComparisonHandoff → RequestCandidateHandoff
+// ──────────────────────────────────────────────────────────────────────────────
+// 이유:
+// - smart-sourcing MultiVendor flow는 product table 없이 freeform 공급사 비교 행으로
+//   구성되므로 RequestAssemblyWorkWindow가 기대하는 RequestCandidateHandoff(item-id 중심)
+//   shape으로 직접 매핑되지 않음.
+// - canonical truth(QuoteComparisonHandoff)를 mutate 하지 않고 derived 합성만 수행한다.
+// - work window는 productId 기반 lookup을 하므로 synthetic product id를 동일 키로 발급한다.
+// ══════════════════════════════════════════════════════════════════════════════
+export interface MultiVendorRequestSeed {
+  requestHandoff: import("./compare-review-engine").RequestCandidateHandoff;
+  syntheticProducts: Array<{
+    id: string;
+    name: string;
+    brand: string;
+    catalogNumber: string;
+    specification: string;
+    packSize: string;
+    vendors: Array<{
+      priceInKRW: number;
+      leadTimeDays: number;
+      vendor: { id: string; name: string };
+    }>;
+  }>;
+  syntheticQuoteItems: Array<{ productId: string; quantity: number | null }>;
+}
+
+export function adaptComparisonHandoffToRequestSeed(
+  handoff: QuoteComparisonHandoff,
+): MultiVendorRequestSeed {
+  // 단일 product 합성 — multi-vendor 비교는 product 1건이 본질
+  const syntheticProductId = `mv_${handoff.id}`;
+  const selected = handoff.vendorSnapshots.find((v) => v.isRecommended) ?? handoff.vendorSnapshots[0];
+
+  const syntheticProducts = [
+    {
+      id: syntheticProductId,
+      name: handoff.productName,
+      brand: "",
+      catalogNumber: "",
+      specification: "",
+      packSize: "",
+      vendors: handoff.vendorSnapshots
+        .filter((v) => v.price !== null)
+        .map((v, idx) => ({
+          priceInKRW: v.price ?? 0,
+          leadTimeDays: parseLeadDays(v.leadTime),
+          // 선택된 공급사를 [0]번에 두어 work window candidate resolver 와 정합
+          vendor: { id: `mv_${handoff.id}_${idx}`, name: v.vendor },
+        }))
+        .sort((a, b) => (a.vendor.name === selected?.vendor ? -1 : b.vendor.name === selected?.vendor ? 1 : 0)),
+    },
+  ];
+
+  const requestHandoff = {
+    compareDecisionSnapshotId: handoff.id,
+    shortlistedItemIds: [syntheticProductId],
+    excludedItemIds: [],
+    requestCandidateIds: [syntheticProductId],
+    compareRationaleSummary: handoff.selectionRationale ?? handoff.recommendation,
+    unresolvedInfoItems: [],
+    nextRequestActionSeed: "다중 견적 비교 결과를 견적 요청으로 조립",
+  } satisfies import("./compare-review-engine").RequestCandidateHandoff;
+
+  const syntheticQuoteItems = [{ productId: syntheticProductId, quantity: handoff.quantity }];
+
+  return { requestHandoff, syntheticProducts, syntheticQuoteItems };
+}
+
+function parseLeadDays(s: string): number {
+  const n = parseInt(String(s).replace(/[^0-9]/g, ""), 10);
+  if (Number.isNaN(n)) return 0;
+  if (s.includes("주")) return n * 7;
+  if (s.includes("개월") || s.includes("월")) return n * 30;
+  return n;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
 // 2. BOM Parse Handoff (BOM 자동 발주 → 발주 대기열)
 // ══════════════════════════════════════════════════════════════════════════════
 

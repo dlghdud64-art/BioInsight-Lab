@@ -196,6 +196,13 @@ export interface PurchaseOrderContract {
   ownerId: string;
   /** 생성 일시 (ISO 8601) */
   createdAt: string;
+  /**
+   * 마지막 수정 일시 (ISO 8601, optional).
+   * - approval 이후 PO 본문/라인/금액 등 canonical 값이 변경될 때마다 갱신.
+   * - dispatch readiness 재계산의 1차 신호 (`dataChangedAfterApproval`).
+   * - undefined 또는 createdAt 과 동일하면 "무변경"으로 해석.
+   */
+  updatedAt?: string;
   /** 생성자 ID */
   createdBy: string;
   /** 발행 일시 (ISO 8601) */

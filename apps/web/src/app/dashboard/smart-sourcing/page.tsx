@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useCallback, useMemo } from "react";
 import {
   BarChart3,
@@ -35,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { CenterWorkWindow, type WorkWindowPhase } from "@/components/work-window/center-work-window";
+import { MultiVendorRequestWorkbench } from "@/components/sourcing/multi-vendor-request-workbench";
 import {
   buildQuoteComparisonHandoff,
   selectVendorInHandoff,
@@ -54,6 +56,8 @@ import {
 } from "@/lib/ai/smart-sourcing-context-hash";
 import { useSmartSourcingStore } from "@/lib/store/smart-sourcing-store";
 import type { VendorQuoteInput, ComparisonResult, BomParseResult, BomItem } from "@/lib/store/smart-sourcing-store";
+import { useFastTrackStore } from "@/lib/store/fast-track-store";
+import type { FastTrackEvaluationInput } from "@/lib/ontology/fast-track/fast-track-engine";
 import {
   QuoteChainProgressStrip,
   buildSmartSourcingStripProps,
@@ -101,6 +105,8 @@ function MultiVendorTab() {
   // D. Work Window
   const [workWindowOpen, setWorkWindowOpen] = useState(false);
   const [workWindowPhase, setWorkWindowPhase] = useState<WorkWindowPhase>("ready");
+  // D-2. Request workbench (production wiring) — handed_off_to_request 상태에서 마운트
+  const [requestWorkbenchOpen, setRequestWorkbenchOpen] = useState(false);
 
   const currentContextHash = useMemo(
     () => buildMultiVendorContextHash({ productName, quantity, vendors }),
@@ -579,7 +585,8 @@ function MultiVendorTab() {
                               setHandoff(executed);
                               // I. Invalidation 이벤트 발행
                               emitComparisonHandedOff(executed.id, executed.selectedVendorName ?? "");
-                              toast.success(`${executed.selectedVendorName} 공급사로 견적 요청이 전달되었습니다.`);
+                              // D-2. terminal toast 대신 request workbench 진입
+                              setRequestWorkbenchOpen(true);
                             } catch (err) {
                               toast.error(String(err));
                             }
@@ -637,6 +644,15 @@ function MultiVendorTab() {
         </div>
       )}
       </CenterWorkWindow>
+
+      {/* D-2. Production wiring: 견적 요청 조립 → 제출 work window */}
+      {handoff && handoff.status === "handed_off_to_request" && (
+        <MultiVendorRequestWorkbench
+          open={requestWorkbenchOpen}
+          onClose={() => setRequestWorkbenchOpen(false)}
+          comparisonHandoff={handoff}
+        />
+      )}
     </div>
   );
 }
@@ -644,6 +660,50 @@ function MultiVendorTab() {
 // ═══════════════════════════════════════════════════════════════
 // BOM Auto Sourcing Tab
 // ═══════════════════════════════════════════════════════════════
+
+/**
+ * BOM item → Fast-Track evaluation input.
+ *
+ * Queue 진입 직후(Smart Sourcing 등록 성공 시점)에는 공급사/단가가 확정되지
+ * 않은 상태이므로, 엔진은 대부분 `not_eligible` 을 반환한다. 그래도 이 시점에
+ * evaluateItem 을 한 번 호출해 두면:
+ *   1) governance bus 에 최초 "not_eligible" transition 이벤트가 찍혀
+ *      drift 재평가의 baseline 이 확보되고,
+ *   2) 이후 견적/공급사 확정 시 재평가에서 previous state 비교가 가능하다.
+ *
+ * procurementCaseId 는 BOM handoff id + line index 로 안정적으로 유도한다.
+ * (handoff id 가 없으면 BOM 텍스트 해시 + idx 로 fallback 가능하지만,
+ *  현재는 handoff id 가 있을 때만 호출하므로 caller 에서 id 보장.)
+ */
+function bomItemToFastTrackInput(
+  caseIdPrefix: string,
+  item: BomItem,
+  idx: number,
+): FastTrackEvaluationInput {
+  const procurementCaseId = `${caseIdPrefix}::${idx}`;
+  return {
+    procurementCaseId,
+    vendorId: "",
+    vendorName: "미정",
+    totalAmount: 0,
+    items: [
+      {
+        productId: item.catalogNumber ?? `bom-${idx}`,
+        productName: item.name,
+        category: "reagent" as const,
+        safetyProfile: {
+          hazardCodes: [],
+          pictograms: [],
+          ppe: [],
+          storageClass: null,
+        },
+        regulatedFlag: false,
+        manualReviewRequired: false,
+      },
+    ],
+    histories: [],
+  };
+}
 
 function BomSourcingTab() {
   // G. Zustand store — 핵심 상태를 store에서 관리
@@ -654,6 +714,11 @@ function BomSourcingTab() {
     setBomHandoff, setBomResultHash, setSelectedBomItems,
     toggleBomItem, toggleAllBomItems, setIsRegistering,
   } = useSmartSourcingStore();
+
+  // Fast-Track 파이프라인 진입점 — BOM 등록 직후 평가를 트리거한다.
+  // canonical truth mutation 은 발생하지 않으며, publisher 가 governance bus
+  // 에 not_eligible/eligible transition 이벤트만 발행한다.
+  const bulkEvaluateFastTrack = useFastTrackStore((s) => s.bulkEvaluate);
 
   // Set 인터페이스 호환 (기존 코드와 일관성)
   const selectedItems = useMemo(() => new Set(selectedBomItems), [selectedBomItems]);
@@ -766,7 +831,32 @@ function BomSourcingTab() {
           // I. Invalidation 이벤트 발행
           emitBomRegisteredToQueue(registered.id, registered.registeredCount ?? 0);
         }
-        toast.success(json.message || `${items.length}개 품목이 발주 대기열에 등록되었습니다.`);
+
+        // ── Fast-Track 파이프라인 진입 훅 ───────────────────────────
+        // Queue 등록이 성공한 직후, 방금 등록된 라인들에 대해 Fast-Track
+        // baseline 평가를 발행한다. caseId 는 handoff id (없으면 BOM hash)
+        // + 라인 인덱스로 결정론적으로 유도한다. Caller 는 결과를 사용하지
+        // 않고 publisher 가 bus 에 transition 이벤트를 올리도록 훅만 연결한다.
+        try {
+          const caseIdPrefix =
+            bomHandoff?.id ?? `bom::${currentBomHash ?? "anon"}`;
+          const selectedIdx = Array.from(selectedItems);
+          const ftInputs: FastTrackEvaluationInput[] = selectedIdx
+            .map((idx: number) => {
+              const item = result.items[idx];
+              if (!item) return null;
+              return bomItemToFastTrackInput(caseIdPrefix, item, idx);
+            })
+            .filter((i): i is FastTrackEvaluationInput => i !== null);
+          if (ftInputs.length > 0) {
+            bulkEvaluateFastTrack(ftInputs);
+          }
+        } catch (ftErr) {
+          // Fast-Track 평가 실패는 등록 흐름을 막지 않는다.
+          console.warn("[smart-sourcing] Fast-Track 초기 평가 실패:", ftErr);
+        }
+
+        // 종료 toast 대신 인라인 hub (BomRegisteredReentryHub) 가 다음 작업으로 안내한다.
       } else {
         throw new Error(json.error || "등록 실패");
       }
@@ -776,7 +866,7 @@ function BomSourcingTab() {
     } finally {
       setIsRegistering(false);
     }
-  }, [result, selectedItems, bomHandoff, setIsRegistering, setBomHandoff]);
+  }, [result, selectedItems, bomHandoff, currentBomHash, setIsRegistering, setBomHandoff, bulkEvaluateFastTrack]);
 
   const EXAMPLE_BOM = `Gibco FBS 500ml 2병
 DMEM High Glucose 500ml 3병
@@ -931,19 +1021,17 @@ PBS pH 7.4 1L 5병`;
             })}
           </div>
 
-          {/* 일괄 등록 버튼 */}
-          <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-slate-500">
-              {bomHandoff?.status === "registered_to_queue"
-                ? `${bomHandoff.registeredCount}개 품목 등록 완료`
-                : `${selectedItems.size}개 품목 선택됨`}
-            </p>
-            {bomHandoff?.status === "registered_to_queue" ? (
-              <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">
-                <CheckCircle2 className="h-4 w-4" />
-                <span>발주 대기열에 등록되었습니다</span>
-              </div>
-            ) : (
+          {/* 일괄 등록 / 다음 작업 진입 허브 */}
+          {bomHandoff?.status === "registered_to_queue" ? (
+            <BomRegisteredReentryHub
+              registeredCount={bomHandoff.registeredCount ?? 0}
+              handoffId={bomHandoff.id}
+            />
+          ) : (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-slate-500">
+                {selectedItems.size}개 품목 선택됨
+              </p>
               <Button
                 size="sm"
                 onClick={handleBulkRegister}
@@ -962,10 +1050,55 @@ PBS pH 7.4 1L 5병`;
                   </>
                 )}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * D-2-bom: BOM 등록 직후 노출되는 "다음 작업 진입 허브".
+ *
+ * - 종료 success 카드가 아니라 next required action 으로 안내한다.
+ * - center=decision (queue 진입), rail=context (등록된 라인 수 / Fast-Track 결과 발행 사실)
+ *   세 영역을 이 작은 hub 안에서 축약 형태로 유지한다.
+ * - canonical truth 는 OrderQueue 가 보유하므로 이 hub 는 read-only 안내만 한다.
+ */
+function BomRegisteredReentryHub({
+  registeredCount,
+  handoffId: _handoffId,
+}: {
+  registeredCount: number;
+  handoffId: string;
+}) {
+  return (
+    <div className="rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 mt-2">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 text-emerald-800 text-sm font-semibold">
+            <CheckCircle2 className="h-4 w-4" />
+            발주 대기열 등록 완료 · {registeredCount}건
+          </div>
+          <p className="mt-1 text-xs text-slate-600">
+            다음 작업: 등록된 라인의 가격/공급사/리드타임을 발주 대기열에서 검토해 진행하세요.
+          </p>
+          <p className="mt-1 text-[11px] text-slate-500">
+            Fast-Track 평가는 백그라운드로 발행되어 대기열에서 우선순위/대체 후보로 반영됩니다.
+          </p>
+        </div>
+        <Button
+          asChild
+          size="sm"
+          className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs flex-shrink-0"
+        >
+          <Link href="/dashboard/orders">
+            발주 대기열 열기
+            <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }

@@ -31,7 +31,9 @@ export type DispatchInvalidationEventType =
   | "policy_hold_changed"
   | "attachment_changed"
   | "send_scheduled"
-  | "schedule_cancelled";
+  | "schedule_cancelled"
+  // B2-h: PurchaseOrderContract.updatedAt > approval.finalDecisionAt 감지 시 발행
+  | "po_data_changed_after_approval";
 
 export interface DispatchInvalidationEvent {
   type: DispatchInvalidationEventType;
@@ -51,7 +53,8 @@ export type DispatchInvalidationPayload =
   | { kind: "policy_hold_changed"; holdActive: boolean; holdReason: string }
   | { kind: "attachment_changed"; action: "added" | "removed"; attachmentName: string }
   | { kind: "send_scheduled"; scheduledAt: string }
-  | { kind: "schedule_cancelled"; cancelReason: string };
+  | { kind: "schedule_cancelled"; cancelReason: string }
+  | { kind: "po_data_changed_after_approval"; previousUpdatedAt: string | null; newUpdatedAt: string; changedFields: string[] };
 
 // ══════════════════════════════════════════════
 // Invalidation Target — 어떤 surface/state를 무효화할지
@@ -137,6 +140,12 @@ const INVALIDATION_MAP: Record<DispatchInvalidationEventType, {
     blockerRecalc: [],
     readinessImpact: "schedule_change",
     lockIrreversible: false,
+  },
+  po_data_changed_after_approval: {
+    targets: ["dispatch_readiness", "snapshot_validity", "blocker_list", "confirmation_checklist", "dock_actions"],
+    blockerRecalc: ["po_data_changed_after_approval", "snapshot_invalidated"],
+    readinessImpact: "may_block",
+    lockIrreversible: true,
   },
 };
 

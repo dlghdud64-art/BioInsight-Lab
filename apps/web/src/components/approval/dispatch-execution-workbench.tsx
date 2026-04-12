@@ -95,8 +95,10 @@ export function DispatchExecutionWorkbench({
   onSendNow, onScheduleSend, onRetry, onCancel, onReopenDispatchPrep,
   className,
 }: DispatchExecutionWorkbenchProps) {
+  const [railOpen, setRailOpen] = React.useState(false);
+
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
@@ -121,14 +123,14 @@ export function DispatchExecutionWorkbench({
 
         {/* Payload snapshot summary (frozen at send time) */}
         {payloadSnapshot && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">발송 Payload (고정본)</h3>
               <span className="text-[10px] text-slate-600">
                 {new Date(payloadSnapshot.frozenAt).toLocaleString("ko-KR")} 고정
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3 text-sm">
               <div>
                 <span className="text-slate-500 text-xs">PO 번호</span>
                 <p className="text-slate-700 font-mono">{payloadSnapshot.poNumber}</p>
@@ -142,7 +144,7 @@ export function DispatchExecutionWorkbench({
                 <p className="text-sm font-semibold tabular-nums text-slate-900">{payloadSnapshot.totalAmount.toLocaleString()}원</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-xs text-slate-400">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-xs text-slate-400">
               <div>
                 <span className="text-slate-500">결제 조건</span>
                 <p>{payloadSnapshot.paymentTerms}</p>
@@ -160,9 +162,9 @@ export function DispatchExecutionWorkbench({
 
         {/* PO summary (when no snapshot yet) */}
         {!payloadSnapshot && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4">
             <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">발송 대상</h3>
-            <div className="grid grid-cols-3 gap-3 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3 text-sm">
               <div>
                 <span className="text-slate-500 text-xs">PO 번호</span>
                 <p className="text-slate-700 font-mono">{poNumber}</p>
@@ -195,7 +197,15 @@ export function DispatchExecutionWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-64 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 px-3 text-xs text-slate-500 md:hidden rounded border border-slate-800 bg-slate-900/50"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          연결 정보 {railOpen ? "▲" : "▼"}
+        </button>
+        <div className={cn("overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+          <div className="space-y-3 md:space-y-3 mt-3 md:mt-0">
         {/* Snapshot linkage */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs space-y-1.5">
           <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">연결 정보</h5>
@@ -233,52 +243,54 @@ export function DispatchExecutionWorkbench({
           </div>
         )}
 
-        {/* Schedule info */}
-        {state.scheduledSendAt && state.status === "scheduled" && (
-          <div className="rounded border border-blue-500/20 bg-blue-500/5 p-3 text-xs">
-            <h5 className="text-[10px] font-medium text-blue-400 mb-1">예약 발송</h5>
-            <p className="text-blue-300">
-              {new Date(state.scheduledSendAt).toLocaleString("ko-KR")}
-            </p>
+            {/* Schedule info */}
+            {state.scheduledSendAt && state.status === "scheduled" && (
+              <div className="rounded border border-blue-500/20 bg-blue-500/5 p-3 text-xs">
+                <h5 className="text-[10px] font-medium text-blue-400 mb-1">예약 발송</h5>
+                <p className="text-blue-300">
+                  {new Date(state.scheduledSendAt).toLocaleString("ko-KR")}
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-2 md:py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
           <NextActionHint
             message={surface.nextAction}
             variant={surface.status === "send_failed" ? "blocked" : surface.status === "sent" ? "default" : "default"}
           />
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto md:shrink-0 md:ml-4">
             {/* Cancel — 비종료 상태에서만 */}
             {onCancel && surface.canCancel && (
-              <button onClick={() => onCancel("")} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">
+              <button onClick={() => onCancel("")} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">
                 발송 취소
               </button>
             )}
             {/* Reopen dispatch prep — cancelled 상태에서 */}
             {onReopenDispatchPrep && state.status === "cancelled" && (
-              <button onClick={onReopenDispatchPrep} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenDispatchPrep} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
                 Dispatch Prep 재열기
               </button>
             )}
             {/* Retry — send_failed에서만 */}
             {onRetry && surface.canRetry && (
-              <button onClick={onRetry} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">
+              <button onClick={onRetry} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">
                 재시도 ({state.maxRetries - state.retryCount}회 남음)
               </button>
             )}
             {/* Schedule — draft에서만 */}
             {onScheduleSend && surface.canSchedule && (
-              <button onClick={() => onScheduleSend("")} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">
+              <button onClick={() => onScheduleSend("")} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">
                 예약 발송
               </button>
             )}
             {/* Send now — draft 또는 scheduled에서 */}
             {onSendNow && surface.canSendNow && (
-              <button onClick={onSendNow} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">
+              <button onClick={onSendNow} className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors">
                 즉시 발송
               </button>
             )}

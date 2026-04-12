@@ -562,29 +562,100 @@ export function parseNaturalLanguageAction(input: string): NLActionParseResult {
 }
 
 /**
+ * 로컬 store/overlay가 주입할 수 있는 fallback 대상 공급자.
+ *
+ * Supabase가 비어 있거나(개발/프리뷰 환경) 쿼리가 실패한 경우,
+ * 이 공급자가 설정되어 있으면 로컬 canonical state(order-queue-store 등)에서
+ * 현재 가시적인 주문을 기반으로 target을 계산한다.
+ *
+ * 제공자는 이 모듈에 직접 store를 import하지 않고(순환 의존 방지),
+ * overlay/page에서 주입한다.
+ */
+export interface NLLocalOrderSnapshot {
+  id: string;
+  status: string;
+  totalAmount: number;
+}
+type LocalOrderProvider = () => NLLocalOrderSnapshot[];
+let localOrderProvider: LocalOrderProvider | null = null;
+export function setNLLocalOrderProvider(provider: LocalOrderProvider | null): void {
+  localOrderProvider = provider;
+}
+
+function matchLocalSnapshot(
+  snap: NLLocalOrderSnapshot,
+  filter: NLTargetFilter,
+): boolean {
+  if (filter.statusFilter && snap.status !== filter.statusFilter) return false;
+  if (filter.amountCondition) {
+    const { operator, value } = filter.amountCondition;
+    switch (operator) {
+      case "lt":  if (!(snap.totalAmount <  value)) return false; break;
+      case "lte": if (!(snap.totalAmount <= value)) return false; break;
+      case "gt":  if (!(snap.totalAmount >  value)) return false; break;
+      case "gte": if (!(snap.totalAmount >= value)) return false; break;
+      case "eq":  if (!(snap.totalAmount === value)) return false; break;
+    }
+  }
+  return true;
+}
+
+/**
  * 파싱된 NL Action 결과에 맞는 주문 목록을 필터링하여 반환.
+ *
+ * Supabase가 정상 응답하면 우선 사용하고, 빈 결과/에러/미설정 환경에서는
+ * `setNLLocalOrderProvider`로 주입된 로컬 canonical snapshot을 대체로 사용한다.
+ * 이 함수는 절대 throw 하지 않는다 — UI는 에러 대신 dry-run preview로 이어져야 한다.
  */
 export async function resolveNLActionTargets(
   parseResult: NLActionParseResult,
 ): Promise<{ targetOrderIds: string[]; matchCount: number }> {
   if (!parseResult.parsed) return { targetOrderIds: [], matchCount: 0 };
 
-  let query = supabase.from("order_queue").select("id, status, total_amount");
+  // 1) Supabase 시도 (실패해도 throw 하지 않음)
+  try {
+    let query: any = supabase.from("order_queue").select("id, status, total_amount");
 
-  if (parseResult.targetFilter.statusFilter) {
-    query = query.eq("status", parseResult.targetFilter.statusFilter);
+    if (parseResult.targetFilter.statusFilter && typeof query?.eq === "function") {
+      query = query.eq("status", parseResult.targetFilter.statusFilter);
+    }
+
+    if (parseResult.targetFilter.amountCondition && typeof query?.filter === "function") {
+      const { operator, value } = parseResult.targetFilter.amountCondition;
+      const opMap: Record<string, string> = { lt: "lt", gt: "gt", lte: "lte", gte: "gte", eq: "eq" };
+      query = query.filter("total_amount", opMap[operator] ?? "lte", value);
+    }
+
+    const { data } = await query;
+    const rows = Array.isArray(data) ? data : [];
+    if (rows.length > 0) {
+      const ids = rows.map((r: any) => r.id).filter(Boolean);
+      return { targetOrderIds: ids, matchCount: ids.length };
+    }
+  } catch (err) {
+    // swallow — 로컬 fallback으로 이어짐
+    if (typeof console !== "undefined") {
+      console.warn("[resolveNLActionTargets] supabase query 실패, 로컬 fallback 사용:", err);
+    }
   }
 
-  if (parseResult.targetFilter.amountCondition) {
-    const { operator, value } = parseResult.targetFilter.amountCondition;
-    const opMap: Record<string, string> = { lt: "lt", gt: "gt", lte: "lte", gte: "gte", eq: "eq" };
-    query = query.filter("total_amount", opMap[operator] ?? "lte", value);
+  // 2) 로컬 canonical snapshot fallback
+  if (localOrderProvider) {
+    try {
+      const snaps = localOrderProvider();
+      const matched = snaps.filter((s) => matchLocalSnapshot(s, parseResult.targetFilter));
+      return {
+        targetOrderIds: matched.map((m) => m.id),
+        matchCount: matched.length,
+      };
+    } catch (err) {
+      if (typeof console !== "undefined") {
+        console.warn("[resolveNLActionTargets] local provider 실패:", err);
+      }
+    }
   }
 
-  const { data } = await query;
-  const ids = (data ?? []).map((r: any) => r.id);
-
-  return { targetOrderIds: ids, matchCount: ids.length };
+  return { targetOrderIds: [], matchCount: 0 };
 }
 
 // ══════════════════════════════════════════════════════════════════════════════

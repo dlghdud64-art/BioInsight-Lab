@@ -122,9 +122,10 @@ export function SupplierConfirmationWorkbench({
   className,
 }: SupplierConfirmationWorkbenchProps) {
   const [notes, setNotes] = React.useState("");
+  const [railOpen, setRailOpen] = React.useState(false);
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER — delta-first ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
@@ -145,7 +146,7 @@ export function SupplierConfirmationWorkbench({
 
         {/* Delta summary — 가장 중요한 영역 */}
         {surface.delta && surface.delta.totalDeltaCount > 0 && (
-          <div className={cn("rounded border p-4 space-y-3",
+          <div className={cn("rounded border p-3 md:p-4 space-y-3",
             surface.delta.hasCriticalDelta ? "border-red-500/20 bg-red-500/5" : "border-amber-500/20 bg-amber-500/5"
           )}>
             <div className="flex items-center justify-between">
@@ -214,7 +215,7 @@ export function SupplierConfirmationWorkbench({
 
         {/* Operator notes input */}
         {(surface.canAccept || surface.canRequestCorrection) && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">검토 의견</label>
             <textarea
               value={notes}
@@ -228,7 +229,15 @@ export function SupplierConfirmationWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-64 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 px-3 text-xs text-slate-500 md:hidden rounded border border-slate-800 bg-slate-900/50"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          발송 기준 {railOpen ? "▲" : "▼"}
+        </button>
+        <div className={cn("overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+          <div className="space-y-3 mt-3 md:mt-0">
         {/* Sent payload snapshot reference */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-xs space-y-1.5">
           <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">발송 기준</h5>
@@ -288,46 +297,48 @@ export function SupplierConfirmationWorkbench({
           </div>
         )}
 
-        {/* Operator review status */}
-        <div className={cn("rounded border p-3 text-xs",
-          state.operatorReviewStatus === "completed" ? "border-emerald-500/20 bg-emerald-500/5" : "border-slate-800 bg-slate-900/50"
-        )}>
-          <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">검토 상태</h5>
-          <p className={state.operatorReviewStatus === "completed" ? "text-emerald-400" : "text-slate-400"}>
-            {state.operatorReviewStatus === "not_started" ? "검토 미시작" :
-             state.operatorReviewStatus === "in_progress" ? "검토 진행 중" : "검토 완료"}
-          </p>
-          {state.operatorDecision !== "pending" && (
-            <p className="text-slate-500 mt-0.5">결정: {state.operatorDecision}</p>
-          )}
+            {/* Operator review status */}
+            <div className={cn("rounded border p-3 text-xs",
+              state.operatorReviewStatus === "completed" ? "border-emerald-500/20 bg-emerald-500/5" : "border-slate-800 bg-slate-900/50"
+            )}>
+              <h5 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-1">검토 상태</h5>
+              <p className={state.operatorReviewStatus === "completed" ? "text-emerald-400" : "text-slate-400"}>
+                {state.operatorReviewStatus === "not_started" ? "검토 미시작" :
+                 state.operatorReviewStatus === "in_progress" ? "검토 진행 중" : "검토 완료"}
+              </p>
+              {state.operatorDecision !== "pending" && (
+                <p className="text-slate-500 mt-0.5">결정: {state.operatorDecision}</p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-2 md:py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
           <NextActionHint
             message={surface.nextAction}
             variant={surface.statusColor === "red" ? "blocked" : "default"}
           />
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto md:shrink-0 md:ml-4">
             {onCancel && surface.canCancel && (
-              <button onClick={() => onCancel(notes)} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">
+              <button onClick={() => onCancel(notes)} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">
                 취소
               </button>
             )}
             {onReopenConversion && surface.canReopenConversion && (
-              <button onClick={onReopenConversion} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenConversion} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
                 PO 전환 재열기
               </button>
             )}
             {onReopenApproval && surface.canReopenApproval && (
-              <button onClick={onReopenApproval} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
+              <button onClick={onReopenApproval} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">
                 승인 재열기
               </button>
             )}
             {onRequestCorrection && surface.canRequestCorrection && (
-              <button onClick={() => onRequestCorrection(notes)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
+              <button onClick={() => onRequestCorrection(notes)} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 보정 요청
               </button>
             )}
@@ -335,7 +346,7 @@ export function SupplierConfirmationWorkbench({
               <button
                 onClick={() => onAccept(state.totalChangeCount > 0, notes)}
                 disabled={!notes.trim() && state.totalChangeCount > 0}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
+                className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
               >
                 {state.totalChangeCount > 0 ? "변경 수락" : "확인 수락"}
               </button>

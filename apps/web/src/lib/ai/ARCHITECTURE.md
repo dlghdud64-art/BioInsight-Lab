@@ -424,6 +424,40 @@ go/conditional_go 승인 시 반드시 고정하는 묶음:
 
 ---
 
+## 12-A. 전역 오버레이 패턴 (Global Overlay Directives)
+
+> Gemini 3.1 Pro Preview 지시문을 LabAxis governance grammar 에 맞게 정제하여 확정.
+
+1. **문맥 유지 (Context Preservation)**
+   - 사용자가 대시보드에서 복잡한 태스크(발주 실행, 상세 내역 검토 등)를 수행할 때, 페이지 이동을 최소화한다.
+   - 우측에서 슬라이드되는 **Global Peek Drawer (Sheet)** 패턴을 사용하되,
+     본격 검토는 반드시 full workbench (center/rail/dock) 로 hand-off 한다.
+   - peek drawer 에서 terminal action (승인/발송/삭제 등) 을 직접 수행하지 않는다.
+
+2. **전역 상태 관리 (Global State)**
+   - overlay 열림/닫힘 상태는 Zustand 기반 전역 store (`useOrderPeekOverlayStore`) 에서 관리한다.
+   - 개별 컴포넌트 `useState` 로 overlay 를 제어하지 않는다.
+   - 앱 내 어느 곳(Action Ledger, Notification, Order Card 등) 에서든
+     `openById(caseId)` 또는 `open(payload)` 1회 호출로 동일 drawer 를 호출할 수 있어야 한다.
+
+3. **최상위 마운트 (Top-level Mounting)**
+   - overlay 컴포넌트는 `DashboardShell` (최상위 레이아웃) 에 단일 mount 한다.
+   - 하위 컴포넌트에 mount 할 경우 z-index 충돌, overflow:hidden 잘림,
+     modal-in-modal focus trap 문제가 발생한다 — 원천 차단.
+
+4. **ID 기반 데이터 참조 (ID-based Data Fetching)**
+   - overlay store 에 무거운 객체 데이터를 통째로 넣지 않는다. `activeCaseId` (식별자) 만 저장한다.
+   - drawer 컴포넌트 내부에서 해당 ID 를 이용해 domain store (`useOrderQueueStore` 등) 에서
+     최신 데이터를 find 하여 렌더링한다. (Single Source of Truth 유지)
+   - payload 기반 호출도 지원하되, payload 는 "호출자가 zip 한 hint" 이며 canonical truth 가 아님을 명시한다.
+
+5. **workbench 와의 경계 (Overlay ≠ Workbench)**
+   - overlay (peek drawer) 는 1-shot read-only summary 이다. center/rail/dock grammar 를 흉내내지 않는다.
+   - overlay 에서 mutation / irreversible action / approval 결선 을 수행하지 않는다.
+   - "워크벤치 열기" CTA 가 유일한 결선 경로이다.
+
+---
+
 ## 13. File Map (핵심 파일)
 
 ### Governance Infrastructure

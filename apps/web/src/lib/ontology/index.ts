@@ -149,6 +149,7 @@ export {
   analyzeOrderOntology,
   parseNaturalLanguageAction,
   resolveNLActionTargets,
+  setNLLocalOrderProvider,
   buildGeminiToolDescription,
   buildExecutionPlan,
 } from "./ai/ontology-ai-service";
@@ -160,6 +161,7 @@ export type {
   SuggestedActionType,
   NLActionParseResult,
   NLTargetFilter,
+  NLLocalOrderSnapshot,
   ExecutionStep,
   ExecutionPlan,
 } from "./ai/ontology-ai-service";
@@ -188,6 +190,21 @@ export type {
   EvaluateAndPublishResult,
   FastTrackEventType,
 } from "./fast-track/fast-track-publisher";
+
+// ── Fast-Track Governance Guard ──
+export {
+  evaluateFastTrackGovernanceGuard,
+} from "./fast-track/fast-track-governance-guard";
+
+export type {
+  FastTrackGovernanceGuardResult,
+  FastTrackGovernanceGuardInput,
+  FastTrackGuardBlockReason,
+  FastTrackGuardBlockCode,
+} from "./fast-track/fast-track-governance-guard";
+
+// ── Fast-Track Guard Input Resolver ──
+export { resolveGuardInputs } from "./fast-track/fast-track-guard-inputs";
 
 // ── Policy Engine Slot (Future RBAC/ABAC/ReBAC) ──
 export {

@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Package, AlertTriangle, DollarSign, FileText, Search, Plus,
   TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, Calendar, GitCompare,
-  CheckCircle2, Clock,
+  CheckCircle2, Clock, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -296,6 +296,9 @@ export default function DashboardPage() {
   } else {
     recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 요청", desc: "작성 대기 요청 없음 — 비교 결과에서 견적을 시작하세요", href: "/app/quote", state: "idle" });
   }
+
+  // 발주 전환
+  recommendedActions.push({ id: "r-po-conversion", icon: <ClipboardList className="h-3.5 w-3.5 text-blue-400" />, label: "발주 전환", desc: "발주 전환 후보를 검토하고 승인·발송을 준비하세요", href: "/dashboard/orders", state: "idle" });
 
   // 검색
   recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "500만+ 품목에서 후보 탐색", href: "/app/search", state: "idle" });

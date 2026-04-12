@@ -20,6 +20,7 @@ import { toast } from "sonner";
 
 import { useNotificationStore, type LocalNotification } from "@/lib/store/notification-store";
 import { startGovernanceNotificationBridge } from "@/lib/notifications/governance-bridge";
+import { useOrderPeekOverlayStore } from "@/lib/store/order-peek-overlay-store";
 
 export function NotificationSonnerBridge() {
   // ── 1. governance bridge 활성화 (mount 한 번) ─────────────────────────────
@@ -65,19 +66,34 @@ export function NotificationSonnerBridge() {
 
 function fireToast(notif: LocalNotification): void {
   const description = notif.description ?? undefined;
+
+  // PO entity 알림 → "빠른 보기" action button 추가.
+  // 클릭 시 peek drawer 가 열려 워크벤치 진입 없이 1-shot 요약을 보여준다.
+  const action =
+    notif.entityType === "PO" && notif.entityId
+      ? {
+          label: "빠른 보기",
+          onClick: () => {
+            useOrderPeekOverlayStore
+              .getState()
+              .openById(notif.entityId!, notif.title);
+          },
+        }
+      : undefined;
+
   switch (notif.severity) {
     case "error":
-      toast.error(notif.title, { description });
+      toast.error(notif.title, { description, action });
       return;
     case "warning":
-      toast.warning(notif.title, { description });
+      toast.warning(notif.title, { description, action });
       return;
     case "success":
-      toast.success(notif.title, { description });
+      toast.success(notif.title, { description, action });
       return;
     case "info":
     default:
-      toast.info(notif.title, { description });
+      toast.info(notif.title, { description, action });
       return;
   }
 }

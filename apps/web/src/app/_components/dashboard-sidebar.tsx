@@ -23,19 +23,21 @@ import {
   PieChart,
   Home,
   Sparkles,
+  ClipboardList,
+  type LucideIcon,
 } from "lucide-react";
 
 interface NavItem {
   title: string;
   href: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: LucideIcon;
   badge?: string;
 }
 
 // ── 아이콘 박스 컨테이너 ──────────────────────────────────
 // B2B SaaS 트렌드: 아이콘 뒤 부드러운 사각형 배경으로 시인성 강화
 function IconBox({ icon: Icon, isActive, tint }: {
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: LucideIcon;
   isActive: boolean;
   tint: { active: string; inactive: string };
 }) {
@@ -81,6 +83,11 @@ const sidebarGroups: SidebarGroup[] = [
         title: "구매 운영",
         href: "/dashboard/purchases",
         icon: ShoppingCart,
+      },
+      {
+        title: "발주 전환 큐",
+        href: "/dashboard/orders",
+        icon: ClipboardList,
       },
       {
         title: "구매 리포트",
@@ -155,6 +162,7 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/smart-sourcing":{ active: "text-violet-600", inactive: "text-violet-400/70" },
   "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  "/dashboard/orders":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400/70" },
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },

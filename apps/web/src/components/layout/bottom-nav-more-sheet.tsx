@@ -33,6 +33,7 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
   {
     title: "운영",
     items: [
+      { label: "발주 전환 큐", href: "/dashboard/orders", icon: ClipboardList },
       { label: "발주", href: "/dashboard/purchase-orders", icon: ClipboardList },
       { label: "입고", href: "/dashboard/receiving", icon: Package },
       { label: "재고 위험", href: "/dashboard/stock-risk", icon: AlertTriangle },

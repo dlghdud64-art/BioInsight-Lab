@@ -103,20 +103,20 @@ export function InboxContextStrip({
         : 'bg-slate-700 text-slate-400';
 
   return (
-    <div className="flex items-center gap-3 rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-xs">
+    <div className="flex flex-wrap items-center gap-2 md:gap-3 rounded border border-slate-800 bg-slate-900/50 px-3 py-2 text-xs">
       <a
         href={returnHref}
-        className="flex items-center gap-1 text-slate-500 hover:text-slate-600 transition-colors shrink-0"
+        className="flex items-center gap-1 text-slate-500 hover:text-slate-600 transition-colors shrink-0 min-h-[32px] md:min-h-0"
       >
         <span>←</span>
         <span>작업함</span>
       </a>
-      <span className="text-slate-700">|</span>
+      <span className="text-slate-700 hidden sm:inline">|</span>
       <span className="rounded bg-blue-500/10 px-2 py-0.5 text-blue-400 font-medium shrink-0">
         {workTypeLabel}
       </span>
-      <span className="text-slate-400 truncate">{whyNow}</span>
-      <div className="ml-auto flex items-center gap-2 shrink-0">
+      <span className="text-slate-400 truncate min-w-0">{whyNow}</span>
+      <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto sm:ml-auto">
         {dueLabel && (
           <span className={`rounded px-2 py-0.5 font-medium ${dueBg}`}>
             {dueLabel}

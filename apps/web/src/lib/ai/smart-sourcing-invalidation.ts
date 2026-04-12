@@ -40,7 +40,12 @@ export type SmartSourcingEventType =
   | "bom_items_confirmed"
   | "bom_registered_to_queue"
   | "context_stale_detected"
-  | "smart_sourcing_reset";
+  | "smart_sourcing_reset"
+  // D-3: request submission lifecycle (sourcing → quote workqueue handoff)
+  // 별도 domain을 추가하지 않고 quote_chain 안의 sub-event로 둔다.
+  // canonical truth는 sourcing 측 store/handoff가 그대로 보유.
+  | "request_submission_executed"
+  | "request_submission_handed_off_to_workqueue";
 
 /** Smart Sourcing은 quote_chain domain에 속함 */
 const SS_DOMAIN: GovernanceDomain = "quote_chain";
@@ -176,6 +181,49 @@ export function emitBomRegisteredToQueue(handoffId: string, registeredCount: num
     toStatus: "registered_to_queue",
     detail: `${registeredCount}개 품목 발주 대기열 등록`,
     payload: { registeredCount },
+  });
+}
+
+/**
+ * 견적 요청 제출 실행됨 (D-3)
+ * — request-submission work window의 buildRequestSubmissionEvent 직후 발행.
+ * — quote_chain.quote_review surface 재계산 + workqueue 진입 준비 신호.
+ */
+export function emitRequestSubmissionExecuted(
+  handoffId: string,
+  vendorTargetCount: number,
+  lineCount: number,
+  submissionEventId: string,
+): GovernanceEvent {
+  return publishSmartSourcingEvent({
+    handoffId,
+    eventType: "request_submission_executed",
+    fromStatus: "request_draft_recorded",
+    toStatus: "request_submission_executed",
+    detail: `견적 요청 제출 실행 — 공급사 ${vendorTargetCount}곳, 품목 ${lineCount}건`,
+    affectedIds: [handoffId, submissionEventId],
+    payload: { vendorTargetCount, lineCount, submissionEventId },
+  });
+}
+
+/**
+ * 견적 워크큐로 handoff 완료 (D-3)
+ * — request submission work window의 onQuoteWorkqueueOpen 직후 발행.
+ * — 자동/수동 모두 동일 이벤트로 통일하여 listener 정합 유지.
+ */
+export function emitRequestSubmissionHandedOffToWorkqueue(
+  handoffId: string,
+  submissionEventId: string,
+  navigatedAt: string,
+): GovernanceEvent {
+  return publishSmartSourcingEvent({
+    handoffId,
+    eventType: "request_submission_handed_off_to_workqueue",
+    fromStatus: "request_submission_executed",
+    toStatus: "handed_off_to_quote_workqueue",
+    detail: `견적 요청이 견적 관리 워크큐로 전달됨`,
+    affectedIds: [handoffId, submissionEventId],
+    payload: { submissionEventId, navigatedAt },
   });
 }
 

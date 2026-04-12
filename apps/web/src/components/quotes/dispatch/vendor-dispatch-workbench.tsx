@@ -283,9 +283,9 @@ export function VendorRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-pg border-slate-600/40">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-pg border-slate-600/40 w-full mx-3 md:mx-0">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-slate-900">
+          <DialogTitle className="flex items-center gap-2 text-slate-900 text-base md:text-lg">
             <Send className="h-5 w-5 text-blue-400" />
             공급사 발송 검토
           </DialogTitle>
@@ -369,7 +369,7 @@ export function VendorRequestModal({
             </div>
 
             {/* Supplier cards */}
-            <div className="space-y-1.5 max-h-[220px] overflow-y-auto">
+            <div className="space-y-1.5 max-h-[220px] overflow-y-auto overflow-x-hidden">
               {suppliers.map((supplier) => (
                 <SupplierReviewCard
                   key={supplier.vendorId}
@@ -517,7 +517,7 @@ export function VendorRequestModal({
           )}
 
           {/* ═══ Dispatch Conditions ═══ */}
-          <div className="flex items-center gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-sh">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-sh">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-slate-500" />
               <span className="text-xs text-slate-400">응답 요청 기한</span>
@@ -532,7 +532,7 @@ export function VendorRequestModal({
                   const v = parseInt(e.target.value) || 14;
                   setExpiresInDays(Math.max(1, Math.min(90, v)));
                 }}
-                className="h-7 text-xs w-16 text-center bg-sh border-bd text-slate-900"
+                className="h-8 md:h-7 text-xs w-16 text-center bg-sh border-bd text-slate-900"
               />
               <span className="text-xs text-slate-500">일 (1~90)</span>
             </div>
@@ -540,13 +540,13 @@ export function VendorRequestModal({
         </div>
 
         {/* ═══ Dock ═══ */}
-        <DialogFooter className="gap-2 pt-2 border-t border-slate-600/20">
+        <DialogFooter className="gap-2 pt-2 border-t border-slate-600/20 flex-col md:flex-row">
           {/* Fallback: manual add link — demoted to footnote */}
           {hasResolved && !showManualFallback && (
             <button
               type="button"
               onClick={() => setShowManualFallback(true)}
-              className="text-xs text-slate-600 hover:text-slate-400 mr-auto transition-colors"
+              className="text-xs text-slate-600 hover:text-slate-400 mr-auto transition-colors text-left"
             >
               + 후보에 없는 공급사 직접 추가
             </button>
@@ -557,14 +557,14 @@ export function VendorRequestModal({
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="text-slate-400 hover:text-slate-700 border border-slate-600/30"
+            className="min-h-[40px] text-slate-400 hover:text-slate-700 border border-slate-600/30 active:scale-95"
           >
             취소
           </Button>
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || sendReadiness === "blocked"}
-            className={`font-semibold ${
+            className={`min-h-[40px] font-semibold active:scale-95 ${
               sendReadiness === "ready"
                 ? "bg-emerald-600 hover:bg-emerald-500 text-white"
                 : sendReadiness === "needs_review"
@@ -607,12 +607,12 @@ function SupplierReviewCard({
   onToggle: () => void;
 }) {
   return (
-    <div className={`rounded-lg border px-3.5 py-2.5 transition-all ${
+    <div className={`rounded-lg border px-3 md:px-3.5 py-2 md:py-2.5 transition-all ${
       supplier.included
         ? "border-slate-600/40 bg-slate-50"
         : "border-slate-600/15 bg-sh opacity-40"
     }`}>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 md:gap-3">
         {/* Toggle */}
         <button
           type="button"
@@ -627,25 +627,25 @@ function SupplierReviewCard({
         </button>
 
         {/* Supplier info — compact single-row */}
-        <div className="flex-1 min-w-0 flex items-center gap-2">
-          <span className="text-sm font-medium text-slate-900 truncate">
+        <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+          <span className="text-xs md:text-sm font-medium text-slate-900 truncate">
             {supplier.vendorName}
           </span>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${CONFIDENCE_COLOR[supplier.confidence]}`}>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 w-fit ${CONFIDENCE_COLOR[supplier.confidence]}`}>
             {supplier.confidence === "high" ? "확실" : supplier.confidence === "medium" ? "보통" : "낮음"}
           </span>
         </div>
 
         {/* Contact source badge */}
-        <span className="text-[10px] text-slate-600 shrink-0">
+        <span className="text-[10px] text-slate-600 shrink-0 ml-auto md:ml-0">
           {CONTACT_SOURCE_LABEL[supplier.contactSource]}
         </span>
       </div>
 
       {/* Second row: email + reason */}
-      <div className="flex items-center gap-2 mt-1 ml-8">
+      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 mt-1 md:mt-0 ml-7 md:ml-8">
         <Mail className="h-3 w-3 text-slate-600 shrink-0" />
-        <span className="text-xs text-slate-500 truncate">{supplier.email}</span>
+        <span className="text-xs text-slate-500 truncate min-w-0">{supplier.email}</span>
         {supplier.reason && (
           <>
             <span className="text-xs text-slate-700">·</span>

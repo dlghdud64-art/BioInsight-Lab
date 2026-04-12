@@ -79,6 +79,7 @@ export function FireApprovalWorkbench({
   className,
 }: FireApprovalWorkbenchProps) {
   const [reason, setReason] = React.useState("");
+  const [railOpen, setRailOpen] = React.useState(false);
 
   // Policy surface from engine — truth source
   const { data: policySurface } = useWorkspacePolicySurface(
@@ -89,7 +90,7 @@ export function FireApprovalWorkbench({
   const surface = policySurface?.policySurface;
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER — 판단 ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Policy status strip */}
@@ -120,11 +121,11 @@ export function FireApprovalWorkbench({
         )}
 
         {/* Action summary */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">
             발송 승인 요청
           </h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">요청자</span>
               <p className="text-slate-700">{requestedBy}</p>
@@ -152,7 +153,7 @@ export function FireApprovalWorkbench({
 
         {/* Policy blockers detail (if any) */}
         {guidance && (guidance.blockerMessages.length > 0 || guidance.warningMessages.length > 0) && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4">
             <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
               정책 제약사항
             </h3>
@@ -167,7 +168,7 @@ export function FireApprovalWorkbench({
 
         {/* Decision reason input */}
         {!isApproved && !isRejected && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">
               결정 사유
             </label>
@@ -183,7 +184,8 @@ export function FireApprovalWorkbench({
       </div>
 
       {/* ═══ RAIL — 참조 ═══ */}
-      <div className="w-72 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>참고 정보 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         {/* Approver requirement */}
         {guidance?.approverInfo && (
           <ApproverRequirementCard
@@ -259,8 +261,8 @@ export function FireApprovalWorkbench({
       </div>
 
       {/* ═══ DOCK — 실행 (하단 고정) ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
           {/* Next action guidance */}
           {guidance && (
             <NextActionHint
@@ -271,11 +273,11 @@ export function FireApprovalWorkbench({
           )}
 
           {/* Action buttons */}
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 md:ml-4 flex-wrap md:flex-nowrap">
             {canEscalate && (
               <button
                 onClick={() => onEscalate?.(reason)}
-                className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors"
+                className="flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors active:scale-95 min-h-[40px]"
               >
                 에스컬레이션
               </button>
@@ -283,7 +285,7 @@ export function FireApprovalWorkbench({
             {canRequestChange && (
               <button
                 onClick={() => onRequestChange?.(reason)}
-                className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors"
+                className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors active:scale-95 min-h-[40px]"
               >
                 수정 요청
               </button>
@@ -292,7 +294,7 @@ export function FireApprovalWorkbench({
               <button
                 onClick={() => onReject?.(reason)}
                 disabled={!reason.trim()}
-                className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 min-h-[40px]"
               >
                 거부
               </button>
@@ -301,7 +303,7 @@ export function FireApprovalWorkbench({
               <button
                 onClick={() => onApprove?.(reason)}
                 disabled={!reason.trim()}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 min-h-[40px]"
               >
                 발송 승인
               </button>

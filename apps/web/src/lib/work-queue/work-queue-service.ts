@@ -117,7 +117,7 @@ export async function transitionWorkItem(params: TransitionParams): Promise<void
 
     await createActivityLog(
       {
-        activityType: mapSubstatusToActivityType(substatus),
+        activityType: mapSubstatusToActivityType(substatus) as any,
         entityType: "AI_ACTION",
         entityId: itemId,
         taskType: current.type,
@@ -343,7 +343,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
   // 다차원 스코어링 + TaskStatus 우선순위 정렬
   const { TASK_STATUS_SORT_ORDER } = await import("./state-mapper");
 
-  const scored = items.map((item) => {
+  const scored = items.map((item: any) => {
     const metadata = (item.payload || {}) as Record<string, unknown>;
     const scoredItem = {
       type: item.type,
@@ -368,7 +368,7 @@ export async function queryWorkQueue(filters: WorkQueueFilters): Promise<{
   });
 
   // 1차: taskStatus 우선순위 → 2차: totalScore DESC → 3차: updatedAt DESC
-  const sorted = scored.sort((a, b) => {
+  const sorted = scored.sort((a: any, b: any) => {
     const statusDiff =
       (TASK_STATUS_SORT_ORDER[a.taskStatus as TaskStatus] ?? 50) -
       (TASK_STATUS_SORT_ORDER[b.taskStatus as TaskStatus] ?? 50);

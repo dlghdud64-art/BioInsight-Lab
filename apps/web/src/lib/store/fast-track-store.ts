@@ -51,15 +51,31 @@ export interface FastTrackAcceptanceLogEntry {
 interface FastTrackState {
   /** procurementCaseId → 최신 recommendation (stale/dismissed/accepted 포함) */
   recommendations: Record<string, FastTrackRecommendationObject>;
+  /**
+   * procurementCaseId → 평가 당시의 input snapshot.
+   *
+   * dismiss / drift 재평가 경로에서 caller 가 input 을 다시 조립하지 않아도
+   * 되도록 store 가 canonical evaluation input 을 함께 보관한다.
+   * recommendation 객체와 1:1 관계이며, 동일 case 의 재평가 시 덮어쓰인다.
+   */
+  inputSnapshots: Record<string, FastTrackEvaluationInput>;
   /** 마지막 evaluateItem() 호출 결과 (UI 디버깅/toast 용) */
   lastRecommendation: FastTrackRecommendationObject | null;
   /** 사용자가 일괄 승인으로 수락한 이력 (ActionLedger 데이터 소스) */
   acceptanceLog: FastTrackAcceptanceLogEntry[];
+  /**
+   * 이미 Ledger 에 기록한 recommendationObjectId 집합.
+   *
+   * 동일 case 가 stale → eligible 루프를 돌아 다시 accepted 로 전이되어도
+   * objectId 는 평가 시각 단위로 새로 생성되므로 legit 재승인과 중복 기록을
+   * 구분할 수 있다. markAccepted 는 이 집합을 consult 해 중복 append 를 차단한다.
+   */
+  loggedRecommendationObjectIds: Set<string>;
 
   // ── Evaluation ──
   /**
    * 단일 case 평가. 내부적으로 publisher 를 호출해 governance bus 이벤트를
-   * 자동 발행한다. 결과 recommendation 은 store 에 캐시된다.
+   * 자동 발행한다. 결과 recommendation 과 evaluation input 은 store 에 캐시된다.
    */
   evaluateItem: (input: FastTrackEvaluationInput) => EvaluateAndPublishResult;
   /** 여러 case 를 한 번에 평가 (BOM/견적 도착 후 일괄 사용) */
@@ -68,12 +84,18 @@ interface FastTrackState {
   // ── Selection helpers ──
   /** eligible 상태인 recommendation 만 반환 (Queue Fast-Track 섹션 렌더링용) */
   getEligible: () => FastTrackRecommendationObject[];
+  /** store 가 보관 중인 input snapshot 을 반환 (없으면 null) */
+  getInputSnapshot: (procurementCaseId: string) => FastTrackEvaluationInput | null;
 
   // ── User actions ──
   /**
    * 사용자가 일괄 승인 버튼 클릭 후 호출. recommendation 상태를 accepted 로
    * 전이하고 acceptanceLog 에 한 줄 추가. 실제 order state mutation 은
    * caller (orders page) 가 useOrderQueueStore.finalizeApproval 로 수행한다.
+   *
+   * Dedup 규칙: 동일 recommendationObjectId 는 한 번만 Ledger 에 기록된다.
+   * (stale → eligible 루프가 돌아 다시 accepted 되어도 objectId 가 같으면 skip.
+   *  drift 재평가로 새 objectId 가 부여되면 legit 재승인으로 간주해 허용한다.)
    *
    * caller 는 vendorName 을 명시 전달해야 한다 (evaluationSnapshot 에는
    * vendorId 만 있으므로 display-friendly label 을 store 에서 재유도하지 않는다).
@@ -83,11 +105,13 @@ interface FastTrackState {
     actor: string,
   ) => FastTrackAcceptanceLogEntry[];
 
-  /** 사용자가 명시적으로 권장을 거부 */
-  dismissRecommendation: (
-    input: FastTrackEvaluationInput,
-    reason: string,
-  ) => void;
+  /**
+   * 사용자가 명시적으로 권장을 거부.
+   *
+   * 기존에는 caller 가 input 을 재조립해서 넘겼지만, 이제 store 가 보관한
+   * inputSnapshot 을 사용하므로 procurementCaseId 만 전달하면 된다.
+   */
+  dismissRecommendation: (procurementCaseId: string, reason: string) => void;
 
   /** 특정 case 만 store 에서 제거 (fetch 무효화 경로) */
   clearRecommendation: (procurementCaseId: string) => void;
@@ -101,8 +125,10 @@ interface FastTrackState {
 
 export const useFastTrackStore = create<FastTrackState>((set, get) => ({
   recommendations: {},
+  inputSnapshots: {},
   lastRecommendation: null,
   acceptanceLog: [],
+  loggedRecommendationObjectIds: new Set<string>(),
 
   evaluateItem: (input) => {
     const previous = get().recommendations[input.procurementCaseId] ?? null;
@@ -111,6 +137,10 @@ export const useFastTrackStore = create<FastTrackState>((set, get) => ({
       recommendations: {
         ...state.recommendations,
         [input.procurementCaseId]: result.recommendation,
+      },
+      inputSnapshots: {
+        ...state.inputSnapshots,
+        [input.procurementCaseId]: input,
       },
       lastRecommendation: result.recommendation,
     }));
@@ -133,10 +163,16 @@ export const useFastTrackStore = create<FastTrackState>((set, get) => ({
     );
   },
 
+  getInputSnapshot: (procurementCaseId) => {
+    return get().inputSnapshots[procurementCaseId] ?? null;
+  },
+
   markAccepted: (entries, actor) => {
     const now = new Date().toISOString();
     const accepted: FastTrackAcceptanceLogEntry[] = [];
-    const recs = get().recommendations;
+    const state = get();
+    const recs = state.recommendations;
+    const alreadyLogged = state.loggedRecommendationObjectIds;
 
     for (const entry of entries) {
       const rec = recs[entry.procurementCaseId];
@@ -144,8 +180,14 @@ export const useFastTrackStore = create<FastTrackState>((set, get) => ({
         // eligible 이 아닌 case 는 optimistic unlock 금지 — 조용히 스킵.
         continue;
       }
+      // Dedup: 동일 recommendationObjectId 가 이미 Ledger 에 기록됐다면
+      // stale → eligible → accepted 루프의 잔상이므로 append 를 차단한다.
+      // (drift 재평가로 새 objectId 가 부여된 경우는 여기를 통과함)
+      if (alreadyLogged.has(rec.objectId)) {
+        continue;
+      }
       accepted.push({
-        id: `${entry.procurementCaseId}::${now}`,
+        id: `${entry.procurementCaseId}::${rec.objectId}`,
         procurementCaseId: entry.procurementCaseId,
         vendorName: entry.vendorName,
         totalAmount: rec.evaluationSnapshot.totalAmount,
@@ -158,35 +200,47 @@ export const useFastTrackStore = create<FastTrackState>((set, get) => ({
 
     if (accepted.length === 0) return [];
 
-    set((state) => ({
-      // 수락된 case 의 recommendation 상태를 accepted 로 전이 (Queue 섹션에서 사라짐)
-      recommendations: {
-        ...state.recommendations,
-        ...Object.fromEntries(
-          accepted.map((a) => [
-            a.procurementCaseId,
-            {
-              ...state.recommendations[a.procurementCaseId],
-              recommendationStatus: "accepted" as const,
-              updatedAt: now,
-            },
-          ]),
-        ),
-      },
-      acceptanceLog: [...accepted, ...state.acceptanceLog],
-    }));
+    set((prev) => {
+      const nextLogged = new Set(prev.loggedRecommendationObjectIds);
+      accepted.forEach((a) => nextLogged.add(a.recommendationObjectId));
+      return {
+        // 수락된 case 의 recommendation 상태를 accepted 로 전이 (Queue 섹션에서 사라짐)
+        recommendations: {
+          ...prev.recommendations,
+          ...Object.fromEntries(
+            accepted.map((a) => [
+              a.procurementCaseId,
+              {
+                ...prev.recommendations[a.procurementCaseId],
+                recommendationStatus: "accepted" as const,
+                updatedAt: now,
+              },
+            ]),
+          ),
+        },
+        acceptanceLog: [...accepted, ...prev.acceptanceLog],
+        loggedRecommendationObjectIds: nextLogged,
+      };
+    });
 
     return accepted;
   },
 
-  dismissRecommendation: (input, reason) => {
-    const prev = get().recommendations[input.procurementCaseId];
+  dismissRecommendation: (procurementCaseId, reason) => {
+    const state = get();
+    const prev = state.recommendations[procurementCaseId];
     if (!prev) return;
+    const input = state.inputSnapshots[procurementCaseId];
+    if (!input) {
+      // snapshot 이 없으면 publish 하지 않는다 — caller 가 evaluateItem 을
+      // 먼저 호출하지 않은 경로이므로 조용히 스킵한다.
+      return;
+    }
     publishFastTrackDismissed(input, prev, reason);
-    set((state) => ({
+    set((s) => ({
       recommendations: {
-        ...state.recommendations,
-        [input.procurementCaseId]: {
+        ...s.recommendations,
+        [procurementCaseId]: {
           ...prev,
           recommendationStatus: "dismissed",
           updatedAt: new Date().toISOString(),
@@ -197,10 +251,18 @@ export const useFastTrackStore = create<FastTrackState>((set, get) => ({
 
   clearRecommendation: (procurementCaseId) => {
     set((state) => {
-      const { [procurementCaseId]: _removed, ...rest } = state.recommendations;
-      return { recommendations: rest };
+      const { [procurementCaseId]: _removedRec, ...restRecs } = state.recommendations;
+      const { [procurementCaseId]: _removedInput, ...restInputs } = state.inputSnapshots;
+      return { recommendations: restRecs, inputSnapshots: restInputs };
     });
   },
 
-  reset: () => set({ recommendations: {}, lastRecommendation: null, acceptanceLog: [] }),
+  reset: () =>
+    set({
+      recommendations: {},
+      inputSnapshots: {},
+      lastRecommendation: null,
+      acceptanceLog: [],
+      loggedRecommendationObjectIds: new Set<string>(),
+    }),
 }));

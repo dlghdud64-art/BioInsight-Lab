@@ -152,7 +152,16 @@ export function QuoteChainProgressStrip({
   let lastPhase: ChainPhase | null = null;
 
   return (
-    <div className={cn("flex items-center gap-0", className)}>
+    <div
+      role="navigation"
+      aria-label="구매 진행 단계"
+      className={cn(
+        // 모바일: 가로 스크롤 가능한 strip (snap-x 로 스와이프 UX)
+        "flex items-center gap-0 overflow-x-auto snap-x scrollbar-none",
+        // 모바일 터치 영역 확보
+        "py-1 -my-1",
+        className,
+      )}>
       {stages.map((stage, idx) => {
         const status = resolved[stage.key];
         const styles = STATUS_STYLES[status];
@@ -164,22 +173,26 @@ export function QuoteChainProgressStrip({
           <React.Fragment key={stage.key}>
             {/* Phase divider */}
             {isNewPhase && idx > 0 && (
-              <div className="mx-1 h-4 w-px bg-slate-800 shrink-0" />
+              <div className="mx-0.5 md:mx-1 h-4 w-px bg-slate-800 shrink-0" />
             )}
 
             {/* Connector line (between stages in same phase) */}
             {!isNewPhase && idx > 0 && (
-              <div className={cn("h-0.5 w-3 shrink-0", styles.connector)} />
+              <div className={cn("h-0.5 w-2 md:w-3 shrink-0", styles.connector)} />
             )}
 
-            {/* Stage node */}
+            {/* Stage node — 모바일: 더 큰 터치 타겟 */}
             <button
               type="button"
               onClick={() => onStageClick?.(stage.key)}
               disabled={!onStageClick}
+              aria-current={status === "current" ? "step" : undefined}
+              aria-label={`${stage.shortLabel} (${status})`}
               className={cn(
-                "flex items-center gap-1.5 px-1.5 py-1 rounded transition-colors shrink-0",
-                onStageClick && "hover:bg-slate-800/50 cursor-pointer",
+                "flex items-center gap-1 md:gap-1.5 px-1.5 md:px-1.5 py-1.5 md:py-1 rounded transition-colors shrink-0 snap-start",
+                // 모바일 터치 타겟: 최소 40px 높이
+                "min-h-[36px] md:min-h-0",
+                onStageClick && "hover:bg-slate-800/50 cursor-pointer active:scale-95",
                 !onStageClick && "cursor-default",
                 status === "current" && cn(phaseColors.bg, phaseColors.border, "border"),
               )}
@@ -191,10 +204,10 @@ export function QuoteChainProgressStrip({
                 status === "current" && "ring-2 ring-offset-1 ring-offset-slate-950 ring-blue-500/30",
               )} />
 
-              {/* Label */}
+              {/* Label — 모바일에서도 표시하되 약간 큰 text */}
               {!compact && (
                 <span className={cn(
-                  "text-[10px] font-medium whitespace-nowrap",
+                  "text-[11px] md:text-[10px] font-medium whitespace-nowrap",
                   styles.label,
                   status === "current" && phaseColors.text,
                 )}>

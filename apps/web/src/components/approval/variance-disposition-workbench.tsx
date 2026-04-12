@@ -83,11 +83,12 @@ export function VarianceDispositionWorkbench({
   const guidance = policySurface?.inlineGuidance;
   const surface = policySurface?.policySurface;
 
+  const [railOpen, setRailOpen] = React.useState(false);
   const pendingLines = lines.filter(l => l.disposition === "pending");
   const allDecided = pendingLines.length === 0;
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {guidance && (
@@ -104,9 +105,9 @@ export function VarianceDispositionWorkbench({
         )}
 
         {/* Variance summary */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">차이 요약</h3>
-          <div className="grid grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">예상 수량</span>
               <p className="text-sm font-semibold tabular-nums text-slate-900">{totalExpectedQty}</p>
@@ -131,8 +132,8 @@ export function VarianceDispositionWorkbench({
         </div>
 
         {/* Line disposition table */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <table className="w-full text-xs">
+        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-x-auto">
+          <table className="w-full text-xs min-w-[400px]">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500">
                 <th className="px-3 py-2 text-left font-medium">Line</th>
@@ -180,7 +181,8 @@ export function VarianceDispositionWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-64 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>처리 현황 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         {guidance?.approverInfo && (
           <ApproverRequirementCard
             requiredRole={guidance.approverInfo.requiredRole}
@@ -221,20 +223,20 @@ export function VarianceDispositionWorkbench({
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
           {guidance && (
             <NextActionHint
               message={allDecided ? (needsApproval ? "모든 라인 결정 완료 — 승인 요청 필요" : "모든 라인 결정 완료 — 확정 가능") : `${pendingLines.length}건 미결정`}
               variant={needsApproval ? "urgent" : "default"}
             />
           )}
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 md:ml-4 flex-wrap md:flex-nowrap">
             {needsApproval && (
               <button
                 onClick={onRequestApproval}
                 disabled={!allDecided}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
+                className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]"
               >
                 승인 요청
               </button>
@@ -243,7 +245,7 @@ export function VarianceDispositionWorkbench({
               <button
                 onClick={onConfirmAll}
                 disabled={!allDecided}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
+                className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]"
               >
                 처리 확정
               </button>

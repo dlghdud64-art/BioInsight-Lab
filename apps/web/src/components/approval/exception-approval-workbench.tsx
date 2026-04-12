@@ -99,6 +99,7 @@ export function ExceptionApprovalWorkbench({
   className,
 }: ExceptionApprovalWorkbenchProps) {
   const [reason, setReason] = React.useState("");
+  const [railOpen, setRailOpen] = React.useState(false);
   const workspaceKey = targetAction === "exception_resolve" ? "exception_resolve" : "exception_return";
 
   const { data: policySurface } = useWorkspacePolicySurface(workspaceKey, actor, caseId);
@@ -106,7 +107,7 @@ export function ExceptionApprovalWorkbench({
   const surface = policySurface?.policySurface;
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {guidance && (
@@ -131,16 +132,16 @@ export function ExceptionApprovalWorkbench({
         )}
 
         {/* Exception summary */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
-          <div className="flex items-center justify-between">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">
               {targetAction === "exception_resolve" ? "예외 해결 승인" : "예외 복귀 승인"}
             </h3>
-            <span className={cn("text-xs font-medium px-2 py-0.5 rounded border", SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium)}>
+            <span className={cn("text-xs font-medium px-2 py-0.5 rounded border w-fit", SEVERITY_COLORS[severity] || SEVERITY_COLORS.medium)}>
               {severity}
             </span>
           </div>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">예외 ID</span>
               <p className="text-slate-600 text-xs font-mono">{exceptionRecordId}</p>
@@ -165,9 +166,9 @@ export function ExceptionApprovalWorkbench({
         </div>
 
         {/* Recovery plan */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">복구 계획</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">복구 액션</span>
               <p className="text-slate-700">{recoveryAction || "미설정"}</p>
@@ -195,7 +196,7 @@ export function ExceptionApprovalWorkbench({
         </div>
 
         {/* Decision input */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-2">
           <label className="text-xs font-medium uppercase tracking-wider text-slate-500">결정 사유</label>
           <textarea
             value={reason}
@@ -208,7 +209,8 @@ export function ExceptionApprovalWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-72 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>참고 정보 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         {guidance?.approverInfo && (
           <ApproverRequirementCard
             requiredRole={guidance.approverInfo.requiredRole}
@@ -263,8 +265,8 @@ export function ExceptionApprovalWorkbench({
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
           {guidance && (
             <NextActionHint
               message={guidance.nextActionMessage}
@@ -272,19 +274,19 @@ export function ExceptionApprovalWorkbench({
               variant={guidance.statusBadge === "blocked" ? "blocked" : "default"}
             />
           )}
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 md:ml-4 flex-wrap md:flex-nowrap">
             {canEscalate && (
-              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
+              <button onClick={() => onEscalate?.(reason)} className="flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors active:scale-95 min-h-[40px]">
                 에스컬레이션
               </button>
             )}
             {canReject && (
-              <button onClick={() => onReject?.(reason)} disabled={!reason.trim()} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40">
+              <button onClick={() => onReject?.(reason)} disabled={!reason.trim()} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]">
                 거부
               </button>
             )}
             {canApprove && (
-              <button onClick={() => onApprove?.(reason)} disabled={!reason.trim()} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">
+              <button onClick={() => onApprove?.(reason)} disabled={!reason.trim()} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]">
                 {targetAction === "exception_resolve" ? "해결 승인" : "복귀 승인"}
               </button>
             )}

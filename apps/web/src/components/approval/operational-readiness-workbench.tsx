@@ -244,13 +244,14 @@ export function OperationalReadinessWorkbench({
   onAction,
   className = "",
 }: OperationalReadinessWorkbenchProps) {
+  const [railOpen, setRailOpen] = React.useState(false);
   const { center, rail, dock } = surface;
   const verdictIsNoGo = center.verdict === "no_go";
 
   return (
-    <div className={`grid grid-cols-[1fr_320px] gap-4 ${className}`}>
+    <div className={`flex flex-col pb-20 md:pb-0 md:grid md:grid-cols-[1fr_320px] gap-4 h-full ${className}`}>
       {/* ── Center ── */}
-      <div className="space-y-4">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 md:space-y-4">
         <VerdictHeader verdict={center.verdict} score={center.overallScore} />
 
         {/* Category breakdown */}
@@ -284,7 +285,15 @@ export function OperationalReadinessWorkbench({
       </div>
 
       {/* ── Rail ── */}
-      <div className="space-y-4">
+      <div className="mt-3 md:mt-0">
+        <button
+          className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden"
+          onClick={() => railOpen ? setRailOpen(false) : setRailOpen(true)}
+        >
+          참고 정보 {railOpen ? "▲" : "▼"}
+        </button>
+        {railOpen && (
+          <div className="space-y-4">
         {/* Runtime signals */}
         <div className="rounded-lg border border-slate-700 bg-slate-800/30 p-3">
           <h4 className="text-xs font-medium uppercase tracking-wide text-slate-500">런타임 신호</h4>
@@ -355,10 +364,12 @@ export function OperationalReadinessWorkbench({
             </div>
           </div>
         </div>
+        </div>
+        )}
       </div>
 
       {/* ── Dock ── */}
-      <div className="col-span-2 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 md:static z-30 md:z-auto md:col-span-2 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/30 px-4 py-3 flex-wrap md:flex-nowrap">
         {dock.actions.map((action) => (
           <DockAction
             key={action.actionKey}

@@ -63,11 +63,12 @@ export function ReorderTriggerWorkbench({
   const guidance = policySurface?.inlineGuidance;
   const config = RESULT_CONFIG[evaluationResult] || RESULT_CONFIG.monitoring;
 
+  const [railOpen, setRailOpen] = React.useState(false);
   const vsSafety = totalAvailableQty - safetyStockQty;
   const vsReorderPoint = totalAvailableQty - reorderPointQty;
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {guidance && (
@@ -94,9 +95,9 @@ export function ReorderTriggerWorkbench({
         </div>
 
         {/* Inventory metrics */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">재고 현황</h3>
-          <div className="grid grid-cols-3 gap-4 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-4 text-sm">
             <div>
               <span className="text-slate-500 text-xs">가용 재고</span>
               <p className="text-lg font-semibold tabular-nums text-slate-900">{totalAvailableQty}</p>
@@ -120,7 +121,8 @@ export function ReorderTriggerWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-64 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>공급 지표 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5">
           <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">공급 지표</h4>
           <div className="text-xs space-y-1">
@@ -152,20 +154,20 @@ export function ReorderTriggerWorkbench({
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
           <NextActionHint
             message={procurementReentryRecommended ? "재구매 진입 권장 — procurement re-entry로 이동" : evaluationResult === "monitoring" ? "모니터링 유지" : "재주문 불필요 — 현재 재고 충분"}
             variant={procurementReentryRecommended ? "urgent" : "default"}
           />
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 w-full md:w-auto shrink-0 md:ml-4 flex-wrap md:flex-nowrap">
             {onDismiss && !procurementReentryRecommended && (
-              <button onClick={onDismiss} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
+              <button onClick={onDismiss} className="flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors active:scale-95 min-h-[40px]">
                 확인
               </button>
             )}
             {onInitiateReorder && procurementReentryRecommended && (
-              <button onClick={onInitiateReorder} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">
+              <button onClick={onInitiateReorder} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">
                 재구매 진입
               </button>
             )}

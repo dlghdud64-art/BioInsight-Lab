@@ -314,6 +314,21 @@ export const GOVERNANCE_INVALIDATION_RULES: InvalidationRule[] = [
       { targetDomain: "quote_chain", targetStage: "quote_review", scope: "surface_only", reason: "AI 분석 입력 변경 → 결과 stale" },
     ],
   },
+  // ── D-3: Sourcing → Quote Workqueue (request submission lifecycle) ──
+  {
+    sourceDomain: "quote_chain",
+    sourceEventTypes: ["request_submission_executed"],
+    targets: [
+      { targetDomain: "quote_chain", targetStage: "quote_review", scope: "surface_only", reason: "견적 요청 제출 실행 → workqueue surface 재계산" },
+    ],
+  },
+  {
+    sourceDomain: "quote_chain",
+    sourceEventTypes: ["request_submission_handed_off_to_workqueue"],
+    targets: [
+      { targetDomain: "quote_chain", targetStage: "quote_review", scope: "state_transition_check", reason: "견적 요청이 워크큐로 진입" },
+    ],
+  },
 
   // ── Quote/Approval chain → Dispatch ──
   {
@@ -321,6 +336,16 @@ export const GOVERNANCE_INVALIDATION_RULES: InvalidationRule[] = [
     sourceEventTypes: ["approval_snapshot_invalidated", "po_conversion_reopened"],
     targets: [
       { targetDomain: "dispatch_prep", targetStage: "dispatch_prep", scope: "readiness_recompute", reason: "approval/conversion snapshot 변경" },
+    ],
+  },
+
+  // ── Dispatch Prep self-invalidation: PO 본문 사후 변경 (B2-h publish 결선) ──
+  {
+    sourceDomain: "dispatch_prep",
+    sourceEventTypes: ["po_data_changed_after_approval"],
+    targets: [
+      { targetDomain: "dispatch_prep", targetStage: "dispatch_prep", scope: "readiness_recompute", reason: "approval 이후 PO 본문 변경 — readiness/blocker 재계산" },
+      { targetDomain: "dispatch_execution", targetStage: "sent", scope: "state_transition_check", reason: "발송 직전 데이터 변경 — irreversible action lock" },
     ],
   },
 

@@ -89,9 +89,10 @@ export function StockReleaseApprovalWorkbench({
 
   const guidance = policySurface?.inlineGuidance;
   const surface = policySurface?.policySurface;
+  const [railOpen, setRailOpen] = React.useState(false);
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {guidance && (
@@ -120,11 +121,11 @@ export function StockReleaseApprovalWorkbench({
         )}
 
         {/* Release summary */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">
             재고 릴리스 승인 요청
           </h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">요청자</span>
               <p className="text-slate-700">{requestedBy}</p>
@@ -145,8 +146,8 @@ export function StockReleaseApprovalWorkbench({
         </div>
 
         {/* Release lines table */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <table className="w-full text-xs">
+        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-x-auto">
+          <table className="w-full min-w-[400px] text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500">
                 <th className="px-3 py-2 text-left font-medium">Line</th>
@@ -180,7 +181,7 @@ export function StockReleaseApprovalWorkbench({
 
         {/* Decision input */}
         {!isApproved && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">결정 사유</label>
             <textarea
               value={reason}
@@ -194,7 +195,15 @@ export function StockReleaseApprovalWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-72 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 px-3 text-xs text-slate-500 md:hidden rounded border border-slate-800 bg-slate-900/50"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          승인 정보 {railOpen ? "▲" : "▼"}
+        </button>
+        <div className={cn("overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+          <div className="space-y-3 mt-3 md:mt-0">
         {guidance?.approverInfo && (
           <ApproverRequirementCard
             requiredRole={guidance.approverInfo.requiredRole}
@@ -206,30 +215,32 @@ export function StockReleaseApprovalWorkbench({
           />
         )}
 
-        {approvalHistory.length > 0 && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5">
-            <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">승인 이력</h4>
-            <div className="space-y-2">
-              {approvalHistory.map((h, i) => (
-                <div key={i} className="text-xs border-l-2 border-slate-700 pl-2 space-y-0.5">
-                  <span className={cn(
-                    "font-medium",
-                    h.decision === "approved" && "text-emerald-400",
-                    h.decision === "rejected" && "text-red-400",
-                  )}>
-                    {h.decision === "approved" ? "승인" : "거부"} by {h.actorId}
-                  </span>
-                  <p className="text-slate-500">{h.reason}</p>
+            {approvalHistory.length > 0 && (
+              <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5">
+                <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">승인 이력</h4>
+                <div className="space-y-2">
+                  {approvalHistory.map((h, i) => (
+                    <div key={i} className="text-xs border-l-2 border-slate-700 pl-2 space-y-0.5">
+                      <span className={cn(
+                        "font-medium",
+                        h.decision === "approved" && "text-emerald-400",
+                        h.decision === "rejected" && "text-red-400",
+                      )}>
+                        {h.decision === "approved" ? "승인" : "거부"} by {h.actorId}
+                      </span>
+                      <p className="text-slate-500">{h.reason}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-2 md:py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
           {guidance && (
             <NextActionHint
               message={guidance.nextActionMessage}
@@ -237,19 +248,19 @@ export function StockReleaseApprovalWorkbench({
               variant={guidance.statusBadge === "blocked" ? "blocked" : "default"}
             />
           )}
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto md:shrink-0 md:ml-4">
             {canEscalate && (
-              <button onClick={() => onEscalate?.(reason)} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
+              <button onClick={() => onEscalate?.(reason)} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">
                 에스컬레이션
               </button>
             )}
             {canReject && (
-              <button onClick={() => onReject?.(reason)} disabled={!reason.trim()} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40">
+              <button onClick={() => onReject?.(reason)} disabled={!reason.trim()} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 active:scale-95 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors disabled:opacity-40">
                 거부
               </button>
             )}
             {canApprove && (
-              <button onClick={() => onApprove?.(reason)} disabled={!reason.trim()} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">
+              <button onClick={() => onApprove?.(reason)} disabled={!reason.trim()} className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">
                 릴리스 승인
               </button>
             )}

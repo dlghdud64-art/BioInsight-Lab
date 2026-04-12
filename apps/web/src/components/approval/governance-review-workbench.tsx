@@ -73,10 +73,11 @@ export function GovernanceReviewWorkbench({
   className,
 }: GovernanceReviewWorkbenchProps) {
   const [comment, setComment] = React.useState("");
+  const [railOpen, setRailOpen] = React.useState(false);
   const statusConfig = STATUS_MAP[cr.status] || STATUS_MAP.draft;
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
@@ -89,9 +90,9 @@ export function GovernanceReviewWorkbench({
         </div>
 
         {/* Change detail */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-3">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">변경 내용</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">Action</span>
               <p className="text-slate-700">{cr.action}</p>
@@ -114,7 +115,7 @@ export function GovernanceReviewWorkbench({
 
         {/* Simulation result */}
         {simulation && (
-          <div className={cn("rounded border p-4 space-y-2",
+          <div className={cn("rounded border p-3 md:p-4 space-y-2",
             simulation.overallImpact === "positive" ? "border-emerald-500/20 bg-emerald-500/5" :
             simulation.overallImpact === "negative" ? "border-red-500/20 bg-red-500/5" :
             "border-slate-800 bg-slate-900/50"
@@ -123,7 +124,7 @@ export function GovernanceReviewWorkbench({
               <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">시뮬레이션 결과</h3>
               <span className={IMPACT_COLORS[simulation.overallImpact]}>{simulation.overallImpact}</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-slate-500">Ownerless 변동</span>
                 <p className={simulation.ownerlessDelta > 0 ? "text-red-400" : simulation.ownerlessDelta < 0 ? "text-emerald-400" : "text-slate-400"}>
@@ -155,7 +156,7 @@ export function GovernanceReviewWorkbench({
 
         {/* Conflicts */}
         {conflicts && conflicts.totalConflicts > 0 && (
-          <div className="rounded border border-red-500/20 bg-red-500/5 p-4 space-y-2">
+          <div className="rounded border border-red-500/20 bg-red-500/5 p-3 md:p-4 space-y-2">
             <h3 className="text-xs font-medium text-red-300">{conflicts.summary}</h3>
             <div className="space-y-1.5">
               {conflicts.conflicts.slice(0, 5).map(c => (
@@ -177,7 +178,7 @@ export function GovernanceReviewWorkbench({
 
         {/* Review comment */}
         {(cr.status === "pending_review" || cr.status === "approved") && (
-          <div className="rounded border border-slate-800 bg-slate-900/50 p-4 space-y-2">
+          <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4 space-y-2">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">코멘트</label>
             <textarea value={comment} onChange={e => setComment(e.target.value)} placeholder="검토 의견..."
               className="w-full rounded bg-slate-950 border border-slate-800 px-3 py-2 text-sm text-slate-700 placeholder-slate-600 focus:border-blue-600 focus:outline-none resize-none" rows={3} />
@@ -186,7 +187,8 @@ export function GovernanceReviewWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-72 shrink-0 space-y-3">
+      <button className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden" onClick={() => setRailOpen(!railOpen)}>판단 근거 {railOpen ? "▲" : "▼"}</button>
+      <div className={cn("mt-3 md:mt-0 md:w-72 shrink-0 overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100 space-y-3", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0 md:max-h-none md:opacity-100")}>
         {explanation && (
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5 text-xs">
             <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">판단 근거</h4>
@@ -204,14 +206,14 @@ export function GovernanceReviewWorkbench({
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-end gap-2">
-          {canRevert && <button onClick={() => onRevert?.(comment)} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">롤백</button>}
-          {canReject && <button onClick={() => onReject?.(comment)} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">거부</button>}
-          {onRequestChanges && cr.status === "pending_review" && <button onClick={() => onRequestChanges(comment)} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors">수정 요청</button>}
-          {canSchedule && cr.status === "approved" && <button onClick={onScheduleApply} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors">예약 적용</button>}
-          {cr.status === "approved" && onApplyNow && <button onClick={onApplyNow} className="rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">즉시 적용</button>}
-          {canApprove && <button onClick={() => onApprove?.(comment)} disabled={!comment.trim()} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40">승인</button>}
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center md:justify-end gap-2">
+          {canRevert && <button onClick={() => onRevert?.(comment)} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors active:scale-95 min-h-[40px]">롤백</button>}
+          {canReject && <button onClick={() => onReject?.(comment)} className="flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors active:scale-95 min-h-[40px]">거부</button>}
+          {onRequestChanges && cr.status === "pending_review" && <button onClick={() => onRequestChanges(comment)} className="flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs font-medium text-amber-300 transition-colors active:scale-95 min-h-[40px]">수정 요청</button>}
+          {canSchedule && cr.status === "approved" && <button onClick={onScheduleApply} className="flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs font-medium text-blue-300 transition-colors active:scale-95 min-h-[40px]">예약 적용</button>}
+          {cr.status === "approved" && onApplyNow && <button onClick={onApplyNow} className="flex-1 md:flex-none rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95 min-h-[40px]">즉시 적용</button>}
+          {canApprove && <button onClick={() => onApprove?.(comment)} disabled={!comment.trim()} className="flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40 active:scale-95 min-h-[40px]">승인</button>}
         </div>
       </div>
     </div>

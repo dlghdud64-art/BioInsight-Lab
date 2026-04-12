@@ -301,10 +301,13 @@ export function InventoryTable({
       <div className="md:hidden">
         {sortedGroups.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 px-4">
-            <Package className="h-12 w-12 text-slate-700  text-slate-700 mb-4" />
-            <p className="text-sm text-muted-foreground mb-4 text-center">{emptyMessage}</p>
+            <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+              <Package className="h-7 w-7 text-slate-400" />
+            </div>
+            <p className="text-sm font-medium text-slate-600 mb-1">등록된 재고가 없습니다</p>
+            <p className="text-xs text-slate-400 mb-5 text-center max-w-xs leading-relaxed">{emptyMessage}</p>
             {emptyAction && (
-              <Button onClick={emptyAction} size="sm">{emptyActionLabel}</Button>
+              <Button onClick={emptyAction} size="sm" className="h-9 px-5 text-sm shadow-sm active:scale-95 transition-transform">{emptyActionLabel}</Button>
             )}
           </div>
         ) : (
@@ -570,26 +573,31 @@ export function InventoryTable({
       {/* ══ 데스크탑: 테이블 ══ */}
       <div className="hidden md:block w-full overflow-x-auto">
         <Table className="min-w-[800px]">
-          <TableHeader className="bg-slate-50">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-[44px] text-xs font-semibold text-slate-500 whitespace-nowrap"></TableHead>
-              <TableHead className="w-[100px] text-xs font-semibold text-slate-500 whitespace-nowrap">상태</TableHead>
-              <TableHead className="min-w-[220px] text-xs font-semibold text-slate-500 whitespace-nowrap">품목 정보</TableHead>
-              <TableHead className="w-[110px] text-right text-xs font-semibold text-slate-500 whitespace-nowrap">총 수량</TableHead>
-              <TableHead className="w-[80px] text-center text-xs font-semibold text-slate-500 whitespace-nowrap">Lot</TableHead>
-              <TableHead className="w-[130px] text-xs font-semibold text-slate-500 whitespace-nowrap">최단 유효기간</TableHead>
-              <TableHead className="w-[200px] text-center text-xs font-semibold text-slate-500 whitespace-nowrap">빠른 작업</TableHead>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent border-b border-slate-200">
+              <TableHead className="w-[44px] text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80"></TableHead>
+              <TableHead className="w-[72px] text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">상</TableHead>
+              <TableHead className="min-w-[240px] text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">품목정보</TableHead>
+              <TableHead className="w-[100px] text-right text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">총 수량</TableHead>
+              <TableHead className="w-[72px] text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">LOT</TableHead>
+              <TableHead className="w-[140px] text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">최단 유효기간</TableHead>
+              <TableHead className="w-[180px] text-center text-[11px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap bg-slate-50/80">빠른 작업</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sortedGroups.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-[400px]">
+                <TableCell colSpan={7} className="h-[420px]">
                   <div className="flex flex-col items-center justify-center h-full">
-                    <Package className="h-12 w-12 text-slate-700  text-slate-700 mb-4" />
-                    <p className="text-muted-foreground mb-4">{emptyMessage}</p>
+                    <div className="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-5">
+                      <Package className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <p className="text-sm font-medium text-slate-600 mb-1.5">등록된 재고가 없습니다</p>
+                    <p className="text-xs text-slate-400 mb-5 max-w-xs text-center leading-relaxed">{emptyMessage}</p>
                     {emptyAction && (
-                      <Button onClick={emptyAction} size="sm">{emptyActionLabel}</Button>
+                      <Button onClick={emptyAction} size="sm" className="h-9 px-5 text-sm shadow-sm active:scale-95 transition-transform">
+                        {emptyActionLabel}
+                      </Button>
                     )}
                   </div>
                 </TableCell>
@@ -615,12 +623,12 @@ export function InventoryTable({
                     {/* ══════ 상위 품목 row ══════ */}
                     <TableRow
                       className={`
-                        cursor-pointer select-none transition-all duration-150 border-b border-bd
+                        cursor-pointer select-none transition-all duration-150 border-b border-slate-100
                         ${isExpanded
-                          ? "bg-white hover:bg-slate-50 shadow-sm"
+                          ? "bg-blue-50/30 hover:bg-blue-50/50"
                           : isRisky
-                          ? "bg-amber-50/50 hover:bg-amber-50"
-                          : "bg-white hover:bg-slate-50"
+                          ? "bg-amber-50/30 hover:bg-amber-50/50"
+                          : "bg-white hover:bg-slate-50/80"
                         }
                       `}
                       onClick={() => toggleExpand(group.productId)}

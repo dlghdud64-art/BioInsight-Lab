@@ -5,11 +5,20 @@
  * 예산 목록, 통제 파생 상태, 필터, AI 인사이트를 관리한다.
  *
  * Flow scope: /dashboard/budget 에서 활성.
+ *
+ * [Phase 1 Ontology] DB 매핑을 ontology/mappers로 위임.
+ * Budget → BudgetObject 전환은 Phase 2에서 완료. 현재는 backward compat 유지.
  */
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+import {
+  mapBudgetRowToObject,
+  type SupabaseBudgetRow,
+  type BudgetObject,
+  type BudgetControlState,
+} from "@/lib/ontology";
 
-// ── Types ──
+// ── Types (backward compat — Phase 2에서 BudgetObject로 일원화) ──
 export interface BudgetUsage {
   totalSpent: number;
   usageRate: number;
@@ -45,45 +54,52 @@ export interface BudgetWithControl {
   ctrl: BudgetControl;
 }
 
-// ── Supabase row → Budget 매핑 ──
-interface SupabaseBudgetRow {
-  id: string;
-  name: string;
-  amount: number;
-  currency: string;
-  period_start: string;
-  period_end: string;
-  organization_id?: string | null;
-  target_department?: string | null;
-  project_name?: string | null;
-  description?: string | null;
-  total_spent: number;
-  burn_rate?: number | null;
-  status?: string | null;
-}
-
-function mapRowToBudget(row: SupabaseBudgetRow): Budget {
+// ── Ontology Domain Object → legacy Budget 변환 (Phase 2에서 제거) ──
+function ontologyToBudget(obj: BudgetObject): Budget {
   return {
-    id: row.id,
-    name: row.name,
-    amount: row.amount,
-    currency: row.currency,
-    periodStart: row.period_start,
-    periodEnd: row.period_end,
-    organizationId: row.organization_id,
-    targetDepartment: row.target_department,
-    projectName: row.project_name,
-    description: row.description,
+    id: obj.objectId,
+    name: obj.displayName,
+    amount: obj.allocatedAmount,
+    currency: obj.currency,
+    periodStart: obj.periodStart,
+    periodEnd: obj.periodEnd,
+    organizationId: null,
+    targetDepartment: obj.departmentName,
+    projectName: obj.projectName,
+    description: null,
     usage: {
-      totalSpent: row.total_spent ?? 0,
-      usageRate: row.burn_rate ?? 0,
-      remaining: Math.max(row.amount - (row.total_spent ?? 0), 0),
+      totalSpent: obj.controlState.actual,
+      usageRate: obj.controlState.burnRate,
+      remaining: obj.controlState.available,
     },
   };
 }
 
-// ── Derived calculation ──
+function ontologyToControl(ctrl: BudgetControlState, total: number): BudgetControl {
+  return {
+    total,
+    reserved: ctrl.reserved,
+    committed: ctrl.committed,
+    actual: ctrl.actual,
+    available: ctrl.available,
+    burnRate: ctrl.burnRate,
+    risk: ctrl.riskLevel,
+  };
+}
+
+/**
+ * Supabase row → Budget (ontology mapper 경유)
+ * 기존 인라인 매핑 대신 ontology/mappers/mapBudgetRowToObject를 거쳐
+ * Domain Object를 만든 뒤 legacy Budget으로 변환한다.
+ */
+function mapRowToBudget(row: SupabaseBudgetRow): Budget {
+  const domainObj = mapBudgetRowToObject(row);
+  return ontologyToBudget(domainObj);
+}
+
+// ── Derived calculation (ontology 경유) ──
 export function deriveBudgetControl(b: Budget): BudgetControl {
+  // Phase 1: ontology controlState와 동일한 계산 로직 사용
   const total = b.amount;
   const actual = b.usage?.totalSpent ?? 0;
   const reserved = 0;
@@ -171,6 +187,8 @@ interface BudgetStoreState {
 
   // Supabase CRUD
   fetchBudgets: () => Promise<void>;
+  /** Supabase Realtime 구독. budgets 변경 시 자동 refetch */
+  subscribe: () => () => void;
   createBudget: (data: {
     name: string;
     amount: number;
@@ -346,6 +364,24 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
     } catch (err) {
       console.error("[budget-store] updateBudget error:", err);
     }
+  },
+
+  // ── Realtime: Supabase postgres_changes 구독 ──
+  subscribe: () => {
+    const channel = supabase
+      .channel("budgets-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "budgets" },
+        () => {
+          get().fetchBudgets();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   },
 
   // ── Supabase: 삭제 ──

@@ -1229,7 +1229,7 @@ function InventoryPageContent() {
               }}
             />
 
-            {/* ── 1차 액션: Add Item · Smart Receive · Reflect Purchase ── */}
+            {/* ── Primary CTAs: 품목 추가 + 스마트 입고 ── */}
             <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm shadow-sm active:scale-95 transition-transform">
               <Plus className="h-4 w-4 mr-1.5" />
               품목 추가
@@ -1241,59 +1241,37 @@ function InventoryPageContent() {
               <Sparkles className="h-4 w-4 mr-1.5" />
               스마트 입고 (AI)
             </Button>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/dashboard/purchases")}
-              className="h-9 px-3 text-sm"
-            >
-              <PackagePlus className="h-4 w-4 mr-1.5" />
-              구매 반영
-            </Button>
 
-            {/* ── 2차 액션: Print Label · Import · Export ── */}
-            <Button
-              variant="outline"
-              onClick={() => handleBulkLabelPrint()}
-              className="h-9 px-3 text-sm"
-            >
-              <Printer className="h-4 w-4 mr-1.5" />
-              라벨 인쇄
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setIsImportStagingOpen(true)}
-              className="h-9 px-3 text-sm hidden md:inline-flex"
-            >
-              <Upload className="h-4 w-4 mr-1.5" />
-              가져오기
-            </Button>
-            <Button variant="outline" className="h-9 px-3 text-sm hidden md:inline-flex">
-              <Download className="h-4 w-4 mr-1.5" />
-              내보내기
-            </Button>
-
-            {/* ── 더보기 (모바일 + 라벨 데이터 내보내기 등 보조 기능) ── */}
+            {/* ── 더보기: 보조 기능 통합 ── */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem
+                  onClick={() => router.push("/dashboard/purchases")}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <PackagePlus className="h-3.5 w-3.5" />
+                  구매 반영
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => setIsImportStagingOpen(true)}
-                  className="flex items-center gap-2 text-xs md:hidden"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <Upload className="h-3.5 w-3.5" />
                   재고 파일 가져오기
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => router.push("/dashboard/inventory/scan")}
-                  className="flex items-center gap-2 text-xs md:hidden"
+                  className="flex items-center gap-2 text-xs"
                 >
                   <QrCode className="h-3.5 w-3.5" />
                   QR 스캔
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
                     if (isExportingLabels) return;
@@ -1338,7 +1316,7 @@ function InventoryPageContent() {
           <div className="flex items-center gap-0.5 border-b border-slate-200 mb-4 overflow-x-auto scrollbar-hide">
             {[
               { key: "manage", icon: <ListFilter className="w-3.5 h-3.5" />, label: "품목 관리", badge: null },
-              { key: "overview", icon: <LayoutGrid className="w-3.5 h-3.5" />, label: "운영 현황", badge: issuesCount > 0 ? issuesCount : null },
+              { key: "overview", icon: <LayoutGrid className="w-3.5 h-3.5" />, label: "운영 현황", badge: issuesCount > 0 ? issuesCount : null, suffix: "S" },
               { key: "storage-location", icon: <MapPin className="w-3.5 h-3.5" />, label: "보관 위치", badge: null },
               { key: "flow", icon: <Truck className="w-3.5 h-3.5" />, label: "입출고 흐름", badge: null },
             ].map((tab) => (
@@ -1349,6 +1327,9 @@ function InventoryPageContent() {
               >
                 {tab.icon}
                 {tab.label}
+                {"suffix" in tab && tab.suffix && (
+                  <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>
+                )}
                 {tab.badge !== null && (
                   <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">
                     {tab.badge}
@@ -1362,15 +1343,15 @@ function InventoryPageContent() {
           </div>
 
         {/* 통합 카드: 콘텐츠 */}
-        <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
           <div className="w-full">
 
             {/* 하단 통합 콘텐츠 */}
             {/* 1. 품목 관리 (item-level 운영 surface) */}
             <TabsContent value="manage" className="m-0 p-4 space-y-4">
-              {/* 검색 + 필터 한 줄 가로 배치 */}
-              <div className="flex items-center gap-2.5">
-                {/* 검색창 — 가장 넓게 */}
+              {/* 검색 + 아이콘 액션 한 줄 — 스크린샷 레이아웃 */}
+              <div className="flex items-center gap-2">
+                {/* 검색창 — flex-1 */}
                 <div className="flex-1 min-w-0">
                   <InventorySearch
                     value={searchQuery}
@@ -1378,47 +1359,91 @@ function InventoryPageContent() {
                     isLoading={isLoading}
                   />
                 </div>
-                {/* Location 필터 */}
-                <Select value={locationFilter} onValueChange={setLocationFilter}>
-                  <SelectTrigger className="w-[150px] shrink-0">
-                    <SelectValue placeholder="전체 위치" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체 위치</SelectItem>
-                    <SelectItem value="none">위치 미지정</SelectItem>
-                    {uniqueLocations.map((loc) => (
-                      <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {/* Status 필터 */}
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px] shrink-0">
-                    <SelectValue placeholder="전체 상태" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">전체 상태</SelectItem>
-                    <SelectItem value="low">부족 / 재주문</SelectItem>
-                    <SelectItem value="expiring">만료 임박</SelectItem>
-                    <SelectItem value="incoming">입고 대기</SelectItem>
-                    <SelectItem value="lot_issue">LOT 이슈</SelectItem>
-                    <SelectItem value="recent">최근 변경</SelectItem>
-                    <SelectItem value="normal">정상</SelectItem>
-                  </SelectContent>
-                </Select>
-                {/* 모바일 필터 버튼 */}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFilterSheetOpen(true)}
-                  className="md:hidden h-9 px-2.5 gap-1.5 text-xs shrink-0"
-                >
-                  <Filter className="h-3.5 w-3.5" />
-                  {activeFilterCount > 0 && (
-                    <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] font-bold">
-                      {activeFilterCount}
-                    </Badge>
-                  )}
+
+                {/* 필터 드롭다운 (아이콘) */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 relative">
+                      <Filter className="h-4 w-4" />
+                      {activeFilterCount > 0 && (
+                        <span className="absolute -top-1 -right-1 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[9px] font-bold px-1">
+                          {activeFilterCount}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 p-3 space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">위치</label>
+                      <Select value={locationFilter} onValueChange={setLocationFilter}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="전체 위치" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 위치</SelectItem>
+                          <SelectItem value="none">위치 미지정</SelectItem>
+                          {uniqueLocations.map((loc) => (
+                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">상태</label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-8 text-xs">
+                          <SelectValue placeholder="전체 상태" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">전체 상태</SelectItem>
+                          <SelectItem value="low">부족 / 재주문</SelectItem>
+                          <SelectItem value="expiring">만료 임박</SelectItem>
+                          <SelectItem value="incoming">입고 대기</SelectItem>
+                          <SelectItem value="lot_issue">LOT 이슈</SelectItem>
+                          <SelectItem value="recent">최근 변경</SelectItem>
+                          <SelectItem value="normal">정상</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs" onClick={() => { setLocationFilter("all"); setStatusFilter("all"); setCategoryFilter("all"); }}>
+                        초기화
+                      </Button>
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* 라벨 인쇄 (아이콘) */}
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => handleBulkLabelPrint()} title="라벨 인쇄">
+                  <Printer className="h-4 w-4" />
+                </Button>
+
+                {/* 내보내기 (아이콘) */}
+                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" title="내보내기" onClick={async () => {
+                  if (isExportingLabels) return;
+                  setIsExportingLabels(true);
+                  try {
+                    const res = await fetch("/api/inventory/export-labels");
+                    if (!res.ok) {
+                      const json = await res.json().catch(() => ({}));
+                      throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+                    a.href = url;
+                    a.download = `Inventory_${yyyymmdd}.xlsx`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                    toast({ title: "내보내기 완료" });
+                  } catch (e: unknown) {
+                    toast({ title: "내보내기 실패", description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.", variant: "destructive" });
+                  } finally {
+                    setIsExportingLabels(false);
+                  }
+                }}>
+                  <Download className="h-4 w-4" />
                 </Button>
               </div>
 

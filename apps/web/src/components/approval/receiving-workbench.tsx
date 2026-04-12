@@ -76,9 +76,10 @@ export function ReceivingWorkbench({
   const totalExpected = lines.reduce((s, l) => s + l.expectedQty, 0);
   const totalReceived = lines.reduce((s, l) => s + l.receivedQty, 0);
   const pendingLines = lines.filter(l => l.status === "pending");
+  const [railOpen, setRailOpen] = React.useState(false);
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ═══ CENTER ═══ */}
       <div className="flex-1 min-w-0 space-y-4">
         {guidance && (
@@ -92,11 +93,11 @@ export function ReceivingWorkbench({
         )}
 
         {/* Summary strip */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 md:p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
             {mode === "preparation" ? "입고 준비" : "입고 실행"}
           </h3>
-          <div className="grid grid-cols-4 gap-3 text-sm">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-3 text-sm">
             <div>
               <span className="text-slate-500 text-xs">총 라인</span>
               <p className="text-sm font-semibold tabular-nums text-slate-900">{lines.length}건</p>
@@ -119,8 +120,8 @@ export function ReceivingWorkbench({
         </div>
 
         {/* Lines table */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <table className="w-full text-xs">
+        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-x-auto">
+          <table className="w-full min-w-[400px] text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500">
                 <th className="px-3 py-2 text-left font-medium">Line</th>
@@ -154,7 +155,15 @@ export function ReceivingWorkbench({
       </div>
 
       {/* ═══ RAIL ═══ */}
-      <div className="w-64 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 px-3 text-xs text-slate-500 md:hidden rounded border border-slate-800 bg-slate-900/50"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          입고 현황 {railOpen ? "▲" : "▼"}
+        </button>
+        <div className={cn("overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+          <div className="space-y-3 mt-3 md:mt-0">
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1.5">
           <h4 className="text-xs font-medium uppercase tracking-wider text-slate-500">입고 현황</h4>
           <div className="text-xs space-y-1">
@@ -171,30 +180,32 @@ export function ReceivingWorkbench({
           </div>
         </div>
 
-        {hasVariance && (
-          <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
-            <p className="text-xs text-amber-400">
-              입고 수량 차이 감지됨. 완료 후 variance disposition 단계로 이동합니다.
-            </p>
+            {hasVariance && (
+              <div className="rounded border border-amber-500/20 bg-amber-500/5 p-3">
+                <p className="text-xs text-amber-400">
+                  입고 수량 차이 감지됨. 완료 후 variance disposition 단계로 이동합니다.
+                </p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {/* ═══ DOCK ═══ */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-2 md:py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
           <NextActionHint
             message={allLinesComplete
               ? (hasVariance ? "입고 완료 — variance disposition으로 이동" : "입고 완료 — 재고 릴리스 준비")
               : `${pendingLines.length}건 입고 대기`}
             variant={pendingLines.length > 0 ? "default" : "default"}
           />
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto md:shrink-0 md:ml-4">
             {onCompleteReceiving && (
               <button
                 onClick={onCompleteReceiving}
                 disabled={!allLinesComplete}
-                className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
+                className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors disabled:opacity-40"
               >
                 입고 완료
               </button>

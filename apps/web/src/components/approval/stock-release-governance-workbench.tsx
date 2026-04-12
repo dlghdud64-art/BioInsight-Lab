@@ -90,8 +90,10 @@ export function StockReleaseGovernanceWorkbench({
   onCompleteReview, onPartialRelease, onFullRelease, onCancel, onReopenReceiving,
   className,
 }: StockReleaseGovernanceWorkbenchProps) {
+  const [railOpen, setRailOpen] = React.useState(false);
+
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:flex-row md:gap-4 md:pb-0 h-full", className)}>
       {/* ── Center ── */}
       <div className="flex-1 min-w-0 space-y-4">
         {/* Status strip */}
@@ -138,8 +140,8 @@ export function StockReleaseGovernanceWorkbench({
         </div>
 
         {/* Line-level release/held delta */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-hidden">
-          <table className="w-full text-xs">
+        <div className="rounded border border-slate-800 bg-slate-900/50 overflow-x-auto">
+          <table className="w-full min-w-[500px] text-xs">
             <thead>
               <tr className="border-b border-slate-800 text-slate-500">
                 <th className="px-3 py-2 text-left font-medium">품목</th>
@@ -220,7 +222,15 @@ export function StockReleaseGovernanceWorkbench({
       </div>
 
       {/* ── Rail ── */}
-      <div className="w-64 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 px-3 text-xs text-slate-500 md:hidden rounded border border-slate-800 bg-slate-900/50"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          릴리즈 요약 {railOpen ? "▲" : "▼"}
+        </button>
+        <div className={cn("overflow-hidden transition-all duration-200 md:max-h-none md:opacity-100", railOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0")}>
+          <div className="space-y-3 mt-3 md:mt-0">
         {/* Release summary */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-2 text-xs">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">릴리즈 요약</h4>
@@ -260,38 +270,40 @@ export function StockReleaseGovernanceWorkbench({
           <p className="text-slate-400">{state.storageLocation}</p>
         </div>
 
-        {/* Chain linkage */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1 text-xs">
-          <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">체인 연결</h4>
-          <div className="flex justify-between"><span className="text-slate-500">PO</span><span className="text-slate-400 font-mono">{state.poNumber}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">입고실행</span><span className="text-slate-400 font-mono truncate ml-2">{state.receivingExecutionId}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">확인</span><span className="text-slate-400 font-mono truncate ml-2">{state.confirmationGovernanceId}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">PO객체</span><span className="text-slate-400 font-mono truncate ml-2">{state.poCreatedObjectId}</span></div>
+            {/* Chain linkage */}
+            <div className="rounded border border-slate-800 bg-slate-900/50 p-3 space-y-1 text-xs">
+              <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500">체인 연결</h4>
+              <div className="flex justify-between"><span className="text-slate-500">PO</span><span className="text-slate-400 font-mono">{state.poNumber}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">입고실행</span><span className="text-slate-400 font-mono truncate ml-2">{state.receivingExecutionId}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">확인</span><span className="text-slate-400 font-mono truncate ml-2">{state.confirmationGovernanceId}</span></div>
+              <div className="flex justify-between"><span className="text-slate-500">PO객체</span><span className="text-slate-400 font-mono truncate ml-2">{state.poCreatedObjectId}</span></div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* ── Dock ── */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
-        <div className="flex items-center justify-between">
+      <div className="fixed bottom-0 left-0 right-0 z-30 md:absolute md:bottom-auto border-t border-slate-800 bg-slate-950 px-3 md:px-4 py-2 md:py-3">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2">
           <span className="text-xs text-slate-500">{surface.nextAction}</span>
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto md:shrink-0 md:ml-4">
             {surface.canCancel && (
-              <button onClick={onCancel} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
+              <button onClick={onCancel} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 active:scale-95 px-3 py-1.5 text-xs text-slate-600 transition-colors">취소</button>
             )}
             {surface.canReopenReceiving && (
-              <button onClick={onReopenReceiving} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">Receiving 재열기</button>
+              <button onClick={onReopenReceiving} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">Receiving 재열기</button>
             )}
             {surface.canPlaceHold && !surface.isTerminal && (
-              <button onClick={onPlaceHold} className="rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 px-3 py-1.5 text-xs text-amber-300 transition-colors">보류 추가</button>
+              <button onClick={onPlaceHold} className="min-h-[40px] flex-1 md:flex-none rounded border border-amber-500/20 bg-amber-500/10 hover:bg-amber-500/20 active:scale-95 px-3 py-1.5 text-xs text-amber-300 transition-colors">보류 추가</button>
             )}
             {surface.canPartialRelease && (
-              <button onClick={onPartialRelease} className="rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 px-3 py-1.5 text-xs text-blue-300 transition-colors">부분 릴리즈</button>
+              <button onClick={onPartialRelease} className="min-h-[40px] flex-1 md:flex-none rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 px-3 py-1.5 text-xs text-blue-300 transition-colors">부분 릴리즈</button>
             )}
             {surface.canEvaluate && (
-              <button onClick={onStartEvaluation} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">릴리즈 평가 시작</button>
+              <button onClick={onStartEvaluation} className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors">릴리즈 평가 시작</button>
             )}
             {surface.canFullRelease && (
-              <button onClick={onFullRelease} className="rounded bg-emerald-600 hover:bg-emerald-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">전량 릴리즈</button>
+              <button onClick={onFullRelease} className="min-h-[40px] flex-1 md:flex-none rounded bg-emerald-600 hover:bg-emerald-500 active:scale-95 px-4 py-1.5 text-xs font-medium text-white transition-colors">전량 릴리즈</button>
             )}
           </div>
         </div>

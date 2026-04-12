@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   FileText, Package, ShoppingCart, AlertTriangle, Clock,
@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useOrderPeekOverlayStore } from "@/lib/store/order-peek-overlay-store";
 import { cn } from "@/lib/utils";
 import {
   useWorkQueue,
@@ -170,7 +171,7 @@ export function WorkQueueInbox() {
               </span>
               <span className="text-[13px] font-medium text-slate-700">처리 대기 {activeItems.length}건</span>
               <span className="text-[11px] text-slate-500 hidden sm:inline">
-                · {activeItems[0] ? (ACTIVITY_LABEL[activeItems[0].lastActivity ?? ""] || activeItems[0].description?.slice(0, 30) || "검토 필요") : ""}
+                · {activeItems[0] ? (ACTIVITY_LABEL[(activeItems[0] as any).lastActivity ?? ""] || (activeItems[0] as any).description?.slice(0, 30) || "검토 필요") : ""}
               </span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -192,7 +193,18 @@ export function WorkQueueInbox() {
               <WorkQueueCard
                 key={item.id}
                 item={item}
-                onNavigate={() => router.push(getDeepLinkPath(item))}
+                onNavigate={() => {
+                  // ORDER type 은 페이지 이동 대신 peek drawer 로 1-shot 요약 제공.
+                  // 본격 검토는 drawer 의 "워크벤치 열기" CTA 로 hand-off.
+                  if (item.relatedEntityType === "ORDER") {
+                    useOrderPeekOverlayStore.getState().openById(
+                      item.relatedEntityId ?? item.id,
+                      item.title,
+                    );
+                  } else {
+                    router.push(getDeepLinkPath(item));
+                  }
+                }}
                 onApprove={() => approveMutation.mutate({ id: item.id })}
                 onDismiss={() => dismissMutation.mutate(item.id)}
                 onExecuteOps={(actionId: string) =>
@@ -322,63 +334,8 @@ function WorkQueueCard({
               </p>
             )}
             {/* SLA aging indicator for compare items */}
-            {item.type === "COMPARE_DECISION" && item.substatus && COMPARE_SUBSTATUS_DEFS[item.substatus] && (() => {
-              const def = COMPARE_SUBSTATUS_DEFS[item.substatus];
-              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
-              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
-                return (
-                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />{ageDays}일 경과
-                  </span>
-                );
-              }
-              return null;
-            })()}
-            {/* SLA aging indicator for ops items */}
-            {item.type !== "COMPARE_DECISION" && item.substatus && OPS_SUBSTATUS_DEFS[item.substatus] && (() => {
-              const def = OPS_SUBSTATUS_DEFS[item.substatus!];
-              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
-              if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
-                return (
-                  <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
-                    <Clock className="h-3 w-3" />{ageDays}일 경과 — {def.escalationMeaning}
-                  </span>
-                );
-              }
-              return null;
-            })()}
-            {/* Inquiry count for compare_inquiry_followup */}
-            {item.substatus === "compare_inquiry_followup" && item.metadata?.inquiryCount && (
-              <span className="text-[10px] text-slate-500 mt-0.5">
-                문의 {String(item.metadata.inquiryCount)}건
-              </span>
-            )}
-            {/* Inquiry aging indicator */}
-            {item.substatus === "compare_inquiry_followup" && (() => {
-              const drafts = item.metadata?.inquiryDrafts as { status: string; createdAt: string }[] | undefined;
-              if (!drafts) return null;
-              const agingDays = computeInquiryAgingDays({ inquiryDrafts: drafts });
-              if (agingDays === null) return null;
-              return (
-                <span className="text-[10px] text-red-500 font-medium mt-0.5">
-                  문의 미발송 {agingDays}일
-                </span>
-              );
-            })()}
-            {/* No-movement hint for stale decision_pending items */}
-            {item.substatus === "compare_decision_pending" && (() => {
-              const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
-              const hasInquiry = Number(item.metadata?.inquiryCount || 0) > 0;
-              const hasQuote = Number(item.metadata?.linkedQuoteCount || 0) > 0;
-              if (ageDays >= 3 && !hasInquiry && !hasQuote) {
-                return (
-                  <span className="text-[10px] text-orange-500 font-medium mt-0.5">
-                    다음 단계 없음 — 판정 또는 문의/견적 전환 필요
-                  </span>
-                );
-              }
-              return null;
-            })()}
+            <CompareSlaBadge item={item} />
+            <ItemSlaBadges item={item} />
 
             {/* Row 3: CTA + Dismiss + Time */}
             <div className="flex items-center gap-2 mt-2">
@@ -429,6 +386,78 @@ function WorkQueueCard({
   );
 }
 
+// ── SLA / status badges (extracted to avoid IIFE unknown-type leak in JSX &&-chains) ──
+function CompareSlaBadge({ item }: { item: WorkQueueItem }) {
+  if (item.type !== "COMPARE_DECISION" || !item.substatus) return null;
+  const def = COMPARE_SUBSTATUS_DEFS[item.substatus];
+  if (!def) return null;
+  const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+  if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+    return (
+      <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+        <Clock className="h-3 w-3" />{ageDays}일 경과
+      </span>
+    );
+  }
+  return null;
+}
+
+function ItemSlaBadges({ item }: { item: WorkQueueItem }) {
+  const parts: React.ReactNode[] = [];
+  const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+
+  // SLA aging — ops items
+  if (item.type !== "COMPARE_DECISION" && item.substatus) {
+    const def = OPS_SUBSTATUS_DEFS[item.substatus];
+    if (def && !def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
+      parts.push(
+        <span key="ops-sla" className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
+          <Clock className="h-3 w-3" />{ageDays}일 경과 — {def.escalationMeaning}
+        </span>,
+      );
+    }
+  }
+
+  // Inquiry count
+  if (item.substatus === "compare_inquiry_followup" && item.metadata?.inquiryCount) {
+    parts.push(
+      <span key="inq-count" className="text-[10px] text-slate-500 mt-0.5">
+        문의 {String(item.metadata.inquiryCount)}건
+      </span>,
+    );
+  }
+
+  // Inquiry aging
+  if (item.substatus === "compare_inquiry_followup") {
+    const drafts = item.metadata?.inquiryDrafts as { status: string; createdAt: string }[] | undefined;
+    if (drafts) {
+      const agingDays = computeInquiryAgingDays({ inquiryDrafts: drafts });
+      if (agingDays !== null) {
+        parts.push(
+          <span key="inq-aging" className="text-[10px] text-red-500 font-medium mt-0.5">
+            문의 미발송 {agingDays}일
+          </span>,
+        );
+      }
+    }
+  }
+
+  // No-movement hint
+  if (item.substatus === "compare_decision_pending") {
+    const hasInquiry = Number(item.metadata?.inquiryCount || 0) > 0;
+    const hasQuote = Number(item.metadata?.linkedQuoteCount || 0) > 0;
+    if (ageDays >= 3 && !hasInquiry && !hasQuote) {
+      parts.push(
+        <span key="no-move" className="text-[10px] text-orange-500 font-medium mt-0.5">
+          다음 단계 없음 — 판정 또는 문의/견적 전환 필요
+        </span>,
+      );
+    }
+  }
+
+  return parts.length > 0 ? <>{parts}</> : null;
+}
+
 // ── Completed Card (접힘 영역) ──
 
 function CompletedCard({ item }: { item: WorkQueueItem }) {
@@ -439,7 +468,7 @@ function CompletedCard({ item }: { item: WorkQueueItem }) {
     <div className="flex items-center gap-2 py-1.5 px-1">
       <CheckCircle2 className="h-3.5 w-3.5 text-green-500 flex-shrink-0" />
       <span className="text-xs text-slate-500 truncate flex-1">{item.title}</span>
-      {item.type === "COMPARE_DECISION" && item.metadata?.resolutionPath && (
+      {item.type === "COMPARE_DECISION" && !!item.metadata?.resolutionPath && (
         <span className="text-[10px] text-slate-400 flex-shrink-0">
           {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
         </span>

@@ -68,6 +68,7 @@ export function PilotActivationWorkbench({
   className,
 }: PilotActivationWorkbenchProps) {
   const [confirmAction, setConfirmAction] = React.useState<"activate" | "rollback" | "complete" | "cancel" | null>(null);
+  const [railOpen, setRailOpen] = React.useState(false);
   const plan = surface.center.plan;
   const progress = surface.center.checklistProgress;
   const isAuthorized = authorizedRoles.includes(operatorRole);
@@ -82,9 +83,9 @@ export function PilotActivationWorkbench({
   };
 
   return (
-    <div className={cn("flex gap-4 h-full", className)}>
+    <div className={cn("flex flex-col pb-20 md:pb-0 md:flex-row gap-4 h-full", className)}>
       {/* ── Center: Checklist ── */}
-      <div className="flex-1 min-w-0 space-y-4">
+      <div className="flex-1 min-w-0 overflow-y-auto p-3 md:p-4 space-y-4">
         {/* Status header */}
         <div className="flex items-center justify-between px-4 py-2.5 rounded bg-slate-900 border border-slate-800">
           <div className="flex items-center gap-3">
@@ -140,7 +141,15 @@ export function PilotActivationWorkbench({
       </div>
 
       {/* ── Rail: Context ── */}
-      <div className="w-64 shrink-0 space-y-3">
+      <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+        <button
+          className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden"
+          onClick={() => setRailOpen(!railOpen)}
+        >
+          설정 정보 {railOpen ? "▲" : "▼"}
+        </button>
+        {railOpen && (
+          <div className="space-y-3">
         {/* Included stages */}
         <div className="rounded border border-slate-800 bg-slate-900/50 p-3">
           <h4 className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">포함 단계</h4>
@@ -178,10 +187,12 @@ export function PilotActivationWorkbench({
             <p className="text-[10px] text-amber-400">현재 역할({operatorRole})은 파일럿 활성화/롤백 권한이 없습니다.</p>
           </div>
         )}
+        </div>
+        )}
       </div>
 
       {/* ── Dock: Actions ── */}
-      <div className="absolute bottom-0 left-0 right-0 border-t border-slate-800 bg-slate-950 px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 md:static z-30 md:z-auto border-t border-slate-800 bg-slate-950 px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-[10px] text-slate-500">
             {plan.status === "ready_to_activate" ? "모든 필수 항목 확인 완료 — 파일럿 시작 가능" :
@@ -189,21 +200,21 @@ export function PilotActivationWorkbench({
              plan.status === "completed" || plan.status === "rolled_back" || plan.status === "cancelled" ? "파일럿 종료됨" :
              `필수 항목 ${progress.requiredTotal - progress.requiredChecked}건 남음`}
           </span>
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 shrink-0 ml-4 flex-wrap md:flex-nowrap">
             {onExport && (
-              <button onClick={onExport} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors">내보내기</button>
+              <button onClick={onExport} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors active:scale-95">내보내기</button>
             )}
             {surface.dock.actions.find(a => a.actionKey === "cancel_pilot")?.enabled && isAuthorized && (
-              <button onClick={() => setConfirmAction("cancel")} className="rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors">취소</button>
+              <button onClick={() => setConfirmAction("cancel")} className="min-h-[40px] flex-1 md:flex-none rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors active:scale-95">취소</button>
             )}
             {surface.dock.actions.find(a => a.actionKey === "rollback_pilot")?.enabled && isAuthorized && (
-              <button onClick={() => setConfirmAction("rollback")} className="rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors">롤백</button>
+              <button onClick={() => setConfirmAction("rollback")} className="min-h-[40px] flex-1 md:flex-none rounded border border-red-500/20 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 text-xs font-medium text-red-300 transition-colors active:scale-95">롤백</button>
             )}
             {surface.dock.actions.find(a => a.actionKey === "complete_pilot")?.enabled && isAuthorized && (
-              <button onClick={() => setConfirmAction("complete")} className="rounded border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-300 transition-colors">완료</button>
+              <button onClick={() => setConfirmAction("complete")} className="min-h-[40px] flex-1 md:flex-none rounded border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-300 transition-colors active:scale-95">완료</button>
             )}
             {surface.dock.actions.find(a => a.actionKey === "activate_pilot")?.enabled && isAuthorized && (
-              <button onClick={() => setConfirmAction("activate")} className="rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors">파일럿 시작</button>
+              <button onClick={() => setConfirmAction("activate")} className="min-h-[40px] flex-1 md:flex-none rounded bg-blue-600 hover:bg-blue-500 px-4 py-1.5 text-xs font-medium text-white transition-colors active:scale-95">파일럿 시작</button>
             )}
           </div>
         </div>

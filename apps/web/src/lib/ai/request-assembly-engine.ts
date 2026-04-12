@@ -11,6 +11,9 @@
 
 import type { CompareDecisionSnapshot, RequestCandidateHandoff } from "./compare-review-engine";
 
+// Re-export so downstream consumers can pull request-assembly types from a single module.
+export type { RequestCandidateHandoff };
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Request Assembly Status
 // ══════════════════════════════════════════════════════════════════════════════

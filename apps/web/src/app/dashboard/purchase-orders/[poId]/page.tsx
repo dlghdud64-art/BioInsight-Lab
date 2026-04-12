@@ -1,9 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { useDispatchOutboundStore } from "@/lib/store/dispatch-outbound-store";
 import {
   ChevronDown,
   ChevronUp,
@@ -17,6 +18,8 @@ import {
   Zap,
   Shield,
   ExternalLink,
+  CalendarClock,
+  XCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
@@ -119,6 +122,7 @@ export default function PurchaseOrderDetailPage() {
   const [showLines, setShowLines] = useState(true);
   const [showAck, setShowAck] = useState(true);
   const [showHandoff, setShowHandoff] = useState(true);
+  const [auditModalOpen, setAuditModalOpen] = useState(false);
 
   const po = useMemo(
     () => store.purchaseOrders.find((p) => p.id === poId),
@@ -165,6 +169,23 @@ export default function PurchaseOrderDetailPage() {
   const isIssued = po.status === "issued" || po.status === "acknowledged";
   const isAcknowledged = po.status === "acknowledged";
   const ackPending = po.status === "issued" && (!ack || ack.status === "sent" || ack.status === "not_sent");
+
+  // ── Outbound execution intent (created truth 와 분리된 schedule/cancel state) ──
+  const outboundRecord = useDispatchOutboundStore((s) => s.recordsByPoId[po.id]);
+  // append-only outbound lineage — read-only audit surface 용
+  const outboundHistory = useDispatchOutboundStore((s) => s.historyByPoId[po.id] ?? []);
+  const hydrateOutbound = useDispatchOutboundStore((s) => s.hydrateFromPersistence);
+  const hydrateOutboundServer = useDispatchOutboundStore((s) => s.hydrateFromServerPersistence);
+
+  // 서버 → sessionStorage 순서로 outbound history 를 hydrate (새로고침/탭 재진입 시)
+  useEffect(() => {
+    // 1. 동기 sessionStorage hydrate (즉각적)
+    const synced = hydrateOutbound(po.id);
+    // 2. 서버 hydrate (비동기, sessionStorage 에 없을 때만 실행)
+    if (!synced) {
+      hydrateOutboundServer(po.id);
+    }
+  }, [po.id, hydrateOutbound, hydrateOutboundServer]);
 
   // ── Shell props ──
   const contextStrip: InboxContextStripProps | undefined = inboxItem
@@ -297,22 +318,31 @@ export default function PurchaseOrderDetailPage() {
         {/* ═══════════════════════════════════════════════════════
             B'. Dispatch Workbench Entry (governance handoff)
             isApproved 상태에서만 노출. 발송 워크벤치는 별도 라우트.
+            outbound execution intent (schedule/cancel) 가 있으면
+            in-context status 로 표시 — created truth 는 변경하지 않음.
             ═══════════════════════════════════════════════════════ */}
         {isApproved && !isIssued && (
-          <Link
-            href={`/dashboard/purchase-orders/${po.id}/dispatch`}
-            className="flex items-center justify-between gap-3 rounded border border-blue-700/40 bg-blue-900/20 hover:bg-blue-900/30 px-4 py-2.5 text-xs transition-colors"
-          >
-            <div className="flex items-center gap-2">
-              <span className="rounded bg-blue-700/40 px-1.5 py-0.5 text-[10px] font-medium text-blue-200 uppercase tracking-wider">
-                발송 워크벤치
-              </span>
-              <span className="text-slate-300">
-                PO Created → Dispatch Prep — 공급사 송신 전 최종 검토 진입
-              </span>
-            </div>
-            <ArrowRight className="h-3 w-3 text-blue-300" />
-          </Link>
+          <>
+            <DispatchWorkbenchEntry
+              poId={po.id}
+              outboundRecord={outboundRecord}
+            />
+            {/* outbound lineage (history >= 2 일 때만 노출 — 단일 mutation 은 latest strip 으로 충분) */}
+            {outboundHistory.length >= 2 && (
+              <>
+                <DispatchOutboundHistoryStrip
+                  history={outboundHistory}
+                  onViewAll={() => setAuditModalOpen(true)}
+                />
+                <DispatchOutboundAuditModal
+                  open={auditModalOpen}
+                  onOpenChange={setAuditModalOpen}
+                  history={outboundHistory}
+                  poNumber={po.poNumber}
+                />
+              </>
+            )}
+          </>
         )}
 
         {/* ═══════════════════════════════════════════════════════
@@ -852,4 +882,315 @@ function ReceivingHandoffPanel({ model }: { model: POExecutionModel }) {
       )}
     </div>
   );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Dispatch Workbench Entry — outbound execution intent in-context strip
+//
+// 발송 워크벤치(/dispatch) 진입점.
+// outbound store 의 schedule/cancel intent 를 PO 상세에서 직접 노출한다.
+// created truth(po.status) 는 절대 변경하지 않으며, 이 strip 은 오직
+// outbound execution lifecycle 만 표시한다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface DispatchWorkbenchEntryProps {
+  poId: string;
+  outboundRecord: import("@/lib/store/dispatch-outbound-store").DispatchOutboundRecord | undefined;
+}
+
+function DispatchWorkbenchEntry({ poId, outboundRecord }: DispatchWorkbenchEntryProps) {
+  const href = `/dashboard/purchase-orders/${poId}/dispatch`;
+
+  // ── 1) outbound intent 없음 → 기본 진입 strip ──
+  if (!outboundRecord) {
+    return (
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 rounded border border-blue-700/40 bg-blue-900/20 hover:bg-blue-900/30 px-4 py-2.5 text-xs transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-blue-700/40 px-1.5 py-0.5 text-[10px] font-medium text-blue-200 uppercase tracking-wider">
+            발송 워크벤치
+          </span>
+          <span className="text-slate-300">
+            PO Created → Dispatch Prep — 공급사 송신 전 최종 검토 진입
+          </span>
+        </div>
+        <ArrowRight className="h-3 w-3 text-blue-300" />
+      </Link>
+    );
+  }
+
+  // ── 2) 예약 발송 등록됨 ──
+  if (outboundRecord.status === "scheduled" && outboundRecord.scheduledFor) {
+    return (
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 rounded border border-amber-700/40 bg-amber-900/15 hover:bg-amber-900/25 px-4 py-2.5 text-xs transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-amber-700/40 px-1.5 py-0.5 text-[10px] font-medium text-amber-200 uppercase tracking-wider">
+            예약 발송 등록
+          </span>
+          <CalendarClock className="h-3.5 w-3.5 text-amber-300" />
+          <span className="text-slate-300">
+            {formatScheduledFor(outboundRecord.scheduledFor)} 발송 예정 — 워크벤치에서 재예약/취소
+          </span>
+        </div>
+        <ArrowRight className="h-3 w-3 text-amber-300" />
+      </Link>
+    );
+  }
+
+  // ── 3) 예약 취소됨 ──
+  if (outboundRecord.status === "schedule_cancelled") {
+    return (
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 rounded border border-slate-700/50 bg-slate-900/30 hover:bg-slate-900/50 px-4 py-2.5 text-xs transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-slate-700/50 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 uppercase tracking-wider">
+            예약 취소됨
+          </span>
+          <XCircle className="h-3.5 w-3.5 text-slate-400" />
+          <span className="text-slate-400">
+            {outboundRecord.cancelReason ?? "사유 미기록"} — 워크벤치에서 재시도
+          </span>
+        </div>
+        <ArrowRight className="h-3 w-3 text-slate-400" />
+      </Link>
+    );
+  }
+
+  // ── 4) dispatch prep 자체 폐기됨 ──
+  if (outboundRecord.status === "prep_cancelled") {
+    return (
+      <Link
+        href={href}
+        className="flex items-center justify-between gap-3 rounded border border-rose-900/40 bg-rose-950/20 hover:bg-rose-950/30 px-4 py-2.5 text-xs transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <span className="rounded bg-rose-900/40 px-1.5 py-0.5 text-[10px] font-medium text-rose-200 uppercase tracking-wider">
+            발송 준비 폐기
+          </span>
+          <XCircle className="h-3.5 w-3.5 text-rose-300" />
+          <span className="text-slate-400">
+            {outboundRecord.cancelReason ?? "사유 미기록"} — 재진입하여 다시 준비 가능
+          </span>
+        </div>
+        <ArrowRight className="h-3 w-3 text-rose-300" />
+      </Link>
+    );
+  }
+
+  // ── fallback (status union 확장 시 안전망) ──
+  return (
+    <Link
+      href={href}
+      className="flex items-center justify-between gap-3 rounded border border-blue-700/40 bg-blue-900/20 hover:bg-blue-900/30 px-4 py-2.5 text-xs transition-colors"
+    >
+      <div className="flex items-center gap-2">
+        <span className="rounded bg-blue-700/40 px-1.5 py-0.5 text-[10px] font-medium text-blue-200 uppercase tracking-wider">
+          발송 워크벤치
+        </span>
+        <span className="text-slate-300">발송 준비 워크벤치 진입</span>
+      </div>
+      <ArrowRight className="h-3 w-3 text-blue-300" />
+    </Link>
+  );
+}
+
+function formatScheduledFor(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${mi}`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DispatchOutboundHistoryStrip — outbound execution lineage (read-only audit)
+//
+// canonical truth 는 latest pointer (DispatchWorkbenchEntry) 가 그대로 보유한다.
+// 본 strip 은 history 가 2건 이상일 때만 노출되며, 사용자에게 outbound intent 의
+// 시간 흐름을 보여주는 작은 read-only 추가 컨텍스트일 뿐이다.
+// 현재 UI 상태(latest)와의 중복을 피하기 위해 마지막 element 는 표기에서 제외한다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface DispatchOutboundHistoryStripProps {
+  history: ReadonlyArray<
+    import("@/lib/store/dispatch-outbound-store").DispatchOutboundRecord
+  >;
+  onViewAll?: () => void;
+}
+
+function DispatchOutboundHistoryStrip({ history, onViewAll }: DispatchOutboundHistoryStripProps) {
+  // 마지막은 latest strip 과 동일하므로 prior lineage 만 노출
+  const prior = history.slice(0, -1);
+  if (prior.length === 0) return null;
+
+  return (
+    <div className="rounded border border-slate-800/60 bg-slate-950/40 px-3 py-2 text-[11px] text-slate-400">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="rounded bg-slate-800/60 px-1.5 py-0.5 text-[10px] font-medium text-slate-300 uppercase tracking-wider">
+          이전 발송 인텐트
+        </span>
+        <span className="text-slate-500">최신 결과 이전 lineage · {prior.length}건</span>
+        {onViewAll && (
+          <button
+            type="button"
+            onClick={onViewAll}
+            className="ml-auto text-[10px] text-blue-400 hover:text-blue-300 font-medium"
+          >
+            전체 보기
+          </button>
+        )}
+      </div>
+      <ol className="space-y-1">
+        {prior.map((record) => (
+          <li key={record.id} className="flex items-center gap-2">
+            <span className="text-slate-500 tabular-nums">
+              {formatScheduledFor(record.updatedAt)}
+            </span>
+            <span className="text-slate-400">
+              {describeOutboundStatus(record.status)}
+            </span>
+            {record.status === "scheduled" && record.scheduledFor && (
+              <span className="text-slate-500">
+                — {formatScheduledFor(record.scheduledFor)} 예정
+              </span>
+            )}
+            {record.cancelReason && (
+              <span className="text-slate-500">— {record.cancelReason}</span>
+            )}
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// DispatchOutboundAuditModal — 전체 outbound execution lineage timeline
+//
+// canonical truth 는 DispatchOutboundStore.historyByPoId 가 보유.
+// 본 modal 은 read-only audit surface — 어떤 mutation 도 발생시키지 않는다.
+// latest (마지막 record) 를 포함한 전체 timeline 을 시간 역순으로 표시한다.
+// ══════════════════════════════════════════════════════════════════════════════
+
+interface DispatchOutboundAuditModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  history: ReadonlyArray<
+    import("@/lib/store/dispatch-outbound-store").DispatchOutboundRecord
+  >;
+  poNumber: string;
+}
+
+function DispatchOutboundAuditModal({
+  open,
+  onOpenChange,
+  history,
+  poNumber,
+}: DispatchOutboundAuditModalProps) {
+  if (!open) return null;
+
+  // 전체 timeline (latest 포함) — 최신→과거 역순
+  const timeline = [...history].reverse();
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/60"
+      onClick={() => onOpenChange(false)}
+    >
+      <div
+        className="w-full max-w-lg mx-4 max-h-[80vh] flex flex-col rounded-xl border border-slate-700 bg-slate-900 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-800">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-200">
+              발송 인텐트 타임라인
+            </h2>
+            <p className="text-[10px] text-slate-500 mt-0.5">
+              {poNumber} · 전체 {timeline.length}건
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="text-slate-500 hover:text-slate-300 text-xs font-medium px-2 py-1"
+          >
+            닫기
+          </button>
+        </div>
+
+        {/* Timeline body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          <ol className="relative border-l border-slate-700/60 ml-2 space-y-4">
+            {timeline.map((record, idx) => {
+              const isLatest = idx === 0;
+              return (
+                <li key={record.id} className="ml-4">
+                  {/* Dot */}
+                  <span
+                    className={cn(
+                      "absolute -left-[5px] w-2.5 h-2.5 rounded-full border-2",
+                      isLatest
+                        ? "bg-blue-500 border-blue-400"
+                        : "bg-slate-700 border-slate-600",
+                    )}
+                    style={{ marginTop: "4px" }}
+                  />
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-[10px] text-slate-500 tabular-nums flex-shrink-0">
+                      {formatScheduledFor(record.updatedAt)}
+                    </span>
+                    {isLatest && (
+                      <span className="text-[9px] font-semibold text-blue-400 uppercase tracking-wider bg-blue-950/40 px-1 py-0.5 rounded">
+                        최신
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-300 mt-0.5">
+                    {describeOutboundStatus(record.status)}
+                  </p>
+                  {record.status === "scheduled" && record.scheduledFor && (
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      예정: {formatScheduledFor(record.scheduledFor)}
+                    </p>
+                  )}
+                  {record.cancelReason && (
+                    <p className="text-[11px] text-slate-500 mt-0.5">
+                      사유: {record.cancelReason}
+                    </p>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function describeOutboundStatus(
+  status: import("@/lib/store/dispatch-outbound-store").DispatchOutboundStatus,
+): string {
+  switch (status) {
+    case "scheduled":
+      return "예약 발송 등록";
+    case "schedule_cancelled":
+      return "예약 취소";
+    case "prep_cancelled":
+      return "발송 준비 폐기";
+    default:
+      return status;
+  }
 }

@@ -83,12 +83,14 @@ export default function GraduationWorkbench({
   const pathLabel = getGraduationPathLabel(surface.center.graduationPath);
   const pathColor = PATH_COLOR[surface.center.graduationPath];
 
+  const [railOpen, setRailOpen] = React.useState(false);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col pb-20 md:pb-0 h-full">
       {/* ── Center + Rail ── */}
-      <div className="flex flex-1 min-h-0">
+      <div className="flex flex-col md:flex-row md:flex-1 md:min-h-0">
         {/* Center */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4">
           {/* Verdict Header */}
           <div className={`border rounded-lg p-4 ${verdictColor}`}>
             <div className="flex items-center justify-between">
@@ -199,7 +201,15 @@ export default function GraduationWorkbench({
         </div>
 
         {/* Rail */}
-        <div className="w-72 border-l overflow-y-auto p-3 space-y-3 bg-gray-50">
+        <div className="mt-3 md:mt-0 md:w-64 lg:w-72 shrink-0">
+          <button
+            className="flex items-center justify-between w-full py-2 text-xs text-slate-500 md:hidden"
+            onClick={() => setRailOpen(!railOpen)}
+          >
+            참고 정보 {railOpen ? "▲" : "▼"}
+          </button>
+          {railOpen && (
+            <div className="md:block overflow-y-auto p-3 space-y-3 bg-gray-50">
           {/* Evidence Summary */}
           <div>
             <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Evidence</h4>
@@ -268,18 +278,20 @@ export default function GraduationWorkbench({
               </div>
             </div>
           )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* ── Dock ── */}
-      <div className="border-t bg-white px-4 py-3">
+      <div className="fixed bottom-0 left-0 right-0 md:static z-30 md:z-auto border-t bg-white px-4 py-3">
         <div className="flex items-center gap-2 flex-wrap">
           {surface.dock.actions.map(action => (
             <button
               key={action.actionKey}
               onClick={() => handleAction(action.actionKey, action.requiresConfirmation)}
               disabled={!action.enabled}
-              className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+              className={`min-h-[40px] flex-1 md:flex-none px-3 py-1.5 rounded text-sm font-medium transition-colors active:scale-95 ${
                 !action.enabled
                   ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                   : action.actionKey === "approve_ga"
