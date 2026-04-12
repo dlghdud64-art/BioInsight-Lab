@@ -27,6 +27,7 @@ import {
   ClipboardCheck, Menu, Package,
 } from "lucide-react";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
+import { CommandPalette } from "@/components/dashboard/command-palette";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -250,18 +251,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
         {/* 우측 영역: 검색창 + 유틸리티 + 프로필 + 햄버거 */}
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          {/* 전역 검색창: 데스크톱 전용 (모바일은 하단 플로팅 검색 사용) */}
-          <div className="hidden md:flex items-center relative flex-1 md:flex-initial w-full min-w-0 md:w-56 lg:w-64 xl:w-96">
-            <Search className="absolute left-3 h-4 w-4 text-slate-500 pointer-events-none flex-shrink-0" />
-            <Input
-              type="search"
-              placeholder="시약, 재고 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              className="pl-9 h-9 bg-slate-50 border-slate-200 focus:bg-white w-full min-w-0 text-slate-900 placeholder:text-slate-400"
-            />
-          </div>
+          {/* 전역 검색 + 커맨드 팔레트 (데스크톱) */}
+          <CommandPalette />
 
           {/* 검색 아이콘 (모바일 전용) — 클릭 시 검색 페이지 이동 */}
           <Button

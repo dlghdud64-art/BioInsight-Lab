@@ -36,23 +36,27 @@ export async function POST() {
       where: { userId },
       select: { workspaceId: true },
     });
-    const wsIds = memberships.map((m) => m.workspaceId);
+    const wsIds = memberships.map((m: { workspaceId: string }) => m.workspaceId);
 
-    // 최근 90일 구매 데이터 조회
+    // 최근 90일 구매 데이터 조회 (PurchaseRecord 모델 사용)
     const since = new Date(Date.now() - 90 * 86400000);
-    const purchases = await db.purchase.findMany({
+    const purchaseScopeKeys = [userId, ...wsIds];
+    const purchases = await db.purchaseRecord.findMany({
       where: {
-        workspaceId: { in: wsIds },
-        purchaseDate: { gte: since },
+        OR: [
+          { scopeKey: { in: purchaseScopeKeys } },
+          ...(wsIds.length > 0 ? [{ workspaceId: { in: wsIds } }] : []),
+        ],
+        purchasedAt: { gte: since },
       },
       select: {
         itemName: true,
         vendorName: true,
         category: true,
         amount: true,
-        purchaseDate: true,
+        purchasedAt: true,
       },
-      orderBy: { purchaseDate: "desc" },
+      orderBy: { purchasedAt: "desc" },
       take: 200,
     });
 
@@ -98,7 +102,7 @@ export async function POST() {
           item: p.itemName,
           vendor: p.vendorName,
           amount: p.amount,
-          date: p.purchaseDate?.toISOString().split("T")[0],
+          date: p.purchasedAt ? new Date(p.purchasedAt).toISOString().split("T")[0] : null,
         })),
     };
 

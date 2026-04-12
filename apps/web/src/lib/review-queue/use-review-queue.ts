@@ -2,10 +2,11 @@
  * Step 1 Review Queue 통합 상태 관리 hook
  *
  * 직접 검색 / 엑셀 업로드 / 프로토콜 업로드가 공유하는 단일 queue.
- * sessionStorage에 draft 유지. 승인된 항목만 Step 2/3로 handoff.
+ * server-first + sessionStorage-fallback 이중 레이어로 draft 영속화.
+ * 승인된 항목만 Step 2/3로 handoff.
  */
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import type {
   ReviewQueueItem,
   ReviewStatus,
@@ -14,26 +15,22 @@ import type {
   HandoffItem,
 } from "./types";
 import { canHandoffToCompare, canHandoffToQuote, toHandoffItem } from "./types";
+import {
+  persistReviewQueueDraft,
+  loadReviewQueueDraft,
+  clearReviewQueueDraft,
+} from "@/lib/persistence/review-queue-client";
 
 const STORAGE_KEY = "labaxis_review_queue_draft";
 
-// ── sessionStorage persistence ──
-function loadDraft(): ReviewQueueItem[] {
+// ── sessionStorage persistence (즉시 로드용, 서버 hydrate 전 fallback) ──
+function loadDraftSync(): ReviewQueueItem[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
-  }
-}
-
-function saveDraft(items: ReviewQueueItem[]) {
-  if (typeof window === "undefined") return;
-  try {
-    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-  } catch {
-    // quota exceeded — silent fail
   }
 }
 
@@ -54,11 +51,31 @@ function findSimilarItems(items: ReviewQueueItem[], newItem: ReviewQueueItem): R
 }
 
 export function useReviewQueue() {
-  const [items, setItems] = useState<ReviewQueueItem[]>(loadDraft);
+  const [items, setItems] = useState<ReviewQueueItem[]>(loadDraftSync);
+  const hydratedRef = useRef(false);
 
-  // ── sessionStorage 동기화 ──
+  // ── 초기 서버 hydrate (마운트 시 한 번) ──
   useEffect(() => {
-    saveDraft(items);
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    loadReviewQueueDraft().then((serverItems: ReviewQueueItem[]) => {
+      if (serverItems.length > 0) {
+        setItems((prev) => {
+          // 서버 데이터가 더 크면 서버 우선
+          if (serverItems.length >= prev.length) return serverItems;
+          return prev;
+        });
+      }
+    }).catch(() => {
+      // 서버 실패 — sessionStorage fallback 이미 로드됨
+    });
+  }, []);
+
+  // ── server + sessionStorage 동기화 (변경 시마다) ──
+  useEffect(() => {
+    // 초기 hydrate 전에는 저장하지 않음
+    if (!hydratedRef.current) return;
+    persistReviewQueueDraft(items);
   }, [items]);
 
   // ── 중복 체크 ──
@@ -222,7 +239,7 @@ export function useReviewQueue() {
 
   const clearAll = useCallback(() => {
     setItems([]);
-    sessionStorage.removeItem(STORAGE_KEY);
+    clearReviewQueueDraft();
   }, []);
 
   // ── 통계 ──

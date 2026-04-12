@@ -6,7 +6,7 @@ import { DashboardSidebar } from "@/app/_components/dashboard-sidebar";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
-import { OntologyCommandOverlay } from "@/components/ontology-command-overlay/ontology-command-overlay";
+// OntologyCommandOverlay는 CommandPalette로 통합됨 (Header 내장)
 import { NotificationSonnerBridge } from "@/components/notifications/notification-sonner-bridge";
 import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-peek-drawer";
 import { GovernanceDevPanel } from "@/components/dashboard/console/governance-dev-panel";
@@ -53,7 +53,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
         <BottomNav />
         <BarcodeScanFab />
-        <OntologyCommandOverlay />
+        {/* CommandPalette는 DashboardHeader 내부에 통합됨 */}
         <NotificationSonnerBridge />
         <OrderCandidatePeekDrawer />
         <WorkbenchProgressOverlay />

@@ -61,7 +61,7 @@ export async function GET() {
     const monthEnd = endOfMonth(now);
 
     // 병렬 DB 조회
-    const [yearBudgets, yearPurchases, recentPurchases, top5Purchases] = await Promise.all([
+    const [yearBudgets, yearPurchases, recentPurchases, top5Purchases, pendingApprovals] = await Promise.all([
       // 올해 예산 합산
       db.budget.findMany({
         where: {
@@ -95,7 +95,23 @@ export async function GET() {
         orderBy: { amount: "desc" },
         take: 5,
       }),
+      // 승인 대기 중인 구매 요청 금액
+      db.purchaseOrder.findMany({
+        where: {
+          OR: [
+            ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
+          ],
+          status: { in: ["PENDING_APPROVAL", "DRAFT", "SUBMITTED"] },
+        },
+        select: { totalAmount: true },
+      }),
     ]);
+
+    // ── 승인 대기 금액 ─────────────────────────────────────
+    const pendingApprovalAmount = pendingApprovals.reduce(
+      (s: number, po: { totalAmount: number | null }) => s + (po.totalAmount ?? 0),
+      0,
+    );
 
     // ── 예산 요약 ──────────────────────────────────────────
     const totalBudget = yearBudgets.reduce((s: number, b: { amount: number }) => s + b.amount, 0);
@@ -149,6 +165,7 @@ export async function GET() {
 
     return NextResponse.json({
       budget: { total: totalBudget, used: usedAmount, remaining: remainingAmount, usageRate },
+      pendingApproval: { amount: pendingApprovalAmount, count: pendingApprovals.length, isEstimate: false },
       monthlySpending,
       categorySpending,
       topSpending,

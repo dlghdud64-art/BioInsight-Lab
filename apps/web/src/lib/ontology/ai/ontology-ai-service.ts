@@ -500,15 +500,28 @@ export function parseNaturalLanguageAction(input: string): NLActionParseResult {
   let confidence = 0;
 
   const actionPatterns: Array<{ pattern: RegExp; action: SuggestedActionType; conf: number }> = [
-    { pattern: /승인/, action: "APPROVE", conf: 0.9 },
-    { pattern: /거절|거부|반려/, action: "REJECT", conf: 0.85 },
-    { pattern: /발송|발주|디스패치|보내/, action: "DISPATCH_NOW", conf: 0.85 },
-    { pattern: /수령|받|입고/, action: "RECEIVE_ORDER", conf: 0.8 },
-    { pattern: /재주문|재발주|추가\s*주문/, action: "TRIGGER_REORDER", conf: 0.8 },
-    { pattern: /메일|이메일|email/, action: "SEND_VENDOR_EMAIL", conf: 0.75 },
-    { pattern: /보류|대기|홀드/, action: "HOLD_FOR_REVIEW", conf: 0.7 },
-    { pattern: /예산.*증액|증액.*요청/, action: "REQUEST_BUDGET_INCREASE", conf: 0.8 },
-    { pattern: /수정|정정|교정/, action: "REQUEST_CORRECTION", conf: 0.7 },
+    // 승인 계열 — "승인해줘", "결재", "허가", "ok해" 등
+    { pattern: /승인|결재|허가|오케이|ok/, action: "APPROVE", conf: 0.9 },
+    // 거절 계열 — "거절", "반송", "취소" 등
+    { pattern: /거절|거부|반려|반송|취소/, action: "REJECT", conf: 0.85 },
+    // 발송 계열 — "보내", "발송", "전달", "배송" 등
+    { pattern: /발송|디스패치|보내|전달|배송|출고/, action: "DISPATCH_NOW", conf: 0.85 },
+    // 발주(주문 생성) — 발송과 구분: "발주서", "주문 넣어" 등
+    { pattern: /발주|주문\s*(?:넣|생성|작성)/, action: "DISPATCH_NOW", conf: 0.8 },
+    // 수령 계열 — "받았", "도착", "검수" 등
+    { pattern: /수령|받았|입고|도착|검수/, action: "RECEIVE_ORDER", conf: 0.8 },
+    // 재주문 계열 — "다시 주문", "재발주", "보충" 등
+    { pattern: /재주문|재발주|추가\s*주문|다시\s*주문|보충\s*주문|리오더/, action: "TRIGGER_REORDER", conf: 0.8 },
+    // 메일 계열
+    { pattern: /메일|이메일|email|연락/, action: "SEND_VENDOR_EMAIL", conf: 0.75 },
+    // 보류 계열 — "나중에", "미루" 등
+    { pattern: /보류|홀드|나중에|미루|잠깐|킵/, action: "HOLD_FOR_REVIEW", conf: 0.7 },
+    // 예산 증액
+    { pattern: /예산.*(?:증액|늘|올|추가)|증액.*요청/, action: "REQUEST_BUDGET_INCREASE", conf: 0.8 },
+    // 예약 발송 — 일반 발송과 구분
+    { pattern: /예약\s*발송|스케줄|예약.*보내/, action: "SCHEDULE_DISPATCH", conf: 0.8 },
+    // 수정/정정
+    { pattern: /수정|정정|교정|변경|고쳐/, action: "REQUEST_CORRECTION", conf: 0.7 },
   ];
 
   for (const { pattern, action, conf } of actionPatterns) {
@@ -522,12 +535,13 @@ export function parseNaturalLanguageAction(input: string): NLActionParseResult {
   // 상태 필터 인식
   let statusFilter: string | null = null;
   const statusPatterns: Array<{ pattern: RegExp; status: string }> = [
-    { pattern: /승인\s*대기/, status: "pending_approval" },
-    { pattern: /발송\s*완료|보낸/, status: "sent" },
-    { pattern: /수령\s*완료/, status: "received" },
-    { pattern: /승인\s*완료|승인된/, status: "approved" },
-    { pattern: /초안|드래프트/, status: "draft" },
-    { pattern: /재고\s*부족/, status: "low_stock" },
+    { pattern: /승인\s*대기|결재\s*대기|미승인/, status: "pending_approval" },
+    { pattern: /발송\s*완료|보낸|전달\s*완료|배송\s*중/, status: "sent" },
+    { pattern: /수령\s*완료|입고\s*완료|도착\s*완료|받은/, status: "received" },
+    { pattern: /승인\s*완료|승인된|결재\s*완료|허가된/, status: "approved" },
+    { pattern: /초안|드래프트|작성\s*중/, status: "draft" },
+    { pattern: /재고\s*부족|품절|소진/, status: "low_stock" },
+    { pattern: /발주\s*완료|po\s*생성/, status: "po_created" },
   ];
 
   for (const { pattern, status } of statusPatterns) {
@@ -537,20 +551,35 @@ export function parseNaturalLanguageAction(input: string): NLActionParseResult {
     }
   }
 
-  // 금액 조건 인식
+  // 금액 조건 인식 — "N만원", "N백만원", "N천만원", "N억원" 지원
   let amountCondition: NLTargetFilter["amountCondition"] = null;
-  const amountMatch = normalized.match(/(\d+)\s*만\s*원\s*(이하|이상|미만|초과)/);
-  if (amountMatch) {
-    const value = parseInt(amountMatch[1]) * 10000;
-    const opMap: Record<string, "lte" | "gte" | "lt" | "gt"> = {
-      "이하": "lte", "이상": "gte", "미만": "lt", "초과": "gt",
-    };
-    amountCondition = { operator: opMap[amountMatch[2]] ?? "lte", value };
+
+  // 패턴 1: "N억(원)" → N * 100,000,000
+  const amountBillion = normalized.match(/(\d+)\s*억\s*원?\s*(이하|이상|미만|초과)/);
+  // 패턴 2: "N천만(원)" → N * 10,000,000
+  const amountTenMil = normalized.match(/(\d+)\s*천\s*만\s*원?\s*(이하|이상|미만|초과)/);
+  // 패턴 3: "N백만(원)" → N * 1,000,000
+  const amountMil = normalized.match(/(\d+)\s*백\s*만\s*원?\s*(이하|이상|미만|초과)/);
+  // 패턴 4: "N만(원)" → N * 10,000
+  const amountTenK = normalized.match(/(\d+)\s*만\s*원?\s*(이하|이상|미만|초과)/);
+
+  const opMap: Record<string, "lte" | "gte" | "lt" | "gt"> = {
+    "이하": "lte", "이상": "gte", "미만": "lt", "초과": "gt",
+  };
+
+  if (amountBillion) {
+    amountCondition = { operator: opMap[amountBillion[2]] ?? "lte", value: parseInt(amountBillion[1]) * 100_000_000 };
+  } else if (amountTenMil) {
+    amountCondition = { operator: opMap[amountTenMil[2]] ?? "lte", value: parseInt(amountTenMil[1]) * 10_000_000 };
+  } else if (amountMil) {
+    amountCondition = { operator: opMap[amountMil[2]] ?? "lte", value: parseInt(amountMil[1]) * 1_000_000 };
+  } else if (amountTenK) {
+    amountCondition = { operator: opMap[amountTenK[2]] ?? "lte", value: parseInt(amountTenK[1]) * 10_000 };
   }
 
   // 범위 인식
   let scope: NLTargetFilter["scope"] = "single";
-  if (/모든|모두|전부|일괄/.test(normalized)) scope = "all";
+  if (/모든|모두|전부|일괄|다\s|전체|싹/.test(normalized)) scope = "all";
 
   return {
     parsed: actionType !== null,
@@ -712,8 +741,8 @@ export async function buildExecutionPlan(input: string): Promise<ExecutionPlan> 
   const confirmationRequired: string[] = [];
   let overallConfidence = 0;
 
-  // 복합 명령 분해: "~하고", "~한 다음", "~후에" 등으로 분리
-  const clauseSplitters = /(?:하고|한\s*다음|한\s*후에?|그리고|이후에?|다음에)/;
+  // 복합 명령 분해: "~하고", "~한 다음", "~후에", "~해서", "~해 주고" 등
+  const clauseSplitters = /(?:하고|한\s*다음|한\s*후에?|그리고|이후에?|다음에|해서|하면|해\s*주고|한\s*뒤에?)/;
   const clauses = normalized.split(clauseSplitters).map(c => c.trim()).filter(Boolean);
 
   let stepOrder = 1;
@@ -795,7 +824,8 @@ function buildStepLabel(actionType: SuggestedActionType, count: number, withNoti
     REQUEST_CORRECTION: "수정 요청",
   };
 
-  let label = `${actionLabels[actionType] ?? actionType} (${count}건)`;
+  // 내부 actionType 코드가 UI에 노출되지 않도록 fallback은 "작업 실행"
+  let label = `${actionLabels[actionType] ?? "작업 실행"} (${count}건)`;
   if (withNotification && actionType !== "SEND_VENDOR_EMAIL") {
     label += " + 알림";
   }

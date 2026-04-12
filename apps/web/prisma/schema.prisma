@@ -2499,6 +2499,19 @@ model POCandidateItem {
   @@index([candidateId])
 }
 
+// Step 1 Review Queue Draft (sessionStorage → DB 영속화)
+model ReviewQueueDraft {
+  id         String   @id @default(cuid())
+  userId     String
+  payload    Json     // ReviewQueueItem[] 전체 직렬화
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId])
+  @@index([userId])
+}
+
 // Governance event publish dedupe (cross-session 중복 방지)
 model GovernanceEventDedupe {
   id            String   @id @default(cuid())

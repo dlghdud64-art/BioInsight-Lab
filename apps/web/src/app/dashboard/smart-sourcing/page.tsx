@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   BarChart3,
   Upload,
@@ -102,6 +102,78 @@ function MultiVendorTab() {
 
   // 로컬 UI 상태 (persist 불필요)
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
+  // PDF 업로드 상태
+  const [parsingVendorId, setParsingVendorId] = useState<string | null>(null);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  /** PDF 파일 → /api/quotes/parse-pdf → 파싱 결과를 rawText에 자동 채움 */
+  const handlePdfUpload = useCallback(async (vendorId: string, file: File) => {
+    if (file.type !== "application/pdf") {
+      toast.error("PDF 파일만 업로드 가능합니다.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("파일 크기는 10MB 이하여야 합니다.");
+      return;
+    }
+
+    setParsingVendorId(vendorId);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/quotes/parse-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || "PDF 파싱에 실패했습니다.");
+      }
+
+      const data = await res.json();
+
+      // 파싱된 구조화 데이터를 텍스트로 변환하여 rawText에 채움
+      const lines: string[] = [];
+      if (data.vendorName) {
+        storeUpdateVendor(vendorId, "vendorName", data.vendorName);
+        lines.push(`공급사: ${data.vendorName}`);
+      }
+      if (data.quoteDate) lines.push(`견적일: ${data.quoteDate}`);
+      if (data.validUntil) lines.push(`유효기한: ${data.validUntil}`);
+      if (data.items?.length) {
+        lines.push("");
+        for (const item of data.items) {
+          const parts: string[] = [];
+          if (item.productName) parts.push(item.productName);
+          if (item.catalogNumber) parts.push(`(${item.catalogNumber})`);
+          if (item.quantity) parts.push(`수량: ${item.quantity}`);
+          if (item.unitPrice != null) parts.push(`단가: ${Number(item.unitPrice).toLocaleString()}원`);
+          if (item.totalPrice != null) parts.push(`소계: ${Number(item.totalPrice).toLocaleString()}원`);
+          if (item.leadTime) parts.push(`납기: ${item.leadTime}일`);
+          if (item.notes) parts.push(`비고: ${item.notes}`);
+          lines.push(`- ${parts.join(" / ")}`);
+        }
+      }
+      if (data.totalAmount != null) {
+        lines.push("");
+        lines.push(`합계: ${Number(data.totalAmount).toLocaleString()}원`);
+      }
+      if (data.notes) lines.push(`특이사항: ${data.notes}`);
+
+      const parsedText = lines.join("\n");
+      storeUpdateVendor(vendorId, "rawText", parsedText);
+      toast.success(`PDF 견적서 파싱 완료 — ${data.items?.length ?? 0}개 품목 추출`);
+    } catch (err: any) {
+      toast.error(err.message || "PDF 파싱 중 오류가 발생했습니다.");
+    } finally {
+      setParsingVendorId(null);
+      // 같은 파일 재업로드 허용을 위해 input 초기화
+      const input = fileInputRefs.current[vendorId];
+      if (input) input.value = "";
+    }
+  }, [storeUpdateVendor]);
   // D. Work Window
   const [workWindowOpen, setWorkWindowOpen] = useState(false);
   const [workWindowPhase, setWorkWindowPhase] = useState<WorkWindowPhase>("ready");
@@ -303,15 +375,77 @@ function MultiVendorTab() {
 
             {(expandedVendor === v.id || !v.rawText.trim()) && (
               <div className="px-4 pb-4 border-t border-slate-100">
-                <label className="block text-xs text-slate-500 mt-3 mb-1.5">
-                  견적서 텍스트 (PDF에서 복사 또는 직접 입력)
-                </label>
-                <Textarea
-                  placeholder={`공급사 ${String.fromCharCode(65 + idx)}의 견적 내용을 붙여넣으세요...\n예: 단가 45,000원, 납기 2주, 배송비 3,000원`}
-                  value={v.rawText}
-                  onChange={(e) => updateVendor(v.id, "rawText", e.target.value)}
-                  className="min-h-[100px] text-sm resize-none"
-                />
+                {/* 라벨 + PDF 업로드 버튼 */}
+                <div className="flex items-center justify-between mt-3 mb-1.5">
+                  <label className="text-xs text-slate-500">
+                    견적서 입력
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      ref={(el) => { fileInputRefs.current[v.id] = el; }}
+                      type="file"
+                      accept="application/pdf"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) handlePdfUpload(v.id, file);
+                      }}
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-[11px] gap-1"
+                      disabled={parsingVendorId === v.id}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRefs.current[v.id]?.click();
+                      }}
+                    >
+                      {parsingVendorId === v.id ? (
+                        <>
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          파싱 중...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3 w-3" />
+                          PDF 업로드
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* 드래그앤드롭 + Textarea 영역 */}
+                <div
+                  className="relative"
+                  onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) handlePdfUpload(v.id, file);
+                  }}
+                >
+                  <Textarea
+                    placeholder={`공급사 ${String.fromCharCode(65 + idx)}의 견적 내용을 붙여넣거나, PDF 파일을 드래그하세요`}
+                    value={v.rawText}
+                    onChange={(e) => updateVendor(v.id, "rawText", e.target.value)}
+                    className="min-h-[100px] text-sm resize-none"
+                    disabled={parsingVendorId === v.id}
+                  />
+                  {parsingVendorId === v.id && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-md">
+                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        AI 견적서 파싱 중...
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <p className="text-[10px] text-slate-400 mt-1">
+                  PDF 파일을 드래그하거나 위 버튼으로 업로드하면 AI가 자동 파싱합니다
+                </p>
               </div>
             )}
           </div>
