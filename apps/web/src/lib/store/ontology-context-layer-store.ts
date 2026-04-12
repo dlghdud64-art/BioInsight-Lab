@@ -18,6 +18,7 @@ import type {
   AppRoute,
   WorkflowStage,
   ContextualBlocker,
+  SourcingContextDetail,
 } from "@/lib/ontology/contextual-action/ontology-next-action-resolver";
 import {
   resolveNextAction,
@@ -66,6 +67,8 @@ export interface OntologyContextBridgeData {
   hasPendingCriticalEvents: boolean;
   activeWorkWindow: string | null;
   counts: Partial<ContextualCounts>;
+  /** Sourcing-specific enrichment data */
+  sourcingDetail?: SourcingContextDetail;
 }
 
 const DEFAULT_COUNTS: ContextualCounts = {
@@ -100,6 +103,7 @@ function buildInput(
       quoteItems: bridge.quoteItems?.length ?? bridge.counts?.quoteItems ?? 0,
       ...bridge.counts,
     },
+    sourcingDetail: bridge.sourcingDetail,
   };
 }
 

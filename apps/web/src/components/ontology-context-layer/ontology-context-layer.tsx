@@ -29,7 +29,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useOntologyContextLayerStore } from "@/lib/store/ontology-context-layer-store";
-import type { ResolvedAction, ActionPriority } from "@/lib/ontology/contextual-action/ontology-next-action-resolver";
+import type {
+  ResolvedAction,
+  ActionPriority,
+  RailLineageItem,
+  CenterContextItem,
+} from "@/lib/ontology/contextual-action/ontology-next-action-resolver";
 
 // ══════════════════════════════════════════════
 // Main Component
@@ -81,7 +86,7 @@ export function OntologyContextLayer() {
 
   if (!isOpen || !resolved) return null;
 
-  const { nextRequiredAction, availableFollowUpActions, blockedActions, whyThisAction, currentStageLabel, mode } = resolved;
+  const { nextRequiredAction, availableFollowUpActions, blockedActions, whyThisAction, currentStageLabel, mode, railContext, centerContext, whyReasons } = resolved;
 
   return (
     <>
@@ -137,13 +142,47 @@ export function OntologyContextLayer() {
             />
           </div>
 
-          {/* ── Rail: Why this action ── */}
-          <div className="px-5 pb-3">
-            <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 px-4 py-3">
-              <p className="text-[11px] font-medium text-slate-400 mb-1">판단 근거</p>
-              <p className="text-xs text-slate-300 leading-relaxed">{whyThisAction}</p>
+          {/* ── Center context summary ── */}
+          {centerContext && centerContext.length > 0 && (
+            <div className="px-5 pb-3">
+              <div className="flex flex-wrap gap-1.5">
+                {centerContext.map((item, i) => (
+                  <ContextBadge key={i} item={item} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* ── Why reasons block ── */}
+          {whyReasons && whyReasons.length > 0 && (
+            <div className="px-5 pb-3">
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 px-4 py-3">
+                <p className="text-[11px] font-medium text-slate-400 mb-1.5">왜 지금 이 작업인가</p>
+                <div className="space-y-1">
+                  {whyReasons.map((reason, i) => (
+                    <p key={i} className="text-xs text-slate-300 leading-relaxed flex items-start gap-1.5">
+                      <span className="text-blue-400/60 mt-0.5 shrink-0">·</span>
+                      {reason}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Rail: Lineage context ── */}
+          {railContext && railContext.length > 0 && (
+            <div className="px-5 pb-3">
+              <div className="rounded-xl border border-slate-700/30 bg-slate-800/20 px-4 py-3">
+                <p className="text-[11px] font-medium text-slate-400 mb-2">컨텍스트 lineage</p>
+                <div className="space-y-1.5">
+                  {railContext.map((item) => (
+                    <RailLineageRow key={item.key} item={item} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── Blocked actions (if any) ── */}
           {blockedActions.length > 0 && (
@@ -370,3 +409,43 @@ const PRIORITY_STYLES: Record<
     Icon: LayoutDashboard,
   },
 };
+
+// ══════════════════════════════════════════════
+// Center context badge & Rail lineage row
+// ══════════════════════════════════════════════
+
+const TONE_BADGE_STYLES: Record<CenterContextItem["tone"], string> = {
+  neutral: "bg-slate-700/40 text-slate-300",
+  positive: "bg-blue-900/30 text-blue-300",
+  warning: "bg-amber-900/30 text-amber-300",
+  blocked: "bg-red-900/30 text-red-300",
+};
+
+function ContextBadge({ item }: { item: CenterContextItem }) {
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-medium ${TONE_BADGE_STYLES[item.tone]}`}>
+      {item.tone === "positive" && <CheckCircle2 className="h-3 w-3 mr-1 shrink-0" />}
+      {item.tone === "warning" && <AlertTriangle className="h-3 w-3 mr-1 shrink-0" />}
+      {item.tone === "blocked" && <ShieldAlert className="h-3 w-3 mr-1 shrink-0" />}
+      {item.label}
+    </span>
+  );
+}
+
+const TONE_VALUE_STYLES: Record<RailLineageItem["tone"], string> = {
+  neutral: "text-slate-300",
+  positive: "text-blue-300",
+  warning: "text-amber-300",
+  blocked: "text-red-300",
+};
+
+function RailLineageRow({ item }: { item: RailLineageItem }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-[11px] text-slate-500 shrink-0">{item.label}</span>
+      <span className={`text-[11px] font-medium text-right truncate ${TONE_VALUE_STYLES[item.tone]}`}>
+        {item.value}
+      </span>
+    </div>
+  );
+}

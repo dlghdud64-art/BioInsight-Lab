@@ -42,6 +42,8 @@ export function useOntologyContextBridge(options: OntologyContextBridgeOptions) 
     options.policyHoldActive,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(options.counts),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(options.sourcingDetail),
   ]);
 
   // Listen for action dispatch from the overlay
