@@ -96,6 +96,7 @@ import { buildSourcingAiContextHash, createCompareSeedDraft, type CompareSeedDra
 import { LabelScannerModal } from "@/components/inventory/LabelScannerModal";
 import { ComparisonModal } from "../_components/comparison-modal";
 import { RequestWizardModal } from "../_components/request-wizard-modal";
+import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
 
 export default function SearchPage() {
   const {
@@ -214,6 +215,53 @@ export default function SearchPage() {
     const qs = params.toString();
     return qs ? `/test/search?${qs}` : "/test/search";
   })();
+
+  // ── Ontology Contextual Action Layer bridge ──
+  useOntologyContextBridge({
+    compareIds,
+    quoteItems,
+    activeWorkWindow: workWindowMode,
+    currentStage: workWindowMode === "request-assembly"
+      ? "request_assembly"
+      : workWindowMode === "request-submission"
+      ? "request_submission"
+      : workWindowMode === "compare" || workWindowMode === "compare-review"
+      ? "search_comparing"
+      : workWindowMode === "quote-queue" || workWindowMode === "quote-normalization"
+      ? "quote_management"
+      : workWindowMode === "quote-compare"
+      ? "quote_comparison"
+      : workWindowMode === "dispatch-prep"
+      ? "dispatch_prep"
+      : workWindowMode === "po-created" || workWindowMode === "po-created-reentry"
+      ? "po_created"
+      : quoteItems.length > 0
+      ? "search_requesting"
+      : compareIds.length >= 2
+      ? "search_comparing"
+      : "search_idle",
+    selectedEntityIds: compareIds,
+    selectedEntityType: compareIds.length > 0 ? "product" : "none",
+    counts: {
+      compareIds: compareIds.length,
+      quoteItems: quoteItems.length,
+    },
+    onActionDispatched: (_actionKey: string, targetWorkWindow: string) => {
+      // Map ontology layer action to work window mode
+      const windowMap: Record<string, typeof workWindowMode> = {
+        "request-assembly": "request-assembly",
+        "request-submission": "request-submission",
+        "compare": "compare",
+        "compare-review": "compare-review",
+        "quote-compare": "quote-compare",
+        "dispatch-prep": "dispatch-prep",
+        "po-conversion": "po-conversion",
+        "po-created-reentry": "po-created-reentry",
+      };
+      const mapped = windowMap[targetWorkWindow];
+      if (mapped) setWorkWindowMode(mapped);
+    },
+  });
 
   const handleProtectedAction = (action: () => void) => {
     // 세션 로딩 중이면 action 실행 허용 (로딩 완료 후 재검증됨)

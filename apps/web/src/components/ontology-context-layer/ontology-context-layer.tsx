@@ -1,0 +1,372 @@
+"use client";
+
+/**
+ * OntologyContextLayer — Contextual next-step command layer overlay.
+ *
+ * NOT a chatbot. NOT a dashboard shortcut. NOT an AI recommendation card.
+ *
+ * This is a deterministic next-step switchboard:
+ * - Center: 다음 required action + 영향 record + blocker + CTA
+ * - Rail: 현재 stage + linked lineage + snapshot validity + why this action
+ * - Dock: 계속하기 / 교정 이동 / 다른 작업 보기 / 닫기
+ *
+ * Governance grammar: center=decision, rail=context, dock=action
+ */
+
+import { useCallback, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import {
+  X,
+  ChevronRight,
+  ArrowRight,
+  AlertTriangle,
+  ShieldAlert,
+  CheckCircle2,
+  LayoutDashboard,
+  ExternalLink,
+  Lock,
+  Compass,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useOntologyContextLayerStore } from "@/lib/store/ontology-context-layer-store";
+import type { ResolvedAction, ActionPriority } from "@/lib/ontology/contextual-action/ontology-next-action-resolver";
+
+// ══════════════════════════════════════════════
+// Main Component
+// ══════════════════════════════════════════════
+
+export function OntologyContextLayer() {
+  const { isOpen, resolved, close } = useOntologyContextLayerStore();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // ESC key to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [isOpen, close]);
+
+  const handleActionClick = useCallback(
+    (action: ResolvedAction) => {
+      if (action.blocked) return;
+
+      // Close overlay first
+      close();
+
+      // Navigate or open work window
+      if (action.targetRoute) {
+        router.push(action.targetRoute);
+      }
+      // targetWorkWindow는 page-level에서 처리 (store에 기록 후 page가 읽음)
+      // 현재 page에서 work window를 열어야 하는 경우,
+      // 이벤트를 발행하여 page가 반응하게 함
+      if (action.targetWorkWindow && !action.targetRoute) {
+        // Custom event로 page에 통지
+        window.dispatchEvent(
+          new CustomEvent("ontology-action-dispatch", {
+            detail: {
+              actionKey: action.actionKey,
+              targetWorkWindow: action.targetWorkWindow,
+            },
+          }),
+        );
+      }
+    },
+    [close, router],
+  );
+
+  if (!isOpen || !resolved) return null;
+
+  const { nextRequiredAction, availableFollowUpActions, blockedActions, whyThisAction, currentStageLabel, mode } = resolved;
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[70] bg-black/40 backdrop-blur-[2px]"
+        onClick={close}
+        aria-hidden="true"
+      />
+
+      {/* Overlay panel */}
+      <div
+        className="fixed z-[71] flex flex-col overflow-hidden rounded-2xl border border-slate-700/60"
+        style={{
+          top: "4.5rem",
+          right: "1rem",
+          width: "min(92vw, 460px)",
+          maxHeight: "calc(100vh - 6rem)",
+          backgroundColor: "#0c1222",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
+        }}
+        role="dialog"
+        aria-modal="true"
+        aria-label="다음 작업 레이어"
+      >
+        {/* ═══ Header ═══ */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-700/40">
+          <div className="flex items-center gap-2.5">
+            <div className="h-7 w-7 rounded-lg bg-blue-600/15 flex items-center justify-center">
+              <Compass className="h-4 w-4 text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-sm font-semibold text-slate-100">다음 작업</h2>
+              <p className="text-[10px] text-slate-400">{currentStageLabel}</p>
+            </div>
+          </div>
+          <button
+            onClick={close}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700/40 transition-colors"
+            aria-label="닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* ═══ Body — scrollable ═══ */}
+        <div className="flex-1 overflow-y-auto overscroll-contain">
+          {/* ── Center: Primary action ── */}
+          <div className="px-5 py-4">
+            <PrimaryActionCard
+              action={nextRequiredAction}
+              onExecute={handleActionClick}
+            />
+          </div>
+
+          {/* ── Rail: Why this action ── */}
+          <div className="px-5 pb-3">
+            <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 px-4 py-3">
+              <p className="text-[11px] font-medium text-slate-400 mb-1">판단 근거</p>
+              <p className="text-xs text-slate-300 leading-relaxed">{whyThisAction}</p>
+            </div>
+          </div>
+
+          {/* ── Blocked actions (if any) ── */}
+          {blockedActions.length > 0 && (
+            <div className="px-5 pb-3">
+              <p className="text-[11px] font-medium text-slate-400 mb-2 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                차단된 작업
+              </p>
+              <div className="space-y-2">
+                {blockedActions.map((action) => (
+                  <BlockedActionCard key={action.actionKey} action={action} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Follow-up actions ── */}
+          {availableFollowUpActions.length > 0 && (
+            <div className="px-5 pb-4">
+              <p className="text-[11px] font-medium text-slate-400 mb-2">다른 작업</p>
+              <div className="space-y-1.5">
+                {availableFollowUpActions.map((action) => (
+                  <FollowUpActionRow
+                    key={action.actionKey}
+                    action={action}
+                    onExecute={handleActionClick}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ═══ Dock: Sticky bottom actions ═══ */}
+        <div className="shrink-0 px-5 py-3 border-t border-slate-700/40 flex items-center justify-between">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3"
+            onClick={close}
+          >
+            닫기
+          </Button>
+          <div className="flex items-center gap-2">
+            {mode === "overview" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3"
+                onClick={() => {
+                  close();
+                  router.push("/dashboard");
+                }}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5 mr-1" />
+                대시보드
+              </Button>
+            )}
+            <Button
+              size="sm"
+              className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
+              disabled={nextRequiredAction.blocked}
+              onClick={() => handleActionClick(nextRequiredAction)}
+            >
+              {nextRequiredAction.blocked ? "차단됨" : "계속하기"}
+              {!nextRequiredAction.blocked && <ArrowRight className="h-3.5 w-3.5 ml-1" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Sub-components
+// ══════════════════════════════════════════════
+
+function PrimaryActionCard({
+  action,
+  onExecute,
+}: {
+  action: ResolvedAction;
+  onExecute: (action: ResolvedAction) => void;
+}) {
+  const priorityConfig = PRIORITY_STYLES[action.priority];
+
+  return (
+    <div className={`rounded-xl border p-4 ${priorityConfig.border} ${priorityConfig.bg}`}>
+      <div className="flex items-start gap-3">
+        <div className={`mt-0.5 h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${priorityConfig.iconBg}`}>
+          <priorityConfig.Icon className={`h-4 w-4 ${priorityConfig.iconColor}`} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className={`text-[10px] font-semibold uppercase tracking-wider ${priorityConfig.badge}`}>
+              {priorityConfig.label}
+            </span>
+          </div>
+          <h3 className="text-sm font-semibold text-slate-100 mb-1">{action.label}</h3>
+          <p className="text-xs text-slate-400 leading-relaxed">{action.reason}</p>
+          {action.targetRoute && (
+            <div className="flex items-center gap-1 mt-2 text-[10px] text-slate-500">
+              <ExternalLink className="h-3 w-3" />
+              <span>{action.targetRoute}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {!action.blocked && (
+        <button
+          onClick={() => onExecute(action)}
+          className={`w-full mt-3 h-9 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors ${priorityConfig.cta}`}
+        >
+          {action.label}
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      )}
+
+      {action.blocked && action.blockReason && (
+        <div className="mt-3 rounded-lg bg-red-900/20 border border-red-800/30 px-3 py-2 flex items-center gap-2">
+          <Lock className="h-3.5 w-3.5 text-red-400 shrink-0" />
+          <span className="text-[11px] text-red-300">{action.blockReason}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BlockedActionCard({ action }: { action: ResolvedAction }) {
+  return (
+    <div className="rounded-lg border border-red-900/30 bg-red-950/20 px-3.5 py-2.5">
+      <div className="flex items-center gap-2">
+        <Lock className="h-3.5 w-3.5 text-red-400 shrink-0" />
+        <span className="text-xs font-medium text-red-300">{action.label}</span>
+      </div>
+      {action.blockReason && (
+        <p className="text-[11px] text-red-400/70 mt-1 ml-5">{action.blockReason}</p>
+      )}
+    </div>
+  );
+}
+
+function FollowUpActionRow({
+  action,
+  onExecute,
+}: {
+  action: ResolvedAction;
+  onExecute: (action: ResolvedAction) => void;
+}) {
+  return (
+    <button
+      onClick={() => onExecute(action)}
+      disabled={action.blocked}
+      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-700/30 bg-slate-800/20 hover:bg-slate-700/30 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed group"
+    >
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-medium text-slate-200 group-hover:text-slate-100 transition-colors">
+          {action.label}
+        </p>
+        <p className="text-[10px] text-slate-500 truncate">{action.reason}</p>
+      </div>
+      <ChevronRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 shrink-0 transition-colors" />
+    </button>
+  );
+}
+
+// ══════════════════════════════════════════════
+// Priority visual mapping
+// ══════════════════════════════════════════════
+
+const PRIORITY_STYLES: Record<
+  ActionPriority,
+  {
+    label: string;
+    border: string;
+    bg: string;
+    iconBg: string;
+    iconColor: string;
+    badge: string;
+    cta: string;
+    Icon: React.ComponentType<{ className?: string }>;
+  }
+> = {
+  primary: {
+    label: "다음 단계",
+    border: "border-blue-800/40",
+    bg: "bg-blue-950/30",
+    iconBg: "bg-blue-600/15",
+    iconColor: "text-blue-400",
+    badge: "text-blue-400",
+    cta: "bg-blue-600 hover:bg-blue-500 text-white",
+    Icon: ArrowRight,
+  },
+  secondary: {
+    label: "대안",
+    border: "border-slate-700/40",
+    bg: "bg-slate-800/30",
+    iconBg: "bg-slate-700/30",
+    iconColor: "text-slate-400",
+    badge: "text-slate-400",
+    cta: "bg-slate-700 hover:bg-slate-600 text-slate-200",
+    Icon: ChevronRight,
+  },
+  correction: {
+    label: "해결 필요",
+    border: "border-amber-800/40",
+    bg: "bg-amber-950/20",
+    iconBg: "bg-amber-600/15",
+    iconColor: "text-amber-400",
+    badge: "text-amber-400",
+    cta: "bg-amber-600 hover:bg-amber-500 text-white",
+    Icon: AlertTriangle,
+  },
+  overview: {
+    label: "작업 허브",
+    border: "border-slate-700/40",
+    bg: "bg-slate-800/20",
+    iconBg: "bg-slate-700/20",
+    iconColor: "text-slate-300",
+    badge: "text-slate-400",
+    cta: "bg-slate-600 hover:bg-slate-500 text-white",
+    Icon: LayoutDashboard,
+  },
+};
