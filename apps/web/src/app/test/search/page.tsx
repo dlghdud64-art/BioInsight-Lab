@@ -1862,6 +1862,9 @@ export default function SearchPage() {
         onSubmitSuccess={() => {
           quoteItems.forEach((item: any) => removeQuoteItem(item.id));
         }}
+        onQuoteManagementOpen={() => {
+          router.push("/dashboard/quotes");
+        }}
       />
     </div>
   );
