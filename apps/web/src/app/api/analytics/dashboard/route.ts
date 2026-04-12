@@ -96,12 +96,10 @@ export async function GET() {
         take: 5,
       }),
       // 승인 대기 중인 구매 요청 금액
-      db.purchaseOrder.findMany({
+      db.purchaseRequest.findMany({
         where: {
-          OR: [
-            ...(workspaceIds.length > 0 ? [{ workspaceId: { in: workspaceIds } }] : []),
-          ],
-          status: { in: ["PENDING_APPROVAL", "DRAFT", "SUBMITTED"] },
+          requesterId: userId,
+          status: "PENDING",
         },
         select: { totalAmount: true },
       }),
