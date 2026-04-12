@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useOrderPeekOverlayStore } from "@/lib/store/order-peek-overlay-store";
+import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 import { cn } from "@/lib/utils";
 import {
   useWorkQueue,
@@ -96,8 +97,15 @@ function timeAgo(dateStr: string): string {
 
 // ── 컴포넌트 ──
 
+// ── Overlay 지원 경로 판별 ──
+const OVERLAY_ROUTE_RE = [/^\/dashboard\/purchase-orders/, /^\/dashboard\/orders/];
+function isOverlayRoute(href: string): boolean {
+  return OVERLAY_ROUTE_RE.some((re) => re.test(href));
+}
+
 export function WorkQueueInbox() {
   const router = useRouter();
+  const openOverlay = useWorkbenchOverlayOpen();
   const [showCompleted, setShowCompleted] = useState(false);
   useSyncOpsQueue(); // Sync ops + compare queue on mount
   const { data, isLoading, error } = useWorkQueue({
@@ -194,15 +202,20 @@ export function WorkQueueInbox() {
                 key={item.id}
                 item={item}
                 onNavigate={() => {
-                  // ORDER type 은 페이지 이동 대신 peek drawer 로 1-shot 요약 제공.
-                  // 본격 검토는 drawer 의 "워크벤치 열기" CTA 로 hand-off.
-                  if (item.relatedEntityType === "ORDER") {
+                  const deepLink = getDeepLinkPath(item);
+                  // ORDER type → overlay (progress sheet) 로 빠른 현황 제공
+                  if (item.relatedEntityType === "ORDER" && isOverlayRoute(deepLink)) {
+                    openOverlay({ routePath: deepLink, origin: "queue", mode: "progress" });
+                  } else if (item.relatedEntityType === "ORDER") {
+                    // fallback: peek drawer
                     useOrderPeekOverlayStore.getState().openById(
                       item.relatedEntityId ?? item.id,
                       item.title,
                     );
+                  } else if (isOverlayRoute(deepLink)) {
+                    openOverlay({ routePath: deepLink, origin: "queue", mode: "progress" });
                   } else {
-                    router.push(getDeepLinkPath(item));
+                    router.push(deepLink);
                   }
                 }}
                 onApprove={() => approveMutation.mutate({ id: item.id })}

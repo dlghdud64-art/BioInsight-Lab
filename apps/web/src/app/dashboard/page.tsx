@@ -12,9 +12,11 @@ import {
   CheckCircle2, Clock, ClipboardList,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
+import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 import dynamic_import from "next/dynamic";
 const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-queue-inbox").then(m => m.WorkQueueInbox), {
   ssr: false,
@@ -42,8 +44,28 @@ const ExecutiveSummarySection = dynamic_import(
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 
+// ── Overlay 지원 경로 판별 ──
+const OVERLAY_ROUTE_PATTERNS = [
+  /^\/dashboard\/purchase-orders/,
+  /^\/dashboard\/orders/,
+];
+function isOverlayCapableRoute(href: string): boolean {
+  return OVERLAY_ROUTE_PATTERNS.some((re) => re.test(href));
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const openOverlay = useWorkbenchOverlayOpen();
+
+  /** Link 대신 overlay를 열 수 있는 경로면 overlay를, 아니면 router.push */
+  const handleNavigateOrOverlay = (href: string, origin: "dashboard" | "queue" | "card" = "dashboard") => {
+    if (isOverlayCapableRoute(href)) {
+      openOverlay({ routePath: href, origin, mode: "progress" });
+    } else {
+      router.push(href);
+    }
+  };
 
   const { data: dashboardStats, isLoading: statsLoading } = useQuery({
     queryKey: ["dashboard-stats"],
@@ -412,17 +434,17 @@ export default function DashboardPage() {
         {hasActionItems ? (
           <div className="divide-y divide-slate-100 sm:divide-y-0 sm:grid sm:divide-x sm:divide-slate-100" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>
             {stats.lowStockAlerts > 0 && (
-              <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory?filter=low", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{stats.lowStockAlerts}건 재고 부족</p>
                   <p className="text-xs text-slate-500">즉시 발주 검토 필요</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </Link>
+              </button>
             )}
             {stats.activeQuotes > 0 && (
-              <Link href="/dashboard/quotes?status=PENDING" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/quotes?status=PENDING", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{stats.activeQuotes}건 견적 대기</p>
@@ -431,20 +453,20 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </Link>
+              </button>
             )}
             {stats.expiringCount > 0 && (
-              <Link href="/dashboard/inventory" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+              <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <Calendar className="h-4 w-4 text-amber-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
                   <p className="text-xs text-slate-500">30일 이내 만료 예정</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </Link>
+              </button>
             )}
             {stats.undecidedCompareCount > 0 && (
-              <Link href="/compare" className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group">
+              <button type="button" onClick={() => handleNavigateOrOverlay("/compare", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <GitCompare className={`h-4 w-4 flex-shrink-0 ${stats.compareStats.slaBreachedCount > 0 ? "text-red-500" : "text-slate-400"}`} />
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900">{stats.undecidedCompareCount}건 비교 판정 대기</p>
@@ -496,7 +518,7 @@ export default function DashboardPage() {
                   )}
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-              </Link>
+              </button>
             )}
           </div>
         ) : (
@@ -557,14 +579,14 @@ export default function DashboardPage() {
               <div className="space-y-1.5">
                 <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">즉시 처리</p>
                 {urgentItems.map((item) => (
-                  <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                  <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
                       <p className="text-xs font-semibold text-slate-900">{item.label}</p>
                       <p className="text-[10px] text-slate-500">{item.desc}</p>
                     </div>
                     <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
-                  </Link>
+                  </button>
                 ))}
               </div>
             )}
@@ -575,14 +597,14 @@ export default function DashboardPage() {
               <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">다음 작업</p>
               <div className="space-y-1">
                 {recommendedActions.map((action) => (
-                  <Link key={action.id} href={action.href} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors">
+                  <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left">
                     {action.icon}
                     <div className="flex-1 min-w-0">
                       <p className={`text-xs font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-600"}`}>{action.label}</p>
                       <p className="text-[10px] text-slate-400 truncate">{action.desc}</p>
                     </div>
                     <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
@@ -852,14 +874,14 @@ export default function DashboardPage() {
                   <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">즉시 처리</p>
                   <div className="space-y-1">
                     {urgentItems.map((item) => (
-                      <Link key={item.id} href={item.href} className={`flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 transition-colors group ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
+                      <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 p-2.5 rounded-lg hover:bg-slate-50 transition-colors group text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                         {item.icon}
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-semibold text-slate-900">{item.label}</p>
                           <p className="text-[10px] text-slate-500">{item.desc}</p>
                         </div>
                         <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -871,14 +893,14 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">다음 작업</p>
                 <div className="space-y-0.5">
                   {recommendedActions.map((action) => (
-                    <Link key={action.id} href={action.href} className="flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group">
+                    <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 px-2 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group text-left">
                       {action.icon}
                       <div className="flex-1 min-w-0">
                         <span className={`block text-sm font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-600"}`}>{action.label}</span>
                         <span className="block text-[11px] text-slate-400 leading-snug">{action.desc}</span>
                       </div>
                       <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
-                    </Link>
+                    </button>
                   ))}
                 </div>
                 {/* 보조 기능 */}
