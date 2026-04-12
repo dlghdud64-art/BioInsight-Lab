@@ -201,7 +201,7 @@ export function OwnershipCoverageCard({ coverage, className }: OwnershipCoverage
         </span>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 text-xs">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
         <div>
           <span className="text-slate-500 text-[10px]">Coverage</span>
           <p className={cn("text-sm font-semibold tabular-nums", coverage.coverageRate >= 90 ? "text-emerald-400" : coverage.coverageRate >= 70 ? "text-amber-400" : "text-red-400")}>

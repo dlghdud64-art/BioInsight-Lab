@@ -103,7 +103,7 @@ export function ReorderDecisionGovernanceWorkbench({
         </div>
 
         {/* Gap + supply indicators */}
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded border border-slate-800 bg-slate-900/50 p-3 text-center">
             <p className="text-lg font-bold tabular-nums text-slate-900">{surface.originalOrdered}</p>
             <p className="text-[10px] text-slate-500">주문</p>

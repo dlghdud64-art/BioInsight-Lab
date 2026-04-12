@@ -378,7 +378,7 @@ function DwellRiskCard({
       <div className="text-sm font-medium text-slate-700">
         진행중 Case 체류 현황
       </div>
-      <div className="mt-2 grid grid-cols-4 gap-2 text-xs text-center">
+      <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-center">
         <div>
           <div className="text-green-400 font-medium">{summary.normal}</div>
           <div className="text-slate-500">정상</div>

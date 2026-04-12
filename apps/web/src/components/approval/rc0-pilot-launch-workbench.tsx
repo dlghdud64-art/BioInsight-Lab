@@ -150,7 +150,7 @@ export function RC0PilotLaunchWorkbench({
 
         {/* Scope summary */}
         <SectionCard title="RC0 범위">
-          <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-slate-400">
             <div><span className="text-slate-500">Stage</span><div className="text-slate-600">{center.scopeSummary.stages}개</div></div>
             <div><span className="text-slate-500">Domain</span><div className="text-slate-600">{center.scopeSummary.domains}개</div></div>
             <div><span className="text-slate-500">PO 제한</span><div className="text-slate-600">{center.scopeSummary.poLimit}건</div></div>

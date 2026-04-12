@@ -891,7 +891,7 @@ export default function SafetyManagerPage() {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, fileName: e.target.files?.[0]?.name || "" }))} />
               {msdsForm.fileName && <p className="text-xs text-emerald-600 flex items-center gap-1"><CheckCircle2 className="h-3 w-3" />{msdsForm.fileName}</p>}
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">문서 버전 *</Label><Input value={msdsForm.docVersion} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, docVersion: e.target.value }))} placeholder="1.0" className="h-9 text-xs" /></div>
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">등록일 *</Label><Input type="date" value={msdsForm.registeredAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, registeredAt: e.target.value }))} className="h-9 text-xs" /></div>
               <div className="space-y-1.5"><Label className="text-xs font-medium text-slate-700">만료일</Label><Input type="date" value={msdsForm.expiresAt} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMsdsForm((f) => ({ ...f, expiresAt: e.target.value }))} className="h-9 text-xs" /></div>

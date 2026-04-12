@@ -3,15 +3,20 @@
  *
  * 책임:
  * - governance event publisher 가 동일 (poNumber, eventType, signatureKey) 조합에 대해
- *   탭/세션을 넘어 중복 발행하지 않도록 sessionStorage 기반 dedupe layer 를 제공한다.
+ *   탭/세션을 넘어 중복 발행하지 않도록 dedupe layer 를 제공한다.
  *
  * 고정 규칙:
  * 1. canonical truth 를 변경하지 않는다 — 발행 여부 결정 logic 만 제공.
- * 2. sessionStorage 가 없는 환경 (SSR / test) 에서는 항상 "발행 OK" 를 반환한다.
- * 3. dedupe 키는 (poNumber + eventType + signatureKey) 의 hash.
+ * 2. storage adapter 가 없는 환경 (SSR / test) 에서는 항상 "발행 OK" 를 반환한다.
+ * 3. dedupe 키는 (poNumber + eventType + signatureKey) 의 composite.
  *    signatureKey 는 호출자가 결정 (예: updatedAt, readiness value 등).
  * 4. 만료 시간(TTL) 은 기본 30분. 같은 PO가 30분 안에 같은 이벤트를 재발행하지 않는다.
  *    30분 후에는 동일 signatureKey 라도 재발행 허용 (stale data recovery 대비).
+ *
+ * Persistence:
+ * - PersistenceAdapter<DedupeRecord> 를 통해 storage 구현에 직접 의존하지 않는다.
+ * - 기본 구현은 SessionStorageAdapter (getDedupeAdapter()).
+ * - 추후 Supabase/DB adapter 로 교체 가능.
  *
  * 사용 예:
  * ```ts
@@ -22,19 +27,12 @@
  * ```
  */
 
-const STORAGE_PREFIX = "labaxis_gov_dedupe_";
+import { getDedupeAdapter, type DedupeRecord } from "@/lib/persistence/persistence-adapter";
+
 const DEFAULT_TTL_MS = 30 * 60 * 1000; // 30분
 
-function buildKey(poNumber: string, eventType: string, signatureKey: string): string {
-  return `${STORAGE_PREFIX}${poNumber}::${eventType}::${signatureKey}`;
-}
-
-function getStorage(): Storage | null {
-  try {
-    return typeof window !== "undefined" ? window.sessionStorage : null;
-  } catch {
-    return null;
-  }
+function buildCompositeKey(poNumber: string, eventType: string, signatureKey: string): string {
+  return `${poNumber}::${eventType}::${signatureKey}`;
 }
 
 /**
@@ -47,18 +45,15 @@ export function shouldPublish(
   signatureKey: string,
   ttlMs: number = DEFAULT_TTL_MS,
 ): boolean {
-  const storage = getStorage();
-  if (!storage) return true; // SSR / test 환경
+  const adapter = getDedupeAdapter();
+  const key = buildCompositeKey(poNumber, eventType, signatureKey);
+  const record = adapter.load(key);
+  if (!record) return true;
 
-  const key = buildKey(poNumber, eventType, signatureKey);
-  const raw = storage.getItem(key);
-  if (!raw) return true;
-
-  const ts = Number(raw);
-  if (Number.isNaN(ts)) return true;
+  if (Number.isNaN(record.timestamp)) return true;
 
   // TTL 만료 시 재발행 허용
-  return Date.now() - ts > ttlMs;
+  return Date.now() - record.timestamp > ttlMs;
 }
 
 /**
@@ -69,15 +64,10 @@ export function markPublished(
   eventType: string,
   signatureKey: string,
 ): void {
-  const storage = getStorage();
-  if (!storage) return;
-
-  const key = buildKey(poNumber, eventType, signatureKey);
-  try {
-    storage.setItem(key, String(Date.now()));
-  } catch {
-    // storage full 등 — silent fail (dedupe 는 best-effort)
-  }
+  const adapter = getDedupeAdapter();
+  const key = buildCompositeKey(poNumber, eventType, signatureKey);
+  const record: DedupeRecord = { timestamp: Date.now(), signature: signatureKey };
+  adapter.persist(key, record);
 }
 
 /**
@@ -86,16 +76,12 @@ export function markPublished(
  * 이후 재계산된 이벤트가 다시 발행될 수 있도록 한다.
  */
 export function clearDedupeForPo(poNumber: string): void {
-  const storage = getStorage();
-  if (!storage) return;
-
-  const prefix = `${STORAGE_PREFIX}${poNumber}::`;
-  const keysToRemove: string[] = [];
-  for (let i = 0; i < storage.length; i++) {
-    const key = storage.key(i);
-    if (key && key.startsWith(prefix)) {
-      keysToRemove.push(key);
-    }
+  const adapter = getDedupeAdapter();
+  // SessionStorageAdapter의 clearByPrefix 활용 — adapter boundary 안에서 처리
+  if ("clearByPrefix" in adapter && typeof (adapter as any).clearByPrefix === "function") {
+    (adapter as any).clearByPrefix(`${poNumber}::`);
+  } else {
+    // generic adapter 대응 — 개별 키를 알 수 없으므로 no-op
+    // 추후 adapter에 clearByPattern() 추가 시 대체
   }
-  keysToRemove.forEach((k) => storage.removeItem(k));
 }

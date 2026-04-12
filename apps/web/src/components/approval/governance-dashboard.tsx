@@ -105,7 +105,7 @@ function BottleneckAlerts({ bottlenecks }: { bottlenecks: BottleneckIndicator[] 
 // ── KPI Strip ──
 function KPIStrip({ metrics }: { metrics: ApprovalMetric[] }) {
   return (
-    <div className="grid grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
       {metrics.map((m) => (
         <div
           key={m.metricKey}

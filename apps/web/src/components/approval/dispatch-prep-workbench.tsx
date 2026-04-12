@@ -20,6 +20,7 @@ import { PolicyStatusBadge, PolicyMessageStack, NextActionHint } from "./index";
 import { QuoteChainProgressStrip, type ChainStageKey } from "./quote-chain-progress-strip";
 import type { DispatchPreparationGovernanceState, DispatchPolicySurface, ConfirmationItem } from "@/lib/ai/po-dispatch-governance-engine";
 import { canCreateExecution } from "@/lib/ai/dispatch-execution-handoff";
+import { useDispatchGovernanceSync } from "@/hooks/use-dispatch-governance-sync";
 import { useOpenGovernedComposer } from "@/hooks/use-open-governed-composer";
 
 /** Rail context — approval / quote / supplier 참조 정보 */
@@ -80,6 +81,10 @@ export interface DispatchPrepWorkbenchProps {
   onReopenConversion?: () => void;
   onCancelPrep?: () => void;
   onStageClick?: (stage: ChainStageKey) => void;
+  /** case ID for governance event subscription */
+  caseId?: string;
+  /** readiness 재계산 콜백 — governance 이벤트 수신 시 호출 */
+  onReadinessRecalcNeeded?: () => void;
   className?: string;
 }
 
@@ -88,9 +93,29 @@ export function DispatchPrepWorkbench({
   railContext, supplierPayload,
   onSendNow, onScheduleSend, onRequestCorrection, onReopenConversion, onCancelPrep,
   onStageClick,
+  caseId,
+  onReadinessRecalcNeeded,
   className,
 }: DispatchPrepWorkbenchProps) {
+  // Layer 1: governance state guard (기존 — backward compat)
   const sendGuard = canCreateExecution(state);
+
+  // Layer 2: comprehensive dock locks (invalidation + snapshot + confirmation)
+  const allConfirmed = state.allConfirmed ?? state.confirmationChecklist.every((c: ConfirmationItem) => !c.required || c.confirmed);
+  const { dockLocks, irreversibleLocked } = useDispatchGovernanceSync({
+    poNumber,
+    caseId: caseId ?? poNumber,
+    readiness: state.readiness,
+    snapshotValid: state.approvalSnapshotValid && state.conversionSnapshotValid,
+    allConfirmed,
+    onReadinessRecalcNeeded,
+  });
+
+  // Combined guard: both layers must allow — optimistic unlock 금지
+  const sendAllowed = sendGuard.allowed && !dockLocks.sendNowLocked;
+  const scheduleAllowed = sendGuard.allowed && !dockLocks.scheduleSendLocked;
+  const lockReason = dockLocks.lockReason ?? sendGuard.denyReason;
+
   const [railOpen, setRailOpen] = React.useState(false);
   const openComposer = useOpenGovernedComposer();
 
@@ -105,15 +130,16 @@ export function DispatchPrepWorkbench({
       linkedSupplierName: vendorName,
       dryRunContext: {
         approvalSnapshotValid: { [poNumber]: state.approvalSnapshotValid },
-        policyHoldActive: state.hardBlockers.some((b) => b.code === "policy_hold"),
-        hasPendingCriticalEvents: state.hardBlockers.some((b) => b.code === "critical_event"),
+        policyHoldActive: state.hardBlockers.some((b) => b.type === "policy_hold_active"),
+        policyHoldReason: state.hardBlockers.find((b) => b.type === "policy_hold_active")?.detail ?? null,
+        hasPendingCriticalEvents: state.hardBlockers.some((b) => b.type === "snapshot_invalidated" || b.type === "approval_expired"),
         availableBudget: null,
         recipientConfigured: Boolean(surface.statusBadge !== "blocked"),
-        attachmentsComplete: !state.hardBlockers.some((b) => b.code === "missing_attachment"),
-        commercialTermsComplete: !state.hardBlockers.some((b) => b.code === "missing_commercial_terms"),
+        attachmentsComplete: !state.hardBlockers.some((b) => b.type === "required_document_missing"),
+        commercialTermsComplete: !state.hardBlockers.some((b) => b.type === "commercial_terms_missing"),
         contactInfoComplete: true,
         entityStatuses: { [poNumber]: "dispatch_preparation" },
-        supplierInfo: { name: vendorName },
+        supplierInfo: { id: poNumber, name: vendorName },
         totalAmount,
       },
     });
@@ -447,11 +473,13 @@ export function DispatchPrepWorkbench({
                 보정 요청
               </button>
             )}
-            {onScheduleSend && sendGuard.allowed && (
+            {onScheduleSend && (
               <button
                 onClick={() => onScheduleSend("")}
+                disabled={!scheduleAllowed}
+                title={!scheduleAllowed ? (lockReason ?? undefined) : undefined}
                 aria-label="발송 예약"
-                className="shrink-0 rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-blue-300 transition-all snap-start"
+                className="shrink-0 rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-blue-300 transition-all disabled:opacity-40 disabled:cursor-not-allowed snap-start"
               >
                 예약 발송
               </button>
@@ -466,8 +494,8 @@ export function DispatchPrepWorkbench({
             {onSendNow && (
               <button
                 onClick={onSendNow}
-                disabled={!sendGuard.allowed}
-                title={sendGuard.denyReason ?? undefined}
+                disabled={!sendAllowed}
+                title={!sendAllowed ? (lockReason ?? undefined) : undefined}
                 aria-label="지금 발송"
                 className="shrink-0 rounded bg-blue-600 hover:bg-blue-500 active:scale-95 min-h-[40px] px-4 py-2 md:py-1.5 text-xs font-medium text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed snap-start"
               >

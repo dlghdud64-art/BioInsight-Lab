@@ -362,7 +362,7 @@ export function PilotMonitoringWorkbench({
         </div>
 
         {/* Split view: 4 health indicators */}
-        <div className="grid grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <HealthIndicator label="셋업" healthy={split.setupComplete} detail={`${health.checklistHealth.progressPercent}%`} />
           <HealthIndicator label="운영" healthy={split.operationalHealthy} detail={`${health.operationalHealth.overallScore}점`} />
           <HealthIndicator label="준수" healthy={split.complianceHealthy} detail={`${health.complianceHealth.complianceRate}%`} />

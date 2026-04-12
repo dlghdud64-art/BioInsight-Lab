@@ -3,7 +3,7 @@
  *
  * 목적:
  *   dispatch-outbound-store (Zustand in-memory) 의 historyByPoId 를
- *   sessionStorage 에 보관해 페이지 새로고침 / 탭 재진입 시에도
+ *   persistence adapter 뒤에서 보관해 페이지 새로고침 / 탭 재진입 시에도
  *   outbound execution lineage (audit modal, history strip) 가 유실되지 않게 한다.
  *
  * 고정 규칙:
@@ -12,34 +12,37 @@
  *   2. PO 단위로 저장/조회/삭제한다. broad global clear 금지.
  *   3. PO conversion reopen / dispatch prep cancel 등 invalidation 이벤트에서
  *      해당 PO 의 persisted history 를 제거해 stale lineage 가 남지 않게 한다.
- *   4. SSR / sessionStorage 미지원 환경에서는 no-op.
+ *   4. SSR-safe — adapter 가 SSR 환경을 처리.
  *   5. 저장 시 history 를 그대로 직렬화한다. field 를 축소하지 않음 —
  *      audit modal 이 전체 record 를 소비하므로.
+ *
+ * Persistence:
+ *   PersistenceAdapter<OutboundHistoryRecord[]> 를 통해 storage 구현에 직접 의존하지 않는다.
+ *   기본 구현은 SessionStorageAdapter (getOutboundHistoryAdapter()).
+ *   추후 Supabase/DB adapter 로 교체 가능.
  */
 
 import type { DispatchOutboundRecord } from "@/lib/store/dispatch-outbound-store";
-
-const STORAGE_KEY_PREFIX = "labaxis_outbound_history::";
+import { getOutboundHistoryAdapter, type OutboundHistoryRecord } from "@/lib/persistence/persistence-adapter";
 
 // ══════════════════════════════════════════════
-// SSR safety
+// Internal: DispatchOutboundRecord ↔ OutboundHistoryRecord 변환
 // ══════════════════════════════════════════════
 
-function isStorageAvailable(): boolean {
-  try {
-    if (typeof window === "undefined") return false;
-    if (typeof window.sessionStorage === "undefined") return false;
-    const probe = "__labaxis_outbound_probe__";
-    window.sessionStorage.setItem(probe, "1");
-    window.sessionStorage.removeItem(probe);
-    return true;
-  } catch {
-    return false;
-  }
+function toHistoryRecords(records: ReadonlyArray<DispatchOutboundRecord>): OutboundHistoryRecord[] {
+  return records.map((r) => ({
+    poId: r.poId,
+    type: r.status,
+    timestamp: r.createdAt,
+    actor: "system",
+    payload: r as unknown as Record<string, unknown>,
+  }));
 }
 
-function buildKey(poId: string): string {
-  return `${STORAGE_KEY_PREFIX}${poId}`;
+function fromHistoryRecords(records: OutboundHistoryRecord[]): DispatchOutboundRecord[] {
+  return records
+    .map((r) => r.payload as unknown as DispatchOutboundRecord)
+    .filter((r): r is DispatchOutboundRecord => r != null && typeof r === "object");
 }
 
 // ══════════════════════════════════════════════
@@ -47,7 +50,7 @@ function buildKey(poId: string): string {
 // ══════════════════════════════════════════════
 
 /**
- * 특정 PO 의 outbound history 를 sessionStorage 에 저장한다.
+ * 특정 PO 의 outbound history 를 persistence adapter에 저장한다.
  * store 의 applyOutboundMutation 이후에 호출되며,
  * 빈 배열이면 해당 key 를 제거해 storage 오염을 방지한다.
  */
@@ -55,17 +58,12 @@ export function persistOutboundHistory(
   poId: string,
   history: ReadonlyArray<DispatchOutboundRecord>,
 ): void {
-  if (!isStorageAvailable()) return;
-  const key = buildKey(poId);
+  const adapter = getOutboundHistoryAdapter();
   if (history.length === 0) {
-    window.sessionStorage.removeItem(key);
+    adapter.clear(poId);
     return;
   }
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(history));
-  } catch {
-    // QuotaExceeded 등 — 무시. audit lineage 유실은 치명적이지 않음.
-  }
+  adapter.persist(poId, toHistoryRecords(history));
 }
 
 // ══════════════════════════════════════════════
@@ -79,16 +77,10 @@ export function persistOutboundHistory(
 export function loadOutboundHistory(
   poId: string,
 ): DispatchOutboundRecord[] {
-  if (!isStorageAvailable()) return [];
-  const raw = window.sessionStorage.getItem(buildKey(poId));
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed as DispatchOutboundRecord[];
-  } catch {
-    return [];
-  }
+  const adapter = getOutboundHistoryAdapter();
+  const records = adapter.load(poId);
+  if (!records || !Array.isArray(records)) return [];
+  return fromHistoryRecords(records);
 }
 
 // ══════════════════════════════════════════════
@@ -100,8 +92,8 @@ export function loadOutboundHistory(
  * reopen / invalidation 이벤트에서 governance-bridge 가 호출한다.
  */
 export function clearOutboundHistory(poId: string): void {
-  if (!isStorageAvailable()) return;
-  window.sessionStorage.removeItem(buildKey(poId));
+  const adapter = getOutboundHistoryAdapter();
+  adapter.clear(poId);
 }
 
 // ══════════════════════════════════════════════

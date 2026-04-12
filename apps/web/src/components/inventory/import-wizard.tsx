@@ -688,7 +688,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
             </div>
 
             {/* 결과 카드 */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="border rounded-lg p-4 text-center">
                 <div className="text-2xl font-bold">{importResult.totalRows}</div>
                 <div className="text-sm text-muted-foreground">총 행 수</div>

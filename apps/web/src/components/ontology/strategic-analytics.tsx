@@ -153,7 +153,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
   return (
     <div className={cn("space-y-6", className)}>
       {/* ═══ KPI Summary Cards ═══ */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <KPICard
           label="총 예산"
           value={`${(kpis.budgets.reduce((s, b) => s + b.totalAmount, 0) / 10000).toLocaleString()}만원`}
@@ -180,7 +180,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
         />
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* ═══ Budget Burn Rate Chart ═══ */}
         <div className="col-span-2 rounded border border-slate-800 bg-slate-900/50 p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
@@ -644,7 +644,7 @@ function OntologyRoadmap() {
             Phase 7 비전
           </span>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
             <p className="text-[11px] font-medium text-slate-300">Zero-Touch Purchasing</p>
             <p className="text-[10px] text-slate-600 leading-relaxed">

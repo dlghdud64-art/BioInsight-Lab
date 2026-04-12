@@ -15,6 +15,11 @@ import {
   Settings,
   Activity,
   ShieldCheck,
+  BarChart3,
+  Wallet,
+  FileBarChart,
+  Building2,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +42,16 @@ const menuGroups: { title: string; items: MoreMenuItem[] }[] = [
       { label: "발주", href: "/dashboard/purchase-orders", icon: ClipboardList },
       { label: "입고", href: "/dashboard/receiving", icon: Package },
       { label: "재고 위험", href: "/dashboard/stock-risk", icon: AlertTriangle },
+    ],
+  },
+  {
+    title: "분석 및 관리",
+    items: [
+      { label: "리포트", href: "/dashboard/reports", icon: FileBarChart },
+      { label: "예산 관리", href: "/dashboard/budget", icon: Wallet },
+      { label: "분석", href: "/dashboard/analytics", icon: BarChart3 },
+      { label: "조직 관리", href: "/dashboard/organizations", icon: Building2 },
+      { label: "안전 관리", href: "/dashboard/safety", icon: Shield },
     ],
   },
   {
@@ -92,7 +107,7 @@ export function BottomNavMoreSheet({ open, onOpenChange }: MoreSheetProps) {
         className="rounded-t-2xl px-4 pb-8 safe-area-bottom bg-slate-900 border-t border-slate-800"
       >
         <SheetHeader className="pb-2">
-          <SheetTitle className="text-base font-bold text-slate-900">
+          <SheetTitle className="text-base font-bold text-slate-100">
             전체 메뉴
           </SheetTitle>
         </SheetHeader>

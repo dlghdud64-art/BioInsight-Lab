@@ -629,7 +629,7 @@ function MultiVendorTab() {
                       )}
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
                     <div>
                       <span className="text-slate-400">단가</span>
                       <p className="font-semibold text-slate-700 mt-0.5">

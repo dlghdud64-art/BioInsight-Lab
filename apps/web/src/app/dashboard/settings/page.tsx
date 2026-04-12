@@ -147,8 +147,8 @@ const NAV_GROUPS: { group: string; items: { id: SettingsSection; label: string; 
     items: [
       { id: "operator", label: "운영자 및 워크스페이스", sublabel: "식별 정보 및 운영 정보", icon: Fingerprint },
       { id: "ontology", label: "온톨로지 엔진 (AI)", sublabel: "추론 및 자동화 규칙", icon: Brain },
-      { id: "security", label: "보안 및 접근 제어", sublabel: "RBAC 및 승인 라우팅", icon: ShieldCheck },
-      { id: "integrations", label: "시스템 연동 (API)", sublabel: "ERP 및 공급사 Webhook", icon: Webhook },
+      { id: "security", label: "보안 및 접근 제어", sublabel: "역할 권한 및 승인 라우팅", icon: ShieldCheck },
+      { id: "integrations", label: "시스템 연동", sublabel: "외부 시스템 및 공급사 연결", icon: Webhook },
     ],
   },
   {
@@ -416,12 +416,12 @@ function SettingsPageContent() {
         <div className="mb-6">
           <div className="flex items-center gap-2 text-[10px] text-slate-500 uppercase tracking-widest font-semibold mb-2">
             <Settings className="h-3 w-3" />
-            SYSTEM CONFIGURATION
+            시스템 설정
           </div>
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-100">시스템 및 워크스페이스 설정</h1>
-              <p className="text-sm text-slate-400 mt-0.5">운영자 권한, 온톨로지 엔진 매개변수 및 외부 시스템 연동을 구성합니다.</p>
+              <p className="text-sm text-slate-400 mt-0.5">운영자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
             </div>
             <div className="flex items-center gap-2">
               {isDirty && (
@@ -489,8 +489,8 @@ function SettingsPageContent() {
             {/* ═══ OPERATOR & WORKSPACE ═══ */}
             {activeSection === "operator" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                {/* Operator Identity */}
-                <SectionCard title="운영자 식별 정보 (Operator Identity)" icon={Fingerprint}>
+                {/* 운영자 식별 정보 */}
+                <SectionCard title="운영자 식별 정보" icon={Fingerprint}>
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
                     <div className="flex flex-col items-center gap-3">
@@ -518,13 +518,13 @@ function SettingsPageContent() {
                         <FieldBlock label="연락처">
                           <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="010-0000-0000" className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
                         </FieldBlock>
-                        <FieldBlock label="이메일 (SSO 연동)">
+                        <FieldBlock label="이메일 (통합 인증)">
                           <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-300 h-9 text-sm" />
                         </FieldBlock>
                       </div>
                       <div className="flex items-center gap-2 pt-1">
                         <Badge className="bg-blue-600/15 text-blue-400 border-blue-600/20 text-[10px] font-medium">{roleLabel}</Badge>
-                        <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[10px] font-medium">Clearance: Level 3</Badge>
+                        <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[10px] font-medium">접근 등급 3</Badge>
                       </div>
                     </div>
                   </div>
@@ -661,13 +661,13 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="역할 기반 접근 제어 (RBAC)" icon={Users}>
+                <SectionCard title="역할 기반 접근 제어" icon={Users}>
                   <div className="space-y-3">
                     {[
-                      { role: "Admin", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-400" },
-                      { role: "Lab Manager", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-400" },
-                      { role: "Procurement", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-400" },
-                      { role: "Viewer", permissions: "읽기 전용 / 리포트 열람", count: 5, color: "text-slate-400" },
+                      { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-400" },
+                      { role: "연구실 관리자", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-400" },
+                      { role: "구매 담당", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-400" },
+                      { role: "열람자", permissions: "읽기 전용 / 리포트 열람", count: 5, color: "text-slate-400" },
                     ].map((r) => (
                       <div key={r.role} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
                         <div className="flex items-center gap-3">

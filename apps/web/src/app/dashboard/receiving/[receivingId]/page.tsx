@@ -379,7 +379,7 @@ function ReceiptInspectionSurface({ model }: { model: ReceivingExecutionModel })
           <Package className="h-3.5 w-3.5 text-slate-500" />
           <span className="text-xs font-medium uppercase tracking-wider text-slate-500">수령 현황</span>
         </div>
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
           <StatCell label="전체 라인" value={rp.totalLines} />
           <StatCell label="수령 완료" value={rp.receivedLines} tone="success" />
           <StatCell label="부분 수령" value={rp.partialLines} tone={rp.partialLines > 0 ? "warning" : undefined} />
@@ -401,7 +401,7 @@ function ReceiptInspectionSurface({ model }: { model: ReceivingExecutionModel })
           <div className="text-xs text-slate-500">검수 불요</div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <StatCell label="필수" value={ins.totalRequired} />
               <StatCell label="합격" value={ins.passed} tone="success" />
               <StatCell label="불합격" value={ins.failed} tone={ins.failed > 0 ? "danger" : undefined} />
@@ -435,7 +435,7 @@ function DocumentSurface({ model }: { model: ReceivingExecutionModel }) {
         <span className="text-xs font-medium uppercase tracking-wider text-slate-500">문서 현황</span>
         <span className={`text-xs ${TONE_TEXT[doc.tone]}`}>{doc.label}</span>
       </div>
-      <div className="grid grid-cols-4 gap-2 text-xs">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
         <StatCell label="완료" value={doc.completeLines} tone="success" />
         <StatCell label="부분" value={doc.partialLines} tone={doc.partialLines > 0 ? "warning" : undefined} />
         <StatCell label="누락" value={doc.missingLines} tone={doc.missingLines > 0 ? "danger" : undefined} />

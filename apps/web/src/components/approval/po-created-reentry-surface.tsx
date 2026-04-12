@@ -201,6 +201,7 @@ export function POCreatedReentrySurface({
       dryRunContext: {
         approvalSnapshotValid: { [entityId]: approvalSnapshotValid },
         policyHoldActive: state.poCreatedBlockedFlag,
+        policyHoldReason: state.poCreatedBlockedFlag ? "정책 보류" : null,
         hasPendingCriticalEvents: false,
         availableBudget: null,
         recipientConfigured: true,
@@ -208,7 +209,7 @@ export function POCreatedReentrySurface({
         commercialTermsComplete: state.missingFieldCount === 0,
         contactInfoComplete: true,
         entityStatuses: { [entityId]: state.poCreatedStatus },
-        supplierInfo: { name: vendorName },
+        supplierInfo: { id: poNumber, name: vendorName },
         totalAmount,
       },
     });

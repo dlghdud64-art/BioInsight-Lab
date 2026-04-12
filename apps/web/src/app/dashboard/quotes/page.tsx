@@ -249,7 +249,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
       onClick={onSelect}
     >
       {/* 운영 신호 3종 — 최상단 */}
-      <div className="flex items-center gap-2 mb-2 flex-wrap">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
         <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
           {(quote.status === "SENT" || quote.status === "PENDING") && !delayed && (
             <span className="relative flex h-2 w-2">
@@ -267,8 +267,8 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
         <span className="text-[11px] text-slate-500 font-mono ml-auto">{quoteRef}</span>
       </div>
 
-      <div className="flex items-start gap-3">
-        <div className="flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
+        <div className="flex-1 min-w-0 w-full">
           {/* 제목 */}
           <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{quote.title}</h3>
 
@@ -283,7 +283,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           )}
 
           {/* 운영형 메타 — triage 우선 */}
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
+          <div className="flex flex-wrap gap-x-2 sm:gap-x-3 gap-y-1">
             <span className="text-[11px] text-slate-500 flex items-center gap-1">
               <Package className="h-3 w-3" />{itemCount}건
             </span>
@@ -302,36 +302,36 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
           </div>
         </div>
 
-        {/* State-aware CTA — rail open only, no page navigation */}
-        <div className="flex flex-col gap-1.5 flex-shrink-0 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+        {/* State-aware CTA — 모바일: 가로 전폭, sm+: 오른쪽 세로 */}
+        <div className="flex sm:flex-col gap-1.5 flex-shrink-0 w-full sm:w-auto sm:min-w-[100px]" onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"
             variant={signals.ctaVariant}
-            className={`h-7 text-xs w-full ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+            className={`h-9 sm:h-7 text-xs flex-1 sm:flex-none sm:w-full ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
             onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
           >
             {signals.ctaLabel}
             <ArrowRight className="h-3 w-3 ml-1" />
           </Button>
-          {/* 다음 액션 힌트 */}
-          <span className="text-[9px] text-slate-500 text-center">다음: {signals.nextAction}</span>
+          {/* 다음 액션 힌트 — 모바일에서는 숨김 */}
+          <span className="text-[9px] text-slate-500 text-center hidden sm:block">다음: {signals.nextAction}</span>
         </div>
       </div>
 
       {/* Readiness strip */}
       <div className="mt-3 pt-2.5 border-t border-bd/50">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           {READINESS_LABELS.map((label, idx) => {
             const active = idx <= signals.readinessStage;
             const current = idx === signals.readinessStage;
             return (
-              <div key={label} className="flex flex-col items-center gap-1 flex-1 min-w-0">
-                <div className={`h-2 w-full rounded-full transition-all ${
+              <div key={label} className="flex flex-col items-center gap-0.5 sm:gap-1 flex-1 min-w-0">
+                <div className={`h-1.5 sm:h-2 w-full rounded-full transition-all ${
                   active
                     ? current ? "bg-blue-500 shadow-sm shadow-blue-200" : "bg-emerald-500/50"
                     : "bg-slate-100"
                 }`} />
-                <span className={`text-[8px] truncate ${current ? "text-blue-600 font-semibold" : active ? "text-emerald-600/60" : "text-slate-300"}`}>{label}</span>
+                <span className={`text-[9px] sm:text-[8px] leading-tight whitespace-nowrap ${current ? "text-blue-600 font-semibold" : active ? "text-emerald-600/60" : "text-slate-300"}`}>{label}</span>
               </div>
             );
           })}
@@ -578,39 +578,39 @@ function QuotesPageContent() {
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
       {/* ── 헤더 ── */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
-          <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 overflow-x-auto snap-x pb-0.5 sm:pb-0">
           {/* AI 견적서 파싱 버튼 */}
           <button
             onClick={() => setAiParseModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 snap-start"
           >
-            <Upload className="h-4 w-4" />
-            AI 견적서 파싱
+            <Upload className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
+            <span className="hidden sm:inline">AI 견적서 파싱</span><span className="sm:hidden">파싱</span>
           </button>
           {/* AI 견적서 비교 버튼 */}
           <button
             onClick={runAiQuoteCompare}
             disabled={aiCompareLoading || !quotes || quotes.length < 2}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0 snap-start"
           >
             {aiCompareLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 animate-spin" />
             ) : (
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
             )}
-            AI 견적서 비교
+            <span className="hidden sm:inline">AI 견적서 비교</span><span className="sm:hidden">비교</span>
           </button>
           <AiActionButton label="견적 요청 초안 만들기" icon={FileText} generateEndpoint="/api/ai-actions/generate/quote-draft"
             generatePayload={{ items: quotes?.slice(0, 3).flatMap((q: Quote) => q.items?.map(item => ({ productName: item.product?.name || "품목", quantity: item.quantity || 1 })) || []) || [] }}
             variant="outline" size="sm" className="h-9 text-sm hidden sm:flex" />
           <PermissionGate permission="quotes.create">
-            <Link href="/app/search" className="flex-shrink-0">
-              <Button size="sm" className="h-9 text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
+            <Link href="/app/search" className="flex-shrink-0 snap-start">
+              <Button size="sm" className="h-9 text-xs sm:text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
               </Button>
             </Link>
@@ -631,8 +631,8 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* ── KPI Control Cards ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* ── KPI Control Cards — 모바일: 가로 스와이프 / sm+: 2열 / md+: 4열 ── */}
+      <div className="flex gap-2.5 overflow-x-auto snap-x pb-1 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-4 sm:gap-3 sm:overflow-visible">
         {[
           { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
           { label: "비교 검토 필요", ...summaryStats.compareReview, icon: RefreshCw, filter: "RESPONDED", color: "purple", iconBg: "bg-purple-50", iconText: "text-purple-600", activeBorder: "border-purple-400/50", activeRing: "ring-purple-400/20", activeBg: "bg-purple-50/50", hoverBorder: "hover:border-purple-300", hoverShadow: "hover:shadow-purple-100" },
@@ -643,7 +643,7 @@ function QuotesPageContent() {
           const isZero = !isLoading && count === 0;
           return (
             <button key={label} onClick={() => setStatusFilter(prev => prev === filter ? "all" : filter)}
-              className={`animate-stagger-up text-left rounded-xl border bg-pn p-3.5 transition-all duration-200 cursor-pointer group
+              className={`animate-stagger-up text-left rounded-xl border bg-pn p-3 sm:p-3.5 transition-all duration-200 cursor-pointer group min-w-[140px] sm:min-w-0 shrink-0 sm:shrink snap-start
                 ${hoverBorder} ${hoverShadow} hover:shadow-md hover:-translate-y-1
                 ${isActive ? `${activeBorder} ${activeBg} ring-1 ${activeRing}` : "border-bd/80"}
                 ${isZero && !isActive ? "opacity-50 hover:opacity-100" : ""}
@@ -806,7 +806,62 @@ function QuotesPageContent() {
 
       </div>{/* end list column */}
 
-      {/* Rail unselected: no placeholder panel, list uses full width */}
+      {/* ═══ Mobile Quote Context Sheet (lg 미만) ═══ */}
+      {selectedQuote && selectedSignals && selectedOpStatus && (
+        <div className="lg:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            className="absolute bottom-0 left-0 right-0 bg-pn rounded-t-2xl border-t border-bd max-h-[75vh] flex flex-col animate-slide-up safe-area-pb"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center py-2"><div className="w-10 h-1 rounded-full bg-slate-300" /></div>
+            {/* Header */}
+            <div className="px-4 pb-2 border-b border-bd/50">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className={`inline-flex items-center gap-1 text-[11px] px-1.5 py-0.5 rounded border font-medium ${selectedOpStatus.bg} ${selectedOpStatus.text} ${selectedOpStatus.border}`}>
+                    {selectedSignals.badge}
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
+                </div>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => closeQuoteContextRail("x_button")}><X className="h-4 w-4" /></Button>
+              </div>
+              <h3 className="text-sm font-semibold text-slate-900 truncate">{selectedQuote.title}</h3>
+              <p className="text-[11px] text-slate-500 mt-0.5">{selectedSignals.summary}</p>
+            </div>
+            {/* Scrollable body — 운영 요약 compact */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div><span className="text-slate-400 block text-[10px]">상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
+                <div><span className="text-slate-400 block text-[10px]">차단</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>
+                <div><span className="text-slate-400 block text-[10px]">비교</span><span className="text-slate-700">{selectedSignals.compareReady}</span></div>
+                <div><span className="text-slate-400 block text-[10px]">전환</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
+              </div>
+              {selectedSignals.aiRecommendation && (
+                <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-violet-50 border border-violet-100">
+                  <Sparkles className="h-3 w-3 text-violet-500 shrink-0" />
+                  <span className="text-[11px] text-violet-700 line-clamp-2">{selectedSignals.aiRecommendation}</span>
+                </div>
+              )}
+            </div>
+            {/* Bottom actions */}
+            <div className="px-4 py-3 border-t border-bd/50 space-y-2">
+              <Button size="sm" className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98]"
+                onClick={() => { if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey); }}
+                disabled={!selectedSignals.actionKey}>
+                {selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+              <div className="flex gap-2">
+                <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
+                  <Button size="sm" variant="outline" className="w-full h-9 text-xs text-slate-400 border-bd">전체 상세</Button>
+                </Link>
+                <Button size="sm" variant="ghost" className="flex-1 h-9 text-xs text-slate-500" onClick={() => closeQuoteContextRail("close_btn")}>닫기</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {

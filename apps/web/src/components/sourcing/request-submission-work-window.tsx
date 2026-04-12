@@ -454,7 +454,7 @@ export function RequestSubmissionWorkWindow({
                   <span className="text-xs text-emerald-400/70 mt-0.5 block">{new Date(submissionEvent.submittedAt).toLocaleString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="px-3 py-2.5 rounded-lg bg-emerald-900/20 border border-emerald-700/20 text-center">
                   <span className="text-xs text-emerald-500 block mb-0.5">공급사</span>
                   <span className="text-lg font-bold text-emerald-300 tabular-nums">{submissionEvent.submittedVendorTargetIds.length}</span>

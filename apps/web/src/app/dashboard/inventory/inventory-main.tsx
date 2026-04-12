@@ -1486,7 +1486,7 @@ export function InventoryMain() {
             {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
             {/* KPI Summary Strip — dark cockpit theme */}
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl border border-bd bg-pn px-4 py-3">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-[11px] font-medium text-slate-500">전체 재고</span>

@@ -422,7 +422,7 @@ export function ProcurementDashboardWorkbench({
           {chainTimelines.length > 0 && (
             <div className="space-y-1">
               <h4 className="text-xs font-medium text-slate-400">체인 건강도</h4>
-              <div className="grid grid-cols-3 gap-1 text-center text-xs">
+              <div className="grid grid-cols-3 sm:grid-cols-3 gap-1 text-center text-xs">
                 <div>
                   <div className="font-mono text-emerald-400">
                     {chainTimelines.filter(t => t.overallHealth === "healthy").length}

@@ -395,7 +395,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
               </section>
 
               {/* Confidence Summary */}
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div className="px-3 py-2.5 rounded-lg border border-emerald-500/20 bg-emerald-600/[0.03] text-center">
                   <span className="text-[9px] text-slate-500 block">고신뢰</span>
                   <span className="text-lg font-bold text-emerald-400">{stagingState.highConfidenceCount}</span>
@@ -587,7 +587,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
                   {stagingState.appliedCount}건 적용 · {stagingState.rejectedCount}건 제외
                 </p>
               </div>
-              <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-sm mx-auto">
                 <div className="px-3 py-2.5 rounded-lg border border-emerald-500/20 bg-emerald-600/[0.03] text-center">
                   <span className="text-[9px] text-slate-500 block">적용</span>
                   <span className="text-lg font-bold text-emerald-400">{stagingState.appliedCount}</span>

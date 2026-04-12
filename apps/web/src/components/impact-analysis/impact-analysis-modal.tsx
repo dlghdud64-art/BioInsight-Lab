@@ -292,7 +292,7 @@ export function ImpactAnalysisModal({
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <div className="grid grid-cols-3 gap-2 mt-3 text-[11px]">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-3 text-[11px]">
                   <div className="rounded bg-slate-50 px-2 py-1.5">
                     <span className="text-slate-500">가용 변화</span>
                     <p className="text-slate-900 font-medium tabular-nums">

@@ -128,7 +128,7 @@ export default function GraduationWorkbench({
           {/* Metrics Summary */}
           <div className="border rounded-lg p-3">
             <h3 className="text-sm font-semibold text-gray-700 mb-2">핵심 지표</h3>
-            <div className="grid grid-cols-3 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm">
               <div className="bg-gray-50 rounded p-2">
                 <span className="text-gray-500">PO 처리</span>
                 <p className="font-semibold">{surface.center.metricsSummary.poProcessed} / {surface.center.metricsSummary.poLimit}</p>

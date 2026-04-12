@@ -605,7 +605,7 @@ function ExpandPanel({
         <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">
           AI 추출 필드
         </div>
-        <div className="grid grid-cols-3 gap-x-4 gap-y-2 text-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2 text-xs">
           <Field label="품목명" value={item.parsedItemName} />
           <Field label="제조사" value={item.manufacturer} />
           <Field label="Cat.No" value={item.catalogNumber} />
