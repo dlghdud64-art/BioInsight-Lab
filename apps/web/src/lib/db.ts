@@ -5,6 +5,75 @@
 let db: any;
 let isPrismaAvailable = false;
 
+// ── Prisma 미생성 시 fallback: Proxy 기반 안전 더미 ──
+// 어떤 모델이든 db.modelName.findMany() 등을 호출하면
+// 에러 대신 빈 결과를 반환하여 서버가 500으로 죽지 않게 합니다.
+const STUB_ERROR_MSG = "Prisma Client not generated. Run: pnpm db:generate";
+
+/** 읽기 전용 메서드는 빈 결과, 쓰기 메서드는 명확한 에러를 반환 */
+function createModelStub(modelName: string) {
+  const readMethods: Record<string, () => any> = {
+    findMany: () => Promise.resolve([]),
+    findFirst: () => Promise.resolve(null),
+    findUnique: () => Promise.resolve(null),
+    count: () => Promise.resolve(0),
+    aggregate: () => Promise.resolve({ _count: 0, _sum: {}, _avg: {}, _min: {}, _max: {} }),
+    groupBy: () => Promise.resolve([]),
+  };
+
+  const writeMethods: Record<string, () => any> = {
+    create: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    createMany: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    update: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    updateMany: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    upsert: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    delete: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+    deleteMany: () => Promise.reject(new Error(STUB_ERROR_MSG)),
+  };
+
+  return new Proxy({} as any, {
+    get(_target, prop: string) {
+      if (prop in readMethods) return readMethods[prop];
+      if (prop in writeMethods) return writeMethods[prop];
+      // 알 수 없는 메서드 — 읽기 fallback (빈 배열)
+      if (typeof prop === "string" && !prop.startsWith("_")) {
+        return () => Promise.resolve([]);
+      }
+      return undefined;
+    },
+  });
+}
+
+function createDummyDb() {
+  return new Proxy(
+    {
+      $transaction: (...args: any[]) => {
+        // $transaction([...promises]) 패턴 지원
+        if (Array.isArray(args[0])) return Promise.all(args[0]);
+        return Promise.reject(new Error(STUB_ERROR_MSG));
+      },
+      $disconnect: () => Promise.resolve(),
+      $connect: () => Promise.resolve(),
+      $queryRaw: () => Promise.resolve([]),
+      $executeRaw: () => Promise.resolve(0),
+    } as any,
+    {
+      get(target, prop: string) {
+        // $로 시작하는 유틸리티 메서드는 target에서 직접 반환
+        if (prop in target) return target[prop];
+        // 모델 접근 → 자동으로 stub 생성
+        if (typeof prop === "string" && prop[0] !== "_") {
+          const stub = createModelStub(prop);
+          // 캐싱하여 동일 모델 재접근 시 같은 stub 반환
+          target[prop] = stub;
+          return stub;
+        }
+        return undefined;
+      },
+    },
+  );
+}
+
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { PrismaClient } = require("@prisma/client");
@@ -25,101 +94,7 @@ try {
 } catch (error: any) {
   console.warn("⚠️ Prisma Client not found. Please run: pnpm db:generate");
   console.warn("⚠️ Error:", error.message);
-  // Prisma Client가 없을 때를 위한 더미 객체 (서버가 시작되도록)
-  db = {
-    product: {
-      findMany: () => Promise.resolve([]),
-      count: () => Promise.resolve(0),
-      upsert: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findUnique: () => Promise.resolve(null),
-    },
-    vendor: {
-      upsert: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findUnique: () => Promise.resolve(null),
-      findFirst: () => Promise.resolve(null),
-    },
-    productVendor: {
-      upsert: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findMany: () => Promise.resolve([]),
-    },
-    searchHistory: {
-      create: () => Promise.resolve({}),
-    },
-    // 이하: API route에서 사용하는 모델 더미 (모두 명확한 에러 반환)
-    workspaceMember: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    budget: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      update: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      delete: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    purchaseRecord: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      count: () => Promise.resolve(0),
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    purchase: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      count: () => Promise.resolve(0),
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    user: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      count: () => Promise.resolve(0),
-    },
-    activityLog: {
-      findMany: () => Promise.resolve([]),
-      count: () => Promise.resolve(0),
-      create: () => Promise.resolve({}),
-      groupBy: () => Promise.resolve([]),
-    },
-    organizationMember: {
-      findMany: () => Promise.resolve([]),
-      findFirst: () => Promise.resolve(null),
-      findUnique: () => Promise.resolve(null),
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    quote: {
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findUnique: () => Promise.resolve(null),
-      findMany: () => Promise.resolve([]),
-    },
-    quoteListItem: {
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      createMany: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    quoteShare: {
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findFirst: () => Promise.resolve(null),
-    },
-    quoteVendorRequest: {
-      create: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    },
-    productInventory: {
-      findMany: () => Promise.resolve([]),
-      createMany: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-      findUnique: () => Promise.resolve(null),
-    },
-    organization: {
-      findUnique: () => Promise.resolve(null),
-      findMany: () => Promise.resolve([]),
-    },
-    $transaction: () => Promise.reject(new Error("Prisma Client not generated. Run: pnpm db:generate")),
-    $disconnect: () => Promise.resolve(),
-  };
+  db = createDummyDb();
   isPrismaAvailable = false;
 }
 
