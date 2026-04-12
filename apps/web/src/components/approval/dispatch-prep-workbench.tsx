@@ -20,6 +20,7 @@ import { PolicyStatusBadge, PolicyMessageStack, NextActionHint } from "./index";
 import { QuoteChainProgressStrip, type ChainStageKey } from "./quote-chain-progress-strip";
 import type { DispatchPreparationGovernanceState, DispatchPolicySurface, ConfirmationItem } from "@/lib/ai/po-dispatch-governance-engine";
 import { canCreateExecution } from "@/lib/ai/dispatch-execution-handoff";
+import { useOpenGovernedComposer } from "@/hooks/use-open-governed-composer";
 
 /** Rail context — approval / quote / supplier 참조 정보 */
 export interface DispatchRailContext {
@@ -91,6 +92,32 @@ export function DispatchPrepWorkbench({
 }: DispatchPrepWorkbenchProps) {
   const sendGuard = canCreateExecution(state);
   const [railOpen, setRailOpen] = React.useState(false);
+  const openComposer = useOpenGovernedComposer();
+
+  const handleOpenComposer = React.useCallback(() => {
+    openComposer({
+      origin: "dispatch_dock",
+      workbenchStage: "dispatch_preparation",
+      selectedEntityIds: [poNumber],
+      selectedEntityType: "purchase_order",
+      currentStatus: "dispatch_preparation",
+      linkedPoNumber: poNumber,
+      linkedSupplierName: vendorName,
+      dryRunContext: {
+        approvalSnapshotValid: { [poNumber]: state.approvalSnapshotValid },
+        policyHoldActive: state.hardBlockers.some((b) => b.code === "policy_hold"),
+        hasPendingCriticalEvents: state.hardBlockers.some((b) => b.code === "critical_event"),
+        availableBudget: null,
+        recipientConfigured: Boolean(surface.statusBadge !== "blocked"),
+        attachmentsComplete: !state.hardBlockers.some((b) => b.code === "missing_attachment"),
+        commercialTermsComplete: !state.hardBlockers.some((b) => b.code === "missing_commercial_terms"),
+        contactInfoComplete: true,
+        entityStatuses: { [poNumber]: "dispatch_preparation" },
+        supplierInfo: { name: vendorName },
+        totalAmount,
+      },
+    });
+  }, [openComposer, poNumber, state, surface, vendorName, totalAmount]);
 
   return (
     <div
@@ -429,6 +456,13 @@ export function DispatchPrepWorkbench({
                 예약 발송
               </button>
             )}
+            <button
+              onClick={handleOpenComposer}
+              aria-label="Governed Action Composer 열기"
+              className="shrink-0 rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-blue-300 transition-all snap-start"
+            >
+              통제 실행
+            </button>
             {onSendNow && (
               <button
                 onClick={onSendNow}

@@ -23,6 +23,7 @@ import {
   type ExecutionPlan,
 } from "@/lib/ontology";
 import { useOrderQueueStore } from "@/lib/store/order-queue-store";
+import { useOpenGovernedComposer } from "@/hooks/use-open-governed-composer";
 
 // ── 추천 액션 ──
 interface QuickAction {
@@ -66,6 +67,7 @@ export function CommandPalette() {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const nlTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const openComposer = useOpenGovernedComposer();
 
   // ── Local canonical snapshot provider 주입 ──
   useEffect(() => {
@@ -215,19 +217,32 @@ export function CommandPalette() {
       setOpen(false);
       router.push(item.id);
     } else if (item.type === "nl") {
-      // NL 결과 → 관련 페이지로 이동
+      // NL 결과 → governed action composer로 진입 (해당하는 경우)
       if (nlResult) {
         const primary = nlResult.steps[0];
-        const actionRouteMap: Record<string, string> = {
-          APPROVE: "/dashboard/purchases",
-          REJECT: "/dashboard/purchases",
-          DISPATCH_NOW: "/dashboard/purchases",
-          RECEIVE_ORDER: "/dashboard/inventory",
-          TRIGGER_REORDER: "/dashboard/stock-risk",
-        };
-        const href = actionRouteMap[primary?.actionType] ?? "/dashboard/purchases";
-        setOpen(false);
-        router.push(href);
+        const GOVERNED_ACTION_TYPES = new Set([
+          "APPROVE", "REJECT", "DISPATCH_NOW", "SCHEDULE_DISPATCH",
+          "RECEIVE_ORDER", "TRIGGER_REORDER",
+        ]);
+        if (primary && GOVERNED_ACTION_TYPES.has(primary.actionType)) {
+          setOpen(false);
+          openComposer({
+            origin: "command_palette",
+            selectedEntityIds: nlResult.steps.flatMap((s) => s.targetIds),
+            selectedEntityType: "purchase_order",
+          });
+        } else {
+          const actionRouteMap: Record<string, string> = {
+            APPROVE: "/dashboard/purchases",
+            REJECT: "/dashboard/purchases",
+            DISPATCH_NOW: "/dashboard/purchases",
+            RECEIVE_ORDER: "/dashboard/inventory",
+            TRIGGER_REORDER: "/dashboard/stock-risk",
+          };
+          const href = actionRouteMap[primary?.actionType] ?? "/dashboard/purchases";
+          setOpen(false);
+          router.push(href);
+        }
       }
     } else if (item.type === "search") {
       const trimmed = query.trim();

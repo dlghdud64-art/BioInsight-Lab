@@ -23,6 +23,7 @@ import type {
   SupplierFacingPayloadStatus,
   ReentryActionKey,
 } from "@/lib/ai/po-created-record";
+import { useOpenGovernedComposer } from "@/hooks/use-open-governed-composer";
 
 // ══════════════════════════════════════════════
 // Props
@@ -185,6 +186,33 @@ export function POCreatedReentrySurface({
   const canReopen = record ? allowedActions.has("reopen_po_conversion") : true;
 
   const [railOpen, setRailOpen] = React.useState(false);
+  const openComposer = useOpenGovernedComposer();
+
+  const handleOpenComposer = React.useCallback(() => {
+    const entityId = poNumber || state.poCreatedObjectId || "";
+    openComposer({
+      origin: "po_created_dock",
+      workbenchStage: "po_created",
+      selectedEntityIds: [entityId],
+      selectedEntityType: "purchase_order",
+      currentStatus: state.poCreatedStatus,
+      linkedPoNumber: poNumber || null,
+      linkedSupplierName: vendorName,
+      dryRunContext: {
+        approvalSnapshotValid: { [entityId]: approvalSnapshotValid },
+        policyHoldActive: state.poCreatedBlockedFlag,
+        hasPendingCriticalEvents: false,
+        availableBudget: null,
+        recipientConfigured: true,
+        attachmentsComplete: true,
+        commercialTermsComplete: state.missingFieldCount === 0,
+        contactInfoComplete: true,
+        entityStatuses: { [entityId]: state.poCreatedStatus },
+        supplierInfo: { name: vendorName },
+        totalAmount,
+      },
+    });
+  }, [openComposer, poNumber, state, approvalSnapshotValid, vendorName, totalAmount]);
 
   return (
     <div
@@ -423,6 +451,13 @@ export function POCreatedReentrySurface({
                 보류
               </button>
             )}
+            <button
+              onClick={handleOpenComposer}
+              aria-label="Governed Action Composer 열기"
+              className="shrink-0 rounded border border-blue-500/20 bg-blue-500/10 hover:bg-blue-500/20 active:scale-95 min-h-[40px] px-3 py-2 md:py-1.5 text-xs font-medium text-blue-300 transition-all snap-start"
+            >
+              통제 실행
+            </button>
             {onProceedToDispatchPrep && canOpenDispatchPrep && (
               <button
                 onClick={onProceedToDispatchPrep}

@@ -12,6 +12,7 @@ import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-pe
 import { GovernanceDevPanel } from "@/components/dashboard/console/governance-dev-panel";
 import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
 import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
+import { GovernedActionComposerBridge } from "@/components/governed-action/governed-action-composer-bridge";
 import { useOverlayDeepLink } from "@/hooks/use-overlay-deep-link";
 import { useOverlayKeyboard } from "@/hooks/use-overlay-keyboard";
 
@@ -59,6 +60,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <WorkbenchProgressOverlay />
         <WorkbenchFullOverlay />
         <GovernanceDevPanel />
+        <GovernedActionComposerBridge />
       </div>
     </OpsStoreProvider>
   );
