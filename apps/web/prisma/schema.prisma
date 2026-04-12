@@ -2409,3 +2409,107 @@ model NotificationAction {
   @@index([status])
   @@index([entityType, entityId])
 }
+
+// ══════════════════════════════════════════════════════
+// Governance Persistence — sessionStorage → Server 전환
+// ══════════════════════════════════════════════════════
+
+// Approval 시점 PO baseline snapshot (dispatch changedFields diff 계산용)
+model ApprovalBaseline {
+  id                 String   @id @default(cuid())
+  poNumber           String
+  approvalDecidedAt  String   // ISO datetime — approval 결정 시각
+  capturedAt         String   // ISO datetime — snapshot 저장 시각
+
+  // diff 계산용 최소 필드 집합
+  totalAmount        Float
+  vendorId           String
+  paymentTerms       String?
+  incoterms          String?
+  shippingRegion     String
+  billToEntity       String
+  shipToLocation     String
+  notes              String?
+  lineCount          Int
+
+  invalidatedAt      DateTime?  // targeted invalidation 시 soft-delete
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([poNumber, approvalDecidedAt])
+  @@index([poNumber])
+}
+
+// Dispatch outbound execution history (schedule/cancel lineage)
+model OutboundHistory {
+  id         String   @id @default(cuid())
+  poId       String
+  seqIndex   Int      // history 배열 내 순서 (0-based)
+
+  recordType String   // "schedule" | "cancel" | "cancel_prep"
+  payload    Json     // DispatchOutboundRecord 전체 직렬화
+
+  createdAt  DateTime @default(now())
+
+  @@unique([poId, seqIndex])
+  @@index([poId])
+}
+
+// ── PO Conversion Candidate ──────────────────────────────────────────────
+// AI 견적 분석 → PO 전환 후보. MOCK_CANDIDATES 를 대체하는 persistent model.
+// order_queue (Supabase) 와는 별도 — 여기는 multi-line items + 선정 사유 + blocker 등
+// presentation-enriched 필드를 보관한다.
+model POCandidate {
+  id               String   @id @default(cuid())
+  userId           String
+  organizationId   String?
+
+  title            String                     // "Thermo Fisher FBS 외 2건"
+  vendor           String
+  totalAmount      Int                        // KRW
+  expectedDelivery DateTime?
+  selectionReason  String?  @db.Text          // AI 선정 사유
+  blockers         String[] @default([])      // blocker 문자열 배열
+  approvalPolicy   String   @default("none")  // none | in_app_approval | external_approval
+  approvalStatus   String   @default("not_required") // ProcurementStage ApprovalStatus (string)
+  stage            String   @default("po_conversion_candidate") // ProcurementStage (string)
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  items            POCandidateItem[]
+
+  @@index([userId])
+  @@index([organizationId])
+  @@index([stage])
+}
+
+model POCandidateItem {
+  id             String @id @default(cuid())
+  candidateId    String
+  name           String
+  catalogNumber  String
+  quantity       Int    @default(1)
+  unitPrice      Int
+  lineTotal      Int
+  leadTime       String @default("")
+
+  candidate      POCandidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  @@index([candidateId])
+}
+
+// Governance event publish dedupe (cross-session 중복 방지)
+model GovernanceEventDedupe {
+  id            String   @id @default(cuid())
+  poNumber      String
+  eventType     String
+  signatureKey  String
+
+  publishedAt   DateTime @default(now())
+  expiresAt     DateTime  // TTL 만료 시각
+
+  @@unique([poNumber, eventType, signatureKey])
+  @@index([poNumber])
+  @@index([expiresAt])
+}

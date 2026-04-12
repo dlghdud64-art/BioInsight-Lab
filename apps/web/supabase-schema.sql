@@ -17,21 +17,8 @@ CREATE TABLE IF NOT EXISTS budgets (
   project_name    TEXT,                                  -- 프로젝트/과제명
   description     TEXT,
   total_spent     BIGINT NOT NULL DEFAULT 0,             -- 집행 총액
-  -- 파생 컬럼: 소진율
-  burn_rate       NUMERIC GENERATED ALWAYS AS (
-    CASE WHEN amount > 0 THEN ROUND((total_spent::NUMERIC / amount) * 100, 1) ELSE 0 END
-  ) STORED,
-  -- 파생 컬럼: 상태
-  status          TEXT GENERATED ALWAYS AS (
-    CASE
-      WHEN CURRENT_DATE > period_end THEN 'ended'
-      WHEN CURRENT_DATE < period_start THEN 'upcoming'
-      WHEN amount > 0 AND total_spent > amount THEN 'over'
-      WHEN amount > 0 AND (total_spent::NUMERIC / amount) >= 0.8 THEN 'critical'
-      WHEN amount > 0 AND (total_spent::NUMERIC / amount) >= 0.6 THEN 'warning'
-      ELSE 'safe'
-    END
-  ) STORED,
+  burn_rate       NUMERIC DEFAULT 0,                     -- 소진율 (앱에서 계산)
+  status          TEXT DEFAULT 'safe',                   -- 상태 (앱에서 계산)
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
@@ -94,7 +81,132 @@ CREATE POLICY "Users can delete own comparisons"
   USING (auth.uid() = user_id);
 
 
--- ── 3. updated_at 트리거 ─────────────────────────────────
+-- ── 3. inventory 테이블 (재고 관리) ───────────────────────
+CREATE TABLE IF NOT EXISTS inventory (
+  id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id           UUID NOT NULL,
+  product_id        TEXT NOT NULL,                         -- 제품 ID
+  product_name      TEXT,                                  -- 제품명 (비정규화)
+  quantity          NUMERIC NOT NULL DEFAULT 0,            -- 현재 수량
+  reserved_quantity NUMERIC NOT NULL DEFAULT 0,            -- 예약 수량
+  unit              TEXT NOT NULL DEFAULT 'EA',            -- 단위
+  lot_number        TEXT,                                  -- LOT 번호
+  expiry_date       DATE,                                  -- 유효기간
+  storage_location  TEXT,                                  -- 보관 위치
+  status            TEXT DEFAULT 'in_stock',               -- 상태 (in_stock/low_stock/out_of_stock/expired)
+  reorder_point     NUMERIC,                               -- 재주문점
+  reorder_quantity  NUMERIC,                               -- 재주문 수량
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_inventory_user ON inventory(user_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_product ON inventory(product_id);
+CREATE INDEX IF NOT EXISTS idx_inventory_status ON inventory(status);
+CREATE INDEX IF NOT EXISTS idx_inventory_lot ON inventory(lot_number);
+
+ALTER TABLE inventory ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own inventory"
+  ON inventory FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own inventory"
+  ON inventory FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own inventory"
+  ON inventory FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own inventory"
+  ON inventory FOR DELETE USING (auth.uid() = user_id);
+
+
+-- ── 4. order_queue 테이블 (주문 큐) ──────────────────────
+CREATE TABLE IF NOT EXISTS order_queue (
+  id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id           UUID NOT NULL,
+  po_number         TEXT NOT NULL,                         -- PO 번호
+  product_id        TEXT NOT NULL,
+  product_name      TEXT,
+  vendor_id         TEXT NOT NULL,
+  vendor_name       TEXT,
+  quantity          NUMERIC NOT NULL DEFAULT 0,
+  unit              TEXT NOT NULL DEFAULT 'EA',
+  unit_price        NUMERIC NOT NULL DEFAULT 0,
+  total_amount      NUMERIC NOT NULL DEFAULT 0,
+  currency          TEXT NOT NULL DEFAULT 'KRW',
+  status            TEXT NOT NULL DEFAULT 'draft',         -- PO 상태
+  requested_by      TEXT NOT NULL,
+  approved_by       TEXT,
+  approved_at       TIMESTAMPTZ,
+  approval_comment  TEXT,
+  expected_quantity NUMERIC,                                -- 예상 수령 수량
+  received_by       TEXT,
+  received_at       TIMESTAMPTZ,
+  received_quantity NUMERIC,
+  -- ── Object Link Graph FK ──
+  budget_id         UUID REFERENCES budgets(id) ON DELETE SET NULL,
+  budget_name       TEXT,                                  -- 비정규화 (UI 표시용)
+  inventory_id      UUID REFERENCES inventory(id) ON DELETE SET NULL,
+  created_at        TIMESTAMPTZ DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_queue_user ON order_queue(user_id);
+CREATE INDEX IF NOT EXISTS idx_order_queue_status ON order_queue(status);
+CREATE INDEX IF NOT EXISTS idx_order_queue_budget ON order_queue(budget_id);
+CREATE INDEX IF NOT EXISTS idx_order_queue_inventory ON order_queue(inventory_id);
+CREATE INDEX IF NOT EXISTS idx_order_queue_po ON order_queue(po_number);
+
+ALTER TABLE order_queue ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own orders"
+  ON order_queue FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own orders"
+  ON order_queue FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own orders"
+  ON order_queue FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own orders"
+  ON order_queue FOR DELETE USING (auth.uid() = user_id);
+
+
+-- ── 5. receiving_records 테이블 (입고 기록) ───────────────
+CREATE TABLE IF NOT EXISTS receiving_records (
+  id                UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id          UUID REFERENCES order_queue(id) ON DELETE CASCADE,
+  product_id        TEXT NOT NULL,
+  inventory_id      UUID REFERENCES inventory(id) ON DELETE SET NULL,
+  received_quantity NUMERIC NOT NULL,
+  unit              TEXT NOT NULL DEFAULT 'EA',
+  lot_number        TEXT,
+  expiry_date       DATE,
+  inspection_result TEXT NOT NULL DEFAULT 'accepted',      -- accepted/accepted_with_note/partial_received/rejected/damaged
+  inspection_note   TEXT,
+  received_by       TEXT NOT NULL,
+  received_at       TIMESTAMPTZ DEFAULT NOW(),
+  storage_location  TEXT,
+  created_at        TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_receiving_order ON receiving_records(order_id);
+CREATE INDEX IF NOT EXISTS idx_receiving_inventory ON receiving_records(inventory_id);
+
+ALTER TABLE receiving_records ENABLE ROW LEVEL SECURITY;
+
+-- receiving_records는 order_queue를 통해 user_id를 확인
+CREATE POLICY "Users can view own receiving records"
+  ON receiving_records FOR SELECT
+  USING (EXISTS (
+    SELECT 1 FROM order_queue
+    WHERE order_queue.id = receiving_records.order_id
+    AND order_queue.user_id = auth.uid()
+  ));
+CREATE POLICY "Users can insert own receiving records"
+  ON receiving_records FOR INSERT
+  WITH CHECK (EXISTS (
+    SELECT 1 FROM order_queue
+    WHERE order_queue.id = receiving_records.order_id
+    AND order_queue.user_id = auth.uid()
+  ));
+
+
+-- ── 6. updated_at 트리거 ─────────────────────────────────
 CREATE OR REPLACE FUNCTION update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -105,4 +217,12 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER budgets_updated_at
   BEFORE UPDATE ON budgets
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER inventory_updated_at
+  BEFORE UPDATE ON inventory
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER order_queue_updated_at
+  BEFORE UPDATE ON order_queue
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();

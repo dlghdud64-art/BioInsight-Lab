@@ -1230,6 +1230,85 @@ async function main() {
   console.log("");
   console.log("🚀 투자자 데모 준비 완료!");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
+  // ============================================================================
+  // PO Conversion Candidates (Batch F-2)
+  // ============================================================================
+  console.log("\n📋 PO Conversion 후보 생성 중...");
+
+  const DEMO_USER_ID = "user-bioinsight-researcher";
+
+  // 기존 POCandidate 가 있으면 건너뜀
+  const existingCandidates = await prisma.pOCandidate.count({ where: { userId: DEMO_USER_ID } });
+  if (existingCandidates === 0) {
+    await prisma.pOCandidate.create({
+      data: {
+        userId: DEMO_USER_ID,
+        title: "Thermo Fisher FBS 외 2건",
+        vendor: "Thermo Fisher Scientific",
+        totalAmount: 1224000,
+        expectedDelivery: daysAgo(-14), // 2주 후
+        selectionReason: "최저 총비용 + 납기 우선 + 기존 거래처",
+        blockers: [],
+        approvalPolicy: "none",
+        approvalStatus: "not_required",
+        stage: "po_conversion_candidate",
+        items: {
+          create: [
+            { name: "Fetal Bovine Serum", catalogNumber: "10270106", quantity: 2, unitPrice: 450000, lineTotal: 900000, leadTime: "3일" },
+            { name: "DMEM Medium 500ml", catalogNumber: "11965092", quantity: 5, unitPrice: 42000, lineTotal: 210000, leadTime: "2일" },
+            { name: "Trypsin-EDTA 0.25%", catalogNumber: "25200056", quantity: 3, unitPrice: 38000, lineTotal: 114000, leadTime: "3일" },
+          ],
+        },
+      },
+    });
+
+    await prisma.pOCandidate.create({
+      data: {
+        userId: DEMO_USER_ID,
+        title: "Sigma-Aldrich Acetone 외 1건",
+        vendor: "Sigma-Aldrich",
+        totalAmount: 340000,
+        expectedDelivery: daysAgo(-17), // 17일 후
+        selectionReason: "규격 완전 일치",
+        blockers: ["위험물 취급 문서 확인 필요"],
+        approvalPolicy: "none",
+        approvalStatus: "not_required",
+        stage: "po_conversion_candidate",
+        items: {
+          create: [
+            { name: "Acetone HPLC Grade 2.5L", catalogNumber: "34850", quantity: 4, unitPrice: 85000, lineTotal: 340000, leadTime: "5일" },
+          ],
+        },
+      },
+    });
+
+    await prisma.pOCandidate.create({
+      data: {
+        userId: DEMO_USER_ID,
+        title: "VWR 피펫팁 외 3건",
+        vendor: "VWR International",
+        totalAmount: 680000,
+        expectedDelivery: daysAgo(-10),
+        selectionReason: "대량 할인 적용 + 보관 용이",
+        blockers: [],
+        approvalPolicy: "in_app_approval",
+        approvalStatus: "in_app_approval_pending",
+        stage: "po_conversion_candidate",
+        items: {
+          create: [
+            { name: "Pipette Tips 200µL", catalogNumber: "89079-460", quantity: 10, unitPrice: 28000, lineTotal: 280000, leadTime: "2일" },
+            { name: "Pipette Tips 1000µL", catalogNumber: "89079-472", quantity: 8, unitPrice: 32000, lineTotal: 256000, leadTime: "2일" },
+            { name: "Serological Pipette 10mL", catalogNumber: "89130-898", quantity: 6, unitPrice: 24000, lineTotal: 144000, leadTime: "3일" },
+          ],
+        },
+      },
+    });
+
+    console.log("   ✅ PO Conversion 후보 3건 생성 완료");
+  } else {
+    console.log(`   ⏭️ 기존 POCandidate ${existingCandidates}건 존재 — 건너뜀`);
+  }
 }
 
 main()
