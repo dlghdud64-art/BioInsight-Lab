@@ -7,6 +7,11 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 import { BarcodeScanFab } from "@/components/layout/barcode-scan-fab";
 import { OpsStoreProvider } from "@/lib/ops-console/ops-store";
 import { OntologyCommandOverlay } from "@/components/ontology-command-overlay/ontology-command-overlay";
+import { NotificationSonnerBridge } from "@/components/notifications/notification-sonner-bridge";
+import { OrderCandidatePeekDrawer } from "@/components/orders/order-candidate-peek-drawer";
+import { GovernanceDevPanel } from "@/components/dashboard/console/governance-dev-panel";
+import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
+import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
 
 /**
  * DashboardShell — baseline shell wrapper.
@@ -43,6 +48,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <BottomNav />
         <BarcodeScanFab />
         <OntologyCommandOverlay />
+        <NotificationSonnerBridge />
+        <OrderCandidatePeekDrawer />
+        <WorkbenchProgressOverlay />
+        <WorkbenchFullOverlay />
+        <GovernanceDevPanel />
       </div>
     </OpsStoreProvider>
   );

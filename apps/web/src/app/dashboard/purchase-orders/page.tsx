@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import {
   buildModuleHeaderStats,
@@ -65,6 +66,7 @@ const STAT_FILTER_MAP: Record<string, string> = {
 // ── Component ─────────────────────────────────────────────────────
 export default function PurchaseOrderLandingPage() {
   const router = useRouter();
+  const openOverlay = useWorkbenchOverlayOpen();
   const { unifiedInboxItems } = useOpsStore();
   const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
 
@@ -195,7 +197,11 @@ export default function PurchaseOrderLandingPage() {
                   <PriorityCard
                     key={item.entityId}
                     item={item}
-                    onClick={() => router.push(buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/purchase-orders', summary: item.title, returnLabel: '발주 목록으로' }))}
+                    onClick={() => openOverlay({
+                      routePath: buildDetailHref(item.targetRoute, { type: 'list', route: '/dashboard/purchase-orders', summary: item.title, returnLabel: '발주 목록으로' }),
+                      origin: "card",
+                      mode: "progress",
+                    })}
                   />
                 ))}
               </div>
@@ -241,9 +247,11 @@ export default function PurchaseOrderLandingPage() {
                       key={item.entityId}
                       item={item}
                       onClick={() =>
-                        router.push(
-                          `/dashboard/purchase-orders/${item.entityId}`,
-                        )
+                        openOverlay({
+                          routePath: `/dashboard/purchase-orders/${item.entityId}`,
+                          origin: "queue",
+                          mode: "progress",
+                        })
                       }
                     />
                   ))}
