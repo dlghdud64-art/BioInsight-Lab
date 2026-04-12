@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
+import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
 
 // ═══════════════════════════════════════════════════════════════════
 //  PO Conversion Queue (발주 전환 큐)
@@ -293,6 +294,13 @@ export default function PurchasesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<string | null>(null);
   const [workWindowPhase, setWorkWindowPhase] = useState<number>(0);
+
+  // ── Ontology Context Layer bridge ──
+  useOntologyContextBridge({
+    currentStage: "approval_pending",
+    activeWorkWindow: activeWorkWindow ?? null,
+    counts: { pendingApprovals: MOCK_DATA.filter(i => getQueueTab(i) === "review").length },
+  });
 
   // ── 필터링 ──
   const filteredItems = useMemo(() => {

@@ -26,6 +26,7 @@ import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
+import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
 import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
@@ -372,6 +373,15 @@ function QuotesPageContent() {
   const [aiCompareResult, setAiCompareResult] = useState<{ comparison: Array<{ vendor: string; price: string; leadTime: string; shippingFee: string }>; recommendation: string; negotiationGuide: string } | null>(null);
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
   const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
+
+  // ── Ontology Context Layer bridge — 현재 견적 관리 상태를 next-step resolver에 전달 ──
+  useOntologyContextBridge({
+    currentStage: "quote_management",
+    activeWorkWindow: activeWorkWindow ?? null,
+    counts: {
+      pendingQuotes: 0, // quotes 로딩 전이므로 아래 useMemo로 갱신
+    },
+  });
 
   // ── AI 견적서 비교 실행 — quotes 선언 뒤로 이동 (아래 참조) ──
 
