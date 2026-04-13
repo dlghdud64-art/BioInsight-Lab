@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 팀 멤버 초대
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -15,6 +17,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { teamId, email, role = TeamRole.MEMBER } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'team_manage',
+      targetEntityType: 'team',
+      targetEntityId: teamId || 'unknown',
+      sourceSurface: 'team-api',
+      routePath: '/api/team/invite',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!teamId || !email) {
       return NextResponse.json(
@@ -88,8 +101,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({});
     return NextResponse.json({ member: newMember }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error inviting team member:", error);
     return NextResponse.json(
       { error: "Failed to invite team member" },

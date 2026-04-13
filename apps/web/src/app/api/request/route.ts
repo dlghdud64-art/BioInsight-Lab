@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 구매 요청 생성 (MEMBER만 가능)
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -15,6 +17,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { teamId, title, message, items, quoteId, totalAmount } = body;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'purchase_request_create',
+      targetEntityType: 'purchase_request',
+      targetEntityId: 'new',
+      sourceSurface: 'purchase-request-api',
+      routePath: '/api/request',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!teamId || !title || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -78,8 +92,14 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({
+      beforeState: { teamId },
+      afterState: { purchaseRequestId: purchaseRequest.id, status: purchaseRequest.status },
+    });
+
     return NextResponse.json({ purchaseRequest }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating purchase request:", error);
     return NextResponse.json(
       { error: "Failed to create purchase request" },

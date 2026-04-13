@@ -1,4 +1,6 @@
 // 서버 환경 폴리필 (DOMMatrix 등) — 반드시 최상단에서 import
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import "@/lib/server-polyfills";
 
 import { NextRequest, NextResponse } from "next/server";
@@ -20,10 +22,25 @@ export const runtime = "nodejs";
  * 구조화 진단 로깅: requestId 기반 추적
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   const requestId = createRequestId();
   const pipelineStart = Date.now();
-
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/protocol/extract-pdf-text',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

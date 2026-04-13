@@ -23,6 +23,7 @@ import Link from "next/link";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
+import CategorySpendingWidget from "@/components/dashboard/CategorySpendingWidget";
 import {
   useBudgetStore,
   deriveBudgetControl,
@@ -368,6 +369,13 @@ export default function BudgetPage() {
             </div>
           ))}
         </div>
+
+        {/* ═══ 카테고리별 예산 사용 현황 ═══ */}
+        {activeOrgId && (
+          <div className="bg-white rounded-xl border border-slate-200 p-5">
+            <CategorySpendingWidget organizationId={activeOrgId} />
+          </div>
+        )}
 
         {/* ═══ Chart + Department TOP 3 ═══ */}
         {budgets.length > 0 && (

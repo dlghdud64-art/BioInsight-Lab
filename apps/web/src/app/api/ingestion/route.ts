@@ -5,6 +5,7 @@
  * 멱등성: source_ref가 동일하면 기존 IngestionEntry 반환
  */
 
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -14,12 +15,25 @@ import type { IngestionInput } from "@/lib/ai-pipeline/types";
 const gateway = new ShadowRuntimeGateway();
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    // 1. 인증
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/ingestion',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    // 1. 인증 (session already obtained above)
+    // Already verified above, proceed to body parsing
 
     // 2. 요청 파싱
     const body = await request.json();

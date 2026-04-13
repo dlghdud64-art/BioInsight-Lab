@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
@@ -155,6 +156,7 @@ export async function GET(request: NextRequest) {
 
 // 재고 생성
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -162,6 +164,18 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
+    const productId = body.productId || 'unknown';
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_create',
+      targetEntityType: 'inventory',
+      targetEntityId: productId,
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const {
       productId: rawProductId,
       // 수기 입력 시 클라이언트가 전달하는 제품 메타 정보 (Find-or-Create 에 사용)
@@ -308,9 +322,9 @@ export async function POST(request: NextRequest) {
     // -----------------------------------------------------------------------
     // 기존 경로: productId로 직접 조회 후 재고 생성
     // -----------------------------------------------------------------------
-    const productId = rawProductId as string;
+    const resolvedProductId = rawProductId as string;
 
-    const product = await db.product.findUnique({ where: { id: productId } });
+    const product = await db.product.findUnique({ where: { id: resolvedProductId } });
     if (!product) {
       return NextResponse.json(
         { error: "존재하지 않는 제품입니다." },
@@ -321,10 +335,10 @@ export async function POST(request: NextRequest) {
     // 중복 재고 확인 (동일 user/org + product)
     const existing = organizationId
       ? await db.productInventory.findFirst({
-          where: { organizationId, productId },
+          where: { organizationId, productId: resolvedProductId },
         })
       : await db.productInventory.findFirst({
-          where: { userId: session.user.id, productId },
+          where: { userId: session.user.id, productId: resolvedProductId },
         });
 
     if (existing) {
@@ -335,12 +349,14 @@ export async function POST(request: NextRequest) {
     }
 
     const inventory = await db.productInventory.create({
-      data: { productId, ...inventoryData },
+      data: { productId: resolvedProductId, ...inventoryData },
       include: inventoryInclude,
     });
 
+    enforcement.complete({});
     return NextResponse.json({ inventory }, { status: 201 });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error creating inventory:", error);
     const status = error?.statusCode ?? 500;
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { QuoteStatus, OrderStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 function generateOrderNumber(): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
@@ -13,12 +14,13 @@ function generateOrderNumber(): string {
 /**
  * 관리자용 주문 생성 API
  * POST /api/admin/orders
- * 
+ *
  * Body: { quoteId, shippingAddress?, notes? }
- * 
+ *
  * 관리자는 다른 사용자의 견적도 주문으로 전환할 수 있음
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -34,6 +36,18 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { quoteId, shippingAddress, notes } = body;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'order',
+      targetEntityId: 'new',
+      sourceSurface: 'admin-order-creation-api',
+      routePath: '/api/admin/orders',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!quoteId) {
       return NextResponse.json(
@@ -165,11 +179,17 @@ export async function POST(request: NextRequest) {
       return { order, budget: updatedBudget, quote: updatedQuote };
     });
 
+    enforcement.complete({
+      beforeState: { quoteId, status: 'PENDING' },
+      afterState: { orderId: result.order.id, status: result.order.status },
+    });
+
     return NextResponse.json({
       success: true,
       order: result.order,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error creating admin order:", error);
     
     const errorMessages: Record<string, string> = {

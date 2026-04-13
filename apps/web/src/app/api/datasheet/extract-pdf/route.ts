@@ -1,3 +1,5 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { extractTextFromPDF } from "@/lib/ai/pdf-parser";
 import { extractProductInfoFromDatasheet } from "@/lib/ai/datasheet-extractor";
@@ -6,7 +8,23 @@ import { extractProductInfoFromDatasheet } from "@/lib/ai/datasheet-extractor";
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/datasheet/extract-pdf',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
 

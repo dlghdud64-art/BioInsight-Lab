@@ -39,6 +39,11 @@ import {
   recordSecurityEvent,
 } from './event-provenance-engine';
 import { sanitizeErrorForSurface } from './frontend-leak-guard';
+import {
+  type CsrfProtectionLevel,
+  type RouteCsrfConfig,
+} from './csrf-contract';
+import { performCsrfCheck } from './csrf-middleware';
 
 // ═══════════════════════════════════════════════════════
 // Types
@@ -56,7 +61,7 @@ interface SessionUser {
 export interface EnforcementConfig {
   readonly action: IrreversibleActionType;
   readonly mutationAction: MutationActionType;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
   /** request body에서 entity ID를 추출하는 함수 */
   readonly extractEntityId: (body: Record<string, unknown>) => string;
   /** request body에서 organization ID를 추출하는 함수 */
@@ -65,6 +70,10 @@ export interface EnforcementConfig {
   readonly extractSnapshotVersion?: (body: Record<string, unknown>) => string;
   /** 감사 로그용 source surface */
   readonly sourceSurface: string;
+  /** CSRF 보호 수준 (default: 'required') */
+  readonly csrfProtection?: CsrfProtectionLevel;
+  /** 고위험 route (soft_enforce에서도 차단) */
+  readonly csrfHighRisk?: boolean;
 }
 
 /** API route에 대한 rate limit 설정 */
@@ -179,7 +188,20 @@ export function withEnforcement(
       );
     }
 
-    // 2. Request body 파싱
+    // 2. CSRF validation (origin + double-submit token)
+    const csrfResult = await performCsrfCheck({
+      req,
+      correlationId,
+      protection: config.csrfProtection || 'required',
+      highRisk: config.csrfHighRisk,
+      sourceSurface: config.sourceSurface,
+      actorUserId: undefined, // actor는 아직 resolve 전
+    });
+    if (!csrfResult.passed && csrfResult.blockResponse) {
+      return csrfResult.blockResponse;
+    }
+
+    // 3. Request body 파싱
     let body: Record<string, unknown> = {};
     try {
       body = await req.json();
@@ -190,7 +212,7 @@ export function withEnforcement(
       );
     }
 
-    // 3. Actor context 생성
+    // 4. Actor context 생성
     // 실제 production에서는 JWT 디코딩 또는 auth() 호출
     const userId = (body._actorId as string) || 'unknown';
     const userRole = (body._actorRole as string) || 'RESEARCHER';
@@ -199,12 +221,12 @@ export function withEnforcement(
       sessionToken.slice(0, 16),
     );
 
-    // 4. Entity 정보 추출
+    // 5. Entity 정보 추출
     const entityId = config.extractEntityId(body);
     const orgId = config.extractOrgId?.(body) || actorContext.organizationId;
     const snapshotVersion = config.extractSnapshotVersion?.(body) || 'v0';
 
-    // 5. Authorization check
+    // 6. Authorization check
     const authResult = checkServerAuthorization({
       action: config.action,
       actor: actorContext,
@@ -235,7 +257,7 @@ export function withEnforcement(
       );
     }
 
-    // 6. Mutation replay guard
+    // 7. Mutation replay guard
     const idempotencyKey = (body._idempotencyKey as string)
       || `${config.mutationAction}_${entityId}_${Date.now()}`;
     const csrfToken = (body._csrfToken as string) || '';
@@ -260,7 +282,7 @@ export function withEnforcement(
       }
     }
 
-    // 7. Concurrency lock 획득
+    // 8. Concurrency lock 획득
     const lockAcquired = beginMutation(config.mutationAction, entityId);
     if (!lockAcquired) {
       return NextResponse.json(
@@ -269,11 +291,11 @@ export function withEnforcement(
       );
     }
 
-    // 8. 실제 핸들러 실행
+    // 9. 실제 핸들러 실행
     try {
       const response = await handler(req, { actorContext, correlationId, body });
 
-      // 9. 성공 시 audit envelope 기록
+      // 10. 성공 시 audit envelope 기록
       if (response.status >= 200 && response.status < 300) {
         appendAuditEnvelope({
           correlationId,
@@ -408,7 +430,7 @@ export interface InlineEnforcementConfig {
   readonly userId: string;
   readonly userRole?: string;
   readonly action: IrreversibleActionType;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
   readonly targetEntityId: string;
   readonly organizationId?: string;
   readonly sourceSurface: string;
@@ -539,6 +561,8 @@ export const ENFORCEMENT_PRESETS = {
     extractEntityId: (body: Record<string, unknown>) => (body.poId || body.entityId || '') as string,
     extractSnapshotVersion: (body: Record<string, unknown>) => (body.snapshotVersion || 'v0') as string,
     sourceSurface: 'dispatch-prep-workbench',
+    csrfProtection: 'required' as CsrfProtectionLevel,
+    csrfHighRisk: true,
   },
 
   dispatchScheduleSend: {
@@ -547,6 +571,8 @@ export const ENFORCEMENT_PRESETS = {
     targetEntityType: 'dispatch' as const,
     extractEntityId: (body: Record<string, unknown>) => (body.poId || body.entityId || '') as string,
     sourceSurface: 'dispatch-prep-workbench',
+    csrfProtection: 'required' as CsrfProtectionLevel,
+    csrfHighRisk: true,
   },
 
   approvalDecision: {
@@ -555,6 +581,8 @@ export const ENFORCEMENT_PRESETS = {
     targetEntityType: 'approval' as const,
     extractEntityId: (body: Record<string, unknown>) => (body.caseId || body.entityId || '') as string,
     sourceSurface: 'fire-approval-workbench',
+    csrfProtection: 'required' as CsrfProtectionLevel,
+    csrfHighRisk: true,
   },
 
   poConversionFinalize: {
@@ -563,6 +591,8 @@ export const ENFORCEMENT_PRESETS = {
     targetEntityType: 'po' as const,
     extractEntityId: (body: Record<string, unknown>) => (body.poId || body.entityId || '') as string,
     sourceSurface: 'po-conversion-workbench',
+    csrfProtection: 'required' as CsrfProtectionLevel,
+    csrfHighRisk: true,
   },
 
   quoteRequestSubmit: {
@@ -571,5 +601,7 @@ export const ENFORCEMENT_PRESETS = {
     targetEntityType: 'quote' as const,
     extractEntityId: (body: Record<string, unknown>) => (body.quoteId || body.entityId || '') as string,
     sourceSurface: 'quote-request-workbench',
+    csrfProtection: 'required' as CsrfProtectionLevel,
+    csrfHighRisk: true,
   },
 } as const;

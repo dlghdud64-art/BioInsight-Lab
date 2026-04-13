@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
@@ -7,7 +8,23 @@ import { auth } from "@/auth";
  * PRD 14.4 이벤트(Analytics) 설계 초안 기반
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_export',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/analytics/track',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { event, properties } = body;
 
@@ -19,7 +36,6 @@ export async function POST(request: NextRequest) {
     }
 
     // 세션 정보 가져오기 (선택사항)
-    const session = await auth();
     const userId = session?.user?.id || properties?.user_id || null;
 
     // 이벤트 데이터 저장

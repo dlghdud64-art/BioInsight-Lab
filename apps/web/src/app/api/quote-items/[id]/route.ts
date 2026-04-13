@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
 import { isDemoMode } from "@/lib/env";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 견적 요청 아이템 수정
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -15,6 +17,17 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-items-api',
+      routePath: '/api/quote-items/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const { quantity, unitPrice, currency, notes } = body;
 
@@ -91,8 +104,11 @@ export async function PUT(
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json(updatedItem);
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating quote item:", error);
     return NextResponse.json(
       { error: "Failed to update quote item" },
@@ -106,6 +122,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -113,6 +130,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-items-api',
+      routePath: '/api/quote-items/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 데모 모드이거나 DB가 없는 경우
     if (isDemoMode() || !isPrismaAvailable || id.startsWith("demo-")) {
@@ -154,8 +182,11 @@ export async function DELETE(
       where: { id },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error deleting quote item:", error);
     return NextResponse.json(
       { error: "Failed to delete quote item" },

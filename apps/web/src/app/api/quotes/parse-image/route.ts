@@ -1,3 +1,5 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { parseQuoteWithGemini } from "@/lib/ocr/gemini-quote-parser";
 
@@ -14,7 +16,23 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
  * Body: { imageBase64: string } (data URI 형식)
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'quote',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/quotes/parse-image',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { imageBase64 } = body;
 

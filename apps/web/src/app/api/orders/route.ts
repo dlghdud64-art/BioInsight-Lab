@@ -6,7 +6,7 @@ import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -36,6 +36,7 @@ function generateOrderNumber(): string {
  * - audit envelope 기록
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'order_create',
@@ -300,7 +301,7 @@ export async function POST(request: NextRequest) {
       budget: result.budget,
     });
   } catch (error: any) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("Error creating order:", error);
 
     // 에러 메시지 매핑

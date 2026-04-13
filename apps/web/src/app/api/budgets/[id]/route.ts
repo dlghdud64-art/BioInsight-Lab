@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { OrganizationRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // OWNER/ADMIN 여부 확인 헬퍼
 async function isOrgAdminOrOwner(userId: string, organizationId: string): Promise<boolean> {
@@ -176,6 +177,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -183,6 +185,18 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'budget_update',
+      targetEntityType: 'budget',
+      targetEntityId: id,
+      sourceSurface: 'budget-update-api',
+      routePath: '/api/budgets/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // ── 1. 예산 존재 여부 확인 ──────────────────────────────────────────────────
     const budget = await db.budget.findUnique({ where: { id } });
@@ -304,6 +318,11 @@ export async function PATCH(
     revalidatePath("/dashboard");
 
     // ── 8. 응답 변환 ──────────────────────────────────────────────────────────
+    enforcement.complete({
+      beforeState: { budgetId: budget.id, amount: budget.amount },
+      afterState: { budgetId: updated.id, amount: updated.amount },
+    });
+
     return NextResponse.json({
       budget: {
         ...updated,
@@ -314,6 +333,7 @@ export async function PATCH(
       },
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[Budget API] Error updating budget:", error);
     return NextResponse.json(
       { error: error.message || "예산 수정에 실패했습니다." },
@@ -327,6 +347,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -334,6 +355,18 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'budget_delete',
+      targetEntityType: 'budget',
+      targetEntityId: id,
+      sourceSurface: 'budget-delete-api',
+      routePath: '/api/budgets/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const budget = await db.budget.findUnique({
       where: { id },
@@ -363,8 +396,14 @@ export async function DELETE(
       where: { id },
     });
 
+    enforcement.complete({
+      beforeState: { budgetId: budget.id },
+      afterState: undefined,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[Budget API] Error deleting budget:", error);
     return NextResponse.json(
       { error: error.message || "Failed to delete budget" },

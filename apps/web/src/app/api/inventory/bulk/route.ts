@@ -3,6 +3,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // ---------------------------------------------------------------------------
 // 입력 스키마
@@ -128,12 +129,24 @@ async function resolveProductId(
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     // 1. 인증
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_import',
+      targetEntityType: 'inventory',
+      targetEntityId: 'bulk',
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/bulk',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 2. JSON 파싱
     let rawBody: unknown;
@@ -271,6 +284,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 8. 성공 응답
+    enforcement.complete({});
     return NextResponse.json(
       {
         message: `재고 ${result.count}개가 성공적으로 등록되었습니다.`,
@@ -279,6 +293,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[inventory/bulk] Error:", error);
     return NextResponse.json(
       { error: error?.message ?? "대량 재고 등록에 실패했습니다." },

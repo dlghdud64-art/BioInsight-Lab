@@ -54,29 +54,63 @@ export type IrreversibleActionType =
   | 'quote_request_submit'
   | 'quote_request_resend'
   | 'quote_status_change'
+  | 'quote_update'
+  | 'quote_delete'
+  | 'quote_share'
+  | 'quote_vendor_reply'
   // ── Purchase / Order chain ──
+  | 'purchase_request_create'
   | 'purchase_request_approve'
   | 'purchase_request_reject'
+  | 'purchase_request_cancel'
+  | 'purchase_request_reverse'
+  | 'purchase_record_reclass'
   | 'order_create'
   | 'order_status_change'
+  | 'order_bulk_action'
   // ── AI action chain ──
   | 'ai_action_approve'
+  | 'ai_action_update'
+  | 'ai_ops_control'
   | 'compare_decision'
   | 'email_draft_approve'
   // ── Inventory chain ──
+  | 'inventory_create'
+  | 'inventory_update'
+  | 'inventory_delete'
   | 'inventory_restock'
   | 'inventory_use'
   | 'inventory_import'
+  | 'inventory_receive'
   // ── Receiving chain ──
   | 'receiving_status_change'
   // ── Organization chain ──
-  | 'member_role_change';
+  | 'member_role_change'
+  | 'organization_update'
+  | 'organization_invite'
+  | 'organization_security_change'
+  | 'team_manage'
+  | 'workspace_manage'
+  | 'workspace_invite_accept'
+  // ── Budget chain ──
+  | 'budget_create'
+  | 'budget_update'
+  | 'budget_delete'
+  // ── Billing chain ──
+  | 'billing_checkout'
+  | 'billing_payment_method'
+  // ── Governance chain ──
+  | 'governance_data_mutation'
+  // ── General sensitive ──
+  | 'sensitive_data_export'
+  | 'sensitive_data_import'
+  | 'sensitive_data_delete';
 
 /** 권한 검증 요청 */
 export interface AuthorizationRequest {
   readonly action: IrreversibleActionType;
   readonly actor: ServerActorContext;
-  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization';
+  readonly targetEntityType: 'po' | 'quote' | 'dispatch' | 'approval' | 'order' | 'inventory' | 'receiving' | 'ai_action' | 'compare_session' | 'email_draft' | 'organization' | 'team' | 'workspace' | 'budget' | 'billing' | 'governance' | 'purchase_request' | 'purchase_record' | 'product' | 'cart' | 'invite';
   readonly targetEntityId: string;
   readonly targetOrganizationId: string;
   readonly snapshotVersion?: string;
@@ -111,23 +145,56 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
   quote_request_submit: ['requester', 'buyer', 'ops_admin'],
   quote_request_resend: ['buyer', 'ops_admin'],
   quote_status_change: ['buyer', 'approver', 'ops_admin'],
+  quote_update: ['requester', 'buyer', 'ops_admin'],
+  quote_delete: ['buyer', 'ops_admin'],
+  quote_share: ['requester', 'buyer', 'ops_admin'],
+  quote_vendor_reply: ['requester', 'buyer', 'ops_admin'],
   // ── Purchase / Order chain ──
+  purchase_request_create: ['requester', 'buyer', 'ops_admin'],
   purchase_request_approve: ['approver', 'ops_admin'],
   purchase_request_reject: ['approver', 'ops_admin'],
+  purchase_request_cancel: ['approver', 'ops_admin'],
+  purchase_request_reverse: ['approver', 'ops_admin'],
+  purchase_record_reclass: ['buyer', 'approver', 'ops_admin'],
   order_create: ['buyer', 'approver', 'ops_admin'],
   order_status_change: ['ops_admin'],
+  order_bulk_action: ['buyer', 'ops_admin'],
   // ── AI action chain ──
   ai_action_approve: ['requester', 'buyer', 'approver', 'ops_admin'],
+  ai_action_update: ['requester', 'buyer', 'approver', 'ops_admin'],
+  ai_ops_control: ['ops_admin'],
   compare_decision: ['requester', 'buyer', 'approver', 'ops_admin'],
   email_draft_approve: ['ops_admin'],
   // ── Inventory chain ──
+  inventory_create: ['requester', 'buyer', 'ops_admin'],
+  inventory_update: ['requester', 'buyer', 'ops_admin'],
+  inventory_delete: ['buyer', 'ops_admin'],
   inventory_restock: ['requester', 'buyer', 'ops_admin'],
   inventory_use: ['requester', 'buyer', 'ops_admin'],
   inventory_import: ['buyer', 'ops_admin'],
+  inventory_receive: ['buyer', 'ops_admin'],
   // ── Receiving chain ──
   receiving_status_change: ['buyer', 'ops_admin'],
   // ── Organization chain ──
   member_role_change: ['ops_admin'],
+  organization_update: ['ops_admin'],
+  organization_invite: ['ops_admin'],
+  organization_security_change: ['ops_admin'],
+  team_manage: ['ops_admin'],
+  workspace_manage: ['ops_admin'],
+  // ── Budget chain ──
+  budget_create: ['buyer', 'approver', 'ops_admin'],
+  budget_update: ['buyer', 'approver', 'ops_admin'],
+  budget_delete: ['ops_admin'],
+  // ── Billing chain ──
+  billing_checkout: ['ops_admin'],
+  billing_payment_method: ['ops_admin'],
+  // ── Governance chain ──
+  governance_data_mutation: ['ops_admin'],
+  // ── General sensitive ──
+  sensitive_data_export: ['buyer', 'ops_admin'],
+  sensitive_data_import: ['buyer', 'ops_admin'],
+  sensitive_data_delete: ['ops_admin'],
 };
 
 /** Self-approval 금지 action (Tier 3 irreversible) */

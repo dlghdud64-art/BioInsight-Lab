@@ -5,7 +5,7 @@ import { auth } from "@/auth";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { fileCache } from "@/lib/cache/file-cache";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("inventory/import/commit");
 
@@ -141,6 +141,7 @@ async function findOrCreateProduct(
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     }
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'inventory_import',
@@ -363,7 +364,7 @@ export async function POST(request: NextRequest) {
       records: successRecords.slice(0, 10), // Return first 10 records as sample
     });
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
     return handleApiError(error, "inventory/import/commit");
   }
 }

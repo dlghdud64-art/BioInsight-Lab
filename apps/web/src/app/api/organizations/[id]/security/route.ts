@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 보안 설정 조회
 export async function GET(
@@ -52,6 +53,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -68,6 +70,17 @@ export async function PATCH(
         { status: 400 }
       );
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_security_change',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-security-api',
+      routePath: '/api/organizations/[id]/security',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 관리자 권한 확인
     const adminMembership = await db.organizationMember.findFirst({
@@ -135,6 +148,8 @@ export async function PATCH(
       console.error("Failed to create audit log:", auditError);
     }
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       allowedEmailDomains: Array.isArray(updated.allowedEmailDomains)
@@ -142,6 +157,7 @@ export async function PATCH(
         : [],
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating security settings:", error);
     return NextResponse.json(
       { error: "Failed to update security settings" },

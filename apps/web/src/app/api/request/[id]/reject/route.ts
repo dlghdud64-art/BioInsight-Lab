@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole } from "@prisma/client";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 구매 요청 거절 (ADMIN/OWNER만 가능)
@@ -16,6 +16,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -27,7 +28,7 @@ export async function POST(
     const { reason } = body;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'purchase_request_reject',
@@ -76,10 +77,10 @@ export async function POST(
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.OWNER)) {
-      enforcement.fail();
+    if (!teamMember || teamMember.role !== TeamRole.ADMIN) {
+      enforcement?.fail();
       return NextResponse.json(
-        { error: "Forbidden: Only OWNER or ADMIN can reject requests" },
+        { error: "Forbidden: Only ADMIN can reject requests" },
         { status: 403 }
       );
     }
@@ -120,7 +121,7 @@ export async function POST(
 
     return NextResponse.json({ purchaseRequest: rejectedRequest });
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("Error rejecting purchase request:", error);
     return NextResponse.json(
       { error: "Failed to reject purchase request" },

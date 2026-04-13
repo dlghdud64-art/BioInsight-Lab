@@ -5,6 +5,8 @@
  * 종합 의견, 3가지 시나리오, 개별 품목 분석을 반환합니다.
  */
 
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_API_KEY = process.env.GOOGLE_GEMINI_API_KEY ?? "";
@@ -100,7 +102,23 @@ function buildLocalAnalysis(products: ProductInput[]) {
 }
 
 export async function POST(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/ai/compare-analysis',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await req.json();
     const { products } = body as { products: ProductInput[] };
 

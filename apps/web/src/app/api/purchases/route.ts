@@ -4,6 +4,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { auth } from "@/auth";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("purchases");
 
@@ -104,11 +105,23 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'purchase_request',
+      targetEntityId: 'new',
+      sourceSurface: 'purchase-api',
+      routePath: '/api/purchases',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const {
@@ -181,14 +194,17 @@ export async function POST(request: NextRequest) {
       productName: product_name,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json(
-      { 
-        success: true, 
-        purchase: purchaseRecord 
+      {
+        success: true,
+        purchase: purchaseRecord
       },
       { status: 201 }
     );
   } catch (error: any) {
+    enforcement?.fail();
     logger.error("Failed to create purchase record", { error: error.message });
     return handleApiError(error, "purchases");
   }

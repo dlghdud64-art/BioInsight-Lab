@@ -9,15 +9,32 @@ import { db } from "@/lib/db";
 import { generateVendorInquiryDraft } from "@/lib/compare-workspace/vendor-inquiry-draft";
 import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
     const session = await auth();
     const userId = session?.user?.id ?? null;
+
+    if (!userId) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    enforcement = enforceAction({
+      userId,
+      userRole: session?.user?.role ?? undefined,
+      action: 'ai_action_update',
+      targetEntityType: 'compare_session',
+      targetEntityId: id,
+      sourceSurface: 'compare-inquiry-draft-api',
+      routePath: '/api/compare-sessions/[id]/inquiry-draft',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const {
@@ -104,8 +121,11 @@ export async function POST(
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ draft });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "POST /api/compare-sessions/[id]/inquiry-draft");
   }
 }
@@ -132,10 +152,26 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
     const session = await auth();
     const userId = session?.user?.id ?? null;
+
+    if (!userId) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    enforcement = enforceAction({
+      userId,
+      userRole: session?.user?.role ?? undefined,
+      action: 'ai_action_update',
+      targetEntityType: 'compare_session',
+      targetEntityId: id,
+      sourceSurface: 'compare-inquiry-draft-api',
+      routePath: '/api/compare-sessions/[id]/inquiry-draft',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const { draftId, status } = body;
@@ -176,8 +212,11 @@ export async function PATCH(
       metadata: { compareSessionId: id },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ draft });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "PATCH /api/compare-sessions/[id]/inquiry-draft");
   }
 }

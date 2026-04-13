@@ -1,7 +1,8 @@
 /**
  * Mutation Rate Limiter
  *
- * Security Batch 4: Rate Limiting
+ * Security Batch 4: Rate Limiting (in-memory)
+ * Security Batch 9: Redis adapter + auto-detect factory
  *
  * 기존 lib/api/rate-limit.ts (IP 기반 범용 rate limiter)를 확장하여,
  * irreversible mutation에 특화된 actor + action 기반 rate limiting을 추가합니다.
@@ -11,7 +12,8 @@
  * - action 유형별 차등 제한 (send_now는 더 엄격, correction은 상대적으로 완화)
  * - entity 단위 제한 (같은 PO에 대한 반복 mutation 방지)
  * - 기존 rate-limit.ts 재사용, security 계층만 추가
- * - Redis 미연결 시 in-memory 동작
+ * - Redis 연결 시 RedisRateLimitAdapter 자동 전환
+ * - Redis 미연결 시 InMemoryRateLimitAdapter 동작
  */
 
 // ═══════════════════════════════════════════════════════
@@ -222,47 +224,315 @@ const ACTION_RATE_POLICIES: Record<RateLimitedAction, ActionRatePolicy> = {
 };
 
 // ═══════════════════════════════════════════════════════
-// In-Memory Store
+// Rate Limit Persistence Adapter Interface (Batch 9)
 // ═══════════════════════════════════════════════════════
 
-/** actor 기준 rate bucket: key = `actor:{actorId}:{action}` */
-const actorBuckets = new Map<string, RateBucket>();
+/** Bucket 검사 결과 */
+interface BucketCheckResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+}
 
-/** entity 기준 rate bucket: key = `entity:{entityId}:{action}` */
-const entityBuckets = new Map<string, RateBucket>();
+/**
+ * Rate Limit Persistence Adapter
+ *
+ * In-Memory (기본) → Redis (연결 시) 교체 가능한 adapter boundary.
+ * 각 adapter는 increment + check를 원자적으로 처리해야 함.
+ */
+export interface RateLimitPersistenceAdapter {
+  /** Bucket increment + check — 원자적 처리 */
+  checkAndIncrement(key: string, interval: number, maxRequests: number): Promise<BucketCheckResult>;
+  /** Bucket 조회 (증가 없음) */
+  peek(key: string, maxRequests: number): Promise<{ remaining: number; resetInSeconds: number }>;
+  /** 만료된 bucket 정리 */
+  prune(): Promise<number>;
+  /** 전체 초기화 (테스트용) */
+  reset(): Promise<void>;
+  /** Adapter 타입 */
+  getAdapterType(): string;
+}
+
+// ═══════════════════════════════════════════════════════
+// In-Memory Rate Limit Adapter (기본)
+// ═══════════════════════════════════════════════════════
 
 const MAX_BUCKETS = 5000;
 
-/** Global rate limit (전체 mutation 합계): 분당 최대 */
-const GLOBAL_ACTOR_LIMIT = { interval: 60_000, maxRequests: 50 };
+export class InMemoryRateLimitAdapter implements RateLimitPersistenceAdapter {
+  private readonly buckets = new Map<string, RateBucket>();
+
+  async checkAndIncrement(key: string, interval: number, maxRequests: number): Promise<BucketCheckResult> {
+    const now = Date.now();
+    const bucket = this.buckets.get(key);
+
+    if (!bucket || now >= bucket.resetAt) {
+      this.buckets.set(key, { count: 1, resetAt: now + interval });
+      return { allowed: true, remaining: maxRequests - 1, resetAt: now + interval };
+    }
+
+    if (bucket.count < maxRequests) {
+      bucket.count++;
+      this.buckets.set(key, bucket);
+      return { allowed: true, remaining: maxRequests - bucket.count, resetAt: bucket.resetAt };
+    }
+
+    return { allowed: false, remaining: 0, resetAt: bucket.resetAt };
+  }
+
+  async peek(key: string, maxRequests: number): Promise<{ remaining: number; resetInSeconds: number }> {
+    const bucket = this.buckets.get(key);
+    if (!bucket || Date.now() >= bucket.resetAt) {
+      return { remaining: maxRequests, resetInSeconds: 0 };
+    }
+    return {
+      remaining: Math.max(0, maxRequests - bucket.count),
+      resetInSeconds: Math.ceil((bucket.resetAt - Date.now()) / 1000),
+    };
+  }
+
+  async prune(): Promise<number> {
+    const now = Date.now();
+    let pruned = 0;
+    for (const [key, bucket] of this.buckets) {
+      if (now >= bucket.resetAt + 60_000) {
+        this.buckets.delete(key);
+        pruned++;
+      }
+    }
+    if (this.buckets.size > MAX_BUCKETS) {
+      const keysToDelete = Array.from(this.buckets.keys()).slice(0, this.buckets.size - MAX_BUCKETS / 2);
+      keysToDelete.forEach(key => this.buckets.delete(key));
+      pruned += keysToDelete.length;
+    }
+    return pruned;
+  }
+
+  async reset(): Promise<void> {
+    this.buckets.clear();
+  }
+
+  getAdapterType(): string {
+    return 'in-memory';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Redis Rate Limit Adapter (Batch 9)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Redis 기반 Rate Limit Adapter
+ *
+ * Lua script으로 increment + check를 원자적으로 처리.
+ * Redis 미연결 시 InMemoryRateLimitAdapter로 fallback.
+ *
+ * 환경변수: LABAXIS_REDIS_URL (예: redis://localhost:6379)
+ * key prefix: labaxis:rl: (rate limit namespace)
+ */
+
+/** Redis client의 최소 필요 interface (ioredis 호환) */
+interface MinimalRedisClient {
+  eval(script: string, numKeys: number, ...args: (string | number)[]): Promise<unknown>;
+  keys(pattern: string): Promise<string[]>;
+  del(...keys: string[]): Promise<number>;
+  quit(): Promise<string>;
+}
+
+/** Redis INCR + TTL Lua script — 원자적 bucket increment */
+const REDIS_RATE_LIMIT_SCRIPT = `
+local key = KEYS[1]
+local interval_ms = tonumber(ARGV[1])
+local max_requests = tonumber(ARGV[2])
+local now_ms = tonumber(ARGV[3])
+
+local data = redis.call('GET', key)
+if not data then
+  local reset_at = now_ms + interval_ms
+  redis.call('SET', key, '1:' .. reset_at, 'PX', interval_ms + 60000)
+  return {1, max_requests - 1, reset_at}
+end
+
+local sep = string.find(data, ':')
+local count = tonumber(string.sub(data, 1, sep - 1))
+local reset_at = tonumber(string.sub(data, sep + 1))
+
+if now_ms >= reset_at then
+  local new_reset = now_ms + interval_ms
+  redis.call('SET', key, '1:' .. new_reset, 'PX', interval_ms + 60000)
+  return {1, max_requests - 1, new_reset}
+end
+
+if count < max_requests then
+  count = count + 1
+  redis.call('SET', key, count .. ':' .. reset_at, 'KEEPTTL')
+  return {1, max_requests - count, reset_at}
+end
+
+return {0, 0, reset_at}
+`;
+
+const REDIS_KEY_PREFIX = 'labaxis:rl:';
+
+export class RedisRateLimitAdapter implements RateLimitPersistenceAdapter {
+  private readonly redis: MinimalRedisClient;
+
+  constructor(redisClient: MinimalRedisClient) {
+    this.redis = redisClient;
+  }
+
+  async checkAndIncrement(key: string, interval: number, maxRequests: number): Promise<BucketCheckResult> {
+    const redisKey = `${REDIS_KEY_PREFIX}${key}`;
+    const now = Date.now();
+
+    const result = await this.redis.eval(
+      REDIS_RATE_LIMIT_SCRIPT, 1,
+      redisKey, interval, maxRequests, now,
+    ) as [number, number, number];
+
+    return {
+      allowed: result[0] === 1,
+      remaining: result[1],
+      resetAt: result[2],
+    };
+  }
+
+  async peek(key: string, maxRequests: number): Promise<{ remaining: number; resetInSeconds: number }> {
+    const redisKey = `${REDIS_KEY_PREFIX}${key}`;
+    // peek은 read-only — eval 대신 GET으로 조회
+    try {
+      const result = await this.redis.eval(
+        `local data = redis.call('GET', KEYS[1])
+         if not data then return {0, 0} end
+         local sep = string.find(data, ':')
+         return {tonumber(string.sub(data, 1, sep - 1)), tonumber(string.sub(data, sep + 1))}`,
+        1, redisKey,
+      ) as [number, number];
+
+      if (!result || result[1] === 0) {
+        return { remaining: maxRequests, resetInSeconds: 0 };
+      }
+
+      const now = Date.now();
+      if (now >= result[1]) {
+        return { remaining: maxRequests, resetInSeconds: 0 };
+      }
+
+      return {
+        remaining: Math.max(0, maxRequests - result[0]),
+        resetInSeconds: Math.ceil((result[1] - now) / 1000),
+      };
+    } catch {
+      return { remaining: maxRequests, resetInSeconds: 0 };
+    }
+  }
+
+  async prune(): Promise<number> {
+    // Redis TTL이 자동으로 만료 처리하므로 별도 prune 불필요
+    // 혹시 남아있는 stale key가 있으면 정리
+    try {
+      const keys = await this.redis.keys(`${REDIS_KEY_PREFIX}*`);
+      // keys가 비어있으면 0 반환 — Redis TTL에 의존
+      return keys.length > 0 ? 0 : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  async reset(): Promise<void> {
+    try {
+      const keys = await this.redis.keys(`${REDIS_KEY_PREFIX}*`);
+      if (keys.length > 0) {
+        await this.redis.del(...keys);
+      }
+    } catch {
+      // Redis 오류 시 무시
+    }
+  }
+
+  getAdapterType(): string {
+    return 'redis';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// Adapter Singleton Factory (auto-detect)
+// ═══════════════════════════════════════════════════════
+
+/** Global adapter store — 3개 scope (actor, entity, global) 동일 adapter 사용 */
+let rateLimitAdapter: RateLimitPersistenceAdapter | null = null;
+
+/**
+ * Redis client 사용 가능한지 확인하고 adapter 생성 시도
+ * 실패 시 null 반환 → InMemory fallback
+ */
+function tryCreateRedisAdapter(): RateLimitPersistenceAdapter | null {
+  try {
+    const redisUrl = typeof process !== 'undefined'
+      ? process.env?.LABAXIS_REDIS_URL
+      : undefined;
+
+    if (!redisUrl) return null;
+
+    // Dynamic require (서버 환경)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Redis = require('ioredis');
+    const client = new Redis(redisUrl, {
+      maxRetriesPerRequest: 1,
+      lazyConnect: true,
+      enableReadyCheck: false,
+      connectTimeout: 3000,
+    });
+    return new RedisRateLimitAdapter(client);
+  } catch {
+    // ioredis 미설치 또는 연결 실패 — fallback
+    return null;
+  }
+}
+
+/**
+ * Rate limit adapter 가져오기
+ *
+ * 우선순위:
+ * 1. 명시적으로 set된 adapter (DI)
+ * 2. LABAXIS_REDIS_URL 존재 시 → RedisRateLimitAdapter
+ * 3. Fallback → InMemoryRateLimitAdapter
+ */
+function getRateLimitAdapter(): RateLimitPersistenceAdapter {
+  if (!rateLimitAdapter) {
+    const redis = tryCreateRedisAdapter();
+    rateLimitAdapter = redis || new InMemoryRateLimitAdapter();
+  }
+  return rateLimitAdapter;
+}
+
+/** Adapter 교체 (DI / 테스트) */
+export function setRateLimitAdapter(adapter: RateLimitPersistenceAdapter): void {
+  rateLimitAdapter = adapter;
+}
+
+/** 현재 adapter 타입 조회 (observability용) */
+export function getRateLimitAdapterType(): string {
+  return getRateLimitAdapter().getAdapterType();
+}
+
+// ═══════════════════════════════════════════════════════
+// In-Memory Store (backward compat — adapter 미사용 시 직접 접근)
+// ═══════════════════════════════════════════════════════
+
+/** @deprecated adapter를 통해 접근하세요 */
+const actorBuckets = new Map<string, RateBucket>();
+/** @deprecated adapter를 통해 접근하세요 */
+const entityBuckets = new Map<string, RateBucket>();
+/** @deprecated adapter를 통해 접근하세요 */
 const globalBuckets = new Map<string, RateBucket>();
 
+/** Global rate limit (전체 mutation 합계): 분당 최대 */
+const GLOBAL_ACTOR_LIMIT = { interval: 60_000, maxRequests: 50 };
+
 // ═══════════════════════════════════════════════════════
-// Core Functions
+// Core Functions (adapter 기반, Batch 9)
 // ═══════════════════════════════════════════════════════
-
-function checkBucket(
-  store: Map<string, RateBucket>,
-  key: string,
-  interval: number,
-  maxRequests: number,
-): { allowed: boolean; remaining: number; resetAt: number } {
-  const now = Date.now();
-  const bucket = store.get(key);
-
-  if (!bucket || now >= bucket.resetAt) {
-    store.set(key, { count: 1, resetAt: now + interval });
-    return { allowed: true, remaining: maxRequests - 1, resetAt: now + interval };
-  }
-
-  if (bucket.count < maxRequests) {
-    bucket.count++;
-    store.set(key, bucket);
-    return { allowed: true, remaining: maxRequests - bucket.count, resetAt: bucket.resetAt };
-  }
-
-  return { allowed: false, remaining: 0, resetAt: bucket.resetAt };
-}
 
 /**
  * Mutation rate limit 검사
@@ -271,19 +541,21 @@ function checkBucket(
  * 1. Global actor limit (분당 전체 mutation 합계)
  * 2. Action-specific actor limit (action별 actor 제한)
  * 3. Action-specific entity limit (같은 entity 반복 제한)
+ *
+ * Batch 9: adapter를 통해 In-Memory 또는 Redis에서 처리
  */
-export function checkMutationRateLimit(
+export async function checkMutationRateLimit(
   actorId: string,
   action: RateLimitedAction,
   entityId: string,
-): MutationRateLimitResult {
+): Promise<MutationRateLimitResult> {
+  const adapter = getRateLimitAdapter();
   const policy = ACTION_RATE_POLICIES[action];
 
   // 1. Global actor limit
   const globalKey = `global:${actorId}`;
-  const globalCheck = checkBucket(
-    globalBuckets, globalKey,
-    GLOBAL_ACTOR_LIMIT.interval, GLOBAL_ACTOR_LIMIT.maxRequests,
+  const globalCheck = await adapter.checkAndIncrement(
+    globalKey, GLOBAL_ACTOR_LIMIT.interval, GLOBAL_ACTOR_LIMIT.maxRequests,
   );
   if (!globalCheck.allowed) {
     return {
@@ -297,9 +569,8 @@ export function checkMutationRateLimit(
 
   // 2. Actor + action limit
   const actorKey = `actor:${actorId}:${action}`;
-  const actorCheck = checkBucket(
-    actorBuckets, actorKey,
-    policy.actorInterval, policy.actorMaxRequests,
+  const actorCheck = await adapter.checkAndIncrement(
+    actorKey, policy.actorInterval, policy.actorMaxRequests,
   );
   if (!actorCheck.allowed) {
     return {
@@ -313,9 +584,8 @@ export function checkMutationRateLimit(
 
   // 3. Entity + action limit
   const entityKey = `entity:${entityId}:${action}`;
-  const entityCheck = checkBucket(
-    entityBuckets, entityKey,
-    policy.entityInterval, policy.entityMaxRequests,
+  const entityCheck = await adapter.checkAndIncrement(
+    entityKey, policy.entityInterval, policy.entityMaxRequests,
   );
   if (!entityCheck.allowed) {
     return {
@@ -338,61 +608,42 @@ export function checkMutationRateLimit(
 
 /**
  * Rate limit 상태 조회 (UI 표시용)
- * 남은 횟수와 리셋 시간을 human-readable로 제공
+ * Batch 9: adapter 기반 조회
  */
-export function getRateLimitStatus(
+export async function getRateLimitStatus(
   actorId: string,
   action: RateLimitedAction,
-): { remaining: number; resetInSeconds: number } {
+): Promise<{ remaining: number; resetInSeconds: number }> {
+  const adapter = getRateLimitAdapter();
   const policy = ACTION_RATE_POLICIES[action];
   const actorKey = `actor:${actorId}:${action}`;
-  const bucket = actorBuckets.get(actorKey);
-
-  if (!bucket || Date.now() >= bucket.resetAt) {
-    return { remaining: policy.actorMaxRequests, resetInSeconds: 0 };
-  }
-
-  return {
-    remaining: Math.max(0, policy.actorMaxRequests - bucket.count),
-    resetInSeconds: Math.ceil((bucket.resetAt - Date.now()) / 1000),
-  };
+  return adapter.peek(actorKey, policy.actorMaxRequests);
 }
 
 // ═══════════════════════════════════════════════════════
 // Cleanup
 // ═══════════════════════════════════════════════════════
 
-/** 만료된 bucket 정리 */
-export function pruneExpiredBuckets(): number {
-  const now = Date.now();
-  let pruned = 0;
-
-  for (const store of [actorBuckets, entityBuckets, globalBuckets]) {
-    for (const [key, bucket] of store) {
-      if (now >= bucket.resetAt + 60_000) {
-        store.delete(key);
-        pruned++;
-      }
-    }
-    // 최대 크기 제한
-    if (store.size > MAX_BUCKETS) {
-      const keysToDelete = Array.from(store.keys()).slice(0, store.size - MAX_BUCKETS / 2);
-      keysToDelete.forEach(key => store.delete(key));
-      pruned += keysToDelete.length;
-    }
-  }
-
-  return pruned;
+/** 만료된 bucket 정리 — adapter 위임 */
+export async function pruneExpiredBuckets(): Promise<number> {
+  const adapter = getRateLimitAdapter();
+  return adapter.prune();
 }
 
 // ═══════════════════════════════════════════════════════
 // Test Helpers
 // ═══════════════════════════════════════════════════════
 
-export function __resetRateLimiterState(): void {
+export async function __resetRateLimiterState(): Promise<void> {
+  // Legacy in-memory store 초기화
   actorBuckets.clear();
   entityBuckets.clear();
   globalBuckets.clear();
+  // Adapter 초기화
+  if (rateLimitAdapter) {
+    await rateLimitAdapter.reset();
+  }
+  rateLimitAdapter = null;
 }
 
 export { ACTION_RATE_POLICIES, GLOBAL_ACTOR_LIMIT };

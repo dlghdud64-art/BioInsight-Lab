@@ -5,6 +5,7 @@ import { isDemoMode } from "@/lib/env";
 import { validateSSOConfig, convertSSOConfigToProvider } from "@/lib/auth/sso-config";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { hasPermission } from "@/lib/permissions/permission-checker";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * SSO 설정 조회
@@ -76,6 +77,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -83,6 +85,17 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_security_change',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-sso-api',
+      routePath: '/api/organizations/[id]/sso',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const {
       ssoEnabled,
@@ -173,12 +186,15 @@ export async function PUT(
       console.error("Failed to create audit log:", error);
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       ssoEnabled: updated.ssoEnabled,
       ssoProvider: updated.ssoProvider,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating SSO config:", error);
     return NextResponse.json(
       { error: "Failed to update SSO config" },

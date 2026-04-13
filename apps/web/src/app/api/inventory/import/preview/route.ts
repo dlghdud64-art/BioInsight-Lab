@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { handleApiError } from "@/lib/api-error-handler";
@@ -16,13 +17,26 @@ export interface PreviewResponse {
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    cleanupFileCache();
-
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'inventory',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/inventory/import/preview',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    cleanupFileCache();
+
+    // session already obtained and verified above
 
     // Parse multipart form data
     const formData = await request.formData();

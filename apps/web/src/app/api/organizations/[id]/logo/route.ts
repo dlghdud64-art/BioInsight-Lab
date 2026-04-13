@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // ─── 상수 ────────────────────────────────────────────────────────────────────
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -72,6 +73,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -79,6 +81,17 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-logo-api',
+      routePath: '/api/organizations/[id]/logo',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // ADMIN 권한 확인
     const membership = await db.organizationMember.findFirst({
@@ -176,8 +189,11 @@ export async function POST(
       select: { id: true, name: true, logoUrl: true },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ organization: updated, logoUrl });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[Logo Upload] Error:", error);
     return NextResponse.json(
       { error: error.message || "로고 업로드에 실패했습니다." },
@@ -191,6 +207,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -198,6 +215,17 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-logo-api',
+      routePath: '/api/organizations/[id]/logo',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const membership = await db.organizationMember.findFirst({
       where: { organizationId: id, userId: session.user.id, role: "ADMIN" },
@@ -226,8 +254,11 @@ export async function DELETE(
       select: { id: true, name: true, logoUrl: true },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ organization: updated });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[Logo Delete] Error:", error);
     return NextResponse.json(
       { error: error.message || "로고 삭제에 실패했습니다." },

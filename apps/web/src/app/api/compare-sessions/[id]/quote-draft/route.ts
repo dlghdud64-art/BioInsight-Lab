@@ -4,6 +4,7 @@
  * compare session의 제품 맥락을 사용하여 Quote를 생성하고
  * comparisonId로 비교 세션과 연결한다.
  */
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -14,9 +15,24 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    const { id } = await params;
     const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'quote',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/compare-sessions/id/quote-draft',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const { id } = await params;
     const userId = session?.user?.id ?? null;
 
     if (!userId) {

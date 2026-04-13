@@ -4,13 +4,21 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import {
   activateKillSwitch,
   deactivateKillSwitch,
 } from "@/lib/ai-pipeline/runtime/doctype-rollout";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       documentType?: string;
       activate?: boolean;
@@ -24,7 +32,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = request.headers.get("x-user-id") || "system";
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'ai_ops_control',
+      targetEntityType: 'ai_action',
+      targetEntityId: body.documentType || 'global',
+      sourceSurface: 'ai-ops-kill-switch-api',
+      routePath: '/api/ai-ops/kill-switch',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const userId = session.user.id;
 
     if (body.activate) {
       await activateKillSwitch(
@@ -32,6 +51,7 @@ export async function POST(request: NextRequest) {
         userId,
         body.reason
       );
+      enforcement.complete({});
       return NextResponse.json({
         success: true,
         message: body.documentType
@@ -46,12 +66,14 @@ export async function POST(request: NextRequest) {
         );
       }
       await deactivateKillSwitch(body.documentType, userId, body.reason);
+      enforcement.complete({});
       return NextResponse.json({
         success: true,
         message: `Kill switch deactivated for ${body.documentType} — restored to SHADOW`,
       });
     }
   } catch (error: unknown) {
+    enforcement?.fail();
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

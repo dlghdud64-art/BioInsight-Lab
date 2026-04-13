@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * GET /api/ai-actions/[id] — 단건 상세 (payload 포함)
@@ -63,11 +64,23 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'ai_action_update',
+      targetEntityType: 'ai_action',
+      targetEntityId: params.id,
+      sourceSurface: 'ai-actions-api',
+      routePath: '/api/ai-actions/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const item = await db.aiActionItem.findUnique({
       where: { id: params.id },
@@ -141,8 +154,11 @@ export async function PATCH(
       userAgent,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ item: updated });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating AI action:", error);
     return NextResponse.json(
       { error: "Failed to update AI action" },

@@ -6,6 +6,7 @@ import { sendQuoteCompletedEmail, sendQuoteRejectedEmail } from "@/lib/email";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { validateTransition } from "@/lib/operations/state-machine";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 허용되는 상태 전환 (P7-1: 정규화된 state-machine.ts가 정의의 원천)
 const ALLOWED_STATUS_TRANSITIONS: Record<QuoteStatus, QuoteStatus[]> = {
@@ -39,6 +40,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -49,6 +51,19 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_status_change',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-status-api',
+      routePath: '/api/quotes/[id]/status',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { status, reason } = body;
 
@@ -190,6 +205,11 @@ export async function PATCH(
       }
     }
 
+    enforcement.complete({
+      beforeState: { status: previousStatus, id },
+      afterState: { status, id },
+    });
+
     return NextResponse.json({
       success: true,
       quote: updatedQuote,
@@ -200,6 +220,7 @@ export async function PATCH(
       },
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating quote status:", error);
     return NextResponse.json(
       { error: "Failed to update quote status" },

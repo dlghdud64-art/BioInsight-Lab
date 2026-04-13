@@ -9,6 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // GET: 결제 수단 목록
 export async function GET(request: NextRequest) {
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
 
 // POST: 결제 수단 추가 (실제 PG 연동 전 Mock)
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -58,6 +60,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { cardNumber, expMonth, expYear, cvc, isDefault } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'billing_payment_method',
+      targetEntityType: 'billing',
+      targetEntityId: body.id || 'unknown',
+      sourceSurface: 'billing-payment-methods-api',
+      routePath: '/api/billing/payment-methods',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 기본 유효성 검사
     if (!cardNumber || !expMonth || !expYear) {
@@ -116,12 +129,15 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       paymentMethod,
       message: "결제 수단이 등록되었습니다.",
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("[PaymentMethods API] Create error:", error);
     return NextResponse.json(
       { error: "결제 수단 등록에 실패했습니다." },
@@ -132,6 +148,7 @@ export async function POST(request: NextRequest) {
 
 // DELETE: 결제 수단 삭제
 export async function DELETE(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -144,6 +161,17 @@ export async function DELETE(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const paymentMethodId = searchParams.get("id");
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'billing_payment_method',
+      targetEntityType: 'billing',
+      targetEntityId: paymentMethodId || 'unknown',
+      sourceSurface: 'billing-payment-methods-api',
+      routePath: '/api/billing/payment-methods',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!paymentMethodId) {
       return NextResponse.json(
@@ -194,11 +222,14 @@ export async function DELETE(request: NextRequest) {
       where: { id: paymentMethodId },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       message: "결제 수단이 삭제되었습니다.",
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("[PaymentMethods API] Delete error:", error);
     return NextResponse.json(
       { error: "결제 수단 삭제에 실패했습니다." },

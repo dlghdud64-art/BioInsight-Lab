@@ -4,12 +4,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { promoteStage, ensureCanaryConfig } from "@/lib/ai-pipeline/runtime/doctype-rollout";
 import { canPromote, validateConstraints } from "@/lib/ai-pipeline/runtime/rollout-config";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
     const body = (await request.json()) as {
       documentType?: string;
       reason?: string;
@@ -22,7 +30,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = request.headers.get("x-user-id") || "system";
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'ai_ops_control',
+      targetEntityType: 'ai_action',
+      targetEntityId: body.documentType || 'unknown',
+      sourceSurface: 'ai-ops-promote-api',
+      routePath: '/api/ai-ops/promote',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const userId = session.user.id;
     const { documentType, reason } = body;
 
     // 제약 조건 확인
@@ -48,12 +67,15 @@ export async function POST(request: NextRequest) {
 
     const updated = await promoteStage(documentType, userId, reason);
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       config: updated,
       message: `${documentType} promoted to ${updated.stage}`,
     });
   } catch (error: unknown) {
+    enforcement?.fail();
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }

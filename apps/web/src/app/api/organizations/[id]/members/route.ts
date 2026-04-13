@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 조직 멤버 조회 API
 export async function GET(
@@ -47,6 +47,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -58,7 +59,7 @@ export async function PATCH(
     const { memberId, role } = body;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'member_role_change',
@@ -149,7 +150,7 @@ export async function PATCH(
 
     return NextResponse.json({ member: updatedMember });
   } catch (error: any) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("Error updating member role:", error);
     return NextResponse.json(
       { error: "Failed to update member role" },

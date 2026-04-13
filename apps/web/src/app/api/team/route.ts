@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 팀 목록 조회 및 팀 생성
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
  * 팀 생성
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -75,6 +77,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { name, description } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'team_manage',
+      targetEntityType: 'team',
+      targetEntityId: 'new',
+      sourceSurface: 'team-api',
+      routePath: '/api/team',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!name) {
       return NextResponse.json(
@@ -111,8 +124,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({});
     return NextResponse.json({ team }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating team:", error);
     return NextResponse.json(
       { error: "Failed to create team" },

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { generateShareToken } from "@/lib/api/share-token";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/share
 const CreateShareSchema = z.object({
@@ -46,6 +47,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
     const { allowed, quote, error, status } = await checkQuoteAccess(id, request);
@@ -53,6 +55,18 @@ export async function POST(
     if (!allowed || !quote) {
       return NextResponse.json({ error }, { status });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: quote.userId,
+      userRole: undefined,
+      action: 'quote_share',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-share-api',
+      routePath: '/api/quotes/[id]/share',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Parse and validate request body
     const body = await request.json();
@@ -88,6 +102,11 @@ export async function POST(
         },
       });
 
+      enforcement.complete({
+        beforeState: { enabled: existingShare.enabled, expiresAt: existingShare.expiresAt },
+        afterState: { enabled: updatedShare.enabled, expiresAt: updatedShare.expiresAt },
+      });
+
       return NextResponse.json({
         shareToken: updatedShare.shareToken,
         enabled: updatedShare.enabled,
@@ -108,6 +127,11 @@ export async function POST(
       },
     });
 
+    enforcement.complete({
+      beforeState: { shareToken: null },
+      afterState: { shareToken: newShare.shareToken, enabled: newShare.enabled },
+    });
+
     return NextResponse.json({
       shareToken: newShare.shareToken,
       enabled: newShare.enabled,
@@ -115,6 +139,7 @@ export async function POST(
       shareUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/share/${newShare.shareToken}`,
     }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating share:", error);
     return NextResponse.json(
       { error: "Failed to create share" },
@@ -131,13 +156,26 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
-    const { allowed, error, status } = await checkQuoteAccess(id, request);
+    const { allowed, quote, error, status } = await checkQuoteAccess(id, request);
 
-    if (!allowed) {
+    if (!allowed || !quote) {
       return NextResponse.json({ error }, { status });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: quote.userId,
+      userRole: undefined,
+      action: 'quote_share',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-share-api',
+      routePath: '/api/quotes/[id]/share',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Find and disable share
     const share = await db.quoteShare.findUnique({
@@ -157,8 +195,14 @@ export async function DELETE(
       },
     });
 
+    enforcement.complete({
+      beforeState: { enabled: share.enabled },
+      afterState: { enabled: false },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error deleting share:", error);
     return NextResponse.json(
       { error: "Failed to delete share" },

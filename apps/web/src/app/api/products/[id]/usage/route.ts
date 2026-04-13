@@ -1,3 +1,5 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { getProductById } from "@/lib/api/products";
 import { generateProductUsageDescription } from "@/lib/ai/openai";
@@ -7,7 +9,23 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'product',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/products/id/usage',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const { id } = await params;
     const product = await getProductById(id);
 

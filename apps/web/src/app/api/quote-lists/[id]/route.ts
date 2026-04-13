@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError } from "@/lib/api/utils";
+import { auth } from "@/auth";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * GET /api/quote-lists/[id]
@@ -63,8 +65,26 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-lists-api',
+      routePath: '/api/quote-lists/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const guestKey = await getOrCreateGuestKey();
 
     const body = await request.json();
@@ -95,8 +115,11 @@ export async function PUT(
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json(updated);
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "PUT /api/quote-lists/[id]");
   }
 }

@@ -3,12 +3,14 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { randomBytes } from "crypto";
 import { OrganizationRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 초대 링크 생성
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -18,6 +20,17 @@ export async function POST(
     const { id } = await params;
     const body = await request.json();
     const { expiresInDays = 7, role = OrganizationRole.VIEWER, email } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_invite',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-invite-api',
+      routePath: '/api/organizations/[id]/invites',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 조직 존재 확인
     const organization = await db.organization.findUnique({ where: { id } });
@@ -68,8 +81,11 @@ export async function POST(
 
     const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/invite/${token}`;
 
+    enforcement.complete({});
+
     return NextResponse.json({ invite: { ...invite, inviteUrl } });
   } catch (error) {
+    enforcement?.fail();
     console.error("[OrgInvites/POST]", error);
     return NextResponse.json({ error: "초대 링크 생성에 실패했습니다." }, { status: 500 });
   }
@@ -130,6 +146,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -143,6 +160,17 @@ export async function DELETE(
     if (!inviteId) {
       return NextResponse.json({ error: "inviteId가 필요합니다." }, { status: 400 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_invite',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-invite-api',
+      routePath: '/api/organizations/[id]/invites',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 권한 확인 (OWNER 또는 ADMIN)
     const membership = await db.organizationMember.findFirst({
@@ -168,8 +196,11 @@ export async function DELETE(
       data: { revokedAt: new Date() },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("[OrgInvites/DELETE]", error);
     return NextResponse.json({ error: "초대 취소에 실패했습니다." }, { status: 500 });
   }

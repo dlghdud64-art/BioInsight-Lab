@@ -5,6 +5,7 @@ import {
   getOrganizationById,
   updateOrganization,
 } from "@/lib/api/organizations";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 조직 상세 조회
 export async function GET(
@@ -34,6 +35,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -41,6 +43,18 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-update-api',
+      routePath: '/api/organizations/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 관리자 권한 확인
     const membership = await db.organizationMember.findFirst({
@@ -85,8 +99,14 @@ export async function PATCH(
       logoUrl: logoUrl !== undefined ? logoUrl : undefined,
     });
 
+    enforcement.complete({
+      beforeState: { organizationId: id },
+      afterState: { organizationId: updated.id, name: updated.name },
+    });
+
     return NextResponse.json({ organization: updated });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating organization:", error);
     return NextResponse.json(
       { error: error.message || "Failed to update organization" },
@@ -100,6 +120,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -107,6 +128,18 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-delete-api',
+      routePath: '/api/organizations/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // ADMIN/OWNER만 삭제 가능
     const membership = await db.organizationMember.findFirst({
@@ -120,8 +153,14 @@ export async function DELETE(
     await db.organizationMember.deleteMany({ where: { organizationId: id } });
     await db.organization.delete({ where: { id } });
 
+    enforcement.complete({
+      beforeState: { organizationId: id },
+      afterState: undefined,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error deleting organization:", error);
     return NextResponse.json(
       { error: error.message || "Failed to delete organization" },

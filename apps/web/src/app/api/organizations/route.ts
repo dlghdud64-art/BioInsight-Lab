@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createOrganization, ORGANIZATION_TYPE_OPTIONS } from "@/lib/api/organizations";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const createOrganizationSchema = z.object({
   name: z.string().min(1, "조직 이름을 입력해주세요.").max(200),
@@ -97,6 +98,7 @@ export async function GET(request: NextRequest) {
 
 // 새 조직 생성 (RLS 권한 문제 해결)
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     // 1. 사용자 확인
     const session = await auth();
@@ -108,6 +110,17 @@ export async function POST(request: NextRequest) {
       console.error("[Organizations API] Unauthorized - No user session");
       return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: 'new',
+      sourceSurface: 'organizations-api',
+      routePath: '/api/organizations',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     console.log("[Organizations API] Request Body:", JSON.stringify(body, null, 2));
@@ -171,9 +184,12 @@ export async function POST(request: NextRequest) {
 
     console.log("[Organizations API] Organization created successfully:", organization.id);
 
+    enforcement.complete({});
+
     // 3. 성공 응답 반환
     return NextResponse.json({ organization }, { status: 201 });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("[Organizations API] ========== ERROR START ==========");
     console.error("[Organizations API] Error Type:", typeof error);
     console.error("[Organizations API] Error Object:", error);

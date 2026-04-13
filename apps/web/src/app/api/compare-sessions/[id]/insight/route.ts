@@ -1,6 +1,7 @@
 /**
  * POST /api/compare-sessions/[id]/insight — AI insight 생성
  */
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -12,9 +13,24 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    const { id } = await params;
     const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'compare_session',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/compare-sessions/id/insight',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    const { id } = await params;
     const userId = session?.user?.id ?? null;
 
     const body = await request.json();

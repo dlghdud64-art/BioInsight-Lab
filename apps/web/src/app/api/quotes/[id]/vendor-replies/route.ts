@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 빈 문자열 → undefined 변환 헬퍼
 const emptyToUndefined = z.preprocess(
@@ -48,6 +49,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -79,6 +81,18 @@ export async function POST(
     if (!isOwner && !isOrgMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_vendor_reply',
+      targetEntityType: 'quote',
+      targetEntityId: quoteId,
+      sourceSurface: 'vendor-replies-api',
+      routePath: '/api/quotes/[id]/vendor-replies',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const validation = SaveVendorReplySchema.safeParse(body);
@@ -127,9 +141,7 @@ export async function POST(
       },
     });
 
-    let resolvedVendorRequestId: string;
-
-    await db.$transaction(async (tx: Prisma.TransactionClient) => {
+    const resolvedVendorRequestId = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       let txVendorRequestId: string;
 
       if (existingRequest) {
@@ -193,7 +205,7 @@ export async function POST(
         });
       }
 
-      resolvedVendorRequestId = txVendorRequestId;
+      return txVendorRequestId;
     });
 
     // 활동 로그: 벤더 회신 수동 기록
@@ -218,8 +230,14 @@ export async function POST(
       userAgent,
     });
 
+    enforcement.complete({
+      beforeState: { vendorName: existingRequest?.vendorName ?? null },
+      afterState: { vendorName, itemCount: items.length, vendorRequestId: resolvedVendorRequestId },
+    });
+
     return NextResponse.json({ success: true, vendorRequestId: resolvedVendorRequestId! });
   } catch (error) {
+    enforcement?.fail();
     console.error("[VendorReplies/POST] ERROR:", error);
     const message = error instanceof Error ? error.message : "알 수 없는 에러";
     return NextResponse.json(

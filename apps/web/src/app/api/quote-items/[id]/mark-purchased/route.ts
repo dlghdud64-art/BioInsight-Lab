@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 구매 완료 처리
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -14,6 +16,17 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_status_change',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-items-mark-purchased-api',
+      routePath: '/api/quote-items/[id]/mark-purchased',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const { isPurchased } = body;
 
@@ -92,8 +105,11 @@ export async function POST(
       }
     }
 
+    enforcement.complete({});
+
     return NextResponse.json({ success: true, item: updated });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error marking item as purchased:", error);
     return NextResponse.json(
       { error: "Failed to mark item as purchased" },

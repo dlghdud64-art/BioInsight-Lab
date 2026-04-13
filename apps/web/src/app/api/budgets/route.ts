@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET(request: NextRequest) {
   try {
@@ -132,11 +133,24 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'budget_create',
+      targetEntityType: 'budget',
+      targetEntityId: 'new',
+      sourceSurface: 'budget-creation-api',
+      routePath: '/api/budgets',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
 
@@ -340,8 +354,14 @@ export async function POST(request: NextRequest) {
       projectName: sanitizedProjectName,
     };
 
+    enforcement.complete({
+      beforeState: { action: 'budget_create' },
+      afterState: { budgetId: budget.id, amount: amountInt },
+    });
+
     return NextResponse.json({ budget: responseBudget });
   } catch (error) {
+    enforcement?.fail();
     // 5. 상세 에러 메시지 반환
     console.error("[Budget API] ========== ERROR START ==========");
     console.error("[Budget API] Error Type:", typeof error);

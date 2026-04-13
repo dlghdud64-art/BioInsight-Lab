@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { generateOptimizedRecommendations, generateBudgetOptimizedCombination } from "@/lib/ai/optimized-recommendations";
@@ -8,9 +9,24 @@ import { isDemoMode } from "@/lib/env";
  * 예산/납기 관점 최적화 추천 API
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
-    const body = await request.json();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/recommendations/optimized',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        const body = await request.json();
     
     const {
       productIds, // 추천할 제품 후보 ID 목록

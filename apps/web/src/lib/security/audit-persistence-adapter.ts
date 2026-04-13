@@ -1,17 +1,17 @@
 /**
  * Audit Persistence Adapter
  *
- * Security Batch 2: Audit Persistence (adapter boundary)
+ * Security Batch 2: Adapter boundary 정의
+ * Security Batch 6: Supabase durable adapter 실제 구현
  *
- * audit-integrity-engine의 in-memory store를 외부 저장소로 영속화하기 위한
- * adapter boundary. 현재는 in-memory + sessionStorage fallback이며,
- * 추후 Supabase/DB adapter로 교체 가능.
+ * audit-integrity-engine의 in-memory store를 외부 저장소로 영속화.
+ * In-Memory (기본) → Prisma/Supabase (DB 연결 시) 자동 전환.
  *
  * 설계 원칙:
- * - fake table/schema 생성 금지 (CLAUDE.md 원칙)
- * - adapter boundary까지만, 실제 DB 연결은 Supabase migration 이후
  * - audit evidence는 append-only — delete/update API 없음
- * - 기존 audit-integrity-engine과 동일 interface
+ * - DB 연결 시 Prisma를 통해 GovernanceAuditLog 테이블에 persist
+ * - DB 미연결 시 InMemoryAuditAdapter로 graceful fallback
+ * - adapter boundary 계약은 동일 interface
  */
 
 import type { AuditEnvelope, AppendAuditInput, ChainVerificationResult } from './audit-integrity-engine';
@@ -150,73 +150,230 @@ export class InMemoryAuditAdapter implements AuditPersistenceAdapter {
 }
 
 // ═══════════════════════════════════════════════════════
-// Supabase Adapter Stub (adapter boundary만)
+// Prisma/Supabase Durable Adapter (Batch 6)
 // ═══════════════════════════════════════════════════════
 
 /**
- * Supabase Audit Adapter — boundary stub
+ * Prisma 기반 GovernanceAuditLog 테이블 Adapter
  *
- * 실제 구현은 Supabase migration 이후.
- * 현재는 InMemoryAuditAdapter로 fallback.
- *
- * 예상 테이블:
- * ```sql
- * CREATE TABLE governance_audit_log (
- *   event_id TEXT PRIMARY KEY,
- *   correlation_id TEXT NOT NULL,
- *   actor_user_id TEXT NOT NULL,
- *   actor_role TEXT NOT NULL,
- *   action_type TEXT NOT NULL,
- *   target_entity_type TEXT NOT NULL,
- *   target_entity_id TEXT NOT NULL,
- *   occurred_at TIMESTAMPTZ NOT NULL,
- *   snapshot_version TEXT,
- *   before_hash TEXT NOT NULL,
- *   after_hash TEXT NOT NULL,
- *   rationale TEXT,
- *   reason_code TEXT,
- *   source_surface TEXT,
- *   previous_envelope_hash TEXT NOT NULL,
- *   envelope_hash TEXT NOT NULL,
- *   security_classification TEXT NOT NULL,
- *   created_at TIMESTAMPTZ DEFAULT now()
- * );
- *
- * -- Append-only: no UPDATE/DELETE grants
- * -- Hash chain index for verification
- * CREATE INDEX idx_audit_chain ON governance_audit_log (envelope_hash);
- * CREATE INDEX idx_audit_correlation ON governance_audit_log (correlation_id);
- * CREATE INDEX idx_audit_entity ON governance_audit_log (target_entity_type, target_entity_id);
- * ```
+ * - Prisma client를 외부에서 주입 (DI)
+ * - append-only: create + findMany 만 사용, update/delete 없음
+ * - DB row ↔ AuditEnvelope 변환
+ * - chain verification은 DB에서 순서대로 조회 후 검증
+ * - DB 오류 시 에러 전파 (fail-closed)
  */
-export class SupabaseAuditAdapterStub extends InMemoryAuditAdapter {
-  constructor() {
-    super();
-    // Supabase 연결 시 여기에 client 주입
-    // const supabase = createClient(url, key);
+
+/** Prisma client의 최소 필요 interface (실제 PrismaClient에서 사용하는 부분만) */
+interface PrismaGovernanceAuditLogDelegate {
+  create(args: { data: Record<string, unknown> }): Promise<Record<string, unknown>>;
+  createMany(args: { data: Record<string, unknown>[] }): Promise<{ count: number }>;
+  findMany(args?: Record<string, unknown>): Promise<Record<string, unknown>[]>;
+  count(args?: Record<string, unknown>): Promise<number>;
+}
+
+interface MinimalPrismaClient {
+  governanceAuditLog: PrismaGovernanceAuditLogDelegate;
+}
+
+/** DB row → AuditEnvelope 변환 */
+function rowToEnvelope(row: Record<string, unknown>): AuditEnvelope {
+  return {
+    eventId: row.eventId as string,
+    correlationId: row.correlationId as string,
+    actorUserId: row.actorUserId as string,
+    actorRole: row.actorRole as string,
+    actionType: row.actionType as string,
+    targetEntityType: row.targetEntityType as string,
+    targetEntityId: row.targetEntityId as string,
+    occurredAt: row.occurredAt instanceof Date
+      ? (row.occurredAt as Date).toISOString()
+      : (row.occurredAt as string),
+    snapshotVersion: (row.snapshotVersion as string) || 'v0',
+    beforeHash: row.beforeHash as string,
+    afterHash: row.afterHash as string,
+    rationale: (row.rationale as string) || '',
+    reasonCode: row.reasonCode as string,
+    sourceSurface: row.sourceSurface as string,
+    previousEnvelopeHash: row.previousEnvelopeHash as string,
+    envelopeHash: row.envelopeHash as string,
+    securityClassification: (row.securityClassification as AuditEnvelope['securityClassification']) || 'audit_evidence',
+  };
+}
+
+/** AuditEnvelope → DB row data 변환 */
+function envelopeToRow(env: AuditEnvelope): Record<string, unknown> {
+  return {
+    eventId: env.eventId,
+    correlationId: env.correlationId,
+    actorUserId: env.actorUserId,
+    actorRole: env.actorRole,
+    actionType: env.actionType,
+    targetEntityType: env.targetEntityType,
+    targetEntityId: env.targetEntityId,
+    occurredAt: new Date(env.occurredAt),
+    snapshotVersion: env.snapshotVersion,
+    beforeHash: env.beforeHash,
+    afterHash: env.afterHash,
+    rationale: env.rationale || null,
+    reasonCode: env.reasonCode,
+    sourceSurface: env.sourceSurface,
+    previousEnvelopeHash: env.previousEnvelopeHash,
+    envelopeHash: env.envelopeHash,
+    securityClassification: env.securityClassification,
+  };
+}
+
+export class PrismaAuditAdapter implements AuditPersistenceAdapter {
+  private readonly prisma: MinimalPrismaClient;
+  private readonly createdAt: string = new Date().toISOString();
+
+  constructor(prismaClient: MinimalPrismaClient) {
+    this.prisma = prismaClient;
   }
 
-  override async getStats(): Promise<AuditStoreStats> {
-    const stats = await super.getStats();
-    return { ...stats, adapterType: 'supabase-stub (in-memory fallback)' };
+  async append(envelope: AuditEnvelope): Promise<AuditEnvelope> {
+    const row = await this.prisma.governanceAuditLog.create({
+      data: envelopeToRow(envelope),
+    });
+    return rowToEnvelope(row);
+  }
+
+  async appendBatch(envelopes: readonly AuditEnvelope[]): Promise<readonly AuditEnvelope[]> {
+    // createMany는 반환값이 count만 — 개별 create로 처리하여 결과 반환
+    const results: AuditEnvelope[] = [];
+    for (const env of envelopes) {
+      results.push(await this.append(env));
+    }
+    return results;
+  }
+
+  async query(filter: AuditQueryFilter): Promise<readonly AuditEnvelope[]> {
+    const where: Record<string, unknown> = {};
+
+    if (filter.correlationId) where.correlationId = filter.correlationId;
+    if (filter.actorUserId) where.actorUserId = filter.actorUserId;
+    if (filter.actionType) where.actionType = filter.actionType;
+    if (filter.targetEntityId) where.targetEntityId = filter.targetEntityId;
+    if (filter.targetEntityType) where.targetEntityType = filter.targetEntityType;
+
+    if (filter.since || filter.until) {
+      const occurredAt: Record<string, unknown> = {};
+      if (filter.since) occurredAt.gte = new Date(filter.since);
+      if (filter.until) occurredAt.lte = new Date(filter.until);
+      where.occurredAt = occurredAt;
+    }
+
+    const rows = await this.prisma.governanceAuditLog.findMany({
+      where,
+      orderBy: { occurredAt: 'asc' },
+      skip: filter.offset || 0,
+      take: filter.limit || 1000,
+    });
+
+    return rows.map(rowToEnvelope);
+  }
+
+  async verifyChain(): Promise<ChainVerificationResult> {
+    const verifiedAt = new Date().toISOString();
+
+    const rows = await this.prisma.governanceAuditLog.findMany({
+      orderBy: { occurredAt: 'asc' },
+    });
+
+    const envelopes = rows.map(rowToEnvelope);
+
+    if (envelopes.length === 0) {
+      return { valid: true, chainLength: 0, verifiedAt };
+    }
+
+    for (let i = 1; i < envelopes.length; i++) {
+      if (envelopes[i].previousEnvelopeHash !== envelopes[i - 1].envelopeHash) {
+        return {
+          valid: false,
+          chainLength: envelopes.length,
+          brokenAt: i,
+          expectedHash: envelopes[i - 1].envelopeHash,
+          actualHash: envelopes[i].previousEnvelopeHash,
+          verifiedAt,
+        };
+      }
+    }
+
+    return { valid: true, chainLength: envelopes.length, verifiedAt };
+  }
+
+  async getStats(): Promise<AuditStoreStats> {
+    const count = await this.prisma.governanceAuditLog.count();
+    const chain = await this.verifyChain();
+    const lastHash = await this.getLastHash();
+
+    return {
+      chainLength: count,
+      currentStoreSize: count,
+      lastHash,
+      createdAt: this.createdAt,
+      adapterType: 'prisma-supabase',
+      chainValid: chain.valid,
+    };
+  }
+
+  async getLastHash(): Promise<string> {
+    const rows = await this.prisma.governanceAuditLog.findMany({
+      orderBy: { occurredAt: 'desc' },
+      take: 1,
+    });
+
+    if (rows.length === 0) return GENESIS_HASH;
+    return rows[0].envelopeHash as string;
+  }
+
+  async getChainLength(): Promise<number> {
+    return this.prisma.governanceAuditLog.count();
   }
 }
 
+/**
+ * Supabase Audit Adapter — backward compat alias
+ * PrismaAuditAdapter을 직접 사용하되, 기존 import 호환 유지
+ */
+export const SupabaseAuditAdapterStub = PrismaAuditAdapter;
+
 // ═══════════════════════════════════════════════════════
-// Singleton Factory
+// Singleton Factory (auto-detect)
 // ═══════════════════════════════════════════════════════
 
 let currentAdapter: AuditPersistenceAdapter | null = null;
 
 /**
+ * Prisma client가 사용 가능한지 확인하고 PrismaAuditAdapter 생성 시도
+ * 실패 시 null 반환 (InMemoryAuditAdapter로 fallback)
+ */
+function tryCreatePrismaAdapter(): AuditPersistenceAdapter | null {
+  try {
+    // Dynamic import를 피하고 require로 시도 (서버 환경)
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const { prisma } = require('@/lib/prisma');
+    if (prisma && prisma.governanceAuditLog) {
+      return new PrismaAuditAdapter(prisma);
+    }
+  } catch {
+    // Prisma 미설정 또는 브라우저 환경 — fallback
+  }
+  return null;
+}
+
+/**
  * Audit persistence adapter 가져오기
  *
- * 기본: InMemoryAuditAdapter
- * Supabase 연결 후: SupabaseAuditAdapter로 교체
+ * 우선순위:
+ * 1. 명시적으로 set된 adapter (DI)
+ * 2. Prisma client 사용 가능 시 → PrismaAuditAdapter (durable)
+ * 3. Fallback → InMemoryAuditAdapter
  */
 export function getAuditPersistenceAdapter(): AuditPersistenceAdapter {
   if (!currentAdapter) {
-    currentAdapter = new InMemoryAuditAdapter();
+    const prismaAdapter = tryCreatePrismaAdapter();
+    currentAdapter = prismaAdapter || new InMemoryAuditAdapter();
   }
   return currentAdapter;
 }
@@ -224,7 +381,7 @@ export function getAuditPersistenceAdapter(): AuditPersistenceAdapter {
 /**
  * Adapter 교체 (DI)
  *
- * 테스트 또는 Supabase 연결 시 호출
+ * 테스트 또는 명시적 교체 시 호출
  */
 export function setAuditPersistenceAdapter(adapter: AuditPersistenceAdapter): void {
   currentAdapter = adapter;
@@ -233,4 +390,13 @@ export function setAuditPersistenceAdapter(adapter: AuditPersistenceAdapter): vo
 /** 테스트용 초기화 */
 export function __resetAuditPersistenceAdapter(): void {
   currentAdapter = null;
+}
+
+/**
+ * 현재 adapter 타입 조회 (observability용)
+ */
+export async function getAuditAdapterType(): Promise<string> {
+  const adapter = getAuditPersistenceAdapter();
+  const stats = await adapter.getStats();
+  return stats.adapterType;
 }

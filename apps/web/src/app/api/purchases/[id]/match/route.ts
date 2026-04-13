@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
 import { createHazardSnapshot } from "@/lib/matching/purchase-matcher";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 구매 내역과 제품 매칭
@@ -11,6 +12,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -18,6 +20,18 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'purchase_request',
+      targetEntityId: id,
+      sourceSurface: 'purchase-match-api',
+      routePath: '/api/purchases/[id]/match',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { productId } = body;
 
@@ -120,11 +134,14 @@ export async function POST(
       console.error("Failed to create audit log:", auditError);
     }
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       purchaseRecord: updated,
     });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error matching product:", error);
     return NextResponse.json(
       { error: "Failed to match product" },

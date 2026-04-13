@@ -6,7 +6,7 @@ import { assertTransitionAllowed } from "@/lib/operations/state-machine";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
 import { onReceivingCompleted, onInventoryChanged } from "@/lib/operations/automation";
 import type { ReceivingStatus } from "@/lib/operations/state-definitions";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const VALID_STATUSES: ReceivingStatus[] = ["PENDING", "PARTIAL", "COMPLETED", "ISSUE"];
 
@@ -20,6 +20,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -29,7 +30,7 @@ export async function PATCH(
     const { id } = await params;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'receiving_status_change',
@@ -143,7 +144,7 @@ export async function PATCH(
       message: `입고 상태가 "${status}"(으)로 변경되었습니다.`,
     });
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("[Receiving/PATCH]", error);
     return NextResponse.json(
       { error: "입고 상태 변경에 실패했습니다." },

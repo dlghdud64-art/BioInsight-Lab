@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { sendEmail } from "@/lib/email/sender";
 import { generateVendorQuoteRequestEmail } from "@/lib/email/vendor-request-templates";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // ---------------------------------------------------------------------------
 // Zod 스키마
@@ -148,6 +148,7 @@ async function dispatchVendorEmail(params: {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     // 1. 인증
     const session = await auth();
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
     const { items, commonRequest, vendorMessages = {}, organizationId: clientOrganizationId, expiresInDays } = parsed.data;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'quote_request_submit',
@@ -463,7 +464,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("Quote Request DB Error Details:", error);
     console.error("[quotes/request] Error:", {
       message: error?.message,

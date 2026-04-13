@@ -3,12 +3,14 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 리스트 버전 생성 (스냅샷 저장)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -16,6 +18,17 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-versions-api',
+      routePath: '/api/quotes/[id]/versions',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const { snapshotNote } = body;
 
@@ -130,8 +143,11 @@ export async function POST(
       console.error("Failed to create activity log:", error);
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ quote: versionQuote }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating quote version:", error);
     return NextResponse.json(
       { error: "Failed to create quote version" },

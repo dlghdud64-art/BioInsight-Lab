@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -63,13 +64,24 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   let id: string | undefined;
-  let body: any;
+  let body: any = {};
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/organizations/id/subscription',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     ({ id } = await params);
     body = await request.json();

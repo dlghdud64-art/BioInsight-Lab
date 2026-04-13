@@ -63,6 +63,7 @@ model Organization {
   maxSharedLinks    Int? // 최대 공유 링크 수
   logoUrl           String?          // 조직 로고 이미지 URL
   slug              String?          @unique // 조직 고유 주소 (예: my-lab)
+  timezone          String           @default("Asia/Seoul") // IANA timezone — 예산 기간 기준
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
 
@@ -83,6 +84,9 @@ model Organization {
   billingInfo   BillingInfo?
   aiActionItems    AiActionItem[]
   ingestionEntries IngestionEntry[]
+  spendingCategories SpendingCategory[]
+  categoryBudgets    CategoryBudget[]
+  budgetEvents       BudgetEvent[]
 
   @@index([name])
   @@index([plan])
@@ -785,8 +789,9 @@ model PurchaseRecord {
   quoteId         String? // Linked quote if source=quote
   purchasedAt     DateTime // Purchase date
   vendorName      String // Vendor name
-  category        String? // Product category
-  itemName        String // Item/product name
+  category              String?  // 원본 카테고리 문자열 (import/사용자 입력)
+  normalizedCategoryId  String?  // FK → SpendingCategory.id (승인/PO 시점 고정)
+  itemName              String   // Item/product name
   catalogNumber   String? // Catalog number
   unit            String? // Unit (ea, mL, g, etc.)
   qty             Int // Quantity
@@ -800,12 +805,14 @@ model PurchaseRecord {
   updatedAt       DateTime @updatedAt
 
   // Relations (optional)
-  quote     Quote?     @relation(fields: [quoteId], references: [id], onDelete: SetNull)
-  workspace Workspace? @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  quote              Quote?            @relation(fields: [quoteId], references: [id], onDelete: SetNull)
+  workspace          Workspace?        @relation(fields: [workspaceId], references: [id], onDelete: SetNull)
+  normalizedCategory SpendingCategory? @relation(fields: [normalizedCategoryId], references: [id], onDelete: SetNull)
 
   @@index([scopeKey, purchasedAt])
   @@index([scopeKey, vendorName])
   @@index([scopeKey, category])
+  @@index([normalizedCategoryId])
   @@index([quoteId])
   @@index([workspaceId])
 }
@@ -2525,4 +2532,118 @@ model GovernanceEventDedupe {
   @@unique([poNumber, eventType, signatureKey])
   @@index([poNumber])
   @@index([expiresAt])
+}
+
+// ─── Governance Audit Log (Security Batch 6) ─────────────
+// append-only, tamper-evident hash chain audit.
+// Security enforcement middleware가 기록하는 irreversible action evidence.
+// UPDATE/DELETE 금지 — INSERT + SELECT only.
+model GovernanceAuditLog {
+  id                    String   @id @default(cuid())
+  eventId               String   @unique               // audit_xxxx_xxx 형식
+  correlationId         String                          // 요청 단위 추적
+  actorUserId           String                          // 행위자 user ID
+  actorRole             String                          // 행위자 시스템 역할
+  actionType            String                          // irreversible action type
+  targetEntityType      String                          // po, quote, dispatch, approval 등
+  targetEntityId        String                          // 대상 entity ID
+  occurredAt            DateTime                        // 이벤트 발생 시각
+  snapshotVersion       String   @default("v0")         // 스냅샷 버전
+  beforeHash            String                          // 변경 전 상태 hash
+  afterHash             String                          // 변경 후 상태 hash
+  rationale             String?  @db.Text               // 결재 사유
+  reasonCode            String                          // action reason code
+  sourceSurface         String                          // UI surface 출처
+  previousEnvelopeHash  String                          // 이전 envelope hash (chain)
+  envelopeHash          String   @unique                // 이 envelope 자체 hash
+  securityClassification String  @default("audit_evidence") // internal_only, governance_restricted, audit_evidence, supplier_facing
+  createdAt             DateTime @default(now())
+
+  @@index([correlationId])
+  @@index([actorUserId])
+  @@index([actionType])
+  @@index([targetEntityType, targetEntityId])
+  @@index([envelopeHash])
+  @@index([occurredAt])
+}
+
+// ────────────────────────────────────────────────────────────
+// 카테고리별 지출 통제 (Category-Based Spending Control)
+// ────────────────────────────────────────────────────────────
+
+/// 지출 카테고리 (관리자가 추가/수정/삭제 가능)
+model SpendingCategory {
+  id              String    @id @default(cuid())
+  organizationId  String
+  name            String    // 내부 키 (org 내 유일)
+  displayName     String    // 표시명 (한국어)
+  description     String?
+  color           String    @default("#6366f1") // tailwind indigo-500
+  icon            String?   // lucide icon name (e.g. "Beaker", "Package")
+  sortOrder       Int       @default(0)
+  isActive        Boolean   @default(true)
+  isDefault       Boolean   @default(false) // 시드 카테고리 여부
+  archivedAt      DateTime? // null=활성, 값 있으면 아카이브된 시각
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  organization     Organization     @relation(fields: [organizationId], references: [id])
+  budgets          CategoryBudget[]
+  purchaseRecords  PurchaseRecord[] // normalizedCategoryId FK
+
+  @@unique([organizationId, name])
+  @@index([organizationId, isActive])
+}
+
+/// 카테고리별 월간 예산 한도
+model CategoryBudget {
+  id               String    @id @default(cuid())
+  organizationId   String
+  categoryId       String
+  yearMonth        String    // "YYYY-MM"
+  amount           Int       // 예산 금액 (KRW)
+  currency         String    @default("KRW")
+  warningPercent   Int       @default(70)   // 경고 임계치
+  softLimitPercent Int       @default(90)   // 소프트 리밋
+  hardStopPercent  Int       @default(100)  // 하드 스톱
+  controlRules     Json?     // ["warning","soft_limit","hard_stop"] 등
+  isActive         Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  organization     Organization     @relation(fields: [organizationId], references: [id])
+  category         SpendingCategory @relation(fields: [categoryId], references: [id])
+
+  @@unique([organizationId, categoryId, yearMonth])
+  @@index([organizationId, yearMonth])
+  @@index([categoryId])
+}
+
+// 예산 이벤트 (idempotency + durable audit trail)
+// reserve(approve) / release(reverse/cancel/void/reclass) 이벤트를 기록.
+// budget_event_key unique 제약으로 동일 이벤트 중복 실행 방지.
+model BudgetEvent {
+  id                String    @id @default(cuid())
+  organizationId    String
+  // idempotency key: orgId + sourceEntityId + eventType + sequence
+  // 예: "org-1:req-abc:approval_reserved:1"
+  budgetEventKey    String    @unique
+  eventType         String    // approval_reserved | approval_reversed | request_cancel_released | po_void_released | category_reclass_release_reapply
+  sourceEntityType  String    // purchase_request | order
+  sourceEntityId    String
+  categoryId        String?
+  yearMonth         String    // period key의 YYYY-MM 부분
+  amount            Int       // 양수: reserve/release, 음수: reapply
+  preCommitted      Int       // 이벤트 전 committed
+  postCommitted     Int       // 이벤트 후 committed
+  // gate decision 전체 (BudgetGateAuditEvent JSON)
+  decisionPayload   Json?
+  executedBy        String
+  executedAt        DateTime  @default(now())
+
+  organization      Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, yearMonth])
+  @@index([sourceEntityId])
+  @@index([categoryId, yearMonth])
 }

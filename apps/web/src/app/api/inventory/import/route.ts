@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import * as XLSX from "xlsx";
@@ -43,9 +44,24 @@ interface ImportPreviewResult {
  * - 텍스트: 공백 정리
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'inventory',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/inventory/import',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

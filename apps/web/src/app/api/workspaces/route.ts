@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { getUserWorkspaces } from "@/lib/auth/scope";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("api/workspaces");
 
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
  * Create a new workspace
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -54,6 +56,17 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'workspace_manage',
+      targetEntityType: 'workspace',
+      targetEntityId: 'new',
+      sourceSurface: 'workspaces-api',
+      routePath: '/api/workspaces',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const { name, slug } = createWorkspaceSchema.parse(body);
@@ -104,8 +117,10 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
     });
 
+    enforcement.complete({});
     return NextResponse.json({ workspace }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Validation error", details: error.errors },

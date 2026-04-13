@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 interface BulkOrderItem {
   name: string;
@@ -26,11 +27,24 @@ interface BulkOrderItem {
 }
 
 export async function POST(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_bulk_action',
+      targetEntityType: 'order',
+      targetEntityId: 'bulk',
+      sourceSurface: 'order-queue-bulk-api',
+      routePath: '/api/order-queue/bulk',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await req.json();
     const { items, sourceHandoffId } = body as {
@@ -110,6 +124,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    enforcement.complete({
+      beforeState: { itemCount: items.length },
+      afterState: { registeredCount: registeredItems.length },
+    });
+
     return NextResponse.json({
       success: true,
       registered: registeredItems.length,
@@ -118,6 +137,7 @@ export async function POST(req: NextRequest) {
       message: `${registeredItems.length}개 품목이 발주 대기열에 등록되었습니다.`,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("[order-queue/bulk] Error:", error);
     return NextResponse.json(
       { error: "발주 대기열 등록 중 오류가 발생했습니다." },

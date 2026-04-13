@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { ActivityType } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 interface ItemUpdate {
   id: string;
@@ -21,6 +22,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -28,6 +30,17 @@ export async function PATCH(
     }
 
     const { id: quoteId } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: quoteId,
+      sourceSurface: 'admin-quote-items-api',
+      routePath: '/api/admin/quotes/[id]/items',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const { items } = body as { items: ItemUpdate[] };
 
@@ -115,12 +128,15 @@ export async function PATCH(
       console.error("Failed to create activity log:", error);
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       success: true,
       message: `${items.length}개 품목이 업데이트되었습니다.`,
       totalAmount,
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating quote items:", error);
     return NextResponse.json(
       { error: "Failed to update quote items" },

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 점검 이력 조회
 export async function GET(
@@ -52,11 +53,23 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_update',
+      targetEntityType: 'inventory',
+      targetEntityId: params.id,
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/[id]/inspection',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const inventory = await db.productInventory.findUnique({
       where: { id: params.id },
@@ -121,8 +134,10 @@ export async function POST(
       return created;
     });
 
+    enforcement.complete({});
     return NextResponse.json({ inspection }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating inspection:", error);
     return NextResponse.json(
       { error: "Failed to create inspection" },

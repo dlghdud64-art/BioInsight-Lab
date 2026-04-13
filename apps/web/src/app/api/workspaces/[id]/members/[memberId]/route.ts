@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("api/workspaces/[id]/members/[memberId]");
 
@@ -41,6 +42,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string; memberId: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -52,6 +54,17 @@ export async function PATCH(
     }
 
     const { id: workspaceId, memberId } = params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'workspace_manage',
+      targetEntityType: 'workspace',
+      targetEntityId: workspaceId,
+      sourceSurface: 'workspaces-api',
+      routePath: '/api/workspaces/[id]/members/[memberId]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Verify admin access
     await verifyAdminAccess(workspaceId, session.user.id);
@@ -102,8 +115,10 @@ export async function PATCH(
       updatedBy: session.user.id,
     });
 
+    enforcement.complete({});
     return NextResponse.json({ member: updatedMember });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("Admin permission required")) {
       return NextResponse.json({ error: "Admin permission required" }, { status: 403 });
     }
@@ -125,6 +140,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string; memberId: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -136,6 +152,17 @@ export async function DELETE(
     }
 
     const { id: workspaceId, memberId } = params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'workspace_manage',
+      targetEntityType: 'workspace',
+      targetEntityId: workspaceId,
+      sourceSurface: 'workspaces-api',
+      routePath: '/api/workspaces/[id]/members/[memberId]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const targetMember = await db.workspaceMember.findUnique({
       where: { id: memberId },
@@ -187,8 +214,10 @@ export async function DELETE(
       isSelfRemoval: isSelf,
     });
 
+    enforcement.complete({});
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("Admin permission required")) {
       return NextResponse.json({ error: "Admin permission required" }, { status: 403 });
     }

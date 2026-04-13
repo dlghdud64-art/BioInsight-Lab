@@ -1,12 +1,28 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // 견적 요청용 영문 텍스트 생성 (GPT 활용)
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'quote',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/quotes/generate-english',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

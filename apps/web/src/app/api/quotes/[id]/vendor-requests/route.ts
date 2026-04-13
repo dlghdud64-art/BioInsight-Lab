@@ -8,6 +8,7 @@ import { generateVendorQuoteRequestEmail } from "@/lib/email/vendor-request-temp
 import { z } from "zod";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/vendor-requests
 const VendorSchema = z.object({
@@ -63,6 +64,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
     const { allowed, quote, error, status } = await checkQuoteAccess(id, request);
@@ -70,6 +72,18 @@ export async function POST(
     if (!allowed || !quote) {
       return NextResponse.json({ error }, { status });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: quote.userId,
+      userRole: undefined,
+      action: 'quote_request_resend',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'vendor-requests-api',
+      routePath: '/api/quotes/[id]/vendor-requests',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Parse and validate request body
     const body = await request.json();
@@ -208,6 +222,11 @@ export async function POST(
       });
     }
 
+    enforcement.complete({
+      beforeState: { vendorCount: quote.id },
+      afterState: { emailsSent: successCount, emailsFailed: failCount, requestCount: createdRequests.length },
+    });
+
     return NextResponse.json({
       createdRequests,
       emailResults,
@@ -218,6 +237,7 @@ export async function POST(
       },
     }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error creating vendor requests:", error);
     return NextResponse.json(
       { error: "Failed to create vendor requests" },

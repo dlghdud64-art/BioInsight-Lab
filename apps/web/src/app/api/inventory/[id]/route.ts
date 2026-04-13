@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 개별 재고 조회
 export async function GET(
@@ -54,11 +55,23 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_update',
+      targetEntityType: 'inventory',
+      targetEntityId: params.id,
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 기존 재고 확인
     const existingInventory = await db.productInventory.findUnique({
@@ -188,8 +201,10 @@ export async function PATCH(
       return updated;
     });
 
+    enforcement.complete({});
     return NextResponse.json({ success: true, data: updatedInventory });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating inventory:", error);
     return NextResponse.json(
       { error: "Failed to update inventory", details: error.message },
@@ -203,11 +218,23 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_delete',
+      targetEntityType: 'inventory',
+      targetEntityId: params.id,
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 기존 재고 확인
     const existingInventory = await db.productInventory.findUnique({
@@ -252,8 +279,10 @@ export async function DELETE(
       await tx.productInventory.delete({ where: { id: params.id } });
     });
 
+    enforcement.complete({});
     return NextResponse.json({ success: true, message: "Inventory deleted successfully" });
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error deleting inventory:", error);
     return NextResponse.json(
       { error: "Failed to delete inventory", details: error.message },

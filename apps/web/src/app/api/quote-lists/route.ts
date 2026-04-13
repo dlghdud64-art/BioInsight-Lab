@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { handleApiError, validateJsonBody } from "@/lib/api/utils";
 import { logger } from "@/lib/api/logger";
+import { auth } from "@/auth";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 입력 스키마
 const QuoteItemInputSchema = z.object({
@@ -30,7 +32,24 @@ const CreateQuoteListSchema = z.object({
  * 견적요청서 리스트 생성
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: 'new',
+      sourceSurface: 'quote-lists-api',
+      routePath: '/api/quote-lists',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     // guestKey 확보
     const guestKey = await getOrCreateGuestKey();
 
@@ -75,8 +94,11 @@ export async function POST(request: NextRequest) {
       itemCount: items.length,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ id: quoteList.id }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "POST /api/quote-lists");
   }
 }

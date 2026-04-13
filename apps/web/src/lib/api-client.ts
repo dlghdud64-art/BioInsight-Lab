@@ -1,6 +1,11 @@
 /**
  * Global API Client Wrapper
  * Handles standardized error responses, Toast notifications, and automatic redirects
+ *
+ * Security Batch 10: CSRF token 자동 부착
+ * - state-changing method (POST/PUT/PATCH/DELETE)에 x-labaxis-csrf-token 헤더 자동 추가
+ * - __Host-labaxis-csrf cookie에서 토큰 읽기
+ * - 토큰 없으면 /api/security/csrf-token에서 bootstrap
  */
 
 import { extractApiErrorMessage, getErrorMessage } from "@/lib/errors";
@@ -14,6 +19,82 @@ export interface ApiErrorResponse {
 export interface ApiClientOptions extends RequestInit {
   skipErrorToast?: boolean; // Skip automatic error toast (caller will handle)
   skipAuthRedirect?: boolean; // Skip automatic redirect on 401
+  skipCsrf?: boolean; // Skip CSRF token attachment (for non-mutation or internal calls)
+}
+
+// ═══════════════════════════════════════════════════════
+// CSRF Token Management
+// ═══════════════════════════════════════════════════════
+
+const CSRF_COOKIE_NAME = 'labaxis-csrf'; // cookie name without __Host- prefix (browser strips it)
+const CSRF_HEADER_NAME = 'x-labaxis-csrf-token';
+const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** 캐시된 CSRF 토큰 (메모리, bootstrap 중복 방지) */
+let _csrfTokenCache: string | null = null;
+let _csrfBootstrapPromise: Promise<string | null> | null = null;
+
+/**
+ * Cookie에서 CSRF 토큰 읽기
+ */
+function getCsrfTokenFromCookie(): string | null {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)(?:__Host-)?${CSRF_COOKIE_NAME}=([^;]+)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
+/**
+ * CSRF 토큰 bootstrap (서버에서 발급)
+ * 중복 호출 방지를 위해 진행 중인 promise를 재사용
+ */
+async function bootstrapCsrfToken(): Promise<string | null> {
+  // 이미 bootstrap 진행 중이면 재사용
+  if (_csrfBootstrapPromise) return _csrfBootstrapPromise;
+
+  _csrfBootstrapPromise = (async () => {
+    try {
+      const res = await fetch('/api/security/csrf-token', {
+        method: 'GET',
+        credentials: 'same-origin',
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      _csrfTokenCache = data.csrfToken || null;
+      return _csrfTokenCache;
+    } catch {
+      return null;
+    } finally {
+      _csrfBootstrapPromise = null;
+    }
+  })();
+
+  return _csrfBootstrapPromise;
+}
+
+/**
+ * CSRF 토큰 획득 (cookie → cache → bootstrap)
+ */
+async function acquireCsrfToken(): Promise<string | null> {
+  // 1. Cookie에서 읽기
+  const fromCookie = getCsrfTokenFromCookie();
+  if (fromCookie) {
+    _csrfTokenCache = fromCookie;
+    return fromCookie;
+  }
+
+  // 2. 메모리 캐시
+  if (_csrfTokenCache) return _csrfTokenCache;
+
+  // 3. Bootstrap
+  return bootstrapCsrfToken();
+}
+
+/**
+ * CSRF 토큰 강제 갱신 (만료 등의 이유로)
+ */
+export async function refreshCsrfToken(): Promise<string | null> {
+  _csrfTokenCache = null;
+  return bootstrapCsrfToken();
 }
 
 /**
@@ -27,13 +108,24 @@ export async function apiClient<T = any>(
   url: string,
   options: ApiClientOptions = {}
 ): Promise<T> {
-  const { skipErrorToast = false, skipAuthRedirect = false, ...fetchOptions } = options;
+  const { skipErrorToast = false, skipAuthRedirect = false, skipCsrf = false, ...fetchOptions } = options;
 
   try {
+    // CSRF token 부착 (state-changing method만)
+    const method = (fetchOptions.method || 'GET').toUpperCase();
+    const csrfHeaders: Record<string, string> = {};
+    if (!skipCsrf && STATE_CHANGING_METHODS.has(method)) {
+      const csrfToken = await acquireCsrfToken();
+      if (csrfToken) {
+        csrfHeaders[CSRF_HEADER_NAME] = csrfToken;
+      }
+    }
+
     const response = await fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
+        ...csrfHeaders,
         ...fetchOptions.headers,
       },
     });

@@ -12,6 +12,7 @@
  * - Active entities with wrong substatus → transition
  * - Terminal entities with active queue items → complete (stale cleanup)
  */
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -36,9 +37,24 @@ interface QueueItem {
 const OPS_ENTITY_TYPES = ["QUOTE", "ORDER", "INVENTORY_RESTOCK", "PURCHASE_REQUEST"];
 
 export async function POST() {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
-    const userId = session?.user?.id ?? null;
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/work-queue/ops-sync',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        const userId = session?.user?.id ?? null;
     if (!userId) {
       return NextResponse.json({ synced: 0 });
     }

@@ -1,17 +1,19 @@
 /**
  * Payload Encryption Adapter
  *
- * Security Batch 5: Payload Encryption at Rest (adapter boundary)
+ * Security Batch 5: Adapter boundary 정의
+ * Security Batch 7: AES-256-GCM 실제 구현 + env 기반 auto-init
  *
  * browser-safe 데이터라도 sessionStorage에 저장 시 암호화하기 위한
- * adapter boundary. 현재는 plaintext fallback이며,
- * 추후 AES-GCM 또는 키 관리 인프라 연결 시 실제 암호화로 교체.
+ * adapter boundary.
  *
  * 설계 원칙:
  * - fake encryption / security theater 금지
- * - adapter boundary까지만 — 실제 키 관리는 인프라 확보 후
- * - plaintext fallback이지만 interface는 encrypt/decrypt 형태
- * - Web Crypto API 사용 준비 (AES-GCM 256bit)
+ * - LABAXIS_ENCRYPTION_KEY 환경변수 존재 시 → AES-256-GCM 실제 암호화
+ * - 환경변수 미설정 시 → PlaintextFallbackAdapter (개발/빌드)
+ * - HKDF 기반 per-purpose key 파생 (audit, session, payload 용도 분리)
+ * - Web Crypto API 사용 (AES-GCM 256bit + HKDF-SHA256)
+ * - KMS 교체 가능한 key provider boundary
  */
 
 // ═══════════════════════════════════════════════════════
@@ -90,42 +92,177 @@ export class PlaintextFallbackAdapter implements PayloadEncryptionAdapter {
 }
 
 // ═══════════════════════════════════════════════════════
-// AES-GCM Adapter Stub (Web Crypto API 기반)
+// Key Provider Interface (Batch 7: KMS-ready boundary)
+// ═══════════════════════════════════════════════════════
+
+/** Key purpose — HKDF info에 사용, 용도별 파생 키 분리 */
+export type KeyPurpose = 'payload' | 'audit' | 'session' | 'token';
+
+/**
+ * Key Provider Interface
+ *
+ * 현재: 환경변수 기반 (EnvKeyProvider)
+ * 추후: KMS 기반 (AwsKmsKeyProvider, GcpKmsKeyProvider 등)
+ */
+export interface EncryptionKeyProvider {
+  /** Master key 가져오기 (raw bytes) */
+  getMasterKey(): Promise<ArrayBuffer | null>;
+  /** Provider 타입 */
+  getProviderType(): string;
+  /** 키 사용 가능 여부 */
+  isAvailable(): boolean;
+}
+
+/**
+ * 환경변수 기반 Key Provider
+ *
+ * LABAXIS_ENCRYPTION_KEY: hex-encoded 256-bit (64자) 키
+ * 예: openssl rand -hex 32
+ */
+export class EnvKeyProvider implements EncryptionKeyProvider {
+  private cachedKey: ArrayBuffer | null = null;
+  private checked = false;
+
+  getMasterKey(): Promise<ArrayBuffer | null> {
+    if (this.checked) return Promise.resolve(this.cachedKey);
+    this.checked = true;
+
+    const hexKey = typeof process !== 'undefined'
+      ? process.env?.LABAXIS_ENCRYPTION_KEY
+      : undefined;
+
+    if (!hexKey || hexKey.length !== 64) {
+      this.cachedKey = null;
+      return Promise.resolve(null);
+    }
+
+    // hex → ArrayBuffer
+    const bytes = new Uint8Array(32);
+    for (let i = 0; i < 32; i++) {
+      bytes[i] = parseInt(hexKey.substring(i * 2, i * 2 + 2), 16);
+    }
+    this.cachedKey = bytes.buffer;
+    return Promise.resolve(this.cachedKey);
+  }
+
+  getProviderType(): string {
+    return 'env';
+  }
+
+  isAvailable(): boolean {
+    const hexKey = typeof process !== 'undefined'
+      ? process.env?.LABAXIS_ENCRYPTION_KEY
+      : undefined;
+    return !!hexKey && hexKey.length === 64;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// HKDF Key Derivation (Batch 7)
 // ═══════════════════════════════════════════════════════
 
 /**
- * AES-256-GCM Adapter — boundary stub
+ * HKDF-SHA256 기반 purpose-specific key 파생
  *
- * Web Crypto API가 사용 가능하고 키가 주입된 경우 실제 암호화 수행.
- * 현재는 키 관리 인프라가 없으므로 PlaintextFallbackAdapter로 fallback.
+ * Master key에서 용도별 파생 키를 생성하여,
+ * 하나의 master key로 여러 용도의 독립적인 암호화 키를 사용.
  *
- * 실제 production 구현 시:
- * 1. 환경변수 또는 KMS에서 master key 가져오기
- * 2. master key로 per-session data key 파생 (HKDF)
- * 3. data key로 AES-256-GCM 암호화
- * 4. encrypted data + IV + key ID를 저장
+ * @param masterKey - 원본 master key (256-bit)
+ * @param purpose - 키 용도 (info parameter)
+ * @param salt - optional salt (기본: 'labaxis-v1')
  */
-export class AesGcmAdapterStub implements PayloadEncryptionAdapter {
-  private readonly fallback = new PlaintextFallbackAdapter();
-  private cryptoKey: CryptoKey | null = null;
+export async function deriveKey(
+  masterKey: ArrayBuffer,
+  purpose: KeyPurpose,
+  salt?: string,
+): Promise<CryptoKey> {
+  const subtle = globalThis.crypto?.subtle;
+  if (!subtle) throw new Error('Web Crypto API가 사용할 수 없습니다');
 
-  /**
-   * 키 주입 (production에서는 KMS에서 가져옴)
-   */
+  const encoder = new TextEncoder();
+  const saltBytes = encoder.encode(salt || 'labaxis-v1');
+  const info = encoder.encode(`labaxis:${purpose}:aes-256-gcm`);
+
+  // Master key → HKDF base key
+  const baseKey = await subtle.importKey(
+    'raw', masterKey, 'HKDF', false, ['deriveKey'],
+  );
+
+  // HKDF → AES-GCM 256-bit key
+  return subtle.deriveKey(
+    { name: 'HKDF', hash: 'SHA-256', salt: saltBytes, info },
+    baseKey,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt'],
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// AES-256-GCM Encryption Adapter (Batch 7: 실제 구현)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * AES-256-GCM Encryption Adapter
+ *
+ * Web Crypto API 기반 실제 암호화:
+ * 1. Key Provider에서 master key 가져오기 (env 또는 KMS)
+ * 2. HKDF로 purpose-specific key 파생
+ * 3. AES-256-GCM 암호화 (12-byte random IV)
+ * 4. ciphertext + IV + key purpose 저장
+ *
+ * backward compat: setEncryptionKey()로 직접 주입도 지원
+ */
+export class AesGcmEncryptionAdapter implements PayloadEncryptionAdapter {
+  private readonly fallback = new PlaintextFallbackAdapter();
+  private readonly keyProvider: EncryptionKeyProvider;
+  private readonly purpose: KeyPurpose;
+  private derivedKey: CryptoKey | null = null;
+  private manualKey: CryptoKey | null = null;
+  private initPromise: Promise<void> | null = null;
+
+  constructor(
+    keyProvider?: EncryptionKeyProvider,
+    purpose?: KeyPurpose,
+  ) {
+    this.keyProvider = keyProvider || new EnvKeyProvider();
+    this.purpose = purpose || 'payload';
+  }
+
+  /** 수동 키 주입 (backward compat / 테스트용) */
   async setEncryptionKey(rawKey: ArrayBuffer): Promise<void> {
     if (typeof globalThis.crypto?.subtle?.importKey !== 'function') return;
-
-    this.cryptoKey = await globalThis.crypto.subtle.importKey(
-      'raw',
-      rawKey,
+    this.manualKey = await globalThis.crypto.subtle.importKey(
+      'raw', rawKey,
       { name: 'AES-GCM', length: 256 },
-      false,
-      ['encrypt', 'decrypt'],
+      false, ['encrypt', 'decrypt'],
     );
   }
 
+  /** HKDF 파생 키 초기화 (lazy, 1회) */
+  private async ensureKey(): Promise<CryptoKey | null> {
+    if (this.manualKey) return this.manualKey;
+    if (this.derivedKey) return this.derivedKey;
+
+    if (!this.initPromise) {
+      this.initPromise = (async () => {
+        try {
+          const masterKey = await this.keyProvider.getMasterKey();
+          if (!masterKey) return;
+          this.derivedKey = await deriveKey(masterKey, this.purpose);
+        } catch {
+          // Crypto 미지원 환경 — fallback
+          this.derivedKey = null;
+        }
+      })();
+    }
+    await this.initPromise;
+    return this.derivedKey;
+  }
+
   async encrypt(plaintext: string): Promise<EncryptedPayload> {
-    if (!this.cryptoKey) return this.fallback.encrypt(plaintext);
+    const key = await this.ensureKey();
+    if (!key) return this.fallback.encrypt(plaintext);
 
     const encoder = new TextEncoder();
     const iv = globalThis.crypto.getRandomValues(new Uint8Array(12));
@@ -133,7 +270,7 @@ export class AesGcmAdapterStub implements PayloadEncryptionAdapter {
 
     const encrypted = await globalThis.crypto.subtle.encrypt(
       { name: 'AES-GCM', iv },
-      this.cryptoKey,
+      key,
       data,
     );
 
@@ -151,8 +288,9 @@ export class AesGcmAdapterStub implements PayloadEncryptionAdapter {
       return this.fallback.decrypt(encrypted);
     }
 
-    if (!this.cryptoKey || !encrypted.iv) {
-      throw new Error('복호화 키가 설정되지 않았거나 IV가 누락되었습니다');
+    const key = await this.ensureKey();
+    if (!key || !encrypted.iv) {
+      throw new Error('복호화 키를 초기화할 수 없거나 IV가 누락되었습니다');
     }
 
     const cipherBytes = new Uint8Array(
@@ -164,7 +302,7 @@ export class AesGcmAdapterStub implements PayloadEncryptionAdapter {
 
     const decrypted = await globalThis.crypto.subtle.decrypt(
       { name: 'AES-GCM', iv: ivBytes },
-      this.cryptoKey,
+      key,
       cipherBytes,
     );
 
@@ -172,29 +310,50 @@ export class AesGcmAdapterStub implements PayloadEncryptionAdapter {
   }
 
   getAlgorithm(): string {
-    return this.cryptoKey ? 'aes-256-gcm' : 'plaintext_fallback';
+    return (this.derivedKey || this.manualKey) ? 'aes-256-gcm' : 'plaintext_fallback';
   }
 
   isEncryptionAvailable(): boolean {
-    return this.cryptoKey !== null;
+    return (this.derivedKey || this.manualKey) !== null;
   }
 }
 
+/** Backward compat alias — 기존 import 호환 유지 */
+export const AesGcmAdapterStub = AesGcmEncryptionAdapter;
+
 // ═══════════════════════════════════════════════════════
-// Singleton Factory
+// Singleton Factory (auto-detect, Batch 7)
 // ═══════════════════════════════════════════════════════
 
 let currentEncryptionAdapter: PayloadEncryptionAdapter | null = null;
 
 /**
+ * Web Crypto API + 환경변수 기반 AesGcmEncryptionAdapter 생성 시도
+ * 실패 시 null 반환 → PlaintextFallbackAdapter fallback
+ */
+function tryCreateAesGcmAdapter(): PayloadEncryptionAdapter | null {
+  // Web Crypto API 사용 가능 확인
+  if (typeof globalThis.crypto?.subtle?.encrypt !== 'function') return null;
+
+  // 환경변수 키 존재 확인
+  const keyProvider = new EnvKeyProvider();
+  if (!keyProvider.isAvailable()) return null;
+
+  return new AesGcmEncryptionAdapter(keyProvider, 'payload');
+}
+
+/**
  * Encryption adapter 가져오기
  *
- * 기본: PlaintextFallbackAdapter
- * KMS 연결 후: AesGcmAdapter로 교체
+ * 우선순위:
+ * 1. 명시적으로 set된 adapter (DI)
+ * 2. LABAXIS_ENCRYPTION_KEY + Web Crypto → AesGcmEncryptionAdapter
+ * 3. Fallback → PlaintextFallbackAdapter
  */
 export function getEncryptionAdapter(): PayloadEncryptionAdapter {
   if (!currentEncryptionAdapter) {
-    currentEncryptionAdapter = new PlaintextFallbackAdapter();
+    const aesAdapter = tryCreateAesGcmAdapter();
+    currentEncryptionAdapter = aesAdapter || new PlaintextFallbackAdapter();
   }
   return currentEncryptionAdapter;
 }
@@ -209,4 +368,24 @@ export function setEncryptionAdapter(adapter: PayloadEncryptionAdapter): void {
 /** 테스트용 초기화 */
 export function __resetEncryptionAdapter(): void {
   currentEncryptionAdapter = null;
+}
+
+/**
+ * 현재 adapter 타입 조회 (observability용)
+ */
+export async function getEncryptionAdapterType(): Promise<string> {
+  const adapter = getEncryptionAdapter();
+  return adapter.getAlgorithm();
+}
+
+/**
+ * Purpose-specific adapter 생성 (audit, session 등 용도별)
+ * 같은 master key에서 HKDF로 다른 파생 키 사용
+ */
+export function createPurposeAdapter(purpose: KeyPurpose): PayloadEncryptionAdapter {
+  const keyProvider = new EnvKeyProvider();
+  if (!keyProvider.isAvailable() || typeof globalThis.crypto?.subtle?.encrypt !== 'function') {
+    return new PlaintextFallbackAdapter();
+  }
+  return new AesGcmEncryptionAdapter(keyProvider, purpose);
 }

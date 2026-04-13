@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const BillingInfoSchema = z.object({
   companyName: z.string().min(1, "회사명은 필수입니다"),
@@ -66,6 +67,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -73,6 +75,17 @@ export async function PUT(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: id,
+      sourceSurface: 'organization-billing-api',
+      routePath: '/api/organizations/[id]/billing-info',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const membership = await checkAdminOrOwner(session.user.id, id);
     if (!membership) {
@@ -116,8 +129,11 @@ export async function PUT(
       update: data,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({ billingInfo });
   } catch (error: unknown) {
+    enforcement?.fail();
     console.error("[BillingInfo API] PUT Error:", error);
     return NextResponse.json(
       { error: "청구 정보 저장 중 오류가 발생했습니다." },

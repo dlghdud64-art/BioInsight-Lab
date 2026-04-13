@@ -45,7 +45,7 @@ export {
 
 export {
   checkMutationReplayGuard,
-  generateCsrfToken,
+  generateCsrfToken as generateMutationCsrfToken,
   beginMutation,
   completeMutation,
   failMutation,
@@ -133,11 +133,13 @@ export {
   type InlineEnforcementHandle,
 } from './server-enforcement-middleware';
 
-// ── Batch 2: Audit Persistence Adapter ──
+// ── Batch 2 + 6: Audit Persistence Adapter (durable) ──
 export {
   getAuditPersistenceAdapter,
   setAuditPersistenceAdapter,
+  getAuditAdapterType,
   InMemoryAuditAdapter,
+  PrismaAuditAdapter,
   SupabaseAuditAdapterStub,
   type AuditPersistenceAdapter,
   type AuditQueryFilter,
@@ -160,21 +162,69 @@ export {
   type HashResult,
 } from './crypto-hash-engine';
 
-// ── Batch 4: Mutation Rate Limiter ──
+// ── Batch 4 + 9: Mutation Rate Limiter (Redis-ready) ──
 export {
   checkMutationRateLimit,
   getRateLimitStatus,
   pruneExpiredBuckets,
+  setRateLimitAdapter,
+  getRateLimitAdapterType,
+  InMemoryRateLimitAdapter,
+  RedisRateLimitAdapter,
   type MutationRateLimitResult,
   type RateLimitedAction,
+  type RateLimitPersistenceAdapter,
 } from './mutation-rate-limiter';
 
-// ── Batch 5: Payload Encryption Adapter ──
+// ── Batch 5 + 7: Payload Encryption Adapter (AES-256-GCM) ──
 export {
   getEncryptionAdapter,
   setEncryptionAdapter,
+  getEncryptionAdapterType,
+  createPurposeAdapter,
+  deriveKey,
   PlaintextFallbackAdapter,
+  AesGcmEncryptionAdapter,
   AesGcmAdapterStub,
+  EnvKeyProvider,
   type PayloadEncryptionAdapter,
   type EncryptedPayload,
+  type EncryptionKeyProvider,
+  type KeyPurpose,
 } from './payload-encryption-adapter';
+
+// ── Batch 10: CSRF Full Enforcement ──
+export {
+  CSRF_HEADER_NAME,
+  CSRF_COOKIE_NAME,
+  CSRF_PROTECTED_METHODS,
+  CSRF_TOKEN_TTL_MS,
+  CSRF_TOKEN_MAX_AGE_MS,
+  getCsrfRolloutMode,
+  getCsrfGovernanceMessage,
+  isProtectedMethod,
+  isTrustedOrigin,
+  shouldBlockOnViolation,
+  type CsrfRolloutMode,
+  type CsrfProtectionLevel,
+  type CsrfValidationResult,
+  type CsrfViolationType,
+  type CsrfTelemetryEvent,
+  type RouteCsrfConfig,
+} from './csrf-contract';
+
+export {
+  generateCsrfToken,
+  generateCsrfTokenSync,
+  validateCsrfDoubleSubmit,
+  validateCsrfDoubleSubmitSync,
+  isCsrfTokenExpired,
+  shouldRefreshCsrfToken,
+  buildCsrfCookieHeader,
+} from './csrf-token-engine';
+
+export {
+  performCsrfCheck,
+  type CsrfCheckContext,
+  type CsrfCheckResult,
+} from './csrf-middleware';

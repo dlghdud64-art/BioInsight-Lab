@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 import crypto from "crypto";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("api/workspaces/[id]/invites");
 
@@ -94,6 +95,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -105,6 +107,17 @@ export async function POST(
     }
 
     const workspaceId = params.id;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'workspace_manage',
+      targetEntityType: 'workspace',
+      targetEntityId: workspaceId,
+      sourceSurface: 'workspaces-api',
+      routePath: '/api/workspaces/[id]/invites',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Verify admin access
     await verifyAdminAccess(workspaceId, session.user.id);
@@ -180,8 +193,10 @@ export async function POST(
     // TODO: Send email with invite link
     // const inviteLink = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${token}`;
 
+    enforcement.complete({});
     return NextResponse.json({ invite }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("Admin permission required")) {
       return NextResponse.json({ error: "Admin permission required" }, { status: 403 });
     }
@@ -203,6 +218,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -214,6 +230,17 @@ export async function DELETE(
     }
 
     const workspaceId = params.id;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'workspace_manage',
+      targetEntityType: 'workspace',
+      targetEntityId: workspaceId,
+      sourceSurface: 'workspaces-api',
+      routePath: '/api/workspaces/[id]/invites',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const inviteId = request.nextUrl.searchParams.get("inviteId");
 
     if (!inviteId) {
@@ -239,8 +266,10 @@ export async function DELETE(
       revokedBy: session.user.id,
     });
 
+    enforcement.complete({});
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("Admin permission required")) {
       return NextResponse.json({ error: "Admin permission required" }, { status: 403 });
     }

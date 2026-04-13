@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db, isPrismaAvailable } from "@/lib/db";
@@ -8,16 +9,25 @@ import { ActivityType } from "@prisma/client";
 
 // 공유 링크 생성
 export async function POST(request: NextRequest) {
-  // body와 expiresAtValue를 try 블록 밖에서 선언하여 catch 블록에서도 접근 가능하도록 수정
-  let body: any = {};
+  let enforcement: InlineEnforcementHandle | undefined;
   let expiresAtValue: Date | null = null;
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'compare_session',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/shared-lists',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
-    body = await request.json();
+    const body = await request.json();
     const { quoteId, title, description, expiresInDays } = body;
 
     // expiresInDays가 0이면 만료 없음 (null)

@@ -7,17 +7,31 @@ import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { generateShareToken } from "@/lib/api/share-token";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
   // body와 session을 try 블록 밖에서 선언하여 catch 블록에서도 접근 가능하도록 수정
   let body: any = {};
   let session: any = null;
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     session = await auth();
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_request_create',
+      targetEntityType: 'quote',
+      targetEntityId: 'new',
+      sourceSurface: 'quote-creation-api',
+      routePath: '/api/quotes',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     body = await request.json();
     const {
@@ -259,8 +273,14 @@ export async function POST(request: NextRequest) {
     const shareToken = quoteResults[0]?.shareToken ?? null;
     const shareUrl = quoteResults[0]?.shareUrl ?? null;
 
+    enforcement.complete({
+      beforeState: { action: 'quote_request_create' },
+      afterState: { quoteId: quote.id, quoteCount: quoteResults.length },
+    });
+
     return NextResponse.json({ quote, shareToken, shareUrl }, { status: 201 });
   } catch (error: any) {
+    enforcement?.fail();
     // 상세 에러 로깅 (Prisma 에러 코드/메타 포함)
     console.error("[quotes/POST] Error creating quote:", {
       message: error?.message,

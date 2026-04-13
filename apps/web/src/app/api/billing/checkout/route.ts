@@ -5,6 +5,7 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 import Stripe from "stripe";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("api/billing/checkout");
 
@@ -47,6 +48,7 @@ async function verifyWorkspaceAdmin(workspaceId: string, userId: string) {
  * Create Stripe checkout session for workspace subscription
  */
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -59,6 +61,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { workspaceId } = checkoutSchema.parse(body);
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'billing_checkout',
+      targetEntityType: 'billing',
+      targetEntityId: 'checkout',
+      sourceSurface: 'billing-checkout-api',
+      routePath: '/api/billing/checkout',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Verify admin access
     const workspace = await verifyWorkspaceAdmin(workspaceId, session.user.id);
@@ -125,10 +138,13 @@ export async function POST(request: NextRequest) {
       workspaceId,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       url: checkoutSession.url,
     });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("admin access required")) {
       return NextResponse.json(
         { error: "Admin access required" },

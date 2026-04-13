@@ -5,6 +5,8 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { fileCache } from "@/lib/cache/file-cache";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
+import { auth } from "@/auth";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("purchases/import/commit");
 
@@ -86,7 +88,24 @@ function parseDate(dateStr: string): Date {
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'purchase_request',
+      targetEntityId: 'import-commit',
+      sourceSurface: 'purchase-import-api',
+      routePath: '/api/purchases/import/commit',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     // Get scope (workspace or guest)
     const scope = await getScope(request);
     const scopeKey = getScopeKey(scope);
@@ -251,11 +270,14 @@ export async function POST(request: NextRequest) {
       `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
     );
 
+    enforcement.complete({});
+
     return NextResponse.json({
       ...result,
       records: successRecords.slice(0, 10), // Return first 10 records as sample
     });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "purchases/import/commit");
   }
 }

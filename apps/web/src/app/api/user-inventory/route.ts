@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -221,9 +222,24 @@ export async function GET(req: NextRequest) {
 // =====================================================
 
 export async function PATCH(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_delete',
+      targetEntityType: 'inventory',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/user-inventory',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        if (!session?.user?.id) {
       return NextResponse.json(
         { error: "인증이 필요합니다.", code: "UNAUTHORIZED" },
         { status: 401 }

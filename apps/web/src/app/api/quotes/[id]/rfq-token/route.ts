@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import crypto from "crypto";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("api/quotes/[id]/rfq-token");
 
@@ -46,6 +47,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -57,6 +59,17 @@ export async function POST(
     }
 
     const quoteId = params.id;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: quoteId,
+      sourceSurface: 'quote-rfq-token-api',
+      routePath: '/api/quotes/[id]/rfq-token',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Verify access
     await verifyQuoteAccess(quoteId, session.user.id);
@@ -99,6 +112,8 @@ export async function POST(
     // Build reply address
     const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
 
+    enforcement.complete({});
+
     return NextResponse.json(
       {
         token: rfqToken.token,
@@ -110,6 +125,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("access denied")) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
@@ -178,6 +194,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -189,6 +206,17 @@ export async function PATCH(
     }
 
     const quoteId = params.id;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: quoteId,
+      sourceSurface: 'quote-rfq-token-api',
+      routePath: '/api/quotes/[id]/rfq-token',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // Verify access
     await verifyQuoteAccess(quoteId, session.user.id);
@@ -212,6 +240,8 @@ export async function PATCH(
     // Build reply address
     const replyAddress = `rfq+${rfqToken.token}@inbound.${process.env.NEXT_PUBLIC_DOMAIN || "yourdomain.com"}`;
 
+    enforcement.complete({});
+
     return NextResponse.json({
       token: rfqToken.token,
       replyAddress,
@@ -220,6 +250,7 @@ export async function PATCH(
       createdAt: rfqToken.createdAt,
     });
   } catch (error) {
+    enforcement?.fail();
     if ((error as Error).message.includes("access denied")) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 재고 사용 이력 조회
 export async function GET(request: NextRequest) {
@@ -95,6 +96,7 @@ export async function GET(request: NextRequest) {
 
 // 재고 사용 기록
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -103,6 +105,17 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { inventoryId, quantity, unit, usageDate, notes } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_use',
+      targetEntityType: 'inventory',
+      targetEntityId: inventoryId || 'unknown',
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/usage',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!inventoryId || !quantity) {
       return NextResponse.json(
@@ -137,8 +150,10 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    enforcement.complete({});
     return NextResponse.json({ usage }, { status: 201 });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error recording usage:", error);
     return NextResponse.json(
       { error: "Failed to record usage" },

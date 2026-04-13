@@ -12,6 +12,7 @@ import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { markQuoteAsPurchased } from "./markPurchased";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("quotes/[id]");
 
@@ -84,6 +85,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -91,6 +93,19 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-edit-api',
+      routePath: '/api/quotes/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { title, description, status, budgetId, vendorRequestId } = body;
 
@@ -395,8 +410,14 @@ export async function PATCH(
     revalidatePath("/quotes");
     revalidatePath(`/quotes/${id}`);
 
+    enforcement.complete({
+      beforeState: { status: previousStatus, id },
+      afterState: { status: updatedQuote.status, id },
+    });
+
     return NextResponse.json({ quote: updatedQuote });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "quotes/PATCH");
   }
 }
@@ -406,6 +427,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -413,6 +435,19 @@ export async function DELETE(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_delete',
+      targetEntityType: 'quote',
+      targetEntityId: id,
+      sourceSurface: 'quote-delete-api',
+      routePath: '/api/quotes/[id]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const quote = await db.quote.findUnique({
       where: { id },
     });
@@ -479,8 +514,14 @@ export async function DELETE(
 
     logger.info(`Deleted quote ${id}`);
 
+    enforcement.complete({
+      beforeState: { id, title: quote.title, status: quote.status },
+      afterState: undefined,
+    });
+
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "quotes/DELETE");
   }
 }

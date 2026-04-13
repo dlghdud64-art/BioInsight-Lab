@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TeamRole } from "@prisma/client";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 팀 멤버 목록 조회
@@ -81,6 +82,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -90,6 +92,17 @@ export async function PATCH(
     const { id: teamId } = await params;
     const body = await request.json();
     const { memberId, role } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'team_manage',
+      targetEntityType: 'team',
+      targetEntityId: teamId,
+      sourceSurface: 'team-api',
+      routePath: '/api/team/[id]/members',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!memberId || !role) {
       return NextResponse.json(
@@ -151,6 +164,7 @@ export async function PATCH(
       },
     });
 
+    enforcement.complete({});
     return NextResponse.json({
       member: {
         id: updatedMember.id,
@@ -163,6 +177,7 @@ export async function PATCH(
       },
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error updating team member role:", error);
     return NextResponse.json(
       { error: "Failed to update team member role" },
@@ -178,6 +193,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -187,6 +203,17 @@ export async function DELETE(
     const { id: teamId } = await params;
     const body = await request.json();
     const { memberId } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'team_manage',
+      targetEntityType: 'team',
+      targetEntityId: teamId,
+      sourceSurface: 'team-api',
+      routePath: '/api/team/[id]/members',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!memberId) {
       return NextResponse.json(
@@ -245,8 +272,10 @@ export async function DELETE(
       where: { id: memberId },
     });
 
+    enforcement.complete({});
     return NextResponse.json({ success: true });
   } catch (error) {
+    enforcement?.fail();
     console.error("Error removing team member:", error);
     return NextResponse.json(
       { error: "Failed to remove team member" },

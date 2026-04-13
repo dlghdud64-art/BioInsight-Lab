@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 입고 이력 조회
 export async function GET(
@@ -64,6 +64,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -73,7 +74,7 @@ export async function POST(
     const { id } = await params;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'inventory_restock',
@@ -198,7 +199,7 @@ export async function POST(
 
     return NextResponse.json({ inventory: updatedInventory, restock: restockRecord });
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
     console.error("[InventoryRestock/POST]", error);
     return NextResponse.json({ error: "입고 처리에 실패했습니다." }, { status: 500 });
   }

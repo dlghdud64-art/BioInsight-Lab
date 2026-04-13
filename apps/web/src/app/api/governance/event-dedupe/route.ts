@@ -8,17 +8,36 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
 import {
   shouldPublishServer,
   markPublishedServer,
   clearDedupeForPoServer,
   purgeExpiredDedupeRecords,
 } from "@/lib/persistence/governance-event-dedupe-server";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
     const body = await request.json();
-    const { action, poNumber, eventType, signatureKey, ttlMs } = body;
+    const { action, poNumber, eventType, signatureKey, ttlMs, key } = body;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'governance_data_mutation',
+      targetEntityType: 'governance',
+      targetEntityId: key || poNumber || 'unknown',
+      sourceSurface: 'governance-event-dedupe-api',
+      routePath: '/api/governance/event-dedupe',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (action === "check") {
       if (!poNumber || !eventType || !signatureKey) {
@@ -44,21 +63,46 @@ export async function POST(request: NextRequest) {
 
     if (action === "purge") {
       const purged = await purgeExpiredDedupeRecords();
+      enforcement.complete({});
       return NextResponse.json({ purged });
     }
 
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
-  } catch {
+  } catch (error) {
+    enforcement?.fail();
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }
 
 export async function DELETE(request: NextRequest) {
-  const poNumber = request.nextUrl.searchParams.get("poNumber");
-  if (!poNumber) {
-    return NextResponse.json({ error: "poNumber required" }, { status: 400 });
-  }
+  let enforcement: InlineEnforcementHandle | undefined;
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
 
-  await clearDedupeForPoServer(poNumber);
-  return NextResponse.json({ ok: true });
+    const poNumber = request.nextUrl.searchParams.get("poNumber");
+    if (!poNumber) {
+      return NextResponse.json({ error: "poNumber required" }, { status: 400 });
+    }
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'governance_data_mutation',
+      targetEntityType: 'governance',
+      targetEntityId: poNumber || 'unknown',
+      sourceSurface: 'governance-event-dedupe-api',
+      routePath: '/api/governance/event-dedupe',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    await clearDedupeForPoServer(poNumber);
+    enforcement.complete({});
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    enforcement?.fail();
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 }

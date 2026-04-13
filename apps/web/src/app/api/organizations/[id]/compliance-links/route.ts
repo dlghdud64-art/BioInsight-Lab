@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { AuditEventType } from "@prisma/client";
 import { validateRules } from "@/lib/compliance/rules";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * GET /api/organizations/[id]/compliance-links
@@ -66,6 +67,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -73,6 +75,17 @@ export async function POST(
     }
 
     const organizationId = params.id;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'organization',
+      targetEntityId: organizationId,
+      sourceSurface: 'organization-compliance-api',
+      routePath: '/api/organizations/[id]/compliance-links',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 권한 확인: ADMIN 또는 organization의 ADMIN
     const member = await db.organizationMember.findFirst({
@@ -140,9 +153,12 @@ export async function POST(
       success: true,
     });
 
+    enforcement.complete({});
+
     return NextResponse.json(link, { status: 201 });
 
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error creating compliance link:", error);
 
     // 실패 AuditLog (session은 try 블록에서만 접근 가능하므로 생략)

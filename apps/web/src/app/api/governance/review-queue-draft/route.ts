@@ -13,6 +13,7 @@ import {
   loadReviewQueueDraftServer,
   clearReviewQueueDraftServer,
 } from "@/lib/persistence/review-queue-server";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 export async function GET() {
   const session = await auth();
@@ -25,6 +26,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -40,19 +42,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'governance_data_mutation',
+      targetEntityType: 'governance',
+      targetEntityId: session.user.id || 'unknown',
+      sourceSurface: 'review-queue-draft-api',
+      routePath: '/api/governance/review-queue-draft',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     await persistReviewQueueDraftServer(session.user.id, items);
+    enforcement.complete({});
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (error) {
+    enforcement?.fail();
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 }
 
 export async function DELETE() {
+  let enforcement: InlineEnforcementHandle | undefined;
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  await clearReviewQueueDraftServer(session.user.id);
-  return NextResponse.json({ ok: true });
+  try {
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'governance_data_mutation',
+      targetEntityType: 'governance',
+      targetEntityId: session.user.id || 'unknown',
+      sourceSurface: 'review-queue-draft-api',
+      routePath: '/api/governance/review-queue-draft',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+    await clearReviewQueueDraftServer(session.user.id);
+    enforcement.complete({});
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    enforcement?.fail();
+    return NextResponse.json({ error: "Invalid request" }, { status: 400 });
+  }
 }

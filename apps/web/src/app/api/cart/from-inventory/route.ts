@@ -1,3 +1,4 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -25,16 +26,24 @@ const reorderSchema = z.object({
 // =====================================================
 
 export async function POST(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    // 1. 인증 검증
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "인증이 필요합니다.", code: "UNAUTHORIZED" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_delete',
+      targetEntityType: 'cart',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/cart/from-inventory',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
+    // 1. 인증 검증 (session already obtained above)
     const userId = session.user.id;
 
     // 2. 요청 바디 파싱 및 검증

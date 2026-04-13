@@ -9,6 +9,7 @@ import { getProductsByIds } from "@/lib/api/products";
 import { computeMultiProductDiff } from "@/lib/compare-workspace/compare-engine";
 import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // ── GET: 비교 세션 목록 ──
 
@@ -177,9 +178,25 @@ export async function GET(request: NextRequest) {
 // ── POST: 비교 세션 생성 ──
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
-    const session = await auth();
-    const userId = session?.user?.id ?? null;
+    const authSession = await auth();
+    const userId = authSession?.user?.id ?? null;
+
+    if (!userId) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+
+    enforcement = enforceAction({
+      userId,
+      userRole: authSession?.user?.role ?? undefined,
+      action: 'compare_decision',
+      targetEntityType: 'compare_session',
+      targetEntityId: 'new',
+      sourceSurface: 'compare-sessions-api',
+      routePath: '/api/compare-sessions',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body = await request.json();
     const { productIds, organizationId } = body;
@@ -239,6 +256,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json({
       session: {
         id: compareSession.id,
@@ -254,6 +273,7 @@ export async function POST(request: NextRequest) {
       })),
     });
   } catch (error) {
+    enforcement?.fail();
     return handleApiError(error, "POST /api/compare-sessions");
   }
 }

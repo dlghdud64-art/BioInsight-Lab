@@ -4,7 +4,14 @@ import { db } from "@/lib/db";
 import { sendOrderDeliveredEmail } from "@/lib/email";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { withSerializableBudgetTx } from "@/lib/budget/budget-concurrency";
+import {
+  releasePOVoided,
+  releaseEventToAuditShape,
+  NegativeCommittedSpendError,
+  type BudgetReleaseEvent,
+} from "@/lib/budget/category-budget-release";
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -24,6 +31,7 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
 
@@ -46,7 +54,7 @@ export async function PATCH(
     const { id: orderId } = await params;
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
       action: 'order_status_change',
@@ -69,7 +77,7 @@ export async function PATCH(
       );
     }
 
-    // 주문 조회
+    // 주문 조회 (예산 release를 위해 purchaseRequest + organization 포함)
     const order = await db.order.findUnique({
       where: { id: orderId },
       include: {
@@ -81,6 +89,12 @@ export async function PATCH(
           },
         },
         items: true,
+        purchaseRequest: {
+          select: { id: true, teamId: true },
+        },
+        organization: {
+          select: { id: true, timezone: true },
+        },
       },
     });
 
@@ -105,7 +119,10 @@ export async function PATCH(
     }
 
     // 트랜잭션으로 주문 상태 변경 및 인벤토리 등록
-    const result = await db.$transaction(async (tx: any) => {
+    // CANCELLED 전환 시 SERIALIZABLE tx로 예산 release 포함
+    let budgetReleaseEvent: BudgetReleaseEvent | undefined;
+
+    const runTransaction = async (tx: any) => {
       // 1. 주문 상태 업데이트
       const updateData: {
         status: typeof newStatus;
@@ -147,7 +164,6 @@ export async function PATCH(
       }> = [];
 
       if (newStatus === "DELIVERED" && order.items.length > 0) {
-        // 각 주문 품목을 인벤토리에 등록
         const inventoryData = order.items.map((item: any) => ({
           userId: order.userId,
           orderId: order.id,
@@ -162,12 +178,10 @@ export async function PATCH(
           receivedAt: new Date(),
         }));
 
-        // 인벤토리 일괄 생성
         await tx.userInventory.createMany({
           data: inventoryData,
         });
 
-        // 생성된 인벤토리 조회
         const createdInventory = await tx.userInventory.findMany({
           where: { orderId: order.id },
           select: {
@@ -180,8 +194,24 @@ export async function PATCH(
         inventoryItems = createdInventory;
       }
 
+      // 3. CANCELLED 전환 시 예산 release — 원본 reserve 참조
+      if (newStatus === "CANCELLED" && order.organizationId && order.purchaseRequest?.id) {
+        budgetReleaseEvent = await releasePOVoided(tx, {
+          organizationId: order.organizationId,
+          orderId,
+          requestId: order.purchaseRequest.id,
+          executedBy: session.user.id,
+          reason: notes ?? "Order cancelled by admin",
+        });
+      }
+
       return { updatedOrder, inventoryItems };
-    });
+    };
+
+    // CANCELLED → SERIALIZABLE tx (예산 정합성), 그 외 → 일반 tx
+    const result = newStatus === "CANCELLED" && order.organizationId && order.purchaseRequest?.id
+      ? await withSerializableBudgetTx(db, runTransaction, { label: "order_cancel_release" })
+      : await db.$transaction(runTransaction);
 
     // 3. DELIVERED 상태 변경 시 이메일 발송 (트랜잭션 외부에서)
     if (newStatus === "DELIVERED" && order.user.email) {
@@ -223,7 +253,14 @@ export async function PATCH(
 
     enforcement.complete({
       beforeState: { status: order.status, orderId },
-      afterState: { status: newStatus, orderId, inventoryCreated: result.inventoryItems.length },
+      afterState: {
+        status: newStatus,
+        orderId,
+        inventoryCreated: result.inventoryItems.length,
+        ...(budgetReleaseEvent && {
+          budgetRelease: releaseEventToAuditShape(budgetReleaseEvent),
+        }),
+      },
     });
 
     return NextResponse.json({
@@ -247,7 +284,19 @@ export async function PATCH(
     });
 
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
+
+    if (error instanceof NegativeCommittedSpendError) {
+      console.error("[Admin Order Status] Negative committed spend:", error.message);
+      return NextResponse.json(
+        {
+          error: "예산 해제 중 정합성 오류가 발생했습니다. 관리자에게 문의하세요.",
+          detail: error.message,
+        },
+        { status: 409 },
+      );
+    }
+
     console.error("[Admin Order Status] Error:", error);
     return NextResponse.json(
       { error: "주문 상태 변경 중 오류가 발생했습니다." },

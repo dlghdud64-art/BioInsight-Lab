@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 견적 응답 업데이트 (협상용)
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; responseId: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -14,6 +16,17 @@ export async function PATCH(
     }
 
     const { id: quoteId, responseId } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_update',
+      targetEntityType: 'quote',
+      targetEntityId: quoteId,
+      sourceSurface: 'quote-response-api',
+      routePath: '/api/quotes/[id]/responses/[responseId]',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const { totalPrice, currency, message, validUntil } = body;
 
@@ -72,8 +85,11 @@ export async function PATCH(
       },
     });
 
+    enforcement.complete({});
+
     return NextResponse.json(updatedResponse);
   } catch (error: any) {
+    enforcement?.fail();
     console.error("Error updating quote response:", error);
     return NextResponse.json(
       { error: "Failed to update response" },

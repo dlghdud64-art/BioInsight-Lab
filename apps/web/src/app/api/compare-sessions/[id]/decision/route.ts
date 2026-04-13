@@ -11,7 +11,7 @@ import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
 import { transitionWorkItem, createWorkItem } from "@/lib/work-queue/work-queue-service";
 import { determineCompareSubstatus, determineResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
-import { enforceAction } from "@/lib/security/server-enforcement-middleware";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 const VALID_DECISION_STATES = ["UNDECIDED", "APPROVED", "HELD", "REJECTED"] as const;
 const TERMINAL_STATES = ["APPROVED", "HELD", "REJECTED"];
@@ -26,6 +26,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const { id } = await params;
     const session = await auth();
@@ -39,7 +40,7 @@ export async function PATCH(
     }
 
     // ── Security enforcement ──
-    const enforcement = enforceAction({
+    enforcement = enforceAction({
       userId,
       userRole: session?.user?.role ?? undefined,
       action: 'compare_decision',
@@ -221,7 +222,7 @@ export async function PATCH(
 
     return NextResponse.json({ session: updated });
   } catch (error) {
-    enforcement.fail();
+    enforcement?.fail();
     return handleApiError(error, "PATCH /api/compare-sessions/[id]/decision");
   }
 }

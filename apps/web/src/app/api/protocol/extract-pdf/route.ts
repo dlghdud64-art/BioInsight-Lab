@@ -15,6 +15,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { enforceAction, InlineEnforcementHandle } from '@/lib/security/server-enforcement-middleware';
 import { db } from '@/lib/db';
 import { robustParsePDF } from '@/lib/ai/robust-pdf-parser';
 import { parseQuoteWithAI } from '@/lib/ai/quote-ai-parser';
@@ -48,11 +49,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
   const requestId = createRequestId();
   const pipelineStart = Date.now();
   let session;
+  let enforcement: InlineEnforcementHandle | undefined;
 
   try {
     // 1. 인증 확인 (게스트도 허용 가능하도록 선택적)
     session = await auth();
     const userId = session?.user?.id || 'guest';
+
+    if (session?.user?.id) {
+      enforcement = enforceAction({
+        userId: session.user.id,
+        userRole: session.user.role ?? undefined,
+        action: 'sensitive_data_import',
+        targetEntityType: 'quote',
+        targetEntityId: 'unknown',
+        sourceSurface: 'web_app',
+        routePath: '/protocol/extract-pdf',
+      });
+      if (!enforcement.allowed) return enforcement.deny();
+    }
 
     // 2. FormData 파싱
     const formData = await request.formData();
@@ -248,6 +263,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       quoteId: quote.id,
     });
 
+    enforcement?.complete({});
+
     // 7. 성공 응답
     return NextResponse.json({
       success: true,
@@ -260,6 +277,8 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
       requestId,
     });
   } catch (error) {
+    enforcement?.fail();
+
     const errorMessage =
       error instanceof Error
         ? error.message

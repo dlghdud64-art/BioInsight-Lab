@@ -1,12 +1,28 @@
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // 리드당 과금 처리 (견적 요청 생성 시 호출)
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
-    const body = await request.json();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'organization_update',
+      targetEntityType: 'product',
+      targetEntityId: 'unknown',
+      sourceSurface: 'vendor_portal',
+      routePath: '/vendor/billing',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
+        const body = await request.json();
     const { quoteId, vendorIds } = body;
 
     if (!quoteId || !vendorIds || !Array.isArray(vendorIds)) {

@@ -3,12 +3,14 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 구매 입고 반영 완료 (inventory quantity update + restock record + purchase followup status)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -16,6 +18,17 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_receive',
+      targetEntityType: 'inventory',
+      targetEntityId: id,
+      sourceSurface: 'inventory-api',
+      routePath: '/api/inventory/[id]/receive',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
     const body = await request.json();
     const {
       purchaseId,
@@ -148,12 +161,14 @@ export async function POST(
       }
     );
 
+    enforcement.complete({});
     return NextResponse.json({
       inventory: updatedInventory,
       restock: restockRecord,
       followUpStatus: "inventory_reflected",
     });
   } catch (error) {
+    enforcement?.fail();
     console.error("[InventoryReceive/POST]", error);
     return NextResponse.json({ error: "입고 반영에 실패했습니다." }, { status: 500 });
   }

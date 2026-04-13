@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // =====================================================
 // 스키마 정의
@@ -62,6 +63,7 @@ async function generateQuoteNumber(): Promise<string> {
 // =====================================================
 
 export async function POST(req: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
     // 1. 인증 검증
     const session = await auth();
@@ -73,6 +75,18 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = session.user.id;
+
+    // ── Security enforcement ──
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_request_create',
+      targetEntityType: 'quote',
+      targetEntityId: 'from-cart',
+      sourceSurface: 'quote-from-cart-api',
+      routePath: '/api/quotes/from-cart',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     // 2. 요청 바디 파싱
     let body;
@@ -227,6 +241,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    enforcement.complete({
+      beforeState: { source: 'cart', itemCount: cart.items.length },
+      afterState: { quoteId: quote?.id, quoteNumber: quote?.quoteNumber, itemCount: quote?.items.length },
+    });
+
     return NextResponse.json({
       success: true,
       message: "견적서가 생성되었습니다.",
@@ -248,6 +267,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error) {
+    enforcement?.fail();
     console.error("[Quotes/FromCart] Error:", error);
     return NextResponse.json(
       { error: "견적서 생성 중 오류가 발생했습니다.", code: "INTERNAL_ERROR" },

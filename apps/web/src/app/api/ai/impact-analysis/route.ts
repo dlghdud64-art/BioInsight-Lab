@@ -11,6 +11,8 @@
  * canonical truth는 mutate하지 않는다 — 본 route는 read-only.
  */
 
+import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import {
   simulateOrderImpact,
@@ -110,7 +112,23 @@ function formatKRW(value: number): string {
 // ── Route Handler ─────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  let enforcement: InlineEnforcementHandle | undefined;
   try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
+    }
+    enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'sensitive_data_import',
+      targetEntityType: 'ai_action',
+      targetEntityId: 'unknown',
+      sourceSurface: 'web_app',
+      routePath: '/ai/impact-analysis',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body: ImpactAnalysisInput = await request.json();
 
     if (!body.orderId || !body.itemName || body.orderAmount == null) {
