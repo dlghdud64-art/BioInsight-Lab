@@ -410,7 +410,7 @@ function SettingsPageContent() {
   // ══════════════════════════════════════════════
 
   return (
-    <div className="w-full min-h-screen" style={{ backgroundColor: "#0a0f1a" }}>
+    <div className="w-full min-h-screen bg-[#F8FAFC]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
         {/* ═══ Page Header ═══ */}
         <div className="mb-6">
@@ -420,12 +420,12 @@ function SettingsPageContent() {
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-100">시스템 및 워크스페이스 설정</h1>
-              <p className="text-sm text-slate-400 mt-0.5">운영자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
+              <h1 className="text-xl font-bold text-slate-900">시스템 및 워크스페이스 설정</h1>
+              <p className="text-sm text-slate-500 mt-0.5">운영자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
             </div>
             <div className="flex items-center gap-2">
               {isDirty && (
-                <Button variant="ghost" size="sm" onClick={handleRevert} className="text-xs text-slate-400 hover:text-slate-200 h-8">
+                <Button variant="ghost" size="sm" onClick={handleRevert} className="text-xs text-slate-500 hover:text-slate-700 h-8">
                   <RotateCcw className="h-3 w-3 mr-1" />
                   변경사항 취소
                 </Button>
@@ -465,16 +465,16 @@ function SettingsPageContent() {
                         className={cn(
                           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                           isActive
-                            ? "bg-blue-600/10 border border-blue-600/20 text-slate-100"
-                            : "text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent"
+                            ? "bg-blue-50 border border-blue-200 text-slate-900"
+                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-transparent"
                         )}
                       >
-                        <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-400" : "text-slate-500")} />
+                        <Icon className={cn("h-4 w-4 shrink-0", isActive ? "text-blue-600" : "text-slate-400")} />
                         <div className="flex-1 min-w-0">
                           <div className="text-sm font-medium leading-tight">{item.label}</div>
                           <div className="text-[10px] text-slate-500 leading-tight mt-0.5">{item.sublabel}</div>
                         </div>
-                        {isActive && <ChevronRight className="h-3 w-3 text-blue-400 shrink-0" />}
+                        {isActive && <ChevronRight className="h-3 w-3 text-blue-600 shrink-0" />}
                       </button>
                     );
                   })}
@@ -494,10 +494,10 @@ function SettingsPageContent() {
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
                     <div className="flex flex-col items-center gap-3">
-                      <div className="h-20 w-20 rounded-2xl bg-blue-600/15 border border-blue-600/20 flex items-center justify-center text-2xl font-bold text-blue-400">
+                      <div className="h-20 w-20 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center text-2xl font-bold text-blue-600">
                         {getInitials()}
                       </div>
-                      <Button variant="ghost" size="sm" className="text-[10px] text-slate-400 hover:text-slate-200 h-7 px-2">
+                      <Button variant="ghost" size="sm" className="text-[10px] text-slate-400 hover:text-slate-800 h-7 px-2">
                         <Upload className="h-3 w-3 mr-1" />
                         식별자 이미지 변경
                       </Button>
@@ -508,23 +508,23 @@ function SettingsPageContent() {
                     <div className="space-y-4">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FieldBlock label="운영자 성명">
-                          <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                          <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                         </FieldBlock>
                         <FieldBlock label="직책 / 역할">
-                          <Input value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                          <Input value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                         </FieldBlock>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FieldBlock label="연락처">
-                          <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="010-0000-0000" className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                          <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="010-0000-0000" className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                         </FieldBlock>
                         <FieldBlock label="이메일 (통합 인증)">
-                          <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-300 h-9 text-sm" />
+                          <Input value={profileEmail} onChange={(e) => setProfileEmail(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                         </FieldBlock>
                       </div>
                       <div className="flex items-center gap-2 pt-1">
-                        <Badge className="bg-blue-600/15 text-blue-400 border-blue-600/20 text-[10px] font-medium">{roleLabel}</Badge>
-                        <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[10px] font-medium">접근 등급 3</Badge>
+                        <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] font-medium">{roleLabel}</Badge>
+                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] font-medium">접근 등급 3</Badge>
                       </div>
                     </div>
                   </div>
@@ -534,11 +534,11 @@ function SettingsPageContent() {
                 <SectionCard title="워크스페이스 환경" icon={Building2}>
                   <div className="space-y-4">
                     <FieldBlock label="워크스페이스 명칭">
-                      <Input value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm" />
+                      <Input value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
                     </FieldBlock>
                     <FieldBlock label="기본 통화 및 단위">
                       <Select value={currencyUnit} onValueChange={setCurrencyUnit}>
-                        <SelectTrigger className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm">
+                        <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-9 text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -556,28 +556,28 @@ function SettingsPageContent() {
                 <SectionCard title="보안 자격 증명" icon={Lock}>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-slate-300">비밀번호</p>
+                      <p className="text-sm text-slate-700">비밀번호</p>
                       <p className="text-xs text-slate-500">마지막 변경: 알 수 없음</p>
                     </div>
                     <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-                      <Button variant="ghost" size="sm" className="text-xs text-blue-400 hover:text-blue-300 h-8 px-3 border border-blue-600/20" onClick={() => setIsPasswordDialogOpen(true)}>
+                      <Button variant="ghost" size="sm" className="text-xs text-blue-600 hover:text-blue-700 h-8 px-3 border border-blue-200" onClick={() => setIsPasswordDialogOpen(true)}>
                         <Lock className="h-3 w-3 mr-1" />
                         비밀번호 변경
                       </Button>
-                      <DialogContent className="bg-slate-900 border-slate-700">
+                      <DialogContent className="bg-white border-slate-200">
                         <DialogHeader>
-                          <DialogTitle className="text-slate-100">비밀번호 변경</DialogTitle>
+                          <DialogTitle className="text-slate-900">비밀번호 변경</DialogTitle>
                           <DialogDescription className="text-slate-400">새 비밀번호를 입력하세요.</DialogDescription>
                         </DialogHeader>
                         <form onSubmit={handlePasswordChange} className="space-y-4 pt-2">
                           <FieldBlock label="현재 비밀번호">
-                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
                           </FieldBlock>
                           <FieldBlock label="새 비밀번호">
-                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
                           </FieldBlock>
                           <FieldBlock label="새 비밀번호 확인">
-                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="bg-slate-800 border-slate-700 text-slate-200" />
+                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
                           </FieldBlock>
                           <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={!newPassword || newPassword !== confirmPassword || !currentPassword}>
                             변경 확인
@@ -602,7 +602,7 @@ function SettingsPageContent() {
                       onChange={setConfidenceThreshold}
                       min={50} max={100} unit="%"
                     />
-                    <div className="h-px bg-slate-700/40" />
+                    <div className="h-px bg-slate-200" />
                     <SliderField
                       label="이상 탐지 민감도 (Anomaly Detection Sensitivity)"
                       description="단가 급등, 비정상 발주량 등을 탐지하는 민감도. 높을수록 경고가 많아집니다."
@@ -610,7 +610,7 @@ function SettingsPageContent() {
                       onChange={setAnomalyDetectionSensitivity}
                       min={0} max={100} unit="%"
                     />
-                    <div className="h-px bg-slate-700/40" />
+                    <div className="h-px bg-slate-200" />
                     <SliderField
                       label="가격 변동 알림 임계값"
                       description="공급사 단가가 이 비율 이상 변동하면 알림을 발생시킵니다."
@@ -625,7 +625,7 @@ function SettingsPageContent() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm font-medium text-slate-200">AI 기반 자동 승인</p>
+                        <p className="text-sm font-medium text-slate-800">AI 기반 자동 승인</p>
                         <p className="text-xs text-slate-500 mt-0.5">신뢰도 임계값을 충족하고 금액 한도 내인 발주를 자동 승인합니다.</p>
                       </div>
                       <Switch checked={autoApprovalEnabled} onCheckedChange={setAutoApprovalEnabled} />
@@ -637,7 +637,7 @@ function SettingsPageContent() {
                             type="text"
                             value={Number(autoApprovalLimit).toLocaleString("ko-KR")}
                             onChange={(e) => setAutoApprovalLimit(e.target.value.replace(/[^0-9]/g, ""))}
-                            className="bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm w-48"
+                            className="bg-white border-slate-200 text-slate-900 h-9 text-sm w-48"
                           />
                           <span className="text-xs text-slate-500">원 이하</span>
                         </div>
@@ -654,9 +654,9 @@ function SettingsPageContent() {
                 <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다.">
                   <div className="space-y-4">
                     <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
-                    <div className="h-px bg-slate-700/40" />
+                    <div className="h-px bg-slate-200" />
                     <ApprovalTierRow tier={2} label="팀장 승인" description="이 금액 이하는 팀장 승인" value={approvalTier2} onChange={setApprovalTier2} color="blue" />
-                    <div className="h-px bg-slate-700/40" />
+                    <div className="h-px bg-slate-200" />
                     <ApprovalTierRow tier={3} label="CFO 승인" description="이 금액 초과 시 CFO 승인 필요" value={approvalTier3} onChange={setApprovalTier3} color="amber" />
                   </div>
                 </SectionCard>
@@ -664,20 +664,20 @@ function SettingsPageContent() {
                 <SectionCard title="역할 기반 접근 제어" icon={Users}>
                   <div className="space-y-3">
                     {[
-                      { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-400" },
-                      { role: "연구실 관리자", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-400" },
-                      { role: "구매 담당", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-400" },
+                      { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-600" },
+                      { role: "연구실 관리자", permissions: "발주 / 재고 / 예산 관리", count: 3, color: "text-blue-600" },
+                      { role: "구매 담당", permissions: "견적 / PO / 공급사 관리", count: 2, color: "text-emerald-600" },
                       { role: "열람자", permissions: "읽기 전용 / 리포트 열람", count: 5, color: "text-slate-400" },
                     ].map((r) => (
-                      <div key={r.role} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                      <div key={r.role} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-50 border border-slate-200">
                         <div className="flex items-center gap-3">
                           <Shield className={cn("h-4 w-4", r.color)} />
                           <div>
-                            <p className="text-sm font-medium text-slate-200">{r.role}</p>
+                            <p className="text-sm font-medium text-slate-800">{r.role}</p>
                             <p className="text-[10px] text-slate-500">{r.permissions}</p>
                           </div>
                         </div>
-                        <Badge className="bg-slate-700/50 text-slate-300 border-slate-600/30 text-[10px]">{r.count}명</Badge>
+                        <Badge className="bg-slate-100 text-slate-600 border-slate-200 text-[10px]">{r.count}명</Badge>
                       </div>
                     ))}
                   </div>
@@ -696,17 +696,17 @@ function SettingsPageContent() {
                       { name: "Sigma-Aldrich Webhook", type: "공급사 주문 확인", status: "pending", lastSync: "설정 대기", icon: Webhook },
                       { name: "Oracle NetSuite", type: "회계 연동", status: "disconnected", lastSync: "미연결", icon: Link2 },
                     ].map((sys) => (
-                      <div key={sys.name} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                      <div key={sys.name} className="flex items-center justify-between py-3 px-4 rounded-lg bg-slate-50 border border-slate-200">
                         <div className="flex items-center gap-3">
                           <div className={cn("h-9 w-9 rounded-lg flex items-center justify-center",
-                            sys.status === "connected" ? "bg-emerald-600/10" : sys.status === "pending" ? "bg-amber-600/10" : "bg-slate-700/30"
+                            sys.status === "connected" ? "bg-emerald-50" : sys.status === "pending" ? "bg-amber-50" : "bg-slate-100"
                           )}>
                             <sys.icon className={cn("h-4 w-4",
-                              sys.status === "connected" ? "text-emerald-400" : sys.status === "pending" ? "text-amber-400" : "text-slate-500"
+                              sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-amber-600" : "text-slate-500"
                             )} />
                           </div>
                           <div>
-                            <p className="text-sm font-medium text-slate-200">{sys.name}</p>
+                            <p className="text-sm font-medium text-slate-800">{sys.name}</p>
                             <p className="text-[10px] text-slate-500">{sys.type}</p>
                           </div>
                         </div>
@@ -714,17 +714,17 @@ function SettingsPageContent() {
                           <div className="text-right">
                             <div className="flex items-center gap-1.5">
                               <div className={cn("h-1.5 w-1.5 rounded-full",
-                                sys.status === "connected" ? "bg-emerald-400" : sys.status === "pending" ? "bg-amber-400 animate-pulse" : "bg-slate-500"
+                                sys.status === "connected" ? "bg-emerald-500" : sys.status === "pending" ? "bg-amber-500 animate-pulse" : "bg-slate-400"
                               )} />
                               <span className={cn("text-[10px] font-medium",
-                                sys.status === "connected" ? "text-emerald-400" : sys.status === "pending" ? "text-amber-400" : "text-slate-500"
+                                sys.status === "connected" ? "text-emerald-600" : sys.status === "pending" ? "text-amber-600" : "text-slate-500"
                               )}>
                                 {sys.status === "connected" ? "연결됨" : sys.status === "pending" ? "대기 중" : "미연결"}
                               </span>
                             </div>
                             <span className="text-[9px] text-slate-500">{sys.lastSync}</span>
                           </div>
-                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-slate-400 hover:text-slate-200 border border-slate-700/40">
+                          <Button variant="ghost" size="sm" className="h-7 px-2 text-[10px] text-slate-400 hover:text-slate-800 border border-slate-200">
                             {sys.status === "disconnected" ? "연결" : "설정"}
                           </Button>
                         </div>
@@ -741,7 +741,7 @@ function SettingsPageContent() {
                 <SectionCard title="전역 알림 빈도" icon={Bell}>
                   <div className="flex items-center gap-4">
                     <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
-                      <SelectTrigger className="w-48 bg-slate-800/50 border-slate-700 text-slate-200 h-9 text-sm">
+                      <SelectTrigger className="w-48 bg-white border-slate-200 text-slate-900 h-9 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -759,11 +759,11 @@ function SettingsPageContent() {
                       {group.items.map((n) => {
                         const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
                         return (
-                          <div key={n.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-800/30 transition-colors">
+                          <div key={n.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg hover:bg-slate-50 transition-colors">
                             <div className="flex-1 min-w-0 mr-4">
                               <div className="flex items-center gap-2">
-                                <p className="text-sm font-medium text-slate-200">{n.label}</p>
-                                {isSafety && <Badge className="bg-red-600/15 text-red-400 border-red-600/20 text-[9px] py-0">즉시</Badge>}
+                                <p className="text-sm font-medium text-slate-800">{n.label}</p>
+                                {isSafety && <Badge className="bg-red-50 text-red-600 border-red-200 text-[9px] py-0">즉시</Badge>}
                               </div>
                               <p className="text-[10px] text-slate-500 mt-0.5">{n.description}</p>
                             </div>
@@ -793,17 +793,17 @@ function SettingsPageContent() {
                   <div className="flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-slate-100">Business</span>
-                        <Badge className="bg-blue-600/15 text-blue-400 border-blue-600/20 text-[10px]">활성</Badge>
+                        <span className="text-lg font-bold text-slate-900">Business</span>
+                        <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px]">활성</Badge>
                       </div>
                       <p className="text-sm text-slate-400 mt-0.5">₩149,000 / 월</p>
                       <p className="text-[10px] text-slate-500 mt-1">다음 갱신: 2026-05-01</p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3 border border-slate-700/40">
+                      <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-800 h-8 px-3 border border-slate-200">
                         플랜 변경
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-xs text-red-400 hover:text-red-300 h-8 px-3" onClick={() => setIsCancelOpen(true)}>
+                      <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 h-8 px-3" onClick={() => setIsCancelOpen(true)}>
                         구독 해지
                       </Button>
                     </div>
@@ -813,17 +813,17 @@ function SettingsPageContent() {
                 <SectionCard title="청구서" icon={Receipt}>
                   <div className="space-y-2">
                     {DEMO_INVOICES.map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-800/30 border border-slate-700/30">
+                      <div key={inv.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-50 border border-slate-200">
                         <div className="flex items-center gap-3">
                           <FileText className="h-4 w-4 text-slate-500" />
                           <div>
-                            <p className="text-sm text-slate-200">{inv.description}</p>
+                            <p className="text-sm text-slate-800">{inv.description}</p>
                             <p className="text-[10px] text-slate-500">{inv.date}</p>
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-slate-200">₩{inv.amount.toLocaleString()}</span>
-                          <Badge className="bg-emerald-600/15 text-emerald-400 border-emerald-600/20 text-[9px]">완료</Badge>
+                          <span className="text-sm font-medium text-slate-800">₩{inv.amount.toLocaleString()}</span>
+                          <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[9px]">완료</Badge>
                         </div>
                       </div>
                     ))}
@@ -838,9 +838,9 @@ function SettingsPageContent() {
 
       {/* Cancel dialog */}
       <Dialog open={isCancelOpen} onOpenChange={(o) => { if (!o) resetCancelFlow(); else setIsCancelOpen(true); }}>
-        <DialogContent className="bg-slate-900 border-slate-700 max-w-md">
+        <DialogContent className="bg-white border-slate-200 max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-slate-100">구독 해지</DialogTitle>
+            <DialogTitle className="text-slate-900">구독 해지</DialogTitle>
             <DialogDescription className="text-slate-400">해지 사유를 알려주시면 서비스 개선에 반영하겠습니다.</DialogDescription>
           </DialogHeader>
           {cancelStep === 1 && (
@@ -852,8 +852,8 @@ function SettingsPageContent() {
                   className={cn(
                     "w-full text-left px-4 py-3 rounded-lg border transition-colors text-sm",
                     cancelReason === r.value
-                      ? "border-red-600/30 bg-red-950/20 text-red-300"
-                      : "border-slate-700/40 text-slate-300 hover:bg-slate-800/50"
+                      ? "border-red-200 bg-red-50 text-red-700"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-100"
                   )}
                 >
                   {r.label}
@@ -863,14 +863,14 @@ function SettingsPageContent() {
           )}
           {cancelStep === 2 && cancelReason && (
             <div className="space-y-4 pt-2">
-              <div className="rounded-lg bg-amber-950/20 border border-amber-800/30 p-4">
-                <p className="text-sm font-medium text-amber-300">{getSaveOffer(cancelReason).title}</p>
-                <p className="text-xs text-amber-400/70 mt-1">{getSaveOffer(cancelReason).description}</p>
+              <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                <p className="text-sm font-medium text-amber-700">{getSaveOffer(cancelReason).title}</p>
+                <p className="text-xs text-amber-600 mt-1">{getSaveOffer(cancelReason).description}</p>
                 <Button size="sm" className="mt-3 h-8 bg-amber-600 hover:bg-amber-500 text-white text-xs" onClick={resetCancelFlow}>
                   {getSaveOffer(cancelReason).cta}
                 </Button>
               </div>
-              <Button variant="ghost" size="sm" className="w-full text-xs text-red-400 hover:text-red-300" onClick={() => {
+              <Button variant="ghost" size="sm" className="w-full text-xs text-red-600 hover:text-red-700" onClick={() => {
                 toast({ title: "구독 해지 요청이 접수되었습니다", description: "현재 결제 기간이 끝나면 해지됩니다." });
                 resetCancelFlow();
               }}>
@@ -895,11 +895,11 @@ function SectionCard({ title, icon: Icon, description, children }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-slate-700/40 overflow-hidden" style={{ backgroundColor: "rgba(15,23,42,0.6)" }}>
-      <div className="px-5 py-4 border-b border-slate-700/30">
+    <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="px-5 py-4 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-slate-400" />
-          <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+          <Icon className="h-4 w-4 text-slate-500" />
+          <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
         </div>
         {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
       </div>
@@ -911,7 +911,7 @@ function SectionCard({ title, icon: Icon, description, children }: {
 function FieldBlock({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-slate-400">{label}</Label>
+      <Label className="text-xs font-medium text-slate-600">{label}</Label>
       {children}
     </div>
   );
@@ -930,11 +930,11 @@ function SliderField({ label, description, value, onChange, min, max, unit }: {
     <div>
       <div className="flex items-center justify-between mb-2">
         <div>
-          <p className="text-sm font-medium text-slate-200">{label}</p>
+          <p className="text-sm font-medium text-slate-800">{label}</p>
           <p className="text-[10px] text-slate-500 mt-0.5">{description}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 ml-4">
-          <span className="text-lg font-bold text-blue-400 tabular-nums">{value}</span>
+          <span className="text-lg font-bold text-blue-600 tabular-nums">{value}</span>
           <span className="text-xs text-slate-500">{unit}</span>
         </div>
       </div>
@@ -944,7 +944,7 @@ function SliderField({ label, description, value, onChange, min, max, unit }: {
         max={max}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full h-1.5 bg-slate-700 rounded-full appearance-none cursor-pointer accent-blue-600"
+        className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-blue-600"
         style={{ accentColor: "#2563eb" }}
       />
       <div className="flex justify-between mt-1">
@@ -964,9 +964,9 @@ function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
   color: "emerald" | "blue" | "amber";
 }) {
   const colorMap = {
-    emerald: { bg: "bg-emerald-600/10", text: "text-emerald-400", border: "border-emerald-600/20" },
-    blue: { bg: "bg-blue-600/10", text: "text-blue-400", border: "border-blue-600/20" },
-    amber: { bg: "bg-amber-600/10", text: "text-amber-400", border: "border-amber-600/20" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
+    blue: { bg: "bg-blue-50", text: "text-blue-600", border: "border-blue-200" },
+    amber: { bg: "bg-amber-50", text: "text-amber-600", border: "border-amber-200" },
   };
   const c = colorMap[color];
 
@@ -976,7 +976,7 @@ function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
         T{tier}
       </div>
       <div className="flex-1">
-        <p className="text-sm font-medium text-slate-200">{label}</p>
+        <p className="text-sm font-medium text-slate-800">{label}</p>
         <p className="text-[10px] text-slate-500">{description}</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
@@ -985,7 +985,7 @@ function ApprovalTierRow({ tier, label, description, value, onChange, color }: {
           type="text"
           value={Number(value).toLocaleString("ko-KR")}
           onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
-          className="bg-slate-800/50 border-slate-700 text-slate-200 h-8 text-sm w-36 text-right"
+          className="bg-white border-slate-200 text-slate-800 h-8 text-sm w-36 text-right"
         />
       </div>
     </div>
