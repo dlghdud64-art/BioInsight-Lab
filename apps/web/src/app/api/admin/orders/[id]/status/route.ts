@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { sendOrderDeliveredEmail } from "@/lib/email";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -43,6 +44,19 @@ export async function PATCH(
     }
 
     const { id: orderId } = await params;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_status_change',
+      targetEntityType: 'order',
+      targetEntityId: orderId,
+      sourceSurface: 'admin-order-status-api',
+      routePath: '/api/admin/orders/[id]/status',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await req.json();
     const { status: newStatus, notes } = body;
 
@@ -207,6 +221,11 @@ export async function PATCH(
       userAgent,
     });
 
+    enforcement.complete({
+      beforeState: { status: order.status, orderId },
+      afterState: { status: newStatus, orderId, inventoryCreated: result.inventoryItems.length },
+    });
+
     return NextResponse.json({
       success: true,
       message: newStatus === "DELIVERED"
@@ -228,6 +247,7 @@ export async function PATCH(
     });
 
   } catch (error) {
+    enforcement.fail();
     console.error("[Admin Order Status] Error:", error);
     return NextResponse.json(
       { error: "주문 상태 변경 중 오류가 발생했습니다." },

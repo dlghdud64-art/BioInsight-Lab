@@ -5,12 +5,18 @@ import { Prisma, TeamRole } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { transitionWorkItem } from "@/lib/work-queue";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * POST /api/ai-actions/[id]/approve — 승인 → 도메인 액션 실행
  *
  * Human-in-the-Loop: 사용자가 AI 초안을 검토한 뒤 승인하면
  * 기존 비즈니스 로직(견적 생성, 이메일 발송 등)을 실행합니다.
+ *
+ * Security: enforceAction (ai_action_approve)
+ * - server-authoritative role check
+ * - concurrency lock (동일 item 중복 승인 차단)
+ * - audit envelope 기록
  *
  * RBAC:
  *   - FOLLOWUP_DRAFT / STATUS_CHANGE_SUGGEST: APPROVER 이상만 승인 가능
@@ -20,17 +26,33 @@ export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+  // ── Security enforcement ──
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
+  const enforcement = enforceAction({
+    userId: session.user.id,
+    userRole: session.user.role ?? undefined,
+    action: 'ai_action_approve',
+    targetEntityType: 'ai_action',
+    targetEntityId: params.id,
+    sourceSurface: 'ai-action-approve-api',
+    routePath: '/api/ai-actions/[id]/approve',
+  });
+
+  if (!enforcement.allowed) {
+    return enforcement.deny();
+  }
+
+  try {
     const item = await db.aiActionItem.findUnique({
       where: { id: params.id },
     });
 
     if (!item) {
+      enforcement.fail();
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
@@ -298,6 +320,11 @@ export async function POST(
         userAgent,
       });
 
+      enforcement.complete({
+        beforeState: { status: 'PENDING', itemId: params.id, type: item.type },
+        afterState: { status: 'APPROVED', itemId: params.id, result },
+      });
+
       return NextResponse.json({ item: updated, result });
     } catch (execError) {
       // 실행 실패: FAILED로 전환 (Legacy + 3-Layer 동기화)
@@ -338,6 +365,7 @@ export async function POST(
       );
     }
   } catch (error) {
+    enforcement.fail();
     console.error("Error approving AI action:", error);
     return NextResponse.json(
       { error: "Failed to approve AI action" },

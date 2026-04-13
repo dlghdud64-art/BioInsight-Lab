@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { PurchaseRequestStatus, TeamRole, OrderStatus } from "@prisma/client";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
  * 승인 시 Order로 변환
+ *
+ * Security: enforceAction (purchase_request_approve)
+ * - server-authoritative role check
+ * - self-approval 차단
+ * - concurrency lock
+ * - audit envelope 기록
  */
 export async function POST(
   request: NextRequest,
@@ -19,6 +26,21 @@ export async function POST(
 
     const { id: requestId } = await params;
 
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'purchase_request_approve',
+      targetEntityType: 'approval',
+      targetEntityId: requestId,
+      sourceSurface: 'request-approval-api',
+      routePath: '/api/request/[id]/approve',
+    });
+
+    if (!enforcement.allowed) {
+      return enforcement.deny();
+    }
+
     // 구매 요청 조회
     const purchaseRequest = await db.purchaseRequest.findUnique({
       where: { id: requestId },
@@ -30,6 +52,7 @@ export async function POST(
     });
 
     if (!purchaseRequest) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Purchase request not found" },
         { status: 404 }
@@ -37,6 +60,7 @@ export async function POST(
     }
 
     if (purchaseRequest.status !== PurchaseRequestStatus.PENDING) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Purchase request is not pending" },
         { status: 400 }
@@ -53,7 +77,8 @@ export async function POST(
       },
     });
 
-    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.ADMIN)) {
+    if (!teamMember || (teamMember.role !== TeamRole.ADMIN && teamMember.role !== TeamRole.OWNER)) {
+      enforcement.fail();
       return NextResponse.json(
         { error: "Forbidden: Only OWNER or ADMIN can approve requests" },
         { status: 403 }
@@ -126,8 +151,15 @@ export async function POST(
       return { purchaseRequest: approvedRequest, order };
     });
 
+    // ── Enforcement: 성공 시 audit 기록 ──
+    enforcement.complete({
+      beforeState: { status: 'PENDING', requestId },
+      afterState: { status: 'APPROVED', requestId, orderId: result.order?.id },
+    });
+
     return NextResponse.json(result);
   } catch (error) {
+    enforcement.fail();
     console.error("Error approving purchase request:", error);
     return NextResponse.json(
       { error: "Failed to approve purchase request" },

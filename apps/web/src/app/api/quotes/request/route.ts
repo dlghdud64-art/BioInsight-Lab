@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { sendEmail } from "@/lib/email/sender";
 import { generateVendorQuoteRequestEmail } from "@/lib/email/vendor-request-templates";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 // ---------------------------------------------------------------------------
 // Zod 스키마
@@ -181,6 +182,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { items, commonRequest, vendorMessages = {}, organizationId: clientOrganizationId, expiresInDays } = parsed.data;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'quote_request_submit',
+      targetEntityType: 'quote',
+      targetEntityId: `bulk_${Date.now()}`, // bulk이므로 고유 ID 생성
+      sourceSurface: 'quote-request-api',
+      routePath: '/api/quotes/request',
+    });
+
+    if (!enforcement.allowed) {
+      return enforcement.deny();
+    }
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 
@@ -410,7 +426,13 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    // 8. 응답 조합
+    // 8. Enforcement audit
+    enforcement.complete({
+      beforeState: { action: 'quote_request_submit', vendorCount: createdRecords.length },
+      afterState: { status: 'created', totalItems: items.length },
+    });
+
+    // 9. 응답 조합
     return NextResponse.json(
       {
         message: `${createdRecords.length}개 벤더에 대한 견적 요청이 생성되었습니다.`,
@@ -441,6 +463,7 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error: any) {
+    enforcement.fail();
     console.error("Quote Request DB Error Details:", error);
     console.error("[quotes/request] Error:", {
       message: error?.message,

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrganizationRole } from "@prisma/client";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 // 조직 멤버 조회 API
 export async function GET(
@@ -55,6 +56,18 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
     const { memberId, role } = body;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'member_role_change',
+      targetEntityType: 'organization',
+      targetEntityId: memberId || id,
+      sourceSurface: 'org-members-api',
+      routePath: '/api/organizations/[id]/members',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     if (!memberId || !role) {
       return NextResponse.json(
@@ -129,8 +142,14 @@ export async function PATCH(
       },
     });
 
+    enforcement.complete({
+      beforeState: { memberId, previousRole: targetMember.role },
+      afterState: { memberId, newRole: role },
+    });
+
     return NextResponse.json({ member: updatedMember });
   } catch (error: any) {
+    enforcement.fail();
     console.error("Error updating member role:", error);
     return NextResponse.json(
       { error: "Failed to update member role" },

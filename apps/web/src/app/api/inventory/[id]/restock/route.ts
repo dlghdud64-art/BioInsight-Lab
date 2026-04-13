@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 // 입고 이력 조회
 export async function GET(
@@ -70,6 +71,19 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_restock',
+      targetEntityType: 'inventory',
+      targetEntityId: id,
+      sourceSurface: 'inventory-restock-api',
+      routePath: '/api/inventory/[id]/restock',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { quantity, lotNumber, expiryDate, notes, purchaseId } = body;
 
@@ -177,8 +191,14 @@ export async function POST(
       }
     );
 
+    enforcement.complete({
+      beforeState: { currentQuantity: quantityBefore },
+      afterState: { currentQuantity: updatedInventory.currentQuantity, restockId: restockRecord.id },
+    });
+
     return NextResponse.json({ inventory: updatedInventory, restock: restockRecord });
   } catch (error) {
+    enforcement.fail();
     console.error("[InventoryRestock/POST]", error);
     return NextResponse.json({ error: "입고 처리에 실패했습니다." }, { status: 500 });
   }

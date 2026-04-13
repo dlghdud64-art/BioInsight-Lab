@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, AuditAction, AuditEntityType } from "@/lib/audit";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 const UseInventorySchema = z.object({
   quantity: z.number().positive("수량은 0보다 커야 합니다."),
@@ -33,6 +34,18 @@ export async function POST(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_use',
+      targetEntityType: 'inventory',
+      targetEntityId: id,
+      sourceSurface: 'inventory-use-api',
+      routePath: '/api/inventory/[id]/use',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const inventory = await db.productInventory.findUnique({
       where: { id },
@@ -131,6 +144,11 @@ export async function POST(
       }
     );
 
+    enforcement.complete({
+      beforeState: { currentQuantity: quantityBefore },
+      afterState: { currentQuantity: updatedInventory.currentQuantity, usageRecordId: usageRecord.id },
+    });
+
     return NextResponse.json({
       success: true,
       type,
@@ -139,6 +157,7 @@ export async function POST(
       warning: willBeNegative ? "재고가 0 이하가 되었습니다. 재고를 보충해주세요." : null,
     });
   } catch (error) {
+    enforcement.fail();
     console.error("[inventory/use POST]", error);
     return NextResponse.json({ error: "처리에 실패했습니다." }, { status: 500 });
   }

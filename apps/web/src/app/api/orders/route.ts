@@ -6,6 +6,7 @@ import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -28,6 +29,12 @@ function generateOrderNumber(): string {
  * 4. 예산 차감
  * 5. 견적 상태 변경 (PURCHASED)
  */
+/**
+ * Security: enforceAction (order_create)
+ * - server-authoritative role check (buyer/approver/ops_admin)
+ * - concurrency lock (동일 견적 중복 주문 차단)
+ * - audit envelope 기록
+ */
 export async function POST(request: NextRequest) {
   try {
     const session = await auth();
@@ -43,6 +50,21 @@ export async function POST(request: NextRequest) {
         { error: "quoteId is required" },
         { status: 400 }
       );
+    }
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'order_create',
+      targetEntityType: 'order',
+      targetEntityId: quoteId, // 견적 기반 주문이므로 quoteId를 entity로 사용
+      sourceSurface: 'order-create-api',
+      routePath: '/api/orders',
+    });
+
+    if (!enforcement.allowed) {
+      return enforcement.deny();
     }
 
     // 권한 체크: MEMBER는 직접 주문 불가, 구매 요청만 가능
@@ -266,6 +288,11 @@ export async function POST(request: NextRequest) {
       userAgent: ua2,
     });
 
+    enforcement.complete({
+      beforeState: { quoteId, status: 'COMPLETED' },
+      afterState: { orderId: result.order.id, orderNumber: result.order.orderNumber, status: 'ORDERED' },
+    });
+
     return NextResponse.json({
       success: true,
       message: "주문이 성공적으로 생성되었습니다.",
@@ -273,6 +300,7 @@ export async function POST(request: NextRequest) {
       budget: result.budget,
     });
   } catch (error: any) {
+    enforcement.fail();
     console.error("Error creating order:", error);
 
     // 에러 메시지 매핑

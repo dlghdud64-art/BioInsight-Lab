@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { fileCache } from "@/lib/cache/file-cache";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 const logger = createLogger("inventory/import/commit");
 
@@ -145,6 +146,18 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'inventory_import',
+      targetEntityType: 'inventory',
+      targetEntityId: `import_${Date.now()}`,
+      sourceSurface: 'inventory-import-api',
+      routePath: '/api/inventory/import/commit',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
 
     const body: CommitRequest = await request.json();
     const { fileId, columnMapping, excludedRows = [], editedRows = {} } = body;
@@ -340,11 +353,17 @@ export async function POST(request: NextRequest) {
       `Import job ${importJob.id} completed: ${result.successRows} success, ${result.errorRows} errors`
     );
 
+    enforcement.complete({
+      beforeState: { fileId },
+      afterState: { totalRows: result.totalRows, successRows: result.successRows, errorRows: result.errorRows },
+    });
+
     return NextResponse.json({
       ...result,
       records: successRecords.slice(0, 10), // Return first 10 records as sample
     });
   } catch (error) {
+    enforcement.fail();
     return handleApiError(error, "inventory/import/commit");
   }
 }

@@ -6,6 +6,7 @@ import { assertTransitionAllowed } from "@/lib/operations/state-machine";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
 import { onReceivingCompleted, onInventoryChanged } from "@/lib/operations/automation";
 import type { ReceivingStatus } from "@/lib/operations/state-definitions";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 const VALID_STATUSES: ReceivingStatus[] = ["PENDING", "PARTIAL", "COMPLETED", "ISSUE"];
 
@@ -26,6 +27,19 @@ export async function PATCH(
     }
 
     const { id } = await params;
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId: session.user.id,
+      userRole: session.user.role ?? undefined,
+      action: 'receiving_status_change',
+      targetEntityType: 'receiving',
+      targetEntityId: id,
+      sourceSurface: 'receiving-status-api',
+      routePath: '/api/receiving/[id]/status',
+    });
+    if (!enforcement.allowed) return enforcement.deny();
+
     const body = await request.json();
     const { status, receivedQuantity, lotNumber, expiryDate, issueNote } = body;
 
@@ -118,12 +132,18 @@ export async function PATCH(
       }
     }
 
+    enforcement.complete({
+      beforeState: { receivingStatus: currentStatus },
+      afterState: { receivingStatus: status },
+    });
+
     return NextResponse.json({
       success: true,
       restock: updated,
       message: `입고 상태가 "${status}"(으)로 변경되었습니다.`,
     });
   } catch (error) {
+    enforcement.fail();
     console.error("[Receiving/PATCH]", error);
     return NextResponse.json(
       { error: "입고 상태 변경에 실패했습니다." },

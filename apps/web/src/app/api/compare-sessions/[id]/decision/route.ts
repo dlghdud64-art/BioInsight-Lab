@@ -11,10 +11,17 @@ import { createActivityLog } from "@/lib/activity-log";
 import { handleApiError } from "@/lib/api-error-handler";
 import { transitionWorkItem, createWorkItem } from "@/lib/work-queue/work-queue-service";
 import { determineCompareSubstatus, determineResolutionPath } from "@/lib/work-queue/compare-queue-semantics";
+import { enforceAction } from "@/lib/security/server-enforcement-middleware";
 
 const VALID_DECISION_STATES = ["UNDECIDED", "APPROVED", "HELD", "REJECTED"] as const;
 const TERMINAL_STATES = ["APPROVED", "HELD", "REJECTED"];
 
+/**
+ * Security: enforceAction (compare_decision)
+ * - server-authoritative role check
+ * - concurrency lock (동일 세션 동시 판정 차단)
+ * - audit envelope 기록
+ */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,6 +36,21 @@ export async function PATCH(
         { error: "로그인이 필요합니다." },
         { status: 401 }
       );
+    }
+
+    // ── Security enforcement ──
+    const enforcement = enforceAction({
+      userId,
+      userRole: session?.user?.role ?? undefined,
+      action: 'compare_decision',
+      targetEntityType: 'compare_session',
+      targetEntityId: id,
+      sourceSurface: 'compare-decision-api',
+      routePath: '/api/compare-sessions/[id]/decision',
+    });
+
+    if (!enforcement.allowed) {
+      return enforcement.deny();
     }
 
     const body = await request.json();
@@ -192,8 +214,14 @@ export async function PATCH(
       },
     });
 
+    enforcement.complete({
+      beforeState: { decisionState: existing.decisionState },
+      afterState: { decisionState, isReopen },
+    });
+
     return NextResponse.json({ session: updated });
   } catch (error) {
+    enforcement.fail();
     return handleApiError(error, "PATCH /api/compare-sessions/[id]/decision");
   }
 }
