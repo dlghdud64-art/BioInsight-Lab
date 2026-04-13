@@ -1113,7 +1113,7 @@ function AgentConsoleTerminal({ steps, isRunning }: { steps: ThoughtStep[]; isRu
   return (
     <div
       ref={scrollRef}
-      className="mt-2 max-h-48 overflow-y-auto rounded-md border border-slate-700/60 bg-slate-950/80 p-3 font-mono text-[11px] leading-relaxed"
+      className="mt-2 max-h-48 overflow-y-auto rounded-md border border-slate-300 bg-slate-100 p-3 font-mono text-[11px] leading-relaxed"
     >
       {steps.map((step) => (
         <div key={step.id} className="flex items-start gap-2 py-0.5">
@@ -1124,18 +1124,18 @@ function AgentConsoleTerminal({ steps, isRunning }: { steps: ThoughtStep[]; isRu
               PHASE_ICON[step.phase]
             )}
           </span>
-          <span className={cn("flex-1", step.status === "running" ? "text-slate-300" : "text-slate-500")}>
+          <span className={cn("flex-1", step.status === "running" ? "text-slate-700" : "text-slate-600")}>
             <span className={cn("font-medium", PHASE_COLOR[step.phase])}>{step.label}</span>
             {step.detail && <span className="text-slate-600 ml-1.5">— {step.detail}</span>}
           </span>
-          <span className="text-[9px] text-slate-700 tabular-nums shrink-0">
+          <span className="text-[9px] text-slate-500 tabular-nums shrink-0">
             {new Date(step.timestamp).toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </span>
         </div>
       ))}
       {isRunning && (
-        <div className="flex items-center gap-1.5 py-0.5 text-slate-600">
-          <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" />
+        <div className="flex items-center gap-1.5 py-0.5 text-slate-700">
+          <span className="inline-block h-1.5 w-1.5 rounded-full bg-blue-600 animate-ping" />
           <span>처리 중...</span>
         </div>
       )}
@@ -1292,7 +1292,7 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
             "relative rounded-lg border transition-all duration-300",
             isAgentRunning
               ? "border-blue-500/50 ring-2 ring-blue-500/20 shadow-[0_0_20px_rgba(59,130,246,0.1)]"
-              : "border-slate-700 hover:border-slate-600"
+              : "border-slate-300 hover:border-slate-400"
           )}>
             {isAgentRunning && (
               <div className="absolute inset-0 rounded-lg animate-pulse bg-blue-500/[0.03] pointer-events-none" />
@@ -1300,7 +1300,7 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
             <div className="flex items-center gap-2 px-3 py-1.5">
               <span className={cn(
                 "shrink-0 text-[10px] font-mono font-bold tracking-wider",
-                isAgentRunning ? "text-blue-400" : "text-slate-600"
+                isAgentRunning ? "text-blue-600" : "text-slate-600"
               )}>
                 {isAgentRunning ? "● AGENT" : "▸ AGENT"}
               </span>
@@ -1311,7 +1311,7 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
                 onKeyDown={e => { if (e.key === "Enter") handleNlCommand(); }}
                 placeholder="자연어 명령 입력 — 예: '승인 대기 중인 모든 주문 승인해줘'"
                 disabled={isAgentRunning}
-                className="flex-1 bg-transparent text-xs text-slate-300 placeholder:text-slate-600 focus:outline-none disabled:opacity-50"
+                className="flex-1 bg-transparent text-xs text-slate-700 placeholder:text-slate-500 focus:outline-none disabled:opacity-50"
               />
               <button
                 onClick={handleNlCommand}
@@ -1331,8 +1331,8 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
           {/* Result badge */}
           {lastResult && !isAgentRunning && thoughtSteps.length === 0 && (
             <div className="mt-1.5 flex items-center gap-2">
-              <span className="text-[10px] text-emerald-500/80 font-medium">{lastResult}</span>
-              <button onClick={() => setLastResult(null)} className="text-slate-600 hover:text-slate-400">
+              <span className="text-[10px] text-emerald-600 font-medium">{lastResult}</span>
+              <button onClick={() => setLastResult(null)} className="text-slate-600 hover:text-slate-700">
                 <X className="h-3 w-3" />
               </button>
             </div>
@@ -1344,10 +1344,10 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
           {/* Collapse terminal after done */}
           {thoughtSteps.length > 0 && !isAgentRunning && (
             <div className="mt-1.5 flex items-center justify-between">
-              <span className="text-[10px] text-emerald-500/80 font-medium">{lastResult}</span>
+              <span className="text-[10px] text-emerald-600 font-medium">{lastResult}</span>
               <button
                 onClick={() => { setThoughtSteps([]); }}
-                className="text-[10px] text-slate-600 hover:text-slate-400 transition-colors"
+                className="text-[10px] text-slate-600 hover:text-slate-700 transition-colors"
               >
                 터미널 닫기
               </button>

@@ -121,15 +121,15 @@ export default function PurchaseOrderLandingPage() {
     allItems.every((i) => i.bucketKey === "waiting_external");
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
       {/* ── 1. Header ──────────────────────────────────────────────── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-900">발주 관리</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{orientation.role}</p>
+            <p className="text-xs text-slate-600 mt-0.5">{orientation.role}</p>
           </div>
-          <p className="text-xs text-slate-400 max-w-xs text-right">
+          <p className="text-xs text-slate-500 max-w-xs text-right">
             {headerStats.nextActionSummary}
           </p>
         </div>
@@ -148,9 +148,9 @@ export default function PurchaseOrderLandingPage() {
               <Link
                 key={key}
                 href={`/dashboard/inbox?module=po&filter=${filterKey}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/60 border border-slate-700/50 text-xs hover:border-slate-600 transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
               >
-                <span className="text-slate-500">{meta.label}</span>
+                <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
@@ -162,13 +162,13 @@ export default function PurchaseOrderLandingPage() {
 
       {/* ── Fallback: Empty ────────────────────────────────────────── */}
       {isEmpty && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+          <p className="text-sm text-slate-600">
             현재 진행 중인 발주가 없습니다 — 견적에서 발주를 생성하세요
           </p>
           <Link
             href="/dashboard/quotes"
-            className="inline-flex items-center gap-1 mt-3 text-xs text-blue-400 hover:text-blue-300"
+            className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
           >
             견적 관리로 이동 <ArrowRight className="h-3 w-3" />
           </Link>
@@ -177,8 +177,8 @@ export default function PurchaseOrderLandingPage() {
 
       {/* ── Fallback: Only waiting ─────────────────────────────────── */}
       {onlyWaiting && (
-        <div className="bg-slate-900 border border-blue-900/40 rounded-lg p-4">
-          <p className="text-sm text-blue-300">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <p className="text-sm text-blue-600">
             공급사 확인 대기 중 — 응답이 도착하면 처리 항목이 표시됩니다
           </p>
         </div>
@@ -210,23 +210,23 @@ export default function PurchaseOrderLandingPage() {
 
           {/* ── 3. State-Split Tabs ────────────────────────────────── */}
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
               상태별 분류
             </h2>
-            <div className="flex gap-1 border-b border-slate-800 mb-3">
+            <div className="flex gap-1 border-b border-slate-200 mb-3">
               {PO_BUCKET_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? "border-blue-500 text-blue-300"
-                      : "border-transparent text-slate-500 hover:text-slate-600"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-slate-600 hover:text-slate-700"
                   }`}
                 >
                   {tab.label}
                   {bucketCounts[tab.key] > 0 && (
-                    <span className="ml-1.5 tabular-nums text-slate-600">
+                    <span className="ml-1.5 tabular-nums text-slate-500">
                       {bucketCounts[tab.key]}
                     </span>
                   )}
@@ -235,13 +235,13 @@ export default function PurchaseOrderLandingPage() {
             </div>
 
             {/* ── 4. Actionable Queue (bucket items) ───────────────── */}
-            <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
               {activeBucketItems.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-slate-600">
                   이 분류에 해당하는 항목이 없습니다
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-slate-200">
                   {activeBucketItems.map((item) => (
                     <ActionableRow
                       key={item.entityId}
@@ -263,7 +263,7 @@ export default function PurchaseOrderLandingPage() {
           {/* ── 5. Downstream ──────────────────────────────────────── */}
           {downstream.length > 0 && (
             <div>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
                 다운스트림 인계
               </h2>
               <div className="grid gap-2 md:grid-cols-2">
@@ -271,20 +271,20 @@ export default function PurchaseOrderLandingPage() {
                   <Link
                     key={ds.label}
                     href={ds.targetRoute}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors group"
+                    className="bg-white border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-700">
                         {ds.label}
                       </span>
-                      <span className="text-xs font-mono text-teal-400 tabular-nums">
+                      <span className="text-xs font-mono text-emerald-600 tabular-nums">
                         {ds.count}건
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       {ds.description}
                     </p>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-400 transition-colors">
+                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-700 transition-colors">
                       이동 <ArrowRight className="h-3 w-3" />
                     </div>
                   </Link>
@@ -315,17 +315,17 @@ function PriorityCard({
   return (
     <button
       onClick={onClick}
-      className={`text-left bg-slate-900 border border-slate-800 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-800/60 transition-colors w-full`}
+      className={`text-left bg-white border border-slate-200 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-50 transition-colors w-full`}
     >
       <div className="flex items-center gap-2 mb-1">
         <span
           className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
         />
-        <span className="text-xs font-mono text-slate-600 truncate">
+        <span className="text-xs font-mono text-slate-700 truncate">
           {item.title}
         </span>
       </div>
-      <p className="text-xs text-slate-500 line-clamp-1">{item.summary}</p>
+      <p className="text-xs text-slate-600 line-clamp-1">{item.summary}</p>
       <div className="flex items-center justify-between mt-2">
         <div className="flex items-center gap-2">
           {item.currentOwnerName && (
@@ -336,13 +336,13 @@ function PriorityCard({
           <DueStateBadge dueState={item.dueState} />
         </div>
         {item.blockerSummary && (
-          <span className="text-xs text-red-400 flex items-center gap-1">
+          <span className="text-xs text-red-600 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             차단
           </span>
         )}
         {item.readySummary && !item.blockerSummary && (
-          <span className="text-xs text-emerald-400 flex items-center gap-1">
+          <span className="text-xs text-emerald-600 flex items-center gap-1">
             <Zap className="h-3 w-3" />
             실행 가능
           </span>
@@ -369,7 +369,7 @@ function ActionableRow({
       : "";
 
   return (
-    <div className={`w-full text-left px-4 py-2.5 hover:bg-slate-800/40 transition-colors ${borderClass}`}>
+    <div className={`w-full text-left px-4 py-2.5 hover:bg-slate-100 transition-colors ${borderClass}`}>
       <button
         onClick={onClick}
         className="w-full flex items-center gap-3"
@@ -379,7 +379,7 @@ function ActionableRow({
         />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <span className="text-sm text-slate-700 font-mono truncate">
+            <span className="text-sm text-slate-900 font-mono truncate">
               {item.title}
             </span>
             <span
@@ -388,7 +388,7 @@ function ActionableRow({
               {item.nextAction}
             </span>
           </div>
-          <p className="text-xs text-slate-500 truncate mt-0.5">
+          <p className="text-xs text-slate-600 truncate mt-0.5">
             {item.summary}
           </p>
         </div>
@@ -399,7 +399,7 @@ function ActionableRow({
             </span>
           )}
           <DueStateBadge dueState={item.dueState} />
-          <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+          <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
         </div>
       </button>
       <AiAnalysisPanel item={item} />
@@ -417,8 +417,8 @@ function DueStateBadge({
 
   const cls =
     dueState.tone === "overdue"
-      ? "text-red-400"
-      : "text-amber-400";
+      ? "text-red-600"
+      : "text-amber-600";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>
@@ -456,18 +456,18 @@ interface SafetyCheckResult {
 }
 
 const RISK_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  NONE:     { bg: "bg-slate-800/40",  text: "text-slate-400",   border: "border-slate-700" },
-  LOW:      { bg: "bg-blue-900/30",   text: "text-blue-300",    border: "border-blue-800" },
-  MEDIUM:   { bg: "bg-amber-900/30",  text: "text-amber-300",   border: "border-amber-800" },
-  HIGH:     { bg: "bg-orange-900/30", text: "text-orange-300",  border: "border-orange-800" },
-  CRITICAL: { bg: "bg-red-900/30",    text: "text-red-300",     border: "border-red-800" },
+  NONE:     { bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300" },
+  LOW:      { bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200" },
+  MEDIUM:   { bg: "bg-amber-50",   text: "text-amber-600",   border: "border-amber-200" },
+  HIGH:     { bg: "bg-orange-50",  text: "text-orange-600",  border: "border-orange-200" },
+  CRITICAL: { bg: "bg-red-50",     text: "text-red-600",     border: "border-red-200" },
 };
 
 const BURN_COLORS: Record<string, { bg: string; text: string; icon: string }> = {
-  SAFE:     { bg: "bg-emerald-900/30", text: "text-emerald-300", icon: "text-emerald-400" },
-  WARNING:  { bg: "bg-amber-900/30",   text: "text-amber-300",   icon: "text-amber-400" },
-  CRITICAL: { bg: "bg-red-900/30",     text: "text-red-300",     icon: "text-red-400" },
-  NORMAL:   { bg: "bg-slate-800/40",   text: "text-slate-400",   icon: "text-slate-500" },
+  SAFE:     { bg: "bg-emerald-50",  text: "text-emerald-600", icon: "text-emerald-600" },
+  WARNING:  { bg: "bg-amber-50",    text: "text-amber-600",   icon: "text-amber-600" },
+  CRITICAL: { bg: "bg-red-50",      text: "text-red-600",     icon: "text-red-600" },
+  NORMAL:   { bg: "bg-slate-100",   text: "text-slate-600",   icon: "text-slate-500" },
 };
 
 function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
@@ -530,7 +530,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
       {!hasResults && !isLoading && (
         <button
           onClick={runAnalysis}
-          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-violet-500/10 border border-violet-500/20 text-violet-300 text-xs font-medium hover:bg-violet-500/20 transition-colors"
+          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-violet-100 border border-violet-200 text-violet-600 text-xs font-medium hover:bg-violet-200 transition-colors"
         >
           <Sparkles className="h-3 w-3" />
           AI 분석
@@ -538,14 +538,14 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
       )}
 
       {isLoading && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded bg-slate-800/60 border border-slate-700/50 text-xs text-slate-400">
+        <div className="flex items-center gap-2 px-3 py-2 rounded bg-slate-100 border border-slate-200 text-xs text-slate-600">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
           예산 이상 탐지 + 안전 규제 검토 중...
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-2 px-3 py-2 rounded bg-red-900/20 border border-red-800/40 text-xs text-red-400">
+        <div className="flex items-center gap-2 px-3 py-2 rounded bg-red-50 border border-red-200 text-xs text-red-600">
           <AlertCircle className="h-3.5 w-3.5" />
           {error}
         </div>
@@ -554,13 +554,13 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
       {hasResults && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
           {budgetResult && (
-            <div className="rounded border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                <DollarSign className="h-3 w-3 text-blue-400" />
+            <div className="rounded border border-slate-300 bg-slate-100 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+                <DollarSign className="h-3 w-3 text-blue-600" />
                 Budget & Anomaly
               </div>
 
-              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.anomalySeverity]?.bg ?? "bg-slate-800/40"}`}>
+              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.anomalySeverity]?.bg ?? "bg-slate-100"}`}>
                 <div className="flex items-center gap-1.5">
                   {budgetResult.isAnomaly ? (
                     <AlertTriangle className={`h-3 w-3 ${BURN_COLORS[budgetResult.anomalySeverity]?.icon ?? "text-slate-500"}`} />
@@ -573,28 +573,28 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
                 </div>
               </div>
 
-              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.burnRateStatus]?.bg ?? "bg-slate-800/40"}`}>
+              <div className={`rounded px-2 py-1.5 ${BURN_COLORS[budgetResult.burnRateStatus]?.bg ?? "bg-slate-100"}`}>
                 <div className="flex items-center justify-between">
-                  <span className={`text-xs ${BURN_COLORS[budgetResult.burnRateStatus]?.text ?? "text-slate-400"}`}>
+                  <span className={`text-xs ${BURN_COLORS[budgetResult.burnRateStatus]?.text ?? "text-slate-600"}`}>
                     잔여 {budgetResult.remainingPercent}%
                   </span>
-                  <span className="text-[10px] text-slate-500">{budgetResult.predictedDepletionDate}</span>
+                  <span className="text-[10px] text-slate-600">{budgetResult.predictedDepletionDate}</span>
                 </div>
-                <p className="text-[10px] text-slate-500 mt-0.5">{budgetResult.burnRateDetail}</p>
+                <p className="text-[10px] text-slate-600 mt-0.5">{budgetResult.burnRateDetail}</p>
               </div>
 
-              <p className="text-[10px] text-slate-500">{budgetResult.recommendation}</p>
+              <p className="text-[10px] text-slate-600">{budgetResult.recommendation}</p>
             </div>
           )}
 
           {safetyResult && (
-            <div className="rounded border border-slate-700/50 bg-slate-800/40 p-2.5 space-y-1.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
-                <FlaskConical className="h-3 w-3 text-amber-400" />
+            <div className="rounded border border-slate-300 bg-slate-100 p-2.5 space-y-1.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 uppercase tracking-wider">
+                <FlaskConical className="h-3 w-3 text-amber-600" />
                 Safety & Compliance
               </div>
 
-              <div className={`rounded px-2 py-1.5 border ${RISK_COLORS[safetyResult.riskLevel]?.bg ?? "bg-slate-800/40"} ${RISK_COLORS[safetyResult.riskLevel]?.border ?? "border-slate-700"}`}>
+              <div className={`rounded px-2 py-1.5 border ${RISK_COLORS[safetyResult.riskLevel]?.bg ?? "bg-slate-100"} ${RISK_COLORS[safetyResult.riskLevel]?.border ?? "border-slate-200"}`}>
                 <div className="flex items-center gap-1.5">
                   {safetyResult.isHazardous ? (
                     <ShieldAlert className={`h-3 w-3 ${RISK_COLORS[safetyResult.riskLevel]?.text ?? "text-slate-400"}`} />
@@ -610,7 +610,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
               {safetyResult.requiredPPE.length > 0 && (
                 <div className="flex flex-wrap gap-1">
                   {safetyResult.requiredPPE.map((ppe, i) => (
-                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-900/30 text-blue-300 border border-blue-800/50">
+                    <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200">
                       {ppe}
                     </span>
                   ))}
@@ -620,7 +620,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
               {safetyResult.regulatoryWarnings.length > 0 && (
                 <div className="space-y-0.5">
                   {safetyResult.regulatoryWarnings.map((w, i) => (
-                    <div key={i} className="flex items-start gap-1 text-[10px] text-amber-400">
+                    <div key={i} className="flex items-start gap-1 text-[10px] text-amber-600">
                       <AlertTriangle className="h-2.5 w-2.5 mt-0.5 flex-shrink-0" />
                       {w}
                     </div>
@@ -629,8 +629,8 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
               )}
 
               {safetyResult.storageRequirements && safetyResult.riskLevel !== "NONE" && (
-                <p className="text-[10px] text-slate-500">
-                  <span className="text-slate-400">보관: </span>{safetyResult.storageRequirements}
+                <p className="text-[10px] text-slate-600">
+                  <span className="text-slate-600">보관: </span>{safetyResult.storageRequirements}
                 </p>
               )}
             </div>

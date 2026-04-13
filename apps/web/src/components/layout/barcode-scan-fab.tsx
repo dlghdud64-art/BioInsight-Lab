@@ -124,7 +124,7 @@ export function BarcodeScanFab() {
                 type="button"
                 onClick={reset}
                 aria-label="닫기"
-                className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/70 text-slate-200 hover:bg-slate-800"
+                className="absolute right-2 top-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-900/70 text-white hover:bg-slate-800"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -156,13 +156,13 @@ export function BarcodeScanFab() {
                     </p>
                     <dl className="mt-1 grid grid-cols-3 gap-2 text-[11px] text-slate-600">
                       <div>
-                        <dt className="uppercase tracking-wide text-slate-400">
+                        <dt className="uppercase tracking-wide text-slate-500">
                           LOT
                         </dt>
                         <dd className="font-medium tabular-nums">{scanned.lotCode}</dd>
                       </div>
                       <div>
-                        <dt className="uppercase tracking-wide text-slate-400">
+                        <dt className="uppercase tracking-wide text-slate-500">
                           수량
                         </dt>
                         <dd className="font-medium tabular-nums">
@@ -170,7 +170,7 @@ export function BarcodeScanFab() {
                         </dd>
                       </div>
                       <div>
-                        <dt className="uppercase tracking-wide text-slate-400">
+                        <dt className="uppercase tracking-wide text-slate-500">
                           보관
                         </dt>
                         <dd className="font-medium">{scanned.storage}</dd>
@@ -193,7 +193,7 @@ export function BarcodeScanFab() {
                       다시 스캔
                     </button>
                   </div>
-                  <p className="text-[10px] text-slate-400">
+                  <p className="text-[10px] text-slate-500">
                     실제 카메라 접근은 연결되지 않은 시뮬레이션 화면입니다. 제품
                     출시 시 디바이스 카메라 및 코드 디코더로 대체됩니다.
                   </p>

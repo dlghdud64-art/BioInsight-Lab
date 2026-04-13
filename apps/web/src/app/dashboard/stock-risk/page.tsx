@@ -226,15 +226,15 @@ export default function StockRiskPage() {
   const isHubEmpty = allItems.length === 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-6 space-y-5">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-6 space-y-5">
       {/* ── 1. Module Header ─────────────────────────────────────── */}
-      <div className="bg-slate-900 border border-slate-800 rounded-lg p-4">
+      <div className="bg-white border border-slate-200 rounded-lg p-4">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-900">재고 위험 관리</h1>
-            <p className="text-xs text-slate-500 mt-0.5">{orientation.role}</p>
+            <p className="text-xs text-slate-600 mt-0.5">{orientation.role}</p>
           </div>
-          <p className="text-xs text-slate-400 max-w-xs text-right">
+          <p className="text-xs text-slate-500 max-w-xs text-right">
             {headerStats.nextActionSummary}
           </p>
         </div>
@@ -253,9 +253,9 @@ export default function StockRiskPage() {
               <Link
                 key={key}
                 href={`/dashboard/inbox?module=stock_risk&filter=${filterKey}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-800/60 border border-slate-700/50 text-xs hover:border-slate-600 transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
               >
-                <span className="text-slate-500">{meta.label}</span>
+                <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
@@ -270,21 +270,21 @@ export default function StockRiskPage() {
             <>
               <Link
                 href={`/dashboard/${orientation.upstream === '입고' ? 'receiving' : 'purchase-orders'}`}
-                className="hover:text-slate-400 transition-colors"
+                className="hover:text-slate-700 transition-colors"
               >
                 {orientation.upstream}
               </Link>
               <ArrowRight className="h-3 w-3" />
             </>
           )}
-          <span className="text-slate-600 font-medium">{orientation.stages}</span>
+          <span className="text-slate-700 font-medium">{orientation.stages}</span>
         </div>
       </div>
 
       {/* ── Fallback: Empty hub ───────────────────────────────────── */}
       {isHubEmpty && (
-        <div className="bg-slate-900 border border-slate-800 rounded-lg p-8 text-center">
-          <p className="text-sm text-slate-400">
+        <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
+          <p className="text-sm text-slate-600">
             현재 운영 큐에 활성 재고 위험 항목이 없습니다 — 아래 상세 테이블에서 전체 현황을 확인하세요
           </p>
         </div>
@@ -312,23 +312,23 @@ export default function StockRiskPage() {
 
           {/* ── 3. State-Split Tabs ──────────────────────────────── */}
           <div>
-            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+            <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
               상태별 분류
             </h2>
-            <div className="flex gap-1 border-b border-slate-800 mb-3">
+            <div className="flex gap-1 border-b border-slate-200 mb-3">
               {SR_BUCKET_TABS.map((tab) => (
                 <button
                   key={tab.key}
                   onClick={() => setActiveTab(tab.key)}
                   className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
                     activeTab === tab.key
-                      ? "border-blue-500 text-blue-300"
-                      : "border-transparent text-slate-500 hover:text-slate-600"
+                      ? "border-blue-500 text-blue-600"
+                      : "border-transparent text-slate-600 hover:text-slate-700"
                   }`}
                 >
                   {tab.label}
                   {bucketCounts[tab.key] > 0 && (
-                    <span className="ml-1.5 tabular-nums text-slate-600">
+                    <span className="ml-1.5 tabular-nums text-slate-500">
                       {bucketCounts[tab.key]}
                     </span>
                   )}
@@ -337,13 +337,13 @@ export default function StockRiskPage() {
             </div>
 
             {/* Actionable Queue (bucket items) */}
-            <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
+            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
               {activeBucketItems.length === 0 ? (
                 <div className="px-4 py-8 text-center text-sm text-slate-600">
                   이 분류에 해당하는 항목이 없습니다
                 </div>
               ) : (
-                <div className="divide-y divide-slate-800">
+                <div className="divide-y divide-slate-200">
                   {activeBucketItems.map((item) => (
                     <ActionableRow
                       key={item.entityId}
@@ -359,7 +359,7 @@ export default function StockRiskPage() {
           {/* ── 4. Downstream ────────────────────────────────────── */}
           {downstream.length > 0 && (
             <div>
-              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-2">
+              <h2 className="text-xs font-medium uppercase tracking-wider text-slate-600 mb-2">
                 다운스트림 인계
               </h2>
               <div className="grid gap-2 md:grid-cols-2">
@@ -367,20 +367,20 @@ export default function StockRiskPage() {
                   <Link
                     key={ds.label}
                     href={ds.targetRoute}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-3 hover:border-slate-700 transition-colors group"
+                    className="bg-white border border-slate-200 rounded-lg p-3 hover:border-slate-300 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-slate-700">
                         {ds.label}
                       </span>
-                      <span className="text-xs font-mono text-teal-400 tabular-nums">
+                      <span className="text-xs font-mono text-emerald-600 tabular-nums">
                         {ds.count}건
                       </span>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">
                       {ds.description}
                     </p>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-400 transition-colors">
+                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-600 group-hover:text-slate-700 transition-colors">
                       이동 <ArrowRight className="h-3 w-3" />
                     </div>
                   </Link>
@@ -395,13 +395,13 @@ export default function StockRiskPage() {
       {/* ── Domain Detail Tables (existing 3-tab structure) ──────── */}
       {/* ════════════════════════════════════════════════════════════ */}
 
-      <div className="border-t border-slate-800 pt-5 space-y-4">
+      <div className="border-t border-slate-200 pt-5 space-y-4">
         <div className="flex items-start justify-between">
-          <h2 className="text-sm font-semibold text-slate-600">상세 재고 현황</h2>
+          <h2 className="text-sm font-semibold text-slate-700">상세 재고 현황</h2>
         </div>
 
         {/* Ownership strip */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 px-4 py-2">
+        <div className="rounded border border-slate-200 bg-slate-100 px-4 py-2">
           <OwnershipStrip ownership={ownership} />
         </div>
 
@@ -411,7 +411,7 @@ export default function StockRiskPage() {
         )}
 
         {/* Detail Tabs */}
-        <div className="flex gap-1 border-b border-slate-800">
+        <div className="flex gap-1 border-b border-slate-200">
           {(
             [
               { key: "health", label: "재고 현황" },
@@ -424,8 +424,8 @@ export default function StockRiskPage() {
               onClick={() => setDetailTab(tab.key)}
               className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 detailTab === tab.key
-                  ? "border-blue-500 text-blue-400"
-                  : "border-transparent text-slate-500 hover:text-slate-600"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-slate-600 hover:text-slate-700"
               }`}
             >
               {tab.label}
@@ -440,7 +440,7 @@ export default function StockRiskPage() {
             placeholder="품목명, 위치, Lot 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 bg-slate-800 border-slate-700 text-sm"
+            className="pl-9 bg-white border-slate-200 text-sm"
           />
         </div>
 
@@ -449,23 +449,23 @@ export default function StockRiskPage() {
           <div className="min-w-0 space-y-4">
             {/* ── Stock Health Tab ── */}
             {detailTab === "health" && (
-              <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900">
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-slate-800/50">
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">품목</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">위치</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-400">가용</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-400">보유</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-400">커버리지</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">위험</th>
+                      <tr className="border-b border-slate-200 bg-slate-100">
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">품목</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">위치</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-700">가용</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-700">보유</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-700">커버리지</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">위험</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredHealth.length === 0 && (
                         <tr>
-                          <td colSpan={6} className="text-center py-12 text-slate-500">
+                          <td colSpan={6} className="text-center py-12 text-slate-600">
                             조건에 맞는 품목이 없습니다
                           </td>
                         </tr>
@@ -478,14 +478,14 @@ export default function StockRiskPage() {
                         return (
                           <tr
                             key={sp.id}
-                            className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
+                            className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition-colors"
                           >
                             <td className="px-4 py-3 text-slate-700">{sp.inventoryItemId}</td>
-                            <td className="px-4 py-3 text-slate-400 text-xs">{sp.locationId ?? "-"}</td>
+                            <td className="px-4 py-3 text-slate-600 text-xs">{sp.locationId ?? "-"}</td>
                             <td className="px-4 py-3 text-right">
                               <span
                                 className={`font-mono ${
-                                  ratio < 0.5 ? "text-red-400" : ratio < 1 ? "text-amber-400" : "text-slate-700"
+                                  ratio < 0.5 ? "text-red-600" : ratio < 1 ? "text-amber-600" : "text-slate-700"
                                 }`}
                               >
                                 {sp.availableQuantity}
@@ -499,9 +499,9 @@ export default function StockRiskPage() {
                               <span
                                 className={`font-mono ${
                                   coverageDays <= 7
-                                    ? "text-red-400"
+                                    ? "text-red-600"
                                     : coverageDays <= 21
-                                      ? "text-amber-400"
+                                      ? "text-amber-600"
                                       : "text-slate-600"
                                 }`}
                               >
@@ -524,24 +524,24 @@ export default function StockRiskPage() {
 
             {/* ── Reorder Tab ── */}
             {detailTab === "reorder" && (
-              <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900">
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-slate-800/50">
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">품목</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">유형</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">긴급도</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">추천 수량</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">공급사</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-400">예산 영향</th>
-                        <th className="text-center px-4 py-3 font-medium text-slate-400">액션</th>
+                      <tr className="border-b border-slate-200 bg-slate-100">
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">품목</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">유형</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">긴급도</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">추천 수량</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">공급사</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-700">예산 영향</th>
+                        <th className="text-center px-4 py-3 font-medium text-slate-700">액션</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredReorder.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-slate-500">
+                          <td colSpan={7} className="text-center py-12 text-slate-600">
                             재주문 추천이 없습니다
                           </td>
                         </tr>
@@ -553,19 +553,19 @@ export default function StockRiskPage() {
                         return (
                           <tr
                             key={rr.id}
-                            className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
+                            className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition-colors"
                           >
                             <td className="px-4 py-3 text-slate-700">{rr.inventoryItemId}</td>
-                            <td className="px-4 py-3 text-slate-400">{rr.recommendationType.replace(/_/g, " ")}</td>
+                            <td className="px-4 py-3 text-slate-600">{rr.recommendationType.replace(/_/g, " ")}</td>
                             <td className="px-4 py-3">
                               <Badge variant="outline" className={`text-xs ${uBadge.className}`}>
                                 {uBadge.label}
                               </Badge>
                             </td>
-                            <td className="px-4 py-3 text-slate-600">
+                            <td className="px-4 py-3 text-slate-700">
                               {rr.recommendedOrderQuantity} {rr.recommendedUnit}
                             </td>
-                            <td className="px-4 py-3 text-slate-400">{rr.preferredVendorId ?? "-"}</td>
+                            <td className="px-4 py-3 text-slate-600">{rr.preferredVendorId ?? "-"}</td>
                             <td className="px-4 py-3 text-right font-mono text-slate-600">
                               {rr.budgetImpactEstimate
                                 ? `₩${rr.budgetImpactEstimate.amount.toLocaleString("ko-KR")}`
@@ -578,7 +578,7 @@ export default function StockRiskPage() {
                                   variant={isBlocked ? "ghost" : "outline"}
                                   onClick={() => isBlocked ? handleResolveBlocker(rr.id) : handleCreateQuote(rr.id)}
                                   disabled={isConverted}
-                                  className="text-xs h-7 px-2 gap-1 border-slate-700"
+                                  className="text-xs h-7 px-2 gap-1 border-slate-300"
                                 >
                                   {isConverted ? (
                                     <>
@@ -596,7 +596,7 @@ export default function StockRiskPage() {
                                 </Button>
                                 {!isConverted && !isBlocked && (
                                   <Link href={`/app/search?q=${encodeURIComponent((rr as any).productName || rr.inventoryItemId)}&source=reorder&qty=${rr.recommendedOrderQuantity}`}>
-                                    <Button size="sm" variant="ghost" className="text-[10px] h-6 px-2 text-blue-400 hover:text-blue-300 gap-1">
+                                    <Button size="sm" variant="ghost" className="text-[10px] h-6 px-2 text-blue-600 hover:text-blue-700 gap-1">
                                       <Search className="h-3 w-3" />소싱
                                     </Button>
                                   </Link>
@@ -604,7 +604,7 @@ export default function StockRiskPage() {
                                 {isBlocked && rr.blockedReasons.length > 0 && (
                                   <div className="text-left">
                                     {rr.blockedReasons.map((reason, i) => (
-                                      <p key={i} className="text-xs text-red-400">
+                                      <p key={i} className="text-xs text-red-600">
                                         {reason}
                                       </p>
                                     ))}
@@ -631,24 +631,24 @@ export default function StockRiskPage() {
 
             {/* ── Expiry Tab ── */}
             {detailTab === "expiry" && (
-              <div className="border border-slate-800 rounded-xl overflow-hidden bg-slate-900">
+              <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="border-b border-slate-800 bg-slate-800/50">
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">품목</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">Lot</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">조치 유형</th>
-                        <th className="text-right px-4 py-3 font-medium text-slate-400">만료까지</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">영향 수량</th>
-                        <th className="text-left px-4 py-3 font-medium text-slate-400">상태</th>
-                        <th className="text-center px-4 py-3 font-medium text-slate-400">액션</th>
+                      <tr className="border-b border-slate-200 bg-slate-100">
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">품목</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">Lot</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">조치 유형</th>
+                        <th className="text-right px-4 py-3 font-medium text-slate-700">만료까지</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">영향 수량</th>
+                        <th className="text-left px-4 py-3 font-medium text-slate-700">상태</th>
+                        <th className="text-center px-4 py-3 font-medium text-slate-700">액션</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredExpiry.length === 0 && (
                         <tr>
-                          <td colSpan={7} className="text-center py-12 text-slate-500">
+                          <td colSpan={7} className="text-center py-12 text-slate-600">
                             만료 조치 항목이 없습니다
                           </td>
                         </tr>
@@ -656,27 +656,27 @@ export default function StockRiskPage() {
                       {filteredExpiry.map((ea) => {
                         const expiryTone =
                           (ea.daysToExpiry ?? 0) <= 7
-                            ? "text-red-400"
+                            ? "text-red-600"
                             : (ea.daysToExpiry ?? 0) <= 30
-                              ? "text-orange-400"
-                              : "text-amber-400";
+                              ? "text-orange-600"
+                              : "text-amber-600";
                         const isCompleted = ea.status === "completed";
                         return (
                           <tr
                             key={ea.id}
-                            className="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/40 transition-colors"
+                            className="border-b border-slate-200 last:border-b-0 hover:bg-slate-50 transition-colors"
                           >
                             <td className="px-4 py-3 text-slate-700">{ea.inventoryItemId}</td>
-                            <td className="px-4 py-3 font-mono text-slate-400">{ea.lotNumber}</td>
+                            <td className="px-4 py-3 font-mono text-slate-600">{ea.lotNumber}</td>
                             <td className="px-4 py-3">
                               <Badge
                                 variant="outline"
                                 className={`text-xs ${
                                   ea.actionType === "dispose"
-                                    ? "bg-red-900/30 text-red-300 border-red-700"
+                                    ? "bg-red-50 text-red-600 border-red-200"
                                     : ea.actionType === "consume_first"
-                                      ? "bg-amber-900/30 text-amber-300 border-amber-700"
-                                      : "bg-blue-900/30 text-blue-300 border-blue-700"
+                                      ? "bg-amber-50 text-amber-600 border-amber-200"
+                                      : "bg-blue-50 text-blue-600 border-blue-200"
                                 }`}
                               >
                                 {EXPIRY_ACTION_LABEL[ea.actionType] ?? ea.actionType}
@@ -756,17 +756,17 @@ function PriorityCard({
   return (
     <button
       onClick={onClick}
-      className={`text-left bg-slate-900 border border-slate-800 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-800/60 transition-colors w-full`}
+      className={`text-left bg-white border border-slate-200 border-l-2 ${borderClass} rounded-lg p-3 hover:bg-slate-50 transition-colors w-full`}
     >
       <div className="flex items-center gap-2 mb-1">
         <span
           className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
         />
-        <span className="text-xs font-mono text-slate-600 truncate">
+        <span className="text-xs font-mono text-slate-700 truncate">
           {item.title}
         </span>
       </div>
-      <p className="text-xs text-slate-500 line-clamp-1">{item.summary}</p>
+      <p className="text-xs text-slate-600 line-clamp-1">{item.summary}</p>
       <div className="flex items-center justify-between mt-2">
         <div className="flex items-center gap-2">
           {item.currentOwnerName && (
@@ -777,13 +777,13 @@ function PriorityCard({
           <DueStateBadge dueState={item.dueState} />
         </div>
         {item.blockerSummary && (
-          <span className="text-xs text-red-400 flex items-center gap-1">
+          <span className="text-xs text-red-600 flex items-center gap-1">
             <AlertCircle className="h-3 w-3" />
             차단
           </span>
         )}
         {item.readySummary && !item.blockerSummary && (
-          <span className="text-xs text-emerald-400 flex items-center gap-1">
+          <span className="text-xs text-emerald-600 flex items-center gap-1">
             <Zap className="h-3 w-3" />
             실행 가능
           </span>
@@ -810,14 +810,14 @@ function ActionableRow({
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-4 py-2.5 hover:bg-slate-800/40 transition-colors flex items-center gap-3 ${borderClass}`}
+      className={`w-full text-left px-4 py-2.5 hover:bg-slate-100 transition-colors flex items-center gap-3 ${borderClass}`}
     >
       <span
         className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
       />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-700 font-mono truncate">
+          <span className="text-sm text-slate-900 font-mono truncate">
             {item.title}
           </span>
           <span
@@ -826,7 +826,7 @@ function ActionableRow({
             {item.nextAction}
           </span>
         </div>
-        <p className="text-xs text-slate-500 truncate mt-0.5">
+        <p className="text-xs text-slate-600 truncate mt-0.5">
           {item.summary}
         </p>
       </div>
@@ -837,7 +837,7 @@ function ActionableRow({
           </span>
         )}
         <DueStateBadge dueState={item.dueState} />
-        <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
+        <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
       </div>
     </button>
   );
@@ -853,8 +853,8 @@ function DueStateBadge({
 
   const cls =
     dueState.tone === "overdue"
-      ? "text-red-400"
-      : "text-amber-400";
+      ? "text-red-600"
+      : "text-amber-600";
 
   return (
     <span className={`text-xs flex items-center gap-0.5 ${cls}`}>
