@@ -24,6 +24,7 @@ import {
   Home,
   Sparkles,
   ClipboardList,
+  LifeBuoy,
   type LucideIcon,
 } from "lucide-react";
 
@@ -125,6 +126,11 @@ const sidebarGroups: SidebarGroup[] = [
     label: "시스템 (SYSTEM)",
     items: [
       {
+        title: "운영 지원 센터",
+        href: "/dashboard/support-center",
+        icon: LifeBuoy,
+      },
+      {
         title: "설정",
         href: "/dashboard/settings",
         icon: Settings,
@@ -168,6 +174,7 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },
   "/dashboard/organizations":{ active: "text-indigo-600",  inactive: "text-indigo-400/70" },
   "/dashboard/safety":       { active: "text-orange-500",  inactive: "text-orange-400/70" },
+  "/dashboard/support-center":{ active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/settings":     { active: "text-slate-600",   inactive: "text-slate-400" },
   "/dashboard/activity-logs":{ active: "text-slate-600",   inactive: "text-slate-400" },
   "/dashboard/audit":        { active: "text-slate-600",   inactive: "text-slate-400" },
