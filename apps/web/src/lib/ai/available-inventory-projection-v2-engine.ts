@@ -10,7 +10,8 @@
  * - forbidden: disposition 미완료 line 포함, hold/rejected qty를 available에 포함
  */
 
-import type { StockReleaseSessionV2, StockReleaseLineV2 } from "./stock-release-resolution-v2-engine";
+import type { StockReleaseSessionV2 } from "./stock-release-resolution-v2-engine";
+import type { StockReleaseLineV2 } from "./stock-release-workspace-v2";
 
 export interface AvailableInventoryLineV2 {
   lineId: string; availableQty: number; location: string; bin: string;

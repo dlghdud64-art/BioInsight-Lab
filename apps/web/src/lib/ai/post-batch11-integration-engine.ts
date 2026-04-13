@@ -196,12 +196,11 @@ import {
   getStatusLabel,
   getPanelLabel,
   CHAIN_STAGE_GRAMMAR,
-  type GovernanceGrammarRegistry,
 } from "./governance-grammar-registry";
 
 // Stage short labels — registry에서 가져오기
 export function getStageShortLabel(stage: QuoteChainStage): string {
-  const grammar = CHAIN_STAGE_GRAMMAR.find(s => s.stageKey === stage);
+  const grammar = CHAIN_STAGE_GRAMMAR.find(s => s.stage === stage);
   return grammar?.shortLabel ?? stage;
 }
 
@@ -220,7 +219,7 @@ export function getPanelDisplayLabel(panelKey: string): string {
  * 호환 adapter. 기존 코드에서 import만 바꾸면 됨.
  */
 export const STAGE_SHORT_FROM_REGISTRY: Partial<Record<QuoteChainStage, string>> = Object.fromEntries(
-  CHAIN_STAGE_GRAMMAR.map(s => [s.stageKey, s.shortLabel])
+  CHAIN_STAGE_GRAMMAR.map(s => [s.stage, s.shortLabel])
 ) as Partial<Record<QuoteChainStage, string>>;
 
 // Readiness label adapter

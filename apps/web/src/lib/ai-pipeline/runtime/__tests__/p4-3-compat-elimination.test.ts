@@ -1,3 +1,4 @@
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
 /**
  * P4 Slice 3 — COMPAT_ONLY_TEMPORARY Elimination (6 tests)
  *

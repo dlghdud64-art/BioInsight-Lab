@@ -124,7 +124,7 @@ export default function ReceivingDetailPage() {
     );
   }
 
-  const vendorName = VENDOR_MAP[rb.vendorId] ?? rb.vendorId;
+  const vendorName = VENDOR_MAP[rb.vendorId as keyof typeof VENDOR_MAP] ?? rb.vendorId;
 
   // ── Build unified execution model ──────────────────────────────
   const model: ReceivingExecutionModel = useMemo(

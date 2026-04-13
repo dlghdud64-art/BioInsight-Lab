@@ -447,7 +447,7 @@ export function ImportStagingWorkbench({ open, onClose, onApplyComplete }: Impor
           )}
 
           {/* Step 3: Data Review */}
-          {(step === "review" || (step === "mapping" && stagingState)) && stagingState && step !== "apply" && (
+          {(step === "review" || (step === "mapping" && stagingState)) && stagingState && (
             <section>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[15px] font-semibold text-slate-900 flex items-center gap-2">

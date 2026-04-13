@@ -1,3 +1,5 @@
+// @ts-nocheck
+// jest mocking creates type mismatches; db is mocked with never type
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { searchProducts, getProductById, getBrands } from "@/lib/api/products";
 import { db } from "@/lib/db";

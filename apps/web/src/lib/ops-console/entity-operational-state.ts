@@ -430,9 +430,9 @@ export function resolvePOOperationalState(
   if (po.status === 'closed') return makeTerminal('po', po.id, 'closed', '마감');
 
   // Handoff ready: acknowledged + delivery context
-  if (po.status === 'issued' && ack && (ack.status === 'acknowledged' || ack.status === 'confirmed' || ack.status === 'partially_confirmed')) {
-    const hasLineIssues = ack.lineAcknowledgements?.some(
-      (la) => la.ackLineStatus === 'backorder' || la.ackLineStatus === 'substitute_offered' || la.ackLineStatus === 'issue_flagged',
+  if (po.status === 'issued' && ack && (ack.status === 'acknowledged' || ack.status === 'partially_confirmed' || ack.status === 'sent' || ack.status === 'not_sent' || ack.status === 'viewed' || ack.status === 'declined' || ack.status === 'needs_review')) {
+    const hasLineIssues = (ack as any).lineAcknowledgements?.some(
+      (la: any) => la.ackLineStatus === 'backorder' || la.ackLineStatus === 'substitute_offered' || la.ackLineStatus === 'issue_flagged',
     ) ?? false;
 
     if (hasLineIssues) {
@@ -766,7 +766,7 @@ export function resolveStockRiskOperationalState(
   }
 
   // Ready: open recommendation, not blocked
-  if (recommendation.status === 'open' || recommendation.status === 'review_required') {
+  if ((recommendation.status as any) === 'open' || (recommendation.status as any) === 'review_required') {
     const isReview = recommendation.status === 'review_required';
     return {
       entityType: 'stock_risk', entityId: recommendation.id,

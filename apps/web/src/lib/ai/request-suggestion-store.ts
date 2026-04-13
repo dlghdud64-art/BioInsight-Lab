@@ -250,8 +250,8 @@ export function shouldShowRequestDraftSuggestion(params: {
 
   // 동일 contextHash 이미 resolved
   const alreadyResolved = resolvedHistory.some(
-    h => h.contextHash === suggestion.sourceContext.contextHash &&
-         h.supplierId === suggestion.sourceContext.supplierId
+    (h: any) => h.contextHash === suggestion.sourceContext?.contextHash &&
+         h.supplierId === suggestion.sourceContext?.supplierId
   );
   if (alreadyResolved) return false;
 

@@ -80,21 +80,24 @@ export async function POST(req: NextRequest) {
       try {
         // Supabase order_queue 또는 orders 테이블에 삽입
         // 테이블 구조에 따라 조정 필요
-        await (db as Record<string, unknown>).order?.create?.({
-          data: {
-            productName: item.name,
-            catalogNumber: item.catalogNumber || null,
-            quantity: item.quantity,
-            unit: item.unit,
-            category: item.category,
-            brand: item.brand || null,
-            notes: item.estimatedUse || null,
-            status: "PENDING",
-            requestedBy: session.user.id,
-            sourceType: "bom_parse",
-            sourceHandoffId: sourceHandoffId || null,
-          },
-        });
+        const dbAny = db as any;
+        if (dbAny.order?.create) {
+          await dbAny.order.create({
+            data: {
+              productName: item.name,
+              catalogNumber: item.catalogNumber || null,
+              quantity: item.quantity,
+              unit: item.unit,
+              category: item.category,
+              brand: item.brand || null,
+              notes: item.estimatedUse || null,
+              status: "PENDING",
+              requestedBy: session.user.id,
+              sourceType: "bom_parse",
+              sourceHandoffId: sourceHandoffId || null,
+            },
+          });
+        }
       } catch {
         // 테이블 미존재 시 silent fail — 아래 응답에서 fallback 처리
       }

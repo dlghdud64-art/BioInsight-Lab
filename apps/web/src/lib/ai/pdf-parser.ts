@@ -62,9 +62,9 @@ export async function extractTextFromPDF(
 
     // Buffer → Uint8Array 변환 (pdf-parse v2는 Uint8Array 요구)
     const uint8Data = new Uint8Array(
-      pdfBuffer.buffer,
-      pdfBuffer.byteOffset,
-      pdfBuffer.byteLength
+      (pdfBuffer as any).buffer,
+      (pdfBuffer as any).byteOffset,
+      (pdfBuffer as any).byteLength
     );
 
     // standardFontDataUrl 설정 (pdfjs-dist가 표준 폰트 데이터 위치를 찾도록)
@@ -73,7 +73,7 @@ export async function extractTextFromPDF(
       const path = require("path");
       const fs = require("fs");
       const fontsDir = path.join(
-        path.dirname(require.resolve("pdfjs-dist/package.json")),
+        path.dirname((require.resolve as any)("pdfjs-dist/package.json")),
         "standard_fonts/"
       );
       // Vercel 서버리스에서는 이 디렉토리가 없을 수 있으므로 존재 확인

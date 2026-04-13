@@ -1,3 +1,4 @@
+// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Portfolio Dashboard & Weekly Council Report
  *

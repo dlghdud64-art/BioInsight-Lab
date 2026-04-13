@@ -96,7 +96,7 @@ export interface ProductAcceptanceReport {
 export function defineScenarioA(): AcceptanceStep[] {
   return [
     { stepId: "A1", stage: "quote_review", domain: "quote_chain", action: "submit_quote", expectedStatus: "pending", requiresHandoffPreservation: false, requiresGrammarConsistency: true },
-    { stepId: "A2", stage: "approval", domain: "quote_chain", action: "approve", expectedStatus: "approved", requiresHandoffPreservation: true, requiresGrammarConsistency: true },
+    { stepId: "A2", stage: "quote_approval", domain: "quote_chain", action: "approve", expectedStatus: "approved", requiresHandoffPreservation: true, requiresGrammarConsistency: true },
     { stepId: "A3", stage: "po_conversion", domain: "quote_chain", action: "convert_to_po", expectedStatus: "converted", requiresHandoffPreservation: true, requiresGrammarConsistency: true },
     { stepId: "A4", stage: "po_created", domain: "quote_chain", action: "reentry", expectedStatus: "reentry_complete", requiresHandoffPreservation: true, requiresGrammarConsistency: true },
     { stepId: "A5", stage: "dispatch_prep", domain: "dispatch_prep", action: "send_now", expectedStatus: "ready_to_send", requiresHandoffPreservation: true, requiresGrammarConsistency: true },

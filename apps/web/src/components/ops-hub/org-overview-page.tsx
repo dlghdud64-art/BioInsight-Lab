@@ -13,7 +13,7 @@ import Link from "next/link";
 import type {
   OrganizationOverviewPageViewModel,
 } from "@/lib/review-queue/ops-hub-view-models";
-import type { AllBlockStates } from "@/lib/review-queue/ops-hub-block-states";
+import type { BlockState } from "@/lib/review-queue/ops-hub-block-states";
 import { PAGE_COPY } from "@/lib/review-queue/ops-hub-block-states";
 import {
   BlockWrapper,
@@ -34,7 +34,7 @@ import { BLOCK_SKELETON_HEIGHTS } from "@/lib/review-queue/ops-hub-block-states"
 
 interface OrganizationOverviewPageProps {
   vm: OrganizationOverviewPageViewModel;
-  blockStates: AllBlockStates;
+  blockStates: Record<string, any>;
 }
 
 // ═══════════════════════════════════════════════════

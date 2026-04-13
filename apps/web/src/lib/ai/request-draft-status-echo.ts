@@ -53,7 +53,7 @@ export function hasRecentAcceptedEcho(input: AcceptedEchoInput): boolean {
   // resolution log에서 가장 최근 해당 supplier의 resolution 조회
   const relevant = resolutionLog
     .filter(
-      (entry) =>
+      (entry: any) =>
         entry.requestAssemblyId === requestAssemblyId &&
         entry.supplierId === supplierId
     )

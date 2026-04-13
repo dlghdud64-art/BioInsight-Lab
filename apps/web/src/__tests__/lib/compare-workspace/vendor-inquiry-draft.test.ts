@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { generateVendorInquiryDraft } from "@/lib/compare-workspace/vendor-inquiry-draft";
 
-(global as any).fetch = jest.fn();
+(globalThis as any).fetch = jest.fn();
 
 const mockDiffResult = {
   compareId: "test-1",

@@ -413,7 +413,7 @@ interface OpsStoreProviderProps {
 
 export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
   const [graph, setGraph] = useState<EntityGraph>(() => createInitialGraph());
-  const [inboxItems, setInboxItems] = useState<OperatorInboxItem>(
+  const [inboxItems, setInboxItems] = useState<OperatorInboxItem[]>(
     () => [...INBOX_ITEMS],
   );
 
@@ -438,7 +438,7 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
           next.stockPositions,
           next.reorderRecommendations,
           next.expiryActions,
-        ) as unknown as OperatorInboxItem,
+        ) as OperatorInboxItem[],
       );
       return next;
     });
@@ -523,7 +523,7 @@ export function OpsStoreProvider({ children }: OpsStoreProviderProps) {
   const resetToInitial = useCallback(() => {
     resetDemoClock();
     setGraph(createInitialGraph());
-    setInboxItems([...INBOX_ITEMS] as unknown as OperatorInboxItem);
+    setInboxItems([...INBOX_ITEMS] as OperatorInboxItem[]);
   }, []);
 
   // -----------------------------------------------------------------------

@@ -1,3 +1,4 @@
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
 /**
  * P2-1 Slice B — Recovery Coordinator Persistence Integration Tests
  *

@@ -153,13 +153,13 @@ export default function InboxPage() {
       allItems.map((item) => ({
         ...item,
         ownershipSummary: buildInboxItemOwnership(item),
-      })),
+      })) as Array<UnifiedInboxItem & { ownershipSummary: any }>,
     [allItems],
   );
 
   // Filtered items
   const filteredItems = useMemo(() => {
-    let result = filterByModule(itemsWithOwnership, moduleFilter);
+    let result = filterByModule(itemsWithOwnership as UnifiedInboxItem[], moduleFilter);
     result = filterByState(result, stateFilter);
     // Owner filter
     if (ownerFilter !== "all") {
@@ -173,8 +173,8 @@ export default function InboxPage() {
       };
       const states = stateMap[ownerFilter];
       if (states) {
-        result = result.filter((i) =>
-          states.includes(i.ownershipSummary.assignmentState),
+        result = result.filter((i: any) =>
+          states.includes(i.ownershipSummary?.assignmentState),
         );
       }
     }

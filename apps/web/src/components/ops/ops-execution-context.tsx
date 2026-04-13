@@ -213,7 +213,7 @@ function ActiveQueueCard({
               처리 중...
             </>
           ) : (
-            completionDef.label
+            (completionDef.label as any)
           )}
         </Button>
       )}

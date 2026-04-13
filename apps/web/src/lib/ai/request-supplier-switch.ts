@@ -44,7 +44,7 @@ export function selectResolutionsForSupplier(
   query: SupplierSuggestionResolutionQuery
 ): RequestSuggestionState["resolvedHistory"] {
   return resolvedHistory.filter(
-    h => h.supplierId === query.supplierId
+    (h: any) => h.supplierId === query.supplierId
       && h.requestAssemblyId === query.requestAssemblyId
   );
 }

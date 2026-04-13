@@ -3,7 +3,7 @@ import { generateCompareInsight } from "@/lib/compare-workspace/compare-insight-
 
 // fetch 모킹
 const mockFetch = jest.fn() as jest.Mock<any>;
-(global as any).fetch = mockFetch;
+(globalThis as any).fetch = mockFetch;
 
 const mockDiffResult = {
   compareId: "test-1",

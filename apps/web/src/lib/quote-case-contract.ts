@@ -163,7 +163,7 @@ export function toQuoteCaseNormalized(raw: QuoteCaseRaw): QuoteCaseNormalized {
     resolvedUiState: uiState,
     priorityScore: derivePriorityScore(raw),
     selectedQuoteId: bestResponse?.id,
-    selectedVendorName: bestResponse?.vendorName,
+    selectedVendorName: (bestResponse?.vendor as any)?.name || (bestResponse as any)?.vendorName,
     compareCompleted: uiState === "ready_for_po_conversion" || uiState === "external_approval_required",
     conditionIssues: 0, // 실제 API에서 조건 이슈 필드가 오면 여기서 매핑
     requiredDocsMissing: false,

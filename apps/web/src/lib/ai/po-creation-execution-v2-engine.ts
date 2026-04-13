@@ -118,9 +118,10 @@ export function evaluatePoCreationExecutionReadiness(state: PoCreationExecutionV
   }
 
   // Governance warnings
-  if (pkg.exceptionFlags?.includes("stale_quote_reference")) warnings.push("Stale quote reference");
-  if (pkg.exceptionFlags?.includes("budget_recheck_needed")) warnings.push("Budget 재확인 필요");
-  if (pkg.exceptionFlags?.includes("equivalent_heavy_payload")) warnings.push("Equivalent 비중 높은 PO");
+  const exceptionFlags = (pkg as any).exceptionFlags;
+  if (exceptionFlags?.includes("stale_quote_reference")) warnings.push("Stale quote reference");
+  if (exceptionFlags?.includes("budget_recheck_needed")) warnings.push("Budget 재확인 필요");
+  if (exceptionFlags?.includes("equivalent_heavy_payload")) warnings.push("Equivalent 비중 높은 PO");
 
   // Bill-to optional warning
   if (!pkg.frozenBillTo) warnings.push("Frozen bill-to 누락");

@@ -78,12 +78,13 @@ export function selectLatestGeneratedMeta(
   let latest: LatestGeneratedMeta | null = null;
 
   for (const s of Object.values(suggestions)) {
-    if (!s) continue;
-    if (s.sourceContext.requestAssemblyId !== requestAssemblyId) continue;
-    if (s.sourceContext.supplierId !== supplierId) continue;
+    const item = s as any;
+    if (!item) continue;
+    if (item.sourceContext?.requestAssemblyId !== requestAssemblyId) continue;
+    if (item.sourceContext?.supplierId !== supplierId) continue;
 
-    if (!latest || s.generatedAt > latest.generatedAt) {
-      latest = { suggestionId: s.id, generatedAt: s.generatedAt };
+    if (!latest || item.generatedAt > latest.generatedAt) {
+      latest = { suggestionId: item.id, generatedAt: item.generatedAt };
     }
   }
 

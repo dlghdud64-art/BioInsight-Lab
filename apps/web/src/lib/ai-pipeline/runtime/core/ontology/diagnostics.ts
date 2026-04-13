@@ -55,6 +55,8 @@ export function emitDiagnostic(
     entityId?: string;
     correlationId?: string;
     fallbackUsed?: boolean;
+    /** 추가 메타데이터 (removalStatus, reasonCode, decision 등) */
+    [key: string]: string | boolean | number | undefined;
   }
 ): void {
   emitOntologyDiagnostic({

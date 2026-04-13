@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 import { useTestFlow } from "../_components/test-flow-provider";

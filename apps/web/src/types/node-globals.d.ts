@@ -49,6 +49,21 @@ declare class Buffer {
   [index: number]: number;
 }
 
+// Node.js crypto — API route / server component / ai-pipeline 에서 사용
+declare module "crypto" {
+  export function randomUUID(): string;
+  export function randomBytes(size: number): Buffer;
+  export function createHash(algorithm: string): {
+    update(data: string | Buffer): any;
+    digest(encoding?: string): string | Buffer;
+  };
+  export function createHmac(algorithm: string, key: string | Buffer): {
+    update(data: string | Buffer): any;
+    digest(encoding?: string): string | Buffer;
+  };
+  export function timingSafeEqual(a: Buffer, b: Buffer): boolean;
+}
+
 // setTimeout / setInterval — global type 보강 (Node timer override)
 declare function setTimeout(callback: (...args: any[]) => void, ms?: number, ...args: any[]): ReturnType<typeof globalThis.setTimeout>;
 declare function clearTimeout(id: ReturnType<typeof setTimeout> | undefined): void;

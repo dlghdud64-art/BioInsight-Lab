@@ -1,3 +1,4 @@
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
 /**
  * P4 Slice 1 — Recovery Coordinator Sync Read Shutdown (7 tests)
  *

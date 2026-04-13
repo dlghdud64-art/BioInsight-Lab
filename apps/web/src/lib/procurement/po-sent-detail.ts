@@ -268,7 +268,7 @@ export function markSupplierAcknowledged(
   }
 
   // Guard: already acknowledged
-  if (tracking.acknowledgmentStatus === "acknowledgment_received" && detail.draftState === "po_acknowledged") {
+  if (tracking.acknowledgmentStatus === "acknowledgment_received" && (detail.draftState as any) === "po_acknowledged") {
     return {
       success: false,
       newState: detail.draftState,

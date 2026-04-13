@@ -68,7 +68,7 @@ export async function POST() {
     }
 
     // 집계 데이터 구성
-    const totalAmount = purchases.reduce((s, p) => s + (p.amount ?? 0), 0);
+    const totalAmount = purchases.reduce((s: number, p: any) => s + (p.amount ?? 0), 0);
     const vendorMap: Record<string, { count: number; amount: number }> = {};
     const categoryMap: Record<string, { count: number; amount: number }> = {};
 
@@ -89,16 +89,16 @@ export async function POST() {
       totalPurchases: purchases.length,
       totalAmount,
       vendors: Object.entries(vendorMap)
-        .sort(([, a], [, b]) => b.amount - a.amount)
+        .sort(([, a]: any, [, b]: any) => b.amount - a.amount)
         .slice(0, 10)
-        .map(([name, data]) => ({ name, ...data, pct: Math.round((data.amount / totalAmount) * 100) })),
+        .map(([name, data]: any) => ({ name, ...data, pct: Math.round((data.amount / totalAmount) * 100) })),
       categories: Object.entries(categoryMap)
-        .sort(([, a], [, b]) => b.amount - a.amount)
-        .map(([name, data]) => ({ name, ...data, pct: Math.round((data.amount / totalAmount) * 100) })),
+        .sort(([, a]: any, [, b]: any) => b.amount - a.amount)
+        .map(([name, data]: any) => ({ name, ...data, pct: Math.round((data.amount / totalAmount) * 100) })),
       recentHighSpend: purchases
-        .filter((p) => (p.amount ?? 0) > totalAmount * 0.05)
+        .filter((p: any) => (p.amount ?? 0) > totalAmount * 0.05)
         .slice(0, 5)
-        .map((p) => ({
+        .map((p: any) => ({
           item: p.itemName,
           vendor: p.vendorName,
           amount: p.amount,

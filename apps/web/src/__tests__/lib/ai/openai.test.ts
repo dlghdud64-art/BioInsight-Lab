@@ -1,3 +1,5 @@
+// @ts-nocheck
+// jest mock setup and type mismatches on mocked fetch return types
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
 import { analyzeSearchIntent, translateText } from "@/lib/ai/openai";
 

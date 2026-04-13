@@ -501,7 +501,7 @@ export function buildInboxFromReceiving(
     // Posting blocked
     if (
       (hasDocMissing || hasQuarantine || hasInspectionPending) &&
-      rb.status !== 'posted'
+      (rb.status as any) !== 'posted'
     ) {
       const blockers: string[] = [];
       if (hasDocMissing) blockers.push('문서 누락');

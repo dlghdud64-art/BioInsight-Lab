@@ -320,7 +320,7 @@ export function buildRequestSuggestion(input: RequestBuilderInput): AiSuggestion
     const afterReadiness = Math.min(100, baseReadiness + 40);
 
     // grouped patches — field-group 단위로 세분화 (최대 2개 group)
-    const groupedPatches: RequestDraftPatch[] = [];
+    const groupedPatches: Array<{ group: string; supplierId: string; value: any }> = [];
     // user-edited messageBody는 AI가 건드리지 않음
     const userEdited = input.userEditedFields || [];
     if (!userEdited.includes("messageBody")) {

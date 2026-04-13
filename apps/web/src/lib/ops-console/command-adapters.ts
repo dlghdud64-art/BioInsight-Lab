@@ -50,7 +50,7 @@ export function buildQuoteCommandSurface(ctx: QuoteCommandContext): CommandSurfa
   const isVendorSelected = qr.status === 'vendor_selected' || qr.status === 'converted_to_po';
   const isConverted = qr.status === 'converted_to_po';
   const hasSubstitute = responses.some((r) => r.responseItems.some((ri) => ri.substituteOffered));
-  const conversionBlockers = comparison?.conversionBlockers ?? [];
+  const conversionBlockers = (comparison as any)?.conversionBlockers ?? [];
   const respondedCount = responses.filter((r) => r.responseStatus === 'responded' || r.responseStatus === 'incomplete').length;
 
   const blockedReasons: string[] = [];

@@ -212,8 +212,8 @@ export function buildQuoteBlockers(
 
   // missing docs in comparison
   if (comparison) {
-    const hasMissingDocs = comparison.comparableItemRows.some((row) =>
-      row.vendorColumns.some((vc) => vc.warningBadges?.length > 0),
+    const hasMissingDocs = comparison.comparableItemRows.some((row: any) =>
+      row.vendorColumns?.some((vc: any) => vc.warningBadges?.length > 0),
     );
     if (hasMissingDocs) {
       blockers.push({
@@ -232,7 +232,7 @@ export function buildQuoteBlockers(
     }
 
     // conversion blockers
-    for (const cb of comparison.conversionBlockers ?? []) {
+    for (const cb of (comparison as any).conversionBlockers ?? []) {
       blockers.push({
         blockerType: 'policy_locked',
         severity: 'hard_block',
@@ -432,7 +432,7 @@ export function buildReceivingBlockers(rb: ReceivingBatchContract): AggregatedBl
 
   // partial receipt
   const totalReceived = rb.lineReceipts.reduce((sum, l) => sum + l.receivedQuantity, 0);
-  const totalOrdered = rb.lineReceipts.reduce((sum, l) => sum + l.orderedQuantity, 0);
+  const totalOrdered = rb.lineReceipts.reduce((sum, l) => sum + (l.orderedQuantity ?? 0), 0);
   if (totalReceived < totalOrdered) {
     blockers.push({
       blockerType: 'external_followup_required',

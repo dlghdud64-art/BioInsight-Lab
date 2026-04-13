@@ -46,7 +46,7 @@ const InventoryContextPanel = dynamic(() => import("@/components/inventory/inven
 const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then(m => m.StorageLocationView), { ssr: false });
 const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then(m => m.InventoryFlowView), { ssr: false });
 const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then(m => m.MobileInventoryView), { ssr: false });
-type ContextPanelItem = { id: string; productId: string; currentQuantity: number; unit: string; safetyStock: number | null; location: string | null; expiryDate: string | null; notes: string | null; product: { id: string; name: string; brand: string | null; catalogNumber: string | null; }; };
+import type { ContextPanelItem } from "@/components/inventory/inventory-context-panel";
 
 interface ProductInventory {
   id: string;
@@ -192,6 +192,7 @@ export function InventoryMain() {
 
   // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
+  // @ts-ignore - data is declared later in component
   useEffect(() => {
     if (entityIdParam && data?.inventories) {
       const target = data.inventories.find((item: ProductInventory) => item.id === entityIdParam);

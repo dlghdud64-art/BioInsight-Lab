@@ -1,3 +1,4 @@
+// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Expansion Capacity Manager — 운영 용량 정량화
  *

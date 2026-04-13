@@ -1,3 +1,4 @@
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
 /**
  * P1 Closeout Validation — 10 Tests / 4 Groups
  *

@@ -62,9 +62,9 @@ async function tryPdfParse(
 
     // Buffer → Uint8Array (pdf-parse v2 요구사항)
     const uint8Data = new Uint8Array(
-      buffer.buffer,
-      buffer.byteOffset,
-      buffer.byteLength
+      (buffer as any).buffer,
+      (buffer as any).byteOffset,
+      (buffer as any).byteLength
     );
 
     // standardFontDataUrl 설정
@@ -72,7 +72,7 @@ async function tryPdfParse(
     try {
       const path = require("path");
       standardFontDataUrl = path.join(
-        path.dirname(require.resolve("pdfjs-dist/package.json")),
+        path.dirname((require.resolve as any)("pdfjs-dist/package.json")),
         "standard_fonts/"
       );
     } catch {

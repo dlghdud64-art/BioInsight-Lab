@@ -220,7 +220,7 @@ export function buildStockRiskReentryContext(
   recommendation: ReorderRecommendationContract,
   stockPosition: InventoryStockPositionContract | undefined,
 ): ReentryContext {
-  const isCritical = recommendation.urgency === 'urgent' || recommendation.urgency === 'critical';
+  const isCritical = recommendation.urgency === 'urgent' || (recommendation.urgency as any) === 'critical';
   const isBlocked = recommendation.status === 'blocked';
   const reasonCodes: ReentryReasonCode[] = [];
 
@@ -253,7 +253,7 @@ export function buildStockRiskReentryContext(
       : undefined,
     substituteAllowed: true,
     urgency: isCritical ? 'critical' : recommendation.urgency === 'high' ? 'high' : 'normal',
-    budgetContextId: recommendation.budgetImpactEstimate?.budgetId ?? undefined,
+    budgetContextId: (recommendation.budgetImpactEstimate as any)?.budgetId ?? undefined,
     linkedInventoryItemId: recommendation.inventoryItemId,
     returnRoute: '/dashboard/stock-risk',
   };
@@ -283,7 +283,7 @@ export function buildExpiryReentryContext(
       unit: expiryAction.unit,
     }],
     substituteAllowed: true,
-    urgency: expiryAction.daysToExpiry <= 7 ? 'critical' : expiryAction.daysToExpiry <= 30 ? 'high' : 'normal',
+    urgency: (expiryAction.daysToExpiry ?? 0) <= 7 ? 'critical' : (expiryAction.daysToExpiry ?? 0) <= 30 ? 'high' : 'normal',
     linkedInventoryItemId: expiryAction.inventoryItemId,
     returnRoute: '/dashboard/stock-risk',
   };
@@ -318,7 +318,7 @@ export function buildReceivingExceptionReentryContext(
     reasonCodes,
     requestedItemHints: targetLine ? [{
       itemName: targetLine.itemName,
-      quantity: targetLine.orderedQuantity - targetLine.receivedQuantity,
+      quantity: (targetLine.orderedQuantity ?? 0) - targetLine.receivedQuantity,
       unit: undefined,
     }] : [],
     requiredDocuments: hasDocMissing ? ['COA', 'MSDS'] : undefined,
@@ -362,8 +362,8 @@ export function buildQuoteFollowupReentryContext(
       specRequirements: item.specRequirements ?? undefined,
     })),
     blockedVendorIds: undefined,
-    requiredDocuments: qr.requiredDocuments ?? undefined,
-    substituteAllowed: qr.substituteAllowed ?? true,
+    requiredDocuments: (qr as any).requiredDocuments ?? undefined,
+    substituteAllowed: (qr as any).substituteAllowed ?? true,
     urgency: qr.priority === 'urgent' ? 'high' : 'normal',
     budgetContextId: qr.budgetContextId ?? undefined,
     returnRoute: `/dashboard/quotes/${qr.id}`,

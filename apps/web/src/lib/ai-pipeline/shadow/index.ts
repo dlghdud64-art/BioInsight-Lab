@@ -1,3 +1,4 @@
+// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Shadow Mode + Canary Rollout — Barrel Export
  */

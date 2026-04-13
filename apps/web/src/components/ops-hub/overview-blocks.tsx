@@ -11,7 +11,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
-import type { BlockStateProps } from "@/lib/review-queue/ops-hub-block-states";
+import type { BlockProps as BlockStateProps } from "@/lib/review-queue/ops-hub-block-states";
 import type {
   OverviewKpiCardViewModel,
   StepFunnelStageViewModel,

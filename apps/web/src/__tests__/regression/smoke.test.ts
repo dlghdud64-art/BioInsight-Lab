@@ -1,3 +1,5 @@
+// @ts-nocheck
+// node types (@types/node) not available; uses child_process and path modules
 /**
  * 회귀 방지 smoke test
  * - 브랜드 문자열 회귀
@@ -32,7 +34,7 @@ function grepContent(pattern: string, ext = "tsx"): string[] {
       .trim()
       .split("\n")
       .filter(Boolean)
-      .filter((l) => !l.includes("//") && !l.includes("node_modules"));
+      .filter((l: string) => !l.includes("//") && !l.includes("node_modules"));
   } catch {
     return [];
   }
@@ -116,7 +118,7 @@ describe("shadcn HSL navy tint 방지", () => {
       const hits = result
         .trim()
         .split("\n")
-        .filter((l) => l.includes("--") && !l.includes("//"));
+        .filter((l: string) => l.includes("--") && !l.includes("//"));
       expect(hits).toHaveLength(0);
     } catch {
       // No matches = pass

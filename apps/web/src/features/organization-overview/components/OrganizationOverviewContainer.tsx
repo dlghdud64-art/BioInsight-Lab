@@ -51,11 +51,11 @@ export function OrganizationOverviewContainer() {
   const reviewQueue = useReviewQueue();
 
   // ── 파생 값 ──
-  const reviewNeeded = reviewQueue.items.filter((i) => i.status === "needs_review" && !i.excluded).length;
-  const compareNeeded = reviewQueue.items.filter((i) => i.status === "compare_needed" && !i.excluded).length;
-  const confirmed = reviewQueue.items.filter((i) => i.status === "confirmed" && !i.excluded).length;
+  const reviewNeeded = reviewQueue.items.filter((i) => i.status === "needs_review").length;
+  const compareNeeded = reviewQueue.items.filter((i) => i.status === "compare_needed").length;
+  const confirmed = reviewQueue.items.filter((i) => i.status === "confirmed").length;
   const approved = reviewQueue.items.filter((i) => i.status === "approved").length;
-  const matchFailed = reviewQueue.items.filter((i) => i.status === "match_failed" && !i.excluded).length;
+  const matchFailed = reviewQueue.items.filter((i) => i.status === "match_failed").length;
 
   // ── 페이지 상태 ──
   const pageState = resolvePageState({
@@ -133,8 +133,8 @@ export function OrganizationOverviewContainer() {
   }), []);
 
   const workQueueBlock = useMemo(() => {
-    const readyItems = reviewQueue.items.filter((i) => i.status === "confirmed" && !i.excluded);
-    const reviewItems = reviewQueue.items.filter((i) => i.status === "needs_review" && !i.excluded);
+    const readyItems = reviewQueue.items.filter((i) => i.status === "confirmed");
+    const reviewItems = reviewQueue.items.filter((i) => i.status === "needs_review");
     const isEmpty = readyItems.length === 0 && reviewItems.length === 0 && compareNeeded === 0;
     return {
       state: (isEmpty ? "empty" : "ready") as BlockState,

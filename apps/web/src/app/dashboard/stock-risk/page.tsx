@@ -595,7 +595,7 @@ export default function StockRiskPage() {
                                   )}
                                 </Button>
                                 {!isConverted && !isBlocked && (
-                                  <Link href={`/app/search?q=${encodeURIComponent(rr.productName)}&source=reorder&qty=${rr.recommendedOrderQuantity}`}>
+                                  <Link href={`/app/search?q=${encodeURIComponent((rr as any).productName || rr.inventoryItemId)}&source=reorder&qty=${rr.recommendedOrderQuantity}`}>
                                     <Button size="sm" variant="ghost" className="text-[10px] h-6 px-2 text-blue-400 hover:text-blue-300 gap-1">
                                       <Search className="h-3 w-3" />소싱
                                     </Button>
@@ -655,9 +655,9 @@ export default function StockRiskPage() {
                       )}
                       {filteredExpiry.map((ea) => {
                         const expiryTone =
-                          ea.daysToExpiry <= 7
+                          (ea.daysToExpiry ?? 0) <= 7
                             ? "text-red-400"
-                            : ea.daysToExpiry <= 30
+                            : (ea.daysToExpiry ?? 0) <= 30
                               ? "text-orange-400"
                               : "text-amber-400";
                         const isCompleted = ea.status === "completed";

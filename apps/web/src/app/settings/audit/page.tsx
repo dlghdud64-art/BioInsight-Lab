@@ -126,6 +126,12 @@ function AuditLogsPageContent() {
       ORGANIZATION_CREATED: "조직 생성",
       ORGANIZATION_UPDATED: "조직 수정",
       ORGANIZATION_DELETED: "조직 삭제",
+      INGESTION_RECEIVED: "입력 수신",
+      DOCUMENT_CLASSIFIED: "문서 분류",
+      EXTRACTION_COMPLETED: "필드 추출",
+      ENTITY_LINKED: "엔티티 연결",
+      VERIFICATION_COMPLETED: "검증 완료",
+      WORK_QUEUE_TASK_GENERATED: "작업 생성",
     };
     return labels[eventType] || eventType;
   };

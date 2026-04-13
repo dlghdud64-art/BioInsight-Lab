@@ -1,3 +1,4 @@
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
 /**
  * P4 Slice 4 — Sync Compat Shutdown + Ack Timing Gap Reduction (7 tests)
  *

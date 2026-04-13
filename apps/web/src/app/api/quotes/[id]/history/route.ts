@@ -29,7 +29,7 @@ export async function GET(
       take: 20,
     });
 
-    const history = logs.map((log) => ({
+    const history = logs.map((log: any) => ({
       id: log.id,
       previousStatus: (log.metadata as any)?.previousStatus ?? null,
       newStatus: (log.metadata as any)?.newStatus ?? null,

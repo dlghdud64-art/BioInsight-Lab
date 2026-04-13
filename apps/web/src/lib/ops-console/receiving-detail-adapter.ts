@@ -284,7 +284,7 @@ export function resolveReceivingExecutionPhase(rb: ReceivingBatchContract): Rece
   const hasInspectionPending = rb.lineReceipts.some(
     (l) => l.inspectionRequired && (l.inspectionStatus === "pending" || l.inspectionStatus === "in_progress"),
   );
-  const isPosted = rb.status === "posted" || rb.status === "closed";
+  const isPosted = (rb.status as any) === "posted" || (rb.status as any) === "closed";
   const canPost = !hasDocMissing && !hasQuarantine && !hasInspectionPending && !isPosted;
 
   if (rb.status === "issue_flagged") return { phase: "issue_flagged", phaseLabel: "이슈 발생", phaseTone: "danger" };

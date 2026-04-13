@@ -87,14 +87,17 @@ export async function POST(
     const actorRole = await getActorRole(session.user.id, item.organizationId);
 
     // 상태를 EXECUTING으로 전환 (Legacy + 3-Layer 동기화)
-    const approvedSubstatus = {
+    const approvedSubstatusMap = {
       QUOTE_DRAFT: "quote_draft_approved",
       VENDOR_EMAIL_DRAFT: "vendor_email_approved",
       FOLLOWUP_DRAFT: "followup_approved",
       STATUS_CHANGE_SUGGEST: "status_change_approved",
       REORDER_SUGGESTION: "restock_approved",
       EXPIRY_ALERT: "expiry_acknowledged",
-    }[item.type] || "quote_draft_approved";
+    };
+    const approvedSubstatus =
+      approvedSubstatusMap[item.type as keyof typeof approvedSubstatusMap] ||
+      "quote_draft_approved";
 
     await db.aiActionItem.update({
       where: { id: params.id },

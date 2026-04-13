@@ -25,7 +25,7 @@ export async function persistOutboundHistoryServer(
   history: ReadonlyArray<Record<string, unknown>>,
 ): Promise<void> {
   try {
-    await db.$transaction(async (tx) => {
+    await db.$transaction(async (tx: any) => {
       // 기존 history 삭제
       await tx.outboundHistory.deleteMany({
         where: { poId },
@@ -60,7 +60,7 @@ export async function loadOutboundHistoryServer(
       where: { poId },
       orderBy: { seqIndex: "asc" },
     });
-    return records.map((r) => r.payload as Record<string, unknown>);
+    return records.map((r: any) => r.payload as Record<string, unknown>);
   } catch (e) {
     console.error("[outbound-history-server] loadOutboundHistoryServer 실패:", e);
     return [];
