@@ -1,53 +1,177 @@
 /**
- * Governance Event Dedupe — Client-side deduplication layer
+ * Governance Event Dedupe — Client Persistence Bridge
  *
+ * sessionStorage 즉시 + 서버 비동기 이중 레이어.
  * 동일 governance event 가 탭 재진입/remount 시 중복 발행되지 않도록
- * sessionStorage 기반으로 dedupe 한다.
+ * sessionStorage 로 즉시 판단하고, 서버에 비동기로 동기화한다.
  *
- * 현재는 sessionStorage 단독. 서버측 dedupe 는 별도 layer 책임.
+ * 패턴: outbound-history-client.ts / approval-baseline-client.ts 와 동일한
+ *       write-through + server-first read.
+ *
+ * 고정 규칙:
+ *   1. canonical truth 를 변경하지 않는다 — 발행 여부 결정 logic 만 제공.
+ *   2. shouldPublish 는 sessionStorage 로 즉시 판단 (동기).
+ *      서버 check 는 background 로 수행하며 결과를 session 에 반영.
+ *   3. markPublished 는 sessionStorage 즉시 + 서버 비동기.
+ *   4. clearDedupeForPo 는 양쪽 모두 삭제.
+ *   5. 서버 장애 시 sessionStorage fallback 자동.
  */
 
 const STORAGE_PREFIX = "labaxis:gov-dedupe:";
+const API_BASE = "/api/governance/event-dedupe";
+
+// ══════════════════════════════════════════════
+// Internal: sessionStorage 직접 접근 (동기)
+// ══════════════════════════════════════════════
+
+function getStorage(): Storage | null {
+  try {
+    return typeof window !== "undefined" ? window.sessionStorage : null;
+  } catch {
+    return null;
+  }
+}
+
+function shouldPublishLocal(
+  entityKey: string,
+  eventType: string,
+  signature: string,
+): boolean {
+  const storage = getStorage();
+  if (!storage) return true;
+  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
+  const existing = storage.getItem(key);
+  return existing !== signature;
+}
+
+function markPublishedLocal(
+  entityKey: string,
+  eventType: string,
+  signature: string,
+): void {
+  const storage = getStorage();
+  if (!storage) return;
+  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
+  storage.setItem(key, signature);
+}
+
+function clearDedupeForPoLocal(entityKey: string): void {
+  const storage = getStorage();
+  if (!storage) return;
+  const prefix = `${STORAGE_PREFIX}${entityKey}::`;
+  const keysToRemove: string[] = [];
+  for (let i = 0; i < storage.length; i++) {
+    const key = storage.key(i);
+    if (key?.startsWith(prefix)) keysToRemove.push(key);
+  }
+  keysToRemove.forEach((k) => storage.removeItem(k));
+}
+
+// ══════════════════════════════════════════════
+// Public: write-through + server bridge
+// ══════════════════════════════════════════════
 
 /**
  * 이 event 를 발행해야 하는지 확인한다.
- * 이미 같은 (entityKey, eventType, signature) 조합이 기록되어 있으면 false.
+ * sessionStorage 로 즉시 판단 (동기 반환).
+ * 서버 상태 확인이 필요하면 shouldPublishWithServerAsync 사용.
  */
 export function shouldPublishWithServer(
   entityKey: string,
   eventType: string,
   signature: string,
 ): boolean {
-  if (typeof window === "undefined") return true;
-  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
-  const existing = sessionStorage.getItem(key);
-  return existing !== signature;
+  return shouldPublishLocal(entityKey, eventType, signature);
+}
+
+/**
+ * 서버에서 dedupe 상태를 확인한다.
+ * server-first → sessionStorage fallback.
+ * background hydration 또는 중요한 판단에 사용.
+ */
+export async function shouldPublishWithServerAsync(
+  entityKey: string,
+  eventType: string,
+  signature: string,
+): Promise<boolean> {
+  // 1. 서버에서 먼저 시도
+  try {
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "check",
+        poNumber: entityKey,
+        eventType,
+        signatureKey: signature,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (typeof data.canPublish === "boolean") {
+        // 서버 결과를 session에 반영
+        if (!data.canPublish) {
+          markPublishedLocal(entityKey, eventType, signature);
+        }
+        return data.canPublish;
+      }
+    }
+  } catch (e) {
+    console.warn("[governance-event-dedupe-client] 서버 check 실패, sessionStorage fallback:", e);
+  }
+
+  // 2. 서버 실패 시 sessionStorage fallback
+  return shouldPublishLocal(entityKey, eventType, signature);
 }
 
 /**
  * event 발행 완료를 기록한다.
+ * sessionStorage 즉시(동기) + 서버 비동기 기록.
  */
 export function markPublishedWithServer(
   entityKey: string,
   eventType: string,
   signature: string,
 ): void {
-  if (typeof window === "undefined") return;
-  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
-  sessionStorage.setItem(key, signature);
+  // 1. sessionStorage 즉시 기록 (동기)
+  markPublishedLocal(entityKey, eventType, signature);
+
+  // 2. 서버에 비동기 기록
+  void (async () => {
+    try {
+      await fetch(API_BASE, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "mark",
+          poNumber: entityKey,
+          eventType,
+          signatureKey: signature,
+        }),
+      });
+    } catch (e) {
+      console.warn("[governance-event-dedupe-client] 서버 mark 실패, sessionStorage fallback:", e);
+    }
+  })();
 }
 
 /**
  * reopen / invalidation 시 해당 PO의 모든 dedupe 기록을 clear한다.
+ * sessionStorage + 서버 양쪽 모두 삭제.
  * 이후 재계산된 governance event가 다시 발행될 수 있게 한다.
  */
 export function clearDedupeForPoWithServer(entityKey: string): void {
-  if (typeof window === "undefined") return;
-  const prefix = `${STORAGE_PREFIX}${entityKey}::`;
-  const keysToRemove: string[] = [];
-  for (let i = 0; i < sessionStorage.length; i++) {
-    const key = sessionStorage.key(i);
-    if (key?.startsWith(prefix)) keysToRemove.push(key);
-  }
-  keysToRemove.forEach((k) => sessionStorage.removeItem(k));
+  // 1. sessionStorage 즉시 clear (동기)
+  clearDedupeForPoLocal(entityKey);
+
+  // 2. 서버 비동기 clear
+  void (async () => {
+    try {
+      await fetch(`${API_BASE}?poNumber=${encodeURIComponent(entityKey)}`, {
+        method: "DELETE",
+      });
+    } catch (e) {
+      console.warn("[governance-event-dedupe-client] 서버 삭제 실패:", e);
+    }
+  })();
 }

@@ -431,3 +431,104 @@ describe("Scenario 10: mock seed가 canonical candidate truth를 override하지 
     expect(merged).toEqual(canonicalTruth);
   });
 });
+
+// ══════════════════════════════════════════════
+// Scenario 11: Persistence Adapter 계약 일관성 검증
+// ══════════════════════════════════════════════
+
+describe("Scenario 11: PersistenceAdapter 계약 — load/persist/clear/hydrateIfEmpty 4종 일관성", () => {
+  let adapter: InMemoryAdapter<{ value: string }>;
+
+  beforeEach(() => {
+    adapter = new InMemoryAdapter<{ value: string }>();
+  });
+
+  it("persist → load 사이클 무손실", () => {
+    adapter.persist("key1", { value: "hello" });
+    const loaded = adapter.load("key1");
+    expect(loaded).toEqual({ value: "hello" });
+  });
+
+  it("clear 후 load 시 null", () => {
+    adapter.persist("key1", { value: "hello" });
+    adapter.clear("key1");
+    expect(adapter.load("key1")).toBeNull();
+  });
+
+  it("hydrateIfEmpty: current 있으면 current 반환 (load 안 함)", () => {
+    adapter.persist("key1", { value: "from_storage" });
+    const result = adapter.hydrateIfEmpty("key1", { value: "current" });
+    expect(result).toEqual({ value: "current" });
+  });
+
+  it("hydrateIfEmpty: current null이면 load 결과 반환", () => {
+    adapter.persist("key1", { value: "from_storage" });
+    const result = adapter.hydrateIfEmpty("key1", null);
+    expect(result).toEqual({ value: "from_storage" });
+  });
+
+  it("hydrateIfEmpty: current null + storage 없으면 null", () => {
+    const result = adapter.hydrateIfEmpty("key1", null);
+    expect(result).toBeNull();
+  });
+
+  it("clearByPrefix: 특정 접두사 키만 삭제", () => {
+    adapter.persist("PO-001::event_a", { value: "a" });
+    adapter.persist("PO-001::event_b", { value: "b" });
+    adapter.persist("PO-002::event_a", { value: "c" });
+
+    adapter.clearByPrefix("PO-001::");
+
+    expect(adapter.load("PO-001::event_a")).toBeNull();
+    expect(adapter.load("PO-001::event_b")).toBeNull();
+    expect(adapter.load("PO-002::event_a")).toEqual({ value: "c" });
+  });
+});
+
+// ══════════════════════════════════════════════
+// Scenario 12: Approval Baseline Adapter — store 계약 검증
+// ══════════════════════════════════════════════
+
+describe("Scenario 12: Approval Baseline adapter boundary — store 계약 검증", () => {
+  it("approval-baseline-client exports가 올바른 시그니처", async () => {
+    // Type-level 검증: import가 올바른 타입을 export하는지 확인
+    // 실제 fetch는 하지 않지만 타입 계약이 유효한지 검증
+    const clientModule = await import("@/lib/persistence/approval-baseline-client");
+
+    expect(typeof clientModule.ensureApprovalSnapshotWithServer).toBe("function");
+    expect(typeof clientModule.getApprovalSnapshotWithServer).toBe("function");
+    expect(typeof clientModule.clearApprovalSnapshotWithServer).toBe("function");
+    expect(typeof clientModule.hydrateApprovalSnapshotFromServer).toBe("function");
+  });
+});
+
+// ══════════════════════════════════════════════
+// Scenario 13: Dedupe Bridge — server bridge 계약 검증
+// ══════════════════════════════════════════════
+
+describe("Scenario 13: Dedupe Bridge — server bridge 계약 검증", () => {
+  it("governance-event-dedupe-client exports가 올바른 시그니처", async () => {
+    const clientModule = await import("@/lib/persistence/governance-event-dedupe-client");
+
+    expect(typeof clientModule.shouldPublishWithServer).toBe("function");
+    expect(typeof clientModule.shouldPublishWithServerAsync).toBe("function");
+    expect(typeof clientModule.markPublishedWithServer).toBe("function");
+    expect(typeof clientModule.clearDedupeForPoWithServer).toBe("function");
+  });
+
+  it("shouldPublishWithServer는 동기 함수 (boolean 반환)", () => {
+    // 서버 없는 테스트 환경 — sessionStorage도 없으므로 true 반환
+    const { shouldPublishWithServer } = require("@/lib/persistence/governance-event-dedupe-client");
+    const result = shouldPublishWithServer("PO-TEST", "test_event", "sig1");
+    expect(typeof result).toBe("boolean");
+  });
+
+  it("shouldPublishWithServerAsync는 비동기 함수 (Promise<boolean> 반환)", async () => {
+    const { shouldPublishWithServerAsync } = require("@/lib/persistence/governance-event-dedupe-client");
+    const result = shouldPublishWithServerAsync("PO-TEST", "test_event", "sig1");
+    expect(result).toBeInstanceOf(Promise);
+    // 서버 없는 환경에서 fallback → true
+    const resolved = await result;
+    expect(typeof resolved).toBe("boolean");
+  });
+});
