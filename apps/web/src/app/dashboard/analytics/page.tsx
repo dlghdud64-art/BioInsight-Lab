@@ -356,12 +356,12 @@ export default function AnalyticsPage() {
         </div>
 
         {/* ── 탭 네비게이션 ── */}
-        <div className="flex items-center gap-1 flex-wrap">
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-0.5">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap touch-manipulation active:scale-95 ${
                 activeTab === tab.id
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-pn border border-bd text-slate-500 hover:text-slate-700 hover:bg-el"
@@ -373,7 +373,7 @@ export default function AnalyticsPage() {
           <button
             onClick={runAiAnalysis}
             disabled={aiLoading}
-            className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 ml-auto"
+            className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 ml-auto whitespace-nowrap touch-manipulation active:scale-95"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
             AI 리포트 생성
@@ -428,9 +428,9 @@ export default function AnalyticsPage() {
 
         {/* ═══ 4 KPI 카드 ═══ */}
         {isLoading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0">
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-bd bg-pn p-5 space-y-3">
+              <div key={i} className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 space-y-3">
                 <Skeleton className="h-3 w-24 bg-el" />
                 <Skeleton className="h-8 w-32 bg-el" />
                 <Skeleton className="h-3 w-full bg-el" />
@@ -438,9 +438,9 @@ export default function AnalyticsPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 sm:overflow-visible sm:pb-0">
             {/* KPI 1: 예산 소진율 */}
-            <div className="rounded-xl border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+            <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Q{Math.ceil((new Date().getMonth() + 1) / 3)} 예산 소진율</p>
                 <TrendBadge value={budget.total > 0 ? Math.round(budget.usageRate - 50) : null} suffix="%" />
@@ -454,7 +454,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* KPI 2: 이번 달 누적 지출 */}
-            <div className="rounded-xl border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+            <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">이번 달 누적 지출</p>
                 <TrendBadge value={monthChange} suffix="%" />
@@ -466,7 +466,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* KPI 3: AI 식별 절감 기회 */}
-            <div className="rounded-xl border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+            <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">AI 식별 절감 기회</p>
                 {savingsOpportunity.count > 0 && (
@@ -482,7 +482,7 @@ export default function AnalyticsPage() {
             </div>
 
             {/* KPI 4: 특정 공급사 의존도 */}
-            <div className="rounded-xl border border-bd bg-pn p-5 hover:shadow-md transition-shadow">
+            <div className="min-w-[160px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border border-bd bg-pn p-4 sm:p-5 hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">특정 공급사 의존도</p>
                 <TrendBadge value={vendorConcentration > 0 ? Math.round(vendorConcentration - 40) : null} suffix="%" />

@@ -159,32 +159,32 @@ export default function AuditTrailPage() {
             <Lock className="h-4 w-4" />
             <span className="font-semibold tracking-tight text-sm">보안 및 컴플라이언스</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight text-slate-900 flex items-center gap-2">
             감사 증적 (Audit Trail)
-            <Lock className="h-6 w-6 text-slate-500" />
+            <Lock className="h-5 w-5 md:h-6 md:w-6 text-slate-500" />
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             시스템 내의 모든 데이터 변경 및 접근 기록을 추적합니다. (CFR 21 Part 11 대응)
           </p>
         </div>
         <div className="flex gap-2 flex-shrink-0">
           <Button
-            className="bg-el text-slate-900 hover:bg-slate-200"
+            className="bg-el text-slate-900 hover:bg-slate-200 touch-manipulation active:scale-95"
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
-            PDF 다운로드
+            <span className="hidden sm:inline">PDF </span>다운로드
           </Button>
-          <Button variant="outline" onClick={handleCsvExport}>
+          <Button variant="outline" onClick={handleCsvExport} className="touch-manipulation active:scale-95">
             <FileText className="w-4 h-4 mr-2" />
-            CSV 내보내기
+            <span className="hidden sm:inline">CSV </span>내보내기
           </Button>
         </div>
       </div>
 
       <div className="border border-bd border-bs rounded-lg bg-pn bg-sh overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-        <Table className="min-w-[800px]">
+        <Table className="min-w-[600px]">
           <TableHeader className="bg-pg bg-pn/50">
             <TableRow>
               <TableHead className="w-[180px] font-semibold">일시 (Timestamp) / ID</TableHead>

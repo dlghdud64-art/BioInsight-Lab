@@ -587,7 +587,7 @@ function POConversionContent() {
 
   if (status === "loading") {
     return (
-      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#F8FAFC' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     );
@@ -598,14 +598,14 @@ function POConversionContent() {
 
       {/* ═══ PO Decision Sub-Header ═══ */}
       <div className="shrink-0">
-        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
+        <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#FFFFFF' }}>
           <div className="flex items-center gap-2">
-            <span className="text-xs md:text-sm font-medium text-slate-400">발주 실행</span>
+            <span className="text-xs md:text-sm font-medium text-slate-600">발주 실행</span>
           </div>
           <div className="flex items-center gap-3">
             {selected && <span className="text-lg font-bold tabular-nums text-slate-900 hidden sm:block">₩{activeTotal.toLocaleString("ko-KR")}</span>}
             <span className={`inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded border font-medium ${
-              canCreate ? "text-emerald-400 bg-emerald-600/10 border-emerald-600/30" : "text-amber-400 bg-amber-600/10 border-amber-600/30"
+              canCreate ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-amber-700 bg-amber-50 border-amber-200"
             }`}>
               {canCreate ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
               {canCreate ? "생성 가능" : "조건 확인"}
@@ -614,16 +614,16 @@ function POConversionContent() {
           </div>
         </div>
         {/* Candidate selector strip */}
-        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#353739' }}>
+        <div className="flex items-center gap-2 px-4 md:px-6 py-2 border-b border-bd overflow-x-auto" style={{ backgroundColor: '#F1F5F9' }}>
           {candidates.map(c => (
             <button key={c.id} onClick={() => setSelectedId(c.id)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap border transition-all ${
-                (selected?.id === c.id) ? "bg-blue-600/10 text-blue-300 border-blue-600/30" : "text-slate-400 border-transparent hover:bg-el"
+                (selected?.id === c.id) ? "bg-blue-50 text-blue-700 border-blue-200" : "text-slate-500 border-transparent hover:bg-el"
               }`}>
               <FileText className="h-3.5 w-3.5" />
               <span>{c.vendor}</span>
               <span className="text-[10px] tabular-nums opacity-70">₩{c.totalAmount.toLocaleString("ko-KR")}</span>
-              {c.blockers.length > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-600/15 text-amber-400">{c.blockers.length}</span>}
+              {c.blockers.length > 0 && <span className="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-700">{c.blockers.length}</span>}
             </button>
           ))}
           <span className="text-[10px] text-slate-500 shrink-0 ml-1">{candidates.length}건 전환 후보</span>
@@ -710,8 +710,8 @@ function POConversionContent() {
           )}
 
           {/* Block A: Line Item 확정 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="px-4 py-2.5 border-b border-bd flex items-center justify-between" style={{ backgroundColor: '#F8FAFC' }}>
               <span className="text-xs font-medium text-slate-700">발주 대상 품목 ({activeItems.length}/{selected.items.length}건)</span>
               <span className="text-xs tabular-nums text-slate-900 font-semibold">₩{activeTotal.toLocaleString("ko-KR")}</span>
             </div>
@@ -742,7 +742,7 @@ function POConversionContent() {
                       <td className="px-2 py-2 text-center">
                         <button onClick={() => setExcludedItems(prev => {
                           const next = new Set(prev); next.has(key) ? next.delete(key) : next.add(key); return next;
-                        })} className={`text-[10px] px-1.5 py-0.5 rounded ${excluded ? "text-red-400 bg-red-600/10" : "text-emerald-400 bg-emerald-600/10"}`}>
+                        })} className={`text-[10px] px-1.5 py-0.5 rounded ${excluded ? "text-red-700 bg-red-50" : "text-emerald-700 bg-emerald-50"}`}>
                           {excluded ? "제외" : "포함"}
                         </button>
                       </td>
@@ -754,8 +754,8 @@ function POConversionContent() {
           </div>
 
           {/* Block B: 발주 조건 확정 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#F8FAFC' }}>
               <span className="text-xs font-medium text-slate-700">발주 조건</span>
             </div>
             <div className="p-4 space-y-3">
@@ -777,37 +777,37 @@ function POConversionContent() {
           </div>
 
           {/* Block C: 정책/문서/예산 가드 */}
-          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+          <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#F8FAFC' }}>
               <span className="text-xs font-medium text-slate-700">전환 가드</span>
             </div>
             <div className="p-4 space-y-2">
               {/* Approval guard */}
               <div className="flex items-center justify-between px-3 py-2 rounded border border-bd bg-pn">
                 <div className="flex items-center gap-2 text-xs">
-                  {approvalCleared ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
+                  {approvalCleared ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
                   <span className="text-slate-600">승인 확인</span>
                 </div>
-                <span className={`text-[10px] ${approvalCleared ? "text-emerald-400" : "text-red-400"}`}>
+                <span className={`text-[10px] ${approvalCleared ? "text-emerald-600" : "text-red-500"}`}>
                   {selected.approvalPolicy === "none" ? "승인 불필요" : selected.approvalStatus === "externally_approved" ? "외부 승인 확인됨" : "외부 승인 대기"}
                 </span>
               </div>
               {/* Line items guard */}
               <div className="flex items-center justify-between px-3 py-2 rounded border border-bd bg-pn">
                 <div className="flex items-center gap-2 text-xs">
-                  {activeItems.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertCircle className="h-3.5 w-3.5 text-red-400" />}
+                  {activeItems.length > 0 ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <AlertCircle className="h-3.5 w-3.5 text-red-500" />}
                   <span className="text-slate-600">발주 대상</span>
                 </div>
-                <span className={`text-[10px] ${activeItems.length > 0 ? "text-emerald-400" : "text-red-400"}`}>{activeItems.length}건 확정</span>
+                <span className={`text-[10px] ${activeItems.length > 0 ? "text-emerald-600" : "text-red-500"}`}>{activeItems.length}건 확정</span>
               </div>
               {/* Blocker guards */}
               {selected.blockers.map((b, idx) => {
                 const resolved = resolvedBlockers.has(b);
                 return (
-                  <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${resolved ? "border-emerald-600/20 bg-emerald-600/5" : "border-amber-600/20 bg-amber-600/5"}`}>
+                  <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${resolved ? "border-emerald-200 bg-emerald-50/50" : "border-amber-200 bg-amber-50/50"}`}>
                     <div className="flex items-center gap-2 text-xs">
-                      {resolved ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}
-                      <span className={resolved ? "text-slate-400 line-through" : "text-amber-300"}>{b}</span>
+                      {resolved ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" /> : <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
+                      <span className={resolved ? "text-slate-400 line-through" : "text-amber-700"}>{b}</span>
                     </div>
                     <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setResolvedBlockers(prev => {
                       const next = new Set(prev); next.has(b) ? next.delete(b) : next.add(b); return next;
@@ -819,16 +819,16 @@ function POConversionContent() {
               {guardrailResults.map((gr, idx) => (
                 <div key={idx} className={`flex items-center justify-between px-3 py-2 rounded border ${SEVERITY_CONFIG[gr.severity].bgColor} ${SEVERITY_CONFIG[gr.severity].borderColor}`}>
                   <div className="flex items-center gap-2 text-xs">
-                    {gr.severity === "blocked" ? <AlertCircle className="h-3.5 w-3.5 text-red-400" />
-                    : gr.severity === "conditional" ? <AlertTriangle className="h-3.5 w-3.5 text-blue-400" />
-                    : <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />}
+                    {gr.severity === "blocked" ? <AlertCircle className="h-3.5 w-3.5 text-red-500" />
+                    : gr.severity === "conditional" ? <AlertTriangle className="h-3.5 w-3.5 text-blue-500" />
+                    : <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />}
                     <span className={SEVERITY_CONFIG[gr.severity].color}>{gr.message}</span>
                   </div>
                   <span className="text-[10px] text-slate-500">{gr.recommendedAction}</span>
                 </div>
               ))}
               {selected.blockers.length === 0 && guardrailResults.length === 0 && (
-                <div className="flex items-center gap-2 text-xs text-emerald-400 px-3 py-2">
+                <div className="flex items-center gap-2 text-xs text-emerald-600 px-3 py-2">
                   <CheckCircle2 className="h-3.5 w-3.5" />모든 조건 충족
                 </div>
               )}
@@ -836,9 +836,9 @@ function POConversionContent() {
           </div>
 
           {/* Block D: 최종 전환 요약 */}
-          <div className="rounded-lg border border-emerald-600/20 bg-emerald-600/5 px-4 py-3">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 px-4 py-3">
             <p className="text-xs text-slate-600 leading-relaxed">
-              <strong className="text-emerald-400">{selected.vendor}</strong> 기준 {activeItems.length}개 품목,
+              <strong className="text-emerald-700">{selected.vendor}</strong> 기준 {activeItems.length}개 품목,
               총 <strong className="text-slate-900">₩{activeTotal.toLocaleString("ko-KR")}</strong>,
               납기 {selected.expectedDelivery},
               {canCreate ? " 발주 실행 가능" : " 실행 조건 확인 필요"}
@@ -848,7 +848,7 @@ function POConversionContent() {
         </div>
 
         {/* ═══ PO Evidence Rail (400px) ═══ */}
-        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#353739' }}>
+        <div className="hidden lg:flex w-[400px] shrink-0 border-l border-bd flex-col" style={{ backgroundColor: '#F1F5F9' }}>
           <div className="px-5 py-4 border-b border-bd">
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">선택 근거</div>
             <p className="text-xs text-slate-600">{selected.selectionReason}</p>
@@ -861,7 +861,7 @@ function POConversionContent() {
               <div className="flex justify-between text-xs"><span className="text-slate-400">총액</span><span className="text-slate-700 tabular-nums font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">납기</span><span className="text-slate-700">{selected.expectedDelivery}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인</span>
-                <span className={approvalCleared ? "text-emerald-400" : "text-amber-400"}>
+                <span className={approvalCleared ? "text-emerald-600" : "text-amber-600"}>
                   {selected.approvalPolicy === "none" ? "불필요" : approvalCleared ? "확인됨" : "외부 대기"}
                 </span>
               </div>
@@ -871,14 +871,14 @@ function POConversionContent() {
             <div className="text-[10px] font-medium uppercase tracking-wider text-slate-500 mb-2">가드 상태</div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 text-xs">
-                {canCreate ? <CheckCircle2 className="h-3 w-3 text-emerald-400" /> : <AlertTriangle className="h-3 w-3 text-amber-400" />}
-                <span className={canCreate ? "text-emerald-400" : "text-amber-400"}>{canCreate ? "모든 조건 충족" : `${unresolvedBlockers.length}건 미해결`}</span>
+                {canCreate ? <CheckCircle2 className="h-3 w-3 text-emerald-600" /> : <AlertTriangle className="h-3 w-3 text-amber-500" />}
+                <span className={canCreate ? "text-emerald-600" : "text-amber-600"}>{canCreate ? "모든 조건 충족" : `${unresolvedBlockers.length}건 미해결`}</span>
               </div>
             </div>
           </div>
           <div className="flex-1" />
           {/* Rail footer CTA */}
-          <div className="px-5 py-4 border-t border-bd shrink-0 space-y-2" style={{ backgroundColor: '#434548' }}>
+          <div className="px-5 py-4 border-t border-bd shrink-0 space-y-2" style={{ backgroundColor: '#F8FAFC' }}>
             <Button size="sm" onClick={openImpactAnalysis} className="w-full h-9 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-40" disabled={!canCreate}>
               <Truck className="h-3 w-3 mr-1.5" />PO 생성
             </Button>
@@ -980,10 +980,10 @@ function POConversionContent() {
 
       {/* ═══ Sticky Action Dock (mobile) ═══ */}
       {selected && (
-        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#434548' }}>
+        <div className="lg:hidden shrink-0 border-t-2 border-bd px-4 py-3" style={{ backgroundColor: '#F8FAFC' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className={`text-[10px] ${canCreate ? "text-emerald-400" : "text-amber-400"}`}>
+              <span className={`text-[10px] ${canCreate ? "text-emerald-600" : "text-amber-600"}`}>
                 {canCreate ? "생성 가능" : `${unresolvedBlockers.length}건 확인`}
               </span>
               <span className="text-xs tabular-nums text-slate-900 font-medium">₩{activeTotal.toLocaleString("ko-KR")}</span>
@@ -1006,11 +1006,11 @@ type OrderView = "queue" | "analytics";
 
 function ViewSwitcher({ current, onChange }: { current: OrderView; onChange: (v: OrderView) => void }) {
   return (
-    <div className="flex items-center gap-1 rounded-lg border border-bd p-0.5" style={{ backgroundColor: '#353739' }}>
+    <div className="flex items-center gap-1 rounded-lg border border-bd p-0.5" style={{ backgroundColor: '#F1F5F9' }}>
       <button
         onClick={() => onChange("queue")}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-          current === "queue" ? "bg-blue-600/10 text-blue-300 border border-blue-600/30" : "text-slate-400 border border-transparent hover:text-slate-300"
+          current === "queue" ? "bg-blue-50 text-blue-700 border border-blue-200" : "text-slate-500 border border-transparent hover:text-slate-700"
         }`}
       >
         <FileText className="h-3 w-3" />
@@ -1019,7 +1019,7 @@ function ViewSwitcher({ current, onChange }: { current: OrderView; onChange: (v:
       <button
         onClick={() => onChange("analytics")}
         className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-colors ${
-          current === "analytics" ? "bg-violet-600/10 text-violet-300 border border-violet-600/30" : "text-slate-400 border border-transparent hover:text-slate-300"
+          current === "analytics" ? "bg-violet-50 text-violet-700 border border-violet-200" : "text-slate-500 border border-transparent hover:text-slate-700"
         }`}
       >
         <Package className="h-3 w-3" />
@@ -1032,7 +1032,7 @@ function ViewSwitcher({ current, onChange }: { current: OrderView; onChange: (v:
 export default function OrdersPage() {
   return (
     <Suspense fallback={
-      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#303236' }}>
+      <div className="fixed inset-0 z-[55] flex items-center justify-center" style={{ backgroundColor: '#F8FAFC' }}>
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
       </div>
     }>
@@ -1054,8 +1054,8 @@ function OrdersPageContent() {
 /** 기존 POConversionContent + ViewSwitcher 통합 */
 function POConversionContentWithSwitcher({ onViewChange }: { onViewChange: (v: OrderView) => void }) {
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
-      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
+      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#F8FAFC' }}>
         <div className="flex items-center gap-2">
           <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
           <div className="w-px h-5 bg-bd" />
@@ -1094,12 +1094,12 @@ const PHASE_ICON: Record<ThoughtStep["phase"], string> = {
 };
 
 const PHASE_COLOR: Record<ThoughtStep["phase"], string> = {
-  intent: "text-blue-400",
-  ontology: "text-violet-400",
-  plan: "text-amber-400",
-  execute: "text-emerald-400",
-  done: "text-green-400",
-  error: "text-red-400",
+  intent: "text-blue-600",
+  ontology: "text-violet-600",
+  plan: "text-amber-600",
+  execute: "text-emerald-600",
+  done: "text-green-600",
+  error: "text-red-500",
 };
 
 function AgentConsoleTerminal({ steps, isRunning }: { steps: ThoughtStep[]; isRunning: boolean }) {
@@ -1274,9 +1274,9 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
   }, []);
 
   return (
-    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#303236' }}>
+    <div className="fixed inset-0 z-[55] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
       {/* Header */}
-      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+      <div className="shrink-0 flex items-center justify-between px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#F8FAFC' }}>
         <div className="flex items-center gap-2">
           <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
           <div className="w-px h-5 bg-bd" />
@@ -1285,7 +1285,7 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
       </div>
 
       {/* AI Agent Console */}
-      <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#353739' }}>
+      <div className="shrink-0 px-4 md:px-6 py-2 border-b border-bd" style={{ backgroundColor: '#F1F5F9' }}>
         <div className="max-w-3xl">
           {/* Command Input */}
           <div className={cn(
@@ -1319,8 +1319,8 @@ function StrategicAnalyticsView({ onBack }: { onBack: () => void }) {
                 className={cn(
                   "shrink-0 rounded px-3 py-1 text-[10px] font-medium transition-all active:scale-95",
                   isAgentRunning
-                    ? "bg-slate-700 text-slate-500 cursor-not-allowed"
-                    : "bg-blue-600/80 hover:bg-blue-500 text-white"
+                    ? "bg-slate-200 text-slate-400 cursor-not-allowed"
+                    : "bg-blue-600 hover:bg-blue-500 text-white"
                 )}
               >
                 {isAgentRunning ? "처리 중..." : "실행"}

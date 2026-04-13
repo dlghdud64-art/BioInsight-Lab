@@ -318,7 +318,7 @@ export default function BudgetPage() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-5">
         {/* ═══ KPI Strip ═══ */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+        <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-3 md:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
           {[
             {
               icon: <AlertTriangle className="h-4 w-4" />,
@@ -356,7 +356,7 @@ export default function BudgetPage() {
               sub: "최근 4주 평균 기준",
             },
           ].map((kpi) => (
-            <div key={kpi.label} className="bg-white rounded-xl border border-slate-200 p-4 hover:shadow-sm transition-shadow">
+            <div key={kpi.label} className="min-w-[140px] snap-start shrink-0 sm:min-w-0 sm:shrink bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 hover:shadow-sm transition-shadow">
               <div className="flex items-center gap-2 mb-2">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.iconColor}`}>
                   {kpi.icon}

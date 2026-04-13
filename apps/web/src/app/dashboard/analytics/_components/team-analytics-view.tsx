@@ -287,7 +287,7 @@ export default function TeamAnalyticsView() {
         </CardHeader>
         <CardContent className="p-4 pt-3">
           <div className="overflow-x-auto">
-            <Table className="min-w-[800px]">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 <TableRow className="border-slate-100 border-bd/50">
                   <TableHead className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">팀명</TableHead>

@@ -21,7 +21,7 @@ export default function BillingPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* 페이지 헤더 */}
         <div className="flex flex-col space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-900">정산 및 세금계산서</h2>
+          <h2 className="text-xl md:text-3xl font-bold tracking-tight text-slate-900">정산 및 세금계산서</h2>
           <p className="text-muted-foreground">
             여러 벤더의 구매 내역을 LabAxis 단일 세금계산서로 한 번에 처리하세요.
           </p>
