@@ -8,6 +8,45 @@
  * - No Prisma imports (interface-only)
  * - No runtime wiring
  * - No DB enum dependencies
+ *
+ * ═══════════════════════════════════════════════════════════════
+ * Truth Layer Contract — registry / persisted / derived view
+ * ═══════════════════════════════════════════════════════════════
+ *
+ * AI pipeline persistence 는 세 가지 진실 계층으로 분리된다.
+ * 이 구분은 lock-hygiene, snapshot-adapter, recovery-startup 등
+ * 모든 consumer 가 지켜야 하는 읽기/쓰기 계약이다.
+ *
+ * 1. Registry Truth (types/stabilization.ts → BaselineRegistry)
+ *    - In-memory canonical baseline. runtime coordinator 가 직접 읽는 진실.
+ *    - 필드: canonicalBaselineId, baselineVersion, baselineHash,
+ *      lifecycleState, releaseMode, baselineStatus 등.
+ *    - 생산자: createCanonicalBaseline() / getCanonicalBaselineFromRepo().
+ *    - 소비자: lock-hygiene (audit emit), recovery-startup (audit emit),
+ *      assertSingleCanonical(), invalidateCanonicalBaseline().
+ *    - 절대 규칙: registry truth 를 직접 쓰는 건 baseline-registry.ts 만 허용.
+ *      다른 모듈은 read-only.
+ *
+ * 2. Persisted Truth (이 파일 → PersistedBaseline, PersistedSnapshot 등)
+ *    - DB-aligned 영속 모델. Prisma schema 와 1:1 매핑.
+ *    - repository (repositories.ts) 가 CRUD 하는 유일한 대상.
+ *    - Registry ↔ Persisted 변환은 BaselineOntologyAdapter 가 담당.
+ *      (runtime/core/ontology/baseline-adapter.ts)
+ *    - 절대 규칙: consumer 가 PersistedBaseline 을 직접 참조하지 않는다.
+ *      항상 adapter 를 거쳐 registry truth 로 변환해야 한다.
+ *
+ * 3. Derived View (lock-hygiene sweep result, snapshot diff, audit event payload)
+ *    - Registry 또는 Persisted 에서 계산된 읽기 전용 projection.
+ *    - canonical truth 를 변경하지 않는다.
+ *    - 예: emitStabilizationAuditEvent 의 payload, lock sweep diagnostics.
+ *
+ * 위반 시나리오 (금지):
+ * - lock-hygiene 가 PersistedBaseline.id 를 직접 사용 → registry.canonicalBaselineId 경유해야.
+ * - snapshot-adapter 가 CreateSnapshotInput 필드를 누락 → 타입 에러로 차단.
+ * - recovery-startup 가 BaselineRegistry 에 없는 필드(baselineId, timelineId) 접근
+ *   → PersistedBaseline 과 혼동한 것. registry 필드만 사용.
+ *
+ * 이 계약은 코드 타입으로 강제된다 (@ts-nocheck 제거 완료).
  */
 
 // ══════════════════════════════════════════════════════════════════════════════
