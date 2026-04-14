@@ -359,11 +359,32 @@ export function CommandPalette() {
             {/* 결과 패널 */}
             <div className="rounded-b-lg border border-t-0 border-slate-200 bg-white shadow-xl max-h-[400px] overflow-y-auto">
 
-              {/* 쿼리가 없을 때: 추천 액션 + 최근 조회 */}
+              {/* 쿼리가 없을 때: 최근 작업 → 바로 시작 → 이동 (섹션 분리) */}
               {!query.trim() && (
                 <div className="py-2">
+                  {/* ── 최근 작업 (있을 때만) ── */}
+                  {recentSearches.length > 0 && (
+                    <>
+                      <div className="px-3 py-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">최근 작업</p>
+                      </div>
+                      {recentSearches.map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => { setQuery(s); }}
+                          className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
+                        >
+                          <Clock className="h-4 w-4 text-slate-300 shrink-0" />
+                          <span className="text-sm text-slate-600">{s}</span>
+                        </button>
+                      ))}
+                      <div className="h-px bg-slate-100 my-1" />
+                    </>
+                  )}
+
+                  {/* ── 바로 시작 ── */}
                   <div className="px-3 py-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">빠른 실행</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">바로 시작</p>
                   </div>
                   {QUICK_ACTIONS.map((action, idx) => (
                     <button
@@ -387,23 +408,26 @@ export function CommandPalette() {
                     </button>
                   ))}
 
-                  {recentSearches.length > 0 && (
-                    <>
-                      <div className="px-3 py-1.5 mt-1">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">최근 조회</p>
-                      </div>
-                      {recentSearches.map((s, idx) => (
-                        <button
-                          key={s}
-                          onClick={() => { setQuery(s); }}
-                          className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
-                        >
-                          <Clock className="h-4 w-4 text-slate-300 shrink-0" />
-                          <span className="text-sm text-slate-600">{s}</span>
-                        </button>
-                      ))}
-                    </>
-                  )}
+                  {/* ── 이동 ── */}
+                  <div className="h-px bg-slate-100 my-1" />
+                  <div className="px-3 py-1.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">이동</p>
+                  </div>
+                  {[
+                    { label: "견적 관리", href: "/dashboard/quotes" },
+                    { label: "구매 운영", href: "/dashboard/purchases" },
+                    { label: "예산 현황", href: "/dashboard/analytics" },
+                    { label: "재고 부족 품목", href: "/dashboard/stock-risk" },
+                  ].map((link) => (
+                    <button
+                      key={link.href}
+                      onClick={() => { setOpen(false); router.push(link.href); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 text-left hover:bg-slate-50 transition-colors"
+                    >
+                      <ArrowRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />
+                      <span className="text-sm text-slate-600">{link.label}</span>
+                    </button>
+                  ))}
                 </div>
               )}
 
@@ -414,7 +438,7 @@ export function CommandPalette() {
                   {nlResult && (
                     <>
                       <div className="px-3 py-1.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-500">AI 분석 결과</p>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-blue-500">실행 가능한 작업</p>
                       </div>
                       <button
                         onClick={() => executeItem(allItems.findIndex(i => i.type === "nl"))}
