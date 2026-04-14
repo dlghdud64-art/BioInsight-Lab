@@ -64,7 +64,7 @@ function deriveInsights(
   // 1. Spend change drivers — top growing category
   const sortedCats = [...categoryData].sort((a, b) => b.value - a.value);
   const topCat = sortedCats[0];
-  const topCatPct = totalAmount > 0 && topCat ? Math.round((topCat.value / totalAmount) * 100) : 0;
+  const topCatPct = totalAmount > 0 && topCat && topCat.value > 0 ? Math.round((topCat.value / totalAmount) * 100) : 0;
 
   // 2. Outlier detection — items > 2x average unit price
   const prices = details
@@ -77,9 +77,11 @@ function deriveInsights(
   const concentrationPct = topCatPct;
 
   // 4. Vendor dependency — single-vendor share
-  const sortedVendors = [...vendorData].sort((a, b) => b.amount - a.amount);
+  const sortedVendors = [...vendorData].sort((a, b) => (b.amount || 0) - (a.amount || 0));
   const topVendor = sortedVendors[0];
-  const topVendorPct = totalAmount > 0 && topVendor ? Math.round((topVendor.amount / totalAmount) * 100) : 0;
+  const topVendorPct = totalAmount > 0 && topVendor && topVendor.amount > 0
+    ? Math.round((topVendor.amount / totalAmount) * 100)
+    : 0;
   const vendorRisk = topVendorPct >= 60 ? "danger" : topVendorPct >= 40 ? "warning" : "safe";
 
   // Monthly trend — last two months comparison
@@ -618,7 +620,7 @@ export default function ReportsPage() {
                     {insights.topVendorPct}%
                   </p>
                   <p className="text-xs text-emerald-600/70 mt-1.5 leading-relaxed">
-                    {insights.topVendor ? `${insights.topVendor.vendor} 단일 공급 비중` : "벤더 데이터 없음"}
+                    {insights.topVendor?.vendor ? `${insights.topVendor.vendor} 단일 공급 비중` : "벤더 데이터 없음"}
                   </p>
                 </div>
               </div>
@@ -652,12 +654,12 @@ export default function ReportsPage() {
                   </Button>
                 </Link>
               </div>
-              {categoryData.length > 0 ? (
+              {categoryData.length > 0 && categoryData.some((c) => c.value > 0) ? (
                 <div className="flex-1 min-h-0" style={{ height: 260 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={categoryData}
+                        data={categoryData.filter((c) => c.value > 0)}
                         cx="50%"
                         cy="45%"
                         innerRadius={55}
@@ -722,8 +724,8 @@ export default function ReportsPage() {
                   </Button>
                 </Link>
               </div>
-              {vendorData.length > 0 ? (
-                <div className="flex-1 min-h-0" style={{ height: Math.max(220, vendorData.length * 44) }}>
+              {vendorData.length > 0 && vendorData.some((v) => v.amount > 0) ? (
+                <div className="flex-1 min-h-0" style={{ height: Math.max(220, vendorData.filter((v) => v.amount > 0).length * 44) }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={vendorData.slice(0, 8)} layout="vertical" margin={{ top: 4, right: 20, left: 10, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} strokeOpacity={0.6} />
@@ -771,7 +773,7 @@ export default function ReportsPage() {
                   </Button>
                 </Link>
               </div>
-              {monthlyData.length > 0 ? (
+              {monthlyData.length > 0 && monthlyData.some((m) => m.amount > 0) ? (
                 <div className="flex-1 min-h-0" style={{ height: 240 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
