@@ -8,7 +8,7 @@ import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
 import { ArrowUpRight, ArrowDownRight, AlertTriangle, TrendingUp, Building2, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, ShieldAlert, Activity } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
@@ -654,35 +654,43 @@ export default function ReportsPage() {
                 </Link>
               </div>
               {categoryData.length > 0 ? (
-                <div className="flex-1 min-h-0" style={{ height: 220 }}>
+                <div className="flex-1 min-h-0" style={{ height: 260 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={categoryData}
                         cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }: { name: string; percent: number }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={80}
+                        cy="45%"
+                        innerRadius={55}
+                        outerRadius={90}
                         fill="#8884d8"
                         dataKey="value"
                         stroke="#ffffff"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         cursor="pointer"
+                        paddingAngle={2}
                       >
                         {categoryData.map((_entry: CategoryItem, index: number) => (
                           <Cell key={`cell-${index}`} fill={_entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#334155", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: "10px 14px" }}
                         formatter={(value: number) => formatCurrency(value, "KRW")}
+                      />
+                      <Legend
+                        verticalAlign="bottom"
+                        align="center"
+                        iconType="circle"
+                        iconSize={8}
+                        wrapperStyle={{ fontSize: "11px", color: "#64748b", paddingTop: "12px" }}
+                        formatter={(value: string) => <span className="text-slate-600 ml-1">{value}</span>}
                       />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[220px] text-slate-500 text-xs">데이터 없음</div>
+                <div className="flex items-center justify-center h-[260px] text-slate-500 text-xs">데이터 없음</div>
               )}
               {/* Category budget comparison list */}
               {insights.sortedCats.length > 0 && (
@@ -716,18 +724,22 @@ export default function ReportsPage() {
                 </Link>
               </div>
               {vendorData.length > 0 ? (
-                <div className="flex-1 min-h-0" style={{ height: 220 }}>
+                <div className="flex-1 min-h-0" style={{ height: Math.max(220, vendorData.length * 44) }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={vendorData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.3} />
-                      <XAxis dataKey="vendor" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
+                    <BarChart data={vendorData.slice(0, 8)} layout="vertical" margin={{ top: 4, right: 20, left: 10, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} strokeOpacity={0.6} />
+                      <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
+                      <YAxis type="category" dataKey="vendor" axisLine={false} tickLine={false} tick={{ fill: "#475569", fontSize: 11, fontWeight: 500 }} width={80} />
                       <Tooltip
-                        cursor={{ fill: "rgba(51,65,85,0.3)" }}
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
+                        cursor={{ fill: "rgba(59,130,246,0.06)" }}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#334155", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: "10px 14px" }}
                         formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                       />
-                      <Bar dataKey="amount" fill="#10b981" barSize={36} maxBarSize={40} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="amount" radius={[0, 6, 6, 0]} barSize={20}>
+                        {vendorData.slice(0, 8).map((_: VendorItem, index: number) => (
+                          <Cell key={`bar-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -748,10 +760,12 @@ export default function ReportsPage() {
               )}
             </div>
 
-            {/* Block 3: Monthly Trend */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
+          </div>{/* end 2-col grid */}
+
+          {/* Block 3: Monthly Trend — Full width */}
+          <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">기간별 추이</p>
+                <p className="text-sm font-bold text-slate-800">월별 지출 추이</p>
                 <Link href="/dashboard/purchases">
                   <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
                     구매내역 필터 →
@@ -759,23 +773,29 @@ export default function ReportsPage() {
                 </Link>
               </div>
               {monthlyData.length > 0 ? (
-                <div className="flex-1 min-h-0" style={{ height: 220 }}>
+                <div className="flex-1 min-h-0" style={{ height: 240 }}>
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={monthlyData} margin={{ top: 8, right: 0, left: 0, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} strokeOpacity={0.3} />
+                    <LineChart data={monthlyData} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} strokeOpacity={0.8} />
                       <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 11 }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
+                      <YAxis axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
                       <Tooltip
-                        cursor={{ fill: "rgba(51,65,85,0.3)" }}
-                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
-                        formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#334155", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: "10px 14px" }}
+                        formatter={(value: number) => [formatCurrency(value, "KRW"), "월 지출"]}
                       />
-                      <Bar dataKey="amount" fill="#3b82f6" barSize={36} maxBarSize={40} radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                      <Line
+                        type="monotone"
+                        dataKey="amount"
+                        stroke="#3b82f6"
+                        strokeWidth={2.5}
+                        dot={{ r: 4, fill: "#3b82f6", stroke: "#ffffff", strokeWidth: 2 }}
+                        activeDot={{ r: 6, fill: "#3b82f6", stroke: "#ffffff", strokeWidth: 2 }}
+                      />
+                    </LineChart>
                   </ResponsiveContainer>
                 </div>
               ) : (
-                <div className="flex items-center justify-center h-[220px] text-slate-500 text-xs">데이터 없음</div>
+                <div className="flex items-center justify-center h-[240px] text-slate-500 text-xs">데이터 없음</div>
               )}
               {/* Trend explanation */}
               {monthlyData.length >= 2 && (
@@ -847,7 +867,6 @@ export default function ReportsPage() {
                 </div>
               )}
             </div>
-          </div>
 
           {/* ============================================================
               BOTTOM: DETAIL TABLE
@@ -855,8 +874,8 @@ export default function ReportsPage() {
           {details.length > 0 && (
             <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">상세 내역</p>
-                <span className="text-xs text-slate-600">{details.length}건</span>
+                <p className="text-sm font-bold text-slate-800">상세 내역</p>
+                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">{details.length}건</span>
               </div>
               <div className="overflow-x-auto">
                 <Table className="min-w-[600px]">
