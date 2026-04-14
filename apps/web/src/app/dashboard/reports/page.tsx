@@ -298,8 +298,7 @@ export default function ReportsPage() {
           ================================================================ */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-blue-600">판단형 리포트</p>
-          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight">구매 분석 콘솔</h2>
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight">구매 리포트</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
