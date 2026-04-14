@@ -338,8 +338,8 @@ export default function PurchasesPage() {
   const formatPrice = (n: number) => n > 0 ? `₩${n.toLocaleString("ko-KR")}` : "—";
 
   return (
-    <div className="min-h-screen bg-slate-50/50 p-4 md:p-8 pt-4 md:pt-6">
-      <div className="max-w-7xl mx-auto space-y-5">
+    <div className="min-h-screen bg-slate-50/50 p-4 md:p-6 pt-4 md:pt-4">
+      <div className="max-w-7xl mx-auto space-y-4">
 
         {/* ═══ 브레드크럼 ═══ */}
         <div className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -447,7 +447,7 @@ export default function PurchasesPage() {
         <div className="flex gap-5">
 
           {/* ── 큐 리스트 ── */}
-          <div className={`flex-1 min-w-0 space-y-3 transition-all ${selectedItem ? "md:max-w-[calc(100%-400px)]" : ""}`}>
+          <div className={`flex-1 min-w-0 space-y-2 transition-all ${selectedItem ? "md:max-w-[calc(100%-400px)]" : ""}`}>
             {filteredItems.length === 0 && (
               <div className="rounded-xl border border-slate-200 bg-white p-10 text-center">
                 <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
@@ -474,9 +474,9 @@ export default function PurchasesPage() {
                   }`}
                   onClick={() => setSelectedId(item.id)}>
 
-                  <div className="p-5">
+                  <div className="p-4">
                     {/* 상단: 배지 + 시간 */}
-                    <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
                       <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md border ${cs.bg} ${cs.text} ${cs.border}`}>
                         {cs.label}
                       </span>

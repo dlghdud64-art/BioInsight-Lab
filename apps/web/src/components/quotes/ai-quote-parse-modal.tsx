@@ -11,6 +11,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Upload, FileText, Loader2, CheckCircle2, AlertTriangle, X,
@@ -177,17 +178,17 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full max-w-2xl mx-4 rounded-xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+      <div className="w-full max-w-2xl mx-4 rounded-xl border border-slate-200 bg-white shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-800 shrink-0">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 shrink-0">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-blue-400" />
-            <span className="text-sm font-semibold text-slate-200">AI 견적서 파싱</span>
-            <span className="text-[10px] font-mono text-slate-600 bg-slate-800 rounded px-1.5 py-0.5">
+            <span className="text-sm font-semibold text-slate-900">AI 견적서 파싱</span>
+            <span className="text-[10px] font-mono text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
               Gemini 2.5 Flash
             </span>
           </div>
-          <button onClick={onClose} className="text-slate-500 hover:text-slate-300 transition-colors">
+          <button onClick={onClose} className="text-slate-500 hover:text-slate-600 transition-colors">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -199,14 +200,23 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
             <div className="space-y-4">
               <div
                 onClick={() => fileInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-700 hover:border-blue-500/50 bg-slate-800/30 hover:bg-blue-950/10 py-12 cursor-pointer transition-all active:scale-[0.99]"
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); e.currentTarget.classList.add("border-blue-500", "bg-blue-50"); }}
+                onDragLeave={(e) => { e.preventDefault(); e.currentTarget.classList.remove("border-blue-500", "bg-blue-50"); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.currentTarget.classList.remove("border-blue-500", "bg-blue-50");
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) handleFileSelect(file);
+                }}
+                className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-blue-50 py-12 cursor-pointer transition-all active:scale-[0.99]"
               >
                 <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
                   <Upload className="h-5 w-5 text-blue-400" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-medium text-slate-300">견적서 파일을 업로드하세요</p>
-                  <p className="text-[11px] text-slate-600 mt-1">PDF, JPG, PNG, WebP (최대 10MB)</p>
+                  <p className="text-sm font-medium text-slate-600">견적서 파일을 여기에 끌어다 놓거나 클릭하세요</p>
+                  <p className="text-[11px] text-slate-400 mt-1">PDF, JPG, PNG, WebP (최대 10MB) · 드래그 앤 드롭 지원</p>
                 </div>
               </div>
               <input
@@ -235,7 +245,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                 <div className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-blue-500 animate-ping" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-slate-300">AI가 견적서를 분석하고 있습니다</p>
+                <p className="text-sm font-medium text-slate-600">AI가 견적서를 분석하고 있습니다</p>
                 <p className="text-[11px] text-slate-500 mt-1">{fileName}</p>
                 <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-600">
                   <Loader2 className="h-3 w-3 animate-spin" />
@@ -255,7 +265,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                     parseResult?.confidence === "high" ? "text-emerald-400" :
                     parseResult?.confidence === "medium" ? "text-amber-400" : "text-red-400"
                   )} />
-                  <span className="text-xs text-slate-400">
+                  <span className="text-xs text-slate-500">
                     파싱 완료 — 신뢰도{" "}
                     <span className={cn("font-semibold",
                       parseResult?.confidence === "high" ? "text-emerald-400" :
@@ -269,12 +279,12 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
               </div>
 
               {/* Vendor Info */}
-              <div className="rounded-lg border border-slate-800 bg-slate-800/30 p-3">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                 <label className="text-[10px] text-slate-600 uppercase tracking-wider block mb-1">공급사명</label>
                 <input
                   value={editableDoc.vendor?.name || ""}
                   onChange={(e) => updateVendorName(e.target.value)}
-                  className="w-full bg-transparent text-sm text-slate-300 border-b border-slate-700 focus:border-blue-500 outline-none pb-1"
+                  className="w-full bg-transparent text-sm text-slate-600 border-b border-slate-200 focus:border-blue-500 outline-none pb-1"
                 />
                 <div className="flex gap-4 mt-2 text-[10px] text-slate-500">
                   {editableDoc.quoteNumber && <span>견적번호: {editableDoc.quoteNumber}</span>}
@@ -284,20 +294,20 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
               </div>
 
               {/* Items Table */}
-              <div className="rounded-lg border border-slate-800 overflow-hidden">
-                <div className="bg-slate-800/50 px-3 py-1.5 flex items-center gap-2">
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <div className="bg-slate-100 px-3 py-1.5 flex items-center gap-2">
                   <Edit3 className="h-3 w-3 text-slate-500" />
                   <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">품목 상세 (수정 가능)</span>
                 </div>
-                <div className="divide-y divide-slate-800/50 max-h-64 overflow-y-auto">
+                <div className="divide-y divide-slate-200 max-h-64 overflow-y-auto">
                   {editableDoc.items.map((item: ParsedQuoteLineItem, idx: number) => (
-                    <div key={idx} className="px-3 py-2 hover:bg-slate-800/20">
+                    <div key={idx} className="px-3 py-2 hover:bg-slate-50">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[9px] text-slate-600 font-mono w-4 text-right shrink-0">{idx + 1}</span>
                         <input
                           value={item.productName || ""}
                           onChange={(e) => updateItem(idx, "productName", e.target.value)}
-                          className="flex-1 bg-transparent text-xs text-slate-300 outline-none"
+                          className="flex-1 bg-transparent text-xs text-slate-600 outline-none"
                           placeholder="품목명"
                         />
                         {item.catalogNumber && (
@@ -310,7 +320,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                           type="number"
                           value={item.quantity || 0}
                           onChange={(e) => updateItem(idx, "quantity", parseInt(e.target.value) || 0)}
-                          className="w-14 bg-slate-800/50 rounded px-1.5 py-0.5 text-slate-400 outline-none text-center"
+                          className="w-14 bg-slate-100 rounded px-1.5 py-0.5 text-slate-500 outline-none text-center"
                         />
                         <span className="text-slate-600">{item.unit}</span>
                         <span className="text-slate-700">|</span>
@@ -319,7 +329,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                           type="number"
                           value={item.unitPrice || 0}
                           onChange={(e) => updateItem(idx, "unitPrice", parseInt(e.target.value) || 0)}
-                          className="w-24 bg-slate-800/50 rounded px-1.5 py-0.5 text-slate-400 outline-none text-right"
+                          className="w-24 bg-slate-100 rounded px-1.5 py-0.5 text-slate-500 outline-none text-right"
                         />
                         <span className="text-slate-600">원</span>
                         {item.leadTimeDays != null && (
@@ -330,7 +340,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                               type="number"
                               value={item.leadTimeDays}
                               onChange={(e) => updateItem(idx, "leadTimeDays", parseInt(e.target.value) || 0)}
-                              className="w-12 bg-slate-800/50 rounded px-1.5 py-0.5 text-slate-400 outline-none text-center"
+                              className="w-12 bg-slate-100 rounded px-1.5 py-0.5 text-slate-500 outline-none text-center"
                             />
                             <span className="text-slate-600">일</span>
                           </>
@@ -343,9 +353,9 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
 
               {/* Total */}
               {editableDoc.totalAmount != null && (
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-800 bg-slate-800/20">
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-200 bg-slate-50">
                   <span className="text-[10px] text-slate-500 uppercase tracking-wider">합계</span>
-                  <span className="text-sm font-semibold text-slate-300 tabular-nums">
+                  <span className="text-sm font-semibold text-slate-600 tabular-nums">
                     {editableDoc.currency} {editableDoc.totalAmount.toLocaleString()}
                     {editableDoc.vat != null && (
                       <span className="text-[10px] text-slate-600 ml-2">(VAT {editableDoc.vat.toLocaleString()})</span>
@@ -360,7 +370,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
           {step === "registering" && (
             <div className="flex flex-col items-center gap-4 py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
-              <p className="text-sm text-slate-400">벤더 응답으로 등록하는 중...</p>
+              <p className="text-sm text-slate-500">벤더 응답으로 등록하는 중...</p>
             </div>
           )}
 
@@ -371,7 +381,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                 <CheckCircle2 className="h-7 w-7 text-emerald-400" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-slate-300">벤더 응답 등록 완료</p>
+                <p className="text-sm font-medium text-slate-600">벤더 응답 등록 완료</p>
                 <p className="text-[11px] text-slate-500 mt-1">
                   {editableDoc?.vendor?.name} — {editableDoc?.items.length}개 품목이 등록되었습니다.
                 </p>
@@ -394,8 +404,8 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
         </div>
 
         {/* Footer Actions */}
-        <div className="shrink-0 px-5 py-3 border-t border-slate-800 flex items-center justify-between bg-slate-900/80">
-          <button onClick={onClose} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+        <div className="shrink-0 px-5 py-3 border-t border-slate-200 flex items-center justify-between bg-slate-50">
+          <button onClick={onClose} className="text-xs text-slate-500 hover:text-slate-600 transition-colors">
             닫기
           </button>
           <div className="flex items-center gap-2">
@@ -404,7 +414,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs border-slate-700 text-slate-400 hover:text-slate-200"
+                  className="text-xs border-slate-200 text-slate-500 hover:text-slate-700"
                   onClick={() => { setStep("upload"); setParseResult(null); setEditableDoc(null); }}
                 >
                   다시 업로드
@@ -427,7 +437,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
               <Button
                 size="sm"
                 variant="outline"
-                className="text-xs border-slate-700 text-slate-400"
+                className="text-xs border-slate-200 text-slate-500"
                 onClick={() => setStep("upload")}
               >
                 다시 시도
