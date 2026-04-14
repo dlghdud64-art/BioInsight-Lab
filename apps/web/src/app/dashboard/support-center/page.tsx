@@ -372,7 +372,7 @@ export default function SupportCenterPage() {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           운영 지원 센터
         </h1>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-slate-500 leading-relaxed">
           운영 매뉴얼, 문제 해결 런북, 지원 티켓을 한 곳에서 관리합니다.
         </p>
       </div>
@@ -389,10 +389,10 @@ export default function SupportCenterPage() {
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 isActive
                   ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-400 hover:text-slate-600 hover:border-slate-300"
+                  : "border-transparent text-slate-500 hover:text-slate-600 hover:border-slate-300"
               }`}
             >
-              <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+              <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
               <span className="hidden sm:inline">{tab.label}</span>
               <span className="sm:hidden">{tab.label}</span>
             </button>
@@ -439,12 +439,12 @@ function ManualTab() {
     <div>
       {/* 검색바 */}
       <div className="relative mb-5">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <Input
           placeholder="매뉴얼 검색 (예: 견적 요청, 재고, PDF 분석)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
@@ -458,14 +458,14 @@ function ManualTab() {
           {RECENT_UPDATES.map((update, i) => (
             <div key={i} className="flex items-start gap-3 rounded-lg bg-white border border-slate-200 px-3.5 py-3">
               <div className="flex flex-col items-start gap-1 flex-shrink-0">
-                <span className="text-[10px] text-slate-400 font-mono">{update.date}</span>
+                <span className="text-[10px] text-slate-500 font-mono">{update.date}</span>
                 <Badge className={`text-[10px] px-1.5 py-0 border-0 font-medium ${update.tagColor}`}>
                   {update.tag}
                 </Badge>
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-700 leading-snug">{update.title}</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">{update.desc}</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{update.desc}</p>
               </div>
             </div>
           ))}
@@ -477,7 +477,7 @@ function ManualTab() {
         {/* 데스크탑 사이드바 */}
         <nav className="hidden md:block w-52 flex-shrink-0">
           <div className="sticky top-4 space-y-0.5">
-            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold px-3 mb-2">카테고리</p>
+            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold px-3 mb-2">카테고리</p>
             {GUIDE_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
               const isActive = !searchQuery && activeCategory === cat.id;
@@ -492,9 +492,9 @@ function ManualTab() {
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                  <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
                   <span className="truncate">{cat.label}</span>
-                  <span className={`ml-auto text-[10px] ${isActive ? "text-blue-500" : "text-slate-400"}`}>{count}</span>
+                  <span className={`ml-auto text-[10px] ${isActive ? "text-blue-500" : "text-slate-500"}`}>{count}</span>
                 </button>
               );
             })}
@@ -517,7 +517,7 @@ function ManualTab() {
                       : "bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-700"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-400"}`} />
+                  <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
                   {cat.label}
                 </button>
               );
@@ -547,9 +547,9 @@ function ManualContent({
   if (entries.length === 0) {
     return (
       <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-        <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+        <Search className="h-8 w-8 text-slate-400 mx-auto mb-3" />
         <p className="text-sm font-medium text-slate-500 mb-1">검색 결과가 없습니다</p>
-        <p className="text-xs text-slate-400">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
+        <p className="text-xs text-slate-500">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
       </div>
     );
   }
@@ -567,7 +567,7 @@ function ManualContent({
       )}
 
       {searchQuery && (
-        <p className="text-xs text-slate-400 mb-1">
+        <p className="text-xs text-slate-500 mb-1">
           &quot;{searchQuery}&quot; 검색 결과 {entries.length}건
         </p>
       )}
@@ -585,16 +585,16 @@ function ManualContent({
                   <h3 className="text-sm font-semibold text-slate-900 mb-2">{entry.title}</h3>
                   <div className="space-y-2 mb-3">
                     <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold w-16 flex-shrink-0 pt-0.5">기능</span>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">기능</span>
                       <p className="text-xs text-slate-600 leading-relaxed">{entry.what}</p>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold w-16 flex-shrink-0 pt-0.5">사용 시점</span>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">사용 시점</span>
                       <p className="text-xs text-slate-500 leading-relaxed">{entry.when}</p>
                     </div>
                     {entry.keyInputs.length > 0 && (
                       <div className="flex items-start gap-2">
-                        <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold w-16 flex-shrink-0 pt-0.5">주요 입력</span>
+                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">주요 입력</span>
                         <div className="flex flex-wrap gap-1">
                           {entry.keyInputs.map((input, i) => (
                             <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 bg-slate-50">{input}</Badge>
@@ -603,7 +603,7 @@ function ManualContent({
                       </div>
                     )}
                     <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold w-16 flex-shrink-0 pt-0.5">다음 단계</span>
+                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">다음 단계</span>
                       <div className="flex items-center gap-1">
                         <ChevronRight className="h-3 w-3 text-emerald-500" />
                         <p className="text-xs text-emerald-600">{entry.nextAction}</p>
@@ -682,12 +682,12 @@ function TroubleshootTab() {
     <div>
       {/* 검색바 */}
       <div className="relative mb-5">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
         <Input
           placeholder="증상 검색 (예: PDF 실패, 알림 안 옴, 비밀번호)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
         />
       </div>
 
@@ -706,7 +706,7 @@ function TroubleshootTab() {
               }`}
             >
               {cat.label}
-              <span className={`text-[10px] ml-0.5 ${isActive ? "text-blue-200" : "text-slate-400"}`}>
+              <span className={`text-[10px] ml-0.5 ${isActive ? "text-blue-200" : "text-slate-500"}`}>
                 {cat.value === "all" ? RUNBOOK_ITEMS.length : RUNBOOK_ITEMS.filter((r) => r.category === cat.value).length}
               </span>
             </button>
@@ -716,14 +716,14 @@ function TroubleshootTab() {
 
       {/* 결과 헤더 */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-slate-500">
           {searchQuery ? `"${searchQuery}" 검색 결과 ${filteredItems.length}건` : `${filteredItems.length}개의 시나리오`}
         </p>
         {filteredItems.length > 0 && (
           <div className="flex gap-2">
-            <button onClick={() => setExpandedIds(new Set(filteredItems.map((r) => r.id)))} className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors">모두 펼치기</button>
-            <span className="text-slate-300">|</span>
-            <button onClick={() => setExpandedIds(new Set())} className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors">모두 접기</button>
+            <button onClick={() => setExpandedIds(new Set(filteredItems.map((r) => r.id)))} className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors">모두 펼치기</button>
+            <span className="text-slate-400">|</span>
+            <button onClick={() => setExpandedIds(new Set())} className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors">모두 접기</button>
           </div>
         )}
       </div>
@@ -732,9 +732,9 @@ function TroubleshootTab() {
       <div className="space-y-2 mb-8">
         {filteredItems.length === 0 ? (
           <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-            <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+            <Search className="h-8 w-8 text-slate-400 mx-auto mb-3" />
             <p className="text-sm font-medium text-slate-500 mb-1">검색 결과가 없습니다</p>
-            <p className="text-xs text-slate-400 mb-4">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
+            <p className="text-xs text-slate-500 mb-4">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
           </div>
         ) : (
           filteredItems.map((item) => {
@@ -749,20 +749,20 @@ function TroubleshootTab() {
                 {/* 증상 헤더 */}
                 <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 group">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-amber-50" : "bg-slate-100"}`}>
-                    <AlertTriangle className={`h-3 w-3 transition-colors ${isExpanded ? "text-amber-500" : "text-slate-400"}`} />
+                    <AlertTriangle className={`h-3 w-3 transition-colors ${isExpanded ? "text-amber-500" : "text-slate-500"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <Badge className={`text-[10px] px-1.5 py-0 border font-medium ${getCategoryColor(item.category)}`}>
                         {getCategoryLabel(item.category)}
                       </Badge>
-                      <span className="text-[10px] text-slate-400">영향: {item.impact}</span>
+                      <span className="text-[10px] text-slate-500">영향: {item.impact}</span>
                     </div>
                     <p className={`text-sm font-medium leading-snug transition-colors ${isExpanded ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
                       {item.symptom}
                     </p>
                   </div>
-                  {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1" /> : <ChevronDown className="h-4 w-4 text-slate-300 flex-shrink-0 mt-1 group-hover:text-slate-400" />}
+                  {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-500 flex-shrink-0 mt-1" /> : <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1 group-hover:text-slate-500" />}
                 </button>
 
                 {/* 런북 상세 */}
@@ -772,13 +772,13 @@ function TroubleshootTab() {
                       {/* 가능한 원인 */}
                       <div>
                         <div className="flex items-center gap-1.5 mb-2">
-                          <Target className="h-3.5 w-3.5 text-slate-400" />
+                          <Target className="h-3.5 w-3.5 text-slate-500" />
                           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">가능한 원인</span>
                         </div>
                         <div className="space-y-1 ml-5">
                           {item.possibleCauses.map((cause, i) => (
                             <p key={i} className="text-xs text-slate-500 leading-relaxed flex items-start gap-2">
-                              <span className="text-slate-300 mt-0.5">-</span>{cause}
+                              <span className="text-slate-400 mt-0.5">-</span>{cause}
                             </p>
                           ))}
                         </div>
@@ -793,7 +793,7 @@ function TroubleshootTab() {
                         <div className="space-y-1.5 ml-5">
                           {item.immediateActions.map((action, i) => (
                             <div key={i} className="flex items-start gap-2">
-                              <span className="text-[10px] font-mono text-blue-400 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{i + 1}</span>
+                              <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{i + 1}</span>
                               <p className="text-xs text-slate-600 leading-relaxed">{action}</p>
                             </div>
                           ))}
@@ -930,7 +930,7 @@ function TicketTab() {
         {/* 헤더 + 새 티켓 버튼 */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <p className="text-xs text-slate-400">접수한 문의를 확인하고 새 티켓을 작성할 수 있습니다.</p>
+            <p className="text-xs text-slate-500">접수한 문의를 확인하고 새 티켓을 작성할 수 있습니다.</p>
           </div>
           <Button
             onClick={() => setView("compose")}
@@ -945,9 +945,9 @@ function TicketTab() {
         <div className="space-y-2 mb-6">
           {MOCK_TICKETS.length === 0 ? (
             <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-              <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+              <MessageSquare className="h-8 w-8 text-slate-400 mx-auto mb-3" />
               <p className="text-sm font-medium text-slate-500 mb-1">아직 접수한 문의가 없습니다</p>
-              <p className="text-xs text-slate-400 mb-4">사용 중 문제가 있으면 새 문의를 작성해주세요.</p>
+              <p className="text-xs text-slate-500 mb-4">사용 중 문제가 있으면 새 문의를 작성해주세요.</p>
               <Button onClick={() => setView("compose")} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white">
                 <Send className="h-3.5 w-3.5" />새 문의 작성
               </Button>
@@ -957,16 +957,16 @@ function TicketTab() {
               <div key={ticket.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 hover:border-slate-300 transition-colors cursor-pointer">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-slate-400">{ticket.id}</span>
+                    <span className="text-[10px] font-mono text-slate-500">{ticket.id}</span>
                     {getStatusBadge(ticket.status)}
                   </div>
-                  <span className="text-[10px] text-slate-400 flex items-center gap-1 flex-shrink-0">
+                  <span className="text-[10px] text-slate-500 flex items-center gap-1 flex-shrink-0">
                     <Clock className="h-2.5 w-2.5" />{ticket.createdAt}
                   </span>
                 </div>
                 <p className="text-[13px] font-medium text-slate-700 leading-snug mb-2">{ticket.title}</p>
                 <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-400">{getCategoryLabel(ticket.category)}</Badge>
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500">{getCategoryLabel(ticket.category)}</Badge>
                   {ticket.status === "answered" && ticket.answeredAt && (
                     <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
                       <CheckCircle2 className="h-3 w-3" />{ticket.answeredAt} 답변 완료
@@ -989,20 +989,20 @@ function TicketTab() {
           <div className="space-y-3">
             <div className="flex items-start gap-2.5">
               <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                <Clock className="h-3.5 w-3.5 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-600">응답 시간</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">평일 09:00-18:00 접수 기준, 당일 내 1차 확인</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">평일 09:00-18:00 접수 기준, 당일 내 1차 확인</p>
               </div>
             </div>
             <div className="flex items-start gap-2.5">
               <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="h-3.5 w-3.5 text-slate-400" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
               </div>
               <div>
                 <p className="text-xs font-medium text-slate-600">처리 프로세스</p>
-                <p className="text-[11px] text-slate-400 mt-0.5 leading-relaxed">접수 → 담당자 배정 → 확인 → 답변 → 완료</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">접수 → 담당자 배정 → 확인 → 답변 → 완료</p>
               </div>
             </div>
           </div>
@@ -1017,7 +1017,7 @@ function TicketTab() {
       <div className="flex items-center gap-3 mb-5">
         <button
           onClick={() => setView("list")}
-          className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600 transition-colors"
         >
           <ChevronRight className="h-3 w-3 rotate-180" />
           목록으로
@@ -1049,7 +1049,7 @@ function TicketTab() {
                       }`}
                     >
                       <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-blue-100" : "bg-white border border-slate-200"}`}>
-                        <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-blue-600" : "text-slate-400"}`} />
+                        <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-blue-600" : "text-slate-500"}`} />
                       </div>
                       <span className={`text-xs font-medium ${isSelected ? "text-blue-700" : "text-slate-600"}`}>{cat.label}</span>
                     </button>
@@ -1061,16 +1061,16 @@ function TicketTab() {
             {/* 관련 리소스 */}
             <div className="space-y-2">
               <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">
-                관련 주문/견적/재고 ID <span className="text-slate-400 font-normal text-[10px]">(선택)</span>
+                관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span>
               </Label>
               <Input
                 id="related-resource"
                 placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
                 value={relatedResource}
                 onChange={(e) => setRelatedResource(e.target.value)}
-                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
               />
-              <p className="text-[11px] text-slate-400">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
+              <p className="text-[11px] text-slate-500">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
             </div>
 
             {/* 우선순위 */}
@@ -1097,7 +1097,7 @@ function TicketTab() {
                         ? opt.value === "high" ? "text-red-600" : opt.value === "medium" ? "text-amber-600" : "text-blue-600"
                         : "text-slate-500"
                     }`}>{opt.label}</span>
-                    <p className={`text-[10px] mt-0.5 ${priority === opt.value ? "text-slate-500" : "text-slate-400"}`}>{opt.description}</p>
+                    <p className={`text-[10px] mt-0.5 ${priority === opt.value ? "text-slate-500" : "text-slate-500"}`}>{opt.description}</p>
                   </button>
                 ))}
               </div>
@@ -1113,7 +1113,7 @@ function TicketTab() {
                 placeholder="이슈를 간단히 요약해주세요"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
               />
             </div>
 
@@ -1127,34 +1127,34 @@ function TicketTab() {
                 placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                className="min-h-[160px] resize-none border-slate-200 bg-slate-50 text-sm text-slate-700 leading-relaxed p-4 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white"
+                className="min-h-[160px] resize-none border-slate-200 bg-slate-50 text-sm text-slate-700 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
               />
             </div>
 
             {/* 첨부파일 */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold text-slate-700">
-                첨부파일 <span className="text-slate-400 font-normal text-[10px]">(선택, 최대 5개)</span>
+                첨부파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개)</span>
               </Label>
               <div className="flex flex-wrap gap-2">
                 {attachments.map((file, idx) => (
                   <div key={idx} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">
-                    <FileText className="h-3 w-3 text-slate-400" />
+                    <FileText className="h-3 w-3 text-slate-500" />
                     <span className="max-w-[120px] truncate">{file.name}</span>
-                    <span className="text-[10px] text-slate-400">({(file.size / 1024).toFixed(0)}KB)</span>
-                    <button type="button" onClick={() => handleRemoveFile(idx)} className="text-slate-400 hover:text-red-500 ml-0.5">
+                    <span className="text-[10px] text-slate-500">({(file.size / 1024).toFixed(0)}KB)</span>
+                    <button type="button" onClick={() => handleRemoveFile(idx)} className="text-slate-500 hover:text-red-500 ml-0.5">
                       <X className="h-3 w-3" />
                     </button>
                   </div>
                 ))}
                 {attachments.length < 5 && (
-                  <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-400 hover:border-slate-400 hover:text-slate-500 cursor-pointer transition-colors">
+                  <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-400 hover:text-slate-500 cursor-pointer transition-colors">
                     <Paperclip className="h-3 w-3" />파일 추가
                     <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
                   </label>
                 )}
               </div>
-              <p className="text-[11px] text-slate-400">PDF, 이미지, 엑셀 파일 · 파일당 최대 10MB</p>
+              <p className="text-[11px] text-slate-500">PDF, 이미지, 엑셀 파일 · 파일당 최대 10MB</p>
             </div>
 
             {/* 제출 */}
@@ -1162,7 +1162,7 @@ function TicketTab() {
               <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold h-10 px-6 gap-2 text-sm active:scale-[0.98]" disabled={isSubmitting}>
                 {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
               </Button>
-              <button type="button" onClick={() => setView("list")} className="text-xs text-slate-400 hover:text-slate-600 transition-colors">취소</button>
+              <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600 transition-colors">취소</button>
             </div>
           </form>
         </div>

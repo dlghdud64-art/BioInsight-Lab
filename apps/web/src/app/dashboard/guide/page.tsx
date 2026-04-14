@@ -44,28 +44,28 @@ const RECENT_UPDATES = [
   {
     date: "2026-03-15",
     tag: "신규",
-    tagColor: "bg-emerald-500/20 text-emerald-400",
+    tagColor: "bg-emerald-50 text-emerald-600",
     title: "AI BOM 추출 기능 출시",
     desc: "PDF 업로드 시 품목 자동 인식 및 BOM 추출을 지원합니다.",
   },
   {
     date: "2026-03-10",
     tag: "개선",
-    tagColor: "bg-blue-500/20 text-blue-400",
+    tagColor: "bg-blue-50 text-blue-600",
     title: "비교 워크스페이스 UX 개선",
     desc: "행 기반 레이아웃, 드래그 정렬, 그룹 비교 기능이 추가되었습니다.",
   },
   {
     date: "2026-03-05",
     tag: "개선",
-    tagColor: "bg-blue-500/20 text-blue-400",
+    tagColor: "bg-blue-50 text-blue-600",
     title: "운영 콘솔 V1 출시",
     desc: "작업 대기열, 이슈 분류, 에스컬레이션, 개인 워크로드 관리가 가능합니다.",
   },
   {
     date: "2026-02-28",
     tag: "수정",
-    tagColor: "bg-amber-500/20 text-amber-400",
+    tagColor: "bg-amber-50 text-amber-600",
     title: "하루 한 번 요약 이메일 발송 안정화",
     desc: "일부 조직에서 발송이 누락되던 문제가 해결되었습니다.",
   },
@@ -443,7 +443,7 @@ export default function GuidePage() {
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           이용 가이드
         </h1>
-        <p className="text-sm text-slate-400 leading-relaxed">
+        <p className="text-sm text-slate-500 leading-relaxed">
           LabAxis의 모든 기능을 단계별로 안내합니다. 카테고리를 선택하거나 검색으로 원하는 가이드를 찾아보세요.
         </p>
       </div>
@@ -462,7 +462,7 @@ export default function GuidePage() {
       {/* ── 최근 업데이트 ── */}
       <div className="rounded-xl bg-pn border border-bd p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-amber-400" />
+          <Sparkles className="h-4 w-4 text-amber-600" />
           <h2 className="text-sm font-semibold text-slate-900">최근 업데이트</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
@@ -507,13 +507,13 @@ export default function GuidePage() {
                   }}
                   className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
                     isActive
-                      ? "bg-blue-600/15 text-blue-400 border border-blue-500/20"
-                      : "text-slate-400 hover:text-slate-700 hover:bg-pn border border-transparent"
+                      ? "bg-blue-50 text-blue-600 border border-blue-200"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-pn border border-transparent"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
+                  <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
                   <span className="truncate">{cat.label}</span>
-                  <span className={`ml-auto text-[10px] ${isActive ? "text-blue-400/70" : "text-slate-600"}`}>
+                  <span className={`ml-auto text-[10px] ${isActive ? "text-blue-600/70" : "text-slate-600"}`}>
                     {count}
                   </span>
                 </button>
@@ -524,7 +524,7 @@ export default function GuidePage() {
             <div className="border-t border-bd mt-4 pt-4 space-y-1">
               <Link
                 href="/dashboard/faq"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-700 hover:bg-pn transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-700 hover:bg-pn transition-colors"
               >
                 <HelpCircle className="h-3.5 w-3.5 text-slate-500" />
                 자주 묻는 질문
@@ -532,7 +532,7 @@ export default function GuidePage() {
               </Link>
               <Link
                 href="/dashboard/support"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-slate-700 hover:bg-pn transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-500 hover:text-slate-700 hover:bg-pn transition-colors"
               >
                 <MessageSquare className="h-3.5 w-3.5 text-slate-500" />
                 1:1 문의하기
@@ -558,7 +558,7 @@ export default function GuidePage() {
                   className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 ${
                     isActive
                       ? "bg-blue-600 text-white"
-                      : "bg-pn border border-bd text-slate-400 hover:text-slate-700"
+                      : "bg-pn border border-bd text-slate-500 hover:text-slate-700"
                   }`}
                 >
                   <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : "text-slate-500"}`} />
@@ -593,8 +593,8 @@ export default function GuidePage() {
       <div className="hidden md:block mt-8 mb-4">
         <div className="rounded-xl bg-pn border border-bd px-5 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-lg bg-blue-500/15 flex items-center justify-center">
-              <HelpCircle className="h-4 w-4 text-blue-400" />
+            <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center">
+              <HelpCircle className="h-4 w-4 text-blue-600" />
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-700">추가 도움이 필요하신가요?</p>
@@ -650,7 +650,7 @@ function GuideContent({
       {/* 카테고리 제목 (검색 중이 아닐 때) */}
       {!searchQuery && activeCategoryMeta && (
         <div className="flex items-center gap-2 mb-1">
-          <activeCategoryMeta.icon className="h-4 w-4 text-blue-400" />
+          <activeCategoryMeta.icon className="h-4 w-4 text-blue-600" />
           <h2 className="text-sm font-semibold text-slate-700">{activeCategoryMeta.label}</h2>
           <Badge className="text-[10px] px-1.5 py-0 bg-el border-bd text-slate-500">
             {entries.length}개 가이드
@@ -674,8 +674,8 @@ function GuideContent({
             <CardContent className="p-4 md:p-5">
               <div className="flex items-start gap-3.5">
                 {/* 아이콘 */}
-                <div className="w-9 h-9 rounded-lg bg-blue-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icon className="h-4 w-4 text-blue-400" />
+                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <Icon className="h-4 w-4 text-blue-600" />
                 </div>
 
                 <div className="flex-1 min-w-0">
@@ -694,7 +694,7 @@ function GuideContent({
                       <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">
                         사용 시점
                       </span>
-                      <p className="text-xs text-slate-400 leading-relaxed">{entry.when}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">{entry.when}</p>
                     </div>
                     {entry.keyInputs.length > 0 && (
                       <div className="flex items-start gap-2">
@@ -706,7 +706,7 @@ function GuideContent({
                             <Badge
                               key={i}
                               variant="outline"
-                              className="text-[10px] px-1.5 py-0 border-bd text-slate-400 bg-el"
+                              className="text-[10px] px-1.5 py-0 border-bd text-slate-500 bg-el"
                             >
                               {input}
                             </Badge>
@@ -720,7 +720,7 @@ function GuideContent({
                       </span>
                       <div className="flex items-center gap-1">
                         <ChevronRight className="h-3 w-3 text-emerald-500" />
-                        <p className="text-xs text-emerald-400">{entry.nextAction}</p>
+                        <p className="text-xs text-emerald-600">{entry.nextAction}</p>
                       </div>
                     </div>
                   </div>
@@ -730,7 +730,7 @@ function GuideContent({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-el hover:text-slate-900 hover:border-blue-500/30"
+                      className="gap-1.5 text-xs border-bd text-slate-600 bg-transparent hover:bg-el hover:text-slate-900 hover:border-blue-200"
                     >
                       {entry.link.label}
                       <ArrowRight className="h-3 w-3" />
