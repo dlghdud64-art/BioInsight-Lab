@@ -18,6 +18,21 @@
 import { create } from "zustand";
 
 import type { NotificationEventType } from "@/lib/notifications/event-types";
+import {
+  markCriticalEventAcknowledged,
+  markCriticalEventsAcknowledged,
+} from "@/lib/ontology/fast-track/critical-event-ack-store";
+
+// governance-bridge 가 사용하는 dedupeKey 형식: `gov:${eventId}`
+// 사용자가 governance critical 알림을 read 처리하면 fast-track entry guard 의
+// pending critical events 집계에서도 제외되도록 ack store 에 전파한다.
+const GOVERNANCE_DEDUPE_PREFIX = "gov:";
+
+function extractGovernanceEventId(dedupeKey: string): string | null {
+  if (!dedupeKey.startsWith(GOVERNANCE_DEDUPE_PREFIX)) return null;
+  const id = dedupeKey.slice(GOVERNANCE_DEDUPE_PREFIX.length);
+  return id.length > 0 ? id : null;
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Types
@@ -142,20 +157,36 @@ export const useNotificationStore = create<NotificationStoreState>((set, get) =>
   markRead: (id) => {
     const state = get();
     let mutated = false;
+    let ackedEventId: string | null = null;
     const next = state.notifications.map((n) => {
       if (n.id === id && !n.read) {
         mutated = true;
+        // governance critical 알림이면 fast-track guard 의 ack store 에도 반영
+        if (n.source === "governance" && n.severity === "error") {
+          ackedEventId = extractGovernanceEventId(n.dedupeKey);
+        }
         return { ...n, read: true };
       }
       return n;
     });
     if (!mutated) return;
+    if (ackedEventId) markCriticalEventAcknowledged(ackedEventId);
     set({ notifications: next, version: state.version + 1 });
   },
 
   markAllRead: () => {
     const state = get();
     if (!state.notifications.some((n) => !n.read)) return;
+    // bulk ack — governance critical 알림 중 read 안 된 것들의 eventId 수집
+    const ackedEventIds: string[] = [];
+    for (const n of state.notifications) {
+      if (n.read) continue;
+      if (n.source === "governance" && n.severity === "error") {
+        const eid = extractGovernanceEventId(n.dedupeKey);
+        if (eid) ackedEventIds.push(eid);
+      }
+    }
+    if (ackedEventIds.length > 0) markCriticalEventsAcknowledged(ackedEventIds);
     set({
       notifications: state.notifications.map((n) => (n.read ? n : { ...n, read: true })),
       version: state.version + 1,
