@@ -50,6 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -259,7 +260,9 @@ export default function OrganizationsPage() {
 
     try {
       setIsCreating(true);
-      const res = await csrfFetch("/api/organizations", {
+      // csrfFetch 가 CSRF 토큰 획득 실패 시 throw 하므로,
+      // 조직 생성은 일반 fetch 로 직접 호출 (CSRF 토큰 없어도 동작해야 함)
+      const res = await fetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -300,9 +303,10 @@ export default function OrganizationsPage() {
       setFormData({ name: "", description: "", organizationType: "" });
 
       if (newOrgId) router.push(`/dashboard/organizations/${newOrgId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("[OrganizationsPage] Unexpected error creating organization:", error);
-      toast({ title: "조직 생성 실패", description: "통신이 일시적으로 원활하지 않습니다.", variant: "destructive" });
+      const detail = error?.message || "통신이 일시적으로 원활하지 않습니다.";
+      toast({ title: "조직 생성 실패", description: detail, variant: "destructive" });
     } finally {
       setIsCreating(false);
     }
@@ -386,9 +390,15 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
-        {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══ */}
+        {/* ═══ 조직 생성 다이얼로그 (리디자인 + 애니메이션) ═══ */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden">
+          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden" asChild>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
             {/* ── 헤더 ── */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-start gap-4">
@@ -475,6 +485,7 @@ export default function OrganizationsPage() {
                 )}
               </Button>
             </div>
+            </motion.div>
           </DialogContent>
         </Dialog>
 
