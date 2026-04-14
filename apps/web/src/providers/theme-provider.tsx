@@ -3,15 +3,15 @@
 import * as React from "react";
 
 /**
- * Dark-only app — no theme switching.
- * next-themes completely removed to prevent light mode injection.
+ * Light-only app — 운영형 workbench 톤.
+ * dark class 를 제거하고 light 를 강제한다.
  */
 export function ThemeProvider({ children }: { children: React.ReactNode; [key: string]: unknown }) {
   React.useEffect(() => {
     const el = document.documentElement;
-    el.classList.remove("light");
-    el.classList.add("dark");
-    el.style.colorScheme = "dark";
+    el.classList.remove("dark");
+    el.classList.add("light");
+    el.style.colorScheme = "light";
   }, []);
   return <>{children}</>;
 }
@@ -19,10 +19,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode; [key: s
 // Stub for any code that imports useTheme
 export function useTheme() {
   return {
-    theme: "dark" as const,
-    resolvedTheme: "dark" as const,
+    theme: "light" as const,
+    resolvedTheme: "light" as const,
     setTheme: () => {},
-    themes: ["dark"],
-    systemTheme: "dark" as const,
+    themes: ["light"],
+    systemTheme: "light" as const,
   };
 }
