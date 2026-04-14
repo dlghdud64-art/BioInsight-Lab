@@ -133,6 +133,13 @@ export default auth(async (req) => {
       return NextResponse.next();
     }
 
+    // 모바일 앱 Bearer 토큰 요청은 CSRF 검증 건너뛰기
+    // (모바일은 cookie 기반이 아니므로 CSRF 보호 불필요)
+    const authHeader = req.headers.get('authorization');
+    if (authHeader?.startsWith('Bearer ')) {
+      return NextResponse.next();
+    }
+
     const mode = getCsrfRolloutMode();
     const correlationId = generateCorrelationId();
     const actorUserId = req.auth?.user?.id || 'anonymous';
