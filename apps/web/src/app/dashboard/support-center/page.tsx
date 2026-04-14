@@ -487,8 +487,8 @@ export default function SupportCenterPage() {
       </div>
 
       {/* ── 통합 검색 (Phase 5) ── */}
-      <div className="relative mb-4 px-1">
-        <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+      <div className="relative mb-4 px-1" style={{ zIndex: 30 }}>
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
         <Input
           placeholder="문서, 문제 해결, 티켓을 한 번에 검색 (예: PDF 실패, 승인, 재고)"
           value={globalSearch}
@@ -505,7 +505,7 @@ export default function SupportCenterPage() {
         )}
         {/* 검색 결과 드롭다운 — same-canvas 안에서 표시 */}
         {globalSearchResults && (
-          <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+          <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-80 overflow-y-auto">
             {globalSearchResults.map((r) => {
               const typeLabel = r.type === "manual" ? "매뉴얼" : r.type === "troubleshoot" ? "문제 해결" : "티켓";
               const typeColor = r.type === "manual" ? "bg-blue-50 text-blue-600" : r.type === "troubleshoot" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600";
@@ -533,7 +533,7 @@ export default function SupportCenterPage() {
           </div>
         )}
         {globalSearch && !globalSearchResults && (
-          <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-6 text-center">
+          <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-6 text-center">
             <Search className="h-6 w-6 text-slate-300 mx-auto mb-2" />
             <p className="text-xs text-slate-400">검색 결과가 없습니다</p>
           </div>
