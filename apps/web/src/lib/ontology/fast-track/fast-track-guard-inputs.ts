@@ -16,6 +16,7 @@
 import { getGlobalGovernanceEventBus } from "@/lib/ai/governance-event-bus";
 import type { FastTrackGovernanceGuardInput } from "./fast-track-governance-guard";
 import type { FastTrackRecommendationObject } from "@/lib/ontology/types";
+import { isCriticalEventAcknowledged } from "./critical-event-ack-store";
 
 // ══════════════════════════════════════════════
 // Policy Hold — governance event bus 에서 최신 policy_hold_changed 이벤트 조회
@@ -84,11 +85,17 @@ function resolveInvalidatedSnapshotCaseIds(
 function resolveHasPendingCriticalEvents(): boolean {
   try {
     const bus = getGlobalGovernanceEventBus();
-    // 최근 50건 중 critical severity 가 하나라도 있으면 pending 으로 간주.
-    // 실제 운영에서는 "acknowledged" flag 가 필요하지만,
-    // 현재 bus 스펙에는 ack 필드가 없으므로 최근 critical 존재 여부로 판단.
+    // 최근 50건 중 critical severity 이면서 critical-event-ack-store 에서
+    // ack 되지 않은 이벤트가 하나라도 있으면 pending 으로 간주.
+    // ack store 는 in-memory session-scoped — 사용자가 governance critical
+    // banner 를 처리한 시점에 markCriticalEventAcknowledged() 를 호출한다.
     const recent = bus.getHistory({ limit: 50 });
-    return recent.some((e: any) => e.severity === "critical");
+    return recent.some(
+      (e: { severity?: string; eventId?: string }) =>
+        e.severity === "critical" &&
+        typeof e.eventId === "string" &&
+        !isCriticalEventAcknowledged(e.eventId),
+    );
   } catch {
     return false;
   }
