@@ -270,26 +270,29 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </Button>
 
 
-          {/* 다음 단계 버튼 — OntologyContextLayer 트리거 */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                onClick={() => ontologyStore.open(pathname, {})}
-                aria-label="다음 단계"
-              >
-                <Compass className="h-5 w-5" />
-                {nextActionLabel && (
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="text-xs max-w-[200px]">
-              {nextActionLabel || "다음 단계 확인"}
-            </TooltipContent>
-          </Tooltip>
+          {/* 다음 단계 버튼 — OntologyContextLayer 트리거
+              퍼블릭 페이지(intro, pricing 등)에서는 숨김 — 앱 내부 surface 전용 */}
+          {pathname?.startsWith("/dashboard") && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  onClick={() => ontologyStore.open(pathname, {})}
+                  aria-label="다음 단계"
+                >
+                  <Compass className="h-5 w-5" />
+                  {nextActionLabel && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="text-xs max-w-[200px]">
+                {nextActionLabel || "다음 단계 확인"}
+              </TooltipContent>
+            </Tooltip>
+          )}
 
           {/* 알림 드롭다운 — 이벤트 피드 (고도화) */}
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
