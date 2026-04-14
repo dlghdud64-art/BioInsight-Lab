@@ -1,4 +1,3 @@
-// @ts-nocheck — ai-pipeline runtime: ViewModel migration 진행 중, 임시 우회
 /**
  * P1-1 Slice-1F — Snapshot Type Adapter
  *
@@ -48,5 +47,11 @@ export function baselineSnapshotToCreateInput(
     queueTopologyChecksum: findScopeChecksum(snap.scopes, "QUEUE_TOPOLOGY"),
     includedScopes: snap.scopes.map((s: SnapshotScopeEntry) => s.scope),
     restoreVerificationStatus: null,
+    // P3-3B fields — adapter is lossy, but the repository contract still
+    // requires them. Provide canonical full payload + capturedBy + legacy id.
+    scopePayload: snap.scopes,
+    configPayload: snap.config ?? null,
+    capturedBy: snap.capturedBy ?? null,
+    snapshotId: snap.snapshotId ?? null,
   };
 }

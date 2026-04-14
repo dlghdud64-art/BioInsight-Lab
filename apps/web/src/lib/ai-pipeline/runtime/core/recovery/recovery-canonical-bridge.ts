@@ -1,4 +1,3 @@
-// @ts-nocheck — ai-pipeline runtime: ViewModel migration 진행 중, 임시 우회
 /**
  * P1 Closeout — Recovery Canonical Bridge
  *
@@ -42,7 +41,8 @@ export function emitRecoveryCanonicalEvent(
     const event = createCanonicalEvent({
       eventType: eventType,
       correlationId: record.correlationId,
-      timelineId: record.timelineId || "tl-" + record.correlationId.slice(0, 8),
+      // RecoveryRecord 에 timelineId 필드 없음 — correlationId 로 derive.
+      timelineId: "tl-" + record.correlationId.slice(0, 8),
       baselineId: record.baselineId,
       lifecycleState: "INCIDENT_LOCKDOWN",
       releaseMode: "FULL_ACTIVE_STABILIZATION",

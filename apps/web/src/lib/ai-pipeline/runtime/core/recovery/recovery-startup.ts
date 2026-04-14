@@ -1,4 +1,3 @@
-// @ts-nocheck — ai-pipeline runtime: ViewModel migration 진행 중, 임시 우회
 /**
  * P2-1 Slice C — Recovery Startup Continuity Contract
  *
@@ -110,7 +109,7 @@ async function emitStartupDiagnostic(
     const baseline = await getCanonicalBaselineFromRepo();
     emitStabilizationAuditEvent({
       eventType: eventType as Parameters<typeof emitStabilizationAuditEvent>[0]["eventType"],
-      baselineId: baseline ? baseline.baselineId : "",
+      baselineId: baseline ? baseline.canonicalBaselineId : "",
       baselineVersion: baseline ? baseline.baselineVersion : "",
       baselineHash: baseline ? baseline.baselineHash : "",
       snapshotId: baseline ? baseline.rollbackSnapshotId : "",

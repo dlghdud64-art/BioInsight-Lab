@@ -1,17 +1,24 @@
-// @ts-nocheck — RequestSuggestionState 타입 drift 진행 중, 임시 우회
 /**
  * Request Draft Generation Cooldown — recently_generated / recently_resolved 시간축 억제
  *
  * 고정 규칙:
  * 1. cooldown은 eligibility 위의 별도 시간축 억제층. eligible이어도 cooldown이면 suppress.
  * 2. recently_generated(중복 생성 방지) ≠ recently_resolved(재등장 억제). 분리.
- * 3. supplier-local only. 다른 supplier cooldown이 현재 supplier를 막으면 안 됨.
+ * 3. contextHash-local only. 다른 컨텍스트 cooldown이 현재 컨텍스트를 막으면 안 됨.
  * 4. resolution source별 cooldown 강도 차등: noop > dismissed > edited > accepted > generated.
  * 5. cooldown은 영구 금지가 아닌 temporary suppress. 시간 + meaningful change → eventually 열림.
  * 6. 동일 now 기준으로 모든 time-based 판단 수행.
+ *
+ * Migration note (Batch 2 후속):
+ *   이전에는 RequestSuggestionState.suggestions (Record) + resolvedHistory.{requestAssemblyId,supplierId}
+ *   기반이었으나, 현재 store 는 single activeSuggestion + contextHash-only resolvedHistory.
+ *   본 모듈도 그에 맞춰 contextHash 기반 lookup 으로 단순화. (suggestion-store.ts 와 lineage 일치)
  */
 
-import type { RequestSuggestionState } from "./request-suggestion-store";
+import type {
+  RequestSuggestionState,
+  RequestDraftSuggestion,
+} from "./request-suggestion-store";
 
 // ── Cooldown model ──
 
@@ -69,27 +76,21 @@ export interface LatestGeneratedMeta {
   generatedAt: string;
 }
 
+/**
+ * activeSuggestion 이 있고 그 contextHash 가 일치하면 generated meta 반환.
+ * Note: 현재 store 는 contextHash 당 active suggestion 1개만 보유하므로
+ *       복수 후보 비교가 불필요하다.
+ */
 export function selectLatestGeneratedMeta(
-  suggestions: RequestSuggestionState["suggestions"],
-  requestAssemblyId: string,
-  supplierId: string
+  activeSuggestion: RequestDraftSuggestion | null,
+  contextHash: string,
 ): LatestGeneratedMeta | null {
-  if (!suggestions) return null;
-
-  let latest: LatestGeneratedMeta | null = null;
-
-  for (const s of Object.values(suggestions)) {
-    const item = s as any;
-    if (!item) continue;
-    if (item.sourceContext?.requestAssemblyId !== requestAssemblyId) continue;
-    if (item.sourceContext?.supplierId !== supplierId) continue;
-
-    if (!latest || item.generatedAt > latest.generatedAt) {
-      latest = { suggestionId: item.id, generatedAt: item.generatedAt };
-    }
-  }
-
-  return latest;
+  if (!activeSuggestion) return null;
+  if (activeSuggestion.sourceContext.contextHash !== contextHash) return null;
+  return {
+    suggestionId: activeSuggestion.id,
+    generatedAt: activeSuggestion.generatedAt,
+  };
 }
 
 // ── Latest resolved query ──
@@ -101,36 +102,36 @@ export interface LatestResolvedMeta {
 
 export function selectLatestResolvedMeta(
   resolvedHistory: RequestSuggestionState["resolvedHistory"],
-  requestAssemblyId: string,
-  supplierId: string
+  contextHash: string,
 ): LatestResolvedMeta | null {
   let latest: LatestResolvedMeta | null = null;
 
   for (const h of resolvedHistory) {
-    if (h.requestAssemblyId !== requestAssemblyId) continue;
-    if (h.supplierId !== supplierId) continue;
-
+    if (h.contextHash !== contextHash) continue;
     if (!latest || h.resolvedAt > latest.resolvedAt) {
-      latest = { resolvedAt: h.resolvedAt, status: h.status as LatestResolvedMeta["status"] };
+      // resolvedHistory 의 status 는 "accepted"|"dismissed"|"edited" 만 저장됨.
+      // "noop" 은 store 가 만들지 않으므로 cast 가 안전.
+      latest = {
+        resolvedAt: h.resolvedAt,
+        status: h.status as LatestResolvedMeta["status"],
+      };
     }
   }
 
   return latest;
 }
 
-// ── Per-supplier cooldown computation ──
+// ── Cooldown computation (contextHash 단위) ──
 
-export function computeSupplierCooldown(input: {
-  suggestions: RequestSuggestionState["suggestions"];
-  resolvedHistory: RequestSuggestionState["resolvedHistory"];
-  requestAssemblyId: string;
-  supplierId: string;
+export function computeContextCooldown(input: {
+  state: RequestSuggestionState;
+  contextHash: string;
   now: string;
 }): RequestDraftGenerationCooldown {
-  const { suggestions, resolvedHistory, requestAssemblyId, supplierId, now } = input;
+  const { state, contextHash, now } = input;
 
-  const latestGen = selectLatestGeneratedMeta(suggestions, requestAssemblyId, supplierId);
-  const latestRes = selectLatestResolvedMeta(resolvedHistory, requestAssemblyId, supplierId);
+  const latestGen = selectLatestGeneratedMeta(state.activeSuggestion, contextHash);
+  const latestRes = selectLatestResolvedMeta(state.resolvedHistory, contextHash);
 
   return {
     recentlyGenerated: isWithinGeneratedCooldown({
