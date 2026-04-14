@@ -272,37 +272,24 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
 
 
           {/* 다음 단계 버튼 — OntologyContextLayer 트리거
-              퍼블릭 페이지(intro, pricing 등)에서는 숨김 — 앱 내부 surface 전용 */}
-          {pathname?.startsWith("/dashboard") && (
+              resolver가 실제 next action을 반환할 때만 표시.
+              dead button / no-op CTA 금지 원칙에 따라 nextActionLabel이 없으면 숨김. */}
+          {pathname?.startsWith("/dashboard") && nextActionLabel && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  onClick={() => {
-                    ontologyStore.open(pathname ?? "", {});
-                    // ontology resolver 가 null 을 반환하면 패널이 열리지 않는다.
-                    // 무반응으로 보이지 않도록 fallback 안내.
-                    requestAnimationFrame(() => {
-                      if (!ontologyStore.isOpen) {
-                        toast.info("현재 페이지에서 추천 다음 단계가 없습니다", {
-                          description: "다른 워크플로 페이지로 이동하면 안내가 표시됩니다.",
-                          duration: 3000,
-                        });
-                      }
-                    });
-                  }}
+                  onClick={() => ontologyStore.open(pathname ?? "", {})}
                   aria-label="다음 단계"
                 >
                   <Compass className="h-5 w-5" />
-                  {nextActionLabel && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white" />
-                  )}
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent className="text-xs max-w-[200px]">
-                {nextActionLabel || "다음 단계 확인"}
+                {nextActionLabel}
               </TooltipContent>
             </Tooltip>
           )}
