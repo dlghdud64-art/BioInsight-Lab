@@ -352,10 +352,10 @@ export default function PurchasesPage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2.5">
-              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">발주 전환 큐</h1>
+              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">구매 운영</h1>
               <Badge variant="outline" className="text-[10px] font-bold border-blue-200 text-blue-600 bg-blue-50">Beta</Badge>
             </div>
-            <p className="text-sm text-slate-500 mt-0.5">회신 완료된 건의 선택안을 확정하고 발주로 넘깁니다.</p>
+            <p className="text-sm text-slate-500 mt-0.5">선택안 확정, 승인 검토, 발주 전환까지 한 화면에서 처리합니다.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link href="/dashboard/quotes">
@@ -499,22 +499,30 @@ export default function PurchasesPage() {
                         <h3 className="font-bold text-slate-900 text-sm leading-snug mb-0.5">{item.requestTitle}</h3>
                         <p className="text-xs text-slate-500 mb-3">{item.itemSummary}</p>
 
-                        {/* 막힘/다음 단계 2열 */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">막힘 확인</p>
-                            <p className={`text-[11px] leading-snug flex items-start gap-1.5 ${item.blockerType !== "none" ? "text-amber-600" : "text-slate-500"}`}>
+                        {/* 막힘 확인 / 다음 단계 — 2열 강조 카드 */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div className={`rounded-xl px-3.5 py-3 border ${
+                            item.blockerType !== "none"
+                              ? "bg-amber-50/70 border-amber-200"
+                              : "bg-emerald-50/50 border-emerald-200"
+                          }`}>
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
+                              item.blockerType !== "none" ? "text-amber-500" : "text-emerald-500"
+                            }`}>막힘 확인</p>
+                            <p className={`text-xs leading-snug flex items-start gap-2 font-medium ${
+                              item.blockerType !== "none" ? "text-amber-700" : "text-emerald-700"
+                            }`}>
                               {item.blockerType !== "none"
-                                ? <AlertTriangle className="h-3 w-3 flex-shrink-0 mt-0.5" />
-                                : <CheckCircle2 className="h-3 w-3 flex-shrink-0 mt-0.5 text-emerald-500" />
+                                ? <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-amber-500" />
+                                : <CheckCircle2 className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-emerald-500" />
                               }
                               {item.blockerReason}
                             </p>
                           </div>
-                          <div className="rounded-lg bg-slate-50 border border-slate-100 px-3 py-2">
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">다음 단계</p>
-                            <p className="text-[11px] text-blue-600 leading-snug flex items-start gap-1.5">
-                              <ArrowRight className="h-3 w-3 flex-shrink-0 mt-0.5" />
+                          <div className="rounded-xl bg-blue-50/60 border border-blue-200 px-3.5 py-3">
+                            <p className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-1">다음 단계</p>
+                            <p className="text-xs text-blue-700 leading-snug flex items-start gap-2 font-medium">
+                              <ArrowRight className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-blue-500" />
                               {item.nextStage}
                             </p>
                           </div>
@@ -642,19 +650,19 @@ export default function PurchasesPage() {
                   {/* 발주 Readiness */}
                   <div className="px-5 py-4">
                     <div className="text-xs font-bold text-slate-700 mb-2.5">발주 Readiness</div>
-                    <div className={`rounded-lg px-3 py-2.5 mb-2.5 ${
-                      selectedItem.blockerType === "none" ? "bg-emerald-50 border border-emerald-200" : "bg-amber-50 border border-amber-200"
+                    <div className={`rounded-xl px-4 py-3 mb-2.5 ${
+                      selectedItem.blockerType === "none" ? "bg-emerald-50/70 border border-emerald-200" : "bg-amber-50/70 border border-amber-200"
                     }`}>
-                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${selectedItem.blockerType === "none" ? "text-emerald-500" : "text-amber-500"}`}>
+                      <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${selectedItem.blockerType === "none" ? "text-emerald-500" : "text-amber-500"}`}>
                         {selectedItem.blockerType === "none" ? "차단 없음" : "현재 막힘"}
                       </p>
-                      <p className={`text-[11px] leading-snug ${selectedItem.blockerType === "none" ? "text-emerald-600" : "text-amber-600"}`}>
+                      <p className={`text-xs font-medium leading-snug ${selectedItem.blockerType === "none" ? "text-emerald-700" : "text-amber-700"}`}>
                         {selectedItem.blockerReason}
                       </p>
                     </div>
-                    <div className="rounded-lg px-3 py-2.5 mb-3 bg-blue-50 border border-blue-200">
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-0.5 text-blue-500">다음 단계</p>
-                      <p className="text-[11px] text-blue-600 leading-snug">{selectedItem.nextStage}</p>
+                    <div className="rounded-xl px-4 py-3 mb-3 bg-blue-50/60 border border-blue-200">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-500">다음 단계</p>
+                      <p className="text-xs text-blue-700 font-medium leading-snug">{selectedItem.nextStage}</p>
                     </div>
                     <div className="space-y-1.5">
                       <div className="flex justify-between text-xs"><span className="text-slate-500">발주 가능</span><span className={selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "text-emerald-600 font-medium" : "text-amber-600"}>{selectedItem.conversionStatus === "ready_for_po" || selectedItem.conversionStatus === "confirmed" ? "가능" : "조건 해소 필요"}</span></div>
