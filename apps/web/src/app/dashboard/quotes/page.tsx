@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,6 +28,8 @@ import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatc
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
+import { useRfqHandoffStore } from "@/lib/store/rfq-handoff-store";
+import type { QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
 import { PermissionGate } from "@/components/permission-gate";
 import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
@@ -374,6 +377,18 @@ function QuotesPageContent() {
   const [aiCompareError, setAiCompareError] = useState<string | null>(null);
   const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
 
+  // ── RFQ handoff banner — 소싱에서 제출 후 넘어온 경우 ──
+  // consumeHandoff 는 1-shot: 한 번 읽으면 clear (새로고침 시 재등장 안 함).
+  const [rfqHandoff, setRfqHandoff] = useState<QuoteWorkqueueHandoff | null>(null);
+  const [rfqBannerDismissed, setRfqBannerDismissed] = useState(false);
+  useEffect(() => {
+    const fromParam = searchParams.get("from");
+    if (fromParam === "rfq") {
+      const handoff = useRfqHandoffStore.getState().consumeHandoff();
+      if (handoff) setRfqHandoff(handoff);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // ── Ontology Context Layer bridge — 현재 견적 관리 상태를 next-step resolver에 전달 ──
   useOntologyContextBridge({
     currentStage: "quote_management",
@@ -484,7 +499,7 @@ function QuotesPageContent() {
           items: q.items?.map((item) => `${item.product?.name || "품목"} x${item.quantity || 1}`).join(", ") || q.title,
           rawText: `${q.title} — ${q.items?.length || 0}건 품목`,
         }));
-      const res = await fetch("/api/ai/quote-compare", {
+      const res = await csrfFetch("/api/ai/quote-compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quotes: quotePayload }),
@@ -627,6 +642,41 @@ function QuotesPageContent() {
           </PermissionGate>
         </div>
       </div>
+
+      {/* ── RFQ Handoff Banner — 소싱에서 제출 후 넘어온 경우 ── */}
+      {rfqHandoff && !rfqBannerDismissed && (
+        <div className="rounded-xl border border-emerald-600/25 bg-emerald-600/5 p-4 flex items-center gap-4 relative">
+          <div className="w-10 h-10 rounded-full bg-emerald-600/15 flex items-center justify-center shrink-0">
+            <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-slate-900">견적 요청 1건이 생성되었습니다</p>
+            <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+              <span>공급사 <span className="font-semibold text-slate-700">{rfqHandoff.submittedVendorTargetIds.length}곳</span></span>
+              <span className="text-slate-300">·</span>
+              <span>품목 <span className="font-semibold text-slate-700">{rfqHandoff.submittedLineIds.length}건</span></span>
+              <span className="text-slate-300">·</span>
+              <span>상태 <span className="font-semibold text-emerald-600">발송 요청됨</span></span>
+            </div>
+            {rfqHandoff.compareRationaleSummary && (
+              <p className="text-xs text-slate-400 mt-1.5 truncate">{rfqHandoff.compareRationaleSummary}</p>
+            )}
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link href="/app/search">
+              <Button variant="outline" size="sm" className="h-8 text-xs text-slate-500 border-slate-200">
+                소싱으로 돌아가기
+              </Button>
+            </Link>
+            <button
+              onClick={() => setRfqBannerDismissed(true)}
+              className="h-7 w-7 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Page-level fatal error (primary fetch 실패 시만) ── */}
       {isError && !quotesData && (

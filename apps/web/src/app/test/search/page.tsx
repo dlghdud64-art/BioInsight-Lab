@@ -70,6 +70,7 @@ import type { RequestResubmissionEvent } from "@/lib/ai/request-submission-reope
 import type { RequestDraftSnapshot, RequestSubmissionHandoff } from "@/lib/ai/request-assembly-engine";
 import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/request-submission-engine";
 import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
+import { useRfqHandoffStore } from "@/lib/store/rfq-handoff-store";
 import type { QuoteNormalizationHandoff } from "@/lib/ai/quote-workqueue-engine";
 import { buildQuoteNormalizationHandoff as buildNormHandoff } from "@/lib/ai/quote-workqueue-engine";
 import { useState, useEffect, useMemo } from "react";
@@ -1117,8 +1118,12 @@ export default function SearchPage() {
         }}
         onQuoteWorkqueueOpen={(handoff) => {
           setQuoteWorkqueueHandoff(handoff);
-          // Primary destination: dashboard quote management (not sourcing-internal popup)
-          router.push("/dashboard/quotes");
+          // Cross-page handoff: sessionStorage 에 저장 후 navigation.
+          // 견적관리 페이지가 mount 시 consumeHandoff() 로 수신.
+          useRfqHandoffStore.getState().setHandoff(handoff);
+          router.push(
+            `/dashboard/quotes?from=rfq&requestId=${encodeURIComponent(handoff.requestSubmissionEventId)}&vendorCount=${handoff.submittedVendorTargetIds.length}&lineCount=${handoff.submittedLineIds.length}`,
+          );
         }}
         onBackToAssembly={() => {
           setWorkWindowMode("request-assembly");

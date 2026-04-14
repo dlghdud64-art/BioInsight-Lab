@@ -411,8 +411,15 @@ function resolveSourcingContext(input: ContextualActionInput): ResolvedNextActio
   // ── State 6: 제출 완료 (lastSubmittedQuoteRequestId 존재) ──
   if (sd.lastSubmittedQuoteRequestId) {
     return {
-      nextRequiredAction: makeAction("go_quote_management", "견적 관리에서 계속", "primary",
-        "견적 요청이 생성되어 견적 관리에서 응답을 추적합니다.", "/dashboard/quotes", null, "sourcing"),
+      nextRequiredAction: makeAction(
+        "go_quote_management",
+        "견적 관리에서 계속",
+        "primary",
+        "견적 요청이 생성되어 견적 관리에서 응답을 추적합니다.",
+        `/dashboard/quotes?from=rfq&requestId=${encodeURIComponent(sd.lastSubmittedQuoteRequestId)}`,
+        null,
+        "sourcing",
+      ),
       availableFollowUpActions: [
         makeAction("back_to_sourcing", "소싱으로 돌아가기", "secondary",
           "새 검색을 시작합니다.", null, null, "sourcing"),
