@@ -77,7 +77,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
         const formData = new FormData();
         formData.append("file", file);
 
-        const res = await fetch("/api/quotes/parse-pdf", {
+        const res = await csrfFetch("/api/quotes/parse-pdf", {
           method: "POST",
           body: formData,
         });
@@ -94,7 +94,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
         // Image → base64 → /api/quotes/parse-image
         const base64 = await fileToBase64(file);
 
-        const res = await fetch("/api/quotes/parse-image", {
+        const res = await csrfFetch("/api/quotes/parse-image", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imageBase64: base64 }),
@@ -123,7 +123,7 @@ export function AiQuoteParseModal({ open, onClose, quoteId, onRegistered }: AiQu
     setStep("registering");
 
     try {
-      const res = await fetch(`/api/quotes/${quoteId}/vendor-replies`, {
+      const res = await csrfFetch(`/api/quotes/${quoteId}/vendor-replies`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
