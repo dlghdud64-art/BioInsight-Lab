@@ -144,14 +144,14 @@ export function WorkQueueInbox() {
 
   if (error) {
     return (
-      <div className="rounded-xl border border-red-900/30 bg-red-950/20 p-4">
-        <p className="text-xs text-red-400">작업함 일부를 불러오지 못했습니다. 기본 대시보드는 계속 사용할 수 있습니다.</p>
+      <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+        <p className="text-xs text-red-600">작업함 일부를 불러오지 못했습니다. 기본 대시보드는 계속 사용할 수 있습니다.</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-xl border border-white/[0.10] bg-slate-50 shadow-sm">
+    <div className="rounded-xl border border-slate-200 bg-slate-50 shadow-sm">
       {/* ── Compact Briefing Strip ── */}
       {activeItems.length === 0 ? (
         /* Empty: one-line operational brief */
