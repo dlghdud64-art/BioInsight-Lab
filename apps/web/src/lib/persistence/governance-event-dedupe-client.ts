@@ -17,19 +17,20 @@
  *   5. 서버 장애 시 sessionStorage fallback 자동.
  */
 
-const STORAGE_PREFIX = "labaxis:gov-dedupe:";
 const API_BASE = "/api/governance/event-dedupe";
 
 // ══════════════════════════════════════════════
-// Internal: sessionStorage 직접 접근 (동기)
+// Internal: PersistenceAdapter 경유 (SSR-safe)
+// 비즈니스 로직은 sessionStorage 를 직접 호출하지 않는다.
 // ══════════════════════════════════════════════
 
-function getStorage(): Storage | null {
-  try {
-    return typeof window !== "undefined" ? window.sessionStorage : null;
-  } catch {
-    return null;
-  }
+import {
+  getDedupeSignatureAdapter,
+  clearAdapterByPrefix,
+} from "@/lib/persistence/persistence-adapter";
+
+function compositeKey(entityKey: string, eventType: string): string {
+  return `${entityKey}::${eventType}`;
 }
 
 function shouldPublishLocal(
@@ -37,10 +38,8 @@ function shouldPublishLocal(
   eventType: string,
   signature: string,
 ): boolean {
-  const storage = getStorage();
-  if (!storage) return true;
-  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
-  const existing = storage.getItem(key);
+  const adapter = getDedupeSignatureAdapter();
+  const existing = adapter.load(compositeKey(entityKey, eventType));
   return existing !== signature;
 }
 
@@ -49,22 +48,14 @@ function markPublishedLocal(
   eventType: string,
   signature: string,
 ): void {
-  const storage = getStorage();
-  if (!storage) return;
-  const key = `${STORAGE_PREFIX}${entityKey}::${eventType}`;
-  storage.setItem(key, signature);
+  const adapter = getDedupeSignatureAdapter();
+  adapter.persist(compositeKey(entityKey, eventType), signature);
 }
 
 function clearDedupeForPoLocal(entityKey: string): void {
-  const storage = getStorage();
-  if (!storage) return;
-  const prefix = `${STORAGE_PREFIX}${entityKey}::`;
-  const keysToRemove: string[] = [];
-  for (let i = 0; i < storage.length; i++) {
-    const key = storage.key(i);
-    if (key?.startsWith(prefix)) keysToRemove.push(key);
-  }
-  keysToRemove.forEach((k) => storage.removeItem(k));
+  const adapter = getDedupeSignatureAdapter();
+  // SessionStorageAdapter 면 prefix delete, 다른 adapter 면 no-op (DB 측에서 처리).
+  clearAdapterByPrefix(adapter, `${entityKey}::`);
 }
 
 // ══════════════════════════════════════════════

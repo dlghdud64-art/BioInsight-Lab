@@ -25,6 +25,10 @@ import { useOrderQueueStore, type OrderQueueItem } from "@/lib/store/order-queue
 import { useFastTrackStore } from "@/lib/store/fast-track-store";
 import { useProactiveFastTrackSessionStore } from "@/lib/store/proactive-fast-track-session-store";
 import type { FastTrackEvaluationInput } from "@/lib/ontology/fast-track/fast-track-engine";
+import {
+  mergeCandidateWithSeed,
+  detectCanonicalOverrideAttempts,
+} from "@/lib/ai/candidate-truth-boundary";
 import type { FastTrackRecommendationObject } from "@/lib/ontology/types";
 import {
   findSimilarEligible,
@@ -121,8 +125,16 @@ function mapStoreStatusToApprovalStatus(
 }
 
 /**
- * MOCK candidate 위에 store 의 canonical 필드를 overlay.
- * - 매칭 order 가 없으면 MOCK 을 그대로 반환.
+ * DB candidate (presentation seed) 위에 useOrderQueueStore (canonical truth) 의
+ * 검증된 필드를 overlay 한다.
+ *
+ * Boundary contract (candidate-truth-boundary.ts):
+ * - canonical truth = order_queue store (vendorName, totalAmount, approvalStatus 매핑)
+ * - presentation seed = DB candidate (multi-line items / blockers / selectionReason)
+ * - canonical 필드는 seed 가 절대 override 하지 못한다.
+ *
+ * mergeCandidateWithSeed 를 통해 boundary 가 코드 계약으로 강제된다.
+ * - 매칭 order 가 없으면 candidate 를 그대로 반환 (canonical 부재 → seed 가 임시 surface).
  * - 매칭 order 가 candidate 단계 이후라면 null 반환 → 리스트에서 제거.
  */
 function overlayCandidateWithStoreOrder(
@@ -131,12 +143,44 @@ function overlayCandidateWithStoreOrder(
 ): POCandidate | null {
   if (!storeOrder) return candidate;
   if (STORE_STATUSES_PAST_CANDIDATE.has(storeOrder.status)) return null;
-  return {
+
+  // 1. canonical truth — store 에서 검증된 값만 골라 신뢰 base 를 만든다.
+  //    값이 없으면 candidate 가 채워주도록 undefined 로 둔다.
+  const canonicalTruth: POCandidate = {
     ...candidate,
     vendor: storeOrder.vendorName || candidate.vendor,
     totalAmount: storeOrder.totalAmount || candidate.totalAmount,
     approvalStatus: mapStoreStatusToApprovalStatus(storeOrder.status, candidate.approvalStatus),
   };
+
+  // 2. presentation seed — DB candidate. canonical 필드는 boundary 에 의해 무시된다.
+  //    __presentationSeed marker 로 runtime 에서도 seed 임을 식별 가능.
+  const seed = {
+    ...(candidate as unknown as Record<string, unknown>),
+    __presentationSeed: true as const,
+  } as Partial<POCandidate> & { __presentationSeed: true };
+
+  // 3. dev 환경: seed 가 canonical override 시도 하면 콘솔 경고 (테스트에서 검증).
+  if (process.env.NODE_ENV !== "production") {
+    const violations = detectCanonicalOverrideAttempts(
+      canonicalTruth as unknown as Record<string, unknown>,
+      seed as unknown as Partial<Record<string, unknown>>,
+    );
+    if (violations.length > 0) {
+      // boundary 위반 — canonical truth 를 흔드는 코드가 들어왔다는 뜻.
+      // 운영에서는 silent (mergeCandidateWithSeed 가 차단), dev 에서는 가시화.
+      console.warn(
+        "[orders] candidate truth boundary 위반 시도:",
+        violations,
+        { candidateId: candidate.id },
+      );
+    }
+  }
+
+  return mergeCandidateWithSeed(
+    canonicalTruth as unknown as Record<string, unknown>,
+    seed as unknown as Partial<Record<string, unknown>> & { __presentationSeed?: true },
+  ) as unknown as POCandidate;
 }
 
 // ── Fast-Track evaluation input builder ─────────────────────────────────────

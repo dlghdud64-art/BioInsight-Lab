@@ -142,6 +142,15 @@ export function getApprovalBaselineAdapter(): PersistenceAdapter<ApprovalPoSnaps
   return _approvalAdapter;
 }
 
+/** Governance dedupe signature adapter (string-value, signature-equality semantics) */
+let _dedupeSignatureAdapter: PersistenceAdapter<string> | null = null;
+export function getDedupeSignatureAdapter(): PersistenceAdapter<string> {
+  if (!_dedupeSignatureAdapter) {
+    _dedupeSignatureAdapter = new SessionStorageAdapter<string>("labaxis:gov-dedupe:");
+  }
+  return _dedupeSignatureAdapter;
+}
+
 /** Outbound history adapter */
 let _outboundAdapter: PersistenceAdapter<OutboundHistoryRecord[]> | null = null;
 export function getOutboundHistoryAdapter(): PersistenceAdapter<OutboundHistoryRecord[]> {
@@ -165,4 +174,28 @@ export function setApprovalBaselineAdapter(adapter: PersistenceAdapter<ApprovalP
 
 export function setOutboundHistoryAdapter(adapter: PersistenceAdapter<OutboundHistoryRecord[]>): void {
   _outboundAdapter = adapter;
+}
+
+export function setDedupeSignatureAdapter(adapter: PersistenceAdapter<string>): void {
+  _dedupeSignatureAdapter = adapter;
+}
+
+// ══════════════════════════════════════════════
+// Adapter helpers — pattern clear (clearByPrefix-capable adapters만)
+// ══════════════════════════════════════════════
+
+/**
+ * adapter 가 clearByPrefix 를 지원하면 호출, 아니면 no-op.
+ * SessionStorageAdapter 는 지원, 추후 DB adapter 는 자체 SQL prefix delete 로 교체.
+ */
+export function clearAdapterByPrefix<T>(
+  adapter: PersistenceAdapter<T>,
+  prefix: string,
+): void {
+  if (
+    "clearByPrefix" in adapter &&
+    typeof (adapter as { clearByPrefix?: (p: string) => void }).clearByPrefix === "function"
+  ) {
+    (adapter as { clearByPrefix: (p: string) => void }).clearByPrefix(prefix);
+  }
 }
