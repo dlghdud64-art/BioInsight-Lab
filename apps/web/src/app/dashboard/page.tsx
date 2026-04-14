@@ -150,8 +150,21 @@ export default function DashboardPage() {
     },
   };
 
-  const hasAnyData = stats.totalInventory > 0 || stats.monthlySpending > 0 || stats.activeQuotes > 0;
-  const hasActionItems = stats.lowStockAlerts > 0 || stats.activeQuotes > 0 || stats.expiringCount > 0 || stats.undecidedCompareCount > 0;
+  // ── 3상태 대시보드 판정 ──────────────────────────────────
+  const processingRequiredCount = stats.lowStockAlerts + stats.expiringCount + stats.undecidedCompareCount;
+  const approvalPendingCount = stats.respondedQuotes; // 견적 응답 = 검토/승인 대기
+  const riskOrBlockerCount = stats.compareStats.slaBreachedCount;
+  const inProgressCount = stats.activeQuotes;
+  const recentActivityCount = stats.totalInventory + stats.monthlySpending + stats.activeQuotes;
+
+  const isBlocked = processingRequiredCount > 0 || approvalPendingCount > 0 || riskOrBlockerCount > 0;
+  const hasOperationalFootprint = recentActivityCount > 0;
+  const isZero = !isBlocked && inProgressCount === 0 && !hasOperationalFootprint;
+  const dashboardState: "blocked" | "zero" | "active" = isBlocked ? "blocked" : isZero ? "zero" : "active";
+
+  // 하위 호환
+  const hasAnyData = hasOperationalFootprint;
+  const hasActionItems = isBlocked;
   const actionCount = (stats.lowStockAlerts > 0 ? 1 : 0) + (stats.activeQuotes > 0 ? 1 : 0) + (stats.expiringCount > 0 ? 1 : 0) + (stats.undecidedCompareCount > 0 ? 1 : 0);
 
   // -- 알림 (심각도순 정렬) --
@@ -359,11 +372,11 @@ export default function DashboardPage() {
         </h2>
         <p className="text-sm text-slate-500">
           {session?.user?.name ? `${session.user.name}님, ` : ""}
-          {hasActionItems
-            ? `처리가 필요한 항목 ${actionCount}건이 있습니다.`
-            : hasAnyData
-              ? "오늘 즉시 처리할 운영 이슈가 없습니다."
-              : "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."}
+          {dashboardState === "blocked"
+            ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
+            : dashboardState === "zero"
+              ? "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."
+              : "오늘 즉시 처리할 운영 이슈가 없습니다."}
         </p>
       </div>
 
@@ -373,32 +386,214 @@ export default function DashboardPage() {
       {/* --- AI 작업함 --- */}
       <WorkQueueInbox />
 
-      {/* --- Empty State (보조 섹션) --- */}
-      {!hasAnyData && !statsLoading && (
-        <div className="rounded-lg border border-slate-200 border-dashed p-4 md:p-5 bg-white">
-          <p className="text-[10px] font-medium text-slate-600 uppercase tracking-widest mb-3">시작하기</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {[
-              { step: "1", label: "품목 등록", desc: "시약·장비 등록", href: "/dashboard/inventory", icon: <Plus className="h-3.5 w-3.5 text-slate-500" /> },
-              { step: "2", label: "비교 시작", desc: "스펙·가격 비교", href: "/app/compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-500" /> },
-              { step: "3", label: "견적 요청", desc: "공급사 견적 요청", href: "/app/quote", icon: <FileText className="h-3.5 w-3.5 text-slate-500" /> },
-              { step: "4", label: "재고 연결", desc: "입고 후 연결", href: "/dashboard/inventory", icon: <Package className="h-3.5 w-3.5 text-slate-500" /> },
-            ].map((item) => (
-              <Link key={item.step} href={item.href} className="group border border-slate-200 rounded-md p-2.5 hover:bg-slate-50 transition-colors">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <span className="text-[9px] font-bold text-slate-600 bg-slate-100 rounded px-1 py-0.5">{item.step}</span>
-                  {item.icon}
+      {/* ═══ 3상태 중앙 패널 (desktop) ═══ */}
+      {!statsLoading && (
+        <div className="hidden md:grid md:grid-cols-5 gap-4">
+          {/* ── 좌측 상태 요약 카드 (3col) ── */}
+          <div className="col-span-3 rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            {dashboardState === "zero" && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-slate-400" />
+                  <h3 className="text-sm font-semibold text-slate-700">운영 이슈 요약</h3>
                 </div>
-                <p className="text-[11px] font-medium text-slate-700">{item.label}</p>
-                <p className="text-[10px] text-slate-600 mt-0.5">{item.desc}</p>
-              </Link>
-            ))}
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">아직 운영 데이터가 없습니다</p>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                    품목 등록, 비교 시작, 견적 요청 생성 중 하나로 첫 운영 흐름을 시작하세요.
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-2">첫 데이터가 생성되면 처리 필요 항목과 최근 활동이 여기에 표시됩니다.</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-slate-100">
+                  <Link href="/dashboard/inventory">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <Plus className="h-3.5 w-3.5" /> 품목 등록
+                    </Button>
+                  </Link>
+                  <Link href="/app/compare">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <GitCompare className="h-3.5 w-3.5" /> 비교 시작
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/quotes">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <FileText className="h-3.5 w-3.5" /> 견적 요청 생성
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
+
+            {dashboardState === "active" && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  <h3 className="text-sm font-semibold text-slate-700">운영 이슈 요약</h3>
+                </div>
+                <div className="text-center py-6">
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                  </div>
+                  <p className="text-sm font-semibold text-slate-700 mb-1">오늘 즉시 처리할 운영 이슈가 없습니다</p>
+                  <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
+                    최근 운영 흐름은 안정적입니다. 최근 활동과 각 워크큐에서 진행 상황을 확인하세요.
+                  </p>
+                </div>
+                {inProgressCount > 0 && (
+                  <div className="pt-2 border-t border-slate-100">
+                    <Link href="/dashboard/quotes">
+                      <Button size="sm" variant="ghost" className="h-8 text-xs text-blue-600 hover:bg-blue-50 gap-1.5 w-full justify-start">
+                        <ArrowRight className="h-3.5 w-3.5" /> 진행 중 작업 계속 ({inProgressCount}건)
+                      </Button>
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {dashboardState === "blocked" && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2 flex-shrink-0">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                  </span>
+                  <h3 className="text-sm font-semibold text-slate-900">지금 확인이 필요한 운영 이슈가 있습니다</h3>
+                </div>
+                <p className="text-xs text-slate-500">아래 항목부터 우선 처리하세요.</p>
+                <div className="space-y-2">
+                  {processingRequiredCount > 0 && (
+                    <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors group">
+                      <div className="flex items-center gap-2.5">
+                        <AlertTriangle className="h-4 w-4 text-amber-600" />
+                        <span className="text-sm font-medium text-amber-800">처리 필요 항목</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-amber-700">{processingRequiredCount}건</span>
+                        <ChevronRight className="h-4 w-4 text-amber-400 group-hover:text-amber-600" />
+                      </div>
+                    </Link>
+                  )}
+                  {approvalPendingCount > 0 && (
+                    <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors group">
+                      <div className="flex items-center gap-2.5">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        <span className="text-sm font-medium text-blue-800">승인 대기</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-blue-700">{approvalPendingCount}건</span>
+                        <ChevronRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600" />
+                      </div>
+                    </Link>
+                  )}
+                  {riskOrBlockerCount > 0 && (
+                    <Link href="/compare" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group">
+                      <div className="flex items-center gap-2.5">
+                        <ShieldAlert className="h-4 w-4 text-red-600" />
+                        <span className="text-sm font-medium text-red-800">위험/차단</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-red-700">{riskOrBlockerCount}건</span>
+                        <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-600" />
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ── 우측 보조 카드 (2col) ── */}
+          <div className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            {dashboardState === "zero" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-slate-700">빠른 시작</h3>
+                <div className="space-y-1.5">
+                  {[
+                    { label: "품목 등록", desc: "시약·장비를 등록합니다", href: "/dashboard/inventory", icon: <Plus className="h-3.5 w-3.5 text-slate-500" /> },
+                    { label: "비교 시작", desc: "제품 스펙·가격을 비교합니다", href: "/app/compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-500" /> },
+                    { label: "견적 요청 생성", desc: "공급사에 견적을 요청합니다", href: "/dashboard/quotes", icon: <FileText className="h-3.5 w-3.5 text-slate-500" /> },
+                  ].map((item) => (
+                    <Link key={item.label} href={item.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group">
+                      <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 group-hover:bg-blue-50">
+                        {item.icon}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-slate-700 group-hover:text-blue-600">{item.label}</p>
+                        <p className="text-[11px] text-slate-400">{item.desc}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-blue-400" />
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {dashboardState === "active" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-slate-700">최근 운영 활동</h3>
+                {notifications.filter((n) => n.id !== "n-delivery" || stats.totalInventory > 0).length > 0 ? (
+                  <div className="space-y-1.5">
+                    {notifications.slice(0, 5).map((n) => (
+                      <Link key={n.id} href={n.href} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors group">
+                        {renderNotificationIcon(n.type)}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-slate-700 group-hover:text-blue-600 truncate">{n.title}</p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">{n.time}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-400 py-4 text-center">최근 7일간 주요 변경이 없습니다.</p>
+                )}
+              </div>
+            )}
+
+            {dashboardState === "blocked" && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-semibold text-slate-700">우선 처리</h3>
+                <div className="space-y-1.5">
+                  {processingRequiredCount > 0 && (
+                    <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 transition-colors group">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-amber-700">처리 필요 항목 보기</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-amber-500" />
+                    </Link>
+                  )}
+                  {approvalPendingCount > 0 && (
+                    <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-blue-50 transition-colors group">
+                      <FileText className="h-4 w-4 text-blue-500" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-blue-700">승인 대기 열기</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-blue-500" />
+                    </Link>
+                  )}
+                  {riskOrBlockerCount > 0 && (
+                    <Link href="/compare" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-red-50 transition-colors group">
+                      <ShieldAlert className="h-4 w-4 text-red-500" />
+                      <span className="text-sm font-medium text-slate-700 group-hover:text-red-700">위험/차단 확인</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-red-500" />
+                    </Link>
+                  )}
+                  {inProgressCount > 0 && (
+                    <Link href="/dashboard/quotes" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-slate-50 transition-colors group">
+                      <ArrowRight className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm font-medium text-slate-700">진행 중 작업 계속</span>
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto" />
+                    </Link>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* --- 1순위: 오늘의 우선 작업 --- */}
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
+      <div className="md:hidden rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {hasActionItems ? (
@@ -413,29 +608,11 @@ export default function DashboardPage() {
               <>
                 <span className={`inline-flex h-2 w-2 rounded-full flex-shrink-0 ${hasAnyData ? "bg-emerald-500" : "bg-slate-400"}`} />
                 <h3 className="text-sm font-semibold text-slate-700">
-                  {hasAnyData ? "오늘 처리할 이슈 없음" : "시작 안내"}
+                  {dashboardState === "active" ? "오늘 처리할 이슈 없음" : "시작 안내"}
                 </h3>
               </>
             )}
           </div>
-          {hasActionItems && (
-            <div className="flex items-center gap-2">
-              {stats.activeQuotes > 0 && (
-                <Link href="/dashboard/quotes?status=PENDING">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-blue-200 text-blue-600 hover:bg-blue-50">
-                    견적 검토하기
-                  </Button>
-                </Link>
-              )}
-              {stats.lowStockAlerts > 0 && (
-                <Link href="/dashboard/inventory?filter=low">
-                  <Button variant="outline" size="sm" className="h-7 text-[11px] px-2.5 border-red-200 text-red-600 hover:bg-red-50">
-                    재고 확인하기
-                  </Button>
-                </Link>
-              )}
-            </div>
-          )}
         </div>
         {hasActionItems ? (
           <div className="divide-y divide-slate-100 sm:divide-y-0 sm:grid sm:divide-x sm:divide-slate-100" style={{ gridTemplateColumns: `repeat(${actionCount}, 1fr)` }}>

@@ -360,7 +360,7 @@ export function ExecutiveSummarySection() {
         />
         <KpiCard
           icon={<ShieldAlert className="h-3.5 w-3.5" />}
-          label="이상 신호"
+          label="위험/차단"
           value={`${kpis.anomalyCount}건`}
           hint={kpis.anomalyDetail}
           risk={
