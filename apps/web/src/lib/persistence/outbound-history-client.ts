@@ -7,6 +7,7 @@
  */
 
 import type { DispatchOutboundRecord } from "@/lib/store/dispatch-outbound-store";
+import { csrfFetch } from "@/lib/api-client";
 import {
   persistOutboundHistory as persistLocal,
   loadOutboundHistory as loadLocal,
@@ -29,7 +30,7 @@ export async function persistOutboundHistoryWithServer(
 
   // 2. 서버에 비동기 기록
   try {
-    await fetch(API_BASE, {
+    await csrfFetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ poId, history }),
@@ -73,7 +74,7 @@ export async function clearOutboundHistoryWithServer(
   clearLocal(poId);
 
   try {
-    await fetch(`${API_BASE}?poId=${encodeURIComponent(poId)}`, {
+    await csrfFetch(`${API_BASE}?poId=${encodeURIComponent(poId)}`, {
       method: "DELETE",
     });
   } catch (e) {

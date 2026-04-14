@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -221,7 +222,7 @@ export default function BudgetPage() {
         ? { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName ?? null, description: formData.description ?? null }
         : { name: formData.name, amount: cleanAmount, currency: formData.currency, periodStart: formData.periodStart, periodEnd: formData.periodEnd, projectName: formData.projectName, description: formData.description, targetDepartment: formData.targetDepartment, organizationId: activeOrgId };
 
-      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const res = await csrfFetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
         setSubmitError((json as any)?.error || "예산 반영 중 오류가 발생했습니다.");

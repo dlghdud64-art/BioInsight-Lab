@@ -6,6 +6,7 @@
  */
 
 import type { ReviewQueueItem } from "@/lib/review-queue/types";
+import { csrfFetch } from "@/lib/api-client";
 
 const STORAGE_KEY = "labaxis_review_queue_draft";
 const API_BASE = "/api/governance/review-queue-draft";
@@ -50,7 +51,7 @@ export async function persistReviewQueueDraft(
 
   // 2. 서버에 비동기 기록
   try {
-    await fetch(API_BASE, {
+    await csrfFetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ items }),
@@ -90,7 +91,7 @@ export async function clearReviewQueueDraft(): Promise<void> {
   clearLocal();
 
   try {
-    await fetch(API_BASE, { method: "DELETE" });
+    await csrfFetch(API_BASE, { method: "DELETE" });
   } catch (e) {
     console.warn("[review-queue-client] 서버 삭제 실패:", e);
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useTestFlow } from "./test-flow-provider";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,7 +113,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
     queryFn: async () => {
       if (quoteItems.length === 0) return null;
 
-      const response = await fetch("/api/quotes/cost-optimization", {
+      const response = await csrfFetch("/api/quotes/cost-optimization", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -899,7 +900,7 @@ export function QuotePanel({ onQuoteSaved }: QuotePanelProps = {}) {
               onClick={async () => {
                 setIsOptimizing(true);
                 try {
-                  const response = await fetch("/api/quotes/optimize-combination", {
+                  const response = await csrfFetch("/api/quotes/optimize-combination", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
@@ -1797,7 +1798,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
       const url = quoteId ? `/api/quote-lists/${quoteId}` : "/api/quote-lists";
       const method = quoteId ? "PUT" : "POST";
 
-      const response = await fetch(url, {
+      const response = await csrfFetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
@@ -1904,7 +1905,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
         }
       });
 
-      const response = await fetch("/api/quotes", {
+      const response = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2052,7 +2053,7 @@ export const QuoteRequestPanel = forwardRef<QuoteRequestPanelRef, QuoteRequestPa
     setIsCreatingShareLink(true);
     try {
       // quote-lists의 ID를 Quote ID로 사용 (나중에 quote-lists용 공유 링크 API 추가 필요)
-      const response = await fetch("/api/shared-lists", {
+      const response = await csrfFetch("/api/shared-lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -17,6 +17,8 @@
  *   5. 서버 장애 시 sessionStorage fallback 자동.
  */
 
+import { csrfFetch } from "@/lib/api-client";
+
 const API_BASE = "/api/governance/event-dedupe";
 
 // ══════════════════════════════════════════════
@@ -87,7 +89,7 @@ export async function shouldPublishWithServerAsync(
 ): Promise<boolean> {
   // 1. 서버에서 먼저 시도
   try {
-    const res = await fetch(API_BASE, {
+    const res = await csrfFetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -130,7 +132,7 @@ export function markPublishedWithServer(
   // 2. 서버에 비동기 기록
   void (async () => {
     try {
-      await fetch(API_BASE, {
+      await csrfFetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -158,7 +160,7 @@ export function clearDedupeForPoWithServer(entityKey: string): void {
   // 2. 서버 비동기 clear
   void (async () => {
     try {
-      await fetch(`${API_BASE}?poNumber=${encodeURIComponent(entityKey)}`, {
+      await csrfFetch(`${API_BASE}?poNumber=${encodeURIComponent(entityKey)}`, {
         method: "DELETE",
       });
     } catch (e) {

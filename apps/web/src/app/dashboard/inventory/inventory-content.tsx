@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -683,7 +684,7 @@ function InventoryPageContent() {
           }
         : formPayload;
 
-      const response = await fetch(url, {
+      const response = await csrfFetch(url, {
         method: isEdit ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -717,7 +718,7 @@ function InventoryPageContent() {
 
   const recordUsageMutation = useMutation({
     mutationFn: async (usagePayload: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
-      const response = await fetch("/api/inventory/usage", {
+      const response = await csrfFetch("/api/inventory/usage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(usagePayload),
@@ -1206,7 +1207,7 @@ function InventoryPageContent() {
               onOpenChange={setIsSmartReceiveOpen}
               onDirectReceive={async (data: SmartReceiveFormData) => {
                 try {
-                  const res = await fetch("/api/inventory", {
+                  const res = await csrfFetch("/api/inventory", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

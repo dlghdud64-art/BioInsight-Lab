@@ -16,6 +16,7 @@
  */
 
 import type { ApprovalPoSnapshot } from "@/lib/ai/approval-snapshot-store";
+import { csrfFetch } from "@/lib/api-client";
 import {
   ensureApprovalSnapshot as ensureLocal,
   getApprovalSnapshot as getLocal,
@@ -41,7 +42,7 @@ export async function ensureApprovalSnapshotWithServer(
 
   // 2. 서버에 비동기 기록
   try {
-    await fetch(API_BASE, {
+    await csrfFetch(API_BASE, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ snapshot: data }),
@@ -95,7 +96,7 @@ export async function clearApprovalSnapshotWithServer(
 
   // 2. 서버 비동기 clear (soft-delete)
   try {
-    await fetch(`${API_BASE}?poNumber=${encodeURIComponent(poNumber)}`, {
+    await csrfFetch(`${API_BASE}?poNumber=${encodeURIComponent(poNumber)}`, {
       method: "DELETE",
     });
   } catch (e) {

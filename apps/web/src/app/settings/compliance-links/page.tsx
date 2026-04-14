@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { useState, Suspense } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -150,7 +151,7 @@ function ComplianceLinksPageContent() {
         rules: Object.keys(data.rules).length > 0 ? data.rules : null,
       };
 
-      const response = await fetch(url, {
+      const response = await csrfFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

@@ -8,6 +8,7 @@
  * Inquiry draft는 DB에 영속화됨.
  */
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
@@ -511,7 +512,7 @@ export function CompareAnalysisDrawer({
       const pIds: string[] = Array.isArray(data.session.productIds) ? data.session.productIds : [];
       if (pIds.length > 0) {
         // Fetch product details
-        const pRes = await fetch("/api/products/compare", {
+        const pRes = await csrfFetch("/api/products/compare", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ productIds: pIds }),
@@ -545,7 +546,7 @@ export function CompareAnalysisDrawer({
   // 비교 세션 생성 + diff 계산
   const createSessionMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch("/api/compare-sessions", {
+      const res = await csrfFetch("/api/compare-sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds, organizationId }),
@@ -575,7 +576,7 @@ export function CompareAnalysisDrawer({
   const insightMutation = useMutation({
     mutationFn: async () => {
       if (!sessionData) throw new Error("세션 없음");
-      const res = await fetch(`/api/compare-sessions/${sessionData.id}/insight`, {
+      const res = await csrfFetch(`/api/compare-sessions/${sessionData.id}/insight`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -609,7 +610,7 @@ export function CompareAnalysisDrawer({
     mutationFn: async () => {
       if (!sessionData) throw new Error("세션 없음");
       if (!vendorName.trim()) throw new Error("공급사 이름을 입력하세요");
-      const res = await fetch(`/api/compare-sessions/${sessionData.id}/inquiry-draft`, {
+      const res = await csrfFetch(`/api/compare-sessions/${sessionData.id}/inquiry-draft`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -635,7 +636,7 @@ export function CompareAnalysisDrawer({
   const quoteDraftMutation = useMutation({
     mutationFn: async () => {
       if (!sessionData) throw new Error("세션 없음");
-      const res = await fetch(`/api/compare-sessions/${sessionData.id}/quote-draft`, {
+      const res = await csrfFetch(`/api/compare-sessions/${sessionData.id}/quote-draft`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -672,7 +673,7 @@ export function CompareAnalysisDrawer({
     if (!sessionData || !decisionForm) return;
     setIsDecisionSaving(true);
     try {
-      const res = await fetch(`/api/compare-sessions/${sessionData.id}/decision`, {
+      const res = await csrfFetch(`/api/compare-sessions/${sessionData.id}/decision`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
