@@ -451,13 +451,20 @@ export default function SupportCenterPage() {
   return (
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
       {/* ── 헤더 + Context Strip ── */}
-      <div className="mb-5 px-1">
-        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
-          운영 지원 센터
-        </h1>
-        <p className="text-sm text-slate-500 leading-relaxed">
-          운영 중 필요한 문서, 문제 해결, 지원 요청을 같은 화면에서 처리합니다.
-        </p>
+      <div className="mb-6 px-1">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <LifeBuoy className="h-5 w-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
+              운영 지원 센터
+            </h1>
+            <p className="text-sm text-slate-500 leading-relaxed">
+              운영 매뉴얼, 문제 해결, 지원 티켓을 한곳에서 처리합니다.
+            </p>
+          </div>
+        </div>
         {/* Context strip — 진입 경로가 있으면 표시 */}
         {(() => {
           const fromRoute = searchParams?.get("from") ?? null;
@@ -493,7 +500,7 @@ export default function SupportCenterPage() {
           placeholder="문서, 문제 해결, 티켓을 한 번에 검색 (예: PDF 실패, 승인, 재고)"
           value={globalSearch}
           onChange={(e) => setGlobalSearch(e.target.value)}
-          className="pl-10 h-10 bg-slate-50 border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 rounded-xl"
+          className="pl-10 h-11 bg-white border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 rounded-xl shadow-sm"
         />
         {globalSearch && (
           <button
@@ -541,7 +548,7 @@ export default function SupportCenterPage() {
       </div>
 
       {/* ── 탭 네비게이션 ── */}
-      <div className="flex gap-1 border-b border-slate-200 mb-6 px-1">
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 mx-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -549,15 +556,14 @@ export default function SupportCenterPage() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all ${
                 isActive
-                  ? "border-blue-600 text-blue-600"
-                  : "border-transparent text-slate-500 hover:text-slate-600 hover:border-slate-300"
+                  ? "bg-white text-blue-700 shadow-sm border border-slate-200/80"
+                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
               }`}
             >
-              <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
-              <span className="hidden sm:inline">{tab.label}</span>
-              <span className="sm:hidden">{tab.label}</span>
+              <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+              {tab.label}
             </button>
           );
         })}
@@ -624,10 +630,10 @@ function ManualTab() {
       </div>
 
       {/* 최근 업데이트 */}
-      <div className="rounded-xl bg-slate-50 border border-slate-200 p-4 mb-6">
+      <div className="rounded-xl bg-gradient-to-br from-blue-50/60 to-slate-50 border border-blue-100 p-4 mb-6">
         <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-amber-500" />
-          <h2 className="text-sm font-semibold text-slate-900">최근 업데이트</h2>
+          <Sparkles className="h-4 w-4 text-blue-500" />
+          <h2 className="text-sm font-bold text-slate-800">최근 업데이트</h2>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           {RECENT_UPDATES.map((update, i) => (
@@ -750,7 +756,7 @@ function ManualContent({
       {entries.map((entry) => {
         const Icon = entry.icon;
         return (
-          <Card key={entry.id} className="bg-white border-slate-200 hover:border-slate-300 transition-colors overflow-hidden">
+          <Card key={entry.id} className="bg-white border-slate-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all overflow-hidden">
             <CardContent className="p-4 md:p-5">
               <div className="flex items-start gap-3.5">
                 <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -918,7 +924,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
               <div
                 key={item.id}
                 className={`rounded-xl border transition-all overflow-hidden ${
-                  isExpanded ? "bg-white border-slate-300 shadow-sm" : "bg-white border-slate-200 hover:border-slate-300"
+                  isExpanded ? "bg-white border-blue-200 shadow-md shadow-blue-50" : "bg-white border-slate-200 hover:border-blue-200 hover:shadow-sm"
                 }`}
               >
                 {/* 증상 헤더 */}

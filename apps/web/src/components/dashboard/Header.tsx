@@ -27,6 +27,7 @@ import {
   ClipboardCheck, Menu, Package,
   Compass,
 } from "lucide-react";
+import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
 import { useOntologyContextLayerStore } from "@/lib/store/ontology-context-layer-store";
@@ -279,7 +280,19 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                   variant="ghost"
                   size="icon"
                   className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  onClick={() => ontologyStore.open(pathname, {})}
+                  onClick={() => {
+                    ontologyStore.open(pathname ?? "", {});
+                    // ontology resolver 가 null 을 반환하면 패널이 열리지 않는다.
+                    // 무반응으로 보이지 않도록 fallback 안내.
+                    requestAnimationFrame(() => {
+                      if (!ontologyStore.isOpen) {
+                        toast.info("현재 페이지에서 추천 다음 단계가 없습니다", {
+                          description: "다른 워크플로 페이지로 이동하면 안내가 표시됩니다.",
+                          duration: 3000,
+                        });
+                      }
+                    });
+                  }}
                   aria-label="다음 단계"
                 >
                   <Compass className="h-5 w-5" />
@@ -300,7 +313,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
                 aria-label="알림"
               >
                 <Bell className="h-5 w-5" />
@@ -405,7 +418,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 cursor-pointer p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors hidden lg:flex"
+                className="h-10 w-10 md:h-9 md:w-9 flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors hidden md:flex"
                 aria-label="도움말"
               >
                 <HelpCircle className="h-5 w-5" />
