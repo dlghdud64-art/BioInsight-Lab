@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import * as XLSX from "xlsx";
 import { CloudUpload, Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -47,12 +48,36 @@ interface BulkImportModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  _renderContentOnly?: boolean;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* Content-only export (GlobalModal 통합용)                        */
+/* ══════════════════════════════════════════════════════════════ */
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry에서 사용. */
+export function BulkImportContent({
+  onClose,
+  onSuccess,
+}: {
+  onClose?: () => void;
+  onSuccess?: () => void;
+}) {
+  return (
+    <BulkImportModal
+      open={true}
+      onOpenChange={(v) => { if (!v && onClose) onClose(); }}
+      onSuccess={onSuccess}
+      _renderContentOnly
+    />
+  );
 }
 
 export function BulkImportModal({
   open,
   onOpenChange,
   onSuccess,
+  _renderContentOnly,
 }: BulkImportModalProps) {
   const router = useRouter();
   const { toast } = useToast();
@@ -284,7 +309,7 @@ export function BulkImportModal({
         return;
       }
 
-      const response = await fetch("/api/inventory/bulk", {
+      const response = await csrfFetch("/api/inventory/bulk", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId, items }),
@@ -319,17 +344,8 @@ export function BulkImportModal({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>재고 일괄 등록</DialogTitle>
-          <DialogDescription>
-            엑셀 파일로 기존 재고 대장을 한 번에 업로드합니다.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 overflow-y-auto pr-1 flex-1">
+  const content = (
+    <div className="space-y-4 overflow-y-auto pr-1 flex-1">
           <Button
             type="button"
             variant="outline"
@@ -382,6 +398,22 @@ export function BulkImportModal({
             </label>
           </div>
         </div>
+    </div>
+  );
+
+  if (_renderContentOnly) return content;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>재고 일괄 등록</DialogTitle>
+          <DialogDescription>
+            엑셀 파일로 기존 재고 대장을 한 번에 업로드합니다.
+          </DialogDescription>
+        </DialogHeader>
+
+        {content}
       </DialogContent>
     </Dialog>
   );

@@ -451,14 +451,44 @@ function ScannerContent() {
   return null;
 }
 
+/* ══════════════════════════════════════════════════════════════ */
+/* Content-only export (GlobalModal 통합용)                        */
+/* ══════════════════════════════════════════════════════════════ */
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry에서 사용. */
+export function GlobalQRScannerContent({
+  onClose,
+}: {
+  onClose?: () => void;
+}) {
+  return (
+    <GlobalQRScannerModal
+      open={true}
+      onOpenChange={(v) => { if (!v && onClose) onClose(); }}
+      _renderContentOnly
+    />
+  );
+}
+
 /**
  * GlobalQRScannerModal
  * - 모바일(md 미만): Sheet side="bottom"
  * - 데스크톱(md 이상): Dialog
  */
-export function GlobalQRScannerModal() {
+export function GlobalQRScannerModal({
+  open,
+  onOpenChange,
+  _renderContentOnly,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  _renderContentOnly?: boolean;
+} = {}) {
   const { isOpen, close } = useQRScanner();
   const [isMobile, setIsMobile] = useState(false);
+
+  const modalOpen = _renderContentOnly ? true : isOpen;
+  const handleOpenChange = _renderContentOnly ? onOpenChange : (o: boolean) => !o && close();
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -467,9 +497,13 @@ export function GlobalQRScannerModal() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
+  const content = <ScannerContent />;
+
+  if (_renderContentOnly) return content;
+
   if (isMobile) {
     return (
-      <Sheet open={isOpen} onOpenChange={(o) => !o && close()}>
+      <Sheet open={modalOpen} onOpenChange={handleOpenChange}>
         <SheetContent side="bottom" className="rounded-t-2xl max-h-[92dvh] overflow-y-auto pb-safe">
           <SheetHeader className="pb-2">
             <SheetTitle className="flex items-center gap-2 text-base">
@@ -477,14 +511,14 @@ export function GlobalQRScannerModal() {
               재고 QR 스캔
             </SheetTitle>
           </SheetHeader>
-          <ScannerContent />
+          {content}
         </SheetContent>
       </Sheet>
     );
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(o) => !o && close()}>
+    <Dialog open={modalOpen} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base">
@@ -492,7 +526,7 @@ export function GlobalQRScannerModal() {
             재고 QR 스캔
           </DialogTitle>
         </DialogHeader>
-        <ScannerContent />
+        {content}
       </DialogContent>
     </Dialog>
   );

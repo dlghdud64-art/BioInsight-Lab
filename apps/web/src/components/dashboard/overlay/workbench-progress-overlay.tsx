@@ -154,10 +154,34 @@ function BlockerRow({
 }
 
 // ══════════════════════════════════════════════
+// Content-only export (GlobalModal 통합용)
+// ══════════════════════════════════════════════
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry에서 사용. */
+export function WorkbenchProgressContent({
+  onClose,
+}: {
+  onClose?: () => void;
+}) {
+  return (
+    <WorkbenchProgressOverlay
+      _renderContentOnly
+      _onClose={onClose}
+    />
+  );
+}
+
+// ══════════════════════════════════════════════
 // Main Component
 // ══════════════════════════════════════════════
 
-export function WorkbenchProgressOverlay() {
+export function WorkbenchProgressOverlay({
+  _renderContentOnly,
+  _onClose,
+}: {
+  _renderContentOnly?: boolean;
+  _onClose?: () => void;
+} = {}) {
   const isOpen = useOverlayChromeStore((s) => s.isOpen);
   const widthMode = useOverlayChromeStore((s) => s.widthMode);
   const overlayRoutePath = useOverlayChromeStore((s) => s.overlayRoutePath);
@@ -232,13 +256,8 @@ export function WorkbenchProgressOverlay() {
 
   const workbenchHref = overlayRoutePath ?? "/dashboard/orders";
 
-  return (
-    <Sheet open={shouldShow} onOpenChange={handleOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-sm bg-white border-l border-slate-200 p-0 flex flex-col"
-      >
-        <div className="flex flex-col flex-1 overflow-hidden">
+  const content = (
+    <div className="flex flex-col flex-1 overflow-hidden">
           {/* ── Header ── */}
           <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-200 space-y-1.5">
             <div className="flex items-center justify-between">
@@ -400,6 +419,153 @@ export function WorkbenchProgressOverlay() {
             </div>
           </div>
         </div>
+    </div>
+  );
+
+  if (_renderContentOnly) {
+    if (_onClose) {
+      return (
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* ── Header ── */}
+          <div className="px-5 pt-5 pb-3 border-b border-slate-200 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+                  진행 현황
+                </span>
+                <span
+                  className={cn(
+                    "text-[10px] font-semibold px-1.5 py-0.5 rounded",
+                    readinessConfig.color,
+                    readinessConfig.bg
+                  )}
+                >
+                  {readinessConfig.label}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={_onClose}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded"
+                aria-label="닫기"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="text-base font-semibold text-slate-900 text-left">
+              {order
+                ? `${order.productName ?? order.poNumber}`
+                : "발주 상세"}
+            </div>
+            {order && (
+              <div className="text-xs text-slate-600 text-left">
+                {order.vendorName} · {order.poNumber}
+              </div>
+            )}
+          </div>
+
+          {/* ── Body ── */}
+          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
+            {/* Current Stage */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                현재 단계
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                <span className="text-sm font-medium text-slate-900">
+                  {STAGE_LABEL[currentStage] ?? currentStage}
+                </span>
+              </div>
+            </div>
+
+            {/* Next Action */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                다음 필요 작업
+              </div>
+              <div className="flex items-center gap-2">
+                <ChevronRight className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                <span className="text-sm text-slate-800">{nextAction}</span>
+              </div>
+            </div>
+
+            {/* Dispatch Readiness */}
+            <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                발송 준비도
+              </div>
+              <div className="flex items-center gap-2">
+                <ReadinessIcon
+                  className={cn("h-4 w-4", readinessConfig.color)}
+                />
+                <span className={cn("text-sm font-medium", readinessConfig.color)}>
+                  {readinessConfig.label}
+                </span>
+              </div>
+            </div>
+
+            {/* Blockers */}
+            {blockers.length > 0 && (
+              <div className="rounded-lg border border-red-200 bg-red-50/40 p-3">
+                <div className="text-[10px] font-semibold text-red-600 uppercase tracking-wider mb-2">
+                  차단 사유 ({blockers.length})
+                </div>
+                <div className="space-y-1.5">
+                  {blockers.map((b, i) => (
+                    <BlockerRow key={i} label={b.label} severity={b.severity} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Order info summary */}
+            {order && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
+                <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                  요약
+                </div>
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">총액</span>
+                    <span className="text-slate-800 font-medium tabular-nums">
+                      ₩{order.totalAmount.toLocaleString("ko-KR")}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-500">상태</span>
+                    <span className="text-slate-800">{order.status}</span>
+                  </div>
+                  {order.budgetName && (
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-500">예산</span>
+                      <span className="text-slate-800">
+                        {order.budgetName}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              본 패널은 빠른 현황 확인용입니다. 승인·발송 결선은 워크벤치에서
+              진행됩니다.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <Sheet open={shouldShow} onOpenChange={handleOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-sm bg-white border-l border-slate-200 p-0 flex flex-col"
+      >
+        {content}
       </SheetContent>
     </Sheet>
   );

@@ -41,36 +41,29 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
   label_scanner: {
     component: lazy(() =>
       import("@/components/inventory/LabelScannerModal").then((m) => ({
-        default: m.LabelScannerContent ?? m.default ?? (() => null),
+        default: m.LabelScannerContent,
       })),
     ),
-    defaultSize: "lg",
-    defaultTitle: "라벨 스캐너",
-    defaultSubtitle: "시약 라벨을 스캔하여 재고에 등록합니다.",
+    defaultSize: "md",
+    defaultTitle: "스마트 입고 (AI 스캔)",
+    defaultSubtitle: "시약 라벨을 스캔하여 자동 인식 후 재고에 등록합니다.",
   },
   qr_scanner: {
     component: lazy(() =>
       import("@/components/inventory/GlobalQRScannerModal").then((m) => ({
-        default: m.GlobalQRScannerContent ?? m.default ?? (() => null),
+        default: m.GlobalQRScannerContent,
       })),
     ),
     defaultSize: "md",
     defaultTitle: "QR 스캐너",
+    defaultSubtitle: "QR 코드를 스캔하여 재고를 조회합니다.",
   },
-  add_inventory: {
-    component: lazy(() =>
-      import("@/components/inventory/AddInventoryModal").then((m) => ({
-        default: m.AddInventoryContent ?? m.default ?? (() => null),
-      })),
-    ),
-    defaultSize: "lg",
-    defaultTitle: "재고 등록",
-    defaultSubtitle: "새로운 재고 항목을 등록합니다.",
-  },
+  // add_inventory: 추후 Content export 분리 후 등록
+  // checkout, dispatch, usage: 추후 마이그레이션 대상
   bulk_import: {
     component: lazy(() =>
       import("@/components/inventory/BulkImportModal").then((m) => ({
-        default: m.BulkImportContent ?? m.default ?? (() => null),
+        default: m.BulkImportContent,
       })),
     ),
     defaultSize: "lg",
@@ -80,20 +73,22 @@ const MODAL_REGISTRY: Partial<Record<ModalType, ModalRegistryEntry>> = {
   purchase: {
     component: lazy(() =>
       import("@/components/purchase/PurchaseModal").then((m) => ({
-        default: m.PurchaseContent ?? m.default ?? (() => null),
+        default: m.PurchaseContent,
       })),
     ),
     defaultSize: "lg",
-    defaultTitle: "구매 요청",
+    defaultTitle: "구매 내역 가져오기",
+    defaultSubtitle: "TSV/Excel 파일로 구매 내역을 일괄 등록합니다.",
   },
   workbench_progress: {
     component: lazy(() =>
       import("@/components/dashboard/overlay/workbench-progress-overlay").then((m) => ({
-        default: m.WorkbenchProgressContent ?? m.default ?? (() => null),
+        default: m.WorkbenchProgressContent,
       })),
     ),
     defaultSize: "xl",
     defaultTitle: "작업 진행 상황",
+    defaultSubtitle: "현재 실행 중인 워크벤치 작업의 진행 상태입니다.",
   },
   confirm: {
     component: lazy(() => Promise.resolve({

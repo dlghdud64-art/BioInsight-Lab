@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -90,9 +91,34 @@ function emptyFormData(): SmartReceiveFormData {
 }
 
 /* ══════════════════════════════════════════════════════════════ */
-/* 메인 컴포넌트                                                  */
+/* Content-only export (GlobalModal 통합용)                        */
 /* ══════════════════════════════════════════════════════════════ */
-export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirectReceive }: LabelScannerModalProps) {
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry에서 사용. */
+export function LabelScannerContent({
+  onClose,
+  onScanComplete,
+  onDirectReceive,
+}: {
+  onClose?: () => void;
+  onScanComplete?: (result: ScanApiResponse) => void;
+  onDirectReceive?: (data: SmartReceiveFormData, scanResult: ScanApiResponse | null) => void;
+}) {
+  return (
+    <LabelScannerModal
+      open={true}
+      onOpenChange={(v) => { if (!v && onClose) onClose(); }}
+      onScanComplete={onScanComplete}
+      onDirectReceive={onDirectReceive}
+      _renderContentOnly
+    />
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* 메인 컴포넌트 (기존 호환 유지)                                    */
+/* ══════════════════════════════════════════════════════════════ */
+export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirectReceive, _renderContentOnly }: LabelScannerModalProps & { _renderContentOnly?: boolean }) {
   const isMobile = useIsMobile();
   const [step, setStep] = useState<ScanStep>("upload");
   const [scanResult, setScanResult] = useState<ScanApiResponse | null>(null);
@@ -147,7 +173,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       setError(null);
 
       try {
-        const res = await fetch("/api/inventory/scan-label", {
+        const res = await csrfFetch("/api/inventory/scan-label", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ imageBase64: base64 }),
@@ -201,7 +227,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setPreviewImage(null);
 
     try {
-      const res = await fetch("/api/inventory/scan-label", {
+      const res = await csrfFetch("/api/inventory/scan-label", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: manualText.trim() }),
@@ -541,6 +567,9 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
       )}
     </div>
   );
+
+  /* ── GlobalModal 통합 모드: content만 반환 ── */
+  if (_renderContentOnly) return content;
 
   /* ── 모바일: Sheet / 데스크탑: Dialog ── */
   if (isMobile) {

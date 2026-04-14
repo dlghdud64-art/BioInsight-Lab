@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,11 +45,34 @@ interface PurchaseModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  _renderContentOnly?: boolean;
 }
 
 type Step = "input" | "preview" | "result";
 
-export function PurchaseModal({ open, onOpenChange, onSuccess }: PurchaseModalProps) {
+/* ══════════════════════════════════════════════════════════════ */
+/* Content-only export (GlobalModal 통합용)                        */
+/* ══════════════════════════════════════════════════════════════ */
+
+/** BaseModal 내부에 렌더링되는 순수 콘텐츠. GlobalModal registry에서 사용. */
+export function PurchaseContent({
+  onClose,
+  onSuccess,
+}: {
+  onClose?: () => void;
+  onSuccess?: () => void;
+}) {
+  return (
+    <PurchaseModal
+      open={true}
+      onOpenChange={(v) => { if (!v && onClose) onClose(); }}
+      onSuccess={onSuccess}
+      _renderContentOnly
+    />
+  );
+}
+
+export function PurchaseModal({ open, onOpenChange, onSuccess, _renderContentOnly }: PurchaseModalProps) {
   const { toast } = useToast();
   const [step, setStep] = useState<Step>("input");
   const [tsvInput, setTsvInput] = useState("");
@@ -199,7 +223,7 @@ export function PurchaseModal({ open, onOpenChange, onSuccess }: PurchaseModalPr
       setLoading(true);
 
       // TODO: API 엔드포인트로 데이터 전송
-      const response = await fetch("/api/purchases/import/tsv", {
+      const response = await csrfFetch("/api/purchases/import/tsv", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -255,17 +279,9 @@ export function PurchaseModal({ open, onOpenChange, onSuccess }: PurchaseModalPr
     setTsvInput(sampleTSV);
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>구매내역 TSV 가져오기</DialogTitle>
-          <DialogDescription>
-            탭으로 구분된 텍스트(TSV)를 붙여넣어 구매내역을 일괄 등록하세요.
-          </DialogDescription>
-        </DialogHeader>
-
-        {/* Step 1: Input */}
+  const content = (
+    <>
+      {/* Step 1: Input */}
         {step === "input" && (
           <div className="space-y-4">
             <div className="space-y-2">
@@ -442,6 +458,22 @@ export function PurchaseModal({ open, onOpenChange, onSuccess }: PurchaseModalPr
             </DialogFooter>
           </div>
         )}
+    </>
+  );
+
+  if (_renderContentOnly) return content;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>구매내역 TSV 가져오기</DialogTitle>
+          <DialogDescription>
+            탭으로 구분된 텍스트(TSV)를 붙여넣어 구매내역을 일괄 등록하세요.
+          </DialogDescription>
+        </DialogHeader>
+
+        {content}
       </DialogContent>
     </Dialog>
   );
