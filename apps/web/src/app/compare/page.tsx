@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -133,7 +134,7 @@ function ComparePageContent() {
     queryKey: ["compare", productIds],
     queryFn: async () => {
       if (productIds.length === 0) return { products: [] };
-      const response = await fetch("/api/products/compare", {
+      const response = await csrfFetch("/api/products/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds }),

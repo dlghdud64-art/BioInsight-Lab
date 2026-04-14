@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -144,7 +145,7 @@ export default function AdminQuotesPage() {
 
   const convertToOrderMutation = useMutation({
     mutationFn: async (quoteId: string) => {
-      const response = await fetch("/api/admin/orders", {
+      const response = await csrfFetch("/api/admin/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quoteId }),

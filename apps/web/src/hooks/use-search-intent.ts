@@ -1,9 +1,10 @@
+import { csrfFetch } from "@/lib/api-client";
 import { useMutation } from "@tanstack/react-query";
 
 export function useSearchIntent() {
   return useMutation({
     mutationFn: async (query: string) => {
-      const response = await fetch("/api/search/intent", {
+      const response = await csrfFetch("/api/search/intent", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

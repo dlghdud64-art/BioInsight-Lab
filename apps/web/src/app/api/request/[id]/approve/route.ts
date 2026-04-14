@@ -14,6 +14,10 @@ import {
   buildBudgetEventKey,
   recordBudgetEventIdempotent,
 } from "@/lib/budget/budget-concurrency";
+import {
+  recordMutationAudit,
+  buildAuditEventKey,
+} from "@/lib/audit/durable-mutation-audit";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -236,6 +240,31 @@ export async function POST(
           }
         }
       }
+
+      // 4. Durable audit event — 같은 SERIALIZABLE tx 안에서 기록
+      await recordMutationAudit(tx, {
+        auditEventKey: buildAuditEventKey(
+          orgId || 'no-org', requestId, 'purchase_request_approve',
+        ),
+        orgId: orgId || 'no-org',
+        actorId: session.user.id,
+        route: '/api/request/[id]/approve',
+        action: 'purchase_request_approve',
+        entityType: 'purchase_request',
+        entityId: requestId,
+        result: 'success',
+        correlationId: enforcement!.correlationId,
+        requestId,
+        orderId: order?.id,
+        periodKey: budgetAuditEvent?.decisions?.[0]?.periodKey,
+        normalizedCategoryId: budgetAuditEvent?.decisions?.[0]?.categoryId,
+        amount: purchaseRequest.totalAmount ?? undefined,
+        thresholds: budgetAuditEvent?.decisions?.[0]?.thresholds,
+        decisionBasis: budgetAuditEvent?.decisions,
+        budgetEventKey: budgetAuditEvent?.decisions?.[0]
+          ? buildBudgetEventKey(orgId!, requestId, 'approval_reserved', budgetAuditEvent.decisions[0].categoryId)
+          : undefined,
+      });
 
       return { purchaseRequest: approvedRequest, order, budgetWarnings };
     });

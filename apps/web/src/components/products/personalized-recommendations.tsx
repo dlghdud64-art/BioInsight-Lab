@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -252,7 +253,7 @@ function RecommendationFeedbackButton({ recommendationId }: { recommendationId: 
 
   const feedbackMutation = useMutation({
     mutationFn: async (data: { isHelpful: boolean; reason?: string }) => {
-      const response = await fetch("/api/recommendations/feedback", {
+      const response = await csrfFetch("/api/recommendations/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -12,6 +12,10 @@ import {
   NegativeCommittedSpendError,
   type BudgetReleaseEvent,
 } from "@/lib/budget/category-budget-release";
+import {
+  recordMutationAudit,
+  buildAuditEventKey,
+} from "@/lib/audit/durable-mutation-audit";
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -202,6 +206,30 @@ export async function PATCH(
           requestId: order.purchaseRequest.id,
           executedBy: session.user.id,
           reason: notes ?? "Order cancelled by admin",
+        });
+
+        // 4. Durable audit event — 같은 tx 안에서 기록
+        await recordMutationAudit(tx, {
+          auditEventKey: buildAuditEventKey(
+            order.organizationId, orderId, 'order_cancelled_po_void',
+          ),
+          orgId: order.organizationId,
+          actorId: session.user.id,
+          route: '/api/admin/orders/[id]/status',
+          action: 'order_cancelled_po_void',
+          entityType: 'order',
+          entityId: orderId,
+          result: 'success',
+          correlationId: enforcement!.correlationId,
+          requestId: order.purchaseRequest.id,
+          orderId,
+          amount: budgetReleaseEvent?.releaseItems?.[0]?.amount,
+          normalizedCategoryId: budgetReleaseEvent?.releaseItems?.[0]?.categoryId ?? undefined,
+          periodKey: budgetReleaseEvent?.releaseItems?.[0]?.periodKey,
+          decisionBasis: budgetReleaseEvent ? { releaseItems: budgetReleaseEvent.releaseItems } : undefined,
+          compensatingForEventId: buildAuditEventKey(
+            order.organizationId, order.purchaseRequest.id, 'purchase_request_approve',
+          ),
         });
       }
 

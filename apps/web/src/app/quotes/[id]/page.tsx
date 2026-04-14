@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import React, { useState, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -385,7 +386,7 @@ export default function QuoteDetailPage() {
         catalogNumber: item.catalogNumber, quantity: item.quantity,
         unitPrice: item.unitPrice, lineTotal: item.lineTotal,
       })) || [];
-      const res = await fetch("/api/request", {
+      const res = await csrfFetch("/api/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ teamId, title: quote.title || "구매 요청", message, items, quoteId: quote.id, totalAmount: quote.totalAmount }),
@@ -409,7 +410,7 @@ export default function QuoteDetailPage() {
 
   const createOrderMutation = useMutation({
     mutationFn: async (orderData: { expectedDelivery?: string; paymentMethod?: string; budgetId?: string; notes?: string }) => {
-      const res = await fetch("/api/orders", {
+      const res = await csrfFetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

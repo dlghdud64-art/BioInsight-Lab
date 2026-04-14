@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useTestFlow } from "../_components/test-flow-provider";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
@@ -121,7 +122,7 @@ export default function TestComparePage() {
     queryKey: ["test-compare-products", compareIds],
     queryFn: async () => {
       if (compareIds.length === 0) return { products: [] };
-      const response = await fetch("/api/products/compare", {
+      const response = await csrfFetch("/api/products/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: compareIds }),
@@ -143,7 +144,7 @@ export default function TestComparePage() {
     queryKey: ["average-lead-times", compareIds],
     queryFn: async () => {
       if (compareIds.length === 0) return { averageLeadTimes: {} };
-      const response = await fetch("/api/products/average-lead-time", {
+      const response = await csrfFetch("/api/products/average-lead-time", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds: compareIds }),

@@ -9,6 +9,7 @@
  * [Phase 1 Ontology] DB 매핑을 ontology/mappers로 위임.
  * Budget → BudgetObject 전환은 Phase 2에서 완료. 현재는 backward compat 유지.
  */
+import { csrfFetch } from "@/lib/api-client";
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
 import {
@@ -297,7 +298,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
       }
 
       // Fallback: 기존 Prisma API
-      const res = await fetch("/api/budgets", {
+      const res = await csrfFetch("/api/budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

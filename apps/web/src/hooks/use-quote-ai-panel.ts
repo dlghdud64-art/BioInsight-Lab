@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 
@@ -73,7 +74,7 @@ export function useQuoteAiPanel() {
       deliveryLocation?: string;
       vendorNames?: string[];
     }) => {
-      const res = await fetch("/api/ai-actions/generate/quote-draft", {
+      const res = await csrfFetch("/api/ai-actions/generate/quote-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

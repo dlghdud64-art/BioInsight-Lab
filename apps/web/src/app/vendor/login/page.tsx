@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export default function VendorLoginPage() {
 
     try {
       setIsSending(true);
-      const response = await fetch("/api/vendor/auth/send-link", {
+      const response = await csrfFetch("/api/vendor/auth/send-link", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),

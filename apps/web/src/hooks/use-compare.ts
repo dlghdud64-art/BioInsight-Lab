@@ -1,9 +1,10 @@
+import { csrfFetch } from "@/lib/api-client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 
 export function useCompareProducts() {
   return useMutation({
     mutationFn: async (productIds: string[]) => {
-      const response = await fetch("/api/products/compare", {
+      const response = await csrfFetch("/api/products/compare", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

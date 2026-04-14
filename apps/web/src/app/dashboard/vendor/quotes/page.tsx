@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +38,7 @@ export default function VendorQuotesPage() {
   const { data: quotes, isLoading } = useQuery({
     queryKey: ["vendor-quotes"],
     queryFn: async () => {
-      const response = await fetch("/api/vendor/quotes");
+      const response = await csrfFetch("/api/vendor/quotes");
       if (!response.ok) throw new Error("Failed to fetch quotes");
       return response.json();
     },

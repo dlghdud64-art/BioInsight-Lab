@@ -5,6 +5,10 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 import { enforceAction, type InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import {
+  recordMutationAudit,
+  buildAuditEventKey,
+} from "@/lib/audit/durable-mutation-audit";
 import crypto from "crypto";
 
 const logger = createLogger("api/invites/accept");
@@ -315,6 +319,21 @@ export async function POST(request: NextRequest) {
       await tx.workspaceInvite.update({
         where: { id: invite.id },
         data: { acceptedAt },
+      });
+
+      // Durable audit event — 같은 tx 안에서 기록
+      await recordMutationAudit(tx, {
+        auditEventKey: buildAuditEventKey(
+          invite.workspaceId, invite.id, 'workspace_invite_accept',
+        ),
+        orgId: invite.workspaceId,
+        actorId: session.user.id,
+        route: '/api/invites/accept',
+        action: 'workspace_invite_accept',
+        entityType: 'invite',
+        entityId: invite.id,
+        result: 'success',
+        correlationId: enforcement!.correlationId,
       });
 
       return [newMember];

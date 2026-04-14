@@ -14,6 +14,7 @@
  * canonical truth(예산/재고 store)는 caller가 onConfirm 안에서만 변경한다.
  */
 
+import { csrfFetch } from "@/lib/api-client";
 import * as React from "react";
 import {
   Bar,
@@ -108,7 +109,7 @@ export function ImpactAnalysisModal({
     setLoading(true);
     setError(null);
     setResult(null);
-    fetch("/api/ai/impact-analysis", {
+    csrfFetch("/api/ai/impact-analysis", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(input),

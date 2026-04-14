@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -122,7 +123,7 @@ export default function TeamSettingsPage() {
   // 멤버 초대
   const inviteMemberMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: TeamRole }) => {
-      const response = await fetch("/api/team/invite", {
+      const response = await csrfFetch("/api/team/invite", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -251,7 +252,7 @@ export default function TeamSettingsPage() {
                   <Button
                     onClick={() => {
                       // 팀 생성 API 호출
-                      fetch("/api/team", {
+                      csrfFetch("/api/team", {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({

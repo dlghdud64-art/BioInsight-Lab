@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,7 +52,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
   const { data: config } = useQuery({
     queryKey: ["config"],
     queryFn: async () => {
-      const res = await fetch("/api/config");
+      const res = await csrfFetch("/api/config");
       return res.json() as Promise<{ pdfMode: string; pdfUploadEnabled: boolean }>;
     },
   });
@@ -64,7 +65,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/protocol/extract", {
+      const response = await csrfFetch("/api/protocol/extract", {
         method: "POST",
         body: formData,
       });
@@ -84,7 +85,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
   // 텍스트 붙여넣기 모드
   const extractFromTextMutation = useMutation({
     mutationFn: async (text: string) => {
-      const response = await fetch("/api/protocol/extract-text", {
+      const response = await csrfFetch("/api/protocol/extract-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -144,7 +145,7 @@ export function ProtocolUpload({ onBOMCreated }: ProtocolUploadProps) {
     }
 
     try {
-      const response = await fetch("/api/protocol/bom", {
+      const response = await csrfFetch("/api/protocol/bom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

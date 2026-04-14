@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -68,7 +69,7 @@ export default function BillingPage() {
   const { data: billingData, isLoading } = useQuery({
     queryKey: ["billing"],
     queryFn: async () => {
-      const res = await fetch("/api/billing");
+      const res = await csrfFetch("/api/billing");
       if (!res.ok) throw new Error("Failed to fetch billing");
       return res.json();
     },
@@ -77,7 +78,7 @@ export default function BillingPage() {
   // 플랜 업그레이드 뮤테이션
   const upgradeMutation = useMutation({
     mutationFn: async (plan: PlanType) => {
-      const res = await fetch("/api/billing", {
+      const res = await csrfFetch("/api/billing", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "upgrade", plan }),
@@ -113,7 +114,7 @@ export default function BillingPage() {
   // 카드 등록 뮤테이션
   const addCardMutation = useMutation({
     mutationFn: async (cardData: typeof cardForm) => {
-      const res = await fetch("/api/billing/payment-methods", {
+      const res = await csrfFetch("/api/billing/payment-methods", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...cardData, isDefault: true }),
@@ -142,7 +143,7 @@ export default function BillingPage() {
   // 카드 삭제 뮤테이션
   const deleteCardMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/billing/payment-methods?id=${id}`, {
+      const res = await csrfFetch(`/api/billing/payment-methods?id=${id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Failed to delete card");

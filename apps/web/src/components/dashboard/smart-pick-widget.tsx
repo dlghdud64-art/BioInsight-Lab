@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -38,7 +39,7 @@ export function SmartPickWidget() {
   const { data, isLoading } = useQuery<{ recommendations: ReorderRecommendation[] }>({
     queryKey: ["smart-pick-recommendations"],
     queryFn: async () => {
-      const response = await fetch("/api/inventory/reorder-recommendations");
+      const response = await csrfFetch("/api/inventory/reorder-recommendations");
       if (!response.ok) throw new Error("Failed to fetch recommendations");
       return response.json();
     },
@@ -50,7 +51,7 @@ export function SmartPickWidget() {
   // 장바구니에 추가 mutation
   const addToCartMutation = useMutation({
     mutationFn: async (rec: ReorderRecommendation) => {
-      const response = await fetch("/api/cart", {
+      const response = await csrfFetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

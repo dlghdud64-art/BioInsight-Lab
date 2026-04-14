@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -169,7 +170,7 @@ function UsersManagementTab() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await fetch("/api/admin/users", {
+      const response = await csrfFetch("/api/admin/users", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, role }),

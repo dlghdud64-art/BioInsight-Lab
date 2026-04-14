@@ -264,6 +264,55 @@ export const api = {
     apiClient<T>(url, { ...options, method: "DELETE" }),
 };
 
+// ═══════════════════════════════════════════════════════
+// csrfFetch — native fetch() drop-in with CSRF auto-attach
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Native `fetch()` 대체용 CSRF-aware wrapper
+ *
+ * 기존 raw `fetch()` 호출을 `csrfFetch()`로 교체하면
+ * state-changing method에 CSRF header가 자동 부착됩니다.
+ *
+ * - 시그니처가 `fetch()`와 동일하므로 drop-in replacement
+ * - GET / HEAD / OPTIONS는 CSRF 토큰 미부착 (그대로 통과)
+ * - POST / PUT / PATCH / DELETE는 x-labaxis-csrf-token 자동 첨부
+ * - cookie에서 토큰 읽기 → 없으면 /api/security/csrf-token bootstrap
+ * - FormData / stream body도 지원 (Content-Type 강제 안함)
+ *
+ * 사용법:
+ * ```ts
+ * import { csrfFetch } from '@/lib/api-client';
+ * const res = await csrfFetch('/api/quotes', { method: 'POST', body: JSON.stringify(data) });
+ * ```
+ */
+export async function csrfFetch(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): Promise<Response> {
+  const method = (init?.method || 'GET').toUpperCase();
+
+  // Safe method → bypass, 원본 fetch 그대로
+  if (!STATE_CHANGING_METHODS.has(method)) {
+    return fetch(input, init);
+  }
+
+  // State-changing → CSRF 토큰 부착
+  const csrfToken = await acquireCsrfToken();
+
+  const existingHeaders = init?.headers instanceof Headers
+    ? Object.fromEntries(init.headers.entries())
+    : (init?.headers as Record<string, string>) || {};
+
+  return fetch(input, {
+    ...init,
+    headers: {
+      ...existingHeaders,
+      ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
+    },
+  });
+}
+
 
 
 

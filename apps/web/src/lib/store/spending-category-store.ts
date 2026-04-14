@@ -5,6 +5,7 @@
  * SpendingCategory CRUD + CategoryBudget 관리 + 지출 현황 조회.
  */
 
+import { csrfFetch } from "@/lib/api-client";
 import { create } from "zustand";
 
 // ── 타입 ──
@@ -172,7 +173,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     createCategory: async (organizationId, data) => {
-      const res = await fetch("/api/spending-categories", {
+      const res = await csrfFetch("/api/spending-categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId, ...data }),
@@ -232,7 +233,7 @@ export const useSpendingCategoryStore = create<SpendingCategoryStore>(
     },
 
     setCategoryBudget: async (organizationId, data) => {
-      const res = await fetch("/api/category-budgets", {
+      const res = await csrfFetch("/api/category-budgets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId, ...data }),

@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -215,7 +216,7 @@ function QuoteCard({ quote }: { quote: any }) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/quotes/parse-pdf", {
+      const response = await csrfFetch("/api/quotes/parse-pdf", {
         method: "POST",
         body: formData,
       });

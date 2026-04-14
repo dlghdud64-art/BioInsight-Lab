@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useCallback, useMemo } from "react";
 import { useMutation } from "@tanstack/react-query";
 
@@ -104,7 +105,7 @@ export function useOrderAiPanel() {
       items: OrderItemInfo[];
       daysSinceOrdered: number;
     }) => {
-      const res = await fetch("/api/ai-actions/generate/order-followup", {
+      const res = await csrfFetch("/api/ai-actions/generate/order-followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orderId: input.orderId }),

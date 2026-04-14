@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ export default function VendorPremiumPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["vendor-premium"],
     queryFn: async () => {
-      const response = await fetch("/api/vendor/premium");
+      const response = await csrfFetch("/api/vendor/premium");
       if (!response.ok) throw new Error("Failed to fetch premium status");
       return response.json();
     },
@@ -31,7 +32,7 @@ export default function VendorPremiumPage() {
 
   const updatePremiumMutation = useMutation({
     mutationFn: async (data: { isPremium: boolean; premiumExpiresAt?: string }) => {
-      const response = await fetch("/api/vendor/premium", {
+      const response = await csrfFetch("/api/vendor/premium", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

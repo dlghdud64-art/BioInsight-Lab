@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TestCard } from "./test-card";
@@ -29,7 +30,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
     queryKey: ["products-for-share", productIds],
     queryFn: async () => {
       if (productIds.length === 0) return { products: [] };
-      const response = await fetch("/api/products/compare", {
+      const response = await csrfFetch("/api/products/compare", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ productIds }),
@@ -174,7 +175,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
   const createShareLinkMutation = useMutation({
     mutationFn: async ({ title, expiresIn }: { title: string; expiresIn: number }) => {
       // 먼저 QuoteList 생성
-      const quoteResponse = await fetch("/api/quotes", {
+      const quoteResponse = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -194,7 +195,7 @@ export function ShareActionsCard({ productIds }: ShareActionsCardProps) {
       const quote = await quoteResponse.json();
 
       // 공유 링크 생성
-      const shareResponse = await fetch("/api/shared-lists", {
+      const shareResponse = await csrfFetch("/api/shared-lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

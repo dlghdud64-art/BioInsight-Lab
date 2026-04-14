@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -290,7 +291,7 @@ function SettingsPageContent() {
   const { data: billingData, isLoading: billingLoading } = useQuery({
     queryKey: ["billing"],
     queryFn: async () => {
-      const response = await fetch("/api/billing");
+      const response = await csrfFetch("/api/billing");
       if (!response.ok) throw new Error("Failed to fetch billing");
       return response.json();
     },
@@ -300,7 +301,7 @@ function SettingsPageContent() {
   // ── Profile mutation ──
   const profileMutation = useMutation({
     mutationFn: async (data: { name?: string; email?: string; phone?: string; password?: string; currentPassword?: string }) => {
-      const response = await fetch("/api/user/profile", {
+      const response = await csrfFetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

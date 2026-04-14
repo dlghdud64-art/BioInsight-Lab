@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,7 +45,7 @@ export default function QuotePage() {
     queryKey: ["compare", productIds],
     queryFn: async () => {
       if (productIds.length === 0) return { products: [] };
-      const response = await fetch("/api/products/compare", {
+      const response = await csrfFetch("/api/products/compare", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,7 +129,7 @@ export default function QuotePage() {
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/quotes", {
+      const response = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -179,7 +180,7 @@ export default function QuotePage() {
         notes: itemNotes[product.id] || "",
       }));
 
-      const response = await fetch("/api/quotes/generate-english", {
+      const response = await csrfFetch("/api/quotes/generate-english", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -251,7 +252,7 @@ export default function QuotePage() {
 
     setIsCreatingRFQ(true);
     try {
-      const response = await fetch("/api/quotes", {
+      const response = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

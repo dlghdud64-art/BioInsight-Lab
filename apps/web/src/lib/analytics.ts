@@ -1,3 +1,4 @@
+import { csrfFetch } from "@/lib/api-client";
 /**
  * Analytics 이벤트 추적 유틸리티
  * PRD 14.4 이벤트(Analytics) 설계 초안 기반
@@ -107,7 +108,7 @@ export async function trackEvent(
     };
 
     // 서버로 이벤트 전송 (비동기, 에러 무시)
-    fetch("/api/analytics/track", {
+    csrfFetch("/api/analytics/track", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

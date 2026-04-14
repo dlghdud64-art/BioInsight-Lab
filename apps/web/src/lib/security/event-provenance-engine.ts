@@ -306,4 +306,41 @@ export function __resetProvenanceState(): void {
   correlationCounter = 0;
 }
 
+/**
+ * Security event summary — rollout 모니터링용
+ * CSRF 관련 이벤트 통계를 반환
+ */
+export function getSecurityEventSummary(): {
+  total: number;
+  csrfEvents: number;
+  byClassification: Record<string, number>;
+  recentCsrf: readonly { detail: string; recordedAt: string }[];
+} {
+  const byClassification: Record<string, number> = {};
+  let csrfEvents = 0;
+  const recentCsrf: { detail: string; recordedAt: string }[] = [];
+
+  for (const ev of SECURITY_EVENTS) {
+    byClassification[ev.classification] = (byClassification[ev.classification] || 0) + 1;
+    if (ev.provenance.targetEntityType === 'csrf') {
+      csrfEvents++;
+    }
+  }
+
+  // 최근 CSRF 이벤트 10건
+  const csrfRecords = SECURITY_EVENTS
+    .filter(ev => ev.provenance.targetEntityType === 'csrf')
+    .slice(-10);
+  for (const ev of csrfRecords) {
+    recentCsrf.push({ detail: ev.detail, recordedAt: ev.recordedAt });
+  }
+
+  return {
+    total: SECURITY_EVENTS.length,
+    csrfEvents,
+    byClassification,
+    recentCsrf,
+  };
+}
+
 export { IMPOSSIBLE_TRANSITIONS };

@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
@@ -189,7 +190,7 @@ export default function ProductDetailPage() {
     if (!product.descriptionEn) return;
     setIsTranslating(true);
     try {
-      const response = await fetch("/api/translate", {
+      const response = await csrfFetch("/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: product.descriptionEn, targetLang: "ko" }),

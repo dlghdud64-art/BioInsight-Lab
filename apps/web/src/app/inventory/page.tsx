@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -128,7 +129,7 @@ export default function InventoryPage() {
   // 위치 업데이트 mutation
   const updateLocationMutation = useMutation({
     mutationFn: async ({ id, location }: { id: string; location: string }) => {
-      const response = await fetch("/api/user-inventory", {
+      const response = await csrfFetch("/api/user-inventory", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, location }),
@@ -147,7 +148,7 @@ export default function InventoryPage() {
   // 수량 업데이트 mutation
   const updateQuantityMutation = useMutation({
     mutationFn: async ({ id, quantity }: { id: string; quantity: number }) => {
-      const response = await fetch("/api/user-inventory", {
+      const response = await csrfFetch("/api/user-inventory", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, quantity }),
@@ -196,7 +197,7 @@ export default function InventoryPage() {
       }
 
       // 2. 견적에 추가
-      const quoteResponse = await fetch("/api/quotes", {
+      const quoteResponse = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

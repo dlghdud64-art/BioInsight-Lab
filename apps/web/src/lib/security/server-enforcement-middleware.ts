@@ -42,7 +42,14 @@ import { sanitizeErrorForSurface } from './frontend-leak-guard';
 import {
   type CsrfProtectionLevel,
   type RouteCsrfConfig,
+  isProtectedMethod as isCsrfProtectedMethod,
+  getCsrfRolloutMode,
+  shouldBlockOnViolation as csrfShouldBlock,
+  getCsrfGovernanceMessage,
+  CSRF_COOKIE_NAME,
+  CSRF_HEADER_NAME,
 } from './csrf-contract';
+import { validateCsrfDoubleSubmitSync } from './csrf-token-engine';
 import { performCsrfCheck } from './csrf-middleware';
 
 // ═══════════════════════════════════════════════════════
@@ -437,6 +444,12 @@ export interface InlineEnforcementConfig {
   readonly routePath: string;
   readonly idempotencyKey?: string;
   readonly rationale?: string;
+  /** CSRF defense-in-depth: request 객체 전달 시 inline CSRF 검증 수행 */
+  readonly request?: NextRequest;
+  /** CSRF 보호 수준 (default: 'required') */
+  readonly csrfProtection?: CsrfProtectionLevel;
+  /** 고위험 route — soft_enforce에서도 차단 */
+  readonly csrfHighRisk?: boolean;
 }
 
 export interface InlineEnforcementHandle {
@@ -470,15 +483,59 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
     targetOrganizationId: config.organizationId || actorContext.organizationId,
   });
 
+  // 2.5. CSRF defense-in-depth (request 객체 전달 시에만 수행)
+  // middleware.ts CSRF gate 이후 추가 검증 — double-check 레이어
+  let csrfPassed = true;
+  let csrfDenyMessage: string | undefined;
+
+  if (config.request && authResult.permitted) {
+    const csrfProtection = config.csrfProtection ?? 'required';
+    const csrfHighRisk = config.csrfHighRisk ?? false;
+
+    if (csrfProtection !== 'exempt' && isCsrfProtectedMethod(config.request.method)) {
+      const mode = getCsrfRolloutMode();
+      const cookieToken =
+        config.request.cookies.get(CSRF_COOKIE_NAME.replace('__Host-', ''))?.value ||
+        config.request.cookies.get(CSRF_COOKIE_NAME)?.value;
+      const headerToken = config.request.headers.get(CSRF_HEADER_NAME);
+
+      const tokenResult = validateCsrfDoubleSubmitSync(cookieToken, headerToken);
+
+      if (!tokenResult.valid && tokenResult.violation) {
+        // Telemetry 기록
+        const csrfProvenance = createEventProvenance({
+          sourceDomain: 'security',
+          sourceSurface: config.sourceSurface,
+          sourceRoute: config.routePath,
+          actorUserId: config.userId,
+          targetEntityType: 'csrf',
+          targetEntityId: config.targetEntityId,
+          correlationId,
+          securityClassification: 'security_event',
+        });
+        recordSecurityEvent(
+          'security_event',
+          csrfProvenance,
+          `CSRF inline check failed: ${tokenResult.violation} action=${config.action} path=${config.routePath}`,
+        );
+
+        if (csrfShouldBlock(mode, csrfProtection, csrfHighRisk)) {
+          csrfPassed = false;
+          csrfDenyMessage = getCsrfGovernanceMessage(tokenResult.violation);
+        }
+      }
+    }
+  }
+
   // 3. Concurrency lock
   const mutationAction = config.action as unknown as MutationActionType;
   let lockAcquired = false;
 
-  if (authResult.permitted) {
+  if (authResult.permitted && csrfPassed) {
     lockAcquired = beginMutation(mutationAction, config.targetEntityId);
   }
 
-  const allowed = authResult.permitted && lockAcquired;
+  const allowed = authResult.permitted && csrfPassed && lockAcquired;
 
   // 4. Security event 기록 (차단 시)
   if (!authResult.permitted) {
@@ -508,8 +565,10 @@ export function enforceAction(config: InlineEnforcementConfig): InlineEnforcemen
     deny() {
       const message = !authResult.permitted
         ? authResult.governanceMessage
+        : !csrfPassed
+        ? (csrfDenyMessage || '보안 검증이 완료되지 않아 작업을 진행할 수 없습니다.')
         : '같은 항목에 대한 다른 작업이 진행 중입니다';
-      const status = !authResult.permitted ? 403 : 409;
+      const status = !authResult.permitted ? 403 : !csrfPassed ? 403 : 409;
 
       return NextResponse.json(
         { error: message, correlationId },

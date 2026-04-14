@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { csrfFetch } from "@/lib/api-client";
 import React, { useState, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -217,7 +218,7 @@ export default function ProtocolBOMPage() {
       formData.append("file", file);
 
       // 1단계: PDF → 텍스트 추출
-      const pdfRes = await fetch("/api/protocol/extract-pdf-text", { method: "POST", body: formData });
+      const pdfRes = await csrfFetch("/api/protocol/extract-pdf-text", { method: "POST", body: formData });
       if (!pdfRes.ok) {
         const e = await pdfRes.json().catch(() => ({}));
         throw new Error(e.error || "PDF 텍스트 추출에 실패했습니다.");
@@ -228,7 +229,7 @@ export default function ProtocolBOMPage() {
       }
 
       // 2단계: 텍스트 → AI 시약 추출
-      const extractRes = await fetch("/api/protocol/extract-text", {
+      const extractRes = await csrfFetch("/api/protocol/extract-text", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
@@ -281,7 +282,7 @@ export default function ProtocolBOMPage() {
   /* ──── 텍스트 추출 mutation ──── */
   const extractMutation = useMutation({
     mutationFn: async (text: string) => {
-      const response = await fetch("/api/protocol/extract-text", {
+      const response = await csrfFetch("/api/protocol/extract-text", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
@@ -322,7 +323,7 @@ export default function ProtocolBOMPage() {
     mutationFn: async () => {
       if (!bomTitle.trim()) throw new Error("BOM 제목을 입력해주세요.");
       if (reagents.length === 0) throw new Error("최소 1개 이상의 항목이 필요합니다.");
-      const response = await fetch("/api/protocol/bom", {
+      const response = await csrfFetch("/api/protocol/bom", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: bomTitle,

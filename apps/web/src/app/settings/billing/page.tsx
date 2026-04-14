@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -67,7 +68,7 @@ function BillingPageContent() {
 
     try {
       setIsUpgrading(true);
-      const response = await fetch("/api/billing/checkout", {
+      const response = await csrfFetch("/api/billing/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -99,7 +100,7 @@ function BillingPageContent() {
 
     try {
       setIsManaging(true);
-      const response = await fetch("/api/billing/portal", {
+      const response = await csrfFetch("/api/billing/portal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

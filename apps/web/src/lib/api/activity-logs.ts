@@ -1,3 +1,4 @@
+import { csrfFetch } from "@/lib/api-client";
 import { ActivityType } from "@prisma/client";
 
 /**
@@ -14,7 +15,7 @@ export async function createActivityLog(params: {
   userAgent?: string;
 }) {
   try {
-    const response = await fetch("/api/activity-logs", {
+    const response = await csrfFetch("/api/activity-logs", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

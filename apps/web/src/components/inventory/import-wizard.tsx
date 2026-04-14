@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from "react";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download, X, Edit2, Check, XCircle } from "lucide-react";
+import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -149,7 +150,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
         setUploadProgress((prev) => Math.min(prev + 10, 90));
       }, 100);
 
-      const response = await fetch("/api/inventory/import/preview", {
+      const response = await csrfFetch("/api/inventory/import/preview", {
         method: "POST",
         body: formData,
       });
@@ -324,7 +325,7 @@ export function ImportWizard({ onSuccess }: ImportWizardProps) {
         setUploadProgress((prev) => Math.min(prev + 5, 95));
       }, 200);
 
-      const response = await fetch("/api/inventory/import/commit", {
+      const response = await csrfFetch("/api/inventory/import/commit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

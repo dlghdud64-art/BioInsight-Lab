@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TaskStatus, ApprovalStatus } from "@/lib/work-queue/state-mapper";
@@ -202,8 +203,8 @@ export function useSyncOpsQueue() {
     synced.current = true;
 
     Promise.all([
-      fetch("/api/work-queue/ops-sync", { method: "POST" }).catch(() => null),
-      fetch("/api/work-queue/compare-sync", { method: "POST" }).catch(() => null),
+      csrfFetch("/api/work-queue/ops-sync", { method: "POST" }).catch(() => null),
+      csrfFetch("/api/work-queue/compare-sync", { method: "POST" }).catch(() => null),
     ]).then(() => {
       queryClient.invalidateQueries({ queryKey: WORK_QUEUE_KEYS.all });
     });
@@ -229,7 +230,7 @@ export function useExecuteOpsAction() {
       itemId: string;
       payload?: Record<string, unknown>;
     }) => {
-      const res = await fetch("/api/work-queue/ops-execute", {
+      const res = await csrfFetch("/api/work-queue/ops-execute", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ actionId, itemId, payload }),
@@ -358,7 +359,7 @@ export function useAssignmentAction() {
       note?: string;
       nextAction?: string;
     }) => {
-      const res = await fetch("/api/work-queue/assignment", {
+      const res = await csrfFetch("/api/work-queue/assignment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
@@ -475,7 +476,7 @@ export function useDailyReviewAction() {
       targetUserId?: string;
       note?: string;
     }) => {
-      const res = await fetch("/api/work-queue/daily-review", {
+      const res = await csrfFetch("/api/work-queue/daily-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
@@ -526,7 +527,7 @@ export function useCadenceStepComplete() {
       note?: string;
       organizationId?: string;
     }) => {
-      const res = await fetch("/api/work-queue/cadence-governance", {
+      const res = await csrfFetch("/api/work-queue/cadence-governance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),
@@ -584,7 +585,7 @@ export function useRemediationAction() {
       note?: string;
       organizationId?: string;
     }) => {
-      const res = await fetch("/api/work-queue/bottleneck-remediation", {
+      const res = await csrfFetch("/api/work-queue/bottleneck-remediation", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(params),

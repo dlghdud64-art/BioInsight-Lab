@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +70,7 @@ export default function PurchasesGuestPage() {
 
   const importMutation = useMutation({
     mutationFn: async (rows: any[]) => {
-      const response = await fetch("/api/purchases/import", {
+      const response = await csrfFetch("/api/purchases/import", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

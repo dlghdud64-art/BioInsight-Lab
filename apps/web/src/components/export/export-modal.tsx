@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import {
   Dialog,
@@ -152,7 +153,7 @@ export function ExportModal({
 
       // Save preset if requested
       if (savePreset && presetName) {
-        await fetch("/api/export/presets", {
+        await csrfFetch("/api/export/presets", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

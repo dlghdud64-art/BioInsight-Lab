@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
@@ -140,7 +141,7 @@ export function ComparisonModal({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/ai/compare-analysis", {
+      const res = await csrfFetch("/api/ai/compare-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ products: targets }),

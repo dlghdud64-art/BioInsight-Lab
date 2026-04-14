@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -182,7 +183,7 @@ export function RequestWizardModal({
         suppliers,
       };
 
-      const res = await fetch("/api/quotes", {
+      const res = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

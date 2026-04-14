@@ -1,3 +1,4 @@
+import { csrfFetch } from "@/lib/api-client";
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 
@@ -14,7 +15,7 @@ export function useTrackBehavior() {
         return; // 비로그인 사용자는 추적하지 않음
       }
 
-      const response = await fetch("/api/analytics/user-behavior", {
+      const response = await csrfFetch("/api/analytics/user-behavior", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

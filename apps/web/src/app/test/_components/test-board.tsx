@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { TestBoardColumn } from "./test-board-column";
@@ -53,7 +54,7 @@ export function TestBoard() {
     queryKey: ["search-intent", searchQuery],
     queryFn: async () => {
       if (!searchQuery) return null;
-      const response = await fetch("/api/search/intent", {
+      const response = await csrfFetch("/api/search/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery }),
@@ -67,7 +68,7 @@ export function TestBoard() {
   // 프로토콜 필드 추출
   const extractProtocolMutation = useMutation({
     mutationFn: async (text: string) => {
-      const response = await fetch("/api/protocol/extract-text", {
+      const response = await csrfFetch("/api/protocol/extract-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),

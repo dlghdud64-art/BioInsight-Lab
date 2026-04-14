@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Download, CloudUpload, FileText } from "lucide-react";
+import { csrfFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -101,7 +102,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/purchases/import/preview", {
+      const response = await csrfFetch("/api/purchases/import/preview", {
         method: "POST",
         headers: {
           "x-guest-key": getGuestKey(),
@@ -183,7 +184,7 @@ export function CsvUploadTab({ onSuccess }: CsvUploadTabProps) {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/purchases/import/commit", {
+      const response = await csrfFetch("/api/purchases/import/commit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

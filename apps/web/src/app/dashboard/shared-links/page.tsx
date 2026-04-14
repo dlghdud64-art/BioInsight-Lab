@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,7 +31,7 @@ export default function SharedLinksPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["shared-links"],
     queryFn: async () => {
-      const response = await fetch("/api/shared-links");
+      const response = await csrfFetch("/api/shared-links");
       if (!response.ok) throw new Error("Failed to fetch shared links");
       return response.json();
     },
@@ -97,7 +98,7 @@ export default function SharedLinksPage() {
     if (!confirm(`선택한 ${selectedLinks.length}개의 링크를 삭제하시겠습니까?`)) return;
 
     try {
-      const response = await fetch("/api/shared-lists/bulk", {
+      const response = await csrfFetch("/api/shared-lists/bulk", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ publicIds: selectedLinks }),

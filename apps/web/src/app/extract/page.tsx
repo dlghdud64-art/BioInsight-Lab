@@ -14,7 +14,7 @@ import { BOMSkeleton } from "@/components/protocol/bom-skeleton";
 import { FileText, Loader2, GitCompare, AlertCircle, Upload, Sparkles, Zap } from "lucide-react";
 import { useCompareStore } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
-import { api } from "@/lib/api-client";
+import { api, csrfFetch} from "@/lib/api-client";
 
 interface ExtractionItem {
   id: string;
@@ -45,7 +45,7 @@ export default function ExtractPage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const response = await fetch("/api/protocol/extract-pdf-text", {
+    const response = await csrfFetch("/api/protocol/extract-pdf-text", {
       method: "POST",
       body: formData,
     });

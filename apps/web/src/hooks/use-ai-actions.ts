@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 // ── Types ──
@@ -228,7 +229,7 @@ export function useGenerateQuoteDraft() {
 
   return useMutation({
     mutationFn: async (input: GenerateQuoteDraftInput) => {
-      const res = await fetch("/api/ai-actions/generate/quote-draft", {
+      const res = await csrfFetch("/api/ai-actions/generate/quote-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
@@ -253,7 +254,7 @@ export function useGenerateOrderFollowup() {
 
   return useMutation({
     mutationFn: async (input: { orderId: string }) => {
-      const res = await fetch("/api/ai-actions/generate/order-followup", {
+      const res = await csrfFetch("/api/ai-actions/generate/order-followup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),
@@ -279,7 +280,7 @@ export function useGenerateVendorEmailDraft() {
 
   return useMutation({
     mutationFn: async (input: GenerateVendorEmailInput) => {
-      const res = await fetch("/api/ai-actions/generate/vendor-email-draft", {
+      const res = await csrfFetch("/api/ai-actions/generate/vendor-email-draft", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(input),

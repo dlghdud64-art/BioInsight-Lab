@@ -1,3 +1,4 @@
+import { csrfFetch } from "@/lib/api-client";
 /**
  * Client-side API utilities for Quote management
  * Supports both authenticated users and guest users via guestKey
@@ -47,7 +48,7 @@ export interface UpdateQuoteInput {
  * Create a new quote
  */
 export async function createQuote(input: CreateQuoteInput): Promise<{ id: string; quote: Quote }> {
-  const response = await fetch("/api/quotes", {
+  const response = await csrfFetch("/api/quotes", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

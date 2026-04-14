@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { createContext, useContext, useState, ReactNode, useEffect, useRef, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
@@ -212,7 +213,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
     queryKey: ["search-intent", searchQuery, searchTrigger],
     queryFn: async () => {
       if (!searchQuery) return null;
-      const response = await fetch("/api/search/intent", {
+      const response = await csrfFetch("/api/search/intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ query: searchQuery }),
@@ -230,7 +231,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
   // 프로토콜 필드 추출
   const extractProtocolMutation = useMutation({
     mutationFn: async (text: string) => {
-      const response = await fetch("/api/protocol/extract-text", {
+      const response = await csrfFetch("/api/protocol/extract-text", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
@@ -423,7 +424,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
     mutationFn: async (params: { title: string; expiresInDays?: number }) => {
       const { title, expiresInDays } = params;
       // 먼저 QuoteList 생성
-      const quoteResponse = await fetch("/api/quotes", {
+      const quoteResponse = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -448,7 +449,7 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
       const quote = quoteData.quote ?? quoteData;
 
       // 공유 링크 생성
-      const shareResponse = await fetch("/api/shared-lists", {
+      const shareResponse = await csrfFetch("/api/shared-lists", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

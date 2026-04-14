@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -482,7 +483,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
 
     try {
       const [budgetRes, safetyRes] = await Promise.allSettled([
-        fetch("/api/ai/budget-anomaly", {
+        csrfFetch("/api/ai/budget-anomaly", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -494,7 +495,7 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
             budgetPeriod: "2026년 상반기",
           }),
         }).then((r) => r.json()),
-        fetch("/api/ai/safety-check", {
+        csrfFetch("/api/ai/safety-check", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
