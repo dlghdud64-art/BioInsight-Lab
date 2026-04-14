@@ -397,7 +397,6 @@ export function BulkImportModal({
               )}
             </label>
           </div>
-        </div>
     </div>
   );
 

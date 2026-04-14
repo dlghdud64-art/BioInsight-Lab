@@ -418,7 +418,6 @@ export function WorkbenchProgressOverlay({
               </Button>
             </div>
           </div>
-        </div>
     </div>
   );
 
