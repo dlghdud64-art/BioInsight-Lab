@@ -78,8 +78,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="dark" suppressHydrationWarning>
-      <body className="min-h-screen bg-sh font-sans text-slate-100 antialiased">
+    <html lang="ko" className="" suppressHydrationWarning>
+      <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
         <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
