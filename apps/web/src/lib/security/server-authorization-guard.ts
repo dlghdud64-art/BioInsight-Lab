@@ -389,4 +389,4 @@ export function getDenialMessage(result: AuthorizationResult): string {
 // Export Constants (테스트용)
 // ═══════════════════════════════════════════════════════
 
-export { ACTION_ROLE_MINIMUM, SELF_APPROVAL_FORBIDDEN, DENIAL_MESSAGES };
+export { ACTION_ROLE_MINIMUM };

@@ -182,7 +182,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* ═══ Budget Burn Rate Chart ═══ */}
-        <div className="col-span-2 rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="col-span-2 rounded border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
             예산 소진율
             {simResult && <span className="text-blue-400 ml-2">(시뮬레이션 적용 중)</span>}
@@ -209,7 +209,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
         </div>
 
         {/* ═══ Order Status Distribution ═══ */}
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">발주 상태 분포</h3>
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
@@ -249,7 +249,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
         "rounded border p-4 transition-all duration-300",
         simResult
           ? "border-blue-500/30 bg-blue-950/20 ring-1 ring-blue-500/10"
-          : "border-slate-800 bg-slate-900/50"
+          : "border-slate-200 bg-white"
       )}>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -271,8 +271,8 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
               className={cn(
                 "w-full rounded border px-2 py-1.5 text-xs focus:outline-none transition-colors",
                 simBudgetId
-                  ? "border-blue-500/30 bg-slate-800 text-slate-200 focus:border-blue-400"
-                  : "border-slate-700 bg-slate-800 text-slate-300 focus:border-blue-500"
+                  ? "border-blue-500/30 bg-slate-50 text-slate-600 focus:border-blue-400"
+                  : "border-slate-200 bg-slate-50 text-slate-700 focus:border-blue-500"
               )}
             >
               <option value="">선택하세요</option>
@@ -290,7 +290,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
               value={simAmount}
               onChange={e => { setSimAmount(e.target.value); setSimResult(null); }}
               placeholder="예: 500000"
-              className="w-full rounded border border-slate-700 bg-slate-800 px-2 py-1.5 text-xs text-slate-300 focus:border-blue-500 focus:outline-none tabular-nums"
+              className="w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs text-slate-700 focus:border-blue-500 focus:outline-none tabular-nums"
             />
           </div>
           <button
@@ -308,7 +308,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
           {simResult && (
             <button
               onClick={() => { setSimResult(null); setSimBudgetId(null); setSimAmount(""); }}
-              className="rounded border border-slate-700 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-300 hover:border-slate-600 transition-colors"
+              className="rounded border border-slate-200 px-3 py-1.5 text-xs text-slate-400 hover:text-slate-700 hover:border-slate-300 transition-colors"
             >
               초기화
             </button>
@@ -351,7 +351,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
                 ))}
               </div>
             )}
-            <div className="col-span-3 flex items-center gap-3 text-[10px] text-slate-600 pt-1 border-t border-slate-800/50">
+            <div className="col-span-3 flex items-center gap-3 text-[10px] text-slate-600 pt-1 border-t border-slate-200/50">
               <span className="flex items-center gap-1">
                 신뢰도:
                 <span className={cn("font-medium",
@@ -371,7 +371,7 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
 
       {/* ═══ Monthly Throughput Trend ═══ */}
       {kpis.monthlyVolume.length > 1 && (
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">
             월간 발주 처리 추이
           </h3>
@@ -430,14 +430,14 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
 
       {/* ═══ Inventory Risk Table ═══ */}
       {kpis.inventoryRisks.filter(r => r.stockStatus !== "in_stock").length > 0 && (
-        <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+        <div className="rounded border border-slate-200 bg-white p-4">
           <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">위험 재고 품목</h3>
           <div className="space-y-1">
             {kpis.inventoryRisks
               .filter(r => r.stockStatus !== "in_stock")
               .sort((a, b) => (a.daysUntilDepletion ?? 999) - (b.daysUntilDepletion ?? 999))
               .map(item => (
-                <div key={item.itemId} className="flex items-center gap-3 text-xs py-1 border-b border-slate-800/50 last:border-0">
+                <div key={item.itemId} className="flex items-center gap-3 text-xs py-1 border-b border-slate-200/50 last:border-0">
                   <span className={cn("h-2 w-2 rounded-full shrink-0",
                     item.stockStatus === "out_of_stock" ? "bg-red-500" :
                     item.stockStatus === "low_stock" ? "bg-amber-500" :
@@ -496,15 +496,15 @@ function SimResultCard({
   label: string; before: string; after: string; delta: string;
   severity: "info" | "warning" | "critical";
 }) {
-  const borderColor = severity === "critical" ? "border-red-500/20" : severity === "warning" ? "border-amber-500/20" : "border-slate-700";
+  const borderColor = severity === "critical" ? "border-red-500/20" : severity === "warning" ? "border-amber-500/20" : "border-slate-200";
   const deltaColor = severity === "critical" ? "text-red-400" : severity === "warning" ? "text-amber-400" : "text-slate-500";
 
   return (
-    <div className={cn("rounded border bg-slate-900/50 p-3", borderColor)}>
+    <div className={cn("rounded border bg-white p-3", borderColor)}>
       <p className="text-[10px] text-slate-500 mb-1">{label}</p>
       <div className="flex items-baseline gap-2">
         <span className="text-[10px] text-slate-600 line-through">{before}</span>
-        <span className="text-xs font-medium text-slate-300">{after}</span>
+        <span className="text-xs font-medium text-slate-700">{after}</span>
       </div>
       <p className={cn("text-[10px] mt-0.5", deltaColor)}>{delta}</p>
     </div>
@@ -579,7 +579,7 @@ const PHASE_TEXT: Record<string, string> = {
 
 function OntologyRoadmap() {
   return (
-    <div className="rounded border border-slate-800 bg-slate-900/50 p-4">
+    <div className="rounded border border-slate-200 bg-white p-4">
       <h3 className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-4">
         기술 고도화 로드맵
       </h3>
@@ -601,7 +601,7 @@ function OntologyRoadmap() {
                   p.status === "active" && "animate-pulse"
                 )} />
                 {!isLast && (
-                  <div className="w-px flex-1 bg-slate-800 mt-1" />
+                  <div className="w-px flex-1 bg-slate-50 mt-1" />
                 )}
               </div>
 
@@ -611,7 +611,7 @@ function OntologyRoadmap() {
                   <span className={cn("text-xs font-semibold", PHASE_TEXT[p.color])}>
                     Phase {p.phase}
                   </span>
-                  <span className="text-xs font-medium text-slate-300">{p.title}</span>
+                  <span className="text-xs font-medium text-slate-700">{p.title}</span>
                   <span className={cn(
                     "inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-medium",
                     badge.className
@@ -624,7 +624,7 @@ function OntologyRoadmap() {
                   {p.milestones.map(m => (
                     <span
                       key={m}
-                      className="inline-flex items-center rounded border border-slate-700/60 bg-slate-800/50 px-2 py-0.5 text-[10px] text-slate-500"
+                      className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-500"
                     >
                       {m}
                     </span>
@@ -646,19 +646,19 @@ function OntologyRoadmap() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-slate-300">Zero-Touch Purchasing</p>
+            <p className="text-[11px] font-medium text-slate-700">Zero-Touch Purchasing</p>
             <p className="text-[10px] text-slate-600 leading-relaxed">
               승인 정책 + 예산 한도 내 자동 발주. 인간 개입 최소화.
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-slate-300">Multi-Agent Debate</p>
+            <p className="text-[11px] font-medium text-slate-700">Multi-Agent Debate</p>
             <p className="text-[10px] text-slate-600 leading-relaxed">
               재고/예산/구매 에이전트 간 협상으로 최적 의사결정 도출.
             </p>
           </div>
           <div className="space-y-1">
-            <p className="text-[11px] font-medium text-slate-300">External API Binding</p>
+            <p className="text-[11px] font-medium text-slate-700">External API Binding</p>
             <p className="text-[10px] text-slate-600 leading-relaxed">
               공급사 ERP, Amazon Business 등 외부 API 직접 연동.
             </p>
