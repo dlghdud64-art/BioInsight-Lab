@@ -627,15 +627,15 @@ function QuotesPageContent() {
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 overflow-x-auto snap-x pb-0.5 sm:pb-0">
-          {/* AI 견적서 파싱 버튼 */}
+          {/* 견적서 파싱 버튼 */}
           <button
             onClick={() => setAiParseModalOpen(true)}
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 snap-start"
           >
             <Upload className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
-            <span className="hidden sm:inline">AI 견적서 파싱</span><span className="sm:hidden">파싱</span>
+            <span className="hidden sm:inline">견적서 파싱</span><span className="sm:hidden">파싱</span>
           </button>
-          {/* AI 견적서 비교 버튼 */}
+          {/* 견적서 비교 버튼 */}
           <button
             onClick={runAiQuoteCompare}
             disabled={aiCompareLoading || !quotes || quotes.length < 2}
@@ -646,7 +646,7 @@ function QuotesPageContent() {
             ) : (
               <Sparkles className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
             )}
-            <span className="hidden sm:inline">AI 견적서 비교</span><span className="sm:hidden">비교</span>
+            <span className="hidden sm:inline">견적서 비교</span><span className="sm:hidden">비교</span>
           </button>
           <AiActionButton label="견적 요청 초안 만들기" icon={FileText} generateEndpoint="/api/ai-actions/generate/quote-draft"
             generatePayload={{ items: quotes?.slice(0, 3).flatMap((q: Quote) => q.items?.map(item => ({ productName: item.product?.name || "품목", quantity: item.quantity || 1 })) || []) || [] }}

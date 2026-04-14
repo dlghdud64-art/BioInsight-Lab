@@ -263,26 +263,20 @@ export default function BudgetPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ═══ Header ═══ */}
-      <div className="border-b border-slate-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 py-4">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-5">
+        {/* ═══ Header ═══ */}
+        <div>
           {/* Breadcrumbs */}
-          <div className="flex items-center gap-1.5 text-xs text-slate-400 mb-3">
+          <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
             <Link href="/dashboard" className="hover:text-slate-600">대시보드</Link>
             <ChevronRight className="h-3 w-3" />
-            <span className="text-slate-700 font-medium">예산 관리</span>
+            <span className="text-slate-900">예산 관리</span>
           </div>
 
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-lg font-bold text-slate-900">예산 통제 워크벤치</h1>
-                <button className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-violet-50 text-violet-600 text-[10px] font-medium hover:bg-violet-100 transition-colors">
-                  <Sparkles className="h-3 w-3" />
-                  AI 분석 생성
-                </button>
-              </div>
-              <p className="text-xs text-slate-500 mt-1">
+            <div className="flex-1">
+              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900 mb-1">예산 관리</h1>
+              <p className="text-sm text-slate-500">
                 이번 달 발주 가능 예산을 확인하고, 지출 일정을 관리하세요.
               </p>
             </div>
@@ -316,9 +310,6 @@ export default function BudgetPage() {
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-5 space-y-5">
         {/* ═══ KPI Strip ═══ */}
         <div className="flex gap-3 overflow-x-auto snap-x snap-mandatory pb-1 scrollbar-hide sm:grid sm:grid-cols-3 md:grid-cols-5 sm:gap-3 sm:overflow-visible sm:pb-0">
           {[

@@ -343,15 +343,11 @@ export default function AnalyticsPage() {
       <div className="space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-500 flex items-center gap-1.5 mb-1">
-              <Sparkles className="h-3 w-3" />
-              SPEND INTELLIGENCE
-            </p>
             <h2 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">
-              지출 통제 및 분석
+              지출 분석
             </h2>
             <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">
-              실시간 예산 소진율, 공급망 위험 및 AI 기반 절감 기회를 모니터링합니다.
+              실시간 예산 소진율, 공급망 위험 및 절감 기회를 모니터링합니다.
             </p>
           </div>
         </div>

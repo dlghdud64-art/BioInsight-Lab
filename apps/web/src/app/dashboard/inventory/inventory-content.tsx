@@ -1051,13 +1051,7 @@ function InventoryPageContent() {
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 마스터</h1>
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700">
-              <span className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
-              Live
-            </span>
-          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
           <p className="text-slate-500 text-xs">실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.</p>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
@@ -1159,14 +1153,8 @@ function InventoryPageContent() {
         {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
         <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
           <div className="flex flex-col space-y-1">
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 마스터</h1>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live
-              </span>
-            </div>
-            <p className="text-slate-500 text-xs hidden sm:block" style={{ fontFamily: "'Pretendard', 'Inter', system-ui, sans-serif" }}>
+            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
+            <p className="text-sm text-slate-500 hidden sm:block" style={{ fontFamily: "'Pretendard', 'Inter', system-ui, sans-serif" }}>
               실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.
             </p>
           </div>

@@ -351,10 +351,7 @@ export default function PurchasesPage() {
         {/* ═══ 페이지 헤더 ═══ */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">구매 운영</h1>
-              <Badge variant="outline" className="text-[10px] font-bold border-blue-200 text-blue-600 bg-blue-50">Beta</Badge>
-            </div>
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">구매 운영</h1>
             <p className="text-sm text-slate-500 mt-0.5">선택안 확정, 승인 검토, 발주 전환까지 한 화면에서 처리합니다.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
