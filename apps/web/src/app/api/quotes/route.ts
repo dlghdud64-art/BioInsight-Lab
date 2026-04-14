@@ -3,7 +3,6 @@ import { auth } from "@/auth";
 import { createQuote } from "@/lib/api/quotes";
 import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors, sendQuoteReceivedEmail } from "@/lib/email";
 import { db, isPrismaAvailable } from "@/lib/db";
-import { isDemoMode } from "@/lib/env";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { generateShareToken } from "@/lib/api/share-token";
@@ -289,19 +288,10 @@ export async function POST(request: NextRequest) {
       stack: error?.stack,
     });
 
-    // 데모 모드에서는 더미 응답 반환
-    if (isDemoMode() || !isPrismaAvailable) {
-      return NextResponse.json({
-        quote: {
-          id: `demo-${Date.now()}`,
-          title: body.title || "Demo Quote",
-          userId: session?.user?.id || "demo-user",
-          createdAt: new Date().toISOString(),
-          demo: true,
-        },
-        message: "데모 환경에서는 실제 저장되지 않습니다.",
-      }, { status: 201 });
-    }
+    // ── 에러 발생 시 항상 실제 에러를 반환한다 ──
+    // 이전에는 isDemoMode() 조건으로 dummy 201을 반환했으나,
+    // 이는 프론트엔드가 성공으로 오판하여 워크큐에 데이터가 안 뜨는 원인이었다.
+    // demo fallback 제거: 실패하면 실패로 응답한다.
 
     // 클라이언트에 의미있는 에러 메시지 반환
     let clientMessage = "견적 생성에 실패했습니다.";
