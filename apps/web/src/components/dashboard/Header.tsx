@@ -409,24 +409,38 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-white border-slate-200 shadow-xl shadow-slate-200/50">
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/support-center?tab=manual" className="cursor-pointer w-full flex items-center gap-3 py-3">
-                  <BookOpen className="mr-2 h-4 w-4" />
-                  운영 매뉴얼
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/support-center?tab=troubleshoot" className="cursor-pointer w-full flex items-center gap-3 py-3">
-                  <HelpCircle className="mr-2 h-4 w-4" />
-                  문제 해결 런북
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href="/dashboard/support-center?tab=ticket" className="cursor-pointer w-full flex items-center gap-3 py-3">
-                  <Headphones className="mr-2 h-4 w-4" />
-                  지원 티켓
-                </Link>
-              </DropdownMenuItem>
+              {(() => {
+                // 현재 workflow 경로를 recovery source 로 전달 —
+                // Support 진입 시 ontology drawer 가 "원래 작업으로 복귀" CTA 를 만든다.
+                // support-center 자체에서 띄운 경우엔 from 을 붙이지 않는다 (self-link 방지).
+                const isOnSupportCenter = pathname?.startsWith("/dashboard/support-center") ?? false;
+                const fromParam =
+                  !isOnSupportCenter && pathname
+                    ? `&from=${encodeURIComponent(pathname)}`
+                    : "";
+                return (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/support-center?tab=manual${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        운영 매뉴얼
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/support-center?tab=troubleshoot${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
+                        <HelpCircle className="mr-2 h-4 w-4" />
+                        문제 해결 런북
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/support-center?tab=ticket${fromParam}`} className="cursor-pointer w-full flex items-center gap-3 py-3">
+                        <Headphones className="mr-2 h-4 w-4" />
+                        지원 티켓
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                );
+              })()}
             </DropdownMenuContent>
           </DropdownMenu>
 

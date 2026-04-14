@@ -1,11 +1,18 @@
-// @ts-nocheck — BlockProps viewmodel drift 진행 중, 임시 우회
 "use client";
 
 /**
  * Organization Overview Hub — Block Wrapper + Presentational Blocks
  *
  * 공통 wrapper로 title/helper/body/footer 구조 통일.
- * block-level loading/empty/unavailable/normal 상태 처리.
+ * block-level loading/empty/unavailable/ready/error 상태 처리.
+ *
+ * Contract: BlockProps<T> (lib/review-queue/ops-hub-block-states.ts)
+ * - state: "loading" | "ready" | "empty" | "error" | "unavailable"
+ * - data?: T (ready 상태에서만)
+ * - error?: { message?; code? }
+ * - isRetryable?, onRetry?, isDisabled?
+ *
+ * 메시지 문구는 wrapper 내부에서 하드코딩 (contract 에 문구 필드 없음).
  */
 
 import Link from "next/link";
@@ -13,9 +20,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import type { BlockProps } from "@/lib/review-queue/ops-hub-block-states";
-// BlockProps<T> 는 generic — wrapper 는 unknown data 로 사용
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type BlockStateProps = BlockProps<any>;
 import type {
   OverviewKpiCardViewModel,
   StepFunnelStageViewModel,
@@ -27,6 +31,9 @@ import type {
   KpiTone,
 } from "@/lib/review-queue/ops-hub-view-models";
 
+// BlockProps<T> 는 generic — wrapper 는 unknown data 로 받는다.
+type BlockStateProps = BlockProps<unknown>;
+
 // ═══════════════════════════════════════════════════
 // Block Wrapper (공통)
 // ═══════════════════════════════════════════════════
@@ -37,9 +44,25 @@ interface BlockWrapperProps {
   state: BlockStateProps;
   children: React.ReactNode;
   minHeight?: number;
+  /** Wrapper 가 노출할 empty 문구 (block 별로 다름) */
+  emptyMessage?: string;
+  /** Wrapper 가 노출할 unavailable 문구 */
+  unavailableMessage?: string;
 }
 
-export function BlockWrapper({ title, helperText, state, children, minHeight }: BlockWrapperProps) {
+const DEFAULT_EMPTY_MESSAGE = "현재 표시할 데이터가 없습니다.";
+const DEFAULT_UNAVAILABLE_MESSAGE = "이 기능은 현재 사용할 수 없습니다.";
+const DEFAULT_RETRY_CTA = "다시 시도";
+
+export function BlockWrapper({
+  title,
+  helperText,
+  state,
+  children,
+  minHeight,
+  emptyMessage,
+  unavailableMessage,
+}: BlockWrapperProps) {
   return (
     <section style={{ minHeight: minHeight ? `${minHeight}px` : undefined }}>
       <div className="flex items-center justify-between mb-3">
@@ -47,33 +70,49 @@ export function BlockWrapper({ title, helperText, state, children, minHeight }: 
         {helperText && <span className="text-[10px] text-slate-500">{helperText}</span>}
       </div>
 
-      {state.uiState === "loading" && (
+      {state.state === "loading" && (
         <div className="bg-pn border border-bd rounded-lg p-6 flex items-center justify-center gap-2 text-slate-400">
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-xs">{state.loadingMessage}</span>
+          <span className="text-xs">불러오는 중</span>
         </div>
       )}
 
-      {state.uiState === "empty" && (
-        <p className="text-xs text-slate-500 bg-pn border border-bd rounded-lg p-4">{state.emptyMessage}</p>
+      {state.state === "empty" && (
+        <p className="text-xs text-slate-500 bg-pn border border-bd rounded-lg p-4">
+          {emptyMessage ?? DEFAULT_EMPTY_MESSAGE}
+        </p>
       )}
 
-      {state.uiState === "unavailable" && (
+      {state.state === "error" && (
         <div className="bg-pn border border-bd rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
-            <span className="text-xs text-slate-400">{state.unavailableMessage}</span>
+            <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
+            <span className="text-xs text-slate-400">
+              {state.error?.message ?? "데이터를 불러오지 못했습니다."}
+            </span>
           </div>
-          {state.onRetry && (
-            <button onClick={state.onRetry} className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors">
+          {state.isRetryable && state.onRetry && (
+            <button
+              onClick={state.onRetry}
+              className="flex items-center gap-1 text-[11px] text-blue-400 hover:text-blue-300 transition-colors"
+            >
               <RefreshCw className="h-3 w-3" />
-              {state.retryCta}
+              {DEFAULT_RETRY_CTA}
             </button>
           )}
         </div>
       )}
 
-      {state.uiState === "normal" && children}
+      {state.state === "unavailable" && (
+        <div className="bg-pn border border-bd rounded-lg p-4 flex items-center gap-2">
+          <AlertTriangle className="h-3.5 w-3.5 text-amber-400" />
+          <span className="text-xs text-slate-400">
+            {unavailableMessage ?? DEFAULT_UNAVAILABLE_MESSAGE}
+          </span>
+        </div>
+      )}
+
+      {state.state === "ready" && children}
     </section>
   );
 }

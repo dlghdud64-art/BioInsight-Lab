@@ -902,12 +902,46 @@ function TroubleshootTab() {
 function TicketTab() {
   const { data: session } = useSession();
   const { toast } = useToast();
+  const searchParams = useSearchParams();
 
-  const [view, setView] = useState<"list" | "compose">("list");
+  // ── Source context prefill (ontology recovery mode) ──
+  // URL: ?tab=ticket&from=<route>&sourceEntityType=<type>&sourceEntityId=<id>
+  // 이 조합이 있으면 compose view 로 자동 진입하고, relatedResource / title 을
+  // prefill 해 "이 이슈로 티켓 생성" 버튼 한 번으로 맥락이 그대로 넘어온다.
+  const srcFromRoute = searchParams?.get("from") ?? null;
+  const srcEntityType = searchParams?.get("sourceEntityType") ?? null;
+  const srcEntityId = searchParams?.get("sourceEntityId") ?? null;
+  const srcLabel = searchParams?.get("sourceLabel") ?? null;
+  const hasSourceContext = Boolean(srcFromRoute || srcEntityId);
+
+  const [view, setView] = useState<"list" | "compose">(
+    hasSourceContext ? "compose" : "list",
+  );
   const [category, setCategory] = useState("");
-  const [relatedResource, setRelatedResource] = useState("");
-  const [title, setTitle] = useState("");
-  const [body, setBody] = useState("");
+  const [relatedResource, setRelatedResource] = useState(() => {
+    if (srcEntityId) {
+      return srcEntityType
+        ? `${srcEntityType}: ${srcEntityId}`
+        : srcEntityId;
+    }
+    return srcLabel ?? srcFromRoute ?? "";
+  });
+  const [title, setTitle] = useState(() => {
+    if (srcEntityId) return `[${srcEntityType ?? "이슈"}] ${srcEntityId} 관련 문의`;
+    if (srcLabel) return `${srcLabel} 관련 문의`;
+    return "";
+  });
+  const [body, setBody] = useState(() => {
+    if (!hasSourceContext) return "";
+    const lines: string[] = [];
+    lines.push("진입 경로: " + (srcFromRoute ?? "(미상)"));
+    if (srcEntityId) lines.push(`대상: ${srcEntityType ?? "entity"} / ${srcEntityId}`);
+    lines.push("");
+    lines.push("문제 상황:");
+    lines.push("");
+    lines.push("재현 단계:");
+    return lines.join("\n");
+  });
   const [priority, setPriority] = useState("medium");
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
