@@ -359,7 +359,11 @@ export default function DashboardPage() {
         </h2>
         <p className="text-sm text-slate-500">
           {session?.user?.name ? `${session.user.name}님, ` : ""}
-          {hasActionItems ? `처리가 필요한 항목 ${actionCount}건이 있습니다.` : "현재 운영 상태가 양호합니다."}
+          {hasActionItems
+            ? `처리가 필요한 항목 ${actionCount}건이 있습니다.`
+            : hasAnyData
+              ? "오늘 즉시 처리할 운영 이슈가 없습니다."
+              : "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."}
         </p>
       </div>
 
@@ -407,8 +411,10 @@ export default function DashboardPage() {
               </>
             ) : (
               <>
-                <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500 flex-shrink-0" />
-                <h3 className="text-sm font-semibold text-slate-700">운영 상태 정상</h3>
+                <span className={`inline-flex h-2 w-2 rounded-full flex-shrink-0 ${hasAnyData ? "bg-emerald-500" : "bg-slate-400"}`} />
+                <h3 className="text-sm font-semibold text-slate-700">
+                  {hasAnyData ? "오늘 처리할 이슈 없음" : "시작 안내"}
+                </h3>
               </>
             )}
           </div>
@@ -522,8 +528,31 @@ export default function DashboardPage() {
             )}
           </div>
         ) : (
-          <div className="px-4 py-3">
-            <p className="text-sm text-slate-500">현재 즉시 처리가 필요한 항목이 없습니다. 아래 빠른 실행에서 업무를 시작하세요.</p>
+          <div className="px-4 py-4">
+            {hasAnyData ? (
+              <p className="text-sm text-slate-500">오늘 즉시 처리할 운영 이슈가 없습니다. 수동 빠른 실행에서 업무를 시작하세요.</p>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-slate-500">아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요.</p>
+                <div className="flex flex-wrap gap-2">
+                  <Link href="/dashboard/inventory">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <Package className="h-3.5 w-3.5" /> 품목 등록
+                    </Button>
+                  </Link>
+                  <Link href="/app/compare">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <GitCompare className="h-3.5 w-3.5" /> 비교 시작
+                    </Button>
+                  </Link>
+                  <Link href="/dashboard/quotes">
+                    <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
+                      <FileText className="h-3.5 w-3.5" /> 견적 요청
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

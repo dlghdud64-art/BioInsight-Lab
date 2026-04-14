@@ -33,6 +33,7 @@ import {
   TrendingDown,
   ClipboardList,
   ShieldAlert,
+  AlertCircle,
   ArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
@@ -320,24 +321,18 @@ export function ExecutiveSummarySection() {
   return (
     <section className="space-y-4">
       {/* ── KPI Row ─────────────────────────────────────── */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
-          icon={<TrendingDown className="h-3.5 w-3.5" />}
-          label="총 예산 소진율"
-          value={`${kpis.burnRate.toFixed(1)}%`}
+          icon={<AlertCircle className="h-3.5 w-3.5" />}
+          label="처리 필요 항목"
+          value={`${kpis.pendingApprovalCount + kpis.anomalyCount}건`}
           hint={
-            kpis.totalBudget > 0
-              ? `${kpis.totalSpent.toLocaleString()} / ${kpis.totalBudget.toLocaleString()}원`
-              : "등록된 예산이 없습니다"
+            (kpis.pendingApprovalCount + kpis.anomalyCount) > 0
+              ? "즉시 처리가 필요한 항목 건수"
+              : "현재 즉시 처리할 항목 없음"
           }
-          risk={
-            kpis.burnRateRisk === "over" || kpis.burnRateRisk === "critical"
-              ? "critical"
-              : kpis.burnRateRisk === "warning"
-                ? "warning"
-                : "none"
-          }
-          href="/dashboard/budget"
+          risk={(kpis.pendingApprovalCount + kpis.anomalyCount) > 0 ? "warning" : "none"}
+          href="/dashboard/purchase-orders"
         />
         <KpiCard
           icon={<ClipboardList className="h-3.5 w-3.5" />}
@@ -352,8 +347,20 @@ export function ExecutiveSummarySection() {
           href="/dashboard/purchase-orders"
         />
         <KpiCard
+          icon={<TrendingDown className="h-3.5 w-3.5" />}
+          label="진행 중 작업"
+          value={`${orders.filter((o: any) => o.status === "PENDING" || o.status === "PROCESSING").length}건`}
+          hint={
+            kpis.totalBudget > 0
+              ? `진행 중 견적/발주 건수`
+              : "견적·발주 진행 건 없음"
+          }
+          risk="none"
+          href="/dashboard/quotes"
+        />
+        <KpiCard
           icon={<ShieldAlert className="h-3.5 w-3.5" />}
-          label="AI 감지 위험"
+          label="이상 신호"
           value={`${kpis.anomalyCount}건`}
           hint={kpis.anomalyDetail}
           risk={
