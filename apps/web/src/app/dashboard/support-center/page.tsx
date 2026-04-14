@@ -420,14 +420,40 @@ export default function SupportCenterPage() {
 
   return (
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
-      {/* ── 헤더 ── */}
+      {/* ── 헤더 + Context Strip ── */}
       <div className="mb-5 px-1">
         <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight mb-1">
           운영 지원 센터
         </h1>
         <p className="text-sm text-slate-500 leading-relaxed">
-          운영 매뉴얼, 문제 해결 런북, 지원 티켓을 한 곳에서 관리합니다.
+          운영 중 필요한 문서, 문제 해결, 지원 요청을 같은 화면에서 처리합니다.
         </p>
+        {/* Context strip — 진입 경로가 있으면 표시 */}
+        {(() => {
+          const fromRoute = searchParams?.get("from") ?? null;
+          const sourceLabel = searchParams?.get("sourceLabel") ?? null;
+          const sourceEntityId = searchParams?.get("sourceEntityId") ?? null;
+          if (!fromRoute && !sourceEntityId) return null;
+          const moduleLabel = sourceLabel ?? fromRoute?.split("/").pop() ?? "이전 화면";
+          return (
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              {sourceEntityId && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-xs font-medium text-blue-700">
+                  <FileText className="h-3 w-3" />
+                  {sourceEntityId}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-600">
+                진입 경로: {moduleLabel}
+              </span>
+              <Link href={fromRoute ?? "/dashboard"}>
+                <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                  원래 작업으로 복귀 <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </Link>
+            </div>
+          );
+        })()}
       </div>
 
       {/* ── 탭 네비게이션 ── */}
@@ -455,7 +481,19 @@ export default function SupportCenterPage() {
 
       {/* ── 탭 콘텐츠 ── */}
       {activeTab === "manual" && <ManualTab />}
-      {activeTab === "troubleshoot" && <TroubleshootTab />}
+      {activeTab === "troubleshoot" && (
+        <TroubleshootTab
+          onCreateTicketFromRunbook={(title, body) => {
+            // 티켓 탭으로 전환 + prefill URL params 주입
+            const params = new URLSearchParams(searchParams?.toString() ?? "");
+            params.set("tab", "ticket");
+            params.set("ticketTitle", title);
+            params.set("ticketBody", body);
+            router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+            setActiveTab("ticket");
+          }}
+        />
+      )}
       {activeTab === "ticket" && <TicketTab />}
     </div>
   );
@@ -683,7 +721,7 @@ function ManualContent({
    Tab 2: 문제 해결 (시나리오 런북)
    ═══════════════════════════════════════════════════════════════════ */
 
-function TroubleshootTab() {
+function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunbook?: (title: string, body: string) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
@@ -882,6 +920,32 @@ function TroubleshootTab() {
                             </Button>
                           </Link>
                         )}
+                        {onCreateTicketFromRunbook && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5 text-xs border-amber-200 text-amber-600 bg-transparent hover:bg-amber-50 hover:text-amber-700"
+                            onClick={() => {
+                              const body = [
+                                `증상: ${item.symptom}`,
+                                `영향: ${item.impact}`,
+                                `가능한 원인: ${item.possibleCauses.join(", ")}`,
+                                "",
+                                "즉시 조치 수행 결과:",
+                                ...item.immediateActions.map((a, i) => `${i + 1}. ${a} → (결과 기입)`),
+                                "",
+                                "추가 설명:",
+                              ].join("\n");
+                              onCreateTicketFromRunbook(
+                                `[문제 해결] ${item.symptom}`,
+                                body,
+                              );
+                            }}
+                          >
+                            <MessageSquare className="h-3 w-3" />
+                            이 이슈로 티켓 생성
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -904,19 +968,21 @@ function TicketTab() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
-  // ── Source context prefill (ontology recovery mode) ──
-  // URL: ?tab=ticket&from=<route>&sourceEntityType=<type>&sourceEntityId=<id>
-  // 이 조합이 있으면 compose view 로 자동 진입하고, relatedResource / title 을
-  // prefill 해 "이 이슈로 티켓 생성" 버튼 한 번으로 맥락이 그대로 넘어온다.
+  // ── Source context prefill (ontology recovery mode + runbook handoff) ──
+  // Source 1: URL params — ?from=<route>&sourceEntityType=<type>&sourceEntityId=<id>
+  // Source 2: Runbook → ticket — ?ticketTitle=<title>&ticketBody=<body>
   const srcFromRoute = searchParams?.get("from") ?? null;
   const srcEntityType = searchParams?.get("sourceEntityType") ?? null;
   const srcEntityId = searchParams?.get("sourceEntityId") ?? null;
   const srcLabel = searchParams?.get("sourceLabel") ?? null;
-  const hasSourceContext = Boolean(srcFromRoute || srcEntityId);
+  const ticketTitleParam = searchParams?.get("ticketTitle") ?? null;
+  const ticketBodyParam = searchParams?.get("ticketBody") ?? null;
+  const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
   const [view, setView] = useState<"list" | "compose">(
     hasSourceContext ? "compose" : "list",
   );
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [category, setCategory] = useState("");
   const [relatedResource, setRelatedResource] = useState(() => {
     if (srcEntityId) {
@@ -927,11 +993,13 @@ function TicketTab() {
     return srcLabel ?? srcFromRoute ?? "";
   });
   const [title, setTitle] = useState(() => {
+    if (ticketTitleParam) return ticketTitleParam;
     if (srcEntityId) return `[${srcEntityType ?? "이슈"}] ${srcEntityId} 관련 문의`;
     if (srcLabel) return `${srcLabel} 관련 문의`;
     return "";
   });
   const [body, setBody] = useState(() => {
+    if (ticketBodyParam) return ticketBodyParam;
     if (!hasSourceContext) return "";
     const lines: string[] = [];
     lines.push("진입 경로: " + (srcFromRoute ?? "(미상)"));
@@ -1010,250 +1078,244 @@ function TicketTab() {
     return TICKET_CATEGORIES.find((c) => c.value === val)?.label || val;
   };
 
-  // ── 티켓 목록 뷰 ──
-  if (view === "list") {
-    return (
-      <div>
-        {/* 헤더 + 새 티켓 버튼 */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <p className="text-xs text-slate-500">접수한 문의를 확인하고 새 티켓을 작성할 수 있습니다.</p>
-          </div>
-          <Button
-            onClick={() => setView("compose")}
-            className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold h-9 px-4"
-          >
-            <Send className="h-3.5 w-3.5" />
-            새 문의 작성
-          </Button>
-        </div>
+  // ── Desktop: Queue (left) + Compose/Detail (right) split ──
+  // ── Mobile: list / compose / detail 단일 뷰 전환 ──
 
-        {/* 티켓 목록 */}
-        <div className="space-y-2 mb-6">
-          {MOCK_TICKETS.length === 0 ? (
-            <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-              <MessageSquare className="h-8 w-8 text-slate-400 mx-auto mb-3" />
-              <p className="text-sm font-medium text-slate-500 mb-1">아직 접수한 문의가 없습니다</p>
-              <p className="text-xs text-slate-500 mb-4">사용 중 문제가 있으면 새 문의를 작성해주세요.</p>
-              <Button onClick={() => setView("compose")} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white">
-                <Send className="h-3.5 w-3.5" />새 문의 작성
-              </Button>
-            </div>
-          ) : (
-            MOCK_TICKETS.map((ticket) => (
-              <div key={ticket.id} className="rounded-xl border border-slate-200 bg-white px-4 py-3.5 hover:border-slate-300 transition-colors cursor-pointer">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-mono text-slate-500">{ticket.id}</span>
-                    {getStatusBadge(ticket.status)}
-                  </div>
-                  <span className="text-[10px] text-slate-500 flex items-center gap-1 flex-shrink-0">
-                    <Clock className="h-2.5 w-2.5" />{ticket.createdAt}
-                  </span>
-                </div>
-                <p className="text-[13px] font-medium text-slate-700 leading-snug mb-2">{ticket.title}</p>
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500">{getCategoryLabel(ticket.category)}</Badge>
-                  {ticket.status === "answered" && ticket.answeredAt && (
-                    <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-medium">
-                      <CheckCircle2 className="h-3 w-3" />{ticket.answeredAt} 답변 완료
-                    </span>
-                  )}
-                  {ticket.status === "in_progress" && (
-                    <span className="flex items-center gap-1 text-[11px] text-blue-500 font-medium">
-                      <AlertCircle className="h-3 w-3" />담당자 확인 중
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* 지원 안내 */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50 px-5 py-4">
-          <h3 className="text-sm font-semibold text-slate-700 mb-3">지원 안내</h3>
-          <div className="space-y-3">
-            <div className="flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                <Clock className="h-3.5 w-3.5 text-slate-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-600">응답 시간</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">평일 09:00-18:00 접수 기준, 당일 내 1차 확인</p>
-              </div>
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-7 h-7 rounded-md bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="h-3.5 w-3.5 text-slate-500" />
-              </div>
-              <div>
-                <p className="text-xs font-medium text-slate-600">처리 프로세스</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">접수 → 담당자 배정 → 확인 → 답변 → 완료</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ── 티켓 작성 뷰 ──
-  return (
-    <div>
-      <div className="flex items-center gap-3 mb-5">
-        <button
-          onClick={() => setView("list")}
-          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600 transition-colors"
+  const ticketQueueRail = (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">내 티켓</p>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-[11px] text-blue-600 hover:bg-blue-50"
+          onClick={() => { setView("compose"); setSelectedTicketId(null); }}
         >
-          <ChevronRight className="h-3 w-3 rotate-180" />
-          목록으로
-        </button>
-        <h2 className="text-sm font-semibold text-slate-700">새 문의 작성</h2>
+          <Send className="h-3 w-3 mr-1" />새 문의
+        </Button>
       </div>
-
-      <div className="rounded-xl border border-slate-200 bg-white">
-        <div className="px-5 py-5">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 관련 기능 선택 */}
-            <div className="space-y-2.5">
-              <Label className="text-xs font-semibold text-slate-700">
-                관련 기능 <span className="text-red-500 text-[10px]">필수</span>
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {TICKET_CATEGORIES.map((cat) => {
-                  const Icon = cat.icon;
-                  const isSelected = category === cat.value;
-                  return (
-                    <button
-                      key={cat.value}
-                      type="button"
-                      onClick={() => setCategory(cat.value)}
-                      className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-all active:scale-[0.98] ${
-                        isSelected
-                          ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
-                          : "border-slate-200 bg-slate-50 hover:border-slate-300"
-                      }`}
-                    >
-                      <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-blue-100" : "bg-white border border-slate-200"}`}>
-                        <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-blue-600" : "text-slate-500"}`} />
-                      </div>
-                      <span className={`text-xs font-medium ${isSelected ? "text-blue-700" : "text-slate-600"}`}>{cat.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 관련 리소스 */}
-            <div className="space-y-2">
-              <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">
-                관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span>
-              </Label>
-              <Input
-                id="related-resource"
-                placeholder="예: QT-20260310-001, 주문번호, 재고 품목명 등"
-                value={relatedResource}
-                onChange={(e) => setRelatedResource(e.target.value)}
-                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
-              />
-              <p className="text-[11px] text-slate-500">관련 건을 연결하면 담당자가 더 빠르게 확인할 수 있습니다.</p>
-            </div>
-
-            {/* 우선순위 */}
-            <div className="space-y-2.5">
-              <Label className="text-xs font-semibold text-slate-700">우선순위</Label>
-              <div className="flex gap-2">
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setPriority(opt.value)}
-                    className={`flex-1 rounded-lg border px-3 py-2.5 text-center transition-all active:scale-[0.98] ${
-                      priority === opt.value
-                        ? opt.value === "high"
-                          ? "border-red-200 bg-red-50 ring-1 ring-red-200"
-                          : opt.value === "medium"
-                          ? "border-amber-200 bg-amber-50 ring-1 ring-amber-200"
-                          : "border-blue-200 bg-blue-50 ring-1 ring-blue-200"
-                        : "border-slate-200 bg-slate-50 hover:bg-white"
-                    }`}
-                  >
-                    <span className={`text-xs font-semibold ${
-                      priority === opt.value
-                        ? opt.value === "high" ? "text-red-600" : opt.value === "medium" ? "text-amber-600" : "text-blue-600"
-                        : "text-slate-500"
-                    }`}>{opt.label}</span>
-                    <p className={`text-[10px] mt-0.5 ${priority === opt.value ? "text-slate-500" : "text-slate-500"}`}>{opt.description}</p>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 제목 */}
-            <div className="space-y-2">
-              <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-700">
-                제목 <span className="text-red-500 text-[10px]">필수</span>
-              </Label>
-              <Input
-                id="ticket-title"
-                placeholder="이슈를 간단히 요약해주세요"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
-              />
-            </div>
-
-            {/* 내용 */}
-            <div className="space-y-2">
-              <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-700">
-                상세 내용 <span className="text-red-500 text-[10px]">필수</span>
-              </Label>
-              <Textarea
-                id="ticket-body"
-                placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요."
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                className="min-h-[160px] resize-none border-slate-200 bg-slate-50 text-sm text-slate-700 leading-relaxed p-4 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white"
-              />
-            </div>
-
-            {/* 첨부파일 */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-700">
-                첨부파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개)</span>
-              </Label>
-              <div className="flex flex-wrap gap-2">
-                {attachments.map((file, idx) => (
-                  <div key={idx} className="flex items-center gap-1.5 rounded-md border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600">
-                    <FileText className="h-3 w-3 text-slate-500" />
-                    <span className="max-w-[120px] truncate">{file.name}</span>
-                    <span className="text-[10px] text-slate-500">({(file.size / 1024).toFixed(0)}KB)</span>
-                    <button type="button" onClick={() => handleRemoveFile(idx)} className="text-slate-500 hover:text-red-500 ml-0.5">
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-                {attachments.length < 5 && (
-                  <label className="flex items-center gap-1.5 rounded-md border border-dashed border-slate-300 bg-slate-50 px-3 py-1.5 text-xs text-slate-500 hover:border-slate-400 hover:text-slate-500 cursor-pointer transition-colors">
-                    <Paperclip className="h-3 w-3" />파일 추가
-                    <input type="file" className="hidden" onChange={handleFileAdd} multiple accept=".pdf,.png,.jpg,.jpeg,.xlsx,.csv" />
-                  </label>
-                )}
-              </div>
-              <p className="text-[11px] text-slate-500">PDF, 이미지, 엑셀 파일 · 파일당 최대 10MB</p>
-            </div>
-
-            {/* 제출 */}
-            <div className="pt-3 border-t border-slate-200 flex items-center gap-3">
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold h-10 px-6 gap-2 text-sm active:scale-[0.98]" disabled={isSubmitting}>
-                {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
-              </Button>
-              <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600 transition-colors">취소</button>
-            </div>
-          </form>
+      {MOCK_TICKETS.length === 0 ? (
+        <div className="text-center py-8">
+          <MessageSquare className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+          <p className="text-[11px] text-slate-500">접수한 문의가 없습니다</p>
         </div>
+      ) : (
+        MOCK_TICKETS.map((ticket) => {
+          const isSelected = selectedTicketId === ticket.id;
+          return (
+            <button
+              key={ticket.id}
+              onClick={() => { setSelectedTicketId(ticket.id); setView("list"); }}
+              className={`w-full text-left rounded-lg border px-3 py-2.5 transition-all ${
+                isSelected
+                  ? "border-blue-300 bg-blue-50/60"
+                  : "border-slate-200 bg-white hover:border-slate-300"
+              }`}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-mono text-slate-500">{ticket.id}</span>
+                {getStatusBadge(ticket.status)}
+              </div>
+              <p className="text-xs font-medium text-slate-700 leading-snug truncate">{ticket.title}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <Badge variant="outline" className="text-[9px] px-1 py-0 border-slate-200 text-slate-500">
+                  {getCategoryLabel(ticket.category)}
+                </Badge>
+                <span className="text-[10px] text-slate-400">{ticket.createdAt}</span>
+              </div>
+            </button>
+          );
+        })
+      )}
+      {/* 지원 안내 (compact) */}
+      <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3">
+        <p className="text-[10px] font-semibold text-slate-500 mb-1.5">지원 안내</p>
+        <p className="text-[10px] text-slate-400 leading-relaxed">평일 09-18시 접수 기준 당일 1차 확인</p>
+        <p className="text-[10px] text-slate-400 leading-relaxed">접수 → 배정 → 확인 → 답변 → 완료</p>
       </div>
     </div>
   );
+
+  // 선택된 티켓 상세 (간단 버전)
+  const selectedTicket = MOCK_TICKETS.find((t) => t.id === selectedTicketId);
+  const ticketDetailPanel = selectedTicket ? (
+    <div className="rounded-xl border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-mono text-slate-500">{selectedTicket.id}</span>
+          {getStatusBadge(selectedTicket.status)}
+        </div>
+        <span className="text-[10px] text-slate-400">{selectedTicket.createdAt}</span>
+      </div>
+      <h3 className="text-sm font-semibold text-slate-900 mb-2">{selectedTicket.title}</h3>
+      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 mb-4">
+        {getCategoryLabel(selectedTicket.category)}
+      </Badge>
+      {selectedTicket.status === "answered" && selectedTicket.answeredAt && (
+        <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 mt-3">
+          <div className="flex items-center gap-2 mb-1">
+            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+            <span className="text-xs font-semibold text-emerald-700">답변 완료 ({selectedTicket.answeredAt})</span>
+          </div>
+          <p className="text-xs text-emerald-600 leading-relaxed">담당자가 답변을 등록했습니다.</p>
+        </div>
+      )}
+      {selectedTicket.status === "in_progress" && (
+        <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 mt-3">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />
+            <span className="text-xs font-semibold text-blue-700">담당자 확인 중</span>
+          </div>
+        </div>
+      )}
+    </div>
+  ) : null;
+
+  // ── Compose form (공통 — desktop/mobile 양쪽에서 사용) ──
+  const composeForm = (
+    <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="px-5 py-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2.5">
+            <Label className="text-xs font-semibold text-slate-700">관련 기능 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {TICKET_CATEGORIES.map((cat) => {
+                const Icon = cat.icon;
+                const isSelected = category === cat.value;
+                return (
+                  <button key={cat.value} type="button" onClick={() => setCategory(cat.value)}
+                    className={`flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-all active:scale-[0.98] ${isSelected ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200" : "border-slate-200 bg-slate-50 hover:border-slate-300"}`}>
+                    <div className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 ${isSelected ? "bg-blue-100" : "bg-white border border-slate-200"}`}>
+                      <Icon className={`h-3.5 w-3.5 ${isSelected ? "text-blue-600" : "text-slate-500"}`} />
+                    </div>
+                    <span className={`text-xs font-medium ${isSelected ? "text-blue-700" : "text-slate-600"}`}>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span></Label>
+            <Input id="related-resource" placeholder="예: QT-20260310-001" value={relatedResource} onChange={(e) => setRelatedResource(e.target.value)} className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white" />
+          </div>
+          <div className="space-y-2.5">
+            <Label className="text-xs font-semibold text-slate-700">우선순위</Label>
+            <div className="flex gap-2">
+              {PRIORITY_OPTIONS.map((opt) => (
+                <button key={opt.value} type="button" onClick={() => setPriority(opt.value)}
+                  className={`flex-1 rounded-lg border px-3 py-2.5 text-center transition-all active:scale-[0.98] ${priority === opt.value ? (opt.value === "high" ? "border-red-200 bg-red-50 ring-1 ring-red-200" : opt.value === "medium" ? "border-amber-200 bg-amber-50 ring-1 ring-amber-200" : "border-blue-200 bg-blue-50 ring-1 ring-blue-200") : "border-slate-200 bg-slate-50 hover:bg-white"}`}>
+                  <span className={`text-xs font-semibold ${priority === opt.value ? (opt.value === "high" ? "text-red-600" : opt.value === "medium" ? "text-amber-600" : "text-blue-600") : "text-slate-500"}`}>{opt.label}</span>
+                  <p className="text-[10px] mt-0.5 text-slate-500">{opt.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-700">제목 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <Input id="ticket-title" placeholder="이슈를 간단히 요약해주세요" value={title} onChange={(e) => setTitle(e.target.value)} className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-700">상세 내용 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <Textarea id="ticket-body" placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요." value={body} onChange={(e) => setBody(e.target.value)} rows={6} className="border-slate-200 bg-slate-50 text-sm text-slate-700 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white resize-none" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-slate-700">첨부 파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개 · 10MB)</span></Label>
+            <div className="flex flex-wrap gap-2">
+              {attachments.map((file, i) => (
+                <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
+                  <Paperclip className="h-3 w-3 text-slate-400" />{file.name}
+                  <button type="button" onClick={() => handleRemoveFile(i)} className="text-slate-400 hover:text-red-500"><X className="h-3 w-3" /></button>
+                </div>
+              ))}
+              <label className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-slate-300 text-xs text-slate-500 cursor-pointer hover:border-blue-400 hover:text-blue-600 transition-colors">
+                <Paperclip className="h-3 w-3" />파일 선택
+                <input type="file" className="hidden" multiple onChange={handleFileAdd} />
+              </label>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pt-2">
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold h-10 px-6 gap-2 text-sm" disabled={isSubmitting}>
+              {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
+            </Button>
+            <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600">취소</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  // ── Desktop split layout ──
+  return (
+    <div className="flex gap-5">
+      {/* 좌측 큐 (desktop only) */}
+      <nav className="hidden md:block w-56 flex-shrink-0">
+        <div className="sticky top-4">{ticketQueueRail}</div>
+      </nav>
+
+      {/* 모바일: list/compose/detail 단일 뷰 전환 */}
+      <div className="md:hidden w-full">
+        {view === "list" && !selectedTicketId && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-xs text-slate-500">접수한 문의를 확인하고 새 티켓을 작성할 수 있습니다.</p>
+              <Button onClick={() => setView("compose")} className="gap-1.5 text-xs bg-blue-600 hover:bg-blue-500 text-white h-9 px-4">
+                <Send className="h-3.5 w-3.5" />새 문의
+              </Button>
+            </div>
+            {ticketQueueRail}
+          </div>
+        )}
+        {view === "list" && selectedTicketId && ticketDetailPanel && (
+          <div>
+            <button onClick={() => setSelectedTicketId(null)} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+              <ChevronRight className="h-3 w-3 rotate-180" />목록으로
+            </button>
+            {ticketDetailPanel}
+          </div>
+        )}
+        {view === "compose" && (
+          <div>
+            <button onClick={() => { setView("list"); setSelectedTicketId(null); }} className="flex items-center gap-1 text-xs text-slate-500 mb-3">
+              <ChevronRight className="h-3 w-3 rotate-180" />목록으로
+            </button>
+            <h2 className="text-sm font-semibold text-slate-700 mb-4">새 문의 작성</h2>
+            {composeForm}
+          </div>
+        )}
+      </div>
+
+      {/* 데스크탑 센터: compose 또는 detail */}
+      <div className="hidden md:block flex-1 min-w-0">
+        {view === "compose" ? (
+          <div>
+            <div className="flex items-center gap-3 mb-5">
+              <button
+                onClick={() => { setView("list"); setSelectedTicketId(null); }}
+                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600 transition-colors"
+              >
+                <ChevronRight className="h-3 w-3 rotate-180" />
+                목록으로
+              </button>
+              <h2 className="text-sm font-semibold text-slate-700">새 문의 작성</h2>
+            </div>
+            {composeForm}
+          </div>
+        ) : selectedTicketId && ticketDetailPanel ? (
+          ticketDetailPanel
+        ) : (
+          <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
+            <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm text-slate-500 mb-1">티켓을 선택하거나 새 문의를 작성하세요</p>
+            <Button onClick={() => setView("compose")} variant="outline" size="sm" className="mt-3 gap-1.5 text-xs">
+              <Send className="h-3.5 w-3.5" />새 문의 작성
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // compose form 은 위에서 composeForm 로 추출 완료.
 }
+// ── 아래 이전 compose form 코드는 composeForm 변수로 이동 완료. 남은 잔여물 제거. ──
+// (이전 1321~1432 라인 삭제됨)

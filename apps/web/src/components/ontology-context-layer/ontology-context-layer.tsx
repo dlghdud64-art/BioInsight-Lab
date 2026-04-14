@@ -385,7 +385,7 @@ const PRIORITY_STYLES: Record<
     iconBg: "bg-slate-100",
     iconColor: "text-slate-500",
     badge: "text-slate-500",
-    cta: "bg-slate-600 hover:bg-slate-500 text-white",
+    cta: "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300",
     Icon: ChevronRight,
   },
   correction: {
@@ -403,9 +403,9 @@ const PRIORITY_STYLES: Record<
     border: "border-slate-200",
     bg: "bg-slate-50/60",
     iconBg: "bg-slate-100",
-    iconColor: "text-slate-600",
+    iconColor: "text-slate-500",
     badge: "text-slate-500",
-    cta: "bg-slate-600 hover:bg-slate-500 text-white",
+    cta: "bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300",
     Icon: LayoutDashboard,
   },
 };
