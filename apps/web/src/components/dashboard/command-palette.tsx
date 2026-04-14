@@ -35,11 +35,21 @@ interface QuickAction {
   ontologyQuery?: string;
 }
 
+/**
+ * zero-state 우선 추천 액션.
+ *
+ * 원칙:
+ * - "새 발주서 작성" 같은 고급 액션은 zero-state 에서 1순위가 아님.
+ * - zero-state 에서 자연스러운 순서: 시약 검색 → 비교 → 견적 요청 → 재고 확인.
+ * - "진행 중 작업 계속" 은 동적으로 추가 (아래 useQuickActions 에서 처리).
+ * - 이 리스트는 Global Command Palette 의 기본 추천이며,
+ *   Ontology 다음액션 resolver 와는 별개.
+ */
 const QUICK_ACTIONS: QuickAction[] = [
-  { id: "new-po", icon: <FileText className="h-4 w-4" />, label: "새 발주서 작성", description: "견적 비교 후 발주 전환", href: "/dashboard/quotes" },
-  { id: "budget", icon: <BarChart2 className="h-4 w-4" />, label: "이번 달 예산 현황 보기", description: "지출 통제 콘솔", href: "/dashboard/analytics" },
-  { id: "pending", icon: <ClipboardCheck className="h-4 w-4" />, label: "승인 대기 건 확인", description: "구매 승인 대기 목록", href: "/dashboard/purchases" },
-  { id: "inventory", icon: <Package className="h-4 w-4" />, label: "재고 부족 품목 확인", description: "재주문 필요 항목", href: "/dashboard/stock-risk" },
+  { id: "search", icon: <Search className="h-4 w-4" />, label: "시약·장비 검색 시작", description: "500만+ 품목 통합 검색", href: "/app/search" },
+  { id: "compare", icon: <ShoppingCart className="h-4 w-4" />, label: "비교 워크스페이스 열기", description: "후보 품목 나란히 비교", href: "/compare" },
+  { id: "quote", icon: <FileText className="h-4 w-4" />, label: "견적 요청 생성", description: "공급사에 견적 요청", href: "/dashboard/quotes" },
+  { id: "inventory", icon: <Package className="h-4 w-4" />, label: "재고 현황 확인", description: "입고·유효기간·안전재고", href: "/dashboard/inventory" },
 ];
 
 // ── 최근 조회 (세션 기반) ──
@@ -308,10 +318,12 @@ export function CommandPalette() {
       {/* ── 검색 트리거 (상단 바에 표시) ── */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 w-56 lg:w-64 xl:w-96 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-400 hover:bg-white hover:border-slate-300 transition-all cursor-text"
+        className="flex items-center gap-2 w-56 lg:w-64 xl:w-96 h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-sm text-slate-400 hover:bg-white hover:border-slate-300 hover:shadow-sm transition-all cursor-text relative z-10"
+        type="button"
+        aria-label="빠른 검색 열기"
       >
         <Search className="h-4 w-4 text-slate-400 shrink-0" />
-        <span className="flex-1 text-left truncate">명령어를 입력하거나 발주, 시약, 예산을 검색하세요...</span>
+        <span className="flex-1 text-left truncate">검색하거나 빠른 실행... (시약, 예산, 견적)</span>
         <kbd className="hidden lg:inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-400">
           <Command className="h-2.5 w-2.5" />K
         </kbd>
@@ -333,7 +345,7 @@ export function CommandPalette() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={onKeyDown}
-                  placeholder="명령어를 입력하거나 발주, 시약, 예산을 검색하세요... (예: 10만원 이하)"
+                  placeholder="검색하거나 빠른 실행... (예: 시약 검색, 재고 확인, 10만원 이하)"
                   className="flex-1 text-sm text-slate-900 placeholder:text-slate-400 bg-transparent outline-none"
                   autoComplete="off"
                 />
@@ -351,7 +363,7 @@ export function CommandPalette() {
               {!query.trim() && (
                 <div className="py-2">
                   <div className="px-3 py-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">추천 액션</p>
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">빠른 실행</p>
                   </div>
                   {QUICK_ACTIONS.map((action, idx) => (
                     <button
