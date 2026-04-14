@@ -418,6 +418,36 @@ export default function SupportCenterPage() {
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
+  // ── 통합 검색 (Phase 5) ──
+  // 문서 / 런북 / 티켓을 한 입력창에서 탐색. same-canvas 유지.
+  const [globalSearch, setGlobalSearch] = useState("");
+  const globalSearchResults = useMemo(() => {
+    const q = globalSearch.trim().toLowerCase();
+    if (!q) return null;
+
+    const manualHits = GUIDE_ENTRIES.filter(
+      (e) => e.title.toLowerCase().includes(q) || e.what.toLowerCase().includes(q) || e.when.toLowerCase().includes(q),
+    ).slice(0, 4).map((e) => ({ type: "manual" as const, id: e.id, title: e.title, desc: e.what, href: e.link.href }));
+
+    const runbookHits = RUNBOOK_ITEMS.filter(
+      (r) => r.symptom.toLowerCase().includes(q) || r.possibleCauses.some((c) => c.toLowerCase().includes(q)),
+    ).slice(0, 4).map((r) => ({ type: "troubleshoot" as const, id: r.id, title: r.symptom, desc: r.impact, href: null }));
+
+    const ticketHits = MOCK_TICKETS.filter(
+      (t) => t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q),
+    ).slice(0, 3).map((t) => ({ type: "ticket" as const, id: t.id, title: t.title, desc: t.id, href: null }));
+
+    // 현재 탭 결과를 우선 정렬
+    const all = [...manualHits, ...runbookHits, ...ticketHits];
+    all.sort((a, b) => {
+      const aMatch = a.type === activeTab ? 0 : 1;
+      const bMatch = b.type === activeTab ? 0 : 1;
+      return aMatch - bMatch;
+    });
+
+    return all.length > 0 ? all : null;
+  }, [globalSearch, activeTab]);
+
   return (
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
       {/* ── 헤더 + Context Strip ── */}
@@ -454,6 +484,60 @@ export default function SupportCenterPage() {
             </div>
           );
         })()}
+      </div>
+
+      {/* ── 통합 검색 (Phase 5) ── */}
+      <div className="relative mb-4 px-1">
+        <Search className="absolute left-4.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+        <Input
+          placeholder="문서, 문제 해결, 티켓을 한 번에 검색 (예: PDF 실패, 승인, 재고)"
+          value={globalSearch}
+          onChange={(e) => setGlobalSearch(e.target.value)}
+          className="pl-10 h-10 bg-slate-50 border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-1 focus:ring-blue-400/30 rounded-xl"
+        />
+        {globalSearch && (
+          <button
+            onClick={() => setGlobalSearch("")}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+        {/* 검색 결과 드롭다운 — same-canvas 안에서 표시 */}
+        {globalSearchResults && (
+          <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+            {globalSearchResults.map((r) => {
+              const typeLabel = r.type === "manual" ? "매뉴얼" : r.type === "troubleshoot" ? "문제 해결" : "티켓";
+              const typeColor = r.type === "manual" ? "bg-blue-50 text-blue-600" : r.type === "troubleshoot" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600";
+              return (
+                <button
+                  key={`${r.type}-${r.id}`}
+                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors"
+                  onClick={() => {
+                    setGlobalSearch("");
+                    if (r.type !== activeTab) handleTabChange(r.type as TabId);
+                    // 탭 내부 검색으로 handoff: 각 탭이 자체 search 로 이어받음
+                  }}
+                >
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <Badge className={`text-[9px] px-1.5 py-0 border-0 ${typeColor}`}>{typeLabel}</Badge>
+                    {r.type === activeTab && (
+                      <span className="text-[9px] text-blue-500 font-medium">현재 탭</span>
+                    )}
+                  </div>
+                  <p className="text-xs font-medium text-slate-700 truncate">{r.title}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{r.desc}</p>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {globalSearch && !globalSearchResults && (
+          <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg px-4 py-6 text-center">
+            <Search className="h-6 w-6 text-slate-300 mx-auto mb-2" />
+            <p className="text-xs text-slate-400">검색 결과가 없습니다</p>
+          </div>
+        )}
       </div>
 
       {/* ── 탭 네비게이션 ── */}
