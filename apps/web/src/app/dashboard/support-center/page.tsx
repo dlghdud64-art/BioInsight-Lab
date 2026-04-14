@@ -57,6 +57,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useOntologyContextLayerStore } from "@/lib/store/ontology-context-layer-store";
 
 /* ═══════════════════════════════════════════════════════════════════
    Tab 1: 운영 매뉴얼 — 데이터
@@ -385,6 +386,30 @@ export default function SupportCenterPage() {
     // activeTab을 의존성에서 빼서 사용자 클릭이 URL에 의해 덮이지 않게 한다
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabParam]);
+
+  // ── Ontology contextual layer: support 진입 시 recovery-mode 주입 ──
+  // `?from=/dashboard/orders&sourceEntityType=order&sourceEntityId=ORD-001`
+  // 파라미터가 있으면 ontology drawer 가 "원래 작업으로 복귀" recovery CTA 를 만든다.
+  // 파라미터가 없으면 drawer 는 null (resolver 가 support_center route 에서 direct entry 로 간주 → 비노출).
+  const ontologyUpdate = useOntologyContextLayerStore((s) => s.updateContext);
+  useEffect(() => {
+    const fromRoute = searchParams?.get("from") ?? null;
+    const sourceEntityType = searchParams?.get("sourceEntityType") ?? undefined;
+    const sourceEntityId = searchParams?.get("sourceEntityId") ?? undefined;
+    const sourceLabel = searchParams?.get("sourceLabel") ?? undefined;
+
+    ontologyUpdate(pathname ?? "/dashboard/support-center", {
+      sourceContext: fromRoute
+        ? {
+            sourceRoute: fromRoute,
+            sourceEntityType,
+            sourceEntityId,
+            sourceLabel,
+          }
+        : null,
+    });
+    // pathname / searchParams 만 의존 — activeTab 변경 시 재주입할 필요 없음
+  }, [pathname, searchParams, ontologyUpdate]);
 
   const handleTabChange = (next: TabId) => {
     setActiveTab(next);

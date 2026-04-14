@@ -28,11 +28,13 @@ export type AppRoute =
   | "dashboard_inventory"   // /dashboard/inventory
   | "dashboard_analytics"   // /dashboard/analytics
   | "dashboard_receiving"   // /dashboard/receiving
+  | "support_center"        // /dashboard/support-center
   | "unknown";
 
 export function classifyRoute(pathname: string): AppRoute {
   if (pathname.includes("/search")) return "sourcing_search";
   if (pathname === "/dashboard" || pathname === "/dashboard/") return "dashboard_overview";
+  if (pathname.startsWith("/dashboard/support-center")) return "support_center";
   if (pathname.startsWith("/dashboard/quotes")) return "dashboard_quotes";
   if (pathname.startsWith("/dashboard/orders")) return "dashboard_orders";
   if (pathname.startsWith("/dashboard/purchases")) return "dashboard_purchases";
@@ -69,6 +71,24 @@ export interface ContextualActionInput {
   counts: ContextualCounts;
   /** Sourcing-specific enrichment data (optional — only sourcing route populates) */
   sourcingDetail?: SourcingContextDetail;
+  /**
+   * Source context — set when user enters support/help while actively working
+   * in a workflow route. Enables recovery-mode actions ("원래 작업으로 복귀").
+   * null 이면 direct entry 로 간주 (ontology panel 비노출).
+   */
+  sourceContext?: SourceContext | null;
+}
+
+/** Recovery-mode context — where the user came from before entering support */
+export interface SourceContext {
+  /** Origin pathname (e.g., /dashboard/orders, /dashboard/quotes/QT-001) */
+  sourceRoute: string;
+  /** Human-readable source label (shown in recovery CTA) */
+  sourceLabel?: string;
+  /** Origin entity type if any (quote, order, po, etc.) */
+  sourceEntityType?: string;
+  /** Origin entity ID (shown in CTA: "QT-20260310-001 로 복귀") */
+  sourceEntityId?: string;
 }
 
 /** Enriched sourcing context for detailed overlay rendering */
@@ -203,7 +223,9 @@ export interface ResolvedNextActionResult {
  * 4. If current stage has blocker-free next step → stage-driven
  * 5. Fallback → overview mode (내 작업 요약)
  */
-export function resolveNextAction(input: ContextualActionInput): ResolvedNextActionResult {
+export function resolveNextAction(
+  input: ContextualActionInput,
+): ResolvedNextActionResult | null {
   const { currentRoute, activeBlockers } = input;
 
   const hardBlocks = activeBlockers.filter(b => b.severity === "hard_block");
@@ -229,9 +251,108 @@ export function resolveNextAction(input: ContextualActionInput): ResolvedNextAct
       return resolveAnalyticsContext(input);
     case "dashboard_overview":
       return resolveOverviewContext(input);
+    case "support_center":
+      return resolveSupportContext(input);
     default:
-      return resolveOverviewContext(input);
+      // 알 수 없는 route 는 ontology panel 노출 대상이 아님.
+      // 이전에는 overview 로 fallback 해 "대시보드 열기" 가 노출되었으나,
+      // 그건 global quick launcher 동작 — ontology 계약에 맞지 않음.
+      return null;
   }
+}
+
+// ── Support center: recovery mode / idle hide ──
+
+/**
+ * Support / help 화면의 next action.
+ *
+ * 2 mode:
+ *   1) recovery — sourceContext 존재 (사용자가 운영 흐름에서 막혀서 들어옴)
+ *      → "원래 작업으로 복귀" primary + "관련 런북 열기" / "이 이슈로 티켓 생성" secondary
+ *   2) idle — sourceContext 없음 (support 직접 진입)
+ *      → null 반환, overlay 비노출. "대시보드 열기" 류 generic fallback 금지.
+ *
+ * 원칙: support route 에서는 절대 workflow-style CTA (소싱 검색, 대시보드) 를 만들지 않는다.
+ */
+function resolveSupportContext(
+  input: ContextualActionInput,
+): ResolvedNextActionResult | null {
+  const src = input.sourceContext;
+  if (!src || !src.sourceRoute) {
+    // direct entry — ontology panel 비노출
+    return null;
+  }
+
+  const backLabel = src.sourceEntityId
+    ? `${src.sourceEntityId} 로 복귀`
+    : (src.sourceLabel ? `${src.sourceLabel} 으로 복귀` : "원래 작업으로 복귀");
+
+  const primary = makeAction(
+    "recover_to_source",
+    backLabel,
+    "primary",
+    "지원 화면 진입 전 작업으로 돌아갑니다",
+    src.sourceRoute,
+    null,
+    "overview",
+  );
+
+  const followUps: ResolvedAction[] = [
+    makeAction(
+      "open_runbook",
+      "관련 문제 해결 런북 열기",
+      "secondary",
+      "현재 이슈 유형의 런북을 엽니다",
+      "/dashboard/support-center?tab=troubleshoot",
+      null,
+      "overview",
+    ),
+    makeAction(
+      "create_ticket_from_issue",
+      "이 이슈로 티켓 생성",
+      "secondary",
+      "담당자에게 이 컨텍스트 그대로 티켓을 보냅니다",
+      `/dashboard/support-center?tab=ticket${
+        src.sourceEntityId
+          ? `&source=${encodeURIComponent(src.sourceEntityType ?? "entity")}:${encodeURIComponent(src.sourceEntityId)}`
+          : ""
+      }`,
+      null,
+      "overview",
+    ),
+  ];
+
+  return {
+    nextRequiredAction: primary,
+    availableFollowUpActions: followUps,
+    blockedActions: [],
+    whyThisAction: "지원 화면은 복귀/해결 경로만 제공합니다 — 새 작업을 시작하지 않습니다.",
+    currentStageLabel: "지원 (복귀 대기)",
+    mode: "contextual",
+    railContext: [
+      {
+        key: "source_route",
+        label: "진입 경로",
+        value: src.sourceRoute,
+        tone: "neutral",
+      },
+      ...(src.sourceEntityId
+        ? [{
+            key: "source_entity",
+            label: src.sourceEntityType ?? "대상",
+            value: src.sourceEntityId,
+            tone: "neutral" as const,
+          }]
+        : []),
+    ],
+    centerContext: [
+      { label: "원래 작업으로 돌아가거나, 이 이슈를 티켓으로 전환할 수 있습니다", tone: "neutral" },
+    ],
+    whyReasons: [
+      "지원 화면은 workflow 가 아니므로 신규 action 을 제시하지 않습니다.",
+      "복귀/런북/티켓 3가지 경로만 제공합니다.",
+    ],
+  };
 }
 
 // ── Correction path (hard blockers present) ──
@@ -283,7 +404,7 @@ function buildCorrectionResult(
 
 // ── Sourcing search context (6-state deterministic) ──
 
-function resolveSourcingContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveSourcingContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   const { counts, activeWorkWindow, sourcingDetail } = input;
   const sd = sourcingDetail ?? DEFAULT_SOURCING_DETAIL;
 
@@ -634,7 +755,7 @@ const DEFAULT_SOURCING_DETAIL: SourcingContextDetail = {
 
 // ── Quote management context ──
 
-function resolveQuoteManagementContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveQuoteManagementContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   const { counts, selectedEntityIds } = input;
 
   if (selectedEntityIds.length > 0) {
@@ -686,7 +807,7 @@ function resolveQuoteManagementContext(input: ContextualActionInput): ResolvedNe
 
 // ── Orders context (approval / PO conversion) ──
 
-function resolveOrdersContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveOrdersContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   const { counts, currentStage } = input;
 
   if (currentStage === "po_created" || currentStage === "dispatch_prep") {
@@ -736,7 +857,7 @@ function resolveOrdersContext(input: ContextualActionInput): ResolvedNextActionR
 
 // ── Dispatch context (PO created / dispatch prep) ──
 
-function resolveDispatchContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveDispatchContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   const { currentStage, snapshotValid, policyHoldActive } = input;
   const actions: ResolvedAction[] = [];
   const blocked: ResolvedAction[] = [];
@@ -856,13 +977,13 @@ function resolveDispatchContext(input: ContextualActionInput): ResolvedNextActio
 
 // ── Purchases context ──
 
-function resolvePurchasesContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolvePurchasesContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   return resolveOverviewContext(input);
 }
 
 // ── Inventory context ──
 
-function resolveInventoryContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveInventoryContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   if (input.counts.pendingReceiving > 0) {
     return {
       nextRequiredAction: makeAction("continue_receiving", "입고 처리 계속", "primary",
@@ -883,13 +1004,15 @@ function resolveInventoryContext(input: ContextualActionInput): ResolvedNextActi
 
 // ── Analytics context ──
 
-function resolveAnalyticsContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveAnalyticsContext(input: ContextualActionInput): ResolvedNextActionResult | null {
   return resolveOverviewContext(input);
 }
 
 // ── Overview fallback ──
 
-function resolveOverviewContext(input: ContextualActionInput): ResolvedNextActionResult {
+function resolveOverviewContext(
+  input: ContextualActionInput,
+): ResolvedNextActionResult | null {
   const { counts } = input;
   const actions: ResolvedAction[] = [];
 
@@ -937,22 +1060,10 @@ function resolveOverviewContext(input: ContextualActionInput): ResolvedNextActio
     };
   }
 
-  // 아무것도 없으면 대시보드
-  return {
-    nextRequiredAction: makeAction("go_dashboard", "대시보드 열기", "overview",
-      "진행 중인 작업이 없습니다.", "/dashboard", null, "overview"),
-    availableFollowUpActions: [
-      makeAction("start_sourcing", "소싱 검색 시작", "secondary",
-        "새로운 검색을 시작합니다.", "/app/search", null, "sourcing"),
-    ],
-    blockedActions: [],
-    whyThisAction: "진행 중인 작업이 없어 대시보드로 안내합니다.",
-    currentStageLabel: "대기",
-    mode: "overview",
-    railContext: [],
-    centerContext: [{ label: "진행 중인 작업이 없습니다", tone: "neutral" }],
-    whyReasons: ["진행 중인 작업이 없어 대시보드로 안내합니다."],
-  };
+  // 아무 context 도 없으면 ontology panel 을 띄우지 않는다 — global launcher 금지.
+  // 이전에는 "대시보드 열기" / "소싱 검색 시작" 을 generic shortcut 으로 노출했으나,
+  // 그건 ontology (context-aware next-step) 계약 위반.
+  return null;
 }
 
 // ══════════════════════════════════════════════

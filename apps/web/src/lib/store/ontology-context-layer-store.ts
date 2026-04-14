@@ -19,6 +19,7 @@ import type {
   WorkflowStage,
   ContextualBlocker,
   SourcingContextDetail,
+  SourceContext,
 } from "@/lib/ontology/contextual-action/ontology-next-action-resolver";
 import {
   resolveNextAction,
@@ -69,6 +70,8 @@ export interface OntologyContextBridgeData {
   counts: Partial<ContextualCounts>;
   /** Sourcing-specific enrichment data */
   sourcingDetail?: SourcingContextDetail;
+  /** Source route/entity when user entered support/help mid-workflow */
+  sourceContext?: SourceContext | null;
 }
 
 const DEFAULT_COUNTS: ContextualCounts = {
@@ -104,6 +107,7 @@ function buildInput(
       ...bridge.counts,
     },
     sourcingDetail: bridge.sourcingDetail,
+    sourceContext: bridge.sourceContext ?? null,
   };
 }
 
@@ -119,6 +123,12 @@ export const useOntologyContextLayerStore = create<OntologyContextLayerState>((s
   open: (pathname, context) => {
     const input = buildInput(pathname, context);
     const resolved = resolveNextAction(input);
+    // resolved === null 이면 ontology panel 노출 대상이 아님 (support direct entry 등).
+    // 호출자가 open() 을 불러도 열지 않는다 — "아무데서나 뜨는" global launcher 회귀 방지.
+    if (!resolved) {
+      set({ isOpen: false, resolved: null, currentInput: input });
+      return;
+    }
     set({ isOpen: true, resolved, currentInput: input });
   },
 
@@ -129,13 +139,21 @@ export const useOntologyContextLayerStore = create<OntologyContextLayerState>((s
   updateContext: (pathname, context) => {
     const input = buildInput(pathname, context);
     const resolved = resolveNextAction(input);
-    set({ resolved, currentInput: input });
+    // resolved 가 null 로 바뀌면 열려 있던 panel 도 닫는다.
+    set((s) => ({
+      resolved,
+      currentInput: input,
+      isOpen: resolved ? s.isOpen : false,
+    }));
   },
 
   reResolve: () => {
     const { currentInput } = get();
     if (!currentInput) return;
     const resolved = resolveNextAction(currentInput);
-    set({ resolved });
+    set((s) => ({
+      resolved,
+      isOpen: resolved ? s.isOpen : false,
+    }));
   },
 }));
