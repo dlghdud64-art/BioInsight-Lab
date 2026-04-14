@@ -458,7 +458,8 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
           {isAdmin && (
             <>
               <Button
-                className="bg-blue-600 hover:bg-blue-700 text-slate-900"
+                variant="outline"
+                className="border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 font-medium"
                 onClick={() => setInviteModalOpen(true)}
               >
                 <UserPlus className="h-4 w-4 mr-2" />
