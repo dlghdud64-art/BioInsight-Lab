@@ -44,6 +44,10 @@ import {
   buildDispatchPolicySurface,
   type DispatchPreparationGovernanceState,
 } from "@/lib/ai/po-dispatch-governance-engine";
+import {
+  evaluateDispatchSendPrecondition,
+  type DispatchSendPreconditionResult,
+} from "@/lib/ontology/dispatch/dispatch-send-precondition";
 import { buildPoCreatedRecord } from "@/lib/ai/po-created-record";
 import type { PoCreatedState, PoCreatedBasis } from "@/lib/ai/po-created-engine";
 import { buildPoCreatedDecisionOptions } from "@/lib/ai/po-created-engine";
@@ -282,6 +286,12 @@ export interface DispatchWorkbenchData {
   record: ReturnType<typeof buildPoCreatedRecord>;
   supplierPayload: SupplierFacingPayloadPreview;
   railContext: DispatchRailContext;
+  /**
+   * Send action 의 마지막 정문(turnstile).
+   * dock 의 Send now / Schedule send 버튼 enable/disable 의 단일 source of truth.
+   * handler 는 mutation 직전에도 다시 한 번 검증한다 (UI race 방어).
+   */
+  sendPrecondition: DispatchSendPreconditionResult;
 }
 
 export interface DispatchWorkbenchHandlers {
@@ -363,6 +373,7 @@ export function useDispatchWorkbenchData(
     });
     const supplierPayload = buildSupplierPayloadFromPo(po, vendorName);
     const railContext = buildRailContextFromPo(po, vendorName);
+    const sendPrecondition = evaluateDispatchSendPrecondition(dispatchGovernance);
     return {
       po,
       vendorName,
@@ -373,6 +384,7 @@ export function useDispatchWorkbenchData(
       record,
       supplierPayload,
       railContext,
+      sendPrecondition,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [po, approval, quoteComparison, baselineVersion]);
@@ -492,11 +504,35 @@ export function useDispatchWorkbenchData(
   const handlers = useMemo<DispatchWorkbenchHandlers>(() => ({
     handleSendNow: () => {
       if (!po) return;
+      // mutation 직전 마지막 정문 — UI button 이 어떤 이유로든 enable 된 채
+      // 클릭됐더라도 store.issuePO 는 여기서 차단된다.
+      const precondition = evaluateDispatchSendPrecondition(data?.dispatchGovernance);
+      if (!precondition.sendNowAllowed) {
+        if (typeof console !== "undefined") {
+          console.warn(
+            "[dispatch] handleSendNow blocked by precondition:",
+            precondition.summary,
+            precondition.blockReasons,
+          );
+        }
+        return;
+      }
       store.issuePO(po.id);
       navigate?.(`/dashboard/purchase-orders/${po.id}`);
     },
     handleScheduleSend: (date: string) => {
       if (!po) return;
+      const precondition = evaluateDispatchSendPrecondition(data?.dispatchGovernance);
+      if (!precondition.scheduleSendAllowed) {
+        if (typeof console !== "undefined") {
+          console.warn(
+            "[dispatch] handleScheduleSend blocked by precondition:",
+            precondition.summary,
+            precondition.blockReasons,
+          );
+        }
+        return;
+      }
       scheduleSend(po.id, date);
       const poNumber = po.poNumber || po.id;
       if (shouldPublish(poNumber, "dispatch_prep_send_scheduled", date)) {
@@ -532,7 +568,7 @@ export function useDispatchWorkbenchData(
       }
       navigate?.(`/dashboard/purchase-orders/${po.id}`);
     },
-  }), [po, store, scheduleSend, cancelDispatchPrep, navigate]);
+  }), [po, store, scheduleSend, cancelDispatchPrep, navigate, data?.dispatchGovernance]);
 
   return {
     data,

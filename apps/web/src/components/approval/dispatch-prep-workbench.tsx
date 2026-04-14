@@ -20,6 +20,7 @@ import { PolicyStatusBadge, PolicyMessageStack, NextActionHint } from "./index";
 import { QuoteChainProgressStrip, type ChainStageKey } from "./quote-chain-progress-strip";
 import type { DispatchPreparationGovernanceState, DispatchPolicySurface, ConfirmationItem } from "@/lib/ai/po-dispatch-governance-engine";
 import { canCreateExecution } from "@/lib/ai/dispatch-execution-handoff";
+import { evaluateDispatchSendPrecondition } from "@/lib/ontology/dispatch/dispatch-send-precondition";
 import { useDispatchGovernanceSync } from "@/hooks/use-dispatch-governance-sync";
 import { useOpenGovernedComposer } from "@/hooks/use-open-governed-composer";
 
@@ -111,10 +112,25 @@ export function DispatchPrepWorkbench({
     onReadinessRecalcNeeded,
   });
 
-  // Combined guard: both layers must allow — optimistic unlock 금지
-  const sendAllowed = sendGuard.allowed && !dockLocks.sendNowLocked;
-  const scheduleAllowed = sendGuard.allowed && !dockLocks.scheduleSendLocked;
-  const lockReason = dockLocks.lockReason ?? sendGuard.denyReason;
+  // Layer 3: send precondition contract — single source of truth.
+  // governance state 가 모든 derived check 를 거친 후의 마지막 정문.
+  // 본 layer 는 hook 의 mutation-time 재검증과 동일한 함수를 호출한다.
+  const sendPrecondition = React.useMemo(
+    () => evaluateDispatchSendPrecondition(state),
+    [state],
+  );
+
+  // Combined guard: 세 layer 모두 allow — optimistic unlock 금지
+  const sendAllowed =
+    sendGuard.allowed && !dockLocks.sendNowLocked && sendPrecondition.sendNowAllowed;
+  const scheduleAllowed =
+    sendGuard.allowed &&
+    !dockLocks.scheduleSendLocked &&
+    sendPrecondition.scheduleSendAllowed;
+  const lockReason =
+    (!sendPrecondition.sendNowAllowed && sendPrecondition.summary) ||
+    dockLocks.lockReason ||
+    sendGuard.denyReason;
 
   const [railOpen, setRailOpen] = React.useState(false);
   const openComposer = useOpenGovernedComposer();
