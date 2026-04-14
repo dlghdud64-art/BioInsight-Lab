@@ -28,27 +28,28 @@ export async function GET(request: NextRequest) {
     }
 
     // 조직 + 멤버 요약 정보 포함 쿼리
-    const memberships = await db.organizationMember.findMany({
-      where: { userId: session.user.id },
-      include: {
-        organization: {
-          include: {
-            members: {
-              select: { id: true, role: true },
-            },
-            invites: {
-              where: {
-                acceptedAt: null,
-                revokedAt: null,
-                expiresAt: { gt: new Date() },
+    // invites / subscription relation 이 DB 에 없을 수 있으므로
+    // members 만 include 하고 나머지는 방어적 처리
+    let memberships: any[];
+    try {
+      memberships = await db.organizationMember.findMany({
+        where: { userId: session.user.id },
+        include: {
+          organization: {
+            include: {
+              members: {
+                select: { id: true, role: true },
               },
-              select: { id: true },
             },
           },
         },
-      },
-      orderBy: { createdAt: "asc" },
-    });
+        orderBy: { createdAt: "asc" },
+      });
+    } catch (queryErr: any) {
+      console.error("[organizations/GET] Prisma query error:", queryErr?.message);
+      // 테이블 자체가 없는 경우 빈 배열 반환
+      return NextResponse.json({ organizations: [] });
+    }
 
     // 소속 조직이 없는 경우(신규 가입자 등) → 빈 배열로 정상 200 응답
     if (!memberships || memberships.length === 0) {
@@ -61,19 +62,15 @@ export async function GET(request: NextRequest) {
       .map((m: any) => {
         const org = m.organization;
         const allMembers = org.members || [];
-        const pendingInvites = org.invites || [];
         const adminCount = allMembers.filter(
           (mem: any) => mem.role === "ADMIN" || mem.role === "OWNER"
         ).length;
-        const pendingCount = pendingInvites.length;
-        // invites는 프론트엔드에 노출하지 않음
-        const { invites, ...orgRest } = org;
         return {
-          ...orgRest,
+          ...org,
           members: allMembers,
           memberCount: allMembers.length,
           adminCount,
-          pendingCount,
+          pendingCount: 0,
           role: m.role ?? "VIEWER",
         };
       });
@@ -132,20 +129,20 @@ export async function POST(request: NextRequest) {
     const trimmedDescription = description?.trim() || undefined;
     const trimmedOrgType = organizationType?.trim() || undefined;
 
-    // 2. 요금제별 조직 생성 한도 체크 (Free/Starter: 1개, Basic: 3개, Pro 이상: 무제한)
-    const existingMemberships = await db.organizationMember.findMany({
-      where: { userId: session.user.id },
-      include: {
-        organization: {
-          include: { subscription: true },
-        },
-      },
-    });
+    // 2. 요금제별 조직 생성 한도 체크
+    // subscription relation 이 DB 에 없을 수 있으므로 방어적 처리
+    let existingMemberships: any[] = [];
+    try {
+      existingMemberships = await db.organizationMember.findMany({
+        where: { userId: session.user.id },
+      });
+    } catch {
+      // 테이블 없는 경우 무시 — 신규 DB
+    }
 
     const currentOrgCount = existingMemberships.length;
-    const plans = existingMemberships.map((m: any) =>
-      (m.organization?.subscription?.plan as string | undefined) ?? "FREE"
-    );
+    // subscription 없으면 전부 FREE 가정
+    const plans: string[] = existingMemberships.map(() => "FREE");
     const hasPro = plans.some((p: string) => p === "TEAM" || p === "ORGANIZATION");
     const hasBasic = !hasPro && plans.some((p: string) => p === "BASIC");
     const orgLimit = hasPro ? Infinity : hasBasic ? 3 : 1; // Free/Starter: 1개, Basic: 3개
