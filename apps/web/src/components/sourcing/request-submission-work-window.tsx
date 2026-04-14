@@ -1,5 +1,6 @@
 "use client";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useMemo, useState, useCallback, useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -138,7 +139,7 @@ export function RequestSubmissionWorkWindow({
         specialNotes: condSummary.purpose || "",
       };
 
-      const res = await fetch("/api/quotes", {
+      const res = await csrfFetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(quotePayload),
@@ -180,6 +181,8 @@ export function RequestSubmissionWorkWindow({
   const [autoHandoffCancelled, setAutoHandoffCancelled] = useState(false);
   const [autoHandoffRemainingMs, setAutoHandoffRemainingMs] = useState<number | null>(null);
 
+  // ref 로 최신 callback 을 보장 — setTimeout 클로저에서 stale closure 방지
+  const handleQuoteWorkqueueRef = useRef<() => void>(() => {});
   const handleQuoteWorkqueue = useCallback(() => {
     if (!submissionEvent) return;
     const handoff = buildQuoteWorkqueueHandoff(
@@ -188,9 +191,9 @@ export function RequestSubmissionWorkWindow({
     );
     onQuoteWorkqueueOpen(handoff);
   }, [submissionEvent, draftSnapshot, onQuoteWorkqueueOpen]);
+  handleQuoteWorkqueueRef.current = handleQuoteWorkqueue;
 
   // 제출 성공 시 카운트다운 + 자동 handoff timer 구동.
-  // submissionEvent 가 set 되는 순간(=성공 직후) 한 번만 동작.
   useEffect(() => {
     if (!submissionEvent) return;
     if (autoHandoffCancelled) return;
@@ -199,7 +202,6 @@ export function RequestSubmissionWorkWindow({
     const startedAt = Date.now();
     setAutoHandoffRemainingMs(autoHandoffDelayMs);
 
-    // 100ms 간격으로 남은 시간 갱신 → countdown UI 의 부드러운 표시
     const tick = setInterval(() => {
       const elapsed = Date.now() - startedAt;
       const remaining = Math.max(0, autoHandoffDelayMs - elapsed);
@@ -210,16 +212,14 @@ export function RequestSubmissionWorkWindow({
     }, 100);
 
     const handoffTimer = setTimeout(() => {
-      handleQuoteWorkqueue();
+      // ref.current 는 항상 최신 submissionEvent 를 참조
+      handleQuoteWorkqueueRef.current();
     }, autoHandoffDelayMs);
 
     return () => {
       clearInterval(tick);
       clearTimeout(handoffTimer);
     };
-    // handleQuoteWorkqueue는 submissionEvent/draftSnapshot 변화 시 재생성되지만
-    // 본 effect는 submissionEvent 가 set 되는 시점에만 timer 를 띄우면 충분함.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [submissionEvent, autoHandoffCancelled, autoHandoffDelayMs]);
 
   const handleCancelAutoHandoff = useCallback(() => {
