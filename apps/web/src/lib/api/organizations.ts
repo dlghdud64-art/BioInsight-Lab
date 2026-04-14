@@ -91,50 +91,47 @@ export async function createOrganization(
     organizationType?: string;
   }
 ) {
-  // 트랜잭션으로 조직 생성과 멤버 등록을 원자적으로 처리
-  return await db.$transaction(async (tx: Prisma.TransactionClient) => {
-    // 1. 조직 생성
-    const organization = await tx.organization.create({
-      data: {
-        name: data.name,
-        description: data.description,
-        organizationType: data.organizationType ?? null,
-        plan: "FREE",
-      },
-    });
+  // pgbouncer(6543) 환경에서 interactive transaction 미지원 → 순차 처리
+  // 1. 조직 생성
+  const organization = await db.organization.create({
+    data: {
+      name: data.name,
+      description: data.description,
+      organizationType: data.organizationType ?? null,
+      plan: "FREE",
+    },
+  });
 
-    // 2. 생성자를 멤버로 즉시 등록 (RLS 권한 문제 해결)
-    //    upsert: 레이스 컨디션/트랜잭션 재시도 시 P2002 방지
-    await tx.organizationMember.upsert({
-      where: {
-        userId_organizationId: { userId, organizationId: organization.id },
-      },
-      update: { role: "ADMIN" },
-      create: {
-        organizationId: organization.id,
-        userId,
-        role: "ADMIN",
-      },
-    });
+  // 2. 생성자를 멤버로 즉시 등록
+  await db.organizationMember.upsert({
+    where: {
+      userId_organizationId: { userId, organizationId: organization.id },
+    },
+    update: { role: "ADMIN" },
+    create: {
+      organizationId: organization.id,
+      userId,
+      role: "ADMIN",
+    },
+  });
 
-    // 3. 생성된 조직을 멤버 정보와 함께 반환
-    return await tx.organization.findUnique({
-      where: { id: organization.id },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                name: true,
-              },
+  // 3. 생성된 조직을 멤버 정보와 함께 반환
+  return await db.organization.findUnique({
+    where: { id: organization.id },
+    include: {
+      members: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
             },
           },
         },
-        subscription: true,
       },
-    });
+      subscription: true,
+    },
   });
 }
 
