@@ -180,7 +180,6 @@ export function CommandPalette() {
       { label: "재고 관리", href: "/dashboard/inventory", keywords: ["재고", "stock", "inventory", "수량"] },
       { label: "예산 관리", href: "/dashboard/budget", keywords: ["예산", "budget", "소진"] },
       { label: "안전 관리", href: "/dashboard/safety", keywords: ["안전", "msds", "safety"] },
-      { label: "스마트 소싱", href: "/dashboard/smart-sourcing", keywords: ["소싱", "sourcing", "공급사"] },
       { label: "구매 리포트", href: "/dashboard/reports", keywords: ["리포트", "보고서", "report"] },
     ];
 

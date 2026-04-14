@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
@@ -153,7 +154,7 @@ export default function AnalyticsPage() {
     setAiLoading(true);
     setAiError(null);
     try {
-      const res = await fetch("/api/analytics/ai-insight", { method: "POST" });
+      const res = await csrfFetch("/api/analytics/ai-insight", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "AI 분석 실패");
       setAiInsight({ summary: data.summary, dataPoints: data.dataPoints ?? 0, analyzedAt: data.analyzedAt ?? new Date().toISOString() });
@@ -269,7 +270,7 @@ export default function AnalyticsPage() {
         title: "단가 인상 감지",
         description: `${anomalies[0].vendor}의 '${anomalies[0].item}' ${anomalies[0].reason}`,
         cta: "대체품 검색",
-        href: "/dashboard/smart-sourcing",
+        href: "/dashboard/quotes",
         color: "red",
       });
     }

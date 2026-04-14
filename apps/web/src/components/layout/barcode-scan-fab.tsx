@@ -55,7 +55,7 @@ export function BarcodeScanFab() {
     setBomText(line);
     setActiveTab("bom-sourcing");
     reset();
-    router.push("/dashboard/smart-sourcing");
+    router.push("/dashboard/quotes?dock=intake&source=bom_import");
   };
 
   const handleRescan = () => {

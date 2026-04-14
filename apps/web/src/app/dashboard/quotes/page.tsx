@@ -17,11 +17,14 @@ import {
   ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
   AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
   AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
-  Loader2, Upload,
+  Loader2, Upload, ChevronDown,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
@@ -36,6 +39,7 @@ import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
 import { FileText } from "lucide-react";
 import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
+import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 
 type QuoteStatus = "PENDING" | "SENT" | "RESPONDED" | "COMPLETED" | "CANCELLED";
 
@@ -381,6 +385,20 @@ function QuotesPageContent() {
   // consumeHandoff 는 1-shot: 한 번 읽으면 clear (새로고침 시 재등장 안 함).
   const [rfqHandoff, setRfqHandoff] = useState<QuoteWorkqueueHandoff | null>(null);
   const [rfqBannerDismissed, setRfqBannerDismissed] = useState(false);
+
+  // ── Intake dock state (Smart Sourcing → workqueue 내부 통합) ──
+  const [intakeDockOpen, setIntakeDockOpen] = useState(false);
+  const [intakeDockSource, setIntakeDockSource] = useState<"manual_upload" | "bom_import" | null>(null);
+
+  // URL dock param 감지 (legacy redirect에서 유입)
+  useEffect(() => {
+    const dockParam = searchParams.get("dock");
+    const sourceParam = searchParams.get("source") as "manual_upload" | "bom_import" | null;
+    if (dockParam === "intake" && sourceParam) {
+      setIntakeDockSource(sourceParam);
+      setIntakeDockOpen(true);
+    }
+  }, [searchParams]);
   useEffect(() => {
     const fromParam = searchParams.get("from");
     if (fromParam === "rfq") {
@@ -634,11 +652,36 @@ function QuotesPageContent() {
             generatePayload={{ items: quotes?.slice(0, 3).flatMap((q: Quote) => q.items?.map(item => ({ productName: item.product?.name || "품목", quantity: item.quantity || 1 })) || []) || [] }}
             variant="outline" size="sm" className="h-9 text-sm hidden sm:flex" />
           <PermissionGate permission="quotes.create">
-            <Link href="/app/search" className="flex-shrink-0 snap-start">
-              <Button size="sm" className="h-9 text-xs sm:text-sm gap-1.5 bg-blue-600 hover:bg-blue-700">
-                <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
-              </Button>
-            </Link>
+            <div className="flex items-center gap-0 flex-shrink-0 snap-start">
+              <Link href="/app/search">
+                <Button size="sm" className="h-9 text-xs sm:text-sm gap-1.5 bg-blue-600 hover:bg-blue-700 rounded-r-none border-r border-blue-500/40">
+                  <Plus className="h-4 w-4" /><span className="hidden sm:inline">새 견적 요청</span><span className="sm:hidden">새 요청</span>
+                </Button>
+              </Link>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm" className="h-9 px-2 bg-blue-600 hover:bg-blue-700 rounded-l-none">
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52 !bg-white">
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2 py-2.5"
+                    onClick={() => { setIntakeDockSource("manual_upload"); setIntakeDockOpen(true); }}
+                  >
+                    <Upload className="h-4 w-4 text-blue-600" />
+                    <span className="text-sm">외부 견적서 업로드</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer gap-2 py-2.5"
+                    onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); }}
+                  >
+                    <FileTextIcon className="h-4 w-4 text-emerald-600" />
+                    <span className="text-sm">BOM 업로드</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </PermissionGate>
         </div>
       </div>
@@ -854,7 +897,7 @@ function QuotesPageContent() {
             <>
               <Package className="h-8 w-8 text-slate-600" />
               <p className="text-sm text-slate-700">현재 처리 중인 견적 케이스가 없습니다</p>
-              <p className="text-xs text-slate-500">새 견적 요청을 만들거나, 소싱 워크벤치에서 시작할 수 있습니다</p>
+              <p className="text-xs text-slate-500">새 견적 요청을 만들거나, BOM/외부 견적서를 업로드할 수 있습니다</p>
               <div className="flex gap-2 mt-2">
                 <Link href="/app/search"><Button size="sm" className="h-8 text-xs bg-blue-600 hover:bg-blue-700">새 요청 만들기</Button></Link>
                 <Link href="/dashboard/inventory"><Button size="sm" variant="outline" className="h-8 text-xs text-slate-400 border-bd">재고 확인</Button></Link>
@@ -1095,6 +1138,22 @@ function QuotesPageContent() {
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
+          </div>
+
+          {/* G-pre. 추가 견적서 업로드 (detail dock 내부 통합) */}
+          <div className="px-4 py-3 border-t border-bd/50">
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full h-8 text-xs gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50"
+              onClick={() => {
+                setIntakeDockSource("manual_upload");
+                setIntakeDockOpen(true);
+              }}
+            >
+              <Upload className="h-3 w-3" />
+              추가 견적서 업로드
+            </Button>
           </div>
 
           </div>{/* end scrollable body */}
@@ -1462,6 +1521,18 @@ function QuotesPageContent() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ── Intake Dock (외부 견적서 업로드 / BOM 업로드) ── */}
+      <QuoteIntakeDock
+        open={intakeDockOpen}
+        onOpenChange={setIntakeDockOpen}
+        source={intakeDockSource}
+        onCommitSuccess={() => {
+          setIntakeDockOpen(false);
+          setIntakeDockSource(null);
+          refetch();
+        }}
+      />
     </div>
   );
 }

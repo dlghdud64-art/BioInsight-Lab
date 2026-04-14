@@ -22,7 +22,6 @@ import {
   CreditCard,
   PieChart,
   Home,
-  Sparkles,
   ClipboardList,
   LifeBuoy,
   type LucideIcon,
@@ -69,12 +68,6 @@ const sidebarGroups: SidebarGroup[] = [
   {
     label: "구매 및 예산 (PURCHASE)",
     items: [
-      {
-        title: "AI 견적 분석",
-        href: "/dashboard/smart-sourcing",
-        icon: Sparkles,
-        badge: "AI",
-      },
       {
         title: "견적 관리",
         href: "/dashboard/quotes",
@@ -165,7 +158,6 @@ const dashboardLinks = [
 const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard":              { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-indigo-400/70" },
-  "/dashboard/smart-sourcing":{ active: "text-violet-600", inactive: "text-violet-400/70" },
   "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/orders":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
