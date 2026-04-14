@@ -247,7 +247,7 @@ export const INTEGRATION_UNAVAILABLE_COPY = {
   title: "현재 권한으로 연동 설정에 접근할 수 없습니다",
   description: "관리자 또는 Business 플랜 이상에서 사용할 수 있습니다.",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 // ---------------------------------------------------------------------------

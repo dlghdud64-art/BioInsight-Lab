@@ -410,21 +410,21 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 min-w-[240px] !bg-white border-slate-200 shadow-xl shadow-slate-200/50">
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/guide" className="cursor-pointer w-full flex items-center gap-3 py-3">
+                <Link href="/dashboard/support-center?tab=manual" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  이용 가이드
+                  운영 매뉴얼
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/faq" className="cursor-pointer w-full flex items-center gap-3 py-3">
+                <Link href="/dashboard/support-center?tab=troubleshoot" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <HelpCircle className="mr-2 h-4 w-4" />
-                  자주 묻는 질문
+                  문제 해결 런북
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/dashboard/support" className="cursor-pointer w-full flex items-center gap-3 py-3">
+                <Link href="/dashboard/support-center?tab=ticket" className="cursor-pointer w-full flex items-center gap-3 py-3">
                   <Headphones className="mr-2 h-4 w-4" />
-                  1:1 문의하기
+                  지원 티켓
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuContent>

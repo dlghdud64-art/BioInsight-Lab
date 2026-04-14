@@ -411,7 +411,7 @@ export const TASK_UNAVAILABLE_COPY = {
   title: "현재 권한으로 작업 관리 기능에 접근할 수 없습니다",
   description: "관리자에게 권한을 요청하세요",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 // ---------------------------------------------------------------------------

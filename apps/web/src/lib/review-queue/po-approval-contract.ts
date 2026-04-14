@@ -596,7 +596,7 @@ export const PO_UNAVAILABLE_COPY = {
   title: "현재 권한으로 발주 관리에 접근할 수 없습니다",
   description: "구매 관리자 권한이 필요합니다",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 // ---------------------------------------------------------------------------

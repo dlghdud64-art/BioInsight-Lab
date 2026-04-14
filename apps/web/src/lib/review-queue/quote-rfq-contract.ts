@@ -477,7 +477,7 @@ export const QUOTE_UNAVAILABLE_COPY = {
   title: "현재 권한으로 견적 관리에 접근할 수 없습니다",
   description: "구매 요청자 이상의 권한이 필요합니다",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 // ---------------------------------------------------------------------------

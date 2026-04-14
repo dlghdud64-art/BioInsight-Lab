@@ -599,7 +599,7 @@ export const SETTINGS_UNAVAILABLE_COPY = {
   title: "현재 권한으로 설정에 접근할 수 없습니다",
   body: "관리자 또는 소유자 권한이 필요합니다",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 /** 설정 관련 안티패턴 목록 — 코드 리뷰 시 경고 기준 */

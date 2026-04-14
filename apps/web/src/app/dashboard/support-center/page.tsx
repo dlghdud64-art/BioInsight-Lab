@@ -2,8 +2,9 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -362,8 +363,35 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "ticket", label: "지원 티켓", icon: MessageSquare },
 ];
 
+function isTabId(value: string | null): value is TabId {
+  return value === "manual" || value === "troubleshoot" || value === "ticket";
+}
+
 export default function SupportCenterPage() {
-  const [activeTab, setActiveTab] = useState<TabId>("manual");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get("tab") ?? null;
+
+  const [activeTab, setActiveTab] = useState<TabId>(
+    isTabId(tabParam) ? tabParam : "manual"
+  );
+
+  // URL → state 동기화 (외부 deep link 진입 시)
+  useEffect(() => {
+    if (isTabId(tabParam) && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+    // activeTab을 의존성에서 빼서 사용자 클릭이 URL에 의해 덮이지 않게 한다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabParam]);
+
+  const handleTabChange = (next: TabId) => {
+    setActiveTab(next);
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("tab", next);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
 
   return (
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
@@ -385,7 +413,7 @@ export default function SupportCenterPage() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px ${
                 isActive
                   ? "border-blue-600 text-blue-600"

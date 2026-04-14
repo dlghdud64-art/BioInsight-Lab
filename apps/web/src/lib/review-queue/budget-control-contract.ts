@@ -262,7 +262,7 @@ export const BUDGET_UNAVAILABLE_COPY = {
   title: "현재 권한으로 예산 통제 설정에 접근할 수 없습니다",
   description: "관리자 또는 예산 책임자 권한이 필요합니다",
   actionLabel: "권한 요청하기",
-  actionHref: "/dashboard/support",
+  actionHref: "/dashboard/support-center?tab=ticket",
 } as const;
 
 // ---------------------------------------------------------------------------
