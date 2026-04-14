@@ -179,8 +179,8 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
   receiving_status_change: ['buyer', 'ops_admin'],
   // ── Organization chain ──
   member_role_change: ['ops_admin'],
-  organization_update: ['ops_admin'],
-  organization_invite: ['ops_admin'],
+  organization_update: ['requester', 'buyer', 'approver', 'ops_admin'],
+  organization_invite: ['buyer', 'approver', 'ops_admin'],
   organization_security_change: ['ops_admin'],
   team_manage: ['ops_admin'],
   workspace_manage: ['ops_admin'],
