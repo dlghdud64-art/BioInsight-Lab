@@ -77,6 +77,21 @@ export interface ContextualActionInput {
    * null 이면 direct entry 로 간주 (ontology panel 비노출).
    */
   sourceContext?: SourceContext | null;
+  /**
+   * Inventory-specific enrichment — lot 단위 폐기/MSDS 판단에 사용.
+   * inventory page 가 선택된 item/lot row 기반으로 주입.
+   */
+  inventoryDetail?: InventoryContextDetail | null;
+}
+
+/** Inventory page context for lot-level ontology resolution */
+export interface InventoryContextDetail {
+  itemId?: string;
+  itemName?: string;
+  safetyRelevant: boolean;
+  expiredLotCount: number;
+  msdsStatus: "registered" | "missing" | "outdated";
+  lowStock: boolean;
 }
 
 /** Recovery-mode context — where the user came from before entering support */
@@ -991,6 +1006,66 @@ function resolvePurchasesContext(input: ContextualActionInput): ResolvedNextActi
 // ── Inventory context ──
 
 function resolveInventoryContext(input: ContextualActionInput): ResolvedNextActionResult | null {
+  // ── 재고 ontology: safety issue > stock issue 원칙 ──
+  // 1. 만료 lot 폐기 (qty > 0 인 expired lot)
+  // 2. MSDS 누락/만료 (위험물)
+  // 3. 입고 대기
+  // 4. 재발주 → overview 에서 처리
+
+  const inv = input.inventoryDetail;
+
+  // Priority 1: 만료 lot 폐기
+  if (inv?.expiredLotCount && inv.expiredLotCount > 0) {
+    return {
+      nextRequiredAction: makeAction("dispose_expired_lot",
+        `만료 lot 폐기 처리 (${inv.expiredLotCount}건)`, "correction",
+        "유효기간 만료 lot 가 수량 > 0 상태로 남아 있습니다.",
+        "/dashboard/inventory", null, "inventory_record"),
+      availableFollowUpActions: [
+        ...(inv.msdsStatus !== "registered" ? [
+          makeAction("register_msds", "MSDS 등록/점검", "secondary",
+            "위험물 MSDS 미등록", "/dashboard/safety", null, "inventory_record"),
+        ] : []),
+        ...(input.counts.pendingReceiving > 0 ? [
+          makeAction("continue_receiving", "입고 처리", "secondary",
+            `${input.counts.pendingReceiving}건 대기`, "/dashboard/receiving", null, "inventory_record"),
+        ] : []),
+      ],
+      blockedActions: [],
+      whyThisAction: "만료 lot 폐기 처리가 safety 기준으로 최우선입니다.",
+      currentStageLabel: "만료 lot 폐기",
+      mode: "contextual",
+      railContext: [
+        { key: "expired", label: "만료 lot", value: `${inv.expiredLotCount}건`, tone: "blocked" },
+        ...(inv.itemName ? [{ key: "item", label: "품목", value: inv.itemName, tone: "neutral" as const }] : []),
+      ],
+      centerContext: [
+        { label: `만료 lot ${inv.expiredLotCount}건 폐기 필요`, tone: "blocked" },
+      ],
+      whyReasons: [
+        "만료된 lot 가 수량 > 0 상태 — 품목 전체가 아닌 lot 단위 폐기",
+        "safety issue 가 stock issue 보다 우선",
+      ],
+    };
+  }
+
+  // Priority 2: MSDS 미등록 (위험물)
+  if (inv?.safetyRelevant && inv?.msdsStatus !== "registered") {
+    return {
+      nextRequiredAction: makeAction("register_msds", "MSDS 등록/점검", "correction",
+        "위험물 MSDS 미등록/만료", "/dashboard/safety", null, "inventory_record"),
+      availableFollowUpActions: [],
+      blockedActions: [],
+      whyThisAction: "위험물 MSDS 누락 — 안전 문서 등록 우선",
+      currentStageLabel: "MSDS 등록",
+      mode: "contextual",
+      railContext: [{ key: "msds", label: "MSDS", value: "미등록/만료", tone: "warning" }],
+      centerContext: [{ label: "MSDS 미등록/만료", tone: "warning" }],
+      whyReasons: ["위험물 MSDS 가 누락 또는 만료 상태입니다."],
+    };
+  }
+
+  // Priority 3: 입고 대기
   if (input.counts.pendingReceiving > 0) {
     return {
       nextRequiredAction: makeAction("continue_receiving", "입고 처리 계속", "primary",

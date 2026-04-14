@@ -206,6 +206,8 @@ export default function SafetyManagerPage() {
 
   // ── AI Queue completion ──
   const [completedQueueIds, setCompletedQueueIds] = useState<Set<number>>(new Set());
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [aiPanelPhase, setAiPanelPhase] = useState<"closed" | "preparing" | "ready" | "running" | "success" | "error">("closed");
 
   // ── MSDS Dialog ──
   const [msdsDialogOpen, setMsdsDialogOpen] = useState(false);
@@ -340,6 +342,9 @@ export default function SafetyManagerPage() {
       .slice(0, 5);
   }, [activeOption, decision.queue]);
 
+  // ── Priority backlog count (AI 패널 대상 수) ──
+  const priorityBacklogCount = immediateCount + docRemCount + msdsMissingCount;
+
   // ── Export ──
   const handleExport = () => {
     if (!filteredItems || filteredItems.length === 0) {
@@ -400,8 +405,21 @@ export default function SafetyManagerPage() {
             <Button onClick={handleExport} variant="outline" size="sm" className="h-10 px-4 text-sm gap-2 border-slate-200">
               <Download className="h-4 w-4" />CSV 내보내기
             </Button>
-            <Button size="sm" className="h-10 px-5 text-sm gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold shadow-sm">
-              <Sparkles className="h-4 w-4" />AI MSDS 분석
+            <Button
+              size="sm"
+              className={`h-10 px-5 text-sm gap-2 font-semibold shadow-sm ${
+                priorityBacklogCount > 0
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-slate-100 text-slate-400 cursor-not-allowed"
+              }`}
+              disabled={priorityBacklogCount === 0}
+              onClick={() => {
+                if (priorityBacklogCount > 0) setAiPanelOpen(true);
+              }}
+              title={priorityBacklogCount === 0 ? "분석 대상 항목이 없습니다" : `우선 점검 대상 ${priorityBacklogCount}건`}
+            >
+              <ShieldAlert className="h-4 w-4" />
+              {priorityBacklogCount > 0 ? `MSDS 점검 실행 (${priorityBacklogCount}건)` : "점검 대상 없음"}
             </Button>
           </div>
         </div>
@@ -968,6 +986,117 @@ export default function SafetyManagerPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ═══ AI MSDS 점검 Side Panel (same-canvas) ═══ */}
+      {aiPanelOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/20" onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }} />
+          <div className="fixed right-0 top-0 bottom-0 z-50 w-full max-w-md bg-white border-l border-slate-200 shadow-2xl flex flex-col overflow-hidden">
+            {/* 패널 헤더 */}
+            <div className="shrink-0 px-5 py-4 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-lg bg-red-50 flex items-center justify-center">
+                    <ShieldAlert className="h-5 w-5 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-slate-900">MSDS 점검 실행</h2>
+                    <p className="text-[11px] text-slate-500">현재 backlog 기준 안전 문서 점검</p>
+                  </div>
+                </div>
+                <button onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 요약 strip */}
+            <div className="shrink-0 px-5 py-3 bg-slate-50 border-b border-slate-100">
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-red-600 font-semibold">긴급 {immediateCount}</span>
+                <span className="text-slate-300">|</span>
+                <span className="text-amber-600 font-semibold">문서보완 {docRemCount}</span>
+                <span className="text-slate-300">|</span>
+                <span className="text-slate-500">MSDS 미등록 {msdsMissingCount}</span>
+                <span className="ml-auto text-slate-400">분석 대상 {priorityBacklogCount}건</span>
+              </div>
+            </div>
+
+            {/* 대상 목록 */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+              {queueItems.length === 0 ? (
+                <div className="text-center py-12">
+                  <ShieldCheck className="h-10 w-10 text-emerald-400 mx-auto mb-3" />
+                  <p className="text-sm font-medium text-slate-500">분석 대상 항목이 없습니다</p>
+                  <p className="text-xs text-slate-400 mt-1">모든 항목이 정상 상태입니다</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">분석 대상 목록</p>
+                  {queueItems.map((q: ClassifiedSafetyItem, i: number) => {
+                    const style = CLASS_STYLE[q.classification];
+                    return (
+                      <div key={q.id} className="rounded-lg border border-slate-200 bg-white p-3">
+                        <div className="flex items-center gap-2 mb-1.5">
+                          <span className="text-xs font-bold text-slate-300">{i + 1}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${style.bg} ${style.text}`}>{style.label}</span>
+                          <span className="text-sm font-semibold text-slate-900 truncate">{q.name.split("(")[0].trim()}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 leading-relaxed">{q.priorityReason}</p>
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+
+              {/* 분석 결과 (success 상태) */}
+              {aiPanelPhase === "success" && (
+                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-emerald-700">분석 완료</span>
+                  </div>
+                  <div className="space-y-2 text-xs text-slate-600">
+                    <p>MSDS 최신성 확인: {queueItems.length}건 중 {msdsMissingCount}건 누락/만료</p>
+                    <p>고위험 즉시 조치 필요: {immediateCount}건</p>
+                    <p>문서 보완 필요: {docRemCount}건</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-100">MSDS 등록</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-amber-200 text-amber-700 hover:bg-amber-100">점검 기록 생성</Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-100">폐기 검토</Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 하단 액션 dock */}
+            <div className="shrink-0 px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between">
+              <Button variant="ghost" size="sm" className="text-xs text-slate-500" onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }}>
+                닫기
+              </Button>
+              <Button
+                size="sm"
+                className="h-9 px-5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white"
+                disabled={aiPanelPhase === "running" || queueItems.length === 0}
+                onClick={() => {
+                  setAiPanelPhase("running");
+                  // 분석 실행 (현재는 deterministic, 추후 서버 API)
+                  setTimeout(() => setAiPanelPhase("success"), 1500);
+                }}
+              >
+                {aiPanelPhase === "running" ? (
+                  <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />분석 중...</>
+                ) : aiPanelPhase === "success" ? (
+                  "재분석"
+                ) : (
+                  "분석 실행"
+                )}
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
