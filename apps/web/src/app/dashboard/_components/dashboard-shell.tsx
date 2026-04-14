@@ -13,6 +13,7 @@ import { GovernanceDevPanel } from "@/components/dashboard/console/governance-de
 import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workbench-progress-overlay";
 import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
 import { GovernedActionComposerBridge } from "@/components/governed-action/governed-action-composer-bridge";
+import { GlobalModal } from "@/components/global-modal";
 import { useOverlayDeepLink } from "@/hooks/use-overlay-deep-link";
 import { useOverlayKeyboard } from "@/hooks/use-overlay-keyboard";
 
@@ -62,6 +63,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <WorkbenchFullOverlay />
         <GovernanceDevPanel />
         <GovernedActionComposerBridge />
+        <GlobalModal />
       </div>
     </OpsStoreProvider>
   );
