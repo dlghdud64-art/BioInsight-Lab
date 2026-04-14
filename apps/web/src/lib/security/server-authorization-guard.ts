@@ -132,6 +132,8 @@ export interface AuthorizationResult {
 
 /** 역할별 최소 권한 매트릭스 */
 const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
+  // ── Workspace invite ──
+  workspace_invite_accept: ['requester', 'buyer', 'approver', 'ops_admin'],
   // ── Dispatch chain ──
   approval_decision: ['approver', 'ops_admin'],
   po_conversion_finalize: ['buyer', 'approver', 'ops_admin'],

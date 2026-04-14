@@ -286,7 +286,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 )}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs max-w-[200px]" asChild={false}>
+            <TooltipContent className="text-xs max-w-[200px]">
               {nextActionLabel || "다음 단계 확인"}
             </TooltipContent>
           </Tooltip>

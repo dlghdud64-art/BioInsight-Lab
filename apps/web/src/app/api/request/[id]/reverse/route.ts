@@ -11,6 +11,10 @@ import {
   releaseEventToAuditShape,
   NegativeCommittedSpendError,
 } from "@/lib/budget/category-budget-release";
+import {
+  recordMutationAudit,
+  buildAuditEventKey,
+} from "@/lib/audit/durable-mutation-audit";
 
 /**
  * POST /api/request/[id]/reverse
@@ -140,6 +144,30 @@ export async function POST(
         });
       }
 
+      // 4. Durable audit event — 같은 SERIALIZABLE tx 안에서 기록
+      await recordMutationAudit(tx, {
+        auditEventKey: buildAuditEventKey(
+          orgId || 'no-org', requestId, 'purchase_request_reverse',
+        ),
+        orgId: orgId || 'no-org',
+        actorId: session.user.id,
+        route: '/api/request/[id]/reverse',
+        action: 'purchase_request_reverse',
+        entityType: 'purchase_request',
+        entityId: requestId,
+        result: 'success',
+        correlationId: enforcement!.correlationId,
+        requestId,
+        orderId: purchaseRequest.orderId ?? undefined,
+        amount: releaseEvent?.releaseItems?.[0]?.amount,
+        normalizedCategoryId: releaseEvent?.releaseItems?.[0]?.categoryId ?? undefined,
+        periodKey: releaseEvent?.releaseItems?.[0]?.periodKey,
+        decisionBasis: releaseEvent ? { releaseItems: releaseEvent.releaseItems } : undefined,
+        compensatingForEventId: buildAuditEventKey(
+          orgId || 'no-org', requestId, 'purchase_request_approve',
+        ),
+      });
+
       return { reversed, releaseEvent };
     }, { label: "approval_reverse_release" });
 
@@ -147,7 +175,8 @@ export async function POST(
     const { ipAddress, userAgent } = extractRequestMeta(req);
     const actorRole = await getActorRole(session.user.id, orgId);
     await createActivityLog({
-      activityType: "PURCHASE_REQUEST_REVERSED",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      activityType: "PURCHASE_REQUEST_REVERSED" as any, // schema 추가됨, prisma generate 대기
       entityType: "PURCHASE_REQUEST",
       entityId: requestId,
       beforeStatus: "APPROVED",

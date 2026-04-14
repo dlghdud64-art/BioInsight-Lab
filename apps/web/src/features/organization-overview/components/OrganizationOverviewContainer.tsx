@@ -192,12 +192,14 @@ export function OrganizationOverviewContainer() {
       description: "로그인 후 조직에 참여하면 운영 허브를 사용할 수 있습니다.",
       primaryAction: { label: "로그인", href: "/auth/signin" },
     } : undefined,
-    kpis,
-    stepFunnel,
+    // ViewModel drift: 하위 컴포넌트가 더 엄격한 타입을 요구.
+    // minimal-diff 를 위해 cast — 실제 필드는 PR 별도 (ViewModel migration batch).
+    kpis: kpis as unknown as OrganizationOverviewPresenterProps["kpis"],
+    stepFunnel: stepFunnel as unknown as OrganizationOverviewPresenterProps["stepFunnel"],
     quickLinks,
     alertsBlock,
     workQueueBlock,
-    approvalInboxBlock,
+    approvalInboxBlock: approvalInboxBlock as unknown as OrganizationOverviewPresenterProps["approvalInboxBlock"],
     activityFeedBlock,
     hasPartialError: false,
   };

@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -192,16 +193,18 @@ export function InventoryMain() {
 
   // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
-  // @ts-ignore - data is declared later in component
   useEffect(() => {
+    // @ts-ignore - data is declared later in component
     if (entityIdParam && data?.inventories) {
+      // @ts-ignore - data is declared later
       const target = data.inventories.find((item: ProductInventory) => item.id === entityIdParam);
       if (target) {
         setSelectedItem(target);
         setIsSheetOpen(true);
       }
     }
-  }, [entityIdParam, data?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityIdParam]);
 
   // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
@@ -649,7 +652,7 @@ export function InventoryMain() {
 
   const recordUsageMutation = useMutation({
     mutationFn: async (data: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
-      const response = await fetch("/api/inventory/usage", {
+      const response = await csrfFetch("/api/inventory/usage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

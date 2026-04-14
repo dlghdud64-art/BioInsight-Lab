@@ -73,7 +73,7 @@ export async function extractTextFromPDF(
       const path = require("path");
       const fs = require("fs");
       const fontsDir = path.join(
-        path.dirname((require.resolve as any)("pdfjs-dist/package.json")),
+        path.dirname((require as any).resolve("pdfjs-dist/package.json")),
         "standard_fonts/"
       );
       // Vercel 서버리스에서는 이 디렉토리가 없을 수 있으므로 존재 확인

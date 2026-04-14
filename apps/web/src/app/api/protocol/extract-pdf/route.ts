@@ -66,7 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ExtractPD
         sourceSurface: 'web_app',
         routePath: '/protocol/extract-pdf',
       });
-      if (!enforcement.allowed) return enforcement.deny();
+      if (!enforcement.allowed) return enforcement.deny() as NextResponse<ExtractPDFResponse>;
     }
 
     // 2. FormData 파싱

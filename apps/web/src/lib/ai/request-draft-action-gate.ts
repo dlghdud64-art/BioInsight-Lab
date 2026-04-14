@@ -106,7 +106,7 @@ export function selectRequestDraftSuggestionGate(
   if (
     assemblyStatus === "ready_to_send" &&
     draft.readiness === "ready" &&
-    draft.mergeState !== "conflicted"
+    (draft.mergeState as string) !== "conflicted"
   ) {
     return "hidden_redundant";
   }

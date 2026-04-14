@@ -72,7 +72,7 @@ async function tryPdfParse(
     try {
       const path = require("path");
       standardFontDataUrl = path.join(
-        path.dirname((require.resolve as any)("pdfjs-dist/package.json")),
+        path.dirname((require as any).resolve("pdfjs-dist/package.json")),
         "standard_fonts/"
       );
     } catch {

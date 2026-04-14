@@ -767,7 +767,7 @@ export function resolveStockRiskOperationalState(
 
   // Ready: open recommendation, not blocked
   if ((recommendation.status as any) === 'open' || (recommendation.status as any) === 'review_required') {
-    const isReview = recommendation.status === 'review_required';
+    const isReview = (recommendation.status as string) === 'review_required';
     return {
       entityType: 'stock_risk', entityId: recommendation.id,
       readiness: isReview ? 'needs_review' : 'ready',

@@ -1115,6 +1115,9 @@ enum ActivityType {
   INVENTORY_RESTOCK_SUGGESTED   // 재발주 제안 생성
   INVENTORY_RESTOCK_REVIEWED    // 재발주 제안 검토
   PURCHASE_REQUEST_CREATED      // 구매 요청 생성
+  PURCHASE_REQUEST_CANCELLED    // 구매 요청 취소
+  PURCHASE_REQUEST_REVERSED     // 구매 요청 되돌림
+  PURCHASE_RECORD_RECLASSIFIED  // 구매 레코드 재분류
   AI_TASK_COMPLETED          // AI 작업 최종 완료 (승인 후 실행 성공)
   AI_TASK_FAILED             // AI 작업 실패 (실행 에러)
 
@@ -2646,4 +2649,43 @@ model BudgetEvent {
   @@index([organizationId, yearMonth])
   @@index([sourceEntityId])
   @@index([categoryId, yearMonth])
+}
+
+// ─── Mutation Audit Event (Batch 6: Durable Audit Sink) ─────────────
+// 모든 irreversible mutation의 durable audit trail.
+// 같은 DB 트랜잭션 안에서 mutation과 함께 기록 (transactional outbox 패턴).
+// append-only — UPDATE/DELETE 금지, INSERT + SELECT only.
+// replay/duplicate retry가 들어와도 auditEventKey unique 제약으로 중복 증식 방지.
+model MutationAuditEvent {
+  id                    String    @id @default(cuid())
+  // idempotency key: orgId:route:entityId:action:sequence
+  auditEventKey         String    @unique
+  occurredAt            DateTime  @default(now())
+  orgId                 String
+  actorId               String                            // userId or "system"
+  route                 String                            // /api/request/[id]/approve 등
+  action                String                            // purchase_request_approve, purchase_request_cancel 등
+  entityType            String                            // purchase_request, order, purchase_record, invite
+  entityId              String
+  result                String                            // success, blocked, error
+  correlationId         String                            // enforcement correlationId
+  // domain-specific context fields (nullable — route에 따라 다름)
+  requestId             String?
+  orderId               String?
+  purchaseRecordId      String?
+  periodKey             String?                           // orgId:categoryId:YYYY-MM
+  normalizedCategoryId  String?
+  amount                Int?
+  thresholds            Json?                             // { warningPercent, softLimitPercent, hardStopPercent }
+  decisionBasis         Json?                             // BudgetGateDecisionBasis[] or full decision payload
+  budgetEventKey        String?                           // 연결된 BudgetEvent의 idempotency key
+  compensatingForEventId String?                          // reopen/reverse 시 원본 event 참조
+  recordedAt            DateTime  @default(now())
+
+  @@index([orgId, occurredAt])
+  @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
+  @@index([correlationId])
+  @@index([route])
 }

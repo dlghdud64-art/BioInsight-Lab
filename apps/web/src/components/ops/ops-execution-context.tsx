@@ -255,11 +255,11 @@ function ExecutionResultCard({ item }: { item: WorkQueueItem }) {
       </div>
 
       {/* State transition */}
-      {metadata?.substatus_before && metadata?.substatus_after && (
+      {Boolean(metadata?.substatus_before && metadata?.substatus_after) && (
         <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-          <span>{getSubstatusLabel(metadata.substatus_before as string)}</span>
+          <span>{getSubstatusLabel(metadata?.substatus_before as string)}</span>
           <ArrowRight className="h-2.5 w-2.5" />
-          <span>{getSubstatusLabel(metadata.substatus_after as string)}</span>
+          <span>{getSubstatusLabel(metadata?.substatus_after as string)}</span>
         </div>
       )}
 

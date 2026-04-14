@@ -10,6 +10,10 @@ import {
   releaseEventToAuditShape,
   NegativeCommittedSpendError,
 } from "@/lib/budget/category-budget-release";
+import {
+  recordMutationAudit,
+  buildAuditEventKey,
+} from "@/lib/audit/durable-mutation-audit";
 
 /**
  * POST /api/purchases/[id]/reclass
@@ -129,6 +133,30 @@ export async function POST(
         reason: reason ?? `Category reclass to ${targetCategory.displayName ?? toCategoryId}`,
       });
 
+      // Durable audit event — 같은 SERIALIZABLE tx 안에서 기록
+      await recordMutationAudit(tx, {
+        auditEventKey: buildAuditEventKey(
+          orgId, recordId, 'purchase_record_reclass',
+        ),
+        orgId,
+        actorId: session.user.id,
+        route: '/api/purchases/[id]/reclass',
+        action: 'purchase_record_reclass',
+        entityType: 'purchase_record',
+        entityId: recordId,
+        result: 'success',
+        correlationId: enforcement!.correlationId,
+        requestId,
+        purchaseRecordId: recordId,
+        amount: record.amount ?? undefined,
+        normalizedCategoryId: toCategoryId,
+        decisionBasis: {
+          fromCategoryId: record.normalizedCategoryId,
+          toCategoryId,
+          releaseItems: releaseEvent.releaseItems,
+        },
+      });
+
       return { releaseEvent };
     }, { label: "category_reclass" });
 
@@ -136,7 +164,8 @@ export async function POST(
     const { ipAddress, userAgent } = extractRequestMeta(req);
     const actorRole = await getActorRole(session.user.id, orgId);
     await createActivityLog({
-      activityType: "PURCHASE_RECORD_RECLASSIFIED",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      activityType: "PURCHASE_RECORD_RECLASSIFIED" as any, // schema 추가됨, prisma generate 대기
       entityType: "PURCHASE_RECORD",
       entityId: recordId,
       beforeStatus: record.normalizedCategoryId ?? "uncategorized",
