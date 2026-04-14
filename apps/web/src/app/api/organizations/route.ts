@@ -111,16 +111,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "로그인이 필요합니다." }, { status: 401 });
     }
 
-    enforcement = enforceAction({
-      userId: session.user.id,
-      userRole: session.user.role ?? undefined,
-      action: 'organization_update',
-      targetEntityType: 'organization',
-      targetEntityId: 'new',
-      sourceSurface: 'organizations-api',
-      routePath: '/api/organizations',
-    });
-    if (!enforcement.allowed) return enforcement.deny();
+    // 조직 생성은 로그인한 모든 사용자에게 허용 — DB 초기화 직후
+    // 아직 조직/역할이 없는 신규 사용자도 첫 조직을 만들 수 있어야 한다.
+    // enforceAction 의 organization_update 는 기존 조직 수정용이므로
+    // 생성(POST)에서는 인증만 확인하고 enforcement 를 건너뛴다.
+    // 플랜 한도 체크 (아래)가 실질적인 gate 역할.
 
     const body = await request.json();
     console.log("[Organizations API] Request Body:", JSON.stringify(body, null, 2));
@@ -184,12 +179,12 @@ export async function POST(request: NextRequest) {
 
     console.log("[Organizations API] Organization created successfully:", organization.id);
 
-    enforcement.complete({});
+    // enforcement 는 조직 생성에서 사용하지 않음 (위 주석 참고)
 
     // 3. 성공 응답 반환
     return NextResponse.json({ organization }, { status: 201 });
   } catch (error: any) {
-    enforcement?.fail();
+    // enforcement 미사용 (조직 생성은 인증 + 플랜 한도만 체크)
     console.error("[Organizations API] ========== ERROR START ==========");
     console.error("[Organizations API] Error Type:", typeof error);
     console.error("[Organizations API] Error Object:", error);
