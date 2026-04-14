@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
+import { csrfFetch } from "@/lib/api-client";
 import { useState, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -150,7 +151,7 @@ export default function ReportsPage() {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await fetch("/api/purchases/import-file", {
+      const response = await csrfFetch("/api/purchases/import-file", {
         method: "POST",
         headers: {
           "x-guest-key": session?.user?.id || "guest",
@@ -390,7 +391,38 @@ export default function ReportsPage() {
             <RefreshCcw className="h-4 w-4 sm:mr-1.5" />
             <span className="hidden sm:inline">갱신</span>
           </Button>
-          <Button size="sm" className="bg-el text-slate-700 hover:bg-slate-700">
+          <Button
+            size="sm"
+            className="bg-blue-600 hover:bg-blue-500 text-white"
+            onClick={() => {
+              if (!details || details.length === 0) {
+                toast({ title: "내보낼 데이터가 없습니다", variant: "destructive" });
+                return;
+              }
+              // CSV 생성 + 다운로드
+              const headers = ["날짜", "제품명", "벤더", "수량", "단가", "총액"];
+              const rows = details.map((d: DetailItem) => [
+                d.date || d.purchaseDate || "",
+                d.productName || d.product || "",
+                d.vendorName || d.vendor || "",
+                String(d.quantity ?? ""),
+                String(d.unitPrice ?? d.price ?? ""),
+                String(d.totalAmount ?? d.amount ?? ""),
+              ]);
+              const csvContent = [headers, ...rows]
+                .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(","))
+                .join("\n");
+              const BOM = "\uFEFF";
+              const blob = new Blob([BOM + csvContent], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `labaxis-purchase-report-${new Date().toISOString().slice(0, 10)}.csv`;
+              a.click();
+              URL.revokeObjectURL(url);
+              toast({ title: "CSV 파일이 다운로드되었습니다" });
+            }}
+          >
             <FileDown className="h-4 w-4 mr-1.5" />
             <span className="hidden sm:inline">내보내기</span>
           </Button>
@@ -601,6 +633,18 @@ export default function ReportsPage() {
           </div>
 
           {/* ============================================================
+              AI 인사이트 자동 생성
+              ============================================================ */}
+          <AiInsightBlock
+            insights={insights}
+            totalAmount={totalAmount}
+            categoryData={categoryData}
+            vendorData={vendorData}
+            monthlyData={monthlyData}
+            details={details}
+          />
+
+          {/* ============================================================
               MIDDLE: ANALYSIS BLOCKS
               ============================================================ */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -628,15 +672,16 @@ export default function ReportsPage() {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        stroke="#0f172a"
+                        stroke="#ffffff"
                         strokeWidth={2}
+                        cursor="pointer"
                       >
                         {categoryData.map((_entry: CategoryItem, index: number) => (
                           <Cell key={`cell-${index}`} fill={_entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "#e2e8f0" }}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
                         formatter={(value: number) => formatCurrency(value, "KRW")}
                       />
                     </PieChart>
@@ -685,7 +730,7 @@ export default function ReportsPage() {
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
                       <Tooltip
                         cursor={{ fill: "rgba(51,65,85,0.3)" }}
-                        contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "#e2e8f0" }}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
                         formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                       />
                       <Bar dataKey="amount" fill="#10b981" barSize={36} maxBarSize={40} radius={[4, 4, 0, 0]} />
@@ -728,7 +773,7 @@ export default function ReportsPage() {
                       <YAxis axisLine={false} tickLine={false} tick={{ fill: "#64748b", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
                       <Tooltip
                         cursor={{ fill: "rgba(51,65,85,0.3)" }}
-                        contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: "6px", color: "#e2e8f0" }}
+                        contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "8px", color: "#334155", boxShadow: "0 4px 12px rgba(0,0,0,0.08)" }}
                         formatter={(value: number) => [formatCurrency(value, "KRW"), "구매 금액"]}
                       />
                       <Bar dataKey="amount" fill="#3b82f6" barSize={36} maxBarSize={40} radius={[4, 4, 0, 0]} />
@@ -866,6 +911,104 @@ export default function ReportsPage() {
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI Insight Block — 구매 데이터 기반 자동 분석 텍스트 생성
+// ═══════════════════════════════════════════════════════════════
+
+function AiInsightBlock({
+  insights,
+  totalAmount,
+  categoryData,
+  vendorData,
+  monthlyData,
+  details,
+}: {
+  insights: ReturnType<typeof deriveInsights>;
+  totalAmount: number;
+  categoryData: CategoryItem[];
+  vendorData: VendorItem[];
+  monthlyData: MonthlyItem[];
+  details: DetailItem[];
+}) {
+  const [aiText, setAiText] = useState<string | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const generateInsight = useCallback(() => {
+    setIsGenerating(true);
+    // 실제 Gemini/OpenAI API 연결 시 이 부분을 교체
+    // 현재는 deriveInsights 결과를 기반으로 결정론적 텍스트 생성
+    setTimeout(() => {
+      const lines: string[] = [];
+
+      // 트렌드
+      if (insights.trendDelta !== 0) {
+        const dir = insights.trendDelta > 0 ? "증가" : "감소";
+        lines.push(`이번 기간 총 지출은 전월 대비 ${Math.abs(insights.trendDelta)}% ${dir}했습니다.`);
+      }
+
+      // 카테고리 집중
+      if (insights.topCat && insights.topCatPct >= 40) {
+        lines.push(`${insights.topCat.name} 카테고리가 전체 지출의 ${insights.topCatPct}%를 차지하고 있어 비용 집중도가 높습니다. 대체 공급사나 대체 제품 검토를 권장합니다.`);
+      }
+
+      // 벤더 의존도
+      if (insights.topVendor && insights.topVendorPct >= 50) {
+        lines.push(`${insights.topVendor.vendor}에 대한 의존도가 ${insights.topVendorPct}%로 높습니다. 공급 리스크 분산을 위해 2~3개 벤더 병행 운영을 고려하세요.`);
+      }
+
+      // 이상치
+      if (insights.outlierCount > 0) {
+        lines.push(`평균 단가 대비 2배 이상인 항목이 ${insights.outlierCount}건 감지되었습니다. 해당 건의 단가 협상 또는 대체품 조달을 검토하세요.`);
+      }
+
+      // 총액
+      if (totalAmount > 0) {
+        lines.push(`분석 기간 총 구매액은 ${formatCurrency(totalAmount, "KRW")}이며, ${details.length}건의 거래가 포함되어 있습니다.`);
+      }
+
+      if (lines.length === 0) {
+        lines.push("현재 데이터로는 특별한 이상 징후가 감지되지 않았습니다. 정상 운영 범위입니다.");
+      }
+
+      setAiText(lines.join("\n\n"));
+      setIsGenerating(false);
+    }, 1200);
+  }, [insights, totalAmount, details.length]);
+
+  return (
+    <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <Activity className="h-4 w-4 text-blue-600" />
+          <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">AI 구매 분석 인사이트</span>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-3 text-xs border-blue-200 text-blue-600 hover:bg-blue-100"
+          onClick={generateInsight}
+          disabled={isGenerating}
+        >
+          {isGenerating ? (
+            <><RefreshCcw className="h-3 w-3 mr-1 animate-spin" />분석 중...</>
+          ) : (
+            <><Activity className="h-3 w-3 mr-1" />인사이트 생성</>
+          )}
+        </Button>
+      </div>
+      {aiText ? (
+        <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+          {aiText}
+        </div>
+      ) : (
+        <p className="text-xs text-blue-500">
+          &quot;인사이트 생성&quot; 버튼을 클릭하면 현재 구매 데이터를 분석하여 핵심 권장 사항을 자동으로 생성합니다.
+        </p>
       )}
     </div>
   );
