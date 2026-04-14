@@ -2,6 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
+import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -258,7 +259,7 @@ export default function OrganizationsPage() {
 
     try {
       setIsCreating(true);
-      const res = await fetch("/api/organizations", {
+      const res = await csrfFetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -385,18 +386,30 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
-        {/* ═══ 조직 생성 다이얼로그 ═══ */}
+        {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══ */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>새 조직 만들기</DialogTitle>
-              <DialogDescription>
-                연구실이나 팀의 이름을 입력하여 새로운 워크스페이스를 만듭니다.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="mt-4 space-y-4">
+          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden">
+            {/* ── 헤더 ── */}
+            <div className="px-6 pt-6 pb-4">
+              <div className="flex items-start gap-4">
+                <div className="h-12 w-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+                  <Building2 className="h-6 w-6 text-blue-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <DialogHeader className="space-y-1 p-0">
+                    <DialogTitle className="text-lg font-bold text-slate-900">새 조직 만들기</DialogTitle>
+                    <DialogDescription className="text-sm text-slate-500">
+                      연구실이나 팀의 새로운 워크스페이스를 만듭니다.
+                    </DialogDescription>
+                  </DialogHeader>
+                </div>
+              </div>
+            </div>
+
+            {/* ── 폼 ── */}
+            <div className="px-6 pb-2 space-y-5">
               <div className="space-y-2">
-                <Label htmlFor="org-name">
+                <Label htmlFor="org-name" className="text-sm font-semibold text-slate-700">
                   조직 이름 <span className="text-red-500">*</span>
                 </Label>
                 <Input
@@ -404,15 +417,16 @@ export default function OrganizationsPage() {
                   placeholder="예: 생명공학연구소 1팀"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org-type">조직 유형</Label>
+                <Label htmlFor="org-type" className="text-sm font-semibold text-slate-700">조직 유형</Label>
                 <Select
                   value={formData.organizationType || undefined}
                   onValueChange={(v) => setFormData({ ...formData, organizationType: v })}
                 >
-                  <SelectTrigger id="org-type">
+                  <SelectTrigger id="org-type" className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
                     <SelectValue placeholder="조직 유형을 선택하세요" />
                   </SelectTrigger>
                   <SelectContent>
@@ -425,20 +439,35 @@ export default function OrganizationsPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="org-desc">간단한 설명 (선택)</Label>
-                <Input
+                <Label htmlFor="org-desc" className="text-sm text-slate-500">
+                  간단한 설명 <span className="text-slate-400 text-xs">(선택)</span>
+                </Label>
+                <textarea
                   id="org-desc"
                   placeholder="예: 단백질 구조 분석 프로젝트 팀"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm placeholder:text-slate-400 focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none transition-all outline-none"
                 />
               </div>
             </div>
-            <div className="mt-6 flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isCreating}>
+
+            {/* ── 하단 액션 ── */}
+            <div className="px-6 py-4 bg-slate-50/60 border-t border-slate-100 flex justify-end gap-3">
+              <Button
+                variant="ghost"
+                onClick={() => setIsOpen(false)}
+                disabled={isCreating}
+                className="h-10 px-5 text-sm text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl"
+              >
                 취소
               </Button>
-              <Button onClick={handleCreateOrg} disabled={isCreating} className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                onClick={handleCreateOrg}
+                disabled={isCreating}
+                className="h-10 px-6 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-md shadow-blue-600/20 transition-all"
+              >
                 {isCreating ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> 생성 중...</>
                 ) : (
