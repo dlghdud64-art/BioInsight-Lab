@@ -298,8 +298,8 @@ export default function ReportsPage() {
           ================================================================ */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
         <div className="space-y-1">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500">판단형 리포트</p>
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 leading-tight">구매 분석 콘솔</h2>
+          <p className="text-xs font-medium uppercase tracking-wider text-blue-600">판단형 리포트</p>
+          <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight">구매 분석 콘솔</h2>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
@@ -432,7 +432,7 @@ export default function ReportsPage() {
       {/* ================================================================
           FILTER BAR
           ================================================================ */}
-      <div className="bg-pn border border-bd rounded-lg p-3 sm:p-4">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
           <div className="space-y-1">
             <label className="text-xs font-medium uppercase tracking-wider text-slate-500">기간</label>
@@ -509,7 +509,7 @@ export default function ReportsPage() {
       {isLoading && (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-pn border border-bd rounded-lg p-4 animate-pulse">
+            <div key={i} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm animate-pulse">
               <div className="h-3 w-20 bg-el rounded mb-3" />
               <div className="h-6 w-28 bg-el rounded" />
             </div>
@@ -551,83 +551,77 @@ export default function ReportsPage() {
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500 mb-3">이번 기간 핵심 인사이트</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {/* Insight 1: Spend Change Driver */}
-              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-blue-400 flex-shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">지출 변화 원인</span>
+              <div className="bg-blue-50 border border-blue-100 rounded-xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-blue-700">지출 변화 추이</span>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-slate-900 leading-tight">
+                  <p className="text-2xl font-extrabold text-blue-900 leading-tight">
                     {insights.trendDelta > 0 ? "+" : ""}{insights.trendDelta}%
-                    {insights.trendDelta > 0 && <ArrowUpRight className="inline h-4 w-4 text-red-400 ml-1" />}
-                    {insights.trendDelta < 0 && <ArrowDownRight className="inline h-4 w-4 text-emerald-400 ml-1" />}
+                    {insights.trendDelta > 0 && <ArrowUpRight className="inline h-5 w-5 text-red-500 ml-1" />}
+                    {insights.trendDelta < 0 && <ArrowDownRight className="inline h-5 w-5 text-emerald-500 ml-1" />}
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {insights.topCat ? `${insights.topCat.name} 카테고리가 총 지출의 ${insights.topCatPct}% 차지` : "데이터 부족"}
+                  <p className="text-xs text-blue-600/70 mt-1.5 leading-relaxed">
+                    {insights.topCat ? `전월 대비 지출 감소 (기저효과)` : "데이터 부족"}
                   </p>
                 </div>
-                <Link href="/dashboard/purchases" className="text-xs text-blue-400 hover:text-blue-300 font-medium mt-auto">
-                  구매내역 필터 →
-                </Link>
               </div>
 
               {/* Insight 2: Outlier Detection */}
-              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">이상치 감지</span>
+              <div className="bg-amber-50 border border-amber-100 rounded-xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-amber-700">이상치 감지</span>
                 </div>
                 <div>
-                  <p className={`text-lg font-bold leading-tight ${insights.outlierCount > 0 ? "text-amber-400" : "text-slate-900"}`}>
+                  <p className="text-2xl font-extrabold text-amber-900 leading-tight">
                     {insights.outlierCount}건
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    평균 단가({formatCurrency(Math.round(insights.avgUnitPrice), "KRW")}) 대비 2배 이상 항목
+                  <p className="text-xs text-amber-600/70 mt-1.5 leading-relaxed">
+                    평균 단가 대비 2배 이상 항목 건수
                   </p>
                 </div>
-                <Link href="/dashboard/purchases" className="text-xs text-amber-400 hover:text-amber-300 font-medium mt-auto">
-                  이상 항목 확인 →
-                </Link>
               </div>
 
               {/* Insight 3: Cost Concentration */}
-              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-violet-400 flex-shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">비용 집중 구간</span>
+              <div className="bg-violet-50 border border-violet-100 rounded-xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-violet-100 flex items-center justify-center">
+                    <Layers className="h-4 w-4 text-violet-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-violet-700">비용 집중 구간</span>
                 </div>
                 <div>
-                  <p className={`text-lg font-bold leading-tight ${insights.concentrationPct >= 60 ? "text-amber-400" : "text-slate-900"}`}>
+                  <p className="text-2xl font-extrabold text-violet-900 leading-tight">
                     {insights.concentrationPct}%
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
-                    {insights.topCat ? `${insights.topCat.name}에 지출 집중` : "카테고리 분포 균등"}
+                  <p className="text-xs text-violet-600/70 mt-1.5 leading-relaxed">
+                    {insights.topCat ? `${insights.topCat.name} 카테고리에 지출 집중` : "카테고리 분포 균등"}
                   </p>
                 </div>
-                <Link href="/dashboard/purchases" className="text-xs text-violet-400 hover:text-violet-300 font-medium mt-auto">
-                  카테고리 검토 →
-                </Link>
               </div>
 
               {/* Insight 4: Vendor Dependency */}
-              <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <ShieldAlert className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">벤더 의존도</span>
+              <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-5 flex flex-col gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                    <ShieldAlert className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <span className="text-xs font-semibold text-emerald-700">벤더 의존도</span>
                 </div>
                 <div>
-                  <p className={`text-lg font-bold leading-tight ${
-                    insights.vendorRisk === "danger" ? "text-red-400" : insights.vendorRisk === "warning" ? "text-amber-400" : "text-emerald-400"
-                  }`}>
+                  <p className="text-2xl font-extrabold text-emerald-900 leading-tight">
                     {insights.topVendorPct}%
                   </p>
-                  <p className="text-xs text-slate-400 mt-1">
+                  <p className="text-xs text-emerald-600/70 mt-1.5 leading-relaxed">
                     {insights.topVendor ? `${insights.topVendor.vendor} 단일 공급 비중` : "벤더 데이터 없음"}
                   </p>
                 </div>
-                <Link href="/app/compare" className="text-xs text-emerald-400 hover:text-emerald-300 font-medium mt-auto">
-                  벤더 비교 →
-                </Link>
               </div>
             </div>
           </div>
@@ -650,7 +644,7 @@ export default function ReportsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
             {/* Block 1: Category Breakdown */}
-            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">카테고리별 분석</p>
                 <Link href="/dashboard/purchases">
@@ -712,7 +706,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Block 2: Vendor Analysis */}
-            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">공급사별 분석</p>
                 <Link href="/app/compare">
@@ -742,20 +736,20 @@ export default function ReportsPage() {
               )}
               {/* Vendor concentration warning */}
               {insights.topVendor && insights.vendorRisk !== "safe" && (
-                <div className={`mt-3 border-t border-bd pt-3 flex items-start gap-2 text-xs ${
-                  insights.vendorRisk === "danger" ? "text-red-400" : "text-amber-400"
+                <div className={`mt-3 rounded-lg px-3.5 py-2.5 flex items-start gap-2 text-xs ${
+                  insights.vendorRisk === "danger" ? "bg-red-50 text-red-700 border border-red-200" : "bg-amber-50 text-amber-700 border border-amber-200"
                 }`}>
                   <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                  <span>
+                  <span className="font-medium">
                     {insights.topVendor.vendor}에 {insights.topVendorPct}% 집중 &mdash;
-                    {insights.vendorRisk === "danger" ? " 단일 공급사 위험 높음" : " 분산 검토 권장"}
+                    {insights.vendorRisk === "danger" ? " 공급망 다변화 검토 필요" : " 분산 검토 권장"}
                   </span>
                 </div>
               )}
             </div>
 
             {/* Block 3: Monthly Trend */}
-            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">기간별 추이</p>
                 <Link href="/dashboard/purchases">
@@ -799,7 +793,7 @@ export default function ReportsPage() {
             </div>
 
             {/* Block 4: Budget vs Actual */}
-            <div className="bg-pn border border-bd rounded-lg p-4 flex flex-col">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 대비 실적</p>
                 <Link href="/dashboard/budget">
@@ -859,7 +853,7 @@ export default function ReportsPage() {
               BOTTOM: DETAIL TABLE
               ============================================================ */}
           {details.length > 0 && (
-            <div className="bg-pn border border-bd rounded-lg p-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-medium uppercase tracking-wider text-slate-500">상세 내역</p>
                 <span className="text-xs text-slate-600">{details.length}건</span>
