@@ -9,9 +9,13 @@ export async function GET() {
 
   try {
     await (db as any).$queryRaw`SELECT 1`;
+    const userCount = await (db as any).user.count();
+    const orgCount = await (db as any).organization.count();
     return NextResponse.json({
       status: "ok",
       db: "connected",
+      userCount,
+      orgCount,
       hasDbUrl: !!dbUrl,
       hasDirectUrl: !!directUrl,
       dbUrlPrefix: dbUrl?.slice(0, 40) + "...",
