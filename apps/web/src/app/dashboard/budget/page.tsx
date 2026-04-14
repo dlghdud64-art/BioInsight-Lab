@@ -277,7 +277,7 @@ export default function BudgetPage() {
             <div className="flex-1">
               <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900 mb-1">예산 관리</h1>
               <p className="text-sm text-slate-500">
-                이번 달 발주 가능 예산을 확인하고, 지출 일정을 관리하세요.
+                예산 등록, 집행 현황, 승인 대기와 초과 위험을 관리합니다.
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">

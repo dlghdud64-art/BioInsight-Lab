@@ -347,7 +347,7 @@ export default function AnalyticsPage() {
               지출 분석
             </h2>
             <p className="text-sm text-slate-500 mt-0.5 hidden sm:block">
-              실시간 예산 소진율, 공급망 위험 및 절감 기회를 모니터링합니다.
+              예산 소진, 공급사 의존도, 이상 지출 신호를 확인합니다.
             </p>
           </div>
         </div>

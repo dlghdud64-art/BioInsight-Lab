@@ -301,6 +301,7 @@ export default function ReportsPage() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
         <div className="space-y-1">
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight">구매 리포트</h2>
+          <p className="text-sm text-slate-500">지출 현황, 카테고리별 분석, 공급사 의존도를 한눈에 확인합니다.</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>

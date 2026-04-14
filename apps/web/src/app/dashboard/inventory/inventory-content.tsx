@@ -1052,7 +1052,7 @@ function InventoryPageContent() {
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
           <h1 className="text-xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
-          <p className="text-slate-500 text-xs">실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.</p>
+          <p className="text-slate-500 text-xs">실험실 재고와 lot 상태를 관리합니다.</p>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
@@ -1101,7 +1101,7 @@ function InventoryPageContent() {
                 className="flex items-center gap-2 text-xs text-blue-600"
               >
                 <ScanLine className="h-3.5 w-3.5" />
-                스마트 입고 (AI)
+                스마트 입고
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1155,7 +1155,7 @@ function InventoryPageContent() {
           <div className="flex flex-col space-y-1">
             <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
             <p className="text-sm text-slate-500 hidden sm:block" style={{ fontFamily: "'Pretendard', 'Inter', system-ui, sans-serif" }}>
-              실험실 시약·장비·소모품을 한눈에 확인하고 관리합니다.
+              실험실 재고와 lot 상태를 관리합니다.
             </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -1228,7 +1228,7 @@ function InventoryPageContent() {
               className="h-9 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-sm active:scale-95 transition-transform"
             >
               <Sparkles className="h-4 w-4 mr-1.5" />
-              스마트 입고 (AI)
+              스마트 입고
             </Button>
 
             {/* ── 더보기: 보조 기능 통합 ── */}

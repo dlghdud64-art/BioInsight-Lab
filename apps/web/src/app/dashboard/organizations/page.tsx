@@ -347,8 +347,8 @@ export default function OrganizationsPage() {
         {/* ═══ 페이지 헤더 ═══ */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">조직 포트폴리오</h1>
-            <p className="text-sm text-slate-500 mt-0.5">소속 조직의 운영 현황 및 멤버를 관리합니다.</p>
+            <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">조직 관리</h1>
+            <p className="text-sm text-slate-500 mt-0.5">소속 조직과 멤버를 관리합니다.</p>
           </div>
           <Button
             onClick={() => setIsOpen(true)}

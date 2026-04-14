@@ -623,8 +623,8 @@ function QuotesPageContent() {
       {/* ── 헤더 ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div className="min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">견적 운영 워크큐</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적을 우선순위 순으로 확인하세요</p>
+          <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">견적 관리</h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적 케이스를 우선순위 순으로 확인합니다.</p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 overflow-x-auto snap-x pb-0.5 sm:pb-0">
           {/* 견적서 파싱 버튼 */}
