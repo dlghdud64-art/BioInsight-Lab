@@ -1,4 +1,3 @@
-// @ts-nocheck — ai-pipeline runtime: ViewModel migration 진행 중, 임시 우회
 /**
  * P1-1 Slice-1E — Persistence Bootstrap
  *
@@ -82,7 +81,7 @@ const REQUIRED_REPOS: readonly string[] = [
 function validateBundle(adapters: PersistenceAdapters): void {
   const missing: string[] = [];
   for (const repo of REQUIRED_REPOS) {
-    const value = (adapters as Record<string, unknown>)[repo];
+    const value = (adapters as unknown as Record<string, unknown>)[repo];
     if (!value) {
       missing.push(repo);
     }
