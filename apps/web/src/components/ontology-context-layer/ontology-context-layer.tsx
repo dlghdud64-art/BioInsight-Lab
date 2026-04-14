@@ -99,33 +99,33 @@ export function OntologyContextLayer() {
 
       {/* Overlay panel */}
       <div
-        className="fixed z-[71] flex flex-col overflow-hidden rounded-2xl border border-slate-700/60"
+        className="fixed z-[71] flex flex-col overflow-hidden rounded-2xl border border-slate-200"
         style={{
           top: "4.5rem",
           right: "1rem",
           width: "min(92vw, 460px)",
           maxHeight: "calc(100vh - 6rem)",
-          backgroundColor: "#0c1222",
-          boxShadow: "0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)",
         }}
         role="dialog"
         aria-modal="true"
         aria-label="다음 작업 레이어"
       >
         {/* ═══ Header ═══ */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-700/40">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-200">
           <div className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-lg bg-blue-600/15 flex items-center justify-center">
-              <Compass className="h-4 w-4 text-blue-400" />
+            <div className="h-7 w-7 rounded-lg bg-blue-50 flex items-center justify-center">
+              <Compass className="h-4 w-4 text-blue-600" />
             </div>
             <div>
-              <h2 className="text-sm font-semibold text-slate-100">다음 작업</h2>
-              <p className="text-[10px] text-slate-400">{currentStageLabel}</p>
+              <h2 className="text-sm font-semibold text-slate-900">다음 작업</h2>
+              <p className="text-[10px] text-slate-500">{currentStageLabel}</p>
             </div>
           </div>
           <button
             onClick={close}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-700/40 transition-colors"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
             aria-label="닫기"
           >
             <X className="h-4 w-4" />
@@ -156,12 +156,12 @@ export function OntologyContextLayer() {
           {/* ── Why reasons block ── */}
           {whyReasons && whyReasons.length > 0 && (
             <div className="px-5 pb-3">
-              <div className="rounded-xl border border-slate-700/30 bg-slate-800/30 px-4 py-3">
-                <p className="text-[11px] font-medium text-slate-400 mb-1.5">왜 지금 이 작업인가</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-[11px] font-medium text-slate-500 mb-1.5">왜 지금 이 작업인가</p>
                 <div className="space-y-1">
                   {whyReasons.map((reason, i) => (
-                    <p key={i} className="text-xs text-slate-300 leading-relaxed flex items-start gap-1.5">
-                      <span className="text-blue-400/60 mt-0.5 shrink-0">·</span>
+                    <p key={i} className="text-xs text-slate-600 leading-relaxed flex items-start gap-1.5">
+                      <span className="text-blue-500/60 mt-0.5 shrink-0">·</span>
                       {reason}
                     </p>
                   ))}
@@ -173,8 +173,8 @@ export function OntologyContextLayer() {
           {/* ── Rail: Lineage context ── */}
           {railContext && railContext.length > 0 && (
             <div className="px-5 pb-3">
-              <div className="rounded-xl border border-slate-700/30 bg-slate-800/20 px-4 py-3">
-                <p className="text-[11px] font-medium text-slate-400 mb-2">컨텍스트 lineage</p>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/60 px-4 py-3">
+                <p className="text-[11px] font-medium text-slate-500 mb-2">컨텍스트 lineage</p>
                 <div className="space-y-1.5">
                   {railContext.map((item) => (
                     <RailLineageRow key={item.key} item={item} />
@@ -187,7 +187,7 @@ export function OntologyContextLayer() {
           {/* ── Blocked actions (if any) ── */}
           {blockedActions.length > 0 && (
             <div className="px-5 pb-3">
-              <p className="text-[11px] font-medium text-slate-400 mb-2 flex items-center gap-1">
+              <p className="text-[11px] font-medium text-slate-500 mb-2 flex items-center gap-1">
                 <Lock className="h-3 w-3" />
                 차단된 작업
               </p>
@@ -202,7 +202,7 @@ export function OntologyContextLayer() {
           {/* ── Follow-up actions ── */}
           {availableFollowUpActions.length > 0 && (
             <div className="px-5 pb-4">
-              <p className="text-[11px] font-medium text-slate-400 mb-2">다른 작업</p>
+              <p className="text-[11px] font-medium text-slate-500 mb-2">다른 작업</p>
               <div className="space-y-1.5">
                 {availableFollowUpActions.map((action) => (
                   <FollowUpActionRow
@@ -217,11 +217,11 @@ export function OntologyContextLayer() {
         </div>
 
         {/* ═══ Dock: Sticky bottom actions ═══ */}
-        <div className="shrink-0 px-5 py-3 border-t border-slate-700/40 flex items-center justify-between">
+        <div className="shrink-0 px-5 py-3 border-t border-slate-200 bg-slate-50/60 flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3"
+            className="text-xs text-slate-500 hover:text-slate-700 h-8 px-3"
             onClick={close}
           >
             닫기
@@ -231,7 +231,7 @@ export function OntologyContextLayer() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="text-xs text-slate-400 hover:text-slate-200 h-8 px-3"
+                className="text-xs text-slate-500 hover:text-slate-700 h-8 px-3"
                 onClick={() => {
                   close();
                   router.push("/dashboard");
@@ -282,10 +282,10 @@ function PrimaryActionCard({
               {priorityConfig.label}
             </span>
           </div>
-          <h3 className="text-sm font-semibold text-slate-100 mb-1">{action.label}</h3>
-          <p className="text-xs text-slate-400 leading-relaxed">{action.reason}</p>
+          <h3 className="text-sm font-semibold text-slate-900 mb-1">{action.label}</h3>
+          <p className="text-xs text-slate-500 leading-relaxed">{action.reason}</p>
           {action.targetRoute && (
-            <div className="flex items-center gap-1 mt-2 text-[10px] text-slate-500">
+            <div className="flex items-center gap-1 mt-2 text-[10px] text-slate-400">
               <ExternalLink className="h-3 w-3" />
               <span>{action.targetRoute}</span>
             </div>
@@ -304,9 +304,9 @@ function PrimaryActionCard({
       )}
 
       {action.blocked && action.blockReason && (
-        <div className="mt-3 rounded-lg bg-red-900/20 border border-red-800/30 px-3 py-2 flex items-center gap-2">
-          <Lock className="h-3.5 w-3.5 text-red-400 shrink-0" />
-          <span className="text-[11px] text-red-300">{action.blockReason}</span>
+        <div className="mt-3 rounded-lg bg-red-50 border border-red-200 px-3 py-2 flex items-center gap-2">
+          <Lock className="h-3.5 w-3.5 text-red-500 shrink-0" />
+          <span className="text-[11px] text-red-600">{action.blockReason}</span>
         </div>
       )}
     </div>
@@ -315,13 +315,13 @@ function PrimaryActionCard({
 
 function BlockedActionCard({ action }: { action: ResolvedAction }) {
   return (
-    <div className="rounded-lg border border-red-900/30 bg-red-950/20 px-3.5 py-2.5">
+    <div className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5">
       <div className="flex items-center gap-2">
-        <Lock className="h-3.5 w-3.5 text-red-400 shrink-0" />
-        <span className="text-xs font-medium text-red-300">{action.label}</span>
+        <Lock className="h-3.5 w-3.5 text-red-500 shrink-0" />
+        <span className="text-xs font-medium text-red-700">{action.label}</span>
       </div>
       {action.blockReason && (
-        <p className="text-[11px] text-red-400/70 mt-1 ml-5">{action.blockReason}</p>
+        <p className="text-[11px] text-red-500 mt-1 ml-5">{action.blockReason}</p>
       )}
     </div>
   );
@@ -338,15 +338,15 @@ function FollowUpActionRow({
     <button
       onClick={() => onExecute(action)}
       disabled={action.blocked}
-      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-700/30 bg-slate-800/20 hover:bg-slate-700/30 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed group"
+      className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-left disabled:opacity-40 disabled:cursor-not-allowed group"
     >
       <div className="flex-1 min-w-0">
-        <p className="text-xs font-medium text-slate-200 group-hover:text-slate-100 transition-colors">
+        <p className="text-xs font-medium text-slate-700 group-hover:text-slate-900 transition-colors">
           {action.label}
         </p>
-        <p className="text-[10px] text-slate-500 truncate">{action.reason}</p>
+        <p className="text-[10px] text-slate-400 truncate">{action.reason}</p>
       </div>
-      <ChevronRight className="h-3.5 w-3.5 text-slate-500 group-hover:text-slate-300 shrink-0 transition-colors" />
+      <ChevronRight className="h-3.5 w-3.5 text-slate-400 group-hover:text-slate-600 shrink-0 transition-colors" />
     </button>
   );
 }
@@ -370,41 +370,41 @@ const PRIORITY_STYLES: Record<
 > = {
   primary: {
     label: "다음 단계",
-    border: "border-blue-800/40",
-    bg: "bg-blue-950/30",
-    iconBg: "bg-blue-600/15",
-    iconColor: "text-blue-400",
-    badge: "text-blue-400",
+    border: "border-blue-200",
+    bg: "bg-blue-50/60",
+    iconBg: "bg-blue-100",
+    iconColor: "text-blue-600",
+    badge: "text-blue-600",
     cta: "bg-blue-600 hover:bg-blue-500 text-white",
     Icon: ArrowRight,
   },
   secondary: {
     label: "대안",
-    border: "border-slate-700/40",
-    bg: "bg-slate-800/30",
-    iconBg: "bg-slate-700/30",
-    iconColor: "text-slate-400",
-    badge: "text-slate-400",
-    cta: "bg-slate-700 hover:bg-slate-600 text-slate-200",
+    border: "border-slate-200",
+    bg: "bg-slate-50",
+    iconBg: "bg-slate-100",
+    iconColor: "text-slate-500",
+    badge: "text-slate-500",
+    cta: "bg-slate-600 hover:bg-slate-500 text-white",
     Icon: ChevronRight,
   },
   correction: {
     label: "해결 필요",
-    border: "border-amber-800/40",
-    bg: "bg-amber-950/20",
-    iconBg: "bg-amber-600/15",
-    iconColor: "text-amber-400",
-    badge: "text-amber-400",
+    border: "border-amber-200",
+    bg: "bg-amber-50/60",
+    iconBg: "bg-amber-100",
+    iconColor: "text-amber-600",
+    badge: "text-amber-600",
     cta: "bg-amber-600 hover:bg-amber-500 text-white",
     Icon: AlertTriangle,
   },
   overview: {
     label: "작업 허브",
-    border: "border-slate-700/40",
-    bg: "bg-slate-800/20",
-    iconBg: "bg-slate-700/20",
-    iconColor: "text-slate-300",
-    badge: "text-slate-400",
+    border: "border-slate-200",
+    bg: "bg-slate-50/60",
+    iconBg: "bg-slate-100",
+    iconColor: "text-slate-600",
+    badge: "text-slate-500",
     cta: "bg-slate-600 hover:bg-slate-500 text-white",
     Icon: LayoutDashboard,
   },
@@ -415,10 +415,10 @@ const PRIORITY_STYLES: Record<
 // ══════════════════════════════════════════════
 
 const TONE_BADGE_STYLES: Record<CenterContextItem["tone"], string> = {
-  neutral: "bg-slate-700/40 text-slate-300",
-  positive: "bg-blue-900/30 text-blue-300",
-  warning: "bg-amber-900/30 text-amber-300",
-  blocked: "bg-red-900/30 text-red-300",
+  neutral: "bg-slate-100 text-slate-600",
+  positive: "bg-blue-50 text-blue-700",
+  warning: "bg-amber-50 text-amber-700",
+  blocked: "bg-red-50 text-red-700",
 };
 
 function ContextBadge({ item }: { item: CenterContextItem }) {
@@ -433,10 +433,10 @@ function ContextBadge({ item }: { item: CenterContextItem }) {
 }
 
 const TONE_VALUE_STYLES: Record<RailLineageItem["tone"], string> = {
-  neutral: "text-slate-300",
-  positive: "text-blue-300",
-  warning: "text-amber-300",
-  blocked: "text-red-300",
+  neutral: "text-slate-600",
+  positive: "text-blue-600",
+  warning: "text-amber-600",
+  blocked: "text-red-600",
 };
 
 function RailLineageRow({ item }: { item: RailLineageItem }) {
