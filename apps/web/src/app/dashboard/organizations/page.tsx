@@ -50,7 +50,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { motion, AnimatePresence } from "framer-motion";
+// framer-motion 은 DialogContent 와 호환 이슈로 제거 (추후 재검토)
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -390,15 +390,9 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
-        {/* ═══ 조직 생성 다이얼로그 (리디자인 + 애니메이션) ═══ */}
+        {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══ */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden" asChild>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
+          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden">
             {/* ── 헤더 ── */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-start gap-4">
@@ -485,7 +479,6 @@ export default function OrganizationsPage() {
                 )}
               </Button>
             </div>
-            </motion.div>
           </DialogContent>
         </Dialog>
 
