@@ -4,6 +4,7 @@ import * as SecureStore from "expo-secure-store";
 import { Platform, Alert } from "react-native";
 import { router } from "expo-router";
 import { logEvent } from "./analytics";
+import { authPreflight } from "./api";
 
 /**
  * 푸시 알림 딥링크 라우팅
@@ -70,10 +71,9 @@ const ROUTE_MAP: Record<NotificationType, RouteTarget> = {
     fallback: "/(tabs)/inventory",
   },
   inspection: {
-    // 점검 알림 → 해당 재고의 점검 기록 화면으로 직접 진입
-    detail: (id, parentId) => parentId
-      ? `/inventory/${parentId}` // inventoryId로 상세 진입 → 점검 섹션
-      : `/inventory/${id}`,
+    // 점검 알림 → 점검 기록 화면으로 직접 진입
+    // id = inventoryId, parentId가 있으면 inspectionId
+    detail: (id) => `/inventory/inspection?inventoryId=${id}`,
     fallback: "/(tabs)/inventory",
   },
   receiving: {
@@ -170,26 +170,22 @@ export async function registerForPushNotifications(): Promise<string | null> {
 // ══════════════════════════════════════════════
 
 /**
- * 인증 상태 확인 — 토큰이 있는지만 체크 (빠른 판별).
- */
-async function isAuthenticated(): Promise<boolean> {
-  const token = await SecureStore.getItemAsync("accessToken");
-  return !!token;
-}
-
-/**
  * 알림 데이터에서 최적의 route를 결정합니다.
  *
- * 우선순위:
- * 1. 인증 확인 → 없으면 로그인
- * 2. type + id → 상세 화면
- * 3. type만 → 해당 탭/목록
- * 4. 아무것도 없으면 → 홈
+ * Auth preflight:
+ * 1. 토큰 유효 → 진행
+ * 2. 토큰 만료 → refresh 시도
+ * 3. refresh 실패 → 로그인 화면
+ *
+ * Route 우선순위:
+ * 1. type + id → 상세 화면
+ * 2. type만 → 해당 탭/목록
+ * 3. 아무것도 없으면 → 홈
  */
 async function resolveDeepLink(data: NotificationPayload): Promise<string> {
-  // 인증 확인
-  const authed = await isAuthenticated();
-  if (!authed) {
+  // auth preflight — 토큰 검증 + 자동 refresh
+  const authStatus = await authPreflight();
+  if (authStatus === "login_required") {
     return "/(auth)/login";
   }
 

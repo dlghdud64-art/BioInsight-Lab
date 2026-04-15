@@ -72,6 +72,46 @@ apiClient.interceptors.response.use(
   }
 );
 
+/**
+ * Auth preflight — 토큰 유효성 확인 + 자동 refresh.
+ * push deeplink 진입 전, 또는 앱 foreground 복귀 시 호출.
+ *
+ * 결과:
+ * - "valid": 토큰 유효, 바로 진행 가능
+ * - "refreshed": 토큰 만료 → refresh 성공
+ * - "login_required": refresh도 실패 → 로그인 필요
+ */
+export async function authPreflight(): Promise<"valid" | "refreshed" | "login_required"> {
+  const token = await SecureStore.getItemAsync("accessToken");
+  if (!token) return "login_required";
+
+  try {
+    // 가벼운 API 호출로 토큰 유효성 확인
+    await apiClient.get("/api/mobile/auth/verify");
+    return "valid";
+  } catch (err: any) {
+    if (err?.response?.status === 401) {
+      // 401 → interceptor가 자동 refresh 시도함
+      // interceptor에서 refresh 성공하면 재시도되므로 여기까지 오면 실패
+      const refreshToken = await SecureStore.getItemAsync("refreshToken");
+      if (!refreshToken) return "login_required";
+
+      try {
+        const res = await axios.post(`${API_BASE_URL}/api/mobile/auth/refresh`, { refreshToken });
+        const { accessToken } = res.data;
+        await SecureStore.setItemAsync("accessToken", accessToken);
+        return "refreshed";
+      } catch {
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("refreshToken");
+        return "login_required";
+      }
+    }
+    // 네트워크 에러 등 → 토큰이 있으니 일단 진행 허용
+    return "valid";
+  }
+}
+
 export async function login(email: string, password: string) {
   const res = await apiClient.post("/api/mobile/auth/signin", {
     email,

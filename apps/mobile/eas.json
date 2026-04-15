@@ -1,35 +1,56 @@
 {
   "cli": {
-    "version": ">= 15.0.0"
+    "version": ">= 15.0.0",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
+      "ios": {
+        "simulator": true
+      },
       "env": {
         "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000"
       }
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
+      "ios": {
+        "buildConfiguration": "Release"
+      },
+      "android": {
+        "buildType": "apk"
+      },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://bioinsight-lab.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://bio-insight-lab-web.vercel.app",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "EXPO_PUBLIC_PROJECT_ID": "${EAS_PROJECT_ID}",
+        "EXPO_PUBLIC_SENTRY_DSN": "${SENTRY_DSN}"
       }
     },
     "production": {
+      "channel": "production",
+      "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://bioinsight-lab.vercel.app"
+        "EXPO_PUBLIC_API_URL": "https://bio-insight-lab-web.vercel.app",
+        "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
+        "EXPO_PUBLIC_PROJECT_ID": "${EAS_PROJECT_ID}",
+        "EXPO_PUBLIC_SENTRY_DSN": "${SENTRY_DSN}"
       }
     }
   },
   "submit": {
     "production": {
       "ios": {
-        "appleId": "APPLE_ID_HERE",
-        "ascAppId": "ASC_APP_ID_HERE"
+        "appleId": "${APPLE_ID}",
+        "ascAppId": "${ASC_APP_ID}",
+        "appleTeamId": "${APPLE_TEAM_ID}"
       },
       "android": {
-        "serviceAccountKeyPath": "./google-services.json"
+        "serviceAccountKeyPath": "./google-services.json",
+        "track": "internal"
       }
     }
   }
