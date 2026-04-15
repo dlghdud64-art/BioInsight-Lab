@@ -315,48 +315,56 @@ export default function BudgetPage() {
           {[
             {
               icon: <AlertTriangle className="h-4 w-4" />,
-              iconColor: actionKpi.immediateReview > 0 ? "text-red-500 bg-red-50" : "text-slate-400 bg-slate-100",
+              iconColor: "text-red-500",
+              cardBg: actionKpi.immediateReview > 0 ? "bg-red-50 border-red-200" : "bg-white border-slate-200",
+              valueColor: actionKpi.immediateReview > 0 ? "text-red-600" : "text-slate-900",
               label: "즉시 확인",
               value: `${actionKpi.immediateReview}건`,
               sub: actionKpi.immediateReview > 0 ? "초과 항목 검토 필요" : "초과 항목 없음",
             },
             {
               icon: <Clock className="h-4 w-4" />,
-              iconColor: actionKpi.blockRisk > 0 ? "text-amber-500 bg-amber-50" : "text-slate-400 bg-slate-100",
+              iconColor: "text-amber-500",
+              cardBg: actionKpi.blockRisk > 0 ? "bg-amber-50 border-amber-200" : "bg-white border-slate-200",
+              valueColor: actionKpi.blockRisk > 0 ? "text-amber-600" : "text-slate-900",
               label: "차단 위험",
               value: `${actionKpi.blockRisk}건`,
               sub: actionKpi.blockRisk > 0 ? "임계 구간 — 곧 차단 가능" : "임계치 안전",
             },
             {
               icon: <CheckCircle2 className="h-4 w-4" />,
-              iconColor: actionKpi.pendingApproval > 0 ? "text-blue-500 bg-blue-50" : "text-slate-400 bg-slate-100",
+              iconColor: "text-blue-500",
+              cardBg: actionKpi.pendingApproval > 0 ? "bg-blue-50 border-blue-200" : "bg-white border-slate-200",
+              valueColor: actionKpi.pendingApproval > 0 ? "text-blue-600" : "text-slate-900",
               label: "승인 대기",
               value: `${actionKpi.pendingApproval}건`,
               sub: "임계 구간 내 예약 건",
             },
             {
               icon: <TrendingUp className="h-4 w-4" />,
-              iconColor: actionKpi.altSavings > 0 ? "text-emerald-500 bg-emerald-50" : "text-slate-400 bg-slate-100",
+              iconColor: "text-emerald-500",
+              cardBg: actionKpi.altSavings > 0 ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-200",
+              valueColor: actionKpi.altSavings > 0 ? "text-emerald-600" : "text-slate-900",
               label: "절감 가능",
               value: formatWonShort(actionKpi.altSavings),
               sub: actionKpi.altSavings > 0 ? "절감 대상 감지" : "절감 대상 없음",
             },
             {
               icon: <RefreshCw className="h-4 w-4" />,
-              iconColor: "text-slate-400 bg-slate-100",
+              iconColor: "text-slate-500",
+              cardBg: "bg-white border-slate-200",
+              valueColor: "text-slate-900",
               label: "주간 소진",
               value: formatWonShort(actionKpi.weeklyBurn),
               sub: "최근 4주 평균 기준",
             },
           ].map((kpi) => (
-            <div key={kpi.label} className="min-w-[140px] snap-start shrink-0 sm:min-w-0 sm:shrink bg-white rounded-xl border border-slate-200 p-3.5 sm:p-4 hover:shadow-sm transition-shadow">
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${kpi.iconColor}`}>
-                  {kpi.icon}
-                </div>
+            <div key={kpi.label} className={`min-w-[140px] snap-start shrink-0 sm:min-w-0 sm:shrink rounded-xl border p-3.5 sm:p-4 hover:shadow-sm transition-shadow ${kpi.cardBg}`}>
+              <div className="flex items-center gap-2 mb-1">
+                <span className={kpi.iconColor}>{kpi.icon}</span>
+                <p className="text-[11px] text-slate-500 font-medium">{kpi.label}</p>
               </div>
-              <p className="text-[11px] text-slate-500 mb-0.5">{kpi.label}</p>
-              <p className="text-xl font-bold text-slate-900 tabular-nums">{kpi.value}</p>
+              <p className={`text-2xl font-extrabold tabular-nums ${kpi.valueColor}`}>{kpi.value}</p>
               <p className="text-[10px] text-slate-400 mt-1">{kpi.sub}</p>
             </div>
           ))}
