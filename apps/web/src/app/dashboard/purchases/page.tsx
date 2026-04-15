@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -294,6 +294,16 @@ export default function PurchasesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<string | null>(null);
   const [workWindowPhase, setWorkWindowPhase] = useState<number>(0);
+
+  // ── URL param: ?view=conversion-ready → 발주 전환 가능 탭 자동 선택 ──
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("view") === "conversion-ready") {
+        setQueueTab("ready");
+      }
+    }
+  }, []);
 
   // ── Ontology Context Layer bridge ──
   useOntologyContextBridge({

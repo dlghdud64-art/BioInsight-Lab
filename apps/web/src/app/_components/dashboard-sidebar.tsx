@@ -79,11 +79,6 @@ const sidebarGroups: SidebarGroup[] = [
         icon: ShoppingCart,
       },
       {
-        title: "발주 전환 큐",
-        href: "/dashboard/orders",
-        icon: ClipboardList,
-      },
-      {
         title: "구매 리포트",
         href: "/dashboard/reports",
         icon: BarChart3,
@@ -160,7 +155,6 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-indigo-400/70" },
   "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400/70" },
-  "/dashboard/orders":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400/70" },
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },
