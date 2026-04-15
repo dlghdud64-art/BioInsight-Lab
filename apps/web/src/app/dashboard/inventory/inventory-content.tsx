@@ -50,6 +50,7 @@ import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
 const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then(m => m.LabelScannerModal), { ssr: false });
+const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then(m => m.LabelPrintModal), { ssr: false });
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
 const ImportStagingWorkbench = dynamic(() => import("@/components/inventory/import-staging-workbench").then(m => m.ImportStagingWorkbench), { ssr: false });
 const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-lifespan-gauge").then(m => m.StockLifespanGauge), { ssr: false });
@@ -273,7 +274,10 @@ function InventoryPageContent() {
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
   const [showRestockHistory, setShowRestockHistory] = useState(false);
 
-  // ── 라벨 인쇄 모달 상태 ──
+  // ── 새 라벨 인쇄 모달 (규격 선택 + 미리보기) ──
+  const [newLabelPrintOpen, setNewLabelPrintOpen] = useState(false);
+
+  // ── 기존 라벨 인쇄 모달 상태 (레거시) ──
   const [labelPrintOpen, setLabelPrintOpen] = useState(false);
   const [labelPrintTitle, setLabelPrintTitle] = useState("");
   const [labelPrintLots, setLabelPrintLots] = useState<ProductInventory[]>([]);
@@ -1402,9 +1406,10 @@ function InventoryPageContent() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* 라벨 인쇄 (아이콘) */}
-                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => handleBulkLabelPrint()} title="라벨 인쇄">
-                  <Printer className="h-4 w-4" />
+                {/* 라벨 인쇄 */}
+                <Button variant="outline" size="sm" className="h-9 gap-1.5 shrink-0 text-xs" onClick={() => setNewLabelPrintOpen(true)} title="라벨 인쇄">
+                  <Printer className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">라벨 인쇄</span>
                 </Button>
 
                 {/* 내보내기 (아이콘) */}
@@ -2972,7 +2977,21 @@ function InventoryPageContent() {
           </DialogContent>
         </Dialog>
 
-        {/* ── 라벨 인쇄 모달 (lot 선택형) ── */}
+        {/* ── 새 라벨 인쇄 모달 (규격 선택 + 미리보기) ── */}
+        <LabelPrintModal
+          open={newLabelPrintOpen}
+          onOpenChange={setNewLabelPrintOpen}
+          selectedItems={displayInventories.slice(0, 10).map((inv) => ({
+            id: inv.id,
+            name: inv.product?.name ?? inv.productName ?? "품목",
+            catalogNumber: inv.product?.catalogNumber ?? undefined,
+            lotNumber: inv.lotNumber ?? undefined,
+            expiryDate: inv.expiryDate ?? undefined,
+            brand: inv.product?.brand ?? undefined,
+          }))}
+        />
+
+        {/* ── 기존 라벨 인쇄 모달 (lot 선택형) ── */}
         <Dialog open={labelPrintOpen} onOpenChange={setLabelPrintOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
