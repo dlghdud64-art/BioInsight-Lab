@@ -867,8 +867,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ======= 데스크탑 레이아웃 ======= */}
-      <div className="hidden md:grid md:grid-cols-7 md:gap-4">
+      {/* ======= 구 데스크탑 레이아웃 제거 — 3상태 중앙 패널이 대체 ======= */}
+      {false && <div className="hidden md:grid md:grid-cols-7 md:gap-4">
 
         {/* -- 좌측 메인 (5col) -- */}
         <div className="md:col-span-5 space-y-4">
@@ -1215,7 +1215,7 @@ export default function DashboardPage() {
             </Card>
           )}
         </div>
-      </div>
+      </div>}
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
       <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-2.5">
