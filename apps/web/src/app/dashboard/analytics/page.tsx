@@ -258,7 +258,8 @@ export default function AnalyticsPage() {
       .slice(0, 5),
   [repeatItems]);
 
-  // 운영 인텔리전스 카드 생성
+  // 지출 인사이트 카드 생성 (spend-only 항목만)
+  // 비-지출 항목(통합 발주 기회, 공급 지연 위험, 비교 검토 필요 등)은 제외
   const intelligenceCards = useMemo(() => {
     const cards: { id: string; icon: React.ReactNode; title: string; description: string; cta: string; href: string; color: "red" | "blue" | "amber" }[] = [];
 
@@ -269,40 +270,26 @@ export default function AnalyticsPage() {
         icon: <AlertTriangle className="h-4 w-4" />,
         title: "단가 인상 감지",
         description: `${anomalies[0].vendor}의 '${anomalies[0].item}' ${anomalies[0].reason}`,
-        cta: "대체품 검색",
-        href: "/dashboard/quotes",
+        cta: "관련 지출 확인",
+        href: "/dashboard/reports",
         color: "red",
       });
     }
 
-    // 통합 발주 기회
-    if (repeatItems.length >= 2) {
-      const topRepeat = repeatItems[0];
+    // 공급사 집중도 위험
+    if (vendorConcentration >= 60 && topVendor) {
       cards.push({
-        id: "bulk-order",
-        icon: <Package className="h-4 w-4" />,
-        title: "통합 발주 기회",
-        description: `'${topRepeat.item}'을(를) ${topRepeat.count}회 개별 발주 중입니다. 통합 시 약 12% 할인이 예상됩니다.`,
-        cta: "통합 발주 구성",
-        href: "/dashboard/quotes",
-        color: "blue",
-      });
-    }
-
-    // 공급 지연 / 재주문 위험
-    if (reorderCandidates.length > 0) {
-      cards.push({
-        id: "supply-delay",
-        icon: <Zap className="h-4 w-4" />,
-        title: "공급량 지연 위험",
-        description: `${reorderCandidates.length}개 반복 구매 품목의 재주문 시점이 지났습니다. 재고 부족이 발생할 수 있습니다.`,
-        cta: "재고 현황 확인",
-        href: "/dashboard/stock-risk",
+        id: "vendor-concentration",
+        icon: <AlertCircle className="h-4 w-4" />,
+        title: "공급사 집중도 위험",
+        description: `${topVendor.vendorName ?? "상위 공급사"}에 지출의 ${vendorConcentration}%가 집중되어 있습니다.`,
+        cta: "공급사별 분석",
+        href: "/dashboard/reports",
         color: "amber",
       });
     }
 
-    // 예산 위험
+    // 예산 초과 위험
     if (budgetStatus === "danger" || budgetStatus === "warning") {
       cards.push({
         id: "budget-risk",
@@ -494,7 +481,7 @@ export default function AnalyticsPage() {
           </div>
         )}
 
-        {/* ═══ 차트 + 운영 인텔리전스 (2컬럼) ═══ */}
+        {/* ═══ 차트 + 지출 인사이트 (2컬럼) ═══ */}
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <div className="lg:col-span-3 rounded-xl border border-bd bg-pn p-5"><Skeleton className="h-[280px] w-full bg-el" /></div>
@@ -559,11 +546,11 @@ export default function AnalyticsPage() {
               )}
             </div>
 
-            {/* 운영 인텔리전스 */}
-            <div className="lg:col-span-2 rounded-xl border border-bd bg-pn p-5">
+            {/* 지출 인사이트 */}
+            <div className="lg:col-span-2 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2 mb-4">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
-                운영 인텔리전스
+                지출 인사이트
               </h3>
               {intelligenceCards.length > 0 ? (
                 <div className="space-y-3">
