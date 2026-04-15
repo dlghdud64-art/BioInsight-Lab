@@ -96,47 +96,47 @@ function KPIActionCard({
 }) {
   const variantStyles = {
     urgent: {
-      border: count > 0 ? "border-red-100" : "border-bd",
+      border: count > 0 ? "border-red-200" : "border-slate-200",
       iconBg: "bg-red-50",
       iconColor: "text-red-500",
-      countColor: count > 0 ? "text-red-600" : "text-slate-100",
+      countColor: count > 0 ? "text-red-600" : "text-slate-300",
       ctaStyle: count > 0
         ? "text-red-700 bg-red-50 border-red-200 hover:bg-red-100"
-        : "text-slate-500 border-bd hover:bg-pg",
+        : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
     warning: {
-      border: count > 0 ? "border-amber-100" : "border-bd",
+      border: count > 0 ? "border-amber-200" : "border-slate-200",
       iconBg: "bg-amber-50",
       iconColor: "text-amber-500",
-      countColor: count > 0 ? "text-amber-600" : "text-slate-100",
+      countColor: count > 0 ? "text-amber-600" : "text-slate-300",
       ctaStyle: count > 0
         ? "text-amber-700 bg-amber-50 border-amber-200 hover:bg-amber-100"
-        : "text-slate-500 border-bd hover:bg-pg",
+        : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
     error: {
-      border: count > 0 ? "border-rose-100" : "border-bd",
+      border: count > 0 ? "border-rose-200" : "border-slate-200",
       iconBg: "bg-rose-50",
       iconColor: "text-rose-500",
-      countColor: count > 0 ? "text-rose-600" : "text-slate-100",
+      countColor: count > 0 ? "text-rose-600" : "text-slate-300",
       ctaStyle: count > 0
         ? "text-rose-700 bg-rose-50 border-rose-200 hover:bg-rose-100"
-        : "text-slate-500 border-bd hover:bg-pg",
+        : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
     default: {
-      border: "border-bd",
+      border: "border-slate-200",
       iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
-      countColor: count > 0 ? "text-blue-600" : "text-slate-100",
+      countColor: count > 0 ? "text-blue-600" : "text-slate-300",
       ctaStyle: count > 0
         ? "text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100"
-        : "text-slate-500 border-bd hover:bg-pg",
+        : "text-slate-400 border-slate-200 hover:bg-slate-50",
     },
   };
 
   const s = variantStyles[variant];
 
   return (
-    <div className={cn("bg-pn border rounded-lg p-4 flex flex-col gap-3", s.border)}>
+    <div className={cn("bg-white border rounded-xl p-5 flex flex-col gap-3 shadow-sm", s.border)}>
       <div className="flex items-center gap-3">
         <div className={cn("p-2 rounded-md shrink-0", s.iconBg)}>
           <Icon className={cn("h-4 w-4", s.iconColor)} />
@@ -199,30 +199,36 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-pg">
+    <div className="flex min-h-screen bg-slate-50">
       <AdminSidebar />
 
       <div className="flex-1 flex flex-col min-h-screen">
         {/* 헤더 */}
-        <div className="bg-pn border-b border-bd px-6 py-3.5 sticky top-0 z-10">
+        <div className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-base font-bold text-slate-100">운영 컨트롤타워</h1>
-              <p className="text-[11px] text-slate-400 mt-0.5">
-                {format(new Date(), "yyyy.MM.dd (E) HH:mm 기준", { locale: ko })}
+              <div className="flex items-center gap-2">
+                <h1 className="text-lg font-extrabold text-slate-900">운영 컨트롤타워</h1>
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  정상
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {format(new Date(), "yyyy.MM.dd (E) HH:mm '기준 시스템 현황'", { locale: ko })}
               </p>
             </div>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
-                className="h-8 text-xs gap-1.5"
+                className="h-8 text-xs gap-1.5 border-slate-200"
                 onClick={() => queryClient.invalidateQueries({ queryKey: ["admin-dashboard-ops"] })}
               >
                 <RefreshCw className="h-3 w-3" />
                 새로 고침
               </Button>
-              <Button size="sm" className="h-8 text-xs gap-1.5 bg-slate-800 hover:bg-slate-700">
+              <Button size="sm" className="h-8 text-xs gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
                 <Plus className="h-3 w-3" />
                 조직 생성
               </Button>
@@ -231,7 +237,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* 본문 */}
-        <div className="flex-1 p-5 space-y-5">
+        <div className="flex-1 p-6 space-y-5">
           {/* ── KPI 액션 카드 ─────────────────────────────── */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <KPIActionCard
@@ -269,13 +275,13 @@ export default function AdminDashboardPage() {
           </div>
 
           {/* ── 탭형 운영 큐 ──────────────────────────────── */}
-          <div className="bg-pn border border-bd rounded-lg overflow-hidden">
+          <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <div className="px-4 pt-3 border-b border-slate-100 bg-pg/50">
+              <div className="px-4 pt-3 border-b border-slate-100">
                 <TabsList className="bg-transparent p-0 h-auto gap-0">
                   <TabsTrigger
                     value="orgs"
-                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium text-slate-600 data-[state=active]:text-blue-700"
                   >
                     조직 승인 대기
                     {kpi.pendingOrgs > 0 && (
@@ -284,7 +290,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="users"
-                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium text-slate-600 data-[state=active]:text-blue-700"
                   >
                     사용자 승인 대기
                     {kpi.pendingUsers > 0 && (
@@ -293,7 +299,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="quotes"
-                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium text-slate-600 data-[state=active]:text-blue-700"
                   >
                     견적 이슈
                     {kpi.slaOverQuotes > 0 && (
@@ -302,7 +308,7 @@ export default function AdminDashboardPage() {
                   </TabsTrigger>
                   <TabsTrigger
                     value="logs"
-                    className="data-[state=active]:bg-pn data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium"
+                    className="data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-b-none border-b-2 data-[state=active]:border-blue-600 border-transparent px-4 py-2 text-xs font-medium text-slate-600 data-[state=active]:text-blue-700"
                   >
                     관리자 활동 로그
                   </TabsTrigger>
