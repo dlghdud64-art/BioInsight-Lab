@@ -1615,6 +1615,40 @@ function InventoryPageContent() {
 
             {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
+            {/* 온톨로지: 만료 lot priority banner */}
+            {(() => {
+              const expiredItems = displayInventories.filter((inv) => {
+                if (!inv.expiryDate) return false;
+                const days = Math.ceil((new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                return days <= 0 && inv.currentQuantity > 0;
+              });
+              if (expiredItems.length === 0) return null;
+              return (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-red-800">우선 처리: 만료 lot {expiredItems.length}건 폐기 필요</p>
+                    <p className="text-xs text-red-600/70">잔량이 남아있는 만료 품목이 있습니다. 폐기 처리를 먼저 진행하세요.</p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
+                    onClick={() => {
+                      // 점검 사항 탭으로 이동하여 만료 항목 확인
+                      const issuesTab = document.querySelector('[value="issues"]') as HTMLButtonElement;
+                      if (issuesTab) issuesTab.click();
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    폐기 확인
+                  </Button>
+                </div>
+              );
+            })()}
+
             {/* KPI Judgment Strip — 상태별 색상 강조 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
@@ -1869,21 +1903,20 @@ function InventoryPageContent() {
                               </Badge>
                             )}
                             {(issueType === "expired") && (
-                              /* 만료됨 → 폐기 검토 */
+                              /* 만료됨 → 폐기 처리 (온톨로지 1순위) */
                               <Button
                                 size="sm"
-                                variant="outline"
-                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10"
+                                className="h-7 px-3 text-[11px] whitespace-nowrap gap-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   toast({
-                                    title: "폐기 검토",
-                                    description: `${inv.product.name} 폐기 절차를 확인하세요.`,
+                                    title: "폐기 처리 시작",
+                                    description: `${inv.product.name} — 잔량 ${inv.currentQuantity}${inv.unit || "개"}의 폐기 절차를 진행합니다.`,
                                   });
                                 }}
                               >
                                 <Trash2 className="h-3 w-3 shrink-0" />
-                                폐기 검토
+                                폐기 처리
                               </Button>
                             )}
                             {(issueType === "no_location") && (
