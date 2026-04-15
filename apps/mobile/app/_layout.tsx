@@ -14,6 +14,7 @@ import {
   handleInitialNotification,
 } from "../lib/notifications";
 import { apiClient } from "../lib/api";
+import { startSyncManager, onSyncComplete } from "../lib/offline";
 
 initSentry();
 
@@ -21,6 +22,18 @@ function RootLayout() {
   const responseListener = useRef<Notifications.EventSubscription>();
 
   useEffect(() => {
+    // 오프라인 동기화 매니저 시작
+    startSyncManager();
+    const unsubSync = onSyncComplete((result) => {
+      if (result.synced > 0) {
+        // 동기화 성공 시 관련 query 캐시 invalidate
+        queryClient.invalidateQueries({ queryKey: ["inventory"] });
+        queryClient.invalidateQueries({ queryKey: ["quotes"] });
+        queryClient.invalidateQueries({ queryKey: ["purchases"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      }
+    });
+
     // 푸시 알림 초기화
     registerForPushNotifications().then((token) => {
       if (token) {
@@ -41,6 +54,7 @@ function RootLayout() {
       );
 
     return () => {
+      unsubSync();
       if (responseListener.current) {
         Notifications.removeNotificationSubscription(responseListener.current);
       }
