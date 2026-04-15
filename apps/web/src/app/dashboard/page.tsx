@@ -18,10 +18,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getGuestKey } from "@/lib/guest-key";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 import dynamic_import from "next/dynamic";
-const WorkQueueInbox = dynamic_import(() => import("@/components/dashboard/work-queue-inbox").then(m => m.WorkQueueInbox), {
-  ssr: false,
-  loading: () => <div className="h-16 rounded-xl bg-slate-200 animate-pulse" />,
-});
+// WorkQueueInbox 제거 — 3상태 중앙 패널이 대체
 const ExecutiveSummarySection = dynamic_import(
   () => import("@/components/dashboard/executive-summary-section").then(m => m.ExecutiveSummarySection),
   {
@@ -383,8 +380,7 @@ export default function DashboardPage() {
       {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) --- */}
       <ExecutiveSummarySection />
 
-      {/* --- AI 작업함 --- */}
-      <WorkQueueInbox />
+      {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
       {/* ═══ 3상태 중앙 패널 (desktop) ═══ */}
       {!statsLoading && (
