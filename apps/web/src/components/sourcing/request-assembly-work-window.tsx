@@ -225,46 +225,7 @@ export function RequestAssemblyWorkWindow({
         {/* ═══ 2. Scope Strips ═══ */}
         <div className="shrink-0 border-b border-slate-600/30 bg-[#22252b]">
 
-          {/* ── 2a. Vendor Strip ── */}
-          <div className="px-6 pt-3 pb-2">
-            <div className="flex items-center gap-2 mb-2">
-              <Building2 className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-xs font-medium text-slate-400">공급사 대상</span>
-              <span className="text-xs text-slate-500">{includedVendors.length}/{assemblyState.targetVendors.length}</span>
-            </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
-              {assemblyState.targetVendors.map((vendor) => (
-                <button
-                  key={vendor.vendorId}
-                  type="button"
-                  onClick={() => toggleVendor(vendor.vendorId)}
-                  disabled={isDraftRecorded}
-                  className={`shrink-0 flex items-center gap-2 h-8 px-3 rounded-lg border text-xs font-medium transition-all ${
-                    vendor.included
-                      ? "border-emerald-500/30 bg-emerald-600/10 text-emerald-300"
-                      : "border-slate-600/25 bg-[#2a2e35] text-slate-400 opacity-60 hover:opacity-80"
-                  }`}
-                >
-                  <span className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
-                    vendor.included
-                      ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
-                      : "border-slate-600/40"
-                  }`}>
-                    {vendor.included && <Check className="h-2.5 w-2.5" />}
-                  </span>
-                  <span className="truncate max-w-[120px]">{vendor.vendorDisplayName}</span>
-                  {vendor.priority === 1 && (
-                    <span className="text-blue-400 text-xs">★</span>
-                  )}
-                </button>
-              ))}
-              {assemblyState.targetVendors.length === 0 && (
-                <span className="text-xs text-amber-400 flex items-center gap-1.5">
-                  <AlertTriangle className="h-3 w-3" />공급사 미지정
-                </span>
-              )}
-            </div>
-          </div>
+          {/* 공급사 대상 제거 — 비교견적 기본, 공급사 확정은 견적 관리에서 */}
 
           {/* ── 2b. Item Strip ── */}
           <div className="px-6 pb-3">

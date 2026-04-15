@@ -171,7 +171,7 @@ export function RequestSubmissionWorkWindow({
         submittedLineCount: event.submittedLineIds.length,
       } : prev);
       toast.success(
-        `견적 요청이 제출되었습니다 — 공급사 ${event.submittedVendorTargetIds.length}곳, 품목 ${event.submittedLineIds.length}건`,
+        `견적 요청이 제출되었습니다 — 품목 ${event.submittedLineIds.length}건 (비교 견적)`,
       );
     } catch (err: any) {
       const msg = err?.message || "요청 제출 중 오류가 발생했습니다. 다시 시도해주세요.";
@@ -269,7 +269,7 @@ export function RequestSubmissionWorkWindow({
               <div>
                 <h2 className="text-lg font-bold text-white leading-tight">{isSubmitted ? "요청 제출 완료" : "요청 제출 검토"}</h2>
                 <div className="flex items-center gap-3 mt-1 text-sm">
-                  <span className="text-slate-300">공급사 <span className="text-white font-semibold">{draftSnapshot.targetVendorIds.length}곳</span></span>
+                  <span className="text-slate-300">전략 <span className="text-white font-semibold">비교 견적</span></span>
                   <span className="text-slate-500">·</span>
                   <span className="text-slate-300">품목 <span className="text-white font-semibold">{submissionLines.length}건</span></span>
                   <span className="text-slate-500">·</span>
@@ -341,23 +341,14 @@ export function RequestSubmissionWorkWindow({
             </section>
           )}
 
-          {/* ═══ B. Final Vendor Target Review ═══ */}
+          {/* 공급사 대상 제거 — 비교견적 기본, 공급사 후보 선정은 견적 관리에서 */}
           <section>
-            <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-2 px-4 py-3 rounded-lg border border-slate-600/20 bg-[#2a2e35]">
               <Building2 className="h-4 w-4 text-slate-400" />
-              <h3 className="text-[15px] font-semibold text-slate-100">공급사 대상 (최종)</h3>
-            </div>
-            <div className="space-y-2">
-              {vendorTargets.map((vt) => (
-                <div key={vt.vendorId} className={`flex items-center gap-4 px-4 py-3.5 rounded-lg border transition-all ${vt.eligibilityStatus === "eligible" ? "border-emerald-500/25 bg-emerald-600/[0.04]" : vt.eligibilityStatus === "warning" ? "border-amber-500/25 bg-amber-600/[0.04]" : "border-red-500/20 bg-red-600/[0.04]"}`}>
-                  <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${vt.eligibilityStatus === "eligible" ? "bg-emerald-400" : vt.eligibilityStatus === "warning" ? "bg-amber-400" : "bg-red-400"}`} />
-                  <Building2 className="h-4 w-4 text-slate-400 shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm text-slate-100 font-medium block truncate">{vt.vendorDisplayName}</span>
-                    <span className="text-xs text-slate-400 mt-0.5 block">품목 {vt.lineCoverageCount}건 · {vt.eligibilityReason}</span>
-                  </div>
-                </div>
-              ))}
+              <div>
+                <p className="text-sm text-slate-300 font-medium">비교 견적 모드</p>
+                <p className="text-xs text-slate-500 mt-0.5">공급사 후보 선정은 견적 관리에서 진행됩니다.</p>
+              </div>
             </div>
           </section>
 
