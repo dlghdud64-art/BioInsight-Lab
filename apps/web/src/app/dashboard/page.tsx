@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Package, AlertTriangle, DollarSign, FileText, Search, Plus,
   TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, Calendar, GitCompare,
-  CheckCircle2, Clock, ClipboardList,
+  CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
