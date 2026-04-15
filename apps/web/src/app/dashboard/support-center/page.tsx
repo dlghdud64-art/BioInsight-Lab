@@ -450,21 +450,10 @@ export default function SupportCenterPage() {
 
   return (
     <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
-      {/* ── 헤더 + Context Strip ── */}
-      <div className="mb-6 px-1">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
-            <LifeBuoy className="h-5 w-5 text-white" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight leading-tight">
-              운영 지원 센터
-            </h1>
-            <p className="text-sm text-slate-500 leading-relaxed">
-              운영 매뉴얼, 문제 해결, 지원 티켓을 한곳에서 처리합니다.
-            </p>
-          </div>
-        </div>
+      {/* ── 헤더 (압축) ── */}
+      <div className="mb-4 px-1">
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">운영 지원 센터</h1>
+        <p className="text-sm text-slate-500 mt-0.5">매뉴얼, 문제 해결, 지원 요청을 한곳에서 처리합니다.</p>
         {/* Context strip — 진입 경로가 있으면 표시 */}
         {(() => {
           const fromRoute = searchParams?.get("from") ?? null;
@@ -493,62 +482,10 @@ export default function SupportCenterPage() {
         })()}
       </div>
 
-      {/* ── 통합 검색 (Phase 5) ── */}
-      <div className="relative mb-4 px-1" style={{ zIndex: 30 }}>
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
-        <Input
-          placeholder="문서, 문제 해결, 티켓을 한 번에 검색 (예: PDF 실패, 승인, 재고)"
-          value={globalSearch}
-          onChange={(e) => setGlobalSearch(e.target.value)}
-          className="pl-10 h-11 bg-white border-slate-200 text-sm text-slate-700 placeholder:text-slate-400 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 rounded-xl shadow-sm"
-        />
-        {globalSearch && (
-          <button
-            onClick={() => setGlobalSearch("")}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-          >
-            <X className="h-3.5 w-3.5" />
-          </button>
-        )}
-        {/* 검색 결과 드롭다운 — same-canvas 안에서 표시 */}
-        {globalSearchResults && (
-          <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-80 overflow-y-auto">
-            {globalSearchResults.map((r) => {
-              const typeLabel = r.type === "manual" ? "매뉴얼" : r.type === "troubleshoot" ? "문제 해결" : "티켓";
-              const typeColor = r.type === "manual" ? "bg-blue-50 text-blue-600" : r.type === "troubleshoot" ? "bg-amber-50 text-amber-600" : "bg-emerald-50 text-emerald-600";
-              return (
-                <button
-                  key={`${r.type}-${r.id}`}
-                  className="w-full text-left px-4 py-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors"
-                  onClick={() => {
-                    setGlobalSearch("");
-                    if (r.type !== activeTab) handleTabChange(r.type as TabId);
-                    // 탭 내부 검색으로 handoff: 각 탭이 자체 search 로 이어받음
-                  }}
-                >
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <Badge className={`text-[9px] px-1.5 py-0 border-0 ${typeColor}`}>{typeLabel}</Badge>
-                    {r.type === activeTab && (
-                      <span className="text-[9px] text-blue-500 font-medium">현재 탭</span>
-                    )}
-                  </div>
-                  <p className="text-xs font-medium text-slate-700 truncate">{r.title}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{r.desc}</p>
-                </button>
-              );
-            })}
-          </div>
-        )}
-        {globalSearch && !globalSearchResults && (
-          <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl px-4 py-6 text-center">
-            <Search className="h-6 w-6 text-slate-300 mx-auto mb-2" />
-            <p className="text-xs text-slate-400">검색 결과가 없습니다</p>
-          </div>
-        )}
-      </div>
+      {/* 통합 검색 제거 — 탭 전용 검색만 유지 */}
 
       {/* ── 탭 네비게이션 ── */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-6 mx-1">
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-4 mx-1">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -619,39 +556,17 @@ function ManualTab() {
   return (
     <div>
       {/* 검색바 */}
-      <div className="relative mb-5">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+      <div className="relative mb-4">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           placeholder="매뉴얼 검색 (예: 견적 요청, 재고, PDF 분석)"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+          className="pl-10 h-10 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 rounded-lg text-sm"
         />
       </div>
 
-      {/* 최근 업데이트 */}
-      <div className="rounded-xl bg-gradient-to-br from-blue-50/60 to-slate-50 border border-blue-100 p-4 mb-6">
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-blue-500" />
-          <h2 className="text-sm font-bold text-slate-800">최근 업데이트</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          {RECENT_UPDATES.map((update, i) => (
-            <div key={i} className="flex items-start gap-3 rounded-lg bg-white border border-slate-200 px-3.5 py-3">
-              <div className="flex flex-col items-start gap-1 flex-shrink-0">
-                <span className="text-[10px] text-slate-500 font-mono">{update.date}</span>
-                <Badge className={`text-[10px] px-1.5 py-0 border-0 font-medium ${update.tagColor}`}>
-                  {update.tag}
-                </Badge>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-slate-700 leading-snug">{update.title}</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">{update.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* 최근 업데이트 — above-the-fold에서 제거, 가이드 리스트 아래로 이동 */}
 
       {/* 메인 레이아웃: 사이드바 + 콘텐츠 */}
       <div className="flex gap-5">
