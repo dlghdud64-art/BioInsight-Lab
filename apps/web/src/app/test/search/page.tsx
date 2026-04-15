@@ -639,7 +639,7 @@ export default function SearchPage() {
                   <div className="flex items-center justify-between mb-1">
                     <div className="flex items-center gap-1.5">
                       <div className={`w-1.5 h-1.5 rounded-full ${aiCompareReadiness.mode === "direct" ? "bg-blue-500" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-500" : "bg-red-400"}`} />
-                      <span className="text-[10px] font-semibold text-slate-800">AI 비교 판단 활성</span>
+                      <span className="text-[10px] font-semibold text-slate-800">비교 검토 활성</span>
                     </div>
                     <span className={`text-[9px] px-1.5 py-0.5 rounded font-medium ${aiCompareReadiness.mode === "direct" ? "bg-blue-50 text-blue-600" : aiCompareReadiness.mode === "mixed_warning" ? "bg-amber-600/15 text-amber-300" : "bg-red-600/15 text-red-300"}`}>
                       {compareIds.length}개 선택
@@ -659,18 +659,9 @@ export default function SearchPage() {
                       onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}
                     >
                       <PenLine className="h-3 w-3 mr-1" />
-                      AI 비교 분석
+                      비교 검토
                     </Button>
-                    {shouldShowSourcingStrip && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 px-2 text-[10px] text-slate-400 hover:text-blue-600 border border-slate-200"
-                        onClick={() => handleProtectedAction(openStrategyOverlay)}
-                      >
-                        <Sparkles className="h-3 w-3" />
-                      </Button>
-                    )}
+                    {/* AI 아이콘 버튼 제거 — 비교 검토 버튼만 유지 */}
                   </div>
                 </div>
               </div>
@@ -678,7 +669,7 @@ export default function SearchPage() {
               <div className="px-3 py-2 border-b border-slate-200">
                 <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-                  <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 AI 비교 판단이 활성화됩니다</span>
+                  <span className="text-[10px] text-slate-500">제품 2개 이상 선택 시 비교 검토가 활성화됩니다</span>
                 </div>
               </div>
             ) : null}
@@ -906,7 +897,7 @@ export default function SearchPage() {
                   {compareReady ? (
                     <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
                       <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                      AI 비교 분석
+                      비교 검토
                     </Button>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs text-amber-600">
@@ -1723,7 +1714,7 @@ export default function SearchPage() {
                     <Sparkles className="h-3.5 w-3.5 text-blue-600" />
                   </div>
                   <div>
-                    <span className="text-[12px] font-semibold text-slate-100">AI 비교 구성안</span>
+                    <span className="text-[12px] font-semibold text-slate-800">비교 구성안</span>
                     <span className="text-[10px] text-slate-500 ml-2">미리보기</span>
                   </div>
                 </div>
