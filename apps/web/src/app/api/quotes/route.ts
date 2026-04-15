@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
+import { getAuthUser } from "@/lib/auth/mobile-jwt";
 import { createQuote } from "@/lib/api/quotes";
 import { sendQuoteConfirmationToUser, sendQuoteNotificationToVendors, sendQuoteReceivedEmail } from "@/lib/email";
 import { db, isPrismaAvailable } from "@/lib/db";
@@ -320,7 +321,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(session, request);
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized", quotes: [] }, { status: 401 });
     }
 
@@ -332,7 +334,7 @@ export async function GET(request: NextRequest) {
     let userOrgIds: string[] = [];
     try {
       const memberships = await db.organizationMember.findMany({
-        where: { userId: session.user.id },
+        where: { userId: user.id },
         select: { organizationId: true },
       });
       userOrgIds = memberships.map((m: any) => m.organizationId).filter(Boolean);
@@ -344,7 +346,7 @@ export async function GET(request: NextRequest) {
     // → organizationId만 저장된 견적도 목록에 포함 (누락 방지)
     const ownerCondition: Record<string, unknown> = {
       OR: [
-        { userId: session.user.id },
+        { userId: user.id },
         ...(userOrgIds.length > 0 ? [{ organizationId: { in: userOrgIds } }] : []),
       ],
     };

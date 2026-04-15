@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { getAuthUser } from "@/lib/auth/mobile-jwt";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 재고 목록 조회
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user?.id) {
+    const user = await getAuthUser(session, request);
+    if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,7 +31,7 @@ export async function GET(request: NextRequest) {
     // -----------------------------------------------------------------------
     const ownerCondition: any = {
       OR: [
-        { userId: session.user.id },
+        { userId: user.id },
         ...(organizationId ? [{ organizationId }] : []),
       ],
     };

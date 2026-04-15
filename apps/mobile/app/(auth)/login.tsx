@@ -15,14 +15,16 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useState, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
-import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react-native";
+import { Eye, EyeOff, Mail, Lock, AlertCircle, Chrome } from "lucide-react-native";
 import { login } from "../../lib/api";
+import { signInWithGoogle } from "../../lib/oauth";
 
 export default function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // 포커스 상태
@@ -30,6 +32,23 @@ export default function LoginScreen() {
   const [passwordFocused, setPasswordFocused] = useState(false);
 
   const passwordRef = useRef<TextInput>(null);
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setOauthLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.success) {
+        router.replace("/(tabs)");
+      } else {
+        setError(result.error ?? "Google 로그인에 실패했습니다.");
+      }
+    } catch {
+      setError("Google 로그인 중 오류가 발생했습니다.");
+    } finally {
+      setOauthLoading(false);
+    }
+  };
 
   const handleLogin = async () => {
     Keyboard.dismiss();
@@ -240,8 +259,28 @@ export default function LoginScreen() {
                 <View className="flex-1 h-px bg-slate-200" />
               </View>
 
+              {/* Google 로그인 */}
+              <TouchableOpacity
+                className={[
+                  "h-14 rounded-xl items-center justify-center flex-row gap-3 border",
+                  oauthLoading ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white",
+                ].join(" ")}
+                onPress={handleGoogleLogin}
+                disabled={oauthLoading || loading}
+                activeOpacity={0.8}
+              >
+                {oauthLoading ? (
+                  <ActivityIndicator color="#2563eb" size="small" />
+                ) : (
+                  <Chrome size={20} color="#4285F4" />
+                )}
+                <Text className="text-slate-700 font-semibold text-base">
+                  {oauthLoading ? "로그인 중..." : "Google 계정으로 로그인"}
+                </Text>
+              </TouchableOpacity>
+
               {/* 안내 문구 */}
-              <View className="items-center">
+              <View className="items-center mt-4">
                 <Text className="text-sm text-slate-500 text-center leading-relaxed">
                   계정이 없으신가요?{"\n"}
                   <Text className="text-blue-600 font-semibold">
