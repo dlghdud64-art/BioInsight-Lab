@@ -48,6 +48,17 @@ export async function POST(request: NextRequest) {
       organizationId: clientOrganizationId,
     } = body;
 
+    // ── 필수 필드 검증: 품목이 없는 빈 견적 생성 방지 ──
+    const resolvedItems = items ?? (productIds ? productIds.map((pid: string, i: number) => ({
+      productId: pid, quantity: quantities?.[i] ?? 1, notes: notes?.[i] ?? "",
+    })) : []);
+    if (!Array.isArray(resolvedItems) || resolvedItems.length === 0) {
+      return NextResponse.json(
+        { error: "견적 요청에 최소 1개 이상의 품목이 필요합니다." },
+        { status: 400 },
+      );
+    }
+
     // 서버 세션 기반 organizationId 결정 (P2003 방지: 실제 Organization 존재 여부까지 검증)
     let serverOrgId: string | null = null;
     try {

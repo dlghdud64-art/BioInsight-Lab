@@ -120,6 +120,14 @@ export function RequestSubmissionWorkWindow({
       // ── DB 저장: POST /api/quotes로 견적 생성 ──
       const lines = draftSnapshot.requestDraftLines;
       const vendorIds = draftSnapshot.targetVendorIds;
+
+      // 빈 견적 방지: 품목 또는 공급사가 없으면 제출 차단
+      if (!lines || lines.length === 0) {
+        toast.error("요청 품목이 없습니다. 품목을 선택한 후 다시 시도하세요.");
+        setIsSubmitting(false);
+        isExecutingRef.current = false;
+        return;
+      }
       const condSummary = event.submissionConditionSummary;
 
       // 각 라인 × 각 벤더 조합으로 items 구성
