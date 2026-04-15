@@ -291,7 +291,7 @@ export default function BudgetPage() {
                     <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>{editingBudget ? "예산 수정" : "예산안 만들기"}</DialogTitle>
                     <DialogDescription>팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.</DialogDescription>
@@ -778,7 +778,7 @@ function BudgetForm({
           <Label htmlFor="currency">통화 *</Label>
           <Select value={currency} onValueChange={setCurrency}>
             <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
+            <SelectContent position="popper" className="z-[9999]">
               <SelectItem value="KRW">KRW (원)</SelectItem>
               <SelectItem value="USD">USD (달러)</SelectItem>
               <SelectItem value="EUR">EUR (유로)</SelectItem>
@@ -809,7 +809,7 @@ function BudgetForm({
         <Label htmlFor="targetDepartment">대상 부서/팀 <span className="text-red-500">*</span></Label>
         <Select value={targetDepartment} onValueChange={(v: string) => { setTargetDepartment(v); if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" })); }}>
           <SelectTrigger className={errors.targetDepartment ? "border-red-500" : ""}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
-          <SelectContent>
+          <SelectContent position="popper" className="z-[9999]">
             {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
