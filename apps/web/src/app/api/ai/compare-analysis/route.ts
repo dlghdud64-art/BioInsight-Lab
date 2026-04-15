@@ -108,12 +108,14 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "인증이 필요합니다." }, { status: 401 });
     }
+    // AI 비교 분석은 읽기/분석 액션 — requester도 허용
+    // sensitive_data_import는 부적절 (buyer/ops_admin만 허용되어 일반 사용자 차단됨)
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
+      action: 'quote_request_create',
       targetEntityType: 'ai_action',
-      targetEntityId: 'unknown',
+      targetEntityId: 'compare-analysis',
       sourceSurface: 'web_app',
       routePath: '/ai/compare-analysis',
     });
