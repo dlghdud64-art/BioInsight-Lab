@@ -102,9 +102,14 @@ export async function POST(request: NextRequest) {
       notes: notes?.[pid] || "",
     })) : []);
 
-    if (!title || quoteItems.length === 0) {
+    // title 자동 생성: 클라이언트가 빈 값으로 보내도 서버에서 fallback
+    const resolvedTitle = (title && typeof title === "string" && title.trim())
+      ? title.trim()
+      : `견적 요청 — ${quoteItems.length}개 품목`;
+
+    if (quoteItems.length === 0) {
       return NextResponse.json(
-        { error: "Title and items are required" },
+        { error: "견적 요청에 최소 1개 이상의 품목이 필요합니다." },
         { status: 400 }
       );
     }
@@ -133,8 +138,8 @@ export async function POST(request: NextRequest) {
 
       // 벤더별 제목 생성
       const vendorTitle = vendorId !== "unknown"
-        ? `${title} (${items.length}건)`
-        : title;
+        ? `${resolvedTitle} (${items.length}건)`
+        : resolvedTitle;
 
       // 벤더별 메시지 생성 (개별 메시지가 있으면 우선 사용)
       const vendorProductCount = items.length;
