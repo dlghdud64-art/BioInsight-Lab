@@ -35,22 +35,22 @@ function Reveal({ children, delay = 0, y = 40, className = "" }: {
 
 /* ── Color tokens — proof용, 목업 1보다 약간 밝은 surface ── */
 const C = {
-  base: "#111D2F",
-  elevated: "#1A2940",
-  sunken: "#0D1724",
-  divider: "#223350",
-  dividerSubtle: "#1A2C42",
-  text1: "#F8FAFC",
-  text2: "#DAE4EE",
-  text3: "#95ABBD",
-  text4: "#708BA5",
-  accent: "#3B82F6",
+  base: "#FFFFFF",
+  elevated: "#F8FAFC",
+  sunken: "#F1F5F9",
+  divider: "#E2E8F0",
+  dividerSubtle: "#F1F5F9",
+  text1: "#0F172A",
+  text2: "#334155",
+  text3: "#64748B",
+  text4: "#94A3B8",
+  accent: "#2563EB",
 } as const;
 
 const BADGE = {
-  red:    { bg: "rgba(239,68,68,0.14)", text: "#FCA5A5", border: "rgba(239,68,68,0.3)" },
-  amber:  { bg: "rgba(245,158,11,0.14)", text: "#FCD34D", border: "rgba(245,158,11,0.3)" },
-  blue:   { bg: "rgba(59,130,246,0.14)", text: "#93C5FD", border: "rgba(59,130,246,0.3)" },
+  red:    { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA" },
+  amber:  { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A" },
+  blue:   { bg: "#EFF6FF", text: "#2563EB", border: "#BFDBFE" },
 } as const;
 
 const INVENTORY_ITEMS = [
