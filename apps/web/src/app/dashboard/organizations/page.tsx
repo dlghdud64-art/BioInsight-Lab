@@ -584,15 +584,13 @@ export default function OrganizationsPage() {
                 </div>
               </div>
 
-              {/* 조직 생성 CTA */}
-              <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-5 text-white">
-                <h3 className="text-sm font-bold mb-1.5">새로운 조직이 필요한가요?</h3>
-                <p className="text-xs text-blue-100 leading-relaxed mb-4">
-                  팀이나 프로젝트를 위한 새로운 공간을 만들고 멤버를 초대하세요.
-                </p>
+              {/* 조직 생성 CTA — 축소 (상단에 이미 primary CTA 있음) */}
+              <div className="rounded-xl bg-blue-50 border border-blue-200 p-4">
+                <p className="text-xs font-semibold text-blue-800 mb-1">새로운 조직이 필요한가요?</p>
+                <p className="text-[11px] text-blue-600/70 mb-3">팀이나 프로젝트를 위한 새로운 공간을 만들고 멤버를 초대하세요.</p>
                 <button
                   onClick={() => setIsOpen(true)}
-                  className="w-full py-2.5 rounded-lg bg-white text-blue-600 text-sm font-bold hover:bg-blue-50 transition-colors"
+                  className="w-full py-2 rounded-lg bg-white border border-blue-200 text-blue-600 text-xs font-semibold hover:bg-blue-50 transition-colors"
                 >
                   조직 만들기
                 </button>
@@ -628,12 +626,12 @@ function OrgCard({
 
   return (
     <div className={`rounded-xl border border-slate-200 bg-white hover:shadow-md hover:border-slate-300 transition-all ${viewMode === "list" ? "flex items-center" : ""}`}>
-      <div className={`p-5 ${viewMode === "list" ? "flex items-center gap-4 flex-1" : ""}`}>
+      <div className={`p-4 ${viewMode === "list" ? "flex items-center gap-4 flex-1" : ""}`}>
         {/* 카드 헤더 — 아바타 + 이름 + 배지 */}
-        <div className={`flex items-start gap-3 ${viewMode === "list" ? "flex-1" : "mb-4"}`}>
+        <div className={`flex items-start gap-3 ${viewMode === "list" ? "flex-1" : "mb-3"}`}>
           {/* 아바타 */}
-          <div className={`w-11 h-11 rounded-xl ${avatar.bg} flex items-center justify-center flex-shrink-0`}>
-            <span className={`text-lg font-bold ${avatar.text}`}>{org.name.charAt(0).toUpperCase()}</span>
+          <div className={`w-10 h-10 rounded-xl ${avatar.bg} flex items-center justify-center flex-shrink-0`}>
+            <span className={`text-base font-bold ${avatar.text}`}>{org.name.charAt(0).toUpperCase()}</span>
           </div>
 
           <div className="flex-1 min-w-0">
@@ -670,17 +668,17 @@ function OrgCard({
 
         {/* 최근 활동 요약 */}
         {viewMode === "grid" && (
-          <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-slate-50 mb-3">
-            <Sparkles className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-            <span className="text-xs text-slate-600 truncate">{activity.text}</span>
+          <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg bg-slate-50 mb-2">
+            <Sparkles className="h-3 w-3 text-slate-400 flex-shrink-0" />
+            <span className="text-[11px] text-slate-600 truncate">{activity.text}</span>
           </div>
         )}
 
         {/* 경고 스트립 */}
         {hasWarnings && viewMode === "grid" && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-100 mb-3">
-            <AlertCircle className="h-3.5 w-3.5 text-red-500 flex-shrink-0" />
-            <span className="text-xs text-red-600 font-medium truncate">
+          <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-100 mb-2">
+            <AlertCircle className="h-3 w-3 text-red-500 flex-shrink-0" />
+            <span className="text-[11px] text-red-600 font-medium truncate">
               {warnings[0].text}
             </span>
           </div>
@@ -688,7 +686,7 @@ function OrgCard({
       </div>
 
       {/* 푸터: 관리 페이지 이동 */}
-      <div className={`px-5 py-3 border-t border-slate-100 flex items-center justify-between ${viewMode === "list" ? "border-t-0 border-l pl-4" : ""}`}>
+      <div className={`px-4 py-2.5 border-t border-slate-100 flex items-center justify-between ${viewMode === "list" ? "border-t-0 border-l pl-4" : ""}`}>
         <button
           onClick={onNavigate}
           className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
