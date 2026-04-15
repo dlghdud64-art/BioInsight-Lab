@@ -814,61 +814,7 @@ export default function ReportsPage() {
               )}
             </div>
 
-            {/* Block 4: Budget vs Actual */}
-            <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">예산 대비 실적</p>
-                <Link href="/dashboard/budget">
-                  <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-700 hover:bg-el h-7 px-2">
-                    예산 관리 →
-                  </Button>
-                </Link>
-              </div>
-              {selectedBudget !== "all" && budgetUsage ? (
-                <div className="flex-1 flex flex-col justify-center gap-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-400">사용 금액</span>
-                      <span className="text-slate-700 font-mono">
-                        {formatCurrency(budgetUsage.used)} / {formatCurrency(budgetUsage.total)}
-                      </span>
-                    </div>
-                    <Progress
-                      value={Math.min(budgetUsedPct, 100)}
-                      className="h-2 bg-el"
-                    />
-                    <div className="flex justify-between text-xs">
-                      <span className={budgetOvershoot ? "text-red-400 font-medium" : "text-slate-500"}>
-                        {budgetOvershoot ? `초과 ${formatCurrency(budgetUsage.used - budgetUsage.total)}` : `잔여 ${formatCurrency(budgetUsage.total - budgetUsage.used)}`}
-                      </span>
-                      <span className={`font-mono font-medium ${budgetOvershoot ? "text-red-400" : budgetUsedPct >= 80 ? "text-amber-400" : "text-emerald-400"}`}>
-                        {budgetUsedPct}%
-                      </span>
-                    </div>
-                  </div>
-                  {budgetOvershoot && (
-                    <div className="flex items-start gap-2 text-xs text-red-400">
-                      <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
-                      <span>예산 초과 상태 &mdash; 즉시 검토 필요</span>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center">
-                  <p className="text-xs text-slate-500">예산 필터를 선택하면 예산 대비 실적을 확인할 수 있습니다.</p>
-                  <div className="grid grid-cols-2 gap-3 w-full mt-3">
-                    <div className="bg-el rounded-md p-3 text-center">
-                      <p className="text-xs text-slate-500 mb-1">총 지출</p>
-                      <p className="text-sm font-bold text-slate-900 font-mono">{formatCurrency(totalAmount, "KRW")}</p>
-                    </div>
-                    <div className="bg-el rounded-md p-3 text-center">
-                      <p className="text-xs text-slate-500 mb-1">건수 / 거래처</p>
-                      <p className="text-sm font-bold text-slate-900 font-mono">{itemCount}건 / {vendorCount}개</p>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* 예산 대비 실적 제거 — 예산 관리 페이지에서 확인 */}
 
           {/* ============================================================
               BOTTOM: DETAIL TABLE
