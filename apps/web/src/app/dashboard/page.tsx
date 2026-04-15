@@ -588,6 +588,120 @@ export default function DashboardPage() {
         </div>
       )}
 
+      {/* ═══ 운영 인텔리전스 ═══ */}
+      {!statsLoading && (
+        <div className="hidden md:block">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <ShieldAlert className="h-4 w-4 text-amber-500" />
+                운영 인텔리전스
+              </h3>
+              <span className="text-[10px] text-slate-400 uppercase tracking-wider">자동 감지</span>
+            </div>
+            {(() => {
+              const cards: Array<{ id: string; icon: React.ReactNode; title: string; desc: string; href: string; color: "red" | "amber" | "blue" | "emerald" }> = [];
+
+              if (stats.lowStockAlerts > 0) {
+                cards.push({
+                  id: "low-stock",
+                  icon: <AlertTriangle className="h-4 w-4" />,
+                  title: "재고 부족 감지",
+                  desc: `${stats.lowStockAlerts}개 품목이 안전재고 이하입니다. 발주 검토가 필요합니다.`,
+                  href: "/dashboard/inventory?filter=low",
+                  color: "red",
+                });
+              }
+
+              if (stats.respondedQuotes > 0) {
+                cards.push({
+                  id: "quote-response",
+                  icon: <FileText className="h-4 w-4" />,
+                  title: "견적 응답 도착",
+                  desc: `공급사 응답 ${stats.respondedQuotes}건이 검토 대기 중입니다.`,
+                  href: "/dashboard/quotes?status=RESPONDED",
+                  color: "blue",
+                });
+              }
+
+              if (stats.expiringCount > 0) {
+                cards.push({
+                  id: "expiry-warning",
+                  icon: <Calendar className="h-4 w-4" />,
+                  title: "유효기한 임박",
+                  desc: `${stats.expiringCount}개 품목이 30일 이내 만료 예정입니다.`,
+                  href: "/dashboard/inventory",
+                  color: "amber",
+                });
+              }
+
+              if (stats.undecidedCompareCount > 0) {
+                cards.push({
+                  id: "compare-pending",
+                  icon: <GitCompare className="h-4 w-4" />,
+                  title: "비교 판정 대기",
+                  desc: `${stats.undecidedCompareCount}건의 비교 결과가 판정을 기다리고 있습니다.`,
+                  href: "/compare",
+                  color: "amber",
+                });
+              }
+
+              if (stats.monthOverMonthChange > 15 && stats.monthlySpending > 0) {
+                cards.push({
+                  id: "spend-spike",
+                  icon: <TrendingUp className="h-4 w-4" />,
+                  title: "지출 급증 감지",
+                  desc: `이번 달 지출이 전월 대비 ${stats.monthOverMonthChange.toFixed(0)}% 증가했습니다.`,
+                  href: "/dashboard/analytics",
+                  color: "amber",
+                });
+              }
+
+              if (cards.length === 0) {
+                return (
+                  <div className="flex items-center gap-3 py-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-slate-700">감지된 운영 이슈가 없습니다</p>
+                      <p className="text-xs text-slate-400">데이터가 축적되면 자동으로 인사이트가 생성됩니다.</p>
+                    </div>
+                  </div>
+                );
+              }
+
+              const colorMap = {
+                red: { border: "border-red-200", bg: "bg-red-50/60", icon: "text-red-500", link: "text-red-600 hover:text-red-700" },
+                amber: { border: "border-amber-200", bg: "bg-amber-50/60", icon: "text-amber-500", link: "text-amber-600 hover:text-amber-700" },
+                blue: { border: "border-blue-200", bg: "bg-blue-50/60", icon: "text-blue-500", link: "text-blue-600 hover:text-blue-700" },
+                emerald: { border: "border-emerald-200", bg: "bg-emerald-50/60", icon: "text-emerald-500", link: "text-emerald-600 hover:text-emerald-700" },
+              };
+
+              return (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {cards.map((card) => {
+                    const c = colorMap[card.color];
+                    return (
+                      <Link key={card.id} href={card.href} className={`rounded-xl border ${c.border} ${c.bg} p-4 hover:shadow-md transition-all group block`}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={c.icon}>{card.icon}</span>
+                          <p className="text-sm font-bold text-slate-800">{card.title}</p>
+                        </div>
+                        <p className="text-xs text-slate-600 leading-relaxed mb-2">{card.desc}</p>
+                        <span className={`text-xs font-semibold ${c.link} flex items-center gap-1`}>
+                          확인하기 <ArrowRight className="h-3 w-3" />
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
