@@ -78,9 +78,45 @@ export function LabelPrintModal({ open, onOpenChange, selectedItems = [] }: Labe
   const activeSpec = LABEL_SPECS.find((s) => s.id === selectedSpec);
 
   const handlePrint = () => {
-    // 브라우저 인쇄 연동
-    window.print();
-    onOpenChange(false);
+    // 새 창에서 라벨 전용 인쇄 페이지 생성
+    const items = selectedItems.length > 0 ? selectedItems : [
+      { id: "sample", name: "Sample Reagent", catalogNumber: "CAT-001", lotNumber: "LOT-001", expiryDate: "2027-01-01" },
+    ];
+
+    const labelsHtml = items.flatMap((item) =>
+      Array.from({ length: copies }).map((_, i) => `
+        <div class="label">
+          <div class="name">${item.name}</div>
+          ${item.catalogNumber ? `<div class="cat">Cat. ${item.catalogNumber}</div>` : ""}
+          ${item.lotNumber ? `<div class="lot">Lot: ${item.lotNumber}</div>` : ""}
+          ${includeBarcode ? `<div class="barcode">||||||||||||||||||||</div>` : ""}
+          ${includeExpiry && item.expiryDate ? `<div class="expiry">EXP: ${item.expiryDate}</div>` : ""}
+        </div>
+      `)
+    ).join("");
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+      <title>라벨 인쇄</title>
+      <style>
+        @page { margin: 5mm; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        .label {
+          border: 1px solid #ccc; border-radius: 4px; padding: 6px 8px;
+          margin-bottom: 4px; page-break-inside: avoid;
+          width: ${activeSpec?.id.includes("3104") ? "90mm" : activeSpec?.id.includes("3102") ? "90mm" : activeSpec?.id.includes("3101") ? "60mm" : "36mm"};
+        }
+        .name { font-size: 9px; font-weight: bold; }
+        .cat, .lot { font-size: 7px; color: #666; }
+        .barcode { font-family: monospace; font-size: 10px; letter-spacing: -1px; margin: 3px 0; }
+        .expiry { font-size: 6px; color: #999; }
+      </style>
+    </head><body>${labelsHtml}</body></html>`);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   };
 
   return (
