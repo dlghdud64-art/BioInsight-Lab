@@ -101,10 +101,10 @@ function InventoryOpsMockupContent() {
         {/* KPI strip — 모바일 2x2, 데스크톱 4col */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-px" style={{ backgroundColor: "rgba(255,255,255,0.04)" }}>
           {[
-            { label: "부족/품절", value: "5", color: "#EF4444" },
-            { label: "만료 임박", value: "2", color: "#F59E0B" },
-            { label: "재주문 필요", value: "4", color: "#3B82F6" },
-            { label: "입고 대기", value: "1", color: "#3B82F6" },
+            { label: "오늘 처리 대상", value: "3", color: "#EF4444" },
+            { label: "부족/품절", value: "2", color: "#F59E0B" },
+            { label: "만료 임박", value: "1", color: "#F97316" },
+            { label: "전체 재고", value: "47", color: "#3B82F6" },
           ].map((kpi) => (
             <div key={kpi.label} className="px-2 md:px-3 py-1.5 md:py-2" style={{ backgroundColor: C.base }}>
               <p className="text-[7px] md:text-[9px] uppercase tracking-wider font-semibold mb-0.5" style={{ color: C.text4 }}>{kpi.label}</p>
@@ -252,10 +252,10 @@ export function FinalCTASection() {
               <span className="text-sm font-bold tracking-wide" style={{ color: LT.blue }}>Inventory Operations</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3" style={{ color: LT.text1 }}>
-              입고 이후 재고 운영까지 끊기지 않습니다
+              재고와 lot 상태를 한눈에 관리합니다
             </h2>
             <p className="text-base" style={{ color: LT.text3 }}>
-              입고 반영, Lot·유효기간 관리, 부족 판단과 재주문까지 이어집니다.
+              만료 폐기, 부족 재발주, 점검 기록까지 하나의 운영 흐름으로 이어집니다.
             </p>
           </div>
         </Reveal>

@@ -443,7 +443,7 @@ export function BioInsightHeroSection() {
 
         {/* ── Mockup 1 캡션 ── */}
         <p className="text-[11px] md:text-[13px] font-semibold tracking-wide mb-4 md:mb-5 animate-stagger-up" style={{ color: "#94A3B8", animationDelay: "240ms" }}>
-          수십 개의 견적 비교부터 AI 발주 추천까지, 한 화면에서
+          견적 비교부터 발주 전환까지, 한 화면에서 운영합니다
         </p>
 
         {/* ── Hero Mockup — 제품이 주인공 ── */}
@@ -475,7 +475,7 @@ export function BioInsightHeroSection() {
               className="flex items-center px-3 md:px-4 py-2"
               style={{ backgroundColor: "#0C1322", borderBottom: "1px solid rgba(255,255,255,0.08)" }}
             >
-              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#7A8BA3" }}>LabAxis — 발주 전환 큐</span>
+              <span className="text-[10px] md:text-[11px] font-medium" style={{ color: "#7A8BA3" }}>LabAxis — 구매 운영</span>
             </div>
 
             {/* KPI bar — "작동 중" 인상 */}
