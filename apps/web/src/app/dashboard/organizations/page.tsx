@@ -488,9 +488,9 @@ export default function OrganizationsPage() {
         ) : filteredOrgs.length === 0 && organizations.length === 0 ? (
           <EmptyState onOpen={() => setIsOpen(true)} />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5 items-start">
             {/* ── 왼쪽: 조직 카드 그리드 ── */}
-            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-3"}>
+            <div className={viewMode === "grid" ? "grid grid-cols-1 md:grid-cols-2 gap-3" : "space-y-3"}>
               {filteredOrgs.length === 0 ? (
                 <div className="col-span-2 flex flex-col items-center py-12 text-center">
                   <Search className="h-8 w-8 text-slate-300 mb-3" />
@@ -509,7 +509,7 @@ export default function OrganizationsPage() {
             </div>
 
             {/* ── 오른쪽: 사이드바 ── */}
-            <div className="space-y-4">
+            <div className="space-y-3 sticky top-20">
               {/* 포트폴리오 요약 */}
               <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-slate-100 flex items-center gap-2">
