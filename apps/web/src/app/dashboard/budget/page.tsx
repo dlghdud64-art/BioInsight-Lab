@@ -291,7 +291,7 @@ export default function BudgetPage() {
                     <Plus className="h-3.5 w-3.5 mr-1.5" />예산 등록
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" onPointerDownOutside={(e) => e.preventDefault()}>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl" onPointerDownOutside={(e) => e.preventDefault()}>
                   <DialogHeader>
                     <DialogTitle>{editingBudget ? "예산 수정" : "예산안 만들기"}</DialogTitle>
                     <DialogDescription>팀/프로젝트 예산을 생성하고 승인 후 활성화할 수 있습니다.</DialogDescription>
@@ -767,26 +767,26 @@ function BudgetForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-5">
       <div>
-        <Label htmlFor="name">예산 이름 *</Label>
-        <Input id="name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: "" })); }} placeholder="예: 2026 상반기 시약비" required className={errors.name ? "border-red-500" : ""} />
-        {errors.name && <p className="text-xs text-red-500 mt-1">{errors.name}</p>}
+        <Label htmlFor="name" className="text-sm font-semibold text-slate-700">예산 이름 <span className="text-red-500">*</span></Label>
+        <Input id="name" value={name} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setName(e.target.value); if (errors.name) setErrors((prev) => ({ ...prev, name: "" })); }} placeholder="예: 2026 하반기 소모품비" required className={`mt-1.5 rounded-xl h-11 ${errors.name ? "border-red-400 ring-1 ring-red-200 focus-visible:ring-red-300" : "border-slate-200"}`} />
+        {errors.name && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.name}</p>}
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="amount">예산 금액 *</Label>
-          <div className="relative">
-            <Input id="amount" type="text" value={formatAmount(amount)} onChange={handleAmountChange} placeholder="예: 10,000,000" required className={errors.amount ? "border-red-500" : ""} />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{currency}</span>
+          <Label htmlFor="amount" className="text-sm font-semibold text-slate-700">예산 금액 <span className="text-red-500">*</span></Label>
+          <div className="relative mt-1.5">
+            <Input id="amount" type="text" value={formatAmount(amount)} onChange={handleAmountChange} placeholder="0" required className={`rounded-xl h-11 ${errors.amount ? "border-red-400 ring-1 ring-red-200 focus-visible:ring-red-300" : "border-slate-200"}`} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400">{currency}</span>
           </div>
-          {errors.amount && <p className="text-xs text-red-500 mt-1">{errors.amount}</p>}
+          {errors.amount && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.amount}</p>}
         </div>
         <div>
-          <Label htmlFor="currency">통화 *</Label>
+          <Label htmlFor="currency" className="text-sm font-semibold text-slate-700">통화 <span className="text-red-500">*</span></Label>
           <Select value={currency} onValueChange={setCurrency}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent position="popper" className="z-[9999]">
+            <SelectTrigger className="mt-1.5 rounded-xl h-11 border-slate-200"><SelectValue /></SelectTrigger>
+            <SelectContent position="popper" className="z-[9999] rounded-xl">
               <SelectItem value="KRW">KRW (원)</SelectItem>
               <SelectItem value="USD">USD (달러)</SelectItem>
               <SelectItem value="EUR">EUR (유로)</SelectItem>
@@ -797,50 +797,50 @@ function BudgetForm({
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <Label htmlFor="periodStart">기간 시작 *</Label>
-          <DatePicker date={periodStart || undefined} onDateChange={(d: Date | undefined) => setPeriodStart(d || null)} placeholder="날짜를 선택하세요" maxDate={periodEnd || undefined} className={errors.periodStart ? "border-red-500" : ""} />
-          {errors.periodStart && <p className="text-xs text-red-500 mt-1">{errors.periodStart}</p>}
+          <Label htmlFor="periodStart" className="text-sm font-semibold text-slate-700">기간 시작 <span className="text-red-500">*</span></Label>
+          <DatePicker date={periodStart || undefined} onDateChange={(d: Date | undefined) => setPeriodStart(d || null)} placeholder="연도-월-일" maxDate={periodEnd || undefined} className={`mt-1.5 rounded-xl h-11 ${errors.periodStart ? "border-red-400 ring-1 ring-red-200" : "border-slate-200"}`} />
+          {errors.periodStart && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.periodStart}</p>}
         </div>
         <div>
-          <Label htmlFor="periodEnd">기간 종료 *</Label>
-          <DatePicker date={periodEnd || undefined} onDateChange={(d: Date | undefined) => setPeriodEnd(d || null)} placeholder="날짜를 선택하세요" minDate={periodStart || undefined} className={errors.periodEnd ? "border-red-500" : ""} />
-          {errors.periodEnd && <p className="text-xs text-red-500 mt-1">{errors.periodEnd}</p>}
+          <Label htmlFor="periodEnd" className="text-sm font-semibold text-slate-700">기간 종료 <span className="text-red-500">*</span></Label>
+          <DatePicker date={periodEnd || undefined} onDateChange={(d: Date | undefined) => setPeriodEnd(d || null)} placeholder="연도-월-일" minDate={periodStart || undefined} className={`mt-1.5 rounded-xl h-11 ${errors.periodEnd ? "border-red-400 ring-1 ring-red-200" : "border-slate-200"}`} />
+          {errors.periodEnd && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.periodEnd}</p>}
         </div>
       </div>
       {periodStart && periodEnd && (
-        <div className="p-3 bg-blue-50 rounded-lg text-xs text-blue-700">
+        <div className="px-4 py-3 bg-blue-50 rounded-xl text-xs text-blue-700">
           <Calendar className="h-3 w-3 inline mr-1" />
           예산 기간: {periodStart.toLocaleDateString("ko-KR")} ~ {periodEnd.toLocaleDateString("ko-KR")} ({Math.ceil((periodEnd.getTime() - periodStart.getTime()) / (1000 * 60 * 60 * 24))}일)
         </div>
       )}
       <div>
-        <Label htmlFor="targetDepartment">대상 부서/팀 <span className="text-red-500">*</span></Label>
+        <Label htmlFor="targetDepartment" className="text-sm font-semibold text-slate-700">대상 부서/팀 <span className="text-red-500">*</span></Label>
         <Select value={targetDepartment} onValueChange={(v: string) => { setTargetDepartment(v); if (errors.targetDepartment) setErrors((prev) => ({ ...prev, targetDepartment: "" })); }}>
-          <SelectTrigger className={errors.targetDepartment ? "border-red-500" : ""}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
-          <SelectContent position="popper" className="z-[9999]">
+          <SelectTrigger className={`mt-1.5 rounded-xl h-11 ${errors.targetDepartment ? "border-red-400 ring-1 ring-red-200" : "border-slate-200"}`}><SelectValue placeholder="부서를 선택해주세요" /></SelectTrigger>
+          <SelectContent position="popper" className="z-[9999] rounded-xl">
             {BUDGET_DEPARTMENT_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {errors.targetDepartment && <p className="text-xs text-red-500 mt-1">{errors.targetDepartment}</p>}
+        {errors.targetDepartment && <p className="text-[12px] font-medium text-red-500 mt-1.5">{errors.targetDepartment}</p>}
       </div>
       <div>
-        <Label htmlFor="projectName">프로젝트/과제명 (선택)</Label>
-        <Input id="projectName" value={projectName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)} placeholder="예: 신약 개발 프로젝트" />
+        <Label htmlFor="projectName" className="text-sm font-semibold text-slate-700">프로젝트/과제명 (선택)</Label>
+        <Input id="projectName" value={projectName} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setProjectName(e.target.value)} placeholder="예: 신약 개발 프로젝트" className="mt-1.5 rounded-xl h-11 border-slate-200" />
       </div>
       <div>
-        <Label htmlFor="description">설명 (선택)</Label>
-        <Textarea id="description" value={description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} placeholder="예산에 대한 추가 설명" rows={3} className="resize-none" />
+        <Label htmlFor="description" className="text-sm font-semibold text-slate-700">설명 (선택)</Label>
+        <Textarea id="description" value={description} onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)} placeholder="예산에 대한 추가 설명" rows={3} className="mt-1.5 rounded-xl resize-none border-slate-200" />
       </div>
       {submitError && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2">
-          <p className="text-xs text-red-600">{submitError}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-[12px] font-medium text-red-600">{submitError}</p>
         </div>
       )}
-      <div className="flex flex-col sm:flex-row gap-2 pt-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={isSubmitting}>취소</Button>
-        <Button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700" disabled={isSubmitting}>
+      <div className="flex flex-col sm:flex-row gap-3 pt-3">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1 h-11 rounded-xl border-slate-200 text-slate-600 font-semibold" disabled={isSubmitting}>취소</Button>
+        <Button type="submit" className="flex-1 h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold" disabled={isSubmitting}>
           {isSubmitting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />{budget ? "수정 중..." : "저장 중..."}</>) : (budget ? "예산 수정 저장" : "예산안 저장")}
         </Button>
       </div>

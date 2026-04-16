@@ -127,35 +127,35 @@ export function InventoryFlowView() {
       {/* ── AI 흐름 분석 ── */}
       {visibleInsights.length > 0 && (
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="h-4 w-4 text-blue-500" />
+            <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">
               AI 흐름 분석
             </span>
-            <span className="text-[10px] font-medium text-slate-400">
+            <span className="text-[11px] font-semibold text-slate-400">
               {visibleInsights.length}건 감지
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {visibleInsights.map((insight: FlowInsight) => {
               const color = getInsightColor(insight.severity);
               const Icon = INSIGHT_ICONS[insight.type] || AlertTriangle;
               return (
                 <div
                   key={insight.id}
-                  className="rounded-lg border bg-white p-3.5 flex gap-3 items-start group transition-colors hover:brightness-[0.97]"
+                  className="rounded-xl border bg-white px-5 py-4.5 flex gap-4 items-start group transition-colors hover:brightness-[0.97]"
                   style={{ borderColor: color.border }}
                 >
                   {/* Colored icon circle */}
                   <div
-                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                    className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center mt-0.5"
                     style={{ backgroundColor: color.iconBg }}
                   >
-                    <Icon className="h-4 w-4" style={{ color: color.text }} />
+                    <Icon className="h-5 w-5" style={{ color: color.text }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-extrabold text-slate-900 mb-0.5">{insight.title}</p>
-                    <p className="text-[11px] leading-relaxed text-slate-500">{insight.reason}</p>
+                    <p className="text-[13px] font-extrabold text-slate-900 mb-1">{insight.title}</p>
+                    <p className="text-xs leading-relaxed text-slate-500">{insight.reason}</p>
                   </div>
                   <button
                     onClick={() => setDismissedInsights((prev) => new Set([...prev, insight.id]))}
@@ -173,7 +173,7 @@ export function InventoryFlowView() {
 
       {/* ── 파이프라인 ── */}
       <div className="overflow-x-auto pb-2">
-        <div className="flex items-start gap-1 min-w-[900px]">
+        <div className="flex items-start gap-1.5 min-w-[1020px]">
           {MOCK_STAGES.map((stage, i) => {
             const Icon = stage.icon;
             const isSelected = selectedStage === stage.id;
@@ -184,41 +184,41 @@ export function InventoryFlowView() {
                 <button
                   type="button"
                   onClick={() => setSelectedStage(isSelected ? null : stage.id)}
-                  className={`flex-shrink-0 w-[120px] rounded-xl border p-3.5 text-center transition-all ${
+                  className={`flex-shrink-0 w-[136px] rounded-xl border px-3 py-4 text-center transition-all ${
                     isSelected
                       ? "border-blue-400 ring-2 ring-blue-400/20 bg-blue-50/50"
                       : "border-slate-200 bg-white hover:bg-slate-50/80"
                   }`}
                 >
                   {/* Large circular icon */}
-                  <div className={`mx-auto w-11 h-11 rounded-full flex items-center justify-center mb-2.5 ${stage.iconBg}`}>
-                    <Icon className={`h-5 w-5 ${stage.iconColor}`} />
+                  <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${stage.iconBg}`}>
+                    <Icon className={`h-5.5 w-5.5 ${stage.iconColor}`} />
                   </div>
 
                   {/* Stage label */}
-                  <p className="text-[11px] font-bold text-slate-500 mb-1 truncate">{stage.label}</p>
+                  <p className="text-xs font-bold text-slate-500 mb-1.5 truncate">{stage.label}</p>
 
                   {/* Count — big bold */}
-                  <p className="text-[22px] font-extrabold tracking-tight text-slate-900 leading-none">{stage.itemCount}</p>
-                  <p className="text-[10px] font-medium text-slate-400 mt-0.5">{stage.lotCount} lots</p>
+                  <p className="text-2xl font-extrabold tracking-tight text-slate-900 leading-none">{stage.itemCount}</p>
+                  <p className="text-[11px] font-medium text-slate-400 mt-1">{stage.lotCount} lots</p>
 
                   {/* Attention badge */}
                   {stage.needsAttention && (
-                    <Badge className="mt-2 h-[18px] px-1.5 text-[9px] font-bold bg-red-50 text-red-600 border-red-200 border">
+                    <Badge className="mt-2.5 h-5 px-2 text-[10px] font-bold bg-red-50 text-red-600 border-red-200 border">
                       조치 필요
                     </Badge>
                   )}
 
                   {/* AI micro-insight */}
                   {micro && (
-                    <p className={`mt-1.5 text-[9px] font-bold leading-tight ${micro.color}`}>{micro.text}</p>
+                    <p className={`mt-1.5 text-[10px] font-bold leading-tight ${micro.color}`}>{micro.text}</p>
                   )}
                 </button>
 
                 {/* Arrow separator */}
                 {i < MOCK_STAGES.length - 1 && (
-                  <div className="flex items-center px-1 flex-shrink-0">
-                    <ArrowRight className="h-3.5 w-3.5 text-slate-300" />
+                  <div className="flex items-center px-1.5 flex-shrink-0">
+                    <ArrowRight className="h-4 w-4 text-slate-300" />
                   </div>
                 )}
               </div>
@@ -285,7 +285,7 @@ export function InventoryFlowView() {
 
       {/* ── 하단 요약 카드 ── */}
       {!selectedStage && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
             { label: "검수 대기", count: 2, iconBg: "bg-amber-100", iconColor: "text-amber-600", icon: ClipboardCheck },
             { label: "안전재고 미만", count: 3, iconBg: "bg-red-100", iconColor: "text-red-600", icon: AlertTriangle },
@@ -294,15 +294,15 @@ export function InventoryFlowView() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3 hover:bg-slate-50/80 transition-colors"
+              className="rounded-xl border border-slate-200 bg-white px-5 py-4.5 flex items-center gap-4 hover:bg-slate-50/80 transition-colors"
             >
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
-                <s.icon className={`h-4 w-4 ${s.iconColor}`} />
+              <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
+                <s.icon className={`h-5 w-5 ${s.iconColor}`} />
               </div>
               <div>
-                <p className="text-[11px] font-bold text-slate-500">{s.label}</p>
-                <p className="text-[20px] font-extrabold tracking-tight text-slate-900 leading-none mt-0.5">
-                  {s.count}<span className="text-[13px] font-bold text-slate-400 ml-0.5">건</span>
+                <p className="text-xs font-bold text-slate-500">{s.label}</p>
+                <p className="text-[22px] font-extrabold tracking-tight text-slate-900 leading-none mt-1">
+                  {s.count}<span className="text-sm font-bold text-slate-400 ml-0.5">건</span>
                 </p>
               </div>
             </div>
