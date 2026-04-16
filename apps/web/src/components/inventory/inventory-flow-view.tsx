@@ -172,53 +172,56 @@ export function InventoryFlowView() {
       )}
 
       {/* ── 파이프라인 ── */}
-      <div className="overflow-x-auto pb-2">
-        <div className="flex items-start gap-1.5 min-w-[1020px]">
+      <div className="rounded-xl border border-slate-200 bg-white p-5">
+        <div className="grid grid-cols-7 gap-0">
           {MOCK_STAGES.map((stage, i) => {
             const Icon = stage.icon;
             const isSelected = selectedStage === stage.id;
             const micro = STAGE_MICRO_INSIGHTS[stage.id];
 
             return (
-              <div key={stage.id} className="flex items-center">
+              <div key={stage.id} className="flex items-stretch">
                 <button
                   type="button"
                   onClick={() => setSelectedStage(isSelected ? null : stage.id)}
-                  className={`flex-shrink-0 w-[136px] rounded-xl border px-3 py-4 text-center transition-all ${
+                  className={`flex-1 rounded-xl border px-2.5 py-5 text-center transition-all flex flex-col items-center min-h-[168px] ${
                     isSelected
                       ? "border-blue-400 ring-2 ring-blue-400/20 bg-blue-50/50"
-                      : "border-slate-200 bg-white hover:bg-slate-50/80"
+                      : "border-slate-100 bg-slate-50/30 hover:bg-slate-50"
                   }`}
                 >
-                  {/* Large circular icon */}
-                  <div className={`mx-auto w-12 h-12 rounded-full flex items-center justify-center mb-3 ${stage.iconBg}`}>
-                    <Icon className={`h-5.5 w-5.5 ${stage.iconColor}`} />
+                  {/* Circular icon */}
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-2.5 flex-shrink-0 ${stage.iconBg}`}>
+                    <Icon className={`h-5 w-5 ${stage.iconColor}`} />
                   </div>
 
                   {/* Stage label */}
-                  <p className="text-xs font-bold text-slate-500 mb-1.5 truncate">{stage.label}</p>
+                  <p className="text-xs font-bold text-slate-500 mb-2 truncate w-full">{stage.label}</p>
 
                   {/* Count — big bold */}
                   <p className="text-2xl font-extrabold tracking-tight text-slate-900 leading-none">{stage.itemCount}</p>
                   <p className="text-[11px] font-medium text-slate-400 mt-1">{stage.lotCount} lots</p>
 
+                  {/* Spacer to push badges to bottom */}
+                  <div className="flex-1" />
+
                   {/* Attention badge */}
                   {stage.needsAttention && (
-                    <Badge className="mt-2.5 h-5 px-2 text-[10px] font-bold bg-red-50 text-red-600 border-red-200 border">
+                    <Badge className="mt-2 h-5 px-2 text-[10px] font-bold bg-red-50 text-red-600 border-red-200 border">
                       조치 필요
                     </Badge>
                   )}
 
                   {/* AI micro-insight */}
                   {micro && (
-                    <p className={`mt-1.5 text-[10px] font-bold leading-tight ${micro.color}`}>{micro.text}</p>
+                    <p className={`mt-1 text-[10px] font-bold leading-tight ${micro.color}`}>{micro.text}</p>
                   )}
                 </button>
 
                 {/* Arrow separator */}
                 {i < MOCK_STAGES.length - 1 && (
-                  <div className="flex items-center px-1.5 flex-shrink-0">
-                    <ArrowRight className="h-4 w-4 text-slate-300" />
+                  <div className="flex items-center px-1 flex-shrink-0">
+                    <ChevronRight className="h-4 w-4 text-slate-300" />
                   </div>
                 )}
               </div>
@@ -294,15 +297,15 @@ export function InventoryFlowView() {
           ].map((s) => (
             <div
               key={s.label}
-              className="rounded-xl border border-slate-200 bg-white px-5 py-4.5 flex items-center gap-4 hover:bg-slate-50/80 transition-colors"
+              className="rounded-xl border border-slate-200 bg-white px-5 py-5 flex items-center gap-4 hover:bg-slate-50/80 transition-colors cursor-pointer"
             >
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
-                <s.icon className={`h-5 w-5 ${s.iconColor}`} />
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
+                <s.icon className={`h-5.5 w-5.5 ${s.iconColor}`} />
               </div>
-              <div>
-                <p className="text-xs font-bold text-slate-500">{s.label}</p>
-                <p className="text-[22px] font-extrabold tracking-tight text-slate-900 leading-none mt-1">
-                  {s.count}<span className="text-sm font-bold text-slate-400 ml-0.5">건</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-bold text-slate-500 mb-1">{s.label}</p>
+                <p className="text-[26px] font-extrabold tracking-tight text-slate-900 leading-none">
+                  {s.count}<span className="text-sm font-bold text-slate-400 ml-1">건</span>
                 </p>
               </div>
             </div>

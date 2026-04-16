@@ -60,13 +60,15 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                   <Link href="/app/search" className="px-4 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors whitespace-nowrap">
                     검색
                   </Link>
-                  <button
-                    onClick={() => openContextLayer(pathname, {})}
-                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
-                  >
-                    <Compass className="h-3.5 w-3.5" />
-                    다음 작업
-                  </button>
+                  {pathname.startsWith("/dashboard") && (
+                    <button
+                      onClick={() => openContextLayer(pathname, {})}
+                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg px-4 py-1.5 transition-colors whitespace-nowrap shadow-sm"
+                    >
+                      <Compass className="h-3.5 w-3.5" />
+                      다음 작업
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
@@ -173,22 +175,24 @@ export function MainHeader({ onMenuClick, pageTitle, showMenuIcon = false }: Mai
                     </div>
                   </div>
 
-                  {/* 다음 작업 (contextual entry) */}
-                  <div className="px-2 py-1.5">
-                    <button
-                      onClick={() => {
-                        close();
-                        openContextLayer(pathname, {});
-                      }}
-                      className="w-full flex items-center gap-3 px-3 rounded-xl transition-colors"
-                      style={{ paddingTop: 11, paddingBottom: 11, color: "#F1F5F9" }}
-                      onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
-                      onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
-                    >
-                      <Compass className="h-4 w-4 flex-shrink-0" style={{ color: "#2563EB" }} />
-                      <span className="text-sm font-semibold">다음 작업</span>
-                    </button>
-                  </div>
+                  {/* 다음 작업 (contextual entry) — 대시보드에서만 표시 */}
+                  {pathname.startsWith("/dashboard") && (
+                    <div className="px-2 py-1.5">
+                      <button
+                        onClick={() => {
+                          close();
+                          openContextLayer(pathname, {});
+                        }}
+                        className="w-full flex items-center gap-3 px-3 rounded-xl transition-colors"
+                        style={{ paddingTop: 11, paddingBottom: 11, color: "#F1F5F9" }}
+                        onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#142840")}
+                        onMouseLeave={e => (e.currentTarget.style.backgroundColor = "transparent")}
+                      >
+                        <Compass className="h-4 w-4 flex-shrink-0" style={{ color: "#2563EB" }} />
+                        <span className="text-sm font-semibold">다음 작업</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* 앱 이동 */}
                   <nav className="px-2 py-2">
