@@ -449,43 +449,76 @@ export default function SupportCenterPage() {
   }, [globalSearch, activeTab]);
 
   return (
-    <div className="flex-1 pt-2 md:pt-4 max-w-5xl mx-auto w-full">
-      {/* ── 헤더 (압축) ── */}
-      <div className="mb-4 px-1">
-        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">운영 지원 센터</h1>
-        <p className="text-sm text-slate-500 mt-0.5">매뉴얼, 문제 해결, 지원 요청을 한곳에서 처리합니다.</p>
-        {/* Context strip — 진입 경로가 있으면 표시 */}
-        {(() => {
-          const fromRoute = searchParams?.get("from") ?? null;
-          const sourceLabel = searchParams?.get("sourceLabel") ?? null;
-          const sourceEntityId = searchParams?.get("sourceEntityId") ?? null;
-          if (!fromRoute && !sourceEntityId) return null;
-          const moduleLabel = sourceLabel ?? fromRoute?.split("/").pop() ?? "이전 화면";
-          return (
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
-              {sourceEntityId && (
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-xs font-medium text-blue-700">
-                  <FileText className="h-3 w-3" />
-                  {sourceEntityId}
+    <div className="flex-1 pt-4 md:pt-6 w-full px-4 md:px-8 lg:px-10">
+      {/* ── 헤더: 좌 title/desc, 우 search ── */}
+      <div className="mb-6 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <h1 className="text-[24px] md:text-[28px] font-extrabold text-slate-900 tracking-tight leading-tight">운영 지원 센터</h1>
+          <p className="text-[13px] text-slate-400 font-medium mt-1">매뉴얼, 문제 해결, 지원 요청을 한곳에서 처리합니다.</p>
+          {/* Context strip — 진입 경로가 있으면 표시 */}
+          {(() => {
+            const fromRoute = searchParams?.get("from") ?? null;
+            const sourceLabel = searchParams?.get("sourceLabel") ?? null;
+            const sourceEntityId = searchParams?.get("sourceEntityId") ?? null;
+            if (!fromRoute && !sourceEntityId) return null;
+            const moduleLabel = sourceLabel ?? fromRoute?.split("/").pop() ?? "이전 화면";
+            return (
+              <div className="mt-3 flex items-center gap-2 flex-wrap">
+                {sourceEntityId && (
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 border border-blue-200 text-xs font-medium text-blue-700">
+                    <FileText className="h-3 w-3" />
+                    {sourceEntityId}
+                  </span>
+                )}
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-600">
+                  진입 경로: {moduleLabel}
                 </span>
-              )}
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-xs text-slate-600">
-                진입 경로: {moduleLabel}
-              </span>
-              <Link href={fromRoute ?? "/dashboard"}>
-                <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
-                  원래 작업으로 복귀 <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
-              </Link>
+                <Link href={fromRoute ?? "/dashboard"}>
+                  <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50">
+                    원래 작업으로 복귀 <ArrowRight className="h-3 w-3 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            );
+          })()}
+        </div>
+        {/* 우측 통합 검색 */}
+        <div className="relative w-full md:w-80 flex-shrink-0">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            placeholder="매뉴얼, 증상, 티켓 검색…"
+            value={globalSearch}
+            onChange={(e) => setGlobalSearch(e.target.value)}
+            className="pl-10 h-10 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 rounded-xl text-sm"
+          />
+          {/* 통합 검색 결과 dropdown */}
+          {globalSearchResults && globalSearch.trim() && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg z-50 max-h-72 overflow-y-auto">
+              {globalSearchResults.map((r) => (
+                <button
+                  key={`${r.type}-${r.id}`}
+                  className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors flex items-start gap-3 border-b border-slate-100 last:border-0"
+                  onClick={() => {
+                    if (r.type !== activeTab) handleTabChange(r.type);
+                    setGlobalSearch("");
+                  }}
+                >
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-slate-200 text-slate-400 font-bold shrink-0 mt-0.5">
+                    {r.type === "manual" ? "매뉴얼" : r.type === "troubleshoot" ? "런북" : "티켓"}
+                  </Badge>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-slate-800 truncate">{r.title}</p>
+                    <p className="text-[11px] text-slate-400 truncate">{r.desc}</p>
+                  </div>
+                </button>
+              ))}
             </div>
-          );
-        })()}
+          )}
+        </div>
       </div>
 
-      {/* 통합 검색 제거 — 탭 전용 검색만 유지 */}
-
       {/* ── 탭 네비게이션 ── */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 mb-4 mx-1">
+      <div className="flex gap-1 border-b border-slate-200 mb-8">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -493,10 +526,10 @@ export default function SupportCenterPage() {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all ${
+              className={`flex items-center gap-2.5 px-5 py-3.5 text-[14px] font-extrabold transition-all border-b-2 -mb-px ${
                 isActive
-                  ? "bg-white text-blue-700 shadow-sm border border-slate-200/80"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
+                  ? "text-slate-900 border-blue-600"
+                  : "text-slate-400 border-transparent hover:text-slate-600 hover:border-slate-300"
               }`}
             >
               <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
@@ -532,65 +565,40 @@ export default function SupportCenterPage() {
 
 function ManualTab() {
   const [activeCategory, setActiveCategory] = useState("getting-started");
-  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredEntries = useMemo(() => {
-    let items = GUIDE_ENTRIES;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      items = items.filter(
-        (e) =>
-          e.title.toLowerCase().includes(q) ||
-          e.what.toLowerCase().includes(q) ||
-          e.when.toLowerCase().includes(q) ||
-          e.keyInputs.some((k) => k.toLowerCase().includes(q)),
-      );
-    } else {
-      items = items.filter((e) => e.category === activeCategory);
-    }
-    return items;
-  }, [activeCategory, searchQuery]);
+    return GUIDE_ENTRIES.filter((e) => e.category === activeCategory);
+  }, [activeCategory]);
 
   const activeCategoryMeta = GUIDE_CATEGORIES.find((c) => c.id === activeCategory);
 
   return (
     <div>
-      {/* 검색바 */}
-      <div className="relative mb-4">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-        <Input
-          placeholder="매뉴얼 검색 (예: 견적 요청, 재고, PDF 분석)"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-10 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 rounded-lg text-sm"
-        />
-      </div>
-
-      {/* 최근 업데이트 — above-the-fold에서 제거, 가이드 리스트 아래로 이동 */}
-
       {/* 메인 레이아웃: 사이드바 + 콘텐츠 */}
-      <div className="flex gap-5">
-        {/* 데스크탑 사이드바 */}
-        <nav className="hidden md:block w-52 flex-shrink-0">
-          <div className="sticky top-4 space-y-0.5">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold px-3 mb-2">카테고리</p>
+      <div className="flex gap-8">
+        {/* 데스크탑 사이드바 — 확장 (w-64 = 256px) */}
+        <nav className="hidden md:block w-64 flex-shrink-0">
+          <div className="sticky top-4 space-y-1">
+            <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold px-3 mb-3">카테고리</p>
             {GUIDE_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
-              const isActive = !searchQuery && activeCategory === cat.id;
+              const isActive = activeCategory === cat.id;
               const count = GUIDE_ENTRIES.filter((e) => e.category === cat.id).length;
               return (
                 <button
                   key={cat.id}
-                  onClick={() => { setActiveCategory(cat.id); setSearchQuery(""); }}
-                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-[13px] font-bold transition-all ${
                     isActive
-                      ? "bg-blue-50 text-blue-700 border border-blue-200"
+                      ? "bg-blue-50 text-blue-700 border border-blue-200 shadow-sm"
                       : "text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent"
                   }`}
                 >
-                  <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? "text-blue-600" : "text-slate-500"}`} />
+                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${isActive ? "bg-blue-100" : "bg-slate-100"}`}>
+                    <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                  </div>
                   <span className="truncate">{cat.label}</span>
-                  <span className={`ml-auto text-[10px] ${isActive ? "text-blue-500" : "text-slate-500"}`}>{count}</span>
+                  <span className={`ml-auto text-[11px] font-extrabold ${isActive ? "text-blue-500" : "text-slate-400"}`}>{count}</span>
                 </button>
               );
             })}
@@ -602,12 +610,12 @@ function ManualTab() {
           <div className="flex gap-1.5 overflow-x-auto pb-3 scrollbar-hide snap-x mb-4">
             {GUIDE_CATEGORIES.map((cat) => {
               const Icon = cat.icon;
-              const isActive = !searchQuery && activeCategory === cat.id;
+              const isActive = activeCategory === cat.id;
               return (
                 <button
                   key={cat.id}
-                  onClick={() => { setActiveCategory(cat.id); setSearchQuery(""); }}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start ${
+                  onClick={() => setActiveCategory(cat.id)}
+                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex-shrink-0 snap-start ${
                     isActive
                       ? "bg-blue-600 text-white"
                       : "bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-700"
@@ -619,12 +627,12 @@ function ManualTab() {
               );
             })}
           </div>
-          <ManualContent entries={filteredEntries} searchQuery={searchQuery} activeCategoryMeta={activeCategoryMeta} />
+          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} />
         </div>
 
         {/* 데스크탑 콘텐츠 */}
         <div className="hidden md:block flex-1 min-w-0">
-          <ManualContent entries={filteredEntries} searchQuery={searchQuery} activeCategoryMeta={activeCategoryMeta} />
+          <ManualContent entries={filteredEntries} activeCategoryMeta={activeCategoryMeta} />
         </div>
       </div>
     </div>
@@ -633,91 +641,103 @@ function ManualTab() {
 
 function ManualContent({
   entries,
-  searchQuery,
   activeCategoryMeta,
 }: {
   entries: GuideEntry[];
-  searchQuery: string;
   activeCategoryMeta: (typeof GUIDE_CATEGORIES)[number] | undefined;
 }) {
   if (entries.length === 0) {
     return (
       <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
         <Search className="h-8 w-8 text-slate-400 mx-auto mb-3" />
-        <p className="text-sm font-medium text-slate-500 mb-1">검색 결과가 없습니다</p>
-        <p className="text-xs text-slate-500">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
+        <p className="text-sm font-bold text-slate-500 mb-1">가이드가 없습니다</p>
+        <p className="text-xs text-slate-400">다른 카테고리를 선택해보세요.</p>
       </div>
     );
   }
 
+  // Featured 2개 + 나머지
+  const featured = entries.slice(0, 2);
+  const rest = entries.slice(2);
+
   return (
-    <div className="space-y-3">
-      {!searchQuery && activeCategoryMeta && (
-        <div className="flex items-center gap-2 mb-1">
-          <activeCategoryMeta.icon className="h-4 w-4 text-blue-600" />
-          <h2 className="text-sm font-semibold text-slate-700">{activeCategoryMeta.label}</h2>
-          <Badge className="text-[10px] px-1.5 py-0 bg-slate-100 border-slate-200 text-slate-500">
-            {entries.length}개 가이드
-          </Badge>
+    <div>
+      {/* 카테고리 헤더 */}
+      {activeCategoryMeta && (
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center">
+            <activeCategoryMeta.icon className="h-4.5 w-4.5 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-[17px] font-extrabold text-slate-900 leading-tight">{activeCategoryMeta.label}</h2>
+            <p className="text-[11px] text-slate-400 font-medium">{entries.length}개 가이드</p>
+          </div>
         </div>
       )}
 
-      {searchQuery && (
-        <p className="text-xs text-slate-500 mb-1">
-          &quot;{searchQuery}&quot; 검색 결과 {entries.length}건
-        </p>
-      )}
-
-      {entries.map((entry) => {
-        const Icon = entry.icon;
-        return (
-          <Card key={entry.id} className="bg-white border-slate-200 hover:border-blue-200 hover:shadow-md hover:shadow-blue-50 transition-all overflow-hidden">
-            <CardContent className="p-4 md:p-5">
-              <div className="flex items-start gap-3.5">
-                <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <Icon className="h-4 w-4 text-blue-600" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-semibold text-slate-900 mb-2">{entry.title}</h3>
-                  <div className="space-y-2 mb-3">
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">기능</span>
-                      <p className="text-xs text-slate-600 leading-relaxed">{entry.what}</p>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">사용 시점</span>
-                      <p className="text-xs text-slate-500 leading-relaxed">{entry.when}</p>
-                    </div>
-                    {entry.keyInputs.length > 0 && (
-                      <div className="flex items-start gap-2">
-                        <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">주요 입력</span>
-                        <div className="flex flex-wrap gap-1">
-                          {entry.keyInputs.map((input, i) => (
-                            <Badge key={i} variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 bg-slate-50">{input}</Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="flex items-start gap-2">
-                      <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold w-16 flex-shrink-0 pt-0.5">다음 단계</span>
-                      <div className="flex items-center gap-1">
-                        <ChevronRight className="h-3 w-3 text-emerald-500" />
-                        <p className="text-xs text-emerald-600">{entry.nextAction}</p>
-                      </div>
+      {/* Featured guides — 큰 카드 2개 */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {featured.map((entry) => {
+          const Icon = entry.icon;
+          return (
+            <Card key={entry.id} className="bg-white border-slate-200 hover:border-blue-200 transition-all overflow-hidden rounded-xl">
+              <CardContent className="p-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-[16px] font-extrabold text-slate-900 mb-2 leading-snug">{entry.title}</h3>
+                    <p className="text-[13px] text-slate-500 leading-relaxed mb-3">{entry.what}</p>
+                    <p className="text-[11px] text-slate-400 mb-4">
+                      <Clock className="h-3 w-3 inline mr-1 -mt-0.5" />
+                      {entry.when}
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <Link href={entry.link.href}>
+                        <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50 h-8 rounded-lg">
+                          {entry.link.label}
+                          <ArrowRight className="h-3 w-3" />
+                        </Button>
+                      </Link>
+                      <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
+                        <ChevronRight className="h-3 w-3" />
+                        {entry.nextAction}
+                      </span>
                     </div>
                   </div>
-                  <Link href={entry.link.href}>
-                    <Button variant="outline" size="sm" className="gap-1.5 text-xs border-slate-200 text-slate-500 bg-transparent hover:bg-slate-50 hover:text-slate-700 hover:border-blue-300">
-                      {entry.link.label}
-                      <ArrowRight className="h-3 w-3" />
-                    </Button>
-                  </Link>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* 나머지 가이드 — 컴팩트 리스트 */}
+      {rest.length > 0 && (
+        <div>
+          <p className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">관련 문서</p>
+          <div className="space-y-1.5">
+            {rest.map((entry) => {
+              const Icon = entry.icon;
+              return (
+                <Link key={entry.id} href={entry.link.href}>
+                  <div className="flex items-center gap-3.5 px-4 py-3 rounded-xl border border-transparent hover:border-slate-200 hover:bg-slate-50 transition-all group cursor-pointer">
+                    <div className="w-8 h-8 rounded-lg bg-slate-100 group-hover:bg-blue-50 flex items-center justify-center flex-shrink-0 transition-colors">
+                      <Icon className="h-4 w-4 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-slate-700 group-hover:text-slate-900 truncate">{entry.title}</p>
+                      <p className="text-[11px] text-slate-400 truncate">{entry.when}</p>
+                    </div>
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -729,7 +749,13 @@ function ManualContent({
 function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunbook?: (title: string, body: string) => void }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  // 첫 항목 기본 open
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => {
+    const first = RUNBOOK_ITEMS[0];
+    return first ? new Set([first.id]) : new Set();
+  });
+  const [showAll, setShowAll] = useState(false);
+  const INITIAL_SHOW_COUNT = 5;
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => {
@@ -778,12 +804,12 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
     <div>
       {/* 검색바 */}
       <div className="relative mb-5">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
           placeholder="증상 검색 (예: PDF 실패, 알림 안 옴, 비밀번호)"
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10 h-11 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30"
+          onChange={(e) => { setSearchQuery(e.target.value); setShowAll(true); }}
+          className="pl-10 h-11 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 rounded-xl text-sm"
         />
       </div>
 
@@ -791,19 +817,26 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
       <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide snap-x mb-5">
         {RUNBOOK_CATEGORIES.map((cat) => {
           const isActive = activeCategory === cat.value;
+          const count = cat.value === "all" ? RUNBOOK_ITEMS.length : RUNBOOK_ITEMS.filter((r) => r.category === cat.value).length;
           return (
             <button
               key={cat.value}
-              onClick={() => setActiveCategory(cat.value)}
-              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex-shrink-0 snap-start ${
+              onClick={() => {
+                setActiveCategory(cat.value);
+                setShowAll(false);
+                // 카테고리 변경 시 첫 항목 기본 open
+                const firstInCat = cat.value === "all" ? RUNBOOK_ITEMS[0] : RUNBOOK_ITEMS.find((r) => r.category === cat.value);
+                setExpandedIds(firstInCat ? new Set([firstInCat.id]) : new Set());
+              }}
+              className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-[11px] font-bold whitespace-nowrap transition-all flex-shrink-0 snap-start ${
                 isActive
-                  ? "bg-blue-600 text-white"
-                  : "bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-700"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
               }`}
             >
               {cat.label}
-              <span className={`text-[10px] ml-0.5 ${isActive ? "text-blue-200" : "text-slate-500"}`}>
-                {cat.value === "all" ? RUNBOOK_ITEMS.length : RUNBOOK_ITEMS.filter((r) => r.category === cat.value).length}
+              <span className={`${isActive ? "text-slate-400" : "text-slate-400"}`}>
+                {count}
               </span>
             </button>
           );
@@ -811,29 +844,22 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
       </div>
 
       {/* 결과 헤더 */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-xs text-slate-500">
+      <div className="flex items-center justify-between mb-4">
+        <p className="text-[13px] font-bold text-slate-500">
           {searchQuery ? `"${searchQuery}" 검색 결과 ${filteredItems.length}건` : `${filteredItems.length}개의 시나리오`}
         </p>
-        {filteredItems.length > 0 && (
-          <div className="flex gap-2">
-            <button onClick={() => setExpandedIds(new Set(filteredItems.map((r) => r.id)))} className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors">모두 펼치기</button>
-            <span className="text-slate-400">|</span>
-            <button onClick={() => setExpandedIds(new Set())} className="text-[11px] text-slate-500 hover:text-slate-600 transition-colors">모두 접기</button>
-          </div>
-        )}
       </div>
 
-      {/* 런북 목록 */}
-      <div className="space-y-2 mb-8">
+      {/* 런북 목록 — 초기 5개만 노출 */}
+      <div className="space-y-2.5 mb-8">
         {filteredItems.length === 0 ? (
           <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-            <Search className="h-8 w-8 text-slate-400 mx-auto mb-3" />
-            <p className="text-sm font-medium text-slate-500 mb-1">검색 결과가 없습니다</p>
-            <p className="text-xs text-slate-500 mb-4">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
+            <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+            <p className="text-[13px] font-bold text-slate-500 mb-1">검색 결과가 없습니다</p>
+            <p className="text-xs text-slate-400">다른 키워드로 검색하거나 카테고리를 변경해보세요.</p>
           </div>
         ) : (
-          filteredItems.map((item) => {
+          (showAll || searchQuery ? filteredItems : filteredItems.slice(0, INITIAL_SHOW_COUNT)).map((item) => {
             const isExpanded = expandedIds.has(item.id);
             return (
               <div
@@ -843,38 +869,37 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                 }`}
               >
                 {/* 증상 헤더 */}
-                <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-4 md:px-5 py-4 flex items-start gap-3 group">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-amber-50" : "bg-slate-100"}`}>
-                    <AlertTriangle className={`h-3 w-3 transition-colors ${isExpanded ? "text-amber-500" : "text-slate-500"}`} />
+                <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-5 md:px-6 py-4.5 flex items-start gap-3.5 group">
+                  <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-amber-100" : "bg-slate-100"}`}>
+                    <AlertTriangle className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-amber-600" : "text-slate-400"}`} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <Badge className={`text-[10px] px-1.5 py-0 border font-medium ${getCategoryColor(item.category)}`}>
-                        {getCategoryLabel(item.category)}
-                      </Badge>
-                      <span className="text-[10px] text-slate-500">영향: {item.impact}</span>
-                    </div>
-                    <p className={`text-sm font-medium leading-snug transition-colors ${isExpanded ? "text-slate-900" : "text-slate-600 group-hover:text-slate-900"}`}>
+                    <p className={`text-[15px] font-extrabold leading-snug transition-colors mb-1.5 ${isExpanded ? "text-slate-900" : "text-slate-700 group-hover:text-slate-900"}`}>
                       {item.symptom}
                     </p>
+                    <div className="flex items-center gap-2">
+                      <Badge className={`text-[10px] px-1.5 py-0 border font-bold ${getCategoryColor(item.category)}`}>
+                        {getCategoryLabel(item.category)}
+                      </Badge>
+                    </div>
                   </div>
-                  {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-500 flex-shrink-0 mt-1" /> : <ChevronDown className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1 group-hover:text-slate-500" />}
+                  {isExpanded ? <ChevronUp className="h-4 w-4 text-slate-400 flex-shrink-0 mt-1.5" /> : <ChevronDown className="h-4 w-4 text-slate-300 flex-shrink-0 mt-1.5 group-hover:text-slate-500" />}
                 </button>
 
                 {/* 런북 상세 */}
                 {isExpanded && (
-                  <div className="px-4 md:px-5 pb-5 border-t border-slate-200">
-                    <div className="space-y-4 pt-4">
+                  <div className="px-5 md:px-6 pb-5 border-t border-slate-100">
+                    <div className="space-y-5 pt-5">
                       {/* 가능한 원인 */}
                       <div>
-                        <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-2 mb-2.5">
                           <Target className="h-3.5 w-3.5 text-slate-500" />
-                          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">가능한 원인</span>
+                          <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">가능한 원인</span>
                         </div>
-                        <div className="space-y-1 ml-5">
+                        <div className="space-y-1.5 ml-5.5">
                           {item.possibleCauses.map((cause, i) => (
-                            <p key={i} className="text-xs text-slate-500 leading-relaxed flex items-start gap-2">
-                              <span className="text-slate-400 mt-0.5">-</span>{cause}
+                            <p key={i} className="text-[13px] text-slate-600 leading-relaxed flex items-start gap-2">
+                              <span className="text-slate-300 mt-0.5">•</span>{cause}
                             </p>
                           ))}
                         </div>
@@ -882,27 +907,27 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
 
                       {/* 즉시 조치 */}
                       <div>
-                        <div className="flex items-center gap-1.5 mb-2">
+                        <div className="flex items-center gap-2 mb-2.5">
                           <Zap className="h-3.5 w-3.5 text-blue-500" />
-                          <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">즉시 조치</span>
+                          <span className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">즉시 조치</span>
                         </div>
-                        <div className="space-y-1.5 ml-5">
+                        <div className="space-y-2 ml-5.5">
                           {item.immediateActions.map((action, i) => (
-                            <div key={i} className="flex items-start gap-2">
-                              <span className="text-[10px] font-mono text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{i + 1}</span>
-                              <p className="text-xs text-slate-600 leading-relaxed">{action}</p>
+                            <div key={i} className="flex items-start gap-2.5">
+                              <span className="text-[11px] font-mono font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{i + 1}</span>
+                              <p className="text-[13px] text-slate-700 leading-relaxed">{action}</p>
                             </div>
                           ))}
                         </div>
                       </div>
 
                       {/* 에스컬레이션 기준 */}
-                      <div className="rounded-lg bg-amber-50 border border-amber-200 px-3.5 py-2.5">
-                        <div className="flex items-start gap-2">
+                      <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                        <div className="flex items-start gap-2.5">
                           <ArrowUpRight className="h-3.5 w-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[10px] font-semibold text-amber-600 uppercase tracking-wider">에스컬레이션 기준</span>
-                            <p className="text-xs text-amber-700 leading-relaxed mt-0.5">{item.escalation}</p>
+                            <span className="text-[11px] font-extrabold text-amber-600 uppercase tracking-wider">에스컬레이션 기준</span>
+                            <p className="text-[13px] text-amber-700 leading-relaxed mt-1">{item.escalation}</p>
                           </div>
                         </div>
                       </div>
@@ -959,6 +984,23 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
             );
           })
         )}
+        {/* 더 보기 버튼 */}
+        {!showAll && !searchQuery && filteredItems.length > INITIAL_SHOW_COUNT && (
+          <button
+            onClick={() => setShowAll(true)}
+            className="w-full py-3 rounded-xl border border-slate-200 bg-slate-50 text-[13px] font-bold text-slate-500 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+          >
+            나머지 {filteredItems.length - INITIAL_SHOW_COUNT}개 시나리오 더 보기
+          </button>
+        )}
+        {/* 보조: 모두 펼치기/접기 */}
+        {filteredItems.length > 1 && (
+          <div className="flex justify-end gap-2 mt-2">
+            <button onClick={() => setExpandedIds(new Set(filteredItems.map((r: RunbookItem) => r.id)))} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors">모두 펼치기</button>
+            <span className="text-slate-300 text-[10px]">|</span>
+            <button onClick={() => setExpandedIds(new Set())} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors">모두 접기</button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -984,10 +1026,13 @@ function TicketTab() {
   const ticketBodyParam = searchParams?.get("ticketBody") ?? null;
   const hasSourceContext = Boolean(srcFromRoute || srcEntityId || ticketTitleParam);
 
+  // 빈 상태 시 compose 기본 open, 티켓 있으면 첫 번째 자동 선택
   const [view, setView] = useState<"list" | "compose">(
-    hasSourceContext ? "compose" : "list",
+    hasSourceContext || MOCK_TICKETS.length === 0 ? "compose" : "list",
   );
-  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(
+    !hasSourceContext && MOCK_TICKETS.length > 0 ? MOCK_TICKETS[0].id : null,
+  );
   const [category, setCategory] = useState("");
   const [relatedResource, setRelatedResource] = useState(() => {
     if (srcEntityId) {
@@ -1087,13 +1132,13 @@ function TicketTab() {
   // ── Mobile: list / compose / detail 단일 뷰 전환 ──
 
   const ticketQueueRail = (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">내 티켓</p>
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">내 티켓</p>
         <Button
           variant="ghost"
           size="sm"
-          className="h-7 px-2 text-[11px] text-blue-600 hover:bg-blue-50"
+          className="h-8 px-2.5 text-[11px] font-bold text-blue-600 hover:bg-blue-50"
           onClick={() => { setView("compose"); setSelectedTicketId(null); }}
         >
           <Send className="h-3 w-3 mr-1" />새 문의
@@ -1102,7 +1147,7 @@ function TicketTab() {
       {MOCK_TICKETS.length === 0 ? (
         <div className="text-center py-8">
           <MessageSquare className="h-6 w-6 text-slate-300 mx-auto mb-2" />
-          <p className="text-[11px] text-slate-500">접수한 문의가 없습니다</p>
+          <p className="text-[11px] font-bold text-slate-500">접수한 문의가 없습니다</p>
         </div>
       ) : (
         MOCK_TICKETS.map((ticket) => {
@@ -1111,19 +1156,19 @@ function TicketTab() {
             <button
               key={ticket.id}
               onClick={() => { setSelectedTicketId(ticket.id); setView("list"); }}
-              className={`w-full text-left rounded-lg border px-3 py-2.5 transition-all ${
+              className={`w-full text-left rounded-xl border px-3.5 py-3 transition-all ${
                 isSelected
-                  ? "border-blue-300 bg-blue-50/60"
-                  : "border-slate-200 bg-white hover:border-slate-300"
+                  ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200 shadow-sm"
+                  : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-mono text-slate-500">{ticket.id}</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className={`text-[11px] font-mono font-bold ${isSelected ? "text-blue-600" : "text-slate-500"}`}>{ticket.id}</span>
                 {getStatusBadge(ticket.status)}
               </div>
-              <p className="text-xs font-medium text-slate-700 leading-snug truncate">{ticket.title}</p>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className="text-[9px] px-1 py-0 border-slate-200 text-slate-500">
+              <p className={`text-[13px] font-bold leading-snug truncate ${isSelected ? "text-slate-900" : "text-slate-700"}`}>{ticket.title}</p>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 font-bold">
                   {getCategoryLabel(ticket.category)}
                 </Badge>
                 <span className="text-[10px] text-slate-400">{ticket.createdAt}</span>
@@ -1133,8 +1178,8 @@ function TicketTab() {
         })
       )}
       {/* 지원 안내 (compact) */}
-      <div className="mt-4 rounded-lg bg-slate-50 border border-slate-200 p-3">
-        <p className="text-[10px] font-semibold text-slate-500 mb-1.5">지원 안내</p>
+      <div className="mt-4 rounded-xl bg-slate-50 border border-slate-200 p-3.5">
+        <p className="text-[10px] font-extrabold text-slate-500 mb-1.5">지원 안내</p>
         <p className="text-[10px] text-slate-400 leading-relaxed">평일 09-18시 접수 기준 당일 1차 확인</p>
         <p className="text-[10px] text-slate-400 leading-relaxed">접수 → 배정 → 확인 → 답변 → 완료</p>
       </div>
@@ -1144,32 +1189,32 @@ function TicketTab() {
   // 선택된 티켓 상세 (간단 버전)
   const selectedTicket = MOCK_TICKETS.find((t) => t.id === selectedTicketId);
   const ticketDetailPanel = selectedTicket ? (
-    <div className="rounded-xl border border-slate-200 bg-white p-5">
+    <div className="rounded-xl border border-slate-200 bg-white p-6">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-slate-500">{selectedTicket.id}</span>
+        <div className="flex items-center gap-2.5">
+          <span className="text-[13px] font-mono font-bold text-slate-500">{selectedTicket.id}</span>
           {getStatusBadge(selectedTicket.status)}
         </div>
-        <span className="text-[10px] text-slate-400">{selectedTicket.createdAt}</span>
+        <span className="text-[11px] text-slate-400">{selectedTicket.createdAt}</span>
       </div>
-      <h3 className="text-sm font-semibold text-slate-900 mb-2">{selectedTicket.title}</h3>
-      <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-slate-200 text-slate-500 mb-4">
+      <h3 className="text-[17px] font-extrabold text-slate-900 mb-3 leading-snug">{selectedTicket.title}</h3>
+      <Badge variant="outline" className="text-[11px] px-2 py-0.5 border-slate-200 text-slate-500 font-bold mb-4">
         {getCategoryLabel(selectedTicket.category)}
       </Badge>
       {selectedTicket.status === "answered" && selectedTicket.answeredAt && (
-        <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 mt-3">
+        <div className="rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-3.5 mt-3">
           <div className="flex items-center gap-2 mb-1">
-            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-xs font-semibold text-emerald-700">답변 완료 ({selectedTicket.answeredAt})</span>
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+            <span className="text-[13px] font-extrabold text-emerald-700">답변 완료 ({selectedTicket.answeredAt})</span>
           </div>
-          <p className="text-xs text-emerald-600 leading-relaxed">담당자가 답변을 등록했습니다.</p>
+          <p className="text-[13px] text-emerald-600 leading-relaxed">담당자가 답변을 등록했습니다.</p>
         </div>
       )}
       {selectedTicket.status === "in_progress" && (
-        <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3 mt-3">
+        <div className="rounded-xl bg-blue-50 border border-blue-200 px-4 py-3.5 mt-3">
           <div className="flex items-center gap-2">
-            <Loader2 className="h-3.5 w-3.5 text-blue-500 animate-spin" />
-            <span className="text-xs font-semibold text-blue-700">담당자 확인 중</span>
+            <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />
+            <span className="text-[13px] font-extrabold text-blue-700">담당자 확인 중</span>
           </div>
         </div>
       )}
@@ -1182,7 +1227,7 @@ function TicketTab() {
       <div className="px-5 py-5">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2.5">
-            <Label className="text-xs font-semibold text-slate-700">관련 기능 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <Label className="text-[13px] font-extrabold text-slate-800">관련 기능 <span className="text-red-500 text-[10px]">필수</span></Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {TICKET_CATEGORIES.map((cat) => {
                 const Icon = cat.icon;
@@ -1200,11 +1245,11 @@ function TicketTab() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="related-resource" className="text-xs font-semibold text-slate-700">관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span></Label>
+            <Label htmlFor="related-resource" className="text-[13px] font-extrabold text-slate-800">관련 주문/견적/재고 ID <span className="text-slate-500 font-normal text-[10px]">(선택)</span></Label>
             <Input id="related-resource" placeholder="예: QT-20260310-001" value={relatedResource} onChange={(e) => setRelatedResource(e.target.value)} className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white" />
           </div>
           <div className="space-y-2.5">
-            <Label className="text-xs font-semibold text-slate-700">우선순위</Label>
+            <Label className="text-[13px] font-extrabold text-slate-800">우선순위</Label>
             <div className="flex gap-2">
               {PRIORITY_OPTIONS.map((opt) => (
                 <button key={opt.value} type="button" onClick={() => setPriority(opt.value)}
@@ -1216,15 +1261,15 @@ function TicketTab() {
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ticket-title" className="text-xs font-semibold text-slate-700">제목 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <Label htmlFor="ticket-title" className="text-[13px] font-extrabold text-slate-800">제목 <span className="text-red-500 text-[10px]">필수</span></Label>
             <Input id="ticket-title" placeholder="이슈를 간단히 요약해주세요" value={title} onChange={(e) => setTitle(e.target.value)} className="border-slate-200 bg-slate-50 text-sm text-slate-700 h-10 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="ticket-body" className="text-xs font-semibold text-slate-700">상세 내용 <span className="text-red-500 text-[10px]">필수</span></Label>
+            <Label htmlFor="ticket-body" className="text-[13px] font-extrabold text-slate-800">상세 내용 <span className="text-red-500 text-[10px]">필수</span></Label>
             <Textarea id="ticket-body" placeholder="문제 상황, 재현 방법, 기대 동작 등을 구체적으로 적어주세요." value={body} onChange={(e) => setBody(e.target.value)} rows={6} className="border-slate-200 bg-slate-50 text-sm text-slate-700 placeholder:text-slate-500 focus:border-blue-500 focus:bg-white resize-none" />
           </div>
           <div className="space-y-2">
-            <Label className="text-xs font-semibold text-slate-700">첨부 파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개 · 10MB)</span></Label>
+            <Label className="text-[13px] font-extrabold text-slate-800">첨부 파일 <span className="text-slate-500 font-normal text-[10px]">(선택, 최대 5개 · 10MB)</span></Label>
             <div className="flex flex-wrap gap-2">
               {attachments.map((file, i) => (
                 <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-600">
@@ -1239,7 +1284,7 @@ function TicketTab() {
             </div>
           </div>
           <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-semibold h-10 px-6 gap-2 text-sm" disabled={isSubmitting}>
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-extrabold h-11 px-8 gap-2 text-[14px] rounded-xl" disabled={isSubmitting}>
               {isSubmitting ? <><Loader2 className="h-4 w-4 animate-spin" />접수 중...</> : <><Send className="h-4 w-4" />문의 접수하기</>}
             </Button>
             <button type="button" onClick={() => setView("list")} className="text-xs text-slate-500 hover:text-slate-600">취소</button>
@@ -1251,9 +1296,9 @@ function TicketTab() {
 
   // ── Desktop split layout ──
   return (
-    <div className="flex gap-5">
-      {/* 좌측 큐 (desktop only) */}
-      <nav className="hidden md:block w-56 flex-shrink-0">
+    <div className="flex gap-6">
+      {/* 좌측 큐 (desktop only) — 확장 */}
+      <nav className="hidden md:block w-72 flex-shrink-0">
         <div className="sticky top-4">{ticketQueueRail}</div>
       </nav>
 
@@ -1294,26 +1339,40 @@ function TicketTab() {
         {view === "compose" ? (
           <div>
             <div className="flex items-center gap-3 mb-5">
-              <button
-                onClick={() => { setView("list"); setSelectedTicketId(null); }}
-                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-600 transition-colors"
-              >
-                <ChevronRight className="h-3 w-3 rotate-180" />
-                목록으로
-              </button>
-              <h2 className="text-sm font-semibold text-slate-700">새 문의 작성</h2>
+              {MOCK_TICKETS.length > 0 && (
+                <button
+                  onClick={() => { setView("list"); setSelectedTicketId(MOCK_TICKETS[0].id); }}
+                  className="flex items-center gap-1 text-xs font-bold text-slate-500 hover:text-slate-600 transition-colors"
+                >
+                  <ChevronRight className="h-3 w-3 rotate-180" />
+                  목록으로
+                </button>
+              )}
+              <h2 className="text-[15px] font-extrabold text-slate-900">새 문의 작성</h2>
             </div>
             {composeForm}
           </div>
         ) : selectedTicketId && ticketDetailPanel ? (
-          ticketDetailPanel
+          <div>
+            {/* 상세 헤더에 새 문의 CTA */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-[15px] font-extrabold text-slate-900">티켓 상세</h2>
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 hover:bg-blue-50 h-8"
+                onClick={() => { setView("compose"); setSelectedTicketId(null); }}
+              >
+                <Send className="h-3 w-3" />새 문의 작성
+              </Button>
+            </div>
+            {ticketDetailPanel}
+          </div>
         ) : (
-          <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
-            <MessageSquare className="h-8 w-8 text-slate-300 mx-auto mb-3" />
-            <p className="text-sm text-slate-500 mb-1">티켓을 선택하거나 새 문의를 작성하세요</p>
-            <Button onClick={() => setView("compose")} variant="outline" size="sm" className="mt-3 gap-1.5 text-xs">
-              <Send className="h-3.5 w-3.5" />새 문의 작성
-            </Button>
+          /* 티켓 없을 때도 compose form 바로 노출 */
+          <div>
+            <h2 className="text-[15px] font-extrabold text-slate-900 mb-5">새 문의 작성</h2>
+            {composeForm}
           </div>
         )}
       </div>
