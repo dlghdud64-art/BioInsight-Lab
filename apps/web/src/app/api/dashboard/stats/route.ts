@@ -43,19 +43,14 @@ export async function GET(request: NextRequest) {
     // ── Phase 1: 완전 독립 쿼리 4개 동시 실행 ─────────────────────────
     // 이전: 순차 await 4개 (activeBudget → orders → memberships → orgMemberships)
     // 이후: Promise.all로 1번의 DB 라운드트립으로 처리
-    const [activeBudget, orders, memberships, orgMemberships] = await Promise.all([
+    const [activeBudget, memberships, orgMemberships] = await Promise.all([
       db.userBudget.findFirst({
         where: { userId, isActive: true },
         include: {
           transactions: { orderBy: { createdAt: "desc" }, take: 5 },
         },
       }),
-      db.order.findMany({
-        where: { userId },
-        select: { id: true, totalAmount: true, status: true, createdAt: true },
-        orderBy: { createdAt: "desc" },
-        take: 500,
-      }),
+      // orders 별도 쿼리 제거: ordersWithItems (Phase 2)에서 통합 처리
       db.workspaceMember.findMany({ where: { userId }, select: { workspaceId: true } }),
       // 중복 제거: organizationMember를 1회만 조회 (기존 코드는 3회 중복 조회)
       db.organizationMember.findMany({ where: { userId }, select: { organizationId: true } }),
@@ -103,13 +98,13 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: "desc" },
         take: 200,
       }),
-      // Select only needed fields (기존: include: { items: true } → 모든 필드 로드)
+      // orders + ordersWithItems 통합: Phase 1의 orders 별도 쿼리 제거
       db.order.findMany({
         where: { userId },
-        include: {
-          items: {
-            select: { productId: true, unitPrice: true, quantity: true },
-          },
+        select: {
+          id: true, totalAmount: true, status: true, createdAt: true,
+          items: { select: { productId: true, unitPrice: true, quantity: true } },
+          quote: { select: { title: true } },
         },
         orderBy: { createdAt: "desc" },
         take: 200,
@@ -163,12 +158,12 @@ export async function GET(request: NextRequest) {
         take: 100,
         orderBy: { decidedAt: "desc" },
       }).catch(() => [] as { createdAt: Date; decidedAt: Date | null }[]),
-      // 견적 연결된 비교 세션 수
+      // 견적 연결된 비교 세션 수 (followThrough에서도 재사용 — id 포함)
       db.quote.findMany({
         where: { comparisonId: { not: null }, userId },
-        select: { comparisonId: true },
+        select: { id: true, comparisonId: true },
         distinct: ["comparisonId" as any],
-      }).catch(() => [] as { comparisonId: string | null }[]),
+      }).catch(() => [] as { id: string; comparisonId: string | null }[]),
       // 완료된 비교 큐 아이템 (해결 경로 분포 계산용)
       db.aiActionItem.findMany({
         where: { userId, type: "COMPARE_DECISION" as any, taskStatus: "COMPLETED" as any },
@@ -181,30 +176,9 @@ export async function GET(request: NextRequest) {
         where: { userId, inquiryDrafts: { some: {} } },
         select: { id: true },
       }).catch(() => [] as { id: string }[]),
-      // Follow-through: compare-origin quotes → orders → restocks
-      db.quote.findMany({
-        where: { comparisonId: { not: null }, userId },
-        select: { id: true },
-      }).then(async (cQuotes: { id: string }[]) => {
-        if (cQuotes.length === 0) return { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
-        const qIds = cQuotes.map((q) => q.id);
-        const orders = await db.order.findMany({
-          where: { quoteId: { in: qIds } },
-          select: { id: true },
-        });
-        if (orders.length === 0) return { quoteCount: cQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
-        const oIds = orders.map((o: { id: string }) => o.id);
-        const restocks = await db.inventoryRestock.findMany({
-          where: { orderId: { in: oIds } },
-          select: { receivingStatus: true },
-        });
-        return {
-          quoteCount: cQuotes.length,
-          orderCount: orders.length,
-          receivingCount: restocks.length,
-          inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
-        };
-      }).catch(() => ({ quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 })),
+      // Follow-through: compareLinkedQuoteSessions 재사용 (id 포함 확장) → orders → restocks
+      // 중복 quote 쿼리 제거: compareLinkedQuoteSessions에 id를 추가해서 공유
+      Promise.resolve(null), // placeholder — Phase 2 완료 후 compareLinkedQuoteSessions 결과로 후처리
       // Ops funnel: all user quotes → purchased → orders confirmed → receiving completed
       db.quote.findMany({
         where: quoteOwnerWhere,
@@ -248,25 +222,15 @@ export async function GET(request: NextRequest) {
 
     console.log("[DASHBOARD_STATS] scopeKeyValues count:", scopeKeyValues.length, "| quoteIds count:", userQuoteIdList.length);
 
-    const [recentPurchaseRecords, lastMonthRecords, recentOrders, recentPurchases] =
+    // lastMonthRecords 별도 쿼리 제거: recentPurchaseRecords에서 필터링으로 대체
+    // recentOrders 별도 쿼리 제거: ordersWithItems.slice(0,5)로 대체
+    const [recentPurchaseRecords, recentPurchases] =
       await Promise.all([
         db.purchaseRecord.findMany({
           where: { ...purchaseOwnerWhere, purchasedAt: { gte: sixMonthsAgo, lte: thisMonthEnd } },
           select: { amount: true, purchasedAt: true },
           orderBy: { purchasedAt: "desc" },
           take: 1000,
-        }),
-        db.purchaseRecord.findMany({
-          where: { ...purchaseOwnerWhere, purchasedAt: { gte: lastMonthStart, lte: lastMonthEnd } },
-          select: { amount: true },
-          take: 500,
-        }),
-        // 기존: return문 안에서 순차 await → 이제 병렬
-        db.order.findMany({
-          where: { userId },
-          include: { quote: { select: { title: true } } },
-          orderBy: { createdAt: "desc" },
-          take: 5,
         }),
         db.purchaseRecord.findMany({
           where: purchaseOwnerWhere,
@@ -284,6 +248,37 @@ export async function GET(request: NextRequest) {
           },
         }),
       ]);
+
+    // recentOrders는 ordersWithItems에서 추출
+    const recentOrders = ordersWithItems.slice(0, 5);
+
+    // followThroughData: compareLinkedQuoteSessions 결과 재사용 (중복 쿼리 제거)
+    const linkedQuotes = compareLinkedQuoteSessions as { id: string; comparisonId: string | null }[];
+    let followThroughDataResolved: { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number };
+    if (linkedQuotes.length === 0) {
+      followThroughDataResolved = { quoteCount: 0, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+    } else {
+      const qIds = linkedQuotes.map((q) => q.id);
+      const ftOrders = await db.order.findMany({
+        where: { quoteId: { in: qIds } },
+        select: { id: true },
+      });
+      if (ftOrders.length === 0) {
+        followThroughDataResolved = { quoteCount: linkedQuotes.length, orderCount: 0, receivingCount: 0, inventoryCount: 0 };
+      } else {
+        const oIds = ftOrders.map((o: { id: string }) => o.id);
+        const restocks = await db.inventoryRestock.findMany({
+          where: { orderId: { in: oIds } },
+          select: { receivingStatus: true },
+        });
+        followThroughDataResolved = {
+          quoteCount: linkedQuotes.length,
+          orderCount: ftOrders.length,
+          receivingCount: restocks.length,
+          inventoryCount: restocks.filter((r: { receivingStatus: string }) => r.receivingStatus === "COMPLETED").length,
+        };
+      }
+    }
 
     // ── Phase 4: N+1 제거 배치 조회 2개 동시 실행 ──────────────────────
     // 이전: userInventories 루프에서 매 항목마다 db.orderItem.findUnique 호출 (N+1)
@@ -312,7 +307,8 @@ export async function GET(request: NextRequest) {
 
     // ── 데이터 가공 ────────────────────────────────────────────────────
 
-    // orders 통계
+    // orders 통계 (ordersWithItems 통합 활용)
+    const orders = ordersWithItems; // 별칭 유지 (하위 호환)
     const totalPurchaseAmount = orders.reduce(
       (sum: number, order: { totalAmount: number }) => sum + order.totalAmount,
       0
@@ -352,11 +348,13 @@ export async function GET(request: NextRequest) {
     console.log("[DASHBOARD_STATS] recentPurchaseRecords count:", recentPurchaseRecords.length);
     console.log("[DASHBOARD_STATS] thisMonthPurchaseAmount:", thisMonthPurchaseAmount);
 
-    // 전월 대비 증감률
-    const lastMonthPurchaseAmount = lastMonthRecords.reduce(
-      (s: number, p: any) => s + (p.amount || 0),
-      0
-    );
+    // 전월 대비 증감률 (recentPurchaseRecords에서 필터링 — 별도 쿼리 제거)
+    const lastMonthPurchaseAmount = recentPurchaseRecords
+      .filter((p: any) => {
+        const d = new Date(p.purchasedAt);
+        return d >= lastMonthStart && d <= lastMonthEnd;
+      })
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
     const monthOverMonthChange =
       lastMonthPurchaseAmount > 0
         ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
@@ -532,7 +530,7 @@ export async function GET(request: NextRequest) {
         compareLinkedQuoteSessions as { comparisonId: string | null }[],
         completedCompareItems as { payload: unknown }[],
         sessionsWithInquiry as { id: string }[],
-        followThroughData as { quoteCount: number; orderCount: number; receivingCount: number; inventoryCount: number },
+        followThroughDataResolved,
       ),
       opsFunnel: (() => {
         const data = opsFunnelData as { totalQuotes: number; purchasedQuotes: number; confirmedOrders: number; completedReceiving: number };

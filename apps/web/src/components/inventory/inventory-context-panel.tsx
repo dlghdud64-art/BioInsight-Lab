@@ -253,11 +253,12 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
         priority: "medium",
       });
     } else if (days <= 0) {
-      actions.push({
+      // 만료 lot with qty > 0 → ontology 최우선 blocker
+      actions.unshift({
         type: "dispose",
-        label: "즉시 폐기",
-        reasoning: `폐기: 유효기간 만료 ${Math.abs(days)}일 경과, 사용 불가 — 규정 상 즉시 폐기 처리 필수`,
-        priority: "high",
+        label: "폐기 처리",
+        reasoning: `만료 lot 폐기 처리 시작: 유효기간 만료 ${Math.abs(days)}일 경과, 사용 금지 — 즉시 격리 후 폐기 기록 필수. 재발주는 폐기 처리 완료 후 진행`,
+        priority: "critical",
       });
     }
   }

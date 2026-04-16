@@ -149,11 +149,17 @@ function getExpiryDays(d: string | null): number | null {
 }
 
 /** 위험도 점수: 높을수록 먼저 노출 */
+/** 우선순위: 만료 lot(qty>0) > 부족 > 임박 > 주의 > 위치미지정 */
 function getRiskScore(group: ProductGroup): number {
   let score = 0;
   const status = getGroupStatus(group);
+  // 1순위: 만료 lot with qty > 0 (ontology 최우선 blocker)
+  const hasExpiredLotWithQty = group.lots.some((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+  if (hasExpiredLotWithQty) score += 500;
+  // 2순위: 부족
   if (status === "부족") score += 100;
   else if (status === "주의") score += 50;
+  // 3순위: 전체 만료 (qty 무관) / 임박
   if (isExpired(group.earliestExpiry)) score += 200;
   else if (isExpiringSoon(group.earliestExpiry)) score += 80;
   // 위치 미지정 lot이 있으면 가산
@@ -170,7 +176,20 @@ function StatusBadge({ status }: { status: string }) {
   const isExpiry = status === "임박";
   const isDiscarded = status === "폐기";
 
-  // 폐기/만료 — red (진짜 치명 상태만)
+  // 만료 (expired lot with qty > 0) — 최우선 blocker
+  const isExpiredLot = status === "만료" || status === "expired";
+  if (isExpiredLot) {
+    return (
+      <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
+        <span className="relative flex h-2 w-2 shrink-0">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-60" />
+          <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
+        </span>
+        <span className="text-[11px] font-bold text-red-600 whitespace-nowrap">만료</span>
+      </span>
+    );
+  }
+  // 폐기 완료 — red (닫힌 상태)
   if (isDiscarded) {
     return (
       <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
@@ -314,10 +333,11 @@ export function InventoryTable({
           <div className="divide-y divide-[#2a2a2e]">
             {sortedGroups.map((group) => {
               const groupStatus = getGroupStatus(group);
-              const expiryStatus = isExpired(group.earliestExpiry) ? "폐기" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
+              const someExpiredMobile = group.lots.some((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+              const expiryStatus = someExpiredMobile ? "만료" : isExpired(group.earliestExpiry) ? "만료" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
               const displayStatus = expiryStatus ?? groupStatus;
               const expiryDays = getExpiryDays(group.earliestExpiry);
-              const isRisky = displayStatus === "부족" || displayStatus === "폐기" || displayStatus === "임박";
+              const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "폐기" || displayStatus === "임박";
               const isExpanded = expandedProducts.has(group.productId);
 
               return (
@@ -468,7 +488,7 @@ export function InventoryTable({
                                   {lot.currentQuantity}<span className="text-slate-400 font-normal ml-0.5">{lot.unit}</span>
                                 </span>
                               </div>
-                              <StatusBadge status={lotExpired ? "폐기" : lotExpiringSoon ? "임박" : lotSt} />
+                              <StatusBadge status={lotExpired ? "만료" : lotExpiringSoon ? "임박" : lotSt} />
                             </div>
 
                             {/* 2행: 메타 정보 */}
@@ -501,9 +521,19 @@ export function InventoryTable({
                               )}
                             </div>
 
-                            {/* 3행: Lot 액션 (출고 중심) */}
+                            {/* 3행: Lot 액션 — 만료 lot: 폐기 primary / 정상: 출고 */}
                             <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
-                              {onConsume && (
+                              {lotExpired && lot.currentQuantity > 0 ? (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
+                                  onClick={() => onReorder(lot)}
+                                >
+                                  <Trash2 className="h-3 w-3 shrink-0" />
+                                  폐기 처리
+                                </Button>
+                              ) : onConsume ? (
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -517,7 +547,7 @@ export function InventoryTable({
                                   <Truck className="h-3 w-3 shrink-0" />
                                   출고
                                 </Button>
-                              )}
+                              ) : null}
                               {onPrintLabel && (
                                 <Button
                                   variant="outline"
@@ -668,6 +698,14 @@ export function InventoryTable({
                             {group.brand ?? "-"}
                             {group.catalogNumber && <> · Cat: {group.catalogNumber}</>}
                           </div>
+                          {someExpired && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
+                                <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
+                                만료 lot {group.lots.filter((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0).length}건 · 폐기 필요
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
 
@@ -726,11 +764,34 @@ export function InventoryTable({
                         )}
                       </TableCell>
 
-                      {/* 빠른 작업 — 상태 기반 우선순위 */}
+                      {/* 빠른 작업 — 상태 기반 우선순위 (만료 lot blocker 우선) */}
                       <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                         <div className="flex items-center justify-center gap-1 whitespace-nowrap">
-                          {(isRisky || groupStatus === "주의") ? (
-                            /* ── 부족/주의/만료/임박 → 재발주(긴급) + 입고 ── */
+                          {someExpired ? (
+                            /* ── 만료 lot 있음 → 폐기 처리가 primary (재발주보다 우선) ── */
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
+                                      onClick={() => {
+                                        const expiredLot = group.lots.find((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+                                        onReorder(expiredLot || group.lots[0]);
+                                      }}
+                                    >
+                                      <Trash2 className="h-3 w-3 shrink-0" />
+                                      폐기 처리
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>만료 lot 폐기 처리</TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </>
+                          ) : (isRisky || groupStatus === "주의") ? (
+                            /* ── 부족/주의/임박 (만료 lot 없음) → 재발주(긴급) + 입고 ── */
                             <>
                               <TooltipProvider>
                                 <Tooltip>
@@ -739,7 +800,7 @@ export function InventoryTable({
                                       variant="outline"
                                       size="sm"
                                       className={`h-7 px-2 text-[11px] gap-1 ${
-                                        groupStatus === "부족" || displayStatus === "폐기"
+                                        groupStatus === "부족"
                                           ? "text-amber-600 border-amber-300 hover:bg-amber-50"
                                           : "text-blue-600 border-blue-300 hover:bg-blue-50"
                                       }`}
@@ -937,7 +998,7 @@ export function InventoryTable({
                                 {lot.expiryDate ? (
                                   <div>
                                     <span className={`text-xs font-medium ${
-                                      lotExpired ? "text-red-600 line-through" :
+                                      lotExpired ? "text-red-600 font-bold" :
                                       lotExpiringSoon ? "text-amber-600" :
                                       "text-slate-500"
                                     }`}>
@@ -950,15 +1011,39 @@ export function InventoryTable({
                                         {lotExpiryDays <= 0 ? "만료" : `D-${lotExpiryDays}`}
                                       </span>
                                     )}
+                                    {lotExpired && lot.currentQuantity > 0 && (
+                                      <div className="text-[10px] text-red-500 font-bold mt-0.5">사용 금지 · 폐기 필요</div>
+                                    )}
                                   </div>
                                 ) : (
                                   <span className="text-xs text-slate-400">-</span>
                                 )}
                               </TableCell>
 
-                              {/* Lot 작업 — 출고/라벨/QR은 Lot에서만 */}
+                              {/* Lot 작업 — 만료 lot: 폐기 처리 primary / 정상: 출고 */}
                               <TableCell className="text-center" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                 <div className="flex items-center justify-center gap-1 whitespace-nowrap">
+                                  {lotExpired && lot.currentQuantity > 0 ? (
+                                    /* ── 만료 lot (qty > 0): 폐기 처리가 primary CTA ── */
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
+                                            onClick={() => onReorder(lot)}
+                                          >
+                                            <Trash2 className="h-3 w-3 shrink-0" />
+                                            폐기 처리
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>만료 lot 폐기 처리</TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  ) : (
+                                    /* ── 정상/임박/부족: 기존 출고 + 이동 ── */
+                                    <>
                                   {onConsume && (
                                     <TooltipProvider>
                                       <Tooltip>
@@ -1000,6 +1085,8 @@ export function InventoryTable({
                                         <TooltipContent>보관 위치 변경</TooltipContent>
                                       </Tooltip>
                                     </TooltipProvider>
+                                  )}
+                                    </>
                                   )}
                                   {/* 더보기 — QR/라벨/상세/수정/폐기 */}
                                   <DropdownMenu>

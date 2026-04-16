@@ -19,7 +19,7 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
+        sans: ["Pretendard Variable", "Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
       },
       colors: {
         // ── LabAxis Color System v1 ──

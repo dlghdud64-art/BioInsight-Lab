@@ -1,4 +1,4 @@
-@import "pretendard/dist/web/static/pretendard.css";
+@import "pretendard/dist/web/variable/pretendardvariable.css";
 
 @tailwind base;
 @tailwind components;
@@ -183,12 +183,12 @@ div.quote-table td.no-column-cell {
     border-color: hsl(var(--border));
   }
   html {
-    font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
+    font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
   }
   body {
-    font-family: "Pretendard", -apple-system, BlinkMacSystemFont,
+    font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
       "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Noto Sans KR",
       "Helvetica Neue", sans-serif !important;
     background-color: var(--surface-shell);

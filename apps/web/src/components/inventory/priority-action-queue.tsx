@@ -177,10 +177,22 @@ export function PriorityActionQueue({
     return acc;
   }, {});
 
+  // 정렬: risk 우선, 동일 risk 내에서 category 우선순위 적용
+  // ontology 우선순위: 만료 lot 폐기 > MSDS > 보관 > 점검 > 재주문
   const riskOrder: QueueRiskLevel[] = ["critical", "high", "medium", "low"];
-  const sorted = [...filtered].sort(
-    (a, b) => riskOrder.indexOf(a.risk) - riskOrder.indexOf(b.risk)
-  );
+  const categoryOrder: QueueCategory[] = [
+    "expiring_soon",     // 1순위: 만료 lot 폐기 처리
+    "disposal_review",   // 2순위: 폐기 검토
+    "receiving_pending", // 3순위: 입고 미정리
+    "no_location",       // 4순위: 위치 미지정 (보관 조건 불일치)
+    "reorder_priority",  // 5순위: 재주문 (만료 lot 해결 후)
+    "label_reprint",     // 6순위: 라벨
+  ];
+  const sorted = [...filtered].sort((a, b) => {
+    const riskDiff = riskOrder.indexOf(a.risk) - riskOrder.indexOf(b.risk);
+    if (riskDiff !== 0) return riskDiff;
+    return categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
+  });
 
   return (
     <div className={`rounded-xl border border-bd bg-pn overflow-hidden ${className}`}>

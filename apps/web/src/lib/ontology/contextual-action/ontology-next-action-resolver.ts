@@ -1098,6 +1098,15 @@ function resolveOverviewContext(
   const { counts } = input;
   const actions: ResolvedAction[] = [];
 
+  // ontology 최우선: 만료 lot 폐기 (inventory safety blocker가 item-level reorder보다 우선)
+  const inv = input.inventoryDetail;
+  if (inv?.expiredLotCount && inv.expiredLotCount > 0) {
+    actions.push(makeAction("dispose_expired_lot",
+      `만료 lot 폐기 처리 (${inv.expiredLotCount}건)`, "correction",
+      "만료 lot 가 수량 > 0 상태 — 즉시 폐기 처리 필요",
+      "/dashboard/inventory", null, "inventory_record"));
+  }
+
   // 현재 진행 중인 작업들을 우선순위로 정렬
   if (counts.dispatchPrepItems > 0) {
     actions.push(makeAction("dispatch_overview", "발송 준비 계속", "primary",

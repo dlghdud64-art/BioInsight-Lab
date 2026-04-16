@@ -3154,6 +3154,26 @@ function InventoryPageContent() {
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-4 md:space-y-6">
+            {/* 온톨로지: 만료 lot priority banner (inventory 목록 탭) */}
+            {(() => {
+              const expiredLotsInList = displayInventories.filter((inv) => {
+                if (!inv.expiryDate) return false;
+                const days = Math.ceil((new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                return days <= 0 && inv.currentQuantity > 0;
+              });
+              if (expiredLotsInList.length === 0) return null;
+              return (
+                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
+                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
+                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-red-800">만료 lot {expiredLotsInList.length}건 · 폐기 처리 필요</p>
+                    <p className="text-xs text-red-600/70">사용 금지 상태입니다. 재발주보다 폐기 처리를 먼저 진행하세요.</p>
+                  </div>
+                </div>
+              );
+            })()}
             {/* 내 자산 / 우리 랩 전체 탭 */}
             <Tabs value={inventoryView} onValueChange={(v) => setInventoryView(v as "my" | "team")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">

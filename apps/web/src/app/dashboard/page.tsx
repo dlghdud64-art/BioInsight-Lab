@@ -341,18 +341,18 @@ export default function DashboardPage() {
     insight: string; action?: string; risk: string; className?: string;
   }) => (
     <Link href={config.href}>
-      <Card className={`overflow-hidden cursor-pointer transition-all hover:shadow-md bg-white border border-slate-200 shadow-sm rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
-        <CardContent className="p-3.5 md:p-4 flex flex-col gap-1.5">
-          <div className="flex items-center gap-2">
-            <span className="flex items-center justify-center w-6 h-6 rounded-lg bg-slate-50">
+      <Card className={`overflow-hidden cursor-pointer transition-colors hover:bg-slate-50/80 bg-white border border-slate-200/80 rounded-xl ${riskBorder(config.risk)} ${config.className ?? ""}`}>
+        <CardContent className="p-3.5 md:p-4 flex flex-col gap-1">
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center justify-center w-5 h-5 rounded-md bg-slate-100/80">
               {config.icon}
             </span>
-            <span className="text-[10px] md:text-xs font-semibold text-slate-500 uppercase tracking-wider">{config.label}</span>
+            <span className="text-[10px] md:text-[11px] font-bold text-slate-400 uppercase tracking-wider">{config.label}</span>
           </div>
-          <div className="text-2xl md:text-3xl font-bold text-slate-900 leading-tight">{config.value}</div>
-          <p className="text-[10px] md:text-[11px] text-slate-500 leading-tight truncate">{config.insight}</p>
+          <div className="text-[22px] md:text-[28px] font-extrabold text-slate-900 leading-none tracking-tight">{config.value}</div>
+          <p className="text-[10px] md:text-[11px] text-slate-500 leading-snug truncate">{config.insight}</p>
           {config.action && (
-            <p className="text-[10px] md:text-[11px] text-blue-600 font-medium mt-0.5">{config.action} →</p>
+            <p className="text-[10px] md:text-[11px] text-blue-600 font-semibold mt-0.5">{config.action} →</p>
           )}
         </CardContent>
       </Card>
@@ -360,14 +360,14 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4 md:space-y-5 overflow-x-hidden" style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
+    <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 overflow-x-hidden" style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
 
       {/* --- 페이지 헤더 --- */}
-      <div className="flex flex-col space-y-1 min-w-0">
-        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900">
+      <div className="flex flex-col space-y-0.5 min-w-0">
+        <h2 className="text-lg md:text-[22px] font-extrabold tracking-tight text-slate-900">
           대시보드
         </h2>
-        <p className="text-sm text-slate-500">
+        <p className="text-[13px] text-slate-500 font-medium">
           {session?.user?.name ? `${session.user.name}님, ` : ""}
           {dashboardState === "blocked"
             ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
@@ -383,21 +383,54 @@ export default function DashboardPage() {
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
       {/* ═══ 3상태 중앙 패널 (desktop) ═══ */}
+      {statsLoading && (
+        <div className="hidden md:grid md:grid-cols-5 gap-4">
+          <div className="col-span-3 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-slate-200 animate-pulse" />
+              <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
+            </div>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-32 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-3 w-48 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-3">
+            <div className="h-4 w-20 rounded bg-slate-200 animate-pulse" />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-2 py-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-28 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-3 w-36 rounded bg-slate-100 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {!statsLoading && (
         <div className="hidden md:grid md:grid-cols-5 gap-4">
           {/* ── 좌측 상태 요약 카드 (3col) ── */}
-          <div className="col-span-3 rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="col-span-3 rounded-xl border border-slate-200/80 bg-white p-5">
             {dashboardState === "zero" && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <span className="inline-flex h-2 w-2 rounded-full bg-slate-400" />
-                  <h3 className="text-sm font-semibold text-slate-700">운영 이슈 요약</h3>
+                  <span className="inline-flex h-2 w-2 rounded-full bg-slate-300" />
+                  <h3 className="text-[13px] font-extrabold text-slate-900">운영 이슈 요약</h3>
                 </div>
                 <div className="text-center py-6">
-                  <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
-                    <Package className="h-6 w-6 text-slate-400" />
+                  <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
+                    <Package className="h-5 w-5 text-slate-400" />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 mb-1">아직 운영 데이터가 없습니다</p>
+                  <p className="text-[13px] font-bold text-slate-900 mb-1">아직 운영 데이터가 없습니다</p>
                   <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
                     품목 등록, 비교 시작, 견적 요청 생성 중 하나로 첫 운영 흐름을 시작하세요.
                   </p>
@@ -427,13 +460,13 @@ export default function DashboardPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2">
                   <span className="inline-flex h-2 w-2 rounded-full bg-emerald-500" />
-                  <h3 className="text-sm font-semibold text-slate-700">운영 이슈 요약</h3>
+                  <h3 className="text-[13px] font-extrabold text-slate-900">운영 이슈 요약</h3>
                 </div>
                 <div className="text-center py-6">
-                  <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+                  <div className="w-11 h-11 rounded-full bg-emerald-50 flex items-center justify-center mx-auto mb-3">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                   </div>
-                  <p className="text-sm font-semibold text-slate-700 mb-1">오늘 즉시 처리할 운영 이슈가 없습니다</p>
+                  <p className="text-[13px] font-bold text-slate-900 mb-1">오늘 즉시 처리할 운영 이슈가 없습니다</p>
                   <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
                     최근 운영 흐름은 안정적입니다. 최근 활동과 각 워크큐에서 진행 상황을 확인하세요.
                   </p>
@@ -457,42 +490,42 @@ export default function DashboardPage() {
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                   </span>
-                  <h3 className="text-sm font-semibold text-slate-900">지금 확인이 필요한 운영 이슈가 있습니다</h3>
+                  <h3 className="text-[13px] font-extrabold text-slate-900">지금 확인이 필요한 운영 이슈가 있습니다</h3>
                 </div>
                 <p className="text-xs text-slate-500">아래 항목부터 우선 처리하세요.</p>
                 <div className="space-y-2">
                   {processingRequiredCount > 0 && (
-                    <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200 hover:bg-amber-100 transition-colors group">
+                    <Link href="/dashboard/inventory?filter=low" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-amber-50/70 border border-amber-200/60 hover:bg-amber-50 transition-colors group">
                       <div className="flex items-center gap-2.5">
                         <AlertTriangle className="h-4 w-4 text-amber-600" />
-                        <span className="text-sm font-medium text-amber-800">처리 필요 항목</span>
+                        <span className="text-[13px] font-bold text-slate-900">처리 필요 항목</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-amber-700">{processingRequiredCount}건</span>
+                        <span className="text-[13px] font-extrabold text-amber-700">{processingRequiredCount}건</span>
                         <ChevronRight className="h-4 w-4 text-amber-400 group-hover:text-amber-600" />
                       </div>
                     </Link>
                   )}
                   {approvalPendingCount > 0 && (
-                    <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 transition-colors group">
+                    <Link href="/dashboard/quotes?status=RESPONDED" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-blue-50/70 border border-blue-200/60 hover:bg-blue-50 transition-colors group">
                       <div className="flex items-center gap-2.5">
                         <FileText className="h-4 w-4 text-blue-600" />
-                        <span className="text-sm font-medium text-blue-800">승인 대기</span>
+                        <span className="text-[13px] font-bold text-slate-900">승인 대기</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-blue-700">{approvalPendingCount}건</span>
+                        <span className="text-[13px] font-extrabold text-blue-700">{approvalPendingCount}건</span>
                         <ChevronRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600" />
                       </div>
                     </Link>
                   )}
                   {riskOrBlockerCount > 0 && (
-                    <Link href="/compare" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 transition-colors group">
+                    <Link href="/compare" className="flex items-center justify-between px-3 py-2.5 rounded-lg bg-red-50/70 border border-red-200/60 hover:bg-red-50 transition-colors group">
                       <div className="flex items-center gap-2.5">
                         <ShieldAlert className="h-4 w-4 text-red-600" />
-                        <span className="text-sm font-medium text-red-800">위험/차단</span>
+                        <span className="text-[13px] font-bold text-slate-900">위험/차단</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-red-700">{riskOrBlockerCount}건</span>
+                        <span className="text-[13px] font-extrabold text-red-700">{riskOrBlockerCount}건</span>
                         <ChevronRight className="h-4 w-4 text-red-400 group-hover:text-red-600" />
                       </div>
                     </Link>
@@ -503,10 +536,10 @@ export default function DashboardPage() {
           </div>
 
           {/* ── 우측 보조 카드 (2col) ── */}
-          <div className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+          <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white p-5">
             {dashboardState === "zero" && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-700">빠른 시작</h3>
+                <h3 className="text-[13px] font-extrabold text-slate-900">빠른 시작</h3>
                 <div className="space-y-1.5">
                   {[
                     { label: "품목 등록", desc: "시약·장비를 등록합니다", href: "/dashboard/inventory", icon: <Plus className="h-3.5 w-3.5 text-slate-500" /> },
@@ -530,7 +563,7 @@ export default function DashboardPage() {
 
             {dashboardState === "active" && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-700">최근 운영 활동</h3>
+                <h3 className="text-[13px] font-extrabold text-slate-900">최근 운영 활동</h3>
                 {notifications.filter((n) => n.id !== "n-delivery" || stats.totalInventory > 0).length > 0 ? (
                   <div className="space-y-1.5">
                     {notifications.slice(0, 5).map((n) => (
@@ -551,7 +584,7 @@ export default function DashboardPage() {
 
             {dashboardState === "blocked" && (
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-slate-700">우선 처리</h3>
+                <h3 className="text-[13px] font-extrabold text-slate-900">우선 처리</h3>
                 <div className="space-y-1.5">
                   {processingRequiredCount > 0 && (
                     <Link href="/dashboard/inventory?filter=low" className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-amber-50 transition-colors group">
@@ -589,15 +622,35 @@ export default function DashboardPage() {
       )}
 
       {/* ═══ 운영 인텔리전스 ═══ */}
-      {!statsLoading && (
+      {statsLoading && (
         <div className="hidden md:block">
           <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-slate-200 animate-pulse" />
+                <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
+              </div>
+              <div className="h-3 w-12 rounded bg-slate-100 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-3 py-3">
+              <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
+              <div className="space-y-2">
+                <div className="h-3.5 w-40 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-56 rounded bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {!statsLoading && (
+        <div className="hidden md:block">
+          <div className="rounded-xl border border-slate-200/80 bg-white p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-extrabold text-slate-900 flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-amber-500" />
                 운영 인텔리전스
               </h3>
-              <span className="text-[10px] text-slate-400 uppercase tracking-wider">자동 감지</span>
+              <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">자동 감지</span>
             </div>
             {(() => {
               const cards: Array<{ id: string; icon: React.ReactNode; title: string; desc: string; href: string; color: "red" | "amber" | "blue" | "emerald" }> = [];
@@ -683,13 +736,13 @@ export default function DashboardPage() {
                   {cards.map((card) => {
                     const c = colorMap[card.color];
                     return (
-                      <Link key={card.id} href={card.href} className={`rounded-xl border ${c.border} ${c.bg} p-4 hover:shadow-md transition-all group block`}>
-                        <div className="flex items-center gap-2 mb-2">
+                      <Link key={card.id} href={card.href} className={`rounded-xl border ${c.border} ${c.bg} p-4 hover:brightness-[0.97] transition-all group block`}>
+                        <div className="flex items-center gap-2 mb-1.5">
                           <span className={c.icon}>{card.icon}</span>
-                          <p className="text-sm font-bold text-slate-800">{card.title}</p>
+                          <p className="text-[13px] font-extrabold text-slate-900">{card.title}</p>
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed mb-2">{card.desc}</p>
-                        <span className={`text-xs font-semibold ${c.link} flex items-center gap-1`}>
+                        <p className="text-[11px] text-slate-500 leading-relaxed mb-2">{card.desc}</p>
+                        <span className={`text-[11px] font-bold ${c.link} flex items-center gap-1`}>
                           확인하기 <ArrowRight className="h-3 w-3" />
                         </span>
                       </Link>
@@ -703,7 +756,7 @@ export default function DashboardPage() {
       )}
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
-      <div className="md:hidden rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+      <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {hasActionItems ? (
@@ -712,12 +765,12 @@ export default function DashboardPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-60" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
                 </span>
-                <h3 className="text-sm font-semibold text-slate-900">오늘의 우선 작업</h3>
+                <h3 className="text-[13px] font-extrabold text-slate-900">오늘의 우선 작업</h3>
               </>
             ) : (
               <>
-                <span className={`inline-flex h-2 w-2 rounded-full flex-shrink-0 ${hasAnyData ? "bg-emerald-500" : "bg-slate-400"}`} />
-                <h3 className="text-sm font-semibold text-slate-700">
+                <span className={`inline-flex h-2 w-2 rounded-full flex-shrink-0 ${hasAnyData ? "bg-emerald-500" : "bg-slate-300"}`} />
+                <h3 className="text-[13px] font-extrabold text-slate-900">
                   {dashboardState === "active" ? "오늘 처리할 이슈 없음" : "시작 안내"}
                 </h3>
               </>
@@ -730,8 +783,8 @@ export default function DashboardPage() {
               <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory?filter=low", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{stats.lowStockAlerts}건 재고 부족</p>
-                  <p className="text-xs text-slate-500">즉시 발주 검토 필요</p>
+                  <p className="text-[13px] font-bold text-slate-900">{stats.lowStockAlerts}건 재고 부족</p>
+                  <p className="text-[11px] text-slate-500">즉시 발주 검토 필요</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </button>
@@ -740,8 +793,8 @@ export default function DashboardPage() {
               <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/quotes?status=PENDING", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{stats.activeQuotes}건 견적 대기</p>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-[13px] font-bold text-slate-900">{stats.activeQuotes}건 견적 대기</p>
+                  <p className="text-[11px] text-slate-500">
                     {stats.respondedQuotes > 0 ? `${stats.respondedQuotes}건 응답 수신 -- 검토 필요` : "공급사 응답 대기 중"}
                   </p>
                 </div>
@@ -752,8 +805,8 @@ export default function DashboardPage() {
               <button type="button" onClick={() => handleNavigateOrOverlay("/dashboard/inventory", "dashboard")} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors group text-left w-full">
                 <Calendar className="h-4 w-4 text-amber-500 flex-shrink-0" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
-                  <p className="text-xs text-slate-500">30일 이내 만료 예정</p>
+                  <p className="text-[13px] font-bold text-slate-900">{stats.expiringCount}건 유통기한 임박</p>
+                  <p className="text-[11px] text-slate-500">30일 이내 만료 예정</p>
                 </div>
                 <ChevronRight className="h-4 w-4 text-slate-400 flex-shrink-0 group-hover:text-slate-600 transition-colors" />
               </button>
@@ -848,6 +901,20 @@ export default function DashboardPage() {
       <div className="md:hidden space-y-3 pb-20">
 
         {/* KPI 판단 카드 2x2 */}
+        {statsLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-slate-200 bg-white shadow-sm p-3.5 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse" />
+                  <div className="h-3 w-14 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="h-7 w-12 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-full rounded bg-slate-100 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
@@ -886,19 +953,20 @@ export default function DashboardPage() {
             risk: quoteRisk,
           })}
         </div>
+        )}
 
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
-        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200/80 rounded-xl">
           <CardContent className="p-3 space-y-3">
             {/* 즉시 처리 */}
             {urgentItems.length > 0 && (
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">즉시 처리</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">즉시 처리</p>
                 {urgentItems.map((item) => (
                   <button key={item.id} type="button" onClick={() => handleNavigateOrOverlay(item.href, "dashboard")} className={`w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left ${item.severity === "red" ? "border-l-2 border-l-red-500" : "border-l-2 border-l-amber-500"}`}>
                     {item.icon}
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-slate-900">{item.label}</p>
+                      <p className="text-xs font-bold text-slate-900">{item.label}</p>
                       <p className="text-[10px] text-slate-500">{item.desc}</p>
                     </div>
                     <ChevronRight className="h-3.5 w-3.5 text-slate-500 flex-shrink-0" />
@@ -910,13 +978,13 @@ export default function DashboardPage() {
             {/* 상태 기반 추천 */}
             <div className="space-y-1.5">
               {urgentItems.length > 0 && <div className="border-t border-slate-200" />}
-              <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">다음 작업</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">다음 작업</p>
               <div className="space-y-1">
                 {recommendedActions.map((action) => (
                   <button key={action.id} type="button" onClick={() => handleNavigateOrOverlay(action.href, "card")} className="w-full flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left">
                     {action.icon}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-xs font-medium ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-600"}`}>{action.label}</p>
+                      <p className={`text-xs font-semibold ${action.state === "blocked" ? "text-slate-400" : action.state === "ready" ? "text-slate-900" : "text-slate-500"}`}>{action.label}</p>
                       <p className="text-[10px] text-slate-400 truncate">{action.desc}</p>
                     </div>
                     <ChevronRight className="h-3 w-3 text-slate-600 flex-shrink-0" />
@@ -928,10 +996,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 알림 */}
-        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200/80 rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">최근 알림</CardTitle>
+              <CardTitle className="text-[13px] font-extrabold text-slate-900">최근 알림</CardTitle>
               <Link href="/dashboard/notifications"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">모두 보기</Button></Link>
             </div>
           </CardHeader>
@@ -953,10 +1021,10 @@ export default function DashboardPage() {
         </Card>
 
         {/* 최근 처리 이력 (축소) */}
-        <Card className="bg-white border-slate-200 shadow-sm rounded-xl">
+        <Card className="bg-white border-slate-200/80 rounded-xl">
           <CardHeader className="pb-2 p-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-slate-900">최근 처리 이력</CardTitle>
+              <CardTitle className="text-[13px] font-extrabold text-slate-900">최근 처리 이력</CardTitle>
               <Link href="/dashboard/purchases"><Button variant="ghost" size="sm" className="text-[11px] h-6 px-2">전체 보기</Button></Link>
             </div>
           </CardHeader>
@@ -1332,7 +1400,7 @@ export default function DashboardPage() {
       </div>}
 
       {/* 모바일 하단 고정 빠른 실행 바 */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/95 backdrop-blur-sm border-t border-slate-200 px-4 py-2.5">
+      <div className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white/97 backdrop-blur-sm border-t border-slate-200/80 px-4 py-2.5">
         <div className="flex items-center gap-2">
           <Link href="/app/search" className="flex-1">
             <Button variant="outline" size="sm" className="w-full h-11 text-xs gap-1.5 bg-white border-slate-200 text-slate-700 hover:bg-slate-50">
