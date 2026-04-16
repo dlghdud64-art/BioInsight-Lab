@@ -311,10 +311,10 @@ export default function ReportsPage() {
                 <span className="hidden sm:inline">데이터 </span>가져오기
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl bg-pn border-bd">
+            <DialogContent className="max-w-2xl bg-white border-slate-200">
               <DialogHeader>
                 <DialogTitle className="text-slate-900">구매 내역 CSV Import</DialogTitle>
-                <DialogDescription className="text-slate-400">
+                <DialogDescription className="text-slate-500">
                   CSV 또는 Excel 파일을 업로드하여 구매 내역을 import합니다.
                 </DialogDescription>
               </DialogHeader>

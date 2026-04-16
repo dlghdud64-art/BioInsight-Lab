@@ -565,22 +565,25 @@ function SettingsPageContent() {
                         <Lock className="h-3 w-3 mr-1" />
                         비밀번호 변경
                       </Button>
-                      <DialogContent className="bg-white border-slate-200">
+                      <DialogContent className="bg-white border-slate-200 rounded-2xl">
                         <DialogHeader>
                           <DialogTitle className="text-slate-900">비밀번호 변경</DialogTitle>
-                          <DialogDescription className="text-slate-400">새 비밀번호를 입력하세요.</DialogDescription>
+                          <DialogDescription className="text-slate-500">새 비밀번호를 입력하세요.</DialogDescription>
                         </DialogHeader>
-                        <form onSubmit={handlePasswordChange} className="space-y-4 pt-2">
+                        <form onSubmit={handlePasswordChange} className="space-y-5 pt-2">
                           <FieldBlock label="현재 비밀번호">
-                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
+                            <Input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-11 rounded-xl" />
                           </FieldBlock>
                           <FieldBlock label="새 비밀번호">
-                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
+                            <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-11 rounded-xl" />
                           </FieldBlock>
                           <FieldBlock label="새 비밀번호 확인">
-                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="bg-white border-slate-200 text-slate-900" />
+                            <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className={`bg-white text-slate-900 h-11 rounded-xl ${confirmPassword && newPassword !== confirmPassword ? "border-red-400 ring-1 ring-red-200" : "border-slate-200"}`} />
+                            {confirmPassword && newPassword !== confirmPassword && (
+                              <p className="text-[12px] font-medium text-red-500 mt-1.5">비밀번호가 일치하지 않습니다.</p>
+                            )}
                           </FieldBlock>
-                          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-500 text-white" disabled={!newPassword || newPassword !== confirmPassword || !currentPassword}>
+                          <Button type="submit" className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold" disabled={!newPassword || newPassword !== confirmPassword || !currentPassword}>
                             변경 확인
                           </Button>
                         </form>
@@ -842,7 +845,7 @@ function SettingsPageContent() {
         <DialogContent className="bg-white border-slate-200 max-w-md">
           <DialogHeader>
             <DialogTitle className="text-slate-900">구독 해지</DialogTitle>
-            <DialogDescription className="text-slate-400">해지 사유를 알려주시면 서비스 개선에 반영하겠습니다.</DialogDescription>
+            <DialogDescription className="text-slate-500">해지 사유를 알려주시면 서비스 개선에 반영하겠습니다.</DialogDescription>
           </DialogHeader>
           {cancelStep === 1 && (
             <div className="space-y-2 pt-2">

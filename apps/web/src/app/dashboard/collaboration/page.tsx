@@ -176,9 +176,9 @@ export default function CollaborationPage() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-6 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="qty">
+          <div className="grid gap-5 py-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="qty" className="text-sm font-semibold text-slate-700">
                 필요 수량 <span className="text-red-500">*</span>
               </Label>
               <Input
@@ -186,26 +186,28 @@ export default function CollaborationPage() {
                 placeholder="예: 2ml 분주 또는 1 vial 대여"
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
+                className="h-11 rounded-xl border-slate-200"
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="purpose">사용 목적 및 프로젝트 명</Label>
+            <div className="grid gap-1.5">
+              <Label htmlFor="purpose" className="text-sm font-semibold text-slate-700">사용 목적 및 프로젝트 명</Label>
               <Input
                 id="purpose"
                 placeholder="예: 정부과제 예비 실험용"
                 value={purpose}
                 onChange={(e) => setPurpose(e.target.value)}
+                className="h-11 rounded-xl border-slate-200"
               />
             </div>
 
-            <div className="grid gap-2">
-              <Label>반환/보상 약속</Label>
+            <div className="grid gap-1.5">
+              <Label className="text-sm font-semibold text-slate-700">반환/보상 약속</Label>
               <Select value={compensation} onValueChange={setCompensation}>
-                <SelectTrigger>
+                <SelectTrigger className="h-11 rounded-xl border-slate-200">
                   <SelectValue placeholder="조건을 선택하세요" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="rounded-xl">
                   <SelectItem value="return">동일 시약 발주 후 반환</SelectItem>
                   <SelectItem value="trade">다른 잉여 시약으로 교환</SelectItem>
                   <SelectItem value="free">단순 소량 분주 요청</SelectItem>
@@ -214,11 +216,11 @@ export default function CollaborationPage() {
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCloseModal}>
+          <DialogFooter className="gap-3">
+            <Button variant="outline" onClick={handleCloseModal} className="h-11 rounded-xl border-slate-200 font-semibold">
               취소
             </Button>
-            <Button onClick={handleRequest} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleRequest} className="h-11 rounded-xl bg-blue-600 hover:bg-blue-700 font-semibold">
               <Send className="w-4 h-4 mr-2" />
               요청서 전송
             </Button>

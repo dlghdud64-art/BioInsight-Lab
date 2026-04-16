@@ -1418,7 +1418,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         <DialogContent className="sm:max-w-[480px] bg-white border-slate-200">
           <DialogHeader>
             <DialogTitle className="text-slate-900">멤버 초대</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-slate-500">
               이메일로 초대하거나 협력 조직을 연결하세요.
             </DialogDescription>
           </DialogHeader>
@@ -1434,27 +1434,27 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
 
             {/* 이메일 초대 탭 */}
             <TabsContent value="email" className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="invite-email" className="text-slate-600">이메일 주소</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="invite-email" className="text-sm font-semibold text-slate-700">이메일 주소</Label>
                 <div className="relative">
-                  <Mail className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
                   <Input
                     id="invite-email"
                     type="email"
-                    className="pl-9 bg-slate-100 border-slate-200 text-slate-900"
+                    className="pl-9 bg-white border-slate-200 text-slate-900 h-11 rounded-xl"
                     placeholder="colleague@univ.edu"
                     value={inviteEmail}
                     onChange={(e) => setInviteEmail(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label className="text-slate-600">역할</Label>
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold text-slate-700">역할</Label>
                 <Select value={inviteRole} onValueChange={setInviteRole}>
-                  <SelectTrigger className="bg-slate-100 border-slate-200 text-slate-900">
+                  <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-11 rounded-xl">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-xl">
                     <SelectItem value="VIEWER">연구원 (조회자)</SelectItem>
                     <SelectItem value="REQUESTER">요청자</SelectItem>
                     <SelectItem value="APPROVER">승인자</SelectItem>
@@ -1462,7 +1462,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                 </Select>
               </div>
               <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-slate-900"
+                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold"
                 disabled={!inviteEmail.trim() || inviteMemberMutation.isPending}
                 onClick={() => inviteMemberMutation.mutate({ userEmail: inviteEmail.trim(), role: inviteRole })}
               >
@@ -1489,7 +1489,7 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
         <DialogContent className="sm:max-w-[400px] bg-white border-slate-200">
           <DialogHeader>
             <DialogTitle className="text-slate-900">권한 변경</DialogTitle>
-            <DialogDescription className="text-slate-400">
+            <DialogDescription className="text-slate-500">
               {permissionDialogMember?.name}님의 역할을 변경합니다.
             </DialogDescription>
           </DialogHeader>
@@ -1497,13 +1497,13 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
             <div className="space-y-4 mt-2">
               <div className="flex items-center gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-blue-900/40 text-blue-300">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
                     {permissionDialogMember.initial}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-semibold text-slate-900">{permissionDialogMember.name}</p>
-                  <p className="text-xs text-slate-400">{permissionDialogMember.email}</p>
+                  <p className="text-xs text-slate-500">{permissionDialogMember.email}</p>
                 </div>
               </div>
               <div className="space-y-2">
