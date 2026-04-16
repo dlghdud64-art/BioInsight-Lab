@@ -851,7 +851,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
       </div>
 
       {/* 런북 목록 — 초기 5개만 노출 */}
-      <div className="space-y-2.5 mb-8">
+      <div className="space-y-3 mb-8">
         {filteredItems.length === 0 ? (
           <div className="rounded-xl bg-slate-50 border border-slate-200 py-16 text-center">
             <Search className="h-8 w-8 text-slate-300 mx-auto mb-3" />
@@ -869,7 +869,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                 }`}
               >
                 {/* 증상 헤더 */}
-                <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-5 md:px-6 py-4.5 flex items-start gap-3.5 group">
+                <button onClick={() => toggleExpand(item.id)} className="w-full text-left px-5 md:px-6 py-5 flex items-start gap-3.5 group">
                   <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${isExpanded ? "bg-amber-100" : "bg-slate-100"}`}>
                     <AlertTriangle className={`h-3.5 w-3.5 transition-colors ${isExpanded ? "text-amber-600" : "text-slate-400"}`} />
                   </div>
@@ -888,15 +888,15 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
 
                 {/* 런북 상세 */}
                 {isExpanded && (
-                  <div className="px-5 md:px-6 pb-5 border-t border-slate-100">
-                    <div className="space-y-5 pt-5">
+                  <div className="px-5 md:px-6 pb-6 border-t border-slate-100">
+                    <div className="space-y-6 pt-6">
                       {/* 가능한 원인 */}
                       <div>
                         <div className="flex items-center gap-2 mb-2.5">
                           <Target className="h-3.5 w-3.5 text-slate-500" />
                           <span className="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">가능한 원인</span>
                         </div>
-                        <div className="space-y-1.5 ml-5.5">
+                        <div className="space-y-2 ml-5.5">
                           {item.possibleCauses.map((cause, i) => (
                             <p key={i} className="text-[13px] text-slate-600 leading-relaxed flex items-start gap-2">
                               <span className="text-slate-300 mt-0.5">•</span>{cause}
@@ -911,7 +911,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                           <Zap className="h-3.5 w-3.5 text-blue-500" />
                           <span className="text-[11px] font-extrabold text-blue-600 uppercase tracking-wider">즉시 조치</span>
                         </div>
-                        <div className="space-y-2 ml-5.5">
+                        <div className="space-y-2.5 ml-5.5">
                           {item.immediateActions.map((action, i) => (
                             <div key={i} className="flex items-start gap-2.5">
                               <span className="text-[11px] font-mono font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded flex-shrink-0">{i + 1}</span>
@@ -922,7 +922,7 @@ function TroubleshootTab({ onCreateTicketFromRunbook }: { onCreateTicketFromRunb
                       </div>
 
                       {/* 에스컬레이션 기준 */}
-                      <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3">
+                      <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3.5">
                         <div className="flex items-start gap-2.5">
                           <ArrowUpRight className="h-3.5 w-3.5 text-amber-500 flex-shrink-0 mt-0.5" />
                           <div>

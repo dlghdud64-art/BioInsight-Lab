@@ -140,19 +140,19 @@ export default function PricingPage() {
                   name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
                   price: "Free", period: "",
                   features: ["시약·장비 검색 및 후보 저장", "기본 비교 기록", "기본 재고 등록"],
-                  cta: "무료 플랜 시작하기", href: "/search", featured: false,
+                  cta: "무료 플랜 시작하기", href: "/auth/signin?plan=starter", featured: false,
                 },
                 {
                   name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
                   price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
                   features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
-                  cta: "플랜 선택하기", href: "/search", featured: true,
+                  cta: "플랜 선택하기", href: "/auth/signin?plan=team", featured: true,
                 },
                 {
                   name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
                   price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
                   features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
-                  cta: "플랜 선택하기", href: "/search", featured: false,
+                  cta: "플랜 선택하기", href: "/auth/signin?plan=business", featured: false,
                 },
                 {
                   name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",

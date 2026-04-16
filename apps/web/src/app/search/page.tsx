@@ -29,10 +29,8 @@ function PublicSearchContent() {
     if (!trimmed) return;
 
     if (session?.user) {
-      // 로그인 상태: /app/search로 이동
       router.push(`/app/search?q=${encodeURIComponent(trimmed)}`);
     } else {
-      // 비로그인: pending state 저장 + 로그인 모달
       savePendingAction({ action: "run_search", query: trimmed });
       setShowLoginModal(true);
     }
@@ -55,15 +53,15 @@ function PublicSearchContent() {
   }, [handleSearch]);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#0F1520" }}>
+    <div className="min-h-screen bg-white">
       {/* Header area */}
-      <div className="mx-auto max-w-3xl px-4 pt-24 pb-16 text-center space-y-8">
+      <div className="mx-auto max-w-3xl px-4 pt-28 pb-20 text-center space-y-10">
         {/* Title */}
-        <div className="space-y-3">
-          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+        <div className="space-y-4">
+          <h1 className="text-3xl md:text-[42px] font-extrabold text-slate-900 tracking-tight leading-tight">
             연구 시약·장비 검색
           </h1>
-          <p className="text-base md:text-lg max-w-lg mx-auto leading-relaxed" style={{ color: "#C8D4E5" }}>
+          <p className="text-[15px] md:text-[17px] max-w-lg mx-auto leading-relaxed text-slate-500">
             제품명, 카탈로그 번호, 브랜드로 검색하세요.
             비교·견적 요청까지 한 번에 진행할 수 있습니다.
           </p>
@@ -73,30 +71,29 @@ function PublicSearchContent() {
         <div className="relative max-w-xl mx-auto">
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5" style={{ color: "#667389" }} />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="제품명, 카탈로그 번호, 브랜드 검색..."
-                className="pl-10 h-12 text-slate-100 placeholder:text-slate-500 text-base"
-                style={{ backgroundColor: "#1E2738", borderColor: "#2E3B50" }}
+                className="pl-11 h-12 text-slate-900 placeholder:text-slate-400 text-base bg-white border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 rounded-xl"
               />
             </div>
             <Button
               onClick={handleSearch}
               disabled={!query.trim()}
-              className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white"
+              className="h-12 px-6 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-[15px] gap-1.5"
             >
               검색
-              <ArrowRight className="ml-1.5 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
         </div>
 
         {/* Example queries */}
         <div className="space-y-3">
-          <p className="text-[11px] font-bold uppercase tracking-widest" style={{ color: "#8A99AF" }}>검색 예시</p>
+          <p className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400">검색 예시</p>
           <div className="flex flex-wrap justify-center gap-2">
             {exampleQueries.map((eq) => {
               const Icon = eq.icon;
@@ -104,10 +101,7 @@ function PublicSearchContent() {
                 <button
                   key={eq.label}
                   onClick={() => handleExampleClick(eq.label)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm transition-colors hover:text-white"
-                  style={{ color: "#C8D4E5", backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = "#4A5E78"; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = "#2E3B50"; }}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-medium text-slate-600 bg-slate-50 border border-slate-200 transition-all hover:border-blue-300 hover:text-blue-600 hover:bg-blue-50"
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {eq.label}
@@ -118,8 +112,8 @@ function PublicSearchContent() {
         </div>
 
         {/* Searchable keys info */}
-        <div className="pt-8" style={{ borderTop: "1px solid #2E3B50" }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div className="pt-10 border-t border-slate-200">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
               { label: "제품명", desc: "한글/영문 제품명" },
               { label: "카탈로그 번호", desc: "제조사 Cat. No." },
@@ -127,8 +121,8 @@ function PublicSearchContent() {
               { label: "LOT 번호", desc: "배치 추적" },
             ].map((item) => (
               <div key={item.label} className="space-y-1">
-                <p className="text-sm font-medium" style={{ color: "#F3F7FF" }}>{item.label}</p>
-                <p className="text-xs" style={{ color: "#8A99AF" }}>{item.desc}</p>
+                <p className="text-[14px] font-extrabold text-slate-800">{item.label}</p>
+                <p className="text-[12px] text-slate-400">{item.desc}</p>
               </div>
             ))}
           </div>
@@ -137,26 +131,25 @@ function PublicSearchContent() {
 
       {/* Login required modal */}
       <Dialog open={showLoginModal} onOpenChange={setShowLoginModal}>
-        <DialogContent className="max-w-sm" style={{ backgroundColor: "#1E2738", borderColor: "#2E3B50" }}>
+        <DialogContent className="max-w-sm bg-white border-slate-200 shadow-xl">
           <DialogHeader>
-            <DialogTitle className="text-white flex items-center gap-2">
-              <LogIn className="h-5 w-5 text-blue-400" />
+            <DialogTitle className="text-slate-900 flex items-center gap-2">
+              <LogIn className="h-5 w-5 text-blue-600" />
               로그인이 필요합니다
             </DialogTitle>
-            <DialogDescription className="pt-2" style={{ color: "#C8D4E5" }}>
+            <DialogDescription className="pt-2 text-slate-500">
               로그인 후 결과 확인과 비교·견적 요청을 진행할 수 있습니다.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 pt-2">
             <Link href={`/auth/signin?callbackUrl=${encodeURIComponent(query.trim() ? `/app/search?q=${encodeURIComponent(query.trim())}` : "/app/search")}`}>
-              <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+              <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold">
                 로그인하기
               </Button>
             </Link>
             <Button
               variant="ghost"
-              className="hover:text-white"
-              style={{ color: "#9DADC0" }}
+              className="text-slate-500 hover:text-slate-700"
               onClick={() => setShowLoginModal(false)}
             >
               취소
@@ -171,8 +164,8 @@ function PublicSearchContent() {
 export default function SearchPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: "#0F1520" }}>
-        <div style={{ color: "#8A99AF" }}>로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="text-slate-400">로딩 중...</div>
       </div>
     }>
       <PublicSearchContent />

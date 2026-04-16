@@ -27,6 +27,9 @@ import {
   Zap,
   AlertCircle,
   Clock,
+  GitCompareArrows,
+  Star,
+  Lock,
 } from "lucide-react";
 
 /* ── Types ── */
@@ -52,6 +55,7 @@ interface ItemConfig {
 }
 
 type Urgency = "일반" | "긴급" | "최우선";
+type SupplierStrategy = "compare" | "preferred" | "directed";
 
 interface RequestWizardModalProps {
   open: boolean;
@@ -93,6 +97,7 @@ export function RequestWizardModal({
   const [direction, setDirection] = useState(0);
   const [purpose, setPurpose] = useState("");
   const [urgency, setUrgency] = useState<Urgency>("일반");
+  const [supplierStrategy, setSupplierStrategy] = useState<SupplierStrategy>("compare");
   const [itemConfigs, setItemConfigs] = useState<ItemConfig[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null);
@@ -138,6 +143,7 @@ export function RequestWizardModal({
       setDirection(0);
       setPurpose("");
       setUrgency("일반");
+      setSupplierStrategy("compare");
       setItemConfigs(
         targetProducts.map((p) => ({
           productId: p.id,
@@ -169,6 +175,7 @@ export function RequestWizardModal({
       const payload = {
         purpose,
         urgency,
+        supplierStrategy,
         items: targetProducts.map((p) => {
           const config = itemConfigs.find((ic) => ic.productId === p.id);
           return {
@@ -180,7 +187,8 @@ export function RequestWizardModal({
             allowSubstitute: config?.allowSubstitute ?? false,
           };
         }),
-        suppliers,
+        // suppliers array는 directed/preferred 전략에서만 의미 있음
+        suppliers: supplierStrategy === "compare" ? [] : suppliers,
       };
 
       const res = await csrfFetch("/api/quotes", {
@@ -391,24 +399,62 @@ export function RequestWizardModal({
                     </div>
                   </div>
 
-                  {/* 공급사 대상 */}
+                  {/* 공급 전략 */}
                   <div>
                     <div className="flex items-center gap-2 mb-3">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[11px] font-bold">3</span>
-                      <h3 className="text-sm font-semibold text-slate-800">공급사 대상 ({suppliers.length}곳)</h3>
+                      <h3 className="text-sm font-semibold text-slate-800">공급 전략</h3>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      {suppliers.length > 0 ? (
-                        suppliers.map((s) => (
-                          <span key={s} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            <CheckCircle2 className="h-3 w-3" />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {([
+                        { value: "compare" as SupplierStrategy, label: "비교 견적", desc: "2~3곳 비교 후 선정", icon: GitCompareArrows, color: "blue" },
+                        { value: "preferred" as SupplierStrategy, label: "선호 공급사 있음", desc: "우선 배정, 비교 병행", icon: Star, color: "amber" },
+                        { value: "directed" as SupplierStrategy, label: "지정 공급사", desc: "해당 공급사만 진행", icon: Lock, color: "slate" },
+                      ]).map((opt) => {
+                        const isActive = supplierStrategy === opt.value;
+                        const Icon = opt.icon;
+                        return (
+                          <button
+                            key={opt.value}
+                            onClick={() => setSupplierStrategy(opt.value)}
+                            className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition-all ${
+                              isActive
+                                ? opt.color === "blue" ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
+                                : opt.color === "amber" ? "border-amber-300 bg-amber-50 ring-1 ring-amber-200"
+                                : "border-slate-300 bg-slate-50 ring-1 ring-slate-200"
+                                : "border-slate-200 bg-white hover:border-slate-300"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              <Icon className={`h-3.5 w-3.5 ${
+                                isActive
+                                  ? opt.color === "blue" ? "text-blue-600"
+                                  : opt.color === "amber" ? "text-amber-600"
+                                  : "text-slate-600"
+                                  : "text-slate-400"
+                              }`} />
+                              <span className={`text-xs font-bold ${isActive ? "text-slate-900" : "text-slate-600"}`}>{opt.label}</span>
+                            </div>
+                            <span className="text-[10px] text-slate-400">{opt.desc}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {supplierStrategy !== "compare" && suppliers.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        <span className="text-[11px] text-slate-500 mr-1">
+                          {supplierStrategy === "preferred" ? "선호:" : "지정:"}
+                        </span>
+                        {suppliers.map((s) => (
+                          <span key={s} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
                             {s}
                           </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400">자동 매칭된 공급사가 없습니다.</span>
-                      )}
-                    </div>
+                        ))}
+                      </div>
+                    )}
+                    {supplierStrategy === "compare" && (
+                      <p className="text-[11px] text-slate-400 mt-2">공급사 후보 선정은 견적 관리에서 진행됩니다.</p>
+                    )}
                   </div>
                 </>
               ) : step === 2 ? (
@@ -483,26 +529,56 @@ export function RequestWizardModal({
                     </div>
                   </div>
 
-                  {/* 공급사 대상 (최종) */}
+                  {/* 공급 전략 */}
                   <div className="rounded-xl border border-slate-200 bg-white p-4">
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-slate-500" />
-                        <h4 className="text-sm font-semibold text-slate-800">공급사 대상 (최종)</h4>
+                        <h4 className="text-sm font-semibold text-slate-800">공급 전략</h4>
                       </div>
-                      <span className="text-xs text-blue-600 font-medium">{suppliers.length}곳</span>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        supplierStrategy === "compare" ? "bg-blue-50 text-blue-600" :
+                        supplierStrategy === "preferred" ? "bg-amber-50 text-amber-600" :
+                        "bg-slate-100 text-slate-600"
+                      }`}>
+                        {supplierStrategy === "compare" ? "비교 견적" :
+                         supplierStrategy === "preferred" ? "선호 공급사" : "지정 공급사"}
+                      </span>
                     </div>
-                    <div className="space-y-2">
-                      {suppliers.map((s) => (
-                        <div key={s} className="flex items-center justify-between py-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                            <span className="text-sm text-slate-700">{s}</span>
-                          </div>
-                          <span className="text-xs text-emerald-600 font-medium">제출 가능</span>
+                    {supplierStrategy === "compare" ? (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between py-1.5 text-xs">
+                          <span className="text-slate-500">견적 수집 목표</span>
+                          <span className="text-slate-700 font-medium">2~3곳</span>
                         </div>
-                      ))}
-                    </div>
+                        <div className="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2.5">
+                          <p className="text-[11px] text-blue-600 leading-relaxed">
+                            공급사 후보 선정은 견적 관리에서 진행됩니다.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {suppliers.map((s) => (
+                          <div key={s} className="flex items-center justify-between py-1.5">
+                            <div className="flex items-center gap-2">
+                              <span className={`h-2 w-2 rounded-full ${supplierStrategy === "preferred" ? "bg-amber-500" : "bg-slate-500"}`} />
+                              <span className="text-sm text-slate-700">{s}</span>
+                            </div>
+                            <span className="text-xs text-slate-500 font-medium">
+                              {supplierStrategy === "preferred" ? "선호" : "지정"}
+                            </span>
+                          </div>
+                        ))}
+                        {supplierStrategy === "preferred" && (
+                          <div className="rounded-lg bg-amber-50 border border-amber-100 px-3 py-2.5">
+                            <p className="text-[11px] text-amber-600 leading-relaxed">
+                              선호 공급사 우선 배정, 비교 견적도 병행합니다.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </>
               ) : step === 3 ? (
@@ -513,7 +589,7 @@ export function RequestWizardModal({
                   </div>
                   <h3 className="text-lg font-bold text-slate-900 mb-1.5">견적 요청이 제출되었습니다</h3>
                   <p className="text-sm text-slate-500 mb-6">
-                    품목 {targetProducts.length}건 · 공급사 {suppliers.length}곳에 견적을 요청했습니다.
+                    품목 {targetProducts.length}건 · {supplierStrategy === "compare" ? "비교 견적으로 진행됩니다" : supplierStrategy === "preferred" ? `선호 공급사 ${suppliers.length}곳 우선 배정` : `지정 공급사 ${suppliers.length}곳에 요청`}
                   </p>
 
                   {/* Handoff summary */}
@@ -536,8 +612,16 @@ export function RequestWizardModal({
                         <span className="text-slate-700">{urgency}</span>
                       </div>
                       <div className="flex items-center justify-between text-xs">
+                        <span className="text-slate-500">공급 전략</span>
+                        <span className="text-slate-700">
+                          {supplierStrategy === "compare" ? "비교 견적" : supplierStrategy === "preferred" ? "선호 공급사" : "지정 공급사"}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
                         <span className="text-slate-500">상태</span>
-                        <span className="text-emerald-600 font-medium">공급사 응답 대기</span>
+                        <span className="text-emerald-600 font-medium">
+                          {supplierStrategy === "compare" ? "견적 관리에서 공급사 후보 선정 예정" : "공급사 응답 대기"}
+                        </span>
                       </div>
                     </div>
                   </div>

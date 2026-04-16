@@ -154,15 +154,15 @@ function buildPriorityAlerts(zones: ZoneSummary[]): { zone: string; message: str
 
 function ExpiryBadge({ days }: { days: number }) {
   if (days <= 3) {
-    return <Badge className="bg-red-950/60 text-red-400 border-red-500/30 text-[11px]">D-{days}</Badge>;
+    return <Badge className="bg-red-50 text-red-600 border-red-200 text-[11px]">D-{days}</Badge>;
   }
   if (days <= 7) {
-    return <Badge className="bg-amber-950/60 text-amber-400 border-amber-500/30 text-[11px]">D-{days}</Badge>;
+    return <Badge className="bg-amber-50 text-amber-600 border-amber-200 text-[11px]">D-{days}</Badge>;
   }
   if (days <= 30) {
-    return <Badge className="bg-yellow-950/60 text-yellow-400 border-yellow-500/30 text-[11px]">D-{days}</Badge>;
+    return <Badge className="bg-yellow-50 text-yellow-600 border-yellow-200 text-[11px]">D-{days}</Badge>;
   }
-  return <Badge className="bg-emerald-950/60 text-emerald-400 border-emerald-500/30 text-[11px]">D-{days}</Badge>;
+  return <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[11px]">D-{days}</Badge>;
 }
 
 // ─── Main Component ───────────────────────────────────────────────────
@@ -187,12 +187,12 @@ export function StorageLocationView() {
             {priorityAlerts.map((a, idx) => (
               <div
                 key={idx}
-                className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${
+                className={`flex items-center gap-2 rounded-full px-3.5 py-2 text-xs font-medium border ${
                   a.severity === "critical"
-                    ? "bg-red-950/40 border-red-500/30 text-red-300"
+                    ? "bg-red-50 border-red-200 text-red-700"
                     : a.severity === "warning"
-                      ? "bg-amber-950/40 border-amber-500/30 text-amber-300"
-                      : "bg-blue-950/40 border-blue-500/30 text-blue-300"
+                      ? "bg-amber-50 border-amber-200 text-amber-700"
+                      : "bg-blue-50 border-blue-200 text-blue-700"
                 }`}
               >
                 {a.severity === "critical" ? (
@@ -203,7 +203,7 @@ export function StorageLocationView() {
                   <ArrowRight className="w-3.5 h-3.5 flex-shrink-0" />
                 )}
                 <span className="font-bold">{a.zone}</span>
-                <span className="text-slate-400">/</span>
+                <span className="text-slate-300">/</span>
                 <span>{a.message}</span>
               </div>
             ))}
@@ -219,10 +219,10 @@ export function StorageLocationView() {
             <button
               key={zone.id}
               onClick={() => setSelectedZone(isSelected ? null : zone.id)}
-              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 hover:border-bs ${
+              className={`relative flex flex-col gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
                 isSelected
-                  ? "bg-pn border-blue-500/60 ring-2 ring-blue-500 shadow-lg shadow-blue-500/10"
-                  : "bg-pn border-bd hover:bg-el"
+                  ? "bg-blue-50/50 border-blue-400 ring-2 ring-blue-500/20 shadow-sm"
+                  : "bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm"
               }`}
             >
               {/* Header */}
@@ -235,7 +235,7 @@ export function StorageLocationView() {
                   </div>
                 </div>
                 {zone.hasHazardous && (
-                  <Badge className="bg-red-950/60 text-red-400 border-red-500/30 text-[10px] px-1.5 py-0.5">
+                  <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5 py-0.5">
                     <Flame className="w-3 h-3 mr-0.5" />
                     위험
                   </Badge>
@@ -252,21 +252,21 @@ export function StorageLocationView() {
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <Clock className="w-3 h-3 text-amber-500" />
                   <span className="text-slate-400">만료</span>
-                  <span className={`font-bold ml-auto ${zone.expiringItems > 0 ? "text-amber-400" : "text-slate-500"}`}>
+                  <span className={`font-bold ml-auto ${zone.expiringItems > 0 ? "text-amber-600" : "text-slate-500"}`}>
                     {zone.expiringItems}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <ShoppingCart className="w-3 h-3 text-blue-500" />
                   <span className="text-slate-400">재주문</span>
-                  <span className={`font-bold ml-auto ${zone.reorderItems > 0 ? "text-blue-400" : "text-slate-500"}`}>
+                  <span className={`font-bold ml-auto ${zone.reorderItems > 0 ? "text-blue-600" : "text-slate-500"}`}>
                     {zone.reorderItems}
                   </span>
                 </div>
                 <div className="flex items-center gap-1.5 text-[11px]">
                   <Wrench className="w-3 h-3 text-rose-500" />
                   <span className="text-slate-400">이슈</span>
-                  <span className={`font-bold ml-auto ${zone.issueItems > 0 ? "text-rose-400" : "text-slate-500"}`}>
+                  <span className={`font-bold ml-auto ${zone.issueItems > 0 ? "text-rose-600" : "text-slate-500"}`}>
                     {zone.issueItems}
                   </span>
                 </div>
@@ -283,16 +283,16 @@ export function StorageLocationView() {
 
       {/* ── Drill-down: Selected Zone Items ── */}
       {activeZone && (
-        <div className="rounded-xl border border-bd bg-pg overflow-hidden animate-in slide-in-from-top-2 duration-300">
+        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden animate-in slide-in-from-top-2 duration-300">
           {/* Drill-down Header */}
-          <div className="flex items-center justify-between px-5 py-3 border-b border-bd bg-pn/50">
+          <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50/50">
             <div className="flex items-center gap-2">
               <span className={activeZone.iconColor}>{activeZone.icon}</span>
               <h3 className="text-sm font-bold text-slate-700">
                 {activeZone.label}
                 <span className="text-slate-500 font-normal ml-2">({activeZone.tempRange})</span>
               </h3>
-              <Badge variant="outline" className="border-slate-600 text-slate-400 text-[11px]">
+              <Badge variant="outline" className="border-slate-300 text-slate-500 text-[11px]">
                 {activeZone.totalItems}건
               </Badge>
             </div>
@@ -308,7 +308,7 @@ export function StorageLocationView() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-bd text-[11px] text-slate-500 uppercase tracking-wide">
+                <tr className="border-b border-slate-200 text-[11px] text-slate-500 uppercase tracking-wide">
                   <th className="text-left px-5 py-2.5 font-medium">품목</th>
                   <th className="text-left px-3 py-2.5 font-medium">Lot</th>
                   <th className="text-center px-3 py-2.5 font-medium">수량</th>
@@ -321,7 +321,7 @@ export function StorageLocationView() {
                 {activeZone.items.map((item) => (
                   <tr
                     key={item.id}
-                    className="border-b border-bd/50 hover:bg-pn/60 transition-colors"
+                    className="border-b border-slate-100 hover:bg-slate-50/60 transition-colors"
                   >
                     {/* Name + Catalog */}
                     <td className="px-5 py-3">
@@ -363,37 +363,37 @@ export function StorageLocationView() {
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap justify-center gap-1">
                         {item.needsRelocation && (
-                          <Badge className="bg-violet-950/60 text-violet-400 border-violet-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-violet-50 text-violet-600 border-violet-200 text-[10px] px-1.5">
                             <MapPin className="w-3 h-3 mr-0.5" />
                             이동
                           </Badge>
                         )}
                         {item.needsInspection && (
-                          <Badge className="bg-amber-950/60 text-amber-400 border-amber-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-amber-50 text-amber-600 border-amber-200 text-[10px] px-1.5">
                             <Wrench className="w-3 h-3 mr-0.5" />
                             점검
                           </Badge>
                         )}
                         {item.reorderNeeded && (
-                          <Badge className="bg-blue-950/60 text-blue-400 border-blue-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px] px-1.5">
                             <ShoppingCart className="w-3 h-3 mr-0.5" />
                             재주문
                           </Badge>
                         )}
                         {item.sdsRequired && (
-                          <Badge className="bg-red-950/60 text-red-400 border-red-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5">
                             <FileText className="w-3 h-3 mr-0.5" />
                             SDS
                           </Badge>
                         )}
                         {item.isHazardous && (
-                          <Badge className="bg-red-950/60 text-red-400 border-red-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] px-1.5">
                             <Flame className="w-3 h-3 mr-0.5" />
                             위험
                           </Badge>
                         )}
                         {!item.needsRelocation && !item.needsInspection && !item.reorderNeeded && !item.sdsRequired && !item.isHazardous && (
-                          <Badge className="bg-emerald-950/60 text-emerald-400 border-emerald-500/30 text-[10px] px-1.5">
+                          <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[10px] px-1.5">
                             <CheckCircle2 className="w-3 h-3 mr-0.5" />
                             정상
                           </Badge>
@@ -407,23 +407,23 @@ export function StorageLocationView() {
           </div>
 
           {/* Zone-level summary footer */}
-          <div className="flex items-center gap-4 px-5 py-3 border-t border-bd bg-pn/30 text-[11px] text-slate-500">
+          <div className="flex items-center gap-4 px-5 py-3 border-t border-slate-200 bg-slate-50/50 text-[11px] text-slate-500">
             <span>
               총 <span className="text-slate-600 font-medium">{activeZone.totalItems}</span>건
             </span>
             {activeZone.expiringItems > 0 && (
               <span>
-                만료 임박 <span className="text-amber-400 font-medium">{activeZone.expiringItems}</span>건
+                만료 임박 <span className="text-amber-600 font-medium">{activeZone.expiringItems}</span>건
               </span>
             )}
             {activeZone.reorderItems > 0 && (
               <span>
-                재주문 필요 <span className="text-blue-400 font-medium">{activeZone.reorderItems}</span>건
+                재주문 필요 <span className="text-blue-600 font-medium">{activeZone.reorderItems}</span>건
               </span>
             )}
             {activeZone.issueItems > 0 && (
               <span>
-                점검/이슈 <span className="text-rose-400 font-medium">{activeZone.issueItems}</span>건
+                점검/이슈 <span className="text-rose-600 font-medium">{activeZone.issueItems}</span>건
               </span>
             )}
           </div>
