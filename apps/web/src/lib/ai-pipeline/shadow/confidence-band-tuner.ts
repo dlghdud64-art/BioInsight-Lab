@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Confidence Band Tuner - 신뢰도 구간 병합/분할/임계값 조정기
  *

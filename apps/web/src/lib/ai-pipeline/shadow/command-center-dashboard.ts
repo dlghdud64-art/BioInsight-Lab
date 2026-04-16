@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Command Center Dashboard — 리더십 액션 아이템 중심 뷰
  *

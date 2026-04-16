@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * DocType Tiering — 4단계 위험도 등급 분류
  *

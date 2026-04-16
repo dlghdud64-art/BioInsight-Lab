@@ -2689,3 +2689,26 @@ model MutationAuditEvent {
   @@index([correlationId])
   @@index([route])
 }
+
+// ─── Contact Inquiry (퍼블릭 문의 인입) ─────────────────────────────
+// /support 페이지에서 접수된 문의. 로그인 불필요.
+// 운영 티켓이 아니라 리드/문의 인입 폼. append-only.
+model ContactInquiry {
+  id            String   @id @default(cuid())
+  referenceId   String   @unique  // 사용자에게 노출되는 참조 번호 (INQ-YYYYMMDD-XXXX)
+  inquiryType   String             // service, pricing, sourcing, account
+  name          String             // 이름 또는 기관명
+  email         String             // 연락 이메일
+  message       String   @db.Text  // 문의 내용
+  status        String   @default("received")  // received, reviewed, replied, closed
+  ipAddress     String?            // 스팸 방지용 (선택적)
+  userAgent     String?  @db.Text  // 접속 환경 (선택적)
+  createdAt     DateTime @default(now())
+  reviewedAt    DateTime?          // 담당자 확인 시각
+  repliedAt     DateTime?          // 답변 시각
+
+  @@index([email])
+  @@index([inquiryType])
+  @@index([status])
+  @@index([createdAt])
+}

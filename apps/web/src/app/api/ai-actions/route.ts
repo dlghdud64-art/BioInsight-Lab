@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 
     // PENDING 카운트 (배지용)
     const pendingCount = await db.aiActionItem.count({
-      where: { userId: session.user.id, status: "PENDING" },
+      where: { userId: session.user.id, status: AiActionStatus.PENDING },
     });
 
     return NextResponse.json({ items, total, pendingCount });

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { AiActionStatus, TaskStatus, ApprovalStatus } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
@@ -97,7 +98,7 @@ export async function PATCH(
     const body = await request.json();
     const { status } = body;
 
-    if (!status || !["DISMISSED", "EXPIRED"].includes(status)) {
+    if (!status || ![AiActionStatus.DISMISSED, AiActionStatus.EXPIRED].includes(status)) {
       return NextResponse.json(
         { error: "Invalid status. Allowed: DISMISSED, EXPIRED" },
         { status: 400 }
@@ -107,9 +108,9 @@ export async function PATCH(
     const { ipAddress, userAgent } = extractRequestMeta(request);
 
     // 3-Layer 상태 동기화
-    const dismissMapping = status === "DISMISSED"
-      ? { taskStatus: "COMPLETED" as const, approvalStatus: "REJECTED" as const, substatus: "quote_draft_dismissed" }
-      : { taskStatus: "COMPLETED" as const, approvalStatus: "NOT_REQUIRED" as const, substatus: "expired" };
+    const dismissMapping = status === AiActionStatus.DISMISSED
+      ? { taskStatus: TaskStatus.COMPLETED, approvalStatus: ApprovalStatus.REJECTED, substatus: "quote_draft_dismissed" }
+      : { taskStatus: TaskStatus.COMPLETED, approvalStatus: ApprovalStatus.NOT_REQUIRED, substatus: "expired" };
 
     const updated = await db.aiActionItem.update({
       where: { id: params.id },

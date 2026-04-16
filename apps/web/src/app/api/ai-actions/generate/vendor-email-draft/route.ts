@@ -2,7 +2,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, AiActionStatus, AiActionPriority, TaskStatus, ApprovalStatus } from "@prisma/client";
 import {
   generateVendorEmailDraft,
   AiKeyMissingError,
@@ -85,11 +85,11 @@ export async function POST(request: NextRequest) {
     const actionItem = await db.aiActionItem.create({
       data: {
         type: "VENDOR_EMAIL_DRAFT",
-        status: "PENDING",
-        priority: "HIGH",
+        status: AiActionStatus.PENDING,
+        priority: AiActionPriority.HIGH,
         // 3-Layer 상태 초기화
-        taskStatus: "REVIEW_NEEDED",
-        approvalStatus: "PENDING",
+        taskStatus: TaskStatus.REVIEW_NEEDED,
+        approvalStatus: ApprovalStatus.PENDING,
         substatus: "vendor_email_generated",
         summary: `${vendorName} · ${items.length}건 품목`,
         userId: session.user.id,

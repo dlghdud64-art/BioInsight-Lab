@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Exclusion Learning - 제외 패턴 추가/제거 학습기
  *

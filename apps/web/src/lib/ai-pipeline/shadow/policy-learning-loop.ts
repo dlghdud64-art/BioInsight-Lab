@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * policy-learning-loop.ts
  * 정책 학습 루프 — 비용·품질·신뢰도·제외규칙 분석 결과를 종합하여

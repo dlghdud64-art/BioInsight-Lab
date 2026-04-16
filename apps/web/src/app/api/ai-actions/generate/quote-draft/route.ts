@@ -2,7 +2,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma } from "@prisma/client";
+import { Prisma, AiActionStatus, AiActionPriority, TaskStatus, ApprovalStatus } from "@prisma/client";
 import {
   generateQuoteDraft,
   AiKeyMissingError,
@@ -83,11 +83,11 @@ export async function POST(request: NextRequest) {
     const actionItem = await db.aiActionItem.create({
       data: {
         type: "QUOTE_DRAFT",
-        status: "PENDING",
-        priority: "HIGH",
+        status: AiActionStatus.PENDING,
+        priority: AiActionPriority.HIGH,
         // 3-Layer 상태 초기화
-        taskStatus: "REVIEW_NEEDED",
-        approvalStatus: "PENDING",
+        taskStatus: TaskStatus.REVIEW_NEEDED,
+        approvalStatus: ApprovalStatus.PENDING,
         substatus: "quote_draft_generated",
         summary: `${vendorNames?.length || 0}개 벤더 · ${items.length}건 품목`,
         userId: session.user.id,

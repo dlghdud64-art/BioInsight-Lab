@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Prisma, TeamRole } from "@prisma/client";
+import { Prisma, TeamRole, AiActionStatus, TaskStatus, ApprovalStatus } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { transitionWorkItem } from "@/lib/work-queue";
@@ -91,10 +91,10 @@ export async function POST(
     }
 
     if (
-      item.status !== "PENDING" ||
-      item.taskStatus === "COMPLETED" ||
-      item.taskStatus === "FAILED" ||
-      item.taskStatus === "IN_PROGRESS"
+      item.status !== AiActionStatus.PENDING ||
+      item.taskStatus === TaskStatus.COMPLETED ||
+      item.taskStatus === TaskStatus.FAILED ||
+      item.taskStatus === TaskStatus.IN_PROGRESS
     ) {
       return NextResponse.json(
         { error: "DUPLICATE_ACTION", message: "이미 처리 중이거나 완료된 작업입니다." },
@@ -124,9 +124,9 @@ export async function POST(
     await db.aiActionItem.update({
       where: { id: params.id },
       data: {
-        status: "EXECUTING",
-        taskStatus: "IN_PROGRESS",
-        approvalStatus: "APPROVED",
+        status: AiActionStatus.EXECUTING,
+        taskStatus: TaskStatus.IN_PROGRESS,
+        approvalStatus: ApprovalStatus.APPROVED,
         substatus: approvedSubstatus,
       },
     });
@@ -279,9 +279,9 @@ export async function POST(
       const updated = await db.aiActionItem.update({
         where: { id: params.id },
         data: {
-          status: "APPROVED",
-          taskStatus: "COMPLETED",
-          approvalStatus: "APPROVED",
+          status: AiActionStatus.APPROVED,
+          taskStatus: TaskStatus.COMPLETED,
+          approvalStatus: ApprovalStatus.APPROVED,
           substatus: approvedSubstatus,
           result: result as Prisma.JsonObject,
           payload: modifiedPayload as Prisma.JsonObject,
@@ -331,9 +331,9 @@ export async function POST(
       await db.aiActionItem.update({
         where: { id: params.id },
         data: {
-          status: "FAILED",
-          taskStatus: "FAILED",
-          approvalStatus: "APPROVED",
+          status: AiActionStatus.FAILED,
+          taskStatus: TaskStatus.FAILED,
+          approvalStatus: ApprovalStatus.APPROVED,
           substatus: "execution_failed",
           result: { error: String(execError) } as Prisma.JsonObject,
           resolvedAt: new Date(),

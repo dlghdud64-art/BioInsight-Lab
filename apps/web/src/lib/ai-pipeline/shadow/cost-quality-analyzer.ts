@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 /**
  * Cost-Quality Analyzer - 문서 유형/신뢰도 구간별 비용-품질 분석기
  *

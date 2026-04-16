@@ -1092,11 +1092,33 @@ function TicketTab() {
       return;
     }
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    toast({ title: "문의가 접수되었습니다", description: "담당자가 확인 후 답변드리겠습니다." });
-    resetForm();
-    setIsSubmitting(false);
-    setView("list");
+    try {
+      const res = await fetch("/api/support/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inquiryType: "service",
+          name: session?.user?.name ?? "Dashboard User",
+          email: session?.user?.email ?? "",
+          message: `[${category}] ${title}\n\n${body}`,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "문의 접수 실패", description: data.error ?? "잠시 후 다시 시도해 주세요.", variant: "destructive" });
+        return;
+      }
+      toast({
+        title: "문의가 접수되었습니다",
+        description: `접수번호: ${data.referenceId ?? "-"}. 영업일 기준 1일 이내 답변드립니다.`,
+      });
+      resetForm();
+      setView("list");
+    } catch {
+      toast({ title: "네트워크 오류", description: "잠시 후 다시 시도해 주세요.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const getStatusBadge = (status: string) => {

@@ -61,15 +61,55 @@ const DEFAULT_PLACEHOLDER = "문의 내용을 자세히 적어주세요. 도입 
 
 export default function SupportPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [referenceId, setReferenceId] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
   const [copied, setCopied] = useState(false);
+  const [refCopied, setRefCopied] = useState(false);
 
   const selectedInquiry = INQUIRY_TYPES.find((t) => t.key === selectedType);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/support/inquiry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          inquiryType: selectedType ?? "service",
+          name: form.name,
+          email: form.email,
+          message: form.message,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setSubmitError(data.error ?? "문의 접수 중 오류가 발생했습니다.");
+        return;
+      }
+
+      setReferenceId(data.referenceId ?? null);
+      setSubmitted(true);
+    } catch {
+      setSubmitError("네트워크 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCopyRef = () => {
+    if (referenceId) {
+      navigator.clipboard.writeText(referenceId);
+      setRefCopied(true);
+      setTimeout(() => setRefCopied(false), 2000);
+    }
   };
 
   const handleReset = () => {
@@ -195,12 +235,33 @@ export default function SupportPage() {
                 <p className="text-base font-semibold mb-1" style={{ color: "#0F1728" }}>
                   문의가 접수되었습니다.
                 </p>
-                <p className="text-sm" style={{ color: "#5B6678" }}>
-                  확인 후 순차적으로 답변 드리겠습니다. 평일 기준으로 처리됩니다.
+                <p className="text-sm mb-4" style={{ color: "#5B6678" }}>
+                  영업일 기준 1일 이내 등록하신 이메일(<span className="font-medium">{form.email}</span>)로 안내드립니다.
+                </p>
+                {referenceId && (
+                  <div
+                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg mb-4"
+                    style={{ backgroundColor: "#F0F4FF", border: "1px solid #D5DFEF" }}
+                  >
+                    <span className="text-xs" style={{ color: "#5B6678" }}>접수 번호</span>
+                    <span className="text-sm font-bold tracking-wide" style={{ color: "#0F1728" }}>
+                      {referenceId}
+                    </span>
+                    <button
+                      onClick={handleCopyRef}
+                      className="ml-1 p-1 rounded transition-colors"
+                      style={{ color: refCopied ? "#10B981" : "#8A97AA" }}
+                    >
+                      {refCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
+                <p className="text-xs mb-5" style={{ color: "#A0AABB" }}>
+                  접수 번호를 기록해 두시면 추후 확인 시 도움이 됩니다.
                 </p>
                 <button
                   onClick={handleReset}
-                  className="mt-5 text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+                  className="text-sm font-medium px-5 py-2 rounded-lg transition-colors"
                   style={{
                     color: "#2F6BFF",
                     border: "1px solid #D5DFEF",
@@ -284,14 +345,33 @@ export default function SupportPage() {
                     구체적으로 작성할수록 빠르게 안내해드릴 수 있습니다.
                   </p>
                 </div>
+                {submitError && (
+                  <div
+                    className="flex items-start gap-2 px-3.5 py-2.5 rounded-lg text-sm"
+                    style={{ backgroundColor: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626" }}
+                  >
+                    <span className="flex-shrink-0 mt-0.5">!</span>
+                    <span>{submitError}</span>
+                  </div>
+                )}
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2">
                   <Button
                     type="submit"
-                    className="font-semibold h-11 px-7 flex items-center gap-2 rounded-lg text-sm shadow-sm"
+                    disabled={isSubmitting}
+                    className="font-semibold h-11 px-7 flex items-center gap-2 rounded-lg text-sm shadow-sm disabled:opacity-60"
                     style={{ backgroundColor: "#2F6BFF", color: "#FFFFFF" }}
                   >
-                    문의 남기기
-                    <ArrowRight className="h-4 w-4" />
+                    {isSubmitting ? (
+                      <>
+                        <span className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        접수 중...
+                      </>
+                    ) : (
+                      <>
+                        문의 남기기
+                        <ArrowRight className="h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                   <p className="text-xs" style={{ color: "#A0AABB" }}>
                     평일 기준 순차적으로 답변드립니다.

@@ -1,4 +1,3 @@
-// @ts-nocheck — shadow pipeline: experimental code, type-check deferred
 
 /**
  * Auto-Verify Policy Engine — 제한적 opt-in auto-verify 판정
