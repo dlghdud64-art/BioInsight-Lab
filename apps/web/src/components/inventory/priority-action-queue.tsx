@@ -45,19 +45,19 @@ export interface QueueItem {
 
 /* ── Config maps ── */
 const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: string }> = {
-  critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-500/10 text-red-400 border-red-500/20" },
-  high:     { label: "높음", dot: "bg-amber-500", bg: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
-  medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-500/10 text-blue-400 border-blue-500/20" },
-  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-pg0/10 text-slate-400 border-slate-500/20" },
+  critical: { label: "긴급", dot: "bg-red-500", bg: "bg-red-50 text-red-600 border-red-200" },
+  high:     { label: "높음", dot: "bg-amber-500", bg: "bg-amber-50 text-amber-600 border-amber-200" },
+  medium:   { label: "보통", dot: "bg-blue-500", bg: "bg-blue-50 text-blue-600 border-blue-200" },
+  low:      { label: "낮음", dot: "bg-slate-400", bg: "bg-slate-50 text-slate-500 border-slate-200" },
 };
 
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
-  expiring_soon:    { label: "만료 임박",       icon: Calendar,     color: "text-red-400" },
-  disposal_review:  { label: "폐기 검토",       icon: Trash2,       color: "text-red-400" },
-  reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-amber-400" },
-  no_location:      { label: "위치 미지정",     icon: MapPin,        color: "text-blue-400" },
-  label_reprint:    { label: "라벨 재출력",     icon: Printer,       color: "text-violet-400" },
-  receiving_pending:{ label: "입고 미정리",     icon: PackageCheck,  color: "text-emerald-400" },
+  expiring_soon:    { label: "만료 임박",       icon: Calendar,     color: "text-red-500" },
+  disposal_review:  { label: "폐기 검토",       icon: Trash2,       color: "text-red-500" },
+  reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-amber-500" },
+  no_location:      { label: "위치 미지정",     icon: MapPin,        color: "text-blue-500" },
+  label_reprint:    { label: "라벨 재출력",     icon: Printer,       color: "text-violet-500" },
+  receiving_pending:{ label: "입고 미정리",     icon: PackageCheck,  color: "text-emerald-500" },
 };
 
 /* ── Mock data generator ── */
@@ -194,26 +194,29 @@ export function PriorityActionQueue({
     return categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category);
   });
 
+  // Top priority item for banner
+  const topItem = sorted[0] ?? null;
+
   return (
-    <div className={`rounded-xl border border-bd bg-pn overflow-hidden ${className}`}>
+    <div className={`rounded-xl border border-slate-200 bg-white overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="px-4 py-3 border-b border-bd flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-500/10">
-            <Flame className="h-3.5 w-3.5 text-amber-400" />
+      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-100">
+            <Flame className="h-3.5 w-3.5 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900">
-              오늘 처리할 재고 작업
+            <h3 className="text-[13px] font-extrabold text-slate-900">
+              우선 처리 큐
             </h3>
-            <p className="text-[11px] text-slate-500">
-              {queueItems.length}건 대기 중
+            <p className="text-[10px] font-medium text-slate-400">
+              ontology 우선순위 · {queueItems.length}건 대기
             </p>
           </div>
         </div>
         <Badge
           variant="outline"
-          className="border-amber-500/30 bg-amber-500/10 text-amber-400 text-[10px] px-2 py-0.5"
+          className="border-slate-200 bg-slate-50 text-slate-500 text-[10px] px-2 py-0.5 font-bold"
         >
           <Clock className="h-3 w-3 mr-1" />
           실시간
@@ -221,13 +224,13 @@ export function PriorityActionQueue({
       </div>
 
       {/* Category filter pills */}
-      <div className="px-4 py-2.5 border-b border-bd flex gap-1.5 overflow-x-auto scrollbar-none">
+      <div className="px-4 py-2.5 border-b border-slate-100 flex gap-1.5 overflow-x-auto scrollbar-none">
         <button
           onClick={() => setSelectedCategory("all")}
-          className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+          className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all ${
             selectedCategory === "all"
-              ? "bg-slate-600/50 text-slate-700"
-              : "bg-el text-slate-500 hover:text-slate-600"
+              ? "bg-slate-900 text-white"
+              : "bg-slate-100 text-slate-500 hover:bg-slate-200"
           }`}
         >
           전체 {queueItems.length}
@@ -240,10 +243,10 @@ export function PriorityActionQueue({
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat === selectedCategory ? "all" : cat)}
-              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all flex items-center gap-1 ${
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold transition-all flex items-center gap-1 ${
                 selectedCategory === cat
-                  ? "bg-slate-600/50 text-slate-700"
-                  : "bg-el text-slate-500 hover:text-slate-600"
+                  ? "bg-slate-900 text-white"
+                  : "bg-slate-100 text-slate-500 hover:bg-slate-200"
               }`}
             >
               {cfg.label} {count}
@@ -253,7 +256,7 @@ export function PriorityActionQueue({
       </div>
 
       {/* Queue items */}
-      <div className="divide-y divide-bd">
+      <div className="divide-y divide-slate-100">
         {sorted.map((item) => {
           const riskCfg = RISK_CONFIG[item.risk];
           const catCfg = CATEGORY_CONFIG[item.category];
@@ -262,18 +265,18 @@ export function PriorityActionQueue({
           return (
             <div
               key={item.id}
-              className="px-4 py-2.5 hover:bg-el transition-colors cursor-pointer group"
+              className="px-4 py-3 hover:bg-slate-50/80 transition-colors cursor-pointer group"
               onClick={() => onItemClick?.(item)}
             >
               {/* Line 1: Risk dot + Product + Risk badge */}
               <div className="flex items-center gap-2 mb-1">
                 <span className={`h-2 w-2 rounded-full shrink-0 ${riskCfg.dot}`} />
-                <span className="text-sm font-semibold text-slate-700 truncate flex-1">
+                <span className="text-[13px] font-bold text-slate-900 truncate flex-1">
                   {item.productName}
                 </span>
                 <Badge
                   variant="outline"
-                  className={`text-[10px] px-1.5 py-0 border shrink-0 ${riskCfg.bg}`}
+                  className={`text-[10px] px-1.5 py-0 border shrink-0 font-bold ${riskCfg.bg}`}
                 >
                   {riskCfg.label}
                 </Badge>
@@ -282,23 +285,23 @@ export function PriorityActionQueue({
               {/* Line 2: 상태 + 리스크 1줄 + lot (축약) */}
               <div className="flex items-center gap-1.5 ml-4 text-[11px]">
                 <CatIcon className={`h-3 w-3 shrink-0 ${catCfg.color}`} />
-                <span className={`font-medium ${catCfg.color}`}>{catCfg.label}</span>
-                <span className="text-slate-600">·</span>
-                <span className="text-slate-400 truncate">{item.reason}</span>
+                <span className={`font-bold ${catCfg.color}`}>{catCfg.label}</span>
+                <span className="text-slate-300">·</span>
+                <span className="text-slate-500 truncate">{item.reason}</span>
                 {item.lotNumber && (
-                  <span className="text-slate-600 font-mono shrink-0 hidden sm:inline">Lot {item.lotNumber}</span>
+                  <span className="text-slate-400 font-mono shrink-0 hidden sm:inline">Lot {item.lotNumber}</span>
                 )}
               </div>
 
-              {/* Line 3: 권장 액션 + CTA (항상 표시) */}
+              {/* Line 3: 권장 액션 + CTA */}
               <div className="flex items-center justify-between mt-1.5 ml-4">
-                <span className="text-[10px] text-slate-500">
-                  권장: <span className="text-slate-400 font-medium">{item.recommendedAction}</span>
+                <span className="text-[10px] text-slate-400">
+                  권장: <span className="text-slate-500 font-bold">{item.recommendedAction}</span>
                 </span>
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-6 px-2 text-[11px] text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 gap-1"
+                  className="h-6 px-2 text-[11px] text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1 font-bold"
                   onClick={(e) => {
                     e.stopPropagation();
                     onAction?.(item);
@@ -315,8 +318,8 @@ export function PriorityActionQueue({
 
       {sorted.length === 0 && (
         <div className="px-4 py-8 text-center">
-          <Shield className="h-8 w-8 text-emerald-500/30 mx-auto mb-2" />
-          <p className="text-xs text-slate-500">모든 재고가 정상 범위입니다.</p>
+          <Shield className="h-8 w-8 text-emerald-400 mx-auto mb-2" />
+          <p className="text-xs font-bold text-slate-500">모든 재고가 정상 범위입니다.</p>
         </div>
       )}
     </div>

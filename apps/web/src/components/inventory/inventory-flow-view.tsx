@@ -7,6 +7,7 @@ import {
   Truck, ClipboardCheck, Package, FlaskConical,
   AlertTriangle, RotateCcw, Trash2, ChevronRight, Clock,
   TrendingUp, ShoppingCart, Archive, MapPin, Sparkles,
+  ArrowRight, X,
 } from "lucide-react";
 import {
   type FlowInsight,
@@ -21,7 +22,10 @@ interface FlowStage {
   id: string;
   label: string;
   icon: React.ElementType;
-  color: string;
+  /** Tailwind bg color for the circular icon container */
+  iconBg: string;
+  /** Tailwind text color for the icon */
+  iconColor: string;
   itemCount: number;
   lotCount: number;
   representative: string[];
@@ -32,13 +36,13 @@ interface FlowStage {
 }
 
 const MOCK_STAGES: FlowStage[] = [
-  { id: "incoming", label: "입고 예정", icon: Truck, color: "text-blue-400", itemCount: 3, lotCount: 4, representative: ["Anti-CD3 Ab", "RPMI 1640"], elapsed: "2일 전 발주", needsAttention: false, nextAction: "/dashboard/purchases", nextActionLabel: "발주 확인" },
-  { id: "inspection", label: "검수 대기", icon: ClipboardCheck, color: "text-amber-400", itemCount: 2, lotCount: 2, representative: ["50ml Conical Tube", "Pipette Tips"], elapsed: "입고 후 1일", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "재고 반영" },
-  { id: "stocked", label: "재고 반영", icon: Package, color: "text-emerald-400", itemCount: 45, lotCount: 78, representative: ["FBS", "DMEM", "PBS"], elapsed: "-", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "재고 현황" },
-  { id: "in_use", label: "사용 중", icon: FlaskConical, color: "text-cyan-400", itemCount: 12, lotCount: 15, representative: ["Trypsin-EDTA", "FBS"], elapsed: "활성 사용", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "사용 추이" },
-  { id: "low_stock", label: "안전재고 미만", icon: AlertTriangle, color: "text-red-400", itemCount: 3, lotCount: 5, representative: ["FBS", "DMEM Medium"], elapsed: "5일 내 소진", needsAttention: true, nextAction: "/dashboard/inventory?filter=low", nextActionLabel: "재주문 검토" },
-  { id: "reorder", label: "재주문 검토", icon: RotateCcw, color: "text-orange-400", itemCount: 2, lotCount: 3, representative: ["Gibco FBS"], elapsed: "검토 필요", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "발주 생성" },
-  { id: "disposal", label: "폐기 검토", icon: Trash2, color: "text-rose-400", itemCount: 1, lotCount: 1, representative: ["DMEM Lot#2024-A12"], elapsed: "만료 D-7", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "폐기 처리" },
+  { id: "incoming", label: "입고 예정", icon: Truck, iconBg: "bg-blue-100", iconColor: "text-blue-600", itemCount: 3, lotCount: 4, representative: ["Anti-CD3 Ab", "RPMI 1640"], elapsed: "2일 전 발주", needsAttention: false, nextAction: "/dashboard/purchases", nextActionLabel: "발주 확인" },
+  { id: "inspection", label: "검수 대기", icon: ClipboardCheck, iconBg: "bg-amber-100", iconColor: "text-amber-600", itemCount: 2, lotCount: 2, representative: ["50ml Conical Tube", "Pipette Tips"], elapsed: "입고 후 1일", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "재고 반영" },
+  { id: "stocked", label: "재고 반영", icon: Package, iconBg: "bg-emerald-100", iconColor: "text-emerald-600", itemCount: 45, lotCount: 78, representative: ["FBS", "DMEM", "PBS"], elapsed: "-", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "재고 현황" },
+  { id: "in_use", label: "사용 중", icon: FlaskConical, iconBg: "bg-cyan-100", iconColor: "text-cyan-600", itemCount: 12, lotCount: 15, representative: ["Trypsin-EDTA", "FBS"], elapsed: "활성 사용", needsAttention: false, nextAction: "/dashboard/inventory", nextActionLabel: "사용 추이" },
+  { id: "low_stock", label: "안전재고 미만", icon: AlertTriangle, iconBg: "bg-red-100", iconColor: "text-red-600", itemCount: 3, lotCount: 5, representative: ["FBS", "DMEM Medium"], elapsed: "5일 내 소진", needsAttention: true, nextAction: "/dashboard/inventory?filter=low", nextActionLabel: "재주문 검토" },
+  { id: "reorder", label: "재주문 검토", icon: RotateCcw, iconBg: "bg-orange-100", iconColor: "text-orange-600", itemCount: 2, lotCount: 3, representative: ["Gibco FBS"], elapsed: "검토 필요", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "발주 생성" },
+  { id: "disposal", label: "폐기 검토", icon: Trash2, iconBg: "bg-rose-100", iconColor: "text-rose-600", itemCount: 1, lotCount: 1, representative: ["DMEM Lot#2024-A12"], elapsed: "만료 D-7", needsAttention: true, nextAction: "/dashboard/inventory", nextActionLabel: "폐기 처리" },
 ];
 
 // ── 단계별 상세 mock 품목 ──
@@ -84,17 +88,13 @@ const MOCK_INVENTORIES: InventorySnapshot[] = [
 ];
 
 const MOCK_USAGE: UsageRecord[] = [
-  // Spike: inv-1 heavy recent usage
   { itemId: "inv-1", quantity: 2, date: new Date(Date.now() - 2 * 86400000).toISOString() },
   { itemId: "inv-1", quantity: 1, date: new Date(Date.now() - 5 * 86400000).toISOString() },
   { itemId: "inv-1", quantity: 0.5, date: new Date(Date.now() - 15 * 86400000).toISOString() },
   { itemId: "inv-1", quantity: 0.3, date: new Date(Date.now() - 25 * 86400000).toISOString() },
-  // Normal: inv-2
   { itemId: "inv-2", quantity: 0.5, date: new Date(Date.now() - 3 * 86400000).toISOString() },
   { itemId: "inv-2", quantity: 0.5, date: new Date(Date.now() - 10 * 86400000).toISOString() },
-  // inv-3 light use
   { itemId: "inv-3", quantity: 0.2, date: new Date(Date.now() - 7 * 86400000).toISOString() },
-  // inv-5: no usage (low turnover)
 ];
 
 const INSIGHT_ICONS: Record<string, React.ElementType> = {
@@ -106,6 +106,13 @@ const INSIGHT_ICONS: Record<string, React.ElementType> = {
   receiving_delay: Truck,
 };
 
+/** Stage-level micro-insight text */
+const STAGE_MICRO_INSIGHTS: Record<string, { text: string; color: string }> = {
+  low_stock: { text: "6일 내 부족 가능", color: "text-red-500" },
+  reorder: { text: "즉시 발주 권장", color: "text-orange-500" },
+  disposal: { text: "D-7 만료 1건", color: "text-rose-500" },
+};
+
 export function InventoryFlowView() {
   const [selectedStage, setSelectedStage] = useState<string | null>(null);
   const [dismissedInsights, setDismissedInsights] = useState<Set<string>>(new Set());
@@ -113,39 +120,49 @@ export function InventoryFlowView() {
 
   // AI Insights
   const allInsights = detectInsights(MOCK_INVENTORIES, MOCK_USAGE);
-  const visibleInsights = allInsights.filter((i) => !dismissedInsights.has(i.id));
+  const visibleInsights = allInsights.filter((i: FlowInsight) => !dismissedInsights.has(i.id));
 
   return (
-    <div className="space-y-5">
-      {/* ── AI Insight Strip ── */}
+    <div className="space-y-6">
+      {/* ── AI 흐름 분석 ── */}
       {visibleInsights.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-            <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: "#6FA2FF" }}>AI 흐름 분석</span>
-            <span className="text-[10px]" style={{ color: "#667389" }}>{visibleInsights.length}건 감지</span>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5 text-blue-500" />
+            <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-400">
+              AI 흐름 분석
+            </span>
+            <span className="text-[10px] font-medium text-slate-400">
+              {visibleInsights.length}건 감지
+            </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-            {visibleInsights.map((insight) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+            {visibleInsights.map((insight: FlowInsight) => {
               const color = getInsightColor(insight.severity);
               const Icon = INSIGHT_ICONS[insight.type] || AlertTriangle;
               return (
                 <div
                   key={insight.id}
-                  className="rounded-lg p-3 flex gap-3 items-start group"
-                  style={{ backgroundColor: color.bg, border: `1px solid ${color.border}` }}
+                  className="rounded-lg border bg-white p-3.5 flex gap-3 items-start group transition-colors hover:brightness-[0.97]"
+                  style={{ borderColor: color.border }}
                 >
-                  <Icon className="h-4 w-4 mt-0.5 flex-shrink-0" style={{ color: color.text }} />
+                  {/* Colored icon circle */}
+                  <div
+                    className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: color.iconBg }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: color.text }} />
+                  </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold mb-0.5" style={{ color: color.text }}>{insight.title}</p>
-                    <p className="text-[11px] leading-relaxed" style={{ color: "#C8D4E5" }}>{insight.reason}</p>
+                    <p className="text-xs font-extrabold text-slate-900 mb-0.5">{insight.title}</p>
+                    <p className="text-[11px] leading-relaxed text-slate-500">{insight.reason}</p>
                   </div>
                   <button
                     onClick={() => setDismissedInsights((prev) => new Set([...prev, insight.id]))}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-500 hover:text-slate-600 flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-slate-600 flex-shrink-0"
                     title="닫기"
                   >
-                    ×
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 </div>
               );
@@ -156,46 +173,52 @@ export function InventoryFlowView() {
 
       {/* ── 파이프라인 ── */}
       <div className="overflow-x-auto pb-2">
-        <div className="flex items-stretch gap-2 min-w-[800px]">
+        <div className="flex items-start gap-1 min-w-[900px]">
           {MOCK_STAGES.map((stage, i) => {
             const Icon = stage.icon;
             const isSelected = selectedStage === stage.id;
+            const micro = STAGE_MICRO_INSIGHTS[stage.id];
+
             return (
-              <div key={stage.id} className="flex items-stretch">
+              <div key={stage.id} className="flex items-center">
                 <button
                   type="button"
                   onClick={() => setSelectedStage(isSelected ? null : stage.id)}
-                  className={`flex-shrink-0 w-[110px] rounded-lg border p-3 text-left transition-all ${
+                  className={`flex-shrink-0 w-[120px] rounded-xl border p-3.5 text-center transition-all ${
                     isSelected
-                      ? "border-blue-500 ring-2 ring-blue-500/30 bg-el"
-                      : "border-bd bg-pn hover:bg-el"
+                      ? "border-blue-400 ring-2 ring-blue-400/20 bg-blue-50/50"
+                      : "border-slate-200 bg-white hover:bg-slate-50/80"
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <Icon className={`h-3.5 w-3.5 ${stage.color}`} />
-                    <span className="text-[10px] font-bold text-slate-600 truncate">{stage.label}</span>
+                  {/* Large circular icon */}
+                  <div className={`mx-auto w-11 h-11 rounded-full flex items-center justify-center mb-2.5 ${stage.iconBg}`}>
+                    <Icon className={`h-5 w-5 ${stage.iconColor}`} />
                   </div>
-                  <div className="text-lg font-bold text-slate-900">{stage.itemCount}</div>
-                  <div className="text-[10px] text-slate-500">{stage.lotCount} lots</div>
+
+                  {/* Stage label */}
+                  <p className="text-[11px] font-bold text-slate-500 mb-1 truncate">{stage.label}</p>
+
+                  {/* Count — big bold */}
+                  <p className="text-[22px] font-extrabold tracking-tight text-slate-900 leading-none">{stage.itemCount}</p>
+                  <p className="text-[10px] font-medium text-slate-400 mt-0.5">{stage.lotCount} lots</p>
+
+                  {/* Attention badge */}
                   {stage.needsAttention && (
-                    <Badge className="mt-1.5 h-4 px-1 text-[9px] bg-amber-500/10 text-amber-400 border-0">
+                    <Badge className="mt-2 h-[18px] px-1.5 text-[9px] font-bold bg-red-50 text-red-600 border-red-200 border">
                       조치 필요
                     </Badge>
                   )}
-                  {/* AI micro-insight per stage */}
-                  {stage.id === "low_stock" && (
-                    <p className="mt-1 text-[9px] leading-tight" style={{ color: "#FBBF24" }}>6일 내 부족 가능</p>
-                  )}
-                  {stage.id === "reorder" && (
-                    <p className="mt-1 text-[9px] leading-tight" style={{ color: "#FB923C" }}>즉시 발주 권장</p>
-                  )}
-                  {stage.id === "disposal" && (
-                    <p className="mt-1 text-[9px] leading-tight" style={{ color: "#F87171" }}>D-7 만료 1건</p>
+
+                  {/* AI micro-insight */}
+                  {micro && (
+                    <p className={`mt-1.5 text-[9px] font-bold leading-tight ${micro.color}`}>{micro.text}</p>
                   )}
                 </button>
+
+                {/* Arrow separator */}
                 {i < MOCK_STAGES.length - 1 && (
-                  <div className="flex items-center px-1">
-                    <ChevronRight className="h-3 w-3 text-slate-600" />
+                  <div className="flex items-center px-1 flex-shrink-0">
+                    <ArrowRight className="h-3.5 w-3.5 text-slate-300" />
                   </div>
                 )}
               </div>
@@ -206,35 +229,46 @@ export function InventoryFlowView() {
 
       {/* ── 선택된 단계 상세 ── */}
       {selectedStage && (
-        <div className="rounded-lg border border-bd bg-pn p-4">
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
               {(() => {
                 const stage = MOCK_STAGES.find(s => s.id === selectedStage);
                 if (!stage) return null;
                 const Icon = stage.icon;
                 return (
                   <>
-                    <Icon className={`h-4 w-4 ${stage.color}`} />
-                    <h3 className="text-sm font-bold text-slate-900">{stage.label}</h3>
-                    <Badge variant="secondary" className="text-[10px] bg-el">{items.length}건</Badge>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${stage.iconBg}`}>
+                      <Icon className={`h-4 w-4 ${stage.iconColor}`} />
+                    </div>
+                    <h3 className="text-[13px] font-extrabold text-slate-900">{stage.label}</h3>
+                    <Badge variant="secondary" className="text-[10px] font-bold bg-slate-100 text-slate-600 border-0">
+                      {items.length}건
+                    </Badge>
                   </>
                 );
               })()}
             </div>
-            <Button size="sm" variant="outline" className="h-7 text-xs border-bs text-slate-400 bg-transparent hover:bg-el">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs font-bold border-slate-200 text-slate-500 bg-white hover:bg-slate-50"
+            >
               {MOCK_STAGES.find(s => s.id === selectedStage)?.nextActionLabel}
             </Button>
           </div>
 
           {items.length === 0 ? (
-            <p className="text-xs text-slate-500 text-center py-6">이 단계에 해당하는 품목이 없습니다</p>
+            <p className="text-xs text-slate-400 text-center py-8">이 단계에 해당하는 품목이 없습니다</p>
           ) : (
             <div className="space-y-2">
               {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-md bg-el hover:bg-st transition-colors">
+                <div
+                  key={i}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors"
+                >
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-700 truncate">{item.name}</p>
+                    <p className="text-xs font-bold text-slate-900 truncate">{item.name}</p>
                     <p className="text-[10px] text-slate-500 mt-0.5">
                       {item.lot !== "-" && `Lot ${item.lot} · `}{item.status}
                     </p>
@@ -249,23 +283,71 @@ export function InventoryFlowView() {
         </div>
       )}
 
-      {/* ── 요약 ── */}
+      {/* ── 하단 요약 카드 ── */}
       {!selectedStage && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { label: "검수 대기", count: 2, color: "text-amber-400", icon: ClipboardCheck },
-            { label: "안전재고 미만", count: 3, color: "text-red-400", icon: AlertTriangle },
-            { label: "재주문 검토", count: 2, color: "text-orange-400", icon: RotateCcw },
-            { label: "폐기 검토", count: 1, color: "text-rose-400", icon: Trash2 },
+            { label: "검수 대기", count: 2, iconBg: "bg-amber-100", iconColor: "text-amber-600", icon: ClipboardCheck },
+            { label: "안전재고 미만", count: 3, iconBg: "bg-red-100", iconColor: "text-red-600", icon: AlertTriangle },
+            { label: "재주문 검토", count: 2, iconBg: "bg-orange-100", iconColor: "text-orange-600", icon: RotateCcw },
+            { label: "폐기 검토", count: 1, iconBg: "bg-rose-100", iconColor: "text-rose-600", icon: Trash2 },
           ].map((s) => (
-            <div key={s.label} className="rounded-lg border border-bd bg-pn p-3 flex items-center gap-3">
-              <s.icon className={`h-4 w-4 ${s.color}`} />
+            <div
+              key={s.label}
+              className="rounded-xl border border-slate-200 bg-white p-4 flex items-center gap-3 hover:bg-slate-50/80 transition-colors"
+            >
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${s.iconBg}`}>
+                <s.icon className={`h-4 w-4 ${s.iconColor}`} />
+              </div>
               <div>
-                <p className="text-xs font-medium text-slate-600">{s.label}</p>
-                <p className="text-lg font-bold text-slate-900">{s.count}건</p>
+                <p className="text-[11px] font-bold text-slate-500">{s.label}</p>
+                <p className="text-[20px] font-extrabold tracking-tight text-slate-900 leading-none mt-0.5">
+                  {s.count}<span className="text-[13px] font-bold text-slate-400 ml-0.5">건</span>
+                </p>
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── 입고 예정 미니 리스트 ── */}
+      {!selectedStage && (
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center">
+                <Truck className="h-3.5 w-3.5 text-blue-600" />
+              </div>
+              <h3 className="text-[13px] font-extrabold text-slate-900">입고 예정</h3>
+              <Badge variant="secondary" className="text-[10px] font-bold bg-slate-100 text-slate-600 border-0">
+                {MOCK_ITEMS.incoming?.length || 0}건
+              </Badge>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs font-bold border-slate-200 text-slate-500 bg-white hover:bg-slate-50"
+            >
+              발주 확인
+            </Button>
+          </div>
+          <div className="space-y-2">
+            {(MOCK_ITEMS.incoming || []).map((item, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg border border-slate-100 bg-slate-50/50"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-slate-900 truncate">{item.name}</p>
+                  <p className="text-[10px] text-slate-500 mt-0.5">{item.status}</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-[11px] font-extrabold text-slate-900">{item.qty}ea</p>
+                  <p className="text-[10px] text-slate-400">{item.reason}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

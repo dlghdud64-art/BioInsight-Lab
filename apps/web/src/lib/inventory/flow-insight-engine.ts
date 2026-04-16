@@ -313,11 +313,12 @@ export function getInsightColor(severity: InsightSeverity): {
   bg: string;
   text: string;
   border: string;
+  iconBg: string;
 } {
-  const colors: Record<InsightSeverity, { bg: string; text: string; border: string }> = {
-    critical: { bg: "#2A0F0F", text: "#F87171", border: "#EF444433" },
-    warning: { bg: "#2A1F0F", text: "#FBBF24", border: "#F59E0B33" },
-    info: { bg: "#0F1A2A", text: "#6FA2FF", border: "#3B82F633" },
+  const colors: Record<InsightSeverity, { bg: string; text: string; border: string; iconBg: string }> = {
+    critical: { bg: "#FEF2F2", text: "#DC2626", border: "#FECACA", iconBg: "#FEE2E2" },
+    warning: { bg: "#FFFBEB", text: "#D97706", border: "#FDE68A", iconBg: "#FEF3C7" },
+    info: { bg: "#EFF6FF", text: "#2563EB", border: "#BFDBFE", iconBg: "#DBEAFE" },
   };
   return colors[severity];
 }

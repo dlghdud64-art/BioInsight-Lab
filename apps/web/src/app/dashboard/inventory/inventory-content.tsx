@@ -57,6 +57,7 @@ const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-li
 const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTable").then(m => m.InventoryTable), { ssr: false });
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then(m => m.AddInventoryModal), { ssr: false });
 const InventoryAiAssistantPanel = dynamic(() => import("@/components/ai/inventory-ai-assistant-panel").then(m => m.InventoryAiAssistantPanel), { ssr: false });
+const LotDisposalPanel = dynamic(() => import("@/components/inventory/lot-disposal-panel").then(m => m.LotDisposalPanel), { ssr: false });
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then(m => m.OpsExecutionContext), { ssr: false });
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
@@ -223,6 +224,10 @@ function InventoryPageContent() {
   const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
+
+  // ── Lot Disposal Panel (object-scoped disposal dock) state ──
+  const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
+  const disposalPanelOpen = disposalTarget !== null;
 
   // ── Context Panel (right-side detail drawer) state ──
   const [contextPanelItem, setContextPanelItem] = useState<ContextPanelItem | null>(null);
@@ -1595,6 +1600,32 @@ function InventoryPageContent() {
                         description: `${inventory.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
                       });
                     }}
+                    onDispose={(inventory) => {
+                      // 부모 item 수량 계산 (같은 productId 전체)
+                      const siblings = filteredInventories.filter(
+                        (inv) => inv.productId === inventory.productId
+                      );
+                      const totalItemQuantity = siblings.reduce(
+                        (sum, inv) => sum + inv.currentQuantity,
+                        0
+                      );
+                      setDisposalTarget({
+                        productName: inventory.product.name,
+                        brand: inventory.product.brand || undefined,
+                        catalogNumber: inventory.product.catalogNumber || undefined,
+                        unit: inventory.unit || undefined,
+                        lotNumber: inventory.lotNumber || "N/A",
+                        lotQuantity: inventory.currentQuantity,
+                        expiryDate: inventory.expiryDate || new Date().toISOString(),
+                        location: inventory.location || undefined,
+                        isHazardous: inventory.hazard || false,
+                        hasMsds: undefined,
+                        requiresIsolation: undefined,
+                        totalItemQuantity,
+                        safetyStock: inventory.safetyStock || undefined,
+                        averageDailyUsage: inventory.averageDailyUsage || undefined,
+                      });
+                    }}
                     onPrintLabel={(productName, lots) => {
                       setLabelPrintTitle(productName);
                       setLabelPrintLots(lots as ProductInventory[]);
@@ -1654,66 +1685,77 @@ function InventoryPageContent() {
               );
             })()}
 
-            {/* KPI Judgment Strip — 상태별 색상 강조 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {[
-                {
-                  label: "오늘 처리 대상",
-                  value: issuesCount,
-                  icon: <Zap className="h-3.5 w-3.5" />,
-                  border: "border-red-200",
-                  bg: "bg-red-50",
-                  iconBg: "bg-red-100",
-                  iconColor: "text-red-500",
-                  valueColor: issuesCount > 0 ? "text-red-600" : "text-slate-400",
-                  labelColor: "text-red-600 font-semibold",
-                },
-                {
-                  label: "부족/품절",
-                  value: lowOrOutOfStockCount,
-                  icon: <AlertTriangle className="h-3.5 w-3.5" />,
-                  border: "border-amber-200",
-                  bg: "bg-amber-50",
-                  iconBg: "bg-amber-100",
-                  iconColor: "text-amber-600",
-                  valueColor: lowOrOutOfStockCount > 0 ? "text-amber-600" : "text-slate-400",
-                  labelColor: "text-amber-700",
-                },
-                {
-                  label: "만료 임박",
-                  value: expiringSoonCount,
-                  icon: <Calendar className="h-3.5 w-3.5" />,
-                  border: "border-orange-200",
-                  bg: "bg-orange-50",
-                  iconBg: "bg-orange-100",
-                  iconColor: "text-orange-500",
-                  valueColor: expiringSoonCount > 0 ? "text-orange-600" : "text-slate-400",
-                  labelColor: "text-orange-700",
-                },
-                {
-                  label: "전체 재고",
-                  value: totalInventoryCount,
-                  icon: <Package className="h-3.5 w-3.5" />,
-                  border: "border-slate-200",
-                  bg: "bg-white",
-                  iconBg: "bg-slate-100",
-                  iconColor: "text-slate-500",
-                  valueColor: "text-slate-700",
-                  labelColor: "text-slate-500",
-                },
-              ].map((kpi) => (
-                <div key={kpi.label} className={`rounded-xl border ${kpi.border} ${kpi.bg} px-4 py-3.5 transition-shadow hover:shadow-sm`}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className={`text-[11px] font-medium ${kpi.labelColor}`}>{kpi.label}</span>
-                    <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${kpi.iconBg} ${kpi.iconColor}`}>
-                      {kpi.icon}
-                    </div>
-                  </div>
-                  <div className={`text-2xl font-bold tracking-tight ${kpi.valueColor}`} style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>
-                    {kpi.value}
-                    <span className="ml-1 text-sm font-normal text-slate-400">건</span>
-                  </div>
+            {/* ── 우선 처리 배너 (최상단 1줄) ── */}
+            {issuesCount > 0 ? (
+              <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${
+                expiringSoonCount > 0
+                  ? "border-red-200 bg-red-50"
+                  : lowOrOutOfStockCount > 0
+                    ? "border-amber-200 bg-amber-50"
+                    : "border-slate-200 bg-slate-50"
+              }`}>
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${
+                  expiringSoonCount > 0
+                    ? "bg-red-100"
+                    : lowOrOutOfStockCount > 0
+                      ? "bg-amber-100"
+                      : "bg-slate-100"
+                }`}>
+                  {expiringSoonCount > 0
+                    ? <Calendar className="h-4 w-4 text-red-600" />
+                    : lowOrOutOfStockCount > 0
+                      ? <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      : <Zap className="h-4 w-4 text-slate-600" />
+                  }
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-extrabold text-slate-900">
+                    {expiringSoonCount > 0
+                      ? `우선 처리: 만료 임박 ${expiringSoonCount}건 — 폐기 또는 우선 소진 필요`
+                      : lowOrOutOfStockCount > 0
+                        ? `우선 처리: 재고 부족 ${lowOrOutOfStockCount}건 — 발주 검토 필요`
+                        : `처리 대기 ${issuesCount}건 — 아래 큐에서 확인하세요`
+                    }
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  className={`h-7 px-3 text-[11px] font-bold gap-1 flex-shrink-0 ${
+                    expiringSoonCount > 0
+                      ? "bg-red-600 hover:bg-red-700 text-white"
+                      : "bg-amber-600 hover:bg-amber-700 text-white"
+                  }`}
+                  onClick={() => {
+                    // Scroll to queue or trigger first item action
+                  }}
+                >
+                  {expiringSoonCount > 0 ? "폐기 처리 시작" : "처리 시작"}
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 flex-shrink-0">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                </div>
+                <p className="text-[13px] font-extrabold text-slate-900">모든 재고 정상 — 즉시 처리할 항목 없음</p>
+              </div>
+            )}
+
+            {/* ── 요약 칩 (backlog 분류, secondary) ── */}
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { label: "만료 임박", value: expiringSoonCount, color: "text-red-600", bg: "bg-red-50 border-red-200" },
+                { label: "부족/품절", value: lowOrOutOfStockCount, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
+                { label: "전체 재고", value: totalInventoryCount, color: "text-slate-600", bg: "bg-white border-slate-200" },
+              ].map((chip) => (
+                <span
+                  key={chip.label}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${chip.bg} ${chip.color}`}
+                >
+                  {chip.label}
+                  <span className="font-extrabold">{chip.value}</span>
+                </span>
               ))}
             </div>
 
@@ -1742,8 +1784,8 @@ function InventoryPageContent() {
               }}
             />
 
-            {/* 조치 필요 항목 — execution strip */}
-            <Card className="shadow-sm border-amber-200 bg-amber-50/30">
+            {/* 조치 필요 항목 — removed: PriorityActionQueue가 동일 ontology backlog를 surface합니다 */}
+            {false && <Card className="shadow-sm border-amber-200 bg-amber-50/30">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center text-sm font-bold text-slate-800">
                   <Zap className="mr-2 h-4 w-4 text-amber-500" />
@@ -2087,7 +2129,7 @@ function InventoryPageContent() {
                   );
                 })()}
               </CardContent>
-            </Card>
+            </Card>}
             </TabsContent>
 
             {/* 3. Lot 추적 — contextual drill-down (1급 탭에서 내려옴, 품목 컨텍스트에서 진입) */}
@@ -3647,6 +3689,53 @@ function InventoryPageContent() {
           aiPanel.setIsOpen(false);
         }}
         isAnalyzing={aiPanel.isAnalyzing}
+      />
+
+      {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}
+      <LotDisposalPanel
+        open={disposalPanelOpen}
+        onOpenChange={(open) => { if (!open) setDisposalTarget(null); }}
+        target={disposalTarget}
+        onConfirmDisposal={(params) => {
+          toast({
+            title: params.quarantine ? "격리 후 폐기 처리" : "폐기 확정",
+            description: `Lot #${params.lotNumber} ${params.quantity}개 — ${
+              params.reason === "expiry" ? "유효기간 만료" :
+              params.reason === "contamination" ? "오염/변질" :
+              params.reason === "damage" ? "파손" :
+              params.reasonDetail || "기타"
+            }`,
+          });
+          setDisposalTarget(null);
+          // TODO: 실제 폐기 API mutation 연결
+        }}
+        onNavigateToReorder={(productName) => {
+          setDisposalTarget(null);
+          // 재발주 검토로 이동 — aiPanel 열기
+          const matchingItem = filteredInventories.find(
+            (inv) => inv.product.name === productName
+          );
+          if (matchingItem) {
+            aiPanel.preparePanel({
+              id: matchingItem.id,
+              productId: matchingItem.productId,
+              productName: matchingItem.product.name,
+              brand: matchingItem.product.brand || undefined,
+              catalogNumber: matchingItem.product.catalogNumber || undefined,
+              currentQuantity: matchingItem.currentQuantity,
+              unit: matchingItem.unit || undefined,
+              safetyStock: matchingItem.safetyStock || undefined,
+              minOrderQty: matchingItem.minOrderQty || undefined,
+              location: matchingItem.location || undefined,
+              expiryDate: matchingItem.expiryDate || undefined,
+              lotNumber: matchingItem.lotNumber || undefined,
+              autoReorderEnabled: matchingItem.autoReorderEnabled || false,
+              averageDailyUsage: matchingItem.averageDailyUsage || undefined,
+              leadTimeDays: matchingItem.leadTimeDays || undefined,
+              lastInspectedAt: undefined,
+            });
+          }
+        }}
       />
     </div>
   );

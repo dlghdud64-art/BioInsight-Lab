@@ -276,6 +276,8 @@ interface InventoryTableProps {
   onConsume?: (inventory: InventoryItem) => void;
   onMoveLocation?: (inventory: InventoryItem) => void;
   onPrintLabel?: (productName: string, lots: InventoryItem[]) => void;
+  /** row-level 폐기 처리 (object-scoped disposal dock) */
+  onDispose?: (inventory: InventoryItem) => void;
   emptyMessage?: string;
   emptyAction?: () => void;
   emptyActionLabel?: string;
@@ -293,6 +295,7 @@ export function InventoryTable({
   onConsume,
   onMoveLocation,
   onPrintLabel,
+  onDispose,
   emptyMessage = "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요.",
   emptyAction,
   emptyActionLabel = "첫 재고 등록하기"
@@ -528,7 +531,7 @@ export function InventoryTable({
                                   variant="outline"
                                   size="sm"
                                   className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
-                                  onClick={() => onReorder(lot)}
+                                  onClick={() => onDispose ? onDispose(lot) : onReorder(lot)}
                                 >
                                   <Trash2 className="h-3 w-3 shrink-0" />
                                   폐기 처리
@@ -779,7 +782,8 @@ export function InventoryTable({
                                       className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
                                       onClick={() => {
                                         const expiredLot = group.lots.find((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
-                                        onReorder(expiredLot || group.lots[0]);
+                                        const target = expiredLot || group.lots[0];
+                                        onDispose ? onDispose(target) : onReorder(target);
                                       }}
                                     >
                                       <Trash2 className="h-3 w-3 shrink-0" />
@@ -1032,7 +1036,7 @@ export function InventoryTable({
                                             variant="outline"
                                             size="sm"
                                             className="h-7 px-2.5 text-[11px] gap-1 text-red-600 border-red-300 hover:bg-red-50 font-bold"
-                                            onClick={() => onReorder(lot)}
+                                            onClick={() => onDispose ? onDispose(lot) : onReorder(lot)}
                                           >
                                             <Trash2 className="h-3 w-3 shrink-0" />
                                             폐기 처리
