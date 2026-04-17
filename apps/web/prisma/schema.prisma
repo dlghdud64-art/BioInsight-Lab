@@ -909,8 +909,9 @@ model Workspace {
   lastWorkspaceId  String? // For user's last active workspace
 
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B)
-  // Phase 1: nullable (backfill 중). Phase 2 마이그레이션에서 NOT NULL + @unique 로 승격한다.
-  organizationId   String?
+  // Phase 1: nullable + @unique. Postgres UNIQUE 는 NULL 끼리 충돌하지 않으므로
+  // backfill 전에도 안전하게 적용 가능. Phase 2 에서는 NOT NULL 로만 승격한다.
+  organizationId   String?       @unique
   organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Stripe billing fields
@@ -932,7 +933,7 @@ model Workspace {
   importJobs       ImportJob[]
 
   @@index([slug])
-  @@index([organizationId])
+  // organizationId 는 @unique 가 자동 인덱스를 생성하므로 별도 @@index 불필요
 }
 
 model WorkspaceMember {
