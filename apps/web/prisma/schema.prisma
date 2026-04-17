@@ -88,6 +88,10 @@ model Organization {
   categoryBudgets    CategoryBudget[]
   budgetEvents       BudgetEvent[]
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B - organization-workspace-bootstrap.md 참조)
+  // Phase 2 (2026-04-17): Workspace.organizationId 는 NOT NULL 로 승격됐지만, 반대 방향인 이 필드는
+  // optional 유지. 이유: Organization 테이블에는 Workspace 를 가리키는 FK 가 없으므로 DB 레벨에서
+  // "모든 Organization 에 Workspace 존재" 를 강제할 수 없고 (Prisma validator 가 차단), 1:1 은
+  // createOrganization 트랜잭션이 애플리케이션 레이어에서 보장한다.
   workspace          Workspace?
 
   @@index([name])
@@ -909,10 +913,11 @@ model Workspace {
   lastWorkspaceId  String? // For user's last active workspace
 
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B)
-  // Phase 1: nullable + @unique. Postgres UNIQUE 는 NULL 끼리 충돌하지 않으므로
-  // backfill 전에도 안전하게 적용 가능. Phase 2 에서는 NOT NULL 로만 승격한다.
-  organizationId   String?       @unique
-  organization     Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  // Phase 1: nullable + @unique 로 컬럼 추가 후 backfill.
+  // Phase 2 (2026-04-17): NOT NULL 승격 완료. 모든 Workspace 는 정확히 하나의 Organization 에 속한다.
+  // onDelete: Cascade — Organization 삭제 시 Workspace 도 같이 삭제. FK 를 들고 있는 이 쪽에 선언.
+  organizationId   String        @unique
+  organization     Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Stripe billing fields
   stripeCustomerId        String? @unique
