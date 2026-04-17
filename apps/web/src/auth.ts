@@ -62,6 +62,25 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             token.role = newUser.role as UserRole;
           }
         }
+
+        // ✅ 복구 로직: 최초 로그인 분기에서 DB 조회/생성이 실패했거나
+        // 기존에 id 없이 캐싱된 세션 토큰을 매 요청마다 email 기반으로 복구.
+        // 에러가 발생해도 세션 자체는 유지하되, id/role 누락 시 한 번 더 시도한다.
+        if (!token.id && token.email) {
+          try {
+            const dbUser = await db.user.findUnique({
+              where: { email: token.email as string },
+              select: { id: true, role: true },
+            });
+            if (dbUser) {
+              token.id = dbUser.id;
+              token.role = dbUser.role as UserRole;
+            }
+          } catch (recoverError) {
+            console.error("Error recovering token.id from email:", recoverError);
+          }
+        }
+
         return token;
       } catch (error) {
         console.error("Error in jwt callback:", error);
