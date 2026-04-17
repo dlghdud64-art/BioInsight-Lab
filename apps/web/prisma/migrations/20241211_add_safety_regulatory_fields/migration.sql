@@ -1,4 +1,0 @@
--- AlterTable
-ALTER TABLE "Product" ADD COLUMN IF NOT EXISTS "msdsUrl" TEXT,
-ADD COLUMN IF NOT EXISTS "safetyNote" TEXT;
-

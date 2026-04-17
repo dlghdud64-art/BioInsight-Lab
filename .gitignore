@@ -45,3 +45,7 @@ next-env.d.ts
 # 삭제된 파일 (다시 추가 방지)
 apps/web/public/brand/bioinsight-icon.PNG
 apps/web/public/brand/bioinsight-icon.svg
+.mcp.json
+
+# Prisma migrations backup (pre-baseline consolidation)
+apps/web/prisma/migrations.backup-*
