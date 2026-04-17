@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { MainHeader } from "@/app/_components/main-header";
 import { MainFooter } from "@/app/_components/main-footer";
 import { MainLayout } from "@/app/_components/main-layout";
-import { CheckCircle2, ArrowRight, Minus, ChevronDown } from "lucide-react";
+import { CheckCircle2, ArrowRight, Minus, ChevronDown, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import type { PlanIntent } from "@/lib/billing/plan-select";
 
 /* ── Light palette — 인트로 editorial과 동일 톤 ───────────────── */
 const P = {
@@ -84,6 +86,51 @@ const FAQ_DATA = [
 export default function PricingPage() {
   const [annual, setAnnual] = useState(false);
   const discount = annual ? 0.9 : 1;
+  const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
+  const [selectError, setSelectError] = useState<string | null>(null);
+
+  /**
+   * 플랜 선택 단일 진입점.
+   * 여기서 하드코딩 /auth/signin 으로 보내지 않고, 서버 resolver 를 통해
+   * 세션·워크스페이스·권한·구독 상태를 보고 올바른 목적지로 라우팅한다.
+   */
+  const handlePlanSelect = useCallback(
+    async (plan: PlanIntent) => {
+      setSelectError(null);
+      setLoadingPlan(plan);
+      try {
+        const res = await fetch("/api/billing/plan-select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selectedPlan: plan }),
+        });
+        if (!res.ok) {
+          // 이 경우에도 로그인창으로 자동 폴백 금지.
+          // 사용자에게 에러를 보여주고 다시 시도할 수 있게 한다.
+          setSelectError(
+            "플랜 선택 처리 중 일시적 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+          );
+          return;
+        }
+        const data = (await res.json()) as {
+          destination?: { kind: string; url: string };
+        };
+        if (!data.destination?.url) {
+          setSelectError("목적지를 확인할 수 없습니다. 도입 상담으로 연결해 주세요.");
+          return;
+        }
+        router.push(data.destination.url);
+      } catch {
+        setSelectError(
+          "네트워크 오류로 플랜 선택을 완료할 수 없습니다. 연결 상태를 확인해 주세요."
+        );
+      } finally {
+        setLoadingPlan(null);
+      }
+    },
+    [router]
+  );
 
   return (
     <MainLayout>
@@ -135,37 +182,47 @@ export default function PricingPage() {
         <section className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-              {[
+              {([
                 {
                   name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
                   price: "Free", period: "",
                   features: ["시약·장비 검색 및 후보 저장", "기본 비교 기록", "기본 재고 등록"],
-                  cta: "무료 플랜 시작하기", href: "/auth/signin?plan=starter", featured: false,
+                  cta: "무료 플랜 시작하기", planIntent: "starter" as PlanIntent, featured: false,
                 },
                 {
                   name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
                   price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
                   features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
-                  cta: "플랜 선택하기", href: "/auth/signin?plan=team", featured: true,
+                  cta: "플랜 선택하기", planIntent: "team" as PlanIntent, featured: true,
                 },
                 {
                   name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
                   price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
                   features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
-                  cta: "플랜 선택하기", href: "/auth/signin?plan=business", featured: false,
+                  cta: "플랜 선택하기", planIntent: "business" as PlanIntent, featured: false,
                 },
                 {
                   name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
                   price: "Custom", period: "",
                   features: ["조직 보안 정책·접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
-                  cta: "도입 상담하기", href: "/support", featured: false,
+                  cta: "도입 상담하기", planIntent: "enterprise" as PlanIntent, featured: false,
                 },
-              ].map((plan, i) => (
+              ] as const).map((plan, i) => (
                 <Reveal key={plan.name} delay={i * 0.08}>
-                  <PlanCard {...plan} />
+                  <PlanCard
+                    {...plan}
+                    onSelect={handlePlanSelect}
+                    loading={loadingPlan === plan.planIntent}
+                    disabled={loadingPlan !== null && loadingPlan !== plan.planIntent}
+                  />
                 </Reveal>
               ))}
             </div>
+            {selectError && (
+              <div className="max-w-3xl mx-auto mt-6 px-6 py-4 rounded-xl text-sm" style={{ backgroundColor: "#FEF2F2", color: "#991B1B", border: "1px solid #FECACA" }}>
+                {selectError}
+              </div>
+            )}
           </div>
         </section>
 
@@ -314,17 +371,25 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
 
 /* ── Plan Card Component — light design ──────────────────────── */
 function PlanCard({
-  name, desc, price, period, features, cta, featured, href,
+  name, desc, price, period, features, cta, featured, planIntent, onSelect, loading, disabled,
 }: {
   name: string;
   desc: string;
   price: string;
   period?: string;
-  features: string[];
+  features: readonly string[];
   cta: string;
-  href: string;
+  planIntent: PlanIntent;
   featured?: boolean;
+  onSelect: (plan: PlanIntent) => void | Promise<void>;
+  loading?: boolean;
+  disabled?: boolean;
 }) {
+  const handleClick = () => {
+    if (loading || disabled) return;
+    void onSelect(planIntent);
+  };
+
   if (featured) {
     return (
       <div className="relative">
@@ -356,11 +421,24 @@ function PlanCard({
               </li>
             ))}
           </ul>
-          <Link href={href}>
-            <button className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2" style={{ backgroundColor: P.blue }}>
-              {cta} <ArrowRight className="h-4 w-4" />
-            </button>
-          </Link>
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={loading || disabled}
+            aria-busy={loading || undefined}
+            className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{ backgroundColor: P.blue }}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
+              </>
+            ) : (
+              <>
+                {cta} <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </button>
         </div>
       </div>
     );
@@ -391,11 +469,24 @@ function PlanCard({
           </li>
         ))}
       </ul>
-      <Link href={href}>
-        <button className="w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2" style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}>
-          {cta} <ArrowRight className="h-4 w-4" />
-        </button>
-      </Link>
+      <button
+        type="button"
+        onClick={handleClick}
+        disabled={loading || disabled}
+        aria-busy={loading || undefined}
+        className="w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+        style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}
+      >
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
+          </>
+        ) : (
+          <>
+            {cta} <ArrowRight className="h-4 w-4" />
+          </>
+        )}
+      </button>
     </div>
   );
 }

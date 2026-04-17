@@ -2,8 +2,11 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Check, Minus, Building2, Users, User, Package, CreditCard, BarChart3 } from "lucide-react";
+import { useCallback, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, Minus, Building2, Users, User, Package, CreditCard, BarChart3, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import type { PlanIntent } from "@/lib/billing/plan-select";
 import {
   Card,
   CardContent,
@@ -22,6 +25,43 @@ import {
 } from "@/components/ui/table";
 
 export default function PricingPage() {
+  const router = useRouter();
+  const [loadingPlan, setLoadingPlan] = useState<PlanIntent | null>(null);
+  const [selectError, setSelectError] = useState<string | null>(null);
+
+  const handlePlanSelect = useCallback(
+    async (plan: PlanIntent) => {
+      setSelectError(null);
+      setLoadingPlan(plan);
+      try {
+        const res = await fetch("/api/billing/plan-select", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ selectedPlan: plan }),
+        });
+        if (!res.ok) {
+          setSelectError(
+            "플랜 선택 처리 중 일시적 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."
+          );
+          return;
+        }
+        const data = (await res.json()) as { destination?: { url: string } };
+        if (!data.destination?.url) {
+          setSelectError("목적지를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+        router.push(data.destination.url);
+      } catch {
+        setSelectError(
+          "네트워크 오류로 플랜 선택을 완료할 수 없습니다. 연결 상태를 확인해 주세요."
+        );
+      } finally {
+        setLoadingPlan(null);
+      }
+    },
+    [router]
+  );
+
   return (
     <div className="flex-1 space-y-12 p-4 md:p-8 pt-6 max-w-6xl mx-auto w-full">
       <div className="text-center space-y-4">
@@ -111,8 +151,20 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-              14일 무료 체험 시작
+            <Button
+              type="button"
+              onClick={() => handlePlanSelect("team")}
+              disabled={loadingPlan !== null}
+              aria-busy={loadingPlan === "team" || undefined}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-60"
+            >
+              {loadingPlan === "team" ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
+                </span>
+              ) : (
+                "14일 무료 체험 시작"
+              )}
             </Button>
           </CardFooter>
         </Card>
@@ -154,12 +206,31 @@ export default function PricingPage() {
             </ul>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full bg-pg bg-pn/50">
-              영업팀과 상담하기
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handlePlanSelect("enterprise")}
+              disabled={loadingPlan !== null}
+              aria-busy={loadingPlan === "enterprise" || undefined}
+              className="w-full bg-pg bg-pn/50 disabled:opacity-60"
+            >
+              {loadingPlan === "enterprise" ? (
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
+                </span>
+              ) : (
+                "영업팀과 상담하기"
+              )}
             </Button>
           </CardFooter>
         </Card>
       </div>
+
+      {selectError && (
+        <div className="max-w-3xl mx-auto px-6 py-4 rounded-xl text-sm border border-red-200 bg-red-50 text-red-700">
+          {selectError}
+        </div>
+      )}
 
       {/* 상세 기능 비교표 */}
       <div className="mt-16 max-w-5xl mx-auto">

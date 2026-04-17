@@ -1,11 +1,11 @@
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, ShieldCheck, Users, Zap } from "lucide-react";
 
 const PIPELINE = ["Search", "Compare", "Request", "Order", "Receive", "Inventory"];
@@ -71,7 +71,35 @@ function SplineBg() {
 
 function SignInContent() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams?.get("callbackUrl") || "/";
+  const router = useRouter();
+  const { status } = useSession();
+
+  // plan intent 를 callbackUrl 에 보존.
+  // pricing 카드에서 ?plan=team 만 들고 들어오는 legacy 경로도 지원.
+  const rawCallback = searchParams?.get("callbackUrl");
+  const planParam = searchParams?.get("plan");
+  const callbackUrl = rawCallback
+    ? rawCallback
+    : planParam
+      ? `/pricing/continue?plan=${encodeURIComponent(planParam)}`
+      : "/";
+
+  // 이미 로그인된 사용자는 로그인 화면을 보지 않고 callbackUrl 로 이동.
+  // 특히 /pricing → /auth/signin?plan=... 로 잘못 라우팅된 경우에도
+  // 여기서 /pricing/continue 로 되돌려 올바른 목적지로 reroute 된다.
+  useEffect(() => {
+    if (status === "authenticated") {
+      router.replace(callbackUrl);
+    }
+  }, [status, callbackUrl, router]);
+
+  if (status === "authenticated") {
+    return (
+      <div className="flex min-h-[100dvh] items-center justify-center" style={{ backgroundColor: "#F5F7FB" }}>
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[100dvh]">
