@@ -111,6 +111,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // ── 스키마 드리프트 탐지 (운영 관측성) ──
+    // Supabase DROP SCHEMA 후 Vercel Redeploy 누락 등으로
+    // Prisma client 와 DB 상태가 어긋나면 여기로 떨어진다.
+    // 500 으로 뭉뚱그리지 않고 명시적으로 로깅해서 원인을 즉시 식별 가능하게.
+    if (error?.code === "P2021") {
+      console.error(
+        "[support/inquiry][P2021] FATAL schema drift: table missing in DB. Run `prisma migrate deploy` or redeploy Vercel.",
+        { code: error.code, meta: error.meta, message: error.message },
+      );
+      return NextResponse.json(
+        { error: "서비스 점검 중입니다. 잠시 후 다시 시도해 주세요." },
+        { status: 503 },
+      );
+    }
+    if (error?.code === "P2022") {
+      console.error(
+        "[support/inquiry][P2022] FATAL schema drift: column missing in DB. Check schema.prisma vs production DB.",
+        { code: error.code, meta: error.meta, message: error.message },
+      );
+      return NextResponse.json(
+        { error: "서비스 점검 중입니다. 잠시 후 다시 시도해 주세요." },
+        { status: 503 },
+      );
+    }
+
     console.error("[support/inquiry] Error:", error);
     return NextResponse.json(
       { error: "문의 접수 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요." },
