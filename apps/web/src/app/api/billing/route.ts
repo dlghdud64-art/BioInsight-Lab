@@ -51,7 +51,7 @@ const PLAN_INFO: Record<
     name: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName,
     nameKo: "Team",
     price: PLAN_PRICES[SubscriptionPlan.TEAM],
-    priceDisplay: "₩49,000/월",
+    priceDisplay: PLAN_DISPLAY[SubscriptionPlan.TEAM].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.TEAM].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.TEAM].maxQuotesPerMonth,
     features: [
@@ -68,7 +68,7 @@ const PLAN_INFO: Record<
     name: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName,
     nameKo: "Business",
     price: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
-    priceDisplay: "₩149,000/월",
+    priceDisplay: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxQuotesPerMonth,
     features: [

@@ -4,11 +4,15 @@
  * DB enum (Prisma): FREE | TEAM | ORGANIZATION
  * UI 표시:          Starter | Team | Business | Enterprise(별도 문의)
  *
- * 가격 기준: 퍼블릭 pricing 페이지 (/pricing)
+ * 가격 기준 (Single Source of Truth): 퍼블릭 pricing 페이지 (/pricing)
  *   Starter  → 무료
- *   Team     → ₩49,000/월 (연간 10% 할인)
- *   Business → ₩149,000/월 (연간 10% 할인)
+ *   Team     → ₩129,000/월 (연간 10% 할인)
+ *   Business → ₩349,000/월 (연간 10% 할인)
  *   Enterprise → 별도 문의
+ *
+ * ⚠️ 이 파일의 가격은 반드시 /pricing 페이지와 일치해야 한다.
+ *    /pricing 페이지는 현재 자체 하드코딩을 쓰지만, Phase 2에서
+ *    이 파일의 PLAN_CATALOG를 import하도록 일원화된다(billing-lifecycle.md §5).
  */
 
 // ── DB Enum (Prisma SubscriptionPlan과 동일) ──
@@ -21,8 +25,8 @@ export enum SubscriptionPlan {
 // ── 가격 상수 ──
 export const PLAN_PRICES = {
   [SubscriptionPlan.FREE]: 0,
-  [SubscriptionPlan.TEAM]: 49_000,
-  [SubscriptionPlan.ORGANIZATION]: 149_000,
+  [SubscriptionPlan.TEAM]: 129_000,
+  [SubscriptionPlan.ORGANIZATION]: 349_000,
 } as const;
 
 /** 연간 결제 시 할인율 (10%) */
@@ -72,8 +76,8 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Team",
     tagline: "협업 시작",
     description: "소규모 연구팀 협업을 위한 플랜",
-    monthlyPrice: 49_000,
-    priceDisplay: "₩49,000/월",
+    monthlyPrice: 129_000,
+    priceDisplay: "₩129,000/월",
     isRecommended: false,
   },
   [SubscriptionPlan.ORGANIZATION]: {
@@ -81,8 +85,8 @@ export const PLAN_DISPLAY: Record<SubscriptionPlan, PlanDisplayInfo> = {
     displayName: "Business",
     tagline: "조직 운영 표준",
     description: "승인과 예산 관리가 필요한 조직용 표준 플랜",
-    monthlyPrice: 149_000,
-    priceDisplay: "₩149,000/월",
+    monthlyPrice: 349_000,
+    priceDisplay: "₩349,000/월",
     isRecommended: true,
   },
 };

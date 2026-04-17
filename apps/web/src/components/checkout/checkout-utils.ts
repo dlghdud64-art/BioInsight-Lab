@@ -21,6 +21,7 @@ import type {
   CheckoutStep,
   CheckoutEntryValidation,
   CheckoutDenialReason,
+  ChangeScenario,
   PlanChangePreview,
   PricingBreakdown,
   BillingInfoData,
@@ -67,6 +68,66 @@ export function isUpgrade(
   target: SubscriptionPlan,
 ): boolean {
   return PLAN_ORDER[target] > PLAN_ORDER[current];
+}
+
+// ── 시나리오 분기 (billing-lifecycle.md §2.4) ─────────
+/**
+ * 현재/대상 플랜 기준으로 Step 1 문구·적용 시점을 확정한다.
+ * Stripe 실제 proration 계산은 Phase 2 body (Webhook + Preview API).
+ * Phase 1 에서는 "무엇이 일어날지" 를 사용자에게 명확히 알리는 문구만 확정한다.
+ */
+export function resolveChangeScenario(
+  currentPlan: SubscriptionPlan,
+  targetPlan: SubscriptionPlan,
+): ChangeScenario {
+  // 무료 → 유료: 최초 결제. proration 개념 없음.
+  if (currentPlan === SubscriptionPlan.FREE && targetPlan !== SubscriptionPlan.FREE) {
+    return "free_to_paid";
+  }
+  // 유료 → 상위: 즉시 적용 + 남은 기간 차액 정산 (Stripe proration).
+  if (isUpgrade(currentPlan, targetPlan)) {
+    return "upgrade_prorated";
+  }
+  // 그 외(유료 → 하위 / 유료 → 무료): 현 결제 주기 종료 시 전환.
+  return "downgrade_at_period_end";
+}
+
+interface ScenarioCopy {
+  headline: string;
+  detail: string;
+  /** UI 상위 컴포넌트용 기존 호환 문구 (effectiveDescription) */
+  effectiveDescription: string;
+  effectiveDate: "immediate" | "next_billing";
+}
+
+function getScenarioCopy(
+  scenario: ChangeScenario,
+  targetDisplayName: string,
+  nextBillingDate: string,
+): ScenarioCopy {
+  switch (scenario) {
+    case "free_to_paid":
+      return {
+        headline: "지금 결제하고 바로 사용",
+        detail: `오늘부터 ${targetDisplayName} 플랜이 즉시 활성화됩니다. 다음 결제는 ${nextBillingDate} 에 자동 갱신됩니다.`,
+        effectiveDescription: "지금 결제 후 즉시 적용됩니다",
+        effectiveDate: "immediate",
+      };
+    case "upgrade_prorated":
+      return {
+        headline: "즉시 적용, 남은 기간은 일할 정산",
+        detail: `오늘부터 ${targetDisplayName} 플랜이 바로 활성화되고, 현재 결제 주기의 남은 일수만큼 차액이 계산되어 청구됩니다. 다음 정기 결제는 ${nextBillingDate}.`,
+        effectiveDescription: "즉시 적용 + 일할 정산 차액 결제",
+        effectiveDate: "immediate",
+      };
+    case "downgrade_at_period_end":
+      return {
+        headline: "다음 결제일부터 적용",
+        detail: `현재 플랜은 ${nextBillingDate} 까지 그대로 유지되고, 해당 날짜부터 ${targetDisplayName} 플랜으로 전환됩니다. 즉시 환불은 발생하지 않습니다.`,
+        effectiveDescription: "현 결제 주기 종료 후 적용됩니다",
+        effectiveDate: "next_billing",
+      };
+  }
 }
 
 // ── 가격 계산 ─────────────────────────────────────────
@@ -116,7 +177,6 @@ export function buildPlanChangePreview(
 ): PlanChangePreview {
   const currentDisplay = PLAN_DISPLAY[currentPlan];
   const targetDisplay = PLAN_DISPLAY[targetPlan];
-  const upgrade = isUpgrade(currentPlan, targetPlan);
 
   const currentPrice =
     billingCycle === "yearly"
@@ -129,11 +189,27 @@ export function buildPlanChangePreview(
 
   const pricing = calculatePricing(targetPlan, billingCycle);
 
-  // 업그레이드: 즉시 적용, 다운그레이드: 다음 갱신일
-  pricing.amountDueToday = upgrade ? pricing.recurringAmount : 0;
-  pricing.effectiveDescription = upgrade
-    ? "즉시 적용됩니다"
-    : "현 결제 주기 종료 후 적용됩니다";
+  // 시나리오 분기 (billing-lifecycle.md §2.4)
+  const scenario = resolveChangeScenario(currentPlan, targetPlan);
+  const copy = getScenarioCopy(
+    scenario,
+    targetDisplay.displayName,
+    pricing.nextBillingDate,
+  );
+
+  // 오늘 결제 금액
+  // - free_to_paid: 한 주기 전액 (Phase 2 에서 Stripe Checkout 로 대체)
+  // - upgrade_prorated: 미정 — Stripe proration 결과에 따라 결정 (표시는 "차액 정산" 문구만)
+  // - downgrade_at_period_end: 즉시 결제 없음
+  if (scenario === "free_to_paid") {
+    pricing.amountDueToday = pricing.recurringAmount;
+  } else if (scenario === "upgrade_prorated") {
+    // Phase 1: 실제 일할 계산은 Stripe 연동 시 확정. UI 는 "차액" 로만 표기.
+    pricing.amountDueToday = 0;
+  } else {
+    pricing.amountDueToday = 0;
+  }
+  pricing.effectiveDescription = copy.effectiveDescription;
 
   // 기능 비교
   const currentFeatures = PLAN_LIMITS[currentPlan].features;
@@ -158,7 +234,10 @@ export function buildPlanChangePreview(
     targetPrice,
     priceDiff: targetPrice - currentPrice,
     pricing,
-    effectiveDate: upgrade ? "immediate" : "next_billing",
+    effectiveDate: copy.effectiveDate,
+    scenario,
+    scenarioHeadline: copy.headline,
+    scenarioDetail: copy.detail,
     featureChanges: { gained, lost },
     seatChanges: {
       current: PLAN_LIMITS[currentPlan].maxMembers,

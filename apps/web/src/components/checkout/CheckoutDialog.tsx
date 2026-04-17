@@ -212,7 +212,7 @@ function ConfirmStep({
         </div>
       </div>
 
-      {/* 적용 시점 안내 */}
+      {/* 적용 시점 안내 — billing-lifecycle.md §2.4 시나리오 분기 */}
       <div
         className={`p-3 rounded-lg text-sm ${
           upgrade
@@ -223,13 +223,9 @@ function ConfirmStep({
         <div className="flex items-start gap-2">
           <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium">
-              {upgrade ? "즉시 적용" : "다음 갱신일부터 적용"}
-            </p>
+            <p className="font-medium">{preview.scenarioHeadline}</p>
             <p className="text-xs mt-0.5 opacity-80">
-              {upgrade
-                ? "플랜 변경 즉시 새 기능을 사용할 수 있습니다."
-                : "현재 결제 주기가 끝난 후 변경된 플랜이 적용됩니다. 그때까지 기존 기능을 계속 사용할 수 있습니다."}
+              {preview.scenarioDetail}
             </p>
           </div>
         </div>
@@ -475,9 +471,11 @@ function ReviewStep({
           </span>
           <span className="text-slate-500">적용 시점</span>
           <span className="font-medium text-right">
-            {preview.effectiveDate === "immediate"
-              ? "즉시 적용"
-              : "다음 갱신일"}
+            {preview.scenario === "free_to_paid"
+              ? "지금 결제 · 즉시 사용"
+              : preview.scenario === "upgrade_prorated"
+                ? "즉시 적용 · 차액 정산"
+                : "다음 결제일부터"}
           </span>
           <span className="text-slate-500">다음 결제일</span>
           <span className="font-medium text-right">

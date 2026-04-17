@@ -59,6 +59,17 @@ export interface PricingBreakdown {
   effectiveDescription: string;
 }
 
+// ── 플랜 변경 시나리오 ────────────────────────────────
+/**
+ * billing-lifecycle.md §2.4 시나리오 표와 1:1 대응.
+ * CheckoutDialog 플랜 변경 흐름에서 사용하는 시나리오만 포함한다.
+ * (cancel / cancel_restore / past_due 는 별도 액션 UI에서 다룬다)
+ */
+export type ChangeScenario =
+  | "free_to_paid"          // 무료 → 유료 업그레이드: 지금 결제하고 바로 사용
+  | "upgrade_prorated"      // 유료 → 상위 업그레이드: 즉시 적용 + 일할 정산
+  | "downgrade_at_period_end"; // 유료 → 하위 다운그레이드: 다음 결제일부터 적용
+
 // ── 플랜 변경 프리뷰 ──────────────────────────────────
 export interface PlanChangePreview {
   currentPlanDisplay: string;
@@ -67,7 +78,21 @@ export interface PlanChangePreview {
   targetPrice: number;
   priceDiff: number;                // 양수=인상, 음수=절감
   pricing: PricingBreakdown;
+  /**
+   * 적용 시점 (표시용 코드).
+   * - immediate: 즉시 적용 (무료→유료, 상위 업그레이드)
+   * - next_billing: 다음 결제일부터 적용 (다운그레이드)
+   */
   effectiveDate: "immediate" | "next_billing";
+  /**
+   * 상세 시나리오 분기. 문구·요약 표시는 이 값을 기준으로 한다.
+   * effectiveDate 는 기존 UI 호환 목적으로 유지한다.
+   */
+  scenario: ChangeScenario;
+  /** 시나리오별 Step 1 헤드라인 (예: "지금 결제하고 바로 사용") */
+  scenarioHeadline: string;
+  /** 시나리오별 보조 설명 (proration 여부, 적용일 등) */
+  scenarioDetail: string;
   featureChanges: {
     gained: string[];               // 새로 사용 가능한 기능
     lost: string[];                 // 사용 불가해지는 기능

@@ -800,7 +800,7 @@ function SettingsPageContent() {
                         <span className="text-lg font-bold text-slate-900">Business</span>
                         <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px]">활성</Badge>
                       </div>
-                      <p className="text-sm text-slate-400 mt-0.5">₩149,000 / 월</p>
+                      <p className="text-sm text-slate-400 mt-0.5">₩349,000 / 월</p>
                       <p className="text-[10px] text-slate-500 mt-1">다음 갱신: 2026-05-01</p>
                     </div>
                     <div className="flex items-center gap-2">

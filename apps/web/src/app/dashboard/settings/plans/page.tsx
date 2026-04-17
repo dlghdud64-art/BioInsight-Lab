@@ -483,6 +483,7 @@ function PlansPageContent() {
  // ── intent=checkout 자동 트리거 ──
  //   pricing resolver 에서 보내온 plan 파라미터가 유효하고,
  //   현재 구독 플랜과 다르면 CheckoutDialog 를 한 번만 자동으로 연다.
+ //   billing-lifecycle.md §2.5 — Owner/Admin 이 아니면 자동 열기도 금지.
  useEffect(() => {
  if (autoCheckoutTriggeredRef.current) return;
  if (intentAction !== "checkout") return;
@@ -490,6 +491,16 @@ function PlansPageContent() {
  if (intentPlanEnum === SubscriptionPlan.FREE) return;
  if (!selectedOrgId) return;
  if (subLoading || subFetching) return;
+
+ // selectedOrg 에 role 이 실릴 때까지 대기 (undefined 상태 가드)
+ const orgRole = (selectedOrg?.role as string | undefined) ?? null;
+ if (!orgRole) return;
+ if (!["OWNER", "ADMIN"].includes(orgRole)) {
+ // 권한 없음 — 자동 트리거를 소진시켜 재시도 루프를 막되 다이얼로그는 열지 않음.
+ // UI 상에서는 상단 배너로 안내한다.
+ autoCheckoutTriggeredRef.current = true;
+ return;
+ }
 
  const currentEnum = resolvePlan(
  subscriptionData?.subscription?.plan ?? selectedOrg?.plan ?? "FREE"
@@ -600,6 +611,14 @@ function PlansPageContent() {
  // ═══════════════════════════════════════════════════════════════
  const subscription = subscriptionData?.subscription ?? null;
 
+ // ── 권한 분기 (billing-lifecycle.md §2.5) ──
+ //   Owner / Billing Admin 만 플랜 변경이 가능하다.
+ //   일반 구성원: 카드 조회만 가능 + 변경 버튼 disabled + 상단 안내 배너.
+ //   서버 측 이중 방어는 /api/organizations/{id}/subscription POST 에서
+ //   role IN (ADMIN, OWNER) 체크로 이미 보장되어 있다.
+ const orgRole = (selectedOrg?.role as string | undefined) ?? "VIEWER";
+ const canManageBilling = ["OWNER", "ADMIN"].includes(orgRole);
+
  // plan slug → enum (방어적 변환)
  const currentPlan = resolvePlan(
  subscription?.plan ?? selectedOrg?.plan ??"FREE"
@@ -635,7 +654,7 @@ function PlansPageContent() {
  return `₩${amount.toLocaleString()}`;
  };
 
- // 버튼 상태 (safe)
+ // 버튼 상태 (safe) — 권한이 없으면 disabled + "권한 없음" 라벨
  const getButtonInfo = (planId: SubscriptionPlan) => {
  if (planId === currentPlan) {
  return {
@@ -643,20 +662,40 @@ function PlansPageContent() {
  disabled: true,
  isUpgrade: false,
  isDowngrade: false,
+ reason: "CURRENT_PLAN" as const,
  };
  }
  const currentOrder = safePlanOrder(currentPlan);
  const targetOrder = safePlanOrder(planId);
  const isUpgrade = targetOrder > currentOrder;
+ if (!canManageBilling) {
+ return {
+ label:"관리자 전용",
+ disabled: true,
+ isUpgrade,
+ isDowngrade: !isUpgrade,
+ reason: "INSUFFICIENT_ROLE" as const,
+ };
+ }
  return {
  label: isUpgrade ?"업그레이드":"다운그레이드",
  disabled: false,
  isUpgrade,
  isDowngrade: !isUpgrade,
+ reason: "ALLOWED" as const,
  };
  };
 
  const handlePlanChange = (planId: SubscriptionPlan) => {
+ // 권한 가드 — UI 는 이미 disabled 지만 직접 호출 경로에 대비한 이중 방어
+ if (!canManageBilling) {
+ toast({
+ title: "플랜 변경 권한이 없습니다",
+ description: "플랜 변경은 조직 관리자(Owner·Admin)만 가능합니다.",
+ variant: "destructive",
+ });
+ return;
+ }
  // CheckoutDialog로 진입
  setCheckoutTarget(planId);
  };
@@ -681,6 +720,14 @@ function PlansPageContent() {
  variant: "warning",
  title: "알 수 없는 플랜 선택",
  message: "요청하신 플랜 정보를 확인할 수 없습니다. 아래 카드에서 다시 선택해 주세요.",
+ };
+ }
+ // 권한 부족 — intent 는 있지만 Owner/Admin 아님
+ if (!canManageBilling) {
+ return {
+ variant: "warning",
+ title: `${intentPlanLabel} 플랜 결제를 시작할 수 없습니다`,
+ message: "플랜 변경은 조직 관리자(Owner·Admin)만 실행할 수 있습니다. 관리자에게 요청하거나, 관리자가 동일 링크로 접속해 결제를 진행해 주세요.",
  };
  }
  return {
@@ -723,6 +770,22 @@ function PlansPageContent() {
  <p className="font-semibold text-sm">{intentBanner.title}</p>
  <p className="text-sm mt-0.5 leading-relaxed">
  {intentBanner.message}
+ </p>
+ </div>
+ </div>
+ )}
+
+ {/* ── 권한 분기 배너 (billing-lifecycle.md §2.5) ── */}
+ {!canManageBilling && (
+ <div
+ className="rounded-lg border border-slate-300 bg-slate-50 text-slate-700 px-4 py-3 flex items-start gap-3"
+ role="status"
+ >
+ <AlertCircle className="h-5 w-5 mt-0.5 shrink-0 text-slate-500" />
+ <div className="min-w-0">
+ <p className="font-semibold text-sm">조회 전용 모드</p>
+ <p className="text-sm mt-0.5 leading-relaxed">
+ 플랜 변경·결제는 조직 관리자(Owner·Admin)만 실행할 수 있습니다. 변경이 필요하시면 조직 관리자에게 요청해 주세요.
  </p>
  </div>
  </div>
@@ -1126,12 +1189,28 @@ function PlansPageContent() {
 
  <div className="pt-4 mt-auto">
  {btnInfo.disabled ? (
+ <>
  <Button
  className="w-full bg-slate-100 bg-slate-100 text-slate-400 hover:bg-slate-100 hover:bg-slate-100 cursor-not-allowed"
  disabled
+ title={
+ btnInfo.reason === "INSUFFICIENT_ROLE"
+ ? "플랜 변경은 조직 관리자만 가능합니다"
+ : undefined
+ }
  >
- 현재 사용 중인 플랜
+ {btnInfo.reason === "CURRENT_PLAN"
+ ? "현재 사용 중인 플랜"
+ : btnInfo.reason === "INSUFFICIENT_ROLE"
+ ? "관리자 전용"
+ : btnInfo.label}
  </Button>
+ {btnInfo.reason === "INSUFFICIENT_ROLE" && (
+ <p className="text-[11px] text-slate-400 mt-1.5 text-center">
+ 플랜 변경은 조직 관리자(Owner·Admin)만 가능합니다.
+ </p>
+ )}
+ </>
  ) : (
  <Button
  className={cn(
