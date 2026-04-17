@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,9 +54,17 @@ interface PlanInfo {
   features: string[];
 }
 
-export default function BillingPage() {
+const PLAN_LABELS: Record<string, string> = {
+  starter: "Starter",
+  team: "Team",
+  business: "Business",
+  enterprise: "Enterprise",
+};
+
+function BillingPageContent() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState("overview");
   const [isAddCardOpen, setIsAddCardOpen] = useState(false);
   const [cardForm, setCardForm] = useState({
@@ -64,6 +73,42 @@ export default function BillingPage() {
     expYear: "",
     cvc: "",
   });
+
+  // 플랜 선택 resolver 로부터 전달된 컨텍스트 파라미터 해석
+  const ctxError = searchParams?.get("error");
+  const ctxStatus = searchParams?.get("status");
+  const ctxAction = searchParams?.get("action");
+  const ctxPlan = searchParams?.get("plan");
+  const ctxPlanLabel = ctxPlan ? PLAN_LABELS[ctxPlan] ?? ctxPlan : null;
+
+  const contextBanner: {
+    variant: "warning" | "info";
+    title: string;
+    message: string;
+  } | null = (() => {
+    if (ctxError === "permission_denied") {
+      return {
+        variant: "warning",
+        title: "결제 권한이 없습니다",
+        message: `${ctxPlanLabel ?? "선택하신"} 플랜으로 변경하려면 워크스페이스 Admin 권한이 필요합니다. 조직 관리자에게 요청해 주세요.`,
+      };
+    }
+    if (ctxStatus === "already_active") {
+      return {
+        variant: "info",
+        title: "이미 해당 플랜을 사용 중입니다",
+        message: `${ctxPlanLabel ?? "선택하신"} 플랜으로 이미 구독 중이라 별도 변경이 필요하지 않습니다.`,
+      };
+    }
+    if (ctxAction === "change_plan") {
+      return {
+        variant: "info",
+        title: "플랜 변경",
+        message: `${ctxPlanLabel ?? "선택하신"} 플랜으로 변경을 진행해 주세요. 아래 결제 수단·구독 상태를 확인하신 뒤 업그레이드하실 수 있습니다.`,
+      };
+    }
+    return null;
+  })();
 
   // 구독 정보 조회
   const { data: billingData, isLoading } = useQuery({
@@ -207,6 +252,26 @@ export default function BillingPage() {
                 icon={CreditCard}
                 iconColor="text-green-600"
               />
+
+              {contextBanner && (
+                <div
+                  className={cn(
+                    "mb-6 rounded-lg border px-4 py-3 flex items-start gap-3",
+                    contextBanner.variant === "warning"
+                      ? "border-amber-300 bg-amber-50 text-amber-900"
+                      : "border-blue-300 bg-blue-50 text-blue-900"
+                  )}
+                  role="status"
+                >
+                  <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm">{contextBanner.title}</p>
+                    <p className="text-sm mt-0.5 leading-relaxed">
+                      {contextBanner.message}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                 <TabsList className="grid w-full grid-cols-3 h-10">
@@ -594,5 +659,19 @@ export default function BillingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-pg flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <BillingPageContent />
+    </Suspense>
   );
 }

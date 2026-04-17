@@ -2,7 +2,9 @@
 
 export const dynamic = 'force-dynamic';
 
+import { Suspense } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,68 @@ const OVERLAY_ROUTE_PATTERNS = [
 ];
 function isOverlayCapableRoute(href: string): boolean {
   return OVERLAY_ROUTE_PATTERNS.some((re) => re.test(href));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// /pricing resolver 로부터 넘어온 plan 온보딩 배너
+//   onboarding=workspace → 워크스페이스 생성이 필요
+//   plan=starter         → Starter 플랜 안내 (워크스페이스 없이 즉시 사용)
+//   plan=team|business   → 플랜 결제 대기, 워크스페이스 생성 이후 /dashboard/settings/plans 로 유도
+// ═══════════════════════════════════════════════════════════════════
+const PLAN_INTENT_LABELS: Record<string, string> = {
+  starter: "Starter",
+  team: "Team",
+  business: "Business",
+  enterprise: "Enterprise",
+};
+
+function PlanOnboardingBanner() {
+  const searchParams = useSearchParams();
+  const onboarding = searchParams?.get("onboarding") ?? null;
+  const planRaw = searchParams?.get("plan") ?? null;
+  const planLabel = planRaw ? PLAN_INTENT_LABELS[planRaw] ?? planRaw : null;
+
+  if (!onboarding && !planRaw) return null;
+
+  if (onboarding === "workspace") {
+    return (
+      <div
+        className="rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-3 flex items-start gap-3 text-indigo-900"
+        role="status"
+      >
+        <ClipboardList className="h-5 w-5 mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <p className="font-semibold text-sm">
+            워크스페이스 생성이 먼저 필요합니다
+          </p>
+          <p className="text-sm mt-0.5 leading-relaxed">
+            {planLabel
+              ? `${planLabel} 플랜은 워크스페이스 단위로 적용됩니다. 워크스페이스를 먼저 만드신 뒤, 플랜 설정으로 이어드립니다.`
+              : "플랜은 워크스페이스 단위로 적용됩니다. 먼저 워크스페이스를 설정해 주세요."}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (planRaw === "starter") {
+    return (
+      <div
+        className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 flex items-start gap-3 text-emerald-900"
+        role="status"
+      >
+        <CheckCircle2 className="h-5 w-5 mt-0.5 shrink-0" />
+        <div className="min-w-0">
+          <p className="font-semibold text-sm">Starter 플랜으로 시작합니다</p>
+          <p className="text-sm mt-0.5 leading-relaxed">
+            별도 결제 없이 기본 기능을 바로 사용하실 수 있습니다. 사용량 한도에 도달하면 상단 배너로 알려드립니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
 }
 
 export default function DashboardPage() {
@@ -361,6 +425,11 @@ export default function DashboardPage() {
 
   return (
     <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 overflow-x-hidden" style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
+
+      {/* --- 플랜 온보딩 배너 (pricing resolver 경유 시) --- */}
+      <Suspense fallback={null}>
+        <PlanOnboardingBanner />
+      </Suspense>
 
       {/* --- 페이지 헤더 --- */}
       <div className="flex flex-col space-y-0.5 min-w-0">

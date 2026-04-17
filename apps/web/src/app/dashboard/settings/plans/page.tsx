@@ -2,9 +2,18 @@
 
 export const dynamic ="force-dynamic";
 
-import { useState, useEffect, useCallback, Component, type ReactNode } from"react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  Suspense,
+  Component,
+  type ReactNode,
+} from "react";
 import * as React from"react";
 import { useSession } from"next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from"@tanstack/react-query";
 import {
  Card,
@@ -276,15 +285,49 @@ function PlansSkeleton() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
+// Plan intent 라우팅 매핑 — /pricing resolver 와 합을 맞춘다
+//  starter → FREE (여기서는 체크아웃 대상 아님)
+//  team    → TEAM
+//  business→ ORGANIZATION
+//  enterprise → 도달하지 않음 (resolver 에서 /support 로 보냄)
+// ═══════════════════════════════════════════════════════════════════
+const PLAN_INTENT_TO_ENUM: Record<string, SubscriptionPlan | null> = {
+  starter: SubscriptionPlan.FREE,
+  team: SubscriptionPlan.TEAM,
+  business: SubscriptionPlan.ORGANIZATION,
+  enterprise: null,
+};
+
+const PLAN_INTENT_LABELS: Record<string, string> = {
+  starter: "Starter",
+  team: "Team",
+  business: "Business",
+  enterprise: "Enterprise",
+};
+
+// ═══════════════════════════════════════════════════════════════════
 // 메인 페이지 컴포넌트
 // ═══════════════════════════════════════════════════════════════════
 function PlansPageContent() {
  const { data: session, status: sessionStatus } = useSession();
  const { toast } = useToast();
  const queryClient = useQueryClient();
+ const searchParams = useSearchParams();
  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
  const [isAnnual, setIsAnnual] = useState(false);
  const [checkoutTarget, setCheckoutTarget] = useState<SubscriptionPlan | null>(null);
+
+ // ── /pricing resolver 로부터 전달된 intent 파라미터 ──
+ const intentPlanRaw = searchParams?.get("plan") ?? null;
+ const intentAction = searchParams?.get("intent") ?? null;
+ const intentWorkspaceId = searchParams?.get("workspaceId") ?? null;
+ const intentPlanEnum: SubscriptionPlan | null = intentPlanRaw
+   ? PLAN_INTENT_TO_ENUM[intentPlanRaw] ?? null
+   : null;
+ const intentPlanLabel = intentPlanRaw
+   ? PLAN_INTENT_LABELS[intentPlanRaw] ?? intentPlanRaw
+   : null;
+ const autoCheckoutTriggeredRef = useRef(false);
 
  // ┌─────────────────────────────────────────────┐
  // │ HOOKS — 모두 최상단, 조건부 return 전에 배치 │
@@ -318,11 +361,20 @@ function PlansPageContent() {
  const organizations = organizationsData?.organizations ?? [];
 
  // ── selectedOrgId 초기화 — hook 위반 없이 최상단에서 ──
+ //    intentWorkspaceId 가 유효한 소속 조직이면 우선 선택한다.
  useEffect(() => {
- if (organizations.length > 0 && !selectedOrgId) {
- setSelectedOrgId(organizations[0].id);
+ if (organizations.length === 0 || selectedOrgId) return;
+ if (intentWorkspaceId) {
+ const match = organizations.find(
+ (org: any) => org.id === intentWorkspaceId
+ );
+ if (match) {
+ setSelectedOrgId(match.id);
+ return;
  }
- }, [organizations, selectedOrgId]);
+ }
+ setSelectedOrgId(organizations[0].id);
+ }, [organizations, selectedOrgId, intentWorkspaceId]);
 
  // ── selectedOrg 파생 ──
  const selectedOrg = selectedOrgId
@@ -421,9 +473,40 @@ function PlansPageContent() {
  subError,
  subscriptionPlan: subscriptionData?.subscription?.plan ??"(null)",
  orgPlan: selectedOrg?.plan ??"(null)",
+ intentPlanRaw,
+ intentAction,
+ intentWorkspaceId,
  });
  }
  });
+
+ // ── intent=checkout 자동 트리거 ──
+ //   pricing resolver 에서 보내온 plan 파라미터가 유효하고,
+ //   현재 구독 플랜과 다르면 CheckoutDialog 를 한 번만 자동으로 연다.
+ useEffect(() => {
+ if (autoCheckoutTriggeredRef.current) return;
+ if (intentAction !== "checkout") return;
+ if (!intentPlanEnum) return;
+ if (intentPlanEnum === SubscriptionPlan.FREE) return;
+ if (!selectedOrgId) return;
+ if (subLoading || subFetching) return;
+
+ const currentEnum = resolvePlan(
+ subscriptionData?.subscription?.plan ?? selectedOrg?.plan ?? "FREE"
+ );
+ if (intentPlanEnum === currentEnum) return;
+
+ autoCheckoutTriggeredRef.current = true;
+ setCheckoutTarget(intentPlanEnum);
+ }, [
+ intentAction,
+ intentPlanEnum,
+ selectedOrgId,
+ subLoading,
+ subFetching,
+ subscriptionData,
+ selectedOrg,
+ ]);
 
  // ── 조직 전환 핸들러 ──
  const handleOrgChange = useCallback(
@@ -578,6 +661,35 @@ function PlansPageContent() {
  setCheckoutTarget(planId);
  };
 
+ // ── pricing resolver 에서 넘어온 intent 배너 ──
+ const intentBanner: {
+ variant: "info" | "warning";
+ title: string;
+ message: string;
+ } | null = (() => {
+ if (intentAction !== "checkout") return null;
+ if (!intentPlanLabel) return null;
+ if (intentPlanEnum === currentPlan) {
+ return {
+ variant: "info",
+ title: "이미 해당 플랜을 사용 중입니다",
+ message: `${intentPlanLabel} 플랜으로 이미 구독 중이라 추가 변경이 필요하지 않습니다.`,
+ };
+ }
+ if (intentPlanEnum === null) {
+ return {
+ variant: "warning",
+ title: "알 수 없는 플랜 선택",
+ message: "요청하신 플랜 정보를 확인할 수 없습니다. 아래 카드에서 다시 선택해 주세요.",
+ };
+ }
+ return {
+ variant: "info",
+ title: `${intentPlanLabel} 플랜 결제를 시작합니다`,
+ message: "현재 조직 상태를 확인했습니다. 결제 창이 자동으로 열리며, 닫혀 있다면 아래 버튼으로 다시 시작하실 수 있습니다.",
+ };
+ })();
+
  // ═══════════════════════════════════════════════════════════════
  // 메인 렌더
  // ═══════════════════════════════════════════════════════════════
@@ -594,6 +706,27 @@ function PlansPageContent() {
  조직별 구독 플랜을 확인하고 변경할 수 있습니다.
  </p>
  </div>
+
+ {/* ── pricing resolver 배너 ── */}
+ {intentBanner && (
+ <div
+ className={cn(
+ "rounded-lg border px-4 py-3 flex items-start gap-3",
+ intentBanner.variant === "warning"
+ ? "border-amber-300 bg-amber-50 text-amber-900"
+ : "border-blue-300 bg-blue-50 text-blue-900"
+ )}
+ role="status"
+ >
+ <AlertCircle className="h-5 w-5 mt-0.5 shrink-0" />
+ <div className="min-w-0">
+ <p className="font-semibold text-sm">{intentBanner.title}</p>
+ <p className="text-sm mt-0.5 leading-relaxed">
+ {intentBanner.message}
+ </p>
+ </div>
+ </div>
+ )}
 
  {/* ── 조직 선택 ── */}
  {organizations.length > 1 && (
@@ -852,6 +985,11 @@ function PlansPageContent() {
  const planLimits = safePlanLimits(card.id);
  const isCurrentPlan = card.id === currentPlan;
  const isBusiness = card.id === SubscriptionPlan.ORGANIZATION;
+ const isIntentTarget =
+ intentAction === "checkout" &&
+ intentPlanEnum !== null &&
+ card.id === intentPlanEnum &&
+ !isCurrentPlan;
  const Icon = card.icon;
  const btnInfo = getButtonInfo(card.id);
  const price = getDisplayPrice(card.id);
@@ -865,9 +1003,14 @@ function PlansPageContent() {
  isCurrentPlan &&
 "ring-2 ring-emerald-500 shadow-lg border-emerald-200 border-emerald-200",
  !isCurrentPlan &&
+ isIntentTarget &&
+"ring-2 ring-indigo-500 shadow-xl border-indigo-200",
+ !isCurrentPlan &&
+ !isIntentTarget &&
  display.isRecommended &&
 "ring-2 ring-blue-500 shadow-xl border-blue-200 border-blue-200",
  !isCurrentPlan &&
+ !isIntentTarget &&
  !display.isRecommended &&
 "border-slate-200"
  )}
@@ -1238,12 +1381,15 @@ function PlansPageContent() {
 }
 
 // ═══════════════════════════════════════════════════════════════════
-// Export — ErrorBoundary로 감싸서 내보냄
+// Export — Suspense + ErrorBoundary 로 감싸서 내보냄
+//   Suspense 는 useSearchParams() 요구사항 (Next.js 14)
 // ═══════════════════════════════════════════════════════════════════
 export default function PlansPage() {
  return (
+ <Suspense fallback={<PlansSkeleton />}>
  <PlansErrorBoundary>
  <PlansPageContent />
  </PlansErrorBoundary>
+ </Suspense>
  );
 }
