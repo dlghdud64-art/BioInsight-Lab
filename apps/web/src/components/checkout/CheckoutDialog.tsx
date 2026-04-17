@@ -294,10 +294,12 @@ function BillingStep({
   billingInfo,
   onChange,
   errors,
+  submitError,
 }: {
   billingInfo: BillingInfoData;
   onChange: (field: keyof BillingInfoData, value: string) => void;
   errors: string[];
+  submitError?: string | null;
 }) {
   return (
     <div className="space-y-4">
@@ -310,6 +312,15 @@ function BillingStep({
           <div className="flex items-start gap-2">
             <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
             <span>필수 항목을 입력해 주세요: {errors.join(", ")}</span>
+          </div>
+        </div>
+      )}
+
+      {submitError && (
+        <div className="p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+            <span>{submitError}</span>
           </div>
         </div>
       )}
@@ -578,6 +589,8 @@ export default function CheckoutDialog({
   const [status, setStatus] = useState<CheckoutStatus>("reviewing_change");
   const [agreed, setAgreed] = useState(false);
   const [billingErrors, setBillingErrors] = useState<string[]>([]);
+  // 서버 측 저장 오류(예: 409 잠금 충돌, 500 저장 실패) — 필드 누락과 분리해서 표시
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [completion, setCompletion] = useState<CheckoutCompletionData | null>(null);
   const [billingInfo, setBillingInfo] = useState<BillingInfoData>({
     companyName: "",
@@ -633,6 +646,7 @@ export default function CheckoutDialog({
       setStatus("reviewing_change");
       setAgreed(false);
       setBillingErrors([]);
+      setSubmitError(null);
       setCompletion(null);
     }
   }, [open]);
@@ -697,6 +711,8 @@ export default function CheckoutDialog({
   const handleBillingChange = (field: keyof BillingInfoData, value: string) => {
     setBillingInfo((prev) => ({ ...prev, [field]: value }));
     setBillingErrors([]);
+    // 사용자가 필드를 수정하면 이전 서버 오류 메시지도 초기화
+    setSubmitError(null);
   };
 
   // 다음 단계 핸들러
@@ -715,12 +731,24 @@ export default function CheckoutDialog({
         return;
       }
       // 청구 정보 저장
+      setSubmitError(null);
       try {
         await billingMutation.mutateAsync(billingInfo);
         setStep("review");
         setStatus("confirming");
-      } catch {
-        // 에러는 mutation에서 처리
+      } catch (err) {
+        // 서버 측 저장 오류를 사용자에게 그대로 노출한다.
+        // (예: 409 "같은 항목에 대한 다른 작업이 진행 중입니다", 500 저장 실패 등)
+        const msg =
+          err instanceof Error && err.message
+            ? err.message
+            : "청구 정보 저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+        setSubmitError(msg);
+        toast({
+          title: "청구 정보 저장 실패",
+          description: msg,
+          variant: "destructive",
+        });
       }
       return;
     }
@@ -799,6 +827,7 @@ export default function CheckoutDialog({
                   billingInfo={billingInfo}
                   onChange={handleBillingChange}
                   errors={billingErrors}
+                  submitError={submitError}
                 />
               )}
               {step === "review" && (

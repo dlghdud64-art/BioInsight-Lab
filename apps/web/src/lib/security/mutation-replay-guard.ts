@@ -104,7 +104,25 @@ const CSRF_TOKENS = new Map<string, CsrfTokenRecord>();
 const CSRF_TOKEN_TTL_MS = 30 * 60 * 1000; // 30분
 const MAX_CSRF_TOKENS = 100;
 
-const ACTIVE_MUTATIONS = new Set<string>(); // targetEntityId 기준 동시 실행 방지
+// targetEntityId 기준 동시 실행 방지
+// Map<concurrencyKey, acquiredAtMs> — 프로세스 메모리 기반이므로 Vercel 람다 재사용 시
+// 이전 실행에서 해제되지 못한(예: 람다 timeout) lock을 TTL로 강제 해제한다.
+const ACTIVE_MUTATIONS = new Map<string, number>();
+const ACTIVE_MUTATION_TTL_MS = 5 * 60 * 1000; // 5분
+
+/**
+ * TTL 초과한 lock은 stale로 간주하고 해제한다.
+ * 반환값: 현재 유효한(stale이 아닌) lock 존재 여부.
+ */
+function hasActiveLock(concurrencyKey: string): boolean {
+  const acquiredAt = ACTIVE_MUTATIONS.get(concurrencyKey);
+  if (acquiredAt === undefined) return false;
+  if (Date.now() - acquiredAt > ACTIVE_MUTATION_TTL_MS) {
+    ACTIVE_MUTATIONS.delete(concurrencyKey);
+    return false;
+  }
+  return true;
+}
 
 /** Stale snapshot 허용 최대 시간 */
 const MAX_REQUEST_AGE_MS = 5 * 60 * 1000; // 5분
@@ -251,7 +269,7 @@ export function checkMutationReplayGuard(
 
   // 4. Concurrent mutation
   const concurrencyKey = `${action}:${targetEntityId}`;
-  if (ACTIVE_MUTATIONS.has(concurrencyKey)) {
+  if (hasActiveLock(concurrencyKey)) {
     return {
       allowed: false,
       reason: 'concurrent_mutation',
@@ -279,8 +297,9 @@ export function beginMutation(
   targetEntityId: string,
 ): boolean {
   const concurrencyKey = `${action}:${targetEntityId}`;
-  if (ACTIVE_MUTATIONS.has(concurrencyKey)) return false;
-  ACTIVE_MUTATIONS.add(concurrencyKey);
+  // stale lock은 hasActiveLock 내부에서 자동 해제됨
+  if (hasActiveLock(concurrencyKey)) return false;
+  ACTIVE_MUTATIONS.set(concurrencyKey, Date.now());
   return true;
 }
 
