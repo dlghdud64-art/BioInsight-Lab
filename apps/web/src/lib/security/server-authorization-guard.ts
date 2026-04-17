@@ -90,6 +90,7 @@ export type IrreversibleActionType =
   | 'organization_invite'
   | 'organization_security_change'
   | 'team_manage'
+  | 'workspace_create'
   | 'workspace_manage'
   | 'workspace_invite_accept'
   // ── Budget chain ──
@@ -183,6 +184,10 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
   organization_invite: ['buyer', 'approver', 'ops_admin'],
   organization_security_change: ['ops_admin'],
   team_manage: ['ops_admin'],
+  // 신규 Workspace 생성은 모든 로그인 유저가 가능해야 한다
+  // (bootstrap paradox 방지: 첫 워크스페이스를 만드는 사람은 아직 ADMIN일 수 없음).
+  // 기존 Workspace의 플랜/멤버 관리는 계속 ops_admin만 허용한다(workspace_manage).
+  workspace_create: ['requester', 'buyer', 'approver', 'ops_admin'],
   workspace_manage: ['ops_admin'],
   // ── Budget chain ──
   budget_create: ['buyer', 'approver', 'ops_admin'],

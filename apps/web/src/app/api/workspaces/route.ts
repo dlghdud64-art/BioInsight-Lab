@@ -60,7 +60,9 @@ export async function POST(request: NextRequest) {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'workspace_manage',
+      // 신규 Workspace 생성 — 생성자는 아직 어떤 Workspace의 ADMIN도 아니므로
+      // workspace_manage(기존 Workspace 관리)와 분리된 workspace_create 액션을 사용한다.
+      action: 'workspace_create',
       targetEntityType: 'workspace',
       targetEntityId: 'new',
       sourceSurface: 'workspaces-api',
