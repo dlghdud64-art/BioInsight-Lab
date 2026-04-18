@@ -52,8 +52,10 @@ export function shouldPublish(
 
   if (Number.isNaN(record.timestamp)) return true;
 
-  // TTL 만료 시 재발행 허용
-  return Date.now() - record.timestamp > ttlMs;
+  // TTL 만료 시 재발행 허용.
+  // NOTE: ttlMs=0 은 "즉시 만료" canonical 의미이므로 `>=` 로 체크해야 한다.
+  //       (`>` 는 동일 ms tick 에서 record 를 방금 만든 경우 0>0=false 로 오판)
+  return Date.now() - record.timestamp >= ttlMs;
 }
 
 /**

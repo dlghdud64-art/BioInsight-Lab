@@ -516,15 +516,17 @@ describe("Scenario 13: Dedupe Bridge — server bridge 계약 검증", () => {
     expect(typeof clientModule.clearDedupeForPoWithServer).toBe("function");
   });
 
-  it("shouldPublishWithServer는 동기 함수 (boolean 반환)", () => {
-    // 서버 없는 테스트 환경 — sessionStorage도 없으므로 true 반환
-    const { shouldPublishWithServer } = require("@/lib/persistence/governance-event-dedupe-client");
+  it("shouldPublishWithServer는 동기 함수 (boolean 반환)", async () => {
+    // NOTE: vitest ESM 환경에서 `require()` 는 @/ alias 를 해석하지 못해 Cannot find module
+    //       에러가 난다. 위 첫 케이스와 동일하게 `await import()` 로 접근.
+    //       서버 없는 테스트 환경 — sessionStorage 도 없으므로 true 반환.
+    const { shouldPublishWithServer } = await import("@/lib/persistence/governance-event-dedupe-client");
     const result = shouldPublishWithServer("PO-TEST", "test_event", "sig1");
     expect(typeof result).toBe("boolean");
   });
 
   it("shouldPublishWithServerAsync는 비동기 함수 (Promise<boolean> 반환)", async () => {
-    const { shouldPublishWithServerAsync } = require("@/lib/persistence/governance-event-dedupe-client");
+    const { shouldPublishWithServerAsync } = await import("@/lib/persistence/governance-event-dedupe-client");
     const result = shouldPublishWithServerAsync("PO-TEST", "test_event", "sig1");
     expect(result).toBeInstanceOf(Promise);
     // 서버 없는 환경에서 fallback → true

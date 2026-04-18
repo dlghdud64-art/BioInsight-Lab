@@ -99,20 +99,23 @@ export function mergeCandidateWithSeed<T extends Record<string, unknown>>(
     if (key === "__presentationSeed") continue;
 
     const isCanonical = (CANONICAL_CANDIDATE_FIELD_KEYS as readonly string[]).includes(key);
+    const truthValue = (canonicalTruth as Record<string, unknown>)[key];
 
     if (isCanonical) {
-      // canonical field: truth에 유효 값이 있으면 seed를 무시
-      const truthValue = (canonicalTruth as Record<string, unknown>)[key];
+      // canonical field: null/undefined 일 때만 seed 로 채움.
+      // empty string 등 "의도된 빈 값" 도 truth 로 보존 (보수적 보호).
       if (truthValue !== null && truthValue !== undefined) {
-        continue; // truth 보호 — seed 무시
+        continue;
+      }
+    } else {
+      // non-canonical (presentation) field: null/undefined/empty string 이면 seed 로 보충.
+      // presentation 영역은 empty string 을 unset 으로 간주하여 fallback 을 허용한다.
+      if (truthValue !== null && truthValue !== undefined && truthValue !== "") {
+        continue;
       }
     }
 
-    // non-canonical field 이거나, canonical이지만 truth에 값이 없는 경우
-    const resultValue = (result as Record<string, unknown>)[key];
-    if (resultValue === null || resultValue === undefined) {
-      (result as Record<string, unknown>)[key] = (seed as Record<string, unknown>)[key];
-    }
+    (result as Record<string, unknown>)[key] = (seed as Record<string, unknown>)[key];
   }
 
   return result;
