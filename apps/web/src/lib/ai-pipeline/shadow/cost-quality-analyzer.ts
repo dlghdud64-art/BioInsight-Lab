@@ -5,8 +5,6 @@
  * 비용 효율성, 지연 시간, false-safe 비율 등을 분석합니다.
  */
 
-import { db } from "@/lib/db";
-
 // --- 타입 정의 ---
 
 /** 비용-품질 분석 세그먼트 */
@@ -144,4 +142,46 @@ export function identifySafeSegments(
 
     return zeroFalseSafe && highConfidence;
   });
+}
+
+/** 비용·품질 분석 결과 및 최적화 제안 */
+export interface CostQualityAnalysisResult {
+  documentType: string;
+  segments: CostQualitySegment[];
+  inefficientSegments: CostQualitySegment[];
+  safeSegments: CostQualitySegment[];
+  proposals: Array<{
+    direction: 'TIGHTEN' | 'RELAX';
+    description: string;
+    segmentId?: string;
+  }>;
+}
+
+/**
+ * 특정 문서 유형에 대한 비용·품질 분석을 실행합니다.
+ * 현재는 인메모리 세그먼트 기반으로 동작하며, 추후 DB 연동으로 확장 가능합니다.
+ */
+export async function runCostQualityAnalysis(
+  documentType: string
+): Promise<CostQualityAnalysisResult> {
+  // 현재 인메모리 세그먼트가 없으므로 빈 결과 반환 (DB 연동은 추후 구현)
+  const segments: CostQualitySegment[] = [];
+  const inefficientSegments = identifyInefficientSegments(segments);
+  const safeSegments = identifySafeSegments(segments);
+
+  const proposals: CostQualityAnalysisResult['proposals'] = [];
+  for (const seg of inefficientSegments) {
+    proposals.push({
+      direction: 'TIGHTEN',
+      description: `${seg.confidenceBand} 구간 비효율 — 임계값 강화 권장 (효율: ${seg.costEfficiencyRatio.toFixed(3)})`,
+    });
+  }
+  for (const seg of safeSegments) {
+    proposals.push({
+      direction: 'RELAX',
+      description: `${seg.confidenceBand} 구간 안전 확인 — 임계값 완화 가능 (false-safe: 0%)`,
+    });
+  }
+
+  return { documentType, segments, inefficientSegments, safeSegments, proposals };
 }

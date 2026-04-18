@@ -124,6 +124,24 @@ export function getDecisionPackages(): DecisionPackage[] {
   return [...decisionPackageStore];
 }
 
+/** PENDING 상태인 의사결정 패키지 조회 */
+export function getPendingDecisions(): DecisionPackage[] {
+  return decisionPackageStore.filter((p) =>
+    p.options.some((opt) => opt.status === 'PENDING')
+  );
+}
+
+/** 특정 의사결정 패키지의 옵션을 REJECTED 처리 (거부권 행사) */
+export function vetoDecision(decisionId: string): DecisionPackage | null {
+  const pkg = decisionPackageStore.find((p) => p.decisionId === decisionId);
+  if (!pkg) return null;
+  pkg.options.forEach((opt) => {
+    if (opt.status === 'PENDING') opt.status = 'REJECTED';
+  });
+  pkg.decidedAt = new Date();
+  return { ...pkg };
+}
+
 /** 특정 의사결정 패키지에 결정 기록 */
 export function recordDecision(
   decisionId: string,
