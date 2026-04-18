@@ -37,11 +37,15 @@ export type OutboundExecutionStatus =
 export const TERMINAL_STATUSES: readonly OutboundExecutionStatus[] = ["sent", "cancelled"] as const;
 
 /** Valid transitions map */
+// NOTE: state machine 주석 및 `cancelExecution` 주석(line 295)은
+//       "any non-terminal → cancelled" 를 canonical 로 선언한다.
+//       `sending` 도 비-terminal 이므로 in-flight 취소(사용자가 발송 중단을 요청)
+//       가 허용되어야 한다. (VALID_TRANSITIONS.sending 에 "cancelled" 누락 버그 수정)
 const VALID_TRANSITIONS: Record<OutboundExecutionStatus, OutboundExecutionStatus[]> = {
   draft_dispatch: ["scheduled", "queued_to_send", "cancelled"],
   scheduled: ["queued_to_send", "cancelled"],
   queued_to_send: ["sending", "cancelled"],
-  sending: ["sent", "send_failed"],
+  sending: ["sent", "send_failed", "cancelled"],
   sent: [], // terminal
   send_failed: ["queued_to_send", "cancelled"], // retry → queued or cancel
   cancelled: [], // terminal — reopen은 별도 프로세스

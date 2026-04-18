@@ -173,7 +173,11 @@ describe("Dispatch Execution Engine", () => {
     const snapshot = makeSnapshot();
 
     // Exhaust retries
-    for (let i = 0; i < 3; i++) {
+    // NOTE: retryCount 는 `queueToSend` 에서 `state.status === "send_failed"` 일 때만 +1.
+    //       즉 최초 시도(draft → queue → ... → failed)는 retryCount 를 증가시키지 않고,
+    //       이후 3번의 재시도에서만 retryCount 가 1/2/3 으로 증가한다.
+    //       maxRetries=3 을 소진하려면 총 4 iterations (초기 1회 + 재시도 3회) 필요.
+    for (let i = 0; i < 4; i++) {
       state = queueToSend(state, snapshot, "op_1").state;
       state = startSending(state, "system").state;
       state = markSendFailed(state, `Failure #${i + 1}`, "system").state;
@@ -273,8 +277,10 @@ describe("Dispatch Execution Engine", () => {
     let state = createInitialExecutionState(makeInput());
 
     // Draft
+    // NOTE: grammar registry(line 123) 상 draft_dispatch 의 canonical label 은 "초안".
+    //       "발송 초안" 은 과거 surface primaryMessage 문구이며 statusLabel 이 아니다.
     let surface = buildExecutionSurface(state);
-    expect(surface.statusLabel).toBe("발송 초안");
+    expect(surface.statusLabel).toBe("초안");
     expect(surface.canSchedule).toBe(true);
     expect(surface.canSendNow).toBe(true);
     expect(surface.canRetry).toBe(false);
@@ -328,8 +334,11 @@ describe("Dispatch Execution Engine", () => {
     expect(sentConfig.label).toBe("발송 완료");
     expect(sentConfig.lockedFieldsFromPrevious).toContain("payloadSnapshotId");
 
-    // Full surface now has 9 stages
+    // Full surface now has 13 stages
+    // NOTE: QUOTE_CHAIN_STAGES (quote-approval-governance-engine.ts:55)는
+    //       quote_review → reorder_decision 까지 13단계를 canonical 로 정의한다.
+    //       과거 9단계는 reorder/receiving/fulfillment 확장 전 구조.
     const fullSurface = buildQuoteChainFullSurface([], 100000, false, true);
-    expect(fullSurface.stages.length).toBe(9);
+    expect(fullSurface.stages.length).toBe(13);
   });
 });

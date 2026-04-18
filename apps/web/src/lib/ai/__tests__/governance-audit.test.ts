@@ -25,17 +25,27 @@ import type { GovernanceEvent } from "../governance-event-bus";
 // ── Helpers ──
 
 function makeEvent(overrides: Partial<GovernanceEvent> = {}): GovernanceEvent {
-  return createGovernanceEvent("dispatch_prep", "status_change", {
-    caseId: "case-001",
-    poNumber: "PO-2026-001",
-    fromStatus: "needs_review",
-    toStatus: "ready_to_send",
-    actor: "operator-A",
-    detail: "검토 완료",
-    severity: "info",
-    chainStage: "dispatch_prep",
-    ...overrides,
-  });
+  // NOTE: createGovernanceEvent 는 domain/eventType 을 위치 인자 1·2 에서만 읽고,
+  //       params 객체의 같은 이름 필드는 무시한다. 그래서 overrides 에서
+  //       domain/eventType 은 분리하여 위치 인자로 전달해야 한다.
+  //       (과거 spread 만으로는 "dispatch_prep"/"status_change" 고정값이 되어
+  //        AU2/AU3/AU8/AU10-12 가 의도치 않게 실패했다.)
+  const { domain, eventType, ...rest } = overrides;
+  return createGovernanceEvent(
+    (domain ?? "dispatch_prep") as any,
+    eventType ?? "status_change",
+    {
+      caseId: "case-001",
+      poNumber: "PO-2026-001",
+      fromStatus: "needs_review",
+      toStatus: "ready_to_send",
+      actor: "operator-A",
+      detail: "검토 완료",
+      severity: "info",
+      chainStage: "dispatch_prep",
+      ...rest,
+    },
+  );
 }
 
 function makeBlockerSnapshot(overrides: Partial<BlockerSnapshot> = {}): BlockerSnapshot {
