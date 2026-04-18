@@ -1,4 +1,3 @@
-// @ts-nocheck
 // node types (@types/node) not available; uses child_process and path modules
 /**
  * 회귀 방지 smoke test

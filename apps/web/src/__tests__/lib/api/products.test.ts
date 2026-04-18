@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
 // jest mocking creates type mismatches; db is mocked with never type
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { searchProducts, getProductById, getBrands } from "@/lib/api/products";

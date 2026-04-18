@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
 // jest mock setup and type mismatches on mocked fetch return types
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { analyzeSearchIntent, translateText } from "@/lib/ai/openai";
