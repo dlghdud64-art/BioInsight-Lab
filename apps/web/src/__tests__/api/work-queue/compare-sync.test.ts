@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — mockJsonResponse 재선언 등 test helper 타입 이슈 (Phase 4 deferred)
 /**
  * Behavioral tests for POST /api/work-queue/compare-sync
  *

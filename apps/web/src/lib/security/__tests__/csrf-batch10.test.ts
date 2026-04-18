@@ -1,4 +1,3 @@
-// @ts-nocheck — vitest/prisma schema drift, 임시 우회
 /**
  * CSRF Batch 10 Contract Tests
  *

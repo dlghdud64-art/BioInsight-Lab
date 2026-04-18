@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck — mockJsonResponse 재선언 등 test helper 타입 이슈 (Phase 4 deferred)
 /**
  * Route integration tests for Compare Sessions API
  *

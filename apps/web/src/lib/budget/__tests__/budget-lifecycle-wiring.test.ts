@@ -1,4 +1,3 @@
-// @ts-nocheck — vitest/prisma schema drift, 임시 우회
 /**
  * Budget Lifecycle Wiring — 계약 테스트
  *
