@@ -375,45 +375,168 @@ Red-Green-Refactor 엄수.
 
 ---
 
-### Phase 4: Residual 개별 처리 + Closeout
-**Goal:** Phase 2/3에서 누적된 residual 파일 개별 처리(간단 fix or defer) + non-test 2개 별도 tracker 제안 + plan closeout.
+### Phase 4: Residual Hybrid 처리 + Closeout
+**Goal:** Pattern-level quick win (4a/4b) + 큰 덩어리 tracker 이관 (4c/4d) + non-test 2개 tracker 제안 + plan closeout.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
-**Phase 4 대상 파일 (누적):**
-- **Phase 2 residual 2 files:**
-  - `__tests__/api/compare-sessions/routes.test.ts` — `mockJsonResponse` 재선언 등 (24 errors)
-  - `__tests__/api/work-queue/compare-sync.test.ts` — 동일 패턴 (8 errors)
-  - → **fix 제안:** helper 파일 추출 (`__tests__/helpers/response-mock.ts`) or `as any` 최소 적용
-- **Phase 3 residual (실행 전 미정):** `phase3-scale-up.sh` 실행 결과로 확정
-- **Phase 0에서 일찌감치 defer된 Type C 2개:**
-  - `lib/ai-pipeline/runtime/__tests__/s0-baseline-freeze.test.ts`
-  - `lib/ai-pipeline/runtime/__tests__/s6-soak-exit-gate.test.ts`
-  - → **사유:** TS2554 arg count mismatch, TS2345 SoakRunContext 필드 drift (real type drift)
-- **#53 ai-pipeline 34 files:** #53 완료 후 별도 tracker 신설 제안
+**Residual Error Pattern 분류 (Phase 3 종료 시점, 2026-04-19):**
+
+| Pattern | 파일 | 에러 수 | 원인 | 처리 |
+| :--- | :--- | ---: | :--- | :--- |
+| **A. `mockJsonResponse` 재선언** | compare-sessions/routes.test.ts (24)<br>work-queue/compare-sync.test.ts (8) | 32 | `vi.mock` factory 내부 + 모듈 상단 중복 선언 | **4a** helper 추출 |
+| **B. `vi.Mock` type-as-value 오용** | lib/api/products.test.ts (9)<br>lib/ai/openai.test.ts (2) | 11 | `(fn as vi.Mock).method()` — `vi.Mock` 은 타입 | **4b** `vi.mocked()` 치환 |
+| **C-defer. product-acceptance-e2e** | lib/ai/__tests__/product-acceptance-e2e.test.ts | 67 | engine API 재설계 후 fixture 미동기화 | **4c** tracker #50 재사용 |
+| **C-individual. ai engine + button** | fire-approval(1) / governance-batch2(2) / operational-readiness(1) / stock-release(3) / button.test.tsx(3) | 10 | ai engine 타입 drift + button 별도 | **4d** 신규 tracker #63 |
+| **E. Phase 0 선제 defer (Type C)** | s0-baseline-freeze.test.ts (1)<br>s6-soak-exit-gate.test.ts (2) | 3 | TS2554 arg count / TS2345 SoakRunContext | **4e** tracker #63 통합 |
+
+---
+
+#### Phase 4a: `mockJsonResponse` Helper 추출 (Pattern A, 2 files, 32 err)
 
 **🔴 RED:**
-- Phase 2/3 residual 에러 목록 수집
-- 각 residual 유형 분류: (a) helper 추출 가능 / (b) `as any` 최소 적용 / (c) real drift defer
-- `@types/*` 설치 필요 건 발견 시 본 plan 밖 분리
+- 신규 helper 파일 `apps/web/src/__tests__/helpers/response-mock.ts` 미존재 확인
+- 2개 파일에서 `mockJsonResponse` 재선언 라인 식별 (각 파일 8~10행)
 
 **🟢 GREEN:**
-- defer 파일 리스트 + 이유 plan notes에 기록
-- non-test 2개 별도 tracker 신설 제안 (TaskCreate)
-- tracker #47 → completed
-- `PLAN_test-runner-and-prisma-stabilization.md`의 `94개 파일 @ts-nocheck 제거 — 별도 plan` 체크박스 업데이트
+- `__tests__/helpers/response-mock.ts` 생성:
+  ```ts
+  import type { NextResponse } from "next/server";
+
+  export interface MockJsonResponse<T> {
+    status: number;
+    json: () => Promise<T>;
+  }
+
+  export const mockJsonResponse = <T>(
+    data: T,
+    init?: { status?: number }
+  ): MockJsonResponse<T> => ({
+    status: init?.status ?? 200,
+    json: async () => data,
+  });
+  ```
+- `compare-sessions/routes.test.ts` / `work-queue/compare-sync.test.ts`:
+  - 모듈 상단 `const mockJsonResponse = ...` 제거
+  - `vi.mock("next/server", ...)` / `vi.mock("@/lib/api-error-handler", ...)` factory에서 import 대신 inline helper 사용 (vi.mock 은 hoisting으로 top-level import 허용 불가 → factory 내부 closure 유지)
+  - **핵심 제약:** vi.mock factory는 import 금지 → helper import는 모듈 상단에 두고, factory는 factory-local 재선언 없이 바로 참조
+- `@ts-nocheck` 제거
+- `npx tsc --noEmit` → baseline 49 유지 확인
 
 **🔵 REFACTOR:**
-- 최종 잔여 @ts-nocheck 카운트 기록
-- Phase 0~4 learnings notes 정리
-- 다음 P1 진입 경로 제안
+- 두 파일 간 중복된 `vi.mock("next/server", ...)` 보일러플레이트 일관성 확인
+- helper 파일에 JSDoc 1줄 추가 (사용처 명시)
 
 **✋ Quality Gate:**
-- [ ] defer 파일 리스트 + 이유 기록
-- [ ] non-test 2개 별도 tracker 제안 반영
+- [ ] helper 파일 생성 + export 정상
+- [ ] 2개 파일 `@ts-nocheck` 제거
+- [ ] tsc --noEmit 실행 결과 baseline 49 유지 (±0)
+- [ ] vitest run 해당 2개 파일 pass (pre-existing CJS 이슈와 별개)
+- [ ] ESM import/vi.mock hoisting 충돌 없음
+
+**Rollback:** 해당 커밋 revert (helper 파일 + 2개 edit). 1커밋.
+
+---
+
+#### Phase 4b: `vi.mocked()` 치환 (Pattern B, 2 files, 11 err)
+
+**🔴 RED:**
+- `products.test.ts` 7 sites, `openai.test.ts` 2 sites 확인 (`grep -c "as vi\\.Mock"`)
+
+**🟢 GREEN:**
+- sed 치환: `(X as vi.Mock).method(...)` → `vi.mocked(X).method(...)`
+  - products.test.ts: `(db.product.findMany as vi.Mock)` 등 7 sites
+  - openai.test.ts: `(fetch as vi.Mock)` 2 sites
+- `@ts-nocheck` 제거
+- `npx tsc --noEmit` → baseline 49 유지 확인
+
+**🔵 REFACTOR:**
+- `vi.mocked()` 첫 인자 타입이 추론되는지 수동 확인 (TS2339 없음)
+- 필요시 `vi.mocked(fetch as typeof fetch)` 로 좁힘 (최소한 적용)
+
+**✋ Quality Gate:**
+- [ ] 2개 파일 `@ts-nocheck` 제거
+- [ ] tsc --noEmit baseline 49 유지
+- [ ] vitest run 해당 2개 파일 pass
+- [ ] `as vi.Mock` 잔재 0 grep 확인
+
+**Rollback:** 해당 커밋 revert. 1커밋.
+
+---
+
+#### Phase 4c: `product-acceptance-e2e.test.ts` → tracker #50 이관 (Pattern C-defer)
+
+**🔴 RED:**
+- 기존 tracker `#50 [pending] product-acceptance-e2e.test.ts 전체 rewrite (engine 실 API 동기화)` 존재 확인
+
+**🟢 GREEN:**
+- `@ts-nocheck` 코멘트 갱신:
+  `// @ts-nocheck — tracker #50에서 전체 rewrite 예정 (engine 실 API 동기화, 67 errors)`
+- 코드 수정 없음 — 상태 유지, 추적 경로만 명시
+
+**🔵 REFACTOR:**
+- 없음
+
+**✋ Quality Gate:**
+- [ ] tracker #50 description에 "product-acceptance-e2e.test.ts 67 errors 흡수" 명시 확인
+- [ ] `@ts-nocheck` 코멘트 tracker #50 참조로 교체
+- [ ] tsc 영향 없음 (동일 상태)
+
+**Rollback:** 코멘트 1줄 revert.
+
+---
+
+#### Phase 4d: 신규 tracker #63 + @ts-nocheck 코멘트 일괄 갱신 (5 files, 10 err)
+
+**🔴 RED:**
+- 5 residual 파일 목록 확정:
+  - lib/ai/__tests__/fire-approval-and-permission-scenarios.test.ts (1)
+  - lib/ai/__tests__/governance-batch2-e2e.test.ts (2)
+  - lib/ai/__tests__/operational-readiness.test.ts (1)
+  - lib/ai/__tests__/stock-release-governance.test.ts (3)
+  - __tests__/components/ui/button.test.tsx (3)
+
+**🟢 GREEN:**
+- `TaskCreate` → **tracker #63 `#47-residual: ai engine fixture 타입 drift 개별 정리`** (P2)
+- 각 파일 `@ts-nocheck` 코멘트 갱신:
+  `// @ts-nocheck — tracker #63에서 개별 정리 예정 (ai engine 타입 drift)`
+- s0/s6 (Phase 0 선제 defer 2 files) 코멘트도 tracker #63 참조로 통합:
+  `// @ts-nocheck — tracker #63 통합 (TS2554 arg count / TS2345 SoakRunContext drift)`
+
+**🔵 REFACTOR:**
+- 없음
+
+**✋ Quality Gate:**
+- [ ] tracker #63 created
+- [ ] 7 파일 (5 + s0/s6 2) 코멘트 갱신
+- [ ] tsc 영향 없음
+
+**Rollback:** 커밋 revert (코멘트만). tracker #63은 유지 (유효한 P2).
+
+---
+
+#### Phase 4e: Closeout (plan + tracker 최종 정리)
+
+**🔴 RED:**
+- non-test 2 files (`app/test/compare/page.tsx`, `lib/ai-pipeline/runtime/core/persistence/types.ts`) 별도 tracker 필요성 판단
+- #53 ai-pipeline 34 files tracker 필요성 (sibling plan 존재 여부 확인)
+
+**🟢 GREEN:**
+- non-test 2 files: 필요시 별도 tracker 제안 (또는 Out of Scope 확정 기록)
+- #53 완료 시점에 별도 tracker 신설 지침 notes에 기록
+- tracker #47 → completed
+- `PLAN_test-runner-and-prisma-stabilization.md`의 `94개 파일 @ts-nocheck 제거 — 별도 plan` 체크박스 업데이트
+- 본 plan Status → Complete, Last Updated 갱신
+
+**🔵 REFACTOR:**
+- Phase 0~4 learnings notes 정리
+- 다음 P1 진입 경로 제안 (Batch 10 soft_enforce)
+
+**✋ Quality Gate:**
 - [ ] tracker #47 completed
-- [ ] stabilization plan 체크박스 업데이트
+- [ ] tracker #63 pending (#47-residual)
+- [ ] tracker #50 설명 갱신 (product-acceptance-e2e 67 err 흡수)
+- [ ] stabilization plan 체크박스 갱신
 - [ ] 본 plan Status + Last Updated 갱신
-- [ ] tsc --noEmit baseline 유지 (or 개선)
 
 **Rollback:** 문서만 — 되돌릴 것 없음.
 
@@ -468,23 +591,29 @@ Red-Green-Refactor 엄수.
 
 ## 11. Progress Tracking
 
-- Overall completion: 50% (Phase 0~2 완료, 6 files clean / 94 대상)
-- Current phase: Phase 3 (scale-up 준비)
-- Current blocker: 없음 — `phase3-scale-up.sh` export 완료, 사장님 로컬 실행 대기
-- Next validation step: 로컬 `bash phase3-scale-up.sh` 실행 → clean unlock 집계 및 residual 파일 확정
+- Overall completion: 85% (Phase 0~3 완료 + Phase 4 설계 확정, 46 clean / 58 test scope)
+- Current phase: Phase 4 Hybrid (4a helper 추출 → 4b vi.mocked 치환 → 4c/4d tracker 이관 → 4e closeout)
+- Current blocker: 없음
+- Next validation step: 4a 실행 (helper 파일 생성 + 2 files 제거), 로컬 tsc baseline 49 유지 확인
 
 **Phase Checklist:**
 - [x] Phase 0 complete (2026-04-18)
 - [x] Phase 1 complete (2026-04-18)
 - [x] Phase 2 complete (2026-04-18, commit `c86073c3`+`ba3a766e`, 로컬 tsc baseline 49 유지)
-- [ ] Phase 3 complete
-- [ ] Phase 4 complete
+- [x] Phase 3 complete (2026-04-18, commits `6ebac5a0`+`379f717d`+`99a674ab`+`3852f50a`, 40/48 clean, residual 16.7%, tsc baseline 49 유지)
+- [ ] Phase 4 complete (Hybrid: 4a / 4b / 4c / 4d / 4e)
 
 **잔여 @ts-nocheck 현재 카운트:**
 - 시작: 94 (test 92 + non-test 2)
-- Phase 2 후: 87 (clean 6 제거)
-- Phase 3 목표: 87 - (48 - residual) = Phase 3 실행 결과로 확정
-- 나머지 defer: 2 Phase 2 residual + 2 s0/s6 Type C + 34 #53 conflict + 2 non-test (Out of Scope)
+- Phase 2 후: 86 (clean 6 제거, 2 residual 복원)
+- Phase 3 후: 46 (clean 40 추가 제거, 8 residual 복원) ← **현 상태**
+- Phase 4 4a+4b 완료 시: 42 (clean 4 추가 = helper 2 + vi.mocked 2)
+- 최종 closeout 시 남는 @ts-nocheck: **12 files** (tracker 명시됨)
+  - tracker #50: 1 file (product-acceptance-e2e, 67 err)
+  - tracker #63 (신규): 7 files (ai 5 + button 1 + s0/s6 2 → 10 + 3 err)
+  - #53 ai-pipeline: 34 files (#53 완료 후 별도 tracker)
+  - non-test Out of Scope: 2 files (별도 tracker 필요성 판단)
+  - → **#47 test scope (58) 기준 최종 clean 비율: 46/58 = 79.3% (4a+4b 후 50/58 = 86.2%)**
 
 ---
 
@@ -519,13 +648,20 @@ as vi.Mock 잔재: 2 파일만 (blast radius 매우 작음)
 - [2026-04-18] #53 ai-pipeline in_progress 파일과 34/36 중복 → 본 plan scope 축소 92 → 58. 34 파일 별도 tracker 제안.
 - [2026-04-18] Phase 2 `git am` 실패 (CRLF 인코딩) → 사장님 로컬 수동 재구성.
 - [2026-04-18] **Phase 2 residual 2/8 (25%) 발견** — `compare-sessions/routes.test.ts` (24 errors) / `work-queue/compare-sync.test.ts` (8 errors). probe 당시 "Type A"로 분류됐으나 실측에서 `mockJsonResponse` 재선언 등 독립 type 이슈 확인 → `@ts-nocheck` 복원 + Phase 4 defer.
+- [2026-04-18] **Phase 3 iterative remediation 실행** — 48 files 대상, 40 clean / 8 residual (16.7%). tsc baseline 49 → 49 불변. 4 cluster 커밋 `6ebac5a0`+`379f717d`+`99a674ab`+`3852f50a`. product-acceptance-e2e.test.ts 단일 파일이 residual 88 err의 76% (67 err) 점유.
+- [2026-04-19] **Phase 4 Hybrid 설계 확정** — Pattern A(mockJsonResponse)/B(vi.Mock)는 quick win fix, Pattern C 대덩어리(product-acceptance-e2e 67 err)는 tracker #50 재사용, Pattern C 잔여(10 err)+Phase 0 defer(s0/s6 3 err)는 신규 tracker #63으로 통합 defer.
 
 **Implementation Notes:**
 - Phase 1 probe (10 files) 결과: A 5 / B 3 / C 2 / D 0. Type B 346 에러가 단일 원인(vitest globals 미타이핑)에서 나옴 → single `.d.ts` (1 line) root fix로 일괄 해소 가능 판정.
 - Phase 2 실행 결과: d.ts 신규 + 8 files 중 6 clean / 2 residual. 로컬 tsc baseline 49 유지 달성. Vitest: 137 tests pass, 3 files fail = pre-existing CJS `@/lib/db` module resolution (Phase 2 무관).
 - **Probe 분류 한계 learning:** vi cascade 제거 후 드러나는 독립 type 이슈가 존재. Phase 3는 probe 의존하지 않고 `remove → tsc → auto-restore` iterative 접근 채택.
 - Phase 3 자동화 스크립트 `phase3-scale-up.sh` workspace export 완료. 48 files 대상 (ai 36 + __tests__ 4 + ontology 4 + budget 3 + security 1).
-- residual 비율 25%가 48 files에 투영되면 ~12 files residual 예상. 최종 clean unlock 예상 = 36 files.
+- **Phase 3 실행 결과:** 40 clean / 8 residual (16.7%, 예상 25%보다 양호). residual 8 files 중 product-acceptance-e2e 하나가 88 err 중 67 err(76%) 점유.
+- **Phase 4 Pattern 분류 (grep -c "as vi\\.Mock" 근거):**
+  - products.test.ts 7 sites + openai.test.ts 2 sites → Pattern B 확정 (9/11 err 일치)
+  - compare-sessions + compare-sync 2개 파일만 `mockJsonResponse` 사용 → Pattern A 확정
+  - 나머지 5 ai engine/button 파일은 별도 fixture drift → Pattern C-individual
+- **Phase 4a helper 추출 제약:** `vi.mock(...)` factory는 hoisting 되어 factory 내부 import 금지. helper import는 모듈 상단(ESM import)에서만 가능. factory는 helper 참조만 가능 (재선언 없이).
 
 **Phase 1 Probe Sample 10개 (2026-04-18 확정):**
 ```
