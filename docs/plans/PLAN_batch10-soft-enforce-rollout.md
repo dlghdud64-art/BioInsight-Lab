@@ -199,7 +199,7 @@ Batch 10 CSRF 보호 시스템을 production 환경에서 `report_only` → `sof
 
 ### Phase 1: Report-only Baseline 24h
 **Goal:** soft_enforce 진입 전 현재 운영 트래픽에서 highRisk route violation rate = 0 확인.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [ ] Pending | [x] In Progress | [ ] Complete
 
 **🔴 RED:** 현재 report_only 상태 24h 데이터 미수집
 **🟢 GREEN:**
@@ -210,10 +210,62 @@ Batch 10 CSRF 보호 시스템을 production 환경에서 `report_only` → `sof
 **🔵 REFACTOR:** 24h 데이터에서 outlier event 있으면 태그/분류
 
 **✋ Quality Gate:**
-- [ ] T=0h / T=24h 스냅샷 저장
+- [x] T=0h 스냅샷 저장 (아래 참조)
+- [ ] T=24h 스냅샷 저장
 - [ ] highRisk route violation count = 0
 - [ ] 만약 > 0이면 원인 분석 문서 + Phase 2 홀드
 - [ ] standard route violation rate는 기록만 (Phase에서는 non-blocking)
+
+#### T=0h Baseline Snapshot
+- **Captured at:** 2026-04-19 02:45 KST (2026-04-18T17:45:50Z)
+- **Source:** `GET /api/security/csrf-status` via browser session (role=ADMIN)
+- **Deployment:** Vercel prod (post-redeploy with `LABAXIS_CSRF_MODE=report_only`)
+
+```json
+{
+  "csrf": {
+    "mode": "report_only",
+    "registry": {
+      "exempt": 9,
+      "highRisk": 30,
+      "exemptReasons": {
+        "framework_csrf_builtin": 1,
+        "webhook_signature": 2,
+        "public_token_auth": 2,
+        "bearer_token_auth": 2,
+        "vendor_token_auth": 2
+      }
+    },
+    "telemetry": {
+      "total": 0,
+      "csrfEvents": 0,
+      "byClassification": {},
+      "recentCsrf": []
+    },
+    "rolloutGuide": {
+      "current": "report_only",
+      "next": "soft_enforce",
+      "envVar": "LABAXIS_CSRF_MODE"
+    }
+  }
+}
+```
+
+**Baseline 판정:**
+- ✅ `mode: "report_only"` — env 주입 정상 (Phase 0 GREEN 확인)
+- ✅ `registry.exempt: 9` — COVERAGE_MATRIX_V2와 정합 (framework/webhook/token 분류 일치)
+- ⚠️ `registry.highRisk: 30` — 문서상 47과 드리프트 존재 (아래 Observation 참조)
+- ✅ `telemetry.csrfEvents: 0` — 완전 zero baseline. T=24h 증분이 곧 실제 위반량.
+- ✅ Telemetry는 in-memory 구조 (서버 재시작 시 리셋) — Phase 1 중 Vercel cold start 발생 시 증분 누락 가능성 기록만 해두고 비차단.
+
+**Observation — highRisk drift (47 → 30):**
+- 원인 후보: route registry의 lazy registration, 일부 route 파일이 런타임에 import되지 않음, 또는 COVERAGE_MATRIX_V2.md가 stale.
+- Phase 2 GREEN 판정에는 영향 없음 (현재 런타임 기준 30 routes 기준으로 violation rate=0만 확인하면 됨).
+- Phase 4 Closeout 시 registry 실태 vs 문서 재정합 태스크로 분리 처리.
+
+#### T=24h Re-capture (예정)
+- **예정 시각:** 2026-04-20 02:45 KST (2026-04-19T17:45:50Z)
+- **예정 액션:** 동일 endpoint 재호출 → `telemetry.csrfEvents` 증분 + `byClassification` 분포 확인
 
 **Rollback:** 관찰만, 상태 변경 없음
 
