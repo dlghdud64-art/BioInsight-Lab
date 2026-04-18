@@ -231,7 +231,9 @@ describe("Supplier Confirmation Governance", () => {
 
     const r1 = cancelConfirmationGovernance(confirmed, "test", "op_1");
     expect(r1.success).toBe(false);
-    expect(r1.error).toContain("Terminal");
+    // NOTE: engine 의 canonical error message 는 소문자 "terminal status" 이다
+    //       (dispatch-execution-engine validateTransition 과 동일 문법).
+    expect(r1.error).toMatch(/terminal/i);
 
     // Cancelled → cannot transition
     let cancelled = createConfirmationGovernanceState(makeInput());
@@ -320,9 +322,11 @@ describe("Supplier Confirmation Governance", () => {
     expect(config.label).toBe("공급사 확인");
     expect(config.lockedFieldsFromPrevious).toContain("executionId");
 
-    // Full surface has 10 stages
+    // Full surface has 13 stages (canonical — quote-approval-governance-engine.ts:55)
+    // NOTE: 과거 10단계(fulfillment 확장 전)에서 receiving_prep/stock_release/reorder_decision
+    //       이 추가되며 13단계로 canonical 확장됨. dispatch-execution.test.ts E12 와 동일 정렬.
     const fullSurface = buildQuoteChainFullSurface([], 100000, false, true);
-    expect(fullSurface.stages.length).toBe(10);
+    expect(fullSurface.stages.length).toBe(13);
   });
 
   it("SC12: expiry handling", () => {
