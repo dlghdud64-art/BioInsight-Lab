@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { createLogger } from "@/lib/logger";
 import Stripe from "stripe";
@@ -281,40 +282,85 @@ export async function POST(request: NextRequest) {
       id: event.id,
     });
 
-    // Handle different event types
-    switch (event.type) {
-      case "checkout.session.completed":
-        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
-        break;
+    // ============================================================
+    // 멱등성 가드 (Task #40) — Stripe 공식 권장 create-first 패턴
+    // ============================================================
+    // Stripe 는 at-least-once delivery 이므로 같은 event 를 여러 번 보낼 수 있다
+    // (network retry, replay, redelivery). event.id 를 PK 로 insert 를 먼저 시도하고,
+    // UNIQUE constraint violation (P2002) 이 나면 중복으로 간주하고 skip 한다.
+    // findUnique → process → create 패턴보다 race condition 에 안전하다.
+    // 참조: https://docs.stripe.com/webhooks (Handle duplicate events)
+    try {
+      await db.stripeEvent.create({
+        data: {
+          eventId: event.id,
+          type: event.type,
+        },
+      });
+    } catch (err) {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === "P2002"
+      ) {
+        logger.info("Duplicate webhook event skipped", {
+          eventId: event.id,
+          type: event.type,
+        });
+        return NextResponse.json({ received: true, duplicate: true });
+      }
+      throw err; // DB 장애 등 예상외 에러는 아래 catch 로 올려 보냄
+    }
 
-      case "customer.subscription.created":
-      case "customer.subscription.updated":
-        await handleSubscriptionChange(event.data.object as Stripe.Subscription);
-        break;
+    // ============================================================
+    // 이벤트 처리 (여기부터는 이 event.id 가 최초 1 회 처리 보장)
+    // ============================================================
+    try {
+      switch (event.type) {
+        case "checkout.session.completed":
+          await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
 
-      case "customer.subscription.deleted":
-        await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
-        break;
+        case "customer.subscription.created":
+        case "customer.subscription.updated":
+          await handleSubscriptionChange(event.data.object as Stripe.Subscription);
+          break;
 
-      case "invoice.payment_succeeded":
-        await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
-        break;
+        case "customer.subscription.deleted":
+          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+          break;
 
-      case "invoice.payment_failed":
-        await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-        break;
+        case "invoice.payment_succeeded":
+          await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
+          break;
 
-      default:
-        logger.info("Unhandled webhook event type", { type: event.type });
+        case "invoice.payment_failed":
+          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+          break;
+
+        default:
+          logger.info("Unhandled webhook event type", { type: event.type });
+      }
+    } catch (handlerError) {
+      // 핸들러 처리 실패 — StripeEvent row 를 롤백해서 Stripe 재시도를 받을 수 있게 한다
+      await db.stripeEvent
+        .delete({ where: { eventId: event.id } })
+        .catch((rollbackErr) => {
+          logger.error("Failed to rollback StripeEvent after handler error", {
+            eventId: event.id,
+            rollbackErr,
+          });
+        });
+      throw handlerError; // 바깥 catch 로 올려서 500 반환 (Stripe 가 재시도)
     }
 
     return NextResponse.json({ received: true });
   } catch (error) {
     logger.error("Webhook processing failed", { error });
-    // Return 200 to prevent Stripe retries on permanent errors
+    // 내부 처리 실패는 500 반환 — Stripe 가 자동 재시도 (at-least-once delivery)
+    // 서명 검증 실패 (400) 는 위에서 이미 처리됨
     return NextResponse.json(
       { error: "Webhook processing failed" },
-      { status: 200 }
+      { status: 500 }
     );
   }
 }

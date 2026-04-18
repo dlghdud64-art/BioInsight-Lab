@@ -997,6 +997,20 @@ model OrganizationInvite {
   @@index([organizationId])
 }
 
+// Stripe Webhook 멱등성 보장 테이블 (Task #40)
+// Stripe 공식 권장 패턴: webhook endpoint는 같은 event 를 여러 번 받을 수 있음 (network retry,
+// replay attack, at-least-once delivery). 처리 전에 event.id 를 PK 로 insert 해서 UNIQUE
+// constraint violation (P2002) 이 발생하면 중복으로 간주하고 skip 한다.
+// 참조: https://docs.stripe.com/webhooks (Handle duplicate events)
+model StripeEvent {
+  eventId     String   @id // Stripe event.id (예: evt_1Abc...)
+  type        String   // Stripe event.type (예: customer.subscription.updated)
+  processedAt DateTime @default(now())
+
+  @@index([type])
+  @@index([processedAt])
+}
+
 // 구독 정보 (Team/Org 플랜) - Production Level
 model Subscription {
   id                   String           @id @default(cuid())
