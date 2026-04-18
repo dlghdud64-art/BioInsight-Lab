@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — tracker #63에서 개별 정리 예정 (TS2554 인자 수 drift, 1 error)
 /**
  * S0 — Baseline Freeze 테스트
  */

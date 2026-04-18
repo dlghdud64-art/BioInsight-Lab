@@ -1,4 +1,4 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
+// @ts-nocheck — tracker #50에서 전체 rewrite 예정 (engine 실 API 동기화, 67 errors)
 /**
  * Batch 16 — Product Acceptance E2E Test Pack
  *

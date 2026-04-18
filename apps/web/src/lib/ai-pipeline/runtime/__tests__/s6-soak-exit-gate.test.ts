@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — tracker #63에서 개별 정리 예정 (TS2345 SoakRunContext drift, 2 errors)
 /**
  * S6 — Full-Active Soak + Exit Gate 테스트
  */

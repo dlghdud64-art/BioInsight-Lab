@@ -1,4 +1,4 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
+// @ts-nocheck — tracker #63에서 개별 정리 예정 (jest-dom matcher 타입, 3 errors)
 // jest-dom matchers (toBeInTheDocument, toHaveClass, toBeDisabled) not available in type checking
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";

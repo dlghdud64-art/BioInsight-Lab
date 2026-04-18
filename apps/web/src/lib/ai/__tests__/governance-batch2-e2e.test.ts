@@ -1,4 +1,4 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
+// @ts-nocheck — tracker #63에서 개별 정리 예정 (ai engine fixture 타입 drift, 2 errors)
 /**
  * Governance Batch 2 핵심 E2E 4종
  *

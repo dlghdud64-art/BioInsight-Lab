@@ -1,4 +1,4 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
+// @ts-nocheck — tracker #63에서 개별 정리 예정 (ai engine fixture 타입 drift, 1 error)
 /**
  * Batch 17 — Operational Readiness Final Gate Test
  *
