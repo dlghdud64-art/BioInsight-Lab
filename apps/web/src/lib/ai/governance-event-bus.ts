@@ -622,13 +622,21 @@ export function traceInvalidationChain(
       chain.push({ event: evt, targets: result.invalidatedTargets, depth });
 
       // Simulate potential cascade (each target domain could emit events)
+      // NOTE: simulated event 의 eventType 은 target domain 이 실제로 emit 할 수 있는
+      //       eventType 이어야 cascade 가 다음 단계로 이어진다.
+      //       "{domain}_readiness_changed" 관행 이름은 GOVERNANCE_INVALIDATION_RULES 의
+      //       sourceEventTypes 와 매칭되지 않아 cascade 가 즉시 멈춘다.
+      //       → target domain 을 sourceDomain 으로 갖는 rule 의 첫 sourceEventType 을
+      //         대표 event 로 사용. (없으면 fallback 으로 기존 관행 이름 유지)
       for (const target of result.invalidatedTargets) {
         if (target.scope === "readiness_recompute" || target.scope === "state_transition_check") {
+          const targetRule = GOVERNANCE_INVALIDATION_RULES.find(r => r.sourceDomain === target.targetDomain);
+          const simulatedEventType = targetRule?.sourceEventTypes[0] ?? `${target.targetDomain}_readiness_changed`;
           const simulatedEvent: GovernanceEvent = {
             ...evt,
             eventId: `sim_${evt.eventId}_${depth}`,
             domain: target.targetDomain,
-            eventType: `${target.targetDomain}_readiness_changed`,
+            eventType: simulatedEventType,
             chainStage: target.targetStage,
             detail: `[simulated cascade from ${evt.domain}]`,
           };

@@ -26,17 +26,27 @@ import {
 // ── Fixtures ──
 
 function makeEvent(overrides?: Partial<GovernanceEvent>): GovernanceEvent {
-  return createGovernanceEvent("stock_release", "stock_release_full", {
-    caseId: "case_001",
-    poNumber: "PO-2024-001",
-    fromStatus: "evaluating",
-    toStatus: "released",
-    actor: "op",
-    detail: "stock release 완료",
-    severity: "info",
-    chainStage: "stock_release",
-    ...overrides,
-  });
+  // NOTE: createGovernanceEvent 는 domain / eventType 을 위치 인자 1·2 에서만 읽고,
+  //       params 객체의 같은 이름 필드는 무시한다. overrides 에 domain / eventType 이
+  //       들어오더라도 ...overrides 로 params 에 spread 되면 실제로 반영되지 않아
+  //       bus.getHistory({ domain }), resolveInvalidation(eventType) 등이 drift 된다.
+  //       → 여기서는 두 필드를 분리해서 위치 인자로 전달한다.
+  const { domain, eventType, ...rest } = overrides ?? {};
+  return createGovernanceEvent(
+    (domain ?? "stock_release") as GovernanceDomain,
+    eventType ?? "stock_release_full",
+    {
+      caseId: "case_001",
+      poNumber: "PO-2024-001",
+      fromStatus: "evaluating",
+      toStatus: "released",
+      actor: "op",
+      detail: "stock release 완료",
+      severity: "info",
+      chainStage: "stock_release",
+      ...rest,
+    },
+  );
 }
 
 // ══════════════════════════════════════════════
