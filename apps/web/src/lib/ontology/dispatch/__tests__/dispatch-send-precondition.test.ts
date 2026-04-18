@@ -1,4 +1,3 @@
-// @ts-nocheck — vitest 미설치 환경에서 타입 체크 bypass
 /**
  * Dispatch Send Precondition Guard — 단위 테스트
  *
