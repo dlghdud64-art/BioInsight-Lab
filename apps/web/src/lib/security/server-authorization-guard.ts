@@ -205,7 +205,7 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
 };
 
 /** Self-approval 금지 action (Tier 3 irreversible) */
-const SELF_APPROVAL_FORBIDDEN: ReadonlySet<IrreversibleActionType> = new Set([
+export const SELF_APPROVAL_FORBIDDEN: ReadonlySet<IrreversibleActionType> = new Set([
   'approval_decision',
   'po_conversion_finalize',
   'purchase_request_approve',

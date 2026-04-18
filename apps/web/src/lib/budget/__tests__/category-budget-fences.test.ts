@@ -19,7 +19,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
-const SRC_ROOT = path.resolve(__dirname, "../../../..");
+// __dirname = apps/web/src/lib/budget/__tests__ → ../../.. = apps/web/src
+const SRC_ROOT = path.resolve(__dirname, "../../..");
 const BUDGET_DIR = path.resolve(__dirname, "..");
 const APPROVE_ROUTE = path.resolve(
   SRC_ROOT,

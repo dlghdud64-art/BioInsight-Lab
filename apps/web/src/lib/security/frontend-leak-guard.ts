@@ -237,11 +237,14 @@ export function sanitizeErrorForSurface(
 export function sanitizeDisplayText(text: string): string {
   if (!text) return '';
 
-  // Stack trace 제거
-  let sanitized = text.replace(/at\s+\w+\s+\(.*:\d+:\d+\)/g, '');
+  // Stack trace 제거 — dotted method name (Function.execute) 및 anonymous 포함
+  let sanitized = text.replace(/\s*at\s+[\w$.<>]+\s*\([^)]*:\d+:\d+\)/g, '');
 
   // File path 제거
   sanitized = sanitized.replace(/\/[a-zA-Z]+\/[a-zA-Z\/\-_.]+\.(ts|tsx|js|jsx)/g, '');
+
+  // 잔존 `:line:col` (+ 주변 괄호) 제거 — path 가 먼저 털린 뒤 남은 '(:42:12)' 케이스 방어
+  sanitized = sanitized.replace(/\s*\(?\s*:\d+:\d+\s*\)?/g, '');
 
   // 내부 에러 클래스명 제거
   sanitized = sanitized.replace(/(TypeError|ReferenceError|SyntaxError|RangeError):\s*/g, '');
