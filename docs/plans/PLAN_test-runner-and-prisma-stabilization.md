@@ -85,9 +85,9 @@ LabAxis web 앱의 테스트 runner 를 Vitest 로 단일화하고, Prisma gener
 - [ ] `npx tsc --noEmit` 통과
 
 ### Out of Scope (⚠️ 절대 구현하지 말 것)
-- [ ] 94개 test 파일의 @ts-nocheck 제거 (별도 plan)
+- [ ] 94개 test 파일의 @ts-nocheck 제거 (별도 plan — #47)
 - [ ] RFQ handoff smoke run (별도 plan)
-- [ ] MutationAuditEvent migration + smoke run (별도 plan)
+- [x] MutationAuditEvent migration + smoke run — **`PLAN_prisma-enum-drift-and-mutation-audit.md` 에서 2026-04-18 완료** (schema ↔ migrations ↔ live DB 3-way 정합 + wiring contract 59/59 GREEN, row 모니터링 조건부)
 - [ ] 테스트 assertion / 로직 변경
 - [ ] Stripe / Toss 관련 코드 수정 (결제 defer 확정)
 
@@ -305,9 +305,9 @@ LabAxis web 앱의 테스트 runner 를 Vitest 로 단일화하고, Prisma gener
 - Cowork sandbox boundary: 파일 read / write / edit 은 가능, unlink / git index write / Linux-native npm install 은 불가능. 이 경계를 플랜에 명시해 두어야 이후 혼선 방지.
 
 ### Deferred Items
-- 94개 파일 @ts-nocheck 제거 — 별도 plan (Medium scope 예상)
+- 94개 파일 @ts-nocheck 제거 — 별도 plan (Medium scope 예상, tracker #47)
 - RFQ handoff smoke run — 별도 plan
-- MutationAuditEvent migration + smoke run — 별도 plan
+- ~~MutationAuditEvent migration + smoke run — 별도 plan~~ → **Completed 2026-04-18 via `PLAN_prisma-enum-drift-and-mutation-audit.md`** (dark-launched monitoring 조건부; 2026-04-20 이후 Q1 재실행으로 row 확인)
 - Batch 10 soft_enforce → full_enforce — 별도 plan
 - Support Center Phase 2~5 — P2 defer
 - Stripe → Toss PG 교체 — `PLAN_toss-payments-migration.md` (Deferred by CEO 2026-04-18)
