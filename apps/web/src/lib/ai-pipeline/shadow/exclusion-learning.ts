@@ -211,3 +211,34 @@ export async function proposeExclusionChanges(
 
   return proposals;
 }
+
+/** runExclusionLearning 반환 타입 */
+export interface ExclusionLearningResult {
+  proposals: Array<{
+    direction: "EXCLUSION_ADD" | "EXCLUSION_REMOVE";
+    description: string;
+  }>;
+}
+
+/**
+ * 제외 패턴 학습을 실행하고 정책 학습 루프용 proposal 형태로 반환합니다.
+ */
+export async function runExclusionLearning(
+  documentType: string
+): Promise<ExclusionLearningResult> {
+  try {
+    const exclusionProposals = await proposeExclusionChanges(documentType);
+    const proposals = exclusionProposals
+      .filter((p) => !p.blocked)
+      .map((p) => ({
+        direction: (p.action === "ADD"
+          ? "EXCLUSION_ADD"
+          : "EXCLUSION_REMOVE") as "EXCLUSION_ADD" | "EXCLUSION_REMOVE",
+        description: p.rationale,
+      }));
+    return { proposals };
+  } catch {
+    // DB 연동 전 또는 ProcessingLog 테이블 미존재 시 빈 결과 반환
+    return { proposals: [] };
+  }
+}

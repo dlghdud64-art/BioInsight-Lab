@@ -11,6 +11,14 @@
 
 import type { CostQualitySegment } from "./cost-quality-analyzer";
 
+/** computeModelAllocation 반환 타입 */
+export interface ModelAllocationResult {
+  proposals: Array<{
+    direction: "TIGHTENING" | "LOOSENING";
+    description: string;
+  }>;
+}
+
 // --- 타입 정의 ---
 
 /** 모델 할당 제안 */
@@ -197,4 +205,29 @@ export function proposeModelAllocations(
   }
 
   return allocations;
+}
+
+/**
+ * 문서 유형에 대한 모델 할당 최적화를 실행하고 정책 학습 루프용 proposal 형태로 반환합니다.
+ * 현재는 인메모리 기반 (DB 연동 추후 확장 가능).
+ */
+export async function computeModelAllocation(
+  documentType: string
+): Promise<ModelAllocationResult> {
+  // 현재 세그먼트 데이터 없음 — 빈 segments로 실행 (DB 연동 추후)
+  const segments: CostQualitySegment[] = [];
+  const allocations = proposeModelAllocations(segments);
+
+  const proposals = allocations
+    .filter((a) => a.suggestedModel !== a.currentModel)
+    .map((a) => ({
+      direction: (a.blocked ? "TIGHTENING" : "LOOSENING") as
+        | "TIGHTENING"
+        | "LOOSENING",
+      description: a.blocked
+        ? `[차단] ${a.documentType}/${a.confidenceBand}: ${a.blockReason}`
+        : `${a.documentType}/${a.confidenceBand}: ${a.currentModel} → ${a.suggestedModel} (절감 ${(a.expectedCostSaving * 100).toFixed(1)}%)`,
+    }));
+
+  return { proposals };
 }

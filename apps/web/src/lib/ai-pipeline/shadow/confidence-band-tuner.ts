@@ -302,3 +302,34 @@ export async function proposeBandTuning(
 
   return proposals;
 }
+
+/** tuneConfidenceBands 반환 타입 */
+export interface BandTuningResult {
+  proposals: Array<{
+    direction: "TIGHTENING" | "LOOSENING";
+    description: string;
+  }>;
+}
+
+/**
+ * 신뢰도 구간 조정 제안을 실행하고 정책 학습 루프용 proposal 형태로 반환합니다.
+ */
+export async function tuneConfidenceBands(
+  documentType: string
+): Promise<BandTuningResult> {
+  try {
+    const bandProposals = await proposeBandTuning(documentType);
+    const proposals = bandProposals
+      .filter((p) => !p.blocked)
+      .map((p) => ({
+        direction: (p.changeType === "LOOSEN" ? "LOOSENING" : "TIGHTENING") as
+          | "TIGHTENING"
+          | "LOOSENING",
+        description: p.rationale,
+      }));
+    return { proposals };
+  } catch {
+    // DB 연동 전 또는 ProcessingLog 테이블 미존재 시 빈 결과 반환
+    return { proposals: [] };
+  }
+}

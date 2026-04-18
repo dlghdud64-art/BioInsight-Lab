@@ -45,6 +45,7 @@ const nextConfig = {
     // Vercel 빌드 환경에서 tsconfig path를 자동 인식 못할 수 있음
     config.resolve.alias["@"] = path.resolve(__dirname);
 
+
     // pdf-parse는 Node.js 전용이므로 클라이언트 번들에서 제외
     config.resolve.fallback = {
       ...config.resolve.fallback,
