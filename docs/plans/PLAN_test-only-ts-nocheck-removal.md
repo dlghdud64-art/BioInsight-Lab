@@ -269,9 +269,13 @@ Red-Green-Refactor 엄수.
 
 ---
 
-### Phase 2: d.ts Root Fix + Probe 8 Files Pilot Unlock
-**Goal:** Phase 1 probe에서 확정된 **Type B root cause**(vitest globals 미타이핑)를 단일 `d.ts` 파일로 해소하고, **probe 8 files**(Type A 5 + Type B 3)를 동시 unlock하여 pilot commit으로 확증한다. 샌드박스에서는 tsc 검증 불가이므로 사장님 로컬 검증 경로를 명시한다.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+### Phase 2: d.ts Root Fix + Probe 6 Files Pilot Unlock (2 residual 복원)
+**Goal:** Phase 1 probe에서 확정된 **Type B root cause**(vitest globals 미타이핑)를 단일 `d.ts` 파일로 해소하고, **probe 8 files** 중 **6 files**만 clean unlock, **2 files는 Type B-residual로 판정되어 `@ts-nocheck` 복원**.
+- Status: [ ] Pending | [ ] In Progress | [x] **Complete (2026-04-18, commit `c86073c3`, 로컬 tsc 검증 baseline 49 유지)**
+
+**중요 learning (Probe 분류 한계):**
+- Probe 시점 "Type A" 판정은 **vi cascade 제거 후 다른 type 이슈가 드러나지 않았다는 가정** 하에 성립. 실제로는 2/8 (25%) 파일이 **cascade + 독립 타입 이슈 혼재** (`mockJsonResponse` redeclare 등).
+- → **Phase 3 scale-up은 probe 가정에 의존하지 말고 iterative "remove → tsc → auto-restore residuals" 워크플로우 필수.**
 
 **설계 원칙:**
 - **최소 diff 원칙**: `tsconfig.json` 미접촉. `@types/*` 기본 자동 포함(`types` 배열 생략 시의 TypeScript 기본)을 보존하기 위해 ambient reference 방식 채택.
@@ -281,78 +285,116 @@ Red-Green-Refactor 엄수.
 
 **🔴 RED:**
 - `apps/web/src/types/vitest-globals.d.ts` 신규 생성 (single line): `/// <reference types="vitest/globals" />`
-- probe 확증 파일 8개에서 `// @ts-nocheck` 제거:
-  - **Type A (5):** `lib/ai/__tests__/app-runtime-signal.test.ts`, `lib/ai/__tests__/approval-governance-stress.test.ts`, `lib/ai/__tests__/batch13-productization.test.ts`, `__tests__/api/compare-sessions/routes.test.ts`, `__tests__/api/work-queue/compare-sync.test.ts`
-  - **Type B (3):** `lib/ontology/contextual-action/__tests__/resolver-support-recovery.test.ts`, `lib/budget/__tests__/budget-lifecycle-wiring.test.ts`, `lib/security/__tests__/csrf-batch10.test.ts`
-- Type C 2개(`s0-baseline-freeze`, `s6-soak-exit-gate`)는 본 phase 제외 → Phase 4에서 개별 처리 / defer
+- probe 확증 파일 8개에서 `// @ts-nocheck` 제거 시도
+- 로컬 tsc 검증 → baseline 49 → 81 (+32 errors) 발견
+- 2 files (`compare-sessions/routes.test.ts` 24 errors / `work-queue/compare-sync.test.ts` 8 errors) residual 확정
 
-**🟢 GREEN:**
-- 사장님 로컬 `cd apps/web && npx tsc --noEmit --pretty false 2>&1 | grep -cE ": error TS"` 실행 → baseline 유지 (0 증가) 확인
-- 8 files + 1 d.ts = 단일 commit (`feat(types): vitest globals ambient ref + test-only @ts-nocheck 제거 (8 files, probe-confirmed)`)
-- 사장님 로컬 `npm run test` 해당 파일 회귀 pass 확인
+**🟢 GREEN (실제 최종):**
+- **Clean unlock 6 files:**
+  - `lib/ai/__tests__/app-runtime-signal.test.ts`
+  - `lib/ai/__tests__/approval-governance-stress.test.ts`
+  - `lib/ai/__tests__/batch13-productization.test.ts`
+  - `lib/ontology/contextual-action/__tests__/resolver-support-recovery.test.ts`
+  - `lib/budget/__tests__/budget-lifecycle-wiring.test.ts`
+  - `lib/security/__tests__/csrf-batch10.test.ts`
+- **`@ts-nocheck` 복원 2 files (사유 주석 정확히 갱신):**
+  - `__tests__/api/compare-sessions/routes.test.ts` — `// @ts-nocheck — mockJsonResponse 재선언 등 test helper 타입 이슈 (Phase 4 deferred)`
+  - `__tests__/api/work-queue/compare-sync.test.ts` — 동일 사유
+- 로컬 tsc baseline 49 유지 (0 증가) ✅
+- 로컬 `vitest run` 8 files → 137 tests passed (3 files fail = pre-existing CJS `@/lib/db` module resolution, Phase 2와 무관)
+- commit `c86073c3` (사장님 로컬 main 푸시 완료, `ba3a766e` 문서 갱신 포함)
 
 **🔵 REFACTOR:**
-- commit 메시지에 file count + cluster 분포 명시 (bisect 편의)
-- 잔여 @ts-nocheck 카운트 기록: 58 → 50 (probe 8 제거)
+- 잔여 @ts-nocheck: 58 → 52 (clean 6 제거; 2 residual은 Phase 4 defer)
+- residual 2 files는 `mockJsonResponse` const 재선언 + TS 중복 선언 에러 → Phase 4 helper type 정리 or 개별 `as any` 적용으로 해결 가능
 
 **✋ Quality Gate:**
-- [ ] `apps/web/src/types/vitest-globals.d.ts` 신규 생성, 내용 단 1 line
-- [ ] `tsconfig.json` **미접촉** (Out of Scope 준수)
-- [ ] probe 8 files `@ts-nocheck` 제거 완료
-- [ ] 사장님 로컬 `tsc --noEmit` 에러 수 baseline 유지 (Phase 1 이전 대비 0 증가)
-- [ ] 사장님 로컬 해당 test 파일 `npm run test` pass (실행 불가시 명시)
-- [ ] commit size ≤ 9 파일 (d.ts 1 + test 8)
+- [x] `apps/web/src/types/vitest-globals.d.ts` 신규 생성, 단 1 line
+- [x] `tsconfig.json` **미접촉** (Out of Scope 준수)
+- [x] 6 files clean 제거, 2 files `@ts-nocheck` 복원 + Phase 4 defer 표시
+- [x] 로컬 tsc baseline 49 유지 (Phase 1 이전 대비 0 증가)
+- [x] 로컬 `vitest run` 137 tests pass (3 pre-existing fail은 Phase 2 무관)
+- [x] commit 2개 (`c86073c3` feat + `ba3a766e` docs), main 푸시 완료
 
-**Rollback:** 단일 commit revert.
-- `git revert <commit>` 으로 d.ts + 8 files 동시 원복 가능
-- d.ts만 revert는 불가 (Type B 3개가 다시 깨짐) — 단일 unit으로 처리
+**Rollback:** `c86073c3` + `ba3a766e` 2개 commit revert.
+- d.ts 포함이므로 Type B 3개가 다시 깨지는 점 유의 → 단일 unit으로 처리
 
 ---
 
-### Phase 3: 나머지 50 Files Bulk Scale-up (A/B 유형 전체)
-**Goal:** Phase 2 pilot이 GREEN으로 확증된 후, 나머지 50 files (probe 10 제외 58 − 8)에서 `@ts-nocheck` bulk 제거. Phase 1 분포 추정(A≈29, B≈17)에 근거하여 A/B 46 files는 d.ts root fix로 자연 unlock, C 잔여 4 files는 Phase 4로 이관.
+### Phase 3: 나머지 50 Files Iterative Auto-Remediation
+**Goal:** Phase 2 learning(Type B-residual 25% 비율) 반영 → **"bulk remove → tsc → auto-restore residuals"** 자동화 스크립트로 50 files 처리. probe 가정에 의존하지 않고 tsc 에러 0 파일만 clean unlock.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
-**선행 조건:**
-- Phase 2 commit local tsc GREEN 확증 완료
-- Phase 2 d.ts가 본 branch에 반영됨 (Type B root cause 해소 선행)
+**Phase 2 learning 반영 설계:**
+- Phase 2에서 2/8 (25%) residual 비율 관측 → 50 files 투영 시 **12~13 files residual 예상**
+- probe 분류에 추가 의존하지 않음. **tsc 실측만이 ground truth**
+- 샌드박스 tsc 불가 → 사장님 로컬 스크립트 `phase3-scale-up.sh` 1회 실행으로 처리
 
-**🔴 RED:**
-- 나머지 50 files `@ts-nocheck` 제거 (전체 `sed` or 스크립트)
-- 사장님 로컬 `npx tsc --noEmit --pretty false 2>&1 | grep -E ": error TS" > /tmp/ts-scale.log` 실행
-- 에러 발생 파일 = Type C 후보 → 해당 파일만 `@ts-nocheck` 복원
+**50 files 구성 (cluster별):**
+- `lib/ai/**`: 39 → 36 (probe 3 제외)
+- `lib/ontology/**`: 5 → 4 (probe 1 제외)
+- `lib/budget/**`: 4 → 3 (probe 1 제외)
+- `lib/security/**`: 2 → 1 (probe 1 제외)
+- `lib/ai-pipeline/**` (#53 non-conflict 2): 2 → 2 (probe 제외 없음 → Type C 예상이므로 Phase 4로 분리)
+- `__tests__/api/**` 나머지: 4 (probe 2 제외)
+
+→ 본 phase 실질 대상: **50 - 2 (ai-pipeline s0/s6 Phase 4 이관) = 48 files**
+
+**🔴 RED (자동화 스크립트):**
+- `phase3-scale-up.sh` (workspace export):
+  1. 대상 48 files 리스트 하드코딩
+  2. `sed`로 48 files 전체 `@ts-nocheck` 제거
+  3. `cd apps/web && npx tsc --noEmit --pretty false > /tmp/phase3-tsc.log`
+  4. grep으로 에러 나는 파일 추출 = residual 후보
+  5. residual 후보 파일만 `@ts-nocheck` 복원 (사유 주석: `// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred`)
+  6. `git diff --stat` 로 최종 제거 파일 수 출력
+  7. (optional) 자동 commit 생성 or 사장님 수동 commit 대기
 
 **🟢 GREEN:**
-- 최종 clean 파일들을 20 files/commit 단위로 분할 커밋 (bisect 편의):
-  - Batch 1: 20 files (cluster 균등)
-  - Batch 2: 20 files
-  - Batch 3: ≤10 files
-- 각 batch commit 후 사장님 로컬 tsc baseline 유지 확인
-- 사장님 로컬 `npm run test` 회귀 0 확인
+- 스크립트 실행 후 tsc baseline = 49 (Phase 2 최종치)와 동일 유지
+- clean unlock 파일 수 = (48 - residual 수)
+- cluster별 분포를 commit message에 기록
+- 30 files/commit 단위로 분할 (bisect 편의) — 스크립트는 stage만, commit은 사장님이 cluster별 batch로
+- 로컬 `vitest run` 해당 cluster 회귀 0 확인
 
 **🔵 REFACTOR:**
-- commit 메시지에 제거 파일 수 + cluster 분포 명시
-- Phase 4로 넘길 Type C 잔여 파일 리스트 notes 기록
-- 잔여 @ts-nocheck 카운트 갱신: 50 → (Type C 잔여 수)
+- residual 파일 리스트 + 에러 건수를 Phase 4로 이관
+- 잔여 @ts-nocheck 카운트 갱신: 52 → (52 - clean count)
+- 본 plan notes에 실측 residual 비율 기록 (probe 가설 검증 결과)
 
 **✋ Quality Gate:**
-- [ ] d.ts root fix 단일 commit이 branch에 반영됨 (Phase 2 선행)
-- [ ] bulk 제거 후 tsc --noEmit 에러 수 = Phase 2 직후 baseline (Type C만큼만 증가 허용하되 즉시 복원)
-- [ ] Type C 파일은 `@ts-nocheck` 복원, Phase 4 defer 대상으로 표시
-- [ ] commit 분할이 20 files/commit 이하
-- [ ] 사장님 로컬 `npm run test` pass regression 0
+- [ ] `phase3-scale-up.sh` workspace export 완료
+- [ ] 로컬 스크립트 실행 성공 (non-zero exit 시 stop)
+- [ ] 스크립트 실행 후 tsc baseline 49 유지 (이탈 시 즉시 rollback)
+- [ ] residual 파일 모두 `@ts-nocheck` 복원 + 사유 주석 정확
+- [ ] clean commit 30 files/batch 이하, cluster 분포 기록
+- [ ] 로컬 `vitest run` 해당 batch 회귀 0 (pre-existing fail은 Phase 2와 동일하게 무관 처리)
 
-**Rollback:** batch commit 단위 revert (파일 단위 bisect 가능).
+**Rollback:** batch commit 단위 revert.
+- 스크립트 실행 도중 예외 → 변경된 파일 `git checkout -- apps/web/src/**` 로 일괄 원복 후 스크립트 수정
 
 ---
 
-### Phase 4: Type C/D Individual + Closeout
-**Goal:** Type C/D 개별 처리 or defer 문서화 + non-test 2개 별도 tracker 제안 + plan closeout.
+### Phase 4: Residual 개별 처리 + Closeout
+**Goal:** Phase 2/3에서 누적된 residual 파일 개별 처리(간단 fix or defer) + non-test 2개 별도 tracker 제안 + plan closeout.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
+**Phase 4 대상 파일 (누적):**
+- **Phase 2 residual 2 files:**
+  - `__tests__/api/compare-sessions/routes.test.ts` — `mockJsonResponse` 재선언 등 (24 errors)
+  - `__tests__/api/work-queue/compare-sync.test.ts` — 동일 패턴 (8 errors)
+  - → **fix 제안:** helper 파일 추출 (`__tests__/helpers/response-mock.ts`) or `as any` 최소 적용
+- **Phase 3 residual (실행 전 미정):** `phase3-scale-up.sh` 실행 결과로 확정
+- **Phase 0에서 일찌감치 defer된 Type C 2개:**
+  - `lib/ai-pipeline/runtime/__tests__/s0-baseline-freeze.test.ts`
+  - `lib/ai-pipeline/runtime/__tests__/s6-soak-exit-gate.test.ts`
+  - → **사유:** TS2554 arg count mismatch, TS2345 SoakRunContext 필드 drift (real type drift)
+- **#53 ai-pipeline 34 files:** #53 완료 후 별도 tracker 신설 제안
+
 **🔴 RED:**
-- Type C: types 누락 원인 확인, `@types/*` 설치 필요시 본 plan 밖 분리
-- Type D: 실 버그 확인, 간단 수정 가능 건만 이번 plan에 포함, 나머지 defer
+- Phase 2/3 residual 에러 목록 수집
+- 각 residual 유형 분류: (a) helper 추출 가능 / (b) `as any` 최소 적용 / (c) real drift defer
+- `@types/*` 설치 필요 건 발견 시 본 plan 밖 분리
 
 **🟢 GREEN:**
 - defer 파일 리스트 + 이유 plan notes에 기록
@@ -426,17 +468,23 @@ Red-Green-Refactor 엄수.
 
 ## 11. Progress Tracking
 
-- Overall completion: 0%
-- Current phase: Phase 0 (baseline)
-- Current blocker: 없음 — 승인 완료, 실행 준비
-- Next validation step: `npx tsc --noEmit` 샌드박스 runnability 확인
+- Overall completion: 50% (Phase 0~2 완료, 6 files clean / 94 대상)
+- Current phase: Phase 3 (scale-up 준비)
+- Current blocker: 없음 — `phase3-scale-up.sh` export 완료, 사장님 로컬 실행 대기
+- Next validation step: 로컬 `bash phase3-scale-up.sh` 실행 → clean unlock 집계 및 residual 파일 확정
 
 **Phase Checklist:**
-- [ ] Phase 0 complete
-- [ ] Phase 1 complete
-- [ ] Phase 2 complete
+- [x] Phase 0 complete (2026-04-18)
+- [x] Phase 1 complete (2026-04-18)
+- [x] Phase 2 complete (2026-04-18, commit `c86073c3`+`ba3a766e`, 로컬 tsc baseline 49 유지)
 - [ ] Phase 3 complete
 - [ ] Phase 4 complete
+
+**잔여 @ts-nocheck 현재 카운트:**
+- 시작: 94 (test 92 + non-test 2)
+- Phase 2 후: 87 (clean 6 제거)
+- Phase 3 목표: 87 - (48 - residual) = Phase 3 실행 결과로 확정
+- 나머지 defer: 2 Phase 2 residual + 2 s0/s6 Type C + 34 #53 conflict + 2 non-test (Out of Scope)
 
 ---
 
@@ -467,10 +515,17 @@ as vi.Mock 잔재: 2 파일만 (blast radius 매우 작음)
 - Type D (실 버그): 5~10%
 
 **Blockers Encountered:**
-- (없음 — Phase 0 시작 전)
+- [2026-04-18] 샌드박스 tsc 실행 불가 → 사장님 로컬 probe 스크립트로 대체. Phase 1 완료.
+- [2026-04-18] #53 ai-pipeline in_progress 파일과 34/36 중복 → 본 plan scope 축소 92 → 58. 34 파일 별도 tracker 제안.
+- [2026-04-18] Phase 2 `git am` 실패 (CRLF 인코딩) → 사장님 로컬 수동 재구성.
+- [2026-04-18] **Phase 2 residual 2/8 (25%) 발견** — `compare-sessions/routes.test.ts` (24 errors) / `work-queue/compare-sync.test.ts` (8 errors). probe 당시 "Type A"로 분류됐으나 실측에서 `mockJsonResponse` 재선언 등 독립 type 이슈 확인 → `@ts-nocheck` 복원 + Phase 4 defer.
 
 **Implementation Notes:**
-- (채워질 예정)
+- Phase 1 probe (10 files) 결과: A 5 / B 3 / C 2 / D 0. Type B 346 에러가 단일 원인(vitest globals 미타이핑)에서 나옴 → single `.d.ts` (1 line) root fix로 일괄 해소 가능 판정.
+- Phase 2 실행 결과: d.ts 신규 + 8 files 중 6 clean / 2 residual. 로컬 tsc baseline 49 유지 달성. Vitest: 137 tests pass, 3 files fail = pre-existing CJS `@/lib/db` module resolution (Phase 2 무관).
+- **Probe 분류 한계 learning:** vi cascade 제거 후 드러나는 독립 type 이슈가 존재. Phase 3는 probe 의존하지 않고 `remove → tsc → auto-restore` iterative 접근 채택.
+- Phase 3 자동화 스크립트 `phase3-scale-up.sh` workspace export 완료. 48 files 대상 (ai 36 + __tests__ 4 + ontology 4 + budget 3 + security 1).
+- residual 비율 25%가 48 files에 투영되면 ~12 files residual 예상. 최종 clean unlock 예상 = 36 files.
 
 **Phase 1 Probe Sample 10개 (2026-04-18 확정):**
 ```
