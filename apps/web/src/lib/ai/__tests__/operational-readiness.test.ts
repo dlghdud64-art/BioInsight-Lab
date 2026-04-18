@@ -1,4 +1,4 @@
-// @ts-nocheck — vitest/jest 미설치 환경에서 타입 체크 bypass
+// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
 /**
  * Batch 17 — Operational Readiness Final Gate Test
  *

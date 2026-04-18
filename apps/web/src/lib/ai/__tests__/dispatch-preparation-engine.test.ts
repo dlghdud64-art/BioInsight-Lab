@@ -1,4 +1,3 @@
-// @ts-nocheck — vitest/jest 미설치 환경에서 타입 체크 bypass
 /**
  * Dispatch Preparation Engine Tests
  *
