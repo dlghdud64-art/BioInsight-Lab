@@ -9,6 +9,14 @@
     "dev": "cd apps/web && npm run dev",
     "build": "cd apps/web && npm run build",
     "lint": "cd apps/web && npm run lint",
+    "test": "cd apps/web && npm run test",
+    "test:watch": "cd apps/web && npm run test:watch",
+    "test:ui": "cd apps/web && npm run test:ui",
+    "test:coverage": "cd apps/web && npm run test:coverage",
+    "db:generate": "cd apps/web && npm run db:generate",
+    "db:migrate": "cd apps/web && npm run db:migrate",
+    "prisma:migrate": "cd apps/web && npm run prisma:migrate",
+    "typecheck": "cd apps/web && npx tsc --noEmit",
     "prepare": "husky || true"
   },
   "dependencies": {

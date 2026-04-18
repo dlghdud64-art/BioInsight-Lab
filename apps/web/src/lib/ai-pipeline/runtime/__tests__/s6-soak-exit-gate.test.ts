@@ -3,7 +3,7 @@
  * S6 — Full-Active Soak + Exit Gate 테스트
  */
 
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   SOAK_SCENARIO_PACK,
   createDefaultMetrics,

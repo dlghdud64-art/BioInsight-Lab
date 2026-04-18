@@ -12,7 +12,7 @@
  * - RS7: full recovery E2E emits REPO_FIRST_TRUTH_SOURCE_CONFIRMED on verify success
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

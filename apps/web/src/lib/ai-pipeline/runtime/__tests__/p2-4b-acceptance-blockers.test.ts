@@ -9,7 +9,7 @@
  * Babel constraints: var + require(), no import type, no as any, .then() chains.
  */
 
-var { describe, it, expect, beforeAll, beforeEach, afterAll } = require("@jest/globals");
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 
 var { createPrismaAdapters } = require("../core/persistence");
 var { PrismaLockRepository } = require("../core/persistence/prisma/lock");

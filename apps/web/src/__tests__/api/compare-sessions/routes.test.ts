@@ -14,7 +14,7 @@ const mockJsonResponse = (data, init) => ({
 });
 
 // ── Module mocks ──
-jest.mock("next/server", () => ({
+vi.mock("next/server", () => ({
   NextRequest: class MockNextRequest {
     constructor(url, init) {
       this.url = typeof url === "string" ? url : url.toString();
@@ -29,32 +29,32 @@ jest.mock("next/server", () => ({
 }));
 
 // @/auth → Jest auto-discovers src/__mocks__/auth.ts (manual mock)
-jest.mock("@/auth");
+vi.mock("@/auth");
 
-jest.mock("@/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   db: {
-    compareSession: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn(), count: jest.fn() },
-    compareInquiryDraft: { create: jest.fn(), findMany: jest.fn(), findUnique: jest.fn(), update: jest.fn() },
-    quote: { create: jest.fn(), findMany: jest.fn() },
-    product: { findMany: jest.fn() },
-    activityLog: { findFirst: jest.fn(), create: jest.fn() },
-    aiActionItem: { findFirst: jest.fn(), findMany: jest.fn(), updateMany: jest.fn() },
+    compareSession: { create: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn(), count: vi.fn() },
+    compareInquiryDraft: { create: vi.fn(), findMany: vi.fn(), findUnique: vi.fn(), update: vi.fn() },
+    quote: { create: vi.fn(), findMany: vi.fn() },
+    product: { findMany: vi.fn() },
+    activityLog: { findFirst: vi.fn(), create: vi.fn() },
+    aiActionItem: { findFirst: vi.fn(), findMany: vi.fn(), updateMany: vi.fn() },
   },
 }));
 
-jest.mock("@/lib/work-queue/work-queue-service", () => ({
-  transitionWorkItem: jest.fn().mockResolvedValue(undefined),
-  createWorkItem: jest.fn().mockResolvedValue("new-queue-item-id"),
+vi.mock("@/lib/work-queue/work-queue-service", () => ({
+  transitionWorkItem: vi.fn().mockResolvedValue(undefined),
+  createWorkItem: vi.fn().mockResolvedValue("new-queue-item-id"),
 }));
 
-jest.mock("@/lib/activity-log", () => ({ createActivityLog: jest.fn() }));
-jest.mock("@/lib/api-error-handler", () => ({
-  handleApiError: jest.fn((error, context) => mockJsonResponse({ error: error?.message ?? "err" }, { status: 500 })),
+vi.mock("@/lib/activity-log", () => ({ createActivityLog: vi.fn() }));
+vi.mock("@/lib/api-error-handler", () => ({
+  handleApiError: vi.fn((error, context) => mockJsonResponse({ error: error?.message ?? "err" }, { status: 500 })),
 }));
-jest.mock("@/lib/api/products", () => ({ getProductsByIds: jest.fn() }));
-jest.mock("@/lib/compare-workspace/compare-engine", () => ({ computeMultiProductDiff: jest.fn() }));
-jest.mock("@/lib/compare-workspace/vendor-inquiry-draft", () => ({ generateVendorInquiryDraft: jest.fn() }));
-jest.mock("@/lib/compare-workspace/compare-insight-generator", () => ({ generateCompareInsight: jest.fn() }));
+vi.mock("@/lib/api/products", () => ({ getProductsByIds: vi.fn() }));
+vi.mock("@/lib/compare-workspace/compare-engine", () => ({ computeMultiProductDiff: vi.fn() }));
+vi.mock("@/lib/compare-workspace/vendor-inquiry-draft", () => ({ generateVendorInquiryDraft: vi.fn() }));
+vi.mock("@/lib/compare-workspace/compare-insight-generator", () => ({ generateCompareInsight: vi.fn() }));
 
 // ── Now require mocked modules ──
 const { db } = require("@/lib/db");
@@ -106,7 +106,7 @@ const mockDraft = {
 // ── Setup ──
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   auth.mockResolvedValue({ user: { id: "mock-user" } });
   createActivityLog.mockResolvedValue(undefined);
 });

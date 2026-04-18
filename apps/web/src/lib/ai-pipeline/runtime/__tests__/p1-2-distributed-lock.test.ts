@@ -5,7 +5,7 @@
  * Babel parser constraints: no `import type`, no `as any`, no `!`, use `var` + `require()`.
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Imports ──
 

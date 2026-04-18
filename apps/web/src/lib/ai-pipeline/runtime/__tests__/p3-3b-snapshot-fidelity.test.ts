@@ -14,7 +14,7 @@
  * - Fidelity contract violation diagnostic for legacy null-payload rows
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { SnapshotOntologyAdapter } = require("../core/ontology/snapshot-adapter");
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");

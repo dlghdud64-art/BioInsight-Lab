@@ -10,28 +10,28 @@ const mockJsonResponse = (data, init) => ({
   json: async () => data,
 });
 
-jest.mock("next/server", () => ({
+vi.mock("next/server", () => ({
   NextResponse: { json: (data, init) => mockJsonResponse(data, init) },
 }));
 
-jest.mock("@/auth");
+vi.mock("@/auth");
 
-jest.mock("@/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   db: {
-    compareSession: { findMany: jest.fn() },
-    aiActionItem: { findMany: jest.fn() },
-    product: { findMany: jest.fn() },
-    quote: { findMany: jest.fn() },
+    compareSession: { findMany: vi.fn() },
+    aiActionItem: { findMany: vi.fn() },
+    product: { findMany: vi.fn() },
+    quote: { findMany: vi.fn() },
   },
 }));
 
-jest.mock("@/lib/work-queue/work-queue-service", () => ({
-  createWorkItem: jest.fn().mockResolvedValue("new-item-id"),
-  transitionWorkItem: jest.fn().mockResolvedValue(undefined),
+vi.mock("@/lib/work-queue/work-queue-service", () => ({
+  createWorkItem: vi.fn().mockResolvedValue("new-item-id"),
+  transitionWorkItem: vi.fn().mockResolvedValue(undefined),
 }));
 
-jest.mock("@/lib/api-error-handler", () => ({
-  handleApiError: jest.fn((error) => mockJsonResponse({ error: error?.message }, { status: 500 })),
+vi.mock("@/lib/api-error-handler", () => ({
+  handleApiError: vi.fn((error) => mockJsonResponse({ error: error?.message }, { status: 500 })),
 }));
 
 const { db } = require("@/lib/db");
@@ -40,7 +40,7 @@ const { createWorkItem, transitionWorkItem } = require("@/lib/work-queue/work-qu
 const { POST } = require("@/app/api/work-queue/compare-sync/route");
 
 beforeEach(() => {
-  jest.clearAllMocks();
+  vi.clearAllMocks();
   auth.mockResolvedValue({ user: { id: "user-1" } });
   db.product.findMany.mockResolvedValue([
     { id: "prod-a", name: "Product A" },

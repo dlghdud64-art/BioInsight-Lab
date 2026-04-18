@@ -12,7 +12,7 @@
  * - FB7: REPO_FALLBACK_INVENTORY — 6 entries, 6 REPO_ONLY, 0 COMPAT_ONLY_TEMPORARY (P4-3)
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

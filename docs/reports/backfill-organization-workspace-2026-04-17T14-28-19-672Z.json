@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-04-17T14:28:19.672Z",
+  "finishedAt": "2026-04-17T14:28:20.783Z",
+  "dryRun": false,
+  "orphanWorkspaces": [],
+  "summary": {
+    "totalOrganizations": 1,
+    "alreadyLinked": 0,
+    "processed": 1,
+    "created": 1,
+    "dryRunPlanned": 0,
+    "skipped": 0,
+    "failed": 0
+  },
+  "entries": [
+    {
+      "organizationId": "cmo2kz6bm0000ke0j538vt755",
+      "organizationName": "LabAxis Test",
+      "action": "created",
+      "workspaceId": "cmo306rno0002tjfzzzja086x",
+      "workspaceSlug": "labaxis-test-2",
+      "adminMemberUserIds": [
+        "cmo2jlr7y0000oi3u8lo2tizd"
+      ]
+    }
+  ]
+}

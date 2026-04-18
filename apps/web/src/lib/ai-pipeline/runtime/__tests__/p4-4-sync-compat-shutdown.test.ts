@@ -12,7 +12,7 @@
  * - SS7: Repo-first contract intact after compat elimination
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

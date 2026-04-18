@@ -15,7 +15,7 @@
  * Babel constraints: var + require(), function() not arrow.
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 var fs = require("fs");
 var path = require("path");
 

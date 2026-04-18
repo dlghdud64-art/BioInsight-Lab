@@ -14,10 +14,17 @@
 - 최신 main 브랜치 checkout
 
 ```powershell
-cd C:\path\to\ai-biocompare\apps\web
+# ⚠️ monorepo 이므로 반드시 apps\web 에서 작업한다
+# 사장님 로컬 실제 경로 예시: C:\Users\young\ai-biocompare\apps\web
+cd C:\Users\young\ai-biocompare\apps\web
 git pull
 pnpm install  # (새 의존성 없음, 안전망)
+
+# 현재 위치 확인 (반드시 ...\apps\web 에서 끝나야 함)
+pwd
 ```
+
+> 레포 루트(`C:\Users\young\ai-biocompare`) 에서 실행하면 `prisma\schema.prisma file not found` 또는 `Cannot find module scripts\backfill-organization-workspace.ts` 에러가 난다. Prisma 스키마와 backfill 스크립트는 **모두 `apps\web\` 하위**에 있기 때문이다.
 
 ## 실행 순서 (총 6 단계)
 

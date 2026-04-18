@@ -1,7 +1,7 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { generateVendorInquiryDraft } from "@/lib/compare-workspace/vendor-inquiry-draft";
 
-(globalThis as any).fetch = jest.fn();
+(globalThis as any).fetch = vi.fn();
 
 const mockDiffResult = {
   compareId: "test-1",
@@ -45,7 +45,7 @@ const mockDiffResult = {
 
 describe("generateVendorInquiryDraft", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env.OPENAI_API_KEY;
   });
 

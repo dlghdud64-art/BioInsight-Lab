@@ -2,7 +2,7 @@
  * S3 — Intake / Routing Integrity 테스트
  */
 
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import { normalizeIntake } from "../core/intake/intake-normalizer";
 import { validateSchema } from "../core/intake/schema-validator";
 import { validatePolicy } from "../core/intake/policy-validator";

@@ -11,7 +11,7 @@
  * Babel constraints: var + require(), no import type, no as any.
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Prisma Adapter Imports (actual classes, not memory backend) ──
 

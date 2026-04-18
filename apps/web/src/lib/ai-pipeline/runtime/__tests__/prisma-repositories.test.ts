@@ -12,7 +12,7 @@
  * Integration tests with real DB are deferred to CI.
  */
 
-const { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Import persistence types (no Prisma dependency) ──
 const {

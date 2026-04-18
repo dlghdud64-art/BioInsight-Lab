@@ -49,3 +49,10 @@ apps/web/public/brand/bioinsight-icon.svg
 
 # Prisma migrations backup (pre-baseline consolidation)
 apps/web/prisma/migrations.backup-*
+
+# Claude Code sandbox artifacts (never commit)
+.claude/worktrees/
+tmpclaude-*-cwd
+*.tsx.bak
+*.ts.bak
+*.bak

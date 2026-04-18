@@ -11,7 +11,7 @@
  * - CE6: Fallback inventory: all 6 REPO_ONLY, 0 COMPAT_ONLY_TEMPORARY
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

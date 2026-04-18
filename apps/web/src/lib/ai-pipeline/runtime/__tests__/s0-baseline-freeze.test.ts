@@ -3,7 +3,7 @@
  * S0 — Baseline Freeze 테스트
  */
 
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   createCanonicalBaseline,
   getCanonicalBaseline,

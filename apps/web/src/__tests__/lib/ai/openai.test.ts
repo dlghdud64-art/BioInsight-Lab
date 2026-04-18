@@ -1,14 +1,14 @@
 // @ts-nocheck
 // jest mock setup and type mismatches on mocked fetch return types
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { analyzeSearchIntent, translateText } from "@/lib/ai/openai";
 
 // fetch 모킹
-global.fetch = jest.fn();
+global.fetch = vi.fn();
 
 describe("OpenAI API", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env.OPENAI_API_KEY;
   });
 
@@ -24,7 +24,7 @@ describe("OpenAI API", () => {
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
       
-      (fetch as jest.Mock).mockResolvedValue({
+      (fetch as vi.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           choices: [
@@ -59,7 +59,7 @@ describe("OpenAI API", () => {
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
       
-      (fetch as jest.Mock).mockResolvedValue({
+      (fetch as vi.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
           choices: [

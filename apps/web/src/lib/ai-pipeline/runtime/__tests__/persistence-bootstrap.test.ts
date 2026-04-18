@@ -3,7 +3,7 @@
  * P1-1 Slice-1E: Persistence Bootstrap & Legacy Bridge Tests
  */
 
-var { describe, it, expect, beforeEach, afterEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Helpers & Imports ──
 

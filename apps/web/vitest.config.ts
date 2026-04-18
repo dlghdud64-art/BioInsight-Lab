@@ -5,6 +5,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // next-auth ESM import chain 을 피하기 위해 manual mock 으로 리다이렉트.
+      // 기존 jest.config.js 의 moduleNameMapper 를 이관.
+      "next-auth": path.resolve(__dirname, "./src/__mocks__/next-auth.ts"),
+      "@auth": path.resolve(__dirname, "./src/__mocks__/next-auth.ts"),
     },
   },
   test: {

@@ -11,7 +11,7 @@
  * - CL6: P3 final acceptance evaluation — decision is ACCEPTED_WITH_DEFERRED_RISKS
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

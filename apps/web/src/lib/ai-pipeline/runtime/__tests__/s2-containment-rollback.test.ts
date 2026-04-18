@@ -2,7 +2,7 @@
  * S2 — Containment / Rollback Hardening 테스트 (Patched)
  */
 
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import { detectBreach, _resetBreaches } from "../core/containment/breach-handler";
 import { activateMutationFreeze, deactivateMutationFreeze, guardWrite, _resetMutationFreeze } from "../core/containment/mutation-freeze";
 import { executeFinalContainment } from "../core/containment/final-containment-pipeline";

@@ -12,7 +12,7 @@
  * - Bridge route guardrail
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { RecoveryOntologyAdapter, toRepositoryPatch } = require("../core/ontology/recovery-adapter");
 var { BaselineOntologyAdapter } = require("../core/ontology/baseline-adapter");

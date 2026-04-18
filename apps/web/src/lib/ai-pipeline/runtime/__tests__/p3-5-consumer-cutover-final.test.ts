@@ -14,7 +14,7 @@
  * - CF9: reconstruction remains valid after cutover: buildTimelineFromRepo same result as buildTimeline
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
 var { createMemoryAdapters } = require("../core/persistence/memory");

@@ -1,6 +1,6 @@
 // @ts-nocheck
 // jest-dom matchers (toBeInTheDocument, toHaveClass, toBeDisabled) not available in type checking
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { Button } from "@/components/ui/button";
 

@@ -10,7 +10,7 @@
  * - MEMORY/PRISMA adapter bundle shape parity
  */
 
-const { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 const {
   createMemoryAdapters,

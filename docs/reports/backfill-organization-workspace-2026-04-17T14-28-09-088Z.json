@@ -1,0 +1,25 @@
+{
+  "startedAt": "2026-04-17T14:28:09.088Z",
+  "finishedAt": "2026-04-17T14:28:09.904Z",
+  "dryRun": true,
+  "orphanWorkspaces": [],
+  "summary": {
+    "totalOrganizations": 1,
+    "alreadyLinked": 0,
+    "processed": 1,
+    "created": 0,
+    "dryRunPlanned": 1,
+    "skipped": 0,
+    "failed": 0
+  },
+  "entries": [
+    {
+      "organizationId": "cmo2kz6bm0000ke0j538vt755",
+      "organizationName": "LabAxis Test",
+      "action": "dry_run_would_create",
+      "adminMemberUserIds": [
+        "cmo2jlr7y0000oi3u8lo2tizd"
+      ]
+    }
+  ]
+}

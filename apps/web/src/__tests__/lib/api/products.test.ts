@@ -1,23 +1,23 @@
 // @ts-nocheck
 // jest mocking creates type mismatches; db is mocked with never type
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { searchProducts, getProductById, getBrands } from "@/lib/api/products";
 import { db } from "@/lib/db";
 
 // Prisma와 DB 모킹
-jest.mock("@/lib/db", () => ({
+vi.mock("@/lib/db", () => ({
   db: {
     product: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      count: jest.fn(),
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+      count: vi.fn(),
     },
   },
 }));
 
 describe("Product API", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("searchProducts", () => {
@@ -31,8 +31,8 @@ describe("Product API", () => {
         },
       ];
 
-      (db.product.findMany as jest.Mock).mockResolvedValue(mockProducts);
-      (db.product.count as jest.Mock).mockResolvedValue(1);
+      (db.product.findMany as vi.Mock).mockResolvedValue(mockProducts);
+      (db.product.count as vi.Mock).mockResolvedValue(1);
 
       const result = await searchProducts({ query: "test" });
 
@@ -50,8 +50,8 @@ describe("Product API", () => {
         },
       ];
 
-      (db.product.findMany as jest.Mock).mockResolvedValue(mockProducts);
-      (db.product.count as jest.Mock).mockResolvedValue(1);
+      (db.product.findMany as vi.Mock).mockResolvedValue(mockProducts);
+      (db.product.count as vi.Mock).mockResolvedValue(1);
 
       const result = await searchProducts({ category: "REAGENT" });
 
@@ -74,7 +74,7 @@ describe("Product API", () => {
         recommendations: [],
       };
 
-      (db.product.findUnique as jest.Mock).mockResolvedValue(mockProduct);
+      (db.product.findUnique as vi.Mock).mockResolvedValue(mockProduct);
 
       const result = await getProductById("1");
 
@@ -87,7 +87,7 @@ describe("Product API", () => {
     });
 
     it("should return null if product not found", async () => {
-      (db.product.findUnique as jest.Mock).mockResolvedValue(null);
+      (db.product.findUnique as vi.Mock).mockResolvedValue(null);
 
       const result = await getProductById("nonexistent");
 
@@ -103,7 +103,7 @@ describe("Product API", () => {
         { brand: "Brand A" }, // 중복
       ];
 
-      (db.product.findMany as jest.Mock).mockResolvedValue(mockBrands);
+      (db.product.findMany as vi.Mock).mockResolvedValue(mockBrands);
 
       const result = await getBrands();
 

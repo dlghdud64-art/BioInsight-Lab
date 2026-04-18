@@ -3,7 +3,7 @@
  * P1-1 Slice-1F: Persistence Cutover Tests
  */
 
-var { describe, it, expect, beforeEach, afterEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Imports ──
 
@@ -100,7 +100,7 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
 
   describe("Bridge Logger", function () {
     it("should log structured warning without throwing", function () {
-      var warnSpy = jest.spyOn(console, "warn").mockImplementation(function () {});
+      var warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {});
       expect(function () {
         logBridgeFailure("test-module", "test-op", new Error("test error"));
       }).not.toThrow();
@@ -114,7 +114,7 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
     });
 
     it("should handle non-Error objects without throwing", function () {
-      var warnSpy = jest.spyOn(console, "warn").mockImplementation(function () {});
+      var warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {});
       expect(function () {
         logBridgeFailure("mod", "op1", "string error");
         logBridgeFailure("mod", "op2", null);
@@ -250,7 +250,7 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
       };
 
       // Should not throw even without bootstrap
-      var warnSpy = jest.spyOn(console, "warn").mockImplementation(function () {});
+      var warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {});
       expect(function () {
         createSnapshotPair({
           baselineId: "bl-no-repo",
@@ -347,7 +347,7 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
 
   describe("Observability", function () {
     it("should log bridge failure with structured format via logBridgeFailure", function () {
-      var warnSpy = jest.spyOn(console, "warn").mockImplementation(function () {});
+      var warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {});
 
       // Directly verify logBridgeFailure logs correctly
       logBridgeFailure("test-module", "test-operation", new Error("simulated failure"));
@@ -365,7 +365,7 @@ describe("P1-1 Slice-1F: Persistence Cutover", function () {
     it("should not break legacy store when bridge logs failure", function () {
       // Set invalid env to force bootstrap failure in bridge try/catch
       process.env.PERSISTENCE_PROVIDER = "REDIS";
-      var warnSpy = jest.spyOn(console, "warn").mockImplementation(function () {});
+      var warnSpy = vi.spyOn(console, "warn").mockImplementation(function () {});
 
       // This should not throw — legacy store works regardless
       emitStabilizationAuditEvent({

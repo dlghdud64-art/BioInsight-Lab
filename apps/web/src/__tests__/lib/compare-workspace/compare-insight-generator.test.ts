@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { generateCompareInsight } from "@/lib/compare-workspace/compare-insight-generator";
 
 // fetch 모킹
-const mockFetch = jest.fn() as jest.Mock<any>;
+const mockFetch = vi.fn();
 (globalThis as any).fetch = mockFetch;
 
 const mockDiffResult = {
@@ -65,7 +65,7 @@ const mockDiffResult = {
 
 describe("generateCompareInsight", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     delete process.env.OPENAI_API_KEY;
   });
 

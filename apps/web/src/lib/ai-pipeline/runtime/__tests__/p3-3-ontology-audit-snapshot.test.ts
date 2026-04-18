@@ -13,7 +13,7 @@
  * - Bridge route guardrail for new modules
  */
 
-var { describe, it, expect, beforeEach } = require("@jest/globals");
+import { describe, it, expect, beforeEach } from "vitest";
 
 var { StabilizationAuditOntologyAdapter } = require("../core/ontology/stabilization-audit-adapter");
 var { CanonicalAuditOntologyAdapter } = require("../core/ontology/canonical-audit-adapter");

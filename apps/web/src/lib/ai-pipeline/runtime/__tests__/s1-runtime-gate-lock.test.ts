@@ -2,7 +2,7 @@
  * S1 — Runtime Gate Lock 테스트
  */
 
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import {
   guardLifecycleTransition,
   guardReleaseModeTransition,
