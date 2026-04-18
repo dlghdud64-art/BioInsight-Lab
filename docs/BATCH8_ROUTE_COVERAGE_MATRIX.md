@@ -53,7 +53,7 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/admin/inbound-emails` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/admin/inbound-emails/[id]/attach-to-quote` | POST | POST | middleware | required | standard | - | - | yes |
 | `/api/admin/orders` | POST | POST | middleware | required | standard | - | - | - |
-| `/api/admin/orders/[id]/status` | GET, PATCH | PATCH | middleware | required | high | - | yes | yes |
+| `/api/admin/orders/[id]/status` | GET, PATCH | PATCH | middleware | required | high | - | ✓ Durable | yes |
 | `/api/admin/products` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/admin/products/[id]` | PATCH | PATCH | middleware | required | high | - | - | - |
 | `/api/admin/quotes` | GET | - | n/a | n/a | n/a | read_only | - | - |
@@ -157,7 +157,7 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/inventory/scan-label` | POST | POST | middleware | required | standard | - | - | - |
 | `/api/inventory/usage` | GET, POST | POST | middleware | required | standard | - | - | - |
 | `/api/invite/[token]` | GET, POST | POST | exempt | exempt | exempt | public_token_auth | - | - |
-| `/api/invites/accept` | POST | POST | middleware | required | high | - | yes | yes |
+| `/api/invites/accept` | POST | POST | middleware | required | high | - | ✓ Durable | yes |
 | `/api/mobile/auth/refresh` | POST | POST | exempt | exempt | exempt | bearer_token_auth | - | - |
 | `/api/mobile/auth/signin` | POST | POST | exempt | exempt | exempt | bearer_token_auth | - | - |
 | `/api/mobile/products/search` | GET | - | n/a | n/a | n/a | read_only | - | - |
@@ -204,7 +204,7 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/protocol/extract-text` | POST | POST | middleware | required | standard | - | - | - |
 | `/api/purchases` | GET, POST | POST | middleware | required | standard | - | - | - |
 | `/api/purchases/[id]/match` | POST | POST | middleware | required | standard | - | - | - |
-| `/api/purchases/[id]/reclass` | POST | POST | middleware | required | high | - | yes | yes |
+| `/api/purchases/[id]/reclass` | POST | POST | middleware | required | high | - | ✓ Durable | yes |
 | `/api/purchases/import` | POST | POST | middleware | required | standard | - | - | - |
 | `/api/purchases/import-file` | POST | POST | middleware | required | standard | - | - | - |
 | `/api/purchases/import/commit` | POST | POST | middleware | required | high | - | - | - |
@@ -246,10 +246,10 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/recommendations/purchase-patterns` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/reports/purchase` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/request` | GET, POST | POST | middleware | required | standard | - | - | - |
-| `/api/request/[id]/approve` | POST | POST | middleware | required | high | - | yes | yes |
-| `/api/request/[id]/cancel` | POST | POST | middleware | required | high | - | yes | yes |
+| `/api/request/[id]/approve` | POST | POST | middleware | required | high | - | ✓ Durable | yes |
+| `/api/request/[id]/cancel` | POST | POST | middleware | required | high | - | ✓ Durable | yes |
 | `/api/request/[id]/reject` | POST | POST | middleware | required | standard | - | - | yes |
-| `/api/request/[id]/reverse` | POST | POST | middleware | required | high | - | yes | yes |
+| `/api/request/[id]/reverse` | POST | POST | middleware | required | high | - | ✓ Durable | yes |
 | `/api/reviews/[id]` | DELETE | DELETE | middleware | required | high | - | - | - |
 | `/api/safety-spend` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/safety-spend/unmapped` | GET | - | n/a | n/a | n/a | read_only | - | - |
@@ -319,3 +319,15 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/workspaces/[id]/invites` | GET, POST, DELETE | POST, DELETE | middleware | required | high | - | - | - |
 | `/api/workspaces/[id]/members` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/workspaces/[id]/members/[memberId]` | PATCH, DELETE | PATCH, DELETE | middleware | required | high | - | - | - |
+
+## 변경 이력
+
+- **2026-04-14 — Batch 6: Durable Audit Sink (MutationAuditEvent) 연결.**
+  - 6개 high-risk 라우트의 `Audit` 열을 `yes` → `✓ Durable` 로 갱신.
+  - 갱신 대상: `/api/request/[id]/approve`, `/api/request/[id]/cancel`, `/api/request/[id]/reverse`, `/api/admin/orders/[id]/status`, `/api/purchases/[id]/reclass`, `/api/invites/accept`.
+  - 같은 DB 트랜잭션 안에서 `MutationAuditEvent` append-only row 를 기록 (`auditEventKey` unique 로 idempotent).
+  - 검증: `apps/web/src/lib/audit/__tests__/durable-mutation-audit-contract.mjs` (정적 분석, 네트워크 불필요).
+- **2026-04-18 — Batch 6 + enum-drift closeout 검증.**
+  - schema ↔ migrations ↔ live DB 3-way 정합 (양방향 `prisma migrate diff` empty) 확정.
+  - `docs/plans/PLAN_prisma-enum-drift-and-mutation-audit.md` Phase 0 ~ Phase 2 종결.
+
