@@ -39,7 +39,7 @@ describe("OpenAI API", () => {
             },
           ],
         }),
-      });
+      } as unknown as Response);
 
       const result = await analyzeSearchIntent("api-key PCR kit query");
 
@@ -73,7 +73,7 @@ describe("OpenAI API", () => {
             },
           ],
         }),
-      });
+      } as unknown as Response);
 
       const result = await translateText("api-key greeting", "en", "ko");
 

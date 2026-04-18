@@ -73,13 +73,18 @@ const { PATCH: patchDecision } = require("@/app/api/compare-sessions/[id]/decisi
 
 // ── Helpers ──
 
-function makeRequest(url, options) {
-  const init = { method: options?.method ?? "GET" };
+function makeRequest(
+  url: string,
+  options?: { method?: string; body?: unknown }
+) {
+  const init: { method: string; body?: string } = {
+    method: options?.method ?? "GET",
+  };
   if (options?.body) init.body = JSON.stringify(options.body);
   return new NextRequest(`http://localhost:3000${url}`, init);
 }
 
-function makeParams(id) {
+function makeParams(id: string) {
   return { params: Promise.resolve({ id }) };
 }
 
