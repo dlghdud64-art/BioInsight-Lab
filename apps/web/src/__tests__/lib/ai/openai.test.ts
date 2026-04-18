@@ -13,8 +13,10 @@ describe("OpenAI API", () => {
   });
 
   describe("analyzeSearchIntent", () => {
+    // NOTE: openai.ts 의 intentCache 는 모듈 레벨 singleton 이므로, 각 테스트에서 unique query 를 써서
+    //       캐시 hit 로 fetch 가 스킵되는 것을 방지한다.
     it("should use fallback when API key is not set", async () => {
-      const result = await analyzeSearchIntent("PCR kit");
+      const result = await analyzeSearchIntent("fallback PCR kit query");
 
       expect(result).toBeDefined();
       expect(result.category).toBeDefined();
@@ -23,7 +25,7 @@ describe("OpenAI API", () => {
 
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
-      
+
       (fetch as vi.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -41,7 +43,7 @@ describe("OpenAI API", () => {
         }),
       });
 
-      const result = await analyzeSearchIntent("PCR kit");
+      const result = await analyzeSearchIntent("api-key PCR kit query");
 
       expect(fetch).toHaveBeenCalled();
       expect(result.category).toBe("REAGENT");
@@ -49,16 +51,19 @@ describe("OpenAI API", () => {
   });
 
   describe("translateText", () => {
-    it("should return placeholder when API key is not set", async () => {
-      const result = await translateText("Hello", "en", "ko");
+    // NOTE: translateText 의 fallback 계약은 "API key 없으면 원문 그대로 반환"(line 270~271)이며,
+    //       catch 블록도 `return text` 로 일관(line 309). `[번역 필요]` placeholder 는 폐기된 구동작이다.
+    // NOTE: translationCache 역시 모듈 singleton 이므로 각 테스트는 unique text 를 써서 캐시 hit 을 피한다.
+    it("should return original text when API key is not set", async () => {
+      const result = await translateText("fallback greeting", "en", "ko");
 
-      expect(result).toContain("[번역 필요]");
+      expect(result).toBe("fallback greeting");
       expect(fetch).not.toHaveBeenCalled();
     });
 
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
-      
+
       (fetch as vi.Mock).mockResolvedValue({
         ok: true,
         json: async () => ({
@@ -72,7 +77,7 @@ describe("OpenAI API", () => {
         }),
       });
 
-      const result = await translateText("Hello", "en", "ko");
+      const result = await translateText("api-key greeting", "en", "ko");
 
       expect(fetch).toHaveBeenCalled();
       expect(result).toBe("안녕하세요");
