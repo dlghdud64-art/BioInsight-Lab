@@ -238,7 +238,9 @@ Red-Green-Refactor 엄수.
 
 ### Phase 1: Probe (유형 카탈로그)
 **Goal:** sample 10개 `@ts-nocheck` 제거 → tsc 돌려서 에러 유형 4개(A/B/C/D)로 분류 → 전체 92개 분포 추정.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [ ] Pending | [ ] In Progress | [x] Complete (2026-04-18)
+- 사장님 로컬 `probe-ts-nocheck.sh` 실행 결과: A 5, B 3, C 2, D 0. 자세한 수치는 Notes 섹션 Phase 1 Probe Report 참조.
+- **Type B root cause 확정:** `tsconfig.json` 에 `vitest/globals` types 선언 없음 (runtime globals: true, tsc만 모름). **Fix:** `apps/web/src/types/vitest-globals.d.ts` 1 파일 추가 (1 line)로 전체 Type B unlock 예상.
 
 **🔴 RED:**
 - probe sample 10개 `@ts-nocheck` 한 줄 제거
@@ -267,57 +269,80 @@ Red-Green-Refactor 엄수.
 
 ---
 
-### Phase 2: Type A Bulk Unlock
-**Goal:** Type A 분류된 파일 전체 대상 → `@ts-nocheck` 제거 → tsc GREEN 확인 → 20 files/commit 단위로 분할 커밋.
+### Phase 2: d.ts Root Fix + Probe 8 Files Pilot Unlock
+**Goal:** Phase 1 probe에서 확정된 **Type B root cause**(vitest globals 미타이핑)를 단일 `d.ts` 파일로 해소하고, **probe 8 files**(Type A 5 + Type B 3)를 동시 unlock하여 pilot commit으로 확증한다. 샌드박스에서는 tsc 검증 불가이므로 사장님 로컬 검증 경로를 명시한다.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
+**설계 원칙:**
+- **최소 diff 원칙**: `tsconfig.json` 미접촉. `@types/*` 기본 자동 포함(`types` 배열 생략 시의 TypeScript 기본)을 보존하기 위해 ambient reference 방식 채택.
+- **probe로 확증된 파일만 먼저 unlock**: A 5 + B 3 = 8 files. 나머지 50 files는 Phase 3에서 bulk 확장.
+- **single root fix (1 line)로 Type B 전체 해소**: `/// <reference types="vitest/globals" />`.
+- `vitest ^3.1.1` 설치 확인됨 → `vitest/globals` 타입 공급자 검증 완료.
+
 **🔴 RED:**
-- Type A 후보 파일 전체에서 `@ts-nocheck` 제거
-- `tsc --noEmit` 실행 → 에러 발생 파일 식별
-- 에러 발생 파일은 Type B/C/D로 재분류 후 rollback
+- `apps/web/src/types/vitest-globals.d.ts` 신규 생성 (single line): `/// <reference types="vitest/globals" />`
+- probe 확증 파일 8개에서 `// @ts-nocheck` 제거:
+  - **Type A (5):** `lib/ai/__tests__/app-runtime-signal.test.ts`, `lib/ai/__tests__/approval-governance-stress.test.ts`, `lib/ai/__tests__/batch13-productization.test.ts`, `__tests__/api/compare-sessions/routes.test.ts`, `__tests__/api/work-queue/compare-sync.test.ts`
+  - **Type B (3):** `lib/ontology/contextual-action/__tests__/resolver-support-recovery.test.ts`, `lib/budget/__tests__/budget-lifecycle-wiring.test.ts`, `lib/security/__tests__/csrf-batch10.test.ts`
+- Type C 2개(`s0-baseline-freeze`, `s6-soak-exit-gate`)는 본 phase 제외 → Phase 4에서 개별 처리 / defer
 
 **🟢 GREEN:**
-- 최종 clean 파일들 20 files/commit 단위로 분할 커밋
-- 각 커밋 후 tsc --noEmit GREEN 유지 확인
-- 사장님 로컬 `npm run test` 회귀 0 확인 (Quality Gate)
+- 사장님 로컬 `cd apps/web && npx tsc --noEmit --pretty false 2>&1 | grep -cE ": error TS"` 실행 → baseline 유지 (0 증가) 확인
+- 8 files + 1 d.ts = 단일 commit (`feat(types): vitest globals ambient ref + test-only @ts-nocheck 제거 (8 files, probe-confirmed)`)
+- 사장님 로컬 `npm run test` 해당 파일 회귀 pass 확인
 
 **🔵 REFACTOR:**
-- commit 메시지에 제거 파일 수 명시 (bisect 편의)
-- 남은 Type B/C/D 파일 수 갱신
+- commit 메시지에 file count + cluster 분포 명시 (bisect 편의)
+- 잔여 @ts-nocheck 카운트 기록: 58 → 50 (probe 8 제거)
 
 **✋ Quality Gate:**
-- [ ] tsc --noEmit baseline 유지
-- [ ] `npm run test` pass rate regression 0 (사장님 로컬 — 실행 불가시 명시)
-- [ ] 커밋 분할이 20 files/commit 이하
-- [ ] bulk unlock 후 잔여 @ts-nocheck 카운트 기록
+- [ ] `apps/web/src/types/vitest-globals.d.ts` 신규 생성, 내용 단 1 line
+- [ ] `tsconfig.json` **미접촉** (Out of Scope 준수)
+- [ ] probe 8 files `@ts-nocheck` 제거 완료
+- [ ] 사장님 로컬 `tsc --noEmit` 에러 수 baseline 유지 (Phase 1 이전 대비 0 증가)
+- [ ] 사장님 로컬 해당 test 파일 `npm run test` pass (실행 불가시 명시)
+- [ ] commit size ≤ 9 파일 (d.ts 1 + test 8)
 
-**Rollback:** 해당 커밋 revert (파일 단위 bisect 가능).
+**Rollback:** 단일 commit revert.
+- `git revert <commit>` 으로 d.ts + 8 files 동시 원복 가능
+- d.ts만 revert는 불가 (Type B 3개가 다시 깨짐) — 단일 unit으로 처리
 
 ---
 
-### Phase 3: Type B vi.Mocked<T> 교체
-**Goal:** Type B 파일들의 `as vi.Mock` → `vi.Mocked<T>` / `vi.mocked(fn)` 교체.
+### Phase 3: 나머지 50 Files Bulk Scale-up (A/B 유형 전체)
+**Goal:** Phase 2 pilot이 GREEN으로 확증된 후, 나머지 50 files (probe 10 제외 58 − 8)에서 `@ts-nocheck` bulk 제거. Phase 1 분포 추정(A≈29, B≈17)에 근거하여 A/B 46 files는 d.ts root fix로 자연 unlock, C 잔여 4 files는 Phase 4로 이관.
 - Status: [ ] Pending | [ ] In Progress | [ ] Complete
 
+**선행 조건:**
+- Phase 2 commit local tsc GREEN 확증 완료
+- Phase 2 d.ts가 본 branch에 반영됨 (Type B root cause 해소 선행)
+
 **🔴 RED:**
-- Type B 파일별 `as vi.Mock` 패턴 식별
-- 해당 파일 `@ts-nocheck` 제거 + 패턴 교체 동시 진행
-- 각 파일 tsc GREEN + test 실행 pass 확인
+- 나머지 50 files `@ts-nocheck` 제거 (전체 `sed` or 스크립트)
+- 사장님 로컬 `npx tsc --noEmit --pretty false 2>&1 | grep -E ": error TS" > /tmp/ts-scale.log` 실행
+- 에러 발생 파일 = Type C 후보 → 해당 파일만 `@ts-nocheck` 복원
 
 **🟢 GREEN:**
-- 교체된 파일 개별 커밋 or 작은 batch 커밋
-- 사장님 로컬 해당 test 실행 pass 확인
+- 최종 clean 파일들을 20 files/commit 단위로 분할 커밋 (bisect 편의):
+  - Batch 1: 20 files (cluster 균등)
+  - Batch 2: 20 files
+  - Batch 3: ≤10 files
+- 각 batch commit 후 사장님 로컬 tsc baseline 유지 확인
+- 사장님 로컬 `npm run test` 회귀 0 확인
 
 **🔵 REFACTOR:**
-- `vi.fn<T>()` / `vi.mocked(fn)` 중 명확한 쪽 선택
-- 재사용 가능한 helper가 보이면 notes에 defer 제안 (본 plan 범위 밖)
+- commit 메시지에 제거 파일 수 + cluster 분포 명시
+- Phase 4로 넘길 Type C 잔여 파일 리스트 notes 기록
+- 잔여 @ts-nocheck 카운트 갱신: 50 → (Type C 잔여 수)
 
 **✋ Quality Gate:**
-- [ ] 각 파일 tsc clean
-- [ ] 각 파일 해당 test 실행 pass (사장님 로컬 확인 필요시 명시)
-- [ ] 기존 test 로직 불변
+- [ ] d.ts root fix 단일 commit이 branch에 반영됨 (Phase 2 선행)
+- [ ] bulk 제거 후 tsc --noEmit 에러 수 = Phase 2 직후 baseline (Type C만큼만 증가 허용하되 즉시 복원)
+- [ ] Type C 파일은 `@ts-nocheck` 복원, Phase 4 defer 대상으로 표시
+- [ ] commit 분할이 20 files/commit 이하
+- [ ] 사장님 로컬 `npm run test` pass regression 0
 
-**Rollback:** 파일 단위 revert.
+**Rollback:** batch commit 단위 revert (파일 단위 bisect 가능).
 
 ---
 
@@ -476,5 +501,34 @@ ai-pipeline remaining (2):
 - 10개 파일 `@ts-nocheck` 한 줄 제거 → `npx tsc --noEmit` → 에러 로그 수집 → 즉시 `git checkout --` 원복
 - output → 제가 유형 분류 (A/B/C/D) → Phase 2/3/4 구체화
 
-**Phase 1 Probe Report:**
-- (채워질 예정 — 사장님 로컬 실행 후)
+**Phase 1 Probe Report (2026-04-18, 사장님 로컬):**
+```
+# 파일                                             에러 분류
+1 app-runtime-signal.test.ts                       0    A
+2 approval-governance-stress.test.ts               0    A
+3 batch13-productization.test.ts                   0    A
+4 compare-sessions/routes.test.ts                  157  B (vi/types 미인식)
+5 work-queue/compare-sync.test.ts                  54   B (vi/types 미인식)
+6 resolver-support-recovery.test.ts                0    A
+7 budget-lifecycle-wiring.test.ts                  0    A
+8 csrf-batch10.test.ts                             135  B (describe/it/expect globals)
+9 s0-baseline-freeze.test.ts                       1    C (TS2554 인자 수)
+10 s6-soak-exit-gate.test.ts                       2    C (TS2345 SoakRunContext)
+```
+- Type A: 5/10 (50%)
+- Type B: 3/10 (30%) — **346 에러 대부분이 cascade, single root cause**
+- Type C: 2/10 (20%) — 실 시그니처 drift
+- Type D: 0/10
+- probe 외 apps/web 전체 baseline 에러 = 2725 lines (B cascade 포함)
+
+**Type B Root Cause 확정 (2026-04-18, sandbox):**
+- `apps/web/vitest.config.ts` → `test.globals: true` 설정되어 런타임 inject는 O
+- `apps/web/tsconfig.json` → `"types": ["vitest/globals"]` **선언 없음** → tsc만 globals 인식 못 함
+- `vitest ^3.1.1` → vitest 패키지 자체에 globals types 포함 (`vitest/globals` reference 가능)
+- **Minimal Diff Fix:** `apps/web/src/types/vitest-globals.d.ts` 신규 파일 1개에 `/// <reference types="vitest/globals" />` 추가. tsconfig.json 미접촉 (Out of Scope 준수).
+
+**전체 58 files 유형 분포 추정 (probe 10개 × 5.8배 스케일):**
+- Type A ≈ 29 files (바로 제거 가능)
+- Type B ≈ 17 files (d.ts 1 fix로 일괄 해결)
+- Type C ≈ 12 files (개별 handling, s0/s6 패턴)
+- Type D ≈ 0 files
