@@ -1,5 +1,3 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
-// jest mock setup and type mismatches on mocked fetch return types
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { analyzeSearchIntent, translateText } from "@/lib/ai/openai";
 
@@ -26,7 +24,7 @@ describe("OpenAI API", () => {
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
 
-      (fetch as vi.Mock).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({
           choices: [
@@ -64,7 +62,7 @@ describe("OpenAI API", () => {
     it("should call OpenAI API when key is set", async () => {
       process.env.OPENAI_API_KEY = "test-key";
 
-      (fetch as vi.Mock).mockResolvedValue({
+      vi.mocked(fetch).mockResolvedValue({
         ok: true,
         json: async () => ({
           choices: [

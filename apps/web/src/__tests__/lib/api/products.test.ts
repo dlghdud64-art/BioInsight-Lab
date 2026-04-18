@@ -1,5 +1,3 @@
-// @ts-nocheck — Phase 3 tsc residual, Phase 4 deferred
-// jest mocking creates type mismatches; db is mocked with never type
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { searchProducts, getProductById, getBrands } from "@/lib/api/products";
 import { db } from "@/lib/db";
@@ -34,8 +32,8 @@ describe("Product API", () => {
         },
       ];
 
-      (db.product.findMany as vi.Mock).mockResolvedValue(mockProducts);
-      (db.product.count as vi.Mock).mockResolvedValue(1);
+      vi.mocked(db.product.findMany).mockResolvedValue(mockProducts);
+      vi.mocked(db.product.count).mockResolvedValue(1);
 
       const result = await searchProducts({ query: "test" });
 
@@ -53,8 +51,8 @@ describe("Product API", () => {
         },
       ];
 
-      (db.product.findMany as vi.Mock).mockResolvedValue(mockProducts);
-      (db.product.count as vi.Mock).mockResolvedValue(1);
+      vi.mocked(db.product.findMany).mockResolvedValue(mockProducts);
+      vi.mocked(db.product.count).mockResolvedValue(1);
 
       const result = await searchProducts({ category: "REAGENT" });
 
@@ -77,7 +75,7 @@ describe("Product API", () => {
         recommendations: [],
       };
 
-      (db.product.findUnique as vi.Mock).mockResolvedValue(mockProduct);
+      vi.mocked(db.product.findUnique).mockResolvedValue(mockProduct);
 
       const result = await getProductById("1");
 
@@ -90,7 +88,7 @@ describe("Product API", () => {
     });
 
     it("should return null if product not found", async () => {
-      (db.product.findUnique as vi.Mock).mockResolvedValue(null);
+      vi.mocked(db.product.findUnique).mockResolvedValue(null);
 
       const result = await getProductById("nonexistent");
 
@@ -104,7 +102,7 @@ describe("Product API", () => {
       //       따라서 mock 은 이미 distinct 가 적용된 결과를 반환해야 한다.
       const mockBrands = [{ brand: "Brand A" }, { brand: "Brand B" }];
 
-      (db.product.findMany as vi.Mock).mockResolvedValue(mockBrands);
+      vi.mocked(db.product.findMany).mockResolvedValue(mockBrands);
 
       const result = await getBrands();
 
