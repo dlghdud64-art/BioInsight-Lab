@@ -271,10 +271,12 @@ describe("POCreatedRecord (unified computed view)", () => {
       },
     });
 
-    // supplier master 변경은 dispatch readiness 를 blocked 로 돌려야 한다
-    expect(record.dispatchReadiness).toBe("blocked");
-    expect(["not_ready", "stale"]).toContain(record.supplierFacingPayloadStatus);
-    expect(record.blockingReasons.some((b) => b.severity === "hard")).toBe(true);
+    // supplier master 변경은 soft blocker 로 needs_review 에 떨어진다
+    // (canonical: dispatch-prep-governance-chain Scenario 5 에서 문서화 — supplier_profile_changed 는 soft)
+    // send 차단은 canCreateExecution guard 가 readiness !== "ready_to_send" 로 거부하여 달성.
+    expect(record.dispatchReadiness).toBe("needs_review");
+    expect(record.supplierFacingPayloadStatus).toBe("draft"); // soft only → draft (R4 와 일관)
+    expect(record.blockingReasons.some((b) => b.severity === "soft" && b.code === "supplier_profile_changed")).toBe(true);
 
     // send 계열은 전부 차단, 그러나 회수/보정/재진입은 살아있어야 한다
     expect(has(record.reentryAvailableActions, "send_now")).toBe(false);

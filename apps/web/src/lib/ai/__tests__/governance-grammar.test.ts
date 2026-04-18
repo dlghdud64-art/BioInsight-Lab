@@ -278,10 +278,14 @@ describe("Panel Grammar", () => {
 // ══════════════════════════════════════════════════════
 
 describe("Cross-registry Consistency", () => {
-  it("GG29: panel domains exist in stage grammar", () => {
-    const stageDomains = new Set(CHAIN_STAGE_GRAMMAR.map(s => s.domain));
+  it("GG29: panel.stage exists in stage grammar (cross-registry stage consistency)", () => {
+    // NOTE: panel.domain 은 "receiving_execution" 처럼 stage 내부의 실행-sub-domain 일 수 있다.
+    //       (e.g. receiving_prep stage 안에서 receiving_execution 도메인이 동작)
+    //       따라서 canonical cross-registry 계약은 "panel.stage 가 stage grammar 에 등록되어 있어야 한다" 이고,
+    //       panel.domain 은 STATUS_GRAMMAR / DOCK_ACTION_GRAMMAR 쪽 계약으로 별도 검증한다.
+    const stages = new Set(CHAIN_STAGE_GRAMMAR.map(s => s.stage));
     for (const panel of PANEL_GRAMMAR) {
-      expect(stageDomains).toContain(panel.domain);
+      expect(stages).toContain(panel.stage);
     }
   });
 

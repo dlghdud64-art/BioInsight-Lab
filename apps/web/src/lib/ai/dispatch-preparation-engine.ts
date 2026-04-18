@@ -96,5 +96,9 @@ export function buildDispatchPreparationObject(state: DispatchPreparationState):
 // ── Send Confirmation Handoff ──
 export interface SendConfirmationHandoff { dispatchPreparationObjectId: string; poCreatedObjectId: string; primaryRecipient: string; sendChannel: string; attachmentBundleSummary: string; outboundSummary: string; sendConfirmationReadiness: "ready" | "incomplete" | "blocked"; }
 export function buildSendConfirmationHandoff(obj: DispatchPreparationObject): SendConfirmationHandoff {
-  return { dispatchPreparationObjectId: obj.id, poCreatedObjectId: obj.poCreatedObjectId, primaryRecipient: obj.primaryRecipient, sendChannel: obj.sendChannel, attachmentBundleSummary: obj.attachmentBundleSummary, outboundSummary: obj.outboundSummary, sendConfirmationReadiness: obj.readinessSummary.includes("완료") ? "ready" : "incomplete" };
+  // NOTE: substring bug 방지 — "Send 준비 미완료" 도 "완료" 를 포함하므로
+  //       정확한 상태 문자열 매칭을 사용한다. canonical 은 buildDispatchPreparationObject
+  //       의 readinessSummary 분기와 1:1 정렬.
+  const isReady = obj.readinessSummary === "Send 준비 완료";
+  return { dispatchPreparationObjectId: obj.id, poCreatedObjectId: obj.poCreatedObjectId, primaryRecipient: obj.primaryRecipient, sendChannel: obj.sendChannel, attachmentBundleSummary: obj.attachmentBundleSummary, outboundSummary: obj.outboundSummary, sendConfirmationReadiness: isReady ? "ready" : "incomplete" };
 }

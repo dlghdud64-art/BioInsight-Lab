@@ -111,8 +111,11 @@ describe("Quote → Approval → PO Chain Governance", () => {
 
     expect(full.completedStages.length).toBe(3);
     expect(full.currentStage).toBe("po_conversion");
-    expect(full.overallProgress).toBe(50); // 3/6 = 50%
-    expect(full.stages.length).toBe(6);
+    // NOTE: QUOTE_CHAIN_STAGES canonical = 13 stages
+    //       (quote-approval-governance-engine.ts:55 — fulfillment 확장 전 6단계에서 확장됨)
+    //       3/13 = 23.07% → Math.floor = 23
+    expect(full.overallProgress).toBe(23);
+    expect(full.stages.length).toBe(13);
 
     // po_conversion should be eligible (previous completed + snapshot valid)
     const poConversion = full.stages.find(s => s.stage === "po_conversion");

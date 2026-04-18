@@ -228,9 +228,10 @@ describe("PO Created → Dispatch Chain", () => {
     expect(poCreatedIdx).toBeGreaterThan(sendReadinessIdx);
     expect(dispatchPrepIdx).toBeGreaterThan(poCreatedIdx);
 
-    // Full surface includes 8 stages
+    // Full surface includes 13 stages (canonical — quote-approval-governance-engine.ts:55)
+    // NOTE: fulfillment 확장 (receiving_prep/stock_release/reorder_decision 추가) 반영
     const fullSurface = buildQuoteChainFullSurface([], 100000, false, true);
-    expect(fullSurface.stages.length).toBe(8);
+    expect(fullSurface.stages.length).toBe(13);
   });
 
   it("C9: PO created decision options gating", () => {

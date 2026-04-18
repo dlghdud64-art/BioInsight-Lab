@@ -342,7 +342,11 @@ function buildDeterministicSummary(args: {
     if (b.depletionAdvancedDays > 0) {
       bullets.push(`예상 고갈 시점이 약 ${b.depletionAdvancedDays}일 앞당겨짐`);
     }
-    if (b.after.available < 0) {
+    // Overspend 판정: BudgetSnapshot.available 은 Math.max(0, ...) 로 clamp 되어
+    // 음수가 나오지 않는다. 따라서 "초과 발주" 는 orderAmount > before.available 로 판별한다.
+    // (canonical: 주문액이 현재 가용액을 초과하면 승인 차단)
+    const wouldOverspend = args.orderAmount > b.before.available;
+    if (wouldOverspend) {
       severity = "blocked";
       bullets.push("승인 시 예산 초과 — 차단 권장");
     } else if (b.riskEscalated) {

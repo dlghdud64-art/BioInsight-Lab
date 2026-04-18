@@ -466,7 +466,10 @@ describe("RD14: buildReorderDecisionGovSurface", () => {
 
     const surface = buildReorderDecisionGovSurface(state);
     expect(surface.canProcurementReentry).toBe(true);
-    expect(surface.statusLabel).toBe("재주문 필요");
+    // NOTE: canonical label = governance-grammar-registry.ts:171
+    //       status "reorder_required" → label "재주문 필수" (category=blocked)
+    //       primaryMessage 에는 "재주문 필요" 가 쓰이지만 statusLabel 은 grammar registry 소비.
+    expect(surface.statusLabel).toBe("재주문 필수");
   });
 
   it("terminal isTerminal=true", () => {

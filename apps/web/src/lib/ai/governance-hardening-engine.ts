@@ -512,7 +512,9 @@ export function createIdempotencyGuard(): IdempotencyGuard {
       let pruned = 0;
       const now = Date.now();
       for (const [k, fp] of fingerprints) {
-        if (now - new Date(fp.appliedAt).getTime() > maxAgeMs) {
+        // NOTE: maxAgeMs=0 은 "즉시 만료" canonical 의미이므로 `>=` 로 비교해야 한다.
+        //       (`>` 는 같은 ms tick 에서 0>0=false 로 오판 — governance-event-dedupe 와 동일 패턴)
+        if (now - new Date(fp.appliedAt).getTime() >= maxAgeMs) {
           fingerprints.delete(k);
           pruned++;
         }
@@ -681,8 +683,12 @@ export function createErrorTracker(): ErrorTracker {
     },
 
     getRecentErrors(windowMs) {
+      // NOTE: windowMs=0 canonical 의미는 "아무 에러도 포함 안 함" 이다.
+      //       `>=` 로 비교하면 같은 ms tick 에서 직전 기록된 에러가 포함되어 오판되므로
+      //       strict `>` 로 cutoff 이후 시점 에러만 포함한다.
+      //       (prune 은 "오래됨 판정" 이라 `>=` 가 canonical — 반대 방향의 boundary)
       const cutoff = Date.now() - windowMs;
-      return errors.filter(e => new Date(e.timestamp).getTime() >= cutoff);
+      return errors.filter(e => new Date(e.timestamp).getTime() > cutoff);
     },
 
     getConsecutiveFailures(objectId) {
