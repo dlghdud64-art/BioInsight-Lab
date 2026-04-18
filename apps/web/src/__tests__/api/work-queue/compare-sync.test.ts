@@ -1,17 +1,16 @@
-// @ts-nocheck — mockJsonResponse 재선언 등 test helper 타입 이슈 (Phase 4 deferred)
 /**
  * Behavioral tests for POST /api/work-queue/compare-sync
  *
  * Tests idempotency, duplicate prevention, reopen handling, stale cleanup.
  */
 
-const mockJsonResponse = (data, init) => ({
-  status: init?.status ?? 200,
-  json: async () => data,
-});
+import { mockJsonResponse } from "@/__tests__/helpers/response-mock";
 
 vi.mock("next/server", () => ({
-  NextResponse: { json: (data, init) => mockJsonResponse(data, init) },
+  NextResponse: {
+    json: (data: unknown, init?: { status?: number }) =>
+      mockJsonResponse(data, init),
+  },
 }));
 
 vi.mock("@/auth");
@@ -31,7 +30,8 @@ vi.mock("@/lib/work-queue/work-queue-service", () => ({
 }));
 
 vi.mock("@/lib/api-error-handler", () => ({
-  handleApiError: vi.fn((error) => mockJsonResponse({ error: error?.message }, { status: 500 })),
+  handleApiError: vi.fn((error: Error | undefined) =>
+    mockJsonResponse({ error: error?.message }, { status: 500 })),
 }));
 
 const { db } = require("@/lib/db");

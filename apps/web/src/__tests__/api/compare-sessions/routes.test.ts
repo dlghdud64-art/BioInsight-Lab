@@ -1,22 +1,18 @@
-// @ts-nocheck — mockJsonResponse 재선언 등 test helper 타입 이슈 (Phase 4 deferred)
 /**
  * Route integration tests for Compare Sessions API
  *
  * Uses CJS require() to avoid ESM/next-auth import chain issues.
  */
 
-// jest, describe, it, expect, beforeEach are provided as globals by Jest
-
-// ── Response shim ──
-const mockJsonResponse = (data, init) => ({
-  status: init?.status ?? 200,
-  json: async () => data,
-});
+import { mockJsonResponse } from "@/__tests__/helpers/response-mock";
 
 // ── Module mocks ──
 vi.mock("next/server", () => ({
   NextRequest: class MockNextRequest {
-    constructor(url, init) {
+    url: string;
+    method: string;
+    private _body: unknown;
+    constructor(url: string | URL, init?: { method?: string; body?: string }) {
       this.url = typeof url === "string" ? url : url.toString();
       this.method = init?.method ?? "GET";
       this._body = init?.body ? JSON.parse(init.body) : null;
@@ -24,7 +20,8 @@ vi.mock("next/server", () => ({
     async json() { return this._body; }
   },
   NextResponse: {
-    json: (data, init) => mockJsonResponse(data, init),
+    json: (data: unknown, init?: { status?: number }) =>
+      mockJsonResponse(data, init),
   },
 }));
 
@@ -49,7 +46,8 @@ vi.mock("@/lib/work-queue/work-queue-service", () => ({
 
 vi.mock("@/lib/activity-log", () => ({ createActivityLog: vi.fn() }));
 vi.mock("@/lib/api-error-handler", () => ({
-  handleApiError: vi.fn((error, context) => mockJsonResponse({ error: error?.message ?? "err" }, { status: 500 })),
+  handleApiError: vi.fn((error: Error | undefined) =>
+    mockJsonResponse({ error: error?.message ?? "err" }, { status: 500 })),
 }));
 vi.mock("@/lib/api/products", () => ({ getProductsByIds: vi.fn() }));
 vi.mock("@/lib/compare-workspace/compare-engine", () => ({ computeMultiProductDiff: vi.fn() }));
