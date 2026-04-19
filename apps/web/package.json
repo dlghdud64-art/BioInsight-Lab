@@ -17,6 +17,7 @@
     "db:make-admin": "tsx scripts/make-admin.ts",
     "prisma:migrate": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
+    "csrf:smoke": "node scripts/csrf-smoke.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
