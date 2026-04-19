@@ -1,9 +1,17 @@
 # Implementation Plan: Batch 10 CSRF soft_enforce Rollout
 
-- **Status:** ⏳ Pending
+- **Status:** ✅ Closed (Superseded — full_enforce 직행)
 - **Started:** 2026-04-19
-- **Last Updated:** 2026-04-19
-- **Estimated Completion:** 2026-04-22 (24~48h monitoring 포함)
+- **Last Updated:** 2026-04-20
+- **Estimated Completion:** N/A
+
+> ⚠️ **계획 변경 (2026-04-20):**
+> 개발 단계로 실 유저 트래픽이 없어 phased rollout(report_only → soft_enforce → full_enforce)의
+> 24h soak 모니터링이 의미 없음. **`full_enforce` 직행**으로 결정.
+>
+> - `LABAXIS_CSRF_MODE=full_enforce` Vercel env 변경 → redeploy로 완료
+> - csrf-smoke.mjs 스크립트 삭제 (실 HTTP 트래픽 기반 → 개발 환경에서 불필요)
+> - 이 문서는 히스토리 보존 목적으로 유지. 실 운영 전환 시 참고용.
 
 **CRITICAL INSTRUCTIONS**: After completing each phase:
 1. ✅ Check off completed task checkboxes
@@ -13,11 +21,13 @@
 5. 📝 Document learnings in Notes section
 6. ➡️ Only then proceed to the next phase
 
-⛔ DO NOT skip quality gates or proceed with failing checks
-⛔ DO NOT proceed with unresolved source-of-truth conflicts
-⛔ DO NOT introduce dead button / no-op / placeholder success
-⛔ DO NOT flip env without Phase 1 baseline 완료
-⛔ DO NOT escalate to full_enforce in this plan (별도 P1)
+~~⛔ DO NOT skip quality gates or proceed with failing checks~~
+~~⛔ DO NOT proceed with unresolved source-of-truth conflicts~~
+~~⛔ DO NOT introduce dead button / no-op / placeholder success~~
+~~⛔ DO NOT flip env without Phase 1 baseline 완료~~
+~~⛔ DO NOT escalate to full_enforce in this plan (별도 P1)~~
+
+> 위 제약은 실 운영 phased rollout 전제 — **개발 단계 full_enforce 직행으로 전면 폐기**
 
 ---
 
@@ -409,29 +419,41 @@ Batch 10 CSRF 보호 시스템을 production 환경에서 `report_only` → `sof
 
 ## 11. Progress Tracking
 
-- **Overall completion:** 0% (Phase 0 대기)
-- **Current phase:** Phase 0 (Pre-flight & Truth Lock)
-- **Current blocker:** 없음 — 사장님 Phase 0 착수 대기
-- **Next validation step:** Vercel production env `LABAXIS_CSRF_MODE` 현재 값 확인
+- **Overall completion:** 100% (Superseded — full_enforce 직행 완료)
+- **Current phase:** Closed
+- **Current blocker:** 없음
+- **Next validation step:** 없음 (Vercel `LABAXIS_CSRF_MODE=full_enforce` 설정 → 완료)
 
-**Phase Checklist:**
-- [ ] Phase 0 complete
-- [ ] Phase 1 complete
-- [ ] Phase 2 complete
-- [ ] Phase 3 complete
-- [ ] Phase 4 complete
+**Phase Checklist (Superseded):**
+- [x] Phase 0 → 불필요 (개발 단계 직행 결정)
+- [x] Phase 1 → T=0h 스냅샷 기록 완료 후 폐기 (실 트래픽 없음)
+- [x] Phase 2 → `full_enforce` 직행으로 대체
+- [x] Phase 3 → 생략 (사용자 없음)
+- [x] Phase 4 → 본 문서로 closeout 완료
+
+**실제 적용된 내용:**
+- `LABAXIS_CSRF_MODE=full_enforce` Vercel production env 설정 (사장님 직접)
+- csrf-smoke.mjs 삭제, `csrf:smoke` script 제거 (commit `6bc6310f` → reverted)
 
 ---
 
 ## 12. Notes & Learnings
 
 ### Blockers Encountered
-- (기록 대기)
+- 없음
 
 ### Implementation Notes
-- CSRF_COVERAGE_MATRIX_V2.md line 169 prerequisite ("Raw fetch gap 해소 후")는 실제 block 집합과 gap 집합 disjoint 근거로 soft_enforce에는 적용 안 함. full_enforce 승격 시 다시 적용되어야 함.
-- 본 plan은 **soft_enforce 진입 + 24~48h 안정화까지**만 scope. full_enforce는 별도 P1으로 분리하여 raw fetch gap 선결.
-- #47 clean unlock 완료 (2026-04-19, 49/58 = 84.5%, 9 defer tracker #50/#63)로 release-prep 큐 다음 항목으로 진입.
+- **2026-04-20 결정**: 개발 단계 (실 유저 트래픽 없음) → phased rollout 전체 폐기, `full_enforce` 직행
+- phased rollout은 production 서비스 전환 시 사용하는 패턴. 개발 단계에서는 오히려 `full_enforce`가
+  로컬 개발/테스트 중 CSRF 미부착 fetch를 조기에 잡아내므로 더 적합.
+- T=0h 스냅샷 (Phase 1 기록)은 히스토리 보존 목적으로 유지.
+- csrf-smoke.mjs 스크립트: 작성 후 즉시 삭제 (실 HTTP 기반이라 node_modules 없는 환경에서도 불필요).
+- CSRF_COVERAGE_MATRIX_V2.md line 169 prerequisite ("Raw fetch gap 해소 후")는
+  full_enforce 시 raw fetch gap(표준 route 29 files) 선결 여전히 유효 — 별도 추적 필요.
+
+### Deferred
+- Raw fetch gap 29 files CSRF 부착 → full_enforce 안정화 이후 별도 P1 (표준 route 보호 완성)
+- CSRF_COVERAGE_MATRIX_V2.md 분모 drift (268 vs 269) 통일 → 별도 cleanup
 
 ### Deferred
 - Raw fetch gap 29 files CSRF 부착 → full_enforce 선결 P1
