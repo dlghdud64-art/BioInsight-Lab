@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P2-1 Slice B — Recovery Coordinator Persistence Integration Tests
  *
@@ -19,39 +19,38 @@
  * Babel constraints: var + require(), no `import type`, no `as any`.
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-var {
+import {
   _resetPersistenceBootstrap,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+} from "../core/persistence/bootstrap";
 
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
+import { _resetAdapterRegistry } from "../core/persistence/factory";
 
-var {
+import {
   createCanonicalBaseline,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createSnapshotPair,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+} from "../core/baseline/snapshot-manager";
 
-var {
+import {
   createAuthorityLine,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
-var {
+import {
   escalateIncident,
   acknowledgeIncident,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
-var { _resetAuditEvents } = require("../core/audit/audit-events");
+import { _resetAuditEvents } from "../core/audit/audit-events";
 
-var {
+import {
   requestRecovery,
   validateRecovery,
   executeRecoveryAsync,
@@ -59,16 +58,16 @@ var {
   getRecoveryStatusAsync,
   detectRecoveryResidue,
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+} from "../core/recovery/recovery-coordinator";
 
-var {
+import {
   activateMutationFreeze,
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+} from "../core/containment/mutation-freeze";
 
-var { logBridgeFailure } = require("../core/persistence/bridge-logger");
+import { logBridgeFailure } from "../core/persistence/bridge-logger";
 
-var { runRecoveryDiagnostics } = require("../core/recovery/recovery-diagnostics");
+import { runRecoveryDiagnostics } from "../core/recovery/recovery-diagnostics";
 
 // ── Scope Data for Snapshots ──
 

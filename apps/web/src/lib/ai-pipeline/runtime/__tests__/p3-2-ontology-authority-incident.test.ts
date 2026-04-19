@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P3 Slice 2 — Authority + Incident Ontology Adapter Tests (12 tests)
  *
@@ -14,14 +14,14 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { AuthorityOntologyAdapter, toAuthorityPatch } = require("../core/ontology/authority-adapter");
-var { IncidentOntologyAdapter } = require("../core/ontology/incident-adapter");
-var { normalizeDateWithDiagnostic } = require("../core/ontology/date-normalizer");
-var { AUTHORITY_ALIASES, INCIDENT_ALIASES } = require("../core/ontology/common-normalizers");
-var { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
+import { AuthorityOntologyAdapter, toAuthorityPatch } from "../core/ontology/authority-adapter";
+import { IncidentOntologyAdapter } from "../core/ontology/incident-adapter";
+import { normalizeDateWithDiagnostic } from "../core/ontology/date-normalizer";
+import { AUTHORITY_ALIASES, INCIDENT_ALIASES } from "../core/ontology/common-normalizers";
+import { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
 // ── Test Fixtures ──
 

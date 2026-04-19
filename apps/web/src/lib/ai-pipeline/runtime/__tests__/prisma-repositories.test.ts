@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1-1 Slice-1C — Prisma Repository Tests
  *
@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Import persistence types (no Prisma dependency) ──
-const {
+import {
   ok,
   fail,
   INCIDENT_STATUS_LIFECYCLE,
@@ -24,7 +24,7 @@ const {
   resolveAdapters,
   isAdapterRegistered,
   _resetAdapterRegistry,
-} = require("../core/persistence");
+} from "../core/persistence";
 
 // ── Mock Prisma Client Builder ──
 

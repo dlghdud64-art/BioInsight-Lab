@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P5 Slice 1 — Startup Async Migration (7 tests)
  *
@@ -16,51 +16,51 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var {
+import {
   _resetPersistenceBootstrap,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
-var {
+} from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry } from "../core/persistence/factory";
+import {
   createCanonicalBaseline,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
+} from "../core/baseline/baseline-registry";
+import {
   createSnapshotPair,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
+} from "../core/baseline/snapshot-manager";
+import {
   createAuthorityLine,
   _resetAuthorityRegistry,
   checkAuthorityIntegrity,
-} = require("../core/authority/authority-registry");
-var {
+} from "../core/authority/authority-registry";
+import {
   escalateIncident,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var {
+} from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import {
   requestRecovery,
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
+} from "../core/recovery/recovery-coordinator";
+import {
   activateMutationFreeze,
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
-var {
+} from "../core/containment/mutation-freeze";
+import {
   runStartupRecoveryScan,
   evaluateResumeReadiness,
-} = require("../core/recovery/recovery-startup");
-var {
+} from "../core/recovery/recovery-startup";
+import {
   runRecoveryPreconditions,
-} = require("../core/recovery/recovery-preconditions");
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { _resetCanonicalAudit } = require("../core/observability/canonical-event-schema");
-var {
+} from "../core/recovery/recovery-preconditions";
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import {
   SYNC_COMPAT_SHUTDOWN_INVENTORY,
   evaluateP4Acceptance,
-} = require("../core/ontology/p3-closeout");
+} from "../core/ontology/p3-closeout";
 
 // ── Scope Data ──
 

@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P3 Slice 3B — Snapshot Full-Fidelity Persistence Tests (9 tests)
  *
@@ -16,12 +16,12 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { SnapshotOntologyAdapter } = require("../core/ontology/snapshot-adapter");
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
-var {
+import { SnapshotOntologyAdapter } from "../core/ontology/snapshot-adapter";
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import {
   createSnapshotPair,
   getSnapshot,
   getSnapshotFromRepo,
@@ -29,7 +29,7 @@ var {
   canEnterActiveRuntimeFromRepo,
   computeScopeChecksum,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+} from "../core/baseline/snapshot-manager";
 
 // ── Test Fixtures ──
 

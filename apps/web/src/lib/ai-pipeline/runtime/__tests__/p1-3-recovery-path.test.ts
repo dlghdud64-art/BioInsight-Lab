@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1-3: INCIDENT_LOCKDOWN Recovery Path Tests
  *
@@ -9,76 +9,76 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Imports ──
 
-var {
+import {
   _resetPersistenceBootstrap,
   _resetAdapterRegistry,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+} from "../core/persistence/bootstrap";
 
-var {
+import {
   _resetAdapterRegistry: _resetReg,
-} = require("../core/persistence/factory");
+} from "../core/persistence/factory";
 
-var {
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   assertSingleCanonical,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createSnapshotPair,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+} from "../core/baseline/snapshot-manager";
 
-var {
+import {
   createAuthorityLine,
   checkAuthorityIntegrity,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
-var {
+import {
   escalateIncident,
   acknowledgeIncident,
   getIncidents,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
-var {
+import {
   _resetAuditEvents,
   getAuditEvents,
-} = require("../core/audit/audit-events");
+} from "../core/audit/audit-events";
 
-var {
+import {
   requestRecovery,
   validateRecovery,
   executeRecoveryAsync,
   verifyRecovery,
   getRecoveryStatus,
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+} from "../core/recovery/recovery-coordinator";
 
-var {
+import {
   withLock,
   recoveryLockKey,
   detectStaleLocks,
-} = require("../core/persistence/lock-manager");
+} from "../core/persistence/lock-manager";
 
-var {
+import {
   guardLifecycleTransition,
-} = require("../core/runtime/transition-guard");
+} from "../core/runtime/transition-guard";
 
-var {
+import {
   checkActionPermission,
-} = require("../core/runtime/action-permission-map");
+} from "../core/runtime/action-permission-map";
 
-var { LOCK_REASON_CODES } = require("../core/persistence/lock-types");
+import { LOCK_REASON_CODES } from "../core/persistence/lock-types";
 
-var {
+import {
   activateMutationFreeze,
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+} from "../core/containment/mutation-freeze";
 
 // ── Scope Data for Snapshots ──
 

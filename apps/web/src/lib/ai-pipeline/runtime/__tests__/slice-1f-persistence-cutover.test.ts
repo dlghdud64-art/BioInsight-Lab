@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1-1 Slice-1F: Persistence Cutover Tests
  */
@@ -7,63 +7,63 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Imports ──
 
-var {
+import {
   logBridgeFailure,
   TRUTH_SOURCE_CONTRACT,
-} = require("../core/persistence/bridge-logger");
+} from "../core/persistence/bridge-logger";
 
-var {
+import {
   baselineSnapshotToCreateInput,
-} = require("../core/persistence/snapshot-adapter");
+} from "../core/persistence/snapshot-adapter";
 
-var {
+import {
   bootstrapPersistence,
   getPersistenceAdapters,
   _resetPersistenceBootstrap,
   _resetAdapterRegistry,
-} = require("../core/persistence");
+} from "../core/persistence";
 
-var {
+import {
   createSnapshotPair,
   getSnapshot,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+} from "../core/baseline/snapshot-manager";
 
-var {
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   getCanonicalBaselineFromRepo,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createAuthorityLine,
   getAuthorityLine,
   getAuthorityLineFromRepo,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
-var {
+import {
   escalateIncident,
   getIncidents,
   getIncidentsFromRepo,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
-var {
+import {
   emitStabilizationAuditEvent,
   getAuditEvents,
   getAuditEventsFromRepo,
   _resetAuditEvents,
-} = require("../core/audit/audit-events");
+} from "../core/audit/audit-events";
 
-var {
+import {
   writeCanonicalAudit,
   createCanonicalEvent,
   getCanonicalAuditLog,
   getCanonicalAuditLogFromRepo,
   _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
+} from "../core/observability/canonical-event-schema";
 
 // ── Setup ──
 

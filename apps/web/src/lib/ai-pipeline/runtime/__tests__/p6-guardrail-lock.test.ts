@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P6 — Async-only Guardrail Lock (14 tests)
  *
@@ -16,24 +16,24 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-var fs = require("fs");
-var path = require("path");
+import * as fs from "fs";
+import * as path from "path";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var {
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import {
   _resetPersistenceBootstrap,
   bootstrapPersistence,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry } = require("../core/persistence/factory");
-var { _resetBaselineRegistry } = require("../core/baseline/baseline-registry");
-var { _resetSnapshotStore } = require("../core/baseline/snapshot-manager");
-var { _resetAuthorityRegistry } = require("../core/authority/authority-registry");
-var { _resetIncidents } = require("../core/incidents/incident-escalation");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var { _resetRecoveryCoordinator } = require("../core/recovery/recovery-coordinator");
-var { _resetMutationFreeze } = require("../core/containment/mutation-freeze");
-var { _resetCanonicalAudit } = require("../core/observability/canonical-event-schema");
-var {
+} from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry } from "../core/persistence/factory";
+import { _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import { _resetCanonicalAudit } from "../core/observability/canonical-event-schema";
+import {
   SYNC_COMPAT_SHUTDOWN_INVENTORY,
   CLOSURE_BASELINES,
   FINAL_MIGRATION_STATE,
@@ -43,7 +43,7 @@ var {
   evaluateP4Acceptance,
   evaluateP5Acceptance,
   evaluateP6Acceptance,
-} = require("../core/ontology/p3-closeout");
+} from "../core/ontology/p3-closeout";
 
 // ── Helpers ──
 

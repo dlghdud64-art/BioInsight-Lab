@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1 Closeout Validation — 10 Tests / 4 Groups
  *
@@ -14,58 +14,58 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Persistence ──
 
-var {
+import {
   _resetPersistenceBootstrap,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
+} from "../core/persistence/bootstrap";
 
-var {
+import {
   _resetAdapterRegistry: _resetReg,
-} = require("../core/persistence/factory");
+} from "../core/persistence/factory";
 
-var {
+import {
   createPrismaAdapters,
-} = require("../core/persistence");
+} from "../core/persistence";
 
 // ── Baseline & Snapshot ──
 
-var {
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   assertSingleCanonical,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createSnapshotPair,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
+} from "../core/baseline/snapshot-manager";
 
 // ── Authority ──
 
-var {
+import {
   createAuthorityLine,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
 // ── Incidents ──
 
-var {
+import {
   escalateIncident,
   acknowledgeIncident,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
 // ── Audit ──
 
-var {
+import {
   _resetAuditEvents,
-} = require("../core/audit/audit-events");
+} from "../core/audit/audit-events";
 
 // ── Canonical Events ──
 
-var {
+import {
   createCanonicalEvent,
   writeCanonicalAudit,
   getCanonicalAuditLog,
@@ -73,45 +73,45 @@ var {
   validateHops,
   _resetCanonicalAudit,
   RECOVERY_FLOW_HOPS,
-} = require("../core/observability/canonical-event-schema");
+} from "../core/observability/canonical-event-schema";
 
 // ── Recovery ──
 
-var {
+import {
   requestRecovery,
   validateRecovery,
   executeRecoveryAsync,
   verifyRecovery,
   getRecoveryStatus,
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
+} from "../core/recovery/recovery-coordinator";
 
-var {
+import {
   emitRecoveryCanonicalEvent,
-} = require("../core/recovery/recovery-canonical-bridge");
+} from "../core/recovery/recovery-canonical-bridge";
 
-var {
+import {
   checkAuditChainReconstructable,
-} = require("../core/recovery/recovery-preconditions");
+} from "../core/recovery/recovery-preconditions";
 
-var {
+import {
   runRecoveryDiagnostics,
-} = require("../core/recovery/recovery-diagnostics");
+} from "../core/recovery/recovery-diagnostics";
 
 // ── Containment ──
 
-var {
+import {
   activateMutationFreeze,
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+} from "../core/containment/mutation-freeze";
 
 // ── Lock ──
 
-var {
+import {
   withLock,
   recoveryLockKey,
   detectStaleLocks,
-} = require("../core/persistence/lock-manager");
+} from "../core/persistence/lock-manager";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Helpers

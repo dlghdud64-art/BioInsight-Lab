@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P2-4A — Real PostgreSQL Multi-Process Contention Validation
  *
@@ -13,8 +13,8 @@
 
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from "vitest";
 
-var { createPrismaAdapters } = require("../core/persistence");
-var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
+import { createPrismaAdapters } from "../core/persistence";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Enhanced Concurrent Mock (fallback when real PostgreSQL unavailable)

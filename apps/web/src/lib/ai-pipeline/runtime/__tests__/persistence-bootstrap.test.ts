@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1-1 Slice-1E: Persistence Bootstrap & Legacy Bridge Tests
  */
@@ -7,7 +7,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 
 // ── Helpers & Imports ──
 
-var {
+import {
   bootstrapPersistence,
   getPersistenceAdapters,
   isPersistenceBootstrapped,
@@ -16,39 +16,39 @@ var {
   normalizeDate,
   normalizeDateOptional,
   createMemoryAdapters,
-} = require("../core/persistence");
+} from "../core/persistence";
 
-var {
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createAuthorityLine,
   getAuthorityLine,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
-var {
+import {
   escalateIncident,
   getIncidents,
   acknowledgeIncident,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
-var {
+import {
   emitStabilizationAuditEvent,
   getAuditEvents,
   _resetAuditEvents,
-} = require("../core/audit/audit-events");
+} from "../core/audit/audit-events";
 
-var {
+import {
   writeCanonicalAudit,
   getCanonicalAuditLog,
   createCanonicalEvent,
   _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
+} from "../core/observability/canonical-event-schema";
 
 // ── Setup ──
 

@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P3 Slice 6 — Closeout Validation (6 tests)
  *
@@ -13,49 +13,49 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap } = require("../core/persistence/bootstrap");
-var {
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap } from "../core/persistence/bootstrap";
+import {
   createSnapshotPair,
   getSnapshot,
   getSnapshotFromRepo,
   _resetSnapshotStore,
   _assertNoDirectStoreAccess: _assertSnapshotGuard,
-} = require("../core/baseline/snapshot-manager");
-var {
+} from "../core/baseline/snapshot-manager";
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   _resetBaselineRegistry,
   _assertNoDirectStoreAccess: _assertBaselineGuard,
-} = require("../core/baseline/baseline-registry");
-var {
+} from "../core/baseline/baseline-registry";
+import {
   createAuthorityLine,
   checkAuthorityIntegrity,
   _resetAuthorityRegistry,
   _assertNoDirectStoreAccess: _assertAuthorityGuard,
-} = require("../core/authority/authority-registry");
-var {
+} from "../core/authority/authority-registry";
+import {
   _resetIncidents,
   _assertNoDirectStoreAccess: _assertIncidentGuard,
-} = require("../core/incidents/incident-escalation");
-var {
+} from "../core/incidents/incident-escalation";
+import {
   _resetAuditEvents,
   _assertNoDirectStoreAccess: _assertAuditGuard,
-} = require("../core/audit/audit-events");
-var {
+} from "../core/audit/audit-events";
+import {
   _resetCanonicalAudit,
   _assertNoDirectStoreAccess: _assertCanonicalAuditGuard,
-} = require("../core/observability/canonical-event-schema");
-var {
+} from "../core/observability/canonical-event-schema";
+import {
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
+} from "../core/recovery/recovery-coordinator";
+import {
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+} from "../core/containment/mutation-freeze";
 
-var {
+import {
   ONTOLOGY_ADAPTER_REGISTRY,
   REPO_FIRST_CONSUMER_REGISTRY,
   DEPRECATED_SYNC_REGISTRY,
@@ -63,7 +63,7 @@ var {
   LEGACY_SHUTDOWN_PLAN,
   getCompatUsageSummary,
   evaluateP3Acceptance,
-} = require("../core/ontology/p3-closeout");
+} from "../core/ontology/p3-closeout";
 
 // ── Test Fixtures ──
 

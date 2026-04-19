@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P3 Slice 5 — Remaining Consumer Cutover + Legacy Deprecation (9 tests)
  *
@@ -16,51 +16,51 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { getDiagnosticLog, _resetDiagnostics } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
-var {
+import { getDiagnosticLog, _resetDiagnostics } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
+import {
   createSnapshotPair,
   _resetSnapshotStore,
-} = require("../core/baseline/snapshot-manager");
-var {
+} from "../core/baseline/snapshot-manager";
+import {
   createCanonicalBaseline,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
-var {
+} from "../core/baseline/baseline-registry";
+import {
   createAuthorityLine,
   checkAuthorityIntegrity,
   checkAuthorityIntegrityFromRepo,
   _resetAuthorityRegistry,
   _assertNoDirectStoreAccess: _assertNoDirectStoreAccessAuthority,
-} = require("../core/authority/authority-registry");
-var {
+} from "../core/authority/authority-registry";
+import {
   escalateIncident,
   hasUnacknowledgedIncidentsFromRepo,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
-var {
+} from "../core/incidents/incident-escalation";
+import {
   emitStabilizationAuditEvent,
   getAuditEventsFromRepo,
   _resetAuditEvents,
-} = require("../core/audit/audit-events");
-var {
+} from "../core/audit/audit-events";
+import {
   writeCanonicalAudit,
   createCanonicalEvent,
   buildTimeline,
   buildTimelineFromRepo,
   _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var {
+} from "../core/observability/canonical-event-schema";
+import {
   runRecoveryPreconditions,
-} = require("../core/recovery/recovery-preconditions");
-var {
+} from "../core/recovery/recovery-preconditions";
+import {
   _resetRecoveryCoordinator,
-} = require("../core/recovery/recovery-coordinator");
-var {
+} from "../core/recovery/recovery-coordinator";
+import {
   _resetMutationFreeze,
-} = require("../core/containment/mutation-freeze");
+} from "../core/containment/mutation-freeze";
 
 // ── Test Fixtures ──
 

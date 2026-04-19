@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1 Closeout — Real DB Contention Validation
  *
@@ -16,32 +16,32 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Prisma Adapter Imports (actual classes, not memory backend) ──
 
-var { createPrismaAdapters } = require("../core/persistence");
-var { PrismaLockRepository } = require("../core/persistence/prisma/lock");
+import { createPrismaAdapters } from "../core/persistence";
+import { PrismaLockRepository } from "../core/persistence/prisma/lock";
 
 // ── Canonical/Recovery for diagnostics ──
 
-var {
+import {
   _resetPersistenceBootstrap,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence/bootstrap");
-var { _resetAdapterRegistry: _resetReg } = require("../core/persistence/factory");
-var { _resetBaselineRegistry } = require("../core/baseline/baseline-registry");
-var { _resetAuthorityRegistry } = require("../core/authority/authority-registry");
-var { _resetIncidents } = require("../core/incidents/incident-escalation");
-var { _resetSnapshotStore } = require("../core/baseline/snapshot-manager");
-var { _resetAuditEvents } = require("../core/audit/audit-events");
-var { _resetRecoveryCoordinator } = require("../core/recovery/recovery-coordinator");
-var { _resetMutationFreeze } = require("../core/containment/mutation-freeze");
-var {
+} from "../core/persistence/bootstrap";
+import { _resetAdapterRegistry: _resetReg } from "../core/persistence/factory";
+import { _resetBaselineRegistry } from "../core/baseline/baseline-registry";
+import { _resetAuthorityRegistry } from "../core/authority/authority-registry";
+import { _resetIncidents } from "../core/incidents/incident-escalation";
+import { _resetSnapshotStore } from "../core/baseline/snapshot-manager";
+import { _resetAuditEvents } from "../core/audit/audit-events";
+import { _resetRecoveryCoordinator } from "../core/recovery/recovery-coordinator";
+import { _resetMutationFreeze } from "../core/containment/mutation-freeze";
+import {
   createCanonicalEvent,
   writeCanonicalAudit,
   buildTimeline,
   _resetCanonicalAudit,
-} = require("../core/observability/canonical-event-schema");
-var { emitRecoveryCanonicalEvent } = require("../core/recovery/recovery-canonical-bridge");
-var { runRecoveryDiagnostics } = require("../core/recovery/recovery-diagnostics");
+} from "../core/observability/canonical-event-schema";
+import { emitRecoveryCanonicalEvent } from "../core/recovery/recovery-canonical-bridge";
+import { runRecoveryDiagnostics } from "../core/recovery/recovery-diagnostics";
 
 // ══════════════════════════════════════════════════════════════════════════════
 // Mock Prisma Client — simulates PostgreSQL constraints at adapter level

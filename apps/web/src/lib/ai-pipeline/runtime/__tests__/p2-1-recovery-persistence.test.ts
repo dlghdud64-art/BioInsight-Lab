@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P2-1 Slice A — Recovery Record Persistence Tests
  *
@@ -15,10 +15,9 @@
  * Babel constraints: var + require(), no `import type`, no `as any`.
  */
 
-/* eslint-disable @typescript-eslint/no-var-requires */
-var { MemoryRecoveryRecordRepository } = require("../core/persistence/memory/recovery-record");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { _resetPersistenceBootstrap, bootstrapPersistence } = require("../core/persistence/bootstrap");
+import { MemoryRecoveryRecordRepository } from "../core/persistence/memory/recovery-record";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { _resetPersistenceBootstrap, bootstrapPersistence } from "../core/persistence/bootstrap";
 
 function buildRecoveryInput(overrides) {
   var base = {

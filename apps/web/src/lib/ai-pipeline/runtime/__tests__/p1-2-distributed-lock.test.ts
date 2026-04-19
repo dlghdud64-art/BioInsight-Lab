@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P1-2: Multi-Instance Uniqueness / Distributed Lock Tests
  *
@@ -9,34 +9,34 @@ import { describe, it, expect, beforeEach } from "vitest";
 
 // ── Imports ──
 
-var {
+import {
   _resetPersistenceBootstrap,
   _resetAdapterRegistry,
   bootstrapPersistence,
   getPersistenceAdapters,
-} = require("../core/persistence");
+} from "../core/persistence";
 
-var {
+import {
   createCanonicalBaseline,
   getCanonicalBaseline,
   _resetBaselineRegistry,
-} = require("../core/baseline/baseline-registry");
+} from "../core/baseline/baseline-registry";
 
-var {
+import {
   createAuthorityLine,
   requestTransfer,
   requestTransferAsync,
   getAuthorityLine,
   _resetAuthorityRegistry,
-} = require("../core/authority/authority-registry");
+} from "../core/authority/authority-registry";
 
-var {
+import {
   escalateIncident,
   escalateIncidentAsync,
   _resetIncidents,
-} = require("../core/incidents/incident-escalation");
+} from "../core/incidents/incident-escalation";
 
-var {
+import {
   withLock,
   acquireLock,
   releaseLock,
@@ -46,11 +46,11 @@ var {
   authorityLineLockKey,
   snapshotRestoreLockKey,
   incidentStreamLockKey,
-} = require("../core/persistence/lock-manager");
+} from "../core/persistence/lock-manager";
 
-var { MemoryLockRepository } = require("../core/persistence/memory/lock");
+import { MemoryLockRepository } from "../core/persistence/memory/lock";
 
-var { LOCK_REASON_CODES } = require("../core/persistence/lock-types");
+import { LOCK_REASON_CODES } from "../core/persistence/lock-types";
 
 // ── Setup ──
 

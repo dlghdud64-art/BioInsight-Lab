@@ -1,9 +1,14 @@
 # Implementation Plan: Test-Only @ts-nocheck 잔여 제거
 
-- **Status:** 🔄 In Progress
+- **Status:** ✅ **Complete — test-only residual governance 정합 완료** (2026-04-19)
 - **Started:** 2026-04-18
-- **Last Updated:** 2026-04-18
-- **Estimated Completion:** 2026-04-20
+- **Last Updated:** 2026-04-19
+- **Estimated Completion:** 2026-04-20 (실제 완료 2026-04-19, 1일 선행)
+
+**#47 완료 정의 (대표님 재정의, 2026-04-19):**
+이 작업은 "제품 기능" 개발이 아니라 **release-prep quality gate governance 정합**이다.
+완료 = (A) production/runtime suppression 0 확인, (B) 모든 test-only residual에 tracker + reason 동시 존재, (C) live grep count와 plan count 일치, (D) 실제 제거가 더 필요한 항목은 별도 residual tracker로 이관.
+"42건 전부 제거"는 목표가 아니다. 42건을 한번에 태우지 말 것.
 
 **CRITICAL INSTRUCTIONS**: After completing each phase:
 1. ✅ Check off completed task checkboxes
@@ -35,7 +40,7 @@
 - `vitest.setup.ts` — canonical test setup
 - `apps/web/tsconfig.json` — strict 설정 확인 (Phase 0)
 - tracker `#46 Vitest 81 failing tests 원인별 분류 및 우선순위 지정` completed — mock 타입 이슈 상당수 자연 해결 추정
-- tracker `#53 ai-pipeline runtime 34개 테스트 require() → import 이관` **in_progress** — 본 plan `apps/web/src/lib/ai-pipeline/**` 36개 cluster와 인접. Phase 0에서 충돌 확인.
+- tracker `#53 ai-pipeline runtime 34개 테스트 require() → import 이관` **completed (2026-04-19)** — 34 files, 323 top-level requires → imports, 5 block eslint-disable removed, +289 tests newly passing. 상세 `docs/plans/PLAN_ai-pipeline-require-import-migration.md`. 본 plan의 @ts-nocheck 주석은 그대로 유지 (assertion drift는 #63으로 격리, @ts-nocheck 제거는 #63 close 시 동반).
 
 **Conflicts Found:**
 - 위임 문서는 "94개 test 파일"로 기록 → 실측은 **test 92 + non-test 2**. non-test 2개는 본 plan 범위에서 제외.
@@ -377,7 +382,9 @@ Red-Green-Refactor 엄수.
 
 ### Phase 4: Residual Hybrid 처리 + Closeout
 **Goal:** Pattern-level quick win (4a/4b) + 큰 덩어리 tracker 이관 (4c/4d) + non-test 2개 tracker 제안 + plan closeout.
-- Status: [ ] Pending | [ ] In Progress | [ ] Complete
+- Status: [ ] Pending | [ ] In Progress | [x] **Complete (2026-04-19)**
+- **commits:** `dc93c6cf` (4a helper 추출) / `4a5b1aae` (4b vi.mocked 치환) / `bdd8932e` (4c/4d 코멘트 tracker 갱신) / `9736a00f` (regression 해소) / `7dd9fb72` (plan 문서)
+- **최종 성과:** test 92 → 42 remaining (50 clean removal, 54.3%), 남은 42는 전원 tracker-referenced (tracker #50 1 + tracker #63 8 + tracker #53 34 deferred)
 
 **Residual Error Pattern 분류 (Phase 3 종료 시점, 2026-04-19):**
 
@@ -391,7 +398,7 @@ Red-Green-Refactor 엄수.
 
 ---
 
-#### Phase 4a: `mockJsonResponse` Helper 추출 (Pattern A, 2 files, 32 err)
+#### Phase 4a: `mockJsonResponse` Helper 추출 (Pattern A, 2 files, 32 err) — ✅ **Complete (commit `dc93c6cf`)**
 
 **🔴 RED:**
 - 신규 helper 파일 `apps/web/src/__tests__/helpers/response-mock.ts` 미존재 확인
@@ -437,7 +444,7 @@ Red-Green-Refactor 엄수.
 
 ---
 
-#### Phase 4b: `vi.mocked()` 치환 (Pattern B, 2 files, 11 err)
+#### Phase 4b: `vi.mocked()` 치환 (Pattern B, 2 files, 11 err) — ✅ **Complete (commit `4a5b1aae` + regression `9736a00f`)**
 
 **🔴 RED:**
 - `products.test.ts` 7 sites, `openai.test.ts` 2 sites 확인 (`grep -c "as vi\\.Mock"`)
@@ -463,7 +470,7 @@ Red-Green-Refactor 엄수.
 
 ---
 
-#### Phase 4c: `product-acceptance-e2e.test.ts` → tracker #50 이관 (Pattern C-defer)
+#### Phase 4c: `product-acceptance-e2e.test.ts` → tracker #50 이관 (Pattern C-defer) — ✅ **Complete (commit `bdd8932e`)**
 
 **🔴 RED:**
 - 기존 tracker `#50 [pending] product-acceptance-e2e.test.ts 전체 rewrite (engine 실 API 동기화)` 존재 확인
@@ -485,7 +492,7 @@ Red-Green-Refactor 엄수.
 
 ---
 
-#### Phase 4d: 신규 tracker #63 + @ts-nocheck 코멘트 일괄 갱신 (5 files, 10 err)
+#### Phase 4d: 신규 tracker #63 + @ts-nocheck 코멘트 일괄 갱신 (5 files, 10 err) — ✅ **Complete (commit `bdd8932e`)**
 
 **🔴 RED:**
 - 5 residual 파일 목록 확정:
@@ -514,29 +521,37 @@ Red-Green-Refactor 엄수.
 
 ---
 
-#### Phase 4e: Closeout (plan + tracker 최종 정리)
+#### Phase 4e: Closeout (plan + tracker 최종 정리) — ✅ **Complete (2026-04-19)**
 
 **🔴 RED:**
 - non-test 2 files (`app/test/compare/page.tsx`, `lib/ai-pipeline/runtime/core/persistence/types.ts`) 별도 tracker 필요성 판단
 - #53 ai-pipeline 34 files tracker 필요성 (sibling plan 존재 여부 확인)
 
-**🟢 GREEN:**
-- non-test 2 files: 필요시 별도 tracker 제안 (또는 Out of Scope 확정 기록)
-- #53 완료 시점에 별도 tracker 신설 지침 notes에 기록
-- tracker #47 → completed
+**🟢 GREEN (실제 실행):**
+- **non-test 2 files 판정:** 둘 다 본 plan scope 밖으로 **Out of Scope 확정**. 별도 tracker 신설은 defer — 이유:
+  1. `app/test/compare/page.tsx`: `/test/*` 라우트는 실사용자 접근 경로가 아닌 dev-only 검증 페이지. 타입 정리 가치보다 페이지 자체 폐기 가능성 먼저 검토 필요 (별도 감사 티켓 대기).
+  2. `lib/ai-pipeline/runtime/core/persistence/types.ts`: `#53 ai-pipeline runtime require() → import` 이관과 동일 surface이므로 #53 완료 시점에 자연 흡수 후보. 지금 독립 tracker 신설 시 surface 중복.
+- **#53 ai-pipeline 34 files 처리:** 본 plan Phase 0에서 선제 defer, 코멘트는 생성 당시 "Prisma 타입 미생성 환경에서 bypass" 유지 → #53 완료 후 별도 tracker(가칭 `#47-ai-pipeline-residual`) 신설 지침 Notes에 기록.
+- **tracker 정리 (2026-04-19):**
+  - `#47 Test-only @ts-nocheck 잔여 제거` → **completed**
+  - `#63 #47-residual: ai engine fixture 타입 drift 개별 정리` → **pending** (P2, 9 files / 15 err)
+  - `#50 product-acceptance-e2e.test.ts 전체 rewrite` → **pending** 유지 (67 err 흡수 이미 반영)
 - `PLAN_test-runner-and-prisma-stabilization.md`의 `94개 파일 @ts-nocheck 제거 — 별도 plan` 체크박스 업데이트
-- 본 plan Status → Complete, Last Updated 갱신
+- 본 plan Status → Complete, Last Updated 2026-04-19 갱신
 
 **🔵 REFACTOR:**
-- Phase 0~4 learnings notes 정리
-- 다음 P1 진입 경로 제안 (Batch 10 soft_enforce)
+- Phase 0~4 learnings notes 정리 완료 (아래 Notes 섹션)
+- 다음 P1 진입 경로: 릴리즈 프렙 큐 잔여(ts-nocheck 제거는 체크아웃), Batch 10 soft_enforce는 이미 closed-at-soft, 다음 후보는 MutationAuditEvent migration smoke 또는 `#40` webhook 멱등화
 
-**✋ Quality Gate:**
-- [ ] tracker #47 completed
-- [ ] tracker #63 pending (#47-residual)
-- [ ] tracker #50 설명 갱신 (product-acceptance-e2e 67 err 흡수)
-- [ ] stabilization plan 체크박스 갱신
-- [ ] 본 plan Status + Last Updated 갱신
+**✋ Quality Gate (최종):**
+- [x] tracker #47 → completed (2026-04-19)
+- [x] tracker #63 pending (#47-residual) 생성 및 description 검증
+- [x] tracker #50 설명 갱신 (product-acceptance-e2e 67 err 흡수 주석 반영)
+- [x] stabilization plan 체크박스 갱신 (`PLAN_test-runner-and-prisma-stabilization.md`)
+- [x] 본 plan Status ✅ Complete, Last Updated 2026-04-19
+- [x] non-test 2 files: Out of Scope 확정 기록 (신규 tracker 없이 defer 이유 명시)
+- [x] #53 ai-pipeline 34 files: #53 closeout 시 별도 tracker 신설 지침 명시
+- [x] commit 누적: `c86073c3` + `ba3a766e` + `6ebac5a0` + `379f717d` + `99a674ab` + `3852f50a` + `84a6e3d7` + `dc93c6cf` + `4a5b1aae` + `bdd8932e` + `9736a00f` + `7dd9fb72` 확인 완료
 
 **Rollback:** 문서만 — 되돌릴 것 없음.
 
@@ -591,29 +606,43 @@ Red-Green-Refactor 엄수.
 
 ## 11. Progress Tracking
 
-- Overall completion: 85% (Phase 0~3 완료 + Phase 4 설계 확정, 46 clean / 58 test scope)
-- Current phase: Phase 4 Hybrid (4a helper 추출 → 4b vi.mocked 치환 → 4c/4d tracker 이관 → 4e closeout)
+- Overall completion: **100% ✅** (Phase 0~4 완료, Phase 4e closeout + governance 재정합 포함)
+- Current phase: **Complete — test-only residual governance 정합 완료**
 - Current blocker: 없음
-- Next validation step: 4a 실행 (helper 파일 생성 + 2 files 제거), 로컬 tsc baseline 49 유지 확인
+- Next validation step: **없음** — 다음 P1 후보(MutationAuditEvent Q1 smoke 또는 `#40` webhook 멱등화)로 이동
 
 **Phase Checklist:**
 - [x] Phase 0 complete (2026-04-18)
 - [x] Phase 1 complete (2026-04-18)
 - [x] Phase 2 complete (2026-04-18, commit `c86073c3`+`ba3a766e`, 로컬 tsc baseline 49 유지)
 - [x] Phase 3 complete (2026-04-18, commits `6ebac5a0`+`379f717d`+`99a674ab`+`3852f50a`, 40/48 clean, residual 16.7%, tsc baseline 49 유지)
-- [ ] Phase 4 complete (Hybrid: 4a / 4b / 4c / 4d / 4e)
+- [x] **Phase 4 complete (2026-04-19, commits `dc93c6cf`+`4a5b1aae`+`bdd8932e`+`9736a00f`+`7dd9fb72`)**
+- [x] **Governance 재정합 (2026-04-19) — strict directive grep = 44, production/runtime 1건 → #76 이관, test-only 43 전원 tracker-referenced**
 
-**잔여 @ts-nocheck 현재 카운트:**
-- 시작: 94 (test 92 + non-test 2)
-- Phase 2 후: 86 (clean 6 제거, 2 residual 복원)
-- Phase 3 후: 46 (clean 40 추가 제거, 8 residual 복원) ← **현 상태**
-- Phase 4 4a+4b 완료 시: 42 (clean 4 추가 = helper 2 + vi.mocked 2)
-- 최종 closeout 시 남는 @ts-nocheck: **12 files** (tracker 명시됨)
-  - tracker #50: 1 file (product-acceptance-e2e, 67 err)
-  - tracker #63 (신규): 7 files (ai 5 + button 1 + s0/s6 2 → 10 + 3 err)
-  - #53 ai-pipeline: 34 files (#53 완료 후 별도 tracker)
-  - non-test Out of Scope: 2 files (별도 tracker 필요성 판단)
-  - → **#47 test scope (58) 기준 최종 clean 비율: 46/58 = 79.3% (4a+4b 후 50/58 = 86.2%)**
+**최종 live grep (strict directive 매칭, 2026-04-19):**
+
+명령: `grep -rlE "^[[:space:]]*//[[:space:]]*@ts-nocheck" --include="*.ts" --include="*.tsx" apps/web/src/`
+결과: **44 files**
+
+| 분류 | 파일 수 | tracker / reason |
+| :--- | ---: | :--- |
+| **Production/runtime** | **1** | **#76** `app/test/compare/page.tsx` (1644 lines, /test/compare 프로토타이핑 surface) |
+| test-only (rewrite 필요) | 1 | #50 `product-acceptance-e2e.test.ts` (67 err) |
+| test-only (individual cleanup) | 8 | #63 (button + products + ai engine 4 + s0 + s6) |
+| test-only (ai-pipeline residual) | 34 | #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정 |
+| **합계** | **44** | **100% tracker-referenced, production/runtime 0건** (#76 이관 완료) |
+
+**Plan 예상 vs 실측 차이 (2026-04-19):**
+- 예상 (Phase 4e 초안): 45 files (43 test + 2 non-test) → Out of Scope 2 files
+- 실측 strict grep: **44 files**
+- 차이 원인: `lib/ai-pipeline/runtime/core/persistence/types.ts`는 실제로 `@ts-nocheck` directive 없음. 파일 주석 본문에 **"@ts-nocheck 제거 완료"** 문구만 존재해서 느슨한 grep(문자열 매칭)이 false positive로 집계. 엄격한 directive 매칭(`^// @ts-nocheck`)으로 재측정해야 true count 나옴.
+- 결론: Out of Scope 항목은 **types.ts는 이미 clean, page.tsx만 실재** → page.tsx는 production/runtime이라 #47 scope 밖 → 신규 tracker **#76**으로 이관.
+
+**#47 완료 정의 검증 (대표님 4가지 기준):**
+- [x] **(A) production/runtime suppression 0** — page.tsx 1건을 #76으로 이관, 본 plan scope에서는 production/runtime suppression 0. 실제 코드 제거는 #76이 담당.
+- [x] **(B) 모든 test-only residual에 tracker + reason 동시 존재** — 43/43 (100%) tracker-referenced. #50, #63, #53 분기 명확.
+- [x] **(C) live grep count와 plan count 일치** — 실측 44 = plan 44. types.ts false positive 원인 문서화 완료.
+- [x] **(D) 실제 제거 필요 항목은 별도 residual tracker로 이관** — #76 (production/runtime), #63 (ai engine), #53 completion시 ai-pipeline residual tracker 신설 지침 기록. #47은 governance 정합 역할로 close.
 
 ---
 
@@ -650,6 +679,10 @@ as vi.Mock 잔재: 2 파일만 (blast radius 매우 작음)
 - [2026-04-18] **Phase 2 residual 2/8 (25%) 발견** — `compare-sessions/routes.test.ts` (24 errors) / `work-queue/compare-sync.test.ts` (8 errors). probe 당시 "Type A"로 분류됐으나 실측에서 `mockJsonResponse` 재선언 등 독립 type 이슈 확인 → `@ts-nocheck` 복원 + Phase 4 defer.
 - [2026-04-18] **Phase 3 iterative remediation 실행** — 48 files 대상, 40 clean / 8 residual (16.7%). tsc baseline 49 → 49 불변. 4 cluster 커밋 `6ebac5a0`+`379f717d`+`99a674ab`+`3852f50a`. product-acceptance-e2e.test.ts 단일 파일이 residual 88 err의 76% (67 err) 점유.
 - [2026-04-19] **Phase 4 Hybrid 설계 확정** — Pattern A(mockJsonResponse)/B(vi.Mock)는 quick win fix, Pattern C 대덩어리(product-acceptance-e2e 67 err)는 tracker #50 재사용, Pattern C 잔여(10 err)+Phase 0 defer(s0/s6 3 err)는 신규 tracker #63으로 통합 defer.
+- [2026-04-19] **Phase 4a/4b 실행 완료** — `dc93c6cf` (helper 추출 + compare-sessions/compare-sync 2 files clean) / `4a5b1aae` (vi.mocked 치환 + products.test.ts defer → tracker #63) / regression 해소 `9736a00f` (makeRequest 타입 annotation + fetch mock Response cast).
+- [2026-04-19] **Phase 4c/4d 실행 완료** — `bdd8932e` 코멘트 tracker 참조 일괄 갱신 (tracker #50 product-acceptance-e2e + tracker #63 × 7 파일: fire-approval / governance-batch2 / operational-readiness / stock-release / button / s0 / s6).
+- [2026-04-19] **Phase 4e Closeout 실행** — 본 plan Status → Complete, tracker #47 → completed, non-test 2 files Out of Scope 확정 (신규 tracker 신설 defer 사유 기록), #53 ai-pipeline 34 files → #53 closeout 시 별도 tracker 신설 지침 문서화.
+- [2026-04-19] **#47 완료 정의 재정의 (대표님 지시) + Governance 재정합 실행** — #47은 "기능 개발"이 아니라 **release-prep quality gate governance 정합**. strict directive grep으로 44 files 실측 확정 → types.ts false positive 확인 (주석 본문에 "@ts-nocheck 제거 완료" 문구만 존재) → production/runtime 1건(`app/test/compare/page.tsx`, 1644 lines) 신규 tracker **#76** 신설 이관 + 코멘트 tracker ref 명시 → ai-pipeline 34 files 코멘트 일괄 갱신해서 `tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정` ref 추가 (Python CRLF-safe 편집, 34/34 success) → 44 files 전원 tracker-referenced 확정. #47 완료 정의 4기준(A/B/C/D) 충족.
 
 **Implementation Notes:**
 - Phase 1 probe (10 files) 결과: A 5 / B 3 / C 2 / D 0. Type B 346 에러가 단일 원인(vitest globals 미타이핑)에서 나옴 → single `.d.ts` (1 line) root fix로 일괄 해소 가능 판정.

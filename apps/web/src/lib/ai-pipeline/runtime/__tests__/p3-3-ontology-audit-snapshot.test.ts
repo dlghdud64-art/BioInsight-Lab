@@ -1,4 +1,4 @@
-// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass
+// @ts-nocheck — ai-pipeline runtime tests: Prisma 타입 미생성 환경에서 bypass (tracker #53 require()→import 이관 완료 후 별도 residual tracker 신설 예정)
 /**
  * P3 Slice 3 — Audit + Canonical Audit + Snapshot Ontology Adapter Tests (13 tests)
  *
@@ -15,14 +15,14 @@
 
 import { describe, it, expect, beforeEach } from "vitest";
 
-var { StabilizationAuditOntologyAdapter } = require("../core/ontology/stabilization-audit-adapter");
-var { CanonicalAuditOntologyAdapter } = require("../core/ontology/canonical-audit-adapter");
-var { SnapshotOntologyAdapter } = require("../core/ontology/snapshot-adapter");
-var { STABILIZATION_AUDIT_ALIASES, SNAPSHOT_ALIASES } = require("../core/ontology/common-normalizers");
-var { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute } = require("../core/ontology/diagnostics");
-var { createMemoryAdapters } = require("../core/persistence/memory");
-var { registerAdapterFactory, _resetAdapterRegistry } = require("../core/persistence/factory");
-var { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } = require("../core/persistence/bootstrap");
+import { StabilizationAuditOntologyAdapter } from "../core/ontology/stabilization-audit-adapter";
+import { CanonicalAuditOntologyAdapter } from "../core/ontology/canonical-audit-adapter";
+import { SnapshotOntologyAdapter } from "../core/ontology/snapshot-adapter";
+import { STABILIZATION_AUDIT_ALIASES, SNAPSHOT_ALIASES } from "../core/ontology/common-normalizers";
+import { getDiagnosticLog, _resetDiagnostics, assertBridgeRoute } from "../core/ontology/diagnostics";
+import { createMemoryAdapters } from "../core/persistence/memory";
+import { registerAdapterFactory, _resetAdapterRegistry } from "../core/persistence/factory";
+import { bootstrapPersistence, _resetPersistenceBootstrap, getPersistenceAdapters } from "../core/persistence/bootstrap";
 
 // ── Test Fixtures ──
 
