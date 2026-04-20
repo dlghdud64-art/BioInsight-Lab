@@ -336,11 +336,14 @@ export function InventoryTable({
           <div className="divide-y divide-[#2a2a2e]">
             {sortedGroups.map((group) => {
               const groupStatus = getGroupStatus(group);
-              const someExpiredMobile = group.lots.some((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+              const expiredLotsMobile = group.lots.filter((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+              const expiredLotCountMobile = expiredLotsMobile.length;
+              const expiredLotQtyMobile = expiredLotsMobile.reduce((sum, lot) => sum + lot.currentQuantity, 0);
+              const someExpiredMobile = expiredLotCountMobile > 0;
               const expiryStatus = someExpiredMobile ? "만료" : isExpired(group.earliestExpiry) ? "만료" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
               const displayStatus = expiryStatus ?? groupStatus;
               const expiryDays = getExpiryDays(group.earliestExpiry);
-              const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "폐기" || displayStatus === "임박";
+              const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "임박";
               const isExpanded = expandedProducts.has(group.productId);
 
               return (
@@ -392,6 +395,17 @@ export function InventoryTable({
                       <span className="text-[11px]">Lot {group.lotCount}개</span>
                     </div>
 
+                    {someExpiredMobile && (
+                      <div className="flex items-center gap-1.5 mb-2.5">
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-red-200 bg-red-50 text-red-600 font-bold">
+                          우선 처리
+                        </Badge>
+                        <span className="text-[11px] font-semibold text-red-600">
+                          만료 lot {expiredLotCountMobile}건 · 잔량 {expiredLotQtyMobile}{group.unit}
+                        </span>
+                      </div>
+                    )}
+
                     {/* 3행: 상태별 primary action 차등 노출 */}
                     <div className="flex items-center gap-1.5" onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                       {(() => {
@@ -399,13 +413,13 @@ export function InventoryTable({
                         const isLow = group.safetyStock !== null && group.totalQuantity <= group.safetyStock;
                         const isOut = group.totalQuantity === 0;
                         const isExpiringItem = expiryDays !== null && expiryDays <= 7;
-                        const isExpiredItem = expiryDays !== null && expiryDays <= 0;
+                        const isExpiredItem = expiredLotCountMobile > 0;
                         const isIncoming = group.totalQuantity <= (group.safetyStock || 0) * 0.5;
 
                         if (isExpiredItem) {
                           return (
-                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10 font-medium" onClick={() => onReorder(group.lots[0])}>
-                              <Trash2 className="h-3 w-3 shrink-0" />폐기/교체
+                            <Button variant="outline" size="sm" className="h-7 px-2.5 text-[11px] gap-1 text-red-400 border-red-500/30 hover:bg-red-500/10 font-medium" onClick={() => onDispose ? onDispose(expiredLotsMobile[0] ?? group.lots[0]) : onReorder(group.lots[0])}>
+                              <Trash2 className="h-3 w-3 shrink-0" />폐기 처리
                             </Button>
                           );
                         }
@@ -639,17 +653,14 @@ export function InventoryTable({
               sortedGroups.map((group) => {
                 const isExpanded = expandedProducts.has(group.productId);
                 const groupStatus = getGroupStatus(group);
-                // 부모 행 상태: 전체 Lot 만료 → 폐기, 일부만 만료 → 주의, 임박 → 임박
-                const allExpired = group.lots.every((l) => l.expiryDate && isExpired(l.expiryDate));
-                const someExpired = group.lots.some((l) => l.expiryDate && isExpired(l.expiryDate));
-                const expiryStatus = allExpired
-                  ? "폐기"
-                  : someExpired
-                    ? "주의"
-                    : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
+                const expiredLots = group.lots.filter((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0);
+                const expiredLotCount = expiredLots.length;
+                const expiredLotQty = expiredLots.reduce((sum, lot) => sum + lot.currentQuantity, 0);
+                const someExpired = expiredLotCount > 0;
+                const expiryStatus = someExpired ? "만료" : isExpiringSoon(group.earliestExpiry) ? "임박" : null;
                 const displayStatus = expiryStatus ?? groupStatus;
                 const expiryDays = getExpiryDays(group.earliestExpiry);
-                const isRisky = displayStatus === "부족" || displayStatus === "폐기" || displayStatus === "임박";
+                const isRisky = displayStatus === "부족" || displayStatus === "만료" || displayStatus === "임박";
 
                 return (
                   <Fragment key={group.productId}>
@@ -703,9 +714,11 @@ export function InventoryTable({
                           </div>
                           {someExpired && (
                             <div className="flex items-center gap-1 mt-1">
-                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded px-1.5 py-0.5">
-                                <AlertTriangle className="h-2.5 w-2.5 shrink-0" />
-                                만료 lot {group.lots.filter((l) => l.expiryDate && isExpired(l.expiryDate) && l.currentQuantity > 0).length}건 · 폐기 필요
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-red-200 bg-red-50 text-red-600 font-bold">
+                                우선 처리
+                              </Badge>
+                              <span className="text-[10px] font-bold text-red-600">
+                                만료 lot {expiredLotCount}건 · 잔량 {expiredLotQty}{group.unit}
                               </span>
                             </div>
                           )}
@@ -932,10 +945,10 @@ export function InventoryTable({
                           const lotStatus = getLotStatus(lot);
                           const lotExpired = isExpired(lot.expiryDate);
                           const lotExpiringSoon = isExpiringSoon(lot.expiryDate);
-                          const lotDisplayStatus = lotExpired ? "폐기" : lotExpiringSoon ? "임박" : lotStatus;
+                          const lotDisplayStatus = lotExpired ? "만료" : lotExpiringSoon ? "임박" : lotStatus;
                           const lotExpiryDays = getExpiryDays(lot.expiryDate);
                           const isLastLot = lotIdx === group.lots.length - 1;
-                          const lotNeedsUrgent = lotDisplayStatus === "부족" || lotDisplayStatus === "폐기" || lotDisplayStatus === "임박" || lotStatus.startsWith("소진 임박") || lotStatus === "재주문 권장";
+                          const lotNeedsUrgent = lotDisplayStatus === "부족" || lotDisplayStatus === "만료" || lotDisplayStatus === "임박" || lotStatus.startsWith("소진 임박") || lotStatus === "재주문 권장";
 
                           return (
                             <TableRow
@@ -1016,7 +1029,7 @@ export function InventoryTable({
                                       </span>
                                     )}
                                     {lotExpired && lot.currentQuantity > 0 && (
-                                      <div className="text-[10px] text-red-500 font-bold mt-0.5">사용 금지 · 폐기 필요</div>
+                                      <div className="text-[10px] text-red-500 font-bold mt-0.5">사용 금지</div>
                                     )}
                                   </div>
                                 ) : (
@@ -1057,7 +1070,7 @@ export function InventoryTable({
                                             size="sm"
                                             className={`h-7 px-2 text-[11px] gap-1 ${
                                               lotNeedsUrgent
-                                                ? lotDisplayStatus === "부족" || lotDisplayStatus === "폐기"
+                                                ? lotDisplayStatus === "부족" || lotDisplayStatus === "만료"
                                                   ? "text-amber-600 border-amber-300 hover:bg-amber-50"
                                                   : "text-blue-600 border-blue-300 hover:bg-blue-50"
                                                 : "text-slate-500 border-slate-200 hover:bg-slate-100"

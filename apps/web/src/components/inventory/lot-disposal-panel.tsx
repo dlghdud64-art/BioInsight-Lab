@@ -62,6 +62,7 @@ interface LotDisposalPanelProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   target: DisposalTarget | null;
+  isSubmitting?: boolean;
   onConfirmDisposal?: (params: {
     lotNumber: string;
     quantity: number;
@@ -76,6 +77,7 @@ export function LotDisposalPanel({
   open,
   onOpenChange,
   target,
+  isSubmitting = false,
   onConfirmDisposal,
   onNavigateToReorder,
 }: LotDisposalPanelProps) {
@@ -127,6 +129,7 @@ export function LotDisposalPanel({
   );
 
   const handleConfirm = () => {
+    if (isSubmitting) return;
     onConfirmDisposal?.({
       lotNumber: target.lotNumber,
       quantity: effectiveQty,
@@ -396,6 +399,7 @@ export function LotDisposalPanel({
         <div className="flex-shrink-0 border-t border-slate-200 bg-white px-5 py-3">
           <div className="flex gap-2">
             <Button
+              disabled={isSubmitting}
               className={`flex-1 h-10 text-xs font-bold ${
                 effectiveQuarantine
                   ? "bg-amber-600 hover:bg-amber-700 text-white"
@@ -404,7 +408,11 @@ export function LotDisposalPanel({
               onClick={handleConfirm}
             >
               <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-              {effectiveQuarantine ? "격리 후 폐기" : "폐기 확정"}
+              {isSubmitting
+                ? "처리 중..."
+                : effectiveQuarantine
+                  ? "격리 후 폐기"
+                  : "폐기 확정"}
             </Button>
           </div>
 

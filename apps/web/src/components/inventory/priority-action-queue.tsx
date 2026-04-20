@@ -53,7 +53,7 @@ const RISK_CONFIG: Record<QueueRiskLevel, { label: string; dot: string; bg: stri
 
 const CATEGORY_CONFIG: Record<QueueCategory, { label: string; icon: React.ElementType; color: string }> = {
   expiring_soon:    { label: "만료 임박",       icon: Calendar,     color: "text-red-500" },
-  disposal_review:  { label: "폐기 검토",       icon: Trash2,       color: "text-red-500" },
+  disposal_review:  { label: "폐기 처리",       icon: Trash2,       color: "text-red-500" },
   reorder_priority: { label: "재주문 우선",     icon: ShoppingCart,  color: "text-amber-500" },
   no_location:      { label: "위치 미지정",     icon: MapPin,        color: "text-blue-500" },
   label_reprint:    { label: "라벨 재출력",     icon: Printer,       color: "text-violet-500" },
@@ -71,8 +71,8 @@ export function generateMockQueueItems(): QueueItem[] {
       category: "expiring_soon",
       reason: "만료 D-3 / 미개봉 2ea",
       rationale: "만료 D-3: 유효기한까지 3일 남은 미개봉 2ea — 즉시 사용하지 않으면 전량 폐기 손실",
-      recommendedAction: "우선 사용 또는 폐기 검토",
-      actionLabel: "폐기 검토",
+      recommendedAction: "우선 사용 또는 폐기 처리",
+      actionLabel: "폐기 처리",
     },
     {
       id: "q-2",
@@ -93,7 +93,7 @@ export function generateMockQueueItems(): QueueItem[] {
       reason: "만료 D-7 / 개봉 후 14일 경과",
       rationale: "만료 D-7 + 개봉 후 14일 경과: 제조사 권장 개봉 후 사용기한(14일) 초과, 활성 저하 우려",
       recommendedAction: "폐기 후 신규 lot 발주",
-      actionLabel: "폐기 검토",
+      actionLabel: "폐기 처리",
     },
     {
       id: "q-4",
@@ -182,7 +182,7 @@ export function PriorityActionQueue({
   const riskOrder: QueueRiskLevel[] = ["critical", "high", "medium", "low"];
   const categoryOrder: QueueCategory[] = [
     "expiring_soon",     // 1순위: 만료 lot 폐기 처리
-    "disposal_review",   // 2순위: 폐기 검토
+    "disposal_review",   // 2순위: 폐기 처리
     "receiving_pending", // 3순위: 입고 미정리
     "no_location",       // 4순위: 위치 미지정 (보관 조건 불일치)
     "reorder_priority",  // 5순위: 재주문 (만료 lot 해결 후)
