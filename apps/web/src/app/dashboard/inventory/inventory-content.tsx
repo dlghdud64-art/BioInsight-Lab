@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -48,7 +48,9 @@ import {
 } from "@/lib/inventory/lot-tracking-engine";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
+import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
 import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
+import type { QueueItem } from "@/components/inventory/priority-action-queue";
 const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then(m => m.LabelScannerModal), { ssr: false });
 const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then(m => m.LabelPrintModal), { ssr: false });
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
@@ -227,6 +229,7 @@ function InventoryPageContent() {
 
   // ── Lot Disposal Panel (object-scoped disposal dock) state ──
   const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
+  const [disposalInventoryId, setDisposalInventoryId] = useState<string | null>(null);
   const disposalPanelOpen = disposalTarget !== null;
 
   // ── Context Panel (right-side detail drawer) state ──
@@ -262,6 +265,27 @@ function InventoryPageContent() {
       averageDailyUsage: inv.averageDailyUsage,
       leadTimeDays: inv.leadTimeDays,
       notes: inv.notes,
+    });
+  };
+
+  const openReorderReview = (inventory: ProductInventory) => {
+    aiPanel.preparePanel({
+      id: inventory.id,
+      productId: inventory.productId,
+      productName: inventory.product.name,
+      brand: inventory.product.brand || undefined,
+      catalogNumber: inventory.product.catalogNumber || undefined,
+      currentQuantity: inventory.currentQuantity,
+      unit: inventory.unit || undefined,
+      safetyStock: inventory.safetyStock || undefined,
+      minOrderQty: inventory.minOrderQty || undefined,
+      location: inventory.location || undefined,
+      expiryDate: inventory.expiryDate || undefined,
+      lotNumber: inventory.lotNumber || undefined,
+      autoReorderEnabled: inventory.autoReorderEnabled || false,
+      averageDailyUsage: inventory.averageDailyUsage || undefined,
+      leadTimeDays: inventory.leadTimeDays || undefined,
+      lastInspectedAt: undefined,
     });
   };
 
@@ -580,6 +604,90 @@ function InventoryPageContent() {
     },
   });
 
+  const disposeLotMutation = useMutation({
+    mutationFn: async ({
+      inventory,
+      params,
+    }: {
+      inventory: ProductInventory;
+      params: {
+        lotNumber: string;
+        quantity: number;
+        reason: DisposalReason;
+        reasonDetail?: string;
+        quarantine: boolean;
+      };
+    }) => {
+      const nextQuantity = Math.max(inventory.currentQuantity - params.quantity, 0);
+      const reasonLabelMap: Record<DisposalReason, string> = {
+        expiry: "유효기간 만료",
+        contamination: "오염/변질",
+        damage: "파손",
+        other: "기타",
+      };
+      const disposalNote = [
+        `[LOT 폐기 ${format(new Date(), "yyyy.MM.dd", { locale: ko })}]`,
+        `lot=${params.lotNumber}`,
+        `qty=${params.quantity}${inventory.unit || ""}`,
+        `reason=${reasonLabelMap[params.reason]}`,
+        params.reasonDetail ? `detail=${params.reasonDetail}` : null,
+        params.quarantine ? "quarantine=true" : null,
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      if (inventory.id.startsWith("mock-")) {
+        setMockInventories((prev) =>
+          prev.map((item) =>
+            item.id === inventory.id
+              ? {
+                  ...item,
+                  currentQuantity: nextQuantity,
+                  notes: [item.notes, disposalNote].filter(Boolean).join("\n"),
+                }
+              : item
+          )
+        );
+        return { success: true, mock: true };
+      }
+
+      const response = await csrfFetch(`/api/inventory/${inventory.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          quantity: nextQuantity,
+          notes: [inventory.notes, disposalNote].filter(Boolean).join("\n"),
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error((errData as { error?: string }).error || "폐기 처리에 실패했습니다.");
+      }
+
+      return response.json();
+    },
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["inventories"] });
+      queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["reorder-recommendations"] });
+      queryClient.invalidateQueries({ queryKey: ["reorder-recommendations-for-highlight"] });
+      setDisposalTarget(null);
+      setDisposalInventoryId(null);
+      toast({
+        title: variables.params.quarantine ? "격리 후 폐기 처리 완료" : "폐기 처리 완료",
+        description: `${variables.inventory.product.name} · Lot ${variables.params.lotNumber} 폐기 처리가 반영되었습니다.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "폐기 처리 실패",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // 재고 사용 이력 조회
   const { data: usageData, isLoading: usageLoading } = useQuery<{
     records: Array<{
@@ -880,6 +988,122 @@ function InventoryPageContent() {
     );
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
+  const actionableExpiredLots = useMemo(
+    () =>
+      displayInventories
+        .filter((inv) => {
+          if (!inv.expiryDate) return false;
+          const expiry = new Date(inv.expiryDate);
+          if (isNaN(expiry.getTime())) return false;
+          return expiry.getTime() < now.getTime() && inv.currentQuantity > 0;
+        })
+        .sort((a, b) => {
+          const expiryDiff =
+            new Date(a.expiryDate || 0).getTime() - new Date(b.expiryDate || 0).getTime();
+          if (expiryDiff !== 0) return expiryDiff;
+          return b.currentQuantity - a.currentQuantity;
+        }),
+    [displayInventories, now]
+  );
+  const priorityExpiredLot = actionableExpiredLots[0] ?? null;
+  const actionableExpiredQuantity = actionableExpiredLots.reduce(
+    (sum, inv) => sum + inv.currentQuantity,
+    0
+  );
+
+  const buildDisposalTarget = (
+    inventory: ProductInventory
+  ): import("@/components/inventory/lot-disposal-panel").DisposalTarget => {
+    const siblings = displayInventories.filter((inv) => inv.productId === inventory.productId);
+    const totalItemQuantity = siblings.reduce((sum, inv) => sum + inv.currentQuantity, 0);
+
+    return {
+      productName: inventory.product.name,
+      brand: inventory.product.brand || undefined,
+      catalogNumber: inventory.product.catalogNumber || undefined,
+      unit: inventory.unit || undefined,
+      lotNumber: inventory.lotNumber || "N/A",
+      lotQuantity: inventory.currentQuantity,
+      expiryDate: inventory.expiryDate || new Date().toISOString(),
+      location: inventory.location || undefined,
+      isHazardous: inventory.hazard || false,
+      hasMsds: undefined,
+      requiresIsolation: undefined,
+      totalItemQuantity,
+      safetyStock: inventory.safetyStock || undefined,
+      averageDailyUsage: inventory.averageDailyUsage || undefined,
+    };
+  };
+
+  const openDisposalDock = (inventory: ProductInventory) => {
+    setDisposalInventoryId(inventory.id);
+    setDisposalTarget(buildDisposalTarget(inventory));
+  };
+
+  const priorityQueueItems = useMemo<QueueItem[]>(() => {
+    const expiredItems = actionableExpiredLots.map((inventory) => {
+      const resolution = resolveDisposal({
+        productName: inventory.product.name,
+        brand: inventory.product.brand || undefined,
+        catalogNumber: inventory.product.catalogNumber || undefined,
+        unit: inventory.unit || undefined,
+        lotNumber: inventory.lotNumber || "N/A",
+        lotQuantity: inventory.currentQuantity,
+        expiryDate: inventory.expiryDate || new Date().toISOString(),
+        location: inventory.location || undefined,
+        isHazardous: inventory.hazard || false,
+        hasMsds: undefined,
+        requiresIsolation: undefined,
+        totalItemQuantity: displayInventories
+          .filter((inv) => inv.productId === inventory.productId)
+          .reduce((sum, inv) => sum + inv.currentQuantity, 0),
+        safetyStock: inventory.safetyStock || undefined,
+        averageDailyUsage: inventory.averageDailyUsage || undefined,
+      });
+
+      return {
+        id: `dispose-${inventory.id}`,
+        productName: inventory.product.name,
+        lotNumber: inventory.lotNumber || undefined,
+        risk: "critical" as const,
+        category: "disposal_review" as const,
+        reason: `만료 · 잔량 ${inventory.currentQuantity}${inventory.unit}`,
+        rationale: resolution.description,
+        recommendedAction: resolution.title,
+        actionLabel: "폐기 처리",
+        meta: {
+          actionType: "dispose_lot",
+          inventoryId: inventory.id,
+        },
+      };
+    });
+
+    const reorderItems = displayInventories
+      .filter(
+        (inventory) =>
+          recommendedInventoryIds.has(inventory.id) &&
+          !actionableExpiredLots.some((expired) => expired.id === inventory.id)
+      )
+      .slice(0, 6)
+      .map((inventory) => ({
+        id: `reorder-${inventory.id}`,
+        productName: inventory.product.name,
+        lotNumber: inventory.lotNumber || undefined,
+        risk: "high" as const,
+        category: "reorder_priority" as const,
+        reason: `재고 ${inventory.currentQuantity}${inventory.unit} · 안전재고 ${inventory.safetyStock ?? "-"}`,
+        rationale: "만료 lot 폐기 처리가 없는 품목 중 재주문 검토가 필요한 항목입니다.",
+        recommendedAction: "재주문 검토",
+        actionLabel: "재주문 검토",
+        meta: {
+          actionType: "review_reorder",
+          inventoryId: inventory.id,
+        },
+      }));
+
+    return [...expiredItems, ...reorderItems];
+  }, [actionableExpiredLots, displayInventories, recommendedInventoryIds]);
+  const topPriorityQueueItem = priorityQueueItems[0] ?? null;
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
   const issuesCount = displayInventories.filter((inv) => {
@@ -920,6 +1144,29 @@ function InventoryPageContent() {
     low_stock:     { label: "부족",       cls: "bg-amber-500/10 text-amber-400",   priority: 3 },
     reorder_lead:  { label: "재발주 필요", cls: "bg-blue-500/10 text-blue-400",    priority: 4 },
     no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",            priority: 5 },
+  };
+
+  const handlePriorityQueueAction = (queueItem: QueueItem) => {
+    const inventoryId = queueItem.meta?.inventoryId;
+    const match = inventoryId
+      ? displayInventories.find((inv) => inv.id === inventoryId)
+      : displayInventories.find((inv) => inv.product.name === queueItem.productName);
+
+    if (!match) {
+      toast({
+        title: "대상 항목을 찾을 수 없습니다",
+        description: "우선 처리 대상 재고를 다시 불러온 뒤 시도해주세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (queueItem.meta?.actionType === "dispose_lot") {
+      openDisposalDock(match);
+      return;
+    }
+
+    openReorderReview(match);
   };
 
   if (status === "loading") {
@@ -1601,30 +1848,7 @@ function InventoryPageContent() {
                       });
                     }}
                     onDispose={(inventory) => {
-                      // 부모 item 수량 계산 (같은 productId 전체)
-                      const siblings = filteredInventories.filter(
-                        (inv) => inv.productId === inventory.productId
-                      );
-                      const totalItemQuantity = siblings.reduce(
-                        (sum, inv) => sum + inv.currentQuantity,
-                        0
-                      );
-                      setDisposalTarget({
-                        productName: inventory.product.name,
-                        brand: inventory.product.brand || undefined,
-                        catalogNumber: inventory.product.catalogNumber || undefined,
-                        unit: inventory.unit || undefined,
-                        lotNumber: inventory.lotNumber || "N/A",
-                        lotQuantity: inventory.currentQuantity,
-                        expiryDate: inventory.expiryDate || new Date().toISOString(),
-                        location: inventory.location || undefined,
-                        isHazardous: inventory.hazard || false,
-                        hasMsds: undefined,
-                        requiresIsolation: undefined,
-                        totalItemQuantity,
-                        safetyStock: inventory.safetyStock || undefined,
-                        averageDailyUsage: inventory.averageDailyUsage || undefined,
-                      });
+                      openDisposalDock(inventory);
                     }}
                     onPrintLabel={(productName, lots) => {
                       setLabelPrintTitle(productName);
@@ -1653,33 +1877,24 @@ function InventoryPageContent() {
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
             {/* 온톨로지: 만료 lot priority banner */}
             {(() => {
-              const expiredItems = displayInventories.filter((inv) => {
-                if (!inv.expiryDate) return false;
-                const days = Math.ceil((new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                return days <= 0 && inv.currentQuantity > 0;
-              });
-              if (expiredItems.length === 0) return null;
+              if (!priorityExpiredLot) return null;
               return (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
                   <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-red-800">우선 처리: 만료 lot {expiredItems.length}건 폐기 필요</p>
-                    <p className="text-xs text-red-600/70">잔량이 남아있는 만료 품목이 있습니다. 폐기 처리를 먼저 진행하세요.</p>
+                    <p className="text-sm font-semibold text-red-800">우선 처리: 만료 lot {actionableExpiredLots.length}건 폐기 필요</p>
+                    <p className="text-xs text-red-600/70">만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개. 폐기 처리를 먼저 진행하세요.</p>
                   </div>
                   <Button
                     size="sm"
                     variant="outline"
                     className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
-                    onClick={() => {
-                      // 점검 사항 탭으로 이동하여 만료 항목 확인
-                      const issuesTab = document.querySelector('[value="issues"]') as HTMLButtonElement;
-                      if (issuesTab) issuesTab.click();
-                    }}
+                    onClick={() => openDisposalDock(priorityExpiredLot)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
-                    폐기 확인
+                    폐기 처리 시작
                   </Button>
                 </div>
               );
@@ -1688,20 +1903,26 @@ function InventoryPageContent() {
             {/* ── 우선 처리 배너 (최상단 1줄) ── */}
             {issuesCount > 0 ? (
               <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${
-                expiringSoonCount > 0
+                priorityExpiredLot
+                  ? "border-red-200 bg-red-50"
+                  : expiringSoonCount > 0
                   ? "border-red-200 bg-red-50"
                   : lowOrOutOfStockCount > 0
                     ? "border-amber-200 bg-amber-50"
                     : "border-slate-200 bg-slate-50"
               }`}>
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${
-                  expiringSoonCount > 0
+                  priorityExpiredLot
+                    ? "bg-red-100"
+                    : expiringSoonCount > 0
                     ? "bg-red-100"
                     : lowOrOutOfStockCount > 0
                       ? "bg-amber-100"
                       : "bg-slate-100"
                 }`}>
-                  {expiringSoonCount > 0
+                  {priorityExpiredLot
+                    ? <Trash2 className="h-4 w-4 text-red-600" />
+                    : expiringSoonCount > 0
                     ? <Calendar className="h-4 w-4 text-red-600" />
                     : lowOrOutOfStockCount > 0
                       ? <AlertTriangle className="h-4 w-4 text-amber-600" />
@@ -1710,7 +1931,9 @@ function InventoryPageContent() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-extrabold text-slate-900">
-                    {expiringSoonCount > 0
+                    {priorityExpiredLot
+                      ? `우선 처리: 만료 lot ${actionableExpiredLots.length}건 — 폐기 처리 필요`
+                      : expiringSoonCount > 0
                       ? `우선 처리: 만료 임박 ${expiringSoonCount}건 — 폐기 또는 우선 소진 필요`
                       : lowOrOutOfStockCount > 0
                         ? `우선 처리: 재고 부족 ${lowOrOutOfStockCount}건 — 발주 검토 필요`
@@ -1720,16 +1943,23 @@ function InventoryPageContent() {
                 </div>
                 <Button
                   size="sm"
+                  disabled={!priorityExpiredLot && !topPriorityQueueItem}
                   className={`h-7 px-3 text-[11px] font-bold gap-1 flex-shrink-0 ${
-                    expiringSoonCount > 0
+                    priorityExpiredLot || expiringSoonCount > 0
                       ? "bg-red-600 hover:bg-red-700 text-white"
                       : "bg-amber-600 hover:bg-amber-700 text-white"
                   }`}
                   onClick={() => {
-                    // Scroll to queue or trigger first item action
+                    if (priorityExpiredLot) {
+                      openDisposalDock(priorityExpiredLot);
+                      return;
+                    }
+                    if (topPriorityQueueItem) {
+                      handlePriorityQueueAction(topPriorityQueueItem);
+                    }
                   }}
                 >
-                  {expiringSoonCount > 0 ? "폐기 처리 시작" : "처리 시작"}
+                  {priorityExpiredLot ? "폐기 처리 시작" : expiringSoonCount > 0 ? "폐기 처리 시작" : "처리 시작"}
                   <ArrowRight className="h-3 w-3" />
                 </Button>
               </div>
@@ -1761,27 +1991,9 @@ function InventoryPageContent() {
 
             {/* Priority Action Queue */}
             <PriorityActionQueue
-              onAction={(queueItem) => {
-                toast({
-                  title: queueItem.actionLabel,
-                  description: `${queueItem.productName}: ${queueItem.recommendedAction}`,
-                });
-              }}
-              onItemClick={(queueItem) => {
-                // Find matching inventory item and open context panel
-                const match = displayInventories.find(
-                  (inv) => inv.product.name === queueItem.productName
-                );
-                if (match) {
-                  if (typeof window !== "undefined" && window.innerWidth >= 1280) {
-                    openContextPanel(match);
-                  } else {
-                    setSelectedItem(match);
-                    setSheetSafetyStock(String(match.safetyStock ?? match.minOrderQty ?? 1));
-                    setIsSheetOpen(true);
-                  }
-                }
-              }}
+              items={priorityQueueItems}
+              onAction={handlePriorityQueueAction}
+              onItemClick={handlePriorityQueueAction}
             />
 
             {/* 조치 필요 항목 — removed: PriorityActionQueue가 동일 ontology backlog를 surface합니다 */}
@@ -1956,10 +2168,7 @@ function InventoryPageContent() {
                                 className="h-7 px-3 text-[11px] whitespace-nowrap gap-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  toast({
-                                    title: "폐기 처리 시작",
-                                    description: `${inv.product.name} — 잔량 ${inv.currentQuantity}${inv.unit || "개"}의 폐기 절차를 진행합니다.`,
-                                  });
+                                  openDisposalDock(inv);
                                 }}
                               >
                                 <Trash2 className="h-3 w-3 shrink-0" />
@@ -2392,10 +2601,9 @@ function InventoryPageContent() {
               setContextPanelItem(null);
             }}
             onDispose={(cpItem) => {
-              toast({
-                title: "폐기 검토",
-                description: `${cpItem.productName} 폐기 절차를 확인하세요.`,
-              });
+              const match = displayInventories.find((inv) => inv.id === cpItem.id);
+              if (!match) return;
+              openDisposalDock(match);
             }}
           />
         )}
@@ -3198,21 +3406,25 @@ function InventoryPageContent() {
           <TabsContent value="inventory" className="space-y-4 md:space-y-6">
             {/* 온톨로지: 만료 lot priority banner (inventory 목록 탭) */}
             {(() => {
-              const expiredLotsInList = displayInventories.filter((inv) => {
-                if (!inv.expiryDate) return false;
-                const days = Math.ceil((new Date(inv.expiryDate).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-                return days <= 0 && inv.currentQuantity > 0;
-              });
-              if (expiredLotsInList.length === 0) return null;
+              if (!priorityExpiredLot) return null;
               return (
                 <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
                   <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-red-800">만료 lot {expiredLotsInList.length}건 · 폐기 처리 필요</p>
-                    <p className="text-xs text-red-600/70">사용 금지 상태입니다. 재발주보다 폐기 처리를 먼저 진행하세요.</p>
+                    <p className="text-sm font-bold text-red-800">우선 처리: 만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개</p>
+                    <p className="text-xs text-red-600/70">사용 금지 상태입니다. 재주문보다 폐기 처리를 먼저 진행하세요.</p>
                   </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
+                    onClick={() => openDisposalDock(priorityExpiredLot)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    폐기 처리 시작
+                  </Button>
                 </div>
               );
             })()}
@@ -3694,46 +3906,37 @@ function InventoryPageContent() {
       {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}
       <LotDisposalPanel
         open={disposalPanelOpen}
-        onOpenChange={(open) => { if (!open) setDisposalTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDisposalTarget(null);
+            setDisposalInventoryId(null);
+          }
+        }}
         target={disposalTarget}
+        isSubmitting={disposeLotMutation.isPending}
         onConfirmDisposal={(params) => {
-          toast({
-            title: params.quarantine ? "격리 후 폐기 처리" : "폐기 확정",
-            description: `Lot #${params.lotNumber} ${params.quantity}개 — ${
-              params.reason === "expiry" ? "유효기간 만료" :
-              params.reason === "contamination" ? "오염/변질" :
-              params.reason === "damage" ? "파손" :
-              params.reasonDetail || "기타"
-            }`,
+          const sourceInventory = displayInventories.find((inv) => inv.id === disposalInventoryId);
+          if (!sourceInventory) {
+            toast({
+              title: "폐기 대상 LOT를 찾을 수 없습니다",
+              description: "재고 목록을 새로고침한 뒤 다시 시도해주세요.",
+              variant: "destructive",
+            });
+            return;
+          }
+          disposeLotMutation.mutate({
+            inventory: sourceInventory,
+            params,
           });
-          setDisposalTarget(null);
-          // TODO: 실제 폐기 API mutation 연결
         }}
         onNavigateToReorder={(productName) => {
           setDisposalTarget(null);
-          // 재발주 검토로 이동 — aiPanel 열기
-          const matchingItem = filteredInventories.find(
+          setDisposalInventoryId(null);
+          const matchingItem = displayInventories.find(
             (inv) => inv.product.name === productName
           );
           if (matchingItem) {
-            aiPanel.preparePanel({
-              id: matchingItem.id,
-              productId: matchingItem.productId,
-              productName: matchingItem.product.name,
-              brand: matchingItem.product.brand || undefined,
-              catalogNumber: matchingItem.product.catalogNumber || undefined,
-              currentQuantity: matchingItem.currentQuantity,
-              unit: matchingItem.unit || undefined,
-              safetyStock: matchingItem.safetyStock || undefined,
-              minOrderQty: matchingItem.minOrderQty || undefined,
-              location: matchingItem.location || undefined,
-              expiryDate: matchingItem.expiryDate || undefined,
-              lotNumber: matchingItem.lotNumber || undefined,
-              autoReorderEnabled: matchingItem.autoReorderEnabled || false,
-              averageDailyUsage: matchingItem.averageDailyUsage || undefined,
-              leadTimeDays: matchingItem.leadTimeDays || undefined,
-              lastInspectedAt: undefined,
-            });
+            openReorderReview(matchingItem);
           }
         }}
       />
