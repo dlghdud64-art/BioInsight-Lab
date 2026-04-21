@@ -17,7 +17,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import {
   Search, Bell, HelpCircle, ChevronRight,
@@ -25,12 +24,10 @@ import {
   Settings, CreditCard, LogOut,
   ShieldAlert, Clock, CheckCircle2,
   ClipboardCheck, Menu, Package,
-  Compass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
-import { useOntologyContextLayerStore } from "@/lib/store/ontology-context-layer-store";
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void;
@@ -80,8 +77,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const queryClient = useQueryClient();
   const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
-  const ontologyStore = useOntologyContextLayerStore();
-  const nextActionLabel = ontologyStore.resolved?.nextRequiredAction?.label;
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 1, category: "stock_alert", read: false, text: "재고 부족 품목 3건 — 재주문 검토 필요", href: "/dashboard/inventory?filter=low", time: "10분 전" },
     { id: 2, category: "expiry_warning", read: false, text: "만료 임박 Lot 1건 (D-3) — 확인 필요", href: "/dashboard/inventory", time: "30분 전" },
@@ -270,29 +265,6 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <Search className="h-5 w-5" />
           </Button>
 
-
-          {/* 다음 단계 버튼 — OntologyContextLayer 트리거
-              resolver가 실제 next action을 반환할 때만 표시.
-              dead button / no-op CTA 금지 원칙에 따라 nextActionLabel이 없으면 숨김. */}
-          {pathname?.startsWith("/dashboard") && nextActionLabel && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-10 w-10 md:h-9 md:w-9 relative flex-shrink-0 p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  onClick={() => ontologyStore.open(pathname ?? "", {})}
-                  aria-label="다음 단계"
-                >
-                  <Compass className="h-5 w-5" />
-                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-blue-500 ring-2 ring-white" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="text-xs max-w-[200px]">
-                {nextActionLabel}
-              </TooltipContent>
-            </Tooltip>
-          )}
 
           {/* 알림 드롭다운 — 이벤트 피드 (고도화) */}
           <DropdownMenu open={isNotificationOpen} onOpenChange={setIsNotificationOpen}>
