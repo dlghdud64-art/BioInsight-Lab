@@ -419,7 +419,7 @@ export default function SafetyManagerPage() {
               title={priorityBacklogCount === 0 ? "분석 대상 항목이 없습니다" : `우선 점검 대상 ${priorityBacklogCount}건`}
             >
               <ShieldAlert className="h-4 w-4" />
-              {priorityBacklogCount > 0 ? `MSDS 점검 실행 (${priorityBacklogCount}건)` : "점검 대상 없음"}
+              {priorityBacklogCount > 0 ? `MSDS 점검 준비 (${priorityBacklogCount}건)` : "점검 대상 없음"}
             </Button>
           </div>
         </div>
@@ -1000,8 +1000,8 @@ export default function SafetyManagerPage() {
                     <ShieldAlert className="h-5 w-5 text-red-600" />
                   </div>
                   <div>
-                    <h2 className="text-sm font-bold text-slate-900">MSDS 점검 실행</h2>
-                    <p className="text-[11px] text-slate-500">현재 backlog 기준 안전 문서 점검</p>
+                    <h2 className="text-sm font-bold text-slate-900">MSDS 점검 준비</h2>
+                    <p className="text-[11px] text-slate-500">현재 backlog 기준 안전 문서 점검 대상 확인</p>
                   </div>
                 </div>
                 <button onClick={() => { setAiPanelOpen(false); setAiPanelPhase("closed"); }} className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100">
@@ -1049,23 +1049,16 @@ export default function SafetyManagerPage() {
                 </>
               )}
 
-              {/* 분석 결과 (success 상태) */}
-              {aiPanelPhase === "success" && (
-                <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4 space-y-3">
+              {/* 안내: 점검 실행 저장 기능 준비 중 (Option 1 · Hide-until-wired) */}
+              {queueItems.length > 0 && (
+                <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-bold text-emerald-700">분석 완료</span>
+                    <AlertTriangle className="h-4 w-4 text-slate-400" />
+                    <span className="text-xs font-bold text-slate-600">점검 실행 저장 기능은 준비 중입니다</span>
                   </div>
-                  <div className="space-y-2 text-xs text-slate-600">
-                    <p>MSDS 최신성 확인: {queueItems.length}건 중 {msdsMissingCount}건 누락/만료</p>
-                    <p>고위험 즉시 조치 필요: {immediateCount}건</p>
-                    <p>문서 보완 필요: {docRemCount}건</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-200 text-emerald-700 hover:bg-emerald-100">MSDS 등록</Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs border-amber-200 text-amber-700 hover:bg-amber-100">점검 기록 생성</Button>
-                    <Button size="sm" variant="outline" className="h-7 text-xs border-red-200 text-red-700 hover:bg-red-100">폐기 검토</Button>
-                  </div>
+                  <p className="text-[11px] leading-relaxed text-slate-500">
+                    현재는 우선 점검 대상 {priorityBacklogCount}건의 목록 확인만 지원합니다. 개별 항목은 상단 테이블에서 "폐기 처리" 또는 행 액션으로 처리해 주세요.
+                  </p>
                 </div>
               )}
             </div>
@@ -1077,21 +1070,11 @@ export default function SafetyManagerPage() {
               </Button>
               <Button
                 size="sm"
-                className="h-9 px-5 text-xs font-semibold bg-red-600 hover:bg-red-500 text-white"
-                disabled={aiPanelPhase === "running" || queueItems.length === 0}
-                onClick={() => {
-                  setAiPanelPhase("running");
-                  // 분석 실행 (현재는 deterministic, 추후 서버 API)
-                  setTimeout(() => setAiPanelPhase("success"), 1500);
-                }}
+                className="h-9 px-5 text-xs font-semibold bg-slate-200 text-slate-400 cursor-not-allowed"
+                disabled
+                title="점검 실행 저장 기능은 준비 중입니다."
               >
-                {aiPanelPhase === "running" ? (
-                  <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />분석 중...</>
-                ) : aiPanelPhase === "success" ? (
-                  "재분석"
-                ) : (
-                  "분석 실행"
-                )}
+                분석 실행 (준비 중)
               </Button>
             </div>
           </div>

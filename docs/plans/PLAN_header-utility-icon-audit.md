@@ -489,3 +489,21 @@ All phases must strictly follow Red-Green-Refactor.
 - Header regression: **PASS**
 - Runtime console clean: **FAIL, unrelated**
 - Separate bug-hunter tickets required: **#6, #B1**
+
+---
+
+### Phase 2 Smoke Correction (2026-04-21, bug-hunter #6 재검증 결과)
+
+이전 Phase 2 Runtime Smoke Note에서 "MSDS 점검 실행 silent no-op"으로 기록한 항목은 **selector false positive**였음이 확인되었습니다.
+
+**재검증 결과:**
+- Top CTA "MSDS 점검 실행 (5건)" → **정상 동작** (패널 열림, `fixedDivs 0→3`, `h2`에 "MSDS 점검 실행" 추가, "현재 backlog 기준 안전 문서 점검" 텍스트 감지)
+- 패널 내부 "분석 실행" 버튼 → **front-only fake success** (setTimeout 1500ms, fetch/XHR intercept 결과 network request 0건, reference id / timestamp / audit trail 없음) — **P1 버그로 확정 (#6)**
+- 패널 내부 success panel 3 버튼 ("MSDS 등록" / "점검 기록 생성" / "폐기 검토") → **dead buttons** (`onclickAttr: null`, React `reactProps.onClick: null`, `disabled: false`) — **P1 버그로 확정 (#6 하위)**
+
+**재검증 방법 교훈:**
+- plain `<div className="fixed ...">` 패널은 `role="dialog"` / `data-state="open"` / `[data-radix-portal]` / `[class*="Sheet|Drawer|Modal"]` 셀렉터로 탐지되지 않음.
+- `getComputedStyle(d).position === 'fixed'`로 직접 측정하거나, 특징적인 Tailwind class (`fixed.right-0.top-0.bottom-0`) 기반 query가 필요.
+- React dead button은 `btn.onclick` (DOM attribute)과 `btn[reactPropsKey].onClick` (React fiber) 양쪽 모두 확인해야 함.
+
+**Plan A 판정은 변경 없음:** header launcher cleanup은 여전히 **PASS**. `#6`은 bug-hunter 트랙에서 계속 진행. 정정된 `#6` 정의는 위 재검증 결과를 따름.
