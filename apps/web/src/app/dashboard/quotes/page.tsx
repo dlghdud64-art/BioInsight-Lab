@@ -706,6 +706,16 @@ function QuotesPageContent() {
             )}
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {/* Primary continuation CTA — ontology resolver State 6: go_quote_management.
+                이미 /dashboard/quotes workbench에 도착해 있으므로 same-canvas로 배너만 닫는다.
+                Route 이동/mutation/sessionStorage 재작성 없음 — canonical truth 미변경. */}
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={() => setRfqBannerDismissed(true)}
+            >
+              견적 관리에서 계속
+            </Button>
             <Link href="/app/search">
               <Button variant="outline" size="sm" className="h-8 text-xs text-slate-500 border-slate-200">
                 소싱으로 돌아가기
