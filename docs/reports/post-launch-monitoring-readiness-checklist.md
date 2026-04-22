@@ -73,31 +73,85 @@ MutationAuditEvent escalation condition:
 
 ### 1.4 Vercel deploy / env / ignoreCommand 상태
 
-**현재 상태 (read-only 실측):**
+#### 1.4.1 vercel.json 드리프트 상태 (기존 관측 유지)
+
 - `vercel.json` (repo root): `buildCommand = "npx prisma generate && npx prisma migrate deploy && npm run build"`, `rootDirectory = apps/web`.
 - `apps/web/vercel.json`: `buildCommand = "npm run build"`, `env.NODE_ENV = "development"`, `env.PRISMA_GENERATE_DATAPROXY = "false"`.
 - **드리프트 관측**: 두 vercel.json 파일이 동시에 존재. 어느 파일이 Vercel 프로젝트에서 채택되는지는 Vercel 프로젝트 설정(`Root Directory`)에 따라 결정. read-only 범위에서는 단정하지 않음.
 - `ignoreCommand` 필드 양쪽 모두 미정의.
 
-**Gate 기준:**
-- [ ] Vercel 프로젝트에서 실제 채택되는 `vercel.json` 확인 (Vercel 대시보드에서 빌드 로그의 `buildCommand` 한 줄 확인으로 충분).
-- [ ] `prisma migrate deploy`가 실 배포에서 실행되는지 확인 (root 파일 채택 시 YES, apps/web 파일 채택 시 NO).
-- [ ] 프로덕션 env 키 존재 확인 (값 열람 금지, presence만):
-  - [ ] `DATABASE_URL`
-  - [ ] `DIRECT_URL`
-  - [ ] `NEXTAUTH_URL`
-  - [ ] `NEXTAUTH_SECRET`
-  - [ ] `MOBILE_JWT_SECRET`
-  - [ ] `LABAXIS_CSRF_MODE`
-- [ ] 미사용 env 확인 (값 열람 금지):
-  - [ ] `MOBILE_DEV_PASSWORD` 프로덕션에서 **미설정**이어야 함 (UAT PRE-08).
-
 **블로커 승격 조건:**
 - 실제 채택 `vercel.json`에 `prisma migrate deploy`가 포함되지 않았는데 신규 migration이 존재하면 blocker.
-- `MOBILE_DEV_PASSWORD`가 프로덕션에 설정돼 있으면 blocker.
+- `MOBILE_DEV_PASSWORD`가 프로덕션에 설정돼 있으면 blocker (UAT PRE-08 기준).
 
 **드리프트 기록(수정은 별도 plan 필요):**
 - 두 vercel.json 중 어느 쪽을 canonical로 할지 결정 + 반대 파일 제거 — **본 checklist 범위 밖**, release-prep 완료 후 별도 작업.
+
+#### 1.4.2 Vercel env presence audit (#24 closeout, 2026-04-22)
+
+> **Important distinction:**
+> This section clears the Vercel env presence gate only.
+> It does not replace critical route smoke, Sentry/go-defer decision, or post-launch telemetry validation.
+
+**Scope:** 값 확인 없음, presence / flag / scope / last-update만 관측. Vercel 대시보드 Needs Attention 툴팁 원문은 `DATABASE_URL` 1건에 한해 heuristic 분류 목적으로 1회 추출 (값 아님). Reveal 버튼 / value 영역 / cookie / localStorage 접근 0건.
+
+**Env inventory (Production scope, 값 미기록):**
+
+| # | Env Name | Scope | Flag | Presence | Code Requirement | Blocker Status | Note |
+|---|----------|-------|------|----------|------------------|----------------|------|
+| 1 | `LABAXIS_CSRF_MODE` | Production | Sensitive | present | required (`csrf-contract.ts:85-102`) | PASS | runtime probe `/api/security/csrf-status` → `mode=full_enforce`, `rolloutGuide.current=full_enforce`, `rolloutGuide.next=done` |
+| 2 | `NEXT_PUBLIC_SUPABASE_URL` | Production | — | present | required | PASS | — |
+| 3 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | All Env | — | present | required | PASS | — |
+| 4 | `SUPABASE_SERVICE_ROLE_KEY` | All Env | — | present | required | PASS | — |
+| 5 | `ABAXIS_CSRF_MODE` | Production | — | present (typo) | code path 0건 | non-blocker | post-launch E: full_enforce 24~48h 관측 후 삭제 |
+| 6 | `DIRECT_URL` | All Env | — | present | required | PASS | — |
+| 7 | `DATABASE_URL` | All Env | Needs Attention | present | required | PASS (hygiene only) | Vercel tooltip: "looks like a secret; consider rotating and saving as Sensitive" |
+| 8 | `GOOGLE_GEMINI_API_KEY` | All Env | Needs Attention | present | required (AI 기능) | PASS (hygiene only) | 동일 heuristic 추정 (원문 미확보) |
+| 9 | `NEXTAUTH_SECRET` | All Env | Needs Attention | present | required (`auth.ts:14` fallback) | PASS (hygiene only) | 동일 heuristic 추정 |
+| 10 | `AUTH_SECRET` | All Env | Needs Attention | present | required (`auth.ts:14` primary) | PASS (hygiene only) | 동일 heuristic 추정 |
+
+**Missing envs 평가 (6건, 전부 code fallback 존재):**
+
+| Env Name | Code Reference | Missing 허용 근거 | Blocker Status |
+|----------|----------------|------------------|----------------|
+| `NEXTAUTH_URL` | `apps/web/src/lib/env.ts:17` | `VERCEL_URL` 자동 주입이 우선 (`env.ts:12`) | non-blocker on Vercel Production |
+| `AUTH_URL` | 동일 helper 경유 | 동일 | non-blocker |
+| `GOOGLE_CLIENT_ID` | `apps/web/src/auth.ts:9` | conditional provider (`auth.ts:19`): `...(hasGoogleOAuth ? [Google(...)] : [])` | non-blocker (missing 시 provider 배열 비어있음, NextAuth 부팅 정상) |
+| `GOOGLE_CLIENT_SECRET` | `apps/web/src/auth.ts:10` | 동일 | non-blocker |
+| `MOBILE_JWT_SECRET` | `apps/web/src/lib/auth/mobile-jwt.ts:18` | `AUTH_SECRET` fallback: `MOBILE_JWT_SECRET \|\| AUTH_SECRET \|\| ""` | non-blocker (`AUTH_SECRET` present) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | grep 0건 | 코드 참조 없음 — `ANON_KEY` 단일 사용 | non-blocker |
+
+**Missing = GO condition (UAT PRE-08):**
+- `MOBILE_DEV_PASSWORD` — Vercel Production 리스트에 미등록 ✅
+
+**Hard NO-GO assessment:**
+
+- `LABAXIS_CSRF_MODE` runtime probe **PASS** — `/api/security/csrf-status` 응답에서 `mode=full_enforce`, `rolloutGuide.current=full_enforce`, `rolloutGuide.next=done` 3개 조건 모두 충족.
+- `ABAXIS_CSRF_MODE`는 typo env이며 code path 0건 → runtime 영향 없음 (grep `ABAXIS_CSRF_MODE` 전체 레포 매치 0건).
+- `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`은 conditional provider 구조상 **technical boot blocker 아님** (`auth.ts:19`).
+- `NEXTAUTH_URL` / `AUTH_URL`은 `VERCEL_URL` 우선 구조상 **blocker 아님** (`env.ts:12`).
+- `MOBILE_JWT_SECRET`은 `AUTH_SECRET` fallback으로 **web release blocker 아님** (`mobile-jwt.ts:18`).
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`는 **code reference 0건이면 blocker 아님**.
+
+**Post-launch follow-ups (release blocker 아님, 별도 작업 큐):**
+
+| ID | 항목 | 관측/행동 조건 |
+|----|------|----------------|
+| A | Google OAuth UI dead-button check | Sign-in 페이지에 "Google 로그인" CTA가 렌더되는데 env 없어서 provider가 빈 배열이면 dead button. **critical route smoke 전 확인**. |
+| B | `VERCEL_URL` / custom domain redirect integrity smoke | Custom domain 연결 후 OAuth callback URL이 Vercel preview URL을 반환하지 않는지 검증. |
+| C | Mobile secret separation before mobile production | 모바일 앱 프로덕션 배포 전 `MOBILE_JWT_SECRET`을 `AUTH_SECRET`와 분리. |
+| D | Needs Attention envs → Sensitive flag hygiene cleanup | `DATABASE_URL`, `GOOGLE_GEMINI_API_KEY`, `NEXTAUTH_SECRET`, `AUTH_SECRET` 4건을 Sensitive 플래그로 일괄 전환. |
+| E | `ABAXIS_CSRF_MODE` typo env deletion | `full_enforce` 안정 24~48h 관측 후 Vercel에서 삭제. 별도 커밋. |
+
+**#24 Final verdict:**
+
+```
+#24 Vercel env presence audit
+Status: completed
+Verdict: CLEAN / GO for env presence gate only
+Overall post-launch readiness: not final yet
+Next gate: #25 Sentry go/defer decision
+```
 
 ---
 
