@@ -210,14 +210,21 @@ describe("middleware admin gate — /api/admin/** (#27)", () => {
 // /dashboard/admin*, /admin* — page contract
 // ──────────────────────────────────────────
 
-describe("middleware admin gate — admin page trees (#27)", () => {
-  it("unauthenticated /dashboard/admin → /auth/signin redirect", async () => {
+describe("middleware legacy /dashboard/admin redirect (#30)", () => {
+  // #30: legacy /dashboard/admin tree는 URL 정규화로 /admin으로 흡수되고
+  // admin gate 로직은 더 이상 /dashboard/admin 경로를 판단하지 않는다.
+  // 로그인/role과 무관하게 즉시 redirect되며, 그 후 새 URL(/admin*)에서
+  // #27의 admin gate가 다시 평가한다.
+
+  it("unauthenticated /dashboard/admin → /admin redirect (auth check comes after normalization)", async () => {
     const res = await callMiddleware(makeReq("/dashboard/admin"));
     expect([307, 308]).toContain(res?.status);
-    expect(res?.headers.get("location") || "").toMatch(/\/auth\/signin/);
+    const loc = res?.headers.get("location") || "";
+    expect(loc).toMatch(/\/admin$/);
+    expect(loc).not.toMatch(/\/auth\/signin/);
   });
 
-  it("RESEARCHER /dashboard/admin → /dashboard redirect (no 403 page)", async () => {
+  it("RESEARCHER /dashboard/admin → /admin redirect (role check comes after normalization)", async () => {
     const res = await callMiddleware(
       makeReq("/dashboard/admin", {
         authUser: { id: "u1", role: "RESEARCHER" },
@@ -225,18 +232,57 @@ describe("middleware admin gate — admin page trees (#27)", () => {
     );
     expect([307, 308]).toContain(res?.status);
     const loc = res?.headers.get("location") || "";
-    expect(loc).toMatch(/\/dashboard$/);
+    expect(loc).toMatch(/\/admin$/);
   });
 
-  it("ADMIN /dashboard/admin → pass-through", async () => {
+  it("ADMIN /dashboard/admin → /admin redirect (not pass-through; subsequent request hits admin gate)", async () => {
     const res = await callMiddleware(
       makeReq("/dashboard/admin", {
         authUser: { id: "a1", role: "ADMIN" },
       }),
     );
-    expect(isPassthrough(res)).toBe(true);
+    expect([307, 308]).toContain(res?.status);
+    const loc = res?.headers.get("location") || "";
+    expect(loc).toMatch(/\/admin$/);
   });
 
+  it("/dashboard/admin/users → /admin/users redirect (prefix preserved)", async () => {
+    const res = await callMiddleware(
+      makeReq("/dashboard/admin/users", {
+        authUser: { id: "a1", role: "ADMIN" },
+      }),
+    );
+    expect([307, 308]).toContain(res?.status);
+    const loc = res?.headers.get("location") || "";
+    expect(loc).toMatch(/\/admin\/users$/);
+  });
+
+  it("/dashboard/admin/deep/path → /admin/deep/path redirect (multi-segment preserved)", async () => {
+    const res = await callMiddleware(
+      makeReq("/dashboard/admin/deep/path", {
+        authUser: { id: "a1", role: "ADMIN" },
+      }),
+    );
+    expect([307, 308]).toContain(res?.status);
+    const loc = res?.headers.get("location") || "";
+    expect(loc).toMatch(/\/admin\/deep\/path$/);
+  });
+
+  it("/dashboard/administration (prefix trap) → NOT redirected", async () => {
+    // startsWith('/dashboard/admin/')는 trailing slash를 요구하므로
+    // /dashboard/administration 같은 경로는 과매칭되지 않아야 한다.
+    const res = await callMiddleware(
+      makeReq("/dashboard/administration", {
+        authUser: { id: "u1", role: "RESEARCHER" },
+      }),
+    );
+    // redirect면 /admin 경로로 가지 않아야 함
+    const loc = res?.headers?.get("location") || "";
+    expect(loc).not.toMatch(/\/administration/);
+  });
+});
+
+describe("middleware admin gate — admin page trees (#27)", () => {
   it("unauthenticated /admin (bare) → /auth/signin redirect", async () => {
     const res = await callMiddleware(makeReq("/admin"));
     expect([307, 308]).toContain(res?.status);

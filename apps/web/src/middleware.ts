@@ -108,6 +108,14 @@ function buildCsrfBlockResponse(
 export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
 
+  // ── 0. Legacy /dashboard/admin tree → /admin redirect (#30) ──
+  // page-per-feature 중복 surface 제거. URL 정규화이므로 auth/role 로직보다 앞에서 처리한다.
+  // 실파일 apps/web/src/app/dashboard/admin/page.tsx 삭제는 후속 commit에서 분리 (rollback safety).
+  if (pathname === '/dashboard/admin' || pathname.startsWith('/dashboard/admin/')) {
+    const newPath = pathname.replace(/^\/dashboard\/admin/, '/admin');
+    return NextResponse.redirect(new URL(newPath + req.nextUrl.search, req.url));
+  }
+
   // ── 1. Page route 인증 (기존 동작 유지 + /admin 트리 포함) ──
   if (
     pathname.startsWith('/app/') ||
