@@ -74,7 +74,7 @@ interface Quote {
     email: string | null;
     organization?: string | null;
   } | null;
-  _count: { listItems: number; items: number };
+  _count: { items: number };
   items?: Array<{
     id: string;
     name: string | null;
@@ -122,11 +122,15 @@ export default function AdminQuotesPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError, error, refetch } = useQuery({
     queryKey: ["admin-quotes"],
     queryFn: async () => {
       const response = await fetch(`/api/admin/quotes?limit=100`);
-      if (!response.ok) throw new Error("Failed to fetch quotes");
+      if (!response.ok) {
+        // #28: surface server errors instead of letting them collapse into an empty list.
+        const detail = await response.text().catch(() => "");
+        throw new Error(`견적 목록을 불러오지 못했습니다. (status ${response.status}) ${detail}`.trim());
+      }
       return response.json();
     },
   });
@@ -330,6 +334,30 @@ export default function AdminQuotesPage() {
                         <Loader2 className="h-5 w-5 animate-spin text-slate-400 mx-auto" />
                       </TableCell>
                     </TableRow>
+                  ) : isError ? (
+                    // #28: error state MUST be distinct from empty state. No fake success.
+                    <TableRow>
+                      <TableCell colSpan={10} className="h-40 text-center">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-center gap-2 text-red-600">
+                            <AlertTriangle className="h-4 w-4" />
+                            <p className="text-sm font-medium">견적 목록을 불러오지 못했습니다.</p>
+                          </div>
+                          <p className="text-xs text-slate-400">
+                            {error instanceof Error ? error.message : "일시적 오류입니다."}
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="mt-2 text-xs"
+                            onClick={() => refetch()}
+                          >
+                            <RefreshCw className="h-3 w-3 mr-1" />
+                            재시도
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ) : filteredQuotes.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={10} className="h-40 text-center">
@@ -353,7 +381,7 @@ export default function AdminQuotesPage() {
                     filteredQuotes.map((quote) => {
                       const cfg = STATUS_CONFIG[quote.status] ?? { label: quote.status, className: "bg-el text-slate-600 border-0", order: 99 };
                       const sla = getSLAStatus(quote.createdAt, quote.status);
-                      const itemCount = quote._count?.items || quote._count?.listItems || 0;
+                      const itemCount = quote._count?.items ?? 0;
                       const canConvert = quote.status === "COMPLETED";
 
                       return (

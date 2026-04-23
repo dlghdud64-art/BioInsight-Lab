@@ -59,7 +59,9 @@ export async function GET(request: NextRequest) {
         },
         _count: {
           select: {
-            listItems: true,
+            // #28: `listItems` is not a Prisma relation on Quote — the QuoteListItem
+            // relation field is named `items`. Legacy `listItems` name caused prisma:error
+            // → 500 on every admin quotes list request. Removed to restore canonical path.
             items: true,
           },
         },
