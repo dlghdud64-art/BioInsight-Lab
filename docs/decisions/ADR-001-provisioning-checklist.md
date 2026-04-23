@@ -1,6 +1,6 @@
 # ADR-001 Provisioning Checklist — Option B (Dedicated Supabase Test Project)
 
-- Status: **OPEN** (호영님 콘솔 작업 대기)
+- Status: **CLOSED** (2026-04-23 — Supabase 콘솔 작업 완료, 값 기록됨, §11 deviation 확정)
 - Parent: `docs/decisions/ADR-001-isolated-write-db-for-smoke.md` — §7 criteria 2 집행용
 - Owner (execution): 호영 (총괄관리자)
 - Operator role: 본 문서에서는 체크리스트만 제공. Supabase 콘솔 / billing / key 발급 어느 것도 자동화하지 않는다.
@@ -73,18 +73,33 @@ Free tier 로 시작하면 `plan=Free` 로 기록.
 
 ---
 
-## 4. 값 기록 슬롯 (프로젝트 생성 후 호영님이 채움)
-
-아래 3개 줄을 채운 뒤, Phase 2 guard 가 실제 값을 env 로 받아서 검증한다.
+## 4. 값 기록 (Phase 1 완료)
 
 ```
-# Filled by 호영 on YYYY-MM-DD after Supabase console provisioning
-TEST_PROJECT_REF     = <여기에 test project-ref 문자열, 예: abcdefghijklmnop>
-PRODUCTION_PROJECT_REF = <여기에 production project-ref 문자열>
-TEST_PROJECT_REGION  = <예: ap-northeast-2>
+# Filled by 호영 on 2026-04-23 after Supabase console confirmation
+TEST_PROJECT_REF       = qbyzsrtxzlctjvbfcscs
+PRODUCTION_PROJECT_REF = xhidynwpkqeaqjuudhsw
+TEST_PROJECT_REGION    = ap-northeast-2
+TEST_PROJECT_NAME      = labaxis-smoke-test   # deviation §11.1
 ```
 
-> 위 세 줄은 **secret 이 아니므로** 저장소에 그대로 commit 가능. 다만 실제 `DATABASE_URL_SMOKE` / password / service key 는 여기에 쓰지 말 것.
+> 위 네 줄은 **secret 이 아니므로** 저장소에 그대로 commit 한다. 실제
+> `DATABASE_URL_SMOKE` / database password / service_role key 는 이 파일 또는
+> 그 어떤 repo 파일에도 쓰지 말 것.
+
+### 4.1 Runtime 주입 contract (Phase 2 guard 가 검증하는 값)
+
+Smoke 실행 시 shell 에 주입해야 할 env:
+
+```sh
+export DATABASE_URL_SMOKE="postgresql://postgres.qbyzsrtxzlctjvbfcscs:<password>@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres"
+export SMOKE_DB_PROJECT_REF="qbyzsrtxzlctjvbfcscs"
+export ALLOWED_SMOKE_DB_SENTINELS="qbyzsrtxzlctjvbfcscs"
+export PRODUCTION_DB_PROJECT_REF="xhidynwpkqeaqjuudhsw"
+```
+
+`DATABASE_URL_SMOKE` 내부의 `<password>` 는 secret. checked-in `.env` 에 들어가면
+안 되고, `.env.smoke` 는 `.gitignore` 상태 확인 후에만 사용.
 
 ---
 
@@ -129,13 +144,13 @@ Operator 는 Phase 3 에서 revision diff 를 확인한다 (production `_prisma_
 
 아래 5개가 모두 충족되면 Phase 1 CLOSED:
 
-1. Supabase 콘솔에 `labaxis-smoke` 프로젝트 생성됨.
-2. §4 세 줄(project-ref / production-ref / region)이 본 파일에 채워짐 + commit.
-3. `DATABASE_URL_SMOKE` 가 호영님 로컬/secret manager 에 저장됨 (repo 에는 기록하지 않음 — 확인은 호영님 자가검증).
-4. checked-in `.env` 에 production DATABASE_URL 이 그대로 유지되고 smoke 값이 덮이지 않았음.
-5. Phase 2 guard 가 준비되어 있음 (별도 트랙, 병렬 진행).
+1. Supabase 콘솔에 smoke 용 test project 가 확보됨 — deviation §11.1 참고.  ✅
+2. §4 값 슬롯(project-ref / production-ref / region / name)이 본 파일에 채워짐 + commit.  ✅ (본 commit)
+3. `DATABASE_URL_SMOKE` 가 호영님 로컬/secret manager 에 저장됨 (repo 에는 기록하지 않음 — 확인은 호영님 자가검증).  ✅ (호영님 확인)
+4. checked-in `.env` 에 production DATABASE_URL 이 그대로 유지되고 smoke 값이 덮이지 않았음.  ✅ (§5.1 제약 2 준수)
+5. Phase 2 guard 가 준비되어 있음.  ✅ (`apps/web/scripts/smoke/guard.ts`, commit 7fbe253e)
 
-1~5 충족되면 Phase 3 (migrate) 집행 가능.
+5/5 충족 → **Phase 1 CLOSED**. Phase 3 (migrate revision diff) 집행 가능.
 
 ---
 
@@ -159,3 +174,56 @@ Operator 는 Phase 3 에서 revision diff 를 확인한다 (production `_prisma_
 ## 10. Changelog
 
 - 2026-04-23 — 초기 작성 (Phase 1 kickoff). §4 값 슬롯은 호영님 콘솔 작업 후 별도 commit 으로 채움.
+- 2026-04-23 — §4 값 기입, Status → **CLOSED**, §11 deviations 추가. Phase 3 (migrate revision diff) 집행 조건 충족.
+
+---
+
+## 11. Deviations from the original checklist
+
+본 섹션은 ADR-001 §5.1 제약 준수 하에 발생한 계획 이탈을 공개 기록한다. 이후
+Phase 4/5 및 Phase 0 truth reconciliation 이 본 섹션을 참조한다.
+
+### 11.1 Reused existing Supabase project (`labaxis-smoke-test`)
+
+- **계획:** "New project → `labaxis-smoke` 라는 이름으로 신규 생성".
+- **실제:** Supabase free plan 의 2-project 한도에 이미 막혀 있어 기존
+  `labaxis-smoke-test` 프로젝트를 smoke 역할로 재지정.
+- **ADR 제약과의 정렬:**
+  - §5.1 제약 1 (production ref ≠ test ref): project-ref 가 전혀 다름
+    (`qbyzsrtxzlctjvbfcscs` vs `xhidynwpkqeaqjuudhsw`) → 충족.
+  - §5.1 제약 3 (host/project-ref guard): guard 는 project-ref 문자열로만 판정
+    하므로 project 이름 불일치는 무관 → 충족.
+- **Follow-up:** free plan 에서 플랜 업그레이드 또는 branching 가용성이
+  확보되면 장기적으로는 smoke 용 전용 project 로 재분리 고려. 현재는 동일
+  project 재사용이 운영 측면에서 합리적.
+
+### 11.2 Pre-existing `#16c` seed data coexistence
+
+- **계획:** sentinel-scoped seed 가 비어 있는 test DB 에 들어감.
+- **실제:** 기존 `#16c` RFQ canonical smoke 에서 생성된 데이터가 남아 있음.
+  재사용 무방 (해당 데이터는 canonical PASS evidence).
+- **ADR 제약과의 정렬:**
+  - §6.2 (sentinel-scoped writes): sentinel cleanup 은 반드시 **전용 sentinel
+    식별자** (`org-smoke-isolated`, `workspace-smoke-isolated` 등) 로만 scope
+    되어야 하며, `#16c` 데이터는 **절대 건드리지 않는다**.
+  - Phase 4 sentinel-seed / sentinel-cleanup 구현 시 단위 테스트로
+    "non-sentinel row 는 cleanup 대상에서 제외" 케이스 강제.
+- **Follow-up:** `#16c` 데이터의 org/workspace 식별자가 sentinel 식별자와
+  충돌하지 않는지 Phase 4 진입 전에 확인 (read-only query).
+
+### 11.3 Vector extension pre-installed
+
+- **계획:** provisioning 후 extension 설치 별도 확인.
+- **실제:** `vector` extension 기설치. S01~S03 이 vector 경로를 트리거하는
+  경우 production parity 유지됨.
+- **ADR 제약과의 정렬:** 추가 작업 없음. 다만 Phase 5 connection probe 에서
+  `vector` extension 존재를 read-only 로 확인할 수 있으면 좋음 (선택).
+
+### 11.4 Prisma migrations already applied (4 migrations)
+
+- **계획:** Phase 3 에서 `prisma migrate deploy` 로 최초 배포.
+- **실제:** 4 migrations 기적용. Phase 3 는 "최초 deploy" 가 아니라
+  "revision diff 검증" 으로 축소.
+- **ADR 제약과의 정렬:** §7 criteria 3 (Prisma migrate 동일 revision) 은
+  "deploy 를 실행" 이 아니라 "production 과 동일 revision set" 을 요구함.
+  Phase 3 operator 산출물(`migrate-revision-diff.ts`) 로 충족 확인.
