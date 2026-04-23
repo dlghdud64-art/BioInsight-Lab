@@ -134,3 +134,22 @@ npm run lint          # 설정되어 있다면
 - Plan: `docs/plans/PLAN_test-runner-and-prisma-stabilization.md`
 - Billing lifecycle: `docs/billing-lifecycle.md`
 - 결제 교체 (deferred): `docs/plans/PLAN_toss-payments-migration.md`
+
+---
+
+## 7. Isolated WRITE smoke env 네이밍 (ADR-001 Option B)
+
+`#26 S01/S02/S03` write smoke 는 production DATABASE_URL 과 **다른** Supabase test
+project 를 타겟팅한다. 네이밍·분리 규칙은 `apps/web/scripts/smoke/guard.ts` 가
+강제한다. 상세 체크리스트는 `docs/decisions/ADR-001-provisioning-checklist.md`.
+
+| Env name | 성격 | 저장 위치 |
+| --- | --- | --- |
+| `DATABASE_URL_SMOKE` | test project 전체 connection string | **secret** — 로컬 shell 또는 gitignored `.env.smoke` 만. checked-in `.env` 금지 |
+| `SMOKE_DB_PROJECT_REF` | test project-ref (식별용 단일 값) | 공개 가능 |
+| `ALLOWED_SMOKE_DB_SENTINELS` | 허용 project-ref 리스트 (콤마 구분) | 공개 가능 |
+| `PRODUCTION_DB_PROJECT_REF` | self-guard 용 production project-ref | 공개 가능 (식별용) |
+
+Smoke runner 는 `assertSmokeDatabaseTarget()` 를 진입부에서 호출한다. guard 는
+fail-closed — DATABASE_URL_SMOKE 미설정, allow list 부재, production-ref 가 allow
+list 에 섞여 있는 경우 모두 즉시 abort 한다.
