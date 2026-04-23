@@ -108,10 +108,12 @@ function buildCsrfBlockResponse(
 export default auth(async (req) => {
   const pathname = req.nextUrl.pathname;
 
-  // ── 1. Page route 인증 (기존 동작 유지) ──
+  // ── 1. Page route 인증 (기존 동작 유지 + /admin 트리 포함) ──
   if (
     pathname.startsWith('/app/') ||
-    pathname.startsWith('/dashboard/')
+    pathname.startsWith('/dashboard/') ||
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/')
   ) {
     const isLoggedIn = !!req.auth;
     if (!isLoggedIn) {
@@ -122,6 +124,53 @@ export default auth(async (req) => {
       );
       return NextResponse.redirect(signInUrl);
     }
+  }
+
+  // ── 1b. Admin surface central authorization gate (#27) ──
+  // admin 페이지(/dashboard/admin*, /admin*)와 admin API(/api/admin/*)의
+  // 권한 체크를 한 곳에 고정해 route별 guard drift(TIER1/2/3)를 차단한다.
+  // deny-by-default: session.user.role === 'ADMIN' 아니면 모두 차단.
+  const isAdminPage =
+    pathname === '/admin' ||
+    pathname.startsWith('/admin/') ||
+    pathname === '/dashboard/admin' ||
+    pathname.startsWith('/dashboard/admin/');
+  const isAdminApi = pathname.startsWith('/api/admin/');
+
+  if (isAdminPage || isAdminApi) {
+    const sessionUser = req.auth?.user as { id?: string; role?: string } | undefined;
+    const role = sessionUser?.role;
+    const isAdmin = role === 'ADMIN';
+
+    if (!req.auth) {
+      if (isAdminApi) {
+        return NextResponse.json(
+          { error: '인증이 필요합니다.' },
+          { status: 401 },
+        );
+      }
+      // admin page — 상위 page-auth 블록에서 redirect되지만 안전망으로 한 번 더.
+      const signInUrl = new URL("/auth/signin", req.url);
+      signInUrl.searchParams.set(
+        "callbackUrl",
+        req.nextUrl.pathname + req.nextUrl.search,
+      );
+      return NextResponse.redirect(signInUrl);
+    }
+
+    if (!isAdmin) {
+      if (isAdminApi) {
+        // e2e(s07-auth-access-control.spec.ts)가 "관리자 권한" 문자열 포함을 기대함.
+        return NextResponse.json(
+          { error: '관리자 권한이 필요합니다.' },
+          { status: 403 },
+        );
+      }
+      // non-admin이 admin page에 접근하면 대시보드 홈으로 돌려보낸다.
+      // 별도 403 셸/페이지를 신설하지 않는다.
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+    // ADMIN → fallthrough (CSRF gate 및 실제 route handler로 진입)
   }
 
   // ── 2. API route CSRF gate ──
@@ -199,6 +248,7 @@ export const config = {
   matcher: [
     "/app/:path*",
     "/dashboard/:path*",
+    "/admin/:path*",
     "/api/:path*",
   ],
 };
