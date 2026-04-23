@@ -153,3 +153,41 @@ project 를 타겟팅한다. 네이밍·분리 규칙은 `apps/web/scripts/smoke
 Smoke runner 는 `assertSmokeDatabaseTarget()` 를 진입부에서 호출한다. guard 는
 fail-closed — DATABASE_URL_SMOKE 미설정, allow list 부재, production-ref 가 allow
 list 에 섞여 있는 경우 모두 즉시 abort 한다.
+
+---
+
+## 8. Pilot tenant env 네이밍 (ADR-002 Option C)
+
+`#P01` pilot 운영은 **production DB 에 sentinel 로 격리된 pilot tenant** 를 seed
+한다. 네이밍·가드는 `apps/web/scripts/pilot/guard.ts` 가 강제하며, 상세 결정
+근거는 `docs/decisions/ADR-002-pilot-tenant-seed.md`.
+
+§7 smoke 와 **env 이름이 전혀 겹치지 않도록** 설계되어 있어 실수로 두 트랙이
+섞이는 것을 구조적으로 차단한다. allow-list 의미가 반대이므로(smoke 는
+production-ref 를 차단, pilot 은 production-ref 가 있어야만 통과) 특히 주의.
+
+| Env name | 성격 | 저장 위치 |
+| --- | --- | --- |
+| `DATABASE_URL_PILOT` | pilot target (production DB) 전체 connection string | **secret** — 로컬 shell 또는 gitignored `.env.pilot` 만. checked-in `.env` 금지 |
+| `ALLOWED_PILOT_DB_SENTINELS` | 허용 project-ref 리스트 (콤마 구분). production ref 가 반드시 포함 | 공개 가능 |
+| `PILOT_REQUIRES_EXPLICIT_OPT_IN` | 정확 일치 필요한 opt-in 토큰. 현재 값: `YES-SEED-PRODUCTION-PILOT-2026` | 공개 가능 (식별용) |
+| `PILOT_OWNER_USER_ID_OVERRIDE` | §11.2 deviation 전용. 생산 외 DB(smoke 등)에서 owner cuid 가 다를 때만 설정 | 공개 가능 |
+
+실행 순서:
+
+```sh
+# 1. Seed (idempotent upsert chain under $transaction)
+pnpm -C apps/web tsx scripts/pilot/pilot-seed.ts
+
+# 2. Cleanup dry-run (present=true/false 리스트만, 삭제 없음)
+pnpm -C apps/web tsx scripts/pilot/pilot-cleanup.ts
+
+# 3. 실제 삭제
+pnpm -C apps/web tsx scripts/pilot/pilot-cleanup.ts --apply
+```
+
+Pilot runner 는 `assertPilotDatabaseTarget()` 를 진입부에서 호출한다. guard 는
+fail-closed — opt-in 토큰 불일치, DATABASE_URL_PILOT 미설정, URL 의 project-ref
+가 allow list 에 없는 경우 모두 즉시 abort 한다. 이후 `pilot.ts` 의
+`PILOT_OWNER_PROTECTION` 가 cleanup 진입 시 로그로 출력되어 "User row 는 절대
+삭제되지 않는다" 는 원칙을 운영 로그에서 재확인할 수 있게 한다.
