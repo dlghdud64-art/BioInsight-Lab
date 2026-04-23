@@ -94,8 +94,10 @@ export interface CleanupResult {
 export async function runCleanup(
   mode: CleanupMode,
   prisma: PilotCleanupPrismaClient,
+  /** Override for smoke-DB deviation (ADR-002 §11). */
+  ownerUserIdOverride?: string,
 ): Promise<CleanupResult> {
-  const plan = buildPilotCleanupPlan();
+  const plan = buildPilotCleanupPlan(ownerUserIdOverride);
   const probes: CleanupProbeRecord[] = [];
   const deletedCalls: CleanupDeleteRecord[] = [];
 
@@ -174,9 +176,11 @@ async function main() {
   });
 
   try {
+    const ownerOverride = process.env.PILOT_OWNER_USER_ID_OVERRIDE;
     const result = await runCleanup(
       mode,
       prisma as unknown as PilotCleanupPrismaClient,
+      ownerOverride,
     );
 
     // eslint-disable-next-line no-console

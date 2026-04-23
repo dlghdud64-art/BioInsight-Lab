@@ -67,12 +67,17 @@ async function main() {
       async (tx) => {
         // 1. The owner user must already exist. We never create it —
         //    it is canonical and owned by the OAuth provider.
+        //    PILOT_OWNER_USER_ID_OVERRIDE: smoke-DB deviation only (ADR-002 §11).
+        //    Set to the smoke DB user's cuid when the smoke DB has the same
+        //    email under a different id than production.
+        const resolvedOwnerId =
+          process.env.PILOT_OWNER_USER_ID_OVERRIDE ?? PILOT_OWNER_USER_ID;
         const owner = await tx.user.findUnique({
-          where: { id: PILOT_OWNER_USER_ID },
+          where: { id: resolvedOwnerId },
         });
         if (!owner) {
           throw new Error(
-            `[pilot-seed] owner user ${PILOT_OWNER_USER_ID} not found. ` +
+            `[pilot-seed] owner user ${resolvedOwnerId} not found. ` +
               "This script refuses to create the user row (canonical). " +
               "Sign in with the ADMIN account first so the user exists, then re-run.",
           );
@@ -106,12 +111,12 @@ async function main() {
         const orgMember = await tx.organizationMember.upsert({
           where: {
             userId_organizationId: {
-              userId: PILOT_OWNER_USER_ID,
+              userId: resolvedOwnerId,
               organizationId: PILOT_ORG_ID,
             },
           },
           create: {
-            userId: PILOT_OWNER_USER_ID,
+            userId: resolvedOwnerId,
             organizationId: PILOT_ORG_ID,
             role: PILOT_OWNER_ORG_ROLE as never,
           },
@@ -123,12 +128,12 @@ async function main() {
           where: {
             workspaceId_userId: {
               workspaceId: PILOT_WORKSPACE_ID,
-              userId: PILOT_OWNER_USER_ID,
+              userId: resolvedOwnerId,
             },
           },
           create: {
             workspaceId: PILOT_WORKSPACE_ID,
-            userId: PILOT_OWNER_USER_ID,
+            userId: resolvedOwnerId,
             role: PILOT_OWNER_WORKSPACE_ROLE as never,
           },
           update: {},

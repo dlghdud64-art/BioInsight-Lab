@@ -275,14 +275,17 @@ export interface PilotCleanupPlan {
  * The pilot OWNER USER is intentionally NOT in this plan — the user
  * row is canonical. See PILOT_OWNER_PROTECTION.
  */
-export function buildPilotCleanupPlan(): PilotCleanupPlan {
+export function buildPilotCleanupPlan(
+  /** Override for smoke-DB deviation (ADR-002 §11). Defaults to PILOT_OWNER_USER_ID. */
+  ownerUserId: string = PILOT_OWNER_USER_ID,
+): PilotCleanupPlan {
   const operations: PilotCleanupOperation[] = [
     {
       model: "workspaceMember",
       where: {
         workspaceId_userId: {
           workspaceId: PILOT_WORKSPACE_ID,
-          userId: PILOT_OWNER_USER_ID,
+          userId: ownerUserId,
         },
       },
     },
@@ -290,7 +293,7 @@ export function buildPilotCleanupPlan(): PilotCleanupPlan {
       model: "organizationMember",
       where: {
         userId_organizationId: {
-          userId: PILOT_OWNER_USER_ID,
+          userId: ownerUserId,
           organizationId: PILOT_ORG_ID,
         },
       },
