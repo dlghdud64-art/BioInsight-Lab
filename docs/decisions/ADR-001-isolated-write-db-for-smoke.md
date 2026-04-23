@@ -170,3 +170,4 @@ Supabase 콘솔에서 별도 프로젝트(`labaxis-smoke` 등)를 생성하고, 
 - 2026-04-23 — 초기 skeleton 작성 (`Status: PROPOSED`). §5 미채움.
 - 2026-04-23 — §5 Option B 채택 (`Status: ACCEPTED`). §5.1 에 호영님이 지정한 운영 제약 4개 고정. §6·§7 은 본 제약 위에서 집행된다.
 - 2026-04-23 — Phase 5 PASS. `scripts/smoke/connection-probe.ts` 실행. 5/5 probe steps PASS. §7 criteria 6 CLOSED. ADR-001 **ALL CRITERIA MET** — `#26 S01/S02/S03` 재개 가능.
+- 2026-04-23 — **#26 S01/S02/S03 CLOSED.** `scripts/smoke/write-chain.ts` 실행 (runId=smoke-1776955189902). S01 PASS (quote=cmobl8nqe0001fkvzofjl4rxz, items=1) / S02 PASS (order=cmobl8ntt0005fkvzmswvd1pr, ORD-SMOKE-smoke-1776955189902) / S03 PASS (inventory=cmobl8nvy0008fkvzyntlq4aq, qty=1). sentinel-cleanup --apply 4 rows deleted. Write smoke track CLOSED.
