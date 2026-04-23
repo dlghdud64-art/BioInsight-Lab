@@ -149,14 +149,14 @@ Supabase 콘솔에서 별도 프로젝트(`labaxis-smoke` 등)를 생성하고, 
 
 ## 7. Acceptance criteria (S01/S02/S03 재개 전 필수 통과)
 
-1. 본 ADR merge + §5 채움 완료.
-2. 선택된 옵션에 따라 isolated DB provisioning 완료 (본 ADR 외부 commit).
-3. Prisma migrate 가 production ledger 와 동일 revision 에서 돌아갔음을 확인.
-4. §6.1 host-tail guard 구현 + unit test PASS.
-5. §6.2 sentinel-scoped seed + cleanup 스크립트 dry-run PASS.
-6. smoke 러너가 isolated DB 에만 접속하는 것을 read-only probe 1회로 확정 (production 으로 fall-through 없음).
+1. ✅ 본 ADR merge + §5 채움 완료.
+2. ✅ 선택된 옵션에 따라 isolated DB provisioning 완료 (본 ADR 외부 commit).
+3. ✅ Prisma migrate 가 production ledger 와 동일 revision 에서 돌아갔음을 확인.
+4. ✅ §6.1 host-tail guard 구현 + unit test PASS.
+5. ✅ §6.2 sentinel-scoped seed + cleanup 스크립트 dry-run PASS.
+6. ✅ smoke 러너가 isolated DB 에만 접속하는 것을 read-only probe 1회로 확정 (production 으로 fall-through 없음).
 
-여섯 개 중 하나라도 미충족 → `#26 S01/S02/S03` 재개 금지.
+**STATUS: ALL 6 CRITERIA PASSED — `#26 S01/S02/S03` 재개 가능 (2026-04-23).**
 
 ## 8. Out of scope (follow-up tracks)
 
@@ -169,3 +169,4 @@ Supabase 콘솔에서 별도 프로젝트(`labaxis-smoke` 등)를 생성하고, 
 
 - 2026-04-23 — 초기 skeleton 작성 (`Status: PROPOSED`). §5 미채움.
 - 2026-04-23 — §5 Option B 채택 (`Status: ACCEPTED`). §5.1 에 호영님이 지정한 운영 제약 4개 고정. §6·§7 은 본 제약 위에서 집행된다.
+- 2026-04-23 — Phase 5 PASS. `scripts/smoke/connection-probe.ts` 실행. 5/5 probe steps PASS. §7 criteria 6 CLOSED. ADR-001 **ALL CRITERIA MET** — `#26 S01/S02/S03` 재개 가능.
