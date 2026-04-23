@@ -1,6 +1,6 @@
 # ADR-001: Isolated WRITE DB for #26 S01/S02/S03 Smoke
 
-- Status: **PROPOSED** (awaiting general manager selection in §5)
+- Status: **ACCEPTED** (general manager selected Option B on 2026-04-23; see §5)
 - Date opened: 2026-04-23
 - Owner: 호영 (총괄관리자)
 - Operator (drafting only): Claude (labaxis-bug-hunter + delivery-planner governance)
@@ -104,18 +104,23 @@ Supabase 콘솔에서 별도 프로젝트(`labaxis-smoke` 등)를 생성하고, 
 - 플랜 미지원 시 즉시 불가.
 - branching 기능 semantics 가 Supabase 업데이트에 따라 바뀔 수 있음.
 
-## 5. Recommendation
+## 5. Recommendation — ACCEPTED
 
-> **이 섹션은 총괄관리자(호영)가 세 옵션을 검토한 뒤 직접 채웁니다.**
-> Operator는 세 옵션을 비교만 했고, 선택은 하지 않습니다.
+- **Chosen option:** **B — Dedicated Supabase test project** (production과 다른 project-ref)
+- **Rationale (3 lines):**
+  1. pgvector / Prisma baseline이 production과 동일하게 유지되어 S01~S03 결과가 production behavior와 일치.
+  2. production project-ref ≠ test project-ref 를 문서로 증명 가능 → canonical truth 오염 방지를 가장 깔끔하게 보장.
+  3. Windows native pgvector 빌드 / Docker / WSL 의존 경로보다 운영 비용이 낮고 재사용성(로컬·CI·preview)이 높음.
+- **Expected setup window:** 2~4시간 (Supabase project 생성 + migrate + seed + §6 가드 + dry-run 기준). provisioning 본 ADR commit 이후 별도 트랙.
 
-채택 시 아래 3개 항목을 명시해 주세요.
+### 5.1 Option B 운영 제약 (채택 시 함께 고정)
 
-```
-- Chosen option: (A / B / C)
-- Rationale (3 lines 이내):
-- Expected setup window (hours):
-```
+호영님이 §5 확정과 함께 명시한 4개 제약을 본 ADR에서 "구속력 있는 제약"으로 못 박는다. §6 가드 구현과 §7 acceptance criteria 는 모두 아래 4개 위에서 작동한다.
+
+1. **production project-ref ≠ test project-ref 를 문서로 명시.** 두 URL의 project-ref (username 구간 또는 host 구간)를 본 저장소 안에 plain text로 기록. key/비밀값은 저장하지 않되, project-ref 문자열 자체는 구분 용도로 공개 가능하게 두어 human-readable diff 를 가능케 함.
+2. **`.env` 파일 직접 수정 금지. 세션 env override 우선.** smoke 실행은 shell-level env injection (예: `DATABASE_URL=... pnpm tsx smoke/...`) 또는 ephemeral `.env.smoke` 파일 + gitignore 로 처리. repo 에 체크인된 `.env` 를 건드려 production URL 을 덮어쓰지 않는다.
+3. **`host/project-ref guard` 를 smoke runner 진입부에 필수 배치.** DATABASE_URL 의 project-ref 가 허용 리스트(ALLOWED_SMOKE_DB_SENTINELS) 에 없으면 즉시 abort. fallback 허용 금지 (§6.1).
+4. **production write / cleanup 의존 smoke / raw SQL workaround 모두 금지.** 어떤 이유로든 guard 를 bypass 하는 우회 경로는 본 ADR 위반. 실수로 production project-ref 가 등재되면 PR reviewer 가 거부한다.
 
 ## 6. Rollback / Cleanup / Project-ref Guard
 
@@ -163,3 +168,4 @@ Supabase 콘솔에서 별도 프로젝트(`labaxis-smoke` 등)를 생성하고, 
 ## 9. Changelog
 
 - 2026-04-23 — 초기 skeleton 작성 (`Status: PROPOSED`). §5 미채움.
+- 2026-04-23 — §5 Option B 채택 (`Status: ACCEPTED`). §5.1 에 호영님이 지정한 운영 제약 4개 고정. §6·§7 은 본 제약 위에서 집행된다.
