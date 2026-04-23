@@ -29,6 +29,12 @@ import {
   SENTINEL_WORKSPACE_ID,
   SENTINEL_WORKSPACE_NAME,
   SENTINEL_WORKSPACE_SLUG,
+  SENTINEL_USER_ID,
+  SENTINEL_USER_EMAIL,
+  SENTINEL_USER_NAME,
+  SENTINEL_PRODUCT_ID,
+  SENTINEL_PRODUCT_NAME,
+  SENTINEL_PRODUCT_CATEGORY,
 } from "./sentinel";
 
 async function main() {
@@ -74,6 +80,37 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log(
       `[sentinel-seed] workspace upserted: id=${ws.id} organizationId=${ws.organizationId}`,
+    );
+
+    const user = await prisma.user.upsert({
+      where: { id: SENTINEL_USER_ID },
+      create: {
+        id: SENTINEL_USER_ID,
+        email: SENTINEL_USER_EMAIL,
+        name: SENTINEL_USER_NAME,
+        // role defaults to RESEARCHER; write-chain smoke does not need
+        // ADMIN here because it writes directly through Prisma, not the
+        // admin HTTP surface.
+      },
+      update: {},
+    });
+    // eslint-disable-next-line no-console
+    console.log(
+      `[sentinel-seed] user upserted: id=${user.id} email=${user.email}`,
+    );
+
+    const product = await prisma.product.upsert({
+      where: { id: SENTINEL_PRODUCT_ID },
+      create: {
+        id: SENTINEL_PRODUCT_ID,
+        name: SENTINEL_PRODUCT_NAME,
+        category: SENTINEL_PRODUCT_CATEGORY,
+      },
+      update: {},
+    });
+    // eslint-disable-next-line no-console
+    console.log(
+      `[sentinel-seed] product upserted: id=${product.id} category=${product.category}`,
     );
 
     // eslint-disable-next-line no-console

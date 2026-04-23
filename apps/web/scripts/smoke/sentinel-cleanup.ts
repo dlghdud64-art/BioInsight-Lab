@@ -27,6 +27,8 @@ import { assertSmokeDatabaseTarget } from "./guard";
 import {
   SENTINEL_ORG_ID,
   SENTINEL_WORKSPACE_ID,
+  SENTINEL_USER_ID,
+  SENTINEL_PRODUCT_ID,
   type SentinelModel,
 } from "./sentinel";
 
@@ -37,24 +39,23 @@ export function parseMode(argv: readonly string[]): CleanupMode {
 }
 
 // Minimal surface the cleanup needs from Prisma. Tests pass a stub that
-// matches this shape without loading @prisma/client.
+// matches this shape without loading @prisma/client. Deliberately omits
+// deleteMany / createMany so any regression that tries to use a
+// filter-based delete will fail type-check (defends ADR-001 §11.2).
+export interface CleanupEntitySurface {
+  readonly findUnique: (args: {
+    where: { id: string };
+  }) => Promise<{ id: string } | null>;
+  readonly delete: (args: {
+    where: { id: string };
+  }) => Promise<{ id: string }>;
+}
+
 export interface CleanupPrismaClient {
-  readonly organization: {
-    readonly findUnique: (args: {
-      where: { id: string };
-    }) => Promise<{ id: string } | null>;
-    readonly delete: (args: {
-      where: { id: string };
-    }) => Promise<{ id: string }>;
-  };
-  readonly workspace: {
-    readonly findUnique: (args: {
-      where: { id: string };
-    }) => Promise<{ id: string } | null>;
-    readonly delete: (args: {
-      where: { id: string };
-    }) => Promise<{ id: string }>;
-  };
+  readonly organization: CleanupEntitySurface;
+  readonly workspace: CleanupEntitySurface;
+  readonly user: CleanupEntitySurface;
+  readonly product: CleanupEntitySurface;
 }
 
 export interface CleanupResult {
@@ -62,6 +63,8 @@ export interface CleanupResult {
   readonly found: {
     readonly organization: boolean;
     readonly workspace: boolean;
+    readonly user: boolean;
+    readonly product: boolean;
   };
   readonly deletedCalls: ReadonlyArray<{
     readonly model: SentinelModel;
@@ -73,27 +76,44 @@ export async function runCleanup(
   mode: CleanupMode,
   prisma: CleanupPrismaClient,
 ): Promise<CleanupResult> {
+  const foundWs = await prisma.workspace.findUnique({
+    where: { id: SENTINEL_WORKSPACE_ID },
+  });
+  const foundUser = await prisma.user.findUnique({
+    where: { id: SENTINEL_USER_ID },
+  });
   const foundOrg = await prisma.organization.findUnique({
     where: { id: SENTINEL_ORG_ID },
   });
-  const foundWs = await prisma.workspace.findUnique({
-    where: { id: SENTINEL_WORKSPACE_ID },
+  const foundProduct = await prisma.product.findUnique({
+    where: { id: SENTINEL_PRODUCT_ID },
   });
 
   const deletedCalls: Array<{ model: SentinelModel; id: string }> = [];
 
   if (mode === "apply") {
+    // Order matters: see sentinel.ts buildCleanupPlan() for rationale.
     if (foundWs) {
       await prisma.workspace.delete({
         where: { id: SENTINEL_WORKSPACE_ID },
       });
       deletedCalls.push({ model: "workspace", id: SENTINEL_WORKSPACE_ID });
     }
+    if (foundUser) {
+      await prisma.user.delete({ where: { id: SENTINEL_USER_ID } });
+      deletedCalls.push({ model: "user", id: SENTINEL_USER_ID });
+    }
     if (foundOrg) {
       await prisma.organization.delete({
         where: { id: SENTINEL_ORG_ID },
       });
       deletedCalls.push({ model: "organization", id: SENTINEL_ORG_ID });
+    }
+    if (foundProduct) {
+      await prisma.product.delete({
+        where: { id: SENTINEL_PRODUCT_ID },
+      });
+      deletedCalls.push({ model: "product", id: SENTINEL_PRODUCT_ID });
     }
   }
 
@@ -102,6 +122,8 @@ export async function runCleanup(
     found: {
       organization: !!foundOrg,
       workspace: !!foundWs,
+      user: !!foundUser,
+      product: !!foundProduct,
     },
     deletedCalls,
   };

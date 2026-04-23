@@ -21,7 +21,23 @@ export const SENTINEL_WORKSPACE_ID = "workspace-smoke-isolated";
 export const SENTINEL_WORKSPACE_NAME = "Smoke Isolated Workspace (#26 ADR-001)";
 export const SENTINEL_WORKSPACE_SLUG = "workspace-smoke-isolated";
 
-export type SentinelModel = "organization" | "workspace";
+// User (Quote/Order owner for write-chain smoke). The write chain uses
+// this user via Quote.userId and Order.userId, both of which have
+// onDelete: Cascade. Deleting this user drops every smoke-created
+// Quote / QuoteListItem / Order / OrderItem in one step.
+export const SENTINEL_USER_ID = "user-smoke-sentinel";
+export const SENTINEL_USER_EMAIL = "smoke-sentinel@labaxis.test";
+export const SENTINEL_USER_NAME = "Smoke Sentinel (#26 ADR-001)";
+
+// Product (ProductInventory target for write-chain S03). Product.id is
+// the FK target for QuoteListItem.productId and ProductInventory.productId;
+// both relations have onDelete: Cascade, so deleting this product clears
+// every smoke-created inventory row and draft line item.
+export const SENTINEL_PRODUCT_ID = "product-smoke-sentinel";
+export const SENTINEL_PRODUCT_NAME = "Smoke Sentinel Product (#26 ADR-001)";
+export const SENTINEL_PRODUCT_CATEGORY = "REAGENT" as const;
+
+export type SentinelModel = "organization" | "workspace" | "user" | "product";
 
 /**
  * Declarative description of what cleanup is allowed to touch. Every
@@ -40,11 +56,23 @@ export interface SentinelCleanupPlan {
 export function buildCleanupPlan(): SentinelCleanupPlan {
   return {
     deleteByExactId: [
-      // Order matters for explicit logging even though Organization's
-      // cascade would catch Workspace anyway. Deleting the workspace
-      // first makes the log line count accurate.
+      // Order notes:
+      //   1. Workspace first (FK to Organization → onDelete: Cascade from
+      //      org, but explicit delete keeps log line count honest).
+      //   2. User second — User cascade drops all smoke Quotes, Orders,
+      //      QuoteListItems, OrderItems, OrganizationMembers,
+      //      WorkspaceMembers in one step. Must run BEFORE the org delete
+      //      because Quote.organization is onDelete: SetNull, so the org
+      //      delete alone would not remove Quote rows.
+      //   3. Organization third — picks up anything left scoped by
+      //      organizationId (ProductInventory, etc.).
+      //   4. Product last — ProductInventory cascade + any draft
+      //      QuoteListItem that survived (shouldn't happen after User
+      //      delete, but keeps the plan explicit).
       { model: "workspace", id: SENTINEL_WORKSPACE_ID },
+      { model: "user", id: SENTINEL_USER_ID },
       { model: "organization", id: SENTINEL_ORG_ID },
+      { model: "product", id: SENTINEL_PRODUCT_ID },
     ],
   };
 }
