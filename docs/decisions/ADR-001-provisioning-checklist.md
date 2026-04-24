@@ -77,10 +77,12 @@ Free tier 로 시작하면 `plan=Free` 로 기록.
 
 ```
 # Filled by 호영 on 2026-04-23 after Supabase console confirmation
-TEST_PROJECT_REF       = qbyzsrtxzlctjvbfcscs
-PRODUCTION_PROJECT_REF = xhidynwpkqeaqjuudhsw
-TEST_PROJECT_REGION    = ap-northeast-2
-TEST_PROJECT_NAME      = labaxis-smoke-test   # deviation §11.1
+# 2026-04-24: PRODUCTION_PROJECT_REF typo (q→o) corrected — see ADR-002 §11.6
+TEST_PROJECT_REF         = qbyzsrtxzlctjvbfcscs
+PRODUCTION_PROJECT_REF   = xhidynwpkqeaojuudhsw
+TEST_PROJECT_REGION      = ap-northeast-2
+PRODUCTION_PROJECT_REGION = ap-northeast-1
+TEST_PROJECT_NAME        = labaxis-smoke-test   # deviation §11.1
 ```
 
 > 위 네 줄은 **secret 이 아니므로** 저장소에 그대로 commit 한다. 실제
@@ -95,7 +97,7 @@ Smoke 실행 시 shell 에 주입해야 할 env:
 export DATABASE_URL_SMOKE="postgresql://postgres.qbyzsrtxzlctjvbfcscs:<password>@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres"
 export SMOKE_DB_PROJECT_REF="qbyzsrtxzlctjvbfcscs"
 export ALLOWED_SMOKE_DB_SENTINELS="qbyzsrtxzlctjvbfcscs"
-export PRODUCTION_DB_PROJECT_REF="xhidynwpkqeaqjuudhsw"
+export PRODUCTION_DB_PROJECT_REF="xhidynwpkqeaojuudhsw"
 ```
 
 `DATABASE_URL_SMOKE` 내부의 `<password>` 는 secret. checked-in `.env` 에 들어가면
@@ -190,7 +192,7 @@ Phase 4/5 및 Phase 0 truth reconciliation 이 본 섹션을 참조한다.
   `labaxis-smoke-test` 프로젝트를 smoke 역할로 재지정.
 - **ADR 제약과의 정렬:**
   - §5.1 제약 1 (production ref ≠ test ref): project-ref 가 전혀 다름
-    (`qbyzsrtxzlctjvbfcscs` vs `xhidynwpkqeaqjuudhsw`) → 충족.
+    (`qbyzsrtxzlctjvbfcscs` vs `xhidynwpkqeaojuudhsw`) → 충족.
   - §5.1 제약 3 (host/project-ref guard): guard 는 project-ref 문자열로만 판정
     하므로 project 이름 불일치는 무관 → 충족.
 - **Follow-up:** free plan 에서 플랜 업그레이드 또는 branching 가용성이

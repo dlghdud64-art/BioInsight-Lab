@@ -20,7 +20,7 @@
  * Env contract (set by the operator, never committed)
  * ---------------------------------------------------
  *   DATABASE_URL_PILOT              — full connection string, target
- *                                     is production DB (xhidynwpkqeaqjuudhsw).
+ *                                     is production DB (xhidynwpkqeaojuudhsw).
  *   ALLOWED_PILOT_DB_SENTINELS      — comma list. Must include the
  *                                     production project-ref for the
  *                                     guard to clear.

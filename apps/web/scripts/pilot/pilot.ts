@@ -23,8 +23,9 @@
  *    user's memberships in any other organization remain untouched.
  *
  * 3. The pilot target is PRODUCTION DB (project-ref
- *    xhidynwpkqeaqjuudhsw). The opt-in is enforced one layer up in
- *    ./guard.ts — this file assumes the guard has already cleared.
+ *    xhidynwpkqeaojuudhsw, region ap-northeast-1 / Tokyo). The opt-in
+ *    is enforced one layer up in ./guard.ts — this file assumes the
+ *    guard has already cleared.
  *
  * 4. Any change to the catalog, identifiers, or owner cuid requires
  *    a fresh pilot-cleanup --apply run against the previous state to

@@ -17,7 +17,7 @@ A live read-only probe of the `/search`, `/dashboard/*`, and public route tree o
 - **B0-3** `/api/cart` returns 500 `INTERNAL_ERROR`. Tracked separately as `#P03`; out of ADR-002 scope.
 - **B1-1** `/dashboard/inventory` and `/dashboard/purchases` render realistic-looking items (Gibco FBS, PCR 튜브, etc.) while every DB-backed endpoint is empty — hard-coded UI mock on top of a silent empty canonical truth. Tracked as `#P02`; must be addressed after the seed lands so pilot users do not see mock data layered over real seed.
 
-Host context: production is in pre-launch / demo state, running an internal pilot with 호영 + team as users. The Supabase project is `xhidynwpkqeaqjuudhsw`. Real external users are not onboarded yet, so seeding the production DB with a clearly-scoped pilot tenant is acceptable behind a paranoid opt-in.
+Host context: production is in pre-launch / demo state, running an internal pilot with 호영 + team as users. The Supabase project is `xhidynwpkqeaojuudhsw` (aws-1-ap-northeast-1, Tokyo region). Real external users are not onboarded yet, so seeding the production DB with a clearly-scoped pilot tenant is acceptable behind a paranoid opt-in.
 
 The goal of ADR-002 is to unblock B0-1 and B0-2 with a minimal, idempotent, revertible seed — without modifying canonical user data and without polluting future real-production state.
 
@@ -142,10 +142,10 @@ After Phase 6, pilot can run against production any time the operator has the pr
 
 ### 11.1 Smoke-DB validation path for Phase 5
 
-- **Plan:** run pilot-seed and pilot-cleanup dry-run against production (`xhidynwpkqeaqjuudhsw`).
+- **Plan:** run pilot-seed and pilot-cleanup dry-run against production (`xhidynwpkqeaojuudhsw`).
 - **Actual:** production connection string was not available at Phase 5 time. Operator validated end-to-end flow against the smoke DB (`qbyzsrtxzlctjvbfcscs`) instead, setting `ALLOWED_PILOT_DB_SENTINELS=qbyzsrtxzlctjvbfcscs` for the run.
 - **Constraint alignment:** smoke DB and production DB have different project-refs, so §5.2 env namespace isolation is intact. Pilot rows created in smoke live alongside ADR-001 sentinel rows (`org-smoke-isolated`, etc.) without id collision — §5.1 sentinel scoping is intact. Opt-in token was still required and matched.
-- **Follow-up:** production run remains open. When the operator obtains the production connection string (Supabase console → `xhidynwpkqeaqjuudhsw` → Settings → Database → Connection string), set `ALLOWED_PILOT_DB_SENTINELS=xhidynwpkqeaqjuudhsw` and re-run Phase 5 — no `PILOT_OWNER_USER_ID_OVERRIDE` is required because the production cuid `cmo4mcbih00003ut3ozub29tc` is the committed default in `pilot.ts`.
+- **Follow-up:** production run remains open. When the operator obtains the production connection string (Supabase console → `xhidynwpkqeaojuudhsw` → Settings → Database → Connection string), set `ALLOWED_PILOT_DB_SENTINELS=xhidynwpkqeaojuudhsw` and re-run Phase 5 — no `PILOT_OWNER_USER_ID_OVERRIDE` is required because the production cuid `cmo4mcbih00003ut3ozub29tc` is the committed default in `pilot.ts`.
 
 ### 11.2 `PILOT_OWNER_USER_ID_OVERRIDE` added at Phase 5 commit d2194359
 
@@ -174,6 +174,22 @@ After Phase 6, pilot can run against production any time the operator has the pr
 - During Phase 6 preparation the operator's sandbox working tree showed truncated copies of `pilot.ts`, `pilot-cleanup.ts`, and `pilot-seed.ts` (missing the closing `isDirectRun` block and final `}` / closing parens). `git show HEAD` returned the correct files, so the truncation was confined to the local file system.
 - Mitigation: `git checkout HEAD -- <files>` restored the correct contents. `origin/main` and the deployed code were never affected. This deviation is recorded for traceability; it did not change committed state.
 
+### 11.6 Production project-ref typo drift — corrected 2026-04-24
+
+- **Discovery:** when the operator pasted the production connection string to unblock the pilot-seed run, the URL resolved to `postgres.xhidynwpkqeaojuudhsw@aws-1-ap-northeast-1.pooler.supabase.com` (Tokyo). This mismatched the `xhidynwpkqeaqjuudhsw` ref that had been committed in 6 doc/test locations since ADR-001 Phase 1.
+- **Ground truth:** real ops env files (`apps/web/CURRENT_STATUS.md`, `CONNECTION_ISSUE_SUMMARY.md`, `NETWORK_DIAGNOSIS.md`, `IPV6_ISSUE_SOLUTION.md`) have always carried the correct `o` variant. The drift was confined to governance docs and pilot-script comments/constants.
+- **Scope of correction (10 sites / 6 files):**
+  - `docs/decisions/ADR-002-pilot-tenant-seed.md` — §Context, §11.1 × 2
+  - `docs/decisions/ADR-001-provisioning-checklist.md` — §4 table, §4.1 env export, §6 constraint alignment
+  - `apps/web/src/__tests__/scripts/pilot-guard.test.ts` — `PROD_REF` constant
+  - `apps/web/scripts/pilot/pilot.ts` — governance comment §3
+  - `apps/web/scripts/pilot/pilot-seed.ts` — Usage example
+  - `apps/web/scripts/pilot/guard.ts` — env contract comment
+- **Runtime impact:** none. The guard parses the ref out of `DATABASE_URL_PILOT` at runtime and matches against `ALLOWED_PILOT_DB_SENTINELS`, both of which are operator-supplied env. No code path ever read the typo'd ref from these files.
+- **Also recorded:** ADR-001 §4 now carries `PRODUCTION_PROJECT_REGION = ap-northeast-1`, which was previously implicit.
+- **Constraint alignment:** §5.1 (production ref ≠ test ref) still holds (`xhidynwpkqeaojuudhsw` ≠ `qbyzsrtxzlctjvbfcscs`). §5.2 env namespace isolation unaffected. Opt-in token unchanged.
+- **Follow-up:** §11.1 "production run open" will be closed in a separate deviation entry when the seed actually runs against production with the corrected env.
+
 ---
 
 ## 12. Changelog
@@ -184,3 +200,4 @@ After Phase 6, pilot can run against production any time the operator has the pr
 - 2026-04-23 — Phase 4 (pilot-cleanup + test) landed at 75588fd8.
 - 2026-04-23 — Phase 5 ran against smoke DB (§11.1 deviation). Commit d2194359 added `PILOT_OWNER_USER_ID_OVERRIDE` (§11.2). Seed PASS, cleanup dry-run 19/19.
 - 2026-04-23 — Phase 6 canonical decision doc (this file). Status ACCEPTED.
+- 2026-04-24 — §11.6 opened: production project-ref typo (q→o) corrected across 10 sites / 6 files. ADR-001 §4 also records `PRODUCTION_PROJECT_REGION = ap-northeast-1`. No runtime impact. Pilot-seed production run still pending with corrected env.

@@ -21,7 +21,7 @@
  * Usage
  * -----
  *   DATABASE_URL_PILOT="<production connection string>" \
- *   ALLOWED_PILOT_DB_SENTINELS="xhidynwpkqeaqjuudhsw" \
+ *   ALLOWED_PILOT_DB_SENTINELS="xhidynwpkqeaojuudhsw" \
  *   PILOT_REQUIRES_EXPLICIT_OPT_IN="YES-SEED-PRODUCTION-PILOT-2026" \
  *   pnpm -C apps/web tsx scripts/pilot/pilot-seed.ts
  */

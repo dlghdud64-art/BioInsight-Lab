@@ -14,7 +14,7 @@ import {
   type PilotDatabaseGuardEnv,
 } from "../../../scripts/pilot/guard";
 
-const PROD_REF = "xhidynwpkqeaqjuudhsw";
+const PROD_REF = "xhidynwpkqeaojuudhsw";
 const OTHER_REF = "abcd1234efgh5678";
 
 function poolerUrl(ref: string): string {
