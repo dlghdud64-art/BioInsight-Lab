@@ -24,6 +24,12 @@
  *   ALLOWED_PILOT_DB_SENTINELS="xhidynwpkqeaojuudhsw" \
  *   PILOT_REQUIRES_EXPLICIT_OPT_IN="YES-SEED-PRODUCTION-PILOT-2026" \
  *   pnpm -C apps/web tsx scripts/pilot/pilot-seed.ts
+ *
+ * NOTE (ADR-002 §11.7): DATABASE_URL_PILOT MUST point at Supabase
+ * SESSION pooler (port :5432), NOT transaction pooler (:6543). Prisma
+ * `$transaction` requires a sticky connection — transaction pooler
+ * dispatches statements across different backends and breaks the
+ * session-scoped locks. Symptom is hang / timeout with no error row.
  */
 
 import { assertPilotDatabaseTarget } from "./guard";

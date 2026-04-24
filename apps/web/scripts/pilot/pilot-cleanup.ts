@@ -23,6 +23,12 @@
  *
  *   # Actually delete
  *   pnpm -C apps/web tsx scripts/pilot/pilot-cleanup.ts --apply
+ *
+ * NOTE (ADR-002 §11.7): DATABASE_URL_PILOT MUST point at Supabase
+ * SESSION pooler (port :5432), NOT transaction pooler (:6543). This
+ * script itself does not use `$transaction`, but we pin the same port
+ * as pilot-seed.ts so the next operator does not mis-route one script
+ * and succeed on the other. See pilot-seed.ts for the full rationale.
  */
 
 import { assertPilotDatabaseTarget } from "./guard";

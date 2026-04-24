@@ -168,7 +168,7 @@ production-ref 를 차단, pilot 은 production-ref 가 있어야만 통과) 특
 
 | Env name | 성격 | 저장 위치 |
 | --- | --- | --- |
-| `DATABASE_URL_PILOT` | pilot target (production DB) 전체 connection string | **secret** — 로컬 shell 또는 gitignored `.env.pilot` 만. checked-in `.env` 금지 |
+| `DATABASE_URL_PILOT` | pilot target (production DB) 전체 connection string. **포트는 반드시 `:5432` (session pooler).** transaction pooler `:6543` 는 Prisma `$transaction` 과 충돌 — ADR-002 §11.7 참조. | **secret** — 로컬 shell 또는 gitignored `.env.pilot` 만. checked-in `.env` 금지 |
 | `ALLOWED_PILOT_DB_SENTINELS` | 허용 project-ref 리스트 (콤마 구분). production ref 가 반드시 포함 | 공개 가능 |
 | `PILOT_REQUIRES_EXPLICIT_OPT_IN` | 정확 일치 필요한 opt-in 토큰. 현재 값: `YES-SEED-PRODUCTION-PILOT-2026` | 공개 가능 (식별용) |
 | `PILOT_OWNER_USER_ID_OVERRIDE` | §11.2 deviation 전용. 생산 외 DB(smoke 등)에서 owner cuid 가 다를 때만 설정 | 공개 가능 |
@@ -191,3 +191,8 @@ fail-closed — opt-in 토큰 불일치, DATABASE_URL_PILOT 미설정, URL 의 p
 가 allow list 에 없는 경우 모두 즉시 abort 한다. 이후 `pilot.ts` 의
 `PILOT_OWNER_PROTECTION` 가 cleanup 진입 시 로그로 출력되어 "User row 는 절대
 삭제되지 않는다" 는 원칙을 운영 로그에서 재확인할 수 있게 한다.
+
+**포트 주의 (ADR-002 §11.7)**: guard 는 port 를 검사하지 않는다. Supabase
+transaction pooler (`:6543`) 는 Prisma `$transaction` 과 충돌하므로 pilot-seed
+가 hang / timeout 한다. 반드시 session pooler (`:5432`) 로 `DATABASE_URL_PILOT`
+을 구성할 것. app runtime 은 `:6543` 그대로 사용한다.

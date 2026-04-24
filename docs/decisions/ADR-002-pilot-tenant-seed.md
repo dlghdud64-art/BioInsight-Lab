@@ -145,7 +145,13 @@ After Phase 6, pilot can run against production any time the operator has the pr
 - **Plan:** run pilot-seed and pilot-cleanup dry-run against production (`xhidynwpkqeaojuudhsw`).
 - **Actual:** production connection string was not available at Phase 5 time. Operator validated end-to-end flow against the smoke DB (`qbyzsrtxzlctjvbfcscs`) instead, setting `ALLOWED_PILOT_DB_SENTINELS=qbyzsrtxzlctjvbfcscs` for the run.
 - **Constraint alignment:** smoke DB and production DB have different project-refs, so §5.2 env namespace isolation is intact. Pilot rows created in smoke live alongside ADR-001 sentinel rows (`org-smoke-isolated`, etc.) without id collision — §5.1 sentinel scoping is intact. Opt-in token was still required and matched.
-- **Follow-up:** production run remains open. When the operator obtains the production connection string (Supabase console → `xhidynwpkqeaojuudhsw` → Settings → Database → Connection string), set `ALLOWED_PILOT_DB_SENTINELS=xhidynwpkqeaojuudhsw` and re-run Phase 5 — no `PILOT_OWNER_USER_ID_OVERRIDE` is required because the production cuid `cmo4mcbih00003ut3ozub29tc` is the committed default in `pilot.ts`.
+- **Follow-up (originally open):** production run remains open. When the operator obtains the production connection string (Supabase console → `xhidynwpkqeaojuudhsw` → Settings → Database → Connection string), set `ALLOWED_PILOT_DB_SENTINELS=xhidynwpkqeaojuudhsw` and re-run Phase 5 — no `PILOT_OWNER_USER_ID_OVERRIDE` is required because the production cuid `cmo4mcbih00003ut3ozub29tc` is the committed default in `pilot.ts`.
+- **Closed 2026-04-24 (post-commit a65069fd):** production seed PASS. Operator ran `pilot-seed.ts` against production (`xhidynwpkqeaojuudhsw`, aws-1-ap-northeast-1) with `ALLOWED_PILOT_DB_SENTINELS=xhidynwpkqeaojuudhsw` and no `PILOT_OWNER_USER_ID_OVERRIDE`. Results:
+  - `org-pilot-internal` + `workspace-pilot-internal` upserted.
+  - 2 membership rows (OrganizationMember + WorkspaceMember, both ADMIN, owner `cmo4mcbih00003ut3ozub29tc`).
+  - 15 products upserted (REAGENT × 8, TOOL × 5, EQUIPMENT × 1, RAW_MATERIAL × 0 — per committed catalog).
+  - `pilot-cleanup.ts` dry-run: 19/19 rows present=true.
+- Operational note surfaced during the run: Supabase transaction pooler (`:6543`) is incompatible with Prisma `$transaction`. Recorded separately as §11.7.
 
 ### 11.2 `PILOT_OWNER_USER_ID_OVERRIDE` added at Phase 5 commit d2194359
 
@@ -188,7 +194,25 @@ After Phase 6, pilot can run against production any time the operator has the pr
 - **Runtime impact:** none. The guard parses the ref out of `DATABASE_URL_PILOT` at runtime and matches against `ALLOWED_PILOT_DB_SENTINELS`, both of which are operator-supplied env. No code path ever read the typo'd ref from these files.
 - **Also recorded:** ADR-001 §4 now carries `PRODUCTION_PROJECT_REGION = ap-northeast-1`, which was previously implicit.
 - **Constraint alignment:** §5.1 (production ref ≠ test ref) still holds (`xhidynwpkqeaojuudhsw` ≠ `qbyzsrtxzlctjvbfcscs`). §5.2 env namespace isolation unaffected. Opt-in token unchanged.
-- **Follow-up:** §11.1 "production run open" will be closed in a separate deviation entry when the seed actually runs against production with the corrected env.
+- **Follow-up:** §11.1 "production run open" will be closed in a separate deviation entry when the seed actually runs against production with the corrected env. — **Closed 2026-04-24** per the §11.1 closeout block above.
+
+### 11.7 Transaction vs Session pooler port constraint for Prisma `$transaction`
+
+Opened 2026-04-24 after the production seed run.
+
+- **Symptom:** when `DATABASE_URL_PILOT` targeted Supabase transaction pooler (port `:6543`), `pilot-seed.ts` hung and eventually failed. Switching the same URL to session pooler (port `:5432`) made the seed complete in seconds.
+- **Root cause:** Supabase Supavisor transaction mode pools connections at the statement level — multiple statements from a single logical transaction can be dispatched to different backend connections, which breaks the session-scoped locks Prisma `$transaction([...])` requires. Prisma needs a sticky connection for the duration of the transaction; only session mode (port `:5432`) guarantees this.
+- **Why smoke (§11.1) did not surface this:** the smoke DB connection string operator used was already `:5432` session pooler, so the constraint was satisfied invisibly.
+- **Operational rule (going forward):**
+  - `DATABASE_URL_PILOT` **must** use port `:5432` (session pooler) because `pilot-seed.ts` wraps all writes in `prisma.$transaction`.
+  - `pilot-cleanup.ts` does sequential `findUnique` + `delete` without `$transaction`, so it would technically survive transaction pooler — but we pin the same URL/port for both to avoid the next operator mis-routing either script. Port `:5432` for both.
+  - App runtime (stateless API routes in `apps/web/src`) continues to target transaction pooler (`:6543`) — no change, that path does not use `$transaction` across statements the way maintenance scripts do.
+- **Enforcement surfaces added by this deviation:**
+  - `apps/web/scripts/pilot/pilot-seed.ts` — `NOTE` in the Usage docblock.
+  - `apps/web/scripts/pilot/pilot-cleanup.ts` — cross-ref `NOTE` in the Usage docblock.
+  - `docs/DEV_RUNBOOK.md §8` — `DATABASE_URL_PILOT` row now warns about the port.
+- **Not enforced in code (deliberate):** the guard (`assertPilotDatabaseTarget`) parses project-ref only; it does not inspect the port. Adding a port check would couple the guard to Supabase's current Supavisor port conventions (subject to change) and block the smoke DB path where the port varies. The documentation surface above is the authoritative control.
+- **Constraint alignment:** no change to §5 constraints. Opt-in token, allow-list, guard semantics all identical.
 
 ---
 
@@ -201,3 +225,4 @@ After Phase 6, pilot can run against production any time the operator has the pr
 - 2026-04-23 — Phase 5 ran against smoke DB (§11.1 deviation). Commit d2194359 added `PILOT_OWNER_USER_ID_OVERRIDE` (§11.2). Seed PASS, cleanup dry-run 19/19.
 - 2026-04-23 — Phase 6 canonical decision doc (this file). Status ACCEPTED.
 - 2026-04-24 — §11.6 opened: production project-ref typo (q→o) corrected across 10 sites / 6 files. ADR-001 §4 also records `PRODUCTION_PROJECT_REGION = ap-northeast-1`. No runtime impact. Pilot-seed production run still pending with corrected env.
+- 2026-04-24 — §11.1 CLOSED: production seed PASS. Org / workspace / 2 memberships / 15 products upserted against `xhidynwpkqeaojuudhsw`; cleanup dry-run 19/19 present=true. §11.7 OPENED: transaction pooler (`:6543`) is incompatible with Prisma `$transaction` — `DATABASE_URL_PILOT` must use session pooler (`:5432`). Enforcement via Usage docblock notes in `pilot-seed.ts` / `pilot-cleanup.ts` + `DEV_RUNBOOK.md §8` row warning.
