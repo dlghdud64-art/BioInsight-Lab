@@ -38,12 +38,12 @@ if (!isVercel) {
   process.exit(0);
 }
 
-// VERCEL_MIGRATE_SKIP=1: 마이그레이션 스텝을 건너뛴다.
+// SKIP_PRISMA_MIGRATE=1: 마이그레이션 스텝을 건너뛴다.
 // 사용 시나리오: DB 비밀번호 리셋 등 스키마 변경 없이 커넥션 스트링만 교체하는
 // 긴급 배포 시 일시적으로 설정. 스키마 변경이 수반된 배포에선 절대 사용 금지.
-if (process.env.VERCEL_MIGRATE_SKIP === "1") {
+if (process.env.SKIP_PRISMA_MIGRATE === "1") {
   console.log(
-    "[prebuild] VERCEL_MIGRATE_SKIP=1 — skipping prisma migrate deploy (emergency bypass)"
+    "[prebuild] SKIP_PRISMA_MIGRATE=1 — skipping prisma migrate deploy (emergency bypass)"
   );
   process.exit(0);
 }
