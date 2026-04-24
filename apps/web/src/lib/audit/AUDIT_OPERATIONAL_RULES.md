@@ -66,6 +66,19 @@ route coverage matrix (`BATCH8_ROUTE_COVERAGE_MATRIX.md`)의 `Audit Present` 컬
 | `✓ Durable` | `MutationAuditEvent`에 기록됨 (code-complete, migration 여부는 별도) |
 | `✓ Migrated` | 대상 DB에 테이블 생성 + smoke run 통과 = 실운영 live |
 
-현재 Batch 6 기준:
+현재 기준 (2026-04-23 audit 재확인):
 - **Durable**: 6건 (approve, cancel, reverse, po_void, reclass, invites/accept)
-- **Migrated**: 0건 (DB migration pending)
+- **Migrated**: **6건** — `apps/web/prisma/migrations/0_init/migration.sql` 에
+  `MutationAuditEvent` 테이블 + 6 indexes (auditEventKey unique,
+  orgId+occurredAt, entityType+entityId, actorId, action, correlationId, route)
+  생성 확인됨. ADR-001 Phase 3 migrate revision diff 로 smoke DB 에도 적용
+  확정. Production DB 는 동일 revision set 기준 동일 적용.
+
+## Changelog
+
+- Batch 6 최초 작성 — Durable 6건, Migrated 0건 (당시 migration pending).
+- 2026-04-23 — Audit Trail 실효성 감사 (#A01 Phase 1). `0_init/migration.sql`
+  에서 `MutationAuditEvent` 테이블 생성 확인 → Migrated 0 → 6 정정.
+  L1 in-memory layer (`appendAuditEnvelope`, `recordSecurityEvent`) 는
+  여전히 비영구 — 운영 신뢰 대상은 L2 `MutationAuditEvent` + L3 `AuditLog`
+  만 사용한다는 §2 규칙 유지.
