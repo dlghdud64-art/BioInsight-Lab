@@ -56,8 +56,8 @@ Prisma 마이그레이션이 필요하다면:
 
 ### .env.local
 ```
-DATABASE_URL="postgresql://postgres.xhidynwpkqeaojuudhsw:Ghdud902490@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
-DIRECT_URL="postgresql://postgres.xhidynwpkqeaojuudhsw:Ghdud902490@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
+DATABASE_URL="postgresql://postgres.xhidynwpkqeaojuudhsw:REDACTED_PW_ROTATED_2026_04_25@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require"
+DIRECT_URL="postgresql://postgres.xhidynwpkqeaojuudhsw:REDACTED_PW_ROTATED_2026_04_25@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
 ```
 
 ## 권장 다음 단계

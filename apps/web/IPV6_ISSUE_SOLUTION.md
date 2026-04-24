@@ -44,7 +44,7 @@ Direct connection이 필요할 때:
 
 ### DATABASE_URL (Transaction pooler)
 ```
-postgresql://postgres.xhidynwpkqeaojuudhsw:Ghdud902490@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
+postgresql://postgres.xhidynwpkqeaojuudhsw:REDACTED_PW_ROTATED_2026_04_25@aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1&sslmode=require
 ```
 ✅ 정상 작동
 
