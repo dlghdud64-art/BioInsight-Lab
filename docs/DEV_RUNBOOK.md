@@ -126,6 +126,7 @@ npm run lint          # 설정되어 있다면
 | `toBeInTheDocument is not a function` | vitest.setup 이 로드되지 않음 | `apps/web/vitest.config.ts` 의 `setupFiles` 확인 |
 | Vercel 배포 실패 (migration) | 로컬 migration 파일이 push 되지 않음 | `git status` 확인 → commit → push 후 재배포 |
 | `prisma generate` 가 schema drift 보고 | 실 DB 와 schema 불일치 | `npx prisma migrate status` 로 확인 → `migrate deploy` 또는 `db pull` 로 동기 |
+| Vercel 빌드에서 `P1000: Authentication failed` (scripts/vercel-migrate.js) | DB password 로테이션 후 Vercel env 의 `DATABASE_URL` 이 stale — **또는** `DATABASE_URL` 의 포트가 session pooler `:5432` (Vercel 빌드 서버는 session pooler 에 접근 불가) | ① Vercel env `DATABASE_URL` 의 password·포트 확인 (포트는 **`:6543`** transaction pooler 필수, 상세 §9 / ADR-002 §11.9 참조). ② 스키마 변경 없는 긴급 배포면 Vercel env 에 `SKIP_PRISMA_MIGRATE=1` 을 임시 설정해 migrate 스텝 우회. 정상화 뒤 반드시 제거. |
 
 ---
 
@@ -192,7 +193,45 @@ fail-closed — opt-in 토큰 불일치, DATABASE_URL_PILOT 미설정, URL 의 p
 `PILOT_OWNER_PROTECTION` 가 cleanup 진입 시 로그로 출력되어 "User row 는 절대
 삭제되지 않는다" 는 원칙을 운영 로그에서 재확인할 수 있게 한다.
 
-**포트 주의 (ADR-002 §11.7)**: guard 는 port 를 검사하지 않는다. Supabase
-transaction pooler (`:6543`) 는 Prisma `$transaction` 과 충돌하므로 pilot-seed
-가 hang / timeout 한다. 반드시 session pooler (`:5432`) 로 `DATABASE_URL_PILOT`
-을 구성할 것. app runtime 은 `:6543` 그대로 사용한다.
+**포트 주의 (ADR-002 §11.7 / §11.9)**: guard 는 port 를 검사하지 않는다. 세
+경로별 포트 사용은 다음과 같이 **완전히 분리**된다:
+
+| 경로 | 포트 | 이유 |
+| --- | --- | --- |
+| Operator shell — `pilot-seed.ts` / `pilot-cleanup.ts` 등 `tsx scripts/...` | **`:5432`** (session pooler) | Prisma `$transaction([...])` 는 sticky connection 요구. transaction pooler 는 statement 단위 분산으로 세션 락 깨짐. |
+| Vercel build-time — `scripts/vercel-migrate.js` (`prisma migrate deploy`) | **`:6543`** (transaction pooler) | Vercel build 인프라에서 session pooler 는 **reachable 하지 않음** (ADR-002 §11.9). `prisma migrate deploy` 는 statement-level transaction 이라 transaction pooler 에서 정상 동작. |
+| App runtime — Next.js serverless functions (`apps/web/src/app/api/**`) | **`:6543`** | 기존 convention. 변경 없음. |
+
+즉 session pooler 는 **오직 operator shell 의 pilot seed/cleanup 시점에만**
+쓰이고, 나머지는 전부 transaction pooler. pilot 실행 시 `DATABASE_URL_PILOT`
+의 포트가 `:5432` 인지 반드시 확인할 것. Vercel env 의 `DATABASE_URL` 은
+`:6543` 이어야 한다.
+
+---
+
+## 9. Vercel build-time migrate / env
+
+Vercel 빌드에서 Prisma migrate 실행은 `apps/web/scripts/vercel-migrate.js` 가
+`prebuild` hook 으로 담당한다. 이 스크립트는 다음 env 를 참조한다:
+
+| Env name | 동작 | 설정 위치 |
+| --- | --- | --- |
+| `VERCEL=1` | Vercel 시스템 env. 비설정 시 no-op (로컬 / CI 무관). | 자동 |
+| `SKIP_PRISMA_MIGRATE=1` | migrate 스텝을 skip. **스키마 변경 없는 긴급 배포 전용** (예: DB password 로테이션). 스키마 변경이 들어있는 배포에선 금지. 정상화 뒤 반드시 제거. 이름 주의 — `VERCEL_` 네임스페이스 충돌로 리네임됨 (commit `e7a01c18`). | Vercel project → Settings → Environment Variables |
+| `DATABASE_URL` / `DIRECT_URL` | migrate 가 사용하는 connection string. **포트 `:6543` (transaction pooler) 필수** — §8 표 참조. password 로테이션 직후엔 반드시 이 값도 최신값으로 업데이트. | Vercel env |
+
+### 9.1 Non-fatal migrate (2026-04-24 임시 조치)
+
+`vercel-migrate.js` 는 현재 `prisma migrate deploy` 실패를 **non-fatal** 로
+처리한다 (commit `16e6ef5d`). 즉 migrate 가 실패해도 build 는 계속 진행된다.
+이는 DB password 로테이션 복구 중 도입된 **임시 safety valve** 이며, DB 연결이
+안정화되면 원복 대상이다.
+
+### 9.2 복구 체크리스트 (DB 연결 안정화 후)
+
+1. Vercel production env 에서 `SKIP_PRISMA_MIGRATE` 제거.
+2. `vercel-migrate.js` 의 catch 블록에서 `process.exit(1)` 원복 (현재
+   `process.exit(0)` 로 주석과 함께 강제 성공 처리).
+3. 의도적으로 스키마 변경을 포함한 canary 배포 1회로 정상 migrate 경로 검증.
+
+상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9`.
