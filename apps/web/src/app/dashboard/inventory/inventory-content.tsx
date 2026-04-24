@@ -393,132 +393,9 @@ function InventoryPageContent() {
     return bySafetyStock || byLeadTime || inv.currentQuantity === 0;
   });
 
-  // Mock 데이터 (데이터가 없을 때 사용) — 동일 제품 Lot별 분리, 실무 엑셀 필드 반영
-  const [mockInventories, setMockInventories] = useState<ProductInventory[]>([
-    {
-      id: "mock-1a",
-      productId: "mock-product-1",
-      currentQuantity: 3,
-      unit: "개",
-      safetyStock: 10,
-      minOrderQty: 20,
-      location: "냉동고 1칸",
-      expiryDate: "2026-12-31",
-      notes: null,
-      lotNumber: "24A01-X",
-      storageCondition: "freezer_20",
-      hazard: false,
-      testPurpose: "세포 배양",
-      vendor: "Thermo Fisher 공급",
-      deliveryPeriod: "2~3주",
-      inUseOrUnopened: "미개봉",
-      averageExpiry: "2026-12-31",
-      averageDailyUsage: 0.5,
-      leadTimeDays: 21,
-      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
-    },
-    {
-      id: "mock-1b",
-      productId: "mock-product-1",
-      currentQuantity: 2,
-      unit: "개",
-      safetyStock: 10,
-      minOrderQty: 20,
-      location: "냉동고 1칸",
-      expiryDate: "2026-03-15",
-      notes: "개봉된 vial인데 시약관리대장 상에서 수량 차감 안 되어서 8/12 개봉 기록 후 vial 전량 사용 예정",
-      lotNumber: "23K15-Y",
-      storageCondition: "freezer_20",
-      hazard: false,
-      testPurpose: "세포 배양",
-      vendor: "Thermo Fisher 공급",
-      deliveryPeriod: "2~3주",
-      inUseOrUnopened: "사용 중",
-      averageExpiry: "2026-03-15",
-      averageDailyUsage: 0.5,
-      leadTimeDays: 21,
-      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
-    },
-    {
-      id: "mock-2",
-      productId: "mock-product-2",
-      currentQuantity: 15,
-      unit: "개",
-      safetyStock: 20,
-      minOrderQty: 50,
-      location: "선반 3층",
-      expiryDate: null,
-      notes: null,
-      storageCondition: "room_temp_std",
-      hazard: false,
-      testPurpose: "일반 실험",
-      vendor: "Corning 직납",
-      deliveryPeriod: "1주",
-      averageDailyUsage: 1,
-      leadTimeDays: 7,
-      product: { id: "mock-product-2", name: "Falcon 50ml Conical Tube", brand: "Corning", catalogNumber: "352070" },
-    },
-    {
-      id: "mock-3",
-      productId: "mock-product-3",
-      currentQuantity: 2,
-      unit: "box",
-      safetyStock: 5,
-      minOrderQty: 10,
-      location: "냉장고 2칸",
-      expiryDate: null,
-      notes: "분기 별 1회 이상 사용",
-      storageCondition: "room_temp_std",
-      hazard: false,
-      testPurpose: "MTT assay",
-      vendor: "Eppendorf",
-      deliveryPeriod: "1~2주",
-      averageDailyUsage: 0.2,
-      leadTimeDays: 14,
-      product: { id: "mock-product-3", name: "Pipette Tips (1000μL)", brand: "Eppendorf", catalogNumber: "0030078447" },
-    },
-    {
-      id: "mock-4",
-      productId: "mock-product-4",
-      currentQuantity: 0,
-      unit: "개",
-      safetyStock: 3,
-      minOrderQty: 5,
-      location: "선반 1층",
-      expiryDate: null,
-      notes: null,
-      storageCondition: "fridge",
-      hazard: false,
-      testPurpose: "MTT assay, 외래성 바이러스 시험",
-      vendor: "Sigma-Aldrich",
-      deliveryPeriod: "3~4주",
-      averageDailyUsage: 0.3,
-      leadTimeDays: 28,
-      product: { id: "mock-product-4", name: "DMEM Medium (500ml)", brand: "Sigma-Aldrich", catalogNumber: "D5671" },
-    },
-    {
-      id: "mock-5",
-      productId: "mock-product-5",
-      currentQuantity: 25,
-      unit: "개",
-      safetyStock: 10,
-      minOrderQty: 20,
-      location: "냉장고 3칸",
-      expiryDate: null,
-      notes: null,
-      storageCondition: "fridge",
-      hazard: true,
-      testPurpose: "세포 배양",
-      vendor: "Gibco",
-      deliveryPeriod: "2주",
-      averageDailyUsage: 1,
-      leadTimeDays: 14,
-      product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
-    },
-  ]);
-
-  // 데이터가 없으면 Mock 데이터 사용
-  const displayInventories = inventories.length > 0 ? inventories : mockInventories;
+  // Canonical truth only — mock fallback removed per #P02 (ADR-002 canvas).
+  // Empty inventory renders empty state CTA → real /api/inventory POST dialog.
+  const displayInventories = inventories;
   const incomingItems = displayInventories.filter((inv) => {
     // 입고 예정 로직 (간단한 예시)
     return inv.currentQuantity <= (inv.safetyStock || 0) * 0.5;
@@ -636,21 +513,6 @@ function InventoryPageContent() {
         .filter(Boolean)
         .join(" ");
 
-      if (inventory.id.startsWith("mock-")) {
-        setMockInventories((prev) =>
-          prev.map((item) =>
-            item.id === inventory.id
-              ? {
-                  ...item,
-                  currentQuantity: nextQuantity,
-                  notes: [item.notes, disposalNote].filter(Boolean).join("\n"),
-                }
-              : item
-          )
-        );
-        return { success: true, mock: true };
-      }
-
       const response = await csrfFetch(`/api/inventory/${inventory.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -759,32 +621,6 @@ function InventoryPageContent() {
       testPurpose?: string;
     }) => {
       const isEdit = Boolean(formPayload.id);
-      const isMockItem = isEdit && formPayload.id?.startsWith("mock-");
-
-      // Mock 데이터 수정: API 대신 로컬 상태 업데이트 (1초 딜레이 시뮬레이션)
-      if (isMockItem && formPayload.id) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        setMockInventories((prev) =>
-          prev.map((item) =>
-            item.id === formPayload.id
-              ? {
-                  ...item,
-                  currentQuantity: formPayload.currentQuantity,
-                  unit: formPayload.unit,
-                  safetyStock: formPayload.safetyStock ?? item.safetyStock,
-                  minOrderQty: formPayload.minOrderQty ?? item.minOrderQty,
-                  location: formPayload.location ?? item.location,
-                  expiryDate: formPayload.expiryDate ?? item.expiryDate,
-                  notes: formPayload.notes ?? item.notes,
-                  lotNumber: formPayload.lotNumber ?? item.lotNumber,
-                  storageCondition: formPayload.storageCondition ?? item.storageCondition,
-                  testPurpose: formPayload.testPurpose ?? item.testPurpose,
-                }
-              : item
-          )
-        );
-        return { success: true };
-      }
 
       const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
       const body = isEdit
@@ -1863,10 +1699,10 @@ function InventoryPageContent() {
                     emptyMessage={
                       debouncedSearchQuery.trim()
                         ? `'${debouncedSearchQuery.trim()}'에 해당하는 재고를 찾지 못했습니다.`
-                        : "재고 항목이 없습니다.\nSupabase에 저장된 데이터가 없습니다. 샘플 데이터를 생성해 보세요."
+                        : "등록된 재고가 없습니다.\n첫 재고를 추가해 운영을 시작하세요."
                     }
                     emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
-                    emptyActionLabel={debouncedSearchQuery.trim() ? "전체 재고 보기" : "샘플 데이터 생성하기"}
+                    emptyActionLabel={debouncedSearchQuery.trim() ? "전체 재고 보기" : "재고 추가하기"}
                   />
                 </CardContent>
               </Card>
