@@ -214,6 +214,23 @@ Opened 2026-04-24 after the production seed run.
 - **Not enforced in code (deliberate):** the guard (`assertPilotDatabaseTarget`) parses project-ref only; it does not inspect the port. Adding a port check would couple the guard to Supabase's current Supavisor port conventions (subject to change) and block the smoke DB path where the port varies. The documentation surface above is the authoritative control.
 - **Constraint alignment:** no change to §5 constraints. Opt-in token, allow-list, guard semantics all identical.
 
+### 11.8 `#P02` Phase A mock removal — runtime-verified 2026-04-25
+
+Scope: `apps/web/src/app/dashboard/inventory/inventory-content.tsx` mock fallback removal (commit `5f282a07`). Verified against production deployment of `bio-insight-lab-web.vercel.app` using Claude in Chrome.
+
+- **Source-level PASS (pre-verification):** `npx tsc --noEmit` zero errors on the modified file; vitest inventory-adjacent suite (review-queue + work-queue, 6 files) 150/150 PASS.
+- **Runtime probe (2026-04-25 via `/dashboard/inventory`):**
+  - Mock products (Gibco FBS / Falcon / DMEM / Trypsin-EDTA / Pipette tips) **no longer rendered** anywhere in the page ✓
+  - Empty state copy renders the new string — "등록된 재고가 없습니다. 첫 재고를 추가해 운영을 시작하세요." ✓
+  - Empty state CTA button ("재고 추가하기") renders in both responsive variants (mobile `md:hidden` + desktop table-cell) ✓
+  - Desktop CTA click opens the real `<AddInventoryModal>` dialog ("새 재고 등록", product search textbox, close button) ✓
+  - Header "품목 추가" CTA opens the same dialog (comparison control) ✓
+- **Probe artifact — recorded as an operating lesson, not a defect:** an initial reading labelled the empty state CTA as a dead button. Root cause: Chrome MCP `find` tool returned the `md:hidden` mobile variant of the button as well as the desktop variant; the first click target landed on the desktop-hidden element (rect 0×0 — `display:none` via Tailwind responsive class), producing a no-op. Direct DOM inspection via `javascript_tool` showed both button instances, with the desktop-visible one (116×36 @ (688, 647)) wired correctly to `setIsDialogOpen(true)`. Not a code defect; a probe methodology gap.
+- **Operational rule for future Chrome probes (LabAxis):** before interpreting a click as a dead button, verify the target element's `getBoundingClientRect()` and `display` via `javascript_tool`; `find` can surface elements with zero rect when they are hidden by responsive utility classes. Committed as habit only, not as a doc file.
+- **Follow-up tracks opened (independent, not blocking §11.8 closeout):**
+  - `#P02-button-type` (LOW): shadcn Button rendered with `type="submit"` across the inventory surface. Currently inert because none of the buttons sit inside a `<form>`, but a latent foot-gun if any of these surfaces get wrapped in a form later. Remediation: either fix shadcn Button default or pass `type="button"` at call sites.
+  - `#P01-followup`: Operator commits `ceda4063` .. `2c225f91` landed Vercel build server workarounds (session pooler unreachable → transaction pooler `:6543` for build-time, `SKIP_PRISMA_MIGRATE` env, non-fatal migrate). This partially revises §11.7 — session-pooler rule applies to operator-shell maintenance scripts only, not to Vercel build-time. To be recorded in §11.9 once the workaround stabilises.
+
 ---
 
 ## 12. Changelog
@@ -226,3 +243,4 @@ Opened 2026-04-24 after the production seed run.
 - 2026-04-23 — Phase 6 canonical decision doc (this file). Status ACCEPTED.
 - 2026-04-24 — §11.6 opened: production project-ref typo (q→o) corrected across 10 sites / 6 files. ADR-001 §4 also records `PRODUCTION_PROJECT_REGION = ap-northeast-1`. No runtime impact. Pilot-seed production run still pending with corrected env.
 - 2026-04-24 — §11.1 CLOSED: production seed PASS. Org / workspace / 2 memberships / 15 products upserted against `xhidynwpkqeaojuudhsw`; cleanup dry-run 19/19 present=true. §11.7 OPENED: transaction pooler (`:6543`) is incompatible with Prisma `$transaction` — `DATABASE_URL_PILOT` must use session pooler (`:5432`). Enforcement via Usage docblock notes in `pilot-seed.ts` / `pilot-cleanup.ts` + `DEV_RUNBOOK.md §8` row warning.
+- 2026-04-25 — §11.8 OPENED and CLOSED: `#P02` Phase A (commit `5f282a07`, inventory mock fallback removal) runtime-verified on production via Claude in Chrome probe. 5 checks PASS. Initial "dead button" reading was a probe artifact (`md:hidden` mobile CTA variant returned by Chrome find tool; not a code defect). Follow-up tracks `#P02-button-type` (shadcn Button default type=submit) and `#P01-followup` (Vercel build-server pooler revision) opened, both non-blocking.
