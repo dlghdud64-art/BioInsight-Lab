@@ -41,12 +41,26 @@ export interface ButtonProps
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
+  ({ className, variant, size, asChild = false, type, ...props }, ref) => {
     const Comp = asChild ? Slot : "button";
+    // #P02-button-type (ADR-002 §11.8 follow-up, 2026-04-25): default to
+    // type="button" for native <button> renders. The HTML default is
+    // "submit", which silently triggers form submission when a Button is
+    // dropped inside a <form> without an explicit type. The §11.8 probe
+    // discovered every Button on /dashboard/inventory rendered with
+    // type="submit" — inert at the time because none sat inside a <form>,
+    // but a real foot-gun for any future surface that gets form-wrapped.
+    //
+    // Caller can still pass type="submit" explicitly (all 6 existing form
+    // sites already do — verified before this change). asChild renders
+    // into the child element via Slot, so we don't force a type there
+    // (anchors / divs / etc. shouldn't receive a button type).
+    const buttonType = asChild ? undefined : (type ?? "button");
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        type={buttonType}
         {...props}
       />
     );
