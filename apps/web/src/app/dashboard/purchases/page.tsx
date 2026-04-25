@@ -177,9 +177,9 @@ export default function PurchasesPage() {
             <p className="text-sm text-slate-500 mt-0.5">선택안 검토, 회신 확인, 발주 전환까지 한 화면에서 처리합니다.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/dashboard/cart">
+            <Link href="/app/search">
               <Button variant="outline" size="sm" className="h-10 px-4 text-sm gap-2 border-slate-200 font-medium">
-                <FileText className="h-4 w-4" /> 장바구니
+                <Search className="h-4 w-4" /> 소싱
               </Button>
             </Link>
             <Link href="/dashboard/quotes">
@@ -304,13 +304,13 @@ export default function PurchasesPage() {
                   {searchQuery.trim()
                     ? "다른 키워드로 검색해 보세요."
                     : items.length === 0
-                      ? "장바구니에서 견적을 만들어 시작하세요."
+                      ? "소싱에서 검색하고 견적을 만들어 시작하세요."
                       : "다른 탭을 확인해 보세요."}
                 </p>
                 {!searchQuery.trim() && items.length === 0 && (
-                  <Link href="/dashboard/cart">
+                  <Link href="/app/search">
                     <Button size="sm" className="h-9 px-4 text-sm shadow-sm">
-                      장바구니 열기 <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      소싱 열기 <ArrowRight className="h-3.5 w-3.5 ml-1" />
                     </Button>
                   </Link>
                 )}
