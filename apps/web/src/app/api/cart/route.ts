@@ -34,10 +34,19 @@ export async function GET(req: NextRequest) {
                 name: true,
                 imageUrl: true,
                 vendors: {
-                  where: { isActive: true },
+                  // ADR-002 §B0-3 / #P03 fix 2026-04-25: ProductVendor has
+                  // neither `isActive` nor `inStock` in the live schema.
+                  // The previous code (`where: { isActive: true }`,
+                  // `select: { inStock: true }`) failed Prisma validation
+                  // at runtime → cart route returned 500 for every user,
+                  // blocking the sourcing → quote flow end-to-end.
+                  // Use `stockStatus` (which IS in the schema) for the
+                  // in-stock signal; drop the active filter (the priority
+                  // story is already covered by isPremiumFeatured /
+                  // premiumPriority indexes elsewhere).
                   select: {
                     priceInKRW: true,
-                    inStock: true,
+                    stockStatus: true,
                   },
                   take: 1,
                   orderBy: { priceInKRW: "asc" },
@@ -85,7 +94,11 @@ export async function GET(req: NextRequest) {
         notes: item.notes,
         sourceType: item.sourceType,
         imageUrl: item.product?.imageUrl,
-        inStock: item.product?.vendors[0]?.inStock ?? true,
+        // Fail-open: only mark out-of-stock when stockStatus says so.
+        // Missing / unknown stockStatus → treat as in stock so the cart
+        // doesn't grey out items because data is incomplete.
+        inStock:
+          item.product?.vendors[0]?.stockStatus !== "OUT_OF_STOCK",
         createdAt: item.createdAt,
       };
     });
