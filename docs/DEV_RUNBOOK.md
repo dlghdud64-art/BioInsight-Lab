@@ -236,13 +236,28 @@ TIMED OUT after 90s` + §11.9 reachability hint 가 출력된다.
 
 ### 9.2 복구 체크리스트 (DB 연결 안정화 후)
 
-1. Vercel production env 에서 `SKIP_PRISMA_MIGRATE` 제거.
-2. `vercel-migrate.js` 의 catch 블록에서 `process.exit(1)` 원복 (현재
-   `process.exit(0)` 로 주석과 함께 강제 성공 처리).
-3. 의도적으로 스키마 변경을 포함한 canary 배포 1회로 정상 migrate 경로 검증.
-4. ~~`execSync` `timeout: 90_000` + `killSignal: "SIGKILL"` 추가~~ —
-   **DONE 2026-04-25** (ADR-002 §11.11). 이 항목은 1~3 의 **선결 조건**
-   이었다 — timeout 없이 1~3 을 진행하면 단일 migrate hang 이 빌드 윈도우
-   전체를 점유해 rollback 자체가 불가능해진다.
+**현재 상태 (2026-04-25 deploy `dpl_66GXg92pDNd3te5EsfZf3kCgQMk9` 검증
+결과)**: 항목 1~3 은 **§11.12 진단 완료 전까지 보류**. 이유는 transaction
+pooler `:6543` 도 Vercel build infra 에서 reachable 하지 않다는 사실이
+field-validated 되어, migrate 가 어차피 timeout-and-skip 으로 끝나 schema
+변경이 적용되지 않기 때문.
 
-상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9 / §11.11`.
+1. ⏸ Vercel production env 에서 `SKIP_PRISMA_MIGRATE` 제거. — **§11.12
+   gated.** 검증 deploy 에서 timeout 으로 끝났으므로 일시적으로 다시
+   `=1` 설정 권장 (매 빌드 90s 손실 방지).
+2. ⏸ `vercel-migrate.js` 의 catch 블록에서 `process.exit(1)` 원복. — 1, 3
+   완료 후. 현재 원복하면 매 빌드 fail.
+3. ⏸ 의도적으로 스키마 변경을 포함한 canary 배포 1회로 정상 migrate 경로
+   검증. — **§11.12 진단 완료 후만 가능.**
+4. ✅ `execSync` `timeout: 90_000` + `killSignal: "SIGKILL"` 추가. —
+   **DONE 2026-04-25** (ADR-002 §11.11, deploy `dpl_66GXg92pDNd3te5...`
+   에서 89s timeout 발동 + 빌드 정상 계속 확인). 이 항목은 1~3 의 **선결
+   조건** 이었다 — timeout 없이 1~3 을 진행하면 단일 migrate hang 이 빌드
+   윈도우 전체를 점유해 rollback 자체가 불가능해진다.
+
+**§11.12 (신규 트랙)**: transaction pooler `:6543` 도 Vercel build 에서
+reachable 하지 않음. 진단 항목은 (i) DATABASE_URL credential drift 확인,
+(ii) direct connection (`db.<ref>.supabase.co:5432`) 카나리 시도, (iii)
+Supabase IP allow-list / IPv4-IPv6 routing 점검. 상세는 ADR-002 §11.12.
+
+상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9 / §11.11 / §11.12`.
