@@ -50,15 +50,33 @@ if (process.env.SKIP_PRISMA_MIGRATE === "1") {
 
 console.log("[prebuild] VERCEL=1 detected — running prisma migrate deploy");
 
+// 2026-04-25 incident 직접 후속 (ADR-002 §11.10 → §11.11):
+// 이전 빌드는 execSync 에 timeout 옵션이 없었고, prisma migrate deploy 가
+// 도달 불가 풀러로 향하면 child process 가 OS 가 죽일 때까지 hang 했다
+// (#P01-followup 빌드 1시간+ BUILDING 으로 deploy queue 전체를 block 한
+// 직접 사례). non-fatal try/catch 는 child 가 실제로 종료되어야 발동하므로
+// timeout 없는 execSync 와는 구조적으로 양립 불가.
+//
+// 90 초 hard cap + SIGKILL: 정상 migrate 는 통상 5~15 초 안에 끝나므로 90s
+// 면 충분한 여유. timeout 도달 시 child 강제 종료 → catch 에서 non-fatal
+// exit(0) → 빌드 계속.
 try {
   execSync("npx prisma migrate deploy", {
     stdio: "inherit",
     env: process.env,
+    timeout: 90_000,
+    killSignal: "SIGKILL",
   });
   console.log("[prebuild] prisma migrate deploy completed successfully");
 } catch (err) {
-  console.error("[prebuild] prisma migrate deploy FAILED — continuing build (non-fatal)");
-  console.error("[prebuild] WARNING: If this is NOT a password-reset-only deploy, STOP and fix the DB connection.");
+  const isTimeout = err && (err.code === "ETIMEDOUT" || err.signal === "SIGKILL");
+  if (isTimeout) {
+    console.error("[prebuild] prisma migrate deploy TIMED OUT after 90s — continuing build (non-fatal)");
+    console.error("[prebuild] HINT: DATABASE_URL is likely unreachable from Vercel build infra (ADR-002 §11.9 — must be transaction pooler :6543).");
+  } else {
+    console.error("[prebuild] prisma migrate deploy FAILED — continuing build (non-fatal)");
+    console.error("[prebuild] WARNING: If this is NOT a password-reset-only deploy, STOP and fix the DB connection.");
+  }
   console.error(err && err.message ? err.message : err);
   // 2026-04-24 긴급 처리: DB 비밀번호 리셋 후 커넥터 풀러 인증 실패.
   // 스키마 변경 없이 커넥션 스트링만 교체하는 경우이므로 non-fatal.

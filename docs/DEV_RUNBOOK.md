@@ -220,12 +220,19 @@ Vercel 빌드에서 Prisma migrate 실행은 `apps/web/scripts/vercel-migrate.js
 | `SKIP_PRISMA_MIGRATE=1` | migrate 스텝을 skip. **스키마 변경 없는 긴급 배포 전용** (예: DB password 로테이션). 스키마 변경이 들어있는 배포에선 금지. 정상화 뒤 반드시 제거. 이름 주의 — `VERCEL_` 네임스페이스 충돌로 리네임됨 (commit `e7a01c18`). | Vercel project → Settings → Environment Variables |
 | `DATABASE_URL` / `DIRECT_URL` | migrate 가 사용하는 connection string. **포트 `:6543` (transaction pooler) 필수** — §8 표 참조. password 로테이션 직후엔 반드시 이 값도 최신값으로 업데이트. | Vercel env |
 
-### 9.1 Non-fatal migrate (2026-04-24 임시 조치)
+### 9.1 Non-fatal migrate (2026-04-24 임시 조치) + 90s timeout (2026-04-25)
 
 `vercel-migrate.js` 는 현재 `prisma migrate deploy` 실패를 **non-fatal** 로
 처리한다 (commit `16e6ef5d`). 즉 migrate 가 실패해도 build 는 계속 진행된다.
 이는 DB password 로테이션 복구 중 도입된 **임시 safety valve** 이며, DB 연결이
 안정화되면 원복 대상이다.
+
+추가로 2026-04-25 부터 `execSync` 에 **`timeout: 90_000` + `killSignal:
+"SIGKILL"`** 가 적용됐다 (ADR-002 §11.11). 이전엔 timeout 옵션이 없어 migrate
+가 도달 불가 풀러로 향하면 빌드 1시간+ hang 한 사례가 있었음. 90 초 후 강제
+종료 → catch 에서 non-fatal exit(0) → 빌드 계속. 정상 migrate 는 5~15 초라
+충분한 여유. timeout 발동 시 로그에 `[prebuild] prisma migrate deploy
+TIMED OUT after 90s` + §11.9 reachability hint 가 출력된다.
 
 ### 9.2 복구 체크리스트 (DB 연결 안정화 후)
 
@@ -233,5 +240,9 @@ Vercel 빌드에서 Prisma migrate 실행은 `apps/web/scripts/vercel-migrate.js
 2. `vercel-migrate.js` 의 catch 블록에서 `process.exit(1)` 원복 (현재
    `process.exit(0)` 로 주석과 함께 강제 성공 처리).
 3. 의도적으로 스키마 변경을 포함한 canary 배포 1회로 정상 migrate 경로 검증.
+4. ~~`execSync` `timeout: 90_000` + `killSignal: "SIGKILL"` 추가~~ —
+   **DONE 2026-04-25** (ADR-002 §11.11). 이 항목은 1~3 의 **선결 조건**
+   이었다 — timeout 없이 1~3 을 진행하면 단일 migrate hang 이 빌드 윈도우
+   전체를 점유해 rollback 자체가 불가능해진다.
 
-상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9`.
+상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9 / §11.11`.

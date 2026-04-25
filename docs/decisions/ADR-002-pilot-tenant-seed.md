@@ -280,7 +280,23 @@ Scope: `apps/web/src/app/dashboard/purchases/page.tsx` rewrite (commit `b214386a
   - `#P02 Phase B-α` — queue-composer endpoint + AI recommendation. Now has a clear hand-off point: Phase B-β rendered the canonical Quote inbox; α layer can compose multi-supplier reply state on top.
   - `#P01-followup-correction` — `.vercel/project.json` drift. New track opened today.
   - `#P02-button-type` — shadcn Button default `type="submit"` (still LOW; not a Phase B blocker).
-  - `vercel-migrate.js` `execSync` timeout option — **promoted from "nice to have" to "real incident lesson"** by today's queue block. Should land before the next migration-bearing schema change.
+  - `vercel-migrate.js` `execSync` timeout option — **promoted from "nice to have" to "real incident lesson"** by today's queue block. Should land before the next migration-bearing schema change. **CLOSED in §11.11.**
+
+### 11.11 `vercel-migrate.js` execSync timeout — landed 2026-04-25
+
+Direct follow-up to §11.10's queue-block incident.
+
+- **Root cause recap (§11.10):** `execSync("npx prisma migrate deploy", { stdio, env })` had no `timeout` option. When migrate hits an unreachable pooler the child process spins on TCP retries until the OS reaps it. The non-fatal try/catch wrapper around execSync only fires *after* the child returns — so the queue-block window equals "however long it takes the OS to give up on the connection," which observed up to ~1 hour on Vercel build infra.
+- **Change (single-file commit):** add `timeout: 90_000` + `killSignal: "SIGKILL"` to the `execSync` options. Catch block now distinguishes timeout vs other failures and emits a §11.9 reachability hint when the failure is a timeout/SIGKILL.
+- **Why 90 s:** healthy migrate runs against the transaction pooler complete in ~5–15 s. 90 s leaves ~6× headroom for cold-start + first-statement latency, while keeping any single hang at well under the GitHub-Vercel webhook re-trigger window. Easier to extend than to shrink later.
+- **Restoration sequence (now 4 items, was 3):**
+  1. ~~Unset `SKIP_PRISMA_MIGRATE`~~ — *still pending; do this first when DB connectivity is confirmed stable.*
+  2. ~~Restore `process.exit(1)` in catch~~ — *still pending; the non-fatal escape hatch should be removed only after timeout proves itself in production.*
+  3. Run a canary schema-change migration to verify the normal path.
+  4. **DONE 2026-04-25:** `execSync` timeout + SIGKILL (this section).
+- **Why land timeout before items 1–3:** even if `SKIP_PRISMA_MIGRATE` is unset and `process.exit(1)` is restored, an unbounded execSync hang would still eat the full Vercel build window and prevent rollback. The timeout is the prerequisite that makes the rest of the restoration safe.
+- **Operational note:** the timeout fires whether the failure is "auth", "pooler unreachable", "schema validation", or "connection refused" — anything that prevents the child from exiting. After timeout the build still proceeds (non-fatal exit(0)) so the deploy still ships, but with a clear `[prebuild] prisma migrate deploy TIMED OUT` log line for postmortem.
+- **Not landed (deliberate):** no per-migration test runner, no separate `prisma migrate status` precheck — both add complexity without removing the timeout requirement. The timeout is the single load-bearing fix.
 
 ---
 
@@ -297,3 +313,4 @@ Scope: `apps/web/src/app/dashboard/purchases/page.tsx` rewrite (commit `b214386a
 - 2026-04-25 — §11.8 OPENED and CLOSED: `#P02` Phase A (commit `5f282a07`, inventory mock fallback removal) runtime-verified on production via Claude in Chrome probe. 5 checks PASS. Initial "dead button" reading was a probe artifact (`md:hidden` mobile CTA variant returned by Chrome find tool; not a code defect). Follow-up tracks `#P02-button-type` (shadcn Button default type=submit) and `#P01-followup` (Vercel build-server pooler revision) opened, both non-blocking.
 - 2026-04-25 — §11.9 OPENED and CLOSED: Vercel build-server reachability revision of §11.7. Session pooler (`:5432`) is unreachable from Vercel build infrastructure; transaction pooler (`:6543`) is required for `prisma migrate deploy`. §11.7 scope now restricted to operator-shell maintenance scripts. Records `SKIP_PRISMA_MIGRATE` emergency bypass + non-fatal migrate safety valve (commits `c99dd785`, `e7a01c18`, `16e6ef5d`) as temporary mitigations with restoration checklist. `.vercel/project.json` projectId unchanged. Empty-commit redeploy pattern noted.
 - 2026-04-25 — §11.10 OPENED and CLOSED: `#P02` Phase B-β (commit `b214386a`, purchases mock removal + `/api/quotes/my` wiring) runtime-verified on production via Claude in Chrome probe. 0 mock signatures, 13/18 new β signatures rendered, `/api/quotes/my` 200 OK with stats schema matching `QuotesMyResponse`, dead-button audit 3/3 PASS (no `md:hidden` artifact). Vercel deploy-queue incident: prior `2259b9c1` build sat in BUILDING for ~1 h holding the queue; resolved by killing the build and setting `SKIP_PRISMA_MIGRATE=1` — direct field validation of §11.9's `execSync` timeout warning. `.vercel/project.json` drift correction: production domain is owned by `prj_sJ6yIgyW59VrOCbTfFbfwO4aJjim` (`bio-insight-lab-web`), not by the `prj_9myxP5rmQ6QupPjp7vi6dtBF1qug` (`web`) recorded in `.vercel/project.json` — earlier §11.9 reading corrected; drift parked as `#P01-followup-correction`.
+- 2026-04-25 — §11.11 OPENED and CLOSED: `vercel-migrate.js` `execSync` now has `timeout: 90_000` + `killSignal: "SIGKILL"`, and the catch block distinguishes timeout (with §11.9 reachability hint) from other failures. Direct follow-up to §11.10's 1-hour queue block — the unbounded execSync was the prerequisite for restoration items 1–3 (unset `SKIP_PRISMA_MIGRATE`, restore `process.exit(1)`, canary migration), so it lands first. Restoration now 4 items, item 4 DONE.
