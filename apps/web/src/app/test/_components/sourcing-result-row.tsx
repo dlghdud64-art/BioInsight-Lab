@@ -248,7 +248,10 @@ export function SourcingResultRow({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200 cursor-default"
-              onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}
+              // #P02-e2e-blocker fix: toast was unconditionally success;
+              // now the wrapping onToggleRequest is the toast authority
+              // (it sees the addProductToQuote result mode).
+              onClick={() => { onToggleRequest(); }}
             >
               <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
@@ -257,7 +260,7 @@ export function SourcingResultRow({
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 transition-colors inline-flex items-center"
-              onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
+              onClick={() => { onToggleRequest(); }}>
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}
@@ -292,13 +295,14 @@ export function SourcingResultRow({
           {isInRequest ? (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-semibold inline-flex items-center gap-1 bg-indigo-50 text-indigo-600 border border-indigo-200"
-              onClick={() => { onToggleRequest(); toast.info("견적함에서 제거되었습니다."); }}>
+              // #P02-e2e-blocker fix: toast moved to wrapping onToggleRequest.
+              onClick={() => { onToggleRequest(); }}>
               <Check className="h-3.5 w-3.5" />견적 후보
             </motion.button>
           ) : (
             <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-500 border border-slate-200 inline-flex items-center"
-              onClick={() => { onToggleRequest(); toast.success("견적함에 성공적으로 담겼습니다."); }}>
+              onClick={() => { onToggleRequest(); }}>
               <FileText className="h-3.5 w-3.5 mr-1" />견적 담기
             </motion.button>
           )}

@@ -2,6 +2,8 @@
 
 import { SearchPanel } from "../_components/search-panel";
 import { useTestFlow } from "../_components/test-flow-provider";
+import { toast } from "sonner";
+import { resolveAddToQuoteToast } from "@/lib/quote/resolve-add-to-quote-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -614,7 +616,18 @@ export default function SearchPage() {
                       onToggleCompare={() => handleProtectedAction(() => toggleCompare(product.id, { name: product.name, brand: product.brand }))}
                       onToggleRequest={() => handleProtectedAction(() => {
                         const existing = quoteItems.find((q: any) => q.productId === product.id);
-                        if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(product); }
+                        if (existing) {
+                          removeQuoteItem(existing.id);
+                          toast.info("견적함에서 제거되었습니다.");
+                        } else {
+                          // #P02-e2e-blocker fix: result-driven toast.
+                          // Vendor-pending now creates a real candidacy
+                          // row instead of silently failing with a fake
+                          // success toast.
+                          const r = addProductToQuote(product);
+                          const t = resolveAddToQuoteToast(r);
+                          toast[t.intent](t.message);
+                        }
                       })}
                       onSelect={() => setActiveResultId(product.id)}
                     />
@@ -682,7 +695,14 @@ export default function SearchPage() {
                 onToggleCompare={() => handleProtectedAction(() => toggleCompare(railProduct.id, { name: railProduct.name, brand: railProduct.brand }))}
                 onToggleRequest={() => handleProtectedAction(() => {
                   const existing = quoteItems.find((q: any) => q.productId === railProduct.id);
-                  if (existing) { removeQuoteItem(existing.id); } else { addProductToQuote(railProduct); }
+                  if (existing) {
+                    removeQuoteItem(existing.id);
+                    toast.info("견적함에서 제거되었습니다.");
+                  } else {
+                    const r = addProductToQuote(railProduct);
+                    const t = resolveAddToQuoteToast(r);
+                    toast[t.intent](t.message);
+                  }
                 })}
                 onClose={() => setActiveResultId(null)}
                 onOpenCompareWindow={() => handleProtectedAction(() => setWorkWindowMode("compare"))}
@@ -1688,9 +1708,16 @@ export default function SearchPage() {
         }}
         onToggleRequest={(productId: string) => {
           const existing = quoteItems.find((q: any) => q.productId === productId);
-          if (existing) { removeQuoteItem(existing.id); } else {
+          if (existing) {
+            removeQuoteItem(existing.id);
+            toast.info("견적함에서 제거되었습니다.");
+          } else {
             const p = products.find((pp: any) => pp.id === productId);
-            if (p) addProductToQuote(p);
+            if (p) {
+              const r = addProductToQuote(p);
+              const t = resolveAddToQuoteToast(r);
+              toast[t.intent](t.message);
+            }
           }
         }}
         totalAmount={totalAmount}

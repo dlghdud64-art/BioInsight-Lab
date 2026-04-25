@@ -9,6 +9,10 @@ import { useCompareStore } from "@/lib/store/compare-store";
 import { useToast } from "@/hooks/use-toast";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { trackEvent } from "@/lib/analytics";
+import {
+  computeAddToQuote,
+  type ComputeAddToQuoteResult,
+} from "@/lib/quote/add-product-to-quote";
 
 interface TestFlowContextType {
   // 검색 상태
@@ -61,7 +65,7 @@ interface TestFlowContextType {
   runSearch: () => void;
   toggleCompare: (productId: string, meta?: { name: string; brand?: string }) => void;
   clearCompare: () => void;
-  addProductToQuote: (product: any) => void;
+  addProductToQuote: (product: any, vendorId?: string) => ComputeAddToQuoteResult;
   updateQuoteItem: (itemId: string, updates: any) => void;
   removeQuoteItem: (itemId: string) => void;
   runProtocolAnalysis: () => void;
@@ -347,49 +351,33 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
     clearProducts();
   };
 
-  const addProductToQuote = (product: any, vendorId?: string) => {
-    // vendorId가 지정되지 않으면 첫 번째 벤더 사용
-    const selectedVendor = vendorId 
-      ? product.vendors?.find((v: any) => v.vendor?.id === vendorId)
-      : product.vendors?.[0];
-    
-    if (!selectedVendor) {
-      console.warn("No vendor found for product", product.id);
-      return;
-    }
-
-    const existingIndex = quoteItems.findIndex(
-      (item) => item.productId === product.id && item.vendorId === selectedVendor.vendor?.id
-    );
-    
-    if (existingIndex >= 0) {
-      // 같은 제품, 같은 벤더가 이미 있으면 수량 증가
-      setQuoteItems((prev) =>
-        prev.map((item, idx) =>
-          idx === existingIndex
-            ? { ...item, quantity: (item.quantity || 1) + 1, lineTotal: item.unitPrice * ((item.quantity || 1) + 1) }
-            : item
-        )
-      );
+  // #P02-e2e-blocker fix (ADR-002 §11.16):
+  // Pure composer takes the current items + product + optional vendor
+  // and returns the next items + a result mode. Vendor-pending is a
+  // first-class success — the candidacy row is created with vendorId="",
+  // unitPrice=0, and the call site picks toast copy from the mode.
+  // This kills the previous "silent return + fake toast.success" path.
+  const addProductToQuote = (
+    product: any,
+    vendorId?: string,
+  ): ComputeAddToQuoteResult => {
+    const result = computeAddToQuote({
+      product,
+      vendorId,
+      currentItems: quoteItems,
+    });
+    if (result.ok) {
+      setQuoteItems(result.nextItems);
     } else {
-      // 새로 추가
-      const unitPrice = selectedVendor?.priceInKRW || 0;
-      setQuoteItems((prev) => [
-        ...prev,
-        {
-          id: `item-${Date.now()}-${prev.length}`,
-          productId: product.id,
-          productName: product.name,
-          vendorId: selectedVendor.vendor?.id || "",
-          vendorName: selectedVendor?.vendor?.name || product.brand || "",
-          unitPrice,
-          currency: "KRW", // priceInKRW를 사용하므로 항상 KRW로 설정
-          quantity: 1,
-          lineTotal: unitPrice,
-          notes: "",
-        },
-      ]);
+      // missing-product-id is genuinely callable garbage; surface it
+      // for triage but do NOT mutate state.
+      console.warn(
+        "[addProductToQuote] refused: ",
+        result.reason,
+        product?.id,
+      );
     }
+    return result;
   };
 
   const updateQuoteItem = (itemId: string, updates: any) => {
@@ -606,7 +594,7 @@ function TestFlowProviderFallback({ children }: { children: ReactNode }) {
         runSearch: () => {},
         toggleCompare: () => {},
         clearCompare: () => {},
-        addProductToQuote: () => {},
+        addProductToQuote: () => ({ ok: false as const, reason: "missing-product-id" as const }),
         updateQuoteItem: () => {},
         removeQuoteItem: () => {},
         runProtocolAnalysis: () => {},
