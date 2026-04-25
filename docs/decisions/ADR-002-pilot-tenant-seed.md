@@ -277,7 +277,7 @@ Scope: `apps/web/src/app/dashboard/purchases/page.tsx` rewrite (commit `b214386a
 - **Vercel project identity correction (companion to §11.9):** Vercel MCP `list_projects` confirmed two projects exist on the team — `web` (`prj_9myxP5rmQ6QupPjp7vi6dtBF1qug`, the one in `.vercel/project.json`) and `bio-insight-lab-web` (`prj_sJ6yIgyW59VrOCbTfFbfwO4aJjim`, the actual production-domain owner). My §11.9 reading that `prj_sJ6yIg...` was an env-var grouping id is now corrected in §11.9 itself; the drift between `.vercel/project.json` and the live project is real and parked as `#P01-followup-correction`. **RESOLVED 2026-04-25** — operator-local `apps/web/.vercel/project.json` resync'd to `prj_sJ6yIgyW59VrOCbTfFbfwO4aJjim` / `bio-insight-lab-web` / `createdAt: 1765128766508`. Build settings (`installCommand`, `buildCommand`, `outputDirectory`, `nodeVersion: 24.x`) verified identical to live project, left unchanged. **Important:** `.vercel/` is in `.gitignore`, so the project.json fix is **operator-local only** — not committed to git. Anyone else running `vercel link` will re-create the file; this ADR entry is the canonical record of which project to link. Legacy `web` project not deleted (separate Vercel-UI step, optional — keeping it inert is harmless).
 - **API behaviour delta:** before this build, `/api/quotes/my` returned `500 INTERNAL_ERROR`. After `b214386a` deployed it returned `200 OK`. The 500 was in the stale deployment code path, not in the route's logic itself — verified that the new build serves correctly with the same DB and same auth path.
 - **Follow-up tracks confirmed (still parked):**
-  - `#P02 Phase B-α` — queue-composer endpoint + AI recommendation. Now has a clear hand-off point: Phase B-β rendered the canonical Quote inbox; α layer can compose multi-supplier reply state on top. **Plan written 2026-04-25**: `docs/plans/PLAN_phase-b-alpha-purchase-conversion.md`. Audit concluded ~80% of the old mock ontology is composable from existing models (`/api/work-queue`, `/api/ai-actions`, `Quote.replies/vendors/vendorRequests`, `ontology-next-action-resolver.ts`). Recommended path: Option α-1 (server-side composer endpoint). Awaiting operator GO.
+  - `#P02 Phase B-α` — queue-composer endpoint + AI recommendation. Now has a clear hand-off point: Phase B-β rendered the canonical Quote inbox; α layer can compose multi-supplier reply state on top. **Plan written 2026-04-25**: `docs/plans/PLAN_phase-b-alpha-purchase-conversion.md`. Audit concluded ~80% of the old mock ontology is composable from existing models (`/api/work-queue`, `/api/ai-actions`, `Quote.replies/vendors/vendorRequests`, `ontology-next-action-resolver.ts`). Recommended path: Option α-1 (server-side composer endpoint). **LANDED + production-verified 2026-04-25** — see §11.15 closeout below.
   - `#P01-followup-correction` — `.vercel/project.json` drift. New track opened today.
   - `#P02-button-type` — shadcn Button default `type="submit"` (still LOW; not a Phase B blocker).
   - `vercel-migrate.js` `execSync` timeout option — **promoted from "nice to have" to "real incident lesson"** by today's queue block. Should land before the next migration-bearing schema change. **CLOSED in §11.11.**
@@ -353,6 +353,48 @@ Opened and CLOSED 2026-04-25. The structural follow-up §11.12 anticipated.
   - Adding a separate migrate-only CI job (e.g., GitHub Actions on schema-change paths) — that is a future workflow polish, not required for the canonical truth correction here. Track as `#P01-followup-migrate-ci` if pursued.
   - Diagnosing the underlying Vercel-build → Supabase-pooler unreachability — academic now that we don't depend on it. The §11.12 diagnostic plan is preserved in case it ever becomes interesting again.
 
+### 11.14 DATABASE_URL env corruption incident — 2026-04-25 (post-§11.13 cleanup)
+
+Operator incident, not a deployed defect.
+
+- **Trigger:** during the §11.13 / §11.10 follow-up cleanup, operator removed `DIRECT_URL` and `SKIP_PRISMA_MIGRATE` from Vercel env vars (recommended action). Side-effect: `DATABASE_URL` value also got mutated — likely an accidental edit in the same form, or a paste/save quirk in the Vercel UI.
+- **Symptom:** every Prisma route returned 500 with `Error parsing connection string: invalid port number in database URL`. `/api/health` reported `db: "failed"`. Fully production-down for canonical-truth-backed surfaces (`/api/health`, `/api/cart`, `/api/inventory`, `/api/quotes/my`, `/api/work-queue`, `/api/work-queue/purchase-conversion`, `/api/products/search`, `/api/organizations/mine` — all 500). Static / auth-only routes still served.
+- **Detection:** Phase B-α α-C runtime probe via Claude in Chrome flagged `/api/work-queue/purchase-conversion` 500. Cross-probe of `/api/quotes/my` (β endpoint, unrelated to α-C code) was also 500, ruling out α-C as the cause. `/api/health` confirmed it was the `DATABASE_URL` env itself, not the schema or the prisma client.
+- **Resolution:** operator re-entered the canonical `DATABASE_URL` value in Vercel UI (host / port `:6543` / userspec / password / `?pgbouncer=true&connection_limit=1&sslmode=require`) and redeployed. Build `dpl_2Vo4Y8mok79MVVozKgXJX7E9dMvV` READY in ~3m 47s. All probed routes back to 200 OK; `/api/health` reported `db: "connected"`.
+- **Why this is operator-territory, not code-territory:** lambda code reads `DATABASE_URL` directly via Prisma's datasource binding. There is no application-side validation of the env (and adding one would either be redundant with Prisma's own parser or wouldn't help — Prisma fails clearly the first time it tries to use the URL). The runbook fix is the right level.
+- **Operational lesson (added to DEV_RUNBOOK §9 implicitly):** any edit to a Prisma-bound env var (`DATABASE_URL`, `DIRECT_URL` if it returns) should be followed by a 3-second probe of `/api/health` after redeploy. The endpoint already exposes `db`, `hasDbUrl`, `hasDirectUrl`, `dbUrlPrefix` — designed for this exact check.
+- **Not in scope for §11.14:** rebuilding `/api/health` to also validate the URL format up-front (would catch this faster) — minor improvement, parked as `#P01-followup-health-precheck` if pursued.
+
+### 11.15 `#P02` Phase B-α — full implementation landed and production-verified 2026-04-25
+
+Closeout of the §11.10 follow-up + plan §0 `docs/plans/PLAN_phase-b-alpha-purchase-conversion.md`.
+
+- **Phases delivered (all in this session):**
+  - **α-A** — `apps/web/src/lib/ontology/purchase-conversion-resolver.ts` (commit `5e56f682`). Pure deterministic resolver, 432 lines, 27 explicit tests / 37 with `it.each` expansion. 37/37 PASS. Public types match the UI's old `PurchaseExecutionItem` shape so α-C is mechanical.
+  - **α-B** — `apps/web/src/app/api/work-queue/purchase-conversion/route.ts` (commit `36c627f9`). 187-line endpoint with 2 batched Prisma queries (Quote + AiActionItem), N+1 explicitly asserted via `mock.calls.length === 1`. 10 integration tests. 10/10 PASS.
+  - **α-C** — `apps/web/src/app/dashboard/purchases/page.tsx` rewire (commit `3f55e63e`). 482→618 lines. UI swaps from `/api/quotes/my` (Phase B-β) to `/api/work-queue/purchase-conversion`. Restores conversion-queue UX (status / blocker / nextAction / AI options) on top of the canonical-truth resolver.
+- **Production verification (2026-04-25 deploy `dpl_2Vo4Y8mok79MVVozKgXJX7E9dMvV`, post §11.14 recovery):**
+  - `/api/work-queue/purchase-conversion` → 200 OK, body shape matches resolver: `{success: true, data: {items: [], stats: {total, review_required, ready_for_po, hold, confirmed, expired}}}`. Empty `items` is correct because the pilot tenant has zero quotes today.
+  - SSR HTML render check: 7/7 α-C signatures present (헤더 카피, 5 탭, empty state). 0 mock signatures. 0 dead-button candidates ("일괄 발주 전환", "선택안 확정" both intentionally hidden until α-D).
+  - β regression check: `/api/quotes/my` still 200, `/api/inventory` still 200 — Phase B-α did not break Phase B-β or any other surface.
+- **LabAxis principle alignment (verified end-to-end):**
+  - canonical truth: every UI field traces to a documented branch in `resolvePurchaseConversion()`. No mock fallback. Empty state surfaces honestly.
+  - chatbot/assistant 재해석 금지: resolver is rule-based; AI rec status / aiOptions decoded from existing `AiActionItem` rows, no LLM call introduced.
+  - dead button ban: bulk-PO + selected-option mutations intentionally NOT rendered. Header CTA hidden, rail has no inline mutation buttons. All shipped CTAs are real Next.js Link nav.
+  - same-canvas + page-per-feature ban: same `/dashboard/purchases` route; no new pages.
+- **Out of scope (still parked):**
+  - **α-D** — bulk-PO conversion + `Quote.selectedReplyId` schema migration. Requires §11.13 operator-shell migrate procedure (DEV_RUNBOOK §9.2). Open whenever the pilot tenant accumulates enough quotes to make per-row mutations valuable; until then the read-only conversion queue is sufficient.
+  - **α-F** — LLM-generated rationale strings for `aiOptions[].rationale[]`. Resolver currently emits rule-based strings ("회신 완료" / "회신 대기"). Add via `/api/ai-actions/generate` if the operational value is proven.
+  - Per-supplier price / leadDays / moq ingestion. Resolver already accepts the fields; populating requires a new schema column or parsing `Quote.replies[].bodyText` — both out of v0 scope.
+- **Net state of `#P02` track:**
+  - Phase A (inventory mock removal) — CLOSED §11.8
+  - Phase B-β (purchases mock removal, /api/quotes/my fallback) — CLOSED §11.10
+  - Phase B-α (conversion-queue ontology restored on canonical truth) — CLOSED §11.15 (this entry)
+  - α-D / α-F — open follow-ups, not blocking core value
+  - `#P02-button-type` — CLOSED commit `acf725d0`
+  - `#P02-legacy` — CLOSED commit `26133295`
+  - `#P02-api-500` (suspected during Phase B-β probe) — moot; root cause was always stale build cache
+
 ---
 
 ## 12. Changelog
@@ -374,3 +416,5 @@ Opened and CLOSED 2026-04-25. The structural follow-up §11.12 anticipated.
 - 2026-04-25 — §11.12 field-validated as **fully refuted**: deploy `dpl_FoFtRWTnCRzrRZGagE2KDJ4DZwmC` ran with both `DATABASE_URL` and `DIRECT_URL` on transaction pooler `:6543`, identical timeout result. Both pooler ports are unreachable from Vercel build infra in this deployment. **§11.13 OPENED and CLOSED:** Vercel build-time `prisma migrate deploy` permanently retired (γ-shell). `apps/web/prisma/schema.prisma` `directUrl` removed; `apps/web/scripts/vercel-migrate.js` rewritten to no-op log; DEV_RUNBOOK §9 fully rewritten as operator-shell migrate procedure. §9.2 restoration items 1–3 are now moot (no build-time migrate to restore). Vercel env vars `SKIP_PRISMA_MIGRATE` and `DIRECT_URL` are removable.
 - 2026-04-25 — `#P02-legacy` CLOSED: deleted 3 dead inventory files (`inventory-main.tsx`, `inventory-content.tsx.full`, `inventory-content.tsx.full2`) totalling 11,580 lines. Method note: FUSE mount denied unlink, used `git update-index --force-remove` to mark deletion in git index without touching working tree. `#P02-button-type` CLOSED: shadcn Button now defaults to `type="button"` (single-file change in `apps/web/src/components/ui/button.tsx`). All 6 forms in `apps/web/src` were verified to already pass `type="submit"` explicitly, so the change has zero behaviour delta but removes the latent foot-gun for any future form-wrap.
 - 2026-04-25 — `#P02 Phase B-α` plan opened: `docs/plans/PLAN_phase-b-alpha-purchase-conversion.md`. Audit found that ~80% of the conversion-queue ontology is composable from existing models. Recommended Option α-1 (server-side composer endpoint), 5-phase implementation (resolver → endpoint → UI rewire → optional bulk-PO → closeout doc). Awaiting GO from operator before implementation starts.
+- 2026-04-25 — `#P02 Phase B-α` α-A (resolver, commit `5e56f682`, 37/37 tests PASS) → α-B (endpoint, commit `36c627f9`, 10/10 tests PASS, no N+1 verified) → α-C (UI rewire, commit `3f55e63e`, 482→618 lines) all landed in single session. Production runtime probe confirmed: `/api/work-queue/purchase-conversion` returns 200 with the documented response shape; SSR HTML carries 7/7 α-C signatures and 0 mock signatures; dead-button audit 0; β regression 0. **§11.15 OPENED and CLOSED.**
+- 2026-04-25 — §11.14 OPENED and CLOSED: DATABASE_URL env corruption incident during operator's §11.13 cleanup. All Prisma routes returned 500 with `Error parsing connection string: invalid port number`. Detected by Phase B-α α-C runtime probe; ruled out as α-C regression by cross-probing β endpoint (also 500). Resolved by re-entering canonical `DATABASE_URL` value in Vercel UI + redeploy (`dpl_2Vo4Y8mok79MVVozKgXJX7E9dMvV`). Operational lesson: probe `/api/health` after any Prisma-bound env edit.
