@@ -6,9 +6,11 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL") — removed 2026-04-25 (ADR-002 §11.13).
+  // Build-time prisma migrate deploy is permanently retired; migrations
+  // are now operator-shell only. See DEV_RUNBOOK §9.
 }
 
 // ?용???권한

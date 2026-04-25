@@ -199,7 +199,7 @@ fail-closed — opt-in 토큰 불일치, DATABASE_URL_PILOT 미설정, URL 의 p
 | 경로 | 포트 | 이유 |
 | --- | --- | --- |
 | Operator shell — `pilot-seed.ts` / `pilot-cleanup.ts` 등 `tsx scripts/...` | **`:5432`** (session pooler) | Prisma `$transaction([...])` 는 sticky connection 요구. transaction pooler 는 statement 단위 분산으로 세션 락 깨짐. |
-| Vercel build-time — `scripts/vercel-migrate.js` (`prisma migrate deploy`) | **`:6543`** (transaction pooler) | Vercel build 인프라에서 session pooler 는 **reachable 하지 않음** (ADR-002 §11.9). `prisma migrate deploy` 는 statement-level transaction 이라 transaction pooler 에서 정상 동작. |
+| ~~Vercel build-time — `scripts/vercel-migrate.js`~~ | ~~`:6543`~~ | **OBSOLETE 2026-04-25 (§9, ADR-002 §11.13).** Vercel build 인프라에서 양쪽 풀러 모두 unreachable 가 검증되어 build-time migrate 자체를 폐지함. `vercel-migrate.js` 는 no-op log 만 출력. migrate 는 §9 의 operator-shell 절차로만 실행. |
 | App runtime — Next.js serverless functions (`apps/web/src/app/api/**`) | **`:6543`** | 기존 convention. 변경 없음. |
 
 즉 session pooler 는 **오직 operator shell 의 pilot seed/cleanup 시점에만**
@@ -209,55 +209,90 @@ fail-closed — opt-in 토큰 불일치, DATABASE_URL_PILOT 미설정, URL 의 p
 
 ---
 
-## 9. Vercel build-time migrate / env
+## 9. Schema migration — operator-shell only (γ-shell, 2026-04-25)
 
-Vercel 빌드에서 Prisma migrate 실행은 `apps/web/scripts/vercel-migrate.js` 가
-`prebuild` hook 으로 담당한다. 이 스크립트는 다음 env 를 참조한다:
+ADR-002 §11.13 결정: **Vercel build-time `prisma migrate deploy` 는 영구
+폐지**. 모든 schema migration 은 operator shell 에서 직접 실행한다.
 
-| Env name | 동작 | 설정 위치 |
-| --- | --- | --- |
-| `VERCEL=1` | Vercel 시스템 env. 비설정 시 no-op (로컬 / CI 무관). | 자동 |
-| `SKIP_PRISMA_MIGRATE=1` | migrate 스텝을 skip. **스키마 변경 없는 긴급 배포 전용** (예: DB password 로테이션). 스키마 변경이 들어있는 배포에선 금지. 정상화 뒤 반드시 제거. 이름 주의 — `VERCEL_` 네임스페이스 충돌로 리네임됨 (commit `e7a01c18`). | Vercel project → Settings → Environment Variables |
-| `DATABASE_URL` / `DIRECT_URL` | migrate 가 사용하는 connection string. **포트 `:6543` (transaction pooler) 필수** — §8 표 참조. password 로테이션 직후엔 반드시 이 값도 최신값으로 업데이트. | Vercel env |
+### 9.1 왜 이렇게 갔는가
 
-### 9.1 Non-fatal migrate (2026-04-24 임시 조치) + 90s timeout (2026-04-25)
+§11.9 → §11.10 → §11.11 → §11.12 검증 결과 Supabase 풀러 (`:5432`,
+`:6543` 모두) 가 Vercel build 인프라에서 unreachable 임이 field-validated.
+build-time migrate 는 `[prebuild] TIMED OUT after 90s — continuing build` 만
+출력하고 production schema 에는 아무것도 적용되지 않는 상태가 6주 가까이
+지속됐다. 이를 "Vercel 이 자동 migrate 한다"는 false promise 로 두기보다
+**code → migrate → verify → push** 라는 명시적 절차로 바꿔 canonical truth
+를 회복한다. 이미 `pilot-seed.ts` / `pilot-cleanup.ts` / `#26 S01-S03`
+write-chain smoke 에서 검증된 동일 패턴.
 
-`vercel-migrate.js` 는 현재 `prisma migrate deploy` 실패를 **non-fatal** 로
-처리한다 (commit `16e6ef5d`). 즉 migrate 가 실패해도 build 는 계속 진행된다.
-이는 DB password 로테이션 복구 중 도입된 **임시 safety valve** 이며, DB 연결이
-안정화되면 원복 대상이다.
+### 9.2 표준 절차 (schema 변경 시)
 
-추가로 2026-04-25 부터 `execSync` 에 **`timeout: 90_000` + `killSignal:
-"SIGKILL"`** 가 적용됐다 (ADR-002 §11.11). 이전엔 timeout 옵션이 없어 migrate
-가 도달 불가 풀러로 향하면 빌드 1시간+ hang 한 사례가 있었음. 90 초 후 강제
-종료 → catch 에서 non-fatal exit(0) → 빌드 계속. 정상 migrate 는 5~15 초라
-충분한 여유. timeout 발동 시 로그에 `[prebuild] prisma migrate deploy
-TIMED OUT after 90s` + §11.9 reachability hint 가 출력된다.
+1. **로컬에서 schema 변경 + 마이그레이션 생성:**
+   ```sh
+   # apps/web/prisma/schema.prisma 수정
+   pnpm -C apps/web prisma migrate dev --name <짧은_변경_요약>
+   ```
+   → `apps/web/prisma/migrations/<ts>_<name>/migration.sql` 생성됨.
+   생성된 SQL 을 사람이 직접 검토.
 
-### 9.2 복구 체크리스트 (DB 연결 안정화 후)
+2. **변경 + 마이그레이션 파일을 같이 commit:**
+   ```sh
+   git add apps/web/prisma/schema.prisma apps/web/prisma/migrations/<ts>_<name>/
+   git commit -m "schema: <change>"
+   ```
+   아직 push 하지 않는다.
 
-**현재 상태 (2026-04-25 deploy `dpl_66GXg92pDNd3te5EsfZf3kCgQMk9` 검증
-결과)**: 항목 1~3 은 **§11.12 진단 완료 전까지 보류**. 이유는 transaction
-pooler `:6543` 도 Vercel build infra 에서 reachable 하지 않다는 사실이
-field-validated 되어, migrate 가 어차피 timeout-and-skip 으로 끝나 schema
-변경이 적용되지 않기 때문.
+3. **Production DB 에 직접 apply (operator shell):**
+   ```sh
+   # apps/web/.env 가 production DATABASE_URL 을 가리키고 있는지 확인
+   pnpm -C apps/web prisma:migrate     # = prisma migrate deploy
+   ```
+   `npm run prisma:migrate` 도 동일.
 
-1. ⏸ Vercel production env 에서 `SKIP_PRISMA_MIGRATE` 제거. — **§11.12
-   gated.** 검증 deploy 에서 timeout 으로 끝났으므로 일시적으로 다시
-   `=1` 설정 권장 (매 빌드 90s 손실 방지).
-2. ⏸ `vercel-migrate.js` 의 catch 블록에서 `process.exit(1)` 원복. — 1, 3
-   완료 후. 현재 원복하면 매 빌드 fail.
-3. ⏸ 의도적으로 스키마 변경을 포함한 canary 배포 1회로 정상 migrate 경로
-   검증. — **§11.12 진단 완료 후만 가능.**
-4. ✅ `execSync` `timeout: 90_000` + `killSignal: "SIGKILL"` 추가. —
-   **DONE 2026-04-25** (ADR-002 §11.11, deploy `dpl_66GXg92pDNd3te5...`
-   에서 89s timeout 발동 + 빌드 정상 계속 확인). 이 항목은 1~3 의 **선결
-   조건** 이었다 — timeout 없이 1~3 을 진행하면 단일 migrate hang 이 빌드
-   윈도우 전체를 점유해 rollback 자체가 불가능해진다.
+4. **Smoke probe 로 적용 확인:**
+   - 영향받은 route 1~2개를 직접 호출 (예: `/api/health`, 또는 변경된
+     entity 의 list/detail endpoint)
+   - 기대 응답 / 타입이 새 스키마와 일치하는지 확인
 
-**§11.12 (신규 트랙)**: transaction pooler `:6543` 도 Vercel build 에서
-reachable 하지 않음. 진단 항목은 (i) DATABASE_URL credential drift 확인,
-(ii) direct connection (`db.<ref>.supabase.co:5432`) 카나리 시도, (iii)
-Supabase IP allow-list / IPv4-IPv6 routing 점검. 상세는 ADR-002 §11.12.
+5. **그 뒤에 push:**
+   ```sh
+   git push origin main
+   ```
+   Vercel 이 새 build 를 시작하지만 prebuild step 은 no-op 이므로
+   `[prebuild] vercel-migrate.js is a NO-OP since 2026-04-25 (ADR-002
+   §11.13).` 한 줄만 출력하고 빠르게 통과. 새 코드는 이미 migrated
+   schema 위에서 실행된다.
 
-상세 근거·배경은 `docs/decisions/ADR-002-pilot-tenant-seed.md §11.9 / §11.11 / §11.12`.
+### 9.3 안전 가드
+
+- **순서 위반 금지**: code 가 먼저 production 에 배포되고 schema 는
+  나중에 migrate 되면, lambda 가 P2021/P2003 같은 schema-drift 에러로
+  500 을 던진다. 반드시 `migrate → verify → push` 순서.
+- **Operator 단독 실행**: `prisma migrate deploy` 는 production DB 를
+  직접 변경한다. CI 자동화 없이 호영이 직접 실행하는 것이 §11.13 결정의
+  핵심 (가시성 + 책임 명시).
+- **DATABASE_URL 안전 체크**: 실행 전 `apps/web/.env` 의
+  `DATABASE_URL` 의 project-ref 가 `xhidynwpkqeaojuudhsw` 인지 확인.
+  smoke / pilot DB 와 혼동 방지는 `pilot-guard.ts` / `smoke-guard.ts`
+  패턴을 참고하면 좋지만 schema migrate 자체에는 그런 guard 가 없다.
+- **롤백**: `prisma migrate resolve --rolled-back <migration_name>` +
+  보정 마이그레이션 작성. Prisma 는 자동 down migration 을 제공하지
+  않으므로 backup-first 를 권장.
+
+### 9.4 Vercel env cleanup (1회)
+
+§11.13 lands 후 Vercel 의 다음 env vars 는 **제거 가능** (영향 0):
+- `SKIP_PRISMA_MIGRATE` — `vercel-migrate.js` 가 더 이상 참조하지 않음
+- `DIRECT_URL` — `schema.prisma` 의 `directUrl` 가 제거됨
+
+남겨도 무해하지만, env 표면을 새 절차와 맞추기 위해 정리 권장.
+
+### 9.5 (OBSOLETE) 옛 §9.1 / §9.2
+
+이전 §9.1 (Non-fatal migrate + 90s timeout) 과 §9.2 (4-item 복구
+체크리스트) 는 모두 build-time migrate 가 존재할 때의 운영 안전망이었다.
+build-time migrate 가 폐지되어 양쪽 모두 의미 없음. 역사적 맥락은
+ADR-002 §11.10 / §11.11 / §11.12 에 보존.
+
+상세 근거·배경: `docs/decisions/ADR-002-pilot-tenant-seed.md §11.13`
+(요약), `§11.9` `§11.11` `§11.12` (단계별 진단).
