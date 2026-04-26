@@ -79,7 +79,12 @@ jobs:
 
       - name: Prisma generate
         working-directory: apps/web
-        run: npx prisma generate
+        # pnpm exec resolves the project-pinned prisma 5.22.0 from
+        # the workspace's node_modules. `npx prisma` would silently
+        # fall back to fetching the global latest (currently 7.x),
+        # which fails P1012 because Prisma 7 removed the
+        # `datasource.url` field — the workflow run #1 caught that.
+        run: pnpm exec prisma generate
 
       - name: Read-only schema drift check (no migrate deploy)
         working-directory: apps/web
@@ -93,5 +98,10 @@ jobs:
           #
           # Production schema changes remain operator-shell-only
           # per ADR-002 §11.13 — never call `migrate deploy` here.
+          #
+          # `pnpm exec` resolves the project-pinned prisma version
+          # (currently 5.22.0). `npx` resolves the global latest
+          # which is incompatible with our schema — see the
+          # comment on the `Prisma generate` step above.
           echo "::notice::Read-only check. This workflow never runs migrate deploy."
-          npx prisma migrate status
+          pnpm exec prisma migrate status
