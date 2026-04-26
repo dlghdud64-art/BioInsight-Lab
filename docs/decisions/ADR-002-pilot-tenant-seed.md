@@ -687,6 +687,49 @@ Closes the last open `#P02` followup. Up to §11.19, every pilot product had `Pr
   - Order lifecycle (CANCELLED, restock, billing). Existing Order endpoints handle that.
   - aiOptions per-reply price / leadDays / moq enrichment — still v0 placeholders, future α-F.
 
+### 11.23 `#SEC03` — `/test/*` middleware matcher omission 2026-04-26
+
+Defense-in-depth gap discovered while planning §11.24 (#P03 readability cleanup). Unrelated to any active probe — caught by reading the matcher list against the file tree.
+
+- **Audit:** middleware.ts `config.matcher` listed `/app/`, `/dashboard/`, `/admin/`, `/api/`. **`/test/*` was missing.** That subtree contains 7 entry pages (analysis, compare, page-redirect, quote, quote/request, search, search/analysis). Per-page useSession audit:
+  - `quote`, `quote/request`, `search`, `search/analysis` → page-level guard ✓
+  - `analysis`, `compare` → **no guard**
+  - root `page.tsx` → `redirect("/test/search")` (effectively guarded via the redirect target)
+- **Real-world risk:** partial. The API routes that the unguarded pages call are session-checked, so a session-less request renders mostly empty UI. But the page route itself should not depend on the API layer being the only gate — that is exactly the defense-in-depth rule the rest of the matcher already follows.
+- **Fix (commit `4e6c304b`):** added `/test/:path*` to the matcher AND to the `pathname.startsWith(...)` page-auth branch in middleware.ts. The two unguarded pages now redirect to `/auth/signin` like every other authenticated page route.
+- **Coupling with §11.24:** §11.24 (#P03) renames the whole `/test/*` subtree to `/_workbench/*`. Next.js treats `_`-prefixed folders as private (non-routed), so once §11.24 lands the URL surface itself disappears. The §11.23 matcher entry is then load-bearing for exactly one commit before §11.24 retires it. The decision to ship §11.23 first as a standalone fix is intentional — defense-in-depth that does not depend on the rename landing.
+- **Out of scope:** static / unauthenticated marketing pages elsewhere in the app (`/auth/*`, `/`, `/share/*`, etc.) are not in this audit; they are deliberately public.
+
+### 11.24 `#P03-test-prefix-cleanup` — `/test/*` → `/_workbench/*` rename 2026-04-26
+
+Closes the readability gap the operator surfaced today: "/app/quote 사용 안 되는 거 아냐?". The /app/* tree is 5 thin auth-gated wrappers; the bodies of every user-facing flow live under /test/* despite there being no testing logic in there. This rename moves the bodies to a Next.js *private* folder (underscore prefix = not routed) so the test-prefix confusion goes away AND the URL surface for those bodies disappears entirely.
+
+- **Why `_workbench` specifically:**
+  - Next.js convention: `_`-prefixed folders are private (not routed). A URL like `/_workbench/quote` returns 404; only the wrapper at `/app/quote` resolves.
+  - Name carries operational meaning — these files ARE the workbench (workbench / queue / rail / dock structure that LabAxis is built around).
+  - Alternatives considered: `/_internal`, `/_chrome` — both tested fine but `_workbench` reads true to the LabAxis lexicon.
+- **Mechanics (commit `566dc510`):**
+  - `git mv apps/web/src/app/test apps/web/src/app/_workbench` — 84 files renamed atomically. Intra-folder relative imports stayed byte-identical because the whole subtree moved together; no edits inside the renamed tree were needed.
+  - 5 external references replaced — every site that imported `from "../../test/..."` or `from "../test/..."`:
+    - `apps/web/src/app/app/compare/page.tsx`
+    - `apps/web/src/app/app/layout.tsx`
+    - `apps/web/src/app/app/quote/page.tsx`
+    - `apps/web/src/app/app/quote/request/page.tsx`
+    - `apps/web/src/app/app/search/page.tsx`
+  - `middleware.ts`: removed the §11.23 `/test/:path*` matcher entry and the `pathname.startsWith('/test/')` page-auth branch. They were load-bearing only while a `/test/*` URL still existed.
+- **Production verification (deploy `dpl_CTW54xfN1ynrdJNoqpmJXUCZW3gZ`):**
+  - `/app/quote` → 200, `/app/search?q=test` → 200, `/app/compare` → 200, `/app/quote/request` → 200. Zero functional regression.
+  - `/test/quote` → 404, `/test/search` → 404, `/test/analysis` → 404, `/test/compare` → 404. The four URLs the §11.23 audit was worried about no longer exist as routes.
+  - Defense-in-depth becomes structural: there is no URL for an unauthenticated request to even reach. The page-level `useSession` guards in quote/search/etc. become belt-and-suspenders rather than the only line of defense.
+- **What stays preserved:**
+  - All canonical user-facing URLs (`/app/quote`, `/app/search`, `/app/compare`, `/app/quote/request`) point at the same page bodies. Operators won't notice the change.
+  - The `_components/test-flow-provider` is now `_workbench/_components/test-flow-provider` — the only site that imports it from outside the subtree (`/app/layout.tsx`) was updated.
+  - tsc on src/* shows only pre-existing ai-pipeline/shadow/* typos (`@@/lib/db`, `db` undefined). No regression on the rename surface. `.next/types/app/test/*` cache errors visible locally are pure incremental-build staleness; `.next` is .gitignored and Vercel rebuilds fresh.
+- **Out of scope (deliberately):**
+  - Inline the 5 wrapper bodies into `/app/*` (eliminating the wrapper indirection entirely). The wrappers do useful work today: `/app/dashboard` is just a `router.replace("/dashboard")`, `/app/search` carries sessionStorage / URL `?q` restore logic, the others are 1-line wrappers but move-once. A future trk can decide whether to inline.
+  - Rename `_components` → `_chrome` or similar. The leading underscore already marks it private to Next.js routing; a second rename is cosmetic.
+  - Path-alias migration (`@/_workbench/...` instead of relative `../../_workbench/...`). Existing relative paths work; switching to alias is style, not contract.
+
 ---
 
 ## 12. Changelog
@@ -721,3 +764,5 @@ Closes the last open `#P02` followup. Up to §11.19, every pilot product had `Pr
 - 2026-04-26 — **§11.20 OPENED and CLOSED:** `#P02-followup-pilot-vendor-catalog` — minimum vendor fixture (commit `32e1280b`). Pilot tenant gains 1 Vendor (Thermo Fisher Scientific) + 15 ProductVendor links via the existing pilot-seed transaction (operator-shell run per §11.13). Production probe verified the symmetric vendor-present path: `/app/search` shows priceInKRW + leadTime + vendor name (no "견적 필요"), "견적 담기" click hits the canonical `added` toast (₩45,000 footer), `/app/quote` displays "Thermo Fisher Scientific" group with full request-ready surface, `POST /api/quotes` persists vendorName in the snapshot (`Q-20260426-0WX80L`), and `/api/work-queue/purchase-conversion` shows `stats.total: 1 → 2` with vendor-pending and vendor-present quotes coexisting and resolved independently. **The `#P02` track is now fully closed.** The pilot tenant exercises both vendor branches end-to-end on real data; any further gap opens against `#P03`+.
 - 2026-04-26 — **§11.21 OPENED and CLOSED:** `#α-D session A` — `Quote.selectedReplyId` persistence (commits `8fdb3e8f` schema + endpoint + UI; `f2281614` lock-release fix). Schema migration applied via session pooler `:5432` after the operator hit a stale `DIRECT_URL` reference on `:6543`. Production probe round 1 surfaced an enforcement-lock leak: 400 early-return paths skipped `enforcement.fail()` and a follow-up POST on the same quote returned 409. Round 2 fix added `enforcement.fail()` to every 4xx return below the enforceAction line and upgraded test mocks from no-op to call-count spies so the regression is reproducible at unit-test level. Round 2 verified: bogus replyId → 400, same quote `replyId: null` → 200 (idempotent un-select), conversion-queue `selectedOptionId` field present and `null` for both existing pilot quotes (no regression). Real-user positive-select path is deferred to natural traffic (no real `QuoteReply` rows in pilot yet); unit tests cover the happy path. Session B (`bulk-PO + ready_for_po decode`) is the natural successor.
 - 2026-04-26 — **§11.22 OPENED and CLOSED:** `#α-D session B` — bulk-PO conversion + selectedReplyId-based `ready_for_po` decode (commit `552c45af`). Resolver `deriveConversionStatus` gains a selectedReplyId short-circuit (43/43 tests). New endpoint `POST /api/work-queue/purchase-conversion/bulk-po` atomically converts a batch of ready_for_po quotes into Orders (9 tests, all 4xx assert lock release per §11.21 lesson). New utility `lib/api/order-number.ts` (`ORD-YYYYMMDD-{cuid-tail}`, mirror of §11.19 quote-number, 6 tests). UI "일괄 발주 전환" header CTA wired with `stats.ready_for_po > 0` visibility gate so the dead-button ban is preserved. **No schema migration required** — `Order` and `OrderItem` already existed. Production probe (deploy `dpl_fwHq2Xerg5Qs4wv2nGiySrRq5tic`) verified all negative paths (400 INVALID_INPUT, 404 QUOTE_MISSING, 409 NO_SELECTED_REPLY) with correct lock-release behavior; real-user positive bulk-PO probe deferred until pilot tenant has actual QuoteReply rows. **α-D track is now closed end-to-end** — operator can pick a reply, the queue promotes the quote to ready_for_po, and the bulk-PO CTA converts it to a real Order.
+- 2026-04-26 — **§11.23 OPENED and CLOSED:** `#SEC03` — `/test/*` middleware matcher omission (commit `4e6c304b`). Audit found two `/test/*` pages (`/test/analysis`, `/test/compare`) shipped without page-level useSession guards. Real-world risk was partial (downstream APIs are session-checked) but the page route should not rely on the API layer as its only gate. Fix added `/test/:path*` to the matcher AND to the page-auth branch — defense-in-depth. Standalone fix that does not depend on §11.24's rename, intentionally so.
+- 2026-04-26 — **§11.24 OPENED and CLOSED:** `#P03-test-prefix-cleanup` — `/test/*` → `/_workbench/*` rename (commit `566dc510`). 84 files renamed atomically via `git mv`; 5 external references replaced; middleware `/test/*` matcher entry retired (URL surface gone — Next.js treats `_`-prefixed folders as private). Production probe verified `/app/quote`, `/app/search`, `/app/compare`, `/app/quote/request` all return 200 (zero functional regression) while `/test/quote`, `/test/search`, `/test/analysis`, `/test/compare` all return 404 (URL surface eliminated). Defense-in-depth becomes structural: there is no URL for an unauthenticated request to even reach the unguarded pages — the §11.23 page-auth branch is now belt-and-suspenders, not the only gate.
