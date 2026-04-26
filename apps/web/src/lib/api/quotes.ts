@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { translateText } from "@/lib/ai/openai";
 import { cache } from "@/lib/cache";
+import { generateQuoteNumber } from "@/lib/api/quote-number";
 
 export interface CreateQuoteParams {
   userId: string | null; // nullable for guest users
@@ -183,6 +184,17 @@ export async function createQuote(params: CreateQuoteParams) {
       title,
       description: message, // message를 description으로 사용
     },
+  });
+
+  // 정식 견적 식별자 발급 (#P02-followup-quote-number-missing, ADR-002 §11.19).
+  // quoteNumber 가 null 인 row 는 /api/quotes/my 와
+  // /api/work-queue/purchase-conversion 에서 모두 필터됨 (PDF 추출 등 비정식
+  // path 와 구분하는 단일 signal). Normal path 는 정식 견적이므로
+  // generateQuoteNumber 로 즉시 발급. /api/quotes/from-cart 와 동일 형식.
+  const quoteNumber = generateQuoteNumber(quote.id);
+  await db.quote.update({
+    where: { id: quote.id },
+    data: { quoteNumber },
   });
 
   // 그 다음 QuoteListItem 생성 (snapshot 포함하기 위해 개별 create)

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { generateQuoteNumber } from "@/lib/api/quote-number";
 
 // =====================================================
 // 스키마 정의
@@ -16,40 +17,12 @@ const createQuoteSchema = z.object({
 });
 
 // =====================================================
-// 견적번호 생성 유틸리티
-// Q-YYYYMMDD-XXXX 형식
+// 견적번호 생성: lib/api/quote-number.ts 의 generateQuoteNumber 사용.
+// 이전에 이 파일 내 dead inline `generateQuoteNumber()` (sequence-based,
+// no-args) 가 있었으나 실제 호출 경로는 cuid-based suffix 였으며
+// 어디서도 호출되지 않는 dead code 였음. ADR-002 §11.19
+// (#P02-followup-quote-number-missing) 에서 utility 단일화로 정리.
 // =====================================================
-
-async function generateQuoteNumber(): Promise<string> {
-  const today = new Date();
-  const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
-  const prefix = `Q-${dateStr}-`;
-
-  // 오늘 날짜의 마지막 견적번호 조회
-  const lastQuote = await db.quote.findFirst({
-    where: {
-      quoteNumber: {
-        startsWith: prefix,
-      },
-    },
-    orderBy: {
-      quoteNumber: "desc",
-    },
-    select: {
-      quoteNumber: true,
-    },
-  });
-
-  let sequence = 1;
-  if (lastQuote?.quoteNumber) {
-    const lastSeq = parseInt(lastQuote.quoteNumber.split("-")[2], 10);
-    if (!isNaN(lastSeq)) {
-      sequence = lastSeq + 1;
-    }
-  }
-
-  return `${prefix}${sequence.toString().padStart(4, "0")}`;
-}
 
 // =====================================================
 // POST /api/quotes/from-cart
@@ -192,9 +165,10 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // quote.id가 확정된 후 고유한 quoteNumber 생성 (race condition 원천 차단)
-      const dateStr = today.toISOString().slice(0, 10).replace(/-/g, "");
-      const quoteNumber = `Q-${dateStr}-${quote.id.slice(-6).toUpperCase()}`;
+      // quote.id가 확정된 후 고유한 quoteNumber 생성 (race condition 원천 차단).
+      // generateQuoteNumber 유틸 사용 — createQuote() Normal path 와 동일 형식.
+      // ADR-002 §11.19 (#P02-followup-quote-number-missing).
+      const quoteNumber = generateQuoteNumber(quote.id, today);
       await tx.quote.update({
         where: { id: quote.id },
         data: { quoteNumber },
