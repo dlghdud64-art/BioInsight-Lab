@@ -117,19 +117,17 @@ export default auth(async (req) => {
   }
 
   // ── 1. Page route 인증 (기존 동작 유지 + /admin 트리 포함) ──
-  // ADR-002 §11.23 (#SEC03): `/test/*` is page-route surface that
-  // historically lived outside the matcher. Two pages (analysis,
-  // compare) ship without page-level useSession guards, so without
-  // a middleware-level gate they can render unauthenticated.
-  // Defense-in-depth — gate `/test/*` here so the page-level guards
-  // are no longer the only line of defense. The /_workbench/* alias
-  // is added in §11.24 (#P03) when the test prefix is renamed.
+  // ADR-002 §11.23 → §11.24 (#SEC03 → #P03): the historical /test/*
+  // surface was renamed to /_workbench/* in §11.24. Next.js treats
+  // `_`-prefixed folders as private (non-routed), so the URL surface
+  // disappears entirely — there is no /test/* or /_workbench/* URL
+  // for an unauthenticated request to hit. The /test/ branch in
+  // §11.23's defense-in-depth gate is retired with this rename.
   if (
     pathname.startsWith('/app/') ||
     pathname.startsWith('/dashboard/') ||
     pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname.startsWith('/test/')
+    pathname.startsWith('/admin/')
   ) {
     const isLoggedIn = !!req.auth;
     if (!isLoggedIn) {
@@ -266,6 +264,5 @@ export const config = {
     "/dashboard/:path*",
     "/admin/:path*",
     "/api/:path*",
-    "/test/:path*", // ADR §11.23 (#SEC03) — defense-in-depth, see L121-135
   ],
 };

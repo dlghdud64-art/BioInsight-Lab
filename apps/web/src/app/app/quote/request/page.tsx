@@ -1,6 +1,6 @@
 "use client";
 
-import QuoteRequestPage from "../../../test/quote/request/page";
+import QuoteRequestPage from "../../../_workbench/quote/request/page";
 
 /**
  * /app/quote/request — 인증된 사용자 전용 견적 요청 페이지

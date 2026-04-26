@@ -1,4 +1,4 @@
-import { TestFlowProvider } from "../test/_components/test-flow-provider";
+import { TestFlowProvider } from "../_workbench/_components/test-flow-provider";
 import { MainHeader } from "../_components/main-header";
 import { StepNav } from "./step-nav";
 

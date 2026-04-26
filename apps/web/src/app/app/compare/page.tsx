@@ -1,6 +1,6 @@
 "use client";
 
-import ComparePage from "../../test/compare/page";
+import ComparePage from "../../_workbench/compare/page";
 
 /**
  * /app/compare — 인증된 사용자 전용 비교 페이지

@@ -2,9 +2,9 @@
 
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTestFlow } from "../../test/_components/test-flow-provider";
+import { useTestFlow } from "../../_workbench/_components/test-flow-provider";
 import { getPendingAction, clearPendingAction } from "@/lib/auth/pending-action";
-import SearchPage from "../../test/search/page";
+import SearchPage from "../../_workbench/search/page";
 
 /**
  * /app/search — 인증된 사용자 전용 소싱 워크벤치
