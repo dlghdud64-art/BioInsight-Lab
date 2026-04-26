@@ -1,4 +1,40 @@
-// OpenAI API 클라이언트 유틸리티
+/**
+ * apps/web/src/lib/ai/openai.ts
+ *
+ * Filename retained for caller compatibility — every caller imports
+ * from "@/lib/ai/openai", and Phase 3 of the Anthropic migration
+ * (#α-F-followup-anthropic-migration, ADR §11.26) does NOT rename
+ * the file to avoid touching ~12 import sites.
+ *
+ * Body migrated to Anthropic Messages API via lib/ai/anthropic.ts.
+ * Only embeddings.ts (separate file) keeps OpenAI — Anthropic has
+ * no embedding API, tracked as #α-F-followup-embedding-strategy.
+ *
+ * Functions in this file
+ * ----------------------
+ * - analyzeSearchIntent(query)       — JSON output (search intent classification)
+ * - generateProductUsageDescription  — plain text (Korean usage description)
+ * - translateText                    — plain text (translation)
+ *
+ * Each retains its v0 fallback semantics:
+ * - no API key → fallback (analyzeSearchIntent uses keyword fallback,
+ *   translateText returns original text, generateProductUsageDescription
+ *   throws to let caller decide)
+ * - non-OK response → fallback / throw
+ * - parse error → fallback / throw
+ *
+ * The `OPENAI_API_KEY` env var name is also retained — Phase 3 swaps
+ * the implementation to use ANTHROPIC_API_KEY at the wrapper layer.
+ */
+
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+} from "@/lib/ai/anthropic";
+
+// ──────────────────────────────────────────────────────────
+// analyzeSearchIntent
+// ──────────────────────────────────────────────────────────
 
 export interface SearchIntentResult {
   category?: "REAGENT" | "TOOL" | "EQUIPMENT";
@@ -14,44 +50,22 @@ export interface SearchIntentResult {
 }
 
 // 간단한 메모리 캐시 (프로덕션에서는 Redis 등 사용 권장)
-const intentCache = new Map<string, { result: SearchIntentResult; timestamp: number }>();
+const intentCache = new Map<
+  string,
+  { result: SearchIntentResult; timestamp: number }
+>();
 const CACHE_TTL = 1000 * 60 * 60; // 1시간
 
 export async function analyzeSearchIntent(
-  query: string
+  query: string,
 ): Promise<SearchIntentResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  // 캐시 확인
   const cacheKey = query.toLowerCase().trim();
   const cached = intentCache.get(cacheKey);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
     return cached.result;
   }
 
-  if (!apiKey) {
-    // API 키가 없으면 기본 키워드 기반 분류
-    const result = analyzeSearchIntentFallback(query);
-    intentCache.set(cacheKey, { result, timestamp: Date.now() });
-    return result;
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10초 타임아웃
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `당신은 바이오·제약 분야 제품 검색 의도를 분석하는 전문가입니다. 
+  const systemPrompt = `당신은 바이오·제약 분야 제품 검색 의도를 분석하는 전문가입니다.
 사용자의 검색 쿼리를 분석하여 다음 정보를 JSON 형식으로 반환하세요:
 
 {
@@ -70,53 +84,48 @@ export async function analyzeSearchIntent(
 - suggestedFilters는 사용자가 클릭할 수 있는 필터 태그 (예: ["ELISA kit", "PCR Master Mix"])
 - 불확실한 정보는 null 또는 빈 배열로 반환
 
-JSON만 반환하고 다른 설명은 하지 마세요.`,
-          },
-          {
-            role: "user",
-            content: `다음 검색어를 분석해주세요: "${query}"`,
-          },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.3,
-        max_tokens: 500,
-      }),
-      signal: controller.signal,
+JSON만 반환하고 다른 설명은 하지 마세요.`;
+
+  try {
+    const r = await callAnthropicMessage({
+      systemPrompt,
+      userPrompt: `다음 검색어를 분석해주세요: "${query}"`,
+      maxTokens: 500,
+      temperature: 0.3,
+      timeoutMs: 10_000,
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
-      );
+    let content: any;
+    try {
+      content = JSON.parse(r.content);
+    } catch {
+      const result = analyzeSearchIntentFallback(query);
+      intentCache.set(cacheKey, { result, timestamp: Date.now() });
+      return result;
     }
-
-    const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
 
     const result: SearchIntentResult = {
-      category: content.category || null,
-      purpose: content.purpose || null,
-      targetExperiment: content.targetExperiment || null,
+      category: content.category || undefined,
+      purpose: content.purpose || undefined,
+      targetExperiment: content.targetExperiment || undefined,
       properties: Array.isArray(content.properties) ? content.properties : [],
-      brandPreference: Array.isArray(content.brandPreference) ? content.brandPreference : [],
-      priceRange: content.priceRange || null,
-      suggestedFilters: Array.isArray(content.suggestedFilters) ? content.suggestedFilters : [],
+      brandPreference: Array.isArray(content.brandPreference)
+        ? content.brandPreference
+        : [],
+      priceRange: content.priceRange || undefined,
+      suggestedFilters: Array.isArray(content.suggestedFilters)
+        ? content.suggestedFilters
+        : [],
     };
 
-    // 캐시 저장
     intentCache.set(cacheKey, { result, timestamp: Date.now() });
-
     return result;
-  } catch (error: any) {
-    if (error.name === "AbortError") {
-      console.error("OpenAI API timeout");
+  } catch (error) {
+    if (error instanceof AnthropicKeyMissingError) {
+      // No key → keyword fallback (silent — same behavior as v0)
     } else {
-      console.error("Error analyzing search intent with OpenAI:", error);
+      console.error("Error analyzing search intent:", error);
     }
-    // 에러 발생 시 폴백 사용
     const result = analyzeSearchIntentFallback(query);
     intentCache.set(cacheKey, { result, timestamp: Date.now() });
     return result;
@@ -170,27 +179,23 @@ function analyzeSearchIntentFallback(query: string): SearchIntentResult {
   return result;
 }
 
+// ──────────────────────────────────────────────────────────
+// generateProductUsageDescription
+// ──────────────────────────────────────────────────────────
+
 /**
- * 제품 사용 용도 설명 생성 (GPT 기반)
+ * 제품 사용 용도 설명 생성. 평문 한국어 응답.
+ *
+ * Throws on every error (including no-key) so the caller decides
+ * how to surface it. Behavior matches the v0 OpenAI version.
  */
 export async function generateProductUsageDescription(
   productName: string,
   productDescription?: string,
   productCategory?: string,
-  productSpecification?: string
+  productSpecification?: string,
 ): Promise<string> {
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    // API 키가 없으면 기본 설명 반환
-    return productDescription || "사용 용도 정보를 생성할 수 없습니다.";
-  }
-
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15초 타임아웃
-
-    const prompt = `다음 바이오·제약 제품에 대한 간결하고 실용적인 사용 용도 설명을 한국어로 작성해주세요.
+  const userPrompt = `다음 바이오·제약 제품에 대한 간결하고 실용적인 사용 용도 설명을 한국어로 작성해주세요.
 
 제품명: ${productName}
 ${productCategory ? `카테고리: ${productCategory}` : ""}
@@ -205,59 +210,40 @@ ${productSpecification ? `규격: ${productSpecification}` : ""}
 
 사용 용도 설명만 반환하고 다른 설명은 하지 마세요.`;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: "당신은 바이오·제약 분야 제품의 사용 용도를 설명하는 전문가입니다. 제품 정보를 바탕으로 실용적이고 정확한 사용 용도 설명을 작성합니다.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.5,
-        max_tokens: 300,
-      }),
-      signal: controller.signal,
+  try {
+    const r = await callAnthropicMessage({
+      systemPrompt:
+        "당신은 바이오·제약 분야 제품의 사용 용도를 설명하는 전문가입니다. 제품 정보를 바탕으로 실용적이고 정확한 사용 용도 설명을 작성합니다.",
+      userPrompt,
+      maxTokens: 300,
+      temperature: 0.5,
+      timeoutMs: 15_000,
     });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(
-        `OpenAI API error: ${response.status} ${response.statusText} - ${JSON.stringify(errorData)}`
+    return r.content.trim();
+  } catch (error) {
+    if (error instanceof AnthropicKeyMissingError) {
+      // Match v0: return the existing description as the cheapest
+      // fallback so the UI has SOMETHING to render.
+      return (
+        productDescription || "사용 용도 정보를 생성할 수 없습니다."
       );
-    }
-
-    const data = await response.json();
-    return data.choices[0].message.content.trim();
-  } catch (error: any) {
-    if (error.name === "AbortError") {
-      throw new Error("요청 시간이 초과되었습니다.");
     }
     console.error("Error generating product usage description:", error);
     throw error;
   }
 }
 
-// 번역 캐시
-const translationCache = new Map<string, string>();
-const TRANSLATION_CACHE_TTL = 1000 * 60 * 60 * 24; // 24시간
+// ──────────────────────────────────────────────────────────
+// translateText
+// ──────────────────────────────────────────────────────────
 
-// 텍스트 번역
+const translationCache = new Map<string, string>();
+// const TRANSLATION_CACHE_TTL = 1000 * 60 * 60 * 24; // 24시간 — TTL 미적용 (v0 유지)
+
 export async function translateText(
   text: string,
   fromLang: string = "ko",
-  toLang: string = "en"
+  toLang: string = "en",
 ): Promise<string> {
   const cacheKey = `${fromLang}-${toLang}-${text}`;
   const cached = translationCache.get(cacheKey);
@@ -265,47 +251,22 @@ export async function translateText(
     return cached;
   }
 
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    // API 키가 없으면 원문 반환
-    return text;
-  }
-
   try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: `You are a professional translator. Translate the following text from ${fromLang} to ${toLang}. Only return the translated text, no explanations.`,
-          },
-          {
-            role: "user",
-            content: text,
-          },
-        ],
-        temperature: 0.3,
-        max_tokens: 1000,
-      }),
+    const r = await callAnthropicMessage({
+      systemPrompt: `You are a professional translator. Translate the following text from ${fromLang} to ${toLang}. Only return the translated text, no explanations.`,
+      userPrompt: text,
+      maxTokens: 1000,
+      temperature: 0.3,
+      timeoutMs: 15_000,
     });
-
-    if (!response.ok) {
-      throw new Error("Translation failed");
-    }
-
-    const data = await response.json();
-    const translated = data.choices[0]?.message?.content?.trim() || text;
-    
+    const translated = r.content.trim() || text;
     translationCache.set(cacheKey, translated);
     return translated;
   } catch (error) {
-    console.error("Translation error:", error);
+    if (!(error instanceof AnthropicKeyMissingError)) {
+      console.error("Translation error:", error);
+    }
+    // Match v0: any error (including no-key) → return original.
     return text;
   }
 }
