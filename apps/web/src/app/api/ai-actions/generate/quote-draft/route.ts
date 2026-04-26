@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'order_create',
+      action: 'ai_action_create',
       targetEntityType: 'quote',
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',

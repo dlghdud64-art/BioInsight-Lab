@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: 'sensitive_data_import',
+      action: 'ai_action_create',
       targetEntityType: 'order',
       targetEntityId: 'unknown',
       sourceSurface: 'web_app',
