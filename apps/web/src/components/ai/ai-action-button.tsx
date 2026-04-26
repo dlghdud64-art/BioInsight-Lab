@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, type LucideIcon } from "lucide-react";
 import { AiDraftPreviewDialog } from "./ai-draft-preview-dialog";
+import { csrfFetch } from "@/lib/api-client";
 
 interface AiActionButtonProps {
   label: string;
@@ -45,7 +46,7 @@ export function AiActionButton({
     setError(null);
 
     try {
-      const res = await fetch(generateEndpoint, {
+      const res = await csrfFetch(generateEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(generatePayload),
@@ -80,7 +81,7 @@ export function AiActionButton({
     setIsApproving(true);
 
     try {
-      const res = await fetch(`/api/ai-actions/${previewData.actionId}/approve`, {
+      const res = await csrfFetch(`/api/ai-actions/${previewData.actionId}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

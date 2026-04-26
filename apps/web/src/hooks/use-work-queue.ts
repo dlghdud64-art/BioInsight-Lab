@@ -90,7 +90,7 @@ export function useApproveWorkItem() {
 
   return useMutation({
     mutationFn: async ({ id, payload }: { id: string; payload?: Record<string, unknown> }) => {
-      const res = await fetch(`/api/ai-actions/${id}/approve`, {
+      const res = await csrfFetch(`/api/ai-actions/${id}/approve`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ payload }),
@@ -145,7 +145,7 @@ export function useDismissWorkItem() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const res = await fetch(`/api/ai-actions/${id}`, {
+      const res = await csrfFetch(`/api/ai-actions/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "DISMISSED" }),
