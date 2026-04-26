@@ -205,6 +205,82 @@ export const PILOT_PRODUCT_IDS: readonly string[] =
   PILOT_PRODUCT_CATALOG.map((p) => p.id);
 
 // ──────────────────────────────────────────────────────────
+// Pilot vendor catalog — minimum fixture (1 vendor, 15 links)
+//
+// ADR-002 §11.20 — closes #P02-followup-pilot-vendor-catalog. Without
+// at least one ProductVendor row per pilot product, every "견적 담기"
+// click in the pilot tenant takes the vendor-pending branch (correct
+// per §11.16, but a partial verification surface — vendor-present
+// path is never exercised). Option 1 (single supplier across all 15
+// products) gives the smallest agreement surface that still exercises
+// the canonical "vendor wired, price known" code path end to end.
+//
+// Operator may adjust priceInKRW or layer multiple suppliers in a
+// follow-up pass; the seed is idempotent so re-running with new
+// values upserts cleanly.
+// ──────────────────────────────────────────────────────────
+
+export interface PilotVendorSpec {
+  readonly id: string;
+  readonly name: string;
+  readonly nameEn: string;
+  readonly email: string | null;
+  readonly country: string;
+  readonly currency: string;
+}
+
+export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
+  {
+    id: "vendor-pilot-thermofisher",
+    name: "Thermo Fisher Scientific",
+    nameEn: "Thermo Fisher Scientific",
+    email: null, // placeholder — pilot tenant only, no real outbound mail
+    country: "US",
+    currency: "USD",
+  },
+];
+
+/** Helper — typed set of pilot vendor ids for cleanup. */
+export const PILOT_VENDOR_IDS: readonly string[] =
+  PILOT_VENDOR_CATALOG.map((v) => v.id);
+
+export interface PilotProductVendorLinkSpec {
+  readonly id: string; // ProductVendor.id (deterministic, idempotent upsert key)
+  readonly productId: string;
+  readonly vendorId: string;
+  readonly priceInKRW: number;
+  readonly stockStatus: string;
+  readonly leadTime: number; // days
+}
+
+/**
+ * 15 ProductVendor rows, one per pilot product, all pointing to the
+ * sole pilot vendor. priceInKRW values are plausible Korean lab-supply
+ * placeholders — operator may adjust without re-keying anything else.
+ *
+ * ProductVendor cascades on either Product or Vendor delete (schema
+ * onDelete: Cascade on both relations), so cleanup never has to touch
+ * ProductVendor directly — see buildPilotCleanupPlan().
+ */
+export const PILOT_PRODUCT_VENDOR_LINKS: readonly PilotProductVendorLinkSpec[] = [
+  { id: "pv-pilot-ethanol-500ml",         productId: "product-pilot-ethanol-500ml",         vendorId: "vendor-pilot-thermofisher", priceInKRW:  35_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-pbs-1l",                productId: "product-pilot-pbs-1l",                vendorId: "vendor-pilot-thermofisher", priceInKRW:  18_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-dmem-500ml",            productId: "product-pilot-dmem-500ml",            vendorId: "vendor-pilot-thermofisher", priceInKRW:  42_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-fbs-500ml",             productId: "product-pilot-fbs-500ml",             vendorId: "vendor-pilot-thermofisher", priceInKRW: 380_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-antibody-gapdh",        productId: "product-pilot-antibody-gapdh",        vendorId: "vendor-pilot-thermofisher", priceInKRW: 250_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-trypsin-100ml",         productId: "product-pilot-trypsin-100ml",         vendorId: "vendor-pilot-thermofisher", priceInKRW:  45_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-filter-022",            productId: "product-pilot-filter-022",            vendorId: "vendor-pilot-thermofisher", priceInKRW:  95_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-falcon-50ml",           productId: "product-pilot-falcon-50ml",           vendorId: "vendor-pilot-thermofisher", priceInKRW:  80_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-tips-1000ul",           productId: "product-pilot-tips-1000ul",           vendorId: "vendor-pilot-thermofisher", priceInKRW:  60_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-hplc-c18",              productId: "product-pilot-hplc-c18",              vendorId: "vendor-pilot-thermofisher", priceInKRW: 850_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-dish-100mm",            productId: "product-pilot-dish-100mm",            vendorId: "vendor-pilot-thermofisher", priceInKRW: 120_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-plate-96well",          productId: "product-pilot-plate-96well",          vendorId: "vendor-pilot-thermofisher", priceInKRW: 140_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-bsa-100g",              productId: "product-pilot-bsa-100g",              vendorId: "vendor-pilot-thermofisher", priceInKRW: 180_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-tris-buffer",           productId: "product-pilot-tris-buffer",           vendorId: "vendor-pilot-thermofisher", priceInKRW:  25_000, stockStatus: "IN_STOCK", leadTime: 5 },
+  { id: "pv-pilot-sds-running-buffer",    productId: "product-pilot-sds-running-buffer",    vendorId: "vendor-pilot-thermofisher", priceInKRW:  22_000, stockStatus: "IN_STOCK", leadTime: 5 },
+];
+
+// ──────────────────────────────────────────────────────────
 // Cleanup plan — declarative, consumed by pilot-cleanup.ts
 // ──────────────────────────────────────────────────────────
 
@@ -213,7 +289,8 @@ export type PilotModel =
   | "organizationMember"
   | "workspace"
   | "organization"
-  | "product";
+  | "product"
+  | "vendor";
 
 /**
  * One cleanup operation. Deliberately models compound keys as a
@@ -250,6 +327,10 @@ export type PilotCleanupOperation =
   | {
       readonly model: "product";
       readonly where: { readonly id: string };
+    }
+  | {
+      readonly model: "vendor";
+      readonly where: { readonly id: string };
     };
 
 export interface PilotCleanupPlan {
@@ -271,7 +352,15 @@ export interface PilotCleanupPlan {
  *   5. Products          — remove each pilot product by exact id,
  *                          one call per id. No deleteMany, no filter.
  *                          Product cascade from ProductInventory /
- *                          QuoteListItem handles any downstream rows.
+ *                          QuoteListItem / ProductVendor (onDelete:
+ *                          Cascade) handles any downstream rows. So
+ *                          most ProductVendor rows are gone after
+ *                          step 5.
+ *   6. Vendors           — remove each pilot vendor by exact id.
+ *                          Vendor cascade picks up any ProductVendor
+ *                          rows that survived step 5 (defensive — in
+ *                          practice none, but it costs nothing).
+ *                          Added in §11.20 with the vendor catalog.
  *
  * The pilot OWNER USER is intentionally NOT in this plan — the user
  * row is canonical. See PILOT_OWNER_PROTECTION.
@@ -310,6 +399,12 @@ export function buildPilotCleanupPlan(
     ...PILOT_PRODUCT_IDS.map(
       (id): PilotCleanupOperation => ({
         model: "product",
+        where: { id },
+      }),
+    ),
+    ...PILOT_VENDOR_IDS.map(
+      (id): PilotCleanupOperation => ({
+        model: "vendor",
         where: { id },
       }),
     ),

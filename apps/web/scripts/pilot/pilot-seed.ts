@@ -45,6 +45,8 @@ import {
   PILOT_OWNER_ORG_ROLE,
   PILOT_OWNER_WORKSPACE_ROLE,
   PILOT_PRODUCT_CATALOG,
+  PILOT_VENDOR_CATALOG,
+  PILOT_PRODUCT_VENDOR_LINKS,
 } from "./pilot";
 
 async function main() {
@@ -164,11 +166,68 @@ async function main() {
           products.push({ id: p.id, name: p.name });
         }
 
-        return { org, workspace, orgMember, workspaceMember, products };
+        // 7. Vendors — pilot vendor catalog (ADR-002 §11.20).
+        //    Currently a single supplier (Thermo Fisher Scientific) so
+        //    every pilot product has a non-pending vendor-present path
+        //    to exercise. Vendor.id is fixed in pilot.ts so cleanup is
+        //    keyed on the exact id, not a filter.
+        const vendors: Array<{ id: string; name: string }> = [];
+        for (const spec of PILOT_VENDOR_CATALOG) {
+          const v = await tx.vendor.upsert({
+            where: { id: spec.id },
+            create: {
+              id: spec.id,
+              name: spec.name,
+              nameEn: spec.nameEn,
+              email: spec.email ?? undefined,
+              country: spec.country,
+              currency: spec.currency,
+            },
+            update: {},
+          });
+          vendors.push({ id: v.id, name: v.name });
+        }
+
+        // 8. ProductVendor links — 15 rows, one per pilot product.
+        //    Keyed on the deterministic `id` from pilot.ts so re-runs
+        //    upsert in place. ProductVendor cascades on either Product
+        //    or Vendor delete (schema), so cleanup never needs to
+        //    delete ProductVendor explicitly — see buildPilotCleanupPlan.
+        const productVendors: Array<{ id: string; productId: string; vendorId: string }> = [];
+        for (const link of PILOT_PRODUCT_VENDOR_LINKS) {
+          const pv = await tx.productVendor.upsert({
+            where: { id: link.id },
+            create: {
+              id: link.id,
+              productId: link.productId,
+              vendorId: link.vendorId,
+              priceInKRW: link.priceInKRW,
+              currency: "KRW",
+              stockStatus: link.stockStatus,
+              leadTime: link.leadTime,
+            },
+            update: {
+              // Idempotent re-runs refresh price / stock / leadTime so
+              // the operator can adjust placeholder values in pilot.ts
+              // and re-seed without manual SQL.
+              priceInKRW: link.priceInKRW,
+              stockStatus: link.stockStatus,
+              leadTime: link.leadTime,
+            },
+          });
+          productVendors.push({
+            id: pv.id,
+            productId: pv.productId,
+            vendorId: pv.vendorId,
+          });
+        }
+
+        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors };
       },
       {
-        // 15 product upserts + 4 parent rows. Default Prisma timeout
-        // (5s) can be tight on cold pooler starts; give headroom.
+        // 15 product upserts + 1 vendor + 15 productVendor + 4 parent
+        // rows = 35 writes. Default Prisma timeout (5s) is tight on
+        // cold pooler starts; keep the §11.7 headroom.
         timeout: 30_000,
         maxWait: 10_000,
       },
@@ -204,6 +263,18 @@ async function main() {
       // eslint-disable-next-line no-console
       console.log(`  - ${p.id}  ${p.name}`);
     }
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] vendors: ${summary.vendors.length} upserted`,
+    );
+    for (const v of summary.vendors) {
+      // eslint-disable-next-line no-console
+      console.log(`  - ${v.id}  ${v.name}`);
+    }
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] productVendor links: ${summary.productVendors.length} upserted`,
+    );
     // eslint-disable-next-line no-console
     console.log("[pilot-seed] PASS");
     // eslint-disable-next-line no-console

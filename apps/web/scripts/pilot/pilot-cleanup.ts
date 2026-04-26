@@ -77,6 +77,7 @@ export interface PilotCleanupPrismaClient {
   readonly workspace: Surface<IdWhere>;
   readonly organization: Surface<IdWhere>;
   readonly product: Surface<IdWhere>;
+  readonly vendor: Surface<IdWhere>; // ADR-002 §11.20 — pilot vendor catalog
   // NOTE: no `user` surface on purpose. See PILOT_OWNER_PROTECTION.
 }
 
@@ -130,6 +131,11 @@ export async function runCleanup(
       case "product":
         entity = await prisma.product.findUnique({ where: op.where });
         break;
+      case "vendor":
+        // ADR-002 §11.20 — pilot vendor catalog cleanup. Vendor cascade
+        // covers any ProductVendor rows that survived the product step.
+        entity = await prisma.vendor.findUnique({ where: op.where });
+        break;
     }
 
     probes.push({
@@ -154,6 +160,9 @@ export async function runCleanup(
           break;
         case "product":
           await prisma.product.delete({ where: op.where });
+          break;
+        case "vendor":
+          await prisma.vendor.delete({ where: op.where });
           break;
       }
       deletedCalls.push({ model: op.model, where: op.where });
