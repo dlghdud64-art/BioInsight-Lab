@@ -476,6 +476,50 @@ Direct field validation that the §11.13 generic-CI-unreachable result generalis
   - `#P01-followup-migrate-ci` — closed as "won't fix for the §11.13 reasons documented here."
   - `#SEC02` (git history password purge), `#P02-followup-quote-403`, `#P02-followup-pilot-vendor-catalog` — independent of §11.17.
 
+### 11.18 `#P02-followup-quote-403` — CLOSED via NEXT_PUBLIC_APP_URL env addition 2026-04-26
+
+Direct successor to §11.16. The §11.16 Phase 1.3 verification (conversion-queue display of a freshly-created Quote) was blocked because every `POST /api/quotes` returned 403. Spike + fix landed as an env-only change.
+
+- **Symptom:** every `POST /api/quotes` returned `{"error":"현재 요청은 유효한 작업 세션에서 시작되지 않았습니다.","correlationId":"corr_..."}` with status 403, regardless of operator role or quote payload. ADMIN role passed `ACTION_ROLE_MINIMUM[quote_request_create] = ['requester','buyer','ops_admin']` cleanly, so the deny was not in `enforceAction`'s authorization branch.
+- **Root cause (read-only audit, no code):**
+  - The 403 message text traces to `apps/web/src/lib/security/csrf-contract.ts:151-152` — the governance message for `origin_mismatch` and `missing_origin`. CSRF gate rejection, not authorization rejection.
+  - `getTrustedOrigins()` in the same file (L109-131) reads `process.env.NEXT_PUBLIC_APP_URL` and `process.env.LABAXIS_TRUSTED_ORIGINS`, plus three hardcoded localhost entries. With both env vars unset in production, the trusted origins list reduced to `['http://localhost:3000', 'http://localhost:3001', 'http://127.0.0.1:3000']`.
+  - Production Origin header `https://bio-insight-lab-web.vercel.app` matched none of the localhost entries, so `isTrustedOrigin()` returned false → `origin_mismatch` violation.
+  - `LABAXIS_CSRF_MODE` was set to a value that escalates `origin_mismatch` on `protection: 'required'` routes to a 403 block (consistent with `full_enforce`). `/api/quotes` is `protection: 'required', highRisk: false` (default config; not in `HIGH_RISK_ROUTE_PATTERNS` of `csrf-route-registry.ts`), so `full_enforce` would block it while `soft_enforce` would not. The empirical block tells us mode = `full_enforce`.
+  - Net: every production browser-origin mutation was blocked, not just `POST /api/quotes`. The narrow §11.16 symptom was a generalizable misconfiguration.
+- **Fix (env-only, no code change):**
+  - Added `NEXT_PUBLIC_APP_URL = https://bio-insight-lab-web.vercel.app` (canonical production host, no trailing slash) to Vercel project env vars (Production scope).
+  - Triggered redeploy `dpl_DmVgbZH4Pa6DgVSz42eauxtfAMHT` (commit `c5d9961c`, ~3.8 min build) — `NEXT_PUBLIC_*` prefix requires a fresh build because Next.js inlines them at build time.
+  - No code change. The CSRF infrastructure is correct; the env was incomplete.
+- **Production verification:**
+  - `/api/cart` → 200 OK (regression check, still healthy).
+  - **First raw fetch** (no CSRF token): `POST /api/quotes` → **403** with `{"error":"보안 검증이 완료되지 않아 작업을 진행할 수 없습니다.","correlationId":"..."}`. The message text now traces to `csrf-contract.ts:148-153` `missing_token` / `token_mismatch` — confirming origin check now passes and the gate has advanced to the token check, exactly the expected next layer.
+  - **Cookie token bootstrap**: `GET /api/security/csrf-token` → 200 with `csrfToken`. Cookie `labaxis-csrf` = `bb3181be9e22...` (12-char prefix logged; full value sensitive).
+  - **Second fetch with `x-labaxis-csrf-token` header attached**: `POST /api/quotes` → **201 CREATED**. Quote row persisted in production DB:
+    ```
+    id:             cmofbcxj30003usrss33mupfl
+    userId:         cmo4mcbih00003ut3ozub29tc  (호영, ADMIN — pilot owner)
+    organizationId: org-pilot-internal          (pilot tenant)
+    title:          NEXT_PUBLIC_APP_URL + token spike test
+    status:         PENDING
+    vendor:         null                        (vendor-pending preserved end to end)
+    items:          1                           (Trypsin-EDTA 100ml)
+    quoteNumber:    null                        ← see followup below
+    ```
+- **Why production UI clicks work after this fix without further changes:**
+  - `apps/web/src/lib/api-client.ts` exports `csrfFetch()` — a `fetch` drop-in that auto-bootstraps and attaches `x-labaxis-csrf-token` for `POST/PUT/PATCH/DELETE`. The sourcing → quote chain (`test-flow-provider.tsx`'s `generateShareLinkMutation`) already routes through `csrfFetch`, so the token attachment is automatic for real user flows.
+  - Spike raw `fetch` had to manually replicate the cookie-read + header-attach pattern; that's why the 1st spike fetch hit `missing_token` and the 2nd passed.
+- **New followup OPENED — `#P02-followup-quote-number-missing` (2026-04-26):**
+  - `createQuote()` in `apps/web/src/lib/api/quotes.ts` does not assign a `quoteNumber` — newly created Quote rows persist with `quoteNumber: null`.
+  - `/api/work-queue/purchase-conversion/route.ts:66` filters `where: { userId, quoteNumber: { not: null } }`, so quotes with null quoteNumber are excluded from the conversion queue.
+  - Verified: the spike-created quote `cmofbcxj30003usrss33mupfl` is not visible in the conversion-queue stats (`stats.total = 0`).
+  - Independent of §11.18: the 403 fix is complete; the queue-display issue is a separate code-side bug in either `createQuote` (should auto-assign a quoteNumber) or in the conversion-queue filter (should accept newly created quotes via a different signal). Tracked as `#P02-followup-quote-number-missing`.
+- **Cleanup deferral:** the spike Quote `cmofbcxj30003usrss33mupfl` remains in production DB, scoped to `org-pilot-internal`. Operator can leave it (no user impact) or run a targeted `DELETE FROM "Quote" WHERE id = 'cmofbcxj30003usrss33mupfl';` from operator shell. Not blocking.
+- **What stays preserved:**
+  - `LABAXIS_CSRF_MODE = full_enforce` is the correct production posture. The fix did not weaken security policy; it added the missing trusted-origin entry that the policy expected.
+  - `LABAXIS_TRUSTED_ORIGINS` remains optional — only needed if operator starts using preview/branch alias URLs (`*-git-main-*` etc.) for production-equivalent traffic. Canonical `bio-insight-lab-web.vercel.app` covers most cases.
+  - csrfFetch wrapper unchanged.
+
 ---
 
 ## 12. Changelog
@@ -505,3 +549,4 @@ Direct field validation that the §11.13 generic-CI-unreachable result generalis
 - 2026-04-26 — **§11.16 OPENED and CLOSED:** `#P02-e2e-blocker` — sourcing → quote inlet fake-success + dead path normalised (commit `f230d817`). Pure composer + result-driven toast resolver replace the silent `return` + unconditional `toast.success` pattern. 13/13 vitest pass; production probe on deploy `dpl_FXHdWJYiw9EkwaHJ2eT7YrR7QfUs` confirms vendor-pending now produces a real candidacy row, the toast tells the truth, and the workbench preserves "검토 필요 / 가격 미확인 / 벤더 미지정" all the way to `/app/quote/request`. Three new followups OPENED in §11.16: `#P02-followup-quote-403` (POST /api/quotes 403 from `enforceAction` deny — blocks Phase 1.3 verification only), `#P02-followup-pilot-vendor-catalog` (15-product vendor backfill), `#P02-followup-compare-fake-success` (7 same-pattern sites in compare/page.tsx).
 - 2026-04-26 — `#P02-followup-compare-fake-success` CLOSED (commit `c4f526fb`). 6 callsites in `apps/web/src/app/test/compare/page.tsx` switched to `resolveAddToQuoteToast` from §11.16. shadcn `useToast` `default | destructive` variant maps cleanly onto the 3-success / 1-error result modes. Bulk-add CTA (L1365) aggregates per-product result tallies into a single honest summary toast instead of one optimistic line per product. tsc on changed surface: 0 errors. `compare` flow's same-shape fake-success risk closed.
 - 2026-04-26 — **§11.17 OPENED and CLOSED:** `#P01-followup-migrate-ci` — drift-detector trk attempted and dropped. 4 commits (`0b4130e → 48703b0 → af0317e → 1212e6c8`) iterated through `npx prisma` → `pnpm exec` → `pnpm --filter web exec` → `npm ci + npx --no-install`. Run #4 finally got past install/postinstall but `prisma migrate status` hung on Supabase pooler `:6543` connection for 8m 37s before timeout-minutes: 10 killed it. **Field-validated that the §11.9 / §11.12 generic-CI-unreachable result generalises to GitHub Actions runners**, not just Vercel build infra. The whole drift-detector premise (query production DB from external CI) has no surface under the current Supabase network policy. Reverted to status quo. §11.13 operator-shell-only migrate stays canonical; the "operator forgets to migrate" weak spot is now explicitly an operator-discipline accountability item, not an automatable safety net.
+- 2026-04-26 — **§11.18 OPENED and CLOSED:** `#P02-followup-quote-403` — env-only fix, no code change. Read-only audit traced the 403 to `csrf-contract.ts:151-152` (`origin_mismatch` / `missing_origin`) caused by missing `NEXT_PUBLIC_APP_URL` env var: production trusted origins reduced to localhost-only, so every production browser-origin mutation was blocked under `full_enforce`. Operator added `NEXT_PUBLIC_APP_URL = https://bio-insight-lab-web.vercel.app` and redeployed (`dpl_DmVgbZH4Pa6DgVSz42eauxtfAMHT`). Production probe: `POST /api/quotes` 403 → 201 CREATED, Quote `cmofbcxj30003usrss33mupfl` persisted in `org-pilot-internal` with `vendor: null` (vendor-pending preserved). New followup `#P02-followup-quote-number-missing` OPENED — `createQuote()` does not assign `quoteNumber`, and the conversion-queue endpoint filters `quoteNumber: { not: null }`, so newly created quotes are invisible in the queue.
