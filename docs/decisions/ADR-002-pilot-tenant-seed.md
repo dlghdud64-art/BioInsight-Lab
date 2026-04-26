@@ -520,6 +520,43 @@ Direct successor to §11.16. The §11.16 Phase 1.3 verification (conversion-queu
   - `LABAXIS_TRUSTED_ORIGINS` remains optional — only needed if operator starts using preview/branch alias URLs (`*-git-main-*` etc.) for production-equivalent traffic. Canonical `bio-insight-lab-web.vercel.app` covers most cases.
   - csrfFetch wrapper unchanged.
 
+### 11.19 `#P02-followup-quote-number-missing` — CLOSED via utility extraction 2026-04-26
+
+Direct successor to §11.18. The §11.18 production verification of a real Quote create surfaced an adjacent code-side bug: the new quote was persisted but invisible to the conversion-queue endpoint because `createQuote()`'s Normal path didn't assign a `quoteNumber`, and downstream filters use `quoteNumber: { not: null }` as the "정식 견적 vs 비정식 quote" boundary.
+
+- **Symptom:** §11.18's spike Quote `cmofbcxj30003usrss33mupfl` was persisted in `org-pilot-internal` with status PENDING, but `/api/work-queue/purchase-conversion` returned `stats.total: 0` — the new quote was filtered out. `/api/quotes/my` had the same shape (matching its own filter at `route.ts:70`).
+- **Root cause (read-only audit):**
+  - `Quote.quoteNumber` is `String? @unique` (schema.prisma:369). Optional by storage but operationally meaningful: it is the single boolean signal that distinguishes "정식 견적" (cart-based or direct-create formal quotes) from PDF-extraction snapshots / draft items / other secondary paths.
+  - Two creation paths existed and diverged:
+    - `/api/quotes/from-cart` (`route.ts:195-197`) computed `Q-${dateStr}-${quote.id.slice(-6).toUpperCase()}` inline and assigned it via a follow-up `tx.quote.update`. Worked.
+    - `/api/quotes` (`createQuote()` in `lib/api/quotes.ts`, Normal path L158-264) created the quote row with no `quoteNumber` field set and never updated it afterward. Failed silently — no error, just `quoteNumber: null` on every fresh formal quote.
+  - Both `/api/quotes/my/route.ts:70` and `/api/work-queue/purchase-conversion/route.ts:66` filter `where: { ..., quoteNumber: { not: null } }`, so the entire `createQuote()` Normal-path output was invisible to the user inbox and the conversion queue. The §11.18 spike Quote sat there unreachable from any UI surface.
+  - Bonus: `from-cart/route.ts:24` carried a dead inline `async generateQuoteNumber(): Promise<string>` (sequence-based, no-args variant) that was *never called* — the active code path used the cuid-suffix inline expression. Two functions with the same name in the same file, only one wired up.
+- **Fix (utility extraction, single source of truth):**
+  - **NEW** `apps/web/src/lib/api/quote-number.ts` — `generateQuoteNumber(quoteId, now?): string` returning `Q-YYYYMMDD-{last-6-of-id, uppercased}`. Pure function. Optional `now` for deterministic tests.
+  - **NEW** `apps/web/src/__tests__/lib/api/quote-number.test.ts` — 6 cases covering format regex, suffix derivation from cuid tail, distinct-id → distinct-number, `now` injection, default-now formatting, and the short-id edge case (`slice(-6)` returns whole string when input < 6 chars). 6/6 PASS via `vitest run`.
+  - **CHANGED** `apps/web/src/lib/api/quotes.ts` Normal path (L177-194 region): right after the initial `db.quote.create`, run `generateQuoteNumber(quote.id)` and apply via `db.quote.update`. Items creation continues unchanged. Draft path (`itemsDetailed`-based, L65-156) intentionally NOT given a `quoteNumber` — that path is the canonical extraction-snapshot surface and SHOULD remain filtered out per the same `not: null` boundary.
+  - **CHANGED** `apps/web/src/app/api/quotes/from-cart/route.ts`: removed the dead inline `generateQuoteNumber()` (sequence-based no-args). Replaced both the dead function and the previously-inline expression with a single `generateQuoteNumber(quote.id, today)` call from the new utility, with `today` injected for transaction-time determinism.
+- **Production verification (deploy `dpl_7E4ecYkagHxzDZuqSA3MqKTb62KK`, commit `4d03d99e`, READY ~3 min):**
+  - `POST /api/quotes` (with CSRF token) → 201 CREATED, response carries `quoteNumber: "Q-20260426-9AYHTZ"` (utility format exactly: 8-digit ISO date + 6-char cuid-tail uppercased).
+  - `GET /api/work-queue/purchase-conversion` → `stats.total: 0 → 1`, `stats.review_required: 0 → 1`. The new quote appears in `items[0]` with `quoteNumber: "Q-20260426-9AYHTZ"`, `conversionStatus: "review_required"`, `blockerType: "none"`, `supplierReplies: "0/0"`. The vendor-pending state from §11.16 is preserved end-to-end through the resolver decode.
+  - **§11.16 Phase 1.3 is now verified for real.** The sourcing → quote → conversion-queue chain in the pilot tenant runs end-to-end: a vendor-pending product clicked from `/app/search` reaches `/dashboard/purchases` as a `review_required` row with no fake fields, no missing identifiers, and no UI lies.
+- **Spike Quote cleanup deferral:** `cmofbcxj30003usrss33mupfl` (from §11.18) was created BEFORE this fix landed and still has `quoteNumber: null`. It will remain hidden from the conversion queue and the user inbox until backfilled. Operator may run a one-shot SQL update from operator shell: `UPDATE "Quote" SET "quoteNumber" = 'Q-20260426-MUPFL' WHERE id = 'cmofbcxj30003usrss33mupfl';` — note the suffix matches what `generateQuoteNumber('cmofbcxj30003usrss33mupfl')` would produce. Or delete the row entirely. Not blocking for any user-facing flow; affects exactly one row.
+- **Net state of `#P02` track after §11.19:**
+  - Phase A (inventory) — CLOSED §11.8
+  - Phase B-β (purchases mock removal) — CLOSED §11.10
+  - Phase B-α (conversion-queue ontology) — CLOSED §11.15
+  - `#P02-e2e-blocker` (sourcing inlet fake-success) — CLOSED §11.16
+  - `#P02-followup-compare-fake-success` — CLOSED (commit `c4f526fb`)
+  - `#P02-followup-quote-403` — CLOSED §11.18
+  - **`#P02-followup-quote-number-missing` — CLOSED §11.19 (this entry)**
+  - `#P02-followup-pilot-vendor-catalog` — still OPEN, no user-visible blocker
+  - α-D / α-F — open follow-ups, not blocking core value
+- **Still preserved:**
+  - Draft path in `createQuote()` keeps no `quoteNumber` — the boundary signal stays intact.
+  - The two filter call sites (`/api/quotes/my`, `/api/work-queue/purchase-conversion`) keep `quoteNumber: { not: null }` — they're now consistent with the createQuote contract instead of being a silent footgun.
+  - `csrfFetch` wrapper unchanged.
+
 ---
 
 ## 12. Changelog
@@ -550,3 +587,4 @@ Direct successor to §11.16. The §11.16 Phase 1.3 verification (conversion-queu
 - 2026-04-26 — `#P02-followup-compare-fake-success` CLOSED (commit `c4f526fb`). 6 callsites in `apps/web/src/app/test/compare/page.tsx` switched to `resolveAddToQuoteToast` from §11.16. shadcn `useToast` `default | destructive` variant maps cleanly onto the 3-success / 1-error result modes. Bulk-add CTA (L1365) aggregates per-product result tallies into a single honest summary toast instead of one optimistic line per product. tsc on changed surface: 0 errors. `compare` flow's same-shape fake-success risk closed.
 - 2026-04-26 — **§11.17 OPENED and CLOSED:** `#P01-followup-migrate-ci` — drift-detector trk attempted and dropped. 4 commits (`0b4130e → 48703b0 → af0317e → 1212e6c8`) iterated through `npx prisma` → `pnpm exec` → `pnpm --filter web exec` → `npm ci + npx --no-install`. Run #4 finally got past install/postinstall but `prisma migrate status` hung on Supabase pooler `:6543` connection for 8m 37s before timeout-minutes: 10 killed it. **Field-validated that the §11.9 / §11.12 generic-CI-unreachable result generalises to GitHub Actions runners**, not just Vercel build infra. The whole drift-detector premise (query production DB from external CI) has no surface under the current Supabase network policy. Reverted to status quo. §11.13 operator-shell-only migrate stays canonical; the "operator forgets to migrate" weak spot is now explicitly an operator-discipline accountability item, not an automatable safety net.
 - 2026-04-26 — **§11.18 OPENED and CLOSED:** `#P02-followup-quote-403` — env-only fix, no code change. Read-only audit traced the 403 to `csrf-contract.ts:151-152` (`origin_mismatch` / `missing_origin`) caused by missing `NEXT_PUBLIC_APP_URL` env var: production trusted origins reduced to localhost-only, so every production browser-origin mutation was blocked under `full_enforce`. Operator added `NEXT_PUBLIC_APP_URL = https://bio-insight-lab-web.vercel.app` and redeployed (`dpl_DmVgbZH4Pa6DgVSz42eauxtfAMHT`). Production probe: `POST /api/quotes` 403 → 201 CREATED, Quote `cmofbcxj30003usrss33mupfl` persisted in `org-pilot-internal` with `vendor: null` (vendor-pending preserved). New followup `#P02-followup-quote-number-missing` OPENED — `createQuote()` does not assign `quoteNumber`, and the conversion-queue endpoint filters `quoteNumber: { not: null }`, so newly created quotes are invisible in the queue.
+- 2026-04-26 — **§11.19 OPENED and CLOSED:** `#P02-followup-quote-number-missing` — utility extraction `lib/api/quote-number.ts` (commit `4d03d99e`). 6/6 vitest pass. `createQuote()` Normal path now updates fresh quotes with a generated `Q-YYYYMMDD-{cuid-tail}` quoteNumber; `from-cart` route refactored onto the same utility (and a dead inline sequence-based `generateQuoteNumber()` removed). Production probe on deploy `dpl_7E4ecYkagHxzDZuqSA3MqKTb62KK`: `POST /api/quotes` returns `quoteNumber: "Q-20260426-9AYHTZ"`, and `GET /api/work-queue/purchase-conversion` shows `stats.total: 0 → 1` with `conversionStatus: "review_required"` for the new quote. **§11.16 Phase 1.3 is now genuinely verified end-to-end**: sourcing → quote → conversion-queue chain renders correctly in the pilot tenant with vendor-pending state preserved at every step.
