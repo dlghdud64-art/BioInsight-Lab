@@ -1,49 +1,46 @@
 /**
  * apps/web/src/lib/ai/build-rationale.ts
  *
- * α-F (ADR §11.25). LLM-backed enrichment for the AI 선택안 rationale
- * line on /dashboard/purchases. Returns a short single-line rationale
- * (Korean, business tone) for one supplier option in the conversion
- * queue.
+ * α-F (ADR §11.25 / §11.26): LLM-backed enrichment for the
+ * AI 선택안 rationale line on /dashboard/purchases. Returns a short
+ * single-line rationale (Korean, business tone) for one supplier
+ * option in the conversion queue.
  *
- * Why this exists
- * ---------------
- * The resolver's `aiOptions[].rationale` was a v0 placeholder:
- *   ["회신 완료"] | ["회신 대기"]
- * Operationally meaningful for a coarse "responded vs not", but
- * doesn't convey *why* a specific supplier might be the right pick
- * (price, lead time, MOQ, recent reliability). This utility produces
- * a richer one-liner via OpenAI Chat (gpt-4o), saved to AiActionItem
- * with the new `RATIONALE_SUMMARY` AiActionType (§11.25 schema
- * migration). The resolver then prefers the persisted rationale when
- * available, falling back to the v0 placeholder when the LLM has not
- * been invoked yet.
+ * #α-F-followup-anthropic-migration: §11.25 shipped against OpenAI;
+ * §11.26 migrated this utility to the Anthropic Messages API
+ * (claude-haiku-4-5-20251001) via the lib/ai/anthropic.ts wrapper.
+ * Behaviour is unchanged: utility ALWAYS returns a string[] —
+ * never throws — so the resolver never has to decide between
+ * "rationale" vs "no rationale".
  *
  * LabAxis principle alignment
  * ---------------------------
- * - Not a chatbot/assistant UI — output is a single-line metadata
- *   string rendered as `text-[10px] text-slate-400` next to existing
- *   resolver outputs. AI is read-only enrichment, not a conversation.
- * - Dead button / no-op ban — utility ALWAYS returns a string[]:
- *   either the LLM result, or the canonical placeholder. The caller
- *   never has to render an empty rationale.
+ * - Not chatbot/assistant UI — output is a single-line metadata
+ *   string rendered as `text-[10px] text-slate-400`. AI is read-only
+ *   enrichment, not a conversation.
+ * - Dead button / no-op ban — utility ALWAYS returns a non-empty
+ *   string[]: either the LLM result, or the canonical placeholder.
  * - Canonical truth boundary — utility writes nothing to the
  *   conversion queue; the AiActionItem layer is the persistence
  *   surface and the resolver re-derives output from it.
  *
  * Failure modes (all map to placeholder fallback, no throw)
  * --------------------------------------------------------
- * - OPENAI_API_KEY unset → fallback
- * - non-2xx response       → fallback
- * - empty content          → fallback
+ * - ANTHROPIC_API_KEY unset → fallback (AnthropicKeyMissingError)
+ * - non-2xx response       → fallback (AnthropicHttpError)
+ * - empty / non-text content → fallback (AnthropicEmptyContentError)
  * - JSON parse failure     → fallback
  * - empty rationale array  → fallback
- * - network error / timeout→ fallback
+ * - network error / timeout → fallback (any other Error)
  */
 
-const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
-const AI_MODEL = "gpt-4o";
-const TIMEOUT_MS = 12_000; // shorter than quote-draft — single supplier, small prompt
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+  AnthropicHttpError,
+  AnthropicEmptyContentError,
+  ANTHROPIC_DEFAULT_MODEL,
+} from "@/lib/ai/anthropic";
 
 export interface BuildRationaleInput {
   readonly supplierName: string;
@@ -82,11 +79,6 @@ function placeholderFor(input: BuildRationaleInput): BuildRationaleResult {
 export async function buildRationale(
   input: BuildRationaleInput,
 ): Promise<BuildRationaleResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    return placeholderFor(input);
-  }
-
   const currency = input.currency ?? "KRW";
   const priceLine =
     input.price != null
@@ -113,44 +105,18 @@ ${priceLine}
 ${leadLine}
 ${moqLine}`.trim();
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
   try {
-    const response = await fetch(OPENAI_CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.2,
-        max_tokens: 80, // single short sentence — anything more is a sign of bad prompt
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
+    const r = await callAnthropicMessage({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 80, // single short sentence
+      temperature: 0.2,
+      timeoutMs: 12_000,
     });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      return placeholderFor(input);
-    }
-
-    const data: any = await response.json();
-    const content: string | undefined = data?.choices?.[0]?.message?.content;
-    if (!content) {
-      return placeholderFor(input);
-    }
 
     let parsed: any;
     try {
-      parsed = JSON.parse(content);
+      parsed = JSON.parse(r.content);
     } catch {
       return placeholderFor(input);
     }
@@ -165,15 +131,24 @@ ${moqLine}`.trim();
       return placeholderFor(input);
     }
 
-    const usage = data.usage ?? {};
     return {
       rationale,
-      aiModel: AI_MODEL,
-      promptTokens: usage.prompt_tokens ?? 0,
-      completionTokens: usage.completion_tokens ?? 0,
+      aiModel: r.model || ANTHROPIC_DEFAULT_MODEL,
+      promptTokens: r.inputTokens,
+      completionTokens: r.outputTokens,
     };
-  } catch {
-    clearTimeout(timeoutId);
+  } catch (err) {
+    // Every wrapper-thrown class (KeyMissing, HttpError, EmptyContent)
+    // and any other Error (network / timeout / abort) maps to the
+    // placeholder. Resolver never sees an empty rationale.
+    if (
+      err instanceof AnthropicKeyMissingError ||
+      err instanceof AnthropicHttpError ||
+      err instanceof AnthropicEmptyContentError ||
+      err instanceof Error
+    ) {
+      return placeholderFor(input);
+    }
     return placeholderFor(input);
   }
 }
