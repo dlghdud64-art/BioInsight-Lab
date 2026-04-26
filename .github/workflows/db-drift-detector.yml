@@ -1,0 +1,97 @@
+# .github/workflows/db-drift-detector.yml
+#
+# Read-only schema drift detector. Runs `prisma migrate status` to
+# verify the production DB migration history matches the migrations
+# committed in this branch.
+#
+# This workflow runs `prisma migrate status` ONLY. It NEVER runs
+# `migrate deploy`. Production schema changes remain
+# operator-shell-only per ADR-002 §11.13.
+#
+# What this catches
+# -----------------
+# - Operator pushed schema + migration files but forgot to run
+#   `pnpm prisma:migrate` against production. Status will report
+#   pending migrations not applied to the live DB → red CI.
+# - Production DB has a migration applied that is not in git
+#   (someone hand-applied SQL, or a rollback wasn't committed).
+#   Status reports "drift detected" → red CI.
+# - Schema drift introduced by a manual ALTER outside the
+#   migrations workflow. Same red CI signal.
+#
+# What this does NOT do
+# ---------------------
+# - Apply migrations (no `migrate deploy`).
+# - Roll back migrations.
+# - Touch the DB beyond a read-only metadata query.
+# - Replace operator responsibility — see ADR-002 §11.13.
+#
+# Required GitHub repository secret
+# ---------------------------------
+# MIGRATE_STATUS_DATABASE_URL
+#   Production DATABASE_URL. Transaction pooler (:6543) is
+#   sufficient — `migrate status` is a read-only metadata query and
+#   does not require the session pooler. Read-only credentials are
+#   acceptable if the role can read `_prisma_migrations` and the
+#   public schema metadata.
+
+name: DB drift detector (read-only, no migrate deploy)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/prisma/**"
+      - ".github/workflows/db-drift-detector.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/web/prisma/**"
+      - ".github/workflows/db-drift-detector.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  drift-check:
+    name: Read-only prisma migrate status
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - name: Setup pnpm 9
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+          run_install: false
+
+      - name: Install dependencies (frozen lockfile)
+        run: pnpm install --frozen-lockfile
+
+      - name: Prisma generate
+        working-directory: apps/web
+        run: npx prisma generate
+
+      - name: Read-only schema drift check (no migrate deploy)
+        working-directory: apps/web
+        env:
+          DATABASE_URL: ${{ secrets.MIGRATE_STATUS_DATABASE_URL }}
+        run: |
+          # IMPORTANT: this step runs `prisma migrate status` ONLY.
+          # `migrate status` is a read-only metadata query that
+          # compares the `_prisma_migrations` table on the live DB
+          # against the migrations on disk. It does NOT apply DDL.
+          #
+          # Production schema changes remain operator-shell-only
+          # per ADR-002 §11.13 — never call `migrate deploy` here.
+          echo "::notice::Read-only check. This workflow never runs migrate deploy."
+          npx prisma migrate status
