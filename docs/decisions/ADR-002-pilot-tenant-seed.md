@@ -641,6 +641,52 @@ Closes the last open `#P02` followup. Up to §11.19, every pilot product had `Pr
 - **Operational lesson preserved in §11.21:**
   - Any new `enforceAction`-protected route must `fail()` on every early-return below the enforcement line, OR shift the validation to before `enforceAction()`. Spy-based mocks in tests catch this at unit level.
 
+### 11.22 `#α-D session B` — bulk-PO conversion + selectedReplyId-based ready_for_po decode 2026-04-26
+
+α-D session B closes the half-finished feature shipped in §11.21: operator could pick a reply but couldn't actually convert ready_for_po quotes into Orders. After commit `552c45af`, "일괄 발주 전환" header CTA on `/dashboard/purchases` is wired to a real atomic bulk-PO mutation, and the resolver promotes selectedReplyId-set quotes into `ready_for_po` even before all suppliers respond.
+
+- **Resolver decode change (lib/ontology/purchase-conversion-resolver.ts):**
+  - `deriveConversionStatus` gains a selectedReplyId short-circuit. If `quote.selectedReplyId` is set, the reply is in `input.replies` (same membership rule as `selectedOptionId` resolution from §11.21), AND at least one reply is in, the quote promotes to `ready_for_po` even with silent other vendors. Without this, an operator who already decided would stay stuck in `review_required` while the resolver waited for silent suppliers — the "decided but blocked" anti-pattern.
+  - 3 new resolver tests: [31] valid selectedReplyId + RESPONDED + partial replies → ready_for_po; [32] valid + SENT (status field lag) → ready_for_po; [33] stale id (reply deleted) → stays review_required. Total 43/43 resolver tests pass.
+- **Bulk-PO endpoint (NEW — `apps/web/src/app/api/work-queue/purchase-conversion/bulk-po/route.ts`):**
+  - POST `/api/work-queue/purchase-conversion/bulk-po`
+  - Body: `{ quoteIds: string[] }` (1-50 items; deduplicated server-side via Set so the same quoteId twice still creates one Order).
+  - Pipeline: auth → enforceAction (concurrency lock keyed on `bulk-po:${userId}` so two parallel bulk calls from the same user serialize) → body parse → schema parse → ownership filter (one `findMany({ where: { id IN, userId } })`; missing id → 404 `QUOTE_MISSING`) → per-quote pre-validation (existing `Order` → 409 `ORDER_EXISTS`; missing/stale `selectedReplyId` → 409 `NO_SELECTED_REPLY`) → `db.$transaction` creates Order + OrderItems for each quote.
+  - Atomic: any pre-check failure aborts the whole batch BEFORE any write. Operator gets the first failing reason. No partial state.
+  - Order.orderNumber generated via new `lib/api/order-number.ts` utility (`ORD-YYYYMMDD-{cuid-tail}`, mirrors §11.19's quote-number format and rationale; 6 unit tests).
+  - 9 unit tests including spy-based assertions: every 4xx asserts `enforcement.fail()` called once and `complete()` never called; happy path asserts the inverse. §11.21 lock-leak class cannot recur.
+- **UI wiring (`/dashboard/purchases/page.tsx`):**
+  - "일괄 발주 전환" header CTA un-hidden. Renders **only** when `stats.ready_for_po > 0` so it never sits as a dead button (LabAxis dead-button ban).
+  - Click → `window.confirm()` → `bulkPoMutation.mutate(quoteIds)` (csrfFetch, useMutation). Disabled while pending; toast on success summarizing the first 3 orderNumbers + remaining count; toast on error with the server's first-failure code.
+- **Schema migration:** **none.** `Order` and `OrderItem` already existed (schema.prisma L1497-1546). This commit is pure read + transactional write against existing models — no operator-shell `migrate deploy` required, no §11.13 procedure step.
+- **Production verification (deploy `dpl_fwHq2Xerg5Qs4wv2nGiySrRq5tic`, commit `552c45af`):**
+  - **GET /api/work-queue/purchase-conversion** → 200, `stats.ready_for_po: 0` (existing pilot quotes have `selectedReplyId: null`, so the new short-circuit doesn't fire — no regression on the existing review_required state of `Q-20260426-0WX80L` and `Q-20260426-9AYHTZ`).
+  - **POST bulk-po with invalid body** (no `quoteIds`) → 400 `INVALID_INPUT` (lock released).
+  - **POST bulk-po with empty array** → 400 `INVALID_INPUT` (lock released).
+  - **POST bulk-po with non-owned quoteId** → 404 `QUOTE_MISSING` (no leak between not-found and not-yours; lock released).
+  - **POST bulk-po with owned quote that has no selectedReplyId** → 409 `NO_SELECTED_REPLY` with the exact failing quote ID in the error message; lock released.
+  - **UI**: header CTA *correctly hidden* on the live `/dashboard/purchases` page (no ready_for_po quotes), so dead-button audit passes — visible 0, total 0.
+- **Real-user happy-path probe deferred to natural traffic:**
+  - Pilot tenant has no `QuoteReply` rows yet (no real vendor email replies). To exercise the positive bulk-PO path end-to-end against production, either (a) a vendor has to reply to a sent RFQ, or (b) operator seeds a reply via SQL. Unit tests cover the happy path completely (test [8]: 2 quotes → 2 Orders → results array; test [9]: dedupe input).
+- **What `#P02` + α-D state looks like at the end of §11.22:**
+  - Phase A — CLOSED §11.8
+  - Phase B-β — CLOSED §11.10
+  - Phase B-α — CLOSED §11.15
+  - `#P02-e2e-blocker` — CLOSED §11.16
+  - `#P02-followup-compare-fake-success` — CLOSED (`c4f526fb`)
+  - `#P02-followup-quote-403` — CLOSED §11.18
+  - `#P02-followup-quote-number-missing` — CLOSED §11.19
+  - `#P02-followup-pilot-vendor-catalog` — CLOSED §11.20
+  - **α-D session A — CLOSED §11.21**
+  - **α-D session B — CLOSED §11.22 (this entry)**
+  - α-F — open (LLM rationale enrichment, separate trk)
+  - `#SEC02` — open (git history password purge, separate slot)
+  - `#P03-test-prefix-cleanup` — open (page-per-feature readability for `/app/quote` wrapper / `/test/quote` body, no functional impact)
+- **Out of scope (deliberately):**
+  - Per-row checkbox UX (operator picks SOME ready_for_po rows instead of all). Current CTA converts ALL `ready_for_po` quotes at once. Add when the operator asks for partial-batch.
+  - Order lifecycle (CANCELLED, restock, billing). Existing Order endpoints handle that.
+  - aiOptions per-reply price / leadDays / moq enrichment — still v0 placeholders, future α-F.
+
 ---
 
 ## 12. Changelog
@@ -674,3 +720,4 @@ Closes the last open `#P02` followup. Up to §11.19, every pilot product had `Pr
 - 2026-04-26 — **§11.19 OPENED and CLOSED:** `#P02-followup-quote-number-missing` — utility extraction `lib/api/quote-number.ts` (commit `4d03d99e`). 6/6 vitest pass. `createQuote()` Normal path now updates fresh quotes with a generated `Q-YYYYMMDD-{cuid-tail}` quoteNumber; `from-cart` route refactored onto the same utility (and a dead inline sequence-based `generateQuoteNumber()` removed). Production probe on deploy `dpl_7E4ecYkagHxzDZuqSA3MqKTb62KK`: `POST /api/quotes` returns `quoteNumber: "Q-20260426-9AYHTZ"`, and `GET /api/work-queue/purchase-conversion` shows `stats.total: 0 → 1` with `conversionStatus: "review_required"` for the new quote. **§11.16 Phase 1.3 is now genuinely verified end-to-end**: sourcing → quote → conversion-queue chain renders correctly in the pilot tenant with vendor-pending state preserved at every step.
 - 2026-04-26 — **§11.20 OPENED and CLOSED:** `#P02-followup-pilot-vendor-catalog` — minimum vendor fixture (commit `32e1280b`). Pilot tenant gains 1 Vendor (Thermo Fisher Scientific) + 15 ProductVendor links via the existing pilot-seed transaction (operator-shell run per §11.13). Production probe verified the symmetric vendor-present path: `/app/search` shows priceInKRW + leadTime + vendor name (no "견적 필요"), "견적 담기" click hits the canonical `added` toast (₩45,000 footer), `/app/quote` displays "Thermo Fisher Scientific" group with full request-ready surface, `POST /api/quotes` persists vendorName in the snapshot (`Q-20260426-0WX80L`), and `/api/work-queue/purchase-conversion` shows `stats.total: 1 → 2` with vendor-pending and vendor-present quotes coexisting and resolved independently. **The `#P02` track is now fully closed.** The pilot tenant exercises both vendor branches end-to-end on real data; any further gap opens against `#P03`+.
 - 2026-04-26 — **§11.21 OPENED and CLOSED:** `#α-D session A` — `Quote.selectedReplyId` persistence (commits `8fdb3e8f` schema + endpoint + UI; `f2281614` lock-release fix). Schema migration applied via session pooler `:5432` after the operator hit a stale `DIRECT_URL` reference on `:6543`. Production probe round 1 surfaced an enforcement-lock leak: 400 early-return paths skipped `enforcement.fail()` and a follow-up POST on the same quote returned 409. Round 2 fix added `enforcement.fail()` to every 4xx return below the enforceAction line and upgraded test mocks from no-op to call-count spies so the regression is reproducible at unit-test level. Round 2 verified: bogus replyId → 400, same quote `replyId: null` → 200 (idempotent un-select), conversion-queue `selectedOptionId` field present and `null` for both existing pilot quotes (no regression). Real-user positive-select path is deferred to natural traffic (no real `QuoteReply` rows in pilot yet); unit tests cover the happy path. Session B (`bulk-PO + ready_for_po decode`) is the natural successor.
+- 2026-04-26 — **§11.22 OPENED and CLOSED:** `#α-D session B` — bulk-PO conversion + selectedReplyId-based `ready_for_po` decode (commit `552c45af`). Resolver `deriveConversionStatus` gains a selectedReplyId short-circuit (43/43 tests). New endpoint `POST /api/work-queue/purchase-conversion/bulk-po` atomically converts a batch of ready_for_po quotes into Orders (9 tests, all 4xx assert lock release per §11.21 lesson). New utility `lib/api/order-number.ts` (`ORD-YYYYMMDD-{cuid-tail}`, mirror of §11.19 quote-number, 6 tests). UI "일괄 발주 전환" header CTA wired with `stats.ready_for_po > 0` visibility gate so the dead-button ban is preserved. **No schema migration required** — `Order` and `OrderItem` already existed. Production probe (deploy `dpl_fwHq2Xerg5Qs4wv2nGiySrRq5tic`) verified all negative paths (400 INVALID_INPUT, 404 QUOTE_MISSING, 409 NO_SELECTED_REPLY) with correct lock-release behavior; real-user positive bulk-PO probe deferred until pilot tenant has actual QuoteReply rows. **α-D track is now closed end-to-end** — operator can pick a reply, the queue promotes the quote to ready_for_po, and the bulk-PO CTA converts it to a real Order.
