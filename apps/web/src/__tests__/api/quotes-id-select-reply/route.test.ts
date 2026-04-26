@@ -29,7 +29,14 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-// Lightweight enforcement stub: always allowed, complete/fail/deny noop.
+// Enforcement stub: spy on complete/fail so we can verify the route
+// releases the concurrency lock on every early-return path.
+// Production probe (ADR §11.21) caught a 409 because a 4xx return
+// path skipped fail() and leaked the lock to the next request.
+const enforcementSpies = {
+  complete: vi.fn(),
+  fail: vi.fn(),
+};
 vi.mock("@/lib/security/server-enforcement-middleware", () => ({
   enforceAction: () => ({
     allowed: true,
@@ -37,8 +44,8 @@ vi.mock("@/lib/security/server-enforcement-middleware", () => ({
     actorContext: {} as unknown,
     authResult: { permitted: true } as unknown,
     deny: () => mockJsonResponse({ error: "forbidden" }, { status: 403 }),
-    complete: () => {},
-    fail: () => {},
+    complete: enforcementSpies.complete,
+    fail: enforcementSpies.fail,
   }),
 }));
 
@@ -67,6 +74,8 @@ const params = Promise.resolve({ id: QUOTE_ID });
 
 beforeEach(() => {
   vi.clearAllMocks();
+  enforcementSpies.complete.mockReset();
+  enforcementSpies.fail.mockReset();
   mockAuth.mockResolvedValue({ user: { id: OWNER_ID, role: "ADMIN" } });
 });
 
@@ -80,23 +89,26 @@ describe("POST /api/quotes/[id]/select-reply", () => {
     expect(body.code).toBe("UNAUTHORIZED");
   });
 
-  it("[2] invalid body (replyId missing) → 400", async () => {
+  it("[2] invalid body (replyId missing) → 400 + enforcement.fail() releases lock", async () => {
     const res = await POST(makeRequest({}) as any, { params });
     expect(res.status).toBe(400);
     const body = await res.json();
     expect(body.success).toBe(false);
+    expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
+    expect(enforcementSpies.complete).not.toHaveBeenCalled();
   });
 
-  it("[3] quote not found → 404", async () => {
+  it("[3] quote not found → 404 + enforcement.fail() releases lock", async () => {
     mockDb.quote.findUnique.mockResolvedValueOnce(null);
     const res = await POST(makeRequest({ replyId: "r1" }) as any, { params });
     expect(res.status).toBe(404);
     const body = await res.json();
     expect(body.code).toBe("NOT_FOUND");
     expect(mockDb.quote.update).not.toHaveBeenCalled();
+    expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
   });
 
-  it("[4] quote owned by someone else → 404 (don't leak existence)", async () => {
+  it("[4] quote owned by someone else → 404 + enforcement.fail() releases lock", async () => {
     mockDb.quote.findUnique.mockResolvedValueOnce({
       id: QUOTE_ID,
       userId: "user-other",
@@ -105,9 +117,12 @@ describe("POST /api/quotes/[id]/select-reply", () => {
     const res = await POST(makeRequest({ replyId: "r1" }) as any, { params });
     expect(res.status).toBe(404);
     expect(mockDb.quote.update).not.toHaveBeenCalled();
+    expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
   });
 
-  it("[5] replyId not on quote → 400 REPLY_NOT_ON_QUOTE", async () => {
+  it("[5] replyId not on quote → 400 REPLY_NOT_ON_QUOTE + enforcement.fail() releases lock", async () => {
+    // ADR §11.21 production probe regression — bogus replyId returned 400
+    // but didn't release the lock, leaking it to the next request.
     mockDb.quote.findUnique.mockResolvedValueOnce({
       id: QUOTE_ID,
       userId: OWNER_ID,
@@ -121,6 +136,8 @@ describe("POST /api/quotes/[id]/select-reply", () => {
     const body = await res.json();
     expect(body.code).toBe("REPLY_NOT_ON_QUOTE");
     expect(mockDb.quote.update).not.toHaveBeenCalled();
+    expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
+    expect(enforcementSpies.complete).not.toHaveBeenCalled();
   });
 
   it("[6] valid replyId → 200 + selectedReplyId persisted", async () => {
@@ -142,6 +159,9 @@ describe("POST /api/quotes/[id]/select-reply", () => {
     const updateCall = mockDb.quote.update.mock.calls[0][0];
     expect(updateCall.where.id).toBe(QUOTE_ID);
     expect(updateCall.data.selectedReplyId).toBe("r2");
+    // Happy path: complete() releases lock and writes audit envelope.
+    expect(enforcementSpies.complete).toHaveBeenCalledTimes(1);
+    expect(enforcementSpies.fail).not.toHaveBeenCalled();
   });
 
   it("[7] replyId === null → unset (200 + selectedReplyId persisted as null)", async () => {

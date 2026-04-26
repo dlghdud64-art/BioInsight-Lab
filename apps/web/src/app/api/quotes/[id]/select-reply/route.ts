@@ -65,10 +65,17 @@ export async function POST(
     if (!enforcement.allowed) return enforcement.deny();
 
     // Body parse
+    // Every early-return below the `enforceAction` line MUST call
+    // `enforcement.fail()` to release the concurrency lock. The lock is
+    // acquired inside enforceAction(); only complete() / fail() release
+    // it. A returned 4xx without a fail() leaks the lock and the next
+    // mutation on the same entity returns 409 — caught in production
+    // probe (ADR §11.21 followup).
     let body: unknown;
     try {
       body = await request.json();
     } catch {
+      enforcement.fail();
       return NextResponse.json(
         { success: false, error: "유효하지 않은 JSON 형식입니다." },
         { status: 400 },
@@ -77,6 +84,7 @@ export async function POST(
 
     const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
+      enforcement.fail();
       return NextResponse.json(
         {
           success: false,
@@ -101,6 +109,7 @@ export async function POST(
     });
 
     if (!quote || quote.userId !== session.user.id) {
+      enforcement.fail();
       // Don't distinguish "not found" from "not yours" — same response.
       return NextResponse.json(
         { success: false, error: "견적을 찾을 수 없습니다.", code: "NOT_FOUND" },
@@ -111,6 +120,7 @@ export async function POST(
     // Validate reply membership when replyId !== null. Empty replies set
     // also fails the membership test, which is the correct rejection.
     if (replyId !== null && !quote.replies.some((r: { id: string }) => r.id === replyId)) {
+      enforcement.fail();
       return NextResponse.json(
         {
           success: false,
