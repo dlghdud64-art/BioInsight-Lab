@@ -1,9 +1,28 @@
 /**
  * Quote Draft Generator — AI 견적 요청 초안 생성 모듈
  *
- * GPT-4o를 사용하여 선택된 품목 기반으로 공식 한국어 RFQ 이메일 초안을 생성합니다.
- * 기존 openai.ts 패턴 (fetch + AbortController + fallback) 준수.
+ * Phase 4 of #α-F-followup-anthropic-migration (ADR §11.26).
+ * Migrated from gpt-4o (OpenAI) to claude-haiku-4-5-20251001 via the
+ * lib/ai/anthropic.ts wrapper. Behaviour contract preserved:
+ *
+ * - generateQuoteDraft / generateVendorEmailDraft throw
+ *   AiKeyMissingError when no API key is set (caller persists an
+ *   AiActionItem with the raised error class for surfacing).
+ * - Any other failure (HTTP non-OK, parse failure, network) returns
+ *   the template fallback so the operator always gets a draft.
+ *
+ * AiKeyMissingError is the public class on this module — it's
+ * imported by /api/ai-actions/generate/quote-draft/route.ts and
+ * vendor-email-draft/route.ts. Phase 4 maps Anthropic's
+ * AnthropicKeyMissingError onto this class so the routes don't need
+ * to know about the underlying provider.
  */
+
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+  ANTHROPIC_DEFAULT_MODEL,
+} from "@/lib/ai/anthropic";
 
 export interface QuoteDraftItem {
   productName: string;
@@ -53,8 +72,6 @@ export interface VendorEmailDraftResult {
   completionTokens: number;
 }
 
-const OPENAI_CHAT_URL = "https://api.openai.com/v1/chat/completions";
-const AI_MODEL = "gpt-4o";
 const TIMEOUT_MS = 15000;
 
 /**
@@ -63,11 +80,6 @@ const TIMEOUT_MS = 15000;
 export async function generateQuoteDraft(
   request: QuoteDraftRequest
 ): Promise<QuoteDraftResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new AiKeyMissingError();
-  }
-
   const itemsTable = request.items
     .map(
       (item, i) =>
@@ -111,42 +123,22 @@ ${request.organizationName ? `조직명: ${request.organizationName}` : ""}
 ${request.requesterName ? `담당자: ${request.requesterName}` : ""}
 ${request.additionalNotes ? `추가 요청사항: ${request.additionalNotes}` : ""}`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
   try {
-    const response = await fetch(OPENAI_CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
+    const r = await callAnthropicMessage({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 2000,
+      temperature: 0.3,
+      timeoutMs: TIMEOUT_MS,
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const errText = await response.text().catch(() => "unknown");
-      throw new Error(`OpenAI API error ${response.status}: ${errText}`);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(r.content);
+    } catch {
+      console.warn("[QuoteDraftGenerator] AI JSON 파싱 실패, 템플릿 폴백");
+      return generateFallbackDraft(request, deliveryDate);
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new Error("Empty AI response");
-
-    const parsed = JSON.parse(content);
-    const usage = data.usage || {};
 
     return {
       emailSubject: parsed.emailSubject || `[견적요청] ${request.items[0]?.productName || "품목"} 외 ${Math.max(0, request.items.length - 1)}건`,
@@ -154,15 +146,16 @@ ${request.additionalNotes ? `추가 요청사항: ${request.additionalNotes}` : 
       items: request.items,
       vendorNames: request.vendorNames || [],
       suggestedDeliveryDate: parsed.suggestedDeliveryDate || deliveryDate,
-      aiModel: AI_MODEL,
-      promptTokens: usage.prompt_tokens || 0,
-      completionTokens: usage.completion_tokens || 0,
+      aiModel: r.model || ANTHROPIC_DEFAULT_MODEL,
+      promptTokens: r.inputTokens,
+      completionTokens: r.outputTokens,
     };
   } catch (err: unknown) {
-    clearTimeout(timeoutId);
-    if (err instanceof AiKeyMissingError) throw err;
-
-    // Fallback: 템플릿 기반 초안 생성
+    if (err instanceof AnthropicKeyMissingError) {
+      // Caller (route.ts) catches this exact class to surface the
+      // "API key not set" UX. Re-throw the public class for contract.
+      throw new AiKeyMissingError();
+    }
     console.warn("[QuoteDraftGenerator] AI 호출 실패, 템플릿 폴백:", err);
     return generateFallbackDraft(request, deliveryDate);
   }
@@ -174,11 +167,6 @@ ${request.additionalNotes ? `추가 요청사항: ${request.additionalNotes}` : 
 export async function generateVendorEmailDraft(
   request: VendorEmailDraftRequest
 ): Promise<VendorEmailDraftResult> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new AiKeyMissingError();
-  }
-
   const itemsTable = request.items
     .map(
       (item, i) =>
@@ -210,55 +198,45 @@ ${request.organizationName ? `발신: ${request.organizationName}` : ""}
 ${request.requesterName ? `담당: ${request.requesterName}` : ""}
 ${request.customMessage ? `추가 메시지: ${request.customMessage}` : ""}`;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
   try {
-    const response = await fetch(OPENAI_CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.3,
-        max_tokens: 1500,
-        response_format: { type: "json_object" },
-      }),
-      signal: controller.signal,
+    const r = await callAnthropicMessage({
+      systemPrompt,
+      userPrompt,
+      maxTokens: 1500,
+      temperature: 0.3,
+      timeoutMs: TIMEOUT_MS,
     });
 
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`OpenAI API error ${response.status}`);
+    let parsed: any;
+    try {
+      parsed = JSON.parse(r.content);
+    } catch {
+      console.warn(
+        "[VendorEmailDraftGenerator] AI JSON 파싱 실패, 템플릿 폴백"
+      );
+      return generateFallbackVendorEmail(request);
     }
 
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new Error("Empty AI response");
-
-    const parsed = JSON.parse(content);
-    const usage = data.usage || {};
-
     return {
-      emailSubject: parsed.emailSubject || `[견적요청] ${request.vendorName} - ${request.items.length}건`,
+      emailSubject:
+        parsed.emailSubject ||
+        `[견적요청] ${request.vendorName} - ${request.items.length}건`,
       emailBody: parsed.emailBody || "",
       vendorName: request.vendorName,
-      aiModel: AI_MODEL,
-      promptTokens: usage.prompt_tokens || 0,
-      completionTokens: usage.completion_tokens || 0,
+      aiModel: r.model || ANTHROPIC_DEFAULT_MODEL,
+      promptTokens: r.inputTokens,
+      completionTokens: r.outputTokens,
     };
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (err instanceof AiKeyMissingError) throw err;
-
-    console.warn("[VendorEmailDraftGenerator] AI 호출 실패, 템플릿 폴백:", err);
+  } catch (err: unknown) {
+    if (err instanceof AnthropicKeyMissingError) {
+      // Caller (route.ts) catches AiKeyMissingError to surface the
+      // "API key not set" UX. Re-throw the public class for contract.
+      throw new AiKeyMissingError();
+    }
+    console.warn(
+      "[VendorEmailDraftGenerator] AI 호출 실패, 템플릿 폴백:",
+      err
+    );
     return generateFallbackVendorEmail(request);
   }
 }
