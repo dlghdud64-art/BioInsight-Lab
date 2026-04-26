@@ -539,4 +539,52 @@ describe("resolvePurchaseConversion — v0 placeholders", () => {
     );
     expect(r.selectedOptionId).toBeNull();
   });
+
+  // ──────────────────────────────────────────────────────────
+  // selectedReplyId → ready_for_po short-circuit (α-D session B,
+  // ADR §11.22)
+  // ──────────────────────────────────────────────────────────
+
+  it("[31] selectedReplyId valid + supplierReplies >= 1 + RESPONDED → ready_for_po", () => {
+    // Operator picked one of the responding vendors. Other vendors
+    // haven't replied yet, but the explicit selection means the queue
+    // should not block on them — promote to ready_for_po.
+    const r1 = reply("V1", "v1@x.com");
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: r1.id, status: "RESPONDED" }),
+        vendors: [vendor("V1"), vendor("V2"), vendor("V3")],
+        replies: [r1], // only V1 responded; V2 / V3 silent
+      }),
+    );
+    expect(r.conversionStatus).toBe("ready_for_po");
+  });
+
+  it("[32] selectedReplyId valid + supplierReplies >= 1 + SENT (not RESPONDED) → ready_for_po", () => {
+    // Status field on Quote may lag if the user picked before all
+    // replies came in. The selection itself is the intent signal.
+    const r1 = reply("V1", "v1@x.com");
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: r1.id, status: "SENT" }),
+        vendors: [vendor("V1"), vendor("V2")],
+        replies: [r1],
+      }),
+    );
+    expect(r.conversionStatus).toBe("ready_for_po");
+  });
+
+  it("[33] selectedReplyId set + reply NOT in input.replies → still review_required (stale id)", () => {
+    // Stale selection (reply was deleted out-of-band, etc.) doesn't
+    // promote — same membership rule as selectedOptionId. Keeps
+    // review_required so the operator notices the missing option.
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: "r-deleted", status: "SENT" }),
+        vendors: [vendor("V1"), vendor("V2")],
+        replies: [reply("V1", "v1@x.com")], // selected reply gone
+      }),
+    );
+    expect(r.conversionStatus).toBe("review_required");
+  });
 });

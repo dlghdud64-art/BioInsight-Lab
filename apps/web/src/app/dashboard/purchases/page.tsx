@@ -128,6 +128,48 @@ export default function PurchasesPage() {
     retry: 1,
   });
 
+  // α-D session B (ADR §11.22): atomic bulk-PO conversion. Takes the
+  // current ready_for_po quoteIds and POSTs them all-or-nothing. On
+  // success, invalidate the queue so the just-converted rows shift to
+  // the confirmed bucket. On failure, toast the server's error code
+  // (most operationally meaningful is the first failing quote).
+  const bulkPoMutation = useMutation({
+    mutationFn: async (quoteIds: string[]) => {
+      const res = await csrfFetch(
+        `/api/work-queue/purchase-conversion/bulk-po`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ quoteIds }),
+          credentials: "include",
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "일괄 발주 전환 실패");
+      }
+      return res.json();
+    },
+    onSuccess: (data: { data: { results: Array<{ quoteId: string; orderNumber: string }> } }) => {
+      const n = data.data.results.length;
+      toast({
+        title: `${n}건 일괄 발주 완료`,
+        description: data.data.results
+          .slice(0, 3)
+          .map((r) => r.orderNumber)
+          .join(", ") + (n > 3 ? ` 외 ${n - 3}건` : ""),
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "일괄 발주 전환 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // α-D session A (ADR §11.21): persist operator's reply choice.
   // POST { replyId } / { replyId: null } to un-select. Optimistic UX
   // is intentionally not used — a single round-trip + invalidation is
@@ -225,10 +267,36 @@ export default function PurchasesPage() {
               </Button>
             </Link>
             {/*
-              "일괄 발주 전환" header CTA — intentionally hidden until α-D
-              wires the bulk-PO mutation. dead button ban precludes a
-              disabled placeholder here.
+              "일괄 발주 전환" header CTA — α-D session B (ADR §11.22).
+              Wired to /api/work-queue/purchase-conversion/bulk-po. Only
+              renders when stats.ready_for_po > 0 so it never appears
+              as a dead button.
             */}
+            {stats.ready_for_po > 0 && (
+              <Button
+                size="sm"
+                className="h-10 px-5 text-sm gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold shadow-sm disabled:opacity-60"
+                disabled={bulkPoMutation.isPending}
+                onClick={() => {
+                  const ids = items
+                    .filter((i) => i.conversionStatus === "ready_for_po")
+                    .map((i) => i.id);
+                  if (ids.length === 0) return;
+                  // Confirm dialog — no fancy modal, just the browser
+                  // confirm. Bulk-PO is reversible at the operational
+                  // level (operator can request cancellation), but the
+                  // mutation itself is atomic so a single OK / Cancel
+                  // is the right friction.
+                  const ok = window.confirm(
+                    `발주 가능 ${ids.length}건을 일괄 PO 로 전환합니다. 진행하시겠습니까?`,
+                  );
+                  if (!ok) return;
+                  bulkPoMutation.mutate(ids);
+                }}
+              >
+                <CheckCircle2 className="h-4 w-4" /> 일괄 발주 전환 ({stats.ready_for_po})
+              </Button>
+            )}
           </div>
         </div>
 

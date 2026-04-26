@@ -250,6 +250,22 @@ function deriveConversionStatus(
   if (quote.status === "COMPLETED") return "ready_for_po";
   if (quote.status === "CANCELLED") return "hold";
 
+  // α-D session B (ADR §11.22): explicit operator selection short-
+  // circuits "wait for all suppliers". If the operator picked a
+  // specific QuoteReply (selectedReplyId is in input.replies — same
+  // membership rule as selectedOptionId resolution), and at least one
+  // reply is in, that's enough intent + signal to mark ready_for_po.
+  // Without this branch, a quote where the operator already decided
+  // would stay in review_required forever just because some other
+  // supplier never responded.
+  if (
+    quote.selectedReplyId !== null &&
+    input.replies.some((r) => r.id === quote.selectedReplyId) &&
+    supplierReplies >= 1
+  ) {
+    return "ready_for_po";
+  }
+
   // RESPONDED with all suppliers in → ready
   if (
     quote.status === "RESPONDED" &&
