@@ -159,6 +159,14 @@ export interface AiActionInput {
   readonly status: string;
   /** TaskStatus enum: "READY" | "REVIEW_NEEDED" | "ACTION_NEEDED" | ... */
   readonly taskStatus: string;
+  /**
+   * α-F (ADR §11.25): RATIONALE_SUMMARY rows carry their option link
+   * + LLM result here. The resolver pulls `payload.optionId` and
+   * `result.rationale` to enrich `aiOptions[].rationale`. Other
+   * AiActionType rows ignore these fields.
+   */
+  readonly payload?: Record<string, unknown> | null;
+  readonly result?: Record<string, unknown> | null;
 }
 
 export interface PurchaseConversionInput {
@@ -384,16 +392,54 @@ function buildAiOptions(input: PurchaseConversionInput): readonly AiOption[] {
     add(req.id, req.vendorName, req.respondedAt !== null);
   }
 
-  return suppliers.map((s, idx) => ({
-    id: s.id,
-    supplierName: s.name,
-    recommendationLevel:
-      idx === 0 ? "primary" : s.replied ? "alternate" : "conservative",
-    price: null,
-    leadDays: null,
-    moq: null,
-    rationale: s.replied ? (["회신 완료"] as const) : (["회신 대기"] as const),
-  }));
+  // α-F (ADR §11.25): prefer LLM-generated rationale persisted as
+  // AiActionItem(type: RATIONALE_SUMMARY, payload.optionId === supplier.id).
+  // When no row exists yet, fall back to the v0 placeholder. Build the
+  // lookup once before the .map() so we don't re-scan input.aiActions
+  // per supplier.
+  const rationaleByOptionId = new Map<string, readonly string[]>();
+  for (const action of input.aiActions) {
+    if (action.type !== "RATIONALE_SUMMARY") continue;
+    const optionId =
+      action.payload && typeof action.payload === "object"
+        ? ((action.payload as Record<string, unknown>).optionId as
+            | string
+            | undefined)
+        : undefined;
+    if (!optionId) continue;
+    const r =
+      action.result && typeof action.result === "object"
+        ? ((action.result as Record<string, unknown>).rationale as unknown)
+        : undefined;
+    if (!Array.isArray(r) || r.length === 0) continue;
+    const cleaned = r.filter(
+      (s): s is string => typeof s === "string" && s.length > 0,
+    );
+    if (cleaned.length === 0) continue;
+    rationaleByOptionId.set(optionId, cleaned);
+  }
+
+  return suppliers.map((s, idx) => {
+    const persisted = rationaleByOptionId.get(s.id);
+    const rationale: readonly string[] = persisted
+      ? persisted
+      : s.replied
+        ? (["회신 완료"] as const)
+        : (["회신 대기"] as const);
+    return {
+      id: s.id,
+      supplierName: s.name,
+      recommendationLevel: (idx === 0
+        ? "primary"
+        : s.replied
+          ? "alternate"
+          : "conservative") as "primary" | "alternate" | "conservative",
+      price: null,
+      leadDays: null,
+      moq: null,
+      rationale,
+    };
+  });
 }
 
 // ──────────────────────────────────────────────────────────

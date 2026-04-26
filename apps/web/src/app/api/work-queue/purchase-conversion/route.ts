@@ -118,13 +118,26 @@ export async function GET(_request: NextRequest) {
         status: true,
         taskStatus: true,
         relatedEntityId: true,
+        // α-F (ADR §11.25): RATIONALE_SUMMARY rows carry the option
+        // link in payload and the LLM rationale in result. Resolver
+        // reads these in buildAiOptions.
+        payload: true,
+        result: true,
       },
     });
 
-    // O(1) lookup table
+    // O(1) lookup table. α-F: payload + result added so resolver can
+    // read RATIONALE_SUMMARY rows.
     const aiActionsByQuote = new Map<
       string,
-      Array<{ id: string; type: string; status: string; taskStatus: string }>
+      Array<{
+        id: string;
+        type: string;
+        status: string;
+        taskStatus: string;
+        payload?: Record<string, unknown> | null;
+        result?: Record<string, unknown> | null;
+      }>
     >();
     for (const action of aiActions) {
       const qid = action.relatedEntityId;
@@ -135,6 +148,8 @@ export async function GET(_request: NextRequest) {
         type: action.type,
         status: action.status,
         taskStatus: action.taskStatus,
+        payload: (action.payload as Record<string, unknown> | null | undefined) ?? null,
+        result: (action.result as Record<string, unknown> | null | undefined) ?? null,
       });
       aiActionsByQuote.set(qid, list);
     }

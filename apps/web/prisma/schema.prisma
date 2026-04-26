@@ -1977,6 +1977,7 @@ enum AiActionType {
   VENDOR_RESPONSE_PARSED // 벤더 회신 파싱 결과
   STATUS_CHANGE_SUGGEST  // 상태 변경 제안
   COMPARE_DECISION       // 비교 세션 판정 대기
+  RATIONALE_SUMMARY      // α-F (ADR §11.25) — AI 선택안 단일 라인 근거
 }
 
 // ── Legacy 상태 (하위 호환) ──

@@ -170,6 +170,57 @@ export default function PurchasesPage() {
     },
   });
 
+  // α-F (ADR §11.25): generate / fetch persisted LLM rationale for a
+  // single supplier option. Backend caches by (quoteId, optionId);
+  // first call hits the LLM, subsequent calls return cached
+  // AiActionItem result. invalidateQueries() reloads the queue so
+  // resolver picks up the new RATIONALE_SUMMARY row.
+  const rationaleMutation = useMutation({
+    mutationFn: async (vars: {
+      quoteId: string;
+      optionId: string;
+      supplierName: string;
+      replied: boolean;
+      price: number | null;
+      leadDays: number | null;
+      moq: number | null;
+      currency: string;
+      quoteTitle: string;
+      totalSuppliers: number;
+    }) => {
+      const res = await csrfFetch(
+        `/api/ai-actions/generate/quote-rationale`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(vars),
+          credentials: "include",
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "AI 근거 생성 실패");
+      }
+      return res.json();
+    },
+    onSuccess: (data: {
+      data: { rationale: string[]; fromCache: boolean; aiModel: string | null };
+    }) => {
+      toast({
+        title: data.data.fromCache ? "AI 근거 (캐시)" : "AI 근거 생성 완료",
+        description: data.data.rationale.join(" · "),
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "AI 근거 생성 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   // α-D session A (ADR §11.21): persist operator's reply choice.
   // POST { replyId } / { replyId: null } to un-select. Optimistic UX
   // is intentionally not used — a single round-trip + invalidation is
@@ -696,6 +747,34 @@ export default function PurchasesPage() {
                               {opt.rationale.length > 0 && (
                                 <p className="text-[10px] text-slate-400 mt-1 leading-snug">{opt.rationale.join(" · ")}</p>
                               )}
+                              {/* α-F (ADR §11.25): inline AI rationale generator.
+                                  Tiny button below rationale line. Click does NOT
+                                  toggle selection (stopPropagation) — it only
+                                  persists / refreshes the LLM rationale via
+                                  /api/ai-actions/generate/quote-rationale. */}
+                              <button
+                                type="button"
+                                disabled={rationaleMutation.isPending}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (rationaleMutation.isPending) return;
+                                  rationaleMutation.mutate({
+                                    quoteId: selectedItem.id,
+                                    optionId: opt.id,
+                                    supplierName: opt.supplierName,
+                                    replied: opt.recommendationLevel !== "conservative",
+                                    price: opt.price,
+                                    leadDays: opt.leadDays,
+                                    moq: opt.moq,
+                                    currency: selectedItem.currency,
+                                    quoteTitle: selectedItem.title,
+                                    totalSuppliers: selectedItem.totalSuppliers,
+                                  });
+                                }}
+                                className="mt-1 inline-flex items-center gap-1 text-[10px] text-slate-500 hover:text-blue-600 disabled:opacity-50"
+                              >
+                                <Sparkles className="h-3 w-3" />AI 근거
+                              </button>
                             </button>
                           );
                         })}

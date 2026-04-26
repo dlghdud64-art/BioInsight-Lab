@@ -587,4 +587,125 @@ describe("resolvePurchaseConversion — v0 placeholders", () => {
     );
     expect(r.conversionStatus).toBe("review_required");
   });
+
+  // ──────────────────────────────────────────────────────────
+  // RATIONALE_SUMMARY branch (α-F, ADR §11.25)
+  // ──────────────────────────────────────────────────────────
+
+  it("[34] RATIONALE_SUMMARY for an option → aiOption.rationale uses LLM result", () => {
+    const r1 = reply("V1", "v1@x.com"); // id "r-V1"
+    const action: AiActionInput = {
+      id: "a1",
+      type: "RATIONALE_SUMMARY",
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { optionId: r1.id, supplierName: "V1" },
+      result: { rationale: ["가장 빠른 납기와 합리적 가격"] },
+    };
+    const r = resolvePurchaseConversion(
+      input({
+        vendors: [vendor("V1")],
+        replies: [r1],
+        aiActions: [action],
+      }),
+    );
+    const v1Option = r.aiOptions.find((o) => o.id === r1.id);
+    expect(v1Option).toBeDefined();
+    expect(v1Option!.rationale).toEqual(["가장 빠른 납기와 합리적 가격"]);
+  });
+
+  it("[35] RATIONALE_SUMMARY missing payload.optionId → ignored, fallback to placeholder", () => {
+    const r1 = reply("V1", "v1@x.com");
+    const action: AiActionInput = {
+      id: "a1",
+      type: "RATIONALE_SUMMARY",
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { /* optionId missing */ supplierName: "V1" },
+      result: { rationale: ["should be ignored"] },
+    };
+    const r = resolvePurchaseConversion(
+      input({
+        vendors: [vendor("V1")],
+        replies: [r1],
+        aiActions: [action],
+      }),
+    );
+    const v1Option = r.aiOptions.find((o) => o.id === r1.id);
+    expect(v1Option!.rationale).toEqual(["회신 완료"]);
+  });
+
+  it("[36] RATIONALE_SUMMARY result.rationale empty array → ignored, fallback", () => {
+    const r1 = reply("V1", "v1@x.com");
+    const action: AiActionInput = {
+      id: "a1",
+      type: "RATIONALE_SUMMARY",
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { optionId: r1.id },
+      result: { rationale: [] },
+    };
+    const r = resolvePurchaseConversion(
+      input({
+        vendors: [vendor("V1")],
+        replies: [r1],
+        aiActions: [action],
+      }),
+    );
+    const v1Option = r.aiOptions.find((o) => o.id === r1.id);
+    expect(v1Option!.rationale).toEqual(["회신 완료"]);
+  });
+
+  it("[37] non-RATIONALE_SUMMARY AiAction types do not affect rationale", () => {
+    const r1 = reply("V1", "v1@x.com");
+    const action: AiActionInput = {
+      id: "a1",
+      type: "QUOTE_DRAFT", // NOT rationale type
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { optionId: r1.id },
+      result: { rationale: ["should be ignored"] },
+    };
+    const r = resolvePurchaseConversion(
+      input({
+        vendors: [vendor("V1")],
+        replies: [r1],
+        aiActions: [action],
+      }),
+    );
+    const v1Option = r.aiOptions.find((o) => o.id === r1.id);
+    expect(v1Option!.rationale).toEqual(["회신 완료"]);
+  });
+
+  it("[38] multiple RATIONALE_SUMMARY rows per option — most recent prevails (or both ok if same content)", () => {
+    // Builder loops in order; same optionId appearing twice means the
+    // last write wins (Map.set behavior). Operationally the endpoint
+    // caches by optionId, so this case is rare but defined.
+    const r1 = reply("V1", "v1@x.com");
+    const a1: AiActionInput = {
+      id: "a1",
+      type: "RATIONALE_SUMMARY",
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { optionId: r1.id },
+      result: { rationale: ["older"] },
+    };
+    const a2: AiActionInput = {
+      id: "a2",
+      type: "RATIONALE_SUMMARY",
+      status: "APPROVED",
+      taskStatus: "COMPLETED",
+      payload: { optionId: r1.id },
+      result: { rationale: ["newer"] },
+    };
+    const r = resolvePurchaseConversion(
+      input({
+        vendors: [vendor("V1")],
+        replies: [r1],
+        aiActions: [a1, a2], // a2 last — Map.set last-write-wins
+      }),
+    );
+    const v1Option = r.aiOptions.find((o) => o.id === r1.id);
+    expect(v1Option!.rationale).toEqual(["newer"]);
+  });
 });
