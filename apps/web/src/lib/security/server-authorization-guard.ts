@@ -69,6 +69,7 @@ export type IrreversibleActionType =
   | 'order_status_change'
   | 'order_bulk_action'
   // ── AI action chain ──
+  | 'ai_action_create'   // ADR §11.25 (#α-F) — RATIONALE_SUMMARY 등 신규 AiActionItem 생성
   | 'ai_action_approve'
   | 'ai_action_update'
   | 'ai_ops_control'
@@ -163,6 +164,7 @@ const ACTION_ROLE_MINIMUM: Record<IrreversibleActionType, SystemRole[]> = {
   order_status_change: ['ops_admin'],
   order_bulk_action: ['buyer', 'ops_admin'],
   // ── AI action chain ──
+  ai_action_create: ['requester', 'buyer', 'approver', 'ops_admin'],
   ai_action_approve: ['requester', 'buyer', 'approver', 'ops_admin'],
   ai_action_update: ['requester', 'buyer', 'approver', 'ops_admin'],
   ai_ops_control: ['ops_admin'],
