@@ -395,6 +395,57 @@ Closeout of the §11.10 follow-up + plan §0 `docs/plans/PLAN_phase-b-alpha-purc
   - `#P02-legacy` — CLOSED commit `26133295`
   - `#P02-api-500` (suspected during Phase B-β probe) — moot; root cause was always stale build cache
 
+### 11.16 `#P02-e2e-blocker` — sourcing → quote fake-success + dead path 정상화 2026-04-26
+
+Direct successor to §11.15. Today's `#P02-e2e` probe (operator option B: Phase 1.1 + 1.2 single-shot, real Quote creation) hit a textbook LabAxis fake-success pattern at the *very first* user-facing step of the sourcing → quote chain — which §11.10 / §11.15 had never exercised because their probes started downstream (queue, then conversion-queue).
+
+- **Trigger (production runtime probe before the fix):**
+  - `/app/search?q=Trypsin` → "견적 담기" click on Trypsin-EDTA 100ml.
+  - Toast renders `"견적함에 성공적으로 담겼습니다."` (success).
+  - Footer counter: `견적 0 후보없음` — unchanged.
+  - Network: zero API calls after the click.
+  - Console WARNING: `"No vendor found for product product-pilot-trypsin-100ml"` (chunk `8403-9ec5409dae0238f6.js:349`).
+- **Two LabAxis principles violated at once:**
+  - *Dead button / no-op:* `addProductToQuote` in `apps/web/src/app/test/_components/test-flow-provider.tsx:356-359` did `console.warn(...); return;` whenever `product.vendors?.[0]` was undefined.
+  - *Fake success:* `apps/web/src/app/test/_components/sourcing-result-row.tsx:260,301` wrappers did `() => { onToggleRequest(); toast.success(...); }` — the toast fired regardless of whether `onToggleRequest` mutated state.
+- **Root cause across data and code:**
+  - **Data:** pilot tenant catalog (`apps/web/scripts/pilot/pilot.ts:110-191`) ships 15 products with **zero ProductVendor rows by design** — the catalog deliberately omits vendor fields and parks vendor backfill for "subsequent phase #P02" (pilot.ts §92-94 comment). Every "견적 담기" click in the pilot tenant therefore hits the no-vendor branch.
+  - **Code:** the no-vendor branch is the only path that *should* exist for pilot products in their current state ("견적 필요" badge is the canonical ontology label for vendor-unknown products). The bug is treating that ontology state as an error and silently bailing while the UI lies about success.
+- **Truth reconciliation against §11.10 / §11.15:**
+  - §11.10 verified `/dashboard/purchases` shows the canonical `/api/quotes/my` empty state. *Did not* exercise the *write* path that creates a Quote.
+  - §11.15 verified `/api/work-queue/purchase-conversion` returns the canonical empty payload. *Did not* exercise the upstream `addProductToQuote` → `createQuote` chain.
+  - Both prior closeouts are correct *for what they tested*. §11.16 covers the upstream surface they did not.
+- **Fix landed (commit `f230d817`):**
+  - **NEW** `apps/web/src/lib/quote/add-product-to-quote.ts` (170 lines, pure composer). Contract: `vendor-unknown is a first-class success that produces a real candidacy row (vendorId="", unitPrice=0)`. Only `ok:false` case is `missing-product-id`. Result type discriminates `added | vendor-pending | merged`.
+  - **NEW** `apps/web/src/lib/quote/resolve-add-to-quote-toast.ts` (74 lines). Single source of truth for toast copy; exhaustive switch on the result mode. `ADD_TO_QUOTE_TOAST` const exposes 4 strings (`added` / `vendorPending` / `merged` / `missingProductId`).
+  - **NEW tests:** `__tests__/lib/quote/add-product-to-quote.test.ts` (8 cases — all branches + multi-product preservation) and `__tests__/lib/quote/resolve-add-to-quote-toast.test.ts` (5 cases — intent per mode + 3-way distinct copy + failure mode never says `"성공"`). 13/13 PASS via `vitest run`.
+  - **CHANGED** `test-flow-provider.tsx`: `addProductToQuote` delegates to the pure composer, returns `ComputeAddToQuoteResult`, commits `nextItems` via `setQuoteItems`. Interface signature changed `void → ComputeAddToQuoteResult`; `TestFlowProvider` dummy default updated to return `{ ok:false, reason:"missing-product-id" }`.
+  - **CHANGED** `sourcing-result-row.tsx`: 4 onClick sites stripped of unconditional `toast.success` / `toast.info` calls. Wrapping `onToggleRequest` is now the toast authority (it sees the result mode).
+  - **CHANGED** `test/search/page.tsx`: 3 `onToggleRequest` wrappers (row, rail, request-review-window) import the toast resolver, branch on result mode for adds, separate `removed` toast for the toggle-off path.
+- **Production verification (deploy `dpl_FXHdWJYiw9EkwaHJ2eT7YrR7QfUs`, READY in 110 s):**
+  - `/api/cart` → 200 OK with `totalItems: 0` baseline. `#P03` regression check — still healthy.
+  - `/app/search?q=Trypsin&_cb=1` (cache-bust) → "견적 담기" click → toast renders `"견적 후보에 추가했어요. 가격은 견적 요청 후 확정됩니다."` (info intent). Footer counter `견적 0 → 1`. Status bar `"견적 후보 1 / 요청서 생성으로 이어갈 수 있습니다"`. Button state transitions `견적 담기 → ✓ 견적 후보`. Console WARNING `"No vendor found"` no longer emitted.
+  - `/app/quote` (workbench) → vendor-pending row preserved end-to-end: `"⚠ 검토 필요 1건 / 가격 미확인 1"` header + `"📄 벤더 미지정"` group label (= `request-assembly.ts:74` fallback) + `Trypsin-EDTA 100ml / 가격 미확인` (= `PriceDisplay` `"가격 문의"` for `unitPrice=0`) + `"⚠ 1건 가격 미확인 — 공급사에 문의 필요"` next-action callout. No fake `₩0` rendered anywhere. Three request-strategy cards (간단 확인 / 표준 견적 [선택됨] / 확장 검토) plus auto-generated title (`Trypsin-EDTA 100ml 견적 요청`) and message wired correctly.
+  - "임시저장" → toast `"임시저장 완료 / 폼 데이터가 로컬에 저장되었습니다."`; no API call (= local form scratch only, by design — no Quote DB row yet).
+- **Out of scope (deliberate, separated into followups):**
+  - **`#P02-followup-quote-403` (NEW, OPENED 2026-04-26):** clicking "1건 전송 준비 완료 →" calls `POST /api/quotes` and returns **403 Forbidden**. This is `enforceAction({ action: 'quote_request_create' }).deny()` in `route.ts:25-34`, gated *before* `createQuote` body executes. Unrelated to the fake-success fix in §11.16. Phase 1.3 (conversion-queue table render of a freshly-created Quote) cannot be verified until 403 is resolved. Action: enforcement policy / RBAC review for `quote_request_create` on the pilot owner.
+  - **`#P02-followup-pilot-vendor-catalog` (NEW, OPENED 2026-04-26):** the 15-product pilot catalog still has zero `ProductVendor` rows. After §11.16, every pilot product click takes the vendor-pending path — *correct* operationally, but the "vendor-present" path in the same chain has no test fixture in production. Backfill all 15 products' vendors in one pass when ready (per-product gas: vendor name, priceInKRW, currency, stockStatus, leadTime, catalogNumber). This was deliberately deferred from option C in today's plan because partial backfill (Trypsin only) creates inconsistency.
+  - **`#P02-followup-compare-fake-success` (NEW, OPENED 2026-04-26):** `apps/web/src/app/test/compare/page.tsx` has 7 sites with the same `addProductToQuote(...) ; toast({...})` pattern (L647, L838, L1196, L1348, L1551, L1580, L1581). Today's commit only fixes the sourcing inlet; compare flow's writes remain optimistic-toast. Same fix pattern (= switch each onClick to consume the result and call `resolveAddToQuoteToast`). Tracked but not blocking.
+- **LabAxis principle alignment (verified end-to-end):**
+  - canonical truth: `quoteItems` (client preview) and Quote DB rows (server truth) cleanly separated. `addProductToQuote` only mutates client preview; nothing pretends to have written DB.
+  - chatbot/assistant 재해석 금지: pure composer is rule-based; AI rec status decoded elsewhere. No LLM call introduced in this fix.
+  - dead button ban: silent return removed; every click produces an observable mutation **or** an honest error toast.
+  - same-canvas + page-per-feature ban: zero new pages; entirely within `/app/search` + `/app/quote`.
+- **Net state of `#P02` track after §11.16:**
+  - Phase A (inventory) — CLOSED §11.8
+  - Phase B-β (purchases mock removal) — CLOSED §11.10
+  - Phase B-α (conversion-queue ontology) — CLOSED §11.15
+  - **`#P02-e2e-blocker` (sourcing inlet fake-success) — CLOSED §11.16 (this entry)**
+  - **`#P02-followup-quote-403`** — OPENED §11.16, blocks Phase 1.3 verification only
+  - **`#P02-followup-pilot-vendor-catalog`** — OPENED §11.16, no user-visible blocker after §11.16
+  - **`#P02-followup-compare-fake-success`** — OPENED §11.16, latent same-pattern in compare flow
+  - α-D / α-F — open follow-ups, not blocking core value
+
 ---
 
 ## 12. Changelog
@@ -420,3 +471,5 @@ Closeout of the §11.10 follow-up + plan §0 `docs/plans/PLAN_phase-b-alpha-purc
 - 2026-04-25 — §11.14 OPENED and CLOSED: DATABASE_URL env corruption incident during operator's §11.13 cleanup. All Prisma routes returned 500 with `Error parsing connection string: invalid port number`. Detected by Phase B-α α-C runtime probe; ruled out as α-C regression by cross-probing β endpoint (also 500). Resolved by re-entering canonical `DATABASE_URL` value in Vercel UI + redeploy (`dpl_2Vo4Y8mok79MVVozKgXJX7E9dMvV`). Operational lesson: probe `/api/health` after any Prisma-bound env edit.
 - 2026-04-25 — `#P01-followup-health-precheck` CLOSED: `/api/health` now performs a structural URL pre-check (commit `42f83fef`, `apps/web/src/lib/health/validate-database-url.ts` + 16 unit tests). New `db: "url-malformed"` branch returns immediately with `urlIssue` reason when `DATABASE_URL` is structurally broken (the §11.14 class), distinguishing it from `db: "failed"` (URL valid but DB unreachable). Adds `urlOk` boolean to all branches for grep-based triage. Direct successor to §11.14.
 - 2026-04-25 — Legacy `web` Vercel project (`prj_9myxP5rmQ6QupPjp7vi6dtBF1qug`) DELETED via Vercel UI by operator. Verified via `mcp__vercel__list_projects` — only `bio-insight-lab-web` (`prj_sJ6yIgyW59VrOCbTfFbfwO4aJjim`) remains as a LabAxis surface. Together with the §11.10 `.vercel/project.json` resync (`#P01-followup-correction`) this fully closes the project drift opened in §11.9 / §11.10 and removes the surface area for env mis-edit on a wrong project.
+- 2026-04-26 — `#P03` CLOSED: `/api/cart` GET aligned with live `ProductVendor` schema. Old code used `where: { isActive: true }` and `select: { inStock: true }` neither of which exist on `ProductVendor`. Replaced with `select: { priceInKRW, stockStatus }` and derived response `inStock` as `stockStatus !== "OUT_OF_STOCK"` (fail-open). Cart route returns 200 with empty cart for the pilot owner; verified pre-§11.16 deploy. Commit `efc4ed42`.
+- 2026-04-26 — **§11.16 OPENED and CLOSED:** `#P02-e2e-blocker` — sourcing → quote inlet fake-success + dead path normalised (commit `f230d817`). Pure composer + result-driven toast resolver replace the silent `return` + unconditional `toast.success` pattern. 13/13 vitest pass; production probe on deploy `dpl_FXHdWJYiw9EkwaHJ2eT7YrR7QfUs` confirms vendor-pending now produces a real candidacy row, the toast tells the truth, and the workbench preserves "검토 필요 / 가격 미확인 / 벤더 미지정" all the way to `/app/quote/request`. Three new followups OPENED in §11.16: `#P02-followup-quote-403` (POST /api/quotes 403 from `enforceAction` deny — blocks Phase 1.3 verification only), `#P02-followup-pilot-vendor-catalog` (15-product vendor backfill), `#P02-followup-compare-fake-success` (7 same-pattern sites in compare/page.tsx).
