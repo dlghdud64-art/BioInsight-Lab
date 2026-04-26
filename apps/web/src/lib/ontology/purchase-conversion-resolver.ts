@@ -104,6 +104,13 @@ export interface QuoteInput {
   readonly quoteNumber: string | null;
   readonly validUntil: Date | null;
   readonly createdAt: Date;
+  /**
+   * α-D: persisted choice of which supplier reply the operator
+   * picked for this quote. Must reference a row in `input.replies`
+   * for the resolver to surface it as `selectedOptionId`. Older
+   * rows persist as `null` (no choice yet). ADR-002 §11.21.
+   */
+  readonly selectedReplyId: string | null;
 }
 
 /** Minimal QuoteVendor subset. Mirrors prisma `model QuoteVendor`. */
@@ -424,8 +431,15 @@ export function resolvePurchaseConversion(
     totalSuppliers,
     aiRecommendationStatus,
     aiOptions,
-    // v0: no schema column for selected reply yet (see plan §1 / §7)
-    selectedOptionId: null,
+    // α-D (ADR §11.21): surface persisted reply choice. Conservative
+    // fallback to null when the persisted id no longer matches a
+    // reply on this quote — a stale id should never render as a
+    // phantom highlight on a non-existent option row.
+    selectedOptionId:
+      input.quote.selectedReplyId &&
+      input.replies.some((r) => r.id === input.quote.selectedReplyId)
+        ? input.quote.selectedReplyId
+        : null,
     // v0: no Approval model yet (see plan §0.2)
     externalApprovalStatus: "unknown",
   };

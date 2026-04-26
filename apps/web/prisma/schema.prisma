@@ -387,6 +387,13 @@ model Quote {
   parentQuoteId  String? // 원본 리스트 ID (버전이 있는 경우)
   isSnapshot     Boolean   @default(false) // 스냅샷 여부
   snapshotNote   String?   @db.Text // 스냅샷 메모
+  // α-D (ADR-002 §11.21): operator-selected QuoteReply for PO conversion.
+  // Nullable — older rows persist as null (no choice yet). FK references
+  // QuoteReply.id but is intentionally NOT a Prisma relation: an
+  // unconstrained string keeps the ALTER TABLE simple and lets the
+  // resolver fall back to null if the reply is deleted out-of-band.
+  // QuoteReply.id format is cuid (same shape as Quote.id).
+  selectedReplyId String?
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 

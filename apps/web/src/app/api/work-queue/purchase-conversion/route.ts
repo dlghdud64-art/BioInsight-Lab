@@ -75,6 +75,7 @@ export async function GET(_request: NextRequest) {
         quoteNumber: true,
         validUntil: true,
         createdAt: true,
+        selectedReplyId: true, // α-D, ADR §11.21
         vendors: {
           select: { id: true, vendorName: true, email: true },
         },
@@ -150,6 +151,7 @@ export async function GET(_request: NextRequest) {
           quoteNumber: q.quoteNumber,
           validUntil: q.validUntil,
           createdAt: q.createdAt,
+          selectedReplyId: q.selectedReplyId ?? null, // α-D, ADR §11.21
         },
         vendors: q.vendors,
         vendorRequests: q.vendorRequests,

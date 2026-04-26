@@ -34,6 +34,7 @@ function quote(overrides: Partial<QuoteInput> = {}): QuoteInput {
     quoteNumber: "Q-20260425-0001",
     validUntil: new Date("2026-05-25T00:00:00Z"),
     createdAt: new Date("2026-04-20T00:00:00Z"),
+    selectedReplyId: null,
     ...overrides,
   };
 }
@@ -480,11 +481,60 @@ describe("resolvePurchaseConversion — v0 placeholders", () => {
     }
   });
 
-  it("[27] selectedOptionId is always null in v0", () => {
+  it("[27] selectedReplyId null → selectedOptionId null (no choice yet)", () => {
     const r = resolvePurchaseConversion(
       input({
+        quote: quote({ selectedReplyId: null }),
         vendors: [vendor("V1")],
         replies: [reply("V1", "v1@x.com")],
+      }),
+    );
+    expect(r.selectedOptionId).toBeNull();
+  });
+
+  // ──────────────────────────────────────────────────────────
+  // selectedReplyId branch (α-D session A, ADR §11.21)
+  // ──────────────────────────────────────────────────────────
+
+  it("[28] selectedReplyId set + reply present → selectedOptionId === selectedReplyId", () => {
+    // The reply id is what the resolver uses as aiOption.id for the
+    // reply branch (see buildAiOptions L348), so a persisted
+    // selectedReplyId maps cleanly to the option the user picked.
+    const r1 = reply("V1", "v1@x.com"); // id: "r-V1"
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: r1.id }),
+        vendors: [vendor("V1")],
+        replies: [r1],
+      }),
+    );
+    expect(r.selectedOptionId).toBe(r1.id);
+  });
+
+  it("[29] selectedReplyId set + reply NOT in input.replies → selectedOptionId null (conservative)", () => {
+    // Reply may have been deleted, or selectedReplyId was set against a
+    // reply on a different quote. Resolver falls back to null so the UI
+    // renders "no selection" rather than a phantom highlight on a row
+    // that doesn't exist.
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: "r-deleted-reply" }),
+        vendors: [vendor("V1")],
+        replies: [reply("V1", "v1@x.com")], // id "r-V1", not "r-deleted-reply"
+      }),
+    );
+    expect(r.selectedOptionId).toBeNull();
+  });
+
+  it("[30] selectedReplyId set + replies empty → selectedOptionId null", () => {
+    // Defensive: even if quote has selectedReplyId persisted, an empty
+    // replies array means no option matches and the UI must render
+    // unselected.
+    const r = resolvePurchaseConversion(
+      input({
+        quote: quote({ selectedReplyId: "r-V1" }),
+        vendors: [vendor("V1")],
+        replies: [],
       }),
     );
     expect(r.selectedOptionId).toBeNull();

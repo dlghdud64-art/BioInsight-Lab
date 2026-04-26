@@ -4,15 +4,17 @@ export const dynamic = 'force-dynamic';
 
 import { useState, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Search, Package, CheckCircle2, Clock, AlertCircle, AlertTriangle,
   ArrowRight, X, ListChecks, CircleCheck, ChevronRight, FileText,
-  Sparkles, Truck,
+  Sparkles, Truck, Check,
 } from "lucide-react";
 import Link from "next/link";
+import { csrfFetch } from "@/lib/api-client";
+import { toast } from "@/hooks/use-toast";
 
 import type {
   PurchaseConversionItem,
@@ -106,6 +108,7 @@ const RECOMMENDATION_LEVEL_LABEL: Record<AiOption["recommendationLevel"], string
 
 export default function PurchasesPage() {
   const { status: authStatus } = useSession();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [queueTab, setQueueTab] = useState<QueueTab>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -123,6 +126,40 @@ export default function PurchasesPage() {
     enabled: authStatus === "authenticated",
     staleTime: 30 * 1000,
     retry: 1,
+  });
+
+  // α-D session A (ADR §11.21): persist operator's reply choice.
+  // POST { replyId } / { replyId: null } to un-select. Optimistic UX
+  // is intentionally not used — a single round-trip + invalidation is
+  // simple and cannot leave the UI showing a phantom selection if the
+  // server rejects.
+  const selectReplyMutation = useMutation({
+    mutationFn: async (vars: { quoteId: string; replyId: string | null }) => {
+      const res = await csrfFetch(
+        `/api/quotes/${vars.quoteId}/select-reply`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ replyId: vars.replyId }),
+          credentials: "include",
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "선택안 저장 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "선택안 저장 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const items = data?.data.items ?? [];
@@ -536,18 +573,49 @@ export default function PurchasesPage() {
                       <div className="space-y-2">
                         {selectedItem.aiOptions.map((opt) => {
                           const isPrimary = opt.recommendationLevel === "primary";
+                          // α-D (ADR §11.21): selectedOptionId comes from
+                          // Quote.selectedReplyId via the resolver. Click
+                          // toggles select / un-select.
+                          const isSelected = selectedItem.selectedOptionId === opt.id;
+                          const onPick = () => {
+                            if (selectReplyMutation.isPending) return;
+                            selectReplyMutation.mutate({
+                              quoteId: selectedItem.id,
+                              replyId: isSelected ? null : opt.id,
+                            });
+                          };
                           return (
-                            <div key={opt.id} className={`rounded-lg border p-3 ${
-                              isPrimary ? "border-emerald-200 bg-emerald-50/50" : "border-slate-100 bg-slate-50/50"
-                            }`}>
+                            <button
+                              type="button"
+                              key={opt.id}
+                              onClick={onPick}
+                              disabled={selectReplyMutation.isPending}
+                              aria-pressed={isSelected}
+                              className={`w-full text-left rounded-lg border p-3 transition-colors ${
+                                isSelected
+                                  ? "border-blue-500 bg-blue-50 ring-1 ring-blue-500"
+                                  : isPrimary
+                                  ? "border-emerald-200 bg-emerald-50/50 hover:border-emerald-300"
+                                  : "border-slate-100 bg-slate-50/50 hover:border-slate-200"
+                              } disabled:opacity-60`}
+                            >
                               <div className="flex items-center justify-between mb-1">
                                 <div className="flex items-center gap-1.5">
                                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                                    isPrimary ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
+                                    isSelected
+                                      ? "bg-blue-100 text-blue-600"
+                                      : isPrimary
+                                      ? "bg-emerald-100 text-emerald-600"
+                                      : "bg-slate-100 text-slate-500"
                                   }`}>
                                     {RECOMMENDATION_LEVEL_LABEL[opt.recommendationLevel]}
                                   </span>
                                   <span className="text-xs font-medium text-slate-700">{opt.supplierName}</span>
+                                  {isSelected && (
+                                    <span className="inline-flex items-center gap-0.5 text-[10px] font-bold text-blue-600">
+                                      <Check className="h-3 w-3" />선택됨
+                                    </span>
+                                  )}
                                 </div>
                                 <span className="text-xs font-bold text-slate-900">
                                   {formatPrice(opt.price, selectedItem.currency)}
@@ -560,7 +628,7 @@ export default function PurchasesPage() {
                               {opt.rationale.length > 0 && (
                                 <p className="text-[10px] text-slate-400 mt-1 leading-snug">{opt.rationale.join(" · ")}</p>
                               )}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
