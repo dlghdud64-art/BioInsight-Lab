@@ -8,32 +8,31 @@
 # `migrate deploy`. Production schema changes remain
 # operator-shell-only per ADR-002 §11.13.
 #
-# What this catches
-# -----------------
-# - Operator pushed schema + migration files but forgot to run
-#   `pnpm prisma:migrate` against production. Status will report
-#   pending migrations not applied to the live DB → red CI.
-# - Production DB has a migration applied that is not in git
-#   (someone hand-applied SQL, or a rollback wasn't committed).
-#   Status reports "drift detected" → red CI.
-# - Schema drift introduced by a manual ALTER outside the
-#   migrations workflow. Same red CI signal.
-#
-# What this does NOT do
-# ---------------------
-# - Apply migrations (no `migrate deploy`).
-# - Roll back migrations.
-# - Touch the DB beyond a read-only metadata query.
-# - Replace operator responsibility — see ADR-002 §11.13.
-#
 # Required GitHub repository secret
 # ---------------------------------
 # MIGRATE_STATUS_DATABASE_URL
-#   Production DATABASE_URL. Transaction pooler (:6543) is
-#   sufficient — `migrate status` is a read-only metadata query and
-#   does not require the session pooler. Read-only credentials are
-#   acceptable if the role can read `_prisma_migrations` and the
-#   public schema metadata.
+#   Production DATABASE_URL. Transaction pooler (:6543) is fine.
+#   Read-only credentials acceptable.
+#
+# History of failed runs (for the next person editing this)
+# ---------------------------------------------------------
+# Run #1 (commit 0b4130e, npx prisma generate from apps/web):
+#   `npx prisma` fetched the global latest (prisma@7.8.0), which
+#   removed `datasource.url` → P1012 schema validation error.
+#
+# Run #2 (commit 48703b0, pnpm exec prisma generate from apps/web):
+#   `pnpm exec` couldn't resolve prisma — the repo is npm-managed
+#   (no pnpm-workspace.yaml; package.json uses npm `workspaces`),
+#   so pnpm's filter machinery saw an empty workspace set.
+#
+# Run #3 (commit af0317e, pnpm --filter web exec):
+#   Same root cause as #2 with the explicit error
+#   "WARN The 'workspaces' field in package.json is not supported
+#    by pnpm. Create a 'pnpm-workspace.yaml' file instead."
+#   Confirmed the repo is npm-managed and this workflow must follow.
+#
+# Current shape (run #4+): npm ci with postinstall, then
+# `npx --no-install` so the binary stays project-pinned.
 
 name: DB drift detector (read-only, no migrate deploy)
 
@@ -67,28 +66,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "24"
+          cache: "npm"
 
-      - name: Setup pnpm 9
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9
-          run_install: false
-
-      - name: Install dependencies (frozen lockfile)
-        run: pnpm install --frozen-lockfile
-
-      - name: Prisma generate
-        # `pnpm --filter web exec` runs from the repo root and
-        # explicitly targets the web workspace's pnpm-managed
-        # node_modules (apps/web/package.json `"name": "web"`).
-        #
-        # Run #1 (npx) → fetched global prisma@7.8.0 → P1012.
-        # Run #2 (pnpm exec from cwd apps/web) → ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
-        # because pnpm couldn't resolve a workspace from the cwd
-        # alone. `--filter web` makes the workspace explicit.
-        run: pnpm --filter web exec prisma generate
+      - name: Install dependencies (npm ci; postinstall runs prisma generate)
+        # Repo is npm-managed. apps/web/package.json's postinstall
+        # is `node scripts/dedupe-react.js && prisma generate`, with
+        # `enable-pre-post-scripts=true` set in .npmrc — so a single
+        # `npm ci` populates node_modules AND generates the prisma
+        # client. No separate generate step needed.
+        run: npm ci
 
       - name: Read-only schema drift check (no migrate deploy)
+        working-directory: apps/web
         env:
           DATABASE_URL: ${{ secrets.MIGRATE_STATUS_DATABASE_URL }}
         run: |
@@ -100,9 +89,10 @@ jobs:
           # Production schema changes remain operator-shell-only
           # per ADR-002 §11.13 — never call `migrate deploy` here.
           #
-          # `pnpm --filter web exec` resolves the project-pinned
-          # prisma 5.22.0 inside the web workspace; see the
-          # comment on the `Prisma generate` step above for why
-          # `npx prisma` and bare `pnpm exec` both fail.
+          # `npx --no-install` REFUSES to fetch a fresh prisma
+          # binary — it only invokes the one already linked under
+          # node_modules/.bin/. Run #1 caught a fetch-the-latest
+          # disaster (prisma@7.8.0 vs our 5.22.0 schema), so the
+          # explicit no-install flag is load-bearing here.
           echo "::notice::Read-only check. This workflow never runs migrate deploy."
-          pnpm --filter web exec prisma migrate status
+          npx --no-install prisma migrate status
