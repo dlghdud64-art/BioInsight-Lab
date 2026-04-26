@@ -6,6 +6,7 @@ import { useTestFlow } from "../_components/test-flow-provider";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { resolveAddToQuoteToast } from "@/lib/quote/resolve-add-to-quote-toast";
 import {
   X,
   ShoppingCart,
@@ -644,8 +645,14 @@ export default function TestComparePage() {
                     size="sm"
                     className="h-7 text-[10px] bg-blue-600 hover:bg-blue-500 text-white"
                     onClick={() => {
-                      addProductToQuote(products[0]);
-                      toast({ title: "견적 리스트에 추가됨", description: products[0].name });
+                      // #P02-followup-compare-fake-success: result-driven toast.
+                      const r = addProductToQuote(products[0]);
+                      const t = resolveAddToQuoteToast(r);
+                      toast({
+                        title: t.message,
+                        description: r.ok ? products[0]?.name : undefined,
+                        variant: t.intent === "error" ? "destructive" : "default",
+                      });
                     }}
                   >
                     이 항목만 견적 담기
@@ -835,8 +842,13 @@ export default function TestComparePage() {
                           variant="ghost"
                           onClick={() => {
                             if (!isInQuote) {
-                              addProductToQuote(product);
-                              toast({ title: "견적 리스트에 추가됨", description: product.name });
+                              const r = addProductToQuote(product);
+                              const t = resolveAddToQuoteToast(r);
+                              toast({
+                                title: t.message,
+                                description: r.ok ? product.name : undefined,
+                                variant: t.intent === "error" ? "destructive" : "default",
+                              });
                             }
                           }}
                           className={`h-7 px-2 text-[10px] ${
@@ -1193,8 +1205,13 @@ export default function TestComparePage() {
                   className="w-full h-8 text-xs bg-blue-600 hover:bg-blue-500 text-white"
                   onClick={() => {
                     if (!quoteItems.some((q: any) => q.productId === selectedProduct.id)) {
-                      addProductToQuote(selectedProduct);
-                      toast({ title: "견적 리스트에 추가됨", description: selectedProduct.name });
+                      const r = addProductToQuote(selectedProduct);
+                      const t = resolveAddToQuoteToast(r);
+                      toast({
+                        title: t.message,
+                        description: r.ok ? selectedProduct.name : undefined,
+                        variant: t.intent === "error" ? "destructive" : "default",
+                      });
                     }
                   }}
                   disabled={quoteItems.some((q: any) => q.productId === selectedProduct.id)}
@@ -1345,8 +1362,33 @@ export default function TestComparePage() {
                 size="sm"
                 className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
                 onClick={() => {
-                  products.forEach((product: any) => addProductToQuote(product));
-                  toast({ title: "견적 리스트에 추가됨", description: `${products.length}개 제품을 담았습니다.` });
+                  // #P02-followup-compare-fake-success: aggregate result-driven toast.
+                  // Tally each result mode; surface the worst case (any error) plus
+                  // the dominant success mode so the user sees a single, honest summary.
+                  let added = 0, vendorPending = 0, merged = 0, failed = 0;
+                  products.forEach((product: any) => {
+                    const r = addProductToQuote(product);
+                    if (!r.ok) failed++;
+                    else if (r.mode === "added") added++;
+                    else if (r.mode === "vendor-pending") vendorPending++;
+                    else if (r.mode === "merged") merged++;
+                  });
+                  if (failed > 0) {
+                    toast({
+                      title: `${failed}건은 추가하지 못했습니다`,
+                      description: `성공 ${added + vendorPending + merged}건 / 실패 ${failed}건`,
+                      variant: "destructive",
+                    });
+                  } else {
+                    const parts = [];
+                    if (added) parts.push(`${added}건 담김`);
+                    if (vendorPending) parts.push(`${vendorPending}건 가격 미정`);
+                    if (merged) parts.push(`${merged}건 수량 +1`);
+                    toast({
+                      title: `${products.length}건 견적 후보 처리 완료`,
+                      description: parts.join(" · "),
+                    });
+                  }
                 }}
               >
                 <ShoppingCart className="h-3.5 w-3.5 mr-1.5" />
@@ -1548,9 +1590,14 @@ export default function TestComparePage() {
                     disabled={!allResolved || !decisionProduct}
                     onClick={() => {
                       if (!decisionProduct) return;
-                      addProductToQuote(decisionProduct);
+                      const r = addProductToQuote(decisionProduct);
+                      const t = resolveAddToQuoteToast(r);
                       trackEvent("compare_review_handoff", { selectedDecisionItemId, note: !!reviewNote });
-                      toast({ title: "견적 리스트에 추가됨", description: decisionProduct.name });
+                      toast({
+                        title: t.message,
+                        description: r.ok ? decisionProduct.name : undefined,
+                        variant: t.intent === "error" ? "destructive" : "default",
+                      });
                       setReviewMode(false);
                       router.push("/app/quote");
                     }}>
@@ -1577,8 +1624,13 @@ export default function TestComparePage() {
                   disabled={!allResolved || !recommended}
                   onClick={() => {
                     if (!recommended) return;
-                    addProductToQuote(recommended);
-                    toast({ title: "견적 전환 완료", description: recommended.name });
+                    const r = addProductToQuote(recommended);
+                    const t = resolveAddToQuoteToast(r);
+                    toast({
+                      title: t.message,
+                      description: r.ok ? recommended.name : undefined,
+                      variant: t.intent === "error" ? "destructive" : "default",
+                    });
                     setReviewMode(false);
                     router.push("/app/quote");
                   }}>
