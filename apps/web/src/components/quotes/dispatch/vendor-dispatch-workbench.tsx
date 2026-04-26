@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { csrfFetch } from "@/lib/api-client";
 import {
   Dialog,
   DialogContent,
@@ -235,7 +236,7 @@ export function VendorRequestModal({
 
     setIsSubmitting(true);
     try {
-      const response = await fetch(`/api/quotes/${quoteId}/vendor-requests`, {
+      const response = await csrfFetch(`/api/quotes/${quoteId}/vendor-requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
