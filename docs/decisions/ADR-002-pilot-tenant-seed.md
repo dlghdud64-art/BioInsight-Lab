@@ -557,6 +557,57 @@ Direct successor to §11.18. The §11.18 production verification of a real Quote
   - The two filter call sites (`/api/quotes/my`, `/api/work-queue/purchase-conversion`) keep `quoteNumber: { not: null }` — they're now consistent with the createQuote contract instead of being a silent footgun.
   - `csrfFetch` wrapper unchanged.
 
+### 11.20 `#P02-followup-pilot-vendor-catalog` — minimum vendor fixture landed 2026-04-26
+
+Closes the last open `#P02` followup. Up to §11.19, every pilot product had `ProductVendor: 0` by deliberate deferral (pilot.ts §92-94 comment). §11.16's vendor-pending fix made that an operational state instead of a UI bug, but it left the symmetric vendor-present path with no production fixture — operators clicking any pilot product always landed on vendor-pending, the vendor-present branch never exercised on real data.
+
+- **Decision (Option 1, single-supplier minimum):** add 1 Vendor (Thermo Fisher Scientific) and 15 ProductVendor links — one per pilot product, all pointing to the same vendor — with priceInKRW values from a Korean lab-supply placeholder set the operator can adjust later without re-keying anything else. Multi-supplier expansion (Option 2) is left for a future trk if comparison/AI-recommendation testing demands it.
+- **Files (commit `32e1280b`):**
+  - `apps/web/scripts/pilot/pilot.ts`:
+    - **NEW** `PILOT_VENDOR_CATALOG`: 1 entry (`vendor-pilot-thermofisher` / Thermo Fisher Scientific / country US / currency USD).
+    - **NEW** `PILOT_VENDOR_IDS`: helper.
+    - **NEW** `PILOT_PRODUCT_VENDOR_LINKS`: 15 entries, deterministic `pv-pilot-*` ids so cleanup keys on the exact id (no filter-based delete).
+    - `PilotCleanupOperation` extended with `vendor` model.
+    - `buildPilotCleanupPlan()` emits vendor delete operations after products. ProductVendor cascades on either side (schema `onDelete: Cascade`), so it never needs an explicit cleanup step — the vendor row delete sweeps any survivors.
+  - `apps/web/scripts/pilot/pilot-seed.ts`:
+    - Inside the existing `$transaction` (after the products loop): step 7 `tx.vendor.upsert` (1 row, idempotent), step 8 `tx.productVendor.upsert` loop (15 rows). The `update` branch refreshes priceInKRW / stockStatus / leadTime so re-runs after operator edits propagate cleanly.
+    - Transaction timeout headroom comment updated (35 writes, well inside 30 s).
+    - Console log lines added for vendor + productVendor counts.
+  - `apps/web/scripts/pilot/pilot-cleanup.ts`:
+    - `PilotCleanupPrismaClient` gains `vendor: Surface<IdWhere>`.
+    - Dispatcher gains `case "vendor"` for both probe and apply paths.
+- **Operator-shell apply (per §11.13, no CI path):**
+  ```sh
+  DATABASE_URL_PILOT="<production session pooler :5432>" \
+  ALLOWED_PILOT_DB_SENTINELS="xhidynwpkqeaojuudhsw" \
+  PILOT_REQUIRES_EXPLICIT_OPT_IN="YES-SEED-PRODUCTION-PILOT-2026" \
+  pnpm -C apps/web tsx scripts/pilot/pilot-seed.ts
+  ```
+  Operator confirmed the run output: `products: 15 upserted`, `vendors: 1 upserted (vendor-pilot-thermofisher / Thermo Fisher Scientific)`, `productVendor links: 15 upserted`, `[pilot-seed] PASS`.
+- **Production verification (sequenced through every layer of the §11.16 → §11.19 chain):**
+  - **`/app/search?q=Trypsin`** — sourcing row now displays `Thermo Fisher Scientific · 시약`, `예상 배송기간 5영업일`, `45,000원 VAT 별도`, `비교 적합` badge. The previous "견적 필요" badge is gone (correct ontology decode for vendor-present + price-known state).
+  - **"견적 담기" click** — toast renders `"견적함에 성공적으로 담겼습니다."` (canonical `added` mode copy, ✓ icon). NOT the §11.16 vendor-pending copy. Footer counter updates to `견적 1 ₩45,000` — actual vendor priceInKRW, not the vendor-pending `₩0`. Button transitions to "✓ 견적 후보". `resolveAddToQuoteToast` correctly classified the result as `added` instead of `vendor-pending`.
+  - **`/app/quote`** — header reads `✓ 요청 가능 / 1건 / 1곳 / ₩45,000`. Group label is `📄 Thermo Fisher Scientific 1건` (NOT `벤더 미지정`). Product row shows `Trypsin-EDTA 100ml / 45,000원` (no `가격 미확인` text). Right rail: `Thermo Fisher Scien... 1건 · ₩45,000`. The whole "request-ready" UX surface that vendor-pending never reached is now exercised.
+  - **`POST /api/quotes`** — 201 CREATED, response carries `quoteNumber: "Q-20260426-0WX80L"`, `unitPrice: 45000`, `items[0].raw.vendorName: "Thermo Fisher Scientific"`. The vendor name is stored in the productSnapshot (raw JSON column), exactly the contract `lib/api/quotes.ts:200-212` documented.
+  - **`GET /api/work-queue/purchase-conversion`** — `stats.total: 1 → 2`. Two quotes coexist: `Q-20260426-9AYHTZ` (vendor-pending from §11.19) and `Q-20260426-0WX80L` (vendor-present from §11.20). Both classified `review_required + blockerType: none` by the resolver — neither has supplier replies yet, which is the correct decode for "request-ready, awaiting vendor turnaround". The two-row state proves the resolver branches independently for vendor-pending vs vendor-present without conflating them.
+- **What `#P02` looks like at the end of §11.20:**
+  - Phase A (inventory) — CLOSED §11.8
+  - Phase B-β (purchases mock removal) — CLOSED §11.10
+  - Phase B-α (conversion-queue ontology) — CLOSED §11.15
+  - `#P02-e2e-blocker` — CLOSED §11.16
+  - `#P02-followup-compare-fake-success` — CLOSED (commit `c4f526fb`)
+  - `#P02-followup-quote-403` — CLOSED §11.18
+  - `#P02-followup-quote-number-missing` — CLOSED §11.19
+  - **`#P02-followup-pilot-vendor-catalog` — CLOSED §11.20 (this entry)**
+  - α-D / α-F — open follow-ups, not blocking core value
+
+  The `#P02` track is now fully closed. The pilot tenant exercises both the vendor-pending and vendor-present quote paths end to end, with all UI surfaces, API contracts, and ontology decodes verified live in production. Any new gap discovered from here will open as a separate trk against `#P03`+ rather than re-opening `#P02`.
+
+- **Out of scope (deliberately):**
+  - Multi-supplier comparison fixture (Option 2). Add as `#P02-followup-pilot-vendor-catalog-multi` if comparison-flow testing requires distinct vendors for the same product.
+  - Real-world prices. Placeholder values are reasonable Korean lab-supply ranges; operator may replace via `pilot.ts` edit + re-seed (the `update` branch in step 8 refreshes priceInKRW idempotently).
+  - Vendor email contact. `email: null` deliberately — pilot tenant has no real outbound mail integration enabled, and a placeholder address in production is worse than no address.
+
 ---
 
 ## 12. Changelog
@@ -588,3 +639,4 @@ Direct successor to §11.18. The §11.18 production verification of a real Quote
 - 2026-04-26 — **§11.17 OPENED and CLOSED:** `#P01-followup-migrate-ci` — drift-detector trk attempted and dropped. 4 commits (`0b4130e → 48703b0 → af0317e → 1212e6c8`) iterated through `npx prisma` → `pnpm exec` → `pnpm --filter web exec` → `npm ci + npx --no-install`. Run #4 finally got past install/postinstall but `prisma migrate status` hung on Supabase pooler `:6543` connection for 8m 37s before timeout-minutes: 10 killed it. **Field-validated that the §11.9 / §11.12 generic-CI-unreachable result generalises to GitHub Actions runners**, not just Vercel build infra. The whole drift-detector premise (query production DB from external CI) has no surface under the current Supabase network policy. Reverted to status quo. §11.13 operator-shell-only migrate stays canonical; the "operator forgets to migrate" weak spot is now explicitly an operator-discipline accountability item, not an automatable safety net.
 - 2026-04-26 — **§11.18 OPENED and CLOSED:** `#P02-followup-quote-403` — env-only fix, no code change. Read-only audit traced the 403 to `csrf-contract.ts:151-152` (`origin_mismatch` / `missing_origin`) caused by missing `NEXT_PUBLIC_APP_URL` env var: production trusted origins reduced to localhost-only, so every production browser-origin mutation was blocked under `full_enforce`. Operator added `NEXT_PUBLIC_APP_URL = https://bio-insight-lab-web.vercel.app` and redeployed (`dpl_DmVgbZH4Pa6DgVSz42eauxtfAMHT`). Production probe: `POST /api/quotes` 403 → 201 CREATED, Quote `cmofbcxj30003usrss33mupfl` persisted in `org-pilot-internal` with `vendor: null` (vendor-pending preserved). New followup `#P02-followup-quote-number-missing` OPENED — `createQuote()` does not assign `quoteNumber`, and the conversion-queue endpoint filters `quoteNumber: { not: null }`, so newly created quotes are invisible in the queue.
 - 2026-04-26 — **§11.19 OPENED and CLOSED:** `#P02-followup-quote-number-missing` — utility extraction `lib/api/quote-number.ts` (commit `4d03d99e`). 6/6 vitest pass. `createQuote()` Normal path now updates fresh quotes with a generated `Q-YYYYMMDD-{cuid-tail}` quoteNumber; `from-cart` route refactored onto the same utility (and a dead inline sequence-based `generateQuoteNumber()` removed). Production probe on deploy `dpl_7E4ecYkagHxzDZuqSA3MqKTb62KK`: `POST /api/quotes` returns `quoteNumber: "Q-20260426-9AYHTZ"`, and `GET /api/work-queue/purchase-conversion` shows `stats.total: 0 → 1` with `conversionStatus: "review_required"` for the new quote. **§11.16 Phase 1.3 is now genuinely verified end-to-end**: sourcing → quote → conversion-queue chain renders correctly in the pilot tenant with vendor-pending state preserved at every step.
+- 2026-04-26 — **§11.20 OPENED and CLOSED:** `#P02-followup-pilot-vendor-catalog` — minimum vendor fixture (commit `32e1280b`). Pilot tenant gains 1 Vendor (Thermo Fisher Scientific) + 15 ProductVendor links via the existing pilot-seed transaction (operator-shell run per §11.13). Production probe verified the symmetric vendor-present path: `/app/search` shows priceInKRW + leadTime + vendor name (no "견적 필요"), "견적 담기" click hits the canonical `added` toast (₩45,000 footer), `/app/quote` displays "Thermo Fisher Scientific" group with full request-ready surface, `POST /api/quotes` persists vendorName in the snapshot (`Q-20260426-0WX80L`), and `/api/work-queue/purchase-conversion` shows `stats.total: 1 → 2` with vendor-pending and vendor-present quotes coexisting and resolved independently. **The `#P02` track is now fully closed.** The pilot tenant exercises both vendor branches end-to-end on real data; any further gap opens against `#P03`+.
