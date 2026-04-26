@@ -1,5 +1,18 @@
 // 데이터시트 텍스트에서 제품 정보 추출
+//
+// Phase 5 of #α-F-followup-anthropic-migration (ADR §11.26):
+// migrated from gpt-4o-mini direct fetch to claude-haiku-4-5-20251001
+// via lib/ai/anthropic.ts wrapper. Function contract preserved —
+// throws on every failure mode (no key, http, parse, timeout); the
+// API route catches and surfaces "데이터시트 분석에 실패했습니다." so
+// the operator UX is unchanged.
 import { parseAiJsonResponse } from "./json-cleaner";
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+  AnthropicHttpError,
+  AnthropicEmptyContentError,
+} from "@/lib/ai/anthropic";
 
 export interface ExtractedProductInfo {
   name?: string;
@@ -71,13 +84,7 @@ export async function extractProductInfoFromDatasheet(
       return cheatResponse;
     }
   }
-  const apiKey = process.env.OPENAI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
-  }
-
-  // 텍스트가 너무 길면 요약 (GPT 토큰 제한 고려)
+  // 텍스트가 너무 길면 요약 (LLM 토큰 제한 고려)
   const truncatedText = text.slice(0, 15000); // 처음 15,000자만 사용
 
   const prompt = `다음은 바이오·제약 제품의 데이터시트 텍스트입니다. 이 텍스트에서 제품 정보를 추출하고 한글로 요약해주세요.
@@ -114,62 +121,38 @@ ${truncatedText}
 JSON만 반환하고 다른 설명은 하지 마세요.`;
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30초 타임아웃
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "당신은 바이오·제약 제품 데이터시트를 분석하는 전문가입니다. 데이터시트에서 제품 정보를 정확하게 추출하고 한글로 요약합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-        temperature: 0.3,
-        response_format: { type: "json_object" },
-        max_tokens: 2000,
-      }),
-      signal: controller.signal,
+    const r = await callAnthropicMessage({
+      systemPrompt:
+        "당신은 바이오·제약 제품 데이터시트를 분석하는 전문가입니다. 데이터시트에서 제품 정보를 정확하게 추출하고 한글로 요약합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
+      userPrompt: prompt,
+      maxTokens: 2000,
+      temperature: 0.3,
+      timeoutMs: 30_000,
     });
-
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error?.message || "GPT API 호출 실패");
-    }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error("GPT 응답이 비어있습니다.");
-    }
 
     // JSON 클리닝 및 파싱 (마크다운 코드블록 등 제거)
     const result = parseAiJsonResponse<ExtractedProductInfo>(
-      content,
+      r.content,
       "Datasheet Extractor"
     );
 
     return result;
   } catch (error: any) {
-    if (error.name === "AbortError") {
-      console.error("OpenAI API timeout");
-      throw new Error("데이터시트 분석 시간이 초과되었습니다.");
-    } else {
-      console.error("Error extracting product info from datasheet:", error);
+    if (error instanceof AnthropicKeyMissingError) {
+      throw new Error("AI API 키가 설정되지 않았습니다.");
+    }
+    if (error instanceof AnthropicEmptyContentError) {
+      throw new Error("LLM 응답이 비어있습니다.");
+    }
+    if (error instanceof AnthropicHttpError) {
+      console.error("[Datasheet Extractor] Anthropic HTTP error:", error.status);
       throw new Error("데이터시트 분석에 실패했습니다.");
     }
+    if (error?.name === "AbortError") {
+      console.error("[Datasheet Extractor] Anthropic API timeout");
+      throw new Error("데이터시트 분석 시간이 초과되었습니다.");
+    }
+    console.error("Error extracting product info from datasheet:", error);
+    throw new Error("데이터시트 분석에 실패했습니다.");
   }
 }

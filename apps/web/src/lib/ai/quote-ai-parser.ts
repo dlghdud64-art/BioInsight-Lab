@@ -1,9 +1,16 @@
 /**
- * GPT-4 기반 견적서 정밀 분석
+ * Claude (Anthropic) 기반 견적서 정밀 분석
  * - 깨진 텍스트도 찰떡같이 이해
  * - 가격, 캣넘버, 납기일 자동 추출
  * - 순수 숫자로 변환 (기호 제거)
  * - 구조화 진단 로깅 (requestId 기반)
+ *
+ * Phase 5 of #α-F-followup-anthropic-migration (ADR §11.26):
+ * migrated from gpt-4o direct fetch to claude-haiku-4-5-20251001 via
+ * lib/ai/anthropic.ts. Pipeline metering (logPipelineStage) preserved
+ * verbatim — model field reports ANTHROPIC_DEFAULT_MODEL. Manual
+ * markdown-codeblock unwrapping kept since the wrapper returns plain
+ * text content (no response_format json_object on Anthropic).
  */
 
 import {
@@ -11,6 +18,13 @@ import {
   createRequestId,
   type PipelineErrorCode,
 } from "./pipeline-logger";
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+  AnthropicHttpError,
+  AnthropicEmptyContentError,
+  ANTHROPIC_DEFAULT_MODEL,
+} from "@/lib/ai/anthropic";
 
 // GPT-4가 반환하는 원본 타입 (문자열 가능)
 interface RawQuoteItem {
@@ -52,7 +66,7 @@ interface QuoteParseResult {
 }
 
 /**
- * LLM 에러 분류
+ * LLM 에러 분류 — Anthropic 마이그레이션 후 버전.
  */
 function classifyLlmError(
   error: unknown,
@@ -61,17 +75,28 @@ function classifyLlmError(
   const msg =
     error instanceof Error ? error.message : String(error ?? "unknown");
 
-  if (!process.env.OPENAI_API_KEY) {
-    return { errorCode: "LLM_AUTH_MISSING", message: "OPENAI_API_KEY not configured" };
+  if (error instanceof AnthropicKeyMissingError) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "ANTHROPIC_API_KEY not configured" };
   }
-  if (statusCode === 401 || statusCode === 403) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "ANTHROPIC_API_KEY not configured" };
+  }
+  const status =
+    statusCode ?? (error instanceof AnthropicHttpError ? error.status : undefined);
+  if (status === 401 || status === 403) {
     return { errorCode: "LLM_AUTH_FAILED", message: msg };
   }
-  if (statusCode === 404 || /model.*not found/i.test(msg)) {
+  if (status === 404 || /model.*not found/i.test(msg)) {
     return { errorCode: "LLM_MODEL_ERROR", message: msg };
   }
-  if (/timeout|ETIMEDOUT|ECONNABORTED/i.test(msg)) {
+  if (
+    /timeout|ETIMEDOUT|ECONNABORTED|aborted/i.test(msg) ||
+    (error instanceof Error && error.name === "AbortError")
+  ) {
     return { errorCode: "LLM_TIMEOUT", message: msg };
+  }
+  if (error instanceof AnthropicEmptyContentError) {
+    return { errorCode: "LLM_PARSE_ERROR", message: msg };
   }
   return { errorCode: "LLM_PARSE_ERROR", message: msg };
 }
@@ -84,17 +109,16 @@ export async function parseQuoteWithAI(
   requestId?: string
 ): Promise<QuoteParseResult> {
   const reqId = requestId ?? createRequestId();
-  const apiKey = process.env.OPENAI_API_KEY;
 
-  if (!apiKey) {
+  if (!process.env.ANTHROPIC_API_KEY) {
     logPipelineStage({
       stage: "llm_request_failed",
       requestId: reqId,
       timestamp: new Date().toISOString(),
       errorCode: "LLM_AUTH_MISSING",
-      errorMessage: "OPENAI_API_KEY is not configured",
+      errorMessage: "ANTHROPIC_API_KEY is not configured",
     });
-    throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
+    throw new Error('AI API 키가 설정되지 않았습니다.');
   }
 
   const prompt = `너는 바이오 연구용품 견적서 전문 AI야.
@@ -148,42 +172,27 @@ ${extractedText}
     stage: "llm_request_started",
     requestId: reqId,
     timestamp: new Date().toISOString(),
-    model: "gpt-4o",
+    model: ANTHROPIC_DEFAULT_MODEL,
     textLength: extractedText.length,
   });
 
   const llmStart = Date.now();
 
   try {
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o',
-        messages: [
-          {
-            role: 'system',
-            content:
-              '너는 바이오 연구용품 견적서 분석 전문 AI다. 깨진 텍스트에서도 정확한 정보를 추출한다.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
+    let r;
+    try {
+      r = await callAnthropicMessage({
+        systemPrompt:
+          '너는 바이오 연구용품 견적서 분석 전문 AI다. 깨진 텍스트에서도 정확한 정보를 추출한다.',
+        userPrompt: prompt,
+        maxTokens: 2000,
         temperature: 0.1, // 낮은 온도로 일관성 확보
-        max_tokens: 2000,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+        timeoutMs: 30_000,
+      });
+    } catch (httpErr) {
       const { errorCode, message } = classifyLlmError(
-        new Error(errorData.error?.message || `HTTP ${response.status}`),
-        response.status
+        httpErr,
+        httpErr instanceof AnthropicHttpError ? httpErr.status : undefined
       );
 
       logPipelineStage({
@@ -191,41 +200,30 @@ ${extractedText}
         requestId: reqId,
         timestamp: new Date().toISOString(),
         errorCode,
-        errorMessage: `HTTP ${response.status}: ${message}`,
-        model: "gpt-4o",
+        errorMessage:
+          httpErr instanceof AnthropicHttpError
+            ? `HTTP ${httpErr.status}: ${httpErr.bodyText.slice(0, 200) || "unknown"}`
+            : message,
+        model: ANTHROPIC_DEFAULT_MODEL,
         durationMs: Date.now() - llmStart,
       });
 
-      throw new Error(
-        `OpenAI API 오류: ${response.status} - ${JSON.stringify(errorData)}`
-      );
+      throw httpErr instanceof Error
+        ? httpErr
+        : new Error(`LLM API 호출 실패`);
     }
-
-    const data = await response.json();
-    const content = data.choices?.[0]?.message?.content;
 
     logPipelineStage({
       stage: "llm_response_received",
       requestId: reqId,
       timestamp: new Date().toISOString(),
-      model: "gpt-4o",
+      model: r.model || ANTHROPIC_DEFAULT_MODEL,
       durationMs: Date.now() - llmStart,
     });
 
-    if (!content) {
-      logPipelineStage({
-        stage: "llm_request_failed",
-        requestId: reqId,
-        timestamp: new Date().toISOString(),
-        errorCode: "LLM_PARSE_ERROR",
-        errorMessage: "OpenAI response content is empty",
-        model: "gpt-4o",
-      });
-      throw new Error('OpenAI 응답이 비어 있습니다.');
-    }
-
-    // JSON 추출 (코드 블록 제거)
-    let jsonText = content.trim();
+    // JSON 추출 (코드 블록 제거) — Anthropic은 response_format 미지원이라
+    // 모델이 ```json ... ``` 래핑을 붙여올 가능성을 v0와 동일하게 방어한다.
+    let jsonText = r.content.trim();
     if (jsonText.startsWith('```json')) {
       jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
     } else if (jsonText.startsWith('```')) {
@@ -300,7 +298,7 @@ ${extractedText}
       timestamp: new Date().toISOString(),
       errorCode,
       errorMessage: message,
-      model: "gpt-4o",
+      model: ANTHROPIC_DEFAULT_MODEL,
       durationMs: Date.now() - llmStart,
     });
 

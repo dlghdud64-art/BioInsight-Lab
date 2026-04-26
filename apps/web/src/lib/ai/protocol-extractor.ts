@@ -5,9 +5,18 @@ import {
   createRequestId,
   type PipelineErrorCode,
 } from "./pipeline-logger";
+import {
+  callAnthropicMessage,
+  AnthropicKeyMissingError,
+  AnthropicHttpError,
+  AnthropicEmptyContentError,
+  ANTHROPIC_DEFAULT_MODEL,
+} from "@/lib/ai/anthropic";
 
-// 중복 정의 제거 - OpenAI API 직접 호출 (openai 패키지 대신 fetch 사용)
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+// Phase 5 of #α-F-followup-anthropic-migration (ADR §11.26):
+// migrated from gpt-4o-mini direct fetch to claude-haiku-4-5-20251001
+// via lib/ai/anthropic.ts wrapper. Pipeline metering (logPipelineStage)
+// preserved verbatim — model field now reports ANTHROPIC_DEFAULT_MODEL.
 
 export interface ExtractedReagent {
   name: string;
@@ -55,7 +64,9 @@ export interface ProtocolExtractionResult {
 }
 
 /**
- * LLM 에러 분류
+ * LLM 에러 분류 — Anthropic 마이그레이션 후 버전.
+ * AnthropicKeyMissingError, AnthropicHttpError, AnthropicEmptyContentError
+ * 클래스 기반 분기 + 메시지 패턴 폴백.
  */
 function classifyLlmError(
   error: unknown,
@@ -64,17 +75,28 @@ function classifyLlmError(
   const msg =
     error instanceof Error ? error.message : String(error ?? "unknown");
 
-  if (!OPENAI_API_KEY) {
-    return { errorCode: "LLM_AUTH_MISSING", message: "OPENAI_API_KEY not configured" };
+  if (error instanceof AnthropicKeyMissingError) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "ANTHROPIC_API_KEY not configured" };
   }
-  if (statusCode === 401 || statusCode === 403) {
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return { errorCode: "LLM_AUTH_MISSING", message: "ANTHROPIC_API_KEY not configured" };
+  }
+  const status =
+    statusCode ?? (error instanceof AnthropicHttpError ? error.status : undefined);
+  if (status === 401 || status === 403) {
     return { errorCode: "LLM_AUTH_FAILED", message: msg };
   }
-  if (statusCode === 404 || /model.*not found/i.test(msg)) {
+  if (status === 404 || /model.*not found/i.test(msg)) {
     return { errorCode: "LLM_MODEL_ERROR", message: msg };
   }
-  if (/timeout|ETIMEDOUT|ECONNABORTED/i.test(msg)) {
+  if (
+    /timeout|ETIMEDOUT|ECONNABORTED|aborted/i.test(msg) ||
+    (error instanceof Error && error.name === "AbortError")
+  ) {
     return { errorCode: "LLM_TIMEOUT", message: msg };
+  }
+  if (error instanceof AnthropicEmptyContentError) {
+    return { errorCode: "LLM_PARSE_ERROR", message: msg };
   }
   return { errorCode: "LLM_PARSE_ERROR", message: msg };
 }
@@ -220,57 +242,41 @@ ${truncatedText}
 - 시간 단위 변환: 1시간=60분, 1일=1440분
 - 농도 비율 표현 (예: "1:1000")은 value에 분자값, unit에 "ratio" 저장`;
 
-    if (!OPENAI_API_KEY) {
+    if (!process.env.ANTHROPIC_API_KEY) {
       logPipelineStage({
         stage: "llm_request_failed",
         requestId: reqId,
         timestamp: new Date().toISOString(),
         errorCode: "LLM_AUTH_MISSING",
-        errorMessage: "OPENAI_API_KEY is not configured",
+        errorMessage: "ANTHROPIC_API_KEY is not configured",
       });
-      throw new Error("OPENAI_API_KEY가 설정되지 않았습니다.");
+      throw new Error("AI API 키가 설정되지 않았습니다.");
     }
 
     logPipelineStage({
       stage: "llm_request_started",
       requestId: reqId,
       timestamp: new Date().toISOString(),
-      model: "gpt-4o-mini",
+      model: ANTHROPIC_DEFAULT_MODEL,
       textLength: truncatedText.length,
     });
 
     const llmStart = Date.now();
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "당신은 생명과학 실험 프로토콜을 분석하는 전문가입니다. 프로토콜에서 필요한 시약, 기구, 장비를 정확하게 추출합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
-          },
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
+    let r;
+    try {
+      r = await callAnthropicMessage({
+        systemPrompt:
+          "당신은 생명과학 실험 프로토콜을 분석하는 전문가입니다. 프로토콜에서 필요한 시약, 기구, 장비를 정확하게 추출합니다.\n\nIMPORTANT: Return raw JSON only. Do not use markdown formatting like ```json or ```. Do not include any explanatory text before or after the JSON. Your response must start with { and end with }.",
+        userPrompt: prompt,
+        maxTokens: 2000, // 더 많은 토큰 할당
         temperature: 0.2, // 더 정확한 추출을 위해 온도 낮춤
-        max_tokens: 2000, // 더 많은 토큰 할당
-        response_format: { type: "json_object" },
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const { errorCode } = classifyLlmError(
-        new Error(errorData.error?.message || `HTTP ${response.status}`),
-        response.status
+        timeoutMs: 30_000,
+      });
+    } catch (httpErr) {
+      const { errorCode, message } = classifyLlmError(
+        httpErr,
+        httpErr instanceof AnthropicHttpError ? httpErr.status : undefined
       );
 
       logPipelineStage({
@@ -278,40 +284,30 @@ ${truncatedText}
         requestId: reqId,
         timestamp: new Date().toISOString(),
         errorCode,
-        errorMessage: `HTTP ${response.status}: ${errorData.error?.message || "unknown"}`,
-        model: "gpt-4o-mini",
+        errorMessage:
+          httpErr instanceof AnthropicHttpError
+            ? `HTTP ${httpErr.status}: ${httpErr.bodyText.slice(0, 200) || "unknown"}`
+            : message,
+        model: ANTHROPIC_DEFAULT_MODEL,
         durationMs: Date.now() - llmStart,
       });
 
-      throw new Error(errorData.error?.message || "GPT API 호출 실패");
+      throw httpErr instanceof Error
+        ? httpErr
+        : new Error("LLM API 호출 실패");
     }
-
-    const data = await response.json();
-    const content = data.choices[0]?.message?.content;
 
     logPipelineStage({
       stage: "llm_response_received",
       requestId: reqId,
       timestamp: new Date().toISOString(),
-      model: "gpt-4o-mini",
+      model: r.model || ANTHROPIC_DEFAULT_MODEL,
       durationMs: Date.now() - llmStart,
     });
 
-    if (!content) {
-      logPipelineStage({
-        stage: "llm_request_failed",
-        requestId: reqId,
-        timestamp: new Date().toISOString(),
-        errorCode: "LLM_PARSE_ERROR",
-        errorMessage: "GPT response content is empty",
-        model: "gpt-4o-mini",
-      });
-      throw new Error("GPT 응답이 비어있습니다.");
-    }
-
     // JSON 클리닝 및 파싱 (마크다운 코드블록 등 제거)
     const result = parseAiJsonResponse<ProtocolExtractionResult>(
-      content,
+      r.content,
       "Protocol Extractor"
     );
 
