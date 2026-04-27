@@ -424,7 +424,7 @@ export default function DashboardPage() {
   );
 
   return (
-    <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 overflow-x-hidden" style={{ backgroundColor: "#F8FAFC", minHeight: "100vh" }}>
+    <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 overflow-x-hidden bg-sh min-h-screen">
 
       {/* --- 플랜 온보딩 배너 (pricing resolver 경유 시) --- */}
       <Suspense fallback={null}>

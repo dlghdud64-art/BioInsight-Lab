@@ -35,9 +35,13 @@
 - 예상 작업: 1 commit (§11.44), <10 minutes
 
 ### 잠재 회귀 가드 후보
-- **#labaxis-no-inline-hex-bg** — `scripts/check-csrf-fetch-regression.sh` 패턴으로 `apps/web/src/app/dashboard/**` 안 inline hex backgroundColor 0건 검증 CI 룰. §11.43에서 발견된 다크 surface 회귀 패턴을 다른 surface 에 두지 않기 위해.
-- **#reports-contract-test** — `/api/reports/purchase` response shape (`categoryData[].amount`, `vendorData[].name`) snapshot 테스트 1건. §11.42 drift 가 release 한 번을 넘긴 이유는 contract test 부재.
-- **#budget-detail-screen-self-chrome-audit** — `apps/web/src/app/dashboard/**/page.tsx` 가 LabAxis 로고를 자체 그리는 곳 grep 으로 audit (1회), 발견 시 일괄 정리.
+- ~~**#labaxis-no-inline-hex-bg**~~ → **§11.45 CLOSED** (2026-04-27): `scripts/check-no-inline-hex-bg.sh` 추가됨. **즉시 6 violation 발견** (`apps/web/src/app/dashboard/inventory/inventory-content.tsx` L2238/2254/2260/2282/2307/3698). `dashboard/page.tsx:427` 1 violation은 §11.45 commit에서 동시 정리. inventory 6 sites는 별도 §11.48 sweep 트랙으로 분리 (단순 sed 불가, 다크 카드 + 동적 hex `card.color/borderColor` + `style={{ color: ... }}` 텍스트 hex까지 박혀 있어 surface 재설계 수반).
+- ~~**#reports-contract-test**~~ → **§11.46 진행 중**.
+- ~~**#budget-detail-screen-self-chrome-audit**~~ → **§11.47 진행 중**.
+
+### 새로 surface된 트랙
+
+- **§11.48 #dashboard-inventory-dark-hex-sweep** (P2) — `dashboard/inventory/inventory-content.tsx` 6 inline-hex sites 정리. 다크 테마 (`#1E2738`, `#151C26`, `#1a1f2e`, `#2E3B50`) 잔재가 LabAxis 라이트 chrome 안에 박혀 있음. `card.color`/`borderColor` 같은 동적 hex 처리 필요 — 단순 토큰 교체가 아니라 chart palette / status badge 색을 LabAxis token으로 표준화하는 작업. 예상 작업량: 2-3 commit, ~1시간. ui-wizard skill 사용 권장.
 
 ---
 
