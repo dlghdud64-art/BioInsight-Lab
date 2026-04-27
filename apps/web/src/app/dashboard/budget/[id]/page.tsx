@@ -93,9 +93,16 @@ const DEFAULT_POLICY = {
 };
 
 function BudgetDetailSkeleton() {
+  // Skeleton mirrors the post-§11.44 page structure:
+  //   page header (h2+subtitle+actions) → Judgment Strip → 3 content cards.
+  // The pre-§11.44 LabAxis chrome strip placeholder was removed because
+  // DashboardShell already renders the global LabAxis chrome (sidebar + header).
   return (
     <div className="min-h-screen bg-sh">
-      <div className="h-11 border-b border-bd animate-pulse bg-el" />
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-3">
+        <div className="h-7 w-48 rounded animate-pulse bg-el" />
+        <div className="h-4 w-24 rounded animate-pulse bg-el mt-2" />
+      </div>
       <div className="h-12 border-b border-bd animate-pulse bg-pn" />
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
@@ -185,22 +192,35 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   return (
     <div className="min-h-screen bg-sh">
-      {/* ═══ Header ═══ */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd bg-el">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
-          <div className="w-px h-5 bg-bd" />
-          <span className="text-xs md:text-sm font-medium text-slate-400">예산 통제</span>
-          <div className="w-px h-4 bg-bd" />
-          <span className="text-xs text-slate-500 truncate max-w-[200px]">{budget.name}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-slate-400 hover:text-slate-700" onClick={handleExcelDownload}>
-            <FileSpreadsheet className="h-3 w-3 mr-1" />내보내기
-          </Button>
-          <Link href="/dashboard/budget">
-            <Button size="sm" variant="ghost" className="h-7 text-xs text-slate-500"><ArrowLeft className="h-3 w-3 mr-1" />목록</Button>
-          </Link>
+      {/* ═══ Page Header (§11.44) ═══
+          DashboardShell already renders the global LabAxis chrome
+          (sidebar + DashboardHeader). This page-internal header
+          carries only operator-relevant content: budget title +
+          page-kind subtitle + page-scoped actions.  No LabAxis logo
+          duplication. */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 pt-4 pb-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-3 sm:gap-4">
+          <div className="space-y-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 leading-tight truncate">
+              {budget.name}
+            </h2>
+            <p className="text-sm text-slate-500">예산 통제</p>
+          </div>
+          <div className="flex flex-wrap gap-2 shrink-0">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-bd bg-pn text-slate-600 hover:bg-el hover:text-slate-900"
+              onClick={handleExcelDownload}
+            >
+              <FileSpreadsheet className="h-4 w-4 mr-1.5" />내보내기
+            </Button>
+            <Link href="/dashboard/budget">
+              <Button variant="outline" size="sm" className="border-bd bg-pn text-slate-600 hover:bg-el hover:text-slate-900">
+                <ArrowLeft className="h-4 w-4 mr-1.5" />목록
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
 
