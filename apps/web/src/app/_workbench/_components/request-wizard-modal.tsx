@@ -232,7 +232,11 @@ export function RequestWizardModal({
     return () => clearTimeout(timer);
   }, [step, handoffCountdown, onOpenChange, onQuoteManagementOpen]);
 
-  const canGoNext = purpose.trim().length > 0;
+  // §11.50 — purpose is optional (backend treats it as a warning, not a
+  // blocking issue; see request-submission-engine.ts L229 +
+  // request-assembly-engine.ts L277). Step 1 → Step 2 only requires that
+  // the operator has at least one target product to request.
+  const canGoNext = targetProducts.length > 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -312,7 +316,7 @@ export function RequestWizardModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">
-                          요청 목적 <span className="text-red-500">*</span>
+                          요청 목적 <span className="text-slate-400 font-normal">(선택)</span>
                         </label>
                         <Input
                           placeholder="예: 연구실 재고 보충 / 프로젝트 시약 구매"
