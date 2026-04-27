@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -100,7 +101,7 @@ export function QuoteForm({
         await onSubmit(validResponses);
       } else {
         // Default API call
-        const response = await fetch(`/api/vendor/requests/${requestId}/respond`, {
+        const response = await csrfFetch(`/api/vendor/requests/${requestId}/respond`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ responses: validResponses }),
