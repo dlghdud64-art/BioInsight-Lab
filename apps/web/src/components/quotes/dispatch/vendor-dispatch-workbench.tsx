@@ -293,7 +293,7 @@ export function VendorRequestModal({
           <DialogDescription className="text-slate-400">
             {hasResolved
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
-              : "선별 가능한 공급사 후보가 없습니다. 공급사 DB 보강 후 다시 시도하세요."}
+              : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
           </DialogDescription>
         </DialogHeader>
 
@@ -303,9 +303,7 @@ export function VendorRequestModal({
           <div className={`rounded-lg border px-4 py-3 ${
             sendReadiness === "ready"
               ? "border-emerald-500/25 bg-emerald-950/10"
-              : sendReadiness === "needs_review"
-                ? "border-amber-500/25 bg-amber-950/10"
-                : "border-red-500/25 bg-red-950/10"
+              : "border-amber-500/25 bg-amber-950/10"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -315,9 +313,9 @@ export function VendorRequestModal({
                   <AlertTriangle className="h-4 w-4 text-amber-400" />
                 )}
                 <span className={`text-sm font-semibold ${
-                  sendReadiness === "ready" ? "text-emerald-300" : sendReadiness === "needs_review" ? "text-amber-300" : "text-red-300"
+                  sendReadiness === "ready" ? "text-emerald-300" : "text-amber-300"
                 }`}>
-                  {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "전달 불가"}
+                  {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "공급사 추가 필요"}
                 </span>
               </div>
               {sendReadiness === "ready" && (
@@ -330,7 +328,7 @@ export function VendorRequestModal({
                   {check.ready ? (
                     <Check className="h-3 w-3 text-emerald-400" />
                   ) : (
-                    <X className="h-3 w-3 text-red-400" />
+                    <Clock className="h-3 w-3 text-amber-400" />
                   )}
                   <span className={`text-xs ${check.ready ? "text-slate-500" : "text-slate-600"}`}>
                     {check.label}
@@ -397,12 +395,11 @@ export function VendorRequestModal({
                       <Button
                         type="button"
                         size="sm"
-                        variant="ghost"
                         onClick={() => setShowManualFallback(true)}
-                        className="h-7 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/20"
+                        className="h-9 text-xs bg-blue-600 hover:bg-blue-500 text-white"
                       >
-                        <UserPlus className="h-3 w-3 mr-1" />
-                        AI 후보에 없는 공급사 직접 추가
+                        <UserPlus className="h-3.5 w-3.5 mr-1.5" />
+                        공급사 직접 추가
                       </Button>
                     </div>
                   </div>
@@ -542,8 +539,8 @@ export function VendorRequestModal({
 
         {/* ═══ Dock ═══ */}
         <DialogFooter className="gap-2 pt-2 border-t border-slate-600/20 flex-col md:flex-row">
-          {/* Fallback: manual add link — demoted to footnote */}
-          {hasResolved && !showManualFallback && (
+          {/* Fallback: manual add link — visible whenever manual panel is collapsed */}
+          {!showManualFallback && (
             <button
               type="button"
               onClick={() => setShowManualFallback(true)}
@@ -562,34 +559,38 @@ export function VendorRequestModal({
           >
             취소
           </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={isSubmitting || sendReadiness === "blocked"}
-            className={`min-h-[40px] font-semibold active:scale-95 ${
-              sendReadiness === "ready"
-                ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                : sendReadiness === "needs_review"
-                  ? "bg-amber-600 hover:bg-amber-500 text-white"
-                  : "bg-slate-700 text-slate-400 cursor-not-allowed"
-            }`}
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                전달 중…
-              </>
-            ) : sendReadiness === "blocked" ? (
-              <>
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                전달 불가
-              </>
-            ) : (
-              <>
-                <Send className="h-4 w-4 mr-2" />
-                선택 공급사에 요청 전달
-              </>
-            )}
-          </Button>
+          {sendReadiness === "blocked" ? (
+            <Button
+              onClick={() => setShowManualFallback(true)}
+              disabled={isSubmitting}
+              className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-500 text-white"
+            >
+              <UserPlus className="h-4 w-4 mr-2" />
+              공급사 직접 추가
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className={`min-h-[40px] font-semibold active:scale-95 ${
+                sendReadiness === "ready"
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
+                  : "bg-amber-600 hover:bg-amber-500 text-white"
+              }`}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  전달 중…
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  선택 공급사에 요청 전달
+                </>
+              )}
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
