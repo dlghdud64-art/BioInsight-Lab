@@ -94,12 +94,12 @@ const DEFAULT_POLICY = {
 
 function BudgetDetailSkeleton() {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#2d2f33' }}>
-      <div className="h-11 border-b border-bd animate-pulse" style={{ backgroundColor: '#434548' }} />
-      <div className="h-12 border-b border-bd animate-pulse" style={{ backgroundColor: '#393b3f' }} />
+    <div className="min-h-screen bg-sh">
+      <div className="h-11 border-b border-bd animate-pulse bg-el" />
+      <div className="h-12 border-b border-bd animate-pulse bg-pn" />
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-4 space-y-4">
         {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="h-32 rounded border border-bd animate-pulse" style={{ backgroundColor: '#393b3f' }} />
+          <div key={i} className="h-32 rounded border border-bd animate-pulse bg-pn" />
         ))}
       </div>
     </div>
@@ -135,7 +135,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
 
   if (!id) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#2d2f33' }}>
+      <div className="min-h-screen flex items-center justify-center bg-sh">
         <p className="text-sm text-slate-400">잘못된 접근입니다.</p>
       </div>
     );
@@ -143,7 +143,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   if (isLoading) return <BudgetDetailSkeleton />;
   if (notFound || !budget) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#2d2f33' }}>
+      <div className="min-h-screen flex items-center justify-center bg-sh">
         <div className="text-center space-y-4">
           <p className="text-sm text-slate-400">해당 예산 정보를 찾을 수 없습니다.</p>
           <Link href="/dashboard/budget" className="inline-flex items-center text-sm font-medium text-blue-400 hover:text-blue-300">
@@ -184,9 +184,9 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#2d2f33' }}>
+    <div className="min-h-screen bg-sh">
       {/* ═══ Header ═══ */}
-      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+      <div className="flex items-center justify-between px-4 md:px-6 py-2.5 border-b border-bd bg-el">
         <div className="flex items-center gap-2">
           <Link href="/" className="shrink-0"><span className="text-sm md:text-lg font-bold text-slate-700 tracking-tight">LabAxis</span></Link>
           <div className="w-px h-5 bg-bd" />
@@ -205,7 +205,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
       </div>
 
       {/* ═══ Judgment Strip: 5 KPI + risk + forecast ═══ */}
-      <div className="border-b border-bd" style={{ backgroundColor: '#393b3f' }}>
+      <div className="border-b border-bd bg-pn">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-3">
           <div className="flex items-center gap-3 mb-3">
             <span className={`inline-block text-[10px] px-2 py-0.5 rounded border font-medium ${riskCfg.color} ${riskCfg.bgColor} ${riskCfg.borderColor}`}>{riskCfg.label}</span>
@@ -243,7 +243,7 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           </div>
           {/* Budget bar */}
           <div className="mt-3 flex items-center gap-2">
-            <div className="flex-1 h-2 rounded-full bg-slate-700 overflow-hidden flex">
+            <div className="flex-1 h-2 rounded-full bg-el overflow-hidden flex">
               {ctrl.actual > 0 && (
                 <div className="h-full bg-slate-400" style={{ width: `${Math.min((ctrl.actual / ctrl.total) * 100, 100)}%` }} />
               )}
@@ -266,8 +266,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           <div className="flex-1 min-w-0 space-y-4">
 
             {/* Block A: 연결된 구매 활동 (chain linked items) */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">연결된 구매 활동</span>
               </div>
               {MOCK_LINKED_ACTIVITIES.length === 0 ? (
@@ -299,8 +299,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
 
             {/* Block B: 예산 차단/경고 (blockers) */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">통제 상태</span>
               </div>
               <div className="p-4 space-y-2">
@@ -362,8 +362,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
 
             {/* Block C: 집행 내역 (chain 연결 후 실데이터로 교체) */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">예산 영향 이력</span>
               </div>
               <div className="px-4 py-8 text-center">
@@ -379,8 +379,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
           {/* ── Right Rail ── */}
           <div className="hidden lg:flex w-[320px] shrink-0 flex-col gap-4">
             {/* Budget Rules */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">통제 규칙</span>
               </div>
               <div className="p-4 space-y-3">
@@ -408,8 +408,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
 
             {/* Budget Info */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">예산 정보</span>
               </div>
               <div className="p-4 space-y-3">
@@ -447,8 +447,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
             </div>
 
             {/* Exception / Override History (placeholder) */}
-            <div className="rounded-lg border border-bd overflow-hidden" style={{ backgroundColor: '#393b3f' }}>
-              <div className="px-4 py-2.5 border-b border-bd" style={{ backgroundColor: '#434548' }}>
+            <div className="rounded-lg border border-bd overflow-hidden bg-pn">
+              <div className="px-4 py-2.5 border-b border-bd bg-el">
                 <span className="text-xs font-medium text-slate-700">예외/조정 이력</span>
               </div>
               <div className="px-4 py-6 text-center">
