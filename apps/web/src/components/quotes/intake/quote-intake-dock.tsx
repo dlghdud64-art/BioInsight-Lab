@@ -16,6 +16,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
+import { csrfFetch } from "@/lib/api-client";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
@@ -152,7 +153,7 @@ export function QuoteIntakeDock({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/quotes/parse-pdf", {
+      const res = await csrfFetch("/api/quotes/parse-pdf", {
         method: "POST",
         body: formData,
       });
@@ -214,7 +215,7 @@ export function QuoteIntakeDock({
       const formData = new FormData();
       formData.append("file", file);
 
-      const res = await fetch("/api/ai/bom-parse", {
+      const res = await csrfFetch("/api/ai/bom-parse", {
         method: "POST",
         body: formData,
       });
@@ -277,7 +278,7 @@ export function QuoteIntakeDock({
         fileName: intakeSession.fileName,
       };
 
-      const res = await fetch(endpoint, {
+      const res = await csrfFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -317,7 +318,7 @@ export function QuoteIntakeDock({
         groupingStrategy: bomBatch.groupingStrategy,
       };
 
-      const res = await fetch("/api/quotes/create-from-bom", {
+      const res = await csrfFetch("/api/quotes/create-from-bom", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
