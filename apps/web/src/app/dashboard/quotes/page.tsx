@@ -380,15 +380,21 @@ function QuotesPageContent() {
   const [aiParseModalOpen, setAiParseModalOpen] = useState(false);
 
   // ── Intake dock state (Smart Sourcing → workqueue 내부 통합) ──
+  // §11.55 — manual_upload 분기 제거. backend (`create-from-intake` /
+  // `attach-document`) 미구현으로 dead-end UI였음. LabAxis 견적 응답
+  // 표준 워크플로우는 Path 1 (vendor token 응답 링크) + Path 2 (SendGrid
+  // inbound webhook) 자동 처리이며 manual upload는 사용 시나리오 없음.
+  // BOM import 분기만 유지.
   const [intakeDockOpen, setIntakeDockOpen] = useState(false);
-  const [intakeDockSource, setIntakeDockSource] = useState<"manual_upload" | "bom_import" | null>(null);
+  const [intakeDockSource, setIntakeDockSource] = useState<"bom_import" | null>(null);
 
   // URL dock param 감지 (legacy redirect에서 유입)
   useEffect(() => {
     const dockParam = searchParams.get("dock");
-    const sourceParam = searchParams.get("source") as "manual_upload" | "bom_import" | null;
-    if (dockParam === "intake" && sourceParam) {
-      setIntakeDockSource(sourceParam);
+    const sourceParam = searchParams.get("source");
+    // §11.55 — manual_upload param은 무시 (legacy URL은 BOM 분기만 유효)
+    if (dockParam === "intake" && sourceParam === "bom_import") {
+      setIntakeDockSource("bom_import");
       setIntakeDockOpen(true);
     }
   }, [searchParams]);
@@ -650,13 +656,7 @@ function QuotesPageContent() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 !bg-white">
-                  <DropdownMenuItem
-                    className="cursor-pointer gap-2 py-2.5"
-                    onClick={() => { setIntakeDockSource("manual_upload"); setIntakeDockOpen(true); }}
-                  >
-                    <Upload className="h-4 w-4 text-blue-600" />
-                    <span className="text-sm">외부 견적서 업로드</span>
-                  </DropdownMenuItem>
+                  {/* §11.55 — "외부 견적서 업로드" 메뉴 제거: backend 미구현 dead-end였음. */}
                   <DropdownMenuItem
                     className="cursor-pointer gap-2 py-2.5"
                     onClick={() => { setIntakeDockSource("bom_import"); setIntakeDockOpen(true); }}
@@ -1090,24 +1090,13 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* G-pre. 공급사 회신 견적서 등록 (detail dock 내부 통합)
-              §11.53 — 운영자가 외부 채널(이메일/팩스)로 받은 PDF 견적서를
-              이 case에 attach하는 secondary action. "업로드"는 implementation
-              단어라 운영 OS 톤(등록·첨부)으로 정렬. */}
-          <div className="px-4 py-3 border-t border-bd/50">
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full h-8 text-xs gap-1.5 border-blue-200 text-blue-600 hover:bg-blue-50"
-              onClick={() => {
-                setIntakeDockSource("manual_upload");
-                setIntakeDockOpen(true);
-              }}
-            >
-              <Upload className="h-3 w-3" />
-              공급사 회신 견적서 등록
-            </Button>
-          </div>
+          {/* §11.55 — G-pre "공급사 회신 견적서 등록" 블록 제거.
+              backend (`/api/quotes/[id]/attach-document`) 미구현으로
+              dead-end UI였음. LabAxis 견적 응답 표준 워크플로우는
+              자동 처리(Path 1: vendor token 응답 링크 + Path 2: SendGrid
+              inbound webhook)이며 운영자가 PDF를 직접 등록하는
+              시나리오는 LabAxis 운영 ontology에 없음. 미래 demand
+              발생 시 backend + UI 함께 재구현. */}
 
           </div>{/* end scrollable body */}
 

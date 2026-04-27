@@ -4,13 +4,16 @@
  * QuoteIntakeDock — Quotes Work Queue 내부 intake capability
  *
  * Smart Sourcing를 독립 페이지 대신 same-canvas right dock로 통합.
- * 두 가지 source:
- *  - manual_upload: 외부 견적서 업로드 → IntakeSession → 정식 요청 전환
+ *
+ * §11.55 — manual_upload 분기 제거 (backend `/api/quotes/create-from-intake`
+ * + `/api/quotes/[id]/attach-document` 미구현으로 dead-end UI였음).
+ * 현재는 BOM import 단일 source.
+ *
  *  - bom_import: BOM 업로드 → BomImportBatch staging → commit
  *
  * 원칙:
  *  - queue row는 commit 시점에만 생성
- *  - IntakeSession / BomImportBatch는 staging only
+ *  - BomImportBatch는 staging only
  *  - parser 결과는 derived snapshot (원본 immutable)
  *  - same-canvas dock 안에서만 동작, 별도 페이지 금지
  */
@@ -33,33 +36,6 @@ import { cn } from "@/lib/utils";
 /* ══════════════════════════════════════════════════════════════
    Domain types (staging / transient)
    ══════════════════════════════════════════════════════════════ */
-
-interface ParsedField {
-  key: string;
-  label: string;
-  value: string | number | null;
-  confidence: "high" | "review" | "blocked";
-  reason?: string;
-}
-
-interface IntakeSession {
-  id: string;
-  fileName: string;
-  fileSize: number;
-  uploadedAt: string;
-  status: "uploading" | "parsing" | "review" | "ready" | "error";
-  supplierName?: string;
-  parsedFields: ParsedField[];
-  rawItems: Array<{
-    name: string;
-    catalogNumber?: string;
-    quantity?: number;
-    unitPrice?: number;
-    totalPrice?: number;
-    unit?: string;
-  }>;
-  errorMessage?: string;
-}
 
 interface BomImportItem {
   id: string;
@@ -91,9 +67,7 @@ interface BomImportBatch {
 interface QuoteIntakeDockProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  source: "manual_upload" | "bom_import" | null;
-  /** 기존 QuoteCase ID — 있으면 해당 케이스에 attach */
-  existingCaseId?: string;
+  source: "bom_import" | null;
   onCommitSuccess?: () => void;
 }
 
@@ -101,15 +75,8 @@ export function QuoteIntakeDock({
   open,
   onOpenChange,
   source,
-  existingCaseId,
   onCommitSuccess,
 }: QuoteIntakeDockProps) {
-  // ── Manual upload state ──
-  const [intakeSession, setIntakeSession] = useState<IntakeSession | null>(null);
-  const [manualSupplier, setManualSupplier] = useState("");
-  const [manualProject, setManualProject] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   // ── BOM import state ──
   const [bomBatch, setBomBatch] = useState<BomImportBatch | null>(null);
   const bomFileInputRef = useRef<HTMLInputElement>(null);
@@ -118,10 +85,7 @@ export function QuoteIntakeDock({
   const [committing, setCommitting] = useState(false);
 
   const resetState = useCallback(() => {
-    setIntakeSession(null);
     setBomBatch(null);
-    setManualSupplier("");
-    setManualProject("");
     setCommitting(false);
   }, []);
 
@@ -132,68 +96,14 @@ export function QuoteIntakeDock({
   }, [onOpenChange, resetState]);
 
   // ══════════════════════════════════════════
-  // Manual Upload: 파일 → parse → review
+  // §11.55 — Manual upload handlers (handleManualFileUpload,
+  // handleCommitManualUpload) removed: backend endpoints
+  // (`/api/quotes/parse-pdf` exists but `/api/quotes/create-from-intake`
+  // and `/api/quotes/[id]/attach-document` do NOT exist) made the
+  // entire flow a 404 dead-end. LabAxis 견적 응답 표준 워크플로우는
+  // Path 1 (vendor token 응답 링크) + Path 2 (SendGrid inbound webhook)
+  // 자동 처리이며 manual upload 시나리오는 운영 ontology에 없음.
   // ══════════════════════════════════════════
-  const handleManualFileUpload = useCallback(async (file: File) => {
-    const sessionId = `intake_${Date.now()}`;
-    setIntakeSession({
-      id: sessionId,
-      fileName: file.name,
-      fileSize: file.size,
-      uploadedAt: new Date().toISOString(),
-      status: "uploading",
-      parsedFields: [],
-      rawItems: [],
-    });
-
-    try {
-      // Step 1: Upload + Parse
-      setIntakeSession((prev) => prev ? { ...prev, status: "parsing" } : prev);
-
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await csrfFetch("/api/quotes/parse-pdf", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) throw new Error("파싱 실패");
-
-      const parsed = await res.json();
-
-      // Step 2: Build ParsedFields from response
-      const fields: ParsedField[] = [
-        { key: "vendorName", label: "공급사명", value: parsed.vendorName, confidence: parsed.vendorName ? "high" : "blocked", reason: !parsed.vendorName ? "공급사명 추출 실패" : undefined },
-        { key: "quoteDate", label: "견적일", value: parsed.quoteDate, confidence: parsed.quoteDate ? "high" : "review", reason: !parsed.quoteDate ? "견적일 미확인" : undefined },
-        { key: "validUntil", label: "유효기간", value: parsed.validUntil, confidence: parsed.validUntil ? "high" : "review", reason: !parsed.validUntil ? "유효기간 미확인" : undefined },
-        { key: "totalAmount", label: "총액", value: parsed.totalAmount, confidence: parsed.totalAmount ? "high" : "review", reason: !parsed.totalAmount ? "총액 추출 실패" : undefined },
-        { key: "currency", label: "통화", value: parsed.currency ?? "KRW", confidence: parsed.currency ? "high" : "review" },
-      ];
-
-      const hasBlocker = fields.some((f) => f.confidence === "blocked");
-
-      setIntakeSession((prev) =>
-        prev
-          ? {
-              ...prev,
-              status: hasBlocker ? "review" : "ready",
-              supplierName: parsed.vendorName ?? undefined,
-              parsedFields: fields,
-              rawItems: parsed.items ?? [],
-            }
-          : prev,
-      );
-
-      if (parsed.vendorName) setManualSupplier(parsed.vendorName);
-    } catch (err) {
-      setIntakeSession((prev) =>
-        prev
-          ? { ...prev, status: "error", errorMessage: (err as Error).message }
-          : prev,
-      );
-    }
-  }, []);
 
   // ══════════════════════════════════════════
   // BOM Upload: 파일 → parse → staging review
@@ -257,52 +167,6 @@ export function QuoteIntakeDock({
   }, []);
 
   // ══════════════════════════════════════════
-  // Commit: IntakeSession → QuoteCase 생성
-  // ══════════════════════════════════════════
-  const handleCommitManualUpload = useCallback(async () => {
-    if (!intakeSession || intakeSession.status === "error") return;
-
-    setCommitting(true);
-    try {
-      // 기존 케이스가 있으면 attach, 없으면 새 QuoteCase 생성
-      const endpoint = existingCaseId
-        ? `/api/quotes/${existingCaseId}/attach-document`
-        : "/api/quotes/create-from-intake";
-
-      const payload = {
-        intakeSessionId: intakeSession.id,
-        supplierName: manualSupplier || intakeSession.supplierName,
-        project: manualProject,
-        parsedFields: intakeSession.parsedFields,
-        items: intakeSession.rawItems,
-        fileName: intakeSession.fileName,
-      };
-
-      const res = await csrfFetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ message: "전환 실패" }));
-        throw new Error(err.message ?? "전환 실패");
-      }
-
-      toast.success(
-        existingCaseId
-          ? "견적서가 해당 케이스에 추가되었습니다"
-          : "정식 견적 요청으로 전환되었습니다",
-      );
-      onCommitSuccess?.();
-    } catch (err) {
-      toast.error((err as Error).message);
-    } finally {
-      setCommitting(false);
-    }
-  }, [intakeSession, existingCaseId, manualSupplier, manualProject, onCommitSuccess]);
-
-  // ══════════════════════════════════════════
   // Commit: BomImportBatch → QuoteCase[] 생성
   // ══════════════════════════════════════════
   const handleCommitBom = useCallback(async () => {
@@ -336,19 +200,8 @@ export function QuoteIntakeDock({
     }
   }, [bomBatch, onCommitSuccess]);
 
-  // ══════════════════════════════════════════
-  // Render helpers
-  // ══════════════════════════════════════════
-  const confidenceBadge = (c: ParsedField["confidence"]) => {
-    switch (c) {
-      case "high":
-        return <Badge className="text-[10px] px-1.5 py-0 bg-emerald-50 text-emerald-600 border-emerald-200">확인됨</Badge>;
-      case "review":
-        return <Badge className="text-[10px] px-1.5 py-0 bg-amber-50 text-amber-600 border-amber-200">검토 필요</Badge>;
-      case "blocked":
-        return <Badge className="text-[10px] px-1.5 py-0 bg-red-50 text-red-600 border-red-200">차단</Badge>;
-    }
-  };
+  // §11.55 — confidenceBadge helper + ParsedField type 제거: manual upload
+  // 분기에서만 쓰던 dead code.
 
   return (
     <Sheet open={open} onOpenChange={(v) => { if (!v) handleClose(); else onOpenChange(v); }}>
@@ -357,199 +210,13 @@ export function QuoteIntakeDock({
         className="w-full sm:w-[480px] md:w-[520px] p-0 overflow-y-auto !bg-white border-l border-slate-200"
       >
         <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-100 bg-slate-50/50">
-          <SheetTitle className="text-base font-bold text-slate-900">
-            {source === "bom_import"
-              ? "BOM 업로드"
-              : existingCaseId
-                ? "공급사 회신 견적서 등록"
-                : "외부 견적서 업로드"}
-          </SheetTitle>
+          <SheetTitle className="text-base font-bold text-slate-900">BOM 업로드</SheetTitle>
           <SheetDescription className="text-xs text-slate-500">
-            {source === "bom_import"
-              ? "BOM 파일을 업로드하면 품목을 인식하고, 확인 후 견적 요청을 생성합니다."
-              : existingCaseId
-                ? "공급사가 외부 채널(이메일·팩스 등)로 회신한 견적서를 이 case에 등록합니다. AI가 자동 파싱합니다."
-                : "견적서를 업로드하면 AI가 파싱하고, 확인 후 정식 견적 요청으로 전환합니다."}
+            BOM 파일을 업로드하면 품목을 인식하고, 확인 후 견적 요청을 생성합니다.
           </SheetDescription>
         </SheetHeader>
 
         <div className="p-5 space-y-5">
-          {source === "manual_upload" && (
-            <>
-              {/* ── Upload zone ── */}
-              {!intakeSession && (
-                <div
-                  className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-blue-300 hover:bg-blue-50/30 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add("border-blue-400", "bg-blue-50/50"); }}
-                  onDragLeave={(e) => { e.currentTarget.classList.remove("border-blue-400", "bg-blue-50/50"); }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.classList.remove("border-blue-400", "bg-blue-50/50");
-                    const file = e.dataTransfer.files[0];
-                    if (file) handleManualFileUpload(file);
-                  }}
-                >
-                  <Upload className="h-8 w-8 text-slate-400 mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-700">견적서 파일을 드래그하거나 클릭하여 업로드</p>
-                  <p className="text-xs text-slate-400 mt-1">PDF, 이미지 파일 지원</p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg,.webp"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleManualFileUpload(file);
-                    }}
-                  />
-                </div>
-              )}
-
-              {/* ── Uploading / Parsing state ── */}
-              {intakeSession && (intakeSession.status === "uploading" || intakeSession.status === "parsing") && (
-                <div className="rounded-xl border border-blue-200 bg-blue-50/30 p-6 text-center">
-                  <Loader2 className="h-8 w-8 text-blue-500 animate-spin mx-auto mb-3" />
-                  <p className="text-sm font-medium text-slate-700">
-                    {intakeSession.status === "uploading" ? "업로드 중..." : "AI 파싱 중..."}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-1">{intakeSession.fileName}</p>
-                </div>
-              )}
-
-              {/* ── Error state ── */}
-              {intakeSession?.status === "error" && (
-                <div className="rounded-xl border border-red-200 bg-red-50/30 p-5">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-sm font-medium text-red-700">파싱 실패</p>
-                      <p className="text-xs text-red-500 mt-1">{intakeSession.errorMessage}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="mt-3 h-8 text-xs border-red-200 text-red-600"
-                        onClick={() => { setIntakeSession(null); fileInputRef.current?.click(); }}
-                      >
-                        다른 파일로 재시도
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Parse review ── */}
-              {intakeSession && (intakeSession.status === "review" || intakeSession.status === "ready") && (
-                <div className="space-y-4">
-                  {/* File info */}
-                  <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-200">
-                    <FileText className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-slate-700 truncate">{intakeSession.fileName}</p>
-                      <p className="text-[10px] text-slate-400">{(intakeSession.fileSize / 1024).toFixed(1)} KB</p>
-                    </div>
-                    <button
-                      className="text-slate-400 hover:text-slate-600"
-                      onClick={() => { setIntakeSession(null); }}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-
-                  {/* Parsed fields */}
-                  <div>
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">파싱 결과</p>
-                    <div className="space-y-1.5">
-                      {intakeSession.parsedFields.map((field) => (
-                        <div key={field.key} className="flex items-center justify-between py-1.5 px-3 rounded-lg bg-white border border-slate-100">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-500 w-16 flex-shrink-0">{field.label}</span>
-                            <span className="text-xs font-medium text-slate-700">{field.value ?? "—"}</span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            {field.reason && <span className="text-[10px] text-slate-400">{field.reason}</span>}
-                            {confidenceBadge(field.confidence)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Items */}
-                  {intakeSession.rawItems.length > 0 && (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
-                        인식된 품목 ({intakeSession.rawItems.length}건)
-                      </p>
-                      <div className="max-h-48 overflow-y-auto space-y-1 rounded-lg border border-slate-200 p-2">
-                        {intakeSession.rawItems.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between py-1.5 px-2 rounded-md bg-slate-50/50 text-xs">
-                            <div className="flex-1 min-w-0">
-                              <span className="font-medium text-slate-700 truncate block">{item.name}</span>
-                              {item.catalogNumber && <span className="text-[10px] text-slate-400">{item.catalogNumber}</span>}
-                            </div>
-                            <div className="flex items-center gap-3 flex-shrink-0 text-slate-500">
-                              {item.quantity && <span>{item.quantity} {item.unit ?? ""}</span>}
-                              {item.unitPrice && <span className="font-medium text-slate-700">{item.unitPrice.toLocaleString()}</span>}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Mapping fields (케이스 없을 때만) */}
-                  {!existingCaseId && (
-                    <div className="space-y-3">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">매핑 정보</p>
-                      <div className="space-y-2">
-                        <div>
-                          <label className="text-[11px] text-slate-500 block mb-1">공급사명</label>
-                          <Input
-                            value={manualSupplier}
-                            onChange={(e) => setManualSupplier(e.target.value)}
-                            placeholder="공급사명 입력 또는 확인"
-                            className="h-9 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[11px] text-slate-500 block mb-1">프로젝트 (선택)</label>
-                          <Input
-                            value={manualProject}
-                            onChange={(e) => setManualProject(e.target.value)}
-                            placeholder="프로젝트명"
-                            className="h-9 text-xs"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Commit CTA */}
-                  <div className="pt-2 border-t border-slate-100">
-                    <Button
-                      className="w-full h-10 gap-2 bg-blue-600 hover:bg-blue-700"
-                      disabled={committing || (!existingCaseId && !manualSupplier)}
-                      onClick={handleCommitManualUpload}
-                    >
-                      {committing ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <ArrowRight className="h-4 w-4" />
-                      )}
-                      {existingCaseId ? "견적서 추가" : "정식 요청으로 전환"}
-                    </Button>
-                    {!existingCaseId && (
-                      <p className="text-[10px] text-slate-400 text-center mt-2">
-                        전환 전까지는 워크큐에 반영되지 않습니다
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
           {source === "bom_import" && (
             <>
               {/* ── BOM Upload zone ── */}

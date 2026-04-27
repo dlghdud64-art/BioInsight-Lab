@@ -17,13 +17,10 @@ export default function SmartSourcingRedirect() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // source hint 보존: manual_upload / bom_import 등
+    // §11.55 — manual_upload source hint 제거 (intake-dock에서
+    // 해당 분기 제거됨). BOM import만 forward.
     const source = searchParams?.get("source");
-    const dockParam = source === "bom_import"
-      ? "?dock=intake&source=bom_import"
-      : source === "manual_upload"
-        ? "?dock=intake&source=manual_upload"
-        : "";
+    const dockParam = source === "bom_import" ? "?dock=intake&source=bom_import" : "";
 
     router.replace(`/dashboard/quotes${dockParam}`);
   }, [router, searchParams]);
