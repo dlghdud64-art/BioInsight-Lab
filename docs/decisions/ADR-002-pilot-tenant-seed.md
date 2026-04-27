@@ -1730,6 +1730,64 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 
 - **§11.56 (다음 트랙 — BOM 업로드 같은 dead-end 평가):** `apps/web/src/app/api/quotes/create-from-bom` 미구현. BOM 워크플로우의 product value 평가 → 호영님이 BOM import 시나리오를 운영 ontology에 두는지 확인 후 (a) 제거 (manual_upload와 동일) (b) backend 구현 (c) hide 결정. 별도 진단 + 옵션 제시.
 
+### 11.56 `#po-delivery-inventory-auto-wiring` — Truth-lock only (구현은 후속 세션) 2026-04-28
+
+§11.56 records truth-lock for Track B 여섯 번째 발견. §11.55 직후 호영님 surface한 운영 자동화 아이디어: "재고관리쪽도 생각을 해봤는데 구매 내역들은 자동으로 배송이 완료되면 추가가 되는 로직이 있으면 좋을듯". 즉 발주(PO) → 배송 완료 → 재고 자동 추가 wiring.
+
+코드 추적 결과 §11.55와 **반대 방향의 UI vs backend gap** — backend가 절반 구현돼있는데 운영자 surface 미연결.
+
+- **Truth lock — 현재 구현 매핑:**
+  | Layer | 위치 | 구현 |
+  | --- | --- | --- |
+  | Backend trigger | `/api/admin/orders/[id]/status` PATCH | ✅ `newStatus === "DELIVERED"` → `tx.userInventory.createMany()` 자동 생성 |
+  | Audit + budget release | 같은 endpoint 안 | ✅ mutation audit + `releasePOVoided` (CANCELLED 분기) wiring |
+  | Status transition guard | `STATUS_TRANSITIONS` 테이블 | ✅ enforce |
+  | **운영자 surface** | PO/order list/detail에서 "배송 완료" 표시 | ❌ **없음** — admin endpoint만, 일반 운영자 entry point 미존재 |
+  | **입고 정보 입력** | location / lot number / expiry / supplier confirmation | ❌ **없음** — `location: "미지정"` 하드코딩 |
+  | **Inventory 모델** | `UserInventory` (자동 생성용) + `ProductInventory` (수동 등록용) | ⚠️ **두 모델 분리 존재** — legacy + new 혼재. 통합 또는 deprecate 결정 필요 |
+  | **재고 surface refresh** | `/dashboard/inventory` 쿼리 | ⚠️ 확인 필요 — 어느 모델 보는지 |
+
+- **호영님 발견 패턴 (Track B 6/6):**
+  - §11.50: UI required vs backend optional — UI **stricter**
+  - §11.51: UI step 3 vs reset useEffect race — UI **buggy**
+  - §11.53: UI label "업로드" vs operator verb "등록" — UI **wrong language**
+  - §11.54: UI 다크 잔재 vs LabAxis light chrome — UI **wrong tone**
+  - §11.55: UI manual_upload vs backend 0% 구현 — UI **fake capability**
+  - **§11.56: backend 자동화 vs UI 미노출 — UI missing capability** ← 반대 방향
+  → Track B는 양방향 gap 모두 surface하는 패턴 입증. 호영님이 **운영 흐름에서 자연스럽게 기대하는 것**이 코드와 일치하지 않으면 surface된다.
+
+- **운영 시나리오 (호영님 mental model로 정리):**
+  1. 운영자(호영님)가 LabAxis로 견적 요청 → 비교 → 발주 확정 (PO 생성)
+  2. 공급사가 물품 발송 (LabAxis 외부)
+  3. 운영자 — 물품 도착 → 검수 → **"배송 완료 / 입고 완료" 표시 ← 이 surface가 없음**
+  4. 자동 — PO items → ProductInventory(또는 UserInventory) 생성
+  5. 자동 — location / lot / expiry 입력 dock open
+  6. 재고 관리에 반영
+
+- **§11.56 결정 (이번 commit scope):**
+  **truth-lock + plan-deferred.** 직접 구현 안 함. 이유:
+  1. **단순 cleanup이 아니라 운영 ontology 확장 feature** — 2-4 commit phase 규모.
+  2. **`UserInventory` vs `ProductInventory` 모델 통합 / deprecate 결정** — schema-level 결정이라 호영님 product 시야 정리 + plan 승인 후 진입해야 함.
+  3. 오늘 누적 17 commits + Track B 5/5 입증 — 새 큰 feature 시작보다 break + 다음 세션 plan-first 진입이 자연스러움.
+  4. **#labaxis-delivery-planner skill 활용 자연스러운 진입점** — Phase 0 (Truth Reconciliation) → Phase 1-N TDD plan + 승인 → 구현.
+
+- **다음 세션 진입 가이드 (§11.56 plan-first):**
+  - **Phase 0 (다음 세션 1번째 작업):** Truth Reconciliation 확장
+    - `/dashboard/inventory`가 `UserInventory` vs `ProductInventory` 어느 쪽을 query하는지 확인
+    - 두 모델 사용 분리: 호영님 운영 시야의 inventory와 backend wiring 흐름의 inventory가 같은 것인지
+    - admin/orders endpoint의 권한 확장 vs 새 운영자 endpoint 신설 평가
+    - PO `actualDelivery` 같은 timestamp field schema 확인
+  - **Phase 1:** 운영자 surface entry point 추가 (PO list/detail "배송 완료" CTA + 입고 정보 입력 dock)
+  - **Phase 2:** backend endpoint 신설 또는 admin endpoint 운영자용 확장 + location/lot/expiry input persist
+  - **Phase 3:** 모델 통합 또는 deprecate 결정 + migration plan
+  - **Phase 4:** 재고 surface 자동 refresh + audit + budget actual_recorded transition
+
+- **Production probe (deferred):** 다음 세션 Phase 0에서 prod 확인 — 호영님이 실제로 PO를 만들고 admin endpoint를 직접 호출(또는 admin UI 사용)했을 때 inventory에 반영되는지. 이미 작동 중이라면 Phase 1만으로 충분.
+
+- **연관 트랙 (별도):**
+  - `#bom-upload-deadend-evaluation` (§11.55에서 분리) — BOM 업로드 같은 dead-end 패턴의 product value 평가. §11.56과 별개 진입.
+  - `#api-surface-coverage-test` (§11.55 lesson에서 surface) — UI에서 호출하는 모든 endpoint가 filesystem에 존재하는지 자동 grep 가드. Track B 회귀 class를 정적 분석으로 catch.
+
 ---
 
 ## 12. Changelog
@@ -1779,6 +1837,7 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 - 2026-04-27 — **§11.35 OPENED and CLOSED:** `#α-F-followup-csrf-fetch-sweep` Phase 2F — "Vendor portal" cluster reclassified + swapped (final csrf-fetch-sweep cluster). Phase 0 audit (in §11.28) tentatively labeled this cluster "Vendor portal" with a flag for csrf-route-registry analysis before any swap. Phase 2F read-only inspection found the Phase 0 classification was wrong: `components/vendor/quote-form.tsx:103` calls `POST /api/vendor/requests/{id}/respond` (slash + "respond"), an **operator-surface session-authenticated route** that uses `auth() + enforceAction()` — not the public token-based vendor portal. The actual public-token route at `/api/vendor-requests/{token}/response` (dash + "response") sits at a separate URL/file with `isValidVendorRequestToken` auth and is already registered in `lib/security/csrf-route-registry.ts:47` as `{ reason: 'public_token_auth' }` (CSRF middleware bypass). `quote-form.tsx` is a dual-use component; the default branch (no `onSubmit` prop) targets the operator route, which is correctly subject to the standard CSRF stack. Drop-in csrfFetch swap is correct. sed-based minimal-diff (+2/-1, line endings preserved); vitest `src/__tests__/lib/ai/` 29/29 PASS, tsc --noEmit on the 1 file → 0 errors. **`#α-F-followup-csrf-fetch-sweep` is now FULLY CLOSED — all 17 raw POST/PUT/PATCH/DELETE sites identified in §11.28 Phase 0 are processed (17/17).** Lessons logged in §11.35 main entry: URL slug similarity ≠ same auth model; csrf-route-registry should be consulted as truth for CSRF stack membership; dual-use components should be classified by default branch, not filename heuristics.
 - 2026-04-27 — **§11.36 OPENED and CLOSED:** P1 priority audit pass + test-only `@ts-nocheck` final 2 files closed. Read-only audit over the 6 P1 items in the LabAxis priority context found items 1 (vitest install) and 2 (prisma generate) already DONE in historical work (verified by 29/29 vitest PASS across 6 sweep commits this session); item 3 (test-only `@ts-nocheck` 잔여) had 2 files left from `PLAN_test-only-ts-nocheck-removal.md` Phase 4 deferred list (`button.test.tsx` jest-dom matcher type, 3 errors; `products.test.ts` `searchProducts` return-type inference collapsed to `{}` because `lib/api/products.ts:18` has no explicit return type and `cache.get()` injects `any` into the return path). Both fixed with test-only minimal-diff: `import "@testing-library/jest-dom/vitest";` added to button.test.tsx (TypeScript needs the module imported in any file that uses the matchers, even though `vitest.setup.ts:4` registers it at runtime); `as { products: unknown[]; total: number }` annotation added to products.test.ts `searchProducts` call. Production-side `lib/api/products.ts` return-type fix tracked separately (likely `#SEC05` or future type pass). vitest 8/8 PASS on the 2 files; tsc --noEmit on the 2 files → 0 errors; codebase-wide grep for `@ts-nocheck` in `apps/web/src/__tests__/` now returns **0 hits**. **`PLAN_test-only-ts-nocheck-removal.md` is hereby fully closed (94 → 0).** Items 4 (enum drift), 5 (RFQ handoff smoke), 6 (MutationAuditEvent migration) remain delegated to their own plans/tracks; this entry reclassifies the LabAxis P1 priority list — items 1-3 confirmed DONE, items 4-6 individually tracked.
 - 2026-04-27 — **§11.37 OPENED and CLOSED:** Master plan + sub-plan audit on P1 items 4–6. Read-only inspection of `PLAN_test-runner-and-prisma-stabilization.md` (Status: ✅ Complete, "사장님 로컬 1 verification only") and `PLAN_prisma-enum-drift-and-mutation-audit.md` (Status: ✅ Complete 2026-04-18, dark-launched monitoring 조건부) confirms: item 4 (enum drift) DONE — Phase 0 confirmed enum-drift count = 0 (schema vs migrations cumulative SQL is in sync); item 6 (MutationAuditEvent migration) DONE — CREATE TABLE was already in `apps/web/prisma/migrations/0_init/migration.sql:1705` from initial migration, wiring contract 59/59 GREEN. Item 5 (RFQ handoff smoke) is the only LabAxis P1 work still pending: code surface exists (`lib/store/rfq-handoff-store.ts` + 2 callers) but no `PLAN_rfq-handoff-smoke.md` was ever written and the production end-to-end smoke run was not executed against pilot data with verified evidence. Final P1 status post-§11.37: **5 / 6 DONE; only item 5 (operator-driven RFQ handoff smoke probe) remains, not blocking.** No code change in this entry.
+- 2026-04-28 — **§11.56 OPENED (truth-lock only, plan-deferred):** `#po-delivery-inventory-auto-wiring` — Track B 6번째 발견. 호영님 운영 자동화 아이디어: "구매 내역들은 자동으로 배송이 완료되면 추가가 되는 로직이 있으면 좋을듯". 코드 추적 결과 §11.55와 **반대 방향의 UI vs backend gap**: backend admin endpoint `/api/admin/orders/[id]/status`에 절반 구현(DELIVERED → `userInventory.createMany()` + audit + budget release wiring)인데 운영자 surface 미연결 + `UserInventory`/`ProductInventory` 두 모델 혼재 + location/lot/expiry 입력 dock 미구현. 이번 commit에선 **truth-lock + plan-deferred** — 단순 cleanup이 아니라 운영 ontology 확장 feature이고 schema-level 결정 (모델 통합/deprecate) 필요해서 labaxis-delivery-planner skill로 plan-first 진입 권장. 다음 세션 Phase 0(Truth Reconciliation 확장: `/dashboard/inventory` 쿼리 모델 + admin 권한 확장 평가) 부터 자연스럽게 진입. **Track B 양방향 gap pattern 입증 (5/5 stricter/buggy/wrong-language/wrong-tone/fake-capability + 1/1 missing-capability):** 호영님이 운영 흐름에서 기대하는 것과 코드 갭은 양방향 모두 surface됨. 후속 트랙 `#bom-upload-deadend-evaluation` + `#api-surface-coverage-test` (§11.55 lesson) 연관.
 - 2026-04-28 — **§11.55 OPENED and CLOSED:** `#manual-upload-deadend-removal` — Track B 다섯 번째 발견 (§11.53 직후 호영님 product 질문 "유저가 견적서 등록하는 모달 자체가 필요 없는거 아냐?"). 코드 추적 결과 `quote-intake-dock`의 manual_upload UI 전체가 backend 미구현 dead-end (`/api/quotes/create-from-intake` + `/api/quotes/[id]/attach-document` 둘 다 404). LabAxis 견적 응답 표준 워크플로우는 Path 1 (vendor token 응답 링크 — 자동) + Path 2 (SendGrid inbound webhook — 자동) 이며 manual upload 시나리오는 운영 ontology에 없음. 5 sites 정리: quote rail G-pre 버튼 (§11.53 라벨의 결과물 자체 제거) + dropdown 메뉴 "외부 견적서 업로드" + intakeDockSource state type union 좁히기 + intake-dock manual_upload 분기 전체 (state 4개 + handlers 2개 + IntakeSession/ParsedField interface + render 블록 ~175 lines + confidenceBadge helper) + smart-sourcing legacy redirect의 manual_upload 분기. intake-dock 591 → 404 lines. dispatch SendChannel enum의 "manual_upload"는 별개 개념이라 보존. **Lesson:** Track B 5건 모두 동일 회귀 class — UI capability vs backend implementation gap. 호영님이 prod 운영 중 직접 surface해야만 catch 되는 product-layer 회귀. 향후 `#api-surface-coverage-test` 트랙으로 자동 검증 가능. tsc 0 errors, surface guard 0 violations 유지. 후속 §11.56은 BOM 업로드 (같은 dead-end 패턴, 별개 product 평가 필요).
 - 2026-04-28 — **§11.54 OPENED and CLOSED:** `#vendor-dispatch-dialog-light-theme-alignment` — Track B 네 번째 발견 (§11.53 직후 호영님 "색상도 아직 안 잡혔고"). VendorRequestModal dialog 전체에 다크 테마 Tailwind class 잔재 17+ 사이트 (`bg-pg`, `bg-amber-950/10`, `text-emerald-300`, `border-slate-600/40`, `bg-emerald-600/25`, `text-emerald-400/70` 등) → 라이트 surface tokens (emerald-50/200/600/700, amber-50/200/500/700, slate-50/200/500/700/900, blue-50/600/700) + rose 추가. CONFIDENCE_COLOR 상수 표도 정리. **Duplicate primary CTA 해소:** §11.41이 만든 부산물 — 두 곳(empty-state 박스 + footer) 동시에 primary blue "공급사 직접 추가" 노출되던 평탄 hierarchy를 footer 단일 primary zone으로 격상, empty-state는 가이드 텍스트만 + 인라인 강조로 footer를 가리킴. **§11.45 surface guard 한계 노출:** inline-hex만 grep해서 Tailwind class form 다크 잔재 못 잡음 — §11.55에서 ban list 확장 가능. tsc 0 errors, vitest sub-suite 3/3 PASS, surface guard 0 violations. **Lesson:** §11.43 (inline-hex) + §11.54 (Tailwind class) — 같은 다크 회귀 class에 표현 형태 2가지. 자동 가드는 둘 다 catch해야 light theme 정합성 보장.
 - 2026-04-28 — **§11.53 OPENED and CLOSED:** `#quote-intake-dock-cta-clarity` — Track B 세 번째 발견 (§11.50/§11.51 prod 검증 직후 quote rail에서 surface). 호영님 직감: "추가 견적서 업로드"의 "유저의?" + "업로드 개념은 운영자 입장에 없는거 아냐?" — 운영자 mental verb는 "업로드"가 아닌 "등록·첨부". 4가지 모호 포인트(주체 / "추가" 의미 / 견적의 source / 사용 시나리오) + "업로드"가 implementation 단어임을 truth lock. Fix scope: G-pre 진입 라벨(L1105) + intake dock SheetTitle(L361 existingCaseId 분기) + description(L367) — 3 sites. Out of scope: dropdown 진입점(BOM 업로드와 짝) + drop zone 행위 안내(drag-and-drop context) — implementation context는 "업로드" 유지. ADR §11.53에 LabAxis 운영 verb 매트릭스 처음 명시 (조립/제출/회신/등록/비교/발주). tsc 0 errors, surface guard 0 violations 유지. **Lesson:** UI 라벨은 implementation 단어 vs 운영 ontology 동사로 분리해서 사용. 후속 §11.54 "VendorRequestModal 색상 hierarchy 미정렬"는 같은 발견 세션에서 surface된 별도 트랙.

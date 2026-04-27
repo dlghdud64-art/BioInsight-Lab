@@ -44,6 +44,33 @@
 2. **#α-F-followup-api-contract-tests** — §11.46 패턴을 다른 dashboard 소비 API 4개(`/api/budgets`, `/api/quotes/my`, `/api/work-queue/purchase-conversion`, `/api/inventory`)에 일반화. 30분-1시간.
 3. **운영자 product gap discovery** — Track B (호영님 직접 운영 후 발견하는 항목).
 
+### 2026-04-28 update — Track B 6 발견 closed/parked
+
+오늘 세션에서 Track B 패턴이 폭발적으로 입증됨. 6 발견 — UI vs backend gap (양방향):
+
+| § | 트랙 | 상태 |
+|---|---|---|
+| §11.50 | request-wizard purpose UI required → optional | closed |
+| §11.51 | request-wizard handoff useEffect race | closed |
+| §11.53 | quote-intake-dock CTA "업로드" → "등록" | closed |
+| §11.54 | VendorRequestModal 다크 잔재 → light tokens | closed |
+| §11.55 | manual_upload UI 전체 제거 (backend 0%) | closed |
+| **§11.56** | **PO 배송 → 재고 자동 wiring** | **truth-lock only, plan-deferred** |
+
+§11.56 은 backend 절반 구현 + 운영자 surface 미연결 + UserInventory/ProductInventory 모델 혼재. **다음 세션의 가장 자연스러운 진입점.**
+
+### 후속 트랙 (다음 세션부터 우선순위 순)
+
+1. **§11.56 #po-delivery-inventory-auto-wiring** (Plan-first, M-L scope)
+   - labaxis-delivery-planner skill로 Phase 0 (Truth Reconciliation 확장) 부터 진입
+   - schema-level 결정 필요 (UserInventory vs ProductInventory 통합/deprecate)
+   - 2-4 commit phase track 예상
+2. **§11.55 후속 — #bom-upload-deadend-evaluation** — 같은 dead-end 패턴, 별개 product 평가
+3. **§11.55 lesson — #api-surface-coverage-test** — UI 호출 endpoint vs filesystem 자동 검증 (Track B 회귀 class 정적 가드)
+4. **§11.52 API 실패 명시적 toast** (§11.51 backlog) — small (15분)
+5. **#α-F-followup-api-contract-tests** — §11.46 패턴 4 API 일반화
+6. **운영자 직접 prod 검증 → 새 Track B 발견** — 가장 valuable, 호영님 페이스
+
 ### 새로 surface된 트랙
 
 - **§11.48 #dashboard-inventory-dark-hex-sweep** (P2) — `dashboard/inventory/inventory-content.tsx` 6 inline-hex sites 정리. 다크 테마 (`#1E2738`, `#151C26`, `#1a1f2e`, `#2E3B50`) 잔재가 LabAxis 라이트 chrome 안에 박혀 있음. `card.color`/`borderColor` 같은 동적 hex 처리 필요 — 단순 토큰 교체가 아니라 chart palette / status badge 색을 LabAxis token으로 표준화하는 작업. 예상 작업량: 2-3 commit, ~1시간. ui-wizard skill 사용 권장.
