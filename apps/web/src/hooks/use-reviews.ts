@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 
 interface Review {
   id: string;
@@ -71,7 +72,7 @@ export function useCreateReview() {
       pros?: string;
       cons?: string;
     }) => {
-      const response = await fetch(`/api/products/${data.productId}/reviews`, {
+      const response = await csrfFetch(`/api/products/${data.productId}/reviews`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -91,7 +92,7 @@ export function useDeleteReview() {
   
   return useMutation({
     mutationFn: async ({ reviewId, productId }: { reviewId: string; productId: string }) => {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
+      const response = await csrfFetch(`/api/reviews/${reviewId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete review");
