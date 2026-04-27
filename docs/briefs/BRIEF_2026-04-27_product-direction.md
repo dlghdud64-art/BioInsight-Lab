@@ -36,8 +36,13 @@
 
 ### 잠재 회귀 가드 후보
 - ~~**#labaxis-no-inline-hex-bg**~~ → **§11.45 CLOSED** (2026-04-27): `scripts/check-no-inline-hex-bg.sh` 추가됨. **즉시 6 violation 발견** (`apps/web/src/app/dashboard/inventory/inventory-content.tsx` L2238/2254/2260/2282/2307/3698). `dashboard/page.tsx:427` 1 violation은 §11.45 commit에서 동시 정리. inventory 6 sites는 별도 §11.48 sweep 트랙으로 분리 (단순 sed 불가, 다크 카드 + 동적 hex `card.color/borderColor` + `style={{ color: ... }}` 텍스트 hex까지 박혀 있어 surface 재설계 수반).
-- ~~**#reports-contract-test**~~ → **§11.46 진행 중**.
-- ~~**#budget-detail-screen-self-chrome-audit**~~ → **§11.47 진행 중**.
+- ~~**#reports-contract-test**~~ → **§11.46 CLOSED** (2026-04-27): `apps/web/src/__tests__/api/reports/purchase.contract.test.ts` 추가, 4/4 PASS. ESM-native vi.mocked 패턴.
+- ~~**#budget-detail-screen-self-chrome-audit**~~ → **§11.47 CLOSED** (2026-04-27): 4 grep 패턴 audit, **0 active violations** outside §11.44. Pattern B 회귀 가드를 §11.45 스크립트에 통합 — 단일 "Surface Regression Guard"로 운영.
+
+### Track A 완료 후 다음 세션 진입 옵션 (우선순위 순)
+1. **§11.48 #dashboard-inventory-dark-hex-sweep** (P2) — inventory-content.tsx 6 sites 다크 hex 정리. ui-wizard skill 권장. 1시간 예상. closing 시 `check-no-inline-hex-bg.sh` exit 0 도달 → §11.49 micro-track으로 CI hook.
+2. **#α-F-followup-api-contract-tests** — §11.46 패턴을 다른 dashboard 소비 API 4개(`/api/budgets`, `/api/quotes/my`, `/api/work-queue/purchase-conversion`, `/api/inventory`)에 일반화. 30분-1시간.
+3. **운영자 product gap discovery** — Track B (호영님 직접 운영 후 발견하는 항목).
 
 ### 새로 surface된 트랙
 
