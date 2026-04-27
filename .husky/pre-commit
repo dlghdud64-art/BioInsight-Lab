@@ -1,1 +1,24 @@
-# no-op
+#!/usr/bin/env sh
+#
+# LabAxis pre-commit hook (§11.49)
+# ─────────────────────────────────
+# Runs scripts/check-no-inline-hex-bg.sh whenever the staged diff
+# touches files under apps/web/src/app/dashboard/**.  When no
+# dashboard surface file is staged the script is skipped so the
+# hook is effectively a no-op for non-UI commits.
+#
+# History
+#   §11.45  script created (regression guard authored, manual run only)
+#   §11.48  inventory-content.tsx 6 sites cleaned → script exits 0
+#   §11.49  this hook wires the script into git pre-commit
+#
+
+# Only run when at least one dashboard surface file is staged.
+DASHBOARD_STAGED=$(git diff --cached --name-only --diff-filter=ACMRTUXB \
+  | grep -E '^apps/web/src/app/dashboard/.*\.(ts|tsx)$' || true)
+
+if [ -z "$DASHBOARD_STAGED" ]; then
+  exit 0
+fi
+
+scripts/check-no-inline-hex-bg.sh

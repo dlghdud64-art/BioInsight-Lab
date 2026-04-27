@@ -1,0 +1,42 @@
+name: LabAxis Surface Guard
+
+# Runs `scripts/check-no-inline-hex-bg.sh` on every PR + push to
+# main / develop.
+#
+# The script enforces two LabAxis surface invariants under
+# `apps/web/src/app/dashboard/**`:
+#   Pattern A — no inline hex `style={{ backgroundColor: '#…' }}`
+#               (must use bg-sh / bg-pn / bg-el LabAxis tokens or
+#               Tailwind standard classes)
+#   Pattern B — no page-internal `<Link href="/"><span>LabAxis</span>`
+#               (DashboardShell owns the chrome; pages render content)
+#
+# Closes ADR-002 §11.49 — the script was originally manual-run only
+# (§11.45). After §11.48 brought Pattern A violations to 0 and §11.47
+# audited Pattern B as 0, both gates can run as a CI block.
+#
+# Local equivalent: .husky/pre-commit (scoped to staged dashboard
+# files only).
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  surface-guard:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run LabAxis Surface Guard
+        run: |
+          chmod +x scripts/check-no-inline-hex-bg.sh
+          scripts/check-no-inline-hex-bg.sh
