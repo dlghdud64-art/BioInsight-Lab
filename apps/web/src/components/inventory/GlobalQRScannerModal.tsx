@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import { useQRScanner } from "@/contexts/QRScannerContext";
 import { QRScanner } from "./QRScanner";
 import { useToast } from "@/hooks/use-toast";
@@ -137,7 +138,7 @@ function ScannerContent() {
       const qty = parseFloat(useQty);
       if (isNaN(qty) || qty <= 0) throw new Error("올바른 수량을 입력하세요.");
 
-      const res = await fetch(`/api/inventory/${inventoryResult.id}/use`, {
+      const res = await csrfFetch(`/api/inventory/${inventoryResult.id}/use`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
