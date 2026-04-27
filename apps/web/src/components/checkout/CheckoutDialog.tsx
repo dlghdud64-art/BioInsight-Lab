@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { csrfFetch } from "@/lib/api-client";
 import {
   Dialog,
   DialogContent,
@@ -652,7 +653,7 @@ export default function CheckoutDialog({
   // 청구 정보 저장 mutation
   const billingMutation = useMutation({
     mutationFn: async (data: BillingInfoData) => {
-      const res = await fetch(`/api/organizations/${organizationId}/billing-info`, {
+      const res = await csrfFetch(`/api/organizations/${organizationId}/billing-info`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -668,7 +669,7 @@ export default function CheckoutDialog({
   // 플랜 변경 mutation
   const changePlanMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetch(`/api/organizations/${organizationId}/subscription`, {
+      const res = await csrfFetch(`/api/organizations/${organizationId}/subscription`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
