@@ -359,7 +359,7 @@ export default function PurchasesPage() {
             label="검토 필요"
             value={stats.review_required}
             valueColor={stats.review_required > 0 ? "text-blue-600" : "text-slate-900"}
-            sub="review_required"
+            sub="응답 수집 중"
             active={queueTab === "review_required"}
             onClick={() => setQueueTab(queueTab === "review_required" ? "all" : "review_required")}
           />
@@ -369,7 +369,7 @@ export default function PurchasesPage() {
             label="발주 가능"
             value={stats.ready_for_po}
             valueColor={stats.ready_for_po > 0 ? "text-emerald-600" : "text-slate-900"}
-            sub="ready_for_po"
+            sub="비교 완료 · 발주 대기"
             active={queueTab === "ready_for_po"}
             onClick={() => setQueueTab(queueTab === "ready_for_po" ? "all" : "ready_for_po")}
           />
@@ -379,7 +379,7 @@ export default function PurchasesPage() {
             label="확정됨"
             value={stats.confirmed}
             valueColor={stats.confirmed > 0 ? "text-purple-600" : "text-slate-900"}
-            sub="confirmed"
+            sub="발주 확정 완료"
             active={queueTab === "confirmed"}
             onClick={() => setQueueTab(queueTab === "confirmed" ? "all" : "confirmed")}
           />
@@ -389,7 +389,7 @@ export default function PurchasesPage() {
             label="만료"
             value={stats.expired}
             valueColor={stats.expired > 0 ? "text-rose-600" : "text-slate-900"}
-            sub="isExpired count"
+            sub="응답 기한 초과"
             active={false}
             onClick={() => setQueueTab("review_required")}
           />
