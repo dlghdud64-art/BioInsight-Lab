@@ -70,9 +70,9 @@ const CONTACT_SOURCE_ICON: Record<ResolvedSupplier["contactSource"], string> = {
 };
 
 const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {
-  high: "text-emerald-400 border-emerald-500/25 bg-emerald-600/10",
-  medium: "text-amber-400 border-amber-500/25 bg-amber-600/10",
-  low: "text-red-400 border-red-500/25 bg-red-600/10",
+  high: "text-emerald-700 border-emerald-200 bg-emerald-50",
+  medium: "text-amber-700 border-amber-200 bg-amber-50",
+  low: "text-rose-700 border-rose-200 bg-rose-50",
 };
 
 // ══════════════════════════════════════════════════════════════
@@ -284,13 +284,20 @@ export function VendorRequestModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-pg border-slate-600/40 w-full mx-3 md:mx-0">
+      {/* §11.54 — light-theme alignment.
+          Pre-§11.54: bg-pg + border-slate-600/40 + bg-amber-950/10 +
+          text-amber-300 etc. (다크 테마 잔재) was painting a dark
+          island inside LabAxis light chrome — same class of regression
+          as §11.43/§11.48 but expressed in Tailwind classes (the
+          §11.45 inline-hex grep can't catch this; future §11.55 may
+          extend the script). */}
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 w-full mx-3 md:mx-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900 text-base md:text-lg">
-            <Send className="h-5 w-5 text-blue-400" />
+            <Send className="h-5 w-5 text-blue-600" />
             공급사 발송 검토
           </DialogTitle>
-          <DialogDescription className="text-slate-400">
+          <DialogDescription className="text-slate-500">
             {hasResolved
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
               : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
@@ -302,35 +309,35 @@ export function VendorRequestModal({
           {/* ═══ Readiness Strip ═══ */}
           <div className={`rounded-lg border px-4 py-3 ${
             sendReadiness === "ready"
-              ? "border-emerald-500/25 bg-emerald-950/10"
-              : "border-amber-500/25 bg-amber-950/10"
+              ? "border-emerald-200 bg-emerald-50"
+              : "border-amber-200 bg-amber-50"
           }`}>
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 {sendReadiness === "ready" ? (
-                  <Check className="h-4 w-4 text-emerald-400" />
+                  <Check className="h-4 w-4 text-emerald-600" />
                 ) : (
-                  <AlertTriangle className="h-4 w-4 text-amber-400" />
+                  <AlertTriangle className="h-4 w-4 text-amber-500" />
                 )}
                 <span className={`text-sm font-semibold ${
-                  sendReadiness === "ready" ? "text-emerald-300" : "text-amber-300"
+                  sendReadiness === "ready" ? "text-emerald-700" : "text-amber-700"
                 }`}>
                   {sendReadiness === "ready" ? "전달 준비 완료" : sendReadiness === "needs_review" ? "보완 필요" : "공급사 추가 필요"}
                 </span>
               </div>
               {sendReadiness === "ready" && (
-                <span className="text-xs text-emerald-400/70">바로 전달 가능</span>
+                <span className="text-xs text-emerald-600">바로 전달 가능</span>
               )}
             </div>
             <div className="flex flex-wrap gap-3">
               {readinessChecks.map((check) => (
                 <div key={check.label} className="flex items-center gap-1.5">
                   {check.ready ? (
-                    <Check className="h-3 w-3 text-emerald-400" />
+                    <Check className="h-3 w-3 text-emerald-600" />
                   ) : (
-                    <Clock className="h-3 w-3 text-amber-400" />
+                    <Clock className="h-3 w-3 text-amber-500" />
                   )}
-                  <span className={`text-xs ${check.ready ? "text-slate-500" : "text-slate-600"}`}>
+                  <span className={`text-xs ${check.ready ? "text-slate-700" : "text-slate-500"}`}>
                     {check.label}
                   </span>
                 </div>
@@ -339,7 +346,7 @@ export function VendorRequestModal({
             {readinessChecks.some((c) => !c.ready) && (
               <div className="mt-2 space-y-0.5">
                 {readinessChecks.filter((c) => !c.ready).map((c) => (
-                  <p key={c.label} className="text-xs text-slate-400">{c.blocker}</p>
+                  <p key={c.label} className="text-xs text-slate-500">{c.blocker}</p>
                 ))}
               </div>
             )}
@@ -349,8 +356,8 @@ export function VendorRequestModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-blue-400" />
-                <span className="text-sm font-semibold text-slate-700">
+                <Building2 className="h-4 w-4 text-blue-600" />
+                <span className="text-sm font-semibold text-slate-900">
                   선별된 공급사 후보
                 </span>
                 {includedCount > 0 && (
@@ -361,7 +368,7 @@ export function VendorRequestModal({
                 )}
               </div>
               {hasResolved && (
-                <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-600/10 text-blue-400 font-medium">
+                <Badge className="text-xs px-1.5 py-0.5 border-0 bg-blue-50 text-blue-700 font-medium">
                   <Sparkles className="h-3 w-3 mr-1" />플랫폼 선별
                 </Badge>
               )}
@@ -378,30 +385,23 @@ export function VendorRequestModal({
               ))}
             </div>
 
-            {/* Empty: no suppliers resolved */}
+            {/* Empty: no suppliers resolved
+                §11.54 — primary "공급사 직접 추가" CTA removed from
+                this empty-state block (was duplicated with the footer
+                primary).  Footer is now the single primary action
+                location; this block carries guidance text only. */}
             {!hasResolved && !showManualFallback && (
-              <div className="rounded-lg border border-dashed border-amber-500/25 bg-amber-950/5 px-4 py-4">
+              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm text-slate-600">공급사 후보 선별 실패</p>
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-sm font-medium text-slate-900">공급사 후보 선별 실패</p>
+                    <p className="text-xs text-slate-600 mt-1">
                       해당 품목에 매칭되는 공급사가 없거나, 플랫폼 공급사 DB에 연락 채널이 등록되지 않았습니다.
                     </p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      플랫폼 운영팀에서 공급사 데이터를 보강 중입니다. 급한 경우 수동으로 추가할 수 있습니다.
+                    <p className="text-xs text-slate-500 mt-1">
+                      플랫폼 운영팀에서 공급사 데이터를 보강 중입니다. 급한 경우 아래 <span className="font-medium text-slate-700">"공급사 직접 추가"</span>로 수동 추가할 수 있습니다.
                     </p>
-                    <div className="flex gap-2 mt-3">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => setShowManualFallback(true)}
-                        className="h-9 text-xs bg-blue-600 hover:bg-blue-500 text-white"
-                      >
-                        <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-                        공급사 직접 추가
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -409,10 +409,10 @@ export function VendorRequestModal({
 
             {/* Manual fallback — only when explicitly opened or no suppliers */}
             {showManualFallback && (
-              <div className="rounded-lg border border-slate-600/30 bg-sh p-3 space-y-2">
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
                 <div className="flex items-center gap-2 mb-1">
                   <UserPlus className="h-3.5 w-3.5 text-slate-500" />
-                  <p className="text-xs font-medium text-slate-400">AI 후보에 없는 공급사를 직접 추가</p>
+                  <p className="text-xs font-medium text-slate-700">AI 후보에 없는 공급사를 직접 추가</p>
                 </div>
                 <div className="flex gap-2">
                   <Input
@@ -420,14 +420,14 @@ export function VendorRequestModal({
                     placeholder="이메일"
                     value={manualEmail}
                     onChange={(e) => setManualEmail(e.target.value)}
-                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-900 flex-1"
+                    className="h-8 text-xs bg-white border-slate-200 text-slate-900 flex-1"
                   />
                   <Input
                     type="text"
                     placeholder="공급사명"
                     value={manualName}
                     onChange={(e) => setManualName(e.target.value)}
-                    className="h-8 text-xs bg-pg border-slate-600/30 text-slate-900 w-36"
+                    className="h-8 text-xs bg-white border-slate-200 text-slate-900 w-36"
                   />
                 </div>
                 <div className="flex gap-2 justify-end">
@@ -436,7 +436,7 @@ export function VendorRequestModal({
                     variant="ghost"
                     size="sm"
                     onClick={() => { setShowManualFallback(false); setManualEmail(""); setManualName(""); }}
-                    className="h-7 text-xs text-slate-500"
+                    className="h-7 text-xs text-slate-500 hover:text-slate-700"
                   >
                     닫기
                   </Button>
@@ -445,7 +445,7 @@ export function VendorRequestModal({
                     size="sm"
                     onClick={addManualVendor}
                     disabled={!manualEmail.trim()}
-                    className="h-7 text-xs bg-slate-600 hover:bg-slate-500 text-slate-700"
+                    className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     추가
                   </Button>
@@ -463,22 +463,22 @@ export function VendorRequestModal({
                 className="flex items-center gap-2 w-full text-left group"
               >
                 <Mail className="h-3.5 w-3.5 text-slate-500" />
-                <span className="text-xs font-medium text-slate-400 group-hover:text-slate-600">
+                <span className="text-xs font-medium text-slate-700 group-hover:text-slate-900">
                   전달 메시지 미리보기
                 </span>
-                <span className="text-xs text-slate-600">·</span>
+                <span className="text-xs text-slate-400">·</span>
                 <span className="text-xs text-slate-500">플랫폼 자동 생성 초안</span>
-                <ChevronDown className={`h-3 w-3 text-slate-600 ml-auto transition-transform ${messageExpanded ? "rotate-180" : ""}`} />
+                <ChevronDown className={`h-3 w-3 text-slate-400 ml-auto transition-transform ${messageExpanded ? "rotate-180" : ""}`} />
               </button>
 
               {messageExpanded && (
-                <div className="rounded-lg border border-slate-600/25 bg-sh px-4 py-3">
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   {messageEditing ? (
                     <>
                       <Textarea
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
-                        className="text-xs min-h-[100px] bg-pg border-slate-600/30 text-slate-900"
+                        className="text-xs min-h-[100px] bg-white border-slate-200 text-slate-900"
                         autoFocus
                       />
                       <div className="flex justify-end mt-2">
@@ -487,7 +487,7 @@ export function VendorRequestModal({
                           size="sm"
                           variant="ghost"
                           onClick={() => setMessageEditing(false)}
-                          className="h-6 text-xs text-slate-400"
+                          className="h-6 text-xs text-slate-500 hover:text-slate-700"
                         >
                           완료
                         </Button>
@@ -495,14 +495,14 @@ export function VendorRequestModal({
                     </>
                   ) : (
                     <>
-                      <pre className="text-xs text-slate-400 whitespace-pre-wrap font-sans leading-relaxed">
+                      <pre className="text-xs text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
                         {message}
                       </pre>
                       <div className="flex justify-end mt-2">
                         <button
                           type="button"
                           onClick={() => setMessageEditing(true)}
-                          className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                          className="text-xs text-blue-600 hover:text-blue-700 transition-colors"
                         >
                           수정
                         </button>
@@ -515,10 +515,10 @@ export function VendorRequestModal({
           )}
 
           {/* ═══ Dispatch Conditions ═══ */}
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 px-3 py-2.5 rounded-lg border border-slate-600/20 bg-sh">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4 px-3 py-2.5 rounded-lg border border-slate-200 bg-slate-50">
             <div className="flex items-center gap-2">
               <Clock className="h-3.5 w-3.5 text-slate-500" />
-              <span className="text-xs text-slate-400">응답 요청 기한</span>
+              <span className="text-xs text-slate-700">응답 요청 기한</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Input
@@ -530,21 +530,21 @@ export function VendorRequestModal({
                   const v = parseInt(e.target.value) || 14;
                   setExpiresInDays(Math.max(1, Math.min(90, v)));
                 }}
-                className="h-8 md:h-7 text-xs w-16 text-center bg-sh border-bd text-slate-900"
+                className="h-8 md:h-7 text-xs w-16 text-center bg-white border-slate-200 text-slate-900"
               />
               <span className="text-xs text-slate-500">일 (1~90)</span>
             </div>
           </div>
         </div>
 
-        {/* ═══ Dock ═══ */}
-        <DialogFooter className="gap-2 pt-2 border-t border-slate-600/20 flex-col md:flex-row">
+        {/* ═══ Dock — Footer is the single primary-action zone (§11.54) ═══ */}
+        <DialogFooter className="gap-2 pt-2 border-t border-slate-200 flex-col md:flex-row">
           {/* Fallback: manual add link — visible whenever manual panel is collapsed */}
           {!showManualFallback && (
             <button
               type="button"
               onClick={() => setShowManualFallback(true)}
-              className="text-xs text-slate-600 hover:text-slate-400 mr-auto transition-colors text-left"
+              className="text-xs text-blue-600 hover:text-blue-700 mr-auto transition-colors text-left"
             >
               + 후보에 없는 공급사 직접 추가
             </button>
@@ -555,7 +555,7 @@ export function VendorRequestModal({
             variant="ghost"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="min-h-[40px] text-slate-400 hover:text-slate-700 border border-slate-600/30 active:scale-95"
+            className="min-h-[40px] text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 active:scale-95"
           >
             취소
           </Button>
@@ -563,7 +563,7 @@ export function VendorRequestModal({
             <Button
               onClick={() => setShowManualFallback(true)}
               disabled={isSubmitting}
-              className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-500 text-white"
+              className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
             >
               <UserPlus className="h-4 w-4 mr-2" />
               공급사 직접 추가
@@ -574,8 +574,8 @@ export function VendorRequestModal({
               disabled={isSubmitting}
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
-                  ? "bg-emerald-600 hover:bg-emerald-500 text-white"
-                  : "bg-amber-600 hover:bg-amber-500 text-white"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-amber-500 hover:bg-amber-600 text-white"
               }`}
             >
               {isSubmitting ? (
@@ -611,8 +611,8 @@ function SupplierReviewCard({
   return (
     <div className={`rounded-lg border px-3 md:px-3.5 py-2 md:py-2.5 transition-all ${
       supplier.included
-        ? "border-slate-600/40 bg-slate-50"
-        : "border-slate-600/15 bg-sh opacity-40"
+        ? "border-slate-200 bg-white"
+        : "border-slate-100 bg-slate-50 opacity-60"
     }`}>
       <div className="flex items-center gap-2 md:gap-3">
         {/* Toggle */}
@@ -621,8 +621,8 @@ function SupplierReviewCard({
           onClick={onToggle}
           className={`w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-all ${
             supplier.included
-              ? "bg-emerald-600/25 border-emerald-500/50 text-emerald-300"
-              : "border-slate-600/40 text-transparent hover:border-slate-500/50"
+              ? "bg-emerald-600 border-emerald-600 text-white"
+              : "border-slate-300 text-transparent hover:border-slate-400"
           }`}
         >
           {supplier.included && <Check className="h-3 w-3" />}
@@ -639,7 +639,7 @@ function SupplierReviewCard({
         </div>
 
         {/* Contact source badge */}
-        <span className="text-[10px] text-slate-600 shrink-0 ml-auto md:ml-0">
+        <span className="text-[10px] text-slate-500 shrink-0 ml-auto md:ml-0">
           {CONTACT_SOURCE_LABEL[supplier.contactSource]}
         </span>
       </div>

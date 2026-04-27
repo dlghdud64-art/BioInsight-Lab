@@ -1603,6 +1603,79 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 
 - **§11.54 (별도 트랙):** 같은 발견 세션에서 호영님이 "색상도 아직 안 잡혔고" surface — `VendorRequestModal` ("공급사 발송 검토") dialog의 color hierarchy. §11.41이 amber 단일 톤으로 정리했으나 추가 검토 필요(예: amber 안의 ✓ 체크 마크가 emerald로 시각 분리 안 됨, "공급사 후보 선정 실패" 라벨이 amber인데 "실패" 단어 emotional weight과 mismatch, 두 개 "공급사 직접 추가" 버튼 — outline + primary blue 중복 등). 별도 진단 + 옵션 제시 후 처리.
 
+### 11.54 `#vendor-dispatch-dialog-light-theme-alignment` — `VendorRequestModal` 다크 테마 잔재(Tailwind class form) → 라이트 토큰 sweep + duplicate primary CTA hierarchy 정리 2026-04-28
+
+§11.54 closes Track B 네 번째 발견. §11.53 직후 호영님이 같은 review 세션에서 surface: "색상도 아직 안 잡혔고". §11.41이 amber 단일 톤으로 정리했으나 그건 Readiness Strip 단일 영역 + duplicate CTA 중 하나의 정리만 수행. 본 트랙은 dialog 전체의 dark-theme Tailwind class 잔재(`bg-amber-950/10`, `text-emerald-300`, `border-slate-600/40`, `bg-pg` 등)를 light surface tokens(emerald-50/200/600/700, amber-50/200/500/700, slate-50/200/500/700/900, blue-50/600/700)로 통일하고, 두 개의 primary blue "공급사 직접 추가" 버튼 hierarchy를 footer 단일 primary로 정렬한다.
+
+- **Why §11.45 surface-guard 가 못 잡았는가:** §11.45 스크립트는 inline `style={{ backgroundColor: '#XXXXXX' }}`만 grep함. 본 트랙의 회귀는 **Tailwind class form** (`bg-amber-950/10`, `text-emerald-300`, `border-slate-600/40` 등 — 다크 테마 시절 작성된 class names가 그대로 남음). 같은 회귀 class지만 정적 분석 표면이 다름. 후속 §11.55 `#labaxis-surface-guard-tailwind-extension` 트랙에서 ban list 확장 가능 (`bg-(\w+)-(800|900|950)`, `text-(\w+)-(200|300)`, `border-slate-600/`, `bg-pg` 등 grep). 이번 commit에선 sweep만, 스크립트 확장은 분리.
+
+- **17+ Tailwind class 잔재 sweep:**
+  | site | pre (dark) | post (light) |
+  | --- | --- | --- |
+  | DialogContent | `bg-pg border-slate-600/40` | `bg-white border-slate-200` |
+  | DialogTitle Send icon | `text-blue-400` | `text-blue-600` |
+  | DialogDescription | `text-slate-400` | `text-slate-500` |
+  | Readiness Strip ready | `border-emerald-500/25 bg-emerald-950/10` | `border-emerald-200 bg-emerald-50` |
+  | Readiness Strip warn | `border-amber-500/25 bg-amber-950/10` | `border-amber-200 bg-amber-50` |
+  | Strip Check icon | `text-emerald-400` | `text-emerald-600` |
+  | Strip AlertTriangle | `text-amber-400` | `text-amber-500` |
+  | Strip title text | `text-emerald-300` / `text-amber-300` | `text-emerald-700` / `text-amber-700` |
+  | Strip "바로 전달 가능" | `text-emerald-400/70` | `text-emerald-600` |
+  | Strip check labels | `text-slate-500` / `text-slate-600` (양쪽 어두운 톤) | `text-slate-700` (ready) / `text-slate-500` (pending) — contrast 분리 |
+  | Strip blocker text | `text-slate-400` | `text-slate-500` |
+  | Building2 icon | `text-blue-400` | `text-blue-600` |
+  | Sparkles Badge | `bg-blue-600/10 text-blue-400` | `bg-blue-50 text-blue-700` |
+  | Empty-state amber 박스 | `border-amber-500/25 bg-amber-950/5` | `border-amber-200 bg-amber-50` |
+  | Empty-state title | `text-slate-600` | `text-slate-900 font-medium` |
+  | Manual fallback box | `border-slate-600/30 bg-sh` | `border-slate-200 bg-slate-50` |
+  | Manual input bg | `bg-pg border-slate-600/30` | `bg-white border-slate-200` |
+  | Manual "추가" button | `bg-slate-600 text-slate-700` (text invisible) | `bg-blue-600 text-white` |
+  | Message preview border | `border-slate-600/25 bg-sh` | `border-slate-200 bg-slate-50` |
+  | Message preview pre text | `text-slate-400` | `text-slate-700` |
+  | Message preview Edit btn | `text-slate-600` | `text-blue-600 hover:text-blue-700` |
+  | Dispatch Conditions box | `border-slate-600/20 bg-sh` | `border-slate-200 bg-slate-50` |
+  | DialogFooter border | `border-slate-600/20` | `border-slate-200` |
+  | "후보에 없는 공급사" link | `text-slate-600 hover:text-slate-400` | `text-blue-600 hover:text-blue-700` |
+  | 취소 button | `text-slate-400 ... border-slate-600/30` | `text-slate-600 ... border-slate-200` |
+  | warn-tone primary submit | `bg-amber-600 hover:bg-amber-500` | `bg-amber-500 hover:bg-amber-600` |
+  | ready-tone primary submit | `bg-emerald-600 hover:bg-emerald-500` | `bg-emerald-600 hover:bg-emerald-700` |
+  | SupplierReviewCard included | `border-slate-600/40 bg-slate-50` | `border-slate-200 bg-white` |
+  | SupplierReviewCard excluded | `border-slate-600/15 bg-sh opacity-40` | `border-slate-100 bg-slate-50 opacity-60` |
+  | SupplierReviewCard toggle | `bg-emerald-600/25 border-emerald-500/50 text-emerald-300` | `bg-emerald-600 border-emerald-600 text-white` |
+  | CONFIDENCE_COLOR.high | `text-emerald-400 border-emerald-500/25 bg-emerald-600/10` | `text-emerald-700 border-emerald-200 bg-emerald-50` |
+  | CONFIDENCE_COLOR.medium | `text-amber-400 border-amber-500/25 bg-amber-600/10` | `text-amber-700 border-amber-200 bg-amber-50` |
+  | CONFIDENCE_COLOR.low | `text-red-400 border-red-500/25 bg-red-600/10` | `text-rose-700 border-rose-200 bg-rose-50` |
+
+- **Duplicate primary CTA hierarchy 정리:**
+  - **Pre-§11.54:** 두 곳에 primary blue "공급사 직접 추가" 버튼 동시 노출 가능
+    - L394-404 empty-state amber 박스 안 (§11.41에서 ghost → primary로 promote했음)
+    - L562-570 footer (§11.41에서 disabled "전달 불가" → primary로 promote했음)
+  - **Pre-§11.54 결과:** 두 버튼이 동일 액션(`setShowManualFallback(true)`)을 트리거하지만 visual hierarchy가 평탄해서 운영자에겐 어디 클릭할지 헷갈림. ui-wizard 원칙 "한 화면에 1 primary action" 위반.
+  - **Post-§11.54:** Empty-state 박스의 primary CTA 제거 → footer가 단일 primary action zone. Empty-state 박스는 가이드 텍스트만 ("아래 \"공급사 직접 추가\"로 수동 추가할 수 있습니다") + 인라인 강조로 footer 버튼을 가리킴.
+  - **§11.41과 차이:** §11.41은 destructive 톤(red disabled "전달 불가") → actionable 톤(blue active "공급사 직접 추가") 변환을 footer에서 수행했음. 그 결과 두 곳에 동일 primary가 떠버린 부산물 — §11.54가 footer를 single primary zone으로 격상하고 empty-state는 contextual guidance only로 demote.
+
+- **LabAxis 색상 hierarchy 정리 (§11.54 후 적용 표준):**
+  | 운영 의미 | Light tone |
+  | --- | --- |
+  | Success / Ready | emerald-50 bg + emerald-200 border + emerald-600/700 text |
+  | Pending / Warning (review needed) | amber-50 bg + amber-200 border + amber-500 icon + amber-700 text |
+  | Critical / Blocker (실제 차단) | rose-50 bg + rose-200 border + rose-500/700 (단, "공급사 후보 선별 실패"는 amber로 유지 — operational pending state, not destructive) |
+  | Information / Selected | blue-50 bg + blue-200 border + blue-600/700 text |
+  | Surface neutral | slate-50/100/200 + white panels |
+  | Body text | slate-700 (primary) / slate-500 (secondary) / slate-400 (muted) / slate-900 (heading) |
+
+- **Verification:**
+  - tsc --noEmit on changed file → 0 errors
+  - vitest sub-suite `components/ui/` → 3/3 PASS
+  - `scripts/check-no-inline-hex-bg.sh` → 0 violations 유지 (Pattern A inline-hex 외)
+  - **알려진 한계:** 본 트랙 회귀(Tailwind class form 다크 잔재)는 현재 surface guard가 catch 못 함 → §11.55 follow-up에서 스크립트 확장 검토.
+
+- **Production probe (deferred — operator):** `/dashboard/quotes` → 견적 1건 selected → footer "견적 요청 발송" 또는 비교 검토에서 vendor dispatch 진입 → "공급사 발송 검토" dialog open → expect (1) light surface (white background, slate-200 borders, no dark island), (2) Readiness Strip이 amber-50/emerald-50 라이트 톤, (3) emerald check icon vs amber clock icon 명확히 분리, (4) "공급사 직접 추가" primary blue 버튼이 **footer에만** 1개 노출 (empty-state 박스에는 없음), (5) 가이드 텍스트가 "아래 공급사 직접 추가로..." 로 footer를 가리킴, (6) SupplierReviewCard included 상태가 white bg + emerald-600 fill toggle (white check 마크 visible), (7) confidence badge가 emerald/amber/rose 라이트 톤.
+
+- **Lesson:** §11.43이 inline-hex(=원시 형태)의 다크 잔재를 잡았다면, §11.54는 Tailwind class form의 다크 잔재를 잡았다. 같은 회귀 class에 두 표현 형태가 존재 — 둘 다 자동 가드해야 light theme 정합성 보장. surface guard script의 다음 확장(§11.55) 우선순위 명확.
+
+- **§11.55 (다음 트랙 — 스크립트 확장):** `scripts/check-no-inline-hex-bg.sh`에 Pattern C 추가 — `apps/web/src/**` 전역에서 다크-only Tailwind classes (`bg-(\w+)-(800|900|950)`, `text-(\w+)-(200|300)`, `border-slate-(600|700)/`, `bg-pg`, `bg-sh` (light token이므로 OK), `text-(\w+)-400/[0-9]+` opacity-blend 등) 0건 검증. ban list는 신중히 — `bg-slate-100`, `bg-blue-50` 같은 light tones는 false-positive 안 됨. 별도 commit, 30분.
+
 ---
 
 ## 12. Changelog
@@ -1652,6 +1725,7 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 - 2026-04-27 — **§11.35 OPENED and CLOSED:** `#α-F-followup-csrf-fetch-sweep` Phase 2F — "Vendor portal" cluster reclassified + swapped (final csrf-fetch-sweep cluster). Phase 0 audit (in §11.28) tentatively labeled this cluster "Vendor portal" with a flag for csrf-route-registry analysis before any swap. Phase 2F read-only inspection found the Phase 0 classification was wrong: `components/vendor/quote-form.tsx:103` calls `POST /api/vendor/requests/{id}/respond` (slash + "respond"), an **operator-surface session-authenticated route** that uses `auth() + enforceAction()` — not the public token-based vendor portal. The actual public-token route at `/api/vendor-requests/{token}/response` (dash + "response") sits at a separate URL/file with `isValidVendorRequestToken` auth and is already registered in `lib/security/csrf-route-registry.ts:47` as `{ reason: 'public_token_auth' }` (CSRF middleware bypass). `quote-form.tsx` is a dual-use component; the default branch (no `onSubmit` prop) targets the operator route, which is correctly subject to the standard CSRF stack. Drop-in csrfFetch swap is correct. sed-based minimal-diff (+2/-1, line endings preserved); vitest `src/__tests__/lib/ai/` 29/29 PASS, tsc --noEmit on the 1 file → 0 errors. **`#α-F-followup-csrf-fetch-sweep` is now FULLY CLOSED — all 17 raw POST/PUT/PATCH/DELETE sites identified in §11.28 Phase 0 are processed (17/17).** Lessons logged in §11.35 main entry: URL slug similarity ≠ same auth model; csrf-route-registry should be consulted as truth for CSRF stack membership; dual-use components should be classified by default branch, not filename heuristics.
 - 2026-04-27 — **§11.36 OPENED and CLOSED:** P1 priority audit pass + test-only `@ts-nocheck` final 2 files closed. Read-only audit over the 6 P1 items in the LabAxis priority context found items 1 (vitest install) and 2 (prisma generate) already DONE in historical work (verified by 29/29 vitest PASS across 6 sweep commits this session); item 3 (test-only `@ts-nocheck` 잔여) had 2 files left from `PLAN_test-only-ts-nocheck-removal.md` Phase 4 deferred list (`button.test.tsx` jest-dom matcher type, 3 errors; `products.test.ts` `searchProducts` return-type inference collapsed to `{}` because `lib/api/products.ts:18` has no explicit return type and `cache.get()` injects `any` into the return path). Both fixed with test-only minimal-diff: `import "@testing-library/jest-dom/vitest";` added to button.test.tsx (TypeScript needs the module imported in any file that uses the matchers, even though `vitest.setup.ts:4` registers it at runtime); `as { products: unknown[]; total: number }` annotation added to products.test.ts `searchProducts` call. Production-side `lib/api/products.ts` return-type fix tracked separately (likely `#SEC05` or future type pass). vitest 8/8 PASS on the 2 files; tsc --noEmit on the 2 files → 0 errors; codebase-wide grep for `@ts-nocheck` in `apps/web/src/__tests__/` now returns **0 hits**. **`PLAN_test-only-ts-nocheck-removal.md` is hereby fully closed (94 → 0).** Items 4 (enum drift), 5 (RFQ handoff smoke), 6 (MutationAuditEvent migration) remain delegated to their own plans/tracks; this entry reclassifies the LabAxis P1 priority list — items 1-3 confirmed DONE, items 4-6 individually tracked.
 - 2026-04-27 — **§11.37 OPENED and CLOSED:** Master plan + sub-plan audit on P1 items 4–6. Read-only inspection of `PLAN_test-runner-and-prisma-stabilization.md` (Status: ✅ Complete, "사장님 로컬 1 verification only") and `PLAN_prisma-enum-drift-and-mutation-audit.md` (Status: ✅ Complete 2026-04-18, dark-launched monitoring 조건부) confirms: item 4 (enum drift) DONE — Phase 0 confirmed enum-drift count = 0 (schema vs migrations cumulative SQL is in sync); item 6 (MutationAuditEvent migration) DONE — CREATE TABLE was already in `apps/web/prisma/migrations/0_init/migration.sql:1705` from initial migration, wiring contract 59/59 GREEN. Item 5 (RFQ handoff smoke) is the only LabAxis P1 work still pending: code surface exists (`lib/store/rfq-handoff-store.ts` + 2 callers) but no `PLAN_rfq-handoff-smoke.md` was ever written and the production end-to-end smoke run was not executed against pilot data with verified evidence. Final P1 status post-§11.37: **5 / 6 DONE; only item 5 (operator-driven RFQ handoff smoke probe) remains, not blocking.** No code change in this entry.
+- 2026-04-28 — **§11.54 OPENED and CLOSED:** `#vendor-dispatch-dialog-light-theme-alignment` — Track B 네 번째 발견 (§11.53 직후 호영님 "색상도 아직 안 잡혔고"). VendorRequestModal dialog 전체에 다크 테마 Tailwind class 잔재 17+ 사이트 (`bg-pg`, `bg-amber-950/10`, `text-emerald-300`, `border-slate-600/40`, `bg-emerald-600/25`, `text-emerald-400/70` 등) → 라이트 surface tokens (emerald-50/200/600/700, amber-50/200/500/700, slate-50/200/500/700/900, blue-50/600/700) + rose 추가. CONFIDENCE_COLOR 상수 표도 정리. **Duplicate primary CTA 해소:** §11.41이 만든 부산물 — 두 곳(empty-state 박스 + footer) 동시에 primary blue "공급사 직접 추가" 노출되던 평탄 hierarchy를 footer 단일 primary zone으로 격상, empty-state는 가이드 텍스트만 + 인라인 강조로 footer를 가리킴. **§11.45 surface guard 한계 노출:** inline-hex만 grep해서 Tailwind class form 다크 잔재 못 잡음 — §11.55에서 ban list 확장 가능. tsc 0 errors, vitest sub-suite 3/3 PASS, surface guard 0 violations. **Lesson:** §11.43 (inline-hex) + §11.54 (Tailwind class) — 같은 다크 회귀 class에 표현 형태 2가지. 자동 가드는 둘 다 catch해야 light theme 정합성 보장.
 - 2026-04-28 — **§11.53 OPENED and CLOSED:** `#quote-intake-dock-cta-clarity` — Track B 세 번째 발견 (§11.50/§11.51 prod 검증 직후 quote rail에서 surface). 호영님 직감: "추가 견적서 업로드"의 "유저의?" + "업로드 개념은 운영자 입장에 없는거 아냐?" — 운영자 mental verb는 "업로드"가 아닌 "등록·첨부". 4가지 모호 포인트(주체 / "추가" 의미 / 견적의 source / 사용 시나리오) + "업로드"가 implementation 단어임을 truth lock. Fix scope: G-pre 진입 라벨(L1105) + intake dock SheetTitle(L361 existingCaseId 분기) + description(L367) — 3 sites. Out of scope: dropdown 진입점(BOM 업로드와 짝) + drop zone 행위 안내(drag-and-drop context) — implementation context는 "업로드" 유지. ADR §11.53에 LabAxis 운영 verb 매트릭스 처음 명시 (조립/제출/회신/등록/비교/발주). tsc 0 errors, surface guard 0 violations 유지. **Lesson:** UI 라벨은 implementation 단어 vs 운영 ontology 동사로 분리해서 사용. 후속 §11.54 "VendorRequestModal 색상 hierarchy 미정렬"는 같은 발견 세션에서 surface된 별도 트랙.
 - 2026-04-27 — **§11.51 OPENED and CLOSED:** `#request-wizard-handoff-reset-collision` — §11.50 직후 호영님이 surface한 두 번째 발견 (제출 후 dialog가 step 1으로 돌아옴, `/dashboard/quotes` 이동 안 함). 시나리오 A/B/C 어느 것도 아닌 **시나리오 D 확정 — 두 useEffect의 race**. Reset useEffect L140 deps `[open, targetProducts.length]`가 `onSubmitSuccess`(부모에서 quoteItems 비움) → targetProducts.length 0 변경 → reset re-run → setStep(1) 강제 → step !== 3 이 되면서 step 3 핸드오프 useEffect (5초 countdown + router.push)가 즉시 종료. Modal은 그대로 열린 채 step 1으로 reset되어 운영자에겐 "자동 재진입"으로 보임. Minimal-diff 1-line fix: deps에서 `targetProducts.length` 제거 → modal 열리는 순간에만 snapshot, 이후 frozen. Side-effect: API 실패 catch 분기 (L211-217)도 같은 race였는데 fix 후 정상화. **Lesson:** §11.50 friction 정렬이 hidden race bug를 노출 — friction 자체가 buggy path를 가리고 있었음. Track B가 valuable한 패턴 입증. 후속 §11.52는 API 실패 명시적 toast UX 개선으로 분리. tsc 0 errors, surface-guard script 0 violations 유지.
 - 2026-04-27 — **§11.50 OPENED and CLOSED:** `#request-wizard-purpose-optional` — Track B (operator-driven product gap discovery) 첫 발견. 호영님이 prod에서 견적 요청 조립 dialog 운영 중 발견 — "요청 목적" 필드가 UI에서 required (빨간 별표 + "다음" disabled)인데 backend는 optional (warning level만, blocking 아님). UI 일관성 위반. 1 file 2-chunk minimal-diff: L315 `text-red-500 *` → `text-slate-400 font-normal (선택)`, L235 `canGoNext = purpose.trim().length > 0` → `canGoNext = targetProducts.length > 0` (품목 0건일 때만 차단). LabAxis 견적 요청은 가장 빈번한 운영 액션이라 dead-friction 해소 가치가 큼. tsc 0 errors, surface-guard script 0 violations 유지. 후속 진화: pilot data 누적 후 preset chips (재고 보충 / 프로젝트용 / 긴급 사용 / 기타) 옵션 가능.
