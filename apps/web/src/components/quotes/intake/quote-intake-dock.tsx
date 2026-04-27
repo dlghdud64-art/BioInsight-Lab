@@ -358,13 +358,17 @@ export function QuoteIntakeDock({
       >
         <SheetHeader className="px-5 pt-5 pb-4 border-b border-slate-100 bg-slate-50/50">
           <SheetTitle className="text-base font-bold text-slate-900">
-            {source === "bom_import" ? "BOM 업로드" : "외부 견적서 업로드"}
+            {source === "bom_import"
+              ? "BOM 업로드"
+              : existingCaseId
+                ? "공급사 회신 견적서 등록"
+                : "외부 견적서 업로드"}
           </SheetTitle>
           <SheetDescription className="text-xs text-slate-500">
             {source === "bom_import"
               ? "BOM 파일을 업로드하면 품목을 인식하고, 확인 후 견적 요청을 생성합니다."
               : existingCaseId
-                ? "이 견적 케이스에 추가 견적서를 첨부합니다."
+                ? "공급사가 외부 채널(이메일·팩스 등)로 회신한 견적서를 이 case에 등록합니다. AI가 자동 파싱합니다."
                 : "견적서를 업로드하면 AI가 파싱하고, 확인 후 정식 견적 요청으로 전환합니다."}
           </SheetDescription>
         </SheetHeader>

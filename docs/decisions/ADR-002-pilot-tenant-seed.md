@@ -1552,6 +1552,57 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 
 - **§11.50 + §11.51 함께 본 의미:** §11.50 fix가 들어가서 wizard 진입 friction이 사라지자 §11.51이 surface됐다. 즉 **friction-reducing fix가 hidden bug를 노출**시킨 사례. friction 자체가 buggy path를 가렸던 것. Track B가 valuable한 이유가 이것 — 작은 friction 정렬이 더 큰 hidden 회귀를 surface한다.
 
+### 11.53 `#quote-intake-dock-cta-clarity` — quote rail "추가 견적서 업로드" → 운영 OS 톤("공급사 회신 견적서 등록") 정렬 2026-04-27
+
+§11.53 closes Track B의 세 번째 발견. §11.50/§11.51 prod 검증 직후 호영님이 quote rail에서 surface: "여기에 추가 견적서 업로드는 어떤 방향으로 있는걸까? 유저의? 뭔가 애매한데 ... 업로드의 개념은 없는거 아냐? 유저의 입장에서". 운영자 mental verb가 "업로드"가 아닌 "등록·첨부"라는 직감.
+
+- **Truth lock — 4가지 모호 포인트:**
+  | 모호 포인트 | 현재 라벨 | 실제 의미 |
+  | --- | --- | --- |
+  | 누가? | "추가 견적서 업로드"는 주체 없음 | 운영자(호영님 본인) |
+  | "추가"의 의미? | "첫 업로드 외 더?" misleading | "case에 attach" 의미 — 첫 PDF부터 업로드 가능 |
+  | 어디서 온 견적? | "견적서"가 무엇의 견적인지 빠짐 | 공급사가 회신한 견적서 |
+  | 언제 사용? | 시나리오 미명시 | 공급사가 LabAxis 응답 링크 안 쓰고 외부 채널(이메일·팩스)로 PDF 보냈을 때 |
+
+- **호영님 두 번째 layer 직감 — "업로드"는 implementation 단어:**
+  - "업로드"는 "파일을 서버에 올린다"는 기술적 함의 — 운영자 mental verb 아님
+  - 운영자는 "받은 견적서를 case에 등록·첨부·기록한다"는 워크플로우 동사로 인식
+  - LabAxis 운영 OS의 ontology에 맞는 동사는 **"등록"** — "견적 요청 등록", "공급사 응답 등록", "발주 등록" 등 일관된 운영 verb
+  - "Upload"라는 일반 SaaS UI 단어는 LabAxis surface에서 implementation context (drop zone 안내 등)로만 제한 사용
+
+- **Fix scope — 운영자 mental layer만 정정 (implementation layer 유지):**
+  | site | 컨텍스트 | pre → post |
+  | --- | --- | --- |
+  | `dashboard/quotes/page.tsx:1105` | quote rail G-pre 진입 라벨 (case에 attach) | "추가 견적서 업로드" → "공급사 회신 견적서 등록" |
+  | `quote-intake-dock.tsx:361` (SheetTitle, existingCaseId 분기) | dock 헤더 (case 컨텍스트) | "외부 견적서 업로드" → "공급사 회신 견적서 등록" |
+  | `quote-intake-dock.tsx:367` (description, existingCaseId 분기) | dock 설명 | "이 견적 케이스에 추가 견적서를 첨부합니다." → "공급사가 외부 채널(이메일·팩스 등)로 회신한 견적서를 이 case에 등록합니다. AI가 자동 파싱합니다." |
+
+- **Out of scope (의도된 보존):**
+  - `dashboard/quotes/page.tsx:658` dropdown menu "외부 견적서 업로드" — 워크플로우 패턴 진입점 (BOM 업로드와 짝). 운영자가 "업로드 패턴으로 시작" 선택지로 인식하는 컨텍스트라 그대로 유지.
+  - `quote-intake-dock.tsx:361` SheetTitle (existingCaseId 없는 분기) — 새 견적 시작 진입이라 dropdown과 일관성 유지.
+  - `quote-intake-dock.tsx:390` drop zone helper "드래그하거나 클릭하여 업로드" — drag-and-drop 행위 자체의 안내이라 "업로드"가 자연스러움.
+  - `bom_import` 분기 전체 — BOM 업로드 워크플로우는 별개 ontology, 이번 트랙 scope 외.
+
+- **운영자 mental verb 일관성 매트릭스 (§11.53 이후 정렬된 LabAxis verb landscape):**
+  | 운영 동작 | 운영자 verb (정렬 후) | LabAxis surface 실제 라벨 |
+  | --- | --- | --- |
+  | 견적 요청 만들기 (Step 1-2) | "조립" | "견적 요청 조립", "다음: 제출 검토" |
+  | 견적 요청 보내기 | "제출", "발송" | "요청 제출", "공급사 발송 검토" |
+  | 공급사 회신 받기 | "회신", "응답" | "공급사 회신 견적서 등록" (§11.53) |
+  | 외부 PDF로 새 견적 시작 | "업로드"(워크플로우 패턴) | "외부 견적서 업로드" (dropdown) |
+  | 비교 분석 | "비교" | "비교 검토" |
+  | 발주 | "발주", "확정" | "발주 진행", "선택안 확정" |
+
+- **Verification:**
+  - tsc on 2 changed files → 0 errors
+  - `scripts/check-no-inline-hex-bg.sh` → 0 violations 유지
+
+- **Production probe (deferred — operator):** `/dashboard/quotes` → 견적 1건 selected → 우측 rail의 G-pre 블록에서 "공급사 회신 견적서 등록" 버튼 표시 확인. 클릭 → dock 열림 → 헤더 "공급사 회신 견적서 등록" + 설명 "공급사가 외부 채널…로 회신한 견적서를 이 case에 등록합니다…" 확인.
+
+- **Lesson:** UI 라벨은 implementation 단어가 아니라 운영자 mental verb로 정렬해야 함. "업로드 / 다운로드 / 동기화 / 처리"는 implementation context (drop zone, technical pop-up)에만 사용. 운영자가 보는 main flow에서는 운영 ontology 동사("조립 / 제출 / 회신 / 등록 / 비교 / 발주")로 통일. 이번 트랙은 이 분리 원칙을 처음 명시적으로 ADR에 기록한 사례.
+
+- **§11.54 (별도 트랙):** 같은 발견 세션에서 호영님이 "색상도 아직 안 잡혔고" surface — `VendorRequestModal` ("공급사 발송 검토") dialog의 color hierarchy. §11.41이 amber 단일 톤으로 정리했으나 추가 검토 필요(예: amber 안의 ✓ 체크 마크가 emerald로 시각 분리 안 됨, "공급사 후보 선정 실패" 라벨이 amber인데 "실패" 단어 emotional weight과 mismatch, 두 개 "공급사 직접 추가" 버튼 — outline + primary blue 중복 등). 별도 진단 + 옵션 제시 후 처리.
+
 ---
 
 ## 12. Changelog
@@ -1601,6 +1652,7 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 - 2026-04-27 — **§11.35 OPENED and CLOSED:** `#α-F-followup-csrf-fetch-sweep` Phase 2F — "Vendor portal" cluster reclassified + swapped (final csrf-fetch-sweep cluster). Phase 0 audit (in §11.28) tentatively labeled this cluster "Vendor portal" with a flag for csrf-route-registry analysis before any swap. Phase 2F read-only inspection found the Phase 0 classification was wrong: `components/vendor/quote-form.tsx:103` calls `POST /api/vendor/requests/{id}/respond` (slash + "respond"), an **operator-surface session-authenticated route** that uses `auth() + enforceAction()` — not the public token-based vendor portal. The actual public-token route at `/api/vendor-requests/{token}/response` (dash + "response") sits at a separate URL/file with `isValidVendorRequestToken` auth and is already registered in `lib/security/csrf-route-registry.ts:47` as `{ reason: 'public_token_auth' }` (CSRF middleware bypass). `quote-form.tsx` is a dual-use component; the default branch (no `onSubmit` prop) targets the operator route, which is correctly subject to the standard CSRF stack. Drop-in csrfFetch swap is correct. sed-based minimal-diff (+2/-1, line endings preserved); vitest `src/__tests__/lib/ai/` 29/29 PASS, tsc --noEmit on the 1 file → 0 errors. **`#α-F-followup-csrf-fetch-sweep` is now FULLY CLOSED — all 17 raw POST/PUT/PATCH/DELETE sites identified in §11.28 Phase 0 are processed (17/17).** Lessons logged in §11.35 main entry: URL slug similarity ≠ same auth model; csrf-route-registry should be consulted as truth for CSRF stack membership; dual-use components should be classified by default branch, not filename heuristics.
 - 2026-04-27 — **§11.36 OPENED and CLOSED:** P1 priority audit pass + test-only `@ts-nocheck` final 2 files closed. Read-only audit over the 6 P1 items in the LabAxis priority context found items 1 (vitest install) and 2 (prisma generate) already DONE in historical work (verified by 29/29 vitest PASS across 6 sweep commits this session); item 3 (test-only `@ts-nocheck` 잔여) had 2 files left from `PLAN_test-only-ts-nocheck-removal.md` Phase 4 deferred list (`button.test.tsx` jest-dom matcher type, 3 errors; `products.test.ts` `searchProducts` return-type inference collapsed to `{}` because `lib/api/products.ts:18` has no explicit return type and `cache.get()` injects `any` into the return path). Both fixed with test-only minimal-diff: `import "@testing-library/jest-dom/vitest";` added to button.test.tsx (TypeScript needs the module imported in any file that uses the matchers, even though `vitest.setup.ts:4` registers it at runtime); `as { products: unknown[]; total: number }` annotation added to products.test.ts `searchProducts` call. Production-side `lib/api/products.ts` return-type fix tracked separately (likely `#SEC05` or future type pass). vitest 8/8 PASS on the 2 files; tsc --noEmit on the 2 files → 0 errors; codebase-wide grep for `@ts-nocheck` in `apps/web/src/__tests__/` now returns **0 hits**. **`PLAN_test-only-ts-nocheck-removal.md` is hereby fully closed (94 → 0).** Items 4 (enum drift), 5 (RFQ handoff smoke), 6 (MutationAuditEvent migration) remain delegated to their own plans/tracks; this entry reclassifies the LabAxis P1 priority list — items 1-3 confirmed DONE, items 4-6 individually tracked.
 - 2026-04-27 — **§11.37 OPENED and CLOSED:** Master plan + sub-plan audit on P1 items 4–6. Read-only inspection of `PLAN_test-runner-and-prisma-stabilization.md` (Status: ✅ Complete, "사장님 로컬 1 verification only") and `PLAN_prisma-enum-drift-and-mutation-audit.md` (Status: ✅ Complete 2026-04-18, dark-launched monitoring 조건부) confirms: item 4 (enum drift) DONE — Phase 0 confirmed enum-drift count = 0 (schema vs migrations cumulative SQL is in sync); item 6 (MutationAuditEvent migration) DONE — CREATE TABLE was already in `apps/web/prisma/migrations/0_init/migration.sql:1705` from initial migration, wiring contract 59/59 GREEN. Item 5 (RFQ handoff smoke) is the only LabAxis P1 work still pending: code surface exists (`lib/store/rfq-handoff-store.ts` + 2 callers) but no `PLAN_rfq-handoff-smoke.md` was ever written and the production end-to-end smoke run was not executed against pilot data with verified evidence. Final P1 status post-§11.37: **5 / 6 DONE; only item 5 (operator-driven RFQ handoff smoke probe) remains, not blocking.** No code change in this entry.
+- 2026-04-28 — **§11.53 OPENED and CLOSED:** `#quote-intake-dock-cta-clarity` — Track B 세 번째 발견 (§11.50/§11.51 prod 검증 직후 quote rail에서 surface). 호영님 직감: "추가 견적서 업로드"의 "유저의?" + "업로드 개념은 운영자 입장에 없는거 아냐?" — 운영자 mental verb는 "업로드"가 아닌 "등록·첨부". 4가지 모호 포인트(주체 / "추가" 의미 / 견적의 source / 사용 시나리오) + "업로드"가 implementation 단어임을 truth lock. Fix scope: G-pre 진입 라벨(L1105) + intake dock SheetTitle(L361 existingCaseId 분기) + description(L367) — 3 sites. Out of scope: dropdown 진입점(BOM 업로드와 짝) + drop zone 행위 안내(drag-and-drop context) — implementation context는 "업로드" 유지. ADR §11.53에 LabAxis 운영 verb 매트릭스 처음 명시 (조립/제출/회신/등록/비교/발주). tsc 0 errors, surface guard 0 violations 유지. **Lesson:** UI 라벨은 implementation 단어 vs 운영 ontology 동사로 분리해서 사용. 후속 §11.54 "VendorRequestModal 색상 hierarchy 미정렬"는 같은 발견 세션에서 surface된 별도 트랙.
 - 2026-04-27 — **§11.51 OPENED and CLOSED:** `#request-wizard-handoff-reset-collision` — §11.50 직후 호영님이 surface한 두 번째 발견 (제출 후 dialog가 step 1으로 돌아옴, `/dashboard/quotes` 이동 안 함). 시나리오 A/B/C 어느 것도 아닌 **시나리오 D 확정 — 두 useEffect의 race**. Reset useEffect L140 deps `[open, targetProducts.length]`가 `onSubmitSuccess`(부모에서 quoteItems 비움) → targetProducts.length 0 변경 → reset re-run → setStep(1) 강제 → step !== 3 이 되면서 step 3 핸드오프 useEffect (5초 countdown + router.push)가 즉시 종료. Modal은 그대로 열린 채 step 1으로 reset되어 운영자에겐 "자동 재진입"으로 보임. Minimal-diff 1-line fix: deps에서 `targetProducts.length` 제거 → modal 열리는 순간에만 snapshot, 이후 frozen. Side-effect: API 실패 catch 분기 (L211-217)도 같은 race였는데 fix 후 정상화. **Lesson:** §11.50 friction 정렬이 hidden race bug를 노출 — friction 자체가 buggy path를 가리고 있었음. Track B가 valuable한 패턴 입증. 후속 §11.52는 API 실패 명시적 toast UX 개선으로 분리. tsc 0 errors, surface-guard script 0 violations 유지.
 - 2026-04-27 — **§11.50 OPENED and CLOSED:** `#request-wizard-purpose-optional` — Track B (operator-driven product gap discovery) 첫 발견. 호영님이 prod에서 견적 요청 조립 dialog 운영 중 발견 — "요청 목적" 필드가 UI에서 required (빨간 별표 + "다음" disabled)인데 backend는 optional (warning level만, blocking 아님). UI 일관성 위반. 1 file 2-chunk minimal-diff: L315 `text-red-500 *` → `text-slate-400 font-normal (선택)`, L235 `canGoNext = purpose.trim().length > 0` → `canGoNext = targetProducts.length > 0` (품목 0건일 때만 차단). LabAxis 견적 요청은 가장 빈번한 운영 액션이라 dead-friction 해소 가치가 큼. tsc 0 errors, surface-guard script 0 violations 유지. 후속 진화: pilot data 누적 후 preset chips (재고 보충 / 프로젝트용 / 긴급 사용 / 기타) 옵션 가능.
 - 2026-04-27 — **§11.49 OPENED and CLOSED:** `#labaxis-surface-guard-ci-hook` — `scripts/check-no-inline-hex-bg.sh`를 두 layer에 wiring: (a) `.husky/pre-commit` — `git commit` 시 staged diff에 `apps/web/src/app/dashboard/**.{ts,tsx}`가 있을 때만 실행 (no-op stub 교체); (b) `.github/workflows/labaxis-surface-guard.yml` — PR + push to main/develop에서 항상 실행 (filter 없음). Smoke 검증 2건 통과(empty filter → 스킵 / 스테이지된 dashboard file → 스크립트 실행 → 0 violation). 같은 스크립트가 local + CI 모두에서 실행 → drift 0. Track A 5트랙(§11.45-49) 완전 wired: 매뉴얼 audit → CI-blocked regression guard. 향후 회귀 시 git commit 또는 PR이 빨강 + ADR §11.43/§11.44 참조로 자동 컨텍스트 제공.

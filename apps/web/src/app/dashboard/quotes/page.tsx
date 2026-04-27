@@ -1090,7 +1090,10 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* G-pre. 추가 견적서 업로드 (detail dock 내부 통합) */}
+          {/* G-pre. 공급사 회신 견적서 등록 (detail dock 내부 통합)
+              §11.53 — 운영자가 외부 채널(이메일/팩스)로 받은 PDF 견적서를
+              이 case에 attach하는 secondary action. "업로드"는 implementation
+              단어라 운영 OS 톤(등록·첨부)으로 정렬. */}
           <div className="px-4 py-3 border-t border-bd/50">
             <Button
               size="sm"
@@ -1102,7 +1105,7 @@ function QuotesPageContent() {
               }}
             >
               <Upload className="h-3 w-3" />
-              추가 견적서 업로드
+              공급사 회신 견적서 등록
             </Button>
           </div>
 
