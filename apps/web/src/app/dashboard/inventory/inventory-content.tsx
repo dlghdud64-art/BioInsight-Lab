@@ -2226,40 +2226,38 @@ function InventoryPageContent() {
                     {/* Summary cards — clickable filters */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                       {([
-                        { key: "all" as LotStatusFilter, label: "전체 Lot", count: summary.totalLots, color: "#C8D4E5", borderColor: "#2E3B50" },
-                        { key: "active" as LotStatusFilter, label: "활성", count: summary.activeLots, color: "#34D399", borderColor: "#16A34A33" },
-                        { key: "expiring_soon" as LotStatusFilter, label: "만료 임박", count: summary.expiringSoonLots, color: "#FBBF24", borderColor: "#F59E0B33" },
-                        { key: "expired" as LotStatusFilter, label: "만료/소진", count: summary.expiredLots + summary.depletedLots, color: "#F87171", borderColor: "#EF444433" },
+                        { key: "all" as LotStatusFilter, label: "전체 Lot", count: summary.totalLots, valueClass: "text-slate-900", borderClass: "border-slate-200" },
+                        { key: "active" as LotStatusFilter, label: "활성", count: summary.activeLots, valueClass: "text-emerald-600", borderClass: "border-emerald-200" },
+                        { key: "expiring_soon" as LotStatusFilter, label: "만료 임박", count: summary.expiringSoonLots, valueClass: "text-amber-500", borderClass: "border-amber-200" },
+                        { key: "expired" as LotStatusFilter, label: "만료/소진", count: summary.expiredLots + summary.depletedLots, valueClass: "text-rose-500", borderClass: "border-rose-200" },
                       ]).map((card) => (
                         <button
                           key={card.key}
                           onClick={() => setLotStatusFilter(card.key)}
-                          className={`rounded-xl p-3 text-left transition-all active:scale-95 ${lotStatusFilter === card.key ? "ring-2 ring-blue-500/50" : ""}`}
-                          style={{ backgroundColor: "#1E2738", border: `1px solid ${lotStatusFilter === card.key ? "#3B82F6" : card.borderColor}` }}
+                          className={`rounded-xl p-3 text-left transition-all active:scale-95 bg-white border ${lotStatusFilter === card.key ? "ring-2 ring-blue-500/50 border-blue-500" : card.borderClass}`}
                         >
-                          <p className="text-[10px] font-bold uppercase tracking-wider mb-1" style={{ color: "#8A99AF" }}>{card.label}</p>
-                          <p className="text-xl font-bold" style={{ color: card.color }}>{card.count}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-slate-500">{card.label}</p>
+                          <p className={`text-xl font-bold ${card.valueClass}`}>{card.count}</p>
                         </button>
                       ))}
                     </div>
 
                     {/* Search bar */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "#667389" }} />
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
                         value={lotSearchQuery}
                         onChange={(e) => setLotSearchQuery(e.target.value)}
                         placeholder="LOT 번호, 품목명, 위치로 검색..."
-                        className="pl-9 h-10 text-sm"
-                        style={{ backgroundColor: "#151C26", borderColor: "#2E3B50", color: "#C8D4E5" }}
+                        className="pl-9 h-10 text-sm bg-white border-slate-200 text-slate-700 placeholder:text-slate-400"
                       />
                     </div>
 
                     {/* Lot row list */}
                     {searched.length === 0 ? (
-                      <div className="rounded-xl px-6 py-10 text-center" style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}>
-                        <Archive className="h-8 w-8 mx-auto mb-3" style={{ color: "#4A5E78" }} />
-                        <p className="text-sm font-medium" style={{ color: "#8A99AF" }}>
+                      <div className="rounded-xl px-6 py-10 text-center bg-white border border-slate-200">
+                        <Archive className="h-8 w-8 mx-auto mb-3 text-slate-400" />
+                        <p className="text-sm font-medium text-slate-500">
                           {lotStatusFilter !== "all" ? `${getLotStatusLabel(lotStatusFilter as any)} 상태의 Lot이 없습니다` : "Lot 데이터가 없습니다"}
                         </p>
                       </div>
@@ -2278,22 +2276,21 @@ function InventoryPageContent() {
                                   const matchInv = displayInventories.find((i) => i.id === lot.itemId);
                                   if (matchInv) openContextPanel(matchInv);
                                 }}
-                                className={`w-full text-left rounded-xl p-3 transition-all active:scale-[0.98] ${selectedLotId === lot.lotId ? "ring-2 ring-blue-500/50" : ""}`}
-                                style={{ backgroundColor: "#1E2738", border: "1px solid #2E3B50" }}
+                                className={`w-full text-left rounded-xl p-3 transition-all active:scale-[0.98] bg-white border ${selectedLotId === lot.lotId ? "ring-2 ring-blue-500/50 border-blue-500" : "border-slate-200"}`}
                               >
                                 <div className="flex items-center justify-between mb-2">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-white">{lot.lotCode}</span>
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
+                                    <span className="text-xs font-bold text-slate-900">{lot.lotCode}</span>
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
                                       {getLotStatusLabel(lot.status)}
                                     </span>
                                   </div>
-                                  <span className="text-xs font-bold text-white">{lot.qtyOnHand} {lot.unit}</span>
+                                  <span className="text-xs font-bold text-slate-900">{lot.qtyOnHand} {lot.unit}</span>
                                 </div>
-                                <p className="text-[11px] truncate" style={{ color: "#C8D4E5" }}>{lot.productName}</p>
+                                <p className="text-[11px] truncate text-slate-700">{lot.productName}</p>
                                 <div className="flex items-center gap-3 mt-1.5">
-                                  {lot.location && <span className="text-[10px] flex items-center gap-1" style={{ color: "#8A99AF" }}><MapPin className="h-3 w-3" />{lot.location}</span>}
-                                  {lot.expiresAt && <span className="text-[10px] flex items-center gap-1" style={{ color: "#8A99AF" }}><Calendar className="h-3 w-3" />{format(new Date(lot.expiresAt), "yy.MM.dd")}</span>}
+                                  {lot.location && <span className="text-[10px] flex items-center gap-1 text-slate-500"><MapPin className="h-3 w-3" />{lot.location}</span>}
+                                  {lot.expiresAt && <span className="text-[10px] flex items-center gap-1 text-slate-500"><Calendar className="h-3 w-3" />{format(new Date(lot.expiresAt), "yy.MM.dd")}</span>}
                                 </div>
                               </button>
                             );
@@ -2301,17 +2298,17 @@ function InventoryPageContent() {
                         </div>
 
                         {/* Desktop: table */}
-                        <div className="hidden md:block rounded-xl overflow-hidden" style={{ border: "1px solid #2E3B50" }}>
+                        <div className="hidden md:block rounded-xl overflow-hidden border border-slate-200">
                           <table className="w-full text-sm">
                             <thead>
-                              <tr style={{ backgroundColor: "#151C26" }}>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>LOT 번호</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>품목</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>상태</th>
-                                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>잔량</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>위치</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>유효기간</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider" style={{ color: "#8A99AF" }}>마지막 이벤트</th>
+                              <tr className="bg-el">
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">LOT 번호</th>
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">품목</th>
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">상태</th>
+                                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">잔량</th>
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">위치</th>
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">유효기간</th>
+                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">마지막 이벤트</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -2326,42 +2323,38 @@ function InventoryPageContent() {
                                       const matchInv = displayInventories.find((i) => i.id === lot.itemId);
                                       if (matchInv) openContextPanel(matchInv);
                                     }}
-                                    className="cursor-pointer transition-colors"
-                                    style={{
-                                      backgroundColor: isSelected ? "#232D3C" : "#1E2738",
-                                      borderBottom: "1px solid #2E3B50",
-                                    }}
+                                    className={`cursor-pointer transition-colors border-b border-slate-100 last:border-0 ${isSelected ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
                                   >
                                     <td className="px-4 py-3">
-                                      <span className="text-xs font-bold text-white">{lot.lotCode}</span>
+                                      <span className="text-xs font-bold text-slate-900">{lot.lotCode}</span>
                                     </td>
                                     <td className="px-4 py-3">
                                       <div>
-                                        <p className="text-xs font-medium text-white truncate max-w-[200px]">{lot.productName}</p>
-                                        {lot.brand && <p className="text-[10px]" style={{ color: "#8A99AF" }}>{lot.brand}</p>}
+                                        <p className="text-xs font-medium text-slate-900 truncate max-w-[200px]">{lot.productName}</p>
+                                        {lot.brand && <p className="text-[10px] text-slate-500">{lot.brand}</p>}
                                       </div>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded" style={{ backgroundColor: sc.bg, color: sc.text, border: `1px solid ${sc.border}` }}>
+                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
                                         {getLotStatusLabel(lot.status)}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3 text-right">
-                                      <span className="text-xs font-bold text-white">{lot.qtyOnHand}</span>
-                                      <span className="text-[10px] ml-0.5" style={{ color: "#8A99AF" }}>{lot.unit}</span>
+                                      <span className="text-xs font-bold text-slate-900">{lot.qtyOnHand}</span>
+                                      <span className="text-[10px] ml-0.5 text-slate-500">{lot.unit}</span>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <span className="text-xs" style={{ color: lot.location ? "#C8D4E5" : "#667389" }}>
+                                      <span className={`text-xs ${lot.location ? "text-slate-700" : "text-slate-400"}`}>
                                         {lot.location || "미지정"}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <span className="text-xs" style={{ color: "#C8D4E5" }}>
+                                      <span className="text-xs text-slate-700">
                                         {lot.expiresAt ? format(new Date(lot.expiresAt), "yyyy.MM.dd") : "—"}
                                       </span>
                                     </td>
                                     <td className="px-4 py-3">
-                                      <span className="text-[11px]" style={{ color: "#8A99AF" }}>
+                                      <span className="text-[11px] text-slate-500">
                                         {format(new Date(lot.lastEventAt), "MM.dd HH:mm")}
                                       </span>
                                     </td>
@@ -2372,7 +2365,7 @@ function InventoryPageContent() {
                           </table>
                         </div>
 
-                        <p className="text-[11px] text-right" style={{ color: "#667389" }}>
+                        <p className="text-[11px] text-right text-slate-400">
                           {searched.length}개 Lot 표시 중
                           {lotStatusFilter !== "all" && ` (${getLotStatusLabel(lotStatusFilter as any)} 필터)`}
                         </p>
@@ -3694,11 +3687,10 @@ function InventoryPageContent() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 60 }}
             transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border border-white/10 px-4 py-3 shadow-2xl"
-            style={{ backgroundColor: "#1a1f2e" }}
+            className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-2xl"
           >
-            <CheckCircle2 className="h-5 w-5 text-emerald-400 shrink-0" />
-            <span className="text-sm font-medium text-slate-900">재고가 등록되었습니다.</span>
+            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+            <span className="text-sm font-medium text-emerald-900">재고가 등록되었습니다.</span>
           </motion.div>
         )}
       </AnimatePresence>
