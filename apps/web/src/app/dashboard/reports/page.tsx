@@ -24,14 +24,18 @@ import { DateRangePicker } from "@/components/ui/date-range-picker";
 // ---------------------------------------------------------------------------
 
 interface CategoryItem {
+  // ⚠️ contract: server (`/api/reports/purchase`) returns `{ name, amount }`
+  // — must stay aligned. See ADR-002 §11.42.
   name: string;
-  value: number;
+  amount: number;
   color?: string;
   budget?: number;
 }
 
 interface VendorItem {
-  vendor: string;
+  // ⚠️ contract: server returns `{ name, amount }`. Y-axis dataKey is "name".
+  // See ADR-002 §11.42.
+  name: string;
   amount: number;
 }
 
@@ -62,9 +66,9 @@ function deriveInsights(
   totalAmount: number,
 ) {
   // 1. Spend change drivers — top growing category
-  const sortedCats = [...categoryData].sort((a, b) => b.value - a.value);
+  const sortedCats = [...categoryData].sort((a, b) => b.amount - a.amount);
   const topCat = sortedCats[0];
-  const topCatPct = totalAmount > 0 && topCat && topCat.value > 0 ? Math.round((topCat.value / totalAmount) * 100) : 0;
+  const topCatPct = totalAmount > 0 && topCat && topCat.amount > 0 ? Math.round((topCat.amount / totalAmount) * 100) : 0;
 
   // 2. Outlier detection — items > 2x average unit price
   const prices = details
@@ -621,7 +625,7 @@ export default function ReportsPage() {
                     {insights.topVendorPct}%
                   </p>
                   <p className="text-xs text-emerald-600/70 mt-1.5 leading-relaxed">
-                    {insights.topVendor?.vendor ? `${insights.topVendor.vendor} 단일 공급 비중` : "벤더 데이터 없음"}
+                    {insights.topVendor?.name ? `${insights.topVendor.name} 단일 공급 비중` : "벤더 데이터 없음"}
                   </p>
                 </div>
               </div>
@@ -655,24 +659,28 @@ export default function ReportsPage() {
                   </Button>
                 </Link>
               </div>
-              {categoryData.length > 0 && categoryData.some((c) => c.value > 0) ? (
+              {categoryData.length > 0 && categoryData.some((c) => c.amount > 0) ? (
                 <div className="flex-1 min-h-0" style={{ height: 260 }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={categoryData.filter((c) => c.value > 0)}
+                        // pre-map raw enum (REAGENT) → 한국어 라벨(시약) for legend/tooltip
+                        data={categoryData
+                          .filter((c) => c.amount > 0)
+                          .map((c) => ({ ...c, displayName: PRODUCT_CATEGORIES[c.name] || c.name }))}
                         cx="50%"
                         cy="45%"
                         innerRadius={55}
                         outerRadius={90}
                         fill="#8884d8"
-                        dataKey="value"
+                        dataKey="amount"
+                        nameKey="displayName"
                         stroke="#ffffff"
                         strokeWidth={3}
                         cursor="pointer"
                         paddingAngle={2}
                       >
-                        {categoryData.map((_entry: CategoryItem, index: number) => (
+                        {categoryData.filter((c) => c.amount > 0).map((_entry: CategoryItem, index: number) => (
                           <Cell key={`cell-${index}`} fill={_entry.color || CHART_COLORS[index % CHART_COLORS.length]} />
                         ))}
                       </Pie>
@@ -698,15 +706,15 @@ export default function ReportsPage() {
               {insights.sortedCats.length > 0 && (
                 <div className="mt-3 space-y-2 border-t border-bd pt-3">
                   {insights.sortedCats.slice(0, 4).map((cat) => {
-                    const pct = totalAmount > 0 ? Math.round((cat.value / totalAmount) * 100) : 0;
+                    const pct = totalAmount > 0 ? Math.round((cat.amount / totalAmount) * 100) : 0;
                     return (
                       <div key={cat.name} className="flex items-center justify-between text-xs">
-                        <span className="text-slate-600 truncate mr-2">{cat.name}</span>
+                        <span className="text-slate-600 truncate mr-2">{PRODUCT_CATEGORIES[cat.name] || cat.name}</span>
                         <div className="flex items-center gap-2">
                           <div className="w-20 h-1.5 bg-el rounded-full overflow-hidden">
                             <div className="h-full bg-blue-500 rounded-full" style={{ width: `${Math.min(pct, 100)}%` }} />
                           </div>
-                          <span className="text-slate-400 w-16 text-right font-mono">{formatCurrency(cat.value, "KRW")}</span>
+                          <span className="text-slate-400 w-16 text-right font-mono">{formatCurrency(cat.amount, "KRW")}</span>
                         </div>
                       </div>
                     );
@@ -731,7 +739,7 @@ export default function ReportsPage() {
                     <BarChart data={vendorData.slice(0, 8)} layout="vertical" margin={{ top: 4, right: 20, left: 10, bottom: 4 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} strokeOpacity={0.6} />
                       <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: "#94a3b8", fontSize: 10 }} tickFormatter={(value: number) => `₩${(value / 10000).toLocaleString()}만`} />
-                      <YAxis type="category" dataKey="vendor" axisLine={false} tickLine={false} tick={{ fill: "#475569", fontSize: 11, fontWeight: 500 }} width={80} />
+                      <YAxis type="category" dataKey="name" axisLine={false} tickLine={false} tick={{ fill: "#475569", fontSize: 11, fontWeight: 500 }} width={80} />
                       <Tooltip
                         cursor={{ fill: "rgba(59,130,246,0.06)" }}
                         contentStyle={{ background: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "10px", color: "#334155", boxShadow: "0 4px 16px rgba(0,0,0,0.1)", padding: "10px 14px" }}
@@ -755,7 +763,7 @@ export default function ReportsPage() {
                 }`}>
                   <AlertTriangle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
                   <span className="font-medium">
-                    {insights.topVendor.vendor}에 {insights.topVendorPct}% 집중 &mdash;
+                    {insights.topVendor.name}에 {insights.topVendorPct}% 집중 &mdash;
                     {insights.vendorRisk === "danger" ? " 공급망 다변화 검토 필요" : " 분산 검토 권장"}
                   </span>
                 </div>
@@ -919,7 +927,7 @@ function AiInsightBlock({
 
       // 벤더 의존도
       if (insights.topVendor && insights.topVendorPct >= 50) {
-        lines.push(`${insights.topVendor.vendor}에 대한 의존도가 ${insights.topVendorPct}%로 높습니다. 공급 리스크 분산을 위해 2~3개 벤더 병행 운영을 고려하세요.`);
+        lines.push(`${insights.topVendor.name}에 대한 의존도가 ${insights.topVendorPct}%로 높습니다. 공급 리스크 분산을 위해 2~3개 벤더 병행 운영을 고려하세요.`);
       }
 
       // 이상치
