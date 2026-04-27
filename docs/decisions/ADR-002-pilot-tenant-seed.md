@@ -1490,6 +1490,68 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 
 - **§11.51 진단 트랙 (별도):** 호영님이 같은 발견 세션에서 surface한 "제출 후 dialog 재진입 흐름" — 코드 추적 결과 자동 재진입 로직은 없음. 가장 가능성 높은 시나리오는 (A) 제출 → quote 관리로 이동 → 호영님이 search로 돌아와 "견적 요청" 버튼 다시 클릭 → quoteItems 0건이라 dialog가 fresh empty 상태로 열림. (B) API 실패 catch 분기 (handleSubmit L211-217), (C) 미발견 자동 재호출 코드 — 호영님 시나리오 확인 후 결정.
 
+### 11.51 `#request-wizard-handoff-reset-collision` — RequestWizardModal reset useEffect와 onSubmitSuccess의 race가 step 3 핸드오프를 차단하던 회귀 fix 2026-04-27
+
+§11.51 closes the second operator-driven discovery from the same prod review session as §11.50. 호영님 보고: "제출 후 `/dashboard/quotes`로 자동 이동 안 보이고 다시 견적 요청 조립 화면으로 돌아왔다." 코드 추적 결과 §11.50 진단에서 가설로 제시한 시나리오 A/B/C 어느 것도 아닌 **시나리오 D (자동 reset bug)** 확인 — 두 useEffect 사이의 race condition.
+
+- **Root cause — reset useEffect의 deps `targetProducts.length`가 step 3 핸드오프를 mid-flight로 차단:**
+
+  ```
+  Pre-§11.51 흐름:
+  1. handleSubmit 성공 → setStep(3) + setHandoffCountdown(5)
+  2. handleSubmit이 onSubmitSuccess() 호출 (성공/실패 분기 양쪽 다)
+       → 부모 search/page.tsx:1929
+       → quoteItems.forEach((item) => removeQuoteItem(item.id))
+       → quoteItems 0건이 됨
+  3. quoteItems 변경 → targetProducts (= memo over quoteItems) 0건
+       → targetProducts.length 변경 (예: 1 → 0)
+  4. modal의 reset useEffect L140 deps `[open, targetProducts.length]`
+       감지 → re-run
+  5. open=true이라 reset block 실행 → setStep(1) + setPurpose("") +
+       setItemConfigs([])
+  6. step !== 3 이 됨 → step 3의 핸드오프 useEffect 즉시 종료
+       (`if (step !== 3) return;`)
+  7. router.push("/dashboard/quotes") 호출 안 됨
+  8. 결과: modal open=true 그대로 + step 1 + 0건 + URL은 search 그대로
+  ```
+
+  → 운영자에겐 "제출 후 자동으로 다시 빈 dialog로 돌아옴"으로 보임. 자동 재진입 코드는 실제로 없고, **두 useEffect의 deps 충돌이 step 3 핸드오프를 차단**한 결과.
+
+- **Why it survived to prod:**
+  - 단위 테스트로 잡기 어려운 useEffect deps 회귀 — `useEffect` deps가 추가됐을 때 이게 다른 useEffect의 cleanup과 race를 만드는지는 정적 분석이 안 됨.
+  - Reset effect의 deps에 `targetProducts.length`를 넣은 의도는 추측건대 "modal 안에서 quoteItems가 변경되면 itemConfigs sync"였을 것. 그러나 실제로는 modal open 시점에 snapshot이 frozen되어야 하는 것이 정상 UX (modal과 quoteItems 변경 UI가 동시 노출되지 않음).
+  - 5-second countdown handoff (Step 3)은 본 세션에서 §11.50 fix가 들어오기 전엔 거의 사용되지 않았을 가능성 높음 (purpose required로 막혀서 Step 1 → 2 → submit까지 도달 자체가 friction에서 막힘). §11.50 fix로 Step 1 → Step 2 → submit이 빈번해지자 §11.51이 surface된 것.
+
+- **Minimal-diff fix — deps에서 `targetProducts.length` 제거:**
+
+  ```diff
+   useEffect(() => {
+     if (open) {
+       setStep(1);
+       ...
+       setItemConfigs(targetProducts.map(...));
+     }
+  -}, [open, targetProducts.length]);
+  +}, [open]);
+  ```
+
+  + `eslint-disable-next-line react-hooks/exhaustive-deps` 코멘트 추가 (linter가 `targetProducts` 미포함을 경고하지 않도록) + 결정 근거 docblock 6줄.
+
+  **Reset semantics 정렬:** modal **열리는 순간 한 번만** snapshot. 이후 modal session 동안 targetProducts 변경에 반응 안 함. handleSubmit이 onSubmitSuccess()로 quoteItems 비워도 modal 안의 itemConfigs는 frozen — Step 3 핸드오프가 의도대로 5초 후 router.push 진행.
+
+- **Side-effect — API 실패 catch 분기도 같이 정상화:** handleSubmit L211-217 catch 분기에서도 onSubmitSuccess() 호출 + setStep(3) — 같은 충돌 시나리오였음. fix 후 API 실패 케이스도 step 3 핸드오프가 정상 진행되어 router.push("/dashboard/quotes")까지 도달. (다만 API 실패 자체를 명시적 toast로 알리는 UX 개선은 §11.52 후속 트랙으로 분리.)
+
+- **Verification:**
+  - tsc on changed file → 0 errors
+  - `scripts/check-no-inline-hex-bg.sh` → 0 violations 유지
+  - eslint exhaustive-deps 경고는 명시적 `eslint-disable-next-line` 주석으로 우회
+
+- **Production probe (deferred — operator):** 호영님이 prod에서 quote items 1건 추가 → "견적 요청" → wizard → 제출하기 → expect (1) Step 3 "핸드오프" 화면이 5초 카운트다운과 함께 보임 (이전엔 step 1로 즉시 reset되어 안 보였음), (2) 5초 후 자동으로 `/dashboard/quotes`로 이동, (3) 방금 제출한 견적이 quote 관리 페이지에 표시.
+
+- **Lesson logged:** useEffect deps에 무엇을 넣을지는 "이 effect가 무엇에 반응해야 하는가?"로 결정해야 함. 자동 sync 의도로 deps를 넓게 잡으면 다른 lifecycle effect와 race를 만들 수 있음. modal-open snapshot 패턴이 필요한 곳은 deps를 `[open]`만 두고 본문에서 snapshot 한 번 잡는 게 안전. §11.42 contract drift처럼 silent 회귀 패턴 — 운영자가 직접 prod에서 발견하기 전엔 보이지 않음. **Track B 계속 운영하면 이런 silent issue가 계속 surface될 것.**
+
+- **§11.50 + §11.51 함께 본 의미:** §11.50 fix가 들어가서 wizard 진입 friction이 사라지자 §11.51이 surface됐다. 즉 **friction-reducing fix가 hidden bug를 노출**시킨 사례. friction 자체가 buggy path를 가렸던 것. Track B가 valuable한 이유가 이것 — 작은 friction 정렬이 더 큰 hidden 회귀를 surface한다.
+
 ---
 
 ## 12. Changelog
@@ -1539,6 +1601,7 @@ These are deferred to subsequent read-only audits. Not blocking. The main P1 pri
 - 2026-04-27 — **§11.35 OPENED and CLOSED:** `#α-F-followup-csrf-fetch-sweep` Phase 2F — "Vendor portal" cluster reclassified + swapped (final csrf-fetch-sweep cluster). Phase 0 audit (in §11.28) tentatively labeled this cluster "Vendor portal" with a flag for csrf-route-registry analysis before any swap. Phase 2F read-only inspection found the Phase 0 classification was wrong: `components/vendor/quote-form.tsx:103` calls `POST /api/vendor/requests/{id}/respond` (slash + "respond"), an **operator-surface session-authenticated route** that uses `auth() + enforceAction()` — not the public token-based vendor portal. The actual public-token route at `/api/vendor-requests/{token}/response` (dash + "response") sits at a separate URL/file with `isValidVendorRequestToken` auth and is already registered in `lib/security/csrf-route-registry.ts:47` as `{ reason: 'public_token_auth' }` (CSRF middleware bypass). `quote-form.tsx` is a dual-use component; the default branch (no `onSubmit` prop) targets the operator route, which is correctly subject to the standard CSRF stack. Drop-in csrfFetch swap is correct. sed-based minimal-diff (+2/-1, line endings preserved); vitest `src/__tests__/lib/ai/` 29/29 PASS, tsc --noEmit on the 1 file → 0 errors. **`#α-F-followup-csrf-fetch-sweep` is now FULLY CLOSED — all 17 raw POST/PUT/PATCH/DELETE sites identified in §11.28 Phase 0 are processed (17/17).** Lessons logged in §11.35 main entry: URL slug similarity ≠ same auth model; csrf-route-registry should be consulted as truth for CSRF stack membership; dual-use components should be classified by default branch, not filename heuristics.
 - 2026-04-27 — **§11.36 OPENED and CLOSED:** P1 priority audit pass + test-only `@ts-nocheck` final 2 files closed. Read-only audit over the 6 P1 items in the LabAxis priority context found items 1 (vitest install) and 2 (prisma generate) already DONE in historical work (verified by 29/29 vitest PASS across 6 sweep commits this session); item 3 (test-only `@ts-nocheck` 잔여) had 2 files left from `PLAN_test-only-ts-nocheck-removal.md` Phase 4 deferred list (`button.test.tsx` jest-dom matcher type, 3 errors; `products.test.ts` `searchProducts` return-type inference collapsed to `{}` because `lib/api/products.ts:18` has no explicit return type and `cache.get()` injects `any` into the return path). Both fixed with test-only minimal-diff: `import "@testing-library/jest-dom/vitest";` added to button.test.tsx (TypeScript needs the module imported in any file that uses the matchers, even though `vitest.setup.ts:4` registers it at runtime); `as { products: unknown[]; total: number }` annotation added to products.test.ts `searchProducts` call. Production-side `lib/api/products.ts` return-type fix tracked separately (likely `#SEC05` or future type pass). vitest 8/8 PASS on the 2 files; tsc --noEmit on the 2 files → 0 errors; codebase-wide grep for `@ts-nocheck` in `apps/web/src/__tests__/` now returns **0 hits**. **`PLAN_test-only-ts-nocheck-removal.md` is hereby fully closed (94 → 0).** Items 4 (enum drift), 5 (RFQ handoff smoke), 6 (MutationAuditEvent migration) remain delegated to their own plans/tracks; this entry reclassifies the LabAxis P1 priority list — items 1-3 confirmed DONE, items 4-6 individually tracked.
 - 2026-04-27 — **§11.37 OPENED and CLOSED:** Master plan + sub-plan audit on P1 items 4–6. Read-only inspection of `PLAN_test-runner-and-prisma-stabilization.md` (Status: ✅ Complete, "사장님 로컬 1 verification only") and `PLAN_prisma-enum-drift-and-mutation-audit.md` (Status: ✅ Complete 2026-04-18, dark-launched monitoring 조건부) confirms: item 4 (enum drift) DONE — Phase 0 confirmed enum-drift count = 0 (schema vs migrations cumulative SQL is in sync); item 6 (MutationAuditEvent migration) DONE — CREATE TABLE was already in `apps/web/prisma/migrations/0_init/migration.sql:1705` from initial migration, wiring contract 59/59 GREEN. Item 5 (RFQ handoff smoke) is the only LabAxis P1 work still pending: code surface exists (`lib/store/rfq-handoff-store.ts` + 2 callers) but no `PLAN_rfq-handoff-smoke.md` was ever written and the production end-to-end smoke run was not executed against pilot data with verified evidence. Final P1 status post-§11.37: **5 / 6 DONE; only item 5 (operator-driven RFQ handoff smoke probe) remains, not blocking.** No code change in this entry.
+- 2026-04-27 — **§11.51 OPENED and CLOSED:** `#request-wizard-handoff-reset-collision` — §11.50 직후 호영님이 surface한 두 번째 발견 (제출 후 dialog가 step 1으로 돌아옴, `/dashboard/quotes` 이동 안 함). 시나리오 A/B/C 어느 것도 아닌 **시나리오 D 확정 — 두 useEffect의 race**. Reset useEffect L140 deps `[open, targetProducts.length]`가 `onSubmitSuccess`(부모에서 quoteItems 비움) → targetProducts.length 0 변경 → reset re-run → setStep(1) 강제 → step !== 3 이 되면서 step 3 핸드오프 useEffect (5초 countdown + router.push)가 즉시 종료. Modal은 그대로 열린 채 step 1으로 reset되어 운영자에겐 "자동 재진입"으로 보임. Minimal-diff 1-line fix: deps에서 `targetProducts.length` 제거 → modal 열리는 순간에만 snapshot, 이후 frozen. Side-effect: API 실패 catch 분기 (L211-217)도 같은 race였는데 fix 후 정상화. **Lesson:** §11.50 friction 정렬이 hidden race bug를 노출 — friction 자체가 buggy path를 가리고 있었음. Track B가 valuable한 패턴 입증. 후속 §11.52는 API 실패 명시적 toast UX 개선으로 분리. tsc 0 errors, surface-guard script 0 violations 유지.
 - 2026-04-27 — **§11.50 OPENED and CLOSED:** `#request-wizard-purpose-optional` — Track B (operator-driven product gap discovery) 첫 발견. 호영님이 prod에서 견적 요청 조립 dialog 운영 중 발견 — "요청 목적" 필드가 UI에서 required (빨간 별표 + "다음" disabled)인데 backend는 optional (warning level만, blocking 아님). UI 일관성 위반. 1 file 2-chunk minimal-diff: L315 `text-red-500 *` → `text-slate-400 font-normal (선택)`, L235 `canGoNext = purpose.trim().length > 0` → `canGoNext = targetProducts.length > 0` (품목 0건일 때만 차단). LabAxis 견적 요청은 가장 빈번한 운영 액션이라 dead-friction 해소 가치가 큼. tsc 0 errors, surface-guard script 0 violations 유지. 후속 진화: pilot data 누적 후 preset chips (재고 보충 / 프로젝트용 / 긴급 사용 / 기타) 옵션 가능.
 - 2026-04-27 — **§11.49 OPENED and CLOSED:** `#labaxis-surface-guard-ci-hook` — `scripts/check-no-inline-hex-bg.sh`를 두 layer에 wiring: (a) `.husky/pre-commit` — `git commit` 시 staged diff에 `apps/web/src/app/dashboard/**.{ts,tsx}`가 있을 때만 실행 (no-op stub 교체); (b) `.github/workflows/labaxis-surface-guard.yml` — PR + push to main/develop에서 항상 실행 (filter 없음). Smoke 검증 2건 통과(empty filter → 스킵 / 스테이지된 dashboard file → 스크립트 실행 → 0 violation). 같은 스크립트가 local + CI 모두에서 실행 → drift 0. Track A 5트랙(§11.45-49) 완전 wired: 매뉴얼 audit → CI-blocked regression guard. 향후 회귀 시 git commit 또는 PR이 빨강 + ADR §11.43/§11.44 참조로 자동 컨텍스트 제공.
 - 2026-04-27 — **§11.48 OPENED and CLOSED:** `#dashboard-inventory-dark-hex-sweep` — `inventory-content.tsx` Lot list view의 6 inline-hex 사이트(L2238/2254/2260/2282/2307/3698 — §11.45 스크립트가 가리킨 모든 Pattern A violation)를 LabAxis 라이트 토큰 + Tailwind status colors로 일괄 sweep. 5 region 마이그레이션: (1) LotStatusFilter 4 카드 — data structure 재구성 `color: hex` → `valueClass: text-emerald-600/text-amber-500/text-rose-500`, `bg-white border` + 의미적 borderClass; (2) search bar — `bg-white border-slate-200 text-slate-700`; (3) empty state — `bg-white border-slate-200` + slate-400/500 텍스트 hierarchy; (4) mobile lot card — `bg-white border-slate-200`, `text-white` → `text-slate-900` (FIX: dark-on-white invisibility 차단); (5) desktop table — `bg-el` 테이블 헤더, `border-b border-slate-100`, `bg-blue-50` 선택 row, `bg-white hover:bg-slate-50`; (6) toast L3698 — **§11.43 동일 invisible-text bug fix** (`bg #1a1f2e` + `text-slate-900` = 검정-on-검정) → `bg-emerald-50 border-emerald-200 text-emerald-900` success-tone. 상태 badge `style={{ ... sc.bg/text/border }}` 5 사이트는 `getLotStatusColor()` 동적 변수라 §11.45 스크립트가 grep 안 함 — out of scope. ui-wizard skill 적용. **`scripts/check-no-inline-hex-bg.sh` Pattern A 6 → 0, Pattern B 0 유지 → 전체 exit 0 도달.** 다음 §11.49 micro-track으로 CI hook(.husky/pre-commit 또는 .github/workflows) wiring 가능. tsc on changed file → 0 errors.

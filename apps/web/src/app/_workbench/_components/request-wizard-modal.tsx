@@ -137,6 +137,22 @@ export function RequestWizardModal({
   }, [targetProducts]);
 
   // 초기화
+  // §11.51 — deps must NOT include `targetProducts.length`. Pre-§11.51
+  // the reset effect re-fired when `onSubmitSuccess` cleared quoteItems
+  // in the parent (search/page.tsx:1929 → `quoteItems.forEach(remove…)`),
+  // which collapsed targetProducts.length to 0 mid-handoff. The reset
+  // effect then forced `setStep(1)` while step 3 was running its 5-second
+  // countdown, which caused the step 3 useEffect to short-circuit
+  // (`if (step !== 3) return;`) and never call `router.push("/dashboard/
+  // quotes")` — operator saw the modal "snap back" to step 1 instead
+  // of the post-submit handoff.
+  //
+  // The reset semantics we actually want: snapshot targetProducts ONCE
+  // when the modal opens, and keep that snapshot frozen for the lifetime
+  // of the modal session. Everything inside the modal (Step 1 → 2 → 3)
+  // operates on that snapshot regardless of what the parent does to its
+  // own quoteItems. The quoteItems clear in the parent is a post-submit
+  // bookkeeping side effect, not a re-initialization signal.
   useEffect(() => {
     if (open) {
       setStep(1);
@@ -152,7 +168,9 @@ export function RequestWizardModal({
         }))
       );
     }
-  }, [open, targetProducts.length]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- §11.51:
+    // targetProducts is intentionally excluded to prevent mid-handoff reset.
+  }, [open]);
 
   const updateItemConfig = (productId: string, patch: Partial<ItemConfig>) => {
     setItemConfigs((prev) =>
