@@ -110,7 +110,17 @@ echo ""
 # Pattern: csrfFetch / fetch / axios.{post|patch|put|delete} 의 첫 string 인자.
 # 백틱 / 더블쿼트 / 싱글쿼트 모두 지원.
 # Capture URL content (between quotes) → strip quotes → output.
-rg -o \
+# §11.66 #api-surface-coverage-script-template-literal-accuracy fix:
+# `-U` (multiline) flag 추가 — caller 가 줄바꿈으로 split 된 형태 (자주 쓰는
+# csrfFetch(
+#   `/api/quotes/${id}/select-reply`,
+#   ...
+# ) 패턴) 에서 `\s*` 가 newline 까지 매치하도록. single-line default 에서는
+# csrfFetch( 와 백틱 사이의 `\n  ` 를 못 넘어가서 caller URL extract 자체가
+# 실패 (false positive — endpoint 가 dead 로 잘못 잡힘).
+# §11.60 baseline (214 callers / 42 violations) → §11.66 fix 후 (230+ callers /
+# 더 적은 violations).
+rg -oU \
   '(csrfFetch|fetch|axios\.(post|patch|put|delete))\s*\(\s*[`"][^`"]+' \
   "$WEB_SRC_DIR" \
   -t ts \
