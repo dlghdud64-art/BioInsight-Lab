@@ -2,6 +2,7 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { useState, useEffect, useMemo } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Dialog,
@@ -93,6 +94,7 @@ export function RequestWizardModal({
   onSubmitSuccess,
   onQuoteManagementOpen,
 }: RequestWizardModalProps) {
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(0);
   const [purpose, setPurpose] = useState("");
@@ -215,24 +217,46 @@ export function RequestWizardModal({
         body: JSON.stringify(payload),
       });
 
-      const requestId = res.ok
-        ? ((await res.json().catch(() => ({}))) as { id?: string }).id ?? `rfq_${Date.now().toString(36)}`
-        : `rfq_${Date.now().toString(36)}`;
+      // §11.52 — fake success 제거.
+      // pre-§11.52: API fail 시에도 fallback id (`rfq_${Date.now()}`)로
+      // step 3 핸드오프 진행 → server에는 견적 안 만들어졌는데 운영자에게는
+      // 성공으로 보이고 router.push 후 견적 관리에서 사라짐 (호영님 발견).
+      // post-§11.52: !res.ok 또는 catch → 명시적 toast.error + step 2 머무름
+      // + retry 가능. quoteItems 보존 (onSubmitSuccess 호출 안 함).
+      if (!res.ok) {
+        const errBody = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+        toast({
+          title: "견적 제출 실패",
+          description: errBody.error ?? errBody.message ?? `서버 오류 (${res.status}). 잠시 후 다시 시도해 주세요.`,
+          variant: "destructive",
+        });
+        return;
+      }
 
-      setSubmittedRequestId(requestId);
+      const json = (await res.json().catch(() => ({}))) as { id?: string };
+      if (!json.id) {
+        toast({
+          title: "견적 제출 실패",
+          description: "서버 응답에 견적 ID가 없습니다. 운영팀에 문의하세요.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setSubmittedRequestId(json.id);
       onSubmitSuccess?.();
 
       // Move to step 3 — handoff
       setDirection(1);
       setStep(3);
       setHandoffCountdown(5);
-    } catch {
-      // Even on API failure, show handoff (request recorded locally)
-      setSubmittedRequestId(`rfq_${Date.now().toString(36)}`);
-      onSubmitSuccess?.();
-      setDirection(1);
-      setStep(3);
-      setHandoffCountdown(5);
+    } catch (err) {
+      // 네트워크 오류 / CSRF / 기타 throw — 명시적 알림 + step 2 머무름
+      toast({
+        title: "견적 제출 실패",
+        description: (err as Error).message ?? "네트워크 오류. 연결을 확인하고 다시 시도해 주세요.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
