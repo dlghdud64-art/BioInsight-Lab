@@ -19,14 +19,21 @@ const SelectTrigger = React.forwardRef<
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 bg-el border-bd",
+      // §11.73: shadcn Select 자체에 hover/animation 강화 — 호영님 시안의
+      // "마우스 호버 시 효과와 부드러운 애니메이션" 을 컴포넌트 본체에 적용.
+      // 모든 사용처 (44+ files) 자동 정합.
+      // - transition-all duration-150 (부드러운 hover 전환)
+      // - hover: border-blue-300 + shadow-sm (라이트 lift effect)
+      // - data-[state=open]: border-blue-400 + shadow-md (강조)
+      // - chevron icon: data-state 따라 회전 (열림 시 180deg)
+      "group flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 bg-el border-bd transition-all duration-150 hover:border-blue-300 hover:shadow-sm data-[state=open]:border-blue-400 data-[state=open]:shadow-md",
       className
     )}
     {...props}
   >
     {children}
     <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
+      <ChevronDown className="h-4 w-4 opacity-50 transition-transform duration-200 group-data-[state=open]:rotate-180" />
     </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
@@ -118,7 +125,9 @@ const SelectItem = React.forwardRef<
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      // §11.73: SelectItem 에 부드러운 hover transition + LabAxis blue tone
+      // accent — Radix focus state 가 mouse hover 와 동등 동작 (data-[highlighted]).
+      "relative flex w-full cursor-pointer select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors duration-100 focus:bg-blue-50 focus:text-blue-700 data-[highlighted]:bg-blue-50 data-[highlighted]:text-blue-700 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       className
     )}
     {...props}
