@@ -2,43 +2,92 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Download, FileText, Search, ShieldAlert } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Download,
+  FileText,
+  Search,
+  ShieldAlert,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
-// §11.64 #audit-trail-operator-friendly-tone
+// §11.81 #audit-trail-data-fetcher-wiring
 //
-// 호영님 mock-up 시안 (담백한 table + 필터 row + token 라벨) 형태로 재디자인.
-// 거부:
-//   - 자물쇠 icon (헤더 + small label 둘 다)
-//   - "(Audit Trail)" 영문 병기 (한국어 "감사 증적"만)
-//   - "CFR 21 Part 11 대응" 규제 톤 description
-//   - 빨간 취소선 변경 표기 (이전 값을 잘못된 것처럼 보이게 함)
-//   - "전자서명 완료" 등 e-signature 강조
-// 채택:
-//   - 가로 한 줄 필터 (필터 / 최근 30일 / 액션 유형 / 작업자) + 우측 검색
-//   - 변경 내역: slate-500 (이전) → slate-900 bold (이후) — 단순 화살표
-//   - 사유 옆 token badge (User Token / 시스템 액션)
-//   - action-tone color (재고/보관/알림/등록/권한 별 라이트 톤)
+// §11.64 시안 흡수 후 §11.67 dead-button-removal 로 임시 제거됐던 필터 row 를
+// real /api/audit-logs fetcher 와 함께 정상 wired. mock 5 행 제거 → Prisma
+// AuditLog 모델 + getAuditLogs 와 직접 연결.
 //
-// LabAxis 원칙: marketing-style decorative 거부 + DashboardShell chrome 그대로 +
-// canonical truth 보호 (이번 mock data 만, 실제 audit log 연결은 별도 트랙).
+// Adapter 책임:
+//   - AuditLog (Prisma) → UI AuditRow 변환
+//   - eventType → 한국어 운영자 라벨 + actionTone 매핑 (5 카테고리)
+//   - changes JSON → before/after string 추출
+//   - userId === null → "system" auth method, else "user_token"
+//   - entityType + entityId → target string
+//
+// LabAxis 원칙:
+//   - mock 0 — canonical truth (Prisma) 만 표시
+//   - dead button 0 — 모든 필터/검색 onClick wired
+//   - empty/loading/error 상태 명시 (no-op 금지)
 
-interface AuditLog {
+interface AuditLogResponse {
+  logs: Array<{
+    id: string;
+    organizationId: string | null;
+    userId: string | null;
+    eventType: string;
+    entityType: string;
+    entityId: string | null;
+    action: string;
+    changes: any;
+    metadata: any;
+    ipAddress: string | null;
+    userAgent: string | null;
+    success: boolean;
+    errorMessage: string | null;
+    createdAt: string;
+    user: { id: string; name: string | null; email: string } | null;
+    organization: { id: string; name: string } | null;
+  }>;
+  total: number;
+  limit: number;
+  offset: number;
+  demo?: boolean;
+}
+
+type ActionTone = "stock" | "storage" | "alert" | "register" | "permission";
+
+interface AuditRow {
   id: string;
   time: string;
   user: string;
   email: string;
   ip: string;
   action: string;
-  actionTone: "stock" | "storage" | "alert" | "register" | "permission";
+  actionTone: ActionTone;
   target: string;
   before: string;
   after: string;
@@ -46,7 +95,40 @@ interface AuditLog {
   authMethod: "user_token" | "system";
 }
 
-const ACTION_TONE: Record<AuditLog["actionTone"], string> = {
+// AuditEventType → (Korean label, action tone) 매핑.
+// 5 카테고리: 재고(stock, 부정 변경), 보관(storage, 조건 변경), 알림(alert, 자동),
+// 등록(register, 신규 entity), 권한(permission, role/auth).
+const EVENT_TYPE_MAP: Record<string, { label: string; tone: ActionTone }> = {
+  USER_LOGIN: { label: "로그인", tone: "permission" },
+  USER_LOGOUT: { label: "로그아웃", tone: "permission" },
+  USER_CREATED: { label: "사용자 등록", tone: "register" },
+  USER_UPDATED: { label: "사용자 수정", tone: "storage" },
+  USER_DELETED: { label: "사용자 삭제", tone: "stock" },
+  PERMISSION_CHANGED: { label: "권한 변경", tone: "permission" },
+  SETTINGS_CHANGED: { label: "설정 변경", tone: "storage" },
+  DATA_EXPORTED: { label: "데이터 내보내기", tone: "alert" },
+  DATA_IMPORTED: { label: "데이터 가져오기", tone: "alert" },
+  SSO_CONFIGURED: { label: "SSO 설정", tone: "permission" },
+  ORGANIZATION_CREATED: { label: "조직 생성", tone: "register" },
+  ORGANIZATION_UPDATED: { label: "조직 수정", tone: "storage" },
+  ORGANIZATION_DELETED: { label: "조직 삭제", tone: "stock" },
+  INGESTION_RECEIVED: { label: "외부 입력 수신", tone: "alert" },
+  DOCUMENT_CLASSIFIED: { label: "문서 분류", tone: "register" },
+  EXTRACTION_COMPLETED: { label: "AI 추출 완료", tone: "register" },
+  ENTITY_LINKED: { label: "DB 연결", tone: "register" },
+  VERIFICATION_COMPLETED: { label: "검증 완료", tone: "storage" },
+  WORK_QUEUE_TASK_GENERATED: { label: "작업 생성", tone: "register" },
+};
+
+const EVENT_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "all", label: "전체 액션" },
+  ...Object.entries(EVENT_TYPE_MAP).map(([value, { label }]) => ({
+    value,
+    label,
+  })),
+];
+
+const ACTION_TONE: Record<ActionTone, string> = {
   stock: "bg-rose-50 text-rose-700 border-rose-200",
   storage: "bg-amber-50 text-amber-700 border-amber-200",
   alert: "bg-blue-50 text-blue-700 border-blue-200",
@@ -54,16 +136,93 @@ const ACTION_TONE: Record<AuditLog["actionTone"], string> = {
   permission: "bg-emerald-50 text-emerald-700 border-emerald-200",
 };
 
-const AUTH_LABEL: Record<AuditLog["authMethod"], { label: string; cls: string }> = {
+const AUTH_LABEL: Record<AuditRow["authMethod"], { label: string; cls: string }> = {
   user_token: { label: "User Token", cls: "bg-slate-100 text-slate-600 border-slate-200" },
   system: { label: "시스템 액션", cls: "bg-slate-50 text-slate-500 border-slate-200" },
 };
+
+const PERIOD_OPTIONS: Array<{ value: string; label: string; days: number | null }> = [
+  { value: "7", label: "최근 7일", days: 7 },
+  { value: "30", label: "최근 30일", days: 30 },
+  { value: "90", label: "최근 90일", days: 90 },
+  { value: "all", label: "전체 기간", days: null },
+];
+
+function formatChange(value: unknown): string {
+  if (value == null) return "";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
+  }
+}
+
+function adaptLog(log: AuditLogResponse["logs"][number]): AuditRow {
+  const meta = EVENT_TYPE_MAP[log.eventType] ?? {
+    label: log.eventType,
+    tone: "register" as ActionTone,
+  };
+
+  // changes JSON 은 { before, after } 또는 { previous, new } 또는 평탄 object.
+  // 일반 케이스만 best-effort decode — 미상 shape 면 빈 문자열로 graceful.
+  let before = "";
+  let after = "";
+  if (log.changes && typeof log.changes === "object") {
+    const c = log.changes as Record<string, unknown>;
+    if ("before" in c) before = formatChange(c.before);
+    if ("after" in c) after = formatChange(c.after);
+    if (!before && "previous" in c) before = formatChange(c.previous);
+    if (!after && "new" in c) after = formatChange(c.new);
+  }
+
+  // metadata 안에 reason / description 있으면 사유로 사용, 없으면 action + entityType
+  let reason = log.action;
+  if (log.metadata && typeof log.metadata === "object") {
+    const m = log.metadata as Record<string, unknown>;
+    if (typeof m.reason === "string") reason = m.reason;
+    else if (typeof m.description === "string") reason = m.description;
+    else if (typeof m.note === "string") reason = m.note;
+  }
+  if (!log.success && log.errorMessage) {
+    reason = `[실패] ${log.errorMessage}`;
+  }
+
+  const target = log.entityId
+    ? `${log.entityType} (${log.entityId.slice(0, 8)})`
+    : log.entityType;
+
+  return {
+    id: log.id,
+    time: new Date(log.createdAt).toLocaleString("ko-KR", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    }),
+    user: log.user?.name ?? log.user?.email ?? "시스템",
+    email: log.user?.email ?? "",
+    ip: log.ipAddress ?? "",
+    action: meta.label,
+    actionTone: meta.tone,
+    target,
+    before,
+    after,
+    reason,
+    authMethod: log.userId ? "user_token" : "system",
+  };
+}
 
 export default function AuditTrailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { toast } = useToast();
   const [search, setSearch] = useState("");
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const [periodFilter, setPeriodFilter] = useState<string>("30");
 
   const userRole = session?.user?.role as string | undefined;
   const canAccessAudit = userRole === "ADMIN" || (userRole as string)?.toLowerCase() === "manager";
@@ -84,6 +243,44 @@ export default function AuditTrailPage() {
     }
   }, [status, canAccessAudit, router, toast]);
 
+  // §11.81: real fetcher — /api/audit-logs (limit 200, eventType + startDate + search forward).
+  const periodMeta = PERIOD_OPTIONS.find((p) => p.value === periodFilter);
+  const startDate = useMemo(() => {
+    if (!periodMeta?.days) return null;
+    const d = new Date();
+    d.setDate(d.getDate() - periodMeta.days);
+    return d.toISOString();
+  }, [periodMeta]);
+
+  const {
+    data,
+    isLoading,
+    isError,
+    isFetching,
+    refetch,
+  } = useQuery<AuditLogResponse>({
+    queryKey: ["audit-logs", eventTypeFilter, periodFilter, search],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      params.set("limit", "200");
+      if (eventTypeFilter !== "all") params.set("eventType", eventTypeFilter);
+      if (startDate) params.set("startDate", startDate);
+      if (search.trim()) params.set("search", search.trim());
+      const res = await fetch(`/api/audit-logs?${params.toString()}`);
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "감사 로그 조회 실패");
+      }
+      return res.json();
+    },
+    enabled: status === "authenticated" && canAccessAudit,
+  });
+
+  const rows: AuditRow[] = useMemo(
+    () => (data?.logs ?? []).map(adaptLog),
+    [data]
+  );
+
   if (status === "loading" || !canAccessAudit) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -100,101 +297,52 @@ export default function AuditTrailPage() {
     );
   }
 
-  const auditLogs: AuditLog[] = [
-    {
-      id: "LOG-992",
-      time: "2026-04-26 14:32:05",
-      user: "이호영",
-      email: "lee@lab.com",
-      ip: "192.168.1.44",
-      action: "재고 차감",
-      actionTone: "stock",
-      target: "Gibco FBS (Lot: 24A01-X)",
-      before: "3개",
-      after: "2개",
-      reason: "MTT assay 실험 사용",
-      authMethod: "user_token",
-    },
-    {
-      id: "LOG-991",
-      time: "2026-04-26 11:15:22",
-      user: "김연구",
-      email: "kim@lab.com",
-      ip: "192.168.1.102",
-      action: "보관 조건 변경",
-      actionTone: "storage",
-      target: "DMSO (Lot: 3202825)",
-      before: "냉장 (2~8°C)",
-      after: "상온 (15~25°C)",
-      reason: "내부 보관 공간 정리",
-      authMethod: "user_token",
-    },
-    {
-      id: "LOG-990",
-      time: "2026-04-25 09:00:01",
-      user: "시스템 자동",
-      email: "",
-      ip: "10.0.1.5",
-      action: "경고 알림 발송",
-      actionTone: "alert",
-      target: "KGM-Gold (Lot: 0001391852)",
-      before: "",
-      after: "",
-      reason: "유효기한 2달 전 도래로 인한 자동 알림",
-      authMethod: "system",
-    },
-    {
-      id: "LOG-989",
-      time: "2026-04-25 08:45:33",
-      user: "박실험",
-      email: "park@lab.com",
-      ip: "192.168.1.88",
-      action: "시약 등록",
-      actionTone: "register",
-      target: "Taq DNA Polymerase",
-      before: "",
-      after: "신규 자산 등록 완료",
-      reason: "신규 입고 등록",
-      authMethod: "user_token",
-    },
-    {
-      id: "LOG-988",
-      time: "2026-04-24 16:20:11",
-      user: "최연구",
-      email: "choi@lab.com",
-      ip: "192.168.1.55",
-      action: "권한 변경",
-      actionTone: "permission",
-      target: "연구실 접근 권한",
-      before: "Guest",
-      after: "Researcher",
-      reason: "정규직 전환에 따른 권한 변경",
-      authMethod: "user_token",
-    },
-  ];
-
-  const filtered = auditLogs.filter((log) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (
-      log.id.toLowerCase().includes(q) ||
-      log.target.toLowerCase().includes(q) ||
-      log.user.toLowerCase().includes(q) ||
-      log.reason.toLowerCase().includes(q)
-    );
-  });
-
   const handlePdfDownload = () => {
     toast({
-      title: "PDF 다운로드",
-      description: "감사 증적 PDF가 생성되었습니다.",
+      title: "PDF 다운로드 준비 중",
+      description: "PDF 생성 기능은 별도 트랙에서 구현 예정입니다.",
     });
   };
 
   const handleCsvExport = () => {
+    if (rows.length === 0) {
+      toast({
+        title: "내보낼 로그가 없습니다",
+        description: "필터 조건을 조정한 후 다시 시도하세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    // CSV 직접 생성 — 별도 endpoint 없이 client-side download
+    const headers = [
+      "ID",
+      "Timestamp",
+      "User",
+      "Email",
+      "IP",
+      "Action",
+      "Target",
+      "Before",
+      "After",
+      "Reason",
+      "AuthMethod",
+    ];
+    const lines = rows.map((r) =>
+      [r.id, r.time, r.user, r.email, r.ip, r.action, r.target, r.before, r.after, r.reason, r.authMethod]
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(",")
+    );
+    const csv = "﻿" + [headers.join(","), ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
     toast({
-      title: "CSV 내보내기",
-      description: "감사 증적 데이터가 CSV로 내보내졌습니다.",
+      title: "CSV 내보내기 완료",
+      description: `${rows.length}건의 감사 로그를 다운로드했습니다.`,
     });
   };
 
@@ -211,9 +359,27 @@ export default function AuditTrailPage() {
           </h2>
           <p className="text-sm text-slate-500 break-keep">
             주요 시스템 데이터 변경 및 접근 기록 이력을 확인합니다.
+            {data && (
+              <span className="ml-2 text-slate-400">
+                · 총 {data.total.toLocaleString("ko-KR")}건
+              </span>
+            )}
           </p>
         </div>
         <div className="flex gap-2 flex-shrink-0">
+          <Button
+            variant="outline"
+            className="touch-manipulation active:scale-95"
+            onClick={() => refetch()}
+            disabled={isFetching}
+          >
+            {isFetching ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <RefreshCw className="w-4 h-4 mr-2" />
+            )}
+            <span className="hidden sm:inline">새로 </span>고침
+          </Button>
           <Button
             variant="outline"
             className="touch-manipulation active:scale-95"
@@ -232,18 +398,40 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      {/* §11.67 #audit-trail-dead-button-removal — §11.64 회귀 fix.
-          §11.64 시안 흡수 시 필터 4 button (필터/최근 30일/액션 유형/작업자)
-          을 추가했으나 onClick wiring 0 → dead button. LabAxis 원칙 strict
-          위반 (호영님이 prod 운용 중 직접 지적). 즉시 제거. 검색 박스만
-          유지 (이미 wired). 필터 row visual essence 복원은
-          `#audit-trail-data-fetcher-wiring` 트랙에서 real /api/audit-logs
-          fetcher 와 함께 한 번에 wired — dead button 으로 미리 만들지 않음. */}
-      <div className="flex justify-end">
+      {/* §11.81 — 필터 row 복원: real fetcher 와 함께 wired (eventType + period
+          + search 모두 query params 로 forward → /api/audit-logs).
+          §11.67 에서 dead button 으로 잠시 제거됐던 시안 visual essence 회복. */}
+      <div className="flex flex-col md:flex-row gap-2 md:items-center">
+        <div className="flex flex-1 gap-2 flex-wrap">
+          <Select value={periodFilter} onValueChange={setPeriodFilter}>
+            <SelectTrigger className="h-9 w-[140px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+            <SelectTrigger className="h-9 w-[160px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {EVENT_TYPE_OPTIONS.map((e) => (
+                <SelectItem key={e.value} value={e.value}>
+                  {e.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <div className="relative w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
-            placeholder="ID, 대상 품목 또는 사유 검색..."
+            placeholder="ID, 대상, 사용자명, 이메일 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9 h-9 text-xs"
@@ -252,77 +440,102 @@ export default function AuditTrailPage() {
       </div>
 
       <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <Table className="min-w-[720px]">
-            <TableHeader className="bg-slate-50/50">
-              <TableRow>
-                <TableHead className="w-[180px] font-semibold text-xs uppercase tracking-wider text-slate-500">일시 (Timestamp) / ID</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">작업자 (User) / IP</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">액션 (Action) 및 대상 품목</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">변경 내역 (Details)</TableHead>
-                <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">사유 (Reason / Auth)</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((log) => {
-                const auth = AUTH_LABEL[log.authMethod];
-                const hasChange = log.before && log.after;
-                const onlyAfter = !log.before && log.after;
-                return (
-                  <TableRow key={log.id} className="hover:bg-slate-50/50">
-                    <TableCell>
-                      <div className="font-mono text-sm font-medium text-slate-900">
-                        {log.time}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5">{log.id}</div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-slate-900">{log.user}</span>
-                        {log.email && (
-                          <span className="text-xs text-slate-400 break-all">{log.email}</span>
-                        )}
-                      </div>
-                      <div className="text-xs text-slate-400 mt-0.5 font-mono">
-                        IP: {log.ip || "-"}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={`mb-1 ${ACTION_TONE[log.actionTone]}`}>
-                        {log.action}
-                      </Badge>
-                      <div className="text-sm font-medium text-slate-900 break-keep">
-                        {log.target}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {hasChange ? (
-                        <div className="flex items-center gap-2 text-sm flex-wrap">
-                          <span className="text-slate-500 break-keep">{log.before}</span>
-                          <span className="text-slate-400 flex-shrink-0">→</span>
-                          <span className="text-slate-900 font-bold break-keep">{log.after}</span>
+        {isLoading ? (
+          <div className="py-16 text-center">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-400 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">감사 로그 조회 중...</p>
+          </div>
+        ) : isError ? (
+          <div className="py-12 text-center">
+            <ShieldAlert className="h-8 w-8 text-rose-400 mx-auto mb-2" />
+            <p className="text-sm text-rose-700">감사 로그를 불러오지 못했습니다.</p>
+            <p className="text-xs text-slate-400 mt-1">
+              새로 고침 버튼을 눌러 다시 시도하세요.
+            </p>
+          </div>
+        ) : rows.length === 0 ? (
+          <div className="py-16 text-center">
+            <FileText className="h-8 w-8 text-slate-300 mx-auto mb-3" />
+            <p className="text-sm font-semibold text-slate-700 mb-1">감사 로그가 없습니다.</p>
+            <p className="text-[11px] text-slate-400 break-keep">
+              선택한 기간 / 액션 조건에 해당하는 기록이 없습니다.
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table className="min-w-[720px]">
+              <TableHeader className="bg-slate-50/50">
+                <TableRow>
+                  <TableHead className="w-[180px] font-semibold text-xs uppercase tracking-wider text-slate-500">일시 / ID</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">작업자 / IP</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">액션 및 대상</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">변경 내역</TableHead>
+                  <TableHead className="font-semibold text-xs uppercase tracking-wider text-slate-500">사유 / 인증</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {rows.map((log) => {
+                  const auth = AUTH_LABEL[log.authMethod];
+                  const hasChange = log.before && log.after;
+                  const onlyAfter = !log.before && log.after;
+                  return (
+                    <TableRow key={log.id} className="hover:bg-slate-50/50">
+                      <TableCell>
+                        <div className="font-mono text-sm font-medium text-slate-900">
+                          {log.time}
                         </div>
-                      ) : onlyAfter ? (
-                        <span className="text-sm text-slate-500 italic break-keep">{log.after}</span>
-                      ) : (
-                        <span className="text-slate-400 text-sm">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-slate-600 break-keep">{log.reason}</div>
-                      <Badge
-                        variant="outline"
-                        className={`mt-1.5 text-[10px] px-1.5 py-0 h-5 ${auth.cls}`}
-                      >
-                        {auth.label}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+                        <div className="text-xs text-slate-400 mt-0.5 truncate max-w-[160px]">
+                          {log.id}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-slate-900">{log.user}</span>
+                          {log.email && (
+                            <span className="text-xs text-slate-400 break-all">{log.email}</span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5 font-mono">
+                          IP: {log.ip || "-"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`mb-1 ${ACTION_TONE[log.actionTone]}`}>
+                          {log.action}
+                        </Badge>
+                        <div className="text-sm font-medium text-slate-900 break-keep">
+                          {log.target}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {hasChange ? (
+                          <div className="flex items-center gap-2 text-sm flex-wrap">
+                            <span className="text-slate-500 break-keep">{log.before}</span>
+                            <span className="text-slate-400 flex-shrink-0">→</span>
+                            <span className="text-slate-900 font-bold break-keep">{log.after}</span>
+                          </div>
+                        ) : onlyAfter ? (
+                          <span className="text-sm text-slate-500 italic break-keep">{log.after}</span>
+                        ) : (
+                          <span className="text-slate-400 text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm text-slate-600 break-keep">{log.reason}</div>
+                        <Badge
+                          variant="outline"
+                          className={`mt-1.5 text-[10px] px-1.5 py-0 h-5 ${auth.cls}`}
+                        >
+                          {auth.label}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
     </div>
   );
