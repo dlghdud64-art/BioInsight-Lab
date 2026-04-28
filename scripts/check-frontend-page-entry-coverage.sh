@@ -54,6 +54,24 @@ EXEMPT_URLS=(
   "/dashboard"
   # /dashboard/orders 는 §11.59 redirect-only stub (다음 release 디렉토리 삭제 예정)
   "/dashboard/orders"
+
+  # §11.96 — settings tab redirect 진입점 (별도 페이지 alive 상태)
+  # 운영자는 /dashboard/settings?tab={billing,notifications} 로 진입 가능.
+  # 별도 standalone page 도 alive — 향후 통폐합 또는 redirect 처리 별도 트랙.
+  "/dashboard/billing"
+  "/dashboard/notifications"
+  "/dashboard/pricing"
+
+  # §11.96 — 운영자 surface 분류 deferred (Phase 2 트랙)
+  # 운영 사용 빈도 + 메뉴 추가 vs delete 결정은 호영님 prod 운영 후 판단.
+  "/dashboard/admin"            # 442 lines — 운영자 admin overview
+  "/dashboard/collaboration"    # 232 lines — 협업 surface
+  "/dashboard/grants"           # 97 lines — 연구비 관리
+  "/dashboard/inbox"            # 822 lines — 알림 inbox
+  "/dashboard/safety-spend"     # 798 lines — 안전 지출 분석
+  "/dashboard/shared-links"     # 356 lines — 공유 링크 관리
+  "/dashboard/supplier"         # 525 lines — 공급사 관리
+  "/dashboard/work-queue"       # 운영 콘솔 (WorkQueueConsole wrapper)
 )
 
 echo "═══ LabAxis Frontend Page Entry Coverage Guard (§11.91) ═══"
