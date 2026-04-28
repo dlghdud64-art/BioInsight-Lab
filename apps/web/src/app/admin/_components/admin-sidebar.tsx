@@ -11,12 +11,14 @@ import {
   Activity,
   Shield,
   FileText,
+  ShoppingCart,
   LogOut,
 } from "lucide-react";
 
 const ADMIN_MENU_ITEMS = [
   { title: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { title: "Quotes", href: "/admin/quotes", icon: FileText },
+  { title: "Orders", href: "/admin/orders", icon: ShoppingCart },
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Organizations", href: "/admin/organizations", icon: Database },
   { title: "Activity Logs", href: "/admin/activity", icon: Activity },

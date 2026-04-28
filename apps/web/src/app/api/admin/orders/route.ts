@@ -5,6 +5,86 @@ import { QuoteStatus, OrderStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
+/**
+ * §11.80 #order-operator-surface — admin Order list 조회
+ * GET /api/admin/orders
+ *
+ * 관리자 (ADMIN role) 가 모든 Order 의 status / items / user / orderNumber 를
+ * 조회. status 전환 surface (`/admin/orders` page) 의 fetcher.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    if (session.user.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "관리자 권한이 필요합니다." },
+        { status: 403 },
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const statusFilter = searchParams.get("status"); // optional
+
+    const where: Prisma.OrderWhereInput = {};
+    if (statusFilter && statusFilter !== "all") {
+      where.status = statusFilter as OrderStatus;
+    }
+
+    const orders = await db.order.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        orderNumber: true,
+        status: true,
+        totalAmount: true,
+        notes: true,
+        shippingAddress: true,
+        expectedDelivery: true,
+        actualDelivery: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          select: { id: true, email: true, name: true },
+        },
+        organization: {
+          select: { id: true, name: true },
+        },
+        items: {
+          select: {
+            id: true,
+            productId: true,
+            name: true,
+            brand: true,
+            catalogNumber: true,
+            quantity: true,
+            unitPrice: true,
+            lineTotal: true,
+          },
+        },
+        quote: {
+          select: { id: true, title: true, quoteNumber: true },
+        },
+      },
+    });
+
+    return NextResponse.json({ orders, total: orders.length });
+  } catch (error: any) {
+    console.error("[admin/orders/GET] error:", {
+      message: error?.message,
+      code: error?.code,
+    });
+    return NextResponse.json(
+      { error: "Order 목록 조회에 실패했습니다." },
+      { status: 500 },
+    );
+  }
+}
+
 function generateOrderNumber(): string {
   const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
   const random = Math.random().toString(36).substr(2, 4).toUpperCase();
