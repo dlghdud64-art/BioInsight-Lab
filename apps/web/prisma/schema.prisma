@@ -127,6 +127,11 @@ model User {
   role          UserRole  @default(RESEARCHER)
   organization  String? // ?거???드 (조직?직접 ?력)
   phone         String?   // §11.69 운영자 연락처 (settings page 에서 update)
+  // §11.97 #user-approval-policy-schema-add — 운영 정책 (read-only, admin 변경).
+  // settings 페이지의 "운영 정책 미설정" 3 항목 backing source.
+  approvalLimit    BigInt? // 단일 건 승인 한도 (KRW). null = 정책 미설정.
+  costCenter       String? // 기본 Cost Center 코드 (예: "RND-BIO-SITE01")
+  defaultLocation  String? // 기본 입고 위치 (예: "제1R&D센터 중앙창고")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

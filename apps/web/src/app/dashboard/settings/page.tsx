@@ -703,7 +703,14 @@ function SettingsPageContent() {
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
                           <p className="text-[11px] text-slate-500 mb-0.5">단일 건 승인 한도</p>
-                          <p className="text-sm font-bold text-slate-400 tabular-nums">운영 정책 미설정</p>
+                          {/* §11.97 — User.approvalLimit (BigInt → string serialized) real value */}
+                          {userData?.approvalLimit ? (
+                            <p className="text-sm font-bold text-slate-900 tabular-nums">
+                              ₩{Number(userData.approvalLimit).toLocaleString("ko-KR")}
+                            </p>
+                          ) : (
+                            <p className="text-sm font-bold text-slate-400 tabular-nums">운영 정책 미설정</p>
+                          )}
                         </div>
                         <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
                           <p className="text-[11px] text-slate-500 mb-0.5">월간 구매 예산</p>
@@ -730,19 +737,27 @@ function SettingsPageContent() {
                       </div>
                     </div>
                     <div className="h-px bg-slate-200" />
-                    {/* §11.87 기본 업무 환경 — Cost Center / 입고 위치 schema 부재.
-                        솔직한 "운영 정책 미설정" empty state. schema 필드 추가는
-                        별도 트랙 (#user-approval-policy-schema-add deferred). */}
+                    {/* §11.87 + §11.97 — 기본 업무 환경.
+                        User.costCenter / defaultLocation schema 추가 후 (§11.97)
+                        real data 표시. null 시 honest empty state 유지. */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">기본 업무 환경</p>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <span className="text-xs text-slate-500">기본 Cost Center</span>
-                          <span className="text-sm font-mono text-slate-400">운영 정책 미설정</span>
+                          {userData?.costCenter ? (
+                            <span className="text-sm font-mono text-slate-900">{userData.costCenter}</span>
+                          ) : (
+                            <span className="text-sm font-mono text-slate-400">운영 정책 미설정</span>
+                          )}
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <span className="text-xs text-slate-500">기본 입고 위치</span>
-                          <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
+                          {userData?.defaultLocation ? (
+                            <span className="text-sm text-slate-900 break-keep">{userData.defaultLocation}</span>
+                          ) : (
+                            <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
+                          )}
                         </div>
                       </div>
                     </div>

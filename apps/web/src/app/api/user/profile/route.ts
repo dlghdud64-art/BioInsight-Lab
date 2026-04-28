@@ -38,6 +38,10 @@ export async function GET(_request: NextRequest) {
         image: true,
         role: true,
         phone: true,
+        // §11.97 — 운영 정책 3 필드 (read-only, settings 페이지 표시).
+        approvalLimit: true,
+        costCenter: true,
+        defaultLocation: true,
       },
     });
 
@@ -45,16 +49,25 @@ export async function GET(_request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    return NextResponse.json(user);
+    // §11.97 — BigInt → string serialize (NextResponse.json 가 BigInt 직접 직렬화 못 함).
+    const serialized = {
+      ...user,
+      approvalLimit:
+        user.approvalLimit !== null && user.approvalLimit !== undefined
+          ? user.approvalLimit.toString()
+          : null,
+    };
+    return NextResponse.json(serialized);
   } catch (error: any) {
     console.error("[user/profile/GET] error:", error);
-    // P2022: Unknown column — migration 미적용 (phone column 부재)
-    if (error?.code === "P2022" && /phone/i.test(error?.message ?? "")) {
+    // P2022: Unknown column — migration 미적용 (phone / approvalLimit 등 column 부재)
+    if (error?.code === "P2022") {
+      // graceful fallback — phone 부재 시 phone 만 누락된 응답, approvalLimit 부재 시 동일.
       return NextResponse.json(
         {
           error:
-            "스키마 마이그레이션이 아직 적용되지 않았습니다. 운영 지원 센터로 문의하시면 phone 컬럼 추가 후 다시 시도하실 수 있습니다.",
-          _debug: { code: "P2022", missing: "phone" },
+            "스키마 마이그레이션이 아직 적용되지 않았습니다. 운영 지원 센터로 문의하시면 column 추가 후 다시 시도하실 수 있습니다.",
+          _debug: { code: "P2022", missing: error?.meta?.column ?? "unknown" },
         },
         { status: 500 },
       );
