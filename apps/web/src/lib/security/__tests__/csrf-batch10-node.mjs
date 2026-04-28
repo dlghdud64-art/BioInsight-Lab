@@ -74,7 +74,7 @@ const HIGH_RISK_ROUTE_PATTERNS = [
   '/api/organizations/[id]', '/api/organizations/[id]/logo', '/api/organizations/[id]/members',
   '/api/purchases/import/commit', '/api/quote-items/[id]', '/api/quotes/[id]',
   '/api/quotes/[id]/status', '/api/quotes/generate-english', '/api/reviews/[id]',
-  '/api/team/[id]/members', '/api/templates/[id]', '/api/user-inventory/[id]',
+  '/api/team/[id]/members', '/api/templates/[id]',
   '/api/workspaces/[id]', '/api/workspaces/[id]/invites', '/api/workspaces/[id]/members/[memberId]',
 ];
 
@@ -196,8 +196,11 @@ test('highRisk: /api/admin/orders/123/status → required + highRisk', () => {
   assert.equal(c.protection, 'required'); assert.equal(c.highRisk, true);
 });
 
-test('highRisk count = 30', () => {
-  assert.equal(COMPILED.filter(r => r.config.highRisk).length, 30);
+test('highRisk count = 29', () => {
+  // 30 → 29: `/api/user-inventory/[id]` 제거 (#inventory-model-consolidation Phase 2,
+  // commit e4d2822f에서 endpoint 삭제됨). 본 트랙(#stale-csrf-registry-entry-cleanup)
+  // 에서 registry/test/docs 5 sites 정리.
+  assert.equal(COMPILED.filter(r => r.config.highRisk).length, 29);
 });
 
 test('standard: /api/cart → required + not highRisk', () => {
@@ -483,9 +486,11 @@ test('telemetry mapping: unknown → fallback', () => {
 
 console.log('\n═══ 6. Coverage & Bootstrap ═══\n');
 
-test('registry: 전체 highRisk ≥ 30 (registry 확장 후)', () => {
+test('registry: 전체 highRisk ≥ 29 (registry 확장 후)', () => {
+  // floor was 30 — `/api/user-inventory/[id]` 제거 (#inventory-model-consolidation
+  // Phase 2)로 -1. 신규 high-risk endpoint 추가 시 floor 재상향.
   const hrCount = COMPILED.filter(r => r.config.highRisk).length;
-  assert.ok(hrCount >= 30, `highRisk count ${hrCount} should be >= 30`);
+  assert.ok(hrCount >= 29, `highRisk count ${hrCount} should be >= 29`);
 });
 
 test('registry: exempt + highRisk + standard = total compiled', () => {

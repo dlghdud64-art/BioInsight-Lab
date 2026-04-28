@@ -285,8 +285,6 @@ Coverage: 182/190 eligible routes protected = **95.8%**
 | `/api/user-budgets` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/user-budgets/[id]` | GET, PATCH, DELETE | PATCH, DELETE | middleware | required | standard | - | - | - |
 | `/api/user-budgets/[id]/check` | GET | - | n/a | n/a | n/a | read_only | - | - |
-| `/api/user-inventory` | GET, PATCH | PATCH | middleware | required | standard | - | - | - |
-| `/api/user-inventory/[id]` | GET, PATCH, DELETE | PATCH, DELETE | middleware | required | high | - | - | - |
 | `/api/validate-link` | POST | POST | middleware | required | standard | - | - | - |
 | `/api/vendor-requests/[token]` | GET | - | n/a | n/a | n/a | read_only | - | - |
 | `/api/vendor-requests/[token]/response` | POST | POST | exempt | exempt | exempt | public_token_auth | - | - |

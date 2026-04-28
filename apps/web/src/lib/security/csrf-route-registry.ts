@@ -86,7 +86,6 @@ const HIGH_RISK_ROUTE_PATTERNS: readonly string[] = [
   '/api/reviews/[id]',
   '/api/team/[id]/members',
   '/api/templates/[id]',
-  '/api/user-inventory/[id]',
   '/api/workspaces/[id]',
   '/api/workspaces/[id]/invites',
   '/api/workspaces/[id]/members/[memberId]',

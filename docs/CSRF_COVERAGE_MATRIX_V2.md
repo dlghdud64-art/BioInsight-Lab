@@ -95,7 +95,6 @@
 | `/api/reviews/[id]` | DELETE | — | ✅ Server-only |
 | `/api/team/[id]/members` | GET, PATCH, DELETE | — | ✅ Server-only |
 | `/api/templates/[id]` | GET, DELETE | — | ✅ Server-only |
-| `/api/user-inventory/[id]` | GET, PATCH, DELETE | — | ✅ Server-only |
 | `/api/workspaces/[id]` | GET, PATCH, DELETE | — | ✅ Server-only |
 | `/api/workspaces/[id]/invites` | GET, POST, DELETE | — | ✅ Server-only |
 | `/api/workspaces/[id]/members/[memberId]` | PATCH, DELETE | — | ✅ Server-only |
@@ -148,7 +147,6 @@
 | `/api/team` | 🟡 standard | `app/quotes/[id]/page.tsx` |
 | `/api/team` | 🟡 standard | `app/team/settings/page.tsx` |
 | `/api/templates` | 🟡 standard | `app/templates/page.tsx` |
-| `/api/user-inventory` | 🟡 standard | `app/inventory/page.tsx` |
 | `/api/vendor/billing` | 🟡 standard | `app/dashboard/vendor/billing/page.tsx` |
 | `/api/vendor/premium` | 🟡 standard | `app/dashboard/vendor/billing/page.tsx` |
 
