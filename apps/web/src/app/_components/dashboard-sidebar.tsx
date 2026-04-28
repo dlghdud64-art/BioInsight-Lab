@@ -79,6 +79,18 @@ const sidebarGroups: SidebarGroup[] = [
         icon: ShoppingCart,
       },
       {
+        // §11.83 #purchase-orders-sidebar-entry-add
+        // §11.55 dead-end 패턴 9번째 회귀 정리 — `/dashboard/purchase-orders`
+        // (643 lines alive surface) 가 desktop sidebar 진입점 부재였던 문제.
+        // 모바일 bottom-nav-more-sheet 의 "발주" 항목 (ClipboardList icon) 과
+        // 동일 entry. ontology 상 "구매 운영"(견적→발주 결정) vs "발주 관리"
+        // (PO 발행 후 ready/needs_review/waiting_external/handoff) 는 분리된
+        // stage 라 두 메뉴 정당.
+        title: "발주 관리",
+        href: "/dashboard/purchase-orders",
+        icon: ClipboardList,
+      },
+      {
         title: "구매 리포트",
         href: "/dashboard/reports",
         icon: BarChart3,
@@ -155,6 +167,8 @@ const ICON_TINT: Record<string, { active: string; inactive: string }> = {
   "/dashboard/analytics":    { active: "text-indigo-600",  inactive: "text-indigo-400/70" },
   "/dashboard/quotes":       { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/purchases":    { active: "text-blue-600",    inactive: "text-blue-400/70" },
+  // §11.83 #purchase-orders-sidebar-entry-add — 발주 단계 (PO 관리) blue 동계
+  "/dashboard/purchase-orders": { active: "text-blue-600", inactive: "text-blue-400/70" },
   "/dashboard/reports":      { active: "text-blue-600",    inactive: "text-blue-400/70" },
   "/dashboard/budget":       { active: "text-emerald-600", inactive: "text-emerald-400/70" },
   "/dashboard/inventory":    { active: "text-teal-600",    inactive: "text-teal-400/70" },
