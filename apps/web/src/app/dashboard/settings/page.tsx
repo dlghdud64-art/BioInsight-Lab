@@ -69,6 +69,7 @@ import {
   Users,
   Eye,
   Sliders,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -211,7 +212,9 @@ function SettingsPageContent() {
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [operatorRole, setOperatorRole] = useState("연구실 관리자 (Lab Manager)");
   const [workspaceName, setWorkspaceName] = useState("제1 바이오 R&D 센터");
-  const [currencyUnit, setCurrencyUnit] = useState("KRW (₩) / Metric");
+  // §11.74: 단위계(Metric/Imperial) 제거 — 정규화 로직 부재로 사용자가
+  // 결정할 항목 아님. 통화만 유지.
+  const [currencyUnit, setCurrencyUnit] = useState("KRW (₩)");
 
   // ── Ontology engine state ──
   const [confidenceThreshold, setConfidenceThreshold] = useState(85);
@@ -531,25 +534,90 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                {/* Workspace Environment */}
-                <SectionCard title="워크스페이스 환경" icon={Building2}>
-                  <div className="space-y-4">
-                    <FieldBlock label="워크스페이스 명칭">
-                      <Input value={workspaceName} onChange={(e) => setWorkspaceName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
-                    </FieldBlock>
-                    <FieldBlock label="기본 통화 및 단위">
-                      <Select value={currencyUnit} onValueChange={setCurrencyUnit}>
-                        <SelectTrigger className="bg-white border-slate-200 text-slate-900 h-9 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="KRW (₩) / Metric">KRW (₩) / Metric</SelectItem>
-                          <SelectItem value="USD ($) / Metric">USD ($) / Metric</SelectItem>
-                          <SelectItem value="EUR (€) / Metric">EUR (€) / Metric</SelectItem>
-                          <SelectItem value="JPY (¥) / Metric">JPY (¥) / Metric</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FieldBlock>
+                {/* §11.74 — 운영 역할 및 업무 범위 (read-only — ASSIGNED BY ADMIN)
+                    Identity Governance: 운영자 self-service 가 아닌 시스템 권한
+                    관리 정책에 따라 결정되는 값. 사용자는 read-only 로 확인만,
+                    변경은 "권한 검토 요청" CTA → /dashboard/organizations 로
+                    redirect (또는 toast notify).
+                    실제 데이터 fetcher 연결은 #user-permission-summary-fetcher
+                    별도 트랙. 본 commit 은 시안 visual essence + read-only
+                    layout 정형화. */}
+                <SectionCard title="운영 역할 및 업무 범위" icon={Shield} description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다.">
+                  <div className="space-y-5">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">활성 운영 역할</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs font-medium">Lab Manager</Badge>
+                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-medium">Requester</Badge>
+                        <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium">Approver</Badge>
+                      </div>
+                    </div>
+                    <div className="h-px bg-slate-200" />
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 권한 (LIMITS)</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
+                          <p className="text-[11px] text-slate-500 mb-0.5">단일 건 승인 한도</p>
+                          <p className="text-sm font-bold text-slate-900 tabular-nums">₩1,000,000</p>
+                        </div>
+                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
+                          <p className="text-[11px] text-slate-500 mb-0.5">월간 구매 예산</p>
+                          <p className="text-sm font-bold text-slate-900 tabular-nums">₩50,000,000</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-px bg-slate-200" />
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">기본 업무 환경</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <span className="text-xs text-slate-500">기본 Cost Center</span>
+                          <span className="text-sm font-mono text-slate-900">RND-BIO-SITE01</span>
+                        </div>
+                        <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                          <span className="text-xs text-slate-500">기본 입고 위치</span>
+                          <span className="text-sm text-slate-900 break-keep">제1R&D센터 중앙창고</span>
+                        </div>
+                      </div>
+                    </div>
+                    {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피) —
+                        조직 관리 페이지로 redirect, 거기서 권한 변경 절차. */}
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto gap-2 text-xs"
+                        onClick={() => router.push("/dashboard/organizations")}
+                      >
+                        <Shield className="h-3.5 w-3.5" />
+                        권한 검토 요청
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                </SectionCard>
+
+                {/* §11.74 — 현재 워크스페이스 정보 (read-only — WORKSPACE CANONICAL IDENTITY)
+                    워크스페이스 식별 정보는 조직 administrator 권한으로만 변경 — 본
+                    페이지에서는 read-only summary. Metric 단위계 항목은 §11.74 에서
+                    제거 (정규화 로직 부재). */}
+                <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
+                      <p className="text-sm font-bold text-slate-900 break-keep mb-1">{workspaceName}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Enterprise Edition</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 코드</p>
+                      <p className="text-sm font-bold font-mono text-slate-900 mb-1">BIO-RND-01</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Auto-generated ID</p>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 bg-white p-4">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
+                      <p className="text-sm font-bold text-slate-900 mb-1">{currencyUnit}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Financial Base</p>
+                    </div>
                   </div>
                 </SectionCard>
 
@@ -589,6 +657,57 @@ function SettingsPageContent() {
                         </form>
                       </DialogContent>
                     </Dialog>
+                  </div>
+                </SectionCard>
+
+                {/* §11.74 — 최근 보안 및 활동 로그 (mini feed)
+                    시안 visual essence — 4-5건 recent audit entries + "전체 보기"
+                    link → /dashboard/audit redirect.
+                    실제 fetcher 연결은 #settings-recent-activity-fetcher 별도
+                    트랙 (현재는 mock — audit-logs canonical 데이터 그대로
+                    /dashboard/audit 에 있음). */}
+                <SectionCard
+                  title="최근 보안 및 활동 로그"
+                  icon={Activity}
+                  description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 증적은 별도 페이지에서 확인."
+                >
+                  <div className="space-y-2">
+                    {[
+                      { label: "프로필 정보 수정", when: "1시간 전", tone: "blue" },
+                      { label: "워크스페이스 명칭 변경", when: "2시간 전", tone: "amber" },
+                      { label: "새로운 API 키 발급", when: "어제", tone: "emerald" },
+                      { label: "역할 변경 (Researcher → Lab Manager)", when: "3일 전", tone: "purple" },
+                    ].map((entry, idx) => {
+                      const dotClass = {
+                        blue: "bg-blue-500",
+                        amber: "bg-amber-500",
+                        emerald: "bg-emerald-500",
+                        purple: "bg-purple-500",
+                      }[entry.tone] || "bg-slate-400";
+                      return (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotClass}`} />
+                            <span className="text-sm text-slate-700 break-keep">{entry.label}</span>
+                          </div>
+                          <span className="text-[11px] text-slate-400 font-mono flex-shrink-0 ml-3">{entry.when}</span>
+                        </div>
+                      );
+                    })}
+                    <div className="pt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 gap-1.5"
+                        onClick={() => router.push("/dashboard/audit")}
+                      >
+                        전체 감사 증적 보기
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </SectionCard>
               </div>
