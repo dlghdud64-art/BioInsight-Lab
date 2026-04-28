@@ -783,10 +783,47 @@ export default function PurchasesPage() {
                   )}
                 </div>
 
-                {/* Rail CTA */}
+                {/* Rail CTA — §11.61 #purchases-rail-inline-action-wiring
+                    헤더 카피 ("검토, 회신 확인, 발주 전환까지 한 화면에서 처리")
+                    가 surface 와 일치하도록 same-canvas inline action 추가.
+                    - ready_for_po stage 에서만 primary "발주 전환" 노출.
+                      bulkPoMutation 재사용 (§11.22 utility, single-item array).
+                      mutation 이미 toast + queryInvalidate 가짐 — 응답 후
+                      stage 가 confirmed 로 자동 전이 → 본 button 자동 사라짐.
+                    - 비-ready_for_po stage (review_required/hold/confirmed/expired)
+                      는 view-only — "견적 상세 페이지 열기" 만 노출 (deep dive).
+                    - "견적 상세 페이지 열기" 는 ready_for_po 에서는 secondary
+                      (outline) 로, 그 외 stage 는 primary 로. */}
                 <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 space-y-2">
+                  {selectedItem.conversionStatus === "ready_for_po" && (
+                    <Button
+                      size="sm"
+                      className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+                      disabled={bulkPoMutation.isPending}
+                      onClick={() => {
+                        if (bulkPoMutation.isPending) return;
+                        bulkPoMutation.mutate([selectedItem.id]);
+                      }}
+                    >
+                      {bulkPoMutation.isPending ? (
+                        "전환 중..."
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                          발주 전환
+                        </>
+                      )}
+                    </Button>
+                  )}
                   <Link href={`/dashboard/quotes/${selectedItem.id}`} className="block">
-                    <Button size="sm" className="w-full h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                    <Button
+                      size="sm"
+                      className={
+                        selectedItem.conversionStatus === "ready_for_po"
+                          ? "w-full h-9 text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 shadow-sm"
+                          : "w-full h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+                      }
+                    >
                       견적 상세 페이지 열기 <ArrowRight className="h-3 w-3 ml-1.5" />
                     </Button>
                   </Link>
