@@ -124,12 +124,18 @@ rg -oU \
   '(csrfFetch|fetch|axios\.(post|patch|put|delete))\s*\(\s*[`"][^`"]+' \
   "$WEB_SRC_DIR" \
   -t ts \
-  -g '!**/api/**' \
+  -g '!**/app/api/**' \
   2>/dev/null \
   | grep -oE '[`"][^`"]*$' \
   | sed -E 's/^.//' \
   | sort -u \
   > "$TEMP_CALLERS" || true
+# §11.79 #api-surface-coverage-script-lib-api-scan-fix:
+# 이전 -g '!**/api/**' 가 너무 광범위 — apps/web/src/lib/api/** 도 exclude
+# 했음. 그 결과 lib/api/quotes-client.ts 같은 helper module 의 caller (예:
+# /api/quotes/[id]/share 호출 3개) 가 scan 에서 누락되어 false positive
+# (endpoint dead 라고 잘못 보고). -g '!**/app/api/**' 로 좁혀서 app/api
+# (route handler 자체) 만 exclude, lib/api (caller helper) 는 포함.
 
 CALLER_COUNT=$(wc -l < "$TEMP_CALLERS" | tr -d ' ')
 echo "Distinct caller URL strings: $CALLER_COUNT"
