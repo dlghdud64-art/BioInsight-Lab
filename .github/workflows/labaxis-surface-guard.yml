@@ -49,6 +49,13 @@ jobs:
           chmod +x scripts/check-no-userinventory-usage.sh
           scripts/check-no-userinventory-usage.sh
 
+      - name: Run LabAxis Native Select Ban Guard
+        # §11.75 — native <select> 신규 사용 차단. §11.71 → 0건 + §11.73
+        # shadcn Select 본체 강화 후 LabAxis 표준. 신규 회귀 즉시 차단.
+        run: |
+          chmod +x scripts/check-no-native-select.sh
+          scripts/check-no-native-select.sh
+
       - name: Run LabAxis API Surface Coverage Guard (advisory)
         # §11.60 — backend mutation endpoint 중 frontend caller 0건인
         # dead capability 자동 catch.
