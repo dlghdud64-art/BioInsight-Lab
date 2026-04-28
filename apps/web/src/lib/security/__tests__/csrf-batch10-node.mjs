@@ -53,11 +53,11 @@ function getCsrfGovernanceMessage(v) { return CSRF_GOVERNANCE_MESSAGES[v] || '�
 // Inline route registry (from csrf-route-registry.ts)
 // ═══════════════════════════════════════════════════════════════
 
+// §11.90 — /api/invite/[token] 제거 (endpoint cleanup batch 2-10)
 const EXEMPT_ROUTES = [
   { pattern: '/api/auth/[...nextauth]', reason: 'framework_csrf_builtin' },
   { pattern: '/api/billing/webhook', reason: 'webhook_signature' },
   { pattern: '/api/inbound/sendgrid/[secret]', reason: 'webhook_signature' },
-  { pattern: '/api/invite/[token]', reason: 'public_token_auth' },
   { pattern: '/api/vendor-requests/[token]/response', reason: 'public_token_auth' },
   { pattern: '/api/mobile/auth/signin', reason: 'bearer_token_auth' },
   { pattern: '/api/mobile/auth/refresh', reason: 'bearer_token_auth' },
@@ -65,17 +65,17 @@ const EXEMPT_ROUTES = [
   { pattern: '/api/vendor/quotes/[quoteId]/response', reason: 'vendor_token_auth' },
 ];
 
+// §11.90 — 12개 dead 항목 제거. alive 만:
 const HIGH_RISK_ROUTE_PATTERNS = [
-  '/api/request/[id]/approve', '/api/request/[id]/cancel', '/api/request/[id]/reverse',
-  '/api/admin/orders/[id]/status', '/api/purchases/[id]/reclass', '/api/invites/accept',
-  '/api/admin/products/[id]', '/api/billing/payment-methods', '/api/budgets/[id]',
-  '/api/cart/items/[id]', '/api/compliance-links/[id]', '/api/groupware/send',
-  '/api/inventory/[id]', '/api/inventory/import/commit', '/api/notifications',
-  '/api/organizations/[id]', '/api/organizations/[id]/logo', '/api/organizations/[id]/members',
+  '/api/request/[id]/approve',
+  '/api/admin/orders/[id]/status',
+  '/api/billing/payment-methods', '/api/budgets/[id]',
+  '/api/compliance-links/[id]',
+  '/api/inventory/[id]', '/api/inventory/import/commit',
+  '/api/organizations/[id]', '/api/organizations/[id]/members',
   '/api/purchases/import/commit', '/api/quote-items/[id]', '/api/quotes/[id]',
   '/api/quotes/[id]/status', '/api/quotes/generate-english', '/api/reviews/[id]',
   '/api/team/[id]/members', '/api/templates/[id]',
-  '/api/workspaces/[id]', '/api/workspaces/[id]/invites', '/api/workspaces/[id]/members/[memberId]',
 ];
 
 function patternToRegex(p) {
@@ -178,16 +178,11 @@ test('exempt: /api/vendor/quotes/q-123/response → exempt', () => {
 
 test('exempt count = 9', () => {
   const exemptEntries = COMPILED.filter(r => r.config.protection === 'exempt');
-  assert.equal(exemptEntries.length, 9);
+  assert.equal(exemptEntries.length, 8); // §11.90: 9 → 8 (invite/[token] 제거)
 });
 
 test('highRisk: /api/request/abc/approve → required + highRisk', () => {
   const c = resolveCsrfConfig('/api/request/abc/approve');
-  assert.equal(c.protection, 'required'); assert.equal(c.highRisk, true);
-});
-
-test('highRisk: /api/invites/accept → required + highRisk', () => {
-  const c = resolveCsrfConfig('/api/invites/accept');
   assert.equal(c.protection, 'required'); assert.equal(c.highRisk, true);
 });
 
@@ -196,11 +191,15 @@ test('highRisk: /api/admin/orders/123/status → required + highRisk', () => {
   assert.equal(c.protection, 'required'); assert.equal(c.highRisk, true);
 });
 
-test('highRisk count = 29', () => {
-  // 30 → 29: `/api/user-inventory/[id]` 제거 (#inventory-model-consolidation Phase 2,
-  // commit e4d2822f에서 endpoint 삭제됨). 본 트랙(#stale-csrf-registry-entry-cleanup)
-  // 에서 registry/test/docs 5 sites 정리.
-  assert.equal(COMPILED.filter(r => r.config.highRisk).length, 29);
+test('highRisk count = 17', () => {
+  // §11.90 #dead-capability-cleanup-batches-2-to-10 — 12개 dead 항목 제거:
+  // /api/request/[id]/{cancel,reverse}, /api/purchases/[id]/reclass,
+  // /api/invites/accept, /api/admin/products/[id], /api/cart/items/[id],
+  // /api/groupware/send, /api/notifications, /api/organizations/[id]/logo,
+  // /api/workspaces/[id], /api/workspaces/[id]/invites,
+  // /api/workspaces/[id]/members/[memberId].
+  // 이전: 30 → §11.58 → 29 (user-inventory/[id]) → §11.90 → 17.
+  assert.equal(COMPILED.filter(r => r.config.highRisk).length, 17);
 });
 
 test('standard: /api/cart → required + not highRisk', () => {

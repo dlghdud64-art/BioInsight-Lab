@@ -44,12 +44,12 @@ import {
 
 describe('csrf-route-registry', () => {
   describe('exempt routes', () => {
+    // §11.90 — /api/invite/[token] 제거 (endpoint cleanup)
     const exemptRoutes = [
       '/api/auth/callback/google',         // [...nextauth] catch-all
       '/api/auth/signin',                  // [...nextauth] catch-all
       '/api/billing/webhook',
       '/api/inbound/sendgrid/abc123',
-      '/api/invite/some-token-value',
       '/api/vendor-requests/tkn-xyz/response',
       '/api/mobile/auth/signin',
       '/api/mobile/auth/refresh',
@@ -63,17 +63,18 @@ describe('csrf-route-registry', () => {
       expect(config.exemptReason).toBeDefined();
     });
 
-    it('exempt 수는 정확히 9개여야 함', () => {
+    it('exempt 수는 정확히 8개여야 함', () => {
       const stats = getRegistryStats();
-      expect(stats.exempt).toBe(9);
+      expect(stats.exempt).toBe(8);
     });
 
     it('exempt reason 분류가 올바름', () => {
       const stats = getRegistryStats();
+      // §11.90 — public_token_auth 2 → 1 (invite/[token] 제거)
       expect(stats.exemptReasons).toEqual({
         framework_csrf_builtin: 1,
         webhook_signature: 2,
-        public_token_auth: 2,
+        public_token_auth: 1,
         bearer_token_auth: 2,
         vendor_token_auth: 2,
       });
@@ -81,23 +82,18 @@ describe('csrf-route-registry', () => {
   });
 
   describe('high-risk routes', () => {
+    // §11.90 — 12개 dead 항목 제거 후 alive 만:
     const highRiskRoutes = [
-      // Durable audit 6건
+      // Durable audit (alive)
       '/api/request/abc/approve',
-      '/api/request/abc/cancel',
-      '/api/request/abc/reverse',
       '/api/admin/orders/123/status',
-      '/api/purchases/456/reclass',
-      '/api/invites/accept',
-      // Other irreversible
-      '/api/admin/products/p1',
+      // Other irreversible (alive)
       '/api/billing/payment-methods',
       '/api/budgets/b1',
       '/api/organizations/org1',
       '/api/quotes/q1',
       '/api/quotes/q1/status',
       '/api/inventory/i1',
-      '/api/workspaces/w1',
     ];
 
     it.each(highRiskRoutes)('should classify %s as required + highRisk', (route) => {
@@ -106,9 +102,9 @@ describe('csrf-route-registry', () => {
       expect(config.highRisk).toBe(true);
     });
 
-    it('highRisk 수는 30개', () => {
+    it('highRisk 수는 17개', () => {
       const stats = getRegistryStats();
-      expect(stats.highRisk).toBe(30);
+      expect(stats.highRisk).toBe(17);
     });
   });
 

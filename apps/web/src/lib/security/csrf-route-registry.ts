@@ -43,7 +43,7 @@ const EXEMPT_ROUTES: ReadonlyArray<{ pattern: string; reason: string }> = [
   { pattern: '/api/auth/[...nextauth]',                 reason: 'framework_csrf_builtin' },
   { pattern: '/api/billing/webhook',                    reason: 'webhook_signature' },
   { pattern: '/api/inbound/sendgrid/[secret]',          reason: 'webhook_signature' },
-  { pattern: '/api/invite/[token]',                     reason: 'public_token_auth' },
+  // §11.90 — /api/invite/[token] 항목 제거 (endpoint cleanup batch).
   { pattern: '/api/vendor-requests/[token]/response',   reason: 'public_token_auth' },
   { pattern: '/api/mobile/auth/signin',                 reason: 'bearer_token_auth' },
   { pattern: '/api/mobile/auth/refresh',                reason: 'bearer_token_auth' },
@@ -57,26 +57,26 @@ const EXEMPT_ROUTES: ReadonlyArray<{ pattern: string; reason: string }> = [
 // ═══════════════════════════════════════════════════════
 
 const HIGH_RISK_ROUTE_PATTERNS: readonly string[] = [
-  // ── Durable Audit 6건 (Batch 6, 최우선) ──
-  '/api/request/[id]/approve',
-  '/api/request/[id]/cancel',
-  '/api/request/[id]/reverse',
-  '/api/admin/orders/[id]/status',
-  '/api/purchases/[id]/reclass',
-  '/api/invites/accept',
+  // §11.90 #dead-capability-cleanup-batches-2-to-10 — 12개 dead 항목 제거.
+  // 제거된 엔트리 목록 (모두 endpoint 자체 삭제됨):
+  //   /api/request/[id]/cancel, /api/request/[id]/reverse,
+  //   /api/purchases/[id]/reclass, /api/invites/accept,
+  //   /api/admin/products/[id], /api/cart/items/[id], /api/groupware/send,
+  //   /api/notifications, /api/organizations/[id]/logo,
+  //   /api/workspaces/[id], /api/workspaces/[id]/invites,
+  //   /api/workspaces/[id]/members/[memberId].
 
-  // ── 나머지 irreversible routes ──
-  '/api/admin/products/[id]',
+  // ── Durable Audit 항목 (alive) ──
+  '/api/request/[id]/approve',
+  '/api/admin/orders/[id]/status',
+
+  // ── 나머지 irreversible routes (alive) ──
   '/api/billing/payment-methods',
   '/api/budgets/[id]',
-  '/api/cart/items/[id]',
   '/api/compliance-links/[id]',
-  '/api/groupware/send',
   '/api/inventory/[id]',
   '/api/inventory/import/commit',
-  '/api/notifications',
   '/api/organizations/[id]',
-  '/api/organizations/[id]/logo',
   '/api/organizations/[id]/members',
   '/api/purchases/import/commit',
   '/api/quote-items/[id]',
@@ -86,9 +86,6 @@ const HIGH_RISK_ROUTE_PATTERNS: readonly string[] = [
   '/api/reviews/[id]',
   '/api/team/[id]/members',
   '/api/templates/[id]',
-  '/api/workspaces/[id]',
-  '/api/workspaces/[id]/invites',
-  '/api/workspaces/[id]/members/[memberId]',
 ];
 
 // ═══════════════════════════════════════════════════════
