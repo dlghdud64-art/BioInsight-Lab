@@ -693,15 +693,21 @@ function ManualContent({
                       <Clock className="h-3 w-3 inline mr-1 -mt-0.5" />
                       {entry.when}
                     </p>
-                    <div className="flex items-center gap-3">
+                    {/* §11.62: flex-wrap + break-keep — 좁은 카드에서 한국어
+                        텍스트가 글자 단위로 세로 stacking 되던 회귀 차단.
+                        button + nextAction 라벨이 같은 row 에 squeeze 되며
+                        한국어 default `word-break: normal` 이 글자 단위로
+                        wrap 시킴. flex-wrap 으로 button → row1, span → row2
+                        자연 줄바꿈 + break-keep 으로 단어 단위 wrap 강제. */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                       <Link href={entry.link.href}>
                         <Button variant="outline" size="sm" className="gap-1.5 text-xs font-bold border-blue-200 text-blue-600 bg-transparent hover:bg-blue-50 h-8 rounded-lg">
                           {entry.link.label}
                           <ArrowRight className="h-3 w-3" />
                         </Button>
                       </Link>
-                      <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1">
-                        <ChevronRight className="h-3 w-3" />
+                      <span className="text-[11px] text-emerald-600 font-bold flex items-center gap-1 break-keep">
+                        <ChevronRight className="h-3 w-3 flex-shrink-0" />
                         {entry.nextAction}
                       </span>
                     </div>

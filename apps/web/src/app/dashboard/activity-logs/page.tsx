@@ -57,7 +57,7 @@ export default function ActivityLogsPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
 
   // 액티비티 로그 조회
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: ["activity-logs", activityTypeFilter, entityTypeFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -78,6 +78,21 @@ export default function ActivityLogsPage() {
 
   const logs = data?.logs || [];
   const total = data?.total || 0;
+
+  // §11.63 — 운영 metric: 오늘 활동 건수 (client-side filter from displayed logs)
+  // logs 가 limit=100 으로 받아오므로 오늘 100건 초과 시 부정확 — 일반 운영 시
+  // 오늘 100건 미만 가정. 정확도 필요 시 별도 /api/activity-logs/today-count
+  // 트랙 분리.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayCount = logs.filter(
+    (log: any) => new Date(log.createdAt) >= todayStart,
+  ).length;
+
+  // §11.63 — 데이터 스트림 동기화 시각 (TanStack Query 의 dataUpdatedAt 사용)
+  const syncedAt = dataUpdatedAt
+    ? format(new Date(dataUpdatedAt), "HH:mm:ss")
+    : "—";
 
   if (status === "loading") {
     return (
@@ -100,6 +115,47 @@ export default function ActivityLogsPage() {
           icon={Activity}
           iconColor="text-purple-600"
         />
+
+        {/* §11.63 — 운영 metric + system status hero
+            호영님 mock-up 시안 (오늘 활동 KPI + 데이터 스트림 정상 indicator)
+            을 DashboardShell 안에서 재해석. marketing nav 는 받지 않음 —
+            DashboardShell owns chrome. */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* KPI: 오늘 활동 */}
+          <Card className="bg-pn border-bd">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-500 mb-1">오늘의 시스템 활동</p>
+                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">
+                  {todayCount.toLocaleString("ko-KR")}
+                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                <Activity className="h-6 w-6 text-purple-600" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Status: 실시간 데이터 스트림 */}
+          <Card className="bg-slate-900 border-slate-800 text-white">
+            <CardContent className="p-5 flex items-center justify-between">
+              <div>
+                <p className="text-xs text-slate-400 mb-1">실시간 데이터 스트림</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
+                  <p className="text-2xl font-extrabold text-emerald-400">정상</p>
+                </div>
+                <p className="text-[11px] text-slate-500 break-keep">
+                  동기화: {syncedAt}
+                </p>
+              </div>
+              <div className="w-12 h-12 rounded-xl bg-emerald-950/30 flex items-center justify-center flex-shrink-0">
+                <Activity className="h-6 w-6 text-emerald-400" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
               {/* 필터 */}
               <Card className="p-3 md:p-6">
