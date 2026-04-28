@@ -48,3 +48,13 @@ jobs:
         run: |
           chmod +x scripts/check-no-userinventory-usage.sh
           scripts/check-no-userinventory-usage.sh
+
+      - name: Run LabAxis API Surface Coverage Guard (advisory)
+        # §11.60 — backend mutation endpoint 중 frontend caller 0건인
+        # dead capability 자동 catch.
+        # 첫 commit 은 advisory mode (exit 0 with violations report) — 점진적
+        # cleanup batch 트랙들이 violations 를 0 에 가깝게 줄인 후
+        # LABAXIS_API_COVERAGE_BLOCK=1 로 전환하여 enforce.
+        run: |
+          chmod +x scripts/check-api-surface-coverage.sh
+          scripts/check-api-surface-coverage.sh
