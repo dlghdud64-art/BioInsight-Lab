@@ -23,7 +23,6 @@ import {
   UserCheck,
   MailWarning,
   Search,
-  Filter,
   LayoutGrid,
   List,
   MoreVertical,
@@ -370,9 +369,10 @@ export default function OrganizationsPage() {
               className="pl-9 h-10 bg-white border-slate-200 text-sm"
             />
           </div>
-          <Button variant="outline" size="sm" className="h-10 px-4 text-sm gap-2 border-slate-200 text-slate-600">
-            <Filter className="h-4 w-4" /> 필터
-          </Button>
+          {/* §11.72: dead filter button 제거. 조직 list 는 현재 검색만
+              지원 (다른 filter dimension 없음). dock UI 추가는
+              #organizations-filter-popover 별도 트랙에서 backend filter
+              schema 확정 후 wired — dead button 으로 미리 만들지 않음. */}
           {/* 그리드/리스트 토글 */}
           <div className="hidden sm:flex items-center border border-slate-200 rounded-lg overflow-hidden">
             <button
