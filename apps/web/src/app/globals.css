@@ -324,3 +324,50 @@ div.quote-table td.no-column-cell {
     }
   }
 }
+
+/*
+ * §11.89 #audit-trail-pdf-export — global print stylesheet.
+ * window.print() 시 dashboard chrome (sidebar / header / bottom nav /
+ * 모바일 overlay) 를 모두 숨기고 main content 만 인쇄. 운영자가 audit
+ * trail (또는 다른 인쇄 친화 surface) 을 PDF 로 저장 가능. 한국어 native
+ * 지원 (브라우저 native print 가 시스템 폰트 사용).
+ *
+ * Note: page.tsx 안의 `print:hidden` Tailwind class 는 page-specific
+ * 으로 더 우선. globals.css 의 본 rule 은 dashboard chrome 에 한정.
+ */
+@media print {
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+
+  /* Dashboard chrome 모두 숨김 */
+  aside,
+  .mobile-sidebar,
+  [class*="bottom-nav"],
+  [data-print-hide="true"] {
+    display: none !important;
+  }
+
+  /* Main content 가 sidebar 영역까지 차지하도록 padding/margin reset */
+  body,
+  main {
+    background: white !important;
+    color: black !important;
+  }
+
+  /* dashboard-shell 의 lg:pl-64 padding 제거 — 인쇄 시 main 이 full-width */
+  .lg\:pl-64 {
+    padding-left: 0 !important;
+  }
+
+  /* 인쇄 시 hover/animation 비활성 */
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    box-shadow: none !important;
+  }
+}

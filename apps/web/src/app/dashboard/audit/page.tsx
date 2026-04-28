@@ -297,11 +297,23 @@ export default function AuditTrailPage() {
     );
   }
 
+  // §11.89 #audit-trail-pdf-export
+  // 브라우저 native print → "PDF로 저장" — 한국어 native 지원 (jsPDF font
+  // embed 회피) + 새 endpoint 0건. @media print CSS 로 필터/헤더 버튼/sidebar
+  // 숨기고 table 만 인쇄. 대안 (server-side puppeteer / pdfkit) 은 별도
+  // 트랙 (#audit-pdf-server-side-render) — 본 트랙은 minimal-diff.
   const handlePdfDownload = () => {
-    toast({
-      title: "PDF 다운로드 준비 중",
-      description: "PDF 생성 기능은 별도 트랙에서 구현 예정입니다.",
-    });
+    if (rows.length === 0) {
+      toast({
+        title: "인쇄할 로그가 없습니다",
+        description: "필터 조건을 조정한 후 다시 시도하세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (typeof window !== "undefined") {
+      window.print();
+    }
   };
 
   const handleCsvExport = () => {
@@ -347,9 +359,29 @@ export default function AuditTrailPage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full">
-      {/* §11.64: 헤더 단순화 — 자물쇠 제거, CFR 21 Part 11 톤 제거 */}
-      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-2">
+    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8 pt-6 max-w-7xl mx-auto w-full print:p-0 print:max-w-none print:space-y-3">
+      {/* §11.89 — 인쇄용 헤더 (화면에는 hidden, PDF/print 시만 표시).
+          회사명 + 인쇄 시각 + 필터 컨디션 요약 — 감사 증적 출력본 보존 용도. */}
+      <div className="hidden print:block border-b border-slate-300 pb-3 mb-3">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-lg font-bold text-slate-900">LabAxis 감사 증적</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {periodMeta?.label || "전체 기간"}
+              {eventTypeFilter !== "all" && ` · ${EVENT_TYPE_OPTIONS.find((o) => o.value === eventTypeFilter)?.label || eventTypeFilter}`}
+              {search.trim() && ` · 검색 "${search.trim()}"`}
+              {data && ` · 총 ${rows.length}건`}
+            </p>
+          </div>
+          <p className="text-[10px] text-slate-500 font-mono">
+            인쇄 시각: {new Date().toLocaleString("ko-KR")}
+          </p>
+        </div>
+      </div>
+
+      {/* §11.64: 헤더 단순화 — 자물쇠 제거, CFR 21 Part 11 톤 제거.
+          §11.89: 화면 헤더는 print:hidden — 인쇄 본은 위 인쇄용 헤더 사용. */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mb-2 print:hidden">
         <div className="flex flex-col space-y-2">
           <div className="flex items-center gap-2 text-slate-400 mb-1">
             <span className="font-semibold tracking-tight text-xs uppercase">보안 및 컴플라이언스</span>
@@ -401,7 +433,7 @@ export default function AuditTrailPage() {
       {/* §11.81 — 필터 row 복원: real fetcher 와 함께 wired (eventType + period
           + search 모두 query params 로 forward → /api/audit-logs).
           §11.67 에서 dead button 으로 잠시 제거됐던 시안 visual essence 회복. */}
-      <div className="flex flex-col md:flex-row gap-2 md:items-center">
+      <div className="flex flex-col md:flex-row gap-2 md:items-center print:hidden">
         <div className="flex flex-1 gap-2 flex-wrap">
           <Select value={periodFilter} onValueChange={setPeriodFilter}>
             <SelectTrigger className="h-9 w-[140px] text-xs">
