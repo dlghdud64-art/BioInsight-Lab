@@ -4,6 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* §11.65 #korean-break-keep-default-css — 한국어 surface 일반 원칙
+   ────────────────────────────────────────────────────────────────
+   §11.62 follow-up: support-center 카드의 "첫 대시보드 둘러보기" 등
+   한국어 텍스트가 글자 단위로 세로 stacking 되던 회귀를 globally 차단.
+   <html lang="ko"> 안의 body 전체에 word-break: keep-all 적용 — 한국어는
+   어절(공백) 단위로만 wrap, 글자 단위 wrap 차단.
+   - 더 specific한 곳 (예: quote-table의 word-break: normal !important)은
+     그대로 동작 — !important + nested selector specificity 가 우선.
+   - component-level `break-keep` class (§11.62 + §11.64에서 명시 적용)는
+     이 default 와 일치하는 방향이라 충돌 0.
+   - 영문 long word 는 default behavior 유지 (overflow-wrap 미변경) —
+     LabAxis 한국어 운영 surface 에서 영문 super-long word 는 드뭄. */
+html[lang="ko"] body {
+  word-break: keep-all;
+}
+
 /* 품목 리스트 테이블 세로 표시 방지 - 최우선 적용 (Tailwind 이후) */
 .quote-table {
   table-layout: fixed !important;
