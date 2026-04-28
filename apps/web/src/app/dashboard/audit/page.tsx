@@ -5,7 +5,7 @@ export const dynamic = 'force-dynamic';
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Download, FileText, Filter, Calendar, Search, ShieldAlert } from "lucide-react";
+import { Download, FileText, Search, ShieldAlert } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -232,25 +232,15 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
-      {/* §11.64: 가로 한 줄 필터 + 우측 검색 — 시안 visual essence */}
-      <div className="flex flex-col md:flex-row gap-3 md:items-center">
-        <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-            <Filter className="h-3.5 w-3.5" />
-            필터
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-            <Calendar className="h-3.5 w-3.5" />
-            최근 30일
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8">
-            액션 유형
-          </Button>
-          <Button variant="outline" size="sm" className="text-xs h-8">
-            작업자
-          </Button>
-        </div>
-        <div className="relative flex-1 md:max-w-sm md:ml-auto">
+      {/* §11.67 #audit-trail-dead-button-removal — §11.64 회귀 fix.
+          §11.64 시안 흡수 시 필터 4 button (필터/최근 30일/액션 유형/작업자)
+          을 추가했으나 onClick wiring 0 → dead button. LabAxis 원칙 strict
+          위반 (호영님이 prod 운용 중 직접 지적). 즉시 제거. 검색 박스만
+          유지 (이미 wired). 필터 row visual essence 복원은
+          `#audit-trail-data-fetcher-wiring` 트랙에서 real /api/audit-logs
+          fetcher 와 함께 한 번에 wired — dead button 으로 미리 만들지 않음. */}
+      <div className="flex justify-end">
+        <div className="relative w-full md:max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
           <Input
             placeholder="ID, 대상 품목 또는 사유 검색..."
