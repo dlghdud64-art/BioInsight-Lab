@@ -42,6 +42,8 @@ const ExecutiveSummarySection = dynamic_import(
 );
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
+// §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
+import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
 
 // ── Overlay 지원 경로 판별 ──
 const OVERLAY_ROUTE_PATTERNS = [
@@ -432,18 +434,26 @@ export default function DashboardPage() {
       </Suspense>
 
       {/* --- 페이지 헤더 --- */}
-      <div className="flex flex-col space-y-0.5 min-w-0">
-        <h2 className="text-lg md:text-[22px] font-extrabold tracking-tight text-slate-900">
-          대시보드
-        </h2>
-        <p className="text-[13px] text-slate-500 font-medium">
-          {session?.user?.name ? `${session.user.name}님, ` : ""}
-          {dashboardState === "blocked"
-            ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
-            : dashboardState === "zero"
-              ? "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."
-              : "오늘 즉시 처리할 운영 이슈가 없습니다."}
-        </p>
+      {/* §11.82 Phase 1: 우측 상단에 "AI 리포트 생성" button 배치.
+          호영님 시안 visual essence 흡수 — 다이얼로그 안에서 real
+          /api/analytics/ai-insight POST 결과 표시 (mock/fake success 0). */}
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 min-w-0">
+        <div className="flex flex-col space-y-0.5 min-w-0">
+          <h2 className="text-lg md:text-[22px] font-extrabold tracking-tight text-slate-900">
+            대시보드
+          </h2>
+          <p className="text-[13px] text-slate-500 font-medium">
+            {session?.user?.name ? `${session.user.name}님, ` : ""}
+            {dashboardState === "blocked"
+              ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
+              : dashboardState === "zero"
+                ? "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."
+                : "오늘 즉시 처리할 운영 이슈가 없습니다."}
+          </p>
+        </div>
+        <div className="flex-shrink-0">
+          <AIInsightDialog />
+        </div>
       </div>
 
       {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) --- */}

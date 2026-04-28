@@ -213,6 +213,11 @@ function buildMonthlyProjection(
 
 // ── KPI Card ─────────────────────────────────────────────────────────
 
+interface KpiBreakdownItem {
+  label: string;
+  value: string;
+}
+
 interface KpiCardProps {
   icon: React.ReactNode;
   label: string;
@@ -220,26 +225,42 @@ interface KpiCardProps {
   hint: string;
   risk: "none" | "warning" | "critical";
   href?: string;
+  /**
+   * §11.82 Phase 2 — hover Quick Data Breakdown popup.
+   * 호영님 시안 visual essence 흡수 (real sub-metric only, mock 0).
+   * undefined 시 popup 비노출.
+   */
+  breakdown?: KpiBreakdownItem[];
+  /**
+   * tone 강제 — risk 무관하게 색상 분기 (호영님 시안: 정상=emerald,
+   * 경고=amber, 지출=blue, 위험=rose). default 는 risk 자동 매핑.
+   */
+  toneOverride?: "blue" | "emerald" | "amber" | "rose";
 }
 
-function KpiCard({ icon, label, value, hint, risk, href }: KpiCardProps) {
-  const accent =
-    risk === "critical"
-      ? "border-l-2 border-l-rose-500"
-      : risk === "warning"
-        ? "border-l-2 border-l-amber-500"
-        : "border-l-2 border-l-slate-200";
+function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride }: KpiCardProps) {
+  // §11.82 Phase 2: 4-tone palette (blue=지출, emerald=정상, amber=경고, rose=위험).
+  const tone =
+    toneOverride
+    ?? (risk === "critical" ? "rose" : risk === "warning" ? "amber" : "emerald");
 
-  const valueColor =
-    risk === "critical"
-      ? "text-rose-600"
-      : risk === "warning"
-        ? "text-amber-600"
-        : "text-slate-900";
+  const accentMap = {
+    blue: "border-l-2 border-l-blue-500",
+    emerald: "border-l-2 border-l-emerald-500",
+    amber: "border-l-2 border-l-amber-500",
+    rose: "border-l-2 border-l-rose-500",
+  };
+
+  const valueColorMap = {
+    blue: "text-blue-700",
+    emerald: "text-slate-900",
+    amber: "text-amber-700",
+    rose: "text-rose-700",
+  };
 
   const body = (
     <div
-      className={`group rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:bg-slate-50 ${accent}`}
+      className={`group relative rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300 ${accentMap[tone]}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
@@ -250,10 +271,34 @@ function KpiCard({ icon, label, value, hint, risk, href }: KpiCardProps) {
           <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500" />
         )}
       </div>
-      <p className={`mt-1.5 text-2xl font-bold tabular-nums ${valueColor}`}>
+      <p className={`mt-1.5 text-2xl font-bold tabular-nums ${valueColorMap[tone]}`}>
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] text-slate-500">{hint}</p>
+      <p className="mt-0.5 text-[11px] text-slate-500 break-keep">{hint}</p>
+
+      {/* §11.82 Phase 2 — hover Quick Data Breakdown popup.
+          desktop only (md+), pointer-events-none 으로 hover 영역 침범 안 함.
+          group-hover 시 opacity + translate-y transition. */}
+      {breakdown && breakdown.length > 0 && (
+        <div className="hidden md:block pointer-events-none absolute left-0 right-0 top-full mt-1 z-20 opacity-0 translate-y-1 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-150">
+          <div className="rounded-lg border border-slate-700 bg-slate-900 text-white shadow-lg p-3">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">
+              Quick Data Breakdown
+            </p>
+            <div className="space-y-1.5">
+              {breakdown.map((b) => (
+                <div
+                  key={b.label}
+                  className="flex items-center justify-between gap-3 text-[11px]"
+                >
+                  <span className="text-slate-300 break-keep">{b.label}</span>
+                  <span className="font-bold tabular-nums text-white">{b.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -321,6 +366,11 @@ export function ExecutiveSummarySection() {
   return (
     <section className="space-y-4">
       {/* ── KPI Row ─────────────────────────────────────── */}
+      {/* §11.82 #dashboard-operational-intelligence-redesign Phase 2.
+          호영님 시안의 4-card visual essence 흡수 — hover Quick Data
+          Breakdown popup 추가 + tone 4분류 (정상=emerald, 경고=amber,
+          지출=blue, 위험=rose). breakdown 데이터는 모두 real Prisma
+          drived store 에서 derive — mock 0 / fake 0. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
           icon={<AlertCircle className="h-3.5 w-3.5" />}
@@ -332,11 +382,18 @@ export function ExecutiveSummarySection() {
               : "현재 즉시 처리할 항목 없음"
           }
           risk={(kpis.pendingApprovalCount + kpis.anomalyCount) > 0 ? "warning" : "none"}
+          toneOverride={
+            kpis.pendingApprovalCount + kpis.anomalyCount === 0 ? "emerald" : "amber"
+          }
           href="/dashboard/purchase-orders"
+          breakdown={[
+            { label: "승인 대기", value: `${kpis.pendingApprovalCount}건` },
+            { label: "이상 신호", value: `${kpis.anomalyCount}건` },
+          ]}
         />
         <KpiCard
           icon={<ClipboardList className="h-3.5 w-3.5" />}
-          label="승인 대기"
+          label="진행 중 발주"
           value={`${kpis.pendingApprovalCount}건`}
           hint={
             kpis.pendingApprovalCount > 0
@@ -344,23 +401,46 @@ export function ExecutiveSummarySection() {
               : "대기 중인 발주가 없습니다"
           }
           risk={kpis.pendingApprovalCount >= 3 ? "warning" : "none"}
+          toneOverride="blue"
           href="/dashboard/purchase-orders"
+          breakdown={[
+            { label: "총 금액", value: `₩${kpis.pendingApprovalAmount.toLocaleString("ko-KR")}` },
+            {
+              label: "건당 평균",
+              value:
+                kpis.pendingApprovalCount > 0
+                  ? `₩${Math.round(kpis.pendingApprovalAmount / kpis.pendingApprovalCount).toLocaleString("ko-KR")}`
+                  : "—",
+            },
+          ]}
         />
         <KpiCard
           icon={<TrendingDown className="h-3.5 w-3.5" />}
-          label="진행 중 작업"
-          value={`${orders.filter((o: any) => o.status === "PENDING" || o.status === "PROCESSING").length}건`}
+          label="누적 지출"
+          value={`₩${(kpis.totalSpent / 1_000_000).toFixed(1)}M`}
           hint={
             kpis.totalBudget > 0
-              ? `진행 중 견적/발주 건수`
-              : "견적·발주 진행 건 없음"
+              ? `예산 대비 ${kpis.burnRate.toFixed(0)}% 소진`
+              : "예산 미설정"
           }
-          risk="none"
-          href="/dashboard/quotes"
+          risk={kpis.burnRateRisk === "over" || kpis.burnRateRisk === "critical" ? "critical" : kpis.burnRateRisk === "warning" ? "warning" : "none"}
+          toneOverride={
+            kpis.burnRateRisk === "over" || kpis.burnRateRisk === "critical"
+              ? "rose"
+              : kpis.burnRateRisk === "warning"
+                ? "amber"
+                : "blue"
+          }
+          href="/dashboard/budget"
+          breakdown={[
+            { label: "총 예산", value: `₩${kpis.totalBudget.toLocaleString("ko-KR")}` },
+            { label: "누적 소진", value: `₩${kpis.totalSpent.toLocaleString("ko-KR")}` },
+            { label: "소진율", value: `${kpis.burnRate.toFixed(1)}%` },
+          ]}
         />
         <KpiCard
           icon={<ShieldAlert className="h-3.5 w-3.5" />}
-          label="위험/차단"
+          label="신규 이상 징후"
           value={`${kpis.anomalyCount}건`}
           hint={kpis.anomalyDetail}
           risk={
@@ -370,13 +450,122 @@ export function ExecutiveSummarySection() {
                 ? "warning"
                 : "none"
           }
+          toneOverride={
+            kpis.anomalyCount >= 3
+              ? "rose"
+              : kpis.anomalyCount > 0
+                ? "amber"
+                : "emerald"
+          }
           href="/dashboard/purchase-orders"
+          breakdown={[
+            { label: "예산 위험", value: kpis.anomalyDetail.includes("예산") ? kpis.anomalyDetail : "0건" },
+            {
+              label: "고액 발주(>500만)",
+              value: `${orders.filter((o) => o.totalAmount > 5_000_000 && o.status !== "completed" && o.status !== "cancelled").length}건`,
+            },
+          ]}
         />
       </div>
+
+      {/* §11.82 #dashboard-operational-intelligence-redesign Phase 3.
+          호영님 시안의 SYSTEM INSIGHT 다크 accent card 흡수.
+          real signal — 진행 중 발주 / 이상 신호 / 예산 burn rate 기반으로
+          한 줄짜리 운영 시그니처 메시지 자동 derive. fake percentage 0,
+          marketing decorative 0. */}
+      <SystemInsightCard kpis={kpis} ordersCount={orders.length} />
 
       {/* 차트/활동 피드는 대시보드에서 제거.
           월별 추이는 지출 분석 페이지로 이관.
           활동 피드는 3상태 중앙 패널 우측 카드가 대체. */}
     </section>
+  );
+}
+
+// ── §11.82 Phase 3: SYSTEM INSIGHT card ─────────────────────────────
+// 호영님 시안의 다크 accent insight card visual essence 흡수.
+// real KPI 기반으로 운영 시그니처 메시지 derive — burnRate / anomaly /
+// pending order 의 조합으로 short message 결정. AI 호출은 별도 dialog
+// (AIInsightDialog) 가 수행 — 이 카드는 항상 표시되는 ambient signal.
+
+function SystemInsightCard({
+  kpis,
+  ordersCount,
+}: {
+  kpis: DashboardKpis;
+  ordersCount: number;
+}) {
+  // signal derivation — risk 우선순위로 message 선정
+  let title = "운영 흐름이 안정적입니다";
+  let detail = "현재 즉시 조치가 필요한 운영 이슈가 없습니다.";
+  let accent: "emerald" | "amber" | "rose" | "indigo" = "indigo";
+
+  if (kpis.burnRateRisk === "over") {
+    title = "예산 한도를 초과했습니다";
+    detail = `누적 소진 ${kpis.burnRate.toFixed(0)}% — 즉시 추가 발주를 보류하고 예산 관리자와 정렬하세요.`;
+    accent = "rose";
+  } else if (kpis.burnRateRisk === "critical") {
+    title = "예산 burn rate 가 임계치에 도달했습니다";
+    detail = `누적 소진 ${kpis.burnRate.toFixed(0)}% — 남은 기간 발주 우선순위를 재검토하세요.`;
+    accent = "amber";
+  } else if (kpis.anomalyCount >= 3) {
+    title = "이상 신호 다발";
+    detail = `${kpis.anomalyDetail} — 위험/차단 카드에서 즉시 확인하세요.`;
+    accent = "rose";
+  } else if (kpis.anomalyCount > 0) {
+    title = "이상 신호 감지";
+    detail = `${kpis.anomalyDetail}.`;
+    accent = "amber";
+  } else if (kpis.pendingApprovalCount >= 3) {
+    title = "승인 대기가 누적되고 있습니다";
+    detail = `${kpis.pendingApprovalCount}건 (₩${kpis.pendingApprovalAmount.toLocaleString("ko-KR")}) — 빠른 검토가 필요합니다.`;
+    accent = "amber";
+  } else if (ordersCount === 0 && kpis.totalBudget === 0) {
+    title = "운영 데이터 수집을 시작하세요";
+    detail = "예산 등록과 첫 견적 요청을 통해 운영 시그니처를 누적할 수 있습니다.";
+    accent = "indigo";
+  } else if (kpis.totalBudget > 0 && kpis.burnRateRisk === "safe") {
+    title = "예산 운영이 정상 범위에 있습니다";
+    detail = `누적 소진 ${kpis.burnRate.toFixed(0)}% · 진행 중 발주 ${kpis.pendingApprovalCount}건 — 안정적입니다.`;
+    accent = "emerald";
+  }
+
+  // dark accent gradient 매핑 (호영님 시안 보라/그라데이션 톤 흡수)
+  const gradientMap = {
+    emerald: "from-emerald-700 to-emerald-900",
+    amber: "from-amber-700 to-amber-900",
+    rose: "from-rose-700 to-rose-900",
+    indigo: "from-indigo-700 to-purple-800",
+  };
+
+  const dotMap = {
+    emerald: "bg-emerald-400",
+    amber: "bg-amber-400",
+    rose: "bg-rose-400",
+    indigo: "bg-indigo-300",
+  };
+
+  return (
+    <div
+      className={`rounded-xl border border-slate-700/50 bg-gradient-to-br ${gradientMap[accent]} text-white shadow-md p-4 md:p-5`}
+    >
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 mt-0.5">
+          <div className="relative flex h-2.5 w-2.5">
+            <span className={`absolute inline-flex h-full w-full rounded-full ${dotMap[accent]} opacity-50 animate-ping`} />
+            <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotMap[accent]}`} />
+          </div>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1.5">
+            System Insight
+          </p>
+          <p className="text-sm md:text-base font-bold text-white break-keep">{title}</p>
+          <p className="text-[12px] md:text-[13px] text-white/80 mt-1 break-keep leading-relaxed">
+            {detail}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
