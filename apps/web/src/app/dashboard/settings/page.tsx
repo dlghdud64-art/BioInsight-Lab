@@ -427,27 +427,48 @@ function SettingsPageContent() {
               <h1 className="text-xl font-bold text-slate-900">시스템 및 워크스페이스 설정</h1>
               <p className="text-sm text-slate-500 mt-0.5">운영자 권한, 온톨로지 엔진 및 외부 시스템 연동을 구성합니다.</p>
             </div>
-            <div className="flex items-center gap-2">
-              {isDirty && (
-                <Button variant="ghost" size="sm" onClick={handleRevert} className="text-xs text-slate-500 hover:text-slate-700 h-8">
-                  <RotateCcw className="h-3 w-3 mr-1" />
-                  변경사항 취소
+            {/* §11.76: Save section section-aware conditional render — operator/
+                notifications 외 section (ontology/security/integrations/billing)
+                에서는 button 자체 hidden (dead button 회귀 차단). 시안 검정 primary
+                button 모양 (bg-slate-900 + rounded-lg + shadow-sm) 적용. */}
+            {(activeSection === "operator" || activeSection === "notifications") ? (
+              <div className="flex items-center gap-2">
+                {isDirty && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRevert}
+                    className="text-xs text-slate-500 hover:text-slate-700 h-9 px-3 rounded-lg"
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                    변경사항 취소
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  className="h-9 px-5 text-xs bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-lg shadow-sm transition-all"
+                  disabled={!isDirty || profileMutation.isPending || isSavingNotifications}
+                  onClick={() => {
+                    if (activeSection === "operator") handleProfileSubmit();
+                    else if (activeSection === "notifications") handleNotificationSave();
+                  }}
+                >
+                  {(profileMutation.isPending || isSavingNotifications) ? (
+                    <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />저장 중</>
+                  ) : saveSuccess ? (
+                    <><Check className="h-3.5 w-3.5 mr-1.5" />저장 완료</>
+                  ) : (
+                    <>설정 저장</>
+                  )}
                 </Button>
-              )}
-              <Button
-                size="sm"
-                className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium"
-                disabled={!isDirty || profileMutation.isPending || isSavingNotifications}
-                onClick={() => {
-                  if (activeSection === "operator") handleProfileSubmit();
-                  else if (activeSection === "notifications") handleNotificationSave();
-                }}
-              >
-                {(profileMutation.isPending || isSavingNotifications) ? <><Loader2 className="h-3 w-3 animate-spin mr-1" />저장 중</> :
-                 saveSuccess ? <><Check className="h-3 w-3 mr-1" />저장 완료</> :
-                 "설정 저장"}
-              </Button>
-            </div>
+              </div>
+            ) : (
+              // 운영자/notifications 외 section 은 read-only 또는 별도 mutation —
+              // header 의 통합 "설정 저장" button 의미 없음.
+              <div className="text-[11px] text-slate-400 break-keep">
+                이 영역의 변경은 자체 컨트롤로 즉시 반영됩니다.
+              </div>
+            )}
           </div>
         </div>
 
