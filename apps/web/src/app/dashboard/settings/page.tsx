@@ -302,6 +302,38 @@ function SettingsPageContent() {
     enabled: activeSection === "billing",
   });
 
+  // §11.87 #user-permission-summary-fetcher
+  // mock badges (Lab Manager/Requester/Approver) + 한도 ₩1,000,000 / 월간 ₩50,000,000
+  // / Cost Center / 입고 위치 → real /api/organizations + /api/user-budgets 기반 derive.
+  // 일부 필드 (단일 건 승인 한도 / Cost Center / 기본 입고 위치) 는 schema 미존재
+  // → "운영 정책 미설정" 솔직한 empty state. schema 필드 추가는 별도 트랙
+  // (#user-approval-policy-schema-add deferred).
+  const { data: orgsData } = useQuery<{
+    organizations: Array<{ id: string; name: string; role: string }>;
+  }>({
+    queryKey: ["settings-organizations"],
+    queryFn: async () => {
+      const response = await fetch("/api/organizations");
+      if (!response.ok) return { organizations: [] };
+      return response.json();
+    },
+    enabled: !!session && activeSection === "operator",
+    staleTime: 5 * 60_000,
+  });
+
+  const { data: userBudgetsData } = useQuery<{
+    budgets: Array<{ id: string; totalAmount: number; remainingAmount: number; isActive?: boolean }>;
+  }>({
+    queryKey: ["settings-user-budgets"],
+    queryFn: async () => {
+      const response = await fetch("/api/user-budgets");
+      if (!response.ok) return { budgets: [] };
+      return response.json();
+    },
+    enabled: !!session && activeSection === "operator",
+    staleTime: 5 * 60_000,
+  });
+
   // §11.86 #settings-recent-activity-fetcher
   // mock 4-row → real /api/audit-logs?userId={current}&limit=5 wiring.
   // session.user.id 기반 본인 변경 이력만 표시 (operator surface 정합).
@@ -594,39 +626,96 @@ function SettingsPageContent() {
                     layout 정형화. */}
                 <SectionCard title="운영 역할 및 업무 범위" icon={Shield} description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다.">
                   <div className="space-y-5">
+                    {/* §11.87 활성 운영 역할 — real session.user.role + organizations[].role
+                        매핑. system ADMIN 은 별도 badge, 각 조직 멤버십은 한국어 라벨
+                        매핑 (ADMIN/OWNER/MEMBER/VIEWER). */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">활성 운영 역할</p>
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge className="bg-blue-50 text-blue-700 border-blue-200 text-xs font-medium">Lab Manager</Badge>
-                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-medium">Requester</Badge>
-                        <Badge className="bg-purple-50 text-purple-700 border-purple-200 text-xs font-medium">Approver</Badge>
+                        {(() => {
+                          const sysRole = session?.user?.role as string | undefined;
+                          const orgs = orgsData?.organizations ?? [];
+                          const orgRoleLabel: Record<string, { label: string; cls: string }> = {
+                            ADMIN: { label: "Admin", cls: "bg-purple-50 text-purple-700 border-purple-200" },
+                            OWNER: { label: "Owner", cls: "bg-rose-50 text-rose-700 border-rose-200" },
+                            MEMBER: { label: "Member", cls: "bg-blue-50 text-blue-700 border-blue-200" },
+                            VIEWER: { label: "Viewer", cls: "bg-slate-50 text-slate-600 border-slate-200" },
+                          };
+                          const badges: React.ReactNode[] = [];
+                          if (sysRole === "ADMIN") {
+                            badges.push(
+                              <Badge key="sys-admin" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs font-medium">
+                                System Admin
+                              </Badge>
+                            );
+                          }
+                          orgs.forEach((org) => {
+                            const meta = orgRoleLabel[org.role] ?? { label: org.role, cls: "bg-slate-50 text-slate-600 border-slate-200" };
+                            badges.push(
+                              <Badge key={org.id} className={`${meta.cls} text-xs font-medium`}>
+                                {org.name} · {meta.label}
+                              </Badge>
+                            );
+                          });
+                          if (badges.length === 0) {
+                            return (
+                              <p className="text-xs text-slate-400 break-keep">
+                                할당된 운영 역할이 없습니다. 조직 관리자에게 문의하세요.
+                              </p>
+                            );
+                          }
+                          return badges;
+                        })()}
                       </div>
                     </div>
                     <div className="h-px bg-slate-200" />
+                    {/* §11.87 승인 권한 — 단일 건 승인 한도 schema 부재 (미설정 표시);
+                        월간 구매 예산은 UserBudget 첫 active 항목 활용. */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 권한 (LIMITS)</p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
                           <p className="text-[11px] text-slate-500 mb-0.5">단일 건 승인 한도</p>
-                          <p className="text-sm font-bold text-slate-900 tabular-nums">₩1,000,000</p>
+                          <p className="text-sm font-bold text-slate-400 tabular-nums">운영 정책 미설정</p>
                         </div>
                         <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
                           <p className="text-[11px] text-slate-500 mb-0.5">월간 구매 예산</p>
-                          <p className="text-sm font-bold text-slate-900 tabular-nums">₩50,000,000</p>
+                          {(() => {
+                            const budgets = userBudgetsData?.budgets ?? [];
+                            // isActive 필드가 source 별로 일관 안 함 — 첫 항목 (가장 최신 createdAt)
+                            // 을 활성으로 가정. UserBudget 은 isActive 명시, Budget 변환분은 항상 표시.
+                            const active = budgets.find((b) => b.isActive !== false) ?? budgets[0];
+                            if (!active) {
+                              return <p className="text-sm font-bold text-slate-400 tabular-nums">예산 미설정</p>;
+                            }
+                            return (
+                              <div>
+                                <p className="text-sm font-bold text-slate-900 tabular-nums">
+                                  ₩{active.totalAmount.toLocaleString("ko-KR")}
+                                </p>
+                                <p className="text-[10px] text-slate-500 tabular-nums mt-0.5">
+                                  잔여 ₩{active.remainingAmount.toLocaleString("ko-KR")}
+                                </p>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     </div>
                     <div className="h-px bg-slate-200" />
+                    {/* §11.87 기본 업무 환경 — Cost Center / 입고 위치 schema 부재.
+                        솔직한 "운영 정책 미설정" empty state. schema 필드 추가는
+                        별도 트랙 (#user-approval-policy-schema-add deferred). */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">기본 업무 환경</p>
                       <div className="space-y-2">
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <span className="text-xs text-slate-500">기본 Cost Center</span>
-                          <span className="text-sm font-mono text-slate-900">RND-BIO-SITE01</span>
+                          <span className="text-sm font-mono text-slate-400">운영 정책 미설정</span>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
                           <span className="text-xs text-slate-500">기본 입고 위치</span>
-                          <span className="text-sm text-slate-900 break-keep">제1R&D센터 중앙창고</span>
+                          <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
                         </div>
                       </div>
                     </div>
