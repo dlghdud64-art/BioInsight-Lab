@@ -65,3 +65,14 @@ jobs:
         run: |
           chmod +x scripts/check-api-surface-coverage.sh
           scripts/check-api-surface-coverage.sh
+
+      - name: Run LabAxis Frontend Page Entry Coverage Guard (advisory)
+        # §11.91 — alive dashboard page 가 menu (sidebar / bottom-nav) entry
+        # 가지고 있는지 grep guard. §11.83 의 §11.55 dead-end 패턴 9번째
+        # 회귀 (alive surface 인데 진입점 부재) 자동 catch.
+        # advisory mode 시작 — Track B operator-driven cleanup 또는 명시적
+        # EXEMPT_URLS 등록으로 violations 줄어든 후
+        # LABAXIS_PAGE_ENTRY_COVERAGE_BLOCK=1 전환.
+        run: |
+          chmod +x scripts/check-frontend-page-entry-coverage.sh
+          scripts/check-frontend-page-entry-coverage.sh
