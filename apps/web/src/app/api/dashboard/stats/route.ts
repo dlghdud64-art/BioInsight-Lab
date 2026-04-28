@@ -128,11 +128,16 @@ export async function GET(request: NextRequest) {
         orderBy: { expiryDate: "asc" },
         take: 10,
       }),
-      // §11.56 / #inventory-model-consolidation Phase 2:
-      // pre-fix: db.userInventory.findMany (legacy receipt log)
-      // post-fix: db.productInventory.findMany (LabAxis 운영 master).
+      // §11.56 / #inventory-model-consolidation Phase 2 (endpoint redirect)
+      //                                       Phase 3 (caller adaptation audit)
+      // pre-fix: UserInventory findMany (legacy receipt log)
+      // post-fix: ProductInventory findMany (LabAxis 운영 master).
       // dashboard stats는 inventory item count만 필요 — id/quantity로 충분.
-      // ProductInventory에서 currentQuantity → quantity 매핑.
+      // ProductInventory에서 currentQuantity → quantity 매핑 + productId →
+      // orderItemId 매핑(N+1 batch lookup 호환). 응답 shape는 internal 캡슐 —
+      // Phase 3 audit 결과 dashboard/page.tsx + executive-dashboard.tsx +
+      // analytics-dashboard.tsx 의 totalAssetValue / reorderNeededCount /
+      // expiringItems / lowStockItems 사용 패턴 모두 그대로 동작 (drift 0).
       db.productInventory.findMany({
         where: { userId },
         select: { id: true, productId: true, currentQuantity: true },

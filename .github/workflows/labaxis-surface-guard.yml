@@ -40,3 +40,11 @@ jobs:
         run: |
           chmod +x scripts/check-no-inline-hex-bg.sh
           scripts/check-no-inline-hex-bg.sh
+
+      - name: Run LabAxis UserInventory Usage Guard
+        # §11.58 — UserInventory(legacy receipt log) 신규 사용 차단.
+        # Phase 1+2+3 으로 application code 는 모두 ProductInventory 정렬 완료.
+        # 모델 자체 drop 은 #userInventory-schema-drop 별도 트랙.
+        run: |
+          chmod +x scripts/check-no-userinventory-usage.sh
+          scripts/check-no-userinventory-usage.sh

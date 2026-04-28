@@ -43,12 +43,17 @@ export async function GET(
     const memberIds = teamMembers.map((m: any) => m.userId);
 
     // 팀 멤버들의 인벤토리 조회
-    // §11.56 / #inventory-model-consolidation Phase 2:
-    // pre-fix: db.userInventory.findMany (legacy receipt log)
-    // post-fix: db.productInventory.findMany (LabAxis 운영 master, schema-designed path)
-    // 호출자(`/dashboard/inventory/inventory-content.tsx` + inventory-main.tsx)는
-    // 같은 endpoint contract 사용. 응답 shape는 두 모델이 다르므로 caller는
-    // ProductInventory shape로 적응 필요(별도 트랙 — Phase 3에서 audit).
+    // §11.56 / #inventory-model-consolidation Phase 2 (endpoint redirect)
+    //                                       Phase 3 (caller adaptation audit)
+    // pre-fix: UserInventory findMany (legacy receipt log)
+    // post-fix: ProductInventory findMany (LabAxis 운영 master, schema-designed path)
+    // Phase 3 audit 결과: caller(`inventory-content.tsx` + `inventory-main.tsx`)
+    // 는 처음부터 `ProductInventory` 시그니처로 작성되어 있었음
+    // (`inv: ProductInventory`, `inv.currentQuantity`, `inv.product.name` 사용).
+    // 즉 pre-Phase 1은 caller의 expected shape ↔ endpoint 반환 shape 의 silent
+    // drift 였음. Phase 1 helper + Phase 2 endpoint redirect 가 이를 정렬,
+    // Phase 3 audit 으로 caller drift 0 건 확정. UserInventory 모델 자체 drop
+    // 은 별도 트랙(`#userInventory-schema-drop`, operator-shell migration).
     const inventories = await db.productInventory.findMany({
       where: {
         userId: {

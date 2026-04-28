@@ -163,7 +163,7 @@ export async function PATCH(
 
       // 2. DELIVERED 상태로 변경 시 인벤토리 자동 등록
       // §11.56 / #inventory-model-consolidation Phase 2:
-      // pre-fix: tx.userInventory.createMany (legacy receipt log, /dashboard/inventory에 안 보임)
+      // pre-fix: UserInventory createMany (legacy receipt log, /dashboard/inventory에 안 보임)
       // post-fix: runDeliveryInventorySync (InventoryRestock + ProductInventory upsert,
       //          schema-designed path, 운영자 시야의 /dashboard/inventory에 자동 반영)
       let inventoryItems: Array<{
