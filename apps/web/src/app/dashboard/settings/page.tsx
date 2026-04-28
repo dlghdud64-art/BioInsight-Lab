@@ -302,6 +302,34 @@ function SettingsPageContent() {
     enabled: activeSection === "billing",
   });
 
+  // §11.86 #settings-recent-activity-fetcher
+  // mock 4-row → real /api/audit-logs?userId={current}&limit=5 wiring.
+  // session.user.id 기반 본인 변경 이력만 표시 (operator surface 정합).
+  // operator section 활성화될 때만 fetch — 다른 section 진입 시 비호출.
+  const { data: recentActivityData } = useQuery<{
+    logs: Array<{
+      id: string;
+      eventType: string;
+      action: string;
+      entityType: string;
+      createdAt: string;
+      success: boolean;
+    }>;
+  }>({
+    queryKey: ["settings-recent-activity", session?.user?.id],
+    queryFn: async () => {
+      if (!session?.user?.id) return { logs: [] };
+      const params = new URLSearchParams();
+      params.set("userId", session.user.id);
+      params.set("limit", "5");
+      const response = await fetch(`/api/audit-logs?${params.toString()}`);
+      if (!response.ok) return { logs: [] };
+      return response.json();
+    },
+    enabled: !!session?.user?.id && activeSection === "operator",
+    staleTime: 60_000,
+  });
+
   // ── Profile mutation ──
   const profileMutation = useMutation({
     mutationFn: async (data: { name?: string; email?: string; phone?: string; password?: string; currentPassword?: string }) => {
@@ -682,43 +710,98 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                {/* §11.74 — 최근 보안 및 활동 로그 (mini feed)
-                    시안 visual essence — 4-5건 recent audit entries + "전체 보기"
-                    link → /dashboard/audit redirect.
-                    실제 fetcher 연결은 #settings-recent-activity-fetcher 별도
-                    트랙 (현재는 mock — audit-logs canonical 데이터 그대로
-                    /dashboard/audit 에 있음). */}
+                {/* §11.86 #settings-recent-activity-fetcher
+                    mock 4-row → real /api/audit-logs?userId={current}&limit=5.
+                    EVENT_TYPE → 한국어 라벨 + tone 5분류 매핑. 빈 결과 시
+                    명시적 empty state (no fake fallback). 시간 표기는
+                    상대 (방금/N분 전/N시간 전/어제/N일 전) format. */}
                 <SectionCard
                   title="최근 보안 및 활동 로그"
                   icon={Activity}
                   description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 증적은 별도 페이지에서 확인."
                 >
                   <div className="space-y-2">
-                    {[
-                      { label: "프로필 정보 수정", when: "1시간 전", tone: "blue" },
-                      { label: "워크스페이스 명칭 변경", when: "2시간 전", tone: "amber" },
-                      { label: "새로운 API 키 발급", when: "어제", tone: "emerald" },
-                      { label: "역할 변경 (Researcher → Lab Manager)", when: "3일 전", tone: "purple" },
-                    ].map((entry, idx) => {
-                      const dotClass = {
+                    {(() => {
+                      const logs = recentActivityData?.logs ?? [];
+                      if (logs.length === 0) {
+                        return (
+                          <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-6 text-center">
+                            <p className="text-xs text-slate-500 break-keep">
+                              아직 운영 활동 이력이 없습니다.
+                            </p>
+                            <p className="text-[10px] text-slate-400 mt-1 break-keep">
+                              프로필·권한·워크스페이스 변경 이력이 여기에 표시됩니다.
+                            </p>
+                          </div>
+                        );
+                      }
+
+                      // EVENT_TYPE → {label, tone} 매핑 (§11.81 패턴 reuse)
+                      const eventLabelMap: Record<string, { label: string; tone: string }> = {
+                        USER_LOGIN: { label: "로그인", tone: "emerald" },
+                        USER_LOGOUT: { label: "로그아웃", tone: "slate" },
+                        USER_CREATED: { label: "사용자 등록", tone: "blue" },
+                        USER_UPDATED: { label: "프로필 정보 수정", tone: "blue" },
+                        USER_DELETED: { label: "사용자 삭제", tone: "rose" },
+                        PERMISSION_CHANGED: { label: "권한 변경", tone: "purple" },
+                        SETTINGS_CHANGED: { label: "설정 변경", tone: "amber" },
+                        DATA_EXPORTED: { label: "데이터 내보내기", tone: "blue" },
+                        DATA_IMPORTED: { label: "데이터 가져오기", tone: "blue" },
+                        SSO_CONFIGURED: { label: "SSO 설정", tone: "purple" },
+                        ORGANIZATION_CREATED: { label: "조직 생성", tone: "emerald" },
+                        ORGANIZATION_UPDATED: { label: "조직 정보 수정", tone: "amber" },
+                        ORGANIZATION_DELETED: { label: "조직 삭제", tone: "rose" },
+                      };
+
+                      // 상대 시간 derive
+                      const formatRelative = (iso: string) => {
+                        const diff = Date.now() - new Date(iso).getTime();
+                        const min = Math.floor(diff / 60000);
+                        if (min < 1) return "방금";
+                        if (min < 60) return `${min}분 전`;
+                        const hr = Math.floor(min / 60);
+                        if (hr < 24) return `${hr}시간 전`;
+                        const day = Math.floor(hr / 24);
+                        if (day === 1) return "어제";
+                        if (day < 7) return `${day}일 전`;
+                        const week = Math.floor(day / 7);
+                        if (week < 5) return `${week}주 전`;
+                        return new Date(iso).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
+                      };
+
+                      const dotMap: Record<string, string> = {
                         blue: "bg-blue-500",
                         amber: "bg-amber-500",
                         emerald: "bg-emerald-500",
                         purple: "bg-purple-500",
-                      }[entry.tone] || "bg-slate-400";
-                      return (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300 transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotClass}`} />
-                            <span className="text-sm text-slate-700 break-keep">{entry.label}</span>
+                        rose: "bg-rose-500",
+                        slate: "bg-slate-400",
+                      };
+
+                      return logs.map((log) => {
+                        const meta = eventLabelMap[log.eventType] ?? {
+                          label: log.action || log.eventType,
+                          tone: "slate",
+                        };
+                        return (
+                          <div
+                            key={log.id}
+                            className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300 transition-colors"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotMap[meta.tone] ?? dotMap.slate}`} />
+                              <span className="text-sm text-slate-700 break-keep">
+                                {meta.label}
+                                {!log.success && <span className="text-rose-500 ml-1">(실패)</span>}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-400 font-mono flex-shrink-0 ml-3">
+                              {formatRelative(log.createdAt)}
+                            </span>
                           </div>
-                          <span className="text-[11px] text-slate-400 font-mono flex-shrink-0 ml-3">{entry.when}</span>
-                        </div>
-                      );
-                    })}
+                        );
+                      });
+                    })()}
                     <div className="pt-1">
                       <Button
                         variant="ghost"

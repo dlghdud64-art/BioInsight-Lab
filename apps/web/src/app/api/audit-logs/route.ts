@@ -27,7 +27,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get("limit") || "100");
     const offset = parseInt(searchParams.get("offset") || "0");
 
-    // 권한 확인: 조직 관리자 또는 시스템 관리자만 조회 가능
+    // 권한 확인: 조직 관리자 / 시스템 관리자 / 본인 self-view 허용.
+    // §11.86 #settings-recent-activity-fetcher 와 함께 self-view 분기 추가 —
+    // settings 페이지에서 본인 변경 이력을 보는 것은 governance 위반 아니라
+    // 운영자 자기 인식 (self-awareness) 기본 정보. userId === 본인 일 때만
+    // org-scope 권한 체크 우회.
+    const isSelfView = !!userId && userId === session.user.id;
+
     if (organizationId) {
       const isOrgAdmin = await db.organizationMember.findFirst({
         where: {
@@ -37,11 +43,11 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      if (!isOrgAdmin && session.user.role !== "ADMIN") {
+      if (!isOrgAdmin && session.user.role !== "ADMIN" && !isSelfView) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
       }
-    } else if (session.user.role !== "ADMIN") {
-      // 조직 ID가 없으면 시스템 관리자만 조회 가능
+    } else if (session.user.role !== "ADMIN" && !isSelfView) {
+      // 조직 ID 없고 self-view 도 아니면 시스템 관리자만 조회 가능
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
