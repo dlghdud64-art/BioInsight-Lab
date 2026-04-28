@@ -126,6 +126,7 @@ model User {
   image         String?
   role          UserRole  @default(RESEARCHER)
   organization  String? // ?거???드 (조직?직접 ?력)
+  phone         String?   // §11.69 운영자 연락처 (settings page 에서 update)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
