@@ -133,12 +133,9 @@ function getSaveOffer(reason: CancelReason | null): { title: string; description
   }
 }
 
-// §11.77: 시안 정합 — LabAxis Enterprise 구독 청구 내역
-const DEMO_INVOICES = [
-  { id: "LX-2026-003", date: "2026-03-01", description: "LabAxis Enterprise Subscription (3월)", amount: 1200000, status: "paid" as const },
-  { id: "LX-2026-002", date: "2026-02-01", description: "LabAxis Enterprise Subscription (2월)", amount: 1200000, status: "paid" as const },
-  { id: "LX-2026-001", date: "2026-01-01", description: "LabAxis Enterprise Subscription (1월)", amount: 1200000, status: "paid" as const },
-];
+// §11.88 #settings-billing-real-fetcher — DEMO_INVOICES 제거.
+// 청구 내역은 /api/billing/invoices alive endpoint 가 real Subscription invoices
+// 또는 mock-backed fallback (운영 데이터 0건 시) 반환. Stripe wiring 은 별도 트랙.
 
 // ══════════════════════════════════════════════
 // Nav Configuration — OS-style system menu
@@ -300,6 +297,36 @@ function SettingsPageContent() {
       return response.json();
     },
     enabled: activeSection === "billing",
+  });
+
+  // §11.88 #settings-billing-real-fetcher
+  // DEMO_INVOICES 로컬 const → /api/billing/invoices alive endpoint.
+  // endpoint 자체는 real Subscription invoices 또는 mock fallback 반환.
+  // shape: { invoices: [{id, number, description, amountDue, amountPaid,
+  //   currency, periodStart, periodEnd, status, invoicePdfUrl}], total }
+  const { data: invoicesData } = useQuery<{
+    invoices: Array<{
+      id: string;
+      number?: string;
+      description?: string;
+      amountDue?: number;
+      amountPaid?: number;
+      currency?: string;
+      periodStart?: string;
+      periodEnd?: string;
+      status?: string;
+      invoicePdfUrl?: string | null;
+    }>;
+    total: number;
+  }>({
+    queryKey: ["billing-invoices"],
+    queryFn: async () => {
+      const response = await fetch("/api/billing/invoices");
+      if (!response.ok) return { invoices: [], total: 0 };
+      return response.json();
+    },
+    enabled: activeSection === "billing",
+    staleTime: 5 * 60_000,
   });
 
   // §11.87 #user-permission-summary-fetcher
@@ -1161,43 +1188,82 @@ function SettingsPageContent() {
                   </CardContent>
                 </Card>
 
-                {/* 최근 청구 내역 — 시안 정합 (LabAxis Enterprise Subscription + PDF 다운로드) */}
+                {/* §11.88 — 최근 청구 내역 real fetcher.
+                    /api/billing/invoices alive endpoint 가 Subscription invoices
+                    (real) 또는 mock fallback 반환. PDF 다운로드 버튼은
+                    invoicePdfUrl 이 있으면 새 탭으로 open, 없으면 솔직한 안내. */}
                 <SectionCard title="최근 청구 내역" icon={Receipt}>
                   <div className="space-y-2">
-                    {DEMO_INVOICES.map((inv) => (
-                      <div
-                        key={inv.id}
-                        className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
-                            <FileText className="h-4 w-4 text-slate-500" />
+                    {(() => {
+                      const invoices = invoicesData?.invoices ?? [];
+                      if (invoices.length === 0) {
+                        return (
+                          <div className="rounded-xl border border-slate-200 bg-slate-50/50 px-4 py-8 text-center">
+                            <p className="text-sm text-slate-500 break-keep">
+                              아직 청구 내역이 없습니다.
+                            </p>
+                            <p className="text-[11px] text-slate-400 mt-1 break-keep">
+                              결제가 처리되면 청구서가 여기에 표시됩니다.
+                            </p>
                           </div>
-                          <div className="min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 break-keep">{inv.description}</p>
-                            <p className="text-[11px] font-mono text-slate-400 mt-0.5">Invoice #{inv.id}</p>
+                        );
+                      }
+                      return invoices.map((inv) => {
+                        const amount = inv.amountPaid ?? inv.amountDue ?? 0;
+                        const description = inv.description || "구독 청구";
+                        const invoiceLabel = inv.number || inv.id;
+                        const hasPdf = !!inv.invoicePdfUrl;
+                        return (
+                          <div
+                            key={inv.id}
+                            className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 transition-colors"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                                <FileText className="h-4 w-4 text-slate-500" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold text-slate-900 break-keep">{description}</p>
+                                <p className="text-[11px] font-mono text-slate-400 mt-0.5">
+                                  Invoice #{invoiceLabel}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 flex-shrink-0">
+                              <div className="text-right">
+                                <p className="text-sm font-bold text-slate-900 tabular-nums">
+                                  ₩{amount.toLocaleString("ko-KR")}
+                                </p>
+                                {hasPdf ? (
+                                  <a
+                                    href={inv.invoicePdfUrl!}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-[11px] text-blue-600 hover:text-blue-700 font-medium mt-0.5 inline-flex items-center gap-0.5"
+                                  >
+                                    PDF 다운로드
+                                    <ArrowRight className="h-3 w-3" />
+                                  </a>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      toast({
+                                        title: "PDF 미발급",
+                                        description: "이 청구서는 아직 PDF 가 발급되지 않았습니다. 운영 지원 센터로 문의해 주세요.",
+                                      })
+                                    }
+                                    className="text-[11px] text-slate-400 hover:text-slate-600 font-medium mt-0.5 inline-flex items-center gap-0.5"
+                                  >
+                                    PDF 미발급
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          <div className="text-right">
-                            <p className="text-sm font-bold text-slate-900 tabular-nums">₩{inv.amount.toLocaleString("ko-KR")}</p>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                toast({
-                                  title: "PDF 다운로드",
-                                  description: `Invoice #${inv.id} PDF 가 곧 다운로드됩니다.`,
-                                })
-                              }
-                              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium mt-0.5 inline-flex items-center gap-0.5"
-                            >
-                              PDF 다운로드
-                              <ArrowRight className="h-3 w-3" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        );
+                      });
+                    })()}
                   </div>
                 </SectionCard>
               </div>
