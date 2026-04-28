@@ -371,6 +371,27 @@ export async function GET(request: NextRequest) {
         ? ((thisMonthPurchaseAmount - lastMonthPurchaseAmount) / lastMonthPurchaseAmount) * 100
         : 0;
 
+    // §11.94 #dashboard-store-trend-history Phase 1
+    // weekOverWeek 비교 — 최근 7일 vs 그 이전 7일 누적 지출.
+    // monthOverMonth (월 단위) 보다 짧은 시간 윈도우 — 운영자가 주간
+    // 변화 sensitivity 가 더 높을 때 가치. recentPurchaseRecords 기반
+    // (별도 쿼리 0 — 동일 데이터 source 재사용).
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const last7DaysSpending = recentPurchaseRecords
+      .filter((p: any) => new Date(p.purchasedAt) >= sevenDaysAgo)
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const prev7DaysSpending = recentPurchaseRecords
+      .filter((p: any) => {
+        const d = new Date(p.purchasedAt);
+        return d >= fourteenDaysAgo && d < sevenDaysAgo;
+      })
+      .reduce((s: number, p: any) => s + (p.amount || 0), 0);
+    const weekOverWeekChange =
+      prev7DaysSpending > 0
+        ? ((last7DaysSpending - prev7DaysSpending) / prev7DaysSpending) * 100
+        : 0;
+
     // 최근 6개월 월별 지출 (차트용)
     const monthlySpending: Array<{ month: string; amount: number }> = [];
     for (let i = 5; i >= 0; i--) {
@@ -498,6 +519,9 @@ export async function GET(request: NextRequest) {
       totalPurchaseAmount,
       thisMonthPurchaseAmount,
       monthOverMonthChange: monthOverMonthChange.toFixed(1),
+      // §11.94 — week-over-week 변화율 (최근 7일 vs 그 이전 7일).
+      weekOverWeekChange: weekOverWeekChange.toFixed(1),
+      last7DaysSpending,
       totalAssetValue,
       reorderNeededCount,
       lowStockAlerts: reorderNeededCount,

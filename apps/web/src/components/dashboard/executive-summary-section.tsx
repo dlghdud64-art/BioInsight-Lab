@@ -375,14 +375,23 @@ function ChartTooltip({
 // ── Main Component ───────────────────────────────────────────────────
 
 /**
- * §11.92 — 외부에서 전달되는 trend 데이터.
- * dashboard/page.tsx 의 stats 객체에 있는 monthOverMonthChange 같은 real
- * delta 만 prop forward. store-derived KPI 의 trend 는 store 에 history
- * 누적 기능 추가 후 별도 트랙 (#dashboard-store-trend-history deferred).
+ * §11.92 + §11.94 — 외부에서 전달되는 trend 데이터.
+ * dashboard/page.tsx 의 stats 객체에 있는 real delta 만 prop forward.
+ * 다른 KPI 의 trend 는 backend snapshot DB 또는 status_history schema
+ * 추가 후 별도 트랙 — Phase 1 framework 만 정형화 (`processingDelta`,
+ * `pendingApprovalDelta`, `anomalyDelta` interface 정의), 데이터 source
+ * 추가 시 자동 활성. 현재 dashboard/stats endpoint 가 derive 가능한 것은
+ * monthOverMonthChange + weekOverWeekChange (recentPurchaseRecords 기반).
  */
 interface ExecutiveSummaryDeltas {
   /** 전월 대비 누적 지출 변화율 (예: 12.4 → "12.4%", -4.2 → "-4.2%"). */
   monthOverMonthChange?: number;
+  /** 전주 대비 누적 지출 변화율 (§11.94 Phase 1 — 최근 7일 vs 그 이전 7일). */
+  weekOverWeekChange?: number;
+  /** §11.94 Phase 2 deferred — store/snapshot history 추가 후 활성. */
+  processingDelta?: { value: number; period: "day" | "week" };
+  pendingApprovalDelta?: { value: number; period: "day" | "week" };
+  anomalyDelta?: { value: number; period: "day" | "week" };
 }
 
 export function ExecutiveSummarySection({
@@ -494,17 +503,25 @@ export function ExecutiveSummarySection({
             { label: "누적 소진", value: `₩${kpis.totalSpent.toLocaleString("ko-KR")}` },
             { label: "소진율", value: `${kpis.burnRate.toFixed(1)}%` },
           ]}
-          /* §11.92 — monthOverMonthChange real delta forward.
-             지출 증가는 negative tone (운영 비용 ↑ = 나쁨), 감소는 positive. */
-          delta={
-            deltas?.monthOverMonthChange !== undefined && Math.abs(deltas.monthOverMonthChange) > 0.1
-              ? {
-                  text: `${deltas.monthOverMonthChange > 0 ? "+" : ""}${deltas.monthOverMonthChange.toFixed(1)}%`,
-                  direction: deltas.monthOverMonthChange > 0 ? "up" : deltas.monthOverMonthChange < 0 ? "down" : "flat",
-                  tone: deltas.monthOverMonthChange > 0 ? "negative" : deltas.monthOverMonthChange < 0 ? "positive" : "neutral",
-                }
-              : undefined
-          }
+          /* §11.92 + §11.94 — week 우선, month fallback delta forward.
+             week 데이터가 더 최신/정밀. 지출 증가는 negative tone (운영
+             비용 ↑ = 나쁨), 감소는 positive. */
+          delta={(() => {
+            const weekly = deltas?.weekOverWeekChange;
+            const monthly = deltas?.monthOverMonthChange;
+            const value = weekly !== undefined && Math.abs(weekly) > 0.1
+              ? weekly
+              : monthly !== undefined && Math.abs(monthly) > 0.1
+                ? monthly
+                : undefined;
+            if (value === undefined) return undefined;
+            const isWeek = weekly !== undefined && Math.abs(weekly) > 0.1;
+            return {
+              text: `${value > 0 ? "+" : ""}${value.toFixed(1)}% ${isWeek ? "주" : "월"}`,
+              direction: value > 0 ? "up" : value < 0 ? "down" : "flat",
+              tone: value > 0 ? "negative" : value < 0 ? "positive" : "neutral",
+            };
+          })()}
         />
         <KpiCard
           icon={<ShieldAlert className="h-3.5 w-3.5" />}
