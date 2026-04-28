@@ -71,7 +71,20 @@ export async function PATCH(
     if (!enforcement.allowed) return enforcement.deny();
 
     const body = await req.json();
-    const { status: newStatus, notes } = body;
+    const { status: newStatus, notes, deliveryDefaults } = body;
+
+    // §11.59 #po-delivery-operator-contract — DELIVERED 전환 시 운영자가 입력한
+    // lot/expiry/location/receivedAt 을 helper 로 forward.
+    // 미전달 시 helper fallback path (lotNumber=null, expiryDate=null, receivedAt=now).
+    // dock UI 진입점은 #order-operator-surface 별도 트랙. 본 contract 는 미리 정렬.
+    const parsedDeliveryDefaults = deliveryDefaults
+      ? {
+          location: typeof deliveryDefaults.location === "string" ? deliveryDefaults.location : undefined,
+          lotNumber: typeof deliveryDefaults.lotNumber === "string" ? deliveryDefaults.lotNumber : undefined,
+          receivedAt: deliveryDefaults.receivedAt ? new Date(deliveryDefaults.receivedAt) : undefined,
+          expiryDate: deliveryDefaults.expiryDate ? new Date(deliveryDefaults.expiryDate) : undefined,
+        }
+      : undefined;
 
     // 상태값 유효성 검사
     const validStatuses = ["ORDERED", "CONFIRMED", "SHIPPING", "DELIVERED", "CANCELLED"];
@@ -176,6 +189,7 @@ export async function PATCH(
         const syncResult = await runDeliveryInventorySync({
           tx,
           orderId: order.id,
+          defaults: parsedDeliveryDefaults,
         });
 
         // ProductInventory rows를 기존 admin response 호환 shape로 변환.

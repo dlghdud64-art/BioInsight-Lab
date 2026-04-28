@@ -10,6 +10,7 @@
  *   2. 추가 입고 (ProductInventory 이미 있음 → currentQuantity += quantity upsert)
  *   3. catalog free-text reject (F-3 Block — productId null → DeliverySyncError)
  *   4. 중복 productId 합산 (같은 PO에 같은 product 여러 OrderItem → quantity 합산)
+ *   5. defaults forward (lotNumber/expiryDate/location/receivedAt — §11.59 contract 확장)
  *
  * Idempotency는 caller responsibility (Order.status duplicate guard) — helper 자체는 검증 안 함.
  */
@@ -202,5 +203,63 @@ describe("runDeliveryInventorySync (#inventory-model-consolidation Phase 1)", ()
 
     expect(result.productInventories).toHaveLength(1);
     expect(result.inventoryRestocks).toHaveLength(1);
+  });
+
+  it("Case 5 — defaults forward: lotNumber/expiryDate/location/receivedAt → ProductInventory.create + InventoryRestock.create 에 정확히 persist", async () => {
+    // §11.59 #po-delivery-operator-contract — endpoint contract 확장으로 운영자 입력
+    // (lot/expiry/location/receivedAt) 이 helper 까지 forward 됨을 검증.
+    // helper 자체는 Phase 1 (commit 3dbd3a33) 부터 defaults 를 지원하지만 이 case
+    // 는 contract 보장 — 향후 #order-operator-surface UI 트랙이 진입할 때
+    // body shape 변경 시 빨리 fail 하도록 유지.
+    const RECEIVED_AT = new Date("2026-04-28T10:30:00Z");
+    const EXPIRY = new Date("2027-12-31T00:00:00Z");
+    tx.order.findUnique.mockResolvedValue({
+      id: "order-5",
+      userId: "user-1",
+      organizationId: "org-1",
+      items: [
+        { id: "item-5", productId: "prod-1", name: "FBS 500ml", quantity: 4, unitPrice: 80000 },
+      ],
+    });
+    tx.productInventory.upsert.mockResolvedValue({
+      id: "inv-5",
+      productId: "prod-1",
+      organizationId: "org-1",
+      currentQuantity: 4,
+    });
+    tx.inventoryRestock.create.mockResolvedValue({
+      id: "restock-5",
+      inventoryId: "inv-5",
+      orderId: "order-5",
+      quantity: 4,
+      receivingStatus: "COMPLETED",
+    });
+
+    await runDeliveryInventorySync({
+      tx: tx as never,
+      orderId: "order-5",
+      defaults: {
+        lotNumber: "LOT-2026-A1",
+        expiryDate: EXPIRY,
+        location: "냉동고 -20°C",
+        receivedAt: RECEIVED_AT,
+      },
+    });
+
+    // ProductInventory.create 에 lotNumber/expiryDate/location 전달
+    const upsertArgs = tx.productInventory.upsert.mock.calls[0][0];
+    expect(upsertArgs.create).toMatchObject({
+      lotNumber: "LOT-2026-A1",
+      expiryDate: EXPIRY,
+      location: "냉동고 -20°C",
+    });
+
+    // InventoryRestock.create 에 lotNumber/expiryDate/restockedAt 전달
+    const restockArgs = tx.inventoryRestock.create.mock.calls[0][0];
+    expect(restockArgs.data).toMatchObject({
+      lotNumber: "LOT-2026-A1",
+      expiryDate: EXPIRY,
+      restockedAt: RECEIVED_AT,
+    });
   });
 });
