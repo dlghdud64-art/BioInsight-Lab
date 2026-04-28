@@ -218,6 +218,20 @@ interface KpiBreakdownItem {
   value: string;
 }
 
+/**
+ * §11.92 #dashboard-kpi-delta-chip — 카드 우측 상단 trend badge.
+ * 호영님 시안 흡수 (↗ +1 / ↗ 12% / ↘ -2 형태). real data 기반만.
+ * direction: chip 화살표 / tone: 색상 분기 (운영자 시야: 증가가 좋은 지표
+ * vs 나쁜 지표 분기). undefined 시 chip 비노출.
+ */
+interface KpiDelta {
+  /** 표시 문자열 (예: "+1", "12%", "-2.5%") */
+  text: string;
+  direction: "up" | "down" | "flat";
+  /** positive=emerald(좋음) / negative=rose(나쁨) / neutral=slate */
+  tone: "positive" | "negative" | "neutral";
+}
+
 interface KpiCardProps {
   icon: React.ReactNode;
   label: string;
@@ -236,9 +250,14 @@ interface KpiCardProps {
    * 경고=amber, 지출=blue, 위험=rose). default 는 risk 자동 매핑.
    */
   toneOverride?: "blue" | "emerald" | "amber" | "rose";
+  /**
+   * §11.92 — trend chip. real KPI delta 기반만 (mock 0). 데이터 부재 시
+   * undefined → chip 비노출 (no fake "0%").
+   */
+  delta?: KpiDelta;
 }
 
-function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride }: KpiCardProps) {
+function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride, delta }: KpiCardProps) {
   // §11.82 Phase 2: 4-tone palette (blue=지출, emerald=정상, amber=경고, rose=위험).
   const tone =
     toneOverride
@@ -258,6 +277,18 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
     rose: "text-rose-700",
   };
 
+  // §11.92 — delta chip 색상 매핑.
+  const deltaToneMap = {
+    positive: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    negative: "bg-rose-50 text-rose-700 border-rose-200",
+    neutral: "bg-slate-50 text-slate-600 border-slate-200",
+  };
+  const deltaArrowMap = {
+    up: "↗",
+    down: "↘",
+    flat: "→",
+  };
+
   const body = (
     <div
       className={`group relative rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300 ${accentMap[tone]}`}
@@ -267,9 +298,20 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
           {icon}
           <span>{label}</span>
         </div>
-        {href && (
-          <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500" />
-        )}
+        <div className="flex items-center gap-1.5">
+          {/* §11.92 — delta trend chip (real data 있을 때만). */}
+          {delta && (
+            <span
+              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-[10px] font-bold tabular-nums ${deltaToneMap[delta.tone]}`}
+            >
+              <span aria-hidden>{deltaArrowMap[delta.direction]}</span>
+              {delta.text}
+            </span>
+          )}
+          {href && (
+            <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500" />
+          )}
+        </div>
       </div>
       <p className={`mt-1.5 text-2xl font-bold tabular-nums ${valueColorMap[tone]}`}>
         {value}
@@ -332,7 +374,22 @@ function ChartTooltip({
 
 // ── Main Component ───────────────────────────────────────────────────
 
-export function ExecutiveSummarySection() {
+/**
+ * §11.92 — 외부에서 전달되는 trend 데이터.
+ * dashboard/page.tsx 의 stats 객체에 있는 monthOverMonthChange 같은 real
+ * delta 만 prop forward. store-derived KPI 의 trend 는 store 에 history
+ * 누적 기능 추가 후 별도 트랙 (#dashboard-store-trend-history deferred).
+ */
+interface ExecutiveSummaryDeltas {
+  /** 전월 대비 누적 지출 변화율 (예: 12.4 → "12.4%", -4.2 → "-4.2%"). */
+  monthOverMonthChange?: number;
+}
+
+export function ExecutiveSummarySection({
+  deltas,
+}: {
+  deltas?: ExecutiveSummaryDeltas;
+} = {}) {
   // store hydration
   const orders = useOrderQueueStore((s) => s.orders);
   const ordersFetching = useOrderQueueStore((s) => s.isFetching);
@@ -437,6 +494,17 @@ export function ExecutiveSummarySection() {
             { label: "누적 소진", value: `₩${kpis.totalSpent.toLocaleString("ko-KR")}` },
             { label: "소진율", value: `${kpis.burnRate.toFixed(1)}%` },
           ]}
+          /* §11.92 — monthOverMonthChange real delta forward.
+             지출 증가는 negative tone (운영 비용 ↑ = 나쁨), 감소는 positive. */
+          delta={
+            deltas?.monthOverMonthChange !== undefined && Math.abs(deltas.monthOverMonthChange) > 0.1
+              ? {
+                  text: `${deltas.monthOverMonthChange > 0 ? "+" : ""}${deltas.monthOverMonthChange.toFixed(1)}%`,
+                  direction: deltas.monthOverMonthChange > 0 ? "up" : deltas.monthOverMonthChange < 0 ? "down" : "flat",
+                  tone: deltas.monthOverMonthChange > 0 ? "negative" : deltas.monthOverMonthChange < 0 ? "positive" : "neutral",
+                }
+              : undefined
+          }
         />
         <KpiCard
           icon={<ShieldAlert className="h-3.5 w-3.5" />}

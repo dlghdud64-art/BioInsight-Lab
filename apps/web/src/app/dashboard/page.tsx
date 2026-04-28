@@ -47,6 +47,8 @@ import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
 // §11.84 + §11.85 — 시안 채택 후속 chart 2종 (Area + 카테고리 도넛)
 import { SpendTrendCard } from "@/components/dashboard/spend-trend-card";
 import { CategoryDistributionCard } from "@/components/dashboard/category-distribution-card";
+// §11.93 — 운영 바로가기 4 카드 (operator quick actions)
+import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
 
 // ── Overlay 지원 경로 판별 ──
 const OVERLAY_ROUTE_PATTERNS = [
@@ -462,8 +464,12 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) --- */}
-      <ExecutiveSummarySection />
+      {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) ---
+          §11.92: deltas prop 으로 monthOverMonthChange real delta forward.
+          KpiCard 의 우측 trend chip 에 표시 (real data only). */}
+      <ExecutiveSummarySection
+        deltas={{ monthOverMonthChange: stats.monthOverMonthChange }}
+      />
 
       {/* §11.84 + §11.85 — 시안 채택 후속.
           dashboard 종합 same-canvas 원칙: 운영자가 detail 보러 다른 surface 로
@@ -479,6 +485,12 @@ export default function DashboardPage() {
           <CategoryDistributionCard categorySpending={stats.categorySpending} />
         </div>
       </div>
+
+      {/* §11.93 — 운영 바로가기 4 카드 (LabAxis 운영 verb 정합).
+          호영님 시안의 "운영 바로가기" visual essence 흡수, 운영 verb 4개:
+          견적 등록 / 발주 전환 / 입고 처리 / 재고 점검. sidebar 와 부분
+          duplicate 이지만 dashboard 종합 surface single-click 단축이 가치. */}
+      <OperatorQuickActions />
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
