@@ -4,16 +4,47 @@ export const dynamic = 'force-dynamic';
 
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { PageHeader } from "@/app/_components/page-header";
-import { Activity, Filter, Calendar, User, Building2, FileText, Share2, Eye, Trash2, Edit2, Plus } from "lucide-react";
+import {
+  Activity,
+  Filter,
+  Calendar,
+  User,
+  Building2,
+  FileText,
+  Share2,
+  Eye,
+  Trash2,
+  Edit2,
+  Plus,
+  Zap,
+  AlertTriangle,
+  Sparkles,
+  RotateCcw,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { motion, AnimatePresence } from "framer-motion";
+
+// §11.70 #activity-log-bento-grid-timeline
+// ──────────────────────────────────────────────────────────────────
+// 호영님 시안 4 사항 채택:
+//   1. 커스텀 드롭다운 (이미 §11.71 에서 shadcn Select 통일)
+//   2. Bento Grid 4 KPI cards + Pulse 실시간 indicator
+//   3. Timeline 디자인 (vertical line + hover lift + motion.div)
+//   4. AI Insights 그라디언트 카드 (chatbot UI 아닌 운영 metric notice)
+//   5. AnimatePresence 로 list 재배치 시 부드러운 transition
+//
+// LabAxis 원칙 부합:
+//   - DashboardShell chrome 그대로 (marketing nav 거부)
+//   - canonical truth (mock data 만 — 실제 audit fetcher 는 §11.63 그대로)
+//   - dead button 0건 (§11.67 lesson — RESET FILTERS onClick wired)
+//   - AI/chatbot UI 추가 X (AI Insights 는 운영 metric 카드, chat 아님)
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   QUOTE_CREATED: "리스트 생성",
@@ -51,12 +82,21 @@ const ACTIVITY_TYPE_ICONS: Record<string, any> = {
   SEARCH_PERFORMED: FileText,
 };
 
+// §11.70 — AI 자동화 처리 분류 (activityType prefix 또는 contains)
+function isAiActivity(activityType: string): boolean {
+  return /^AI_|_AI_|RECOMMENDATION|RATIONALE/i.test(activityType);
+}
+
+// §11.70 — 경고/오류 활동 분류
+function isAlertActivity(activityType: string): boolean {
+  return /ERROR|WARNING|FAILED|EXPIRED/i.test(activityType);
+}
+
 export default function ActivityLogsPage() {
   const { data: session, status } = useSession();
   const [activityTypeFilter, setActivityTypeFilter] = useState<string>("all");
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>("all");
 
-  // 액티비티 로그 조회
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: ["activity-logs", activityTypeFilter, entityTypeFilter],
     queryFn: async () => {
@@ -76,23 +116,27 @@ export default function ActivityLogsPage() {
     enabled: status === "authenticated",
   });
 
-  const logs = data?.logs || [];
+  const logs: any[] = data?.logs || [];
   const total = data?.total || 0;
 
-  // §11.63 — 운영 metric: 오늘 활동 건수 (client-side filter from displayed logs)
-  // logs 가 limit=100 으로 받아오므로 오늘 100건 초과 시 부정확 — 일반 운영 시
-  // 오늘 100건 미만 가정. 정확도 필요 시 별도 /api/activity-logs/today-count
-  // 트랙 분리.
+  // §11.70 — KPI 분류 (client-side filter from displayed logs)
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  const todayCount = logs.filter(
-    (log: any) => new Date(log.createdAt) >= todayStart,
-  ).length;
+  const todayLogs = logs.filter((log) => new Date(log.createdAt) >= todayStart);
+  const todayCount = todayLogs.length;
+  const aiCount = todayLogs.filter((log) => isAiActivity(log.activityType)).length;
+  const alertCount = todayLogs.filter((log) => isAlertActivity(log.activityType)).length;
 
-  // §11.63 — 데이터 스트림 동기화 시각 (TanStack Query 의 dataUpdatedAt 사용)
   const syncedAt = dataUpdatedAt
     ? format(new Date(dataUpdatedAt), "HH:mm:ss")
     : "—";
+
+  // §11.67 lesson — RESET FILTERS button onClick wired (no dead button)
+  const isFiltered = activityTypeFilter !== "all" || entityTypeFilter !== "all";
+  const handleResetFilters = () => {
+    setActivityTypeFilter("all");
+    setEntityTypeFilter("all");
+  };
 
   if (status === "loading") {
     return (
@@ -116,182 +160,297 @@ export default function ActivityLogsPage() {
           iconColor="text-purple-600"
         />
 
-        {/* §11.63 — 운영 metric + system status hero
-            호영님 mock-up 시안 (오늘 활동 KPI + 데이터 스트림 정상 indicator)
-            을 DashboardShell 안에서 재해석. marketing nav 는 받지 않음 —
-            DashboardShell owns chrome. */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* KPI: 오늘 활동 */}
-          <Card className="bg-pn border-bd">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 mb-1">오늘의 시스템 활동</p>
-                <p className="text-3xl font-extrabold text-slate-900 tabular-nums">
+        {/* §11.70 — Bento Grid 4 KPI cards (오늘 활동 / AI 자동화 / 경고·오류 / Stream Status) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* 1. 오늘의 시스템 활동 */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <Card className="bg-white border-slate-200 hover:border-purple-200 transition-colors h-full">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-purple-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mb-1 break-keep">오늘의 시스템 활동</p>
+                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
                   {todayCount.toLocaleString("ko-KR")}
                   <span className="text-sm font-bold text-slate-400 ml-1">건</span>
                 </p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-                <Activity className="h-6 w-6 text-purple-600" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          {/* Status: 실시간 데이터 스트림 */}
-          <Card className="bg-slate-900 border-slate-800 text-white">
-            <CardContent className="p-5 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-400 mb-1">실시간 데이터 스트림</p>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse flex-shrink-0" />
-                  <p className="text-2xl font-extrabold text-emerald-400">정상</p>
+          {/* 2. AI 자동화 처리 */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
+          >
+            <Card className="bg-white border-slate-200 hover:border-amber-200 transition-colors h-full">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center">
+                    <Zap className="h-5 w-5 text-amber-600" />
+                  </div>
                 </div>
-                <p className="text-[11px] text-slate-500 break-keep">
-                  동기화: {syncedAt}
+                <p className="text-xs text-slate-500 mb-1 break-keep">AI 자동화 처리</p>
+                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
+                  {aiCount.toLocaleString("ko-KR")}
+                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
                 </p>
-              </div>
-              <div className="w-12 h-12 rounded-xl bg-emerald-950/30 flex items-center justify-center flex-shrink-0">
-                <Activity className="h-6 w-6 text-emerald-400" />
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* 3. 경고/오류 발생 */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.1 }}
+          >
+            <Card className="bg-white border-slate-200 hover:border-rose-200 transition-colors h-full">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center">
+                    <AlertTriangle className="h-5 w-5 text-rose-600" />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-500 mb-1 break-keep">경고/오류 발생</p>
+                <p className="text-2xl md:text-3xl font-extrabold text-slate-900 tabular-nums">
+                  {alertCount.toLocaleString("ko-KR")}
+                  <span className="text-sm font-bold text-slate-400 ml-1">건</span>
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* 4. Stream Status (dark accent + pulse) */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.25, delay: 0.15 }}
+          >
+            <Card className="bg-slate-900 border-slate-800 text-white h-full">
+              <CardContent className="p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-950/40 flex items-center justify-center">
+                    <Activity className="h-5 w-5 text-emerald-400" />
+                  </div>
+                </div>
+                <p className="text-xs text-slate-400 mb-1 break-keep">실시간 데이터 스트림</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="relative flex w-2 h-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex w-2 h-2 rounded-full bg-emerald-400" />
+                  </span>
+                  <p className="text-xl md:text-2xl font-extrabold text-emerald-400">정상</p>
+                </div>
+                <p className="text-[11px] text-slate-500 break-keep">동기화: {syncedAt}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
 
-              {/* 필터 */}
-              <Card className="p-3 md:p-6">
-                <CardHeader className="px-0 pt-0 pb-3">
-                  <CardTitle className="text-xs md:text-sm font-semibold">필터</CardTitle>
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-                    <div className="flex-1">
-                      <label className="text-[10px] md:text-xs text-slate-600 mb-1 block">활동 유형</label>
-                      <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
-                        <SelectTrigger className="text-xs md:text-sm h-8 md:h-10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">전체</SelectItem>
-                          {Object.entries(ACTIVITY_TYPE_LABELS).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                              {label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1">
-                      <label className="text-[10px] md:text-xs text-slate-600 mb-1 block">엔티티 유형</label>
-                      <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-                        <SelectTrigger className="text-xs md:text-sm h-8 md:h-10">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">전체</SelectItem>
-                          <SelectItem value="quote">리스트</SelectItem>
-                          <SelectItem value="product">제품</SelectItem>
-                          <SelectItem value="search">검색</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* §11.70 — AI Insights 그라디언트 카드 (운영 metric notice — chatbot UI 아님) */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card className="border-0 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white overflow-hidden relative">
+            <CardContent className="p-5 md:p-6 relative">
+              <div className="flex items-start gap-4">
+                <div className="w-11 h-11 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold mb-1.5 break-keep">AI 인사이트</p>
+                  <p className="text-xs md:text-sm text-white/85 break-keep leading-relaxed">
+                    {aiCount > 0
+                      ? `오늘 ${aiCount}건의 AI 자동화 처리가 운영 워크플로에 적용되었습니다. 견적 추천·재고 자동 분류·발주 검토에 시간 절약 효과가 누적되고 있습니다.`
+                      : `오늘 시스템 활동 ${todayCount}건이 기록되었습니다. AI 자동화 처리가 시작되면 이 자리에 인사이트가 노출됩니다.`}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-              {/* 활동 로그 리스트 */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-sm font-semibold">활동 내역</CardTitle>
-                      <CardDescription className="text-xs">
-                        총 {total}개의 활동이 기록되었습니다.
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    <div className="text-center py-12 text-slate-500">로딩 중...</div>
-                  ) : error ? (
-                    <div className="text-center py-12 text-red-500">
-                      활동 로그를 불러오는 중 오류가 발생했습니다.
-                    </div>
-                  ) : logs.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">
-                      활동 내역이 없습니다.
-                    </div>
-                  ) : (
-                    <div className="space-y-2 md:space-y-3">
-                      {logs.map((log: any) => {
-                        const Icon = ACTIVITY_TYPE_ICONS[log.activityType] || Activity;
-                        const colorClass = ACTIVITY_TYPE_COLORS[log.activityType] || "bg-el text-slate-700 border-bd";
-                        const label = ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
+        {/* §11.70 — 필터 (custom dropdown 이미 §11.71 shadcn Select) + RESET FILTERS button */}
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4 md:p-5">
+            <div className="flex flex-col md:flex-row gap-3 md:items-end">
+              <div className="flex-1">
+                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1.5 block uppercase tracking-wider">
+                  활동 유형
+                </label>
+                <Select value={activityTypeFilter} onValueChange={setActivityTypeFilter}>
+                  <SelectTrigger className="text-xs md:text-sm h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 활동</SelectItem>
+                    {Object.entries(ACTIVITY_TYPE_LABELS).map(([key, label]) => (
+                      <SelectItem key={key} value={key}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] md:text-xs font-semibold text-slate-500 mb-1.5 block uppercase tracking-wider">
+                  엔티티 유형
+                </label>
+                <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
+                  <SelectTrigger className="text-xs md:text-sm h-9">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">전체 엔티티</SelectItem>
+                    <SelectItem value="quote">리스트</SelectItem>
+                    <SelectItem value="product">제품</SelectItem>
+                    <SelectItem value="search">검색</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleResetFilters}
+                disabled={!isFiltered}
+                className="h-9 gap-1.5 text-xs"
+              >
+                <RotateCcw className="h-3.5 w-3.5" />
+                필터 초기화
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-                        return (
+        {/* §11.70 — Timeline 디자인 (vertical line + motion + hover lift) */}
+        <Card className="bg-white border-slate-200">
+          <CardContent className="p-4 md:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <p className="text-sm font-bold text-slate-900 mb-0.5">활동 내역</p>
+                <p className="text-xs text-slate-500">
+                  총 <span className="font-semibold text-slate-700 tabular-nums">{total.toLocaleString("ko-KR")}</span>개의 활동이 기록되었습니다.
+                </p>
+              </div>
+              <Filter className="h-4 w-4 text-slate-300" />
+            </div>
+
+            {isLoading ? (
+              <div className="text-center py-12 text-slate-500 text-sm">로딩 중...</div>
+            ) : error ? (
+              <div className="text-center py-12 text-rose-600 text-sm">
+                활동 로그를 불러오는 중 오류가 발생했습니다.
+              </div>
+            ) : logs.length === 0 ? (
+              <div className="text-center py-12 text-slate-500 text-sm">활동 내역이 없습니다.</div>
+            ) : (
+              <div className="relative">
+                {/* Vertical timeline line */}
+                <div
+                  aria-hidden
+                  className="absolute left-[19px] top-2 bottom-2 w-px bg-slate-200"
+                />
+                <AnimatePresence mode="popLayout">
+                  <ul className="space-y-3">
+                    {logs.map((log: any) => {
+                      const Icon = ACTIVITY_TYPE_ICONS[log.activityType] || Activity;
+                      const colorClass =
+                        ACTIVITY_TYPE_COLORS[log.activityType] ||
+                        "bg-slate-100 text-slate-700 border-slate-200";
+                      const label =
+                        ACTIVITY_TYPE_LABELS[log.activityType] || log.activityType;
+
+                      return (
+                        <motion.li
+                          key={log.id}
+                          layout
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          transition={{ duration: 0.2 }}
+                          whileHover={{ x: 2 }}
+                          className="relative flex items-start gap-3 pl-0"
+                        >
+                          {/* Timeline icon (z-index 위로 — line 가림) */}
                           <div
-                            key={log.id}
-                            className="flex items-start gap-2 md:gap-4 p-2.5 md:p-4 border border-bd rounded-lg hover:bg-pg transition-colors"
+                            className={`relative z-10 w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center transition-all ${colorClass} group-hover:scale-105`}
                           >
-                            <div className={`p-1.5 md:p-2 rounded-lg flex-shrink-0 ${colorClass}`}>
-                              <Icon className="h-3 w-3 md:h-4 md:w-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1.5 md:gap-2 mb-1 flex-wrap">
-                                <Badge variant="outline" className={`text-[10px] md:text-xs ${colorClass}`}>
-                                  {label}
-                                </Badge>
-                                {log.entityType && (
-                                  <span className="text-xs text-slate-500">
-                                    {log.entityType}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="flex items-center gap-4 text-xs text-slate-600 mb-2">
-                                {log.user && (
-                                  <div className="flex items-center gap-1">
-                                    <User className="h-3 w-3" />
-                                    <span>{log.user.name || log.user.email}</span>
-                                  </div>
-                                )}
-                                {log.organization && (
-                                  <div className="flex items-center gap-1">
-                                    <Building2 className="h-3 w-3" />
-                                    <span>{log.organization.name}</span>
-                                  </div>
-                                )}
-                                <div className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
-                                  <span>
-                                    {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm", { locale: ko })}
-                                  </span>
-                                </div>
-                              </div>
-                              {log.metadata && (
-                                <div className="text-xs text-slate-500 mt-2">
-                                  {log.metadata.title && (
-                                    <div>제목: {log.metadata.title}</div>
-                                  )}
-                                  {log.metadata.itemCount !== undefined && (
-                                    <div>품목 수: {log.metadata.itemCount}개</div>
-                                  )}
-                                  {log.metadata.totalAmount !== undefined && (
-                                    <div>총액: ₩{log.metadata.totalAmount.toLocaleString("ko-KR")}</div>
-                                  )}
-                                </div>
+                            <Icon className="h-4 w-4" />
+                          </div>
+
+                          {/* Card body */}
+                          <div className="flex-1 min-w-0 bg-white border border-slate-200 rounded-xl p-3 md:p-4 hover:border-purple-200 hover:shadow-sm transition-all">
+                            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                              <Badge
+                                variant="outline"
+                                className={`text-[10px] md:text-xs font-bold ${colorClass}`}
+                              >
+                                {label}
+                              </Badge>
+                              <span className="text-[10px] font-mono text-slate-400 break-all">
+                                {log.activityType}
+                              </span>
+                              {log.entityType && (
+                                <span className="text-[10px] text-slate-400">· {log.entityType}</span>
                               )}
                             </div>
+                            <div className="flex items-center gap-3 text-xs text-slate-600 mb-1.5 flex-wrap">
+                              {log.user && (
+                                <div className="flex items-center gap-1 break-keep">
+                                  <User className="h-3 w-3 flex-shrink-0" />
+                                  <span>{log.user.name || log.user.email}</span>
+                                </div>
+                              )}
+                              {log.organization && (
+                                <div className="flex items-center gap-1 break-keep">
+                                  <Building2 className="h-3 w-3 flex-shrink-0" />
+                                  <span>{log.organization.name}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-1 font-mono text-slate-400">
+                                <Calendar className="h-3 w-3 flex-shrink-0" />
+                                <span>
+                                  {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm", {
+                                    locale: ko,
+                                  })}
+                                </span>
+                              </div>
+                            </div>
+                            {log.metadata && (
+                              <div className="text-[11px] text-slate-500 space-y-0.5 break-keep">
+                                {log.metadata.title && <div>제목: {log.metadata.title}</div>}
+                                {log.metadata.itemCount !== undefined && (
+                                  <div>품목 수: {log.metadata.itemCount}개</div>
+                                )}
+                                {log.metadata.totalAmount !== undefined && (
+                                  <div>
+                                    총액: ₩
+                                    {log.metadata.totalAmount.toLocaleString("ko-KR")}
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </AnimatePresence>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
-
-
-
