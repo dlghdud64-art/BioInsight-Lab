@@ -19,6 +19,8 @@ import {
 } from "./index";
 import { useWorkspacePolicySurface } from "@/hooks/use-approval-policy";
 import type { ActorContext } from "@/lib/ai/dispatch-v2-permission-policy-engine";
+// §11.71: native <select> → shadcn Select 통일
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface VarianceLineItem {
   lineId: string;
@@ -158,15 +160,19 @@ export function VarianceDispositionWorkbench({
                   </td>
                   <td className="px-3 py-1.5">
                     {onLineDisposition ? (
-                      <select
+                      <Select
                         value={line.disposition}
-                        onChange={(e) => onLineDisposition(line.lineId, e.target.value as VarianceLineItem["disposition"])}
-                        className="rounded bg-slate-950 border border-slate-700 px-1.5 py-0.5 text-xs text-slate-700 focus:border-blue-600 focus:outline-none"
+                        onValueChange={(v) => onLineDisposition(line.lineId, v as VarianceLineItem["disposition"])}
                       >
-                        {Object.entries(DISPOSITION_LABELS).map(([key, label]) => (
-                          <option key={key} value={key}>{label}</option>
-                        ))}
-                      </select>
+                        <SelectTrigger className="h-7 px-1.5 py-0.5 text-xs bg-white border-slate-200 text-slate-900 focus:border-blue-600">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {Object.entries(DISPOSITION_LABELS).map(([key, label]) => (
+                            <SelectItem key={key} value={key}>{label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     ) : (
                       <span className={DISPOSITION_COLORS[line.disposition]}>
                         {DISPOSITION_LABELS[line.disposition]}

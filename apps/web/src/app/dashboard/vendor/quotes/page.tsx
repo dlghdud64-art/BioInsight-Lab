@@ -13,6 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+// §11.71: native <select> → shadcn Select 통일
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, MessageSquare, Calendar, DollarSign, TrendingUp, History, BarChart3, Clock, Percent, Download, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -544,20 +546,21 @@ export default function VendorQuotesPage() {
                                     })
                                   }
                                 />
-                                <select
-                                  className="px-3 py-2 border rounded-md"
+                                <Select
                                   value={responseForm.currency}
-                                  onChange={(e) =>
-                                    setResponseForm({
-                                      ...responseForm,
-                                      currency: e.target.value,
-                                    })
+                                  onValueChange={(v) =>
+                                    setResponseForm({ ...responseForm, currency: v })
                                   }
                                 >
-                                  <option value="KRW">KRW</option>
-                                  <option value="USD">USD</option>
-                                  <option value="EUR">EUR</option>
-                                </select>
+                                  <SelectTrigger className="px-3 py-2 border rounded-md">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="KRW">KRW</SelectItem>
+                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value="EUR">EUR</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
                             <div>
@@ -708,20 +711,21 @@ export default function VendorQuotesPage() {
                                     })
                                   }
                                 />
-                                <select
-                                  className="px-3 py-2 border rounded-md"
+                                <Select
                                   value={responseForm.currency}
-                                  onChange={(e) =>
-                                    setResponseForm({
-                                      ...responseForm,
-                                      currency: e.target.value,
-                                    })
+                                  onValueChange={(v) =>
+                                    setResponseForm({ ...responseForm, currency: v })
                                   }
                                 >
-                                  <option value="KRW">KRW</option>
-                                  <option value="USD">USD</option>
-                                  <option value="EUR">EUR</option>
-                                </select>
+                                  <SelectTrigger className="px-3 py-2 border rounded-md">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="KRW">KRW</SelectItem>
+                                    <SelectItem value="USD">USD</SelectItem>
+                                    <SelectItem value="EUR">EUR</SelectItem>
+                                  </SelectContent>
+                                </Select>
                               </div>
                             </div>
                             <div>

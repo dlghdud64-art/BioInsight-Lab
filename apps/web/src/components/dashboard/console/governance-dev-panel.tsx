@@ -21,6 +21,8 @@ import {
   type GovernanceEventSeverity,
 } from "@/lib/ai/governance-event-bus";
 import { cn } from "@/lib/utils";
+// §11.71: native <select> → shadcn Select 통일
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ══════════════════════════════════════════════
 // Constants
@@ -182,26 +184,34 @@ export function GovernanceDevPanel() {
 
       {/* Filters */}
       <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 border-b border-slate-800 bg-[#1e1f22]">
-        <select
+        <Select
           value={domainFilter}
-          onChange={(e) => setDomainFilter(e.target.value as GovernanceDomain | "all")}
-          className="bg-slate-800 text-slate-300 text-[10px] rounded px-1.5 py-0.5 border-none outline-none"
+          onValueChange={(v) => setDomainFilter(v as GovernanceDomain | "all")}
         >
-          <option value="all">전체 domain</option>
-          {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
-            <option key={key} value={key}>{label}</option>
-          ))}
-        </select>
-        <select
+          <SelectTrigger className="h-7 bg-slate-800 text-slate-300 text-[10px] rounded px-1.5 py-0.5 border-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 domain</SelectItem>
+            {Object.entries(DOMAIN_LABELS).map(([key, label]) => (
+              <SelectItem key={key} value={key}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
           value={severityFilter}
-          onChange={(e) => setSeverityFilter(e.target.value as GovernanceEventSeverity | "all")}
-          className="bg-slate-800 text-slate-300 text-[10px] rounded px-1.5 py-0.5 border-none outline-none"
+          onValueChange={(v) => setSeverityFilter(v as GovernanceEventSeverity | "all")}
         >
-          <option value="all">전체 severity</option>
-          <option value="info">info</option>
-          <option value="warning">warning</option>
-          <option value="critical">critical</option>
-        </select>
+          <SelectTrigger className="h-7 bg-slate-800 text-slate-300 text-[10px] rounded px-1.5 py-0.5 border-none">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">전체 severity</SelectItem>
+            <SelectItem value="info">info</SelectItem>
+            <SelectItem value="warning">warning</SelectItem>
+            <SelectItem value="critical">critical</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Event list + Detail split */}

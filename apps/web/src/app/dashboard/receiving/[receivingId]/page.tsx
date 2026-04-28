@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { Badge } from "@/components/ui/badge";
+// §11.71: native <select> → shadcn Select 통일
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ChevronDown,
   ChevronUp,
@@ -921,19 +923,25 @@ function ReceivingInputPanel({
             {/* Discrepancy */}
             <div>
               <label className="text-[10px] text-slate-500 block mb-1">이슈 (수량 차이 / 파손 / 오배송)</label>
-              <select
-                value={discrepancies[activeLine.id] ?? ""}
-                onChange={e => setDiscrepancies(prev => ({ ...prev, [activeLine.id]: e.target.value }))}
-                className="w-full h-7 px-2 text-xs bg-slate-800 border border-slate-700 rounded text-slate-700 focus:border-blue-600 focus:outline-none"
+              <Select
+                value={discrepancies[activeLine.id] || "none"}
+                onValueChange={(v) =>
+                  setDiscrepancies((prev) => ({ ...prev, [activeLine.id]: v === "none" ? "" : v }))
+                }
               >
-                <option value="">이슈 없음</option>
-                <option value="shortage">수량 부족</option>
-                <option value="overage">초과 수령</option>
-                <option value="damaged">파손</option>
-                <option value="wrong_item">오배송</option>
-                <option value="doc_missing">문서 누락</option>
-                <option value="expiry_issue">유효기한 문제</option>
-              </select>
+                <SelectTrigger className="w-full h-7 px-2 text-xs bg-white border-slate-200 text-slate-900 focus:border-blue-600">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">이슈 없음</SelectItem>
+                  <SelectItem value="shortage">수량 부족</SelectItem>
+                  <SelectItem value="overage">초과 수령</SelectItem>
+                  <SelectItem value="damaged">파손</SelectItem>
+                  <SelectItem value="wrong_item">오배송</SelectItem>
+                  <SelectItem value="doc_missing">문서 누락</SelectItem>
+                  <SelectItem value="expiry_issue">유효기한 문제</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Actions */}

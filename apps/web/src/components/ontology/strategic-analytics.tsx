@@ -25,6 +25,8 @@ import {
   type BudgetSimulationResult,
   type BudgetRiskCategory,
 } from "@/lib/ontology/simulation/what-if-engine";
+// §11.71: native <select> → shadcn Select 통일
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 // ══════════════════════════════════════════════
 // KPI Data Types
@@ -265,23 +267,32 @@ export function StrategicAnalytics({ kpis, className }: StrategicAnalyticsProps)
         <div className="flex items-end gap-3">
           <div className="flex-1 max-w-xs">
             <label className="text-[10px] text-slate-500 block mb-1">대상 예산</label>
-            <select
-              value={simBudgetId || ""}
-              onChange={e => { setSimBudgetId(e.target.value || null); setSimResult(null); }}
-              className={cn(
-                "w-full rounded border px-2 py-1.5 text-xs focus:outline-none transition-colors",
-                simBudgetId
-                  ? "border-blue-500/30 bg-slate-50 text-slate-600 focus:border-blue-400"
-                  : "border-slate-200 bg-slate-50 text-slate-700 focus:border-blue-500"
-              )}
+            <Select
+              value={simBudgetId || "_none"}
+              onValueChange={(v) => {
+                setSimBudgetId(v === "_none" ? null : v);
+                setSimResult(null);
+              }}
             >
-              <option value="">선택하세요</option>
-              {kpis.budgets.map(b => (
-                <option key={b.budgetId} value={b.budgetId}>
-                  {b.budgetName} ({RISK_LABELS[b.riskLevel]} · {b.burnRate.toFixed(0)}%)
-                </option>
-              ))}
-            </select>
+              <SelectTrigger
+                className={cn(
+                  "w-full h-8 rounded border px-2 py-1.5 text-xs focus:outline-none transition-colors",
+                  simBudgetId
+                    ? "border-blue-500/30 bg-slate-50 text-slate-700 focus:border-blue-400"
+                    : "border-slate-200 bg-slate-50 text-slate-500 focus:border-blue-500"
+                )}
+              >
+                <SelectValue placeholder="선택하세요" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">선택하세요</SelectItem>
+                {kpis.budgets.map((b) => (
+                  <SelectItem key={b.budgetId} value={b.budgetId}>
+                    {b.budgetName} ({RISK_LABELS[b.riskLevel]} · {b.burnRate.toFixed(0)}%)
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex-1 max-w-xs">
             <label className="text-[10px] text-slate-500 block mb-1">예상 발주 금액 (원)</label>
