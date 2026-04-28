@@ -133,10 +133,11 @@ function getSaveOffer(reason: CancelReason | null): { title: string; description
   }
 }
 
+// §11.77: 시안 정합 — LabAxis Enterprise 구독 청구 내역
 const DEMO_INVOICES = [
-  { id: "inv-001", date: "2026-03-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
-  { id: "inv-002", date: "2026-02-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
-  { id: "inv-003", date: "2026-01-01", description: "Business 플랜 — 월간 구독", amount: 149000, status: "paid" as const },
+  { id: "LX-2026-003", date: "2026-03-01", description: "LabAxis Enterprise Subscription (3월)", amount: 1200000, status: "paid" as const },
+  { id: "LX-2026-002", date: "2026-02-01", description: "LabAxis Enterprise Subscription (2월)", amount: 1200000, status: "paid" as const },
+  { id: "LX-2026-001", date: "2026-01-01", description: "LabAxis Enterprise Subscription (1월)", amount: 1200000, status: "paid" as const },
 ];
 
 // ══════════════════════════════════════════════
@@ -930,44 +931,98 @@ function SettingsPageContent() {
               </div>
             )}
 
-            {/* ═══ BILLING ═══ */}
+            {/* ═══ BILLING ═══ §11.77 시안 정합 — LabAxis Enterprise CURRENT PLAN
+                + 최근 청구 내역 + 플랜 업그레이드 / 결제 수단 변경 / 구독 해지 */}
             {activeSection === "billing" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="현재 구독" icon={CreditCard}>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold text-slate-900">Business</span>
-                        <Badge className="bg-blue-50 text-blue-600 border-blue-200 text-[10px]">활성</Badge>
-                      </div>
-                      <p className="text-sm text-slate-400 mt-0.5">₩349,000 / 월</p>
-                      <p className="text-[10px] text-slate-500 mt-1">다음 갱신: 2026-05-01</p>
+                {/* CURRENT PLAN — 큰 dark accent 카드 (시안 image 3) */}
+                <Card className="border-0 bg-slate-900 text-white overflow-hidden relative">
+                  <CardContent className="p-6 md:p-7 relative">
+                    <div className="absolute top-4 right-4 opacity-20">
+                      <Zap className="h-32 w-32 -rotate-12" strokeWidth={1.5} />
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm" className="text-xs text-slate-400 hover:text-slate-800 h-8 px-3 border border-slate-200">
-                        플랜 변경
+                    <Badge className="bg-blue-600/90 text-white border-0 text-[10px] uppercase tracking-wider font-bold mb-3">
+                      Current Plan
+                    </Badge>
+                    <h3 className="text-2xl md:text-3xl font-extrabold mb-2 break-keep">LabAxis Enterprise</h3>
+                    <p className="text-xs md:text-sm text-slate-300 mb-6 break-keep">
+                      대규모 연구소 및 R&D 센터를 위한 무제한 엔터프라이즈 플랜
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Next Billing Date</p>
+                        <p className="text-lg md:text-xl font-bold font-mono text-white">2026.05.15</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-700 bg-slate-800/50 p-4">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">Monthly Cost</p>
+                        <p className="text-lg md:text-xl font-bold text-white tabular-nums">
+                          ₩1,200,000
+                          <span className="text-xs text-slate-400 font-normal ml-1.5">/ mo</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-5">
+                      <Button
+                        size="sm"
+                        className="h-9 px-4 text-xs bg-white text-slate-900 hover:bg-slate-100 font-semibold rounded-lg shadow-sm"
+                        onClick={() => toast({ title: "플랜 업그레이드", description: "엔터프라이즈 플랜은 영업팀과 직접 조율됩니다. 운영 지원 센터로 문의해 주세요." })}
+                      >
+                        플랜 업그레이드
                       </Button>
-                      <Button variant="ghost" size="sm" className="text-xs text-red-600 hover:text-red-700 h-8 px-3" onClick={() => setIsCancelOpen(true)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-9 px-4 text-xs bg-transparent border-slate-700 text-slate-200 hover:bg-slate-800 hover:text-white font-medium rounded-lg"
+                        onClick={() => toast({ title: "결제 수단 변경", description: "엔터프라이즈 결제는 청구서 발행 방식입니다. 운영 지원 센터로 문의해 주세요." })}
+                      >
+                        결제 수단 변경
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto h-9 px-3 text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-950/30 rounded-lg"
+                        onClick={() => setIsCancelOpen(true)}
+                      >
                         구독 해지
                       </Button>
                     </div>
-                  </div>
-                </SectionCard>
+                  </CardContent>
+                </Card>
 
-                <SectionCard title="청구서" icon={Receipt}>
+                {/* 최근 청구 내역 — 시안 정합 (LabAxis Enterprise Subscription + PDF 다운로드) */}
+                <SectionCard title="최근 청구 내역" icon={Receipt}>
                   <div className="space-y-2">
                     {DEMO_INVOICES.map((inv) => (
-                      <div key={inv.id} className="flex items-center justify-between py-2.5 px-3 rounded-lg bg-slate-50 border border-slate-200">
-                        <div className="flex items-center gap-3">
-                          <FileText className="h-4 w-4 text-slate-500" />
-                          <div>
-                            <p className="text-sm text-slate-800">{inv.description}</p>
-                            <p className="text-[10px] text-slate-500">{inv.date}</p>
+                      <div
+                        key={inv.id}
+                        className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0">
+                            <FileText className="h-4 w-4 text-slate-500" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-slate-900 break-keep">{inv.description}</p>
+                            <p className="text-[11px] font-mono text-slate-400 mt-0.5">Invoice #{inv.id}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-slate-800">₩{inv.amount.toLocaleString()}</span>
-                          <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 text-[9px]">완료</Badge>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <div className="text-right">
+                            <p className="text-sm font-bold text-slate-900 tabular-nums">₩{inv.amount.toLocaleString("ko-KR")}</p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                toast({
+                                  title: "PDF 다운로드",
+                                  description: `Invoice #${inv.id} PDF 가 곧 다운로드됩니다.`,
+                                })
+                              }
+                              className="text-[11px] text-blue-600 hover:text-blue-700 font-medium mt-0.5 inline-flex items-center gap-0.5"
+                            >
+                              PDF 다운로드
+                              <ArrowRight className="h-3 w-3" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
