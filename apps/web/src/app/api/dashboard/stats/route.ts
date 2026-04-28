@@ -128,11 +128,17 @@ export async function GET(request: NextRequest) {
         orderBy: { expiryDate: "asc" },
         take: 10,
       }),
-      db.userInventory.findMany({
+      // §11.56 / #inventory-model-consolidation Phase 2:
+      // pre-fix: db.userInventory.findMany (legacy receipt log)
+      // post-fix: db.productInventory.findMany (LabAxis 운영 master).
+      // dashboard stats는 inventory item count만 필요 — id/quantity로 충분.
+      // ProductInventory에서 currentQuantity → quantity 매핑.
+      db.productInventory.findMany({
         where: { userId },
-        // 필요 필드만 select (기존: include: { user: true } 불필요 join)
-        select: { id: true, orderItemId: true, quantity: true },
-      }),
+        select: { id: true, productId: true, currentQuantity: true },
+      }).then((rows: Array<{ id: string; productId: string; currentQuantity: number }>) =>
+        rows.map((r) => ({ id: r.id, orderItemId: r.productId, quantity: r.currentQuantity })),
+      ),
       // fallback 예산: UserBudget 없을 때만 조회 (조건부 병렬)
       activeBudget
         ? Promise.resolve(null)

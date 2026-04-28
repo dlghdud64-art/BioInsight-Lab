@@ -43,7 +43,13 @@ export async function GET(
     const memberIds = teamMembers.map((m: any) => m.userId);
 
     // 팀 멤버들의 인벤토리 조회
-    const inventories = await db.userInventory.findMany({
+    // §11.56 / #inventory-model-consolidation Phase 2:
+    // pre-fix: db.userInventory.findMany (legacy receipt log)
+    // post-fix: db.productInventory.findMany (LabAxis 운영 master, schema-designed path)
+    // 호출자(`/dashboard/inventory/inventory-content.tsx` + inventory-main.tsx)는
+    // 같은 endpoint contract 사용. 응답 shape는 두 모델이 다르므로 caller는
+    // ProductInventory shape로 적응 필요(별도 트랙 — Phase 3에서 audit).
+    const inventories = await db.productInventory.findMany({
       where: {
         userId: {
           in: memberIds,
@@ -58,9 +64,17 @@ export async function GET(
             image: true,
           },
         },
+        product: {
+          select: {
+            id: true,
+            name: true,
+            brand: true,
+            catalogNumber: true,
+          },
+        },
       },
       orderBy: {
-        receivedAt: "desc",
+        updatedAt: "desc",
       },
     });
 

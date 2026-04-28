@@ -16,6 +16,7 @@ import {
   recordMutationAudit,
   buildAuditEventKey,
 } from "@/lib/audit/durable-mutation-audit";
+import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -161,41 +162,34 @@ export async function PATCH(
       });
 
       // 2. DELIVERED 상태로 변경 시 인벤토리 자동 등록
+      // §11.56 / #inventory-model-consolidation Phase 2:
+      // pre-fix: tx.userInventory.createMany (legacy receipt log, /dashboard/inventory에 안 보임)
+      // post-fix: runDeliveryInventorySync (InventoryRestock + ProductInventory upsert,
+      //          schema-designed path, 운영자 시야의 /dashboard/inventory에 자동 반영)
       let inventoryItems: Array<{
         id: string;
-        productName: string;
+        productName: string | null;
         quantity: number;
       }> = [];
 
       if (newStatus === "DELIVERED" && order.items.length > 0) {
-        const inventoryData = order.items.map((item: any) => ({
-          userId: order.userId,
+        const syncResult = await runDeliveryInventorySync({
+          tx,
           orderId: order.id,
-          orderItemId: item.id,
-          productName: item.name,
-          brand: item.brand,
-          catalogNumber: item.catalogNumber,
-          quantity: item.quantity,
-          unit: "ea",
-          location: "미지정",
-          status: "IN_STOCK",
-          receivedAt: new Date(),
+        });
+
+        // ProductInventory rows를 기존 admin response 호환 shape로 변환.
+        // productName은 Product 참조에서 derived (현재 helper response에는 없음)이라
+        // OrderItem.name fallback 사용.
+        const orderItemNamesByProductId = new Map<string, string>();
+        for (const item of order.items as Array<{ productId: string | null; name: string }>) {
+          if (item.productId) orderItemNamesByProductId.set(item.productId, item.name);
+        }
+        inventoryItems = syncResult.productInventories.map((inv) => ({
+          id: inv.id,
+          productName: orderItemNamesByProductId.get(inv.productId) ?? null,
+          quantity: inv.currentQuantity,
         }));
-
-        await tx.userInventory.createMany({
-          data: inventoryData,
-        });
-
-        const createdInventory = await tx.userInventory.findMany({
-          where: { orderId: order.id },
-          select: {
-            id: true,
-            productName: true,
-            quantity: true,
-          },
-        });
-
-        inventoryItems = createdInventory;
       }
 
       // 3. CANCELLED 전환 시 예산 release — 원본 reserve 참조
