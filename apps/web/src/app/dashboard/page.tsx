@@ -44,6 +44,9 @@ import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } 
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
 import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
+// §11.84 + §11.85 — 시안 채택 후속 chart 2종 (Area + 카테고리 도넛)
+import { SpendTrendCard } from "@/components/dashboard/spend-trend-card";
+import { CategoryDistributionCard } from "@/components/dashboard/category-distribution-card";
 
 // ── Overlay 지원 경로 판별 ──
 const OVERLAY_ROUTE_PATTERNS = [
@@ -174,6 +177,9 @@ export default function DashboardPage() {
     respondedQuotes: rawStats.quoteStats?.responded ?? 0,
     monthOverMonthChange: parseFloat(rawStats.monthOverMonthChange ?? "0"),
     monthlySpendingChart: (rawStats.monthlySpending ?? []) as Array<{ month: string; amount: number }>,
+    // §11.85 — categorySpending 은 dashboard/stats endpoint 가 이미 derive
+    // 하고 있던 unused field. PRODUCT_CATEGORIES 매핑은 컴포넌트 내부에서.
+    categorySpending: (rawStats.categorySpending ?? []) as Array<{ category: string; amount: number }>,
     expiringItems: (rawStats.expiringItems ?? []) as Array<{
       id: string; productName: string; catalogNumber?: string;
       expiryDate: string; currentQuantity: number; unit: string; daysLeft: number;
@@ -458,6 +464,21 @@ export default function DashboardPage() {
 
       {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) --- */}
       <ExecutiveSummarySection />
+
+      {/* §11.84 + §11.85 — 시안 채택 후속.
+          dashboard 종합 same-canvas 원칙: 운영자가 detail 보러 다른 surface 로
+          이동하지 않고 한 화면에서 종합 표시. /dashboard/analytics + /dashboard/reports
+          는 deep-dive 그대로 유지 (duplicate 아님 — same canonical truth, different
+          angle). data: dashboard/stats endpoint 의 monthlySpending +
+          categorySpending unused fields 활용 (새 endpoint 0). */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2">
+          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+        </div>
+        <div className="lg:col-span-1">
+          <CategoryDistributionCard categorySpending={stats.categorySpending} />
+        </div>
+      </div>
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
