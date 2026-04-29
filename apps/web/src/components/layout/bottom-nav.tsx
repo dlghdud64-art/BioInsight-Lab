@@ -44,7 +44,10 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 inset-x-0 z-50 border-t border-bd bg-sh lg:hidden safe-area-bottom">
+      <nav
+        className="fixed bottom-0 inset-x-0 z-50 border-t border-bd bg-sh lg:hidden safe-area-bottom"
+        aria-label="모바일 하단 메뉴"
+      >
         <div className="flex items-center justify-around h-14">
           {tabs.map((tab) => {
             const active = isActive(tab.href, tab.exact);

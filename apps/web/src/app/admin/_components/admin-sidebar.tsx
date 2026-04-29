@@ -181,7 +181,10 @@ export function AdminSidebar() {
         </div>
 
         {/* 네비게이션 */}
-        <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
+        <nav
+          className="flex-1 p-3 space-y-0.5 overflow-y-auto"
+          aria-label="관리자 메뉴"
+        >
           {ADMIN_MENU_ITEMS.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon;

@@ -226,7 +226,10 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           </Link>
 
           {/* 브레드크럼 (데스크탑 전용) */}
-          <nav className="hidden md:flex items-center gap-1.5 text-sm text-slate-500 min-w-0">
+          <nav
+            className="hidden md:flex items-center gap-1.5 text-sm text-slate-500 min-w-0"
+            aria-label="현재 위치"
+          >
             {breadcrumbs.map((crumb, index) => (
               <div key={crumb.href} className="flex items-center gap-1.5 min-w-0">
                 {index > 0 && (

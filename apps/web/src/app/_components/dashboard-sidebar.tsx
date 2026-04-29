@@ -261,7 +261,7 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
 
         {/* 대시보드 링크 (상단) */}
         <div className="mb-6">
-          <nav className="space-y-0.5">
+          <nav className="space-y-0.5" aria-label="대시보드 메뉴">
             {dashboardLinks.map((item) => {
               const isActive = item.href === "/dashboard" ? pathname === "/dashboard" : (pathname === item.href || pathname?.startsWith(item.href + "/"));
               const tint = ICON_TINT[item.href] || { active: "text-blue-600", inactive: "text-slate-400" };
