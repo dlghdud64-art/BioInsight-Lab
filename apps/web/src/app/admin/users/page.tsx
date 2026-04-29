@@ -3,6 +3,7 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import {
@@ -267,6 +268,10 @@ export default function AdminUsersPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      toast.success("사용자가 승인되었습니다.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "사용자 승인에 실패했습니다.");
     },
   });
 
@@ -284,6 +289,10 @@ export default function AdminUsersPage() {
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
       // 반려된 user 가 selected 상태였으면 panel 닫기
       if (selectedUserId) setSelectedUserId(null);
+      toast.success("사용자가 반려되었습니다.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "사용자 반려에 실패했습니다.");
     },
   });
 
@@ -313,10 +322,17 @@ export default function AdminUsersPage() {
     onSuccess: (data) => {
       setSelectedUserIds(new Set());
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      // 부분 실패 시 console 표시 (toast 사용 가능하면 sonner)
-      if (data.failedCount > 0) {
-        console.warn("[bulk-approve] partial failure", data.failedItems);
+      // §11.137 — sonner toast 통합
+      if (data.failedCount === 0) {
+        toast.success(`${data.successCount}명 일괄 승인 완료`);
+      } else if (data.successCount === 0) {
+        toast.error(`일괄 승인 실패 — ${data.failedCount}명 처리 안 됨`);
+      } else {
+        toast.warning(`${data.successCount}명 승인, ${data.failedCount}명 실패 (부분 성공)`);
       }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "일괄 승인 처리에 실패했습니다.");
     },
   });
 
@@ -340,9 +356,19 @@ export default function AdminUsersPage() {
     onSuccess: (data) => {
       setSelectedUserIds(new Set());
       queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
-      if (data.failedCount > 0) {
-        console.warn("[bulk-reject] partial failure", data.failedItems);
+      // §11.137 — sonner toast 통합
+      if (data.failedCount === 0) {
+        toast.success(`${data.successCount}명 일괄 반려 완료`);
+      } else if (data.successCount === 0) {
+        toast.error(`일괄 반려 실패 — ${data.failedCount}명 처리 안 됨`);
+      } else {
+        toast.warning(
+          `${data.successCount}명 반려, ${data.failedCount}명 실패 (부분 성공)`,
+        );
       }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "일괄 반려 처리에 실패했습니다.");
     },
   });
 
@@ -1325,6 +1351,10 @@ function DeletedUsersDialog({
         queryKey: ["admin", "users", "deleted"],
       });
       onRestored();
+      toast.success("사용자가 복구되었습니다.");
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "사용자 복구에 실패했습니다.");
     },
   });
 
