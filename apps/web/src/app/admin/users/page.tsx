@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import {
   Table,
@@ -36,6 +36,9 @@ import {
   Mail,
   Loader2,
   AlertTriangle,
+  Settings2,
+  X,
+  Save,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -127,10 +130,22 @@ function adaptUser(row: AdminUserApiRow): AdminUser {
 
 // ─── 메인 컴포넌트 ──────────────────────────────────────────────────────────
 
+interface ApprovalPolicy {
+  id: string;
+  email: string;
+  name: string | null;
+  approvalLimit: string | null;
+  costCenter: string | null;
+  defaultLocation: string | null;
+  updatedAt: string;
+}
+
 export default function AdminUsersPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const usersQuery = useQuery<AdminUsersResponse>({
     queryKey: ["admin", "users", { search: searchQuery, role: roleFilter }],
@@ -153,6 +168,79 @@ export default function AdminUsersPage() {
   const users = useMemo<AdminUser[]>(() => {
     return (usersQuery.data?.users ?? []).map(adaptUser);
   }, [usersQuery.data]);
+
+  // §11.115 — selected user 의 approval policy detail
+  const policyQuery = useQuery<ApprovalPolicy>({
+    queryKey: ["admin", "users", selectedUserId, "approval-policy"],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/admin/users/${selectedUserId}/approval-policy`,
+        { credentials: "same-origin" },
+      );
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    enabled: !!selectedUserId,
+  });
+
+  // 정책 form state — selected 변경 시 reset
+  const [formApprovalLimit, setFormApprovalLimit] = useState<string>("");
+  const [formCostCenter, setFormCostCenter] = useState<string>("");
+  const [formDefaultLocation, setFormDefaultLocation] = useState<string>("");
+  const [formError, setFormError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (policyQuery.data) {
+      setFormApprovalLimit(policyQuery.data.approvalLimit ?? "");
+      setFormCostCenter(policyQuery.data.costCenter ?? "");
+      setFormDefaultLocation(policyQuery.data.defaultLocation ?? "");
+      setFormError(null);
+    }
+  }, [policyQuery.data]);
+
+  const policyMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedUserId) throw new Error("선택된 사용자가 없습니다.");
+      const res = await fetch(
+        `/api/admin/users/${selectedUserId}/approval-policy`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({
+            approvalLimit: formApprovalLimit.trim() || null,
+            costCenter: formCostCenter.trim() || null,
+            defaultLocation: formDefaultLocation.trim() || null,
+          }),
+        },
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      setFormError(null);
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "users", selectedUserId, "approval-policy"],
+      });
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      queryClient.invalidateQueries({ queryKey: ["user", "profile"] });
+    },
+    onError: (err: Error) => {
+      setFormError(err.message || "운영 정책 변경에 실패했습니다.");
+    },
+  });
+
+  const isFormDirty =
+    !!policyQuery.data &&
+    (formApprovalLimit !== (policyQuery.data.approvalLimit ?? "") ||
+      formCostCenter !== (policyQuery.data.costCenter ?? "") ||
+      formDefaultLocation !== (policyQuery.data.defaultLocation ?? ""));
 
   // server-side: search + role / client-side: status (derive 결과 기반)
   const filteredUsers = useMemo(() => {
@@ -271,6 +359,155 @@ export default function AdminUsersPage() {
             </Select>
           </div>
 
+          {/* ── §11.115 운영 정책 panel (selected user 시) ── */}
+          {selectedUserId && (
+            <div className="fixed inset-x-0 bottom-0 lg:inset-auto lg:bottom-4 lg:right-4 lg:w-[400px] z-30 bg-pn border border-bd rounded-t-lg lg:rounded-lg shadow-xl">
+              <div className="flex items-center justify-between border-b border-bd px-4 py-2.5">
+                <div className="flex items-center gap-2 text-slate-900">
+                  <Settings2 className="h-4 w-4 text-blue-700" />
+                  <h3 className="text-sm font-semibold">운영 정책</h3>
+                </div>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0"
+                  onClick={() => {
+                    setSelectedUserId(null);
+                    setFormError(null);
+                  }}
+                  title="닫기"
+                >
+                  <X className="h-4 w-4 text-slate-500" />
+                </Button>
+              </div>
+
+              <div className="p-4 space-y-3 max-h-[60vh] lg:max-h-[70vh] overflow-y-auto">
+                {policyQuery.isLoading ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-slate-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <p className="text-xs">정책을 불러오는 중입니다…</p>
+                  </div>
+                ) : policyQuery.isError ? (
+                  <div className="flex flex-col items-center gap-2 py-6 text-rose-700">
+                    <AlertTriangle className="h-5 w-5" />
+                    <p className="text-xs">정책을 불러오지 못했습니다.</p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7 mt-1"
+                      onClick={() => policyQuery.refetch()}
+                    >
+                      다시 시도
+                    </Button>
+                  </div>
+                ) : policyQuery.data ? (
+                  <>
+                    <div className="text-[11px] text-slate-500 leading-relaxed">
+                      <p className="font-medium text-slate-700">
+                        {policyQuery.data.name?.trim() ||
+                          policyQuery.data.email}
+                      </p>
+                      <p>{policyQuery.data.email}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-700">
+                        단일 건 승인 한도 (₩)
+                      </label>
+                      <Input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="예: 100,000,000 (빈 값 = 정책 미설정)"
+                        value={formApprovalLimit}
+                        onChange={(e) => setFormApprovalLimit(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                      <p className="text-[10px] text-slate-500">
+                        0 이상의 정수만 입력 가능합니다. 콤마는 자동 처리됩니다.
+                      </p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-700">
+                        기본 Cost Center
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="예: RND-BIO-SITE01 (빈 값 = 미설정)"
+                        value={formCostCenter}
+                        onChange={(e) => setFormCostCenter(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-slate-700">
+                        기본 입고 위치
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="예: 제1R&D센터 중앙창고 (빈 값 = 미설정)"
+                        value={formDefaultLocation}
+                        onChange={(e) => setFormDefaultLocation(e.target.value)}
+                        className="h-8 text-xs"
+                      />
+                    </div>
+
+                    {formError && (
+                      <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        <p>{formError}</p>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-bd">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-xs"
+                        onClick={() => {
+                          if (policyQuery.data) {
+                            setFormApprovalLimit(
+                              policyQuery.data.approvalLimit ?? "",
+                            );
+                            setFormCostCenter(
+                              policyQuery.data.costCenter ?? "",
+                            );
+                            setFormDefaultLocation(
+                              policyQuery.data.defaultLocation ?? "",
+                            );
+                            setFormError(null);
+                          }
+                        }}
+                        disabled={!isFormDirty || policyMutation.isPending}
+                      >
+                        되돌리기
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                        onClick={() => policyMutation.mutate()}
+                        disabled={!isFormDirty || policyMutation.isPending}
+                      >
+                        {policyMutation.isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Save className="h-3 w-3" />
+                        )}
+                        저장
+                      </Button>
+                    </div>
+                    {policyMutation.isSuccess && !isFormDirty && (
+                      <p className="text-[10px] text-emerald-700 text-right">
+                        ✓ 운영 정책이 저장되었습니다.
+                      </p>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            </div>
+          )}
+
           {/* ── 테이블 ── */}
           <div className="bg-pn border border-bd rounded-lg overflow-hidden">
             <div className="w-full overflow-x-auto">
@@ -374,11 +611,16 @@ export default function AdminUsersPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-6 px-2 text-[10px] text-slate-500"
-                                disabled
-                                title="준비 중 — 상세 패널은 #admin-user-approval-policy-set-surface 에서 제공됩니다."
+                                className={cn(
+                                  "h-6 px-2 text-[10px]",
+                                  selectedUserId === user.id
+                                    ? "text-blue-700 bg-blue-50"
+                                    : "text-slate-600 hover:text-slate-900",
+                                )}
+                                onClick={() => setSelectedUserId(user.id)}
+                                title="운영 정책 보기/변경"
                               >
-                                <Eye className="h-3 w-3 mr-0.5" />상세
+                                <Settings2 className="h-3 w-3 mr-0.5" />정책
                               </Button>
                               {user.status === "pending" && (
                                 <>
