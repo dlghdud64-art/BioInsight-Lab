@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import { AdminSidebar } from "../_components/admin-sidebar";
 import {
   Table,
@@ -292,6 +293,20 @@ export default function AdminUsersPage() {
     },
   });
 
+  // §11.123 — dialog a11y hooks (3 dialog 각각)
+  const policyDialog = useDialogA11y<HTMLDivElement>({
+    open: !!selectedUserId,
+    onClose: () => {
+      setSelectedUserId(null);
+      setFormError(null);
+    },
+  });
+
+  const rejectDialog = useDialogA11y<HTMLDivElement>({
+    open: !!confirmReject,
+    onClose: () => setConfirmReject(null),
+  });
+
   const isFormDirty =
     !!policyQuery.data &&
     (formApprovalLimit !== (policyQuery.data.approvalLimit ?? "") ||
@@ -414,10 +429,16 @@ export default function AdminUsersPage() {
             </Select>
           </div>
 
-          {/* ── §11.117 반려 확인 dialog ── */}
+          {/* ── §11.117 반려 확인 dialog §11.123 a11y ── */}
           {confirmReject && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-              <div className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl">
+              <div
+                ref={rejectDialog.dialogRef}
+                className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl"
+                role="dialog"
+                aria-modal="true"
+                aria-label="사용자 반려 확인"
+              >
                 <div className="flex items-center gap-2 border-b border-bd px-4 py-3 text-rose-700">
                   <AlertTriangle className="h-4 w-4" />
                   <h3 className="text-sm font-semibold">사용자 반려</h3>
@@ -477,9 +498,15 @@ export default function AdminUsersPage() {
             />
           )}
 
-          {/* ── §11.115 운영 정책 panel (selected user 시) ── */}
+          {/* ── §11.115 운영 정책 panel (selected user 시) §11.123 a11y ── */}
           {selectedUserId && (
-            <div className="fixed inset-x-0 bottom-0 lg:inset-auto lg:bottom-4 lg:right-4 lg:w-[400px] z-30 bg-pn border border-bd rounded-t-lg lg:rounded-lg shadow-xl">
+            <div
+              ref={policyDialog.dialogRef}
+              className="fixed inset-x-0 bottom-0 lg:inset-auto lg:bottom-4 lg:right-4 lg:w-[400px] z-30 bg-pn border border-bd rounded-t-lg lg:rounded-lg shadow-xl"
+              role="dialog"
+              aria-modal="true"
+              aria-label="운영 정책 편집"
+            >
               <div className="flex items-center justify-between border-b border-bd px-4 py-2.5">
                 <div className="flex items-center gap-2 text-slate-900">
                   <Settings2 className="h-4 w-4 text-blue-700" />
@@ -1033,6 +1060,12 @@ function InviteUserDialog({
   const [copied, setCopied] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  // §11.123 — dialog a11y (always open while mounted)
+  const dialog = useDialogA11y<HTMLDivElement>({
+    open: true,
+    onClose,
+  });
+
   const inviteMutation = useMutation({
     mutationFn: async () => {
       const res = await fetch("/api/admin/users/invite", {
@@ -1080,7 +1113,13 @@ function InviteUserDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl">
+      <div
+        ref={dialog.dialogRef}
+        className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="사용자 초대"
+      >
         <div className="flex items-center justify-between border-b border-bd px-4 py-3">
           <div className="flex items-center gap-2 text-slate-900">
             <UserPlus className="h-4 w-4 text-blue-700" />
