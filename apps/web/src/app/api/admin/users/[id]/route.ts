@@ -6,7 +6,7 @@ import { createAuditLog } from "@/lib/audit/audit-logger";
 import { AuditEventType } from "@prisma/client";
 
 /**
- * §11.117 #admin-user-approval-flow — reject (hard delete)
+ * §11.117 + §11.133 #admin-user-soft-delete
  *
  * DELETE /api/admin/users/[id]
  *
@@ -21,13 +21,14 @@ import { AuditEventType } from "@prisma/client";
  *   - 404 target not found
  *   - 200 success
  *
- * 부수효과:
- *   - User row delete (cascade — 모든 FK relation onDelete:Cascade)
- *   - AuditLog USER_DELETED (delete 전 metadata 캡처)
+ * 부수효과 (§11.133 정형화):
+ *   - User row 보존 + deletedAt set (soft delete) — cascade 회피, audit 추적
+ *     강화. getUsers helper 가 deletedAt IS NULL filter 자동 적용 → admin/users
+ *     list 에서 사라짐. auth.ts jwt callback 가 deletedAt truthy user OAuth 차단.
+ *   - AuditLog USER_DELETED (action="user_reject", deleted user metadata 보존)
  *
- * NOTE: 본 endpoint 는 hard delete. soft delete 트랙은 별도
- *   (`#admin-user-soft-delete`). pending user 외 active user 도 admin 이
- *   delete 가능하지만 audit 보존을 위해 운영자 신중 사용.
+ * NOTE: hard delete (§11.117 초기 버전) → soft delete (§11.133) 전환. email
+ * unique constraint 유지 — 같은 email 재 invite 는 별도 트랙.
  */
 
 export async function DELETE(
@@ -81,8 +82,12 @@ export async function DELETE(
       );
     }
 
-    // delete (cascade)
-    await db.user.delete({ where: { id: targetUserId } });
+    // §11.133 — soft delete: User row 보존 + deletedAt set
+    // (hard delete 가 아닌 audit 추적 강화)
+    await db.user.update({
+      where: { id: targetUserId },
+      data: { deletedAt: new Date() },
+    });
 
     // audit (delete 후에도 actor 의 audit log 는 남음)
     await createAuditLog({

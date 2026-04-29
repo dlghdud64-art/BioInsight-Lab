@@ -74,7 +74,8 @@ export async function getUsers(params?: {
   const { page = 1, limit = 20, search } = params || {};
   const skip = (page - 1) * limit;
 
-  const where: any = {};
+  // §11.133 — soft-deleted user 제외 (deletedAt: null filter)
+  const where: any = { deletedAt: null };
   if (search) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },

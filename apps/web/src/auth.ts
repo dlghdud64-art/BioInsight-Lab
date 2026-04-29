@@ -48,8 +48,18 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
               emailVerified: true,
               name: true,
               image: true,
+              deletedAt: true,
             },
           });
+
+          // §11.133 — soft-deleted user OAuth 차단
+          if (dbUser?.deletedAt) {
+            console.warn(
+              "[auth] OAuth attempted by soft-deleted user — refusing token",
+              { email: user.email, deletedAt: dbUser.deletedAt },
+            );
+            return token; // token.id / token.role 미설정 → session 무효
+          }
 
           if (dbUser) {
             token.id = dbUser.id;

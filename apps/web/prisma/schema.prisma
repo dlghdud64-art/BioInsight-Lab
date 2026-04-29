@@ -134,6 +134,9 @@ model User {
   defaultLocation  String? // 기본 입고 위치 (예: "제1R&D센터 중앙창고")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  // §11.133 #admin-user-soft-delete — soft delete marker. null=active,
+  // truthy=반려/삭제. getUsers filter + auth.ts OAuth 차단 동시 적용.
+  deletedAt     DateTime?
 
   // NextAuth 관?
   accounts Account[]

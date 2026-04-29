@@ -94,10 +94,12 @@ describe("/api/admin/users/[id] DELETE endpoint — reject (§11.117)", () => {
     );
   });
 
-  it("db.user.delete 호출", () => {
+  it("§11.133 soft delete: db.user.update + deletedAt set (hard delete 회귀 차단)", () => {
     if (!existsSync(ROUTE_PATH)) return;
     const source = readFileSync(ROUTE_PATH, "utf8");
-    expect(source).toMatch(/db\.user\.delete|user\.delete/);
+    // §11.133 — db.user.update 로 deletedAt set (hard delete 가 아닌 soft delete)
+    expect(source).toMatch(/db\.user\.update|user\.update/);
+    expect(source).toMatch(/deletedAt:\s*new Date|deletedAt:\s*now/);
   });
 
   it("USER_DELETED audit event", () => {
