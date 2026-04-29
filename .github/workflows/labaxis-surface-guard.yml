@@ -77,19 +77,22 @@ jobs:
           chmod +x scripts/check-frontend-page-entry-coverage.sh
           scripts/check-frontend-page-entry-coverage.sh
 
-      - name: Run LabAxis API Orphan Caller Guard (advisory)
+      - name: Run LabAxis API Orphan Caller Guard (block)
         # §11.103 — §11.60 의 inverse. frontend caller fetch URL 이 backend
-        # route.ts 와 매치 안 되는 silent 404 회귀 자동 catch. §11.104 fix
-        # 후 violations 0. block 전환 가능한 상태.
+        # route.ts 와 매치 안 되는 silent 404 회귀 자동 catch.
+        # §11.104 fix 후 violations 0 도달. §11.112 block mode 전환.
+        env:
+          LABAXIS_API_ORPHAN_CALLER_BLOCK: "1"
         run: |
           chmod +x scripts/check-api-orphan-caller.sh
           scripts/check-api-orphan-caller.sh
 
-      - name: Run LabAxis Tailwind Dark Class Ban Guard (advisory)
+      - name: Run LabAxis Tailwind Dark Class Ban Guard (block)
         # §11.105 — §11.45 inline-hex 의 inverse 표현 형태. Tailwind class
-        # 형태의 다크 잔재 (`bg-pg`, `bg-{color}-950`) 회귀 차단. 첫 run
-        # baseline 96 violations — 점진 cleanup 트랙들로 줄인 후
-        # LABAXIS_TAILWIND_DARK_BLOCK=1 전환.
+        # 다크 잔재 (`bg-pg`, `bg-{color}-950`) 회귀 차단.
+        # §11.110 + §11.111 sweep 후 violations 0 도달. §11.112 block 전환.
+        env:
+          LABAXIS_TAILWIND_DARK_BLOCK: "1"
         run: |
           chmod +x scripts/check-no-tailwind-dark-class.sh
           scripts/check-no-tailwind-dark-class.sh
