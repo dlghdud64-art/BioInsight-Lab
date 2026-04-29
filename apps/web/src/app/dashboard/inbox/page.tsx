@@ -649,6 +649,35 @@ function ContextPanel({
 
   return (
     <div className="hidden lg:block w-[320px] flex-shrink-0 bg-pn border-l border-bd sticky top-0 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
+      {/* §11.145 Brief header — 운영 브리핑 + 선택한 작업 (lock §11.142) */}
+      <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 작업</span>
+      </div>
+
+      {/* §11.145 4 preset chips — anchor jump to brief sections */}
+      <div className="px-4 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
+        {[
+          { id: "summary", label: "상태 요약" },
+          { id: "facts",   label: "차단 사유" },
+          { id: "risks",   label: "위험도" },
+          { id: "next",    label: "다음 단계" },
+        ].map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const el = document.getElementById(`brief-${c.id}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
       <div className="p-4 space-y-4">
         {/* Header */}
         <div className="flex items-start justify-between">
@@ -673,12 +702,17 @@ function ContextPanel({
           </button>
         </div>
 
-        {/* Summary */}
-        <p className="text-xs text-slate-400 leading-relaxed">
-          {item.summary}
-        </p>
+        {/* § 1. 상황 요약 — summary */}
+        <section id="brief-summary" className="scroll-mt-4">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            {item.summary}
+          </p>
+        </section>
 
-        {/* Priority + Due */}
+        {/* § 2. 핵심 근거 — Priority + Due */}
+        <section id="brief-facts" className="scroll-mt-4">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">핵심 근거</div>
         <div className="flex items-center gap-2">
           <span
             className={cn(
@@ -697,6 +731,7 @@ function ContextPanel({
             {item.dueState.label}
           </span>
         </div>
+        </section>
 
         {/* Owner + Assignment State */}
         <div className="text-xs space-y-1">
@@ -724,10 +759,16 @@ function ContextPanel({
           })()}
         </div>
 
-        {/* Blocker details — structured resolution */}
+        {/* § 3. 리스크 — Blocker details (structured resolution) */}
+        <section id="brief-risks" className="scroll-mt-4">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">리스크</div>
         {(() => {
           const blockers = buildInboxItemBlockers(item);
-          if (blockers.length === 0) return null;
+          if (blockers.length === 0) {
+            return (
+              <p className="text-[11px] text-slate-500">차단 없음</p>
+            );
+          }
           return (
             <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-2">
               <div className="flex items-center gap-1.5 mb-1">
@@ -759,7 +800,7 @@ function ContextPanel({
 
         {/* Risk badges */}
         {item.riskBadges.length > 0 && (
-          <div className="flex flex-wrap gap-1">
+          <div className="flex flex-wrap gap-1 mt-2">
             {item.riskBadges.map((badge) => (
               <span
                 key={badge}
@@ -770,12 +811,15 @@ function ContextPanel({
             ))}
           </div>
         )}
+        </section>
 
-        {/* Next action */}
-        <div className="text-xs">
-          <span className="text-slate-500">다음 조치: </span>
-          <span className="text-blue-400">{item.nextAction}</span>
-        </div>
+        {/* § 4. 다음 조치 — next action + CTA */}
+        <section id="brief-next" className="scroll-mt-4">
+          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
+          <div className="text-xs">
+            <span className="text-blue-600">{item.nextAction}</span>
+          </div>
+        </section>
 
         {/* Action buttons */}
         <div className="space-y-2 pt-2">

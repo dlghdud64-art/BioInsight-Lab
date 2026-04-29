@@ -396,8 +396,37 @@ export function InventoryContextPanel({
     <div
       className={`w-[420px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
     >
+      {/* §11.146 Brief header — 운영 브리핑 + 선택한 재고 (lock §11.142) */}
+      <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-el flex items-center justify-between">
+        <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+        <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
+      </div>
+
+      {/* §11.146 4 preset chips — anchor jump */}
+      <div className="px-5 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
+        {[
+          { id: "summary", label: "상태 요약" },
+          { id: "facts",   label: "보유량" },
+          { id: "risks",   label: "리스크" },
+          { id: "next",    label: "재발주" },
+        ].map((c) => (
+          <button
+            key={c.id}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const el = document.getElementById(`brief-${c.id}`);
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-el border-b border-bd px-5 py-4">
+      <div className="bg-el border-b border-bd px-5 py-4">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -436,10 +465,24 @@ export function InventoryContextPanel({
         </div>
       </div>
 
-      <div className="px-5 py-4 space-y-5">
-        {/* ── A. Basic Info ── */}
+      {/* § 1. 상황 요약 — resolver-derived 1-line */}
+      <section id="brief-summary" className="px-5 py-3 border-b border-bd/50 scroll-mt-4">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
+        <p className="text-xs text-slate-700 leading-relaxed">
+          {item.currentQuantity === 0
+            ? "재고 소진 — 즉시 재발주 필요"
+            : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
+              ? `안전재고 미달 (${item.currentQuantity}/${item.safetyStock} ${item.unit}) — 재발주 검토`
+              : risks.length > 0
+                ? `${risks.length}건 운영 리스크 — 검토 필요`
+                : "안정 — 운영 정상"}
+        </p>
+      </section>
+
+      <div id="brief-facts" className="px-5 py-4 space-y-5 scroll-mt-4">
+        {/* ── § 2. 핵심 근거 — A. Basic Info ── */}
         <section>
-          <SectionHeader icon={Package} label="기본 정보" />
+          <SectionHeader icon={Package} label="핵심 근거" />
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2.5">
             <InfoRow label="현재 수량">
               <span
@@ -549,7 +592,8 @@ export function InventoryContextPanel({
         {/* ── C. Operational Risk ── */}
         {risks.length > 0 && (
           <section>
-            <SectionHeader icon={AlertTriangle} label="운영 리스크" count={risks.length} />
+            <span id="brief-risks" className="scroll-mt-4" />
+            <SectionHeader icon={AlertTriangle} label="리스크 — 운영 리스크" count={risks.length} />
             <div className="mt-2.5 space-y-2">
               {risks.map((risk, idx) => (
                 <div
@@ -724,8 +768,9 @@ export function InventoryContextPanel({
         </section>
       </div>
 
-      {/* Sticky footer actions — state-based primary action */}
-      <div className="sticky bottom-0 bg-el border-t border-bd px-5 py-3">
+      {/* § 4. 다음 조치 — Sticky footer actions (state-based primary action) */}
+      <div id="brief-next" className="sticky bottom-0 bg-el border-t border-bd px-5 py-3 scroll-mt-4">
+        <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
         {(() => {
           // 상태별 primary action 차등 노출
           const isLow = item.safetyStock !== null && item.currentQuantity <= item.safetyStock;

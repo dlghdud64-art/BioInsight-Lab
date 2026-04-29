@@ -926,6 +926,35 @@ function QuotesPageContent() {
 
         return (
         <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
+          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142) */}
+          <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
+            <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
+          </div>
+
+          {/* §11.144 4 preset chips — anchor jump to brief sections */}
+          <div className="px-4 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
+            {[
+              { id: "summary", label: "상태 요약" },
+              { id: "facts",   label: "회신 현황" },
+              { id: "facts2",  label: "비교 진행" },
+              { id: "next",    label: "발주 전환" },
+            ].map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const el = document.getElementById(`brief-${c.id}`);
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
           {/* A. Rail header */}
           <div className="px-4 py-3 border-b border-bd bg-el/50">
             <div className="flex items-center justify-between mb-1">
@@ -950,9 +979,15 @@ function QuotesPageContent() {
           {/* Rail scrollable body */}
           <div className="flex-1 overflow-y-auto">
 
-          {/* B. Operating summary — 5 canonical fields */}
-          <div className="px-4 py-3 border-b border-bd/50">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">운영 요약</div>
+          {/* § 1. 상황 요약 — resolver-derived 1-line + AI rec */}
+          <section id="brief-summary" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
+            <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
+          </section>
+
+          {/* § 2. 핵심 근거 — was 운영 요약 (5 canonical fields) */}
+          <div id="brief-facts" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">핵심 근거</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>
@@ -962,8 +997,8 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* C. Response / Compare snapshot — response delta 강화 */}
-          <div className="px-4 py-3 border-b border-bd/50">
+          {/* § 2 cont. 핵심 근거 (회신/비교) — response delta */}
+          <div id="brief-facts2" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 · 비교 현황</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs">
@@ -1068,9 +1103,31 @@ function QuotesPageContent() {
             </div>
           </div>
 
-          {/* E. Decision summary + AI */}
+          {/* § 3. 리스크 — 차단/위험 + 만료 임박 */}
+          <section id="brief-risks" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">리스크</div>
+            <div className="space-y-1">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">차단/위험</span>
+                <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-amber-600 font-medium"}>{selectedSignals.blocker}</span>
+              </div>
+              {sqDaysToDeadline !== null && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-slate-400">납기 잔여</span>
+                  <span className={sqDaysToDeadline < 0 ? "text-rose-600 font-medium" : sqDaysToDeadline <= 3 ? "text-amber-600" : "text-slate-700"}>
+                    {sqDaysToDeadline < 0 ? `${Math.abs(sqDaysToDeadline)}일 초과` : `${sqDaysToDeadline}일`}
+                  </span>
+                </div>
+              )}
+              {sqDelayed && (
+                <p className="text-[11px] text-amber-600 mt-1">⚠ 회신 지연 — 재요청 권장</p>
+              )}
+            </div>
+          </section>
+
+          {/* (was E. Decision summary + AI) — § 1 상황 요약 의 AI 판단 보조 */}
           <div className="px-4 py-3 border-b border-bd/50">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">판단 요약</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">AI 판단</div>
             <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
             {selectedSignals.aiRecommendation && (
               <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-1.5">
@@ -1079,16 +1136,16 @@ function QuotesPageContent() {
             )}
           </div>
 
-          {/* F. 다음 단계 연결 */}
-          <div className="px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">연결 작업</div>
+          {/* § 4. 다음 조치 — 연결 작업 + 발주 전환 정보 */}
+          <section id="brief-next" className="px-4 py-3 scroll-mt-4">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
               <div className="flex justify-between text-xs"><span className="text-slate-400">승인 정책</span><span className="text-slate-500">없음</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className="text-slate-500">불필요</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
-          </div>
+          </section>
 
           {/* §11.55 — G-pre "공급사 회신 견적서 등록" 블록 제거.
               backend (`/api/quotes/[id]/attach-document`) 미구현으로
