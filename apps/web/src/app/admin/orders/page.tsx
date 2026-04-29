@@ -129,6 +129,9 @@ export default function AdminOrdersPage() {
   const [expiryDate, setExpiryDate] = useState("");
   const [location, setLocation] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
+  // §11.102 — bulk transition state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkNextStatus, setBulkNextStatus] = useState<OrderStatus | "">("");
 
   const { data, isLoading, isError, refetch, isFetching } = useQuery<{
     orders: OrderRow[];
@@ -186,6 +189,59 @@ export default function AdminOrdersPage() {
     onError: (err: Error) => {
       toast({
         title: "상태 전환 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // §11.102 — bulk transition mutation
+  const bulkStatusMutation = useMutation({
+    mutationFn: async (vars: {
+      orderIds: string[];
+      status: OrderStatus;
+    }) => {
+      const res = await csrfFetch(`/api/admin/orders/bulk-status`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderIds: vars.orderIds,
+          status: vars.status,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || "일괄 전환 실패");
+      }
+      return res.json() as Promise<{
+        successCount: number;
+        failedItems: Array<{ orderId: string; error: string }>;
+      }>;
+    },
+    onSuccess: (result) => {
+      const failedCount = result.failedItems.length;
+      if (failedCount === 0) {
+        toast({
+          title: "일괄 전환 완료",
+          description: `${result.successCount}건 처리됨`,
+        });
+      } else {
+        toast({
+          title: "부분 성공",
+          description: `${result.successCount}건 성공, ${failedCount}건 실패. 실패 항목: ${result.failedItems
+            .slice(0, 3)
+            .map((f) => f.orderId.slice(0, 8))
+            .join(", ")}${failedCount > 3 ? " 외" : ""}`,
+          variant: failedCount > result.successCount ? "destructive" : "default",
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+      setSelectedIds(new Set());
+      setBulkNextStatus("");
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "일괄 전환 실패",
         description: err.message,
         variant: "destructive",
       });
@@ -297,10 +353,85 @@ export default function AdminOrdersPage() {
               </p>
             </div>
           ) : (
-            <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+            <>
+              {/* §11.102 — bulk action bar (selectedIds 가 있을 때만 노출) */}
+              {selectedIds.size > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center gap-3 flex-wrap">
+                  <span className="text-sm font-bold text-blue-900">
+                    선택 {selectedIds.size}개
+                  </span>
+                  <Select
+                    value={bulkNextStatus}
+                    onValueChange={(v) => setBulkNextStatus(v as OrderStatus)}
+                  >
+                    <SelectTrigger className="h-8 w-[160px] text-xs bg-white">
+                      <SelectValue placeholder="다음 상태 선택" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(["CONFIRMED", "SHIPPING", "DELIVERED", "CANCELLED"] as OrderStatus[]).map((s) => (
+                        <SelectItem key={s} value={s}>
+                          {STATUS_LABEL[s]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={!bulkNextStatus || bulkStatusMutation.isPending}
+                    onClick={() => {
+                      if (!bulkNextStatus) return;
+                      bulkStatusMutation.mutate({
+                        orderIds: Array.from(selectedIds),
+                        status: bulkNextStatus,
+                      });
+                    }}
+                  >
+                    {bulkStatusMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                        처리 중
+                      </>
+                    ) : (
+                      "일괄 전환"
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-8 text-xs text-blue-700 hover:bg-blue-100 ml-auto"
+                    onClick={() => {
+                      setSelectedIds(new Set());
+                      setBulkNextStatus("");
+                    }}
+                  >
+                    선택 해제
+                  </Button>
+                </div>
+              )}
+
+              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
+                    {/* §11.102 — header checkbox: select-all (현재 보이는 row 만) */}
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 cursor-pointer accent-blue-600"
+                        checked={
+                          orders.length > 0 &&
+                          orders.every((o) => selectedIds.has(o.id))
+                        }
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIds(new Set(orders.map((o) => o.id)));
+                          } else {
+                            setSelectedIds(new Set());
+                          }
+                        }}
+                      />
+                    </TableHead>
                     <TableHead className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
                       Order Number
                     </TableHead>
@@ -327,8 +458,29 @@ export default function AdminOrdersPage() {
                 <TableBody>
                   {orders.map((order) => {
                     const canTransition = NEXT_STATES[order.status].length > 0;
+                    const isSelected = selectedIds.has(order.id);
                     return (
-                      <TableRow key={order.id} className="hover:bg-slate-50/50">
+                      <TableRow
+                        key={order.id}
+                        className={`hover:bg-slate-50/50 ${isSelected ? "bg-blue-50/40" : ""}`}
+                      >
+                        {/* §11.102 — row checkbox */}
+                        <TableCell className="w-10">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 cursor-pointer accent-blue-600"
+                            checked={isSelected}
+                            disabled={!canTransition}
+                            onChange={(e) => {
+                              setSelectedIds((prev) => {
+                                const next = new Set(prev);
+                                if (e.target.checked) next.add(order.id);
+                                else next.delete(order.id);
+                                return next;
+                              });
+                            }}
+                          />
+                        </TableCell>
                         <TableCell className="font-mono text-sm font-semibold text-slate-900">
                           {order.orderNumber}
                         </TableCell>
@@ -385,7 +537,8 @@ export default function AdminOrdersPage() {
                   })}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+            </>
           )}
         </div>
       </div>
