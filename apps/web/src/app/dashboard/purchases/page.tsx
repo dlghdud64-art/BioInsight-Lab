@@ -16,6 +16,7 @@ import Link from "next/link";
 import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 import type {
   PurchaseConversionItem,
@@ -161,6 +162,11 @@ export default function PurchasesPage() {
           .join(", ") + (n > 3 ? ` 외 ${n - 3}건` : ""),
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+      // §11.158 cache-bust — bulk-PO 직후 영향 quote brief 모두 invalidate
+      for (const r of data.data.results) {
+        invalidateBriefNarrative({ quoteId: r.quoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
+        invalidateBriefNarrative({ quoteId: r.quoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
+      }
     },
     onError: (err: Error) => {
       toast({
@@ -206,12 +212,14 @@ export default function PurchasesPage() {
     },
     onSuccess: (data: {
       data: { rationale: string[]; fromCache: boolean; aiModel: string | null };
-    }) => {
+    }, vars) => {
       toast({
         title: data.data.fromCache ? "AI 근거 (캐시)" : "AI 근거 생성 완료",
         description: data.data.rationale.join(" · "),
       });
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+      // §11.158 cache-bust — rationale update 후 brief stale
+      invalidateBriefNarrative({ quoteId: vars.quoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
     },
     onError: (err: Error) => {
       toast({
@@ -244,8 +252,11 @@ export default function PurchasesPage() {
       }
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+      // §11.158 cache-bust — selectedReplyId 변경은 두 surface narrative 모두 stale
+      invalidateBriefNarrative({ quoteId: vars.quoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
+      invalidateBriefNarrative({ quoteId: vars.quoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
     },
     onError: (err: Error) => {
       toast({

@@ -25,6 +25,7 @@ import {
   type ConsoleMode,
 } from "@/lib/work-queue/console-v1-productization";
 import { TYPOGRAPHY, SPACING, SURFACE } from "@/lib/work-queue/console-visual-grammar";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 // Extracted components
 import { ConsoleEmptyState } from "./console/console-empty-state";
@@ -122,14 +123,24 @@ export function WorkQueueConsole() {
 
   const handleCtaClick = (item: GroupedItem) => {
     if (item.primaryCtaActionId) {
-      executeOps.mutate({ actionId: item.primaryCtaActionId, itemId: item.id });
+      executeOps.mutate({ actionId: item.primaryCtaActionId, itemId: item.id }, {
+        onSuccess: () => {
+          // §11.158 cache-bust — work queue task 상태 변경 narrative stale
+          invalidateBriefNarrative({ workQueueTaskId: item.id, module: "work_queue", sourceUpdatedAt: new Date() });
+        },
+      });
     } else {
       navigateToEntity(router, item);
     }
   };
 
   const handleAssignmentAction = (itemId: string, action: string) => {
-    assignmentAction.mutate({ itemId, action });
+    assignmentAction.mutate({ itemId, action }, {
+      onSuccess: () => {
+        // §11.158 cache-bust — assignment 상태 변경 narrative stale
+        invalidateBriefNarrative({ workQueueTaskId: itemId, module: "work_queue", sourceUpdatedAt: new Date() });
+      },
+    });
   };
 
   const isPending = executeOps.isPending || assignmentAction.isPending;

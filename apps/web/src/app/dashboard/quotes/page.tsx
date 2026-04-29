@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -416,6 +417,9 @@ function QuotesPageContent() {
     if (selectedQuoteId) {
       queryClient.invalidateQueries({ queryKey: ["quote", selectedQuoteId] });
       queryClient.invalidateQueries({ queryKey: ["vendor-requests", selectedQuoteId] });
+      // §11.158 cache-bust — vendor request 발송 직후 brief stale (quote_detail + purchase_conversion)
+      invalidateBriefNarrative({ quoteId: selectedQuoteId, module: "quote_detail", sourceUpdatedAt: new Date() });
+      invalidateBriefNarrative({ quoteId: selectedQuoteId, module: "purchase_conversion", sourceUpdatedAt: new Date() });
     }
     setActiveWorkWindow(null);
   }, [queryClient, selectedQuoteId]);

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { csrfFetch } from "@/lib/api-client";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -2464,6 +2465,8 @@ function InventoryPageContent() {
             onClose={() => setContextPanelItem(null)}
             onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
             onReorder={(cpItem) => {
+              // §11.158 cache-bust — reorder 진입 시 inventory brief stale
+              invalidateBriefNarrative({ inventoryId: cpItem.id, module: "inventory", sourceUpdatedAt: new Date() });
               const match = displayInventories.find((inv) => inv.id === cpItem.id);
               if (match) {
                 aiPanel.preparePanel({

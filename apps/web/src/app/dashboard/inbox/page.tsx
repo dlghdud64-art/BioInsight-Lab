@@ -20,6 +20,7 @@ import {
 } from "@/lib/ops-console/inbox-adapter";
 import { cn } from "@/lib/utils";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import {
   AlertTriangle,
   ChevronDown,
@@ -254,6 +255,9 @@ export default function InboxPage() {
       const quickAction = buildInboxQuickAction(item, store);
       if (quickAction && !quickAction.requiresDetail && quickAction.onExecute) {
         quickAction.onExecute();
+        // §11.158 cache-bust — quickAction 실행 후 inbox + work_queue brief stale
+        invalidateBriefNarrative({ workQueueTaskId: item.id, module: "inbox", sourceUpdatedAt: new Date() });
+        invalidateBriefNarrative({ workQueueTaskId: item.id, module: "work_queue", sourceUpdatedAt: new Date() });
         store.refreshInbox();
         setSelectedItemId(null);
       } else if (quickAction?.requiresDetail && quickAction.detailRoute) {
