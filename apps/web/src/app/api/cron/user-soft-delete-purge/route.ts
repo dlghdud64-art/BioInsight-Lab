@@ -62,6 +62,9 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    // §11.141 — fail alert: errors 가 발생하면 critical AuditLog
+    // (action=auto_purge_failed) 추가 + console.error. admin/audit 페이지에서
+    // 발견 가능. email/Slack 알림은 별도 트랙.
     let purgedCount = 0;
     const errors: { userId: string; error: string }[] = [];
 
@@ -92,6 +95,33 @@ export async function GET(request: NextRequest) {
           userId: user.id,
           error: err instanceof Error ? err.message : "delete failed",
         });
+      }
+    }
+
+    // §11.141 — purge 실패 발생 시 critical alert audit log + console.error
+    if (errors.length > 0) {
+      console.error(
+        "[cron/user-soft-delete-purge] FAIL ALERT — purge errors detected",
+        { failedCount: errors.length, errors },
+      );
+      try {
+        await createAuditLog({
+          eventType: AuditEventType.USER_DELETED,
+          entityType: "User",
+          action: "auto_purge_failed",
+          metadata: {
+            cutoff: cutoff.toISOString(),
+            candidatesFound: candidates.length,
+            purgedCount,
+            failedCount: errors.length,
+            failedSample: errors.slice(0, 5),
+            cronRunAt: new Date().toISOString(),
+          },
+          success: false,
+          errorMessage: `purge cron 부분 실패 — ${errors.length} 명 미처리`,
+        });
+      } catch (auditErr) {
+        console.error("[cron/user-soft-delete-purge] alert audit log 실패", auditErr);
       }
     }
 
