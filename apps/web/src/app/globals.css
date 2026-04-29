@@ -212,6 +212,16 @@ div.quote-table td.no-column-cell {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  /* §11.127 #focus-visible-style — 키보드 사용자 visual cue (WCAG 2.4.7).
+     mouse 사용자에게는 :focus-visible 자동 무시 (browser default).
+     specificity 1 — shadcn/ui 의 .button:focus-visible:ring-* (specificity 2)
+     가 우선 적용 (개별 컴포넌트 스타일 보존). LabAxis 표준 blue-600 accent. */
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+  }
+
   * {
     font-family: inherit;
   }
