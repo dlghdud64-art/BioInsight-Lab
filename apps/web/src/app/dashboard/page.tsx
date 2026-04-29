@@ -180,6 +180,19 @@ export default function DashboardPage() {
     monthOverMonthChange: parseFloat(rawStats.monthOverMonthChange ?? "0"),
     // §11.94 — week 단위 trend (stats endpoint 신규 metric)
     weekOverWeekChange: parseFloat(rawStats.weekOverWeekChange ?? "0"),
+    // §11.107 — DashboardStatsSnapshot 기반 trend (3 KPI delta).
+    // null = snapshot 부재 (cron 미실행 또는 24h 미경과) → KpiCard chip 미노출.
+    trend: (rawStats.trend ?? {
+      processingDelta: null,
+      pendingApprovalDelta: null,
+      anomalyDelta: null,
+      lookupAt: null,
+    }) as {
+      processingDelta: number | null;
+      pendingApprovalDelta: number | null;
+      anomalyDelta: number | null;
+      lookupAt: string | null;
+    },
     monthlySpendingChart: (rawStats.monthlySpending ?? []) as Array<{ month: string; amount: number }>,
     // §11.85 — categorySpending 은 dashboard/stats endpoint 가 이미 derive
     // 하고 있던 unused field. PRODUCT_CATEGORIES 매핑은 컴포넌트 내부에서.
@@ -473,6 +486,19 @@ export default function DashboardPage() {
         deltas={{
           monthOverMonthChange: stats.monthOverMonthChange,
           weekOverWeekChange: stats.weekOverWeekChange,
+          // §11.107 — snapshot trend forward (null 시 chip 미노출)
+          processingDelta:
+            stats.trend.processingDelta !== null
+              ? { value: stats.trend.processingDelta, period: "day" }
+              : undefined,
+          pendingApprovalDelta:
+            stats.trend.pendingApprovalDelta !== null
+              ? { value: stats.trend.pendingApprovalDelta, period: "day" }
+              : undefined,
+          anomalyDelta:
+            stats.trend.anomalyDelta !== null
+              ? { value: stats.trend.anomalyDelta, period: "day" }
+              : undefined,
         }}
       />
 

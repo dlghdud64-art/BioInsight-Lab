@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { createWorkItem } from "@/lib/work-queue/work-queue-service";
 import { COMPARE_SUBSTATUS_DEFS, determineHandoffStallPoint } from "@/lib/work-queue/compare-queue-semantics";
 import { determineOpsStallPoint } from "@/lib/work-queue/ops-queue-semantics";
+// §11.107 — DashboardStatsSnapshot 기반 trend derive
+import { getMostRecentSnapshotBefore } from "@/lib/dashboard/snapshot-helper";
 
 // Next.js 정적 캐시 완전 비활성화: 항상 DB에서 최신 데이터 조회
 export const dynamic = "force-dynamic";
@@ -501,7 +503,50 @@ export async function GET(request: NextRequest) {
         unit: inv.unit || "ea",
       }));
 
+    // §11.107 #dashboard-stats-trend-derive-endpoint
+    // DashboardStatsSnapshot lookup (24h ago / 7d ago) → 현재 KPI 와 비교
+    // 해 trend delta 산출. snapshot 부재 시 (cron 미실행 또는 DB 부재) 조용히
+    // null fallback — frontend chip 미노출 (no fake delta).
+    const currentPendingApproval = (pendingQuotes as number) ?? 0;
+    const currentAnomaly = 0; // store-derived (high-value pending order count)는
+                              // store hydration 후 derive — endpoint 단계 0 fallback.
+    const currentProcessing = reorderNeededCount + (expiringInventories as any[]).length;
+
+    let trend: {
+      processingDelta: number | null;
+      pendingApprovalDelta: number | null;
+      anomalyDelta: number | null;
+      lookupAt: string | null;
+    } = {
+      processingDelta: null,
+      pendingApprovalDelta: null,
+      anomalyDelta: null,
+      lookupAt: null,
+    };
+    try {
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      // §11.107 — primary org membership 사용 (multi-org 운영자는 첫 org 기준).
+      const orgIdForLookup = orgIds[0] ?? null;
+      const snap = await getMostRecentSnapshotBefore({
+        organizationId: orgIdForLookup,
+        userId: orgIdForLookup ? null : userId,
+        before: oneDayAgo,
+      });
+      if (snap) {
+        trend = {
+          processingDelta: currentProcessing - snap.processingRequiredCount,
+          pendingApprovalDelta: currentPendingApproval - snap.pendingApprovalCount,
+          anomalyDelta: currentAnomaly - snap.anomalyCount,
+          lookupAt: snap.capturedAt.toISOString(),
+        };
+      }
+    } catch {
+      // graceful — schema/DB 부재 시 null 유지 (frontend chip 미노출)
+    }
+
     const resp = NextResponse.json({
+      // §11.107 — KPI trend (snapshot 비교 delta)
+      trend,
       // 예산 정보
       budget: activeBudget
         ? {

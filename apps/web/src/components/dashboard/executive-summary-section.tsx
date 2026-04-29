@@ -475,6 +475,17 @@ export function ExecutiveSummarySection({
             { label: "승인 대기", value: `${kpis.pendingApprovalCount}건` },
             { label: "이상 신호", value: `${kpis.anomalyCount}건` },
           ]}
+          /* §11.107/§11.108 — processingDelta chip (snapshot 24h 비교).
+             증가 = negative tone (운영 부담 ↑). 감소 = positive (해소). */
+          delta={
+            deltas?.processingDelta && deltas.processingDelta.value !== 0
+              ? {
+                  text: `${deltas.processingDelta.value > 0 ? "+" : ""}${deltas.processingDelta.value}건`,
+                  direction: deltas.processingDelta.value > 0 ? "up" : "down",
+                  tone: deltas.processingDelta.value > 0 ? "negative" : "positive",
+                }
+              : undefined
+          }
         />
         <KpiCard
           icon={<ClipboardList className="h-3.5 w-3.5" />}
@@ -498,6 +509,17 @@ export function ExecutiveSummarySection({
                   : "—",
             },
           ]}
+          /* §11.107/§11.108 — pendingApprovalDelta chip (snapshot 24h 비교).
+             증가 = negative (운영자 처리 부담 ↑). 감소 = positive (해소). */
+          delta={
+            deltas?.pendingApprovalDelta && deltas.pendingApprovalDelta.value !== 0
+              ? {
+                  text: `${deltas.pendingApprovalDelta.value > 0 ? "+" : ""}${deltas.pendingApprovalDelta.value}건`,
+                  direction: deltas.pendingApprovalDelta.value > 0 ? "up" : "down",
+                  tone: deltas.pendingApprovalDelta.value > 0 ? "negative" : "positive",
+                }
+              : undefined
+          }
         />
         <KpiCard
           icon={<TrendingDown className="h-3.5 w-3.5" />}
@@ -569,6 +591,17 @@ export function ExecutiveSummarySection({
               value: `${orders.filter((o) => o.totalAmount > 5_000_000 && o.status !== "completed" && o.status !== "cancelled").length}건`,
             },
           ]}
+          /* §11.107/§11.108 — anomalyDelta chip (snapshot 24h 비교).
+             증가 = negative (위험 신호 ↑). 감소 = positive (해소). */
+          delta={
+            deltas?.anomalyDelta && deltas.anomalyDelta.value !== 0
+              ? {
+                  text: `${deltas.anomalyDelta.value > 0 ? "+" : ""}${deltas.anomalyDelta.value}건`,
+                  direction: deltas.anomalyDelta.value > 0 ? "up" : "down",
+                  tone: deltas.anomalyDelta.value > 0 ? "negative" : "positive",
+                }
+              : undefined
+          }
         />
       </div>
 
