@@ -3,6 +3,7 @@
 export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
+import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -1181,6 +1182,39 @@ function QuotesPageContent() {
       })()}
 
       </div>{/* end flex container */}
+
+      {/* §11.155 모바일 변종 — desktop rail (hidden lg:flex) 와 mutually exclusive */}
+      {selectedQuote && selectedSignals && (
+        <MobileOperationalBriefSheet
+          open={!!selectedQuote}
+          onClose={() => closeQuoteContextRail("x_button")}
+          objectLabel="선택한 견적"
+          chips={[
+            { id: "summary", label: "상태 요약" },
+            { id: "facts",   label: "회신 현황" },
+            { id: "risks",   label: "리스크" },
+            { id: "next",    label: "발주 전환" },
+          ]}
+          summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>}
+          facts={
+            <div className="space-y-1 text-xs">
+              <div className="flex justify-between"><span className="text-slate-400">현재 상태</span><span className="font-medium">{selectedSignals.status}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">다음 액션</span><span>{selectedSignals.nextAction}</span></div>
+              <div className="flex justify-between"><span className="text-slate-400">수신 견적</span><span>{(selectedQuote.responses?.length ?? 0)}건</span></div>
+            </div>
+          }
+          risks={
+            <p className={`text-xs ${selectedSignals.blocker === "차단 없음" ? "text-emerald-700" : "text-amber-700"}`}>
+              {selectedSignals.blocker}
+            </p>
+          }
+          next={<p className="text-xs text-slate-700">{selectedSignals.handoffTarget}</p>}
+          primaryCta={selectedSignals.actionKey ? {
+            label: selectedSignals.railCtaLabel,
+            onClick: () => { setActiveWorkWindow(selectedSignals.actionKey); },
+          } : undefined}
+        />
+      )}
 
       {/* ═══ 견적 발송 워크벤치 (request_send) ═══ */}
       {activeWorkWindow === "request_send" && selectedQuote && (

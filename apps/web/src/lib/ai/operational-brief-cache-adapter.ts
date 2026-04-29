@@ -41,18 +41,80 @@ class InMemoryBackend implements BriefCacheBackend {
   }
 }
 
+/** KV entry 의 TTL — narrative 캐시 라이프사이클 안전 상한 (15분). */
+const KV_TTL_SECONDS = 15 * 60;
+
+/** Vercel KV 가 설치되었을 때 (`@vercel/kv`) 사용하는 adapter. dynamic import 로 lazy load. */
+class VercelKvBackend implements BriefCacheBackend {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(private readonly kv: any, private readonly prefix = "ob:") {}
+
+  private k(key: string) {
+    return `${this.prefix}${key}`;
+  }
+
+  async get(key: string) {
+    try {
+      const raw = await this.kv.get(this.k(key));
+      if (!raw) return null;
+      // KV 는 JSON 자동 직렬화 — 문자열 또는 object 모두 처리
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      return parsed as { narrative: string; sourceUpdatedAtMs: number; createdAt: number };
+    } catch {
+      return null;
+    }
+  }
+
+  async set(key: string, value: { narrative: string; sourceUpdatedAtMs: number; createdAt: number }) {
+    try {
+      await this.kv.set(this.k(key), JSON.stringify(value), { ex: KV_TTL_SECONDS });
+    } catch {
+      // KV 실패 시 silent — caller 는 다음 요청에 재시도
+    }
+  }
+
+  async delete(key: string) {
+    try {
+      await this.kv.del(this.k(key));
+    } catch {
+      // ignore
+    }
+  }
+
+  async size(): Promise<number> {
+    // KV 는 SCAN 지원하나 비용/정확도 trade-off — admin metric 용도이므로 -1 반환 (unknown)
+    return -1;
+  }
+
+  async clear() {
+    // KV 전체 clear 는 위험 + 비용 큰 작업 — 제공 X. 운영자는 prefix 별 SCAN+DEL 운영도구 사용.
+    // 미구현은 의도적 — `clear()` 가 prod 에서 호출되면 안 됨.
+  }
+}
+
 /**
- * Vercel KV 가 설치되었을 때 (`@vercel/kv` 패키지) lazy-load 후 KV adapter 반환.
+ * Vercel KV 가 설치되었을 때 (`@vercel/kv`) lazy-load 후 KV adapter 반환.
  * 미설치 또는 env var 부재 시 `null` 반환 (in-memory fallback).
  *
- * 향후 `#operational-brief-cache-kv-impl` 트랙에서 본격 구현.
+ * 환경변수:
+ *   OPERATIONAL_BRIEF_KV_URL — KV 사용 시 truthy 값 설정 (실제 KV connection 은 @vercel/kv
+ *   가 KV_URL / KV_REST_API_URL / KV_REST_API_TOKEN 자동 감지).
  */
 export async function tryLoadKvBackend(): Promise<BriefCacheBackend | null> {
   if (!process.env.OPERATIONAL_BRIEF_KV_URL) return null;
-  // 본 함수는 KV 설치/설정 시 dynamic import 로 swap.
-  // dynamic import 비용을 prod hot path 에 두지 않으려고 single-call gating.
-  // 현재는 placeholder — 실제 구현은 별도 트랙.
-  return null;
+  try {
+    // dynamic import via runtime-string indirection — vite static analyzer 회피.
+    // `@vercel/kv` 미설치 시 throw → null fallback.
+    const pkgName = ["@vercel", "kv"].join("/");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const mod = await (Function("p", "return import(p)") as any)(pkgName).catch(() => null);
+    if (!mod || !("kv" in mod)) return null;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new VercelKvBackend((mod as any).kv);
+  } catch (err) {
+    console.warn("[operational-brief] KV backend load 실패 — in-memory fallback", err);
+    return null;
+  }
 }
 
 let _activeBackend: BriefCacheBackend | null = null;

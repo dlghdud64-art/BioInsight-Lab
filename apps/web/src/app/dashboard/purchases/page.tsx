@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
+import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 
 import type {
   PurchaseConversionItem,
@@ -900,6 +901,52 @@ export default function PurchasesPage() {
             );
           })()}
         </div>
+
+        {/* §11.155 모바일 변종 — desktop rail (hidden md:flex) 와 mutually exclusive */}
+        {selectedItem && (
+          <MobileOperationalBriefSheet
+            open={!!selectedItem}
+            onClose={closeRail}
+            objectLabel="선택한 견적"
+            chips={[
+              { id: "summary", label: "상태 요약" },
+              { id: "facts",   label: "공급사 회신" },
+              { id: "risks",   label: "차단 사유" },
+              { id: "next",    label: "PO 전환" },
+            ]}
+            summary={
+              <p className="text-xs text-slate-700 leading-relaxed">
+                {STATUS_MAP[selectedItem.conversionStatus]?.label} · {selectedItem.requestTitle}
+                {selectedItem.blockerType !== "none" && ` — ${selectedItem.blockerReason}`}
+              </p>
+            }
+            facts={
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between"><span className="text-slate-400">상태</span><span className="font-medium">{STATUS_MAP[selectedItem.conversionStatus]?.label}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">공급사 회신</span><span>{selectedItem.supplierReplies}/{selectedItem.totalSuppliers}건</span></div>
+                {selectedItem.quoteNumber && <div className="flex justify-between"><span className="text-slate-400">견적번호</span><span className="font-mono text-[11px]">{selectedItem.quoteNumber}</span></div>}
+              </div>
+            }
+            risks={
+              selectedItem.blockerType !== "none"
+                ? <p className="text-xs text-amber-700">{selectedItem.blockerReason}</p>
+                : selectedItem.isExpired
+                  ? <p className="text-xs text-rose-700">유효기간 만료</p>
+                  : <p className="text-xs text-slate-500">차단 없음</p>
+            }
+            next={
+              <p className="text-xs text-slate-700">{selectedItem.nextStage}</p>
+            }
+            primaryCta={{
+              label: "견적 관리에서 계속",
+              onClick: () => {
+                if (typeof window !== "undefined") {
+                  window.location.href = `/dashboard/quotes?focus=${encodeURIComponent(selectedItem.id)}`;
+                }
+              },
+            }}
+          />
+        )}
 
       </div>
     </div>

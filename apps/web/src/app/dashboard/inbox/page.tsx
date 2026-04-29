@@ -19,6 +19,7 @@ import {
   type InboxSummaryStats,
 } from "@/lib/ops-console/inbox-adapter";
 import { cn } from "@/lib/utils";
+import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import {
   AlertTriangle,
   ChevronDown,
@@ -483,7 +484,7 @@ export default function InboxPage() {
           )}
         </div>
 
-        {/* ── 컨텍스트 패널 ── */}
+        {/* ── 컨텍스트 패널 (desktop only, hidden lg:block 내부) ── */}
         {selectedItem && (
           <ContextPanel
             item={selectedItem}
@@ -493,6 +494,45 @@ export default function InboxPage() {
             quickAction={buildInboxQuickAction(selectedItem, store)}
           />
         )}
+
+        {/* §11.155 모바일 변종 — desktop ContextPanel (hidden lg:block) 와 mutually exclusive */}
+        {selectedItem && (() => {
+          const qa = buildInboxQuickAction(selectedItem, store);
+          return (
+            <MobileOperationalBriefSheet
+              open={!!selectedItem}
+              onClose={() => setSelectedItemId(null)}
+              objectLabel="선택한 작업"
+              chips={[
+                { id: "summary", label: "상태 요약" },
+                { id: "facts",   label: "차단 사유" },
+                { id: "risks",   label: "위험도" },
+                { id: "next",    label: "다음 단계" },
+              ]}
+              summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedItem.summary}</p>}
+              facts={
+                <div className="space-y-1 text-xs">
+                  <div className="flex justify-between"><span className="text-slate-400">우선순위</span><span className="font-medium">{PRIORITY_LABEL[selectedItem.priority]}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">기한</span><span>{selectedItem.dueState.label}</span></div>
+                  {selectedItem.owner && <div className="flex justify-between"><span className="text-slate-400">담당자</span><span>{selectedItem.owner}</span></div>}
+                </div>
+              }
+              risks={
+                selectedItem.riskBadges.length > 0
+                  ? <div className="flex flex-wrap gap-1">{selectedItem.riskBadges.map((b) => <span key={b} className="text-[11px] px-2 py-0.5 rounded bg-red-50 text-red-700">{b}</span>)}</div>
+                  : <p className="text-xs text-slate-500">차단 없음</p>
+              }
+              next={<p className="text-xs text-slate-700">{selectedItem.nextAction}</p>}
+              primaryCta={qa && qa.canExecute ? {
+                label: qa.label,
+                onClick: () => handleAction(selectedItem),
+              } : qa ? {
+                label: qa.label,
+                onClick: () => router.push(qa.detailRoute ?? selectedItem.entityRoute),
+              } : undefined}
+            />
+          );
+        })()}
       </div>
     </div>
   );

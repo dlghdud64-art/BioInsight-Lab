@@ -78,3 +78,23 @@ export function useOperationalBriefNarrative({ sourceTrace, facts, enabled = tru
 
   return { narrative, isLoading, cached };
 }
+
+/**
+ * §11.156 cache-bust on mutation — caller `onSuccess` 에서 호출.
+ *
+ * 사용 예 (selectReplyMutation §11.21 onSuccess):
+ *   invalidateBriefNarrative({ quoteId: q.id, module: "quote_detail", sourceUpdatedAt: new Date() });
+ *
+ * 실패 시 silent — caller 동작 영향 0 (다음 fetch 가 자연스럽게 miss → 재생성).
+ */
+export async function invalidateBriefNarrative(sourceTrace: BriefSourceTrace): Promise<void> {
+  try {
+    await csrfFetch("/api/operational-brief/narrative", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ sourceTrace }),
+    });
+  } catch {
+    // ignore — next fetch will miss + regenerate
+  }
+}

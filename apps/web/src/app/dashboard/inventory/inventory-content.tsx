@@ -63,6 +63,7 @@ const LotDisposalPanel = dynamic(() => import("@/components/inventory/lot-dispos
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then(m => m.OpsExecutionContext), { ssr: false });
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
+const MobileOperationalBriefSheet = dynamic(() => import("@/components/operational-brief/mobile-bottom-sheet").then(m => m.MobileOperationalBriefSheet), { ssr: false });
 const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then(m => m.StorageLocationView), { ssr: false });
 const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then(m => m.InventoryFlowView), { ssr: false });
 const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then(m => m.MobileInventoryView), { ssr: false });
@@ -2390,8 +2391,73 @@ function InventoryPageContent() {
 
         </div>{/* end main content */}
 
-        {/* ── Context Panel (right-side operational detail) ── */}
+        {/* §11.155 모바일 변종 — desktop context panel (w-[420px]) 와 mutually exclusive */}
         {contextPanelOpen && contextPanelItem && (
+          <MobileOperationalBriefSheet
+            open={contextPanelOpen}
+            onClose={() => setContextPanelItem(null)}
+            objectLabel="선택한 재고"
+            chips={[
+              { id: "summary", label: "상태 요약" },
+              { id: "facts",   label: "보유량" },
+              { id: "risks",   label: "리스크" },
+              { id: "next",    label: "재발주" },
+            ]}
+            summary={
+              <p className="text-xs text-slate-700 leading-relaxed">
+                {contextPanelItem.currentQuantity === 0
+                  ? "재고 소진 — 즉시 재발주 필요"
+                  : contextPanelItem.safetyStock !== null && contextPanelItem.currentQuantity <= contextPanelItem.safetyStock
+                    ? `안전재고 미달 (${contextPanelItem.currentQuantity}/${contextPanelItem.safetyStock} ${contextPanelItem.unit})`
+                    : "안정 — 운영 정상"}
+              </p>
+            }
+            facts={
+              <div className="space-y-1 text-xs">
+                <div className="flex justify-between"><span className="text-slate-400">보유량</span><span className="font-medium">{contextPanelItem.currentQuantity} {contextPanelItem.unit}</span></div>
+                {contextPanelItem.safetyStock !== null && <div className="flex justify-between"><span className="text-slate-400">안전재고</span><span>{contextPanelItem.safetyStock} {contextPanelItem.unit}</span></div>}
+                {contextPanelItem.location && <div className="flex justify-between"><span className="text-slate-400">위치</span><span>{contextPanelItem.location}</span></div>}
+              </div>
+            }
+            risks={
+              contextPanelItem.expiryDate && new Date(contextPanelItem.expiryDate).getTime() < Date.now()
+                ? <p className="text-xs text-rose-700">유효기간 만료</p>
+                : <p className="text-xs text-slate-500">차단 없음</p>
+            }
+            next={<p className="text-xs text-slate-700">재발주 또는 정보 수정</p>}
+            primaryCta={{
+              label: "재발주",
+              onClick: () => {
+                const match = displayInventories.find((inv) => inv.id === contextPanelItem.id);
+                if (match) {
+                  aiPanel.preparePanel({
+                    id: match.id,
+                    productId: match.productId,
+                    productName: match.product.name,
+                    brand: match.product.brand || undefined,
+                    catalogNumber: match.product.catalogNumber || undefined,
+                    currentQuantity: match.currentQuantity,
+                    unit: match.unit || undefined,
+                    safetyStock: match.safetyStock || undefined,
+                    minOrderQty: match.minOrderQty || undefined,
+                    location: match.location || undefined,
+                    expiryDate: match.expiryDate || undefined,
+                    lotNumber: match.lotNumber || undefined,
+                    autoReorderEnabled: match.autoReorderEnabled || false,
+                    averageDailyUsage: match.averageDailyUsage || undefined,
+                    leadTimeDays: match.leadTimeDays || undefined,
+                    lastInspectedAt: undefined,
+                  });
+                }
+                setContextPanelItem(null);
+              },
+            }}
+          />
+        )}
+
+        {/* ── Context Panel (right-side operational detail, desktop only) ── */}
+        {contextPanelOpen && contextPanelItem && (
+          <div className="hidden md:contents">
           <InventoryContextPanel
             item={contextPanelItem}
             isOpen={contextPanelOpen}
@@ -2435,6 +2501,7 @@ function InventoryPageContent() {
               openDisposalDock(match);
             }}
           />
+          </div>
         )}
         </div>{/* end flex row */}
 
