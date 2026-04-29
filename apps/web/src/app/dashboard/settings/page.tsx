@@ -213,7 +213,9 @@ function SettingsPageContent() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
-  const [operatorRole, setOperatorRole] = useState("연구실 관리자 (Lab Manager)");
+  // §11.157 — operatorRole free-text useState 제거 (Identity Governance).
+  //   canonical role display 는 line ~488 `roleLabel` + line ~645 Badge 가 담당.
+  //   §11.74 SectionCard "운영 역할 및 업무 범위" (line ~660) 는 read-only 정합 유지.
   const [workspaceName, setWorkspaceName] = useState("제1 바이오 R&D 센터");
   // §11.74: 단위계(Metric/Imperial) 제거 — 정규화 로직 부재로 사용자가
   // 결정할 항목 아님. 통화만 유지.
@@ -623,16 +625,15 @@ function SettingsPageContent() {
                       <span className="text-[9px] text-slate-500">JPG, PNG 지원. 최대 2MB.</span>
                     </div>
 
-                    {/* Fields */}
+                    {/* Fields — §11.157 individual profile only.
+                        직책/역할 free-text Input 제거 (Identity Governance):
+                        canonical role 은 아래 Badge ({roleLabel}) 와 §11.74
+                        "운영 역할 및 업무 범위" SectionCard 에서 read-only 로
+                        표시. 사용자는 자유 입력 불가. */}
                     <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FieldBlock label="운영자 성명">
-                          <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
-                        </FieldBlock>
-                        <FieldBlock label="직책 / 역할">
-                          <Input value={operatorRole} onChange={(e) => setOperatorRole(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
-                        </FieldBlock>
-                      </div>
+                      <FieldBlock label="운영자 성명">
+                        <Input value={profileName} onChange={(e) => setProfileName(e.target.value)} className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
+                      </FieldBlock>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FieldBlock label="연락처">
                           <Input value={profilePhone} onChange={(e) => setProfilePhone(e.target.value)} placeholder="010-0000-0000" className="bg-white border-slate-200 text-slate-900 h-9 text-sm" />
