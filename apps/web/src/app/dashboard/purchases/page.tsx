@@ -584,9 +584,13 @@ export default function PurchasesPage() {
             return (
               <div className="hidden md:flex flex-col w-[380px] flex-shrink-0 rounded-xl border border-slate-200 bg-white overflow-hidden max-h-[calc(100vh-160px)] shadow-sm">
 
-                {/* Rail header */}
+                {/* §11.142-impl Rail header — 운영 브리핑 */}
                 <div className="px-5 py-3.5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
                   <div className="min-w-0">
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 mb-1">
+                      운영 브리핑
+                    </div>
+                    <div className="text-[11px] text-slate-500 mb-1.5">선택한 견적</div>
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${cs.bg} ${cs.text} ${cs.border}`}>{cs.label}</span>
                       {selectedItem.isExpired && (
@@ -599,17 +603,57 @@ export default function PurchasesPage() {
                       <p className="text-[11px] text-slate-500 truncate font-mono">{selectedItem.quoteNumber}</p>
                     )}
                   </div>
-                  <button onClick={closeRail} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 shrink-0 transition-colors">
+                  <button onClick={closeRail} className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 shrink-0 transition-colors" aria-label="브리핑 닫기">
                     <X className="h-4 w-4" />
                   </button>
+                </div>
+
+                {/* §11.142-impl preset action chips — anchor scroll */}
+                <div className="px-5 py-2.5 border-b border-slate-100 bg-white flex items-center gap-1.5 flex-wrap">
+                  <a
+                    href="#brief-summary"
+                    className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    상태 요약
+                  </a>
+                  <a
+                    href="#brief-facts"
+                    className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    공급사 회신
+                  </a>
+                  <a
+                    href="#brief-next"
+                    className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    PO 전환
+                  </a>
+                  <a
+                    href="#brief-risks"
+                    className="text-[11px] px-2 py-1 rounded border border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 transition-colors"
+                  >
+                    차단 사유
+                  </a>
                 </div>
 
                 {/* Rail body */}
                 <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#cbd5e1 transparent" }}>
 
-                  {/* 견적 요약 */}
-                  <div className="px-5 py-4 border-b border-slate-100">
-                    <div className="text-xs font-bold text-slate-700 mb-2.5">견적 요약</div>
+                  {/* §11.142-impl § 1. 상황 요약 — 1-line resolver-derived */}
+                  <div id="brief-summary" className="px-5 py-4 border-b border-slate-100 bg-slate-50/30">
+                    <div className="text-xs font-bold text-slate-700 mb-2">상황 요약</div>
+                    <p className="text-[12px] text-slate-700 leading-relaxed break-keep">
+                      {hasBlocker
+                        ? `${cs.label} 상태이며, ${selectedItem.blockerReason}`
+                        : selectedItem.totalSuppliers > 0 && selectedItem.supplierReplies < selectedItem.totalSuppliers
+                          ? `${cs.label} 상태입니다. 공급사 ${selectedItem.totalSuppliers}곳 중 ${selectedItem.supplierReplies}곳이 회신했고, 차단된 작업은 없습니다.`
+                          : `${cs.label} 상태이며, 차단된 작업이 없습니다. ${selectedItem.nextStage}`}
+                    </p>
+                  </div>
+
+                  {/* §11.142-impl § 2. 핵심 근거 — canonical facts */}
+                  <div id="brief-facts" className="px-5 py-4 border-b border-slate-100">
+                    <div className="text-xs font-bold text-slate-700 mb-2.5">핵심 근거</div>
                     <div className="space-y-2">
                       <div className="flex justify-between text-xs">
                         <span className="text-slate-500">상태</span>
@@ -644,14 +688,14 @@ export default function PurchasesPage() {
                     </div>
                   </div>
 
-                  {/* 막힘 확인 + 다음 단계 */}
-                  <div className="px-5 py-4 border-b border-slate-100">
-                    <div className="text-xs font-bold text-slate-700 mb-2.5">발주 Readiness</div>
-                    <div className={`rounded-xl px-4 py-3 mb-2.5 ${
+                  {/* §11.142-impl § 3. 리스크 — blocker / expired / missing-info */}
+                  <div id="brief-risks" className="px-5 py-4 border-b border-slate-100">
+                    <div className="text-xs font-bold text-slate-700 mb-2.5">리스크</div>
+                    <div className={`rounded-xl px-4 py-3 ${
                       hasBlocker ? "bg-amber-50/70 border border-amber-200" : "bg-emerald-50/70 border border-emerald-200"
                     }`}>
                       <p className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                        hasBlocker ? "text-amber-500" : "text-emerald-500"
+                        hasBlocker ? "text-amber-700" : "text-emerald-700"
                       }`}>
                         {hasBlocker ? "현재 막힘" : "차단 없음"}
                       </p>
@@ -661,17 +705,30 @@ export default function PurchasesPage() {
                         {selectedItem.blockerReason}
                       </p>
                     </div>
-                    <div className="rounded-xl px-4 py-3 bg-blue-50/60 border border-blue-200">
-                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-500">다음 단계</p>
+                    {selectedItem.isExpired && (
+                      <div className="rounded-xl px-4 py-3 bg-rose-50/60 border border-rose-200 mt-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-rose-700">유효기간 만료</p>
+                        <p className="text-xs text-rose-700 font-medium leading-snug">
+                          견적 유효기간이 지났습니다. 갱신 또는 재요청이 필요합니다.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* §11.142-impl § 4. 다음 조치 — nextStage + primary CTA */}
+                  <div id="brief-next" className="px-5 py-4 border-b border-slate-100">
+                    <div className="text-xs font-bold text-slate-700 mb-2.5">다음 조치</div>
+                    <div className="rounded-xl px-4 py-3 bg-blue-50/60 border border-blue-200 mb-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-blue-700">다음 단계</p>
                       <p className="text-xs text-blue-700 font-medium leading-snug">{selectedItem.nextStage}</p>
                     </div>
-                    <div className="space-y-1.5 mt-3">
+                    <div className="space-y-1.5 mb-3">
                       <div className="flex justify-between text-xs">
                         <span className="text-slate-500">외부 승인</span>
                         <span className={selectedItem.externalApprovalStatus === "approved"
-                          ? "text-emerald-600 font-medium"
+                          ? "text-emerald-700 font-medium"
                           : selectedItem.externalApprovalStatus === "pending"
-                            ? "text-amber-600"
+                            ? "text-amber-700"
                             : "text-slate-500"}>
                           {selectedItem.externalApprovalStatus === "approved" ? "승인 완료"
                             : selectedItem.externalApprovalStatus === "pending" ? "대기 중"
@@ -679,6 +736,14 @@ export default function PurchasesPage() {
                         </span>
                       </div>
                     </div>
+                    {/* Primary CTA — 견적 관리 handoff */}
+                    <Link
+                      href={`/dashboard/quotes?focus=${encodeURIComponent(selectedItem.id)}`}
+                      className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors"
+                    >
+                      견적 관리에서 계속
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
 
                   {/* AI 선택안 */}
