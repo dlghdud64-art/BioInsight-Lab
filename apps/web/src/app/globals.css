@@ -342,7 +342,12 @@ div.quote-table td.no-column-cell {
     margin: 1cm;
   }
 
-  /* Dashboard chrome 모두 숨김 */
+  /* Dashboard chrome 모두 숨김.
+     §11.100 — page-level `print:hidden` Tailwind class (settings nav,
+     reports filter, billing action button row 등) 로 페이지별 추가
+     suppression 가능. globals 에는 chrome (sidebar/header/bottom-nav)
+     공통 selector 만 — <nav> 등 일반 selector 추가 시 accessibility nav
+     같은 곳도 영향 받음. */
   aside,
   .mobile-sidebar,
   [class*="bottom-nav"],

@@ -567,7 +567,8 @@ function SettingsPageContent() {
 
         <div className="flex flex-col lg:flex-row gap-6">
           {/* ═══ Left System Nav ═══ */}
-          <nav className="lg:w-64 shrink-0">
+          {/* §11.100 — 인쇄 시 settings 좌측 nav hide (활성 section 만 인쇄). */}
+          <nav className="lg:w-64 shrink-0 print:hidden">
             {NAV_GROUPS.map((group) => (
               <div key={group.group} className="mb-4">
                 <div className="text-[10px] font-semibold uppercase tracking-widest text-slate-500 px-3 mb-2">{group.group}</div>
@@ -1158,7 +1159,9 @@ function SettingsPageContent() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-5">
+                    {/* §11.100 — 인쇄 시 action button row hide (인쇄 본은 청구
+                        내역 보존 용도, 액션 의미 없음). */}
+                    <div className="flex flex-wrap items-center gap-2 mt-5 print:hidden">
                       <Button
                         size="sm"
                         className="h-9 px-4 text-xs bg-white text-slate-900 hover:bg-slate-100 font-semibold rounded-lg shadow-sm"
