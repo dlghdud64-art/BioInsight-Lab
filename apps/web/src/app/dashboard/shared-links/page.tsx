@@ -259,7 +259,7 @@ export default function SharedLinksPage() {
                       const isSelected = selectedLinks.includes(link.publicId);
 
                       return (
-                        <TableRow key={link.id} className={isSelected ? "bg-pg" : ""}>
+                        <TableRow key={link.id} className={isSelected ? "bg-el" : ""}>
                           <TableCell>
                             <Checkbox
                               checked={isSelected}

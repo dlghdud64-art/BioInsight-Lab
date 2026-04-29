@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BudgetDetailLoading() {
   return (
-    <div className="min-h-screen bg-pg bg-sh py-8 px-4 md:px-8">
+    <div className="min-h-screen bg-el bg-sh py-8 px-4 md:px-8">
       <div className="max-w-5xl mx-auto space-y-6">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">

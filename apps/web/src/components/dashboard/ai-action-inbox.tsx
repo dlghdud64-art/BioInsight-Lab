@@ -127,7 +127,7 @@ const DEFAULT_CONFIG: CardConfig = {
   description: "",
   cta: "확인하기",
   badgeLabel: "오늘 처리 권장",
-  badgeClass: "bg-pg text-slate-600 border-bd",
+  badgeClass: "bg-el text-slate-600 border-bd",
   approveToast: "작업이 완료되었습니다",
 };
 
@@ -322,7 +322,7 @@ export function AiActionInbox() {
             return (
               <div
                 key={item.id}
-                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-pg/50 hover:bg-el/20 transition-all duration-200`}
+                className={`px-4 py-3 border-l-[3px] ${config.borderColor} hover:bg-el/50 hover:bg-el/20 transition-all duration-200`}
               >
                 <div
                   className="flex items-start gap-3 cursor-pointer md:cursor-default"

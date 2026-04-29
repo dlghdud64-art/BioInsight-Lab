@@ -304,7 +304,7 @@ export default function TeamAnalyticsView() {
                 {TEAM_DATA.map((team) => {
                   const statusStyle = getStatusStyle(team.status);
                   return (
-                    <TableRow key={team.id} className="border-slate-100 border-bd/30 hover:bg-pg hover:bg-el/20 transition-colors">
+                    <TableRow key={team.id} className="border-slate-100 border-bd/30 hover:bg-el hover:bg-el/20 transition-colors">
                       <TableCell className="py-2.5">
                         <div className="flex items-center gap-2">
                           <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
@@ -370,31 +370,31 @@ export default function TeamAnalyticsView() {
       </Card>
 
       {/* ══ 5. 팀 관점 액션 ══ */}
-      <div className="rounded-xl border border-bd/50 bg-pg/60 bg-pn/30 p-4">
+      <div className="rounded-xl border border-bd/50 bg-el/60 bg-pn/30 p-4">
         <p className="text-[10px] font-semibold text-slate-400 text-slate-500 uppercase tracking-wider mb-3">
           팀 관리 후속 조치
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
           <Link href="/dashboard/purchases">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-el hover:bg-el border-bd border-bs font-medium transition-colors">
               <ShoppingCart className="h-3.5 w-3.5 text-slate-500" />
               팀별 구매 내역
             </Button>
           </Link>
           <Link href="/dashboard/budget">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-el hover:bg-el border-bd border-bs font-medium transition-colors">
               <CreditCard className="h-3.5 w-3.5 text-slate-500" />
               예산 재배정 검토
             </Button>
           </Link>
           <Link href="/dashboard/analytics/category">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-el hover:bg-el border-bd border-bs font-medium transition-colors">
               <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
               카테고리별 상세 분석
             </Button>
           </Link>
           <Link href="/dashboard/settings">
-            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-pg hover:bg-el border-bd border-bs font-medium transition-colors">
+            <Button variant="outline" className="w-full h-10 justify-start text-xs gap-2 bg-pn bg-pn hover:bg-el hover:bg-el border-bd border-bs font-medium transition-colors">
               <Settings className="h-3.5 w-3.5 text-slate-500" />
               조직 / 예산 관리
             </Button>

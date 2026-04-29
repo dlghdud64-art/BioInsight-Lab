@@ -4172,7 +4172,7 @@ function InventoryForm({
         />
       </div>
 
-      <div className="space-y-3 p-4 border rounded-lg bg-pg">
+      <div className="space-y-3 p-4 border rounded-lg bg-el">
         <div className="flex items-center justify-between">
           <div>
             <Label htmlFor="autoReorderEnabled">자동 재주문</Label>

@@ -291,7 +291,7 @@ export default function EnterpriseSettingsPage() {
                         )}
 
                         {!ssoEnabled && (
-                          <div className="p-4 bg-pg border border-bd rounded-lg text-sm text-slate-600">
+                          <div className="p-4 bg-el border border-bd rounded-lg text-sm text-slate-600">
                             SSO를 활성화하려면 위의 스위치를 켜주세요.
                           </div>
                         )}
@@ -347,7 +347,7 @@ export default function EnterpriseSettingsPage() {
                               return (
                                 <div
                                   key={log.id}
-                                  className="flex items-start gap-4 p-4 border border-bd rounded-lg hover:bg-pg transition-colors"
+                                  className="flex items-start gap-4 p-4 border border-bd rounded-lg hover:bg-el transition-colors"
                                 >
                                   <div className={`p-2 rounded-lg ${
                                     log.success
@@ -655,7 +655,7 @@ function OrganizationMembersPermissions({ organizationId }: { organizationId: st
           </TableBody>
         </Table>
       </div>
-      <div className="text-xs md:text-sm text-slate-600 p-3 bg-pg rounded-lg">
+      <div className="text-xs md:text-sm text-slate-600 p-3 bg-el rounded-lg">
         <p className="font-medium mb-1 flex items-center gap-2">
           <Lightbulb className="h-4 w-4 text-slate-500" />
           참고

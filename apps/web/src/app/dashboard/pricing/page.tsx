@@ -212,7 +212,7 @@ export default function PricingPage() {
               onClick={() => handlePlanSelect("enterprise")}
               disabled={loadingPlan !== null}
               aria-busy={loadingPlan === "enterprise" || undefined}
-              className="w-full bg-pg bg-pn/50 disabled:opacity-60"
+              className="w-full bg-el bg-pn/50 disabled:opacity-60"
             >
               {loadingPlan === "enterprise" ? (
                 <span className="inline-flex items-center gap-2">
@@ -237,7 +237,7 @@ export default function PricingPage() {
         <h3 className="text-2xl font-bold text-center mb-8">상세 기능 비교</h3>
         <div className="border border-bd border-bs rounded-lg bg-pn bg-sh overflow-hidden">
           <Table>
-            <TableHeader className="bg-pg bg-pn/50">
+            <TableHeader className="bg-el bg-pn/50">
               <TableRow>
                 <TableHead className="w-[30%]">기능</TableHead>
                 <TableHead className="text-center">Starter</TableHead>
@@ -249,7 +249,7 @@ export default function PricingPage() {
             </TableHeader>
             <TableBody>
               {/* 카테고리 1: 재고 관리 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
+              <TableRow className="bg-el/50 bg-pn/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <Package className="h-3.5 w-3.5 text-slate-500" />
@@ -299,7 +299,7 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 2: 구매 및 정산 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
+              <TableRow className="bg-el/50 bg-pn/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <CreditCard className="h-3.5 w-3.5 text-slate-500" />
@@ -345,7 +345,7 @@ export default function PricingPage() {
               </TableRow>
 
               {/* 카테고리 3: 분석 및 권한 */}
-              <TableRow className="bg-pg/50 bg-pn/30">
+              <TableRow className="bg-el/50 bg-pn/30">
                 <TableCell colSpan={4} className="font-bold text-slate-400 text-xs py-2">
                   <span className="flex items-center gap-2">
                     <BarChart3 className="h-3.5 w-3.5 text-slate-500" />

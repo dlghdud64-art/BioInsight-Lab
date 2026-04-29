@@ -178,7 +178,7 @@ export default function CategoryAnalyticsPage() {
                 return (
                   <div
                     key={item.name}
-                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 border-bd bg-pg bg-pn/40"
+                    className="flex items-center justify-between p-4 rounded-lg border border-slate-100 border-bd bg-el bg-pn/40"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div

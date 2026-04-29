@@ -273,7 +273,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-full bg-pg p-6 md:p-8 space-y-5">
+    <div className="min-h-full bg-el p-6 md:p-8 space-y-5">
       {/* ── 헤더 ── */}
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold text-slate-900">알림</h1>

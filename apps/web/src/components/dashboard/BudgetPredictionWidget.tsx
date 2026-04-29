@@ -240,7 +240,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
                   </SelectContent>
                 </Select>
               ) : (
-                <div className="px-2 py-1.5 rounded-full bg-pg bg-el/60 border border-bd/80 border-bs/80 text-[11px] text-slate-600">
+                <div className="px-2 py-1.5 rounded-full bg-el bg-el/60 border border-bd/80 border-bs/80 text-[11px] text-slate-600">
                   {effectiveBudgets[0]?.budgetName}
                 </div>
               )}
@@ -334,7 +334,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
           </div>
         )}
         {!selectedBudget.hasWarning && (
-          <div className="mx-3 sm:mx-4 rounded-lg bg-pg bg-el/50 border border-bd border-bs px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
+          <div className="mx-3 sm:mx-4 rounded-lg bg-el bg-el/50 border border-bd border-bs px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-slate-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-600 leading-relaxed">
               현재 소진 속도가 안정적입니다. 예산 소진 추이를 지속적으로 모니터링 중입니다.
