@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/dashboard-snapshot",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/user-soft-delete-purge",
+      "schedule": "0 2 * * *"
     }
   ]
 }
