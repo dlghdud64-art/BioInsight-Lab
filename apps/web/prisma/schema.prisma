@@ -2735,3 +2735,36 @@ model ContactInquiry {
   @@index([status])
   @@index([createdAt])
 }
+
+// ─── §11.106 #dashboard-stats-snapshot-table ────────────────────────
+// Daily snapshot of dashboard KPIs for trend derivation (point-in-time
+// count). §11.94 Phase 1 (week-over-week spending) 후속 backend source —
+// store-derived KPIs (pendingApproval / anomaly / processingRequired) 의
+// trend chip 활성화 가능.
+//
+// Capture: Vercel cron (`/api/cron/dashboard-snapshot`) daily — 또는
+// admin manual trigger.
+//
+// Trend derive: `/api/dashboard/stats` 가 응답에 어제/1주 전 snapshot
+// 비교 metric 추가. 데이터 누적 후 자동 활성.
+model DashboardStatsSnapshot {
+  id             String   @id @default(cuid())
+  organizationId String?  // 조직별 분리 (multi-tenant)
+  userId         String?  // 개인별 (organization 부재 시)
+  capturedAt     DateTime @default(now())
+
+  // 핵심 KPI metrics (향후 trend 산출 source)
+  pendingApprovalCount    Int    @default(0) // 진행 중 발주 (status=pending_approval)
+  anomalyCount            Int    @default(0) // 이상 신호 (over budget + high value order)
+  processingRequiredCount Int    @default(0) // 처리 필요 항목 (lowStock + expiring + undecided)
+  totalSpent              BigInt @default(0) // 누적 지출 (KRW)
+  totalBudget             BigInt @default(0) // 총 예산 (KRW)
+
+  // capture metadata
+  capturedBy String? // userId who triggered (null = cron auto)
+  source     String  @default("auto") // "auto" (cron) | "manual" (admin)
+
+  @@index([organizationId, capturedAt])
+  @@index([userId, capturedAt])
+  @@index([capturedAt])
+}

@@ -6,7 +6,13 @@
   "env": {
     "PRISMA_GENERATE_DATAPROXY": "false",
     "NODE_ENV": "development"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/dashboard-snapshot",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
 
 
