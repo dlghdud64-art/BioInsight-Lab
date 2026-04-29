@@ -37,6 +37,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <OpsStoreProvider>
+      {/* §11.125 — skip-link (WCAG 2.4.1 Bypass Blocks). 키보드 사용자가
+          Tab 첫 stop 으로 sidebar nav 건너뛰고 main 으로 이동. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] focus:bg-blue-600 focus:text-white focus:px-3 focus:py-2 focus:rounded-md focus:text-sm focus:font-semibold focus:shadow-lg"
+      >
+        본문 바로가기
+      </a>
+
       <div className="flex h-screen overflow-hidden bg-[#F8FAFC]">
         <DashboardSidebar
           isMobileOpen={isMobileMenuOpen}
@@ -48,7 +57,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
           />
 
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-20 lg:pb-8">
+          <main
+            id="main-content"
+            tabIndex={-1}
+            className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-20 lg:pb-8"
+          >
             {children}
           </main>
         </div>
