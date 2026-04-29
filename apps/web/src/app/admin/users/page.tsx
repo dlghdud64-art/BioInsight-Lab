@@ -626,8 +626,143 @@ export default function AdminUsersPage() {
             </div>
           )}
 
-          {/* ── 테이블 ── */}
-          <div className="bg-pn border border-bd rounded-lg overflow-hidden">
+          {/* §11.120 — mobile card list (md 미만) */}
+          <div className="md:hidden space-y-2">
+            {usersQuery.isLoading ? (
+              <div className="bg-pn border border-bd rounded-lg py-12 text-center">
+                <Loader2 className="h-5 w-5 animate-spin text-slate-400 mx-auto mb-2" />
+                <p className="text-xs text-slate-500">사용자 목록을 불러오는 중입니다…</p>
+              </div>
+            ) : usersQuery.isError ? (
+              <div className="bg-pn border border-bd rounded-lg py-10 text-center px-4">
+                <AlertTriangle className="h-5 w-5 text-rose-700 mx-auto mb-2" />
+                <p className="text-sm font-medium text-rose-700 mb-1">
+                  사용자 목록을 불러오지 못했습니다.
+                </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-7 mt-2"
+                  onClick={() => usersQuery.refetch()}
+                >
+                  다시 시도
+                </Button>
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div className="bg-pn border border-bd rounded-lg py-10 text-center">
+                <Users className="h-5 w-5 text-slate-400 mx-auto mb-2" />
+                <p className="text-sm font-medium text-slate-700">
+                  {statusFilter === "all" && roleFilter === "all" && !searchQuery.trim()
+                    ? "등록된 사용자가 없습니다."
+                    : "조건에 맞는 사용자가 없습니다."}
+                </p>
+              </div>
+            ) : (
+              filteredUsers.map((user) => {
+                const statusCfg =
+                  STATUS_BADGE[user.status] || {
+                    label: user.status,
+                    className: "bg-el text-slate-500 border-0",
+                  };
+                const isSelected = selectedUserId === user.id;
+                return (
+                  <div
+                    key={user.id}
+                    className={`bg-pn border rounded-xl p-3 shadow-sm space-y-2 ${
+                      isSelected ? "border-blue-300 bg-blue-50/40" : "border-bd"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-slate-900 truncate">
+                          {user.name}
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                          {user.email}
+                        </div>
+                      </div>
+                      <Badge
+                        className={cn("text-[10px] shrink-0", statusCfg.className)}
+                      >
+                        {statusCfg.label}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] text-slate-600">
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-medium"
+                      >
+                        {user.role}
+                      </Badge>
+                      <span className="text-slate-400">·</span>
+                      <span className="truncate">{user.orgName}</span>
+                      <span className="text-slate-400 ml-auto shrink-0">
+                        {user.lastActivity}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-end gap-1 pt-2 border-t border-bd flex-wrap">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className={cn(
+                          "h-7 px-2 text-[11px] gap-1",
+                          isSelected
+                            ? "text-blue-700 bg-blue-50"
+                            : "text-slate-700",
+                        )}
+                        onClick={() => setSelectedUserId(user.id)}
+                      >
+                        <Settings2 className="h-3 w-3" />
+                        정책
+                      </Button>
+                      {user.status === "pending" && (
+                        <>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 px-2 text-[11px] text-rose-700 hover:bg-rose-50 gap-1"
+                            onClick={() =>
+                              setConfirmReject({
+                                id: user.id,
+                                label: user.name || user.email,
+                              })
+                            }
+                            disabled={
+                              rejectMutation.isPending ||
+                              approveMutation.isPending
+                            }
+                          >
+                            <XCircle className="h-3 w-3" />
+                            반려
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="h-7 px-2 text-[11px] bg-blue-600 hover:bg-blue-700 text-white gap-1"
+                            onClick={() => approveMutation.mutate(user.id)}
+                            disabled={
+                              approveMutation.isPending ||
+                              rejectMutation.isPending
+                            }
+                          >
+                            {approveMutation.isPending &&
+                            approveMutation.variables === user.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="h-3 w-3" />
+                            )}
+                            승인
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* §11.120 — desktop table (md 이상) */}
+          <div className="hidden md:block bg-pn border border-bd rounded-lg overflow-hidden">
             <div className="w-full overflow-x-auto">
               <Table>
                 <TableHeader>
