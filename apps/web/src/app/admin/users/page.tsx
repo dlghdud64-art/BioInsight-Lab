@@ -44,6 +44,7 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
+  History,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -151,6 +152,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
@@ -371,6 +373,16 @@ export default function AdminUsersPage() {
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1.5"
+                onClick={() => setHistoryOpen(true)}
+                title="최근 사용자 초대 발급 내역"
+              >
+                <History className="h-3 w-3" />
+                초대 내역
+              </Button>
+              <Button
+                size="sm"
                 className="h-8 text-xs gap-1.5 bg-slate-900 hover:bg-slate-800 text-white"
                 onClick={() => setInviteOpen(true)}
               >
@@ -496,6 +508,11 @@ export default function AdminUsersPage() {
                 queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
               }}
             />
+          )}
+
+          {/* ── §11.128 초대 내역 dialog ── */}
+          {historyOpen && (
+            <InviteHistoryDialog onClose={() => setHistoryOpen(false)} />
           )}
 
           {/* ── §11.115 운영 정책 panel (selected user 시) §11.123 a11y ── */}
@@ -1044,6 +1061,165 @@ function MiniKPI({
 }
 
 // ─── §11.116 사용자 초대 Dialog ─────────────────────────────────────────────
+
+// ─── §11.128 초대 내역 Dialog ─────────────────────────────────────────────
+
+interface InviteAuditLog {
+  id: string;
+  createdAt: string;
+  action: string;
+  metadata: {
+    invitedEmail?: string;
+    invitedName?: string | null;
+    invitedRole?: string;
+    inviteLinkIssued?: boolean;
+  } | null;
+  user: {
+    name: string | null;
+    email: string;
+  } | null;
+}
+
+function InviteHistoryDialog({ onClose }: { onClose: () => void }) {
+  const dialog = useDialogA11y<HTMLDivElement>({
+    open: true,
+    onClose,
+  });
+
+  const historyQuery = useQuery({
+    queryKey: ["admin", "users", "invite-history"],
+    queryFn: async () => {
+      // §11.116 audit log (eventType=USER_CREATED + action=user_invite) 조회
+      const res = await fetch(
+        `/api/audit-logs?eventType=USER_CREATED&limit=50`,
+        { credentials: "same-origin" },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<{ logs: InviteAuditLog[]; total: number }>;
+    },
+  });
+
+  // §11.116 audit metadata 의 action="user_invite" 만 필터링
+  const inviteLogs = useMemo(() => {
+    return (historyQuery.data?.logs ?? []).filter(
+      (log) => log.action === "user_invite",
+    );
+  }, [historyQuery.data]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div
+        ref={dialog.dialogRef}
+        className="w-full max-w-lg bg-pn border border-bd rounded-lg shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="사용자 초대 내역"
+      >
+        <div className="flex items-center justify-between border-b border-bd px-4 py-3">
+          <div className="flex items-center gap-2 text-slate-900">
+            <History className="h-4 w-4 text-blue-700" />
+            <h3 className="text-sm font-semibold">사용자 초대 내역</h3>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            onClick={onClose}
+            title="닫기"
+          >
+            <X className="h-4 w-4 text-slate-500" />
+          </Button>
+        </div>
+
+        <div className="p-4 max-h-[70vh] overflow-y-auto">
+          {historyQuery.isLoading ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <p className="text-xs">초대 내역을 불러오는 중입니다…</p>
+            </div>
+          ) : historyQuery.isError ? (
+            <div className="flex flex-col items-center gap-2 py-8">
+              <AlertTriangle className="h-5 w-5 text-rose-700" />
+              <p className="text-sm font-medium text-rose-700">
+                초대 내역을 불러오지 못했습니다.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7 mt-1"
+                onClick={() => historyQuery.refetch()}
+              >
+                다시 시도
+              </Button>
+            </div>
+          ) : inviteLogs.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-slate-500">
+              <History className="h-5 w-5 text-slate-400" />
+              <p className="text-sm font-medium text-slate-700">
+                아직 발급된 초대 내역이 없습니다.
+              </p>
+              <p className="text-[11px] text-slate-500">
+                상단의 "사용자 초대" 버튼으로 첫 초대를 시작하세요.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[10px] text-slate-500 mb-2">
+                최근 50건의 invite (USER_CREATED + action=user_invite) audit log
+                기반.
+              </p>
+              {inviteLogs.map((log) => {
+                const meta = log.metadata ?? {};
+                const actor = log.user?.name || log.user?.email || "시스템";
+                const issuedAt = new Date(log.createdAt).toLocaleString("ko-KR", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                });
+                return (
+                  <div
+                    key={log.id}
+                    className="border border-bd rounded-md p-3 text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-slate-900 truncate">
+                        {meta.invitedName?.trim() ||
+                          meta.invitedEmail ||
+                          "—"}
+                      </span>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {meta.invitedRole || "—"}
+                      </Badge>
+                    </div>
+                    {meta.invitedEmail && meta.invitedName?.trim() && (
+                      <div className="text-[11px] text-slate-500 truncate">
+                        {meta.invitedEmail}
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2 text-[10px] text-slate-500 pt-1 border-t border-bd">
+                      <span>발급: {actor}</span>
+                      <span className="font-mono">{issuedAt}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-bd px-4 py-2.5 flex items-center justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            onClick={onClose}
+          >
+            닫기
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function InviteUserDialog({
   onClose,
