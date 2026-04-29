@@ -27,8 +27,8 @@ import { AuditEventType } from "@prisma/client";
  *     최소화 + 한국어 폰트 native 사용)
  *   - browser print 의존 → §11.89 와 동일 path 이지만 server-side
  *     formatted layout (정형 양식 보장)
- *   - signature/watermark 는 인쇄 본 footer 에 텍스트로 — image
- *     embed 는 별도 트랙 (`#audit-pdf-watermark-image`)
+ *   - §11.130 brand logo (Bio-Insight.png) header 좌측 + 디지털 서명
+ *     watermark footer 에 회사 정보 보강.
  */
 
 // audit-logs page 의 권한 체크와 동일 패턴
@@ -124,7 +124,17 @@ export async function GET(request: NextRequest) {
     border-bottom: 2px solid #1e293b;
     padding-bottom: 12px;
     margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
   }
+  header.report-header .logo {
+    height: 36px;
+    width: auto;
+    max-width: 100px;
+    flex-shrink: 0;
+  }
+  header.report-header .title-block { flex: 1; }
   header h1 {
     margin: 0 0 4px 0;
     font-size: 20px;
@@ -132,6 +142,14 @@ export async function GET(request: NextRequest) {
     color: #0f172a;
   }
   header .subtitle { font-size: 11px; color: #64748b; }
+  .digital-watermark {
+    margin-top: 18px;
+    text-align: center;
+    font-size: 9px;
+    color: #94a3b8;
+    letter-spacing: 0.05em;
+  }
+  .digital-watermark strong { color: #475569; }
   .meta-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -227,8 +245,11 @@ export async function GET(request: NextRequest) {
   </div>
   <article class="doc">
     <header class="report-header">
-      <h1>LabAxis 감사 증적 (Audit Trail)</h1>
-      <div class="subtitle">컴플라이언스 보존 양식 — 운영자 검토용</div>
+      <img src="/brand/Bio-Insight.png" alt="BioInsight Lab" class="logo" />
+      <div class="title-block">
+        <h1>LabAxis 감사 증적 (Audit Trail)</h1>
+        <div class="subtitle">컴플라이언스 보존 양식 — 운영자 검토용</div>
+      </div>
     </header>
 
     <dl class="meta-grid">
@@ -288,6 +309,12 @@ export async function GET(request: NextRequest) {
         <div class="signature-row">검토자 서명 / Reviewer Signature</div>
         <div class="signature-row">결재자 서명 / Approver Signature</div>
       </div>
+    </div>
+
+    <!-- §11.130 디지털 서명 watermark — bioinsightlab.com 식별성 + 인쇄본 출처 표기 -->
+    <div class="digital-watermark">
+      <strong>LabAxis Audit System</strong> · bioinsightlab.com · 인쇄본 출처
+      <span style="font-family: monospace;">${printedAt.toISOString()}</span>
     </div>
   </article>
   <script>
