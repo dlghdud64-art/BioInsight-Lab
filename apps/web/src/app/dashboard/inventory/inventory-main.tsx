@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, Suspense } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -18,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight, ScanLine } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,39 +33,21 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
-import { Info, FileText, BellRing, Save, Sparkles, GitBranch, Clock, Archive } from "lucide-react";
-import {
-  type LotRecord,
-  type LotStatusFilter,
-  computeLotStatus,
-  sortLots,
-  computeLotSummary,
-  filterLotsByStatus,
-  searchLots,
-  getLotStatusLabel,
-  getLotStatusColor,
-} from "@/lib/inventory/lot-tracking-engine";
+import { Info, FileText, BellRing, Save, Sparkles, GitBranch } from "lucide-react";
 import { getStorageConditionLabel } from "@/lib/constants";
 import { useInventoryAiPanel } from "@/hooks/use-inventory-ai-panel";
-import { resolveDisposal, type DisposalReason } from "@/lib/ontology/contextual-action/disposal-resolver";
-import type { SmartReceiveFormData } from "@/components/inventory/LabelScannerModal";
-import type { QueueItem } from "@/components/inventory/priority-action-queue";
-const LabelScannerModal = dynamic(() => import("@/components/inventory/LabelScannerModal").then(m => m.LabelScannerModal), { ssr: false });
-const LabelPrintModal = dynamic(() => import("@/components/inventory/LabelPrintModal").then(m => m.LabelPrintModal), { ssr: false });
 const BulkImportModal = dynamic(() => import("@/components/inventory/BulkImportModal").then(m => m.BulkImportModal), { ssr: false });
-const ImportStagingWorkbench = dynamic(() => import("@/components/inventory/import-staging-workbench").then(m => m.ImportStagingWorkbench), { ssr: false });
 const StockLifespanGauge = dynamic(() => import("@/components/inventory/stock-lifespan-gauge").then(m => m.StockLifespanGauge), { ssr: false });
 const InventoryTable = dynamic(() => import("@/components/inventory/InventoryTable").then(m => m.InventoryTable), { ssr: false });
 const AddInventoryModal = dynamic(() => import("@/components/inventory/AddInventoryModal").then(m => m.AddInventoryModal), { ssr: false });
 const InventoryAiAssistantPanel = dynamic(() => import("@/components/ai/inventory-ai-assistant-panel").then(m => m.InventoryAiAssistantPanel), { ssr: false });
-const LotDisposalPanel = dynamic(() => import("@/components/inventory/lot-disposal-panel").then(m => m.LotDisposalPanel), { ssr: false });
 const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution-context").then(m => m.OpsExecutionContext), { ssr: false });
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
 const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then(m => m.StorageLocationView), { ssr: false });
 const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then(m => m.InventoryFlowView), { ssr: false });
 const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then(m => m.MobileInventoryView), { ssr: false });
-type ContextPanelItem = { id: string; productId: string; productName: string; brand: string | null; catalogNumber: string | null; currentQuantity: number; unit: string; safetyStock: number | null; location: string | null; expiryDate: string | null; notes: string | null; lotNumber?: string | null; storageCondition?: string | null; hazard?: boolean; testPurpose?: string | null; vendor?: string | null; deliveryPeriod?: string | null; inUseOrUnopened?: string | null; averageDailyUsage?: number; leadTimeDays?: number; };
+import type { ContextPanelItem } from "@/components/inventory/inventory-context-panel";
 
 interface ProductInventory {
   id: string;
@@ -98,7 +79,7 @@ interface ProductInventory {
   };
 }
 
-function InventoryPageContent() {
+export function InventoryMain() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -108,8 +89,6 @@ function InventoryPageContent() {
   const aiPanelParam = searchParams.get("ai_panel") === "open";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
-  const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
-  const [isSmartReceiveOpen, setIsSmartReceiveOpen] = useState(false);
   const [editingInventory, setEditingInventory] = useState<ProductInventory | null>(null);
   const [inventoryView, setInventoryView] = useState<"my" | "team">("my");
   const [restockRequestedIds, setRestockRequestedIds] = useState<Set<string>>(new Set());
@@ -132,50 +111,6 @@ function InventoryPageContent() {
     if (f) setStatusFilter(f);
   }, [searchParams]);
 
-  // 라벨 스캔 결과로 AddInventoryModal 자동 오픈 + 프리필
-  useEffect(() => {
-    const fromScan = searchParams.get("from");
-    if (fromScan !== "label-scan") return;
-
-    const productId = searchParams.get("productId");
-    const productName = searchParams.get("productName");
-    const brand = searchParams.get("brand");
-    const catalogNumber = searchParams.get("catalogNumber");
-    const lotNumber = searchParams.get("lotNumber");
-    const expiryDate = searchParams.get("expiryDate");
-    const quantity = searchParams.get("quantity");
-
-    // 매칭된 DB 제품 또는 스캔된 제품 정보로 프리필
-    if (productName) {
-      setEditingInventory({
-        productId: productId || `manual-${Date.now()}`,
-        product: {
-          id: productId || `manual-${Date.now()}`,
-          name: productName,
-          brand: brand ?? null,
-          catalogNumber: catalogNumber ?? null,
-        },
-        currentQuantity: 0,
-        unit: "개",
-        safetyStock: null,
-        minOrderQty: null,
-        location: null,
-        expiryDate: expiryDate ?? null,
-        notes: null,
-        lotNumber: lotNumber ?? null,
-      } as any);
-    }
-
-    setIsDialogOpen(true);
-
-    // URL 정리 (파라미터 제거)
-    const url = new URL(window.location.href);
-    ["from", "productId", "productName", "brand", "catalogNumber", "lotNumber", "expiryDate", "quantity", "casNumber", "action"].forEach(
-      (key) => url.searchParams.delete(key)
-    );
-    router.replace(url.pathname + url.search, { scroll: false });
-  }, [searchParams]);
-
   // purchase-receiving 모드 진입 (구매 → 재고 반영 플로우)
   useEffect(() => {
     const prId = searchParams.get("purchase-receiving");
@@ -186,8 +121,8 @@ function InventoryPageContent() {
           if (res.ok) return res.json();
           throw new Error("구매 데이터를 찾을 수 없습니다.");
         })
-        .then((purchaseRes) => {
-          const purchase = purchaseRes.purchase || purchaseRes;
+        .then((data) => {
+          const purchase = data.purchase || data;
           setPurchaseContext(purchase);
           setReceivingForm((prev) => ({
             ...prev,
@@ -227,21 +162,9 @@ function InventoryPageContent() {
   const [isExportingLabels, setIsExportingLabels] = useState(false);
   const aiPanel = useInventoryAiPanel();
 
-  // ── Lot Disposal Panel (object-scoped disposal dock) state ──
-  const [disposalTarget, setDisposalTarget] = useState<import("@/components/inventory/lot-disposal-panel").DisposalTarget | null>(null);
-  const [disposalInventoryId, setDisposalInventoryId] = useState<string | null>(null);
-  const disposalPanelOpen = disposalTarget !== null;
-
   // ── Context Panel (right-side detail drawer) state ──
   const [contextPanelItem, setContextPanelItem] = useState<ContextPanelItem | null>(null);
   const contextPanelOpen = contextPanelItem !== null;
-
-  // ── Inventory tab (controlled) ──
-  const [activeInventoryTab, setActiveInventoryTab] = useState("manage");
-  // ── Lot 추적 tab state ──
-  const [lotStatusFilter, setLotStatusFilter] = useState<LotStatusFilter>("all");
-  const [lotSearchQuery, setLotSearchQuery] = useState("");
-  const [selectedLotId, setSelectedLotId] = useState<string | null>(null);
 
   const openContextPanel = (inv: ProductInventory) => {
     setContextPanelItem({
@@ -268,28 +191,20 @@ function InventoryPageContent() {
     });
   };
 
-  const openReorderReview = (inventory: ProductInventory) => {
-    aiPanel.preparePanel({
-      id: inventory.id,
-      productId: inventory.productId,
-      productName: inventory.product.name,
-      brand: inventory.product.brand || undefined,
-      catalogNumber: inventory.product.catalogNumber || undefined,
-      currentQuantity: inventory.currentQuantity,
-      unit: inventory.unit || undefined,
-      safetyStock: inventory.safetyStock || undefined,
-      minOrderQty: inventory.minOrderQty || undefined,
-      location: inventory.location || undefined,
-      expiryDate: inventory.expiryDate || undefined,
-      lotNumber: inventory.lotNumber || undefined,
-      autoReorderEnabled: inventory.autoReorderEnabled || false,
-      averageDailyUsage: inventory.averageDailyUsage || undefined,
-      leadTimeDays: inventory.leadTimeDays || undefined,
-      lastInspectedAt: undefined,
-    });
-  };
-
+  // Deep-link: entity_id → 해당 아이템 시트 열기
   const entityIdParam = searchParams.get("entity_id");
+  useEffect(() => {
+    // @ts-ignore - data is declared later in component
+    if (entityIdParam && data?.inventories) {
+      // @ts-ignore - data is declared later
+      const target = data.inventories.find((item: ProductInventory) => item.id === entityIdParam);
+      if (target) {
+        setSelectedItem(target);
+        setIsSheetOpen(true);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entityIdParam]);
 
   // Deep-link: ?ai_panel=open 시 패널 자동 오픈
   useEffect(() => {
@@ -303,10 +218,7 @@ function InventoryPageContent() {
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
   const [showRestockHistory, setShowRestockHistory] = useState(false);
 
-  // ── 새 라벨 인쇄 모달 (규격 선택 + 미리보기) ──
-  const [newLabelPrintOpen, setNewLabelPrintOpen] = useState(false);
-
-  // ── 기존 라벨 인쇄 모달 상태 (레거시) ──
+  // ── 라벨 인쇄 모달 상태 ──
   const [labelPrintOpen, setLabelPrintOpen] = useState(false);
   const [labelPrintTitle, setLabelPrintTitle] = useState("");
   const [labelPrintLots, setLabelPrintLots] = useState<ProductInventory[]>([]);
@@ -341,7 +253,7 @@ function InventoryPageContent() {
   const selectedTeam = teamsData?.teams?.[0];
 
   // 내 인벤토리 조회
-  const { data: inventoryResponse, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
+  const { data, isLoading } = useQuery<{ inventories: ProductInventory[] }>({
     queryKey: ["inventories"],
     queryFn: async () => {
       const response = await fetch("/api/inventory");
@@ -350,17 +262,6 @@ function InventoryPageContent() {
     },
     enabled: status === "authenticated" && inventoryView === "my",
   });
-
-  // Deep-link: entity_id → 해당 아이템 시트 열기 (inventoryResponse 선언 이후)
-  useEffect(() => {
-    if (entityIdParam && inventoryResponse?.inventories) {
-      const target = inventoryResponse.inventories.find((item: ProductInventory) => item.id === entityIdParam);
-      if (target) {
-        setSelectedItem(target);
-        setIsSheetOpen(true);
-      }
-    }
-  }, [entityIdParam, inventoryResponse?.inventories]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 팀 인벤토리 조회
   const { data: teamInventoryData, isLoading: isLoadingTeam } = useQuery<{ inventories: any[] }>({
@@ -374,7 +275,7 @@ function InventoryPageContent() {
     enabled: status === "authenticated" && !!selectedTeam?.id && inventoryView === "team",
   });
 
-  const myInventories = inventoryResponse?.inventories || [];
+  const myInventories = data?.inventories || [];
   const teamInventories = teamInventoryData?.inventories || [];
   const inventories = inventoryView === "my" ? myInventories : teamInventories;
 
@@ -393,9 +294,132 @@ function InventoryPageContent() {
     return bySafetyStock || byLeadTime || inv.currentQuantity === 0;
   });
 
-  // Canonical truth only — mock fallback removed per #P02 (ADR-002 canvas).
-  // Empty inventory renders empty state CTA → real /api/inventory POST dialog.
-  const displayInventories = inventories;
+  // Mock 데이터 (데이터가 없을 때 사용) — 동일 제품 Lot별 분리, 실무 엑셀 필드 반영
+  const [mockInventories, setMockInventories] = useState<ProductInventory[]>([
+    {
+      id: "mock-1a",
+      productId: "mock-product-1",
+      currentQuantity: 3,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉동고 1칸",
+      expiryDate: "2026-12-31",
+      notes: null,
+      lotNumber: "24A01-X",
+      storageCondition: "freezer_20",
+      hazard: false,
+      testPurpose: "세포 배양",
+      vendor: "Thermo Fisher 공급",
+      deliveryPeriod: "2~3주",
+      inUseOrUnopened: "미개봉",
+      averageExpiry: "2026-12-31",
+      averageDailyUsage: 0.5,
+      leadTimeDays: 21,
+      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
+    },
+    {
+      id: "mock-1b",
+      productId: "mock-product-1",
+      currentQuantity: 2,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉동고 1칸",
+      expiryDate: "2026-03-15",
+      notes: "개봉된 vial인데 시약관리대장 상에서 수량 차감 안 되어서 8/12 개봉 기록 후 vial 전량 사용 예정",
+      lotNumber: "23K15-Y",
+      storageCondition: "freezer_20",
+      hazard: false,
+      testPurpose: "세포 배양",
+      vendor: "Thermo Fisher 공급",
+      deliveryPeriod: "2~3주",
+      inUseOrUnopened: "사용 중",
+      averageExpiry: "2026-03-15",
+      averageDailyUsage: 0.5,
+      leadTimeDays: 21,
+      product: { id: "mock-product-1", name: "Gibco FBS (500ml)", brand: "Thermo Fisher", catalogNumber: "16000-044" },
+    },
+    {
+      id: "mock-2",
+      productId: "mock-product-2",
+      currentQuantity: 15,
+      unit: "개",
+      safetyStock: 20,
+      minOrderQty: 50,
+      location: "선반 3층",
+      expiryDate: null,
+      notes: null,
+      storageCondition: "room_temp_std",
+      hazard: false,
+      testPurpose: "일반 실험",
+      vendor: "Corning 직납",
+      deliveryPeriod: "1주",
+      averageDailyUsage: 1,
+      leadTimeDays: 7,
+      product: { id: "mock-product-2", name: "Falcon 50ml Conical Tube", brand: "Corning", catalogNumber: "352070" },
+    },
+    {
+      id: "mock-3",
+      productId: "mock-product-3",
+      currentQuantity: 2,
+      unit: "box",
+      safetyStock: 5,
+      minOrderQty: 10,
+      location: "냉장고 2칸",
+      expiryDate: null,
+      notes: "분기 별 1회 이상 사용",
+      storageCondition: "room_temp_std",
+      hazard: false,
+      testPurpose: "MTT assay",
+      vendor: "Eppendorf",
+      deliveryPeriod: "1~2주",
+      averageDailyUsage: 0.2,
+      leadTimeDays: 14,
+      product: { id: "mock-product-3", name: "Pipette Tips (1000μL)", brand: "Eppendorf", catalogNumber: "0030078447" },
+    },
+    {
+      id: "mock-4",
+      productId: "mock-product-4",
+      currentQuantity: 0,
+      unit: "개",
+      safetyStock: 3,
+      minOrderQty: 5,
+      location: "선반 1층",
+      expiryDate: null,
+      notes: null,
+      storageCondition: "fridge",
+      hazard: false,
+      testPurpose: "MTT assay, 외래성 바이러스 시험",
+      vendor: "Sigma-Aldrich",
+      deliveryPeriod: "3~4주",
+      averageDailyUsage: 0.3,
+      leadTimeDays: 28,
+      product: { id: "mock-product-4", name: "DMEM Medium (500ml)", brand: "Sigma-Aldrich", catalogNumber: "D5671" },
+    },
+    {
+      id: "mock-5",
+      productId: "mock-product-5",
+      currentQuantity: 25,
+      unit: "개",
+      safetyStock: 10,
+      minOrderQty: 20,
+      location: "냉장고 3칸",
+      expiryDate: null,
+      notes: null,
+      storageCondition: "fridge",
+      hazard: true,
+      testPurpose: "세포 배양",
+      vendor: "Gibco",
+      deliveryPeriod: "2주",
+      averageDailyUsage: 1,
+      leadTimeDays: 14,
+      product: { id: "mock-product-5", name: "Trypsin-EDTA Solution", brand: "Gibco", catalogNumber: "25200-056" },
+    },
+  ]);
+
+  // 데이터가 없으면 Mock 데이터 사용
+  const displayInventories = inventories.length > 0 ? inventories : mockInventories;
   const incomingItems = displayInventories.filter((inv) => {
     // 입고 예정 로직 (간단한 예시)
     return inv.currentQuantity <= (inv.safetyStock || 0) * 0.5;
@@ -411,8 +435,8 @@ function InventoryPageContent() {
           try {
             const response = await fetch(`/api/inventory/${inv.id}/restock-request`);
             if (response.ok) {
-              const restockRes = await response.json();
-              statuses[inv.id] = restockRes.hasRequest || false;
+              const data = await response.json();
+              statuses[inv.id] = data.hasRequest || false;
             }
           } catch (error) {
             // 에러는 무시하고 계속 진행
@@ -464,7 +488,7 @@ function InventoryPageContent() {
       }
       return response.json();
     },
-    onSuccess: (_result, inventoryId) => {
+    onSuccess: (data, inventoryId) => {
       setRestockRequestedIds((prev) => new Set(prev).add(inventoryId));
       queryClient.invalidateQueries({ queryKey: ["restock-status"] });
       toast({
@@ -475,75 +499,6 @@ function InventoryPageContent() {
     onError: (error: Error) => {
       toast({
         title: "재입고 요청 실패",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const disposeLotMutation = useMutation({
-    mutationFn: async ({
-      inventory,
-      params,
-    }: {
-      inventory: ProductInventory;
-      params: {
-        lotNumber: string;
-        quantity: number;
-        reason: DisposalReason;
-        reasonDetail?: string;
-        quarantine: boolean;
-      };
-    }) => {
-      const nextQuantity = Math.max(inventory.currentQuantity - params.quantity, 0);
-      const reasonLabelMap: Record<DisposalReason, string> = {
-        expiry: "유효기간 만료",
-        contamination: "오염/변질",
-        damage: "파손",
-        other: "기타",
-      };
-      const disposalNote = [
-        `[LOT 폐기 ${format(new Date(), "yyyy.MM.dd", { locale: ko })}]`,
-        `lot=${params.lotNumber}`,
-        `qty=${params.quantity}${inventory.unit || ""}`,
-        `reason=${reasonLabelMap[params.reason]}`,
-        params.reasonDetail ? `detail=${params.reasonDetail}` : null,
-        params.quarantine ? "quarantine=true" : null,
-      ]
-        .filter(Boolean)
-        .join(" ");
-
-      const response = await csrfFetch(`/api/inventory/${inventory.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          quantity: nextQuantity,
-          notes: [inventory.notes, disposalNote].filter(Boolean).join("\n"),
-        }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error((errData as { error?: string }).error || "폐기 처리에 실패했습니다.");
-      }
-
-      return response.json();
-    },
-    onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["inventories"] });
-      queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["reorder-recommendations"] });
-      queryClient.invalidateQueries({ queryKey: ["reorder-recommendations-for-highlight"] });
-      setDisposalTarget(null);
-      setDisposalInventoryId(null);
-      toast({
-        title: variables.params.quarantine ? "격리 후 폐기 처리 완료" : "폐기 처리 완료",
-        description: `${variables.inventory.product.name} · Lot ${variables.params.lotNumber} 폐기 처리가 반영되었습니다.`,
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "폐기 처리 실패",
         description: error.message,
         variant: "destructive",
       });
@@ -604,7 +559,7 @@ function InventoryPageContent() {
   });
 
   const createOrUpdateMutation = useMutation({
-    mutationFn: async (formPayload: {
+    mutationFn: async (data: {
       id?: string;
       productId: string;
       currentQuantity: number;
@@ -620,22 +575,48 @@ function InventoryPageContent() {
       storageCondition?: string;
       testPurpose?: string;
     }) => {
-      const isEdit = Boolean(formPayload.id);
+      const isEdit = Boolean(data.id);
+      const isMockItem = isEdit && data.id?.startsWith("mock-");
 
-      const url = isEdit ? `/api/inventory/${formPayload.id}` : "/api/inventory";
+      // Mock 데이터 수정: API 대신 로컬 상태 업데이트 (1초 딜레이 시뮬레이션)
+      if (isMockItem && data.id) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        setMockInventories((prev) =>
+          prev.map((item) =>
+            item.id === data.id
+              ? {
+                  ...item,
+                  currentQuantity: data.currentQuantity,
+                  unit: data.unit,
+                  safetyStock: data.safetyStock ?? item.safetyStock,
+                  minOrderQty: data.minOrderQty ?? item.minOrderQty,
+                  location: data.location ?? item.location,
+                  expiryDate: data.expiryDate ?? item.expiryDate,
+                  notes: data.notes ?? item.notes,
+                  lotNumber: data.lotNumber ?? item.lotNumber,
+                  storageCondition: data.storageCondition ?? item.storageCondition,
+                  testPurpose: data.testPurpose ?? item.testPurpose,
+                }
+              : item
+          )
+        );
+        return { success: true };
+      }
+
+      const url = isEdit ? `/api/inventory/${data.id}` : "/api/inventory";
       const body = isEdit
         ? {
-            quantity: formPayload.currentQuantity,
-            location: formPayload.location ?? undefined,
-            notes: formPayload.notes ?? undefined,
-            expiryDate: formPayload.expiryDate ?? undefined,
-            minOrderQty: formPayload.minOrderQty ?? undefined,
-            safetyStock: formPayload.safetyStock ?? undefined,
-            lotNumber: formPayload.lotNumber ?? undefined,
-            storageCondition: formPayload.storageCondition ?? undefined,
-            testPurpose: formPayload.testPurpose ?? undefined,
+            quantity: data.currentQuantity,
+            location: data.location ?? undefined,
+            notes: data.notes ?? undefined,
+            expiryDate: data.expiryDate ?? undefined,
+            minOrderQty: data.minOrderQty ?? undefined,
+            safetyStock: data.safetyStock ?? undefined,
+            lotNumber: data.lotNumber ?? undefined,
+            storageCondition: data.storageCondition ?? undefined,
+            testPurpose: data.testPurpose ?? undefined,
           }
-        : formPayload;
+        : data;
 
       const response = await csrfFetch(url, {
         method: isEdit ? "PATCH" : "POST",
@@ -670,11 +651,11 @@ function InventoryPageContent() {
   });
 
   const recordUsageMutation = useMutation({
-    mutationFn: async (usagePayload: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
+    mutationFn: async (data: { inventoryId: string; quantity: number; unit?: string; notes?: string }) => {
       const response = await csrfFetch("/api/inventory/usage", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(usagePayload),
+        body: JSON.stringify(data),
       });
       if (!response.ok) throw new Error("Failed to record usage");
       return response.json();
@@ -689,7 +670,7 @@ function InventoryPageContent() {
   // 삭제 mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/inventory/${id}`, {
+      const response = await csrfFetch(`/api/inventory/${id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error("Failed to delete inventory");
@@ -714,7 +695,7 @@ function InventoryPageContent() {
   // 입고 mutation (POST /api/inventory/[id]/restock — 트랜잭션 기반 이력 기록)
   const restockMutation = useMutation({
     mutationFn: async ({ id, addQty, lotNumber, expiryDate }: { id: string; addQty: number; lotNumber?: string; expiryDate?: string }) => {
-      const response = await fetch(`/api/inventory/${id}/restock`, {
+      const response = await csrfFetch(`/api/inventory/${id}/restock`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -769,33 +750,14 @@ function InventoryPageContent() {
       if (locationFilter !== "none" && inv.location !== locationFilter) return false;
     }
 
-    // 상태 필터 (리드 타임 기반 재주문 필요 포함 + 처리형 필터)
+    // 상태 필터 (리드 타임 기반 재주문 필요 포함)
     if (statusFilter !== "all") {
       const isLow = inv.safetyStock !== null && inv.currentQuantity <= inv.safetyStock;
       const isOut = inv.currentQuantity === 0;
       const byLeadTime = isReorderNeededByLeadTime(inv);
       const needsAttention = isLow || isOut || byLeadTime;
-
       if (statusFilter === "low" && !needsAttention) return false;
       if (statusFilter === "normal" && needsAttention) return false;
-      if (statusFilter === "expiring") {
-        if (!inv.expiryDate) return false;
-        const daysLeft = Math.ceil((new Date(inv.expiryDate).getTime() - Date.now()) / 86400000);
-        if (daysLeft > 30) return false;
-      }
-      if (statusFilter === "incoming") {
-        // 입고 대기: 안전재고 50% 이하 (발주 진행 추정)
-        if (inv.currentQuantity > (inv.safetyStock || 0) * 0.5) return false;
-      }
-      if (statusFilter === "lot_issue") {
-        // Lot 불일치: lot 번호 미등록 또는 보관 조건 미매칭
-        const hasLotIssue = !inv.lotNumber || (inv.storageCondition && inv.storageCondition.includes("freezer") && !inv.location);
-        if (!hasLotIssue) return false;
-      }
-      if (statusFilter === "recent") {
-        // 최근 변경은 모든 항목 포함 (실제로는 updatedAt 기반으로 필터)
-        // Mock에서는 모든 항목 통과
-      }
     }
 
     return true;
@@ -824,122 +786,6 @@ function InventoryPageContent() {
     );
     return daysUntilExpiry > 0 && daysUntilExpiry <= 30;
   }).length;
-  const actionableExpiredLots = useMemo(
-    () =>
-      displayInventories
-        .filter((inv) => {
-          if (!inv.expiryDate) return false;
-          const expiry = new Date(inv.expiryDate);
-          if (isNaN(expiry.getTime())) return false;
-          return expiry.getTime() < now.getTime() && inv.currentQuantity > 0;
-        })
-        .sort((a, b) => {
-          const expiryDiff =
-            new Date(a.expiryDate || 0).getTime() - new Date(b.expiryDate || 0).getTime();
-          if (expiryDiff !== 0) return expiryDiff;
-          return b.currentQuantity - a.currentQuantity;
-        }),
-    [displayInventories, now]
-  );
-  const priorityExpiredLot = actionableExpiredLots[0] ?? null;
-  const actionableExpiredQuantity = actionableExpiredLots.reduce(
-    (sum, inv) => sum + inv.currentQuantity,
-    0
-  );
-
-  const buildDisposalTarget = (
-    inventory: ProductInventory
-  ): import("@/components/inventory/lot-disposal-panel").DisposalTarget => {
-    const siblings = displayInventories.filter((inv) => inv.productId === inventory.productId);
-    const totalItemQuantity = siblings.reduce((sum, inv) => sum + inv.currentQuantity, 0);
-
-    return {
-      productName: inventory.product.name,
-      brand: inventory.product.brand || undefined,
-      catalogNumber: inventory.product.catalogNumber || undefined,
-      unit: inventory.unit || undefined,
-      lotNumber: inventory.lotNumber || "N/A",
-      lotQuantity: inventory.currentQuantity,
-      expiryDate: inventory.expiryDate || new Date().toISOString(),
-      location: inventory.location || undefined,
-      isHazardous: inventory.hazard || false,
-      hasMsds: undefined,
-      requiresIsolation: undefined,
-      totalItemQuantity,
-      safetyStock: inventory.safetyStock || undefined,
-      averageDailyUsage: inventory.averageDailyUsage || undefined,
-    };
-  };
-
-  const openDisposalDock = (inventory: ProductInventory) => {
-    setDisposalInventoryId(inventory.id);
-    setDisposalTarget(buildDisposalTarget(inventory));
-  };
-
-  const priorityQueueItems = useMemo<QueueItem[]>(() => {
-    const expiredItems = actionableExpiredLots.map((inventory) => {
-      const resolution = resolveDisposal({
-        productName: inventory.product.name,
-        brand: inventory.product.brand || undefined,
-        catalogNumber: inventory.product.catalogNumber || undefined,
-        unit: inventory.unit || undefined,
-        lotNumber: inventory.lotNumber || "N/A",
-        lotQuantity: inventory.currentQuantity,
-        expiryDate: inventory.expiryDate || new Date().toISOString(),
-        location: inventory.location || undefined,
-        isHazardous: inventory.hazard || false,
-        hasMsds: undefined,
-        requiresIsolation: undefined,
-        totalItemQuantity: displayInventories
-          .filter((inv) => inv.productId === inventory.productId)
-          .reduce((sum, inv) => sum + inv.currentQuantity, 0),
-        safetyStock: inventory.safetyStock || undefined,
-        averageDailyUsage: inventory.averageDailyUsage || undefined,
-      });
-
-      return {
-        id: `dispose-${inventory.id}`,
-        productName: inventory.product.name,
-        lotNumber: inventory.lotNumber || undefined,
-        risk: "critical" as const,
-        category: "disposal_review" as const,
-        reason: `만료 · 잔량 ${inventory.currentQuantity}${inventory.unit}`,
-        rationale: resolution.description,
-        recommendedAction: resolution.title,
-        actionLabel: "폐기 처리",
-        meta: {
-          actionType: "dispose_lot",
-          inventoryId: inventory.id,
-        },
-      };
-    });
-
-    const reorderItems = displayInventories
-      .filter(
-        (inventory) =>
-          recommendedInventoryIds.has(inventory.id) &&
-          !actionableExpiredLots.some((expired) => expired.id === inventory.id)
-      )
-      .slice(0, 6)
-      .map((inventory) => ({
-        id: `reorder-${inventory.id}`,
-        productName: inventory.product.name,
-        lotNumber: inventory.lotNumber || undefined,
-        risk: "high" as const,
-        category: "reorder_priority" as const,
-        reason: `재고 ${inventory.currentQuantity}${inventory.unit} · 안전재고 ${inventory.safetyStock ?? "-"}`,
-        rationale: "만료 lot 폐기 처리가 없는 품목 중 재주문 검토가 필요한 항목입니다.",
-        recommendedAction: "재주문 검토",
-        actionLabel: "재주문 검토",
-        meta: {
-          actionType: "review_reorder",
-          inventoryId: inventory.id,
-        },
-      }));
-
-    return [...expiredItems, ...reorderItems];
-  }, [actionableExpiredLots, displayInventories, recommendedInventoryIds]);
-  const topPriorityQueueItem = priorityQueueItems[0] ?? null;
 
   // 점검 사항 탭용 이슈 카운트 (부족, 품절, 폐기 임박, 재주문 권장, 위치 미지정)
   const issuesCount = displayInventories.filter((inv) => {
@@ -974,35 +820,12 @@ function InventoryPageContent() {
     return "low_stock"; // fallback
   };
   const ISSUE_CONFIG: Record<IssueType, { label: string; cls: string; priority: number }> = {
-    expired:       { label: "만료됨",     cls: "bg-red-500/10 text-red-400",       priority: 0 },
-    out_of_stock:  { label: "품절",       cls: "bg-red-500/10 text-red-400",       priority: 1 },
-    expiring:      { label: "만료 임박",  cls: "bg-amber-500/10 text-amber-400",   priority: 2 },
-    low_stock:     { label: "부족",       cls: "bg-amber-500/10 text-amber-400",   priority: 3 },
-    reorder_lead:  { label: "재발주 필요", cls: "bg-blue-500/10 text-blue-400",    priority: 4 },
-    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",            priority: 5 },
-  };
-
-  const handlePriorityQueueAction = (queueItem: QueueItem) => {
-    const inventoryId = queueItem.meta?.inventoryId;
-    const match = inventoryId
-      ? displayInventories.find((inv) => inv.id === inventoryId)
-      : displayInventories.find((inv) => inv.product.name === queueItem.productName);
-
-    if (!match) {
-      toast({
-        title: "대상 항목을 찾을 수 없습니다",
-        description: "우선 처리 대상 재고를 다시 불러온 뒤 시도해주세요.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (queueItem.meta?.actionType === "dispose_lot") {
-      openDisposalDock(match);
-      return;
-    }
-
-    openReorderReview(match);
+    expired:       { label: "만료됨",     cls: "bg-red-900/50 text-red-400",       priority: 0 },
+    out_of_stock:  { label: "품절",       cls: "bg-red-900/50 text-red-400",       priority: 1 },
+    expiring:      { label: "임박",       cls: "bg-amber-900/50 text-amber-400", priority: 2 },
+    low_stock:     { label: "재고 부족",  cls: "bg-orange-900/50 text-orange-400", priority: 3 },
+    reorder_lead:  { label: "재주문 권장", cls: "bg-amber-900/50 text-amber-400", priority: 4 },
+    no_location:   { label: "위치 미지정", cls: "bg-el text-slate-400",  priority: 5 },
   };
 
   if (status === "loading") {
@@ -1143,8 +966,7 @@ function InventoryPageContent() {
       {/* ── Mobile View (below md breakpoint) ── */}
       <div className="md:hidden">
         <div className="flex flex-col space-y-1 mb-4">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
-          <p className="text-slate-500 text-xs">실험실 재고와 lot 상태를 관리합니다.</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">재고 관리</h1>
         </div>
         <div className="flex flex-wrap items-start gap-2 mb-5">
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
@@ -1156,8 +978,8 @@ function InventoryPageContent() {
             variant="outline"
             onClick={() => router.push("/dashboard/purchases")}
           >
-            <PackagePlus className="h-3.5 w-3.5 mr-1.5" />
-            구매 반영
+            <Truck className="h-3.5 w-3.5 mr-1.5" />
+            입고 반영
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1167,11 +989,11 @@ function InventoryPageContent() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem
-                onClick={() => setIsImportStagingOpen(true)}
+                onClick={() => setIsImportDialogOpen(true)}
                 className="flex items-center gap-2 text-xs"
               >
                 <Upload className="h-3.5 w-3.5" />
-                재고 파일 가져오기
+                엑셀 업로드
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push("/dashboard/inventory/scan")}
@@ -1186,14 +1008,6 @@ function InventoryPageContent() {
               >
                 <Printer className="h-3.5 w-3.5" />
                 라벨 인쇄
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={() => setIsSmartReceiveOpen(true)}
-                className="flex items-center gap-2 text-xs text-blue-600"
-              >
-                <ScanLine className="h-3.5 w-3.5" />
-                스마트 입고
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -1242,24 +1056,24 @@ function InventoryPageContent() {
       <div className="hidden md:flex gap-0">
       {/* Main content area */}
       <div className={`flex-1 min-w-0 space-y-4 sm:space-y-6 transition-all ${contextPanelOpen ? "max-w-[calc(100%-420px)]" : "max-w-7xl mx-auto"}`}>
-        {/* 상단 타이틀 및 액션 버튼 — 타이틀 좌측 / 버튼 우측 (스크린샷 레이아웃) */}
-        <div className="flex items-start justify-between gap-4 mb-3 sm:mb-4">
-          <div className="flex flex-col space-y-1">
-            <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900" style={{ fontFamily: "'Inter', 'Pretendard', system-ui, sans-serif" }}>재고 관리</h1>
-            <p className="text-sm text-slate-500 hidden sm:block" style={{ fontFamily: "'Pretendard', 'Inter', system-ui, sans-serif" }}>
-              실험실 재고와 lot 상태를 관리합니다.
+        {/* 상단 타이틀 및 액션 버튼 */}
+        <div className="flex flex-col gap-3 md:gap-5 mb-3 sm:mb-4">
+          <div className="flex flex-col space-y-1 sm:space-y-2">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-slate-900">재고 관리</h1>
+            <p className="text-muted-foreground text-sm hidden sm:block">
+              연구실의 모든 시약과 장비를 한눈에 파악하고 관리하세요.
             </p>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex flex-wrap items-start justify-start gap-2 md:gap-3 w-full">
             <AddInventoryModal
               open={isDialogOpen}
               onOpenChange={(open) => {
                 setIsDialogOpen(open);
                 if (!open) setEditingInventory(null);
               }}
-              onSubmit={(submitValues) => {
+              onSubmit={(data) => {
                 createOrUpdateMutation.mutate({
-                  ...submitValues,
+                  ...data,
                   id: editingInventory?.id,
                 });
               }}
@@ -1274,85 +1088,66 @@ function InventoryPageContent() {
                 queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
               }}
             />
-            <ImportStagingWorkbench
-              open={isImportStagingOpen}
-              onClose={() => setIsImportStagingOpen(false)}
-              onApplyComplete={() => {
-                queryClient.invalidateQueries({ queryKey: ["inventories"] });
-                queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
-              }}
-            />
-            <LabelScannerModal
-              open={isSmartReceiveOpen}
-              onOpenChange={setIsSmartReceiveOpen}
-              onDirectReceive={async (data: SmartReceiveFormData) => {
-                try {
-                  const res = await csrfFetch("/api/inventory", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      productName: data.productName,
-                      brand: data.brand || null,
-                      catalogNumber: data.catalogNumber || null,
-                      lotNumber: data.lotNumber || null,
-                      expiryDate: data.expirationDate || null,
-                      currentQuantity: parseInt(data.quantity) || 1,
-                      unit: data.unit || "개",
-                    }),
-                  });
-                  if (!res.ok) throw new Error("입고 등록 실패");
-                  toast({ title: "입고 완료", description: `${data.productName} ${data.quantity}${data.unit} 입고 처리되었습니다.` });
-                  queryClient.invalidateQueries({ queryKey: ["inventories"] });
-                  queryClient.invalidateQueries({ queryKey: ["team-inventory"] });
-                } catch {
-                  toast({ title: "오류", description: "입고 처리 중 오류가 발생했습니다.", variant: "destructive" });
-                }
-              }}
-            />
 
-            {/* ── Primary CTAs: 품목 추가 + 스마트 입고 ── */}
-            <Button onClick={() => setIsDialogOpen(true)} className="h-9 px-4 text-sm shadow-sm active:scale-95 transition-transform">
-              <Plus className="h-4 w-4 mr-1.5" />
-              품목 추가
+            {/* ── 1차 액션: 재고 등록 · 입고 반영 · 라벨 인쇄 ── */}
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              재고 등록
             </Button>
             <Button
-              onClick={() => setIsSmartReceiveOpen(true)}
-              className="h-9 px-4 text-sm bg-blue-600 hover:bg-blue-700 text-white shadow-sm active:scale-95 transition-transform"
+              variant="outline"
+              onClick={() => router.push("/dashboard/purchases")}
             >
-              <Sparkles className="h-4 w-4 mr-1.5" />
-              스마트 입고
+              <Truck className="h-4 w-4 mr-2" />
+              입고 반영
             </Button>
 
-            {/* ── 더보기: 보조 기능 통합 ── */}
+            {/* ── 2차 액션: 라벨 인쇄 · 엑셀 업로드 · 내보내기 ── */}
+            <Button
+              variant="outline"
+              onClick={() => {
+                // 전체 재고 라벨 인쇄 (PC 프린터 print dialog)
+                handleBulkLabelPrint();
+              }}
+            >
+              <Printer className="h-4 w-4 mr-0 sm:mr-2" />
+              <span className="hidden sm:inline">라벨 인쇄</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsImportDialogOpen(true)}
+              className="hidden md:inline-flex"
+            >
+              <Upload className="h-4 w-4 mr-2" />
+              엑셀 업로드
+            </Button>
+            <Button variant="outline" className="hidden md:inline-flex">
+              <Download className="h-4 w-4 mr-2" />
+              내보내기
+            </Button>
+
+            {/* ── 더보기 (모바일 + 라벨 데이터 내보내기 등 보조 기능) ── */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0">
+                <Button variant="outline" size="icon" className="h-10 w-10 shrink-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem
-                  onClick={() => router.push("/dashboard/purchases")}
-                  className="flex items-center gap-2 text-xs"
-                >
-                  <PackagePlus className="h-3.5 w-3.5" />
-                  구매 반영
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsImportStagingOpen(true)}
-                  className="flex items-center gap-2 text-xs"
+                  onClick={() => setIsImportDialogOpen(true)}
+                  className="flex items-center gap-2 text-xs md:hidden"
                 >
                   <Upload className="h-3.5 w-3.5" />
-                  재고 파일 가져오기
+                  엑셀 업로드
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => router.push("/dashboard/inventory/scan")}
-                  className="flex items-center gap-2 text-xs"
+                  className="flex items-center gap-2 text-xs md:hidden"
                 >
                   <QrCode className="h-3.5 w-3.5" />
                   QR 스캔
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={async () => {
                     if (isExportingLabels) return;
@@ -1392,141 +1187,139 @@ function InventoryPageContent() {
           </div>
         </div>
 
-        {/* 탭 바 — 하단 인디케이터 스타일 */}
-        <Tabs value={activeInventoryTab} onValueChange={(v) => setActiveInventoryTab(v)} className="w-full">
-          <div className="flex items-center gap-0.5 border-b border-slate-200 mb-4 overflow-x-auto scrollbar-hide">
-            {[
-              { key: "manage", icon: <ListFilter className="w-3.5 h-3.5" />, label: "품목 관리", badge: null },
-              { key: "overview", icon: <LayoutGrid className="w-3.5 h-3.5" />, label: "운영 현황", badge: issuesCount > 0 ? issuesCount : null, suffix: "S" },
-              { key: "storage-location", icon: <MapPin className="w-3.5 h-3.5" />, label: "보관 위치", badge: null },
-              { key: "flow", icon: <Truck className="w-3.5 h-3.5" />, label: "입출고 흐름", badge: null },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveInventoryTab(tab.key)}
-                className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium transition-colors whitespace-nowrap ${activeInventoryTab === tab.key ? "text-blue-600" : "text-slate-400 hover:text-slate-600"}`}
-              >
-                {tab.icon}
-                {tab.label}
-                {"suffix" in tab && tab.suffix && (
-                  <span className="text-[10px] font-bold text-blue-500 ml-0.5">{tab.suffix}</span>
-                )}
-                {tab.badge !== null && (
-                  <span className="inline-flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-white font-bold px-1 text-[10px] ml-0.5">
-                    {tab.badge}
-                  </span>
-                )}
-                {activeInventoryTab === tab.key && (
-                  <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-blue-600" />
-                )}
-              </button>
-            ))}
-          </div>
-
-        {/* 통합 카드: 콘텐츠 */}
-        <div className="rounded-xl border border-slate-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
-          <div className="w-full">
+        {/* 통합 카드: 탭 + 검색/필터/리스트 */}
+        <div className="rounded-xl border border-bd/50 bg-pn shadow-sm overflow-hidden">
+          <Tabs defaultValue="manage" className="w-full">
+            {/* 상단 통합 헤더 */}
+            <div className="p-4 border-b border-bd bg-el/50">
+              <TabsList className="flex bg-el p-1 rounded-xl w-fit">
+                <TabsTrigger
+                  value="manage"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <ListFilter className="w-4 h-4" />
+                  <span className="hidden sm:inline">시약 </span>관리
+                </TabsTrigger>
+                <TabsTrigger
+                  value="overview"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                  운영 현황
+                  {issuesCount > 0 ? (
+                    <span className="inline-flex h-5 min-w-[20px] flex-shrink-0 items-center justify-center rounded-full bg-rose-950/50 text-rose-400 font-medium px-1.5 text-[11px] shadow-sm ring-2 ring-[#09090b]/50  bg-rose-950/50  text-rose-400 animate-in zoom-in-95 duration-300 ml-2">
+                      {issuesCount}
+                    </span>
+                  ) : null}
+                </TabsTrigger>
+                <TabsTrigger
+                  value="lot-tracking"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <GitBranch className="w-4 h-4" />
+                  <span className="hidden sm:inline">Lot </span>추적
+                </TabsTrigger>
+                <TabsTrigger
+                  value="storage-location"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <MapPin className="w-4 h-4" />
+                  <span className="hidden sm:inline">저장 </span>위치
+                </TabsTrigger>
+                <TabsTrigger
+                  value="flow"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-bold bg-transparent text-slate-400 hover:text-slate-600 transition-all data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-md data-[state=active]:hover:text-white"
+                >
+                  <Truck className="w-4 h-4" />
+                  <span className="hidden sm:inline">입고/사용 </span>흐름
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             {/* 하단 통합 콘텐츠 */}
-            {/* 1. 품목 관리 (item-level 운영 surface) */}
-            <TabsContent value="manage" className="m-0 p-4 space-y-4">
-              {/* 검색 + 아이콘 액션 한 줄 — 스크린샷 레이아웃 */}
-              <div className="flex items-center gap-2">
-                {/* 검색창 — flex-1 */}
-                <div className="flex-1 min-w-0">
+            {/* 1. 시약 관리하기 (테이블 전용 뷰) */}
+            <TabsContent value="manage" className="m-0 p-6 space-y-4">
+              <div className="flex flex-col gap-3 rounded-lg border border-bs bg-el/30 p-3">
+                {/* 모바일: 검색 + 필터 버튼 */}
+                <div className="md:hidden flex items-center gap-2">
+                  <div className="flex-1">
+                    <InventorySearch
+                      value={searchQuery}
+                      onChange={setSearchQuery}
+                      isLoading={isLoading}
+                    />
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setFilterSheetOpen(true)}
+                    className="h-9 px-2.5 gap-1.5 text-xs shrink-0 border-bs"
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    필터
+                    {activeFilterCount > 0 && (
+                      <Badge variant="secondary" className="h-4 min-w-[16px] px-1 text-[10px] font-bold bg-blue-900/50 text-blue-300  bg-blue-900  text-blue-300">
+                        {activeFilterCount}
+                      </Badge>
+                    )}
+                  </Button>
+                </div>
+                {/* 모바일: 필터 요약 텍스트 */}
+                {activeFilterCount > 0 && (
+                  <div className="md:hidden text-[11px] text-slate-500  text-slate-400 px-0.5">
+                    {[
+                      locationFilter !== "all" && `위치 1`,
+                      statusFilter !== "all" && `상태 1`,
+                      categoryFilter !== "all" && `카테고리 1`,
+                    ].filter(Boolean).join(" · ")}
+                  </div>
+                )}
+
+                {/* 데스크탑: 검색 + 필터 셀렉트 */}
+                <div className="hidden md:block">
                   <InventorySearch
                     value={searchQuery}
                     onChange={setSearchQuery}
                     isLoading={isLoading}
                   />
                 </div>
-
-                {/* 필터 드롭다운 (아이콘) */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-9 w-9 shrink-0 relative">
-                      <Filter className="h-4 w-4" />
-                      {activeFilterCount > 0 && (
-                        <span className="absolute -top-1 -right-1 h-4 min-w-[16px] flex items-center justify-center rounded-full bg-blue-600 text-white text-[9px] font-bold px-1">
-                          {activeFilterCount}
-                        </span>
-                      )}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 p-3 space-y-3">
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">위치</label>
-                      <Select value={locationFilter} onValueChange={setLocationFilter}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="전체 위치" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">전체 위치</SelectItem>
-                          <SelectItem value="none">위치 미지정</SelectItem>
-                          {uniqueLocations.map((loc) => (
-                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">상태</label>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="h-8 text-xs">
-                          <SelectValue placeholder="전체 상태" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">전체 상태</SelectItem>
-                          <SelectItem value="low">부족 / 재주문</SelectItem>
-                          <SelectItem value="expiring">만료 임박</SelectItem>
-                          <SelectItem value="incoming">입고 대기</SelectItem>
-                          <SelectItem value="lot_issue">LOT 이슈</SelectItem>
-                          <SelectItem value="recent">최근 변경</SelectItem>
-                          <SelectItem value="normal">정상</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex gap-2 pt-1">
-                      <Button variant="ghost" size="sm" className="flex-1 h-7 text-xs" onClick={() => { setLocationFilter("all"); setStatusFilter("all"); setCategoryFilter("all"); }}>
-                        초기화
-                      </Button>
-                    </div>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-
-                {/* 라벨 인쇄 */}
-                <Button variant="outline" size="sm" className="h-9 gap-1.5 shrink-0 text-xs" onClick={() => setNewLabelPrintOpen(true)} title="라벨 인쇄">
-                  <Printer className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">라벨 인쇄</span>
-                </Button>
-
-                {/* 내보내기 (아이콘) */}
-                <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" title="내보내기" onClick={async () => {
-                  if (isExportingLabels) return;
-                  setIsExportingLabels(true);
-                  try {
-                    const res = await fetch("/api/inventory/export-labels");
-                    if (!res.ok) {
-                      const json = await res.json().catch(() => ({}));
-                      throw new Error((json as { error?: string }).error || "내보내기에 실패했습니다.");
-                    }
-                    const blob = await res.blob();
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    const yyyymmdd = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-                    a.href = url;
-                    a.download = `Inventory_${yyyymmdd}.xlsx`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    toast({ title: "내보내기 완료" });
-                  } catch (e: unknown) {
-                    toast({ title: "내보내기 실패", description: e instanceof Error ? e.message : "잠시 후 다시 시도해주세요.", variant: "destructive" });
-                  } finally {
-                    setIsExportingLabels(false);
-                  }
-                }}>
-                  <Download className="h-4 w-4" />
-                </Button>
+                <div className="hidden md:flex items-center gap-2 flex-wrap">
+                  <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="위치별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 위치</SelectItem>
+                      <SelectItem value="none">위치 미지정</SelectItem>
+                      {uniqueLocations.map((loc) => (
+                        <SelectItem key={loc} value={loc}>
+                          {loc}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="상태별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 상태</SelectItem>
+                      <SelectItem value="low">부족</SelectItem>
+                      <SelectItem value="normal">정상</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                    <SelectTrigger className="w-[140px]">
+                      <SelectValue placeholder="카테고리별" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">전체 카테고리</SelectItem>
+                      <SelectItem value="reagent">시약</SelectItem>
+                      <SelectItem value="equipment">장비</SelectItem>
+                      <SelectItem value="consumable">소모품</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {/* 모바일 필터 바텀시트 */}
@@ -1561,11 +1354,7 @@ function InventoryPageContent() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">전체 상태</SelectItem>
-                          <SelectItem value="low">부족 / 재주문 필요</SelectItem>
-                          <SelectItem value="expiring">만료 임박</SelectItem>
-                          <SelectItem value="incoming">입고 대기</SelectItem>
-                          <SelectItem value="lot_issue">LOT 불일치</SelectItem>
-                          <SelectItem value="recent">최근 변경</SelectItem>
+                          <SelectItem value="low">부족</SelectItem>
                           <SelectItem value="normal">정상</SelectItem>
                         </SelectContent>
                       </Select>
@@ -1608,19 +1397,11 @@ function InventoryPageContent() {
               </Sheet>
 
             {isLoading ? (
-              <div className="space-y-3">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="flex items-center gap-4 px-4 py-3.5 rounded-lg border border-slate-100 bg-white animate-pulse">
-                    <div className="h-9 w-9 rounded-lg bg-slate-100" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3.5 w-32 rounded bg-slate-100" />
-                      <div className="h-3 w-48 rounded bg-slate-50" />
-                    </div>
-                    <div className="h-6 w-16 rounded-full bg-slate-100" />
-                    <div className="h-3 w-12 rounded bg-slate-50" />
-                  </div>
-                ))}
-              </div>
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <p className="text-muted-foreground">재고 목록을 불러오는 중...</p>
+                </CardContent>
+              </Card>
             ) : (
               <Card>
                 <CardContent className="p-0">
@@ -1683,9 +1464,6 @@ function InventoryPageContent() {
                         description: `${inventory.product.name} 위치 이동 기능은 곧 제공될 예정입니다.`,
                       });
                     }}
-                    onDispose={(inventory) => {
-                      openDisposalDock(inventory);
-                    }}
                     onPrintLabel={(productName, lots) => {
                       setLabelPrintTitle(productName);
                       setLabelPrintLots(lots as ProductInventory[]);
@@ -1698,11 +1476,11 @@ function InventoryPageContent() {
                     }}
                     emptyMessage={
                       debouncedSearchQuery.trim()
-                        ? `'${debouncedSearchQuery.trim()}'에 해당하는 재고를 찾지 못했습니다.`
-                        : "등록된 재고가 없습니다.\n첫 재고를 추가해 운영을 시작하세요."
+                        ? `검색어 '${debouncedSearchQuery.trim()}'에 대한 결과를 찾을 수 없습니다.`
+                        : "아직 등록된 재고가 없습니다. 첫 재고를 등록해보세요."
                     }
                     emptyAction={debouncedSearchQuery.trim() ? () => setSearchQuery("") : () => setIsDialogOpen(true)}
-                    emptyActionLabel={debouncedSearchQuery.trim() ? "전체 재고 보기" : "재고 추가하기"}
+                    emptyActionLabel={debouncedSearchQuery.trim() ? "모든 재고 보기" : "첫 재고 등록하기"}
                   />
                 </CardContent>
               </Card>
@@ -1711,135 +1489,83 @@ function InventoryPageContent() {
 
             {/* 2. 운영 현황 (Inventory Operations Cockpit) */}
             <TabsContent value="overview" className="m-0 p-4 sm:p-6 space-y-5">
-            {/* 온톨로지: 만료 lot priority banner */}
-            {(() => {
-              if (!priorityExpiredLot) return null;
-              return (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
-                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+            {/* KPI Summary Strip — dark cockpit theme */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="rounded-xl border border-bd bg-pn px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-slate-500">전체 재고</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-950/200/10">
+                    <Package className="h-3 w-3 text-blue-400" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-red-800">우선 처리: 만료 lot {actionableExpiredLots.length}건 폐기 필요</p>
-                    <p className="text-xs text-red-600/70">만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개. 폐기 처리를 먼저 진행하세요.</p>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-slate-900">
+                  {totalInventoryCount}
+                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-red-500/20 bg-pn px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-red-400/80">부족/품절</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-red-950/300/10">
+                    <AlertTriangle className="h-3 w-3 text-red-400" />
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
-                    onClick={() => openDisposalDock(priorityExpiredLot)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    폐기 처리 시작
-                  </Button>
                 </div>
-              );
-            })()}
-
-            {/* ── 우선 처리 배너 (최상단 1줄) ── */}
-            {issuesCount > 0 ? (
-              <div className={`rounded-xl border px-4 py-3 flex items-center gap-3 ${
-                priorityExpiredLot
-                  ? "border-red-200 bg-red-50"
-                  : expiringSoonCount > 0
-                  ? "border-red-200 bg-red-50"
-                  : lowOrOutOfStockCount > 0
-                    ? "border-amber-200 bg-amber-50"
-                    : "border-slate-200 bg-slate-50"
-              }`}>
-                <div className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${
-                  priorityExpiredLot
-                    ? "bg-red-100"
-                    : expiringSoonCount > 0
-                    ? "bg-red-100"
-                    : lowOrOutOfStockCount > 0
-                      ? "bg-amber-100"
-                      : "bg-slate-100"
-                }`}>
-                  {priorityExpiredLot
-                    ? <Trash2 className="h-4 w-4 text-red-600" />
-                    : expiringSoonCount > 0
-                    ? <Calendar className="h-4 w-4 text-red-600" />
-                    : lowOrOutOfStockCount > 0
-                      ? <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      : <Zap className="h-4 w-4 text-slate-600" />
-                  }
+                <div className="text-2xl font-bold tracking-tight text-red-400">
+                  {lowOrOutOfStockCount}
+                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-extrabold text-slate-900">
-                    {priorityExpiredLot
-                      ? `우선 처리: 만료 lot ${actionableExpiredLots.length}건 — 폐기 처리 필요`
-                      : expiringSoonCount > 0
-                      ? `우선 처리: 만료 임박 ${expiringSoonCount}건 — 폐기 또는 우선 소진 필요`
-                      : lowOrOutOfStockCount > 0
-                        ? `우선 처리: 재고 부족 ${lowOrOutOfStockCount}건 — 발주 검토 필요`
-                        : `처리 대기 ${issuesCount}건 — 아래 큐에서 확인하세요`
-                    }
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  disabled={!priorityExpiredLot && !topPriorityQueueItem}
-                  className={`h-7 px-3 text-[11px] font-bold gap-1 flex-shrink-0 ${
-                    priorityExpiredLot || expiringSoonCount > 0
-                      ? "bg-red-600 hover:bg-red-700 text-white"
-                      : "bg-amber-600 hover:bg-amber-700 text-white"
-                  }`}
-                  onClick={() => {
-                    if (priorityExpiredLot) {
-                      openDisposalDock(priorityExpiredLot);
-                      return;
-                    }
-                    if (topPriorityQueueItem) {
-                      handlePriorityQueueAction(topPriorityQueueItem);
-                    }
-                  }}
-                >
-                  {priorityExpiredLot ? "폐기 처리 시작" : expiringSoonCount > 0 ? "폐기 처리 시작" : "처리 시작"}
-                  <ArrowRight className="h-3 w-3" />
-                </Button>
               </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 flex items-center gap-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 flex-shrink-0">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                </div>
-                <p className="text-[13px] font-extrabold text-slate-900">모든 재고 정상 — 즉시 처리할 항목 없음</p>
-              </div>
-            )}
 
-            {/* ── 요약 칩 (backlog 분류, secondary) ── */}
-            <div className="flex flex-wrap items-center gap-2">
-              {[
-                { label: "만료 임박", value: expiringSoonCount, color: "text-red-600", bg: "bg-red-50 border-red-200" },
-                { label: "부족/품절", value: lowOrOutOfStockCount, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
-                { label: "전체 재고", value: totalInventoryCount, color: "text-slate-600", bg: "bg-white border-slate-200" },
-              ].map((chip) => (
-                <span
-                  key={chip.label}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[11px] font-bold ${chip.bg} ${chip.color}`}
-                >
-                  {chip.label}
-                  <span className="font-extrabold">{chip.value}</span>
-                </span>
-              ))}
+              <div className="rounded-xl border border-amber-500/20 bg-pn px-4 py-3">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[11px] font-medium text-amber-400/80">만료 임박</span>
+                  <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/10">
+                    <Calendar className="h-3 w-3 text-amber-400" />
+                  </div>
+                </div>
+                <div className="text-2xl font-bold tracking-tight text-amber-400">
+                  {expiringSoonCount}
+                  <span className="ml-1 text-sm font-normal text-slate-400">건</span>
+                </div>
+              </div>
             </div>
 
             {/* Priority Action Queue */}
             <PriorityActionQueue
-              items={priorityQueueItems}
-              onAction={handlePriorityQueueAction}
-              onItemClick={handlePriorityQueueAction}
+              onAction={(queueItem) => {
+                toast({
+                  title: queueItem.actionLabel,
+                  description: `${queueItem.productName}: ${queueItem.recommendedAction}`,
+                });
+              }}
+              onItemClick={(queueItem) => {
+                // Find matching inventory item and open context panel
+                const match = displayInventories.find(
+                  (inv) => inv.product.name === queueItem.productName
+                );
+                if (match) {
+                  if (typeof window !== "undefined" && window.innerWidth >= 1280) {
+                    openContextPanel(match);
+                  } else {
+                    setSelectedItem(match);
+                    setSheetSafetyStock(String(match.safetyStock ?? match.minOrderQty ?? 1));
+                    setIsSheetOpen(true);
+                  }
+                }
+              }}
             />
 
-            {/* 조치 필요 항목 — removed: PriorityActionQueue가 동일 ontology backlog를 surface합니다 */}
-            {false && <Card className="shadow-sm border-amber-200 bg-amber-50/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center text-sm font-bold text-slate-800">
-                  <Zap className="mr-2 h-4 w-4 text-amber-500" />
+            {/* 조치 필요 항목 */}
+            <Card className="shadow-sm border-bd bg-pn">
+              <CardHeader>
+                <CardTitle className="flex items-center text-lg text-red-400">
+                  <Zap className="mr-2 h-5 w-5" />
                   조치 필요 항목
-                  <Badge variant="outline" className="ml-2 text-[10px] px-1.5 py-0 border-amber-300 bg-amber-100 text-amber-700">{issuesCount}건</Badge>
                 </CardTitle>
+                <CardDescription className="text-slate-500">
+                  재고 부족, 유효기간 임박, 위치 미지정 항목입니다. 아래 조치 버튼으로 바로 처리하세요.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -1871,14 +1597,12 @@ function InventoryPageContent() {
                     .slice(0, 10);
                   if (urgent.length === 0) {
                     return (
-                      <div className="flex flex-col items-center py-8 text-center">
-                        <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center mb-3">
-                          <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-                        </div>
-                        <p className="text-sm font-medium text-slate-700">
+                      <div className="flex flex-col items-center py-6 text-center">
+                        <CheckCircle2 className="h-10 w-10 text-emerald-300  text-emerald-400 mb-3" />
+                        <p className="text-sm font-medium text-slate-400  text-slate-400">
                           모든 재고가 정상 범위입니다.
                         </p>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-400  text-slate-500 mt-1">
                           긴급 조치가 필요한 항목이 없습니다.
                         </p>
                       </div>
@@ -1896,14 +1620,14 @@ function InventoryPageContent() {
                     switch (issueType) {
                       case "expired":
                       case "out_of_stock":
-                        return "bg-red-50 border-red-200";
+                        return "bg-red-950/10  bg-red-950/10 border-red-900/30  border-red-900/30";
                       case "expiring":
-                        return "bg-amber-50 border-amber-200";
+                        return "bg-amber-950/10  bg-amber-950/10 border-amber-900/30  border-amber-900/30";
                       case "low_stock":
                       case "reorder_lead":
-                        return "bg-orange-50 border-orange-200";
+                        return "bg-orange-950/10  bg-orange-950/10 border-orange-900/30  border-orange-900/30";
                       case "no_location":
-                        return "bg-slate-50 border-slate-200";
+                        return "bg-pn/30 border-bs";
                     }
                   };
                   return (
@@ -1929,27 +1653,50 @@ function InventoryPageContent() {
                             }}
                             className="flex-1 min-w-0 text-left"
                           >
-                            {/* Line 1: 배지 + 품목명 + D-day */}
-                            <div className="flex items-center gap-2">
+                            {/* Row 1: 이슈 유형 배지 + 품목명 + 보조 배지 */}
+                            <div className="flex items-center gap-2 flex-wrap">
                               <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${issueInfo.cls}`}>{issueInfo.label}</Badge>
-                              <h5 className="text-sm font-bold text-slate-900 truncate flex-1">
+                              <h5 className="text-sm font-bold text-slate-900 truncate">
                                 {inv.product.name}
                               </h5>
                               {daysLeft && (issueType === "expiring" || issueType === "expired") && (
-                                <span className={`text-[10px] font-bold shrink-0 ${issueType === "expired" ? "text-red-400" : "text-amber-400"}`}>{daysLeft}</span>
+                                <Badge className={`text-[10px] px-1.5 py-0 border-none whitespace-nowrap shrink-0 ${
+                                  issueType === "expired"
+                                    ? "bg-red-900/50 text-red-400"
+                                    : "bg-amber-900/50 text-amber-400"
+                                }`}>{daysLeft}</Badge>
                               )}
                             </div>
-                            {/* Line 2: 핵심 수치 1줄 (축약) */}
-                            <p className="text-[11px] text-slate-400 mt-0.5 truncate">
-                              <span className={`font-semibold ${
-                                inv.currentQuantity === 0 ? "text-red-400" :
-                                (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-amber-400" :
-                                "text-slate-600"
-                              }`}>{inv.currentQuantity}</span> {inv.unit}
-                              {inv.safetyStock != null && <span className="text-slate-500"> / 안전재고 {inv.safetyStock}</span>}
-                              {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && <span className="text-slate-500"> · {format(new Date(inv.expiryDate), "MM.dd")} 만료</span>}
-                              {!inv.location && issueType !== "no_location" && <span className="text-amber-500"> · 위치 없음</span>}
-                            </p>
+                            {/* Row 2: 보조 정보 */}
+                            <div className="flex items-center gap-x-2 gap-y-0.5 flex-wrap mt-1 text-xs text-slate-500  text-slate-400">
+                              {inv.lotNumber && <span className="whitespace-nowrap">Lot: <span className="font-mono font-medium text-slate-400  text-slate-600">{inv.lotNumber}</span></span>}
+                              {inv.location ? (
+                                <>
+                                  <span className="text-slate-600  text-slate-400">·</span>
+                                  <span className="whitespace-nowrap">{inv.location}</span>
+                                </>
+                              ) : issueType !== "no_location" ? (
+                                <>
+                                  <span className="text-slate-600  text-slate-400">·</span>
+                                  <span className="whitespace-nowrap text-amber-500">위치 미지정</span>
+                                </>
+                              ) : null}
+                              <span className="text-slate-600  text-slate-400">·</span>
+                              <span className="whitespace-nowrap">
+                                <span className={`font-semibold ${
+                                  inv.currentQuantity === 0 ? "text-red-400  text-red-400" :
+                                  (inv.safetyStock != null && inv.currentQuantity <= inv.safetyStock) ? "text-orange-400  text-orange-400" :
+                                  "text-slate-600"
+                                }`}>{inv.currentQuantity}</span> {inv.unit}
+                                {inv.safetyStock != null && <span className="text-slate-400"> / 안전재고 {inv.safetyStock}</span>}
+                              </span>
+                              {inv.expiryDate && issueType !== "expiring" && issueType !== "expired" && (
+                                <>
+                                  <span className="text-slate-600  text-slate-400">·</span>
+                                  <span className="whitespace-nowrap">{format(new Date(inv.expiryDate), "yyyy.MM.dd")}</span>
+                                </>
+                              )}
+                            </div>
                           </button>
                           {/* ── 이슈 유형별 조치 액션 ── */}
                           <div className="flex gap-1.5 flex-shrink-0 items-start pt-0.5">
@@ -1961,8 +1708,8 @@ function InventoryPageContent() {
                                 variant="outline"
                                 className={`h-7 px-2 text-[11px] whitespace-nowrap gap-1 ${
                                   issueType === "out_of_stock"
-                                    ? "text-blue-400 border-blue-500/30 hover:bg-blue-500/10"
-                                    : "text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
+                                    ? "text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
+                                    : "text-orange-400 border-orange-800 hover:bg-orange-950/30  text-orange-400  border-orange-800  hover:bg-orange-950/30"
                                 }`}
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1998,17 +1745,21 @@ function InventoryPageContent() {
                               </Badge>
                             )}
                             {(issueType === "expired") && (
-                              /* 만료됨 → 폐기 처리 (온톨로지 1순위) */
+                              /* 만료됨 → 폐기 검토 */
                               <Button
                                 size="sm"
-                                className="h-7 px-3 text-[11px] whitespace-nowrap gap-1 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                                variant="outline"
+                                className="h-7 px-2 text-[11px] whitespace-nowrap gap-1 text-red-400 border-red-800 hover:bg-red-950/30  text-red-400  border-red-800  hover:bg-red-950/30"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  openDisposalDock(inv);
+                                  toast({
+                                    title: "폐기 검토",
+                                    description: `${inv.product.name} 폐기 절차를 확인하세요.`,
+                                  });
                                 }}
                               >
                                 <Trash2 className="h-3 w-3 shrink-0" />
-                                폐기 처리
+                                폐기 검토
                               </Button>
                             )}
                             {(issueType === "no_location") && (
@@ -2065,7 +1816,7 @@ function InventoryPageContent() {
                                   <>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem
-                                      className="gap-2 text-xs text-red-400"
+                                      className="gap-2 text-xs text-red-400  text-red-400"
                                       onClick={() => {
                                         toast({
                                           title: "폐기 검토",
@@ -2174,206 +1925,38 @@ function InventoryPageContent() {
                   );
                 })()}
               </CardContent>
-            </Card>}
+            </Card>
             </TabsContent>
 
-            {/* 3. Lot 추적 — contextual drill-down (1급 탭에서 내려옴, 품목 컨텍스트에서 진입) */}
-            <TabsContent value="lot-tracking" className="m-0 p-4 sm:p-6 space-y-4">
-              {/* Back to item view */}
-              <button
-                type="button"
-                onClick={() => setActiveInventoryTab("manage")}
-                className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 transition-colors mb-1"
-              >
-                <ChevronRight className="h-3.5 w-3.5 rotate-180" />
-                품목 관리로 돌아가기
-              </button>
-              {(() => {
-                const now = new Date();
-                // Build lot records from inventory data
-                const allLots: LotRecord[] = displayInventories
-                  .filter((inv) => inv.lotNumber)
-                  .map((inv) => ({
-                    lotId: `${inv.id}-${inv.lotNumber}`,
-                    itemId: inv.id,
-                    lotCode: inv.lotNumber!,
-                    productName: inv.product.name,
-                    brand: inv.product.brand,
-                    catalogNumber: inv.product.catalogNumber,
-                    qtyOnHand: inv.currentQuantity,
-                    unit: inv.unit,
-                    location: inv.location,
-                    receivedAt: new Date(Date.now() - Math.random() * 90 * 86400000).toISOString(),
-                    expiresAt: inv.expiryDate,
-                    status: computeLotStatus(inv.currentQuantity, inv.expiryDate, now),
-                    sourceDocumentId: null,
-                    lastEventAt: new Date(Date.now() - Math.random() * 14 * 86400000).toISOString(),
-                    storageCondition: inv.storageCondition,
-                  }));
-
-                const summary = computeLotSummary(allLots);
-                const sorted = sortLots(allLots);
-
-                // Local state isn't possible inside render — use URL-like approach with closure
-                // Use parent-level state for lot filter and search (added above)
-                const filtered = filterLotsByStatus(sorted, lotStatusFilter);
-                const searched = lotSearchQuery.trim()
-                  ? searchLots(filtered, lotSearchQuery)
-                  : filtered;
-
-                return (
-                  <>
-                    {/* Summary cards — clickable filters */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                      {([
-                        { key: "all" as LotStatusFilter, label: "전체 Lot", count: summary.totalLots, valueClass: "text-slate-900", borderClass: "border-slate-200" },
-                        { key: "active" as LotStatusFilter, label: "활성", count: summary.activeLots, valueClass: "text-emerald-600", borderClass: "border-emerald-200" },
-                        { key: "expiring_soon" as LotStatusFilter, label: "만료 임박", count: summary.expiringSoonLots, valueClass: "text-amber-500", borderClass: "border-amber-200" },
-                        { key: "expired" as LotStatusFilter, label: "만료/소진", count: summary.expiredLots + summary.depletedLots, valueClass: "text-rose-500", borderClass: "border-rose-200" },
-                      ]).map((card) => (
-                        <button
-                          key={card.key}
-                          onClick={() => setLotStatusFilter(card.key)}
-                          className={`rounded-xl p-3 text-left transition-all active:scale-95 bg-white border ${lotStatusFilter === card.key ? "ring-2 ring-blue-500/50 border-blue-500" : card.borderClass}`}
-                        >
-                          <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-slate-500">{card.label}</p>
-                          <p className={`text-xl font-bold ${card.valueClass}`}>{card.count}</p>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Search bar */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        value={lotSearchQuery}
-                        onChange={(e) => setLotSearchQuery(e.target.value)}
-                        placeholder="LOT 번호, 품목명, 위치로 검색..."
-                        className="pl-9 h-10 text-sm bg-white border-slate-200 text-slate-700 placeholder:text-slate-400"
-                      />
-                    </div>
-
-                    {/* Lot row list */}
-                    {searched.length === 0 ? (
-                      <div className="rounded-xl px-6 py-10 text-center bg-white border border-slate-200">
-                        <Archive className="h-8 w-8 mx-auto mb-3 text-slate-400" />
-                        <p className="text-sm font-medium text-slate-500">
-                          {lotStatusFilter !== "all" ? `${getLotStatusLabel(lotStatusFilter as any)} 상태의 Lot이 없습니다` : "Lot 데이터가 없습니다"}
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        {/* Mobile: card list */}
-                        <div className="md:hidden space-y-2">
-                          {searched.map((lot) => {
-                            const sc = getLotStatusColor(lot.status);
-                            return (
-                              <button
-                                key={lot.lotId}
-                                onClick={() => {
-                                  setSelectedLotId(lot.lotId);
-                                  // Also open context panel with matching inventory
-                                  const matchInv = displayInventories.find((i) => i.id === lot.itemId);
-                                  if (matchInv) openContextPanel(matchInv);
-                                }}
-                                className={`w-full text-left rounded-xl p-3 transition-all active:scale-[0.98] bg-white border ${selectedLotId === lot.lotId ? "ring-2 ring-blue-500/50 border-blue-500" : "border-slate-200"}`}
-                              >
-                                <div className="flex items-center justify-between mb-2">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs font-bold text-slate-900">{lot.lotCode}</span>
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
-                                      {getLotStatusLabel(lot.status)}
-                                    </span>
-                                  </div>
-                                  <span className="text-xs font-bold text-slate-900">{lot.qtyOnHand} {lot.unit}</span>
-                                </div>
-                                <p className="text-[11px] truncate text-slate-700">{lot.productName}</p>
-                                <div className="flex items-center gap-3 mt-1.5">
-                                  {lot.location && <span className="text-[10px] flex items-center gap-1 text-slate-500"><MapPin className="h-3 w-3" />{lot.location}</span>}
-                                  {lot.expiresAt && <span className="text-[10px] flex items-center gap-1 text-slate-500"><Calendar className="h-3 w-3" />{format(new Date(lot.expiresAt), "yy.MM.dd")}</span>}
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-
-                        {/* Desktop: table */}
-                        <div className="hidden md:block rounded-xl overflow-hidden border border-slate-200">
-                          <table className="w-full text-sm">
-                            <thead>
-                              <tr className="bg-el">
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">LOT 번호</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">품목</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">상태</th>
-                                <th className="text-right px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">잔량</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">위치</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">유효기간</th>
-                                <th className="text-left px-4 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-500">마지막 이벤트</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {searched.map((lot) => {
-                                const sc = getLotStatusColor(lot.status);
-                                const isSelected = selectedLotId === lot.lotId;
-                                return (
-                                  <tr
-                                    key={lot.lotId}
-                                    onClick={() => {
-                                      setSelectedLotId(lot.lotId);
-                                      const matchInv = displayInventories.find((i) => i.id === lot.itemId);
-                                      if (matchInv) openContextPanel(matchInv);
-                                    }}
-                                    className={`cursor-pointer transition-colors border-b border-slate-100 last:border-0 ${isSelected ? "bg-blue-50" : "bg-white hover:bg-slate-50"}`}
-                                  >
-                                    <td className="px-4 py-3">
-                                      <span className="text-xs font-bold text-slate-900">{lot.lotCode}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <div>
-                                        <p className="text-xs font-medium text-slate-900 truncate max-w-[200px]">{lot.productName}</p>
-                                        {lot.brand && <p className="text-[10px] text-slate-500">{lot.brand}</p>}
-                                      </div>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className="text-[10px] font-bold px-2 py-0.5 rounded border" style={{ backgroundColor: sc.bg, color: sc.text, borderColor: sc.border }}>
-                                        {getLotStatusLabel(lot.status)}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3 text-right">
-                                      <span className="text-xs font-bold text-slate-900">{lot.qtyOnHand}</span>
-                                      <span className="text-[10px] ml-0.5 text-slate-500">{lot.unit}</span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className={`text-xs ${lot.location ? "text-slate-700" : "text-slate-400"}`}>
-                                        {lot.location || "미지정"}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className="text-xs text-slate-700">
-                                        {lot.expiresAt ? format(new Date(lot.expiresAt), "yyyy.MM.dd") : "—"}
-                                      </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                      <span className="text-[11px] text-slate-500">
-                                        {format(new Date(lot.lastEventAt), "MM.dd HH:mm")}
-                                      </span>
-                                    </td>
-                                  </tr>
-                                );
-                              })}
-                            </tbody>
-                          </table>
-                        </div>
-
-                        <p className="text-[11px] text-right text-slate-400">
-                          {searched.length}개 Lot 표시 중
-                          {lotStatusFilter !== "all" && ` (${getLotStatusLabel(lotStatusFilter as any)} 필터)`}
-                        </p>
-                      </>
-                    )}
-                  </>
-                );
-              })()}
+            {/* 3. Lot 추적 (placeholder) */}
+            <TabsContent value="lot-tracking" className="m-0 p-4 sm:p-6 space-y-5">
+              <div className="rounded-xl border border-bd bg-pn px-6 py-10 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10 mx-auto mb-4">
+                  <GitBranch className="h-6 w-6 text-violet-400" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-700 mb-2">Lot 추적</h3>
+                <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+                  Lot별 입고/사용/폐기 이력을 시간순으로 추적합니다.
+                  동일 제품의 여러 Lot을 한눈에 비교하고, Lot별 상태를 실시간으로 확인할 수 있습니다.
+                </p>
+                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-3 max-w-lg mx-auto">
+                  <div className="rounded-lg border border-bd bg-el px-3 py-2.5">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">활성 Lot</p>
+                    <p className="text-xl font-bold text-slate-700">{displayInventories.filter((i) => i.lotNumber).length}</p>
+                  </div>
+                  <div className="rounded-lg border border-amber-500/20 bg-el px-3 py-2.5">
+                    <p className="text-[10px] text-amber-400/70 uppercase tracking-wider mb-1">임박 Lot</p>
+                    <p className="text-xl font-bold text-amber-400">{expiringSoonCount}</p>
+                  </div>
+                  <div className="rounded-lg border border-bd bg-el px-3 py-2.5">
+                    <p className="text-[10px] text-slate-400 uppercase tracking-wider mb-1">위치 미지정</p>
+                    <p className="text-xl font-bold text-slate-400">{displayInventories.filter((i) => !i.location).length}</p>
+                  </div>
+                </div>
+                <Badge variant="outline" className="mt-6 border-violet-500/30 text-violet-400 text-xs">
+                  P2 개발 예정
+                </Badge>
+              </div>
             </TabsContent>
 
             {/* 4. 저장 위치 */}
@@ -2384,9 +1967,8 @@ function InventoryPageContent() {
             <TabsContent value="flow" className="m-0 p-4 sm:p-6 space-y-5">
               <InventoryFlowView />
             </TabsContent>
-          </div>{/* end 통합 카드 */}
-        </div>{/* end rounded card */}
-        </Tabs>{/* end Tabs */}
+          </Tabs>
+        </div>
 
         </div>{/* end main content */}
 
@@ -2396,7 +1978,6 @@ function InventoryPageContent() {
             item={contextPanelItem}
             isOpen={contextPanelOpen}
             onClose={() => setContextPanelItem(null)}
-            onLotDrillDown={() => setActiveInventoryTab("lot-tracking")}
             onReorder={(cpItem) => {
               const match = displayInventories.find((inv) => inv.id === cpItem.id);
               if (match) {
@@ -2430,9 +2011,10 @@ function InventoryPageContent() {
               setContextPanelItem(null);
             }}
             onDispose={(cpItem) => {
-              const match = displayInventories.find((inv) => inv.id === cpItem.id);
-              if (!match) return;
-              openDisposalDock(match);
+              toast({
+                title: "폐기 검토",
+                description: `${cpItem.productName} 폐기 절차를 확인하세요.`,
+              });
             }}
           />
         )}
@@ -3056,21 +2638,7 @@ function InventoryPageContent() {
           </DialogContent>
         </Dialog>
 
-        {/* ── 새 라벨 인쇄 모달 (규격 선택 + 미리보기) ── */}
-        <LabelPrintModal
-          open={newLabelPrintOpen}
-          onOpenChange={setNewLabelPrintOpen}
-          selectedItems={displayInventories.slice(0, 10).map((inv) => ({
-            id: inv.id,
-            name: inv.product?.name ?? inv.productName ?? "품목",
-            catalogNumber: inv.product?.catalogNumber ?? undefined,
-            lotNumber: inv.lotNumber ?? undefined,
-            expiryDate: inv.expiryDate ?? undefined,
-            brand: inv.product?.brand ?? undefined,
-          }))}
-        />
-
-        {/* ── 기존 라벨 인쇄 모달 (lot 선택형) ── */}
+        {/* ── 라벨 인쇄 모달 (lot 선택형) ── */}
         <Dialog open={labelPrintOpen} onOpenChange={setLabelPrintOpen}>
           <DialogContent className="max-w-md">
             <DialogHeader>
@@ -3233,30 +2801,6 @@ function InventoryPageContent() {
           </TabsList>
 
           <TabsContent value="inventory" className="space-y-4 md:space-y-6">
-            {/* 온톨로지: 만료 lot priority banner (inventory 목록 탭) */}
-            {(() => {
-              if (!priorityExpiredLot) return null;
-              return (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
-                  <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-red-800">우선 처리: 만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개</p>
-                    <p className="text-xs text-red-600/70">사용 금지 상태입니다. 재주문보다 폐기 처리를 먼저 진행하세요.</p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
-                    onClick={() => openDisposalDock(priorityExpiredLot)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                    폐기 처리 시작
-                  </Button>
-                </div>
-              );
-            })()}
             {/* 내 자산 / 우리 랩 전체 탭 */}
             <Tabs value={inventoryView} onValueChange={(v) => setInventoryView(v as "my" | "team")} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -3678,23 +3222,6 @@ function InventoryPageContent() {
         </div>
       </div>
 
-      {/* Framer Motion 토스트 알림 (재고 등록/수정 시) */}
-      <AnimatePresence>
-        {createOrUpdateMutation.isSuccess && (
-          <motion.div
-            key="inventory-toast"
-            initial={{ opacity: 0, y: 60 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 60 }}
-            transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-            className="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 shadow-2xl"
-          >
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
-            <span className="text-sm font-medium text-emerald-900">재고가 등록되었습니다.</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* 재고 운영 AI 보조 패널 */}
       <InventoryAiAssistantPanel
         open={aiPanel.isOpen}
@@ -3729,44 +3256,6 @@ function InventoryPageContent() {
           aiPanel.setIsOpen(false);
         }}
         isAnalyzing={aiPanel.isAnalyzing}
-      />
-
-      {/* ── LOT Disposal Panel (object-scoped disposal dock) ── */}
-      <LotDisposalPanel
-        open={disposalPanelOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDisposalTarget(null);
-            setDisposalInventoryId(null);
-          }
-        }}
-        target={disposalTarget}
-        isSubmitting={disposeLotMutation.isPending}
-        onConfirmDisposal={(params) => {
-          const sourceInventory = displayInventories.find((inv) => inv.id === disposalInventoryId);
-          if (!sourceInventory) {
-            toast({
-              title: "폐기 대상 LOT를 찾을 수 없습니다",
-              description: "재고 목록을 새로고침한 뒤 다시 시도해주세요.",
-              variant: "destructive",
-            });
-            return;
-          }
-          disposeLotMutation.mutate({
-            inventory: sourceInventory,
-            params,
-          });
-        }}
-        onNavigateToReorder={(productName) => {
-          setDisposalTarget(null);
-          setDisposalInventoryId(null);
-          const matchingItem = displayInventories.find(
-            (inv) => inv.product.name === productName
-          );
-          if (matchingItem) {
-            openReorderReview(matchingItem);
-          }
-        }}
       />
     </div>
   );
@@ -3811,11 +3300,6 @@ function InventoryCard({
   };
 
   return (
-    <motion.div
-      whileHover={{ y: -2, backgroundColor: "rgba(255,255,255,0.03)" }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
-      className="rounded-xl"
-    >
     <Card className={
       hasRestockRequest
         ? "border-red-500 bg-red-950/10 ring-2 ring-red-200"
@@ -4010,7 +3494,6 @@ function InventoryCard({
         </div>
       </CardContent>
     </Card>
-    </motion.div>
   );
 }
 
@@ -4369,16 +3852,3 @@ function TeamInventoryCard({
   );
 }
 
-export function InventoryContent() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-        </div>
-      }
-    >
-      <InventoryPageContent />
-    </Suspense>
-  );
-}

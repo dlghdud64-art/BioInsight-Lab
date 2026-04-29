@@ -95,7 +95,7 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ["products", "search"],
     queryFn: async () => {
-      const response = await fetch("/api/products?limit=100");
+      const response = await fetch("/api/products/search?limit=100");
       if (!response.ok) throw new Error("Failed to fetch products");
       return response.json();
     },
