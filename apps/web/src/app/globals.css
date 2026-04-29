@@ -332,6 +332,21 @@ div.quote-table td.no-column-cell {
       animation: none;
       transform: none;
     }
+
+    /* §11.131 — universal animation/transition 단축 (WCAG 2.3.3 정합).
+       OS / browser 의 reduce-motion 설정 시 모든 animation 거의 즉시 종료.
+       drawer slide / hover transition / marquee 등 모두 short-circuit. */
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    html {
+      scroll-behavior: auto !important;
+    }
   }
 }
 
