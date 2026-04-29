@@ -616,7 +616,11 @@ export default function AdminUsersPage() {
                     </div>
 
                     {formError && (
-                      <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                      <div
+                        className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"
+                        role="alert"
+                        aria-live="assertive"
+                      >
                         <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                         <p>{formError}</p>
                       </div>
@@ -1367,7 +1371,11 @@ function InviteUserDialog({
               </div>
 
               {errorMsg && (
-                <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                <div
+                  className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
                   <p>{errorMsg}</p>
                 </div>
