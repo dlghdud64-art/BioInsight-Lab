@@ -318,7 +318,7 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
       </p>
       <p className="mt-0.5 text-[11px] text-slate-500 break-keep">{hint}</p>
 
-      {/* §11.82 Phase 2 — hover Quick Data Breakdown popup.
+      {/* §11.82 Phase 2 — desktop hover Quick Data Breakdown popup.
           desktop only (md+), pointer-events-none 으로 hover 영역 침범 안 함.
           group-hover 시 opacity + translate-y transition. */}
       {breakdown && breakdown.length > 0 && (
@@ -339,6 +339,25 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* §11.98 #dashboard-mobile-breakdown-pattern — 모바일 always-visible
+          inline breakdown (md:hidden). 모바일은 hover 가 없어서 desktop popup
+          접근 불가 → 카드 하단에 dim 톤 sub-list 로 항상 표시. 카드 높이가
+          약간 늘어나지만 운영자 first-glance 가치 우선. Link wrapper 안에
+          있어도 inline 이라 click conflict 0 (별도 button 없음). */}
+      {breakdown && breakdown.length > 0 && (
+        <div className="md:hidden mt-2 pt-2 border-t border-slate-100 space-y-1">
+          {breakdown.map((b) => (
+            <div
+              key={b.label}
+              className="flex items-center justify-between gap-2 text-[10px]"
+            >
+              <span className="text-slate-400 break-keep">{b.label}</span>
+              <span className="font-semibold tabular-nums text-slate-600">{b.value}</span>
+            </div>
+          ))}
         </div>
       )}
     </div>
