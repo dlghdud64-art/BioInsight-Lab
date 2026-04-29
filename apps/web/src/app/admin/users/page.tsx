@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import { AdminSidebar } from "../_components/admin-sidebar";
@@ -157,6 +158,33 @@ export default function AdminUsersPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [deletedUsersOpen, setDeletedUsersOpen] = useState(false);
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id ?? null;
+
+  // §11.136 — row checkbox toggle
+  const toggleUserSelected = (userId: string, checked: boolean) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(userId);
+      else next.delete(userId);
+      return next;
+    });
+  };
+
+  // select-all (현재 list 의 모든 user 선택 토글, 본인 제외)
+  const toggleSelectAll = (allUsers: AdminUser[]) => {
+    const selectableIds = allUsers
+      .map((u) => u.id)
+      .filter((id) => id !== currentUserId);
+    const allSelected =
+      selectableIds.length > 0 &&
+      selectableIds.every((id) => selectedUserIds.has(id));
+    if (allSelected) {
+      setSelectedUserIds(new Set());
+    } else {
+      setSelectedUserIds(new Set(selectableIds));
+    }
+  };
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
@@ -846,6 +874,8 @@ export default function AdminUsersPage() {
                     className: "bg-el text-slate-500 border-0",
                   };
                 const isSelected = selectedUserId === user.id;
+                const isChecked = selectedUserIds.has(user.id);
+                const isSelf = user.id === currentUserId;
                 return (
                   <div
                     key={user.id}
@@ -853,7 +883,18 @@ export default function AdminUsersPage() {
                       isSelected ? "border-blue-300 bg-blue-50/40" : "border-bd"
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 mt-1 cursor-pointer accent-blue-600 shrink-0 disabled:cursor-not-allowed"
+                        checked={isChecked}
+                        disabled={isSelf}
+                        onChange={(e) =>
+                          toggleUserSelected(user.id, e.target.checked)
+                        }
+                        aria-label={`${user.name} 선택`}
+                        title={isSelf ? "본인은 선택할 수 없습니다" : undefined}
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="text-sm font-semibold text-slate-900 truncate">
                           {user.name}
@@ -948,6 +989,21 @@ export default function AdminUsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-sh/80 hover:bg-transparent">
+                    <TableHead className="w-10">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 cursor-pointer accent-blue-600"
+                        checked={
+                          filteredUsers.length > 0 &&
+                          filteredUsers
+                            .filter((u) => u.id !== currentUserId)
+                            .every((u) => selectedUserIds.has(u.id)) &&
+                          filteredUsers.some((u) => u.id !== currentUserId)
+                        }
+                        onChange={() => toggleSelectAll(filteredUsers)}
+                        aria-label="현재 보이는 모든 사용자 선택"
+                      />
+                    </TableHead>
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[120px]">이름</TableHead>
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[160px]">이메일</TableHead>
                     <TableHead className="text-[11px] font-semibold text-slate-500 min-w-[120px]">조직</TableHead>
@@ -960,7 +1016,7 @@ export default function AdminUsersPage() {
                 <TableBody>
                   {usersQuery.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-48 text-center">
+                      <TableCell colSpan={8} className="h-48 text-center">
                         <div className="flex flex-col items-center gap-2 text-slate-500">
                           <Loader2 className="h-5 w-5 animate-spin" />
                           <p className="text-xs">사용자 목록을 불러오는 중입니다…</p>
@@ -969,7 +1025,7 @@ export default function AdminUsersPage() {
                     </TableRow>
                   ) : usersQuery.isError ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-48 text-center">
+                      <TableCell colSpan={8} className="h-48 text-center">
                         <div className="flex flex-col items-center gap-2">
                           <AlertTriangle className="h-5 w-5 text-rose-700" />
                           <p className="text-sm font-medium text-rose-700">사용자 목록을 불러오지 못했습니다.</p>
@@ -989,7 +1045,7 @@ export default function AdminUsersPage() {
                     </TableRow>
                   ) : filteredUsers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7} className="h-48 text-center">
+                      <TableCell colSpan={8} className="h-48 text-center">
                         <div className="space-y-2">
                           <div className="inline-flex items-center justify-center p-3 rounded-full bg-el mb-1">
                             <Users className="h-5 w-5 text-slate-400" />
@@ -1028,8 +1084,23 @@ export default function AdminUsersPage() {
                   ) : (
                     filteredUsers.map((user) => {
                       const statusCfg = STATUS_BADGE[user.status] || { label: user.status, className: "bg-el text-slate-500 border-0" };
+                      const isChecked = selectedUserIds.has(user.id);
+                      const isSelf = user.id === currentUserId;
                       return (
                         <TableRow key={user.id} className="text-xs hover:bg-sh/50">
+                          <TableCell className="w-10">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 cursor-pointer accent-blue-600 disabled:cursor-not-allowed"
+                              checked={isChecked}
+                              disabled={isSelf}
+                              onChange={(e) =>
+                                toggleUserSelected(user.id, e.target.checked)
+                              }
+                              aria-label={`${user.name} 선택`}
+                              title={isSelf ? "본인은 선택할 수 없습니다" : undefined}
+                            />
+                          </TableCell>
                           <TableCell className="font-medium text-slate-900">{user.name}</TableCell>
                           <TableCell className="text-slate-600">{user.email}</TableCell>
                           <TableCell className="text-slate-700">{user.orgName}</TableCell>
