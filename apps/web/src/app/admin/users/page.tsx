@@ -156,6 +156,7 @@ export default function AdminUsersPage() {
   const [inviteOpen, setInviteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [deletedUsersOpen, setDeletedUsersOpen] = useState(false);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
@@ -262,6 +263,60 @@ export default function AdminUsersPage() {
     id: string;
     label: string;
   } | null>(null);
+
+  // §11.135 — bulk approve/reject (multi-row)
+  const bulkApproveMutation = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selectedUserIds);
+      const res = await fetch(`/api/admin/users/bulk-approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ userIds: ids }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data as {
+        successCount: number;
+        failedCount: number;
+        failedItems: { userId: string; error: string }[];
+      };
+    },
+    onSuccess: (data) => {
+      setSelectedUserIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      // 부분 실패 시 console 표시 (toast 사용 가능하면 sonner)
+      if (data.failedCount > 0) {
+        console.warn("[bulk-approve] partial failure", data.failedItems);
+      }
+    },
+  });
+
+  const bulkRejectMutation = useMutation({
+    mutationFn: async () => {
+      const ids = Array.from(selectedUserIds);
+      const res = await fetch(`/api/admin/users/bulk-reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ userIds: ids }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data as {
+        successCount: number;
+        failedCount: number;
+        failedItems: { userId: string; error: string }[];
+      };
+    },
+    onSuccess: (data) => {
+      setSelectedUserIds(new Set());
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      if (data.failedCount > 0) {
+        console.warn("[bulk-reject] partial failure", data.failedItems);
+      }
+    },
+  });
 
   const policyMutation = useMutation({
     mutationFn: async () => {
@@ -694,6 +749,61 @@ export default function AdminUsersPage() {
                   </>
                 ) : null}
               </div>
+            </div>
+          )}
+
+          {/* §11.135 — bulk action bar (selectedUserIds 가 있을 때만 노출) */}
+          {selectedUserIds.size > 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 flex items-center gap-3 flex-wrap fixed bottom-0 inset-x-0 z-40 md:static md:rounded-xl shadow-lg md:shadow-sm">
+              <span className="text-sm font-bold text-blue-900">
+                선택 {selectedUserIds.size}명
+              </span>
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1"
+                disabled={
+                  bulkApproveMutation.isPending || bulkRejectMutation.isPending
+                }
+                onClick={() => bulkApproveMutation.mutate()}
+              >
+                {bulkApproveMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-3 w-3" />
+                )}
+                일괄 승인
+              </Button>
+              <Button
+                size="sm"
+                className="h-8 text-xs bg-rose-600 hover:bg-rose-700 text-white gap-1"
+                disabled={
+                  bulkApproveMutation.isPending || bulkRejectMutation.isPending
+                }
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `선택한 ${selectedUserIds.size}명을 영구 반려합니다. 계속할까요?`,
+                    )
+                  ) {
+                    bulkRejectMutation.mutate();
+                  }
+                }}
+              >
+                {bulkRejectMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <XCircle className="h-3 w-3" />
+                )}
+                일괄 반려
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs text-blue-700 hover:bg-blue-100 ml-auto"
+                onClick={() => setSelectedUserIds(new Set())}
+              >
+                선택 해제
+              </Button>
             </div>
           )}
 
