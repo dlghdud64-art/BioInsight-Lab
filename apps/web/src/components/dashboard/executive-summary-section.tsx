@@ -17,7 +17,7 @@
  */
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LineChart,
   Line,
@@ -35,7 +35,9 @@ import {
   ShieldAlert,
   AlertCircle,
   ArrowUpRight,
+  ChevronDown,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import {
   useOrderQueueStore,
@@ -258,6 +260,10 @@ interface KpiCardProps {
 }
 
 function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride, delta }: KpiCardProps) {
+  // §11.139 — mobile breakdown collapsible (default closed).
+  // §11.98 always-visible 의 카드 높이 부담 해소.
+  const [breakdownExpanded, setBreakdownExpanded] = useState(false);
+
   // §11.82 Phase 2: 4-tone palette (blue=지출, emerald=정상, amber=경고, rose=위험).
   const tone =
     toneOverride
@@ -342,22 +348,42 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
         </div>
       )}
 
-      {/* §11.98 #dashboard-mobile-breakdown-pattern — 모바일 always-visible
-          inline breakdown (md:hidden). 모바일은 hover 가 없어서 desktop popup
-          접근 불가 → 카드 하단에 dim 톤 sub-list 로 항상 표시. 카드 높이가
-          약간 늘어나지만 운영자 first-glance 가치 우선. Link wrapper 안에
-          있어도 inline 이라 click conflict 0 (별도 button 없음). */}
+      {/* §11.139 #dashboard-kpi-mobile-collapsible — §11.98 always-visible 의
+          카드 높이 부담 해소. default closed + toggle button.
+          desktop hover popup (hidden md:block) 은 그대로. */}
       {breakdown && breakdown.length > 0 && (
-        <div className="md:hidden mt-2 pt-2 border-t border-slate-100 space-y-1">
-          {breakdown.map((b) => (
-            <div
-              key={b.label}
-              className="flex items-center justify-between gap-2 text-[10px]"
-            >
-              <span className="text-slate-400 break-keep">{b.label}</span>
-              <span className="font-semibold tabular-nums text-slate-600">{b.value}</span>
+        <div className="md:hidden mt-2 pt-2 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setBreakdownExpanded((prev) => !prev);
+            }}
+            className="w-full flex items-center justify-between gap-2 text-[10px] text-slate-500 hover:text-slate-700"
+            aria-expanded={breakdownExpanded}
+          >
+            <span>{breakdownExpanded ? "내역 닫기" : "내역 보기"}</span>
+            <ChevronDown
+              className={cn(
+                "h-3 w-3 transition-transform",
+                breakdownExpanded && "rotate-180",
+              )}
+            />
+          </button>
+          {breakdownExpanded && (
+            <div className="mt-2 space-y-1">
+              {breakdown.map((b) => (
+                <div
+                  key={b.label}
+                  className="flex items-center justify-between gap-2 text-[10px]"
+                >
+                  <span className="text-slate-400 break-keep">{b.label}</span>
+                  <span className="font-semibold tabular-nums text-slate-600">{b.value}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
