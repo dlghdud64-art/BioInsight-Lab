@@ -35,6 +35,14 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 
+// §11.99 — audit event label helper (두 surface 일관)
+import {
+  AUDIT_EVENT_LABELS,
+  AUDIT_TONE_CLASSES,
+  buildEventTypeOptions,
+  type AuditEventTone,
+} from "@/lib/audit/event-labels";
+
 // §11.81 #audit-trail-data-fetcher-wiring
 //
 // §11.64 시안 흡수 후 §11.67 dead-button-removal 로 임시 제거됐던 필터 row 를
@@ -78,7 +86,8 @@ interface AuditLogResponse {
   demo?: boolean;
 }
 
-type ActionTone = "stock" | "storage" | "alert" | "register" | "permission";
+// §11.99 — ActionTone alias for AuditEventTone (helper 와 동일 5-tone)
+type ActionTone = AuditEventTone;
 
 interface AuditRow {
   id: string;
@@ -95,46 +104,11 @@ interface AuditRow {
   authMethod: "user_token" | "system";
 }
 
-// AuditEventType → (Korean label, action tone) 매핑.
-// 5 카테고리: 재고(stock, 부정 변경), 보관(storage, 조건 변경), 알림(alert, 자동),
-// 등록(register, 신규 entity), 권한(permission, role/auth).
-const EVENT_TYPE_MAP: Record<string, { label: string; tone: ActionTone }> = {
-  USER_LOGIN: { label: "로그인", tone: "permission" },
-  USER_LOGOUT: { label: "로그아웃", tone: "permission" },
-  USER_CREATED: { label: "사용자 등록", tone: "register" },
-  USER_UPDATED: { label: "사용자 수정", tone: "storage" },
-  USER_DELETED: { label: "사용자 삭제", tone: "stock" },
-  PERMISSION_CHANGED: { label: "권한 변경", tone: "permission" },
-  SETTINGS_CHANGED: { label: "설정 변경", tone: "storage" },
-  DATA_EXPORTED: { label: "데이터 내보내기", tone: "alert" },
-  DATA_IMPORTED: { label: "데이터 가져오기", tone: "alert" },
-  SSO_CONFIGURED: { label: "SSO 설정", tone: "permission" },
-  ORGANIZATION_CREATED: { label: "조직 생성", tone: "register" },
-  ORGANIZATION_UPDATED: { label: "조직 수정", tone: "storage" },
-  ORGANIZATION_DELETED: { label: "조직 삭제", tone: "stock" },
-  INGESTION_RECEIVED: { label: "외부 입력 수신", tone: "alert" },
-  DOCUMENT_CLASSIFIED: { label: "문서 분류", tone: "register" },
-  EXTRACTION_COMPLETED: { label: "AI 추출 완료", tone: "register" },
-  ENTITY_LINKED: { label: "DB 연결", tone: "register" },
-  VERIFICATION_COMPLETED: { label: "검증 완료", tone: "storage" },
-  WORK_QUEUE_TASK_GENERATED: { label: "작업 생성", tone: "register" },
-};
+const EVENT_TYPE_MAP = AUDIT_EVENT_LABELS;
+const EVENT_TYPE_OPTIONS = buildEventTypeOptions();
 
-const EVENT_TYPE_OPTIONS: Array<{ value: string; label: string }> = [
-  { value: "all", label: "전체 액션" },
-  ...Object.entries(EVENT_TYPE_MAP).map(([value, { label }]) => ({
-    value,
-    label,
-  })),
-];
-
-const ACTION_TONE: Record<ActionTone, string> = {
-  stock: "bg-rose-50 text-rose-700 border-rose-200",
-  storage: "bg-amber-50 text-amber-700 border-amber-200",
-  alert: "bg-blue-50 text-blue-700 border-blue-200",
-  register: "bg-blue-50 text-blue-700 border-blue-200",
-  permission: "bg-emerald-50 text-emerald-700 border-emerald-200",
-};
+// §11.99 — AUDIT_TONE_CLASSES helper 사용
+const ACTION_TONE = AUDIT_TONE_CLASSES;
 
 const AUTH_LABEL: Record<AuditRow["authMethod"], { label: string; cls: string }> = {
   user_token: { label: "User Token", cls: "bg-slate-100 text-slate-600 border-slate-200" },

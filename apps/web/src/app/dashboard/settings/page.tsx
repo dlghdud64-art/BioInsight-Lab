@@ -3,6 +3,11 @@
 export const dynamic = "force-dynamic";
 
 import { csrfFetch } from "@/lib/api-client";
+// §11.99 — audit event label helper (settings recent activity 와 audit page 일관)
+import {
+  AUDIT_EVENT_LABELS,
+  AUDIT_TONE_DOT_CLASSES,
+} from "@/lib/audit/event-labels";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -867,22 +872,8 @@ function SettingsPageContent() {
                         );
                       }
 
-                      // EVENT_TYPE → {label, tone} 매핑 (§11.81 패턴 reuse)
-                      const eventLabelMap: Record<string, { label: string; tone: string }> = {
-                        USER_LOGIN: { label: "로그인", tone: "emerald" },
-                        USER_LOGOUT: { label: "로그아웃", tone: "slate" },
-                        USER_CREATED: { label: "사용자 등록", tone: "blue" },
-                        USER_UPDATED: { label: "프로필 정보 수정", tone: "blue" },
-                        USER_DELETED: { label: "사용자 삭제", tone: "rose" },
-                        PERMISSION_CHANGED: { label: "권한 변경", tone: "purple" },
-                        SETTINGS_CHANGED: { label: "설정 변경", tone: "amber" },
-                        DATA_EXPORTED: { label: "데이터 내보내기", tone: "blue" },
-                        DATA_IMPORTED: { label: "데이터 가져오기", tone: "blue" },
-                        SSO_CONFIGURED: { label: "SSO 설정", tone: "purple" },
-                        ORGANIZATION_CREATED: { label: "조직 생성", tone: "emerald" },
-                        ORGANIZATION_UPDATED: { label: "조직 정보 수정", tone: "amber" },
-                        ORGANIZATION_DELETED: { label: "조직 삭제", tone: "rose" },
-                      };
+                      // §11.99 — AUDIT_EVENT_LABELS helper 사용 (audit page 와
+                      // 일관 — 향후 enum 추가 시 본 helper 만 update).
 
                       // 상대 시간 derive
                       const formatRelative = (iso: string) => {
@@ -900,29 +891,21 @@ function SettingsPageContent() {
                         return new Date(iso).toLocaleDateString("ko-KR", { month: "short", day: "numeric" });
                       };
 
-                      const dotMap: Record<string, string> = {
-                        blue: "bg-blue-500",
-                        amber: "bg-amber-500",
-                        emerald: "bg-emerald-500",
-                        purple: "bg-purple-500",
-                        rose: "bg-rose-500",
-                        slate: "bg-slate-400",
-                      };
-
                       return logs.map((log) => {
-                        const meta = eventLabelMap[log.eventType] ?? {
-                          label: log.action || log.eventType,
-                          tone: "slate",
-                        };
+                        const meta = AUDIT_EVENT_LABELS[log.eventType];
+                        const label = meta?.label ?? log.action ?? log.eventType;
+                        const dotCls = meta
+                          ? AUDIT_TONE_DOT_CLASSES[meta.tone]
+                          : "bg-slate-400";
                         return (
                           <div
                             key={log.id}
                             className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2.5 hover:border-slate-300 transition-colors"
                           >
                             <div className="flex items-center gap-2.5 min-w-0">
-                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotMap[meta.tone] ?? dotMap.slate}`} />
+                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${dotCls}`} />
                               <span className="text-sm text-slate-700 break-keep">
-                                {meta.label}
+                                {label}
                                 {!log.success && <span className="text-rose-500 ml-1">(실패)</span>}
                               </span>
                             </div>
