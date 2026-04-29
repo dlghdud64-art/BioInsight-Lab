@@ -45,6 +45,8 @@ import {
   ChevronLeft,
   ChevronRight,
   History,
+  Trash2,
+  RotateCcw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -153,6 +155,7 @@ export default function AdminUsersPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [deletedUsersOpen, setDeletedUsersOpen] = useState(false);
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
@@ -383,6 +386,16 @@ export default function AdminUsersPage() {
               </Button>
               <Button
                 size="sm"
+                variant="outline"
+                className="h-8 text-xs gap-1.5"
+                onClick={() => setDeletedUsersOpen(true)}
+                title="삭제된 사용자 (복구 가능)"
+              >
+                <Trash2 className="h-3 w-3" />
+                삭제된 사용자
+              </Button>
+              <Button
+                size="sm"
                 className="h-8 text-xs gap-1.5 bg-slate-900 hover:bg-slate-800 text-white"
                 onClick={() => setInviteOpen(true)}
               >
@@ -513,6 +526,16 @@ export default function AdminUsersPage() {
           {/* ── §11.128 초대 내역 dialog ── */}
           {historyOpen && (
             <InviteHistoryDialog onClose={() => setHistoryOpen(false)} />
+          )}
+
+          {/* ── §11.134 삭제된 사용자 dialog (복구 surface) ── */}
+          {deletedUsersOpen && (
+            <DeletedUsersDialog
+              onClose={() => setDeletedUsersOpen(false)}
+              onRestored={() => {
+                queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+              }}
+            />
           )}
 
           {/* ── §11.115 운영 정책 panel (selected user 시) §11.123 a11y ── */}
@@ -1065,6 +1088,195 @@ function MiniKPI({
 }
 
 // ─── §11.116 사용자 초대 Dialog ─────────────────────────────────────────────
+
+// ─── §11.134 삭제된 사용자 Dialog (복구 surface) ─────────────────────────
+
+interface DeletedUserRow {
+  id: string;
+  email: string;
+  name: string | null;
+  role: string;
+  organization: string | null;
+  updatedAt: string;
+}
+
+function DeletedUsersDialog({
+  onClose,
+  onRestored,
+}: {
+  onClose: () => void;
+  onRestored: () => void;
+}) {
+  const dialog = useDialogA11y<HTMLDivElement>({
+    open: true,
+    onClose,
+  });
+
+  const queryClient = useQueryClient();
+
+  const deletedQuery = useQuery({
+    queryKey: ["admin", "users", "deleted"],
+    queryFn: async () => {
+      const res = await fetch(
+        `/api/admin/users?onlyDeleted=true&limit=100`,
+        { credentials: "same-origin" },
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json() as Promise<{
+        users: DeletedUserRow[];
+        total: number;
+      }>;
+    },
+  });
+
+  const restoreMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/admin/users/${userId}/restore`, {
+        method: "POST",
+        credentials: "same-origin",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin", "users", "deleted"],
+      });
+      onRestored();
+    },
+  });
+
+  const users = deletedQuery.data?.users ?? [];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div
+        ref={dialog.dialogRef}
+        className="w-full max-w-lg bg-pn border border-bd rounded-lg shadow-xl"
+        role="dialog"
+        aria-modal="true"
+        aria-label="삭제된 사용자 복구"
+      >
+        <div className="flex items-center justify-between border-b border-bd px-4 py-3">
+          <div className="flex items-center gap-2 text-slate-900">
+            <Trash2 className="h-4 w-4 text-rose-700" />
+            <h3 className="text-sm font-semibold">삭제된 사용자 — 복구</h3>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            onClick={onClose}
+            title="닫기"
+          >
+            <X className="h-4 w-4 text-slate-500" />
+          </Button>
+        </div>
+
+        <div className="p-4 max-h-[70vh] overflow-y-auto">
+          {deletedQuery.isLoading ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-slate-500">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <p className="text-xs">삭제된 사용자 목록을 불러오는 중입니다…</p>
+            </div>
+          ) : deletedQuery.isError ? (
+            <div className="flex flex-col items-center gap-2 py-8">
+              <AlertTriangle className="h-5 w-5 text-rose-700" />
+              <p className="text-sm font-medium text-rose-700">
+                목록을 불러오지 못했습니다.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-xs h-7 mt-1"
+                onClick={() => deletedQuery.refetch()}
+              >
+                다시 시도
+              </Button>
+            </div>
+          ) : users.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-8 text-slate-500">
+              <Trash2 className="h-5 w-5 text-slate-400" />
+              <p className="text-sm font-medium text-slate-700">
+                삭제된 사용자가 없습니다.
+              </p>
+              <p className="text-[11px] text-slate-500">
+                반려된 사용자가 발생하면 이곳에 표시됩니다.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[10px] text-slate-500 mb-2">
+                총 {deletedQuery.data?.total.toLocaleString("ko-KR")}명 중
+                {users.length}명 표시. 복구 시 admin/users 활성 목록 자동 갱신.
+              </p>
+              {users.map((user) => {
+                const display = user.name?.trim() || user.email.split("@")[0];
+                const deletedLabel = new Date(user.updatedAt).toLocaleString(
+                  "ko-KR",
+                  { dateStyle: "short", timeStyle: "short" },
+                );
+                const isPending =
+                  restoreMutation.isPending &&
+                  restoreMutation.variables === user.id;
+                return (
+                  <div
+                    key={user.id}
+                    className="border border-bd rounded-md p-3 text-xs space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-slate-900 truncate">
+                          {display}
+                        </div>
+                        <div className="text-[11px] text-slate-500 truncate">
+                          {user.email}
+                        </div>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {user.role}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1 border-t border-bd">
+                      <span className="text-[10px] text-slate-500">
+                        반려 시각: {deletedLabel}
+                      </span>
+                      <Button
+                        size="sm"
+                        className="h-7 text-[11px] bg-emerald-600 hover:bg-emerald-700 text-white gap-1"
+                        onClick={() => restoreMutation.mutate(user.id)}
+                        disabled={restoreMutation.isPending}
+                      >
+                        {isPending ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <RotateCcw className="h-3 w-3" />
+                        )}
+                        복구
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-bd px-4 py-2.5 flex items-center justify-end">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            onClick={onClose}
+          >
+            닫기
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ─── §11.128 초대 내역 Dialog ─────────────────────────────────────────────
 

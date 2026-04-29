@@ -70,12 +70,16 @@ export async function getUsers(params?: {
   page?: number;
   limit?: number;
   search?: string;
+  /** §11.134 — true 시 deletedAt IS NOT NULL (삭제된 사용자만 list) */
+  onlyDeleted?: boolean;
 }) {
-  const { page = 1, limit = 20, search } = params || {};
+  const { page = 1, limit = 20, search, onlyDeleted = false } = params || {};
   const skip = (page - 1) * limit;
 
-  // §11.133 — soft-deleted user 제외 (deletedAt: null filter)
-  const where: any = { deletedAt: null };
+  // §11.133 — soft-deleted user 제외 by default. §11.134 onlyDeleted=true 시 inverse.
+  const where: any = onlyDeleted
+    ? { deletedAt: { not: null } }
+    : { deletedAt: null };
   if (search) {
     where.OR = [
       { name: { contains: search, mode: "insensitive" } },

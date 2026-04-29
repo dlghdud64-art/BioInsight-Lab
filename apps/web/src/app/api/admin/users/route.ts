@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
         : 20,
       role: searchParams.get("role") as any,
       search: searchParams.get("search") || undefined,
+      // §11.134 — onlyDeleted=true 시 soft-deleted user list (복구 surface 용)
+      onlyDeleted: searchParams.get("onlyDeleted") === "true",
     };
 
     const result = await getUsers(params);
