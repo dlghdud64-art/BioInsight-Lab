@@ -42,12 +42,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           // Prisma에서 사용자 정보 가져오기
           const dbUser = await db.user.findUnique({
             where: { email: user.email! },
-            select: { id: true, role: true },
+            select: {
+              id: true,
+              role: true,
+              emailVerified: true,
+              name: true,
+              image: true,
+            },
           });
 
           if (dbUser) {
             token.id = dbUser.id;
             token.role = dbUser.role as UserRole;
+            // §11.116 invite acceptance — admin 이 미리 생성한 user 의
+            // emailVerified 가 null 이면 OAuth 첫 로그인 시점에 자동 set.
+            // image / name 도 OAuth profile 로 보강 (admin invite 시 미입력 케이스).
+            if (!dbUser.emailVerified) {
+              try {
+                await db.user.update({
+                  where: { id: dbUser.id },
+                  data: {
+                    emailVerified: new Date(),
+                    name: dbUser.name ?? user.name ?? null,
+                    image: dbUser.image ?? user.image ?? null,
+                  },
+                });
+              } catch (linkError) {
+                console.error(
+                  "Error linking invited user emailVerified:",
+                  linkError,
+                );
+              }
+            }
           } else if (user.email) {
             // 사용자가 없으면 생성
             const newUser = await db.user.create({

@@ -39,6 +39,8 @@ import {
   Settings2,
   X,
   Save,
+  Copy,
+  Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -145,6 +147,7 @@ export default function AdminUsersPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [inviteOpen, setInviteOpen] = useState(false);
   const queryClient = useQueryClient();
 
   const usersQuery = useQuery<AdminUsersResponse>({
@@ -301,8 +304,7 @@ export default function AdminUsersPage() {
               <Button
                 size="sm"
                 className="h-8 text-xs gap-1.5 bg-slate-900 hover:bg-slate-800 text-white"
-                disabled
-                title="준비 중 — 사용자 초대 surface 는 별도 트랙에서 제공됩니다."
+                onClick={() => setInviteOpen(true)}
               >
                 <UserPlus className="h-3 w-3" />
                 사용자 초대
@@ -358,6 +360,16 @@ export default function AdminUsersPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* ── §11.116 사용자 초대 modal ── */}
+          {inviteOpen && (
+            <InviteUserDialog
+              onClose={() => setInviteOpen(false)}
+              onCreated={() => {
+                queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+              }}
+            />
+          )}
 
           {/* ── §11.115 운영 정책 panel (selected user 시) ── */}
           {selectedUserId && (
@@ -688,6 +700,253 @@ function MiniKPI({
       <div>
         <div className={cn("text-lg font-bold tabular-nums", count > 0 ? c.count : "text-slate-400")}>{count}</div>
         <div className="text-[10px] text-slate-500">{label}</div>
+      </div>
+    </div>
+  );
+}
+
+// ─── §11.116 사용자 초대 Dialog ─────────────────────────────────────────────
+
+function InviteUserDialog({
+  onClose,
+  onCreated,
+}: {
+  onClose: () => void;
+  onCreated: () => void;
+}) {
+  const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [role, setRole] = useState("RESEARCHER");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [createdEmail, setCreatedEmail] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const inviteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch("/api/admin/users/invite", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          email: email.trim(),
+          name: name.trim() || null,
+          role,
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      return data as {
+        user: { id: string; email: string; name: string | null };
+        inviteLink: string;
+      };
+    },
+    onSuccess: (data) => {
+      setInviteLink(data.inviteLink);
+      setCreatedEmail(data.user.email);
+      setErrorMsg(null);
+      onCreated();
+    },
+    onError: (err: Error) => {
+      setErrorMsg(err.message || "사용자 초대에 실패했습니다.");
+    },
+  });
+
+  const isValid = email.trim().length > 0 && /@/.test(email);
+
+  async function handleCopy() {
+    if (!inviteLink) return;
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setErrorMsg("클립보드 복사에 실패했습니다. 링크를 직접 선택해 주세요.");
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl">
+        <div className="flex items-center justify-between border-b border-bd px-4 py-3">
+          <div className="flex items-center gap-2 text-slate-900">
+            <UserPlus className="h-4 w-4 text-blue-700" />
+            <h3 className="text-sm font-semibold">사용자 초대</h3>
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-7 w-7 p-0"
+            onClick={onClose}
+            title="닫기"
+          >
+            <X className="h-4 w-4 text-slate-500" />
+          </Button>
+        </div>
+
+        <div className="p-4 space-y-3">
+          {!inviteLink ? (
+            <>
+              <p className="text-[11px] text-slate-500 leading-relaxed">
+                ADMIN 만 사용자를 초대할 수 있습니다. 초대 링크를 복사하여
+                Slack / 카카오톡 등으로 전달하세요. 이메일 자동 발송은 이번
+                트랙에서 제공되지 않습니다.
+              </p>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-700">
+                  이메일 *
+                </label>
+                <Input
+                  type="email"
+                  placeholder="user@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-700">
+                  이름 (선택)
+                </label>
+                <Input
+                  type="text"
+                  placeholder="예: 홍길동"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-700">
+                  역할 *
+                </label>
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="역할 선택" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="RESEARCHER">RESEARCHER (기본)</SelectItem>
+                    <SelectItem value="REQUESTER">REQUESTER</SelectItem>
+                    <SelectItem value="APPROVER">APPROVER</SelectItem>
+                    <SelectItem value="VIEWER">VIEWER</SelectItem>
+                    <SelectItem value="ADMIN">ADMIN</SelectItem>
+                    <SelectItem value="OWNER">OWNER</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {errorMsg && (
+                <div className="flex items-start gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] text-rose-700">
+                  <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                  <p>{errorMsg}</p>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-bd">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 text-xs"
+                  onClick={onClose}
+                  disabled={inviteMutation.isPending}
+                >
+                  취소
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white gap-1.5"
+                  onClick={() => inviteMutation.mutate()}
+                  disabled={!isValid || inviteMutation.isPending}
+                >
+                  {inviteMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <UserPlus className="h-3 w-3" />
+                  )}
+                  초대 링크 생성
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-[11px] text-emerald-700">
+                <Check className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium">초대가 생성되었습니다.</p>
+                  <p className="text-emerald-600">
+                    {createdEmail} — 아래 링크를 복사하여 전달하세요.
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-semibold text-slate-700">
+                  초대 링크
+                </label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="text"
+                    value={inviteLink}
+                    readOnly
+                    className="h-8 text-[11px] font-mono"
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs gap-1.5 shrink-0"
+                    onClick={handleCopy}
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="h-3 w-3 text-emerald-700" />
+                        복사됨
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3 w-3" />
+                        복사
+                      </>
+                    )}
+                  </Button>
+                </div>
+                <p className="text-[10px] text-slate-500">
+                  받는 분이 링크 클릭 → Google 로그인 → 자동 활성화됩니다.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-bd">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setInviteLink(null);
+                    setCreatedEmail(null);
+                    setEmail("");
+                    setName("");
+                    setRole("RESEARCHER");
+                    setErrorMsg(null);
+                  }}
+                >
+                  추가 초대
+                </Button>
+                <Button
+                  size="sm"
+                  className="h-8 text-xs bg-slate-900 hover:bg-slate-800 text-white"
+                  onClick={onClose}
+                >
+                  닫기
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
