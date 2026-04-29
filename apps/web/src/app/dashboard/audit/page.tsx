@@ -290,6 +290,27 @@ export default function AuditTrailPage() {
     }
   };
 
+  // §11.109 — 정형 PDF 양식 (서명란 + 페이지 번호 + 회사 헤더 포함).
+  // /api/audit-logs/pdf-view server-side rendered HTML 페이지를 새 탭으로
+  // 열고 autoPrint=1 로 자동 인쇄 dialog trigger. 컴플라이언스 보존 양식.
+  const handleCompliancePdf = () => {
+    if (rows.length === 0) {
+      toast({
+        title: "인쇄할 로그가 없습니다",
+        description: "필터 조건을 조정한 후 다시 시도하세요.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const params = new URLSearchParams();
+    if (eventTypeFilter !== "all") params.set("eventType", eventTypeFilter);
+    if (startDate) params.set("startDate", startDate);
+    if (search.trim()) params.set("search", search.trim());
+    params.set("limit", "200");
+    params.set("autoPrint", "1");
+    window.open(`/api/audit-logs/pdf-view?${params.toString()}`, "_blank");
+  };
+
   const handleCsvExport = () => {
     if (rows.length === 0) {
       toast({
@@ -392,7 +413,16 @@ export default function AuditTrailPage() {
             onClick={handlePdfDownload}
           >
             <Download className="w-4 h-4 mr-2" />
-            <span className="hidden sm:inline">PDF </span>다운로드
+            <span className="hidden sm:inline">간단 </span>인쇄
+          </Button>
+          {/* §11.109 — 정형 PDF 양식 (서명란 + 페이지 번호 + 회사 헤더) */}
+          <Button
+            variant="outline"
+            className="touch-manipulation active:scale-95 border-slate-700 text-slate-700 hover:bg-slate-50"
+            onClick={handleCompliancePdf}
+          >
+            <Download className="w-4 h-4 mr-2" />
+            <span className="hidden sm:inline">정형 </span>PDF
           </Button>
           <Button
             className="bg-blue-600 hover:bg-blue-700 text-white touch-manipulation active:scale-95"
