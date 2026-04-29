@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useDialogA11y } from "@/lib/hooks/use-dialog-a11y";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -222,6 +223,12 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
     }
   }, [isMobileOpen]);
 
+  // §11.124 — Esc + Tab focus trap + return-focus (useDialogA11y hook)
+  const mobileDialog = useDialogA11y<HTMLElement>({
+    open: isMobileOpen,
+    onClose: () => setIsMobileOpen(false),
+  });
+
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
@@ -407,6 +414,10 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
         />
       )}
       <aside
+        ref={mobileDialog.dialogRef}
+        role="dialog"
+        aria-modal={isMobileOpen ? "true" : undefined}
+        aria-label="대시보드 메뉴"
         className={cn(
           "fixed top-0 left-0 h-full w-64 min-w-[16rem] bg-white border-r border-slate-200 z-50 mobile-sidebar transition-transform duration-300 shrink-0 lg:hidden",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
