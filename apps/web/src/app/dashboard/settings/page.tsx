@@ -1180,7 +1180,7 @@ function SettingsPageContent() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="ml-auto h-9 px-3 text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-950/30 rounded-lg"
+                        className="ml-auto h-9 px-3 text-xs text-rose-300 hover:text-rose-200 hover:bg-rose-50 rounded-lg"
                         onClick={() => setIsCancelOpen(true)}
                       >
                         구독 해지

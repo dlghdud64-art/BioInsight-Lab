@@ -41,7 +41,7 @@ const DOMAIN_LABELS: Record<GovernanceDomain, string> = {
 
 const SEVERITY_COLORS: Record<GovernanceEventSeverity, { bg: string; text: string; dot: string }> = {
   info: { bg: "bg-slate-800", text: "text-slate-400", dot: "bg-slate-500" },
-  warning: { bg: "bg-amber-950/30", text: "text-amber-400", dot: "bg-amber-500" },
+  warning: { bg: "bg-amber-50", text: "text-amber-400", dot: "bg-amber-500" },
   critical: { bg: "bg-red-950/30", text: "text-red-400", dot: "bg-red-500" },
 };
 
@@ -237,7 +237,7 @@ export function GovernanceDevPanel() {
                   onClick={() => setSelectedEvent(isSelected ? null : evt)}
                   className={cn(
                     "w-full text-left flex items-start gap-1.5 px-2 py-1 border-b border-slate-800/50 hover:bg-slate-800/50 transition-colors",
-                    isSelected && "bg-blue-950/30 border-blue-800/30",
+                    isSelected && "bg-blue-50 border-blue-800/30",
                     sev.bg,
                   )}
                 >

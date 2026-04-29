@@ -237,7 +237,7 @@ export default function ActivityLogsPage() {
             <Card className="bg-slate-900 border-slate-800 text-white h-full">
               <CardContent className="p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-950/40 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
                     <Activity className="h-5 w-5 text-emerald-400" />
                   </div>
                 </div>

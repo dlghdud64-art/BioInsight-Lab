@@ -82,13 +82,13 @@ const TEAM_DATA: TeamSpendingData[] = [
 function getStatusStyle(status: TeamSpendingData["status"]) {
   switch (status) {
     case "안정":
-      return { bg: "bg-emerald-50  bg-emerald-950/20", text: "text-emerald-700 text-emerald-400", border: "border-emerald-200  border-emerald-900/40" };
+      return { bg: "bg-emerald-50  bg-emerald-50", text: "text-emerald-700 text-emerald-400", border: "border-emerald-200  border-emerald-900/40" };
     case "주의":
-      return { bg: "bg-amber-50  bg-amber-950/20", text: "text-amber-700 text-amber-400", border: "border-amber-200  border-amber-900/40" };
+      return { bg: "bg-amber-50  bg-amber-50", text: "text-amber-700 text-amber-400", border: "border-amber-200  border-amber-900/40" };
     case "초과 위험":
       return { bg: "bg-red-50 bg-red-950/20", text: "text-red-700 text-red-400", border: "border-red-200  border-red-900/40" };
     case "검토 필요":
-      return { bg: "bg-blue-50  bg-blue-950/20", text: "text-blue-700 text-blue-400", border: "border-blue-200  border-blue-900/40" };
+      return { bg: "bg-blue-50  bg-blue-50", text: "text-blue-700 text-blue-400", border: "border-blue-200  border-blue-900/40" };
   }
 }
 
@@ -132,7 +132,7 @@ export default function TeamAnalyticsView() {
           <p className="text-xs text-slate-400 mt-1">예산 배정된 운영 팀</p>
         </div>
 
-        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30  bg-amber-950/10  border-amber-900/30" : "border-bd/60 bg-pn border-bd/50"}`}>
+        <div className={`rounded-xl border p-4 shadow-sm ${riskTeams > 0 ? "border-amber-200/60 bg-amber-50/30  bg-amber-50  border-amber-900/30" : "border-bd/60 bg-pn border-bd/50"}`}>
           <div className="flex items-center gap-2 mb-2">
             <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">예산 위험 팀</span>
@@ -164,7 +164,7 @@ export default function TeamAnalyticsView() {
 
       {/* ══ 2. 예산 위험 팀 알림 ══ */}
       {riskTeamList.length > 0 && (
-        <Card className="rounded-xl border-amber-100  border-amber-900/30 bg-amber-50/40  bg-amber-950/10 shadow-sm">
+        <Card className="rounded-xl border-amber-100  border-amber-900/30 bg-amber-50/40  bg-amber-50 shadow-sm">
           <CardHeader className="pb-2 p-4">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />

@@ -177,7 +177,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
     return (
       <Card className="border border-bd shadow-sm bg-pn bg-pn border-bd">
         <CardContent className="py-6 px-5 flex items-center gap-4">
-          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50  bg-blue-950/40">
+          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50  bg-blue-50">
             <span className="animate-ping absolute inline-flex h-5 w-5 rounded-full bg-blue-300 opacity-50" />
             <Loader2 className="relative h-4 w-4 text-blue-500 animate-spin" />
           </div>
@@ -326,7 +326,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
 
         {/* AI 인사이트 영역 */}
         {selectedBudget.hasWarning && selectedBudget.warningMessage && (
-          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-950/30 border border-amber-200  border-amber-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
+          <div className="mx-3 mb-3 sm:mx-4 sm:mb-4 rounded-lg bg-amber-50 border border-amber-200  border-amber-800/40 px-3 py-1.5 sm:px-4 sm:py-2 flex items-start gap-2">
             <AlertTriangle className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-amber-600 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs text-slate-700  text-amber-200 leading-relaxed">
               {selectedBudget.warningMessage}
@@ -359,7 +359,7 @@ export function BudgetPredictionWidget({ organizationId }: { organizationId?: st
               variant="outline"
               disabled={isDownloading}
               onClick={handleDownload}
-              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300  border-emerald-800 text-emerald-400  hover:bg-emerald-950/50 text-xs h-8 px-3"
+              className="border-emerald-200 text-emerald-600 hover:bg-emerald-50 hover:border-emerald-300  border-emerald-800 text-emerald-400  hover:bg-emerald-50 text-xs h-8 px-3"
             >
               {isDownloading ? (
                 <>

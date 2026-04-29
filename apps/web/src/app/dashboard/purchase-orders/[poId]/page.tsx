@@ -968,7 +968,7 @@ function DispatchWorkbenchEntry({ poId, outboundRecord }: DispatchWorkbenchEntry
     return (
       <Link
         href={href}
-        className="flex items-center justify-between gap-3 rounded border border-rose-900/40 bg-rose-950/20 hover:bg-rose-950/30 px-4 py-2.5 text-xs transition-colors"
+        className="flex items-center justify-between gap-3 rounded border border-rose-900/40 bg-rose-50 hover:bg-rose-50 px-4 py-2.5 text-xs transition-colors"
       >
         <div className="flex items-center gap-2">
           <span className="rounded bg-rose-900/40 px-1.5 py-0.5 text-[10px] font-medium text-rose-200 uppercase tracking-wider">
@@ -1152,7 +1152,7 @@ function DispatchOutboundAuditModal({
                       {formatScheduledFor(record.updatedAt)}
                     </span>
                     {isLatest && (
-                      <span className="text-[9px] font-semibold text-blue-400 uppercase tracking-wider bg-blue-950/40 px-1 py-0.5 rounded">
+                      <span className="text-[9px] font-semibold text-blue-400 uppercase tracking-wider bg-blue-50 px-1 py-0.5 rounded">
                         최신
                       </span>
                     )}

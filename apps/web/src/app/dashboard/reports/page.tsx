@@ -329,9 +329,9 @@ export default function ReportsPage() {
                   onDrop={handleDrop}
                   className={`border-2 border-dashed rounded-lg p-12 text-center h-64 flex flex-col items-center justify-center cursor-pointer transition-colors ${
                     isDragging
-                      ? "border-blue-500 bg-blue-950/20"
+                      ? "border-blue-500 bg-blue-50"
                       : selectedFile
-                      ? "border-blue-400 bg-blue-950/10"
+                      ? "border-blue-400 bg-blue-50"
                       : "border-bs bg-sh hover:border-slate-600"
                   }`}
                   onClick={() => document.getElementById("file-input")?.click()}

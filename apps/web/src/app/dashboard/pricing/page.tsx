@@ -241,7 +241,7 @@ export default function PricingPage() {
               <TableRow>
                 <TableHead className="w-[30%]">기능</TableHead>
                 <TableHead className="text-center">Starter</TableHead>
-                <TableHead className="text-center bg-blue-50/50 bg-blue-950/30 text-blue-700  text-blue-300 font-bold">
+                <TableHead className="text-center bg-blue-50/50 bg-blue-50 text-blue-700  text-blue-300 font-bold">
                   Pro
                 </TableHead>
                 <TableHead className="text-center">Enterprise</TableHead>
@@ -260,7 +260,7 @@ export default function PricingPage() {
               <TableRow>
                 <TableCell className="font-medium text-slate-600">팀원 수</TableCell>
                 <TableCell className="text-center text-slate-400">1명</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-50">
                   무제한
                 </TableCell>
                 <TableCell className="text-center text-slate-600 font-medium">무제한</TableCell>
@@ -268,7 +268,7 @@ export default function PricingPage() {
               <TableRow>
                 <TableCell className="font-medium text-slate-600">재고 등록 한도</TableCell>
                 <TableCell className="text-center text-slate-400">최대 100개</TableCell>
-                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center font-bold text-blue-600 text-blue-400 bg-blue-50/20  bg-blue-50">
                   무제한
                 </TableCell>
                 <TableCell className="text-center text-slate-600 font-medium">무제한</TableCell>
@@ -278,7 +278,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -290,7 +290,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -312,7 +312,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Check className="w-4 h-4 mx-auto text-emerald-500" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -324,7 +324,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -336,7 +336,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -358,7 +358,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Check className="w-4 h-4 mx-auto text-blue-600 text-blue-400" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -370,7 +370,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">
@@ -382,7 +382,7 @@ export default function PricingPage() {
                 <TableCell className="text-center">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
-                <TableCell className="text-center bg-blue-50/20  bg-blue-950/20">
+                <TableCell className="text-center bg-blue-50/20  bg-blue-50">
                   <Minus className="w-4 h-4 mx-auto text-slate-600  text-slate-600" />
                 </TableCell>
                 <TableCell className="text-center">

@@ -41,7 +41,7 @@ interface CardConfig {
 const CARD_CONFIG: Record<string, CardConfig> = {
   QUOTE_DRAFT: {
     icon: FileText,
-    iconBg: "bg-blue-50  bg-blue-950/40",
+    iconBg: "bg-blue-50  bg-blue-50",
     iconColor: "text-blue-600 text-blue-400",
     borderColor: "border-l-blue-500",
     title: "견적 요청 초안이 준비되었습니다",
@@ -54,7 +54,7 @@ const CARD_CONFIG: Record<string, CardConfig> = {
   },
   VENDOR_EMAIL_DRAFT: {
     icon: Mail,
-    iconBg: "bg-blue-50  bg-blue-950/40",
+    iconBg: "bg-blue-50  bg-blue-50",
     iconColor: "text-blue-600 text-blue-400",
     borderColor: "border-l-blue-500",
     title: "벤더 이메일 초안이 준비되었습니다",
@@ -66,27 +66,27 @@ const CARD_CONFIG: Record<string, CardConfig> = {
   },
   FOLLOWUP_DRAFT: {
     icon: Clock,
-    iconBg: "bg-amber-50  bg-amber-950/40",
+    iconBg: "bg-amber-50  bg-amber-50",
     iconColor: "text-amber-600 text-amber-400",
     borderColor: "border-l-amber-500",
     title: "회신 지연 주문이 있습니다",
     description: "회신 대기 중인 주문에 대해 follow-up 메일 초안을 준비했습니다.",
     cta: "follow-up 초안 확인하기",
     badgeLabel: "회신 대기",
-    badgeClass: "bg-amber-50 text-amber-700  bg-amber-950/40 text-amber-400 border-amber-200  border-amber-800",
+    badgeClass: "bg-amber-50 text-amber-700  bg-amber-50 text-amber-400 border-amber-200  border-amber-800",
     approveToast: "Follow-up 메일이 승인되었습니다",
     approveHref: "/dashboard/orders",
   },
   STATUS_CHANGE_SUGGEST: {
     icon: Clock,
-    iconBg: "bg-purple-50  bg-purple-950/40",
+    iconBg: "bg-purple-50  bg-purple-50",
     iconColor: "text-purple-600 text-purple-400",
     borderColor: "border-l-purple-500",
     title: "주문 상태 변경 제안",
     description: "벤더 회신을 분석하여 주문 상태 변경을 제안합니다.",
     cta: "상태 변경안 검토하기",
     badgeLabel: "상태 변경 제안",
-    badgeClass: "bg-purple-50 text-purple-700  bg-purple-950/40 text-purple-400 border-purple-200  border-purple-800",
+    badgeClass: "bg-purple-50 text-purple-700  bg-purple-50 text-purple-400 border-purple-200  border-purple-800",
     approveToast: "주문 상태가 변경되었습니다",
     approveHref: "/dashboard/orders",
   },
@@ -144,11 +144,11 @@ const STAGE_CONFIG: Record<string, { label: string; className: string }> = {
   },
   FOLLOWUP_DRAFT: {
     label: "응답 대기",
-    className: "bg-amber-50 text-amber-700  bg-amber-950/40 text-amber-400 border-amber-200  border-amber-800",
+    className: "bg-amber-50 text-amber-700  bg-amber-50 text-amber-400 border-amber-200  border-amber-800",
   },
   STATUS_CHANGE_SUGGEST: {
     label: "승인 필요",
-    className: "bg-purple-50 text-purple-700  bg-purple-950/40 text-purple-400 border-purple-200  border-purple-800",
+    className: "bg-purple-50 text-purple-700  bg-purple-50 text-purple-400 border-purple-200  border-purple-800",
   },
   REORDER_SUGGESTION: {
     label: "조치 필요",
