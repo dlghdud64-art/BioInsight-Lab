@@ -204,6 +204,45 @@ export default function AdminUsersPage() {
     }
   }, [policyQuery.data]);
 
+  // §11.117 — manual approve / reject
+  const approveMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/admin/users/${userId}/approval`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      const res = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        credentials: "same-origin",
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin", "users"] });
+      // 반려된 user 가 selected 상태였으면 panel 닫기
+      if (selectedUserId) setSelectedUserId(null);
+    },
+  });
+
+  const [confirmReject, setConfirmReject] = useState<{
+    id: string;
+    label: string;
+  } | null>(null);
+
   const policyMutation = useMutation({
     mutationFn: async () => {
       if (!selectedUserId) throw new Error("선택된 사용자가 없습니다.");
@@ -360,6 +399,59 @@ export default function AdminUsersPage() {
               </SelectContent>
             </Select>
           </div>
+
+          {/* ── §11.117 반려 확인 dialog ── */}
+          {confirmReject && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+              <div className="w-full max-w-md bg-pn border border-bd rounded-lg shadow-xl">
+                <div className="flex items-center gap-2 border-b border-bd px-4 py-3 text-rose-700">
+                  <AlertTriangle className="h-4 w-4" />
+                  <h3 className="text-sm font-semibold">사용자 반려</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  <p className="text-xs text-slate-700 leading-relaxed">
+                    <span className="font-medium text-slate-900">
+                      {confirmReject.label}
+                    </span>{" "}
+                    사용자를 영구 삭제합니다. 관련된 모든 데이터(즐겨찾기, 검색
+                    이력 등)가 함께 제거되며 복구할 수 없습니다.
+                  </p>
+                  <p className="text-[11px] text-rose-700 bg-rose-50 border border-rose-200 rounded-md px-3 py-2">
+                    실수로 초대한 user 정리 또는 OAuth 미응답 정리 용도입니다.
+                    이미 활성 user 의 경우 운영 정책 회수 후 신중히 사용하세요.
+                  </p>
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-bd">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 text-xs"
+                      onClick={() => setConfirmReject(null)}
+                      disabled={rejectMutation.isPending}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs bg-rose-600 hover:bg-rose-700 text-white gap-1.5"
+                      onClick={() => {
+                        rejectMutation.mutate(confirmReject.id, {
+                          onSuccess: () => setConfirmReject(null),
+                        });
+                      }}
+                      disabled={rejectMutation.isPending}
+                    >
+                      {rejectMutation.isPending ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <XCircle className="h-3 w-3" />
+                      )}
+                      영구 삭제
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ── §11.116 사용자 초대 modal ── */}
           {inviteOpen && (
@@ -640,18 +732,37 @@ export default function AdminUsersPage() {
                                     size="sm"
                                     variant="ghost"
                                     className="h-6 px-2 text-[10px] text-rose-700 hover:bg-rose-50"
-                                    disabled
-                                    title="준비 중 — 승인/반려 surface 는 별도 트랙에서 제공됩니다."
+                                    onClick={() =>
+                                      setConfirmReject({
+                                        id: user.id,
+                                        label: user.name || user.email,
+                                      })
+                                    }
+                                    disabled={
+                                      rejectMutation.isPending ||
+                                      approveMutation.isPending
+                                    }
+                                    title="이 사용자를 영구 삭제합니다."
                                   >
                                     <XCircle className="h-3 w-3 mr-0.5" />반려
                                   </Button>
                                   <Button
                                     size="sm"
                                     className="h-6 px-2 text-[10px] bg-blue-600 hover:bg-blue-700 text-white"
-                                    disabled
-                                    title="준비 중 — 승인/반려 surface 는 별도 트랙에서 제공됩니다."
+                                    onClick={() => approveMutation.mutate(user.id)}
+                                    disabled={
+                                      approveMutation.isPending ||
+                                      rejectMutation.isPending
+                                    }
+                                    title="OAuth 인증 없이 즉시 활성화합니다."
                                   >
-                                    <CheckCircle2 className="h-3 w-3 mr-0.5" />승인
+                                    {approveMutation.isPending &&
+                                    approveMutation.variables === user.id ? (
+                                      <Loader2 className="h-3 w-3 mr-0.5 animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 className="h-3 w-3 mr-0.5" />
+                                    )}
+                                    승인
                                   </Button>
                                 </>
                               )}
