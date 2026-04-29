@@ -76,3 +76,13 @@ jobs:
         run: |
           chmod +x scripts/check-frontend-page-entry-coverage.sh
           scripts/check-frontend-page-entry-coverage.sh
+
+      - name: Run LabAxis API Orphan Caller Guard (advisory)
+        # §11.103 — §11.60 의 inverse. frontend caller fetch URL 이 backend
+        # route.ts 와 매치 안 되는 silent 404 회귀 자동 catch. 첫 run 에서
+        # 1 violation (/api/products?limit=100) 발견 — 별도 cleanup 트랙
+        # (#api-products-list-endpoint-or-callers-fix). 0 도달 후
+        # LABAXIS_API_ORPHAN_CALLER_BLOCK=1 전환.
+        run: |
+          chmod +x scripts/check-api-orphan-caller.sh
+          scripts/check-api-orphan-caller.sh
