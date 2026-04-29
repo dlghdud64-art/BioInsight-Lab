@@ -41,6 +41,8 @@ import {
   Save,
   Copy,
   Check,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -148,13 +150,25 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 50;
   const queryClient = useQueryClient();
 
+  // §11.118 — search/role/page 변경 시 page reset (search/role 변경 시만)
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, roleFilter]);
+
   const usersQuery = useQuery<AdminUsersResponse>({
-    queryKey: ["admin", "users", { search: searchQuery, role: roleFilter }],
+    queryKey: [
+      "admin",
+      "users",
+      { search: searchQuery, role: roleFilter, page },
+    ],
     queryFn: async () => {
       const params = new URLSearchParams();
-      params.set("limit", "200");
+      params.set("limit", String(PAGE_SIZE));
+      params.set("page", String(page));
       if (searchQuery.trim()) params.set("search", searchQuery.trim());
       if (roleFilter !== "all") params.set("role", roleFilter);
       const res = await fetch(`/api/admin/users?${params.toString()}`, {
@@ -775,6 +789,57 @@ export default function AdminUsersPage() {
                 </TableBody>
               </Table>
             </div>
+
+            {/* §11.118 — pagination UI (totalPages > 1 일 때만 노출) */}
+            {usersQuery.data && usersQuery.data.totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-bd px-4 py-2.5 text-[11px] text-slate-500">
+                <span>
+                  총 <span className="font-semibold text-slate-900">{usersQuery.data.total.toLocaleString("ko-KR")}</span>명 중{" "}
+                  <span className="font-semibold text-slate-900">
+                    {((page - 1) * PAGE_SIZE + 1).toLocaleString("ko-KR")}
+                  </span>
+                  {" — "}
+                  <span className="font-semibold text-slate-900">
+                    {Math.min(page * PAGE_SIZE, usersQuery.data.total).toLocaleString("ko-KR")}
+                  </span>
+                  명 표시
+                </span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[11px] gap-1"
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page <= 1 || usersQuery.isFetching}
+                  >
+                    <ChevronLeft className="h-3 w-3" />
+                    이전
+                  </Button>
+                  <span className="tabular-nums">
+                    <span className="font-semibold text-slate-900">{page}</span>
+                    {" / "}
+                    {usersQuery.data.totalPages}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 px-2 text-[11px] gap-1"
+                    onClick={() =>
+                      setPage((p) =>
+                        Math.min(usersQuery.data!.totalPages, p + 1),
+                      )
+                    }
+                    disabled={
+                      page >= usersQuery.data.totalPages ||
+                      usersQuery.isFetching
+                    }
+                  >
+                    다음
+                    <ChevronRight className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

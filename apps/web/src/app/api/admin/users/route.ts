@@ -1,8 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getUsers, updateUserRole, isAdmin } from "@/lib/api/admin";
+import { getUsers, isAdmin } from "@/lib/api/admin";
 
-// ì¬ì©ì ëª©ë¡ ì¡°í - ì¤ë³µ ì ì ì ê±°
+/**
+ * §11.118 #admin-users-route-encoding-fix
+ *
+ * 이전 mojibake 주석 (UTF-8 → Latin-1 → UTF-8 decode 누락) 정리 +
+ * 미사용 import (updateUserRole) 제거. role 변경은 §11.115/§11.117 의
+ * /[id]/approval-policy + /[id]/approval 에서 별도 처리.
+ *
+ * GET /api/admin/users — 관리자용 사용자 목록 조회
+ *
+ * Query params:
+ *  - page: number (default 1)
+ *  - limit: number (default 20)
+ *  - search: string (이름/이메일 검색)
+ *  - role: UserRole (필터)
+ *
+ * Response: { users[], total, page, limit, totalPages }
+ *
+ * 권한: ADMIN only.
+ */
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -17,7 +36,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const params = {
       page: searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1,
-      limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 20,
+      limit: searchParams.get("limit")
+        ? parseInt(searchParams.get("limit")!)
+        : 20,
       role: searchParams.get("role") as any,
       search: searchParams.get("search") || undefined,
     };
@@ -27,10 +48,8 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error fetching users:", error);
     return NextResponse.json(
-      { error: "Failed to fetch users" },
-      { status: 500 }
+      { error: "사용자 목록 조회에 실패했습니다." },
+      { status: 500 },
     );
   }
 }
-
-// ì¬ì©ì ì­í  ë³ê²½ - ì¤ë³µ ì ì ì ê±°
