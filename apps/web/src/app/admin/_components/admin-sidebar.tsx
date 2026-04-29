@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -46,6 +46,10 @@ const ADMIN_MENU_ITEMS = [
 export function AdminSidebar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  // §11.122 — focus management refs
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
 
   // pathname 변경 시 mobile drawer 자동 close
   useEffect(() => {
@@ -64,14 +68,66 @@ export function AdminSidebar() {
     };
   }, [mobileOpen]);
 
+  // §11.122 — Esc key → close + focus trap (Tab 순환)
+  useEffect(() => {
+    if (!mobileOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        return;
+      }
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileOpen]);
+
+  // §11.122 — drawer open 시 close button 으로 initial focus,
+  // close 시 hamburger trigger 로 focus 복귀
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    if (mobileOpen) {
+      // 다음 frame 에서 focus (transition 후 안정화)
+      const timer = setTimeout(() => {
+        closeButtonRef.current?.focus();
+      }, 50);
+      wasOpenRef.current = true;
+      return () => clearTimeout(timer);
+    }
+    if (wasOpenRef.current) {
+      // open → close 전이 시 trigger button 으로 focus 복귀
+      triggerRef.current?.focus();
+      wasOpenRef.current = false;
+    }
+  }, [mobileOpen]);
+
   return (
     <>
       {/* Mobile hamburger trigger (md 미만에서만 노출) */}
       <button
+        ref={triggerRef}
         type="button"
         className="md:hidden fixed top-3 left-3 z-30 inline-flex items-center justify-center h-9 w-9 rounded-lg bg-white border border-slate-200 shadow-sm text-slate-700 hover:bg-slate-50"
         onClick={() => setMobileOpen(true)}
         aria-label="관리자 메뉴 열기"
+        aria-expanded={mobileOpen}
+        aria-controls="admin-sidebar-drawer"
       >
         <Menu className="h-4 w-4" />
       </button>
@@ -89,6 +145,11 @@ export function AdminSidebar() {
           - desktop (md+): inline w-56 (항상 노출)
           - mobile (< md): fixed drawer (mobileOpen 시 슬라이드 인) */}
       <aside
+        ref={drawerRef}
+        id="admin-sidebar-drawer"
+        role="dialog"
+        aria-modal={mobileOpen ? "true" : undefined}
+        aria-label="관리자 메뉴"
         className={cn(
           "bg-slate-900 text-white flex flex-col w-56",
           // desktop: inline relative + 항상 노출
@@ -109,6 +170,7 @@ export function AdminSidebar() {
           </div>
           {/* mobile close button */}
           <button
+            ref={closeButtonRef}
             type="button"
             className="md:hidden inline-flex items-center justify-center h-7 w-7 rounded text-slate-400 hover:bg-slate-800 hover:text-white"
             onClick={() => setMobileOpen(false)}
