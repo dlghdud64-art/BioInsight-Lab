@@ -354,9 +354,10 @@ export default function AdminOrdersPage() {
             </div>
           ) : (
             <>
-              {/* §11.102 — bulk action bar (selectedIds 가 있을 때만 노출) */}
+              {/* §11.102 — bulk action bar (selectedIds 가 있을 때만 노출)
+                  §11.119 — 모바일 fixed bottom (선택 후 즉시 액션) / 데스크탑 inline */}
               {selectedIds.size > 0 && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center gap-3 flex-wrap">
+                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-3 flex items-center gap-3 flex-wrap fixed bottom-0 inset-x-0 z-40 md:static md:rounded-xl shadow-lg md:shadow-sm">
                   <span className="text-sm font-bold text-blue-900">
                     선택 {selectedIds.size}개
                   </span>
@@ -410,7 +411,124 @@ export default function AdminOrdersPage() {
                 </div>
               )}
 
-              <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+              {/* §11.119 — mobile card list (md 미만) */}
+              <div className="md:hidden space-y-2">
+                {orders.map((order) => {
+                  const canTransition = NEXT_STATES[order.status].length > 0;
+                  const isSelected = selectedIds.has(order.id);
+                  return (
+                    <div
+                      key={order.id}
+                      className={`bg-white border rounded-xl p-3 shadow-sm ${
+                        isSelected
+                          ? "border-blue-300 bg-blue-50/40"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 mt-1 cursor-pointer accent-blue-600 shrink-0"
+                          checked={isSelected}
+                          disabled={!canTransition}
+                          onChange={(e) => {
+                            setSelectedIds((prev) => {
+                              const next = new Set(prev);
+                              if (e.target.checked) next.add(order.id);
+                              else next.delete(order.id);
+                              return next;
+                            });
+                          }}
+                        />
+                        <div className="flex-1 min-w-0 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-mono text-sm font-semibold text-slate-900 truncate">
+                              {order.orderNumber}
+                            </span>
+                            <Badge
+                              variant="outline"
+                              className={`${STATUS_TONE[order.status]} text-[10px] shrink-0`}
+                            >
+                              {STATUS_LABEL[order.status]}
+                            </Badge>
+                          </div>
+                          <div className="text-xs text-slate-700 break-keep">
+                            {order.user.name || order.user.email}
+                            {order.organization && (
+                              <span className="text-slate-400 ml-1">
+                                · {order.organization.name}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs text-slate-600 break-keep">
+                            {order.items[0]?.name ?? "-"}
+                            {order.items.length > 1 && (
+                              <span className="text-slate-400 ml-1">
+                                외 {order.items.length - 1}건
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+                            <span className="text-sm font-bold text-slate-900 tabular-nums">
+                              ₩{order.totalAmount.toLocaleString("ko-KR")}
+                            </span>
+                            {canTransition ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-[11px] gap-1"
+                                onClick={() => openDialog(order)}
+                              >
+                                상태 전환
+                                <ArrowRight className="h-3 w-3" />
+                              </Button>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">
+                                최종 상태
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[10px] font-mono text-slate-400">
+                            {format(
+                              new Date(order.createdAt),
+                              "yyyy-MM-dd HH:mm",
+                              { locale: ko },
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* 모바일에서 select-all toggle */}
+                <div className="flex items-center justify-between py-2 px-1">
+                  <button
+                    type="button"
+                    className="text-[11px] text-blue-700 font-medium"
+                    onClick={() => {
+                      if (
+                        orders.length > 0 &&
+                        orders.every((o) => selectedIds.has(o.id))
+                      ) {
+                        setSelectedIds(new Set());
+                      } else {
+                        setSelectedIds(new Set(orders.map((o) => o.id)));
+                      }
+                    }}
+                  >
+                    {orders.length > 0 &&
+                    orders.every((o) => selectedIds.has(o.id))
+                      ? "전체 선택 해제"
+                      : "전체 선택"}
+                  </button>
+                  <span className="text-[10px] text-slate-400">
+                    {orders.length}건
+                  </span>
+                </div>
+              </div>
+
+              {/* §11.119 — desktop table (md 이상) */}
+              <div className="hidden md:block bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-slate-50/50">
