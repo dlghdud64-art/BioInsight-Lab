@@ -287,7 +287,7 @@ export default function DashboardPage() {
       case "alert":
         return <AlertTriangle className="h-4 w-4 text-red-500 flex-shrink-0 mt-0.5" />;
       case "quote":
-        return <FileText className="h-4 w-4 text-blue-400 flex-shrink-0 mt-0.5" />;
+        return <FileText className="h-4 w-4 text-blue-700 flex-shrink-0 mt-0.5" />;
       case "delivery":
         return <Truck className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />;
       default:
@@ -364,7 +364,7 @@ export default function DashboardPage() {
   if (stats.expiringCount > 0) {
     urgentItems.push({
       id: "u-expiring",
-      icon: <Calendar className="h-4 w-4 text-amber-400" />,
+      icon: <Calendar className="h-4 w-4 text-amber-700" />,
       label: `유통기한 임박 ${stats.expiringCount}건`,
       desc: "30일 이내 만료 예정",
       href: "/dashboard/inventory",
@@ -384,7 +384,7 @@ export default function DashboardPage() {
   if (stats.activeQuotes > 0 && stats.respondedQuotes === 0) {
     urgentItems.push({
       id: "u-pending-quote",
-      icon: <Clock className="h-4 w-4 text-amber-400" />,
+      icon: <Clock className="h-4 w-4 text-amber-700" />,
       label: `승인 대기 견적 ${stats.activeQuotes}건`,
       desc: "공급사 응답 대기 중",
       href: "/dashboard/quotes?status=PENDING",
@@ -399,19 +399,19 @@ export default function DashboardPage() {
   if (stats.totalInventory === 0) {
     recommendedActions.push({ id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-slate-400" />, label: "품목 등록", desc: "등록된 품목이 없어 비교·견적을 시작할 수 없습니다", href: "/dashboard/inventory", state: "blocked" });
   } else {
-    recommendedActions.push({ id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-emerald-400" />, label: "재고 등록", desc: `${stats.totalInventory}개 운영 중 · 추가 입고 등록`, href: "/dashboard/inventory", state: "ready" });
+    recommendedActions.push({ id: "r-register", icon: <Plus className="h-3.5 w-3.5 text-emerald-700" />, label: "재고 등록", desc: `${stats.totalInventory}개 운영 중 · 추가 입고 등록`, href: "/dashboard/inventory", state: "ready" });
   }
 
   // 비교 상태
   if (stats.undecidedCompareCount > 0) {
-    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-amber-400" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
+    recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-amber-700" />, label: "비교 판정", desc: `${stats.undecidedCompareCount}건 판정 대기 — 검토 후 확정하세요`, href: "/compare", state: "ready" });
   } else if (stats.totalInventory > 0) {
     recommendedActions.push({ id: "r-compare", icon: <GitCompare className="h-3.5 w-3.5 text-slate-400" />, label: "제품 비교", desc: "비교 대기 항목 없음 — 검색에서 후보를 추가하세요", href: "/app/compare", state: "idle" });
   }
 
   // 견적 상태
   if (stats.respondedQuotes > 0) {
-    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-amber-400" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
+    recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-amber-700" />, label: "견적 검토", desc: `${stats.respondedQuotes}건 응답 수신 — 확정 대기`, href: "/dashboard/quotes?status=RESPONDED", state: "ready" });
   } else if (stats.activeQuotes > 0) {
     recommendedActions.push({ id: "r-quote", icon: <FileText className="h-3.5 w-3.5 text-slate-400" />, label: "견적 현황", desc: `${stats.activeQuotes}건 응답 대기 중`, href: "/dashboard/quotes?status=PENDING", state: "idle" });
   } else {
@@ -419,7 +419,7 @@ export default function DashboardPage() {
   }
 
   // 발주 전환
-  recommendedActions.push({ id: "r-po-conversion", icon: <ClipboardList className="h-3.5 w-3.5 text-blue-400" />, label: "발주 전환", desc: "발주 전환 후보를 검토하고 승인·발송을 준비하세요", href: "/dashboard/orders", state: "idle" });
+  recommendedActions.push({ id: "r-po-conversion", icon: <ClipboardList className="h-3.5 w-3.5 text-blue-700" />, label: "발주 전환", desc: "발주 전환 후보를 검토하고 승인·발송을 준비하세요", href: "/dashboard/orders", state: "idle" });
 
   // 검색
   recommendedActions.push({ id: "r-search", icon: <Search className="h-3.5 w-3.5 text-slate-400" />, label: "시약·장비 검색", desc: "500만+ 품목에서 후보 탐색", href: "/app/search", state: "idle" });
@@ -645,7 +645,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[13px] font-extrabold text-amber-700">{processingRequiredCount}건</span>
-                        <ChevronRight className="h-4 w-4 text-amber-400 group-hover:text-amber-600" />
+                        <ChevronRight className="h-4 w-4 text-amber-700 group-hover:text-amber-600" />
                       </div>
                     </Link>
                   )}
@@ -657,7 +657,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-[13px] font-extrabold text-blue-700">{approvalPendingCount}건</span>
-                        <ChevronRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600" />
+                        <ChevronRight className="h-4 w-4 text-blue-700 group-hover:text-blue-600" />
                       </div>
                     </Link>
                   )}
@@ -697,7 +697,7 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-slate-700 group-hover:text-blue-600">{item.label}</p>
                         <p className="text-[11px] text-slate-400">{item.desc}</p>
                       </div>
-                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-blue-400" />
+                      <ChevronRight className="h-4 w-4 text-slate-300 ml-auto group-hover:text-blue-700" />
                     </Link>
                   ))}
                 </div>
@@ -1061,7 +1061,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
-            icon: <Package className="h-3 w-3 text-emerald-400" />,
+            icon: <Package className="h-3 w-3 text-emerald-700" />,
             label: "등록 품목",
             value: stats.totalInventory.toLocaleString("ko-KR"),
             insight: getInventoryInsight(),
@@ -1070,7 +1070,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/inventory?filter=low",
-            icon: <AlertTriangle className="h-3 w-3 text-amber-400" />,
+            icon: <AlertTriangle className="h-3 w-3 text-amber-700" />,
             label: "재고 부족",
             value: stats.lowStockAlerts,
             insight: getStockInsight(),
@@ -1079,7 +1079,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/purchases",
-            icon: <DollarSign className="h-3 w-3 text-blue-400" />,
+            icon: <DollarSign className="h-3 w-3 text-blue-700" />,
             label: "이번 달 지출",
             value: stats.monthlySpending > 0 ? `₩${stats.monthlySpending.toLocaleString("ko-KR")}` : "—",
             insight: getSpendingInsight(),
@@ -1088,7 +1088,7 @@ export default function DashboardPage() {
           })}
           {renderKpiCard({
             href: "/dashboard/quotes?status=PENDING",
-            icon: <FileText className="h-3 w-3 text-violet-400" />,
+            icon: <FileText className="h-3 w-3 text-violet-700" />,
             label: "진행 중 견적",
             value: stats.activeQuotes,
             insight: getQuoteInsight(),

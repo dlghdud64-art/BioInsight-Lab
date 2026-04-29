@@ -483,7 +483,7 @@ export default function AuditTrailPage() {
           </div>
         ) : isError ? (
           <div className="py-12 text-center">
-            <ShieldAlert className="h-8 w-8 text-rose-400 mx-auto mb-2" />
+            <ShieldAlert className="h-8 w-8 text-rose-700 mx-auto mb-2" />
             <p className="text-sm text-rose-700">감사 로그를 불러오지 못했습니다.</p>
             <p className="text-xs text-slate-400 mt-1">
               새로 고침 버튼을 눌러 다시 시도하세요.
