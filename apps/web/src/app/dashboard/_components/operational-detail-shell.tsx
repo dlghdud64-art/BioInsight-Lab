@@ -561,13 +561,46 @@ export function OperationalDetailShell({
   decisionPanel,
   commandSurface,
   metaRail,
-}: OperationalDetailShellProps) {
+  briefObjectLabel,
+}: OperationalDetailShellProps & { briefObjectLabel?: string }) {
+  const objectLabel = briefObjectLabel ?? "선택한 작업";
   return (
     <div className="space-y-3">
-      {/* A. Inbox Context Strip */}
-      {contextStrip && <InboxContextStrip {...contextStrip} />}
+      {/* §11.149 Brief banner — 운영 브리핑 + 선택한 X (lock §11.142) */}
+      <div className="rounded border border-bd bg-el/30 px-4 py-2">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+          <span className="text-[10px] text-slate-500 uppercase tracking-wide">{objectLabel}</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            { id: "summary", label: "상태 요약" },
+            { id: "facts",   label: "검수 진행" },
+            { id: "risks",   label: "리스크" },
+            { id: "next",    label: "다음 조치" },
+          ].map((c) => (
+            <button
+              key={c.id}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                const el = document.getElementById(`brief-${c.id}`);
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* B. Operational Header */}
+      {/* A. Inbox Context Strip — id=brief-summary anchor */}
+      <div id="brief-summary" className="scroll-mt-4">
+      {contextStrip && <InboxContextStrip {...contextStrip} />}
+      </div>
+
+      {/* B. Operational Header — § 1. 상황 요약 anchor host */}
       <OperationalHeader {...header} />
 
       {/* B'. Ownership Strip */}
@@ -577,18 +610,23 @@ export function OperationalDetailShell({
         </div>
       )}
 
-      {/* C. Blocker/Review Strip — AggregatedBlockerView takes precedence */}
+      {/* C. § 3. 리스크 — Blocker/Review Strip */}
+      <div id="brief-risks" className="scroll-mt-4">
+        <span className="sr-only">리스크</span>
       {blockerView && blockerView.totalCount > 0
         ? <AggregatedBlockerStrip blockerView={blockerView} />
         : blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
+      </div>
 
-      {/* D+E+F: Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3">
+      {/* D+E+F: Main grid — § 2. 핵심 근거 + § 4. 다음 조치 */}
+      <div id="brief-facts" className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3 scroll-mt-4">
+        <span className="sr-only">핵심 근거</span>
         {/* D. Primary Work Area */}
         <div className="min-w-0 space-y-3">{children}</div>
 
-        {/* E+F. Sidebar: CommandBar (preferred) or legacy DecisionPanel + Meta */}
-        <div className="space-y-3 lg:sticky lg:top-4 lg:self-start">
+        {/* E+F. Sidebar: CommandBar (preferred) — § 4. 다음 조치 */}
+        <div id="brief-next" className="space-y-3 lg:sticky lg:top-4 lg:self-start scroll-mt-4">
+          <span className="sr-only">다음 조치</span>
           {commandSurface
             ? <OperationalCommandBar surface={commandSurface} ownership={ownership} blockerView={blockerView} />
             : decisionPanel && <DecisionPanelShell {...decisionPanel} />}
