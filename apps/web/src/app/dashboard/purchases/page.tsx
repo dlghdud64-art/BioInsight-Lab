@@ -16,7 +16,7 @@ import Link from "next/link";
 import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
-import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 import type {
   PurchaseConversionItem,
@@ -295,6 +295,21 @@ export default function PurchasesPage() {
   }, [selectedId, items]);
 
   const closeRail = useCallback(() => setSelectedId(null), []);
+
+  // §11.161 — 운영 브리핑 narrative hook
+  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
+    sourceTrace: {
+      quoteId: selectedItem?.id ?? "",
+      module: "purchase_conversion",
+      sourceUpdatedAt: new Date(0),
+    },
+    facts: {
+      status: selectedItem ? (STATUS_MAP[selectedItem.conversionStatus]?.label ?? selectedItem.conversionStatus) : null,
+      blocker: selectedItem?.blockerType !== "none" ? (selectedItem?.blockerReason ?? null) : "차단 없음",
+      nextAction: selectedItem?.nextStage ?? null,
+    },
+    enabled: !!selectedItem?.id,
+  });
 
   const formatPrice = (n: number | null, c: string) => {
     if (n === null || n === undefined) return "—";
@@ -651,15 +666,17 @@ export default function PurchasesPage() {
                 {/* Rail body */}
                 <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "#cbd5e1 transparent" }}>
 
-                  {/* §11.142-impl § 1. 상황 요약 — 1-line resolver-derived */}
+                  {/* §11.142-impl § 1. 상황 요약 — 1-line resolver-derived + §11.161 LLM narrative hook */}
                   <div id="brief-summary" className="px-5 py-4 border-b border-slate-100 bg-slate-50/30">
                     <div className="text-xs font-bold text-slate-700 mb-2">상황 요약</div>
                     <p className="text-[12px] text-slate-700 leading-relaxed break-keep">
-                      {hasBlocker
-                        ? `${cs.label} 상태이며, ${selectedItem.blockerReason}`
-                        : selectedItem.totalSuppliers > 0 && selectedItem.supplierReplies < selectedItem.totalSuppliers
-                          ? `${cs.label} 상태입니다. 공급사 ${selectedItem.totalSuppliers}곳 중 ${selectedItem.supplierReplies}곳이 회신했고, 차단된 작업은 없습니다.`
-                          : `${cs.label} 상태이며, 차단된 작업이 없습니다. ${selectedItem.nextStage}`}
+                      {briefNarrative ??
+                        (hasBlocker
+                          ? `${cs.label} 상태이며, ${selectedItem.blockerReason}`
+                          : selectedItem.totalSuppliers > 0 && selectedItem.supplierReplies < selectedItem.totalSuppliers
+                            ? `${cs.label} 상태입니다. 공급사 ${selectedItem.totalSuppliers}곳 중 ${selectedItem.supplierReplies}곳이 회신했고, 차단된 작업은 없습니다.`
+                            : `${cs.label} 상태이며, 차단된 작업이 없습니다. ${selectedItem.nextStage}`)}
+                      {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
                     </p>
                   </div>
 

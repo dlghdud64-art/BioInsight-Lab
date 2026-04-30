@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
-import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -531,6 +531,21 @@ function QuotesPageContent() {
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
+
+  // §11.161 — 운영 브리핑 narrative hook (selectedQuote 선언 후 호출)
+  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
+    sourceTrace: {
+      quoteId: selectedQuote?.id ?? "",
+      module: "quote_detail",
+      sourceUpdatedAt: selectedQuote?.createdAt ?? new Date(0),
+    },
+    facts: {
+      status: selectedSignals?.status ?? null,
+      blocker: selectedSignals?.blocker ?? null,
+      nextAction: selectedSignals?.nextAction ?? null,
+    },
+    enabled: !!selectedQuote?.id,
+  });
   const selectedOpStatus = selectedQuote ? getOpStatus(selectedQuote) : null;
 
   // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
@@ -984,10 +999,13 @@ function QuotesPageContent() {
           {/* Rail scrollable body */}
           <div className="flex-1 overflow-y-auto">
 
-          {/* § 1. 상황 요약 — resolver-derived 1-line + AI rec */}
+          {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook */}
           <section id="brief-summary" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
-            <p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>
+            <p className="text-xs text-slate-700 leading-relaxed">
+              {briefNarrative ?? selectedSignals.summary}
+              {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
+            </p>
           </section>
 
           {/* § 2. 핵심 근거 — was 운영 요약 (5 canonical fields) */}

@@ -20,7 +20,7 @@ import {
 } from "@/lib/ops-console/inbox-adapter";
 import { cn } from "@/lib/utils";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
-import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import {
   AlertTriangle,
   ChevronDown,
@@ -691,6 +691,21 @@ function ContextPanel({
   const actionLabel = quickAction?.label ?? null;
   const canExecuteAction = quickAction ? quickAction.canExecute && !quickAction.requiresDetail : false;
 
+  // §11.161 — 운영 브리핑 narrative hook
+  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
+    sourceTrace: {
+      workQueueTaskId: item.id,
+      module: "inbox",
+      sourceUpdatedAt: item.updatedAt ?? new Date(0),
+    },
+    facts: {
+      status: WORK_TYPE_LABELS[item.workType] ?? item.workType,
+      blocker: item.riskBadges.length > 0 ? item.riskBadges.join(", ") : "차단 없음",
+      nextAction: item.nextAction ?? null,
+    },
+    enabled: !!item.id,
+  });
+
   return (
     <div className="hidden lg:block w-[320px] flex-shrink-0 bg-pn border-l border-bd sticky top-0 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
       {/* §11.145 Brief header — 운영 브리핑 + 선택한 작업 (lock §11.142) */}
@@ -746,11 +761,12 @@ function ContextPanel({
           </button>
         </div>
 
-        {/* § 1. 상황 요약 — summary */}
+        {/* § 1. 상황 요약 — summary + §11.161 LLM narrative hook */}
         <section id="brief-summary" className="scroll-mt-4">
           <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            {item.summary}
+            {briefNarrative ?? item.summary}
+            {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
           </p>
         </section>
 

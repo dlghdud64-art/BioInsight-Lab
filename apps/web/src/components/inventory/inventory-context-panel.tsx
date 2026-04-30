@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
+import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 /* ── Types ── */
 export interface ContextPanelItem {
@@ -390,6 +391,29 @@ export function InventoryContextPanel({
   const flows = generateMockConnectedFlows(item);
   const actions = generateMockActions(item);
 
+  // §11.161 — 운영 브리핑 narrative hook
+  const inventorySummary =
+    item.currentQuantity === 0
+      ? "재고 소진"
+      : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
+        ? "안전재고 미달"
+        : risks.length > 0
+          ? `${risks.length}건 운영 리스크`
+          : "안정";
+  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
+    sourceTrace: {
+      inventoryId: item.id,
+      module: "inventory",
+      sourceUpdatedAt: new Date(0),
+    },
+    facts: {
+      status: inventorySummary,
+      blocker: item.expiryDate && new Date(item.expiryDate).getTime() < Date.now() ? "유효기간 만료" : "차단 없음",
+      nextAction: actions[0]?.label ?? "정상",
+    },
+    enabled: !!item.id && isOpen,
+  });
+
   if (!isOpen) return null;
 
   return (
@@ -465,17 +489,19 @@ export function InventoryContextPanel({
         </div>
       </div>
 
-      {/* § 1. 상황 요약 — resolver-derived 1-line */}
+      {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook */}
       <section id="brief-summary" className="px-5 py-3 border-b border-bd/50 scroll-mt-4">
         <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
         <p className="text-xs text-slate-700 leading-relaxed">
-          {item.currentQuantity === 0
-            ? "재고 소진 — 즉시 재발주 필요"
-            : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
-              ? `안전재고 미달 (${item.currentQuantity}/${item.safetyStock} ${item.unit}) — 재발주 검토`
-              : risks.length > 0
-                ? `${risks.length}건 운영 리스크 — 검토 필요`
-                : "안정 — 운영 정상"}
+          {briefNarrative ??
+            (item.currentQuantity === 0
+              ? "재고 소진 — 즉시 재발주 필요"
+              : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
+                ? `안전재고 미달 (${item.currentQuantity}/${item.safetyStock} ${item.unit}) — 재발주 검토`
+                : risks.length > 0
+                  ? `${risks.length}건 운영 리스크 — 검토 필요`
+                  : "안정 — 운영 정상")}
+          {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
         </p>
       </section>
 

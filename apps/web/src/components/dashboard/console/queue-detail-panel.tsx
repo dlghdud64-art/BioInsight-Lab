@@ -20,6 +20,7 @@ import { formatRelativeTime } from "@/lib/work-queue/console-v1-productization";
 import { TASK_STATUS_BADGE, type TaskStatus } from "@/hooks/use-work-queue";
 import type { GroupedItem } from "@/lib/work-queue/console-grouping";
 import type { PriorityTier } from "@/lib/work-queue/console-priorities";
+import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 /**
  * §11.143 #operational-brief-rail-work-queue
@@ -60,6 +61,21 @@ export function QueueDetailPanel({
   isPending,
 }: QueueDetailPanelProps) {
   const router = useRouter();
+
+  // §11.161 — 운영 브리핑 narrative hook (Rules of Hooks: guard 전에 호출 필수)
+  const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
+    sourceTrace: {
+      workQueueTaskId: item?.id ?? "",
+      module: "work_queue",
+      sourceUpdatedAt: item?.updatedAt ?? new Date(0),
+    },
+    facts: {
+      status: item ? (TASK_STATUS_BADGE[item.taskStatus as TaskStatus]?.label ?? item.taskStatus) : null,
+      blocker: item?.urgencyReason ?? "차단 없음",
+      nextAction: item?.nextQueueLabel ?? null,
+    },
+    enabled: !!item?.id && open,
+  });
 
   if (!item) return null;
 
@@ -135,10 +151,11 @@ export function QueueDetailPanel({
         </div>
 
         <div className={cn("space-y-5 pt-4", SPACING.panelPadding)}>
-          {/* ── § 1. 상황 요약 ── */}
+          {/* ── § 1. 상황 요약 — resolver 1-line + §11.161 LLM narrative hook ── */}
           <BriefSection id="summary" title="상황 요약">
             <p className={cn(TYPOGRAPHY.metadata, "text-foreground leading-relaxed")}>
-              {situationOneLiner}
+              {briefNarrative ?? situationOneLiner}
+              {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
             </p>
           </BriefSection>
 
