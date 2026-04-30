@@ -304,7 +304,8 @@ export default function BudgetDetailPage({ params }: { params: { id: string } })
                         <Send className="h-3 w-3 mr-1" />견적 보기
                       </Button>
                     </Link>
-                    <Link href="/dashboard/orders">
+                    {/* §11.162: PO list canonical = /dashboard/purchase-orders */}
+                    <Link href="/dashboard/purchase-orders">
                       <Button size="sm" variant="outline" className="h-7 text-[10px] border-bd text-slate-400 hover:text-slate-700">
                         <FileCheck className="h-3 w-3 mr-1" />발주 보기
                       </Button>

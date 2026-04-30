@@ -75,7 +75,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     badgeLabel: "회신 대기",
     badgeClass: "bg-amber-50 text-amber-700  bg-amber-50 text-amber-400 border-amber-200  border-amber-800",
     approveToast: "Follow-up 메일이 승인되었습니다",
-    approveHref: "/dashboard/orders",
+    // §11.162: PO list canonical = /dashboard/purchase-orders
+    approveHref: "/dashboard/purchase-orders",
   },
   STATUS_CHANGE_SUGGEST: {
     icon: Clock,
@@ -88,7 +89,8 @@ const CARD_CONFIG: Record<string, CardConfig> = {
     badgeLabel: "상태 변경 제안",
     badgeClass: "bg-purple-50 text-purple-700  bg-purple-50 text-purple-400 border-purple-200  border-purple-800",
     approveToast: "주문 상태가 변경되었습니다",
-    approveHref: "/dashboard/orders",
+    // §11.162: PO list canonical = /dashboard/purchase-orders
+    approveHref: "/dashboard/purchase-orders",
   },
   REORDER_SUGGESTION: {
     icon: Package,

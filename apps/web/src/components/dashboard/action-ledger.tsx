@@ -123,7 +123,8 @@ function buildFastTrackEvents(
     title: `⚡ ${e.vendorName} Fast-Track 수락`,
     detail: `사용자가 AI의 Fast-Track 권장을 수락하여 승인함 · ${e.totalAmount.toLocaleString()}원`,
     timestamp: e.acceptedAt,
-    href: `/dashboard/orders`,
+    // §11.162: PO list canonical = /dashboard/purchase-orders
+    href: `/dashboard/purchase-orders`,
   }));
 }
 

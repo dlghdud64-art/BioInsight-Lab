@@ -411,7 +411,8 @@ function navigateToEntity(router: ReturnType<typeof useRouter>, item: GroupedIte
 
   const pathMap: Record<string, string> = {
     QUOTE: "/dashboard/quotes",
-    ORDER: "/dashboard/orders",
+    // §11.162: ORDER → /dashboard/purchase-orders (canonical PO list)
+    ORDER: "/dashboard/purchase-orders",
     INVENTORY_RESTOCK: "/dashboard/inventory",
     PURCHASE_REQUEST: "/dashboard/purchases",
     COMPARE_SESSION: "/dashboard/compare",

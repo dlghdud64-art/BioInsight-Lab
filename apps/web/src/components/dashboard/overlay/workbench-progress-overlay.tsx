@@ -254,7 +254,8 @@ export function WorkbenchProgressOverlay({
       return result;
     }, [order]);
 
-  const workbenchHref = overlayRoutePath ?? "/dashboard/orders";
+  // §11.162: PO list canonical = /dashboard/purchase-orders
+  const workbenchHref = overlayRoutePath ?? "/dashboard/purchase-orders";
 
   const content = (
     <div className="flex flex-col flex-1 overflow-hidden">
