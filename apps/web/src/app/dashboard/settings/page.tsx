@@ -805,10 +805,18 @@ function SettingsPageContent() {
                 <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
                   {(() => {
                     // §11.159 — canonical Workspace fetch (mock 제거)
-                    //   `last active workspace` 가 없으면 첫 번째 멤버십 사용.
-                    //   미동기화 시 명시적 fallback indicator 표시.
+                    // §11.164 — explicit pickActiveWorkspace priority logic
+                    //   Priority:
+                    //     1. (future) session.user.lastWorkspaceId — schema 추가 필요 (deferred 트랙
+                    //        `#user-last-workspace-id-schema`). 현재 User 모델에 필드 부재.
+                    //     2. WorkspaceMember.updatedAt desc 첫 번째 (last active implicit) —
+                    //        `getUserWorkspaces` (lib/auth/scope.ts:208) 가 이미 desc 정렬.
+                    //     3. fallback null → "데이터 미동기화" indicator (§11.159).
+                    //   `Workspace.lastWorkspaceId` (schema:933) 는 design ambiguity —
+                    //   workspace 모델 안 user-scoped 필드는 multi-user 부합 0. 사용 X.
+                    const activeWorkspace = pickActiveWorkspace(workspacesData?.workspaces);
                     const wsList = workspacesData?.workspaces ?? [];
-                    const activeWs = wsList[0] ?? null;
+                    const activeWs = activeWorkspace;
                     const wsName = activeWs?.name ?? "데이터 미동기화";
                     const wsSlug = activeWs?.slug ?? "—";
                     const wsPlan = activeWs?.plan ? activeWs.plan : "—";
@@ -1466,4 +1474,24 @@ export default function SettingsPage() {
       <SettingsPageContent />
     </Suspense>
   );
+}
+
+/**
+ * §11.164 #workspace-last-active-tracking — explicit active workspace picker.
+ *
+ * Priority logic:
+ *   1. (future) session.user.lastWorkspaceId — User 모델 schema 추가 필요
+ *      (별도 트랙 `#user-last-workspace-id-schema`).
+ *   2. WorkspaceMember.updatedAt desc 첫 번째 (implicit last active) —
+ *      `getUserWorkspaces` 가 이미 desc 정렬.
+ *   3. null fallback (workspaces 미동기화 또는 멤버십 0).
+ *
+ * Identity Governance: workspace 선택 결정은 캐논. operator 자유 선택 X.
+ */
+function pickActiveWorkspace<T extends { id: string; name: string }>(
+  workspaces: T[] | undefined,
+): T | null {
+  if (!workspaces || workspaces.length === 0) return null;
+  // 현재는 endpoint 정렬 (WorkspaceMember.updatedAt desc) 신뢰
+  return workspaces[0];
 }
