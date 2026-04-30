@@ -255,6 +255,28 @@ export default function AuditTrailPage() {
     [data]
   );
 
+  // §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only gating, /api/admin/operational-brief-cache-stats)
+  const { data: briefCacheStats } = useQuery<{
+    hit: number;
+    miss: number;
+    set: number;
+    evict: number;
+    invalidate: number;
+    hitRate: number;
+    cacheSize: number;
+    startedAt: string;
+  }>({
+    queryKey: ["operational-brief-cache-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/operational-brief-cache-stats");
+      if (!res.ok) throw new Error("cache stats fetch 실패");
+      return res.json();
+    },
+    enabled: status === "authenticated" && userRole === "ADMIN",
+    refetchInterval: 60_000, // 1분 자동 갱신 — 운영자 가시성
+    staleTime: 30_000,
+  });
+
   if (status === "loading" || !canAccessAudit) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-[60vh]">
@@ -475,6 +497,29 @@ export default function AuditTrailPage() {
         </div>
       </div>
 
+      {/* §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only) */}
+      {userRole === "ADMIN" && briefCacheStats && (
+        <div className="mb-4 border border-slate-200 rounded-lg bg-white p-4 shadow-sm print:hidden">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-bold text-slate-900">운영 브리핑 캐시 통계</h2>
+            <span className="text-[10px] text-slate-500 uppercase tracking-wider">
+              {briefCacheStats.startedAt && `since ${new Date(briefCacheStats.startedAt).toLocaleTimeString("ko-KR")}`}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+            <StatCell label="hit rate" value={`${(briefCacheStats.hitRate * 100).toFixed(1)}%`} accent={briefCacheStats.hitRate >= 0.5 ? "ok" : "warn"} />
+            <StatCell label="cache size" value={String(briefCacheStats.cacheSize)} />
+            <StatCell label="hit" value={String(briefCacheStats.hit)} />
+            <StatCell label="miss" value={String(briefCacheStats.miss)} />
+            <StatCell label="evict" value={String(briefCacheStats.evict)} />
+            <StatCell label="invalidate" value={String(briefCacheStats.invalidate)} />
+          </div>
+          <p className="text-[10px] text-slate-500 mt-2">
+            §11.142 ecosystem · 1분 자동 갱신 · ADMIN 전용 가시성. KV 통합 시 cache size 는 -1 (unknown).
+          </p>
+        </div>
+      )}
+
       <div className="border border-bd rounded-lg bg-white overflow-hidden shadow-sm">
         {isLoading ? (
           <div className="py-16 text-center">
@@ -573,6 +618,20 @@ export default function AuditTrailPage() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// §11.163 — 운영 브리핑 캐시 통계 단일 셀 helper
+function StatCell({ label, value, accent }: { label: string; value: string; accent?: "ok" | "warn" }) {
+  const valueClass =
+    accent === "ok" ? "text-emerald-700"
+    : accent === "warn" ? "text-amber-700"
+    : "text-slate-900";
+  return (
+    <div className="rounded-md border border-slate-100 bg-slate-50/40 px-3 py-2">
+      <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+      <p className={`text-sm font-bold tabular-nums ${valueClass}`}>{value}</p>
     </div>
   );
 }
