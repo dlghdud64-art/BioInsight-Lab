@@ -53,6 +53,32 @@ function deterministicNarrative(facts: BriefNarrativeFacts): string {
   return parts.join(" · ");
 }
 
+/**
+ * §11.167 — LLM 응답이 facts canonical token 을 보존하는지 검증.
+ *
+ * Why:
+ *   - LLM (Anthropic) 이 prompt instruction 을 무시하고 status 를
+ *     다른 단어로 hallucinate 할 수 있음 (예: "검토 필요" → "확인 중").
+ *   - prompt level instruction (§11.165) 만으로는 hallucination 100% 차단 X.
+ *   - test level RTC (§11.166 statusToken 검증) 와 동일 logic 을 prod 에서 강제.
+ *
+ * Validation:
+ *   - facts.status 가 truthy 면 narrative 에 status 문자열 포함 필수.
+ *   - blocker 가 "차단 없음" 외 truthy 면 narrative 에 blocker 문자열 포함 필수.
+ *   - nextAction 은 LLM 이 동의어 사용 가능 (조치 표현 자유) — 검증 X.
+ *
+ * 실패 시 caller 가 deterministic fallback 호출.
+ */
+export function validateNarrativeFitness(narrative: string, facts: BriefNarrativeFacts): boolean {
+  if (facts.status != null && facts.status !== "") {
+    if (!narrative.includes(String(facts.status))) return false;
+  }
+  if (facts.blocker != null && facts.blocker !== "" && facts.blocker !== "차단 없음") {
+    if (!narrative.includes(String(facts.blocker))) return false;
+  }
+  return true;
+}
+
 function isLlmEnabled(): boolean {
   if (process.env.OPERATIONAL_BRIEF_USE_LLM !== "1") return false;
   if (!process.env.ANTHROPIC_API_KEY && !process.env.LABAXIS_AI_PROVIDER) return false;
@@ -82,6 +108,11 @@ export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promis
     const trimmed = result.content.trim();
     // LLM 실패 또는 빈 결과 시 fallback
     if (!trimmed) return deterministicNarrative(facts);
+    // §11.167 — LLM 응답이 canonical token 누락 시 fallback (hallucination 차단)
+    if (!validateNarrativeFitness(trimmed, facts)) {
+      console.warn("[operational-brief] LLM narrative fitness 실패 — deterministic fallback (token loss)");
+      return deterministicNarrative(facts);
+    }
     return trimmed;
   } catch (err) {
     console.warn("[operational-brief] LLM narrative 실패 — deterministic fallback", err);

@@ -38,14 +38,15 @@ describe("§11.153 generateBriefNarrative", () => {
   it("LLM enabled + ANTHROPIC_API_KEY 있을 때 호출", async () => {
     process.env.OPERATIONAL_BRIEF_USE_LLM = "1";
     process.env.ANTHROPIC_API_KEY = "sk-test";
+    // §11.167: narrative 에 facts.status 포함 필수 (fitness check pass)
     vi.mocked(callAnthropicMessage).mockResolvedValue({
-      content: "AI generated narrative",
+      content: "X 상태 narrative.",
       inputTokens: 10,
       outputTokens: 5,
       model: "claude-haiku",
     });
     const out = await generateBriefNarrative({ status: "X" });
-    expect(out).toBe("AI generated narrative");
+    expect(out).toBe("X 상태 narrative.");
     expect(callAnthropicMessage).toHaveBeenCalledTimes(1);
     delete process.env.OPERATIONAL_BRIEF_USE_LLM;
   });
