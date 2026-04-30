@@ -216,10 +216,9 @@ function SettingsPageContent() {
   // §11.157 — operatorRole free-text useState 제거 (Identity Governance).
   //   canonical role display 는 line ~488 `roleLabel` + line ~645 Badge 가 담당.
   //   §11.74 SectionCard "운영 역할 및 업무 범위" (line ~660) 는 read-only 정합 유지.
-  const [workspaceName, setWorkspaceName] = useState("제1 바이오 R&D 센터");
-  // §11.74: 단위계(Metric/Imperial) 제거 — 정규화 로직 부재로 사용자가
-  // 결정할 항목 아님. 통화만 유지.
-  const [currencyUnit, setCurrencyUnit] = useState("KRW (₩)");
+  // §11.159 — workspaceName / currencyUnit hardcoded mock 제거.
+  //   workspace 는 /api/workspaces canonical fetch (아래 useQuery), currency 는
+  //   Workspace 모델에 필드 부재이므로 "KRW (시스템 기본값)" 명시 fallback.
 
   // ── Ontology engine state ──
   const [confidenceThreshold, setConfidenceThreshold] = useState(85);
@@ -349,6 +348,20 @@ function SettingsPageContent() {
     queryFn: async () => {
       const response = await fetch("/api/organizations");
       if (!response.ok) return { organizations: [] };
+      return response.json();
+    },
+    enabled: !!session && activeSection === "operator",
+    staleTime: 5 * 60_000,
+  });
+
+  // §11.159 — canonical Workspace fetch (기존 /api/workspaces 재사용)
+  const { data: workspacesData } = useQuery<{
+    workspaces: Array<{ id: string; name: string; slug: string; plan?: string }>;
+  }>({
+    queryKey: ["settings-workspaces"],
+    queryFn: async () => {
+      const response = await fetch("/api/workspaces");
+      if (!response.ok) return { workspaces: [] };
       return response.json();
     },
     enabled: !!session && activeSection === "operator",
@@ -790,23 +803,35 @@ function SettingsPageContent() {
                     페이지에서는 read-only summary. Metric 단위계 항목은 §11.74 에서
                     제거 (정규화 로직 부재). */}
                 <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
-                      <p className="text-sm font-bold text-slate-900 break-keep mb-1">{workspaceName}</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Enterprise Edition</p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 코드</p>
-                      <p className="text-sm font-bold font-mono text-slate-900 mb-1">BIO-RND-01</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Auto-generated ID</p>
-                    </div>
-                    <div className="rounded-xl border border-slate-200 bg-white p-4">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
-                      <p className="text-sm font-bold text-slate-900 mb-1">{currencyUnit}</p>
-                      <p className="text-[10px] text-slate-500 uppercase tracking-wider">Financial Base</p>
-                    </div>
-                  </div>
+                  {(() => {
+                    // §11.159 — canonical Workspace fetch (mock 제거)
+                    //   `last active workspace` 가 없으면 첫 번째 멤버십 사용.
+                    //   미동기화 시 명시적 fallback indicator 표시.
+                    const wsList = workspacesData?.workspaces ?? [];
+                    const activeWs = wsList[0] ?? null;
+                    const wsName = activeWs?.name ?? "데이터 미동기화";
+                    const wsSlug = activeWs?.slug ?? "—";
+                    const wsPlan = activeWs?.plan ? activeWs.plan : "—";
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div className="rounded-xl border border-slate-200 bg-white p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
+                          <p className="text-sm font-bold text-slate-900 break-keep mb-1">{wsName}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{activeWs ? `Plan: ${wsPlan}` : "워크스페이스 없음"}</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 bg-white p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 슬러그</p>
+                          <p className="text-sm font-bold font-mono text-slate-900 mb-1">{wsSlug}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">URL Identifier</p>
+                        </div>
+                        <div className="rounded-xl border border-slate-200 bg-white p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
+                          <p className="text-sm font-bold text-slate-900 mb-1">KRW (₩)</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">시스템 기본값</p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </SectionCard>
 
                 {/* Password */}
