@@ -1,29 +1,32 @@
 /**
  * §11.181 #operational-brief-popup-self-contained
+ * §11.182 right-rail simplification — non-modal + 한국어 라벨 + raw key 제거 + CTA wire
  *
- * 우하단 FloatingEntry 클릭 시 뜨는 self-contained popup.
+ * 우하단 FloatingEntry 클릭 시 우측에서 슬라이드 인 하는 non-modal rail.
  *
- * 구조 (popup 내부 navigation, 페이지 이동 0):
- *   - 1단계: priority list (top 5 from useOpsStore + sortInboxItems)
- *   - 2단계: row click → 동일 popup 안에서 brief detail (4-section + 4-cell + amber)
- *   - 3단계: back button → list 복귀
+ * §11.182 (호영님 지시 — operational rail 정리):
+ *   1. desktop dim overlay 제거 (modal={false}, SheetPortal+Content 직접 사용)
+ *   2. width 640 → 400 (본문 가시성 보존)
+ *   3. eyebrow 영문 → 한국어 "운영 브리핑" 으로 swap
+ *   4. 판단 근거 section 라벨 한국어 swap (영문 내부 용어 비노출)
+ *   5. raw owner ID (`user-inv-001`) → 사람 라벨 ("재고 운영" 등)
+ *   6. P0/P1 → 즉시/높음/보통/낮음
+ *   7. CTA copy = item.nextAction (canonical ontology 기반, 임의 라벨 0)
+ *   8. close X 1개만 (우상단)
  *
  * lock §11.142 호환:
- *   - work object selected 시만 facts 노출
- *   - chatbot/assistant/ai-reasoning UI 0
- *   - dead button 0 (list 빈 상태 시 empty state)
- *   - canonical truth 보호 (useOpsStore client-side mirror)
+ *   - work object selected 시만 facts 노출 (popup state 자체는 facts 0)
+ *   - chatbot/assistant/터미널 UI 0
+ *   - dead button 0 (nextAction 없으면 CTA 미렌더)
+ *   - canonical truth 보호 (useOpsStore + canonical sourceTrace)
  */
 
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, AlertTriangle, ExternalLink, X } from "lucide-react";
-import {
-  Sheet,
-  SheetContent,
-} from "@/components/ui/sheet";
+import * as SheetPrimitive from "@radix-ui/react-dialog";
+import { ArrowLeft, AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
@@ -40,11 +43,12 @@ import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief"
 import { MetricCell } from "./metric-cell";
 import { formatRelativeKr } from "./relative-time";
 
-const PRIORITY_LABEL: Record<string, string> = {
-  p0: "P0",
-  p1: "P1",
-  p2: "P2",
-  p3: "P3",
+/* §11.182 — priority 사람 라벨 (raw enum 노출 0). */
+const PRIORITY_HUMAN: Record<string, string> = {
+  p0: "즉시",
+  p1: "높음",
+  p2: "보통",
+  p3: "낮음",
 };
 const PRIORITY_BADGE: Record<string, string> = {
   p0: "bg-red-500/10 text-red-700",
@@ -53,7 +57,25 @@ const PRIORITY_BADGE: Record<string, string> = {
   p3: "bg-zinc-500/10 text-zinc-700",
 };
 
-/** Popup 의 "탭" — list ↔ detail 전환 stack. */
+/**
+ * §11.182 — owner raw ID → 사람 라벨.
+ * pilot 시드 + 운영 ontology 기반. 미매핑 시 "미배정".
+ * 향후 Membership.role 기반 자동 매핑 후속 (§11.183).
+ */
+const OWNER_HUMAN_LABEL: Record<string, string> = {
+  "user-inv-001": "재고 운영",
+  "user-inv-002": "재고 운영",
+  "user-proc-001": "구매 운영",
+  "user-proc-002": "구매 운영",
+  "user-qc-001": "품질 검토",
+  "user-rfq-001": "견적 운영",
+};
+function formatOwner(o: string | null | undefined): string {
+  if (!o) return "미배정";
+  return OWNER_HUMAN_LABEL[o] ?? o;
+}
+
+/** Popup root — list ↔ detail stack. */
 export function OperationalBriefPopup() {
   const { isOpen, close, selectedItemId, setSelectedItemId } = useOperationalBriefPopup();
   const store = useOpsStore();
@@ -88,23 +110,58 @@ export function OperationalBriefPopup() {
 
   const sortedItems = useMemo(() => sortInboxItems(allItems), [allItems]);
   const top = sortedItems.slice(0, 5);
+  const totalCount = sortedItems.length;
   const selected = selectedItemId
     ? sortedItems.find((i) => i.id === selectedItemId) ?? null
     : null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
-      <SheetContent
-        side="right"
-        className="w-full sm:w-[640px] sm:max-w-[640px] p-0 overflow-y-auto"
-      >
-        {selected ? (
-          <PopupBriefDetail item={selected} onBack={() => setSelectedItemId(null)} onClose={close} />
-        ) : (
-          <PopupPriorityList items={top} totalCount={sortedItems.length} onSelect={setSelectedItemId} onClose={close} />
-        )}
-      </SheetContent>
-    </Sheet>
+    // §11.182 — modal={false} : desktop dim/backdrop 0, body scroll lock 0,
+    //          본문 그대로 사용 가능. mobile bottom sheet 는 §11.183 별도 분기.
+    <SheetPrimitive.Root open={isOpen} onOpenChange={(v) => !v && close()} modal={false}>
+      <SheetPrimitive.Portal>
+        <SheetPrimitive.Content
+          className={cn(
+            "fixed inset-y-0 right-0 z-40 h-full",
+            // §11.182 — 너비 400 desktop, mobile w-full
+            "w-full sm:w-[400px] sm:max-w-[400px]",
+            "bg-background border-l border-bd shadow-lg",
+            "overflow-y-auto",
+            // slide animation (Radix data-state)
+            "transition ease-in-out duration-300",
+            "data-[state=open]:animate-in data-[state=closed]:animate-out",
+            "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
+          )}
+          // §11.182 — outside click 시 close 허용 (modal=false 이미 동일 동작), focus trap 0
+          onInteractOutside={(e) => {
+            // 본문 클릭 시 popup 그대로 유지 (rail 으로 동작) — close 차단
+            e.preventDefault();
+          }}
+        >
+          {/* §11.182 — 단일 close X (우상단). PopupPriorityList/PopupBriefDetail header 의 X 제거 */}
+          <SheetPrimitive.Close
+            className="absolute right-4 top-4 z-10 rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            aria-label="브리핑 닫기"
+          >
+            <X className="h-4 w-4" />
+          </SheetPrimitive.Close>
+
+          {selected ? (
+            <PopupBriefDetail
+              item={selected}
+              onBack={() => setSelectedItemId(null)}
+              onClose={close}
+            />
+          ) : (
+            <PopupPriorityList
+              items={top}
+              totalCount={totalCount}
+              onSelect={setSelectedItemId}
+            />
+          )}
+        </SheetPrimitive.Content>
+      </SheetPrimitive.Portal>
+    </SheetPrimitive.Root>
   );
 }
 
@@ -114,44 +171,32 @@ function PopupPriorityList({
   items,
   totalCount,
   onSelect,
-  onClose,
 }: {
   items: UnifiedInboxItem[];
   totalCount: number;
   onSelect: (id: string) => void;
-  onClose: () => void;
 }) {
   return (
     <>
-      {/* Header */}
-      <div className="px-6 py-5 border-b border-bd bg-el/20">
-        <div className="flex items-start justify-between mb-2">
-          <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
-            OPERATIONAL BRIEFING
-          </span>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded transition-colors"
-            aria-label="브리핑 닫기"
-          >
-            <X className="h-5 w-5" />
-          </button>
+      {/* Header — §11.182 한국어 eyebrow + Top N subtitle */}
+      <div className="px-6 py-5 border-b border-bd">
+        <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
+          운영 브리핑
         </div>
-        <h3 className="text-2xl font-bold text-slate-900 leading-tight">
-          우선순위 작업
+        <h3 className="text-xl font-bold text-slate-900 leading-tight">
+          {items.length > 0 ? `오늘 즉시 처리 ${items.length}건` : "오늘 즉시 처리할 항목 없음"}
         </h3>
-        <p className="mt-1 text-xs text-slate-500">
-          전체 {totalCount}건 중 상위 {items.length}건 — 항목 클릭 시 상세 브리핑
-        </p>
+        {totalCount > 0 && (
+          <p className="mt-1 text-xs text-slate-500">
+            전체 {totalCount}건 중 상위 우선순위 기준
+          </p>
+        )}
       </div>
 
       {/* List */}
       {items.length === 0 ? (
-        <div className="p-12 text-center text-sm text-slate-500">
+        <div className="p-10 text-center text-sm text-slate-500">
           <p>현재 처리할 우선 작업이 없습니다.</p>
-          <p className="mt-1 text-xs text-slate-400">
-            견적 / 발주 / 입고 / 재고 위험이 있으면 자동으로 표시됩니다.
-          </p>
         </div>
       ) : (
         <div className="divide-y divide-bd/40">
@@ -162,10 +207,10 @@ function PopupPriorityList({
               onClick={() => onSelect(item.id)}
               className="w-full text-left px-6 py-4 hover:bg-el/30 transition-colors"
             >
-              <div className="flex items-start gap-3">
+              <div className="flex items-start gap-2">
                 <span
                   className={cn(
-                    "inline-flex shrink-0 px-2 py-0.5 rounded text-[10px] font-medium whitespace-nowrap",
+                    "inline-flex shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap",
                     SOURCE_MODULE_COLORS[item.sourceModule],
                   )}
                 >
@@ -174,16 +219,16 @@ function PopupPriorityList({
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-slate-900 truncate">{item.title}</p>
                   <p className="text-xs text-slate-500 truncate mt-0.5">{item.summary}</p>
-                  <div className="flex items-center gap-2 mt-1.5">
+                  <div className="mt-1.5 text-[11px] text-slate-500">
                     <span
                       className={cn(
-                        "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium",
+                        "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium mr-2",
                         PRIORITY_BADGE[item.priority],
                       )}
                     >
-                      {PRIORITY_LABEL[item.priority]}
+                      {PRIORITY_HUMAN[item.priority] ?? item.priority}
                     </span>
-                    <span className="text-[10px] text-slate-500">{item.dueState.label}</span>
+                    {item.dueState.label}
                   </div>
                 </div>
               </div>
@@ -214,7 +259,6 @@ function PopupBriefDetail({
   const { narrative: briefNarrative } = useOperationalBriefNarrative({
     sourceTrace: {
       workQueueTaskId: item.id,
-      // popup 은 inbox/work-queue 통합 view — type narrowing 위해 work_queue 매핑.
       module: "work_queue",
       sourceUpdatedAt: item.updatedAt ?? new Date(0),
     },
@@ -226,70 +270,62 @@ function PopupBriefDetail({
     enabled: !!item.id,
   });
 
+  // §11.182 — CTA copy = item.nextAction (canonical ontology). 없으면 CTA 미렌더 (dead button 0).
+  const ctaLabel = item.nextAction?.trim() ? item.nextAction.trim() : null;
+
   return (
     <>
-      {/* Header — back / OPERATIONAL BRIEFING / close */}
-      <div className="px-6 py-5 border-b border-bd bg-el/20">
-        <div className="flex items-start justify-between mb-3">
-          <button
-            onClick={onBack}
-            className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors"
-            aria-label="우선순위 목록으로"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            목록
-          </button>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1 rounded transition-colors"
-            aria-label="브리핑 닫기"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 mb-3 flex-wrap">
-          <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
-            OPERATIONAL BRIEFING
+      {/* Header — §11.182 back / 한국어 eyebrow / 단일 X (Sheet root) */}
+      <div className="px-6 py-5 border-b border-bd pr-12">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
+          aria-label="우선순위 목록으로"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          목록
+        </button>
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase">
+            운영 브리핑
           </span>
           <span
             className={cn(
-              "inline-flex px-2 py-0.5 rounded text-[11px] font-medium",
+              "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium",
               SOURCE_MODULE_COLORS[item.sourceModule],
             )}
           >
             {WORK_TYPE_LABELS[item.workType]}
           </span>
         </div>
-        <h3 className="text-2xl font-bold text-slate-900 leading-tight">{item.title}</h3>
+        <h3 className="text-lg font-bold text-slate-900 leading-tight">{item.title}</h3>
         {lastUpdatedLabel && (
-          <div className="mt-2 text-[11px] text-slate-500 uppercase tracking-wide">
-            <span className="font-semibold">LAST UPDATED</span> · {lastUpdatedLabel}
-          </div>
+          <div className="mt-1.5 text-[11px] text-slate-500">{lastUpdatedLabel} 업데이트</div>
         )}
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-5">
         {/* § 1. 상황 요약 */}
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
             상황 요약
           </div>
-          <div className="rounded-lg border-l-4 border-blue-500 bg-slate-50 p-4">
-            <p className="text-base text-slate-800 leading-relaxed">
+          <div className="rounded-md border-l-2 border-blue-500 bg-slate-50 p-3">
+            <p className="text-sm text-slate-800 leading-relaxed">
               {briefNarrative ?? item.summary}
             </p>
           </div>
         </section>
 
-        {/* § 2. 핵심 근거 — 4-cell metric grid */}
+        {/* § 2. 판단 근거 — §11.182 내부 용어 라벨 제거, 사람 owner / 사람 priority */}
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
-            RESOLVER 판별 근거
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+            판단 근거
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <MetricCell
               label="우선순위"
-              value={PRIORITY_LABEL[item.priority]}
+              value={PRIORITY_HUMAN[item.priority] ?? item.priority}
               tone={item.priority === "p0" ? "danger" : item.priority === "p1" ? "warn" : "neutral"}
             />
             <MetricCell
@@ -297,7 +333,7 @@ function PopupBriefDetail({
               value={item.dueState.label}
               tone={item.dueState.tone === "overdue" ? "danger" : item.dueState.tone === "due_soon" ? "warn" : "neutral"}
             />
-            <MetricCell label="담당자" value={item.owner ?? "미할당"} tone="neutral" />
+            <MetricCell label="담당" value={formatOwner(item.owner)} tone="neutral" />
             <MetricCell
               label="차단 상태"
               value={blockers.length === 0 ? "없음" : `${blockers.length}건`}
@@ -306,15 +342,15 @@ function PopupBriefDetail({
           </div>
         </section>
 
-        {/* § 3. 리스크 — amber alert */}
+        {/* § 3. 리스크 */}
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
-            리스크 식별
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+            리스크
           </div>
           {blockers.length === 0 ? (
             <p className="text-sm text-slate-500">차단 없음</p>
           ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-2">
+            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 space-y-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4 text-amber-600" />
                 <span className="text-sm font-semibold text-amber-900">
@@ -333,27 +369,27 @@ function PopupBriefDetail({
 
         {/* § 4. 다음 조치 */}
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
             다음 조치
           </div>
-          <p className="text-sm text-blue-700 font-medium">{item.nextAction}</p>
+          <p className="text-sm text-blue-700 font-medium">{item.nextAction ?? "—"}</p>
         </section>
 
-        {/* CTA */}
-        <div className="pt-2">
-          <Button
-            variant="outline"
-            className="w-full h-11 text-sm gap-1.5"
-            onClick={() => {
-              // popup 닫고 detail page 로 이동 — work object 별 처리 surface
-              onClose();
-              router.push(item.entityRoute);
-            }}
-          >
-            <ExternalLink className="h-4 w-4" />
-            상세 페이지에서 처리
-          </Button>
-        </div>
+        {/* §11.182 — Primary CTA (canonical nextAction copy). nextAction 없으면 미렌더 (dead button 0). */}
+        {ctaLabel && (
+          <div className="pt-2">
+            <Button
+              className="w-full h-11 text-sm"
+              onClick={() => {
+                // popup 닫고 detail page 로 이동 — work object 별 처리 surface
+                onClose();
+                router.push(item.entityRoute);
+              }}
+            >
+              {ctaLabel}
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

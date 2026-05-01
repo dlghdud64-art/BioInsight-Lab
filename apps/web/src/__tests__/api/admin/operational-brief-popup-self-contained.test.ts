@@ -51,9 +51,14 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(read(PATH)).toMatch(/"use client"/);
   });
 
-  it("Sheet right side 640 너비 (mobile w-full)", () => {
+  it("§11.182 — non-modal Sheet (modal={false}) + width 400 (mobile w-full)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/<SheetContent[\s\S]*?side="right"[\s\S]*?w-full sm:w-\[640px\]/);
+    // SheetPrimitive.Root modal={false} — desktop dim/backdrop 0
+    expect(src).toMatch(/SheetPrimitive\.Root[\s\S]*?modal=\{false\}/);
+    // 너비 400
+    expect(src).toMatch(/w-full sm:w-\[400px\]/);
+    // SheetContent 사용 안 함 (자체 SheetPrimitive.Content)
+    expect(src).toMatch(/SheetPrimitive\.Content/);
   });
 
   it("priority list (상위 5건) + brief detail stack 분기", () => {
@@ -63,24 +68,48 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/PopupBriefDetail/);
   });
 
-  it("brief detail — 4-section + 4-cell MetricCell + amber alert", () => {
+  it("brief detail — 4-section + 4-cell MetricCell + amber alert (§11.182 판단 근거)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/RESOLVER 판별 근거[\s\S]*?grid-cols-2/);
+    // §11.182 — RESOLVER 라벨 제거, "판단 근거" 사용
+    expect(src).toMatch(/판단 근거[\s\S]*?grid-cols-2/);
+    expect(src).not.toMatch(/RESOLVER 판별 근거/);
     const metricCells = src.match(/<MetricCell\b/g) ?? [];
     expect(metricCells.length).toBe(4);
     expect(src).toMatch(/bg-amber-50[\s\S]*?border-amber-200/);
   });
 
-  it("OPERATIONAL BRIEFING eyebrow + LAST UPDATED + 상황요약 + 다음 조치", () => {
+  it("§11.182 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/OPERATIONAL BRIEFING/);
-    expect(src).toMatch(/LAST UPDATED/);
+    // 한국어 "운영 브리핑" eyebrow 사용
+    expect(src).toMatch(/운영 브리핑/);
+    // 영문 OPERATIONAL BRIEFING 비노출
+    expect(src).not.toMatch(/OPERATIONAL BRIEFING/);
     expect(src).toMatch(/상황 요약/);
     expect(src).toMatch(/다음 조치/);
   });
 
-  it("CTA — 상세 페이지 navigate (popup close 후 router.push)", () => {
+  it("§11.182 — priority enum → 사람 라벨 (즉시/높음/보통/낮음)", () => {
     const src = read(PATH);
+    expect(src).toMatch(/PRIORITY_HUMAN[\s\S]*?p0:\s*"즉시"/);
+    expect(src).toMatch(/p1:\s*"높음"/);
+    expect(src).toMatch(/p2:\s*"보통"/);
+    expect(src).toMatch(/p3:\s*"낮음"/);
+  });
+
+  it("§11.182 — owner raw ID → 사람 라벨 매핑 + 미배정 fallback", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/OWNER_HUMAN_LABEL/);
+    expect(src).toMatch(/"user-inv-001":\s*"재고 운영"/);
+    expect(src).toMatch(/formatOwner/);
+    expect(src).toMatch(/미배정/);
+  });
+
+  it("§11.182 — CTA copy = item.nextAction (canonical, dead button 0)", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/ctaLabel\s*=\s*item\.nextAction/);
+    // ctaLabel falsy 시 CTA 미렌더 (dead button 0)
+    expect(src).toMatch(/\{ctaLabel\s*&&/);
+    // CTA 클릭 시 popup close + entityRoute navigate
     expect(src).toMatch(/onClose\(\)[\s\S]*?router\.push\(item\.entityRoute\)/);
   });
 });
