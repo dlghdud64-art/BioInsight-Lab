@@ -618,9 +618,9 @@ export function OperationalDetailShell({
         : blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
       </div>
 
-      {/* D+E+F: Main grid — § 2. 핵심 근거 + § 4. 다음 조치 */}
+      {/* D+E+F: Main grid — §11.190 § 2. 판단 근거 + § 4. 다음 조치 (§11.182 한국어 정합) */}
       <div id="brief-facts" className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3 scroll-mt-4">
-        <span className="sr-only">핵심 근거</span>
+        <span className="sr-only">판단 근거</span>
         {/* D. Primary Work Area */}
         <div className="min-w-0 space-y-3">{children}</div>
 

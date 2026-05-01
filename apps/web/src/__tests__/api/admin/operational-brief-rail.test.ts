@@ -31,9 +31,10 @@ describe("operational brief rail — §11.142-impl regression guard", () => {
     expect(source).toMatch(/차단 사유/);
   });
 
-  it("4 section 헤딩: 상황 요약 / 핵심 근거 / 리스크 / 다음 조치", () => {
+  it("4 section 헤딩: 상황 요약 / 판단 근거 / 리스크 / 다음 조치 (§11.182/188 한국어 정합)", () => {
     expect(source).toMatch(/상황 요약/);
-    expect(source).toMatch(/핵심 근거/);
+    // §11.188 — "핵심 근거" → "판단 근거" swap
+    expect(source).toMatch(/판단 근거/);
     expect(source).toMatch(/리스크/);
     expect(source).toMatch(/다음 조치/);
   });
