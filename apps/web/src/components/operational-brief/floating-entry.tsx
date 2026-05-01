@@ -61,7 +61,7 @@ export function OperationalBriefFloatingEntry({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       disabled={disabled}
       aria-label={open ? "운영 브리핑 닫기" : "운영 브리핑 열기"}
       aria-expanded={open}
