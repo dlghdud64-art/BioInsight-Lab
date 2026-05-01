@@ -58,9 +58,16 @@ const PRIORITY_BADGE: Record<string, string> = {
 };
 
 /**
- * §11.182 — owner raw ID → 사람 라벨.
- * pilot 시드 + 운영 ontology 기반. 미매핑 시 "미배정".
- * 향후 Membership.role 기반 자동 매핑 후속 (§11.183).
+ * §11.182/184 — owner raw ID → 사람 라벨 (raw ID 절대 노출 0).
+ *
+ * 매핑 우선순위:
+ *   1. explicit mapping (pilot seed + 운영 ontology) — `OWNER_HUMAN_LABEL`
+ *   2. prefix-based smart fallback (user-{inv|proc|qc|rfq|admin}-* → 부서 라벨)
+ *   3. 일반 fallback "담당자" (raw ID 노출 절대 0)
+ *   4. null/undefined → "미배정"
+ *
+ * canonical (DB Membership.role) 조회는 §11.184b 후속 (별도 endpoint 필요).
+ * 현재는 prefix pattern 으로 충분 — pilot ID 체계가 부서 prefix 강제하므로 안전.
  */
 const OWNER_HUMAN_LABEL: Record<string, string> = {
   "user-inv-001": "재고 운영",
@@ -70,9 +77,25 @@ const OWNER_HUMAN_LABEL: Record<string, string> = {
   "user-qc-001": "품질 검토",
   "user-rfq-001": "견적 운영",
 };
+
+const OWNER_PREFIX_LABEL: Array<{ prefix: string; label: string }> = [
+  { prefix: "user-inv-", label: "재고 운영" },
+  { prefix: "user-proc-", label: "구매 운영" },
+  { prefix: "user-qc-", label: "품질 검토" },
+  { prefix: "user-rfq-", label: "견적 운영" },
+  { prefix: "user-admin-", label: "관리자" },
+];
+
 function formatOwner(o: string | null | undefined): string {
   if (!o) return "미배정";
-  return OWNER_HUMAN_LABEL[o] ?? o;
+  // 1. explicit mapping
+  if (OWNER_HUMAN_LABEL[o]) return OWNER_HUMAN_LABEL[o];
+  // 2. prefix-based smart fallback
+  for (const { prefix, label } of OWNER_PREFIX_LABEL) {
+    if (o.startsWith(prefix)) return label;
+  }
+  // 3. 마지막 fallback — raw ID 노출 절대 0
+  return "담당자";
 }
 
 /**

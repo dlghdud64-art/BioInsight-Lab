@@ -122,12 +122,18 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/p3:\s*"낮음"/);
   });
 
-  it("§11.182 — owner raw ID → 사람 라벨 매핑 + 미배정 fallback", () => {
+  it("§11.182/184 — owner raw ID → 사람 라벨 매핑 + prefix fallback + 미배정", () => {
     const src = read(PATH);
     expect(src).toMatch(/OWNER_HUMAN_LABEL/);
     expect(src).toMatch(/"user-inv-001":\s*"재고 운영"/);
     expect(src).toMatch(/formatOwner/);
     expect(src).toMatch(/미배정/);
+    // §11.184 — prefix-based smart fallback (raw ID 노출 0)
+    expect(src).toMatch(/OWNER_PREFIX_LABEL/);
+    expect(src).toMatch(/prefix:\s*"user-inv-",\s*label:\s*"재고 운영"/);
+    expect(src).toMatch(/prefix:\s*"user-proc-",\s*label:\s*"구매 운영"/);
+    // 마지막 fallback "담당자" — raw ID 노출 절대 0
+    expect(src).toMatch(/"담당자"/);
   });
 
   it("§11.182 — CTA copy = item.nextAction (canonical, dead button 0)", () => {
