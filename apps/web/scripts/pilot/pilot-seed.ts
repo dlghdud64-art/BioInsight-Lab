@@ -47,6 +47,9 @@ import {
   PILOT_PRODUCT_CATALOG,
   PILOT_VENDOR_CATALOG,
   PILOT_PRODUCT_VENDOR_LINKS,
+  // §11.178 — Quote + Inventory pilot fixtures
+  PILOT_QUOTE_CATALOG,
+  PILOT_INVENTORY_CATALOG,
 } from "./pilot";
 
 async function main() {
@@ -222,12 +225,75 @@ async function main() {
           });
         }
 
-        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors };
+        // 9. §11.178 — Quote pilot fixtures (1 row).
+        //    Quote.organizationId 는 onDelete: SetNull 이라 cleanup 시 별도 op 필요.
+        //    userId 는 PILOT_OWNER_USER_ID 로 고정 (canonical user 보호: cascade
+        //    on user delete 가 있으나 user 자체는 cleanup 대상 0).
+        //    quoteNumber 는 고정 시 unique 충돌 가능 → null 로 두고 surface 에서
+        //    필요 시 backfill (§11.19 quote-number utility).
+        const quotes: Array<{ id: string; title: string }> = [];
+        for (const spec of PILOT_QUOTE_CATALOG) {
+          const q = await tx.quote.upsert({
+            where: { id: spec.id },
+            create: {
+              id: spec.id,
+              userId: ownerUserId,
+              organizationId: PILOT_ORG_ID,
+              workspaceId: PILOT_WORKSPACE_ID,
+              title: spec.title,
+              description: spec.description,
+              status: spec.status as never,
+              currency: spec.currency,
+              totalAmount: spec.totalAmount,
+            },
+            update: {
+              title: spec.title,
+              description: spec.description,
+              status: spec.status as never,
+              totalAmount: spec.totalAmount,
+            },
+          });
+          quotes.push({ id: q.id, title: q.title });
+        }
+
+        // 10. §11.178 — ProductInventory pilot fixtures (3 rows).
+        //     ProductInventory.organizationId 는 onDelete: Cascade 라 org 삭제 시
+        //     자동 cleanup. cleanup operation 별도 등록 0.
+        //     compound unique (organizationId, productId) 활용.
+        const inventories: Array<{ id: string; productId: string; currentQuantity: number }> = [];
+        for (const spec of PILOT_INVENTORY_CATALOG) {
+          const inv = await tx.productInventory.upsert({
+            where: { id: spec.id },
+            create: {
+              id: spec.id,
+              organizationId: PILOT_ORG_ID,
+              productId: spec.productId,
+              currentQuantity: spec.currentQuantity,
+              unit: spec.unit,
+              safetyStock: spec.safetyStock,
+              minOrderQty: spec.minOrderQty,
+              location: spec.location,
+              lotNumber: spec.lotNumber,
+            },
+            update: {
+              currentQuantity: spec.currentQuantity,
+              safetyStock: spec.safetyStock,
+              minOrderQty: spec.minOrderQty,
+              location: spec.location,
+            },
+          });
+          inventories.push({
+            id: inv.id,
+            productId: inv.productId,
+            currentQuantity: inv.currentQuantity,
+          });
+        }
+
+        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, quotes, inventories };
       },
       {
         // 15 product upserts + 1 vendor + 15 productVendor + 4 parent
-        // rows = 35 writes. Default Prisma timeout (5s) is tight on
-        // cold pooler starts; keep the §11.7 headroom.
+        // rows + §11.178 1 quote + 3 inventory = 39 writes. 30s 여전 충분.
         timeout: 30_000,
         maxWait: 10_000,
       },
@@ -275,6 +341,23 @@ async function main() {
     console.log(
       `[pilot-seed] productVendor links: ${summary.productVendors.length} upserted`,
     );
+    // §11.178 — quote + inventory log
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] quotes: ${summary.quotes.length} upserted`,
+    );
+    for (const q of summary.quotes) {
+      // eslint-disable-next-line no-console
+      console.log(`  - ${q.id}  ${q.title}`);
+    }
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] inventories: ${summary.inventories.length} upserted`,
+    );
+    for (const inv of summary.inventories) {
+      // eslint-disable-next-line no-console
+      console.log(`  - ${inv.id}  product=${inv.productId}  qty=${inv.currentQuantity}`);
+    }
     // eslint-disable-next-line no-console
     console.log("[pilot-seed] PASS");
     // eslint-disable-next-line no-console

@@ -113,20 +113,24 @@ describe("parseMode", () => {
 });
 
 describe("buildPilotCleanupPlan — scoping structure", () => {
-  it("emits exactly 19 operations", () => {
+  it("emits exactly 21 operations (member 2 + quote 1 + workspace 1 + org 1 + product 15 + vendor 1)", () => {
+    // §11.20 vendor + §11.178 quote 추가 반영.
     const plan = buildPilotCleanupPlan();
-    expect(plan.operations).toHaveLength(19);
+    expect(plan.operations).toHaveLength(21);
   });
 
-  it("places workspaceMember → organizationMember → workspace → organization → products in the documented order", () => {
+  it("places workspaceMember → organizationMember → quote → workspace → organization → products → vendors in the documented order", () => {
+    // §11.178 — Quote 는 SetNull on org delete → workspace/org 보다 먼저 cleanup.
     const plan = buildPilotCleanupPlan();
     const models = plan.operations.map((o) => o.model);
     expect(models[0]).toBe("workspaceMember");
     expect(models[1]).toBe("organizationMember");
-    expect(models[2]).toBe("workspace");
-    expect(models[3]).toBe("organization");
-    // remaining 15 are product
-    expect(models.slice(4)).toEqual(new Array(15).fill("product"));
+    expect(models[2]).toBe("quote"); // §11.178
+    expect(models[3]).toBe("workspace");
+    expect(models[4]).toBe("organization");
+    // 5..19 = 15 products, 20 = vendor
+    expect(models.slice(5, 20)).toEqual(new Array(15).fill("product"));
+    expect(models[20]).toBe("vendor");
   });
 
   it("covers all 15 pilot product ids exactly once", () => {

@@ -281,6 +281,90 @@ export const PILOT_PRODUCT_VENDOR_LINKS: readonly PilotProductVendorLinkSpec[] =
 ];
 
 // ──────────────────────────────────────────────────────────
+// §11.178 — Pilot Quote 카탈로그 (1건 — RFQ/quote 진입 surface 활성화)
+//
+// Quote.organizationId 는 onDelete: SetNull 이라 org 삭제 시 orphan 됨.
+// pilot-cleanup 에서 quote 별도 cleanup 필요 (PilotCleanupOperation 에 추가).
+// ──────────────────────────────────────────────────────────
+
+export interface PilotQuoteSpec {
+  readonly id: string;
+  readonly title: string;
+  readonly status: "PENDING" | "REPLIED" | "REVIEW_REQUIRED" | "READY_FOR_PO" | "COMPLETED";
+  readonly currency: string;
+  readonly totalAmount: number;
+  readonly description: string;
+}
+
+export const PILOT_QUOTE_CATALOG: readonly PilotQuoteSpec[] = [
+  {
+    id: "quote-pilot-cell-culture-starter",
+    title: "Cell Culture Starter Pack — DMEM/FBS/Trypsin",
+    status: "PENDING",
+    currency: "KRW",
+    totalAmount: 320_000,
+    description: "세포 배양 시작 키트 시드 견적 (DMEM 500ml + FBS 500ml + Trypsin-EDTA 100ml)",
+  },
+];
+
+export const PILOT_QUOTE_IDS: readonly string[] =
+  PILOT_QUOTE_CATALOG.map((q) => q.id);
+
+// ──────────────────────────────────────────────────────────
+// §11.178 — Pilot Inventory 카탈로그 (3건 — 재고 진입 surface 활성화)
+//
+// ProductInventory.organizationId 는 onDelete: Cascade 라 org 삭제 시
+// 자동 cleanup. cleanup operation 별도 등록 불필요.
+// ──────────────────────────────────────────────────────────
+
+export interface PilotInventorySpec {
+  readonly id: string;
+  readonly productId: string;
+  readonly currentQuantity: number;
+  readonly unit: string;
+  readonly safetyStock: number;
+  readonly minOrderQty: number;
+  readonly location: string;
+  readonly lotNumber: string;
+}
+
+export const PILOT_INVENTORY_CATALOG: readonly PilotInventorySpec[] = [
+  {
+    id: "inv-pilot-dmem",
+    productId: "product-pilot-dmem-500ml",
+    currentQuantity: 5,
+    unit: "bottle",
+    safetyStock: 10,
+    minOrderQty: 30,
+    location: "Lab-A · Cold-4C",
+    lotNumber: "LOT-DMEM-2026-04",
+  },
+  {
+    id: "inv-pilot-fbs",
+    productId: "product-pilot-fbs-500ml",
+    currentQuantity: 40,
+    unit: "bottle",
+    safetyStock: 12,
+    minOrderQty: 20,
+    location: "Lab-A · Freezer-20C",
+    lotNumber: "LOT-FBS-2026-04",
+  },
+  {
+    id: "inv-pilot-trypsin",
+    productId: "product-pilot-trypsin-100ml",
+    currentQuantity: 0,
+    unit: "bottle",
+    safetyStock: 8,
+    minOrderQty: 15,
+    location: "Lab-A · Cold-4C",
+    lotNumber: "LOT-TRY-2026-04",
+  },
+];
+
+export const PILOT_INVENTORY_IDS: readonly string[] =
+  PILOT_INVENTORY_CATALOG.map((i) => i.id);
+
+// ──────────────────────────────────────────────────────────
 // Cleanup plan — declarative, consumed by pilot-cleanup.ts
 // ──────────────────────────────────────────────────────────
 
@@ -290,7 +374,9 @@ export type PilotModel =
   | "workspace"
   | "organization"
   | "product"
-  | "vendor";
+  | "vendor"
+  // §11.178 — Quote 는 SetNull on org delete → orphan 방지 위해 별도 cleanup
+  | "quote";
 
 /**
  * One cleanup operation. Deliberately models compound keys as a
@@ -330,6 +416,11 @@ export type PilotCleanupOperation =
     }
   | {
       readonly model: "vendor";
+      readonly where: { readonly id: string };
+    }
+  // §11.178 — Quote cleanup (Order 는 quote cascade 로 자동 삭제, ProductInventory 는 org cascade)
+  | {
+      readonly model: "quote";
       readonly where: { readonly id: string };
     };
 
@@ -388,6 +479,15 @@ export function buildPilotCleanupPlan(
         },
       },
     },
+    // §11.178 — Quote cleanup 우선 (org 삭제 시 SetNull 되어 orphan 됨, Order 는
+    //          Quote cascade 로 자동 삭제). ProductInventory 는 org Cascade 로
+    //          처리되므로 별도 op 불필요.
+    ...PILOT_QUOTE_IDS.map(
+      (id): PilotCleanupOperation => ({
+        model: "quote",
+        where: { id },
+      }),
+    ),
     {
       model: "workspace",
       where: { id: PILOT_WORKSPACE_ID },
