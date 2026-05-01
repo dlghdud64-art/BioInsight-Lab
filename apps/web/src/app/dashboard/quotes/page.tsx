@@ -956,10 +956,10 @@ function QuotesPageContent() {
         const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
 
         return (
-        <div className="hidden lg:flex w-[380px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
-          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142) */}
+        <div className="hidden lg:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
+          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일) */}
           <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+            <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">OPERATIONAL BRIEFING</span>
             <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
           </div>
 

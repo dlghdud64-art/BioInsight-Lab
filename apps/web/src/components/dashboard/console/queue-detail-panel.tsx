@@ -115,12 +115,12 @@ export function QueueDetailPanel({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-[420px] sm:w-[480px] overflow-y-auto">
-        {/* ── Brief Header (§11.142 lock) ── */}
+      <SheetContent side="right" className="w-[480px] sm:w-[560px] overflow-y-auto">
+        {/* ── Brief Header (§11.142 lock, §11.179 eyebrow 통일) ── */}
         <SheetHeader className="pb-3 border-b">
           <div className="flex items-center justify-between gap-2">
-            <SheetTitle className={cn(TYPOGRAPHY.sectionTitle, "text-base font-semibold")}>
-              운영 브리핑
+            <SheetTitle className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
+              OPERATIONAL BRIEFING
             </SheetTitle>
             <span className={cn(TYPOGRAPHY.metadata, "text-[10px] uppercase tracking-wide text-muted-foreground")}>
               선택한 작업

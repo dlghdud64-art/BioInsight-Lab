@@ -418,11 +418,11 @@ export function InventoryContextPanel({
 
   return (
     <div
-      className={`w-[420px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
+      className={`w-[480px] shrink-0 border-l border-bd bg-el overflow-y-auto h-full ${className}`}
     >
-      {/* §11.146 Brief header — 운영 브리핑 + 선택한 재고 (lock §11.142) */}
+      {/* §11.146 Brief header — 운영 브리핑 + 선택한 재고 (lock §11.142, §11.179 eyebrow 통일) */}
       <div className="sticky top-0 z-10 px-5 py-2 border-b border-bd bg-el flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+        <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">OPERATIONAL BRIEFING</span>
         <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 재고</span>
       </div>
 

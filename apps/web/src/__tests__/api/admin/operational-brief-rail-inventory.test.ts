@@ -56,7 +56,7 @@ describe("operational brief rail (inventory) — §11.146 regression guard", () 
     expect(source).toMatch(/risks/);
   });
 
-  it("rail w-[420px] desktop sticky — same-canvas 보존", () => {
-    expect(source).toMatch(/w-\[420px\]/);
+  it("rail w-[480px] desktop sticky — same-canvas 보존 (§11.179 density up)", () => {
+    expect(source).toMatch(/w-\[480px\]/);
   });
 });

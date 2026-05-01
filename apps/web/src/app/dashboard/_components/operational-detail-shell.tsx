@@ -566,10 +566,10 @@ export function OperationalDetailShell({
   const objectLabel = briefObjectLabel ?? "선택한 작업";
   return (
     <div className="space-y-3">
-      {/* §11.149 Brief banner — 운영 브리핑 + 선택한 X (lock §11.142) */}
+      {/* §11.149 Brief banner — 운영 브리핑 + 선택한 X (lock §11.142, §11.179 eyebrow 통일) */}
       <div className="rounded border border-bd bg-el/30 px-4 py-2">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
+          <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">OPERATIONAL BRIEFING</span>
           <span className="text-[10px] text-slate-500 uppercase tracking-wide">{objectLabel}</span>
         </div>
         <div className="flex flex-wrap gap-1.5">
