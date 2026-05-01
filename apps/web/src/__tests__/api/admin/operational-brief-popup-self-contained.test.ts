@@ -105,10 +105,12 @@ describe("§11.181 dashboard shell mount", () => {
 describe("§11.181 FloatingEntry default = popup open", () => {
   const PATH = "src/components/operational-brief/floating-entry.tsx";
 
-  it("useOperationalBriefPopup 호출 + onClick fallback 으로 popup.open()", () => {
+  it("useOperationalBriefPopup 호출 + handleClick useCallback (§11.181b — minify-safe)", () => {
     const src = read(PATH);
     expect(src).toMatch(/useOperationalBriefPopup\(\)/);
-    expect(src).toMatch(/onClick\s*\?\?\s*popup\.open/);
+    // §11.181b — handleClick 이 useCallback 으로 wrap, body 안에서 onClick 분기 + popup.open()
+    expect(src).toMatch(/handleClick\s*=\s*useCallback/);
+    expect(src).toMatch(/popup\.open\(\)/);
   });
 
   it("open prop 미지정 시 popup.isOpen 으로 derive (aria-expanded 동기)", () => {

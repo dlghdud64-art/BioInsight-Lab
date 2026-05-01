@@ -19,6 +19,7 @@
 
 "use client";
 
+import { useCallback } from "react";
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOperationalBriefPopup } from "./popup-context";
@@ -45,10 +46,18 @@ export function OperationalBriefFloatingEntry({
   className,
 }: OperationalBriefFloatingEntryProps) {
   const popup = useOperationalBriefPopup();
-  const handleClick = onClick ?? popup.open;
+  // §11.181b — onClick ?? popup.open 패턴이 prod build minify 후 closure 캡처
+  // stale 되는 이슈 발견. useCallback + explicit ternary 로 swap (always-fresh popup ref).
+  const handleClick = useCallback(() => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    popup.open();
+  }, [onClick, popup]);
   // open prop 미지정 시 popup context 의 isOpen 으로 derive (aria-expanded 동기)
   const open = openProp ?? popup.isOpen;
-  const disabled = !handleClick;
+  const disabled = false; // §11.181b — popup default 항상 가용 (NOOP fallback) 이므로 disabled 0
   return (
     <button
       type="button"
