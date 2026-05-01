@@ -28,6 +28,8 @@ import {
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { MetricCell } from "@/components/operational-brief/metric-cell";
+import { formatRelativeKr } from "@/components/operational-brief/relative-time";
 
 /* ── Types ── */
 export interface ContextPanelItem {
@@ -509,28 +511,39 @@ export function InventoryContextPanel({
         {/* ── § 2. 핵심 근거 — A. Basic Info ── */}
         <section>
           <SectionHeader icon={Package} label="핵심 근거" />
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2.5">
-            <InfoRow label="현재 수량">
-              <span
-                className={`font-bold ${
-                  item.currentQuantity === 0
-                    ? "text-red-400"
-                    : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
-                      ? "text-amber-400"
-                      : "text-slate-700"
-                }`}
-              >
-                {item.currentQuantity}
-              </span>
-              <span className="text-slate-500 ml-0.5">{item.unit}</span>
-            </InfoRow>
-            <InfoRow label="안전재고">
-              {item.safetyStock !== null ? (
-                <span className="text-slate-600">{item.safetyStock} {item.unit}</span>
-              ) : (
-                <span className="text-slate-600">미설정</span>
-              )}
-            </InfoRow>
+          {/* §11.180 — RESOLVER 판별 근거 4-cell MetricCell grid (text-3xl 수치) */}
+          {(() => {
+            const qtyTone: "ok" | "warn" | "danger" =
+              item.currentQuantity === 0
+                ? "danger"
+                : item.safetyStock !== null && item.currentQuantity <= item.safetyStock
+                  ? "warn"
+                  : "ok";
+            const expiryDays = item.expiryDate
+              ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
+              : null;
+            const expiryValue =
+              expiryDays === null ? "-" : expiryDays < 0 ? "만료됨" : `D-${expiryDays}`;
+            const expiryTone: "ok" | "warn" | "danger" | "neutral" =
+              expiryDays === null ? "neutral" : expiryDays < 0 ? "danger" : expiryDays <= 30 ? "warn" : "ok";
+            const safetyValue =
+              item.safetyStock !== null ? `${item.safetyStock} ${item.unit}` : "미설정";
+            const lotValue = item.lotNumber ?? "-";
+            return (
+              <div className="grid grid-cols-2 gap-3 mt-3">
+                <MetricCell
+                  label="현재 수량"
+                  value={`${item.currentQuantity} ${item.unit}`}
+                  tone={qtyTone}
+                />
+                <MetricCell label="안전재고" value={safetyValue} tone="neutral" />
+                <MetricCell label="만료까지" value={expiryValue} tone={expiryTone} />
+                <MetricCell label="최단 Lot" value={lotValue} tone="neutral" />
+              </div>
+            );
+          })()}
+          {/* 보조 metadata — 카테고리/보관/위치/시험항목 (정보 보존) */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-3 pt-3 border-t border-bd/50">
             <InfoRow label="카테고리">
               <span className="text-slate-600">{item.category || "시약"}</span>
             </InfoRow>
