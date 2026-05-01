@@ -65,6 +65,7 @@ const OpsExecutionContext = dynamic(() => import("@/components/ops/ops-execution
 const PriorityActionQueue = dynamic(() => import("@/components/inventory/priority-action-queue").then(m => m.PriorityActionQueue), { ssr: false });
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then(m => m.InventoryContextPanel), { ssr: false });
 const MobileOperationalBriefSheet = dynamic(() => import("@/components/operational-brief/mobile-bottom-sheet").then(m => m.MobileOperationalBriefSheet), { ssr: false });
+const OperationalBriefFloatingEntry = dynamic(() => import("@/components/operational-brief/floating-entry").then(m => m.OperationalBriefFloatingEntry), { ssr: false });
 const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then(m => m.StorageLocationView), { ssr: false });
 const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then(m => m.InventoryFlowView), { ssr: false });
 const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then(m => m.MobileInventoryView), { ssr: false });
@@ -3837,6 +3838,23 @@ function InventoryPageContent() {
             openReorderReview(matchingItem);
           }
         }}
+      />
+
+      {/* §11.177 — 운영 브리핑 floating entry (inventory surface) */}
+      <OperationalBriefFloatingEntry
+        onClick={
+          displayInventories.length > 0
+            ? () => {
+                if (selectedItem) {
+                  setSelectedItem(null);
+                  return;
+                }
+                setSelectedItem(displayInventories[0] ?? null);
+              }
+            : undefined
+        }
+        open={!!selectedItem}
+        controls="operational-brief-context-panel"
       />
     </div>
   );

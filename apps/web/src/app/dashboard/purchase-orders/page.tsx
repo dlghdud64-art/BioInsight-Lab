@@ -38,6 +38,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -295,6 +296,12 @@ export default function PurchaseOrderLandingPage() {
           )}
         </>
       )}
+
+      {/* §11.177 — 운영 브리핑 floating entry (PO list surface, lead to inbox auto_open=p0) */}
+      <OperationalBriefFloatingEntry
+        onClick={() => router.push("/dashboard/inbox?auto_open=p0")}
+        controls="operational-brief-context-panel"
+      />
     </div>
   );
 }

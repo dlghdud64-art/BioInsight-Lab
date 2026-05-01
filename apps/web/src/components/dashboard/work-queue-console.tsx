@@ -31,6 +31,7 @@ import { invalidateBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { ConsoleEmptyState } from "./console/console-empty-state";
 import { QueueRow, QueueColumnHeader } from "./console/queue-row";
 import { QueueDetailPanel } from "./console/queue-detail-panel";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { DailyReviewRow, DailyReviewColumnHeader } from "./console/daily-review-row";
 import { GovernanceView } from "./console/governance-table";
 import { RemediationView } from "./console/remediation-table";
@@ -236,6 +237,24 @@ export function WorkQueueConsole() {
           />
         </>
       )}
+
+      {/* §11.177 — 운영 브리핑 floating entry (work-queue surface) */}
+      <OperationalBriefFloatingEntry
+        onClick={(() => {
+          // groups[0].items[0] 가 priority desc 첫 행 (console-grouping 가 정렬함)
+          const firstItem = groups.find(g => g.items.length > 0)?.items[0] ?? null;
+          if (!firstItem) return undefined;
+          return () => {
+            if (selectedItem) {
+              setSelectedItem(null);
+              return;
+            }
+            setSelectedItem(firstItem);
+          };
+        })()}
+        open={!!selectedItem}
+        controls="operational-brief-context-panel"
+      />
     </div>
   );
 }
