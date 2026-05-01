@@ -55,15 +55,25 @@ function deterministicNarrative(facts: BriefNarrativeFacts): string {
 }
 
 /**
+ * §11.169 — narrative 길이 cap.
+ *   prompt level (§11.165) 가 "40자 이내" 명시했으나 LLM 이 무시 가능.
+ *   lib level 에서 60자 cap (40자 + 여유 + 어미 가변성 흡수) 강제.
+ *   초과 시 운영자 가시성 + UX 부담 위험 — fallback 처리.
+ */
+export const NARRATIVE_LENGTH_CAP = 60;
+
+/**
  * §11.167 — LLM 응답이 facts canonical token 을 보존하는지 검증.
+ * §11.169 — 추가로 길이 cap 검증 (60자 이내).
  *
  * Why:
  *   - LLM (Anthropic) 이 prompt instruction 을 무시하고 status 를
  *     다른 단어로 hallucinate 할 수 있음 (예: "검토 필요" → "확인 중").
- *   - prompt level instruction (§11.165) 만으로는 hallucination 100% 차단 X.
+ *   - prompt level instruction (§11.165) 만으로는 hallucination + length 100% 차단 X.
  *   - test level RTC (§11.166 statusToken 검증) 와 동일 logic 을 prod 에서 강제.
  *
  * Validation:
+ *   - 길이 ≤ 60자 (NARRATIVE_LENGTH_CAP) 필수.
  *   - facts.status 가 truthy 면 narrative 에 status 문자열 포함 필수.
  *   - blocker 가 "차단 없음" 외 truthy 면 narrative 에 blocker 문자열 포함 필수.
  *   - nextAction 은 LLM 이 동의어 사용 가능 (조치 표현 자유) — 검증 X.
@@ -71,6 +81,8 @@ function deterministicNarrative(facts: BriefNarrativeFacts): string {
  * 실패 시 caller 가 deterministic fallback 호출.
  */
 export function validateNarrativeFitness(narrative: string, facts: BriefNarrativeFacts): boolean {
+  // §11.169 — length cap (UX 부담 + LLM verbosity 차단)
+  if (narrative.length > NARRATIVE_LENGTH_CAP) return false;
   if (facts.status != null && facts.status !== "") {
     if (!narrative.includes(String(facts.status))) return false;
   }
