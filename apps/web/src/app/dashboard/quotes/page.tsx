@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
@@ -531,6 +532,16 @@ function QuotesPageContent() {
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
+
+  // §11.176 — floating entry click handler (selected toggle / 첫 quote hydrate). filteredQuotes 정의 이후 필요해 useEffect 외부에 const 로 placeholder, 실제 use 는 JSX 시점.
+  const handleFloatingEntryClick = () => {
+    if (selectedQuoteId) {
+      setSelectedQuoteId(null);
+      return;
+    }
+    if (filteredQuotes.length === 0) return;
+    setSelectedQuoteId(filteredQuotes[0].id ?? null);
+  };
 
   // §11.161 — 운영 브리핑 narrative hook (selectedQuote 선언 후 호출)
   const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
@@ -1587,6 +1598,13 @@ function QuotesPageContent() {
           setIntakeDockSource(null);
           refetch();
         }}
+      />
+
+      {/* §11.176 — 운영 브리핑 floating entry */}
+      <OperationalBriefFloatingEntry
+        onClick={filteredQuotes.length > 0 ? handleFloatingEntryClick : undefined}
+        open={!!selectedQuote}
+        controls="operational-brief-context-panel"
       />
     </div>
   );

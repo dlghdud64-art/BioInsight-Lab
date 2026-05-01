@@ -21,6 +21,8 @@ import {
 import { cn } from "@/lib/utils";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+import { MetricCell } from "@/components/operational-brief/metric-cell";
+import { formatRelativeKr } from "@/components/operational-brief/relative-time";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import {
   AlertTriangle,
@@ -959,48 +961,6 @@ function ContextPanel({
   );
 }
 
-/**
- * §11.175 — RESOLVER 판별 근거 metric cell (text-3xl 수치).
- * tone 별 좌측 액센트 색상.
- */
-function MetricCell({ label, value, tone }: { label: string; value: string; tone: "ok" | "warn" | "danger" | "neutral" }) {
-  const accent = {
-    ok: "border-emerald-500",
-    warn: "border-amber-500",
-    danger: "border-red-500",
-    neutral: "border-slate-300",
-  }[tone];
-  return (
-    <div className={cn("rounded-lg border bg-white p-4 border-l-4", accent, "border-y-slate-200 border-r-slate-200")}>
-      <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">
-        {label}
-      </div>
-      <div className="text-3xl font-bold text-slate-900 leading-none truncate">
-        {value}
-      </div>
-    </div>
-  );
-}
-
-/**
- * §11.175 — deterministic 한국어 상대 시간 (외부 dep 0).
- * "방금 전" / "12분 전" / "3시간 전" / "5일 전" / null (Date 0 또는 invalid).
- */
-function formatRelativeKr(input: Date | string | null): string | null {
-  if (!input) return null;
-  const d = typeof input === "string" ? new Date(input) : input;
-  if (isNaN(d.getTime()) || d.getTime() === 0) return null;
-  const diffMs = Date.now() - d.getTime();
-  if (diffMs < 0) return "방금 전";
-  const sec = Math.floor(diffMs / 1000);
-  if (sec < 60) return "방금 전";
-  const min = Math.floor(sec / 60);
-  if (min < 60) return `${min}분 전`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}시간 전`;
-  const day = Math.floor(hr / 24);
-  if (day < 7) return `${day}일 전`;
-  return d.toLocaleDateString("ko-KR");
-}
+/* §11.176 — MetricCell + formatRelativeKr 는 shared 모듈로 이동 (inbox 가 먼저 정의했지만 multi-surface 재사용) */
 
 // Quick action labels now provided by buildInboxQuickAction adapter

@@ -89,9 +89,10 @@ describe("§11.175 inbox ContextPanel density-up", () => {
     expect(src).toMatch(/id="brief-summary"[\s\S]*?text-base[\s\S]*?leading-relaxed/);
   });
 
-  it("핵심 근거 2x2 metric grid + text-3xl 수치", () => {
+  it("핵심 근거 2x2 metric grid + MetricCell (text-3xl 수치는 shared component 책임)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/id="brief-facts"[\s\S]*?grid-cols-2[\s\S]*?text-3xl/);
+    // §11.176 — MetricCell + text-3xl 은 shared 로 추출, inbox 는 grid-cols-2 안에서 MetricCell 사용
+    expect(src).toMatch(/id="brief-facts"[\s\S]*?grid-cols-2[\s\S]*?MetricCell/);
   });
 
   it("OPERATIONAL BRIEFING eyebrow", () => {

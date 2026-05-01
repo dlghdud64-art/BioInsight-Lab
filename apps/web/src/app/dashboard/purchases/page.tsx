@@ -16,6 +16,7 @@ import Link from "next/link";
 import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 import type {
@@ -295,6 +296,16 @@ export default function PurchasesPage() {
   }, [selectedId, items]);
 
   const closeRail = useCallback(() => setSelectedId(null), []);
+
+  // §11.176 — floating entry click handler (selected toggle / 첫 row hydrate)
+  const handleFloatingEntryClick = useCallback(() => {
+    if (selectedId) {
+      setSelectedId(null);
+      return;
+    }
+    if (filteredItems.length === 0) return;
+    setSelectedId(filteredItems[0].id ?? null);
+  }, [selectedId, filteredItems]);
 
   // §11.161 — 운영 브리핑 narrative hook
   const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
@@ -977,6 +988,13 @@ export default function PurchasesPage() {
         )}
 
       </div>
+
+      {/* §11.176 — 운영 브리핑 floating entry */}
+      <OperationalBriefFloatingEntry
+        onClick={filteredItems.length > 0 ? handleFloatingEntryClick : undefined}
+        open={!!selectedItem}
+        controls="operational-brief-context-panel"
+      />
     </div>
   );
 }
