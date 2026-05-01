@@ -256,13 +256,17 @@ export default function AuditTrailPage() {
   );
 
   // §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only gating, /api/admin/operational-brief-cache-stats)
+  // §11.168 — fitness_pass / fitness_fail / fitnessPassRate 추가 (LLM hallucination drift)
   const { data: briefCacheStats } = useQuery<{
     hit: number;
     miss: number;
     set: number;
     evict: number;
     invalidate: number;
+    fitness_pass: number;
+    fitness_fail: number;
     hitRate: number;
+    fitnessPassRate: number;
     cacheSize: number;
     startedAt: string;
   }>({
@@ -506,16 +510,24 @@ export default function AuditTrailPage() {
               {briefCacheStats.startedAt && `since ${new Date(briefCacheStats.startedAt).toLocaleTimeString("ko-KR")}`}
             </span>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3">
             <StatCell label="hit rate" value={`${(briefCacheStats.hitRate * 100).toFixed(1)}%`} accent={briefCacheStats.hitRate >= 0.5 ? "ok" : "warn"} />
             <StatCell label="cache size" value={String(briefCacheStats.cacheSize)} />
             <StatCell label="hit" value={String(briefCacheStats.hit)} />
             <StatCell label="miss" value={String(briefCacheStats.miss)} />
             <StatCell label="evict" value={String(briefCacheStats.evict)} />
             <StatCell label="invalidate" value={String(briefCacheStats.invalidate)} />
+            {/* §11.168 fitness drift indicator — pass rate <90% = LLM hallucination 빈도 시그널 */}
+            <StatCell
+              label="fitness pass"
+              value={`${(briefCacheStats.fitnessPassRate * 100).toFixed(1)}%`}
+              accent={briefCacheStats.fitness_pass + briefCacheStats.fitness_fail === 0 ? undefined : briefCacheStats.fitnessPassRate >= 0.9 ? "ok" : "warn"}
+            />
+            <StatCell label="fitness fail" value={String(briefCacheStats.fitness_fail)} accent={briefCacheStats.fitness_fail > 0 ? "warn" : undefined} />
           </div>
           <p className="text-[10px] text-slate-500 mt-2">
             §11.142 ecosystem · 1분 자동 갱신 · ADMIN 전용 가시성. KV 통합 시 cache size 는 -1 (unknown).
+            fitness fail &gt; 0 = LLM hallucination 차단 (자동 deterministic fallback). pass rate &lt; 90% = prompt drift 검토.
           </p>
         </div>
       )}

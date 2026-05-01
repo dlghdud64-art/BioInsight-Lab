@@ -15,6 +15,7 @@
  */
 
 import { callAnthropicMessage } from "@/lib/ai/anthropic";
+import { incrementCacheStat } from "@/lib/ai/operational-brief-cache-metrics";
 
 export interface BriefNarrativeFacts {
   status?: string | number | null;
@@ -109,10 +110,13 @@ export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promis
     // LLM 실패 또는 빈 결과 시 fallback
     if (!trimmed) return deterministicNarrative(facts);
     // §11.167 — LLM 응답이 canonical token 누락 시 fallback (hallucination 차단)
+    // §11.168 — fitness pass/fail metric 누적 (drift 모니터링)
     if (!validateNarrativeFitness(trimmed, facts)) {
+      incrementCacheStat("fitness_fail");
       console.warn("[operational-brief] LLM narrative fitness 실패 — deterministic fallback (token loss)");
       return deterministicNarrative(facts);
     }
+    incrementCacheStat("fitness_pass");
     return trimmed;
   } catch (err) {
     console.warn("[operational-brief] LLM narrative 실패 — deterministic fallback", err);

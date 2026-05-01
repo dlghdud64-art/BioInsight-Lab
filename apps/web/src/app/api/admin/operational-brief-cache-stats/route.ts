@@ -12,6 +12,7 @@ import { auth } from "@/auth";
 import {
   getBriefCacheStats,
   computeBriefCacheHitRate,
+  computeBriefFitnessPassRate,
 } from "@/lib/ai/operational-brief-cache-metrics";
 import { getBriefCacheSize } from "@/lib/ai/operational-brief-cache";
 
@@ -27,6 +28,7 @@ export async function GET() {
   return NextResponse.json({
     ...stats,
     hitRate: computeBriefCacheHitRate(),
+    fitnessPassRate: computeBriefFitnessPassRate(),
     cacheSize: getBriefCacheSize(),
   });
 }
