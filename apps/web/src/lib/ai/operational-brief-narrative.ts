@@ -55,6 +55,76 @@ function deterministicNarrative(facts: BriefNarrativeFacts): string {
 }
 
 /**
+ * §11.170 — prompt injection pattern detection.
+ *
+ * facts value 가 user-controlled (예: blockerReason 이 vendor 회신 / operator
+ * 입력) 시 prompt injection 위험. LLM 에 전달 전 위험 패턴 detect.
+ *
+ * 감지 패턴 (보수적 deny-list):
+ *   - "ignore" / "previous instructions" / "you are" / "system:" / "</system>"
+ *   - "무시하" / "지시" / "출력하세요" + dangerous 키워드 결합
+ *   - newline + 명령어 패턴 (`\n\n` + instruction keyword)
+ *   - 비정상 토큰 (`<|`, `[INST]`, JSON 종료 후 추가 instruction)
+ *
+ * 감지 시 LLM 호출 skip + deterministic fallback (status 원문 그대로 유지).
+ */
+const INJECTION_PATTERNS: readonly RegExp[] = [
+  /ignore\s+(previous|prior|all)\s+(instruction|prompt|message)/i,
+  /you\s+are\s+(now\s+)?a\s+different/i,
+  /<\/?system>/i,
+  /\bsystem\s*:\s*/i,
+  /<\|.*?\|>/,
+  /\[INST\]|\[\/INST\]/i,
+  /이전\s*지시\s*무시/,
+  /시스템\s*명령/,
+  /다음을\s*출력하세요/,
+  /\n\n\s*(instruction|명령|지시)\s*[:：]/i,
+];
+
+export function detectPromptInjection(facts: BriefNarrativeFacts): boolean {
+  for (const v of Object.values(facts)) {
+    if (v == null) continue;
+    const s = String(v);
+    for (const re of INJECTION_PATTERNS) {
+      if (re.test(s)) return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * §11.170 — facts value sanitization (LLM 호출 전).
+ * newline / control chars 제거 + per-field length cap.
+ *   - newline → space (single line 강제, prompt 분리자 사용 차단)
+ *   - control chars (\x00-\x1F) → 제거
+ *   - per-field length cap (status 80자 / blocker 200자 / nextAction 200자)
+ */
+const FIELD_LENGTH_CAP: Record<string, number> = {
+  status: 80,
+  blocker: 200,
+  nextAction: 200,
+};
+
+export function sanitizeFacts(facts: BriefNarrativeFacts): BriefNarrativeFacts {
+  const out: BriefNarrativeFacts = {};
+  for (const [k, v] of Object.entries(facts)) {
+    if (v == null) {
+      out[k] = v;
+      continue;
+    }
+    if (typeof v === "number") {
+      out[k] = v;
+      continue;
+    }
+    let s = String(v).replace(/[\x00-\x1F]+/g, " ");
+    const cap = FIELD_LENGTH_CAP[k] ?? 200;
+    if (s.length > cap) s = s.slice(0, cap);
+    out[k] = s;
+  }
+  return out;
+}
+
+/**
  * §11.169 — narrative 길이 cap.
  *   prompt level (§11.165) 가 "40자 이내" 명시했으나 LLM 이 무시 가능.
  *   lib level 에서 60자 cap (40자 + 여유 + 어미 가변성 흡수) 강제.
@@ -105,12 +175,23 @@ function isLlmEnabled(): boolean {
  * `OPERATIONAL_BRIEF_USE_LLM=1` 설정 시 Anthropic 호출 + 실패 시 fallback.
  */
 export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promise<string> {
+  // §11.170 — facts sanitize (newline / control chars / length cap)
+  const safe = sanitizeFacts(facts);
+
+  // §11.170 — injection pattern detect → LLM skip + deterministic fallback
+  // (prompt injection 차단의 first quality gate. fitness_fail 누적해 admin 가시화)
+  if (detectPromptInjection(safe)) {
+    incrementCacheStat("fitness_fail");
+    console.warn("[operational-brief] prompt injection 감지 — deterministic fallback");
+    return deterministicNarrative(safe);
+  }
+
   if (!isLlmEnabled()) {
-    return deterministicNarrative(facts);
+    return deterministicNarrative(safe);
   }
 
   try {
-    const userPrompt = `다음 facts 를 한국어 1문장으로 요약하세요:\n${JSON.stringify(facts, null, 2)}`;
+    const userPrompt = `다음 facts 를 한국어 1문장으로 요약하세요:\n${JSON.stringify(safe, null, 2)}`;
     const result = await callAnthropicMessage({
       systemPrompt: SYSTEM_PROMPT,
       userPrompt,
@@ -120,18 +201,18 @@ export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promis
     });
     const trimmed = result.content.trim();
     // LLM 실패 또는 빈 결과 시 fallback
-    if (!trimmed) return deterministicNarrative(facts);
+    if (!trimmed) return deterministicNarrative(safe);
     // §11.167 — LLM 응답이 canonical token 누락 시 fallback (hallucination 차단)
     // §11.168 — fitness pass/fail metric 누적 (drift 모니터링)
-    if (!validateNarrativeFitness(trimmed, facts)) {
+    if (!validateNarrativeFitness(trimmed, safe)) {
       incrementCacheStat("fitness_fail");
       console.warn("[operational-brief] LLM narrative fitness 실패 — deterministic fallback (token loss)");
-      return deterministicNarrative(facts);
+      return deterministicNarrative(safe);
     }
     incrementCacheStat("fitness_pass");
     return trimmed;
   } catch (err) {
     console.warn("[operational-brief] LLM narrative 실패 — deterministic fallback", err);
-    return deterministicNarrative(facts);
+    return deterministicNarrative(safe);
   }
 }
