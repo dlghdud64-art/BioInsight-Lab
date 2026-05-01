@@ -16,6 +16,7 @@
 
 import { callAnthropicMessage } from "@/lib/ai/anthropic";
 import { incrementCacheStat } from "@/lib/ai/operational-brief-cache-metrics";
+import { logBriefInjectionAudit } from "@/lib/ai/operational-brief-injection-audit";
 
 export interface BriefNarrativeFacts {
   status?: string | number | null;
@@ -68,28 +69,36 @@ function deterministicNarrative(facts: BriefNarrativeFacts): string {
  *
  * 감지 시 LLM 호출 skip + deterministic fallback (status 원문 그대로 유지).
  */
-const INJECTION_PATTERNS: readonly RegExp[] = [
-  /ignore\s+(previous|prior|all)\s+(instruction|prompt|message)/i,
-  /you\s+are\s+(now\s+)?a\s+different/i,
-  /<\/?system>/i,
-  /\bsystem\s*:\s*/i,
-  /<\|.*?\|>/,
-  /\[INST\]|\[\/INST\]/i,
-  /이전\s*지시\s*무시/,
-  /시스템\s*명령/,
-  /다음을\s*출력하세요/,
-  /\n\n\s*(instruction|명령|지시)\s*[:：]/i,
+const INJECTION_PATTERNS: readonly { name: string; re: RegExp }[] = [
+  { name: "ignore_previous_instructions_en", re: /ignore\s+(previous|prior|all)\s+(instruction|prompt|message)/i },
+  { name: "role_hijack_en", re: /you\s+are\s+(now\s+)?a\s+different/i },
+  { name: "system_tag_inject", re: /<\/?system>/i },
+  { name: "system_role_marker", re: /\bsystem\s*:\s*/i },
+  { name: "anthropic_pipe_token", re: /<\|.*?\|>/ },
+  { name: "inst_token", re: /\[INST\]|\[\/INST\]/i },
+  { name: "ignore_instructions_kr", re: /이전\s*지시\s*무시/ },
+  { name: "system_command_kr", re: /시스템\s*명령/ },
+  { name: "output_directive_kr", re: /다음을\s*출력하세요/ },
+  { name: "newline_instruction_marker", re: /\n\n\s*(instruction|명령|지시)\s*[:：]/i },
 ];
 
-export function detectPromptInjection(facts: BriefNarrativeFacts): boolean {
-  for (const v of Object.values(facts)) {
+/**
+ * §11.171 — injection 감지 시 매칭된 pattern name 반환 (audit log metadata 용).
+ * 매칭 0건 시 null.
+ */
+export function detectPromptInjectionPattern(facts: BriefNarrativeFacts): string | null {
+  for (const [k, v] of Object.entries(facts)) {
     if (v == null) continue;
     const s = String(v);
-    for (const re of INJECTION_PATTERNS) {
-      if (re.test(s)) return true;
+    for (const { name, re } of INJECTION_PATTERNS) {
+      if (re.test(s)) return `${name}@${k}`;
     }
   }
-  return false;
+  return null;
+}
+
+export function detectPromptInjection(facts: BriefNarrativeFacts): boolean {
+  return detectPromptInjectionPattern(facts) !== null;
 }
 
 /**
@@ -180,9 +189,13 @@ export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promis
 
   // §11.170 — injection pattern detect → LLM skip + deterministic fallback
   // (prompt injection 차단의 first quality gate. fitness_fail 누적해 admin 가시화)
-  if (detectPromptInjection(safe)) {
+  // §11.171 — 감지 시 audit log persistence (보안 감사성).
+  const injectionPattern = detectPromptInjectionPattern(safe);
+  if (injectionPattern !== null) {
     incrementCacheStat("fitness_fail");
-    console.warn("[operational-brief] prompt injection 감지 — deterministic fallback");
+    console.warn(`[operational-brief] prompt injection 감지 (${injectionPattern}) — deterministic fallback`);
+    // audit log fire-and-forget — caller/lib 동작 영향 0
+    logBriefInjectionAudit({ pattern: injectionPattern, factsKeys: Object.keys(safe) });
     return deterministicNarrative(safe);
   }
 
