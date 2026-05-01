@@ -17,6 +17,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 
 import type {
@@ -682,40 +683,48 @@ export default function PurchasesPage() {
                     </p>
                   </div>
 
-                  {/* §11.142-impl § 2. 핵심 근거 — canonical facts */}
+                  {/* §11.187 § 2. 판단 근거 — 4-cell MetricCell grid (§11.180 패턴) */}
                   <div id="brief-facts" className="px-5 py-4 border-b border-slate-100">
-                    <div className="text-xs font-bold text-slate-700 mb-2.5">핵심 근거</div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">상태</span>
-                        <span className={`${cs.text} font-medium`}>{cs.label}</span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">총액</span>
-                        <span className="text-slate-900 font-medium">
-                          {formatPrice(selectedItem.totalBudget, selectedItem.currency)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">회신 현황</span>
-                        <span className={selectedItem.supplierReplies === selectedItem.totalSuppliers && selectedItem.totalSuppliers > 0
-                          ? "text-emerald-600 font-medium"
-                          : "text-amber-600"}>
-                          {selectedItem.supplierReplies}/{selectedItem.totalSuppliers} {selectedItem.totalSuppliers > 0 ? "완료" : "—"}
-                        </span>
-                      </div>
-                      {selectedItem.validUntil && (
-                        <div className="flex justify-between text-xs">
-                          <span className="text-slate-500">유효기간</span>
-                          <span className={selectedItem.isExpired ? "text-rose-600 font-medium" : "text-slate-700"}>
-                            {new Date(selectedItem.validUntil).toLocaleDateString("ko-KR")}
-                          </span>
+                    <div className="text-xs font-bold text-slate-700 mb-2.5">판단 근거</div>
+                    {(() => {
+                      const replyTone: "ok" | "warn" | "danger" =
+                        selectedItem.totalSuppliers === 0
+                          ? "danger"
+                          : selectedItem.supplierReplies === selectedItem.totalSuppliers
+                            ? "ok"
+                            : "warn";
+                      const expiryTone: "ok" | "warn" | "danger" | "neutral" =
+                        selectedItem.isExpired
+                          ? "danger"
+                          : selectedItem.validUntil
+                            ? "ok"
+                            : "neutral";
+                      const replyValue =
+                        selectedItem.totalSuppliers === 0
+                          ? "—"
+                          : `${selectedItem.supplierReplies}/${selectedItem.totalSuppliers}`;
+                      const expiryValue = selectedItem.isExpired
+                        ? "만료됨"
+                        : selectedItem.validUntil
+                          ? new Date(selectedItem.validUntil).toLocaleDateString("ko-KR")
+                          : "—";
+                      return (
+                        <div className="grid grid-cols-2 gap-2.5">
+                          <MetricCell label="상태" value={cs.label} tone="neutral" />
+                          <MetricCell label="공급사 회신" value={replyValue} tone={replyTone} />
+                          <MetricCell
+                            label="총액"
+                            value={formatPrice(selectedItem.totalBudget, selectedItem.currency)}
+                            tone="neutral"
+                          />
+                          <MetricCell label="유효기간" value={expiryValue} tone={expiryTone} />
                         </div>
-                      )}
-                      <div className="flex justify-between text-xs">
-                        <span className="text-slate-500">작성 후</span>
-                        <span className="text-slate-700">{selectedItem.createdDaysAgo}일</span>
-                      </div>
+                      );
+                    })()}
+                    {/* 보조 metadata — 작성 후 일수 (정보 보존) */}
+                    <div className="mt-3 pt-3 border-t border-slate-100 flex justify-between text-[11px]">
+                      <span className="text-slate-500">작성 후</span>
+                      <span className="text-slate-700">{selectedItem.createdDaysAgo}일</span>
                     </div>
                   </div>
 
