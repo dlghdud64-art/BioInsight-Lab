@@ -20,6 +20,7 @@ import {
 } from "@/lib/ops-console/inbox-adapter";
 import { cn } from "@/lib/utils";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import {
   AlertTriangle,
@@ -207,6 +208,35 @@ export default function InboxPage() {
         : null,
     [allItems, selectedItemId],
   );
+
+  // §11.175 — auto_open URL handler (dashboard/floating entry → priority hydrate).
+  // ?auto_open=p0 또는 ?auto_open=1 → filteredItems 첫 행 자동 선택 (sortInboxItems
+  // 가 이미 priority desc 로 정렬하므로 [0] 이 가장 시급 항목).
+  // 1회성 (URL param consume 후 router.replace 로 제거).
+  const autoOpenParam = searchParams.get("auto_open");
+  useEffect(() => {
+    if (!autoOpenParam) return;
+    if (selectedItemId) return; // 이미 열려 있으면 skip
+    if (filteredItems.length === 0) return;
+    const target = filteredItems[0];
+    setSelectedItemId(target.id ?? null);
+    // consume URL param (back/refresh 시 중복 hydrate 방지)
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("auto_open");
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }, [autoOpenParam, filteredItems, selectedItemId, pathname, router, searchParams]);
+
+  // §11.175 — floating entry click handler.
+  // selected 없으면 priority 첫 행 hydrate, 있으면 toggle close.
+  const handleFloatingEntryClick = useCallback(() => {
+    if (selectedItemId) {
+      setSelectedItemId(null);
+      return;
+    }
+    if (filteredItems.length === 0) return;
+    setSelectedItemId(filteredItems[0].id ?? null);
+  }, [selectedItemId, filteredItems]);
 
   // Toggle group collapse
   const toggleGroup = useCallback((group: string) => {
@@ -538,6 +568,13 @@ export default function InboxPage() {
           );
         })()}
       </div>
+
+      {/* §11.175 — 운영 브리핑 floating entry (selected 없으면 priority 첫 행 hydrate, 있으면 toggle close) */}
+      <OperationalBriefFloatingEntry
+        onClick={filteredItems.length > 0 ? handleFloatingEntryClick : undefined}
+        open={!!selectedItem}
+        controls="operational-brief-context-panel"
+      />
     </div>
   );
 }
@@ -706,20 +743,52 @@ function ContextPanel({
     enabled: !!item.id,
   });
 
+  // §11.175 — LAST UPDATED relative time (deterministic, no external dep)
+  const lastUpdatedLabel = formatRelativeKr(item.updatedAt ?? null);
+  const blockerCount = buildInboxItemBlockers(item).length;
+
   return (
-    <div className="hidden lg:block w-[320px] flex-shrink-0 bg-pn border-l border-bd sticky top-0 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
-      {/* §11.145 Brief header — 운영 브리핑 + 선택한 작업 (lock §11.142) */}
-      <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
-        <span className="text-[11px] font-semibold text-blue-700 uppercase tracking-wide">운영 브리핑</span>
-        <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 작업</span>
+    <div className="hidden lg:block w-[560px] flex-shrink-0 bg-pn border-l border-bd sticky top-0 self-start max-h-[calc(100vh-120px)] overflow-y-auto">
+      {/* §11.175 — eyebrow + module label + work object id + LAST UPDATED + close X */}
+      <div className="px-6 py-5 border-b border-bd bg-el/20">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">
+              OPERATIONAL BRIEFING
+            </span>
+            <span
+              className={cn(
+                "inline-flex px-2 py-0.5 rounded text-[11px] font-medium",
+                SOURCE_MODULE_COLORS[item.sourceModule],
+              )}
+            >
+              {WORK_TYPE_LABELS[item.workType]}
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-slate-700 p-1 rounded transition-colors"
+            aria-label="브리핑 닫기"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <h3 className="text-2xl font-bold text-slate-900 leading-tight">
+          {item.title}
+        </h3>
+        {lastUpdatedLabel && (
+          <div className="mt-2 text-[11px] text-slate-500 uppercase tracking-wide">
+            <span className="font-semibold">LAST UPDATED</span> · {lastUpdatedLabel}
+          </div>
+        )}
       </div>
 
-      {/* §11.145 4 preset chips — anchor jump to brief sections */}
-      <div className="px-4 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
+      {/* §11.145 4 preset chips — anchor jump */}
+      <div className="px-6 py-3 border-b border-bd/50 flex flex-wrap gap-1.5">
         {[
           { id: "summary", label: "상태 요약" },
-          { id: "facts",   label: "차단 사유" },
-          { id: "risks",   label: "위험도" },
+          { id: "facts",   label: "핵심 근거" },
+          { id: "risks",   label: "리스크" },
           { id: "next",    label: "다음 단계" },
         ].map((c) => (
           <button
@@ -730,126 +799,96 @@ function ContextPanel({
               const el = document.getElementById(`brief-${c.id}`);
               if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
             }}
-            className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+            className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
           >
             {c.label}
           </button>
         ))}
       </div>
 
-      <div className="p-4 space-y-4">
-        {/* Header */}
-        <div className="flex items-start justify-between">
-          <div>
-            <span
-              className={cn(
-                "inline-flex px-2 py-0.5 rounded text-[11px] font-medium mb-2",
-                SOURCE_MODULE_COLORS[item.sourceModule],
-              )}
-            >
-              {WORK_TYPE_LABELS[item.workType]}
-            </span>
-            <h3 className="text-sm font-semibold text-st mt-1">
-              {item.title}
-            </h3>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-slate-500 hover:text-slate-600 p-0.5"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
+      <div className="p-6 space-y-6">
 
-        {/* § 1. 상황 요약 — summary + §11.161 LLM narrative hook */}
+        {/* § 1. 상황 요약 — text-base + leading-relaxed (§11.175 density-up) */}
         <section id="brief-summary" className="scroll-mt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
-          <p className="text-xs text-slate-600 leading-relaxed">
-            {briefNarrative ?? item.summary}
-            {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
-          </p>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+            상황 요약
+          </div>
+          <div className="rounded-lg border-l-4 border-blue-500 bg-slate-50 p-4">
+            <p className="text-base text-slate-800 leading-relaxed">
+              {briefNarrative ?? item.summary}
+            </p>
+            {briefCached && (
+              <span className="mt-1 inline-block text-[10px] text-slate-400">· 캐시</span>
+            )}
+          </div>
         </section>
 
-        {/* § 2. 핵심 근거 — Priority + Due */}
+        {/* § 2. 핵심 근거 — 2x2 metric grid + text-3xl 수치 (§11.175) */}
         <section id="brief-facts" className="scroll-mt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">핵심 근거</div>
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex px-2 py-0.5 rounded text-[11px] font-medium",
-              PRIORITY_BADGE[item.priority],
-            )}
-          >
-            {PRIORITY_LABEL[item.priority]}
-          </span>
-          <span
-            className={cn(
-              "inline-flex px-2 py-0.5 rounded text-[11px] font-medium",
-              DUE_BADGE[item.dueState.tone],
-            )}
-          >
-            {item.dueState.label}
-          </span>
-        </div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+            RESOLVER 판별 근거
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <MetricCell label="우선순위" value={PRIORITY_LABEL[item.priority]} tone={item.priority === "p0" ? "danger" : item.priority === "p1" ? "warn" : "neutral"} />
+            <MetricCell label="기한" value={item.dueState.label} tone={item.dueState.tone === "overdue" ? "danger" : item.dueState.tone === "due_soon" ? "warn" : "neutral"} />
+            <MetricCell label="담당자" value={item.owner ?? "미할당"} tone="neutral" />
+            <MetricCell label="차단 상태" value={blockerCount === 0 ? "없음" : `${blockerCount}건`} tone={blockerCount === 0 ? "ok" : "danger"} />
+          </div>
         </section>
 
-        {/* Owner + Assignment State */}
-        <div className="text-xs space-y-1">
-          {item.owner && (
-            <div>
-              <span className="text-slate-500">담당자: </span>
-              <span className="text-slate-600">{item.owner}</span>
-            </div>
-          )}
+        {/* Owner + Assignment State (보조 metadata) */}
+        <div className="text-xs space-y-1.5">
           {(() => {
             const ownerSummary = buildInboxItemOwnership(item);
             return (
-              <div className="flex items-center gap-2">
-                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium bg-slate-800 ${ASSIGNMENT_STATE_TONES[ownerSummary.assignmentState]}`}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`rounded px-2 py-0.5 text-[11px] font-medium bg-slate-800 ${ASSIGNMENT_STATE_TONES[ownerSummary.assignmentState]}`}>
                   {ASSIGNMENT_STATE_LABELS[ownerSummary.assignmentState]}
                 </span>
                 {ownerSummary.waitingExternalLabel && (
-                  <span className="text-[10px] text-purple-400">⏳ {ownerSummary.waitingExternalLabel}</span>
+                  <span className="text-[11px] text-purple-600">⏳ {ownerSummary.waitingExternalLabel}</span>
                 )}
                 {ownerSummary.slaState === 'escalation_required' && ownerSummary.escalationOwnerName && (
-                  <span className="text-[10px] text-red-400">에스컬레이션 → {ownerSummary.escalationOwnerName}</span>
+                  <span className="text-[11px] text-red-600">에스컬레이션 → {ownerSummary.escalationOwnerName}</span>
                 )}
               </div>
             );
           })()}
         </div>
 
-        {/* § 3. 리스크 — Blocker details (structured resolution) */}
+        {/* § 3. 리스크 — amber alert tone (§11.175) */}
         <section id="brief-risks" className="scroll-mt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">리스크</div>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+            리스크 식별
+          </div>
         {(() => {
           const blockers = buildInboxItemBlockers(item);
           if (blockers.length === 0) {
             return (
-              <p className="text-[11px] text-slate-500">차단 없음</p>
+              <p className="text-sm text-slate-500">차단 없음</p>
             );
           }
           return (
-            <div className="bg-red-500/5 border border-red-500/20 rounded-lg p-3 space-y-2">
-              <div className="flex items-center gap-1.5 mb-1">
-                <AlertTriangle className="h-3.5 w-3.5 text-red-400" />
-                <span className="text-xs font-medium text-red-400">
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm font-semibold text-amber-900">
                   차단 사유 ({blockers.length}건)
                 </span>
               </div>
               {blockers.map((b) => (
-                <div key={b.summaryKey} className="space-y-0.5">
-                  <div className="flex items-center gap-2 text-xs">
+                <div key={b.summaryKey} className="space-y-1">
+                  <div className="flex items-center gap-2 text-sm">
                     <span className={`w-1.5 h-1.5 rounded-full ${SEVERITY_DOT_COLORS[b.severity]} shrink-0`} />
-                    <span className="text-slate-600">{b.whyBlocked}</span>
+                    <span className="text-slate-800">{b.whyBlocked}</span>
                   </div>
-                  <div className="pl-3.5 text-[10px] space-y-0.5">
-                    <p className="text-blue-400/80">→ {b.whatCanResolveIt}</p>
+                  <div className="pl-3.5 text-xs space-y-0.5">
+                    <p className="text-blue-700">→ {b.whatCanResolveIt}</p>
                     <p className="text-slate-500">
                       {SEVERITY_LABELS[b.severity]} · {b.recommendedResolutionLabel}
                     </p>
                     {b.canPartiallyContinue && b.partialContinuationLabel && (
-                      <p className="text-emerald-400/70">▸ {b.partialContinuationLabel}</p>
+                      <p className="text-emerald-700">▸ {b.partialContinuationLabel}</p>
                     )}
                   </div>
                 </div>
@@ -864,7 +903,7 @@ function ContextPanel({
             {item.riskBadges.map((badge) => (
               <span
                 key={badge}
-                className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 text-red-400"
+                className="inline-flex px-2 py-0.5 rounded text-[11px] font-medium bg-red-500/10 text-red-600"
               >
                 {badge}
               </span>
@@ -875,18 +914,17 @@ function ContextPanel({
 
         {/* § 4. 다음 조치 — next action + CTA */}
         <section id="brief-next" className="scroll-mt-4">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
-          <div className="text-xs">
-            <span className="text-blue-600">{item.nextAction}</span>
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500 mb-2">
+            다음 조치
           </div>
+          <p className="text-sm text-blue-700 font-medium">{item.nextAction}</p>
         </section>
 
         {/* Action buttons */}
         <div className="space-y-2 pt-2">
           {actionLabel && canExecuteAction && (
             <Button
-              size="sm"
-              className="w-full text-xs"
+              className="w-full h-11 text-sm"
               onClick={onAction}
             >
               {actionLabel}
@@ -895,8 +933,7 @@ function ContextPanel({
           {actionLabel && !canExecuteAction && quickAction?.requiresDetail && (
             <Button
               variant="outline"
-              size="sm"
-              className="w-full text-xs gap-1.5"
+              className="w-full h-11 text-sm gap-1.5"
               onClick={() => {
                 if (quickAction.detailRoute) {
                   window.location.href = quickAction.detailRoute;
@@ -910,17 +947,60 @@ function ContextPanel({
           )}
           <Button
             variant="outline"
-            size="sm"
-            className="w-full text-xs gap-1.5"
+            className="w-full h-11 text-sm gap-1.5"
             onClick={onNavigate}
           >
-            <ExternalLink className="h-3 w-3" />
+            <ExternalLink className="h-4 w-4" />
             상세 페이지 이동
           </Button>
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * §11.175 — RESOLVER 판별 근거 metric cell (text-3xl 수치).
+ * tone 별 좌측 액센트 색상.
+ */
+function MetricCell({ label, value, tone }: { label: string; value: string; tone: "ok" | "warn" | "danger" | "neutral" }) {
+  const accent = {
+    ok: "border-emerald-500",
+    warn: "border-amber-500",
+    danger: "border-red-500",
+    neutral: "border-slate-300",
+  }[tone];
+  return (
+    <div className={cn("rounded-lg border bg-white p-4 border-l-4", accent, "border-y-slate-200 border-r-slate-200")}>
+      <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1">
+        {label}
+      </div>
+      <div className="text-3xl font-bold text-slate-900 leading-none truncate">
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * §11.175 — deterministic 한국어 상대 시간 (외부 dep 0).
+ * "방금 전" / "12분 전" / "3시간 전" / "5일 전" / null (Date 0 또는 invalid).
+ */
+function formatRelativeKr(input: Date | string | null): string | null {
+  if (!input) return null;
+  const d = typeof input === "string" ? new Date(input) : input;
+  if (isNaN(d.getTime()) || d.getTime() === 0) return null;
+  const diffMs = Date.now() - d.getTime();
+  if (diffMs < 0) return "방금 전";
+  const sec = Math.floor(diffMs / 1000);
+  if (sec < 60) return "방금 전";
+  const min = Math.floor(sec / 60);
+  if (min < 60) return `${min}분 전`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}시간 전`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}일 전`;
+  return d.toLocaleDateString("ko-KR");
 }
 
 // Quick action labels now provided by buildInboxQuickAction adapter

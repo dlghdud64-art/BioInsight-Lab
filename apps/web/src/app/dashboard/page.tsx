@@ -49,6 +49,7 @@ import { SpendTrendCard } from "@/components/dashboard/spend-trend-card";
 import { CategoryDistributionCard } from "@/components/dashboard/category-distribution-card";
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
+import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 
 // ── Overlay 지원 경로 판별 ──
 const OVERLAY_ROUTE_PATTERNS = [
@@ -1216,6 +1217,12 @@ export default function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      {/* §11.175 — 운영 브리핑 floating entry (dashboard → inbox auto_open=p0 hand-off) */}
+      <OperationalBriefFloatingEntry
+        onClick={() => router.push("/dashboard/inbox?auto_open=p0")}
+        controls="operational-brief-context-panel"
+      />
     </div>
   );
 }
