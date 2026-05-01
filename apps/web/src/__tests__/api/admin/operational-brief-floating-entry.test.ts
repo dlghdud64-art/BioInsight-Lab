@@ -126,7 +126,7 @@ describe("§11.175 inbox auto_open URL handler", () => {
   });
 });
 
-describe("§11.175 dashboard 진입점 wire", () => {
+describe("§11.175 dashboard 진입점 wire (§11.181 popup default 로 marshall 됨)", () => {
   const PATH = "src/app/dashboard/page.tsx";
 
   it("OperationalBriefFloatingEntry import + 사용", () => {
@@ -134,8 +134,10 @@ describe("§11.175 dashboard 진입점 wire", () => {
     expect(src).toMatch(/OperationalBriefFloatingEntry/);
   });
 
-  it("clicking entry → /dashboard/inbox?auto_open=p0", () => {
+  it("§11.181 — onClick prop 없음 (popup context default 사용)", () => {
     const src = read(PATH);
-    expect(src).toMatch(/auto_open=p0|\?auto_open=p0/);
+    const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
+    expect(m).not.toBeNull();
+    expect(m![0]).not.toMatch(/\bonClick\s*=/);
   });
 });

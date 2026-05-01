@@ -238,23 +238,8 @@ export function WorkQueueConsole() {
         </>
       )}
 
-      {/* §11.177 — 운영 브리핑 floating entry (work-queue surface) */}
-      <OperationalBriefFloatingEntry
-        onClick={(() => {
-          // groups[0].items[0] 가 priority desc 첫 행 (console-grouping 가 정렬함)
-          const firstItem = groups.find(g => g.items.length > 0)?.items[0] ?? null;
-          if (!firstItem) return undefined;
-          return () => {
-            if (selectedItem) {
-              setSelectedItem(null);
-              return;
-            }
-            setSelectedItem(firstItem);
-          };
-        })()}
-        open={!!selectedItem}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

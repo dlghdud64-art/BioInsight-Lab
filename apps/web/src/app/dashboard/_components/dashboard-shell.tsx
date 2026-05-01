@@ -14,6 +14,8 @@ import { WorkbenchProgressOverlay } from "@/components/dashboard/overlay/workben
 import { WorkbenchFullOverlay } from "@/components/dashboard/overlay/workbench-full-overlay";
 import { GovernedActionComposerBridge } from "@/components/governed-action/governed-action-composer-bridge";
 import { GlobalModal } from "@/components/global-modal";
+import { OperationalBriefPopupProvider } from "@/components/operational-brief/popup-context";
+import { OperationalBriefPopup } from "@/components/operational-brief/popup";
 import { useOverlayDeepLink } from "@/hooks/use-overlay-deep-link";
 import { useOverlayKeyboard } from "@/hooks/use-overlay-keyboard";
 
@@ -37,6 +39,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <OpsStoreProvider>
+      <OperationalBriefPopupProvider>
       {/* §11.125 — skip-link (WCAG 2.4.1 Bypass Blocks). 키보드 사용자가
           Tab 첫 stop 으로 sidebar nav 건너뛰고 main 으로 이동. */}
       <a
@@ -77,7 +80,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <GovernanceDevPanel />
         <GovernedActionComposerBridge />
         <GlobalModal />
+        {/* §11.181 — 운영 브리핑 popup (모든 dashboard surface 에서 단일 인스턴스) */}
+        <OperationalBriefPopup />
       </div>
+      </OperationalBriefPopupProvider>
     </OpsStoreProvider>
   );
 }

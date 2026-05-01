@@ -296,16 +296,7 @@ export default function PurchasesPage() {
   }, [selectedId, items]);
 
   const closeRail = useCallback(() => setSelectedId(null), []);
-
-  // §11.176 — floating entry click handler (selected toggle / 첫 row hydrate)
-  const handleFloatingEntryClick = useCallback(() => {
-    if (selectedId) {
-      setSelectedId(null);
-      return;
-    }
-    if (filteredItems.length === 0) return;
-    setSelectedId(filteredItems[0].id ?? null);
-  }, [selectedId, filteredItems]);
+  // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
 
   // §11.161 — 운영 브리핑 narrative hook
   const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
@@ -989,12 +980,8 @@ export default function PurchasesPage() {
 
       </div>
 
-      {/* §11.176 — 운영 브리핑 floating entry */}
-      <OperationalBriefFloatingEntry
-        onClick={filteredItems.length > 0 ? handleFloatingEntryClick : undefined}
-        open={!!selectedItem}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

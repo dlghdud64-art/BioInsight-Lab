@@ -21,9 +21,14 @@
 
 import { Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useOperationalBriefPopup } from "./popup-context";
 
 interface OperationalBriefFloatingEntryProps {
-  /** 클릭 핸들러. undefined 시 disabled (dead button 방지). */
+  /**
+   * 클릭 핸들러 (선택).
+   * §11.181 부터 default = useOperationalBriefPopup().open() — popup 호출.
+   * surface 별로 자체 hydrate 가 필요한 경우만 onClick 명시 (대부분 0).
+   */
   onClick?: () => void;
   /** brief panel 이 열려 있는 상태 — aria-expanded 반영. */
   open?: boolean;
@@ -35,11 +40,15 @@ interface OperationalBriefFloatingEntryProps {
 
 export function OperationalBriefFloatingEntry({
   onClick,
-  open = false,
+  open: openProp,
   controls,
   className,
 }: OperationalBriefFloatingEntryProps) {
-  const disabled = !onClick;
+  const popup = useOperationalBriefPopup();
+  const handleClick = onClick ?? popup.open;
+  // open prop 미지정 시 popup context 의 isOpen 으로 derive (aria-expanded 동기)
+  const open = openProp ?? popup.isOpen;
+  const disabled = !handleClick;
   return (
     <button
       type="button"

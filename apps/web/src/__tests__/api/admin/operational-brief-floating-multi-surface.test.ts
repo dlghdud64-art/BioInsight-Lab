@@ -68,18 +68,18 @@ describe("§11.176 4 surface floating entry mount", () => {
   }
 });
 
-describe("§11.176 surface 별 hydrate / navigation handler", () => {
-  it("purchases — handleFloatingEntryClick (selected toggle / 첫 row hydrate)", () => {
+describe("§11.176 surface 별 hydrate handler (§11.181 popup default 로 marshall 됨)", () => {
+  it("§11.181 — purchases FAB 에 onClick prop 없음 (popup context 사용)", () => {
     const src = read("src/app/dashboard/purchases/page.tsx");
-    expect(src).toMatch(/handleFloatingEntryClick/);
-    expect(src).toMatch(/setSelectedId\(\s*null\s*\)/);
-    expect(src).toMatch(/setSelectedId\(\s*filteredItems\[0\]\.id/);
+    const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
+    expect(m).not.toBeNull();
+    expect(m![0]).not.toMatch(/\bonClick\s*=/);
   });
 
-  it("quotes — handleFloatingEntryClick (selected toggle / 첫 quote hydrate)", () => {
+  it("§11.181 — quotes FAB 에 onClick prop 없음 (popup context 사용)", () => {
     const src = read("src/app/dashboard/quotes/page.tsx");
-    expect(src).toMatch(/handleFloatingEntryClick/);
-    expect(src).toMatch(/setSelectedQuoteId\(\s*null\s*\)/);
-    expect(src).toMatch(/setSelectedQuoteId\(\s*filteredQuotes\[0\]\.id/);
+    const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
+    expect(m).not.toBeNull();
+    expect(m![0]).not.toMatch(/\bonClick\s*=/);
   });
 });

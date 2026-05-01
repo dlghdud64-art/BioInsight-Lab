@@ -297,11 +297,8 @@ export default function PurchaseOrderLandingPage() {
         </>
       )}
 
-      {/* §11.177 — 운영 브리핑 floating entry (PO list surface, lead to inbox auto_open=p0) */}
-      <OperationalBriefFloatingEntry
-        onClick={() => router.push("/dashboard/inbox?auto_open=p0")}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

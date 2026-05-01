@@ -229,16 +229,8 @@ export default function InboxPage() {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }, [autoOpenParam, filteredItems, selectedItemId, pathname, router, searchParams]);
 
-  // §11.175 — floating entry click handler.
-  // selected 없으면 priority 첫 행 hydrate, 있으면 toggle close.
-  const handleFloatingEntryClick = useCallback(() => {
-    if (selectedItemId) {
-      setSelectedItemId(null);
-      return;
-    }
-    if (filteredItems.length === 0) return;
-    setSelectedItemId(filteredItems[0].id ?? null);
-  }, [selectedItemId, filteredItems]);
+  // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
+  // §11.175 의 auto_open URL handler 만 유지 (외부 deep-link 호환성).
 
   // Toggle group collapse
   const toggleGroup = useCallback((group: string) => {
@@ -571,12 +563,8 @@ export default function InboxPage() {
         })()}
       </div>
 
-      {/* §11.175 — 운영 브리핑 floating entry (selected 없으면 priority 첫 행 hydrate, 있으면 toggle close) */}
-      <OperationalBriefFloatingEntry
-        onClick={filteredItems.length > 0 ? handleFloatingEntryClick : undefined}
-        open={!!selectedItem}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

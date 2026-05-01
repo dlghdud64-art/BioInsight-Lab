@@ -1218,11 +1218,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* §11.175 — 운영 브리핑 floating entry (dashboard → inbox auto_open=p0 hand-off) */}
-      <OperationalBriefFloatingEntry
-        onClick={() => router.push("/dashboard/inbox?auto_open=p0")}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

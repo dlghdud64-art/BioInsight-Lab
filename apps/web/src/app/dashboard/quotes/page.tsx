@@ -533,15 +533,7 @@ function QuotesPageContent() {
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
 
-  // §11.176 — floating entry click handler (selected toggle / 첫 quote hydrate). filteredQuotes 정의 이후 필요해 useEffect 외부에 const 로 placeholder, 실제 use 는 JSX 시점.
-  const handleFloatingEntryClick = () => {
-    if (selectedQuoteId) {
-      setSelectedQuoteId(null);
-      return;
-    }
-    if (filteredQuotes.length === 0) return;
-    setSelectedQuoteId(filteredQuotes[0].id ?? null);
-  };
+  // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
 
   // §11.161 — 운영 브리핑 narrative hook (selectedQuote 선언 후 호출)
   const { narrative: briefNarrative, cached: briefCached } = useOperationalBriefNarrative({
@@ -1600,12 +1592,8 @@ function QuotesPageContent() {
         }}
       />
 
-      {/* §11.176 — 운영 브리핑 floating entry */}
-      <OperationalBriefFloatingEntry
-        onClick={filteredQuotes.length > 0 ? handleFloatingEntryClick : undefined}
-        open={!!selectedQuote}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

@@ -3840,22 +3840,8 @@ function InventoryPageContent() {
         }}
       />
 
-      {/* §11.177 — 운영 브리핑 floating entry (inventory surface) */}
-      <OperationalBriefFloatingEntry
-        onClick={
-          displayInventories.length > 0
-            ? () => {
-                if (selectedItem) {
-                  setSelectedItem(null);
-                  return;
-                }
-                setSelectedItem(displayInventories[0] ?? null);
-              }
-            : undefined
-        }
-        open={!!selectedItem}
-        controls="operational-brief-context-panel"
-      />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
+      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
   );
 }

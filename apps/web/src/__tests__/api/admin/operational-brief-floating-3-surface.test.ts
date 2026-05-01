@@ -15,30 +15,23 @@ function read(rel: string): string {
   return readFileSync(join(REPO_ROOT, rel), "utf8");
 }
 
-describe("§11.177 3 surface floating entry mount", () => {
-  it("inventory-content.tsx — OperationalBriefFloatingEntry import + 사용 + selectedItem 토글 / displayInventories[0] hydrate", () => {
-    const src = read("src/app/dashboard/inventory/inventory-content.tsx");
-    expect(src).toMatch(/OperationalBriefFloatingEntry/);
-    expect(src).toMatch(/operational-brief\/floating-entry/);
-    expect(src).toMatch(/setSelectedItem\(\s*null\s*\)/);
-    expect(src).toMatch(/setSelectedItem\(\s*displayInventories\[0\]/);
-  });
+describe("§11.177 3 surface floating entry mount (§11.181 popup default 로 marshall 됨)", () => {
+  const SURFACES: { name: string; path: string }[] = [
+    { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },
+    { name: "work-queue-console", path: "src/components/dashboard/work-queue-console.tsx" },
+    { name: "purchase-orders/page", path: "src/app/dashboard/purchase-orders/page.tsx" },
+  ];
 
-  it("work-queue-console.tsx — OperationalBriefFloatingEntry import + 사용 + groups 첫 item hydrate", () => {
-    const src = read("src/components/dashboard/work-queue-console.tsx");
-    expect(src).toMatch(/OperationalBriefFloatingEntry/);
-    expect(src).toMatch(/from\s+["']@\/components\/operational-brief\/floating-entry["']/);
-    expect(src).toMatch(/groups\.find\(g\s*=>\s*g\.items\.length\s*>\s*0\)/);
-    expect(src).toMatch(/setSelectedItem\(firstItem\)/);
-  });
-
-  it("purchase-orders/page.tsx — OperationalBriefFloatingEntry import + inbox auto_open=p0 lead", () => {
-    const src = read("src/app/dashboard/purchase-orders/page.tsx");
-    expect(src).toMatch(/OperationalBriefFloatingEntry/);
-    expect(src).toMatch(/from\s+["']@\/components\/operational-brief\/floating-entry["']/);
-    expect(src).toMatch(/\/dashboard\/inbox\?auto_open=p0/);
-    expect(src).toMatch(/router\.push\(["']\/dashboard\/inbox\?auto_open=p0["']\)/);
-  });
+  for (const { name, path } of SURFACES) {
+    it(`${name} — OperationalBriefFloatingEntry import + onClick prop 없음 (popup context default)`, () => {
+      const src = read(path);
+      expect(src).toMatch(/OperationalBriefFloatingEntry/);
+      expect(src).toMatch(/operational-brief\/floating-entry/);
+      const m = src.match(/<OperationalBriefFloatingEntry[\s\S]*?\/>/);
+      expect(m, `${name} FAB mount 없음`).not.toBeNull();
+      expect(m![0]).not.toMatch(/\bonClick\s*=/);
+    });
+  }
 });
 
 describe("§11.177 lock §11.142 호환 — facts 0 노출", () => {
