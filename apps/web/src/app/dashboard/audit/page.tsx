@@ -499,6 +499,30 @@ export default function AuditTrailPage() {
             className="pl-9 h-9 text-xs"
           />
         </div>
+        {/* §11.172 — Injection 시도 전용 quick filter chip (ADMIN-only) */}
+        {userRole === "ADMIN" && (
+          <button
+            type="button"
+            onClick={() => {
+              const isActive = search.trim() === "prompt_injection_detected" && eventTypeFilter === "SETTINGS_CHANGED";
+              if (isActive) {
+                setSearch("");
+                setEventTypeFilter("all");
+              } else {
+                setSearch("prompt_injection_detected");
+                setEventTypeFilter("SETTINGS_CHANGED");
+              }
+            }}
+            className={`h-9 px-3 rounded-md text-xs font-medium border transition-colors ${
+              search.trim() === "prompt_injection_detected" && eventTypeFilter === "SETTINGS_CHANGED"
+                ? "bg-rose-50 text-rose-700 border-rose-200"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            }`}
+            title="prompt_injection_detected action 만 보기"
+          >
+            🛡 Injection 시도
+          </button>
+        )}
       </div>
 
       {/* §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only) */}
