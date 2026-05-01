@@ -37,6 +37,9 @@ type Presence = {
   workspace?: boolean;
   organization?: boolean;
   products?: boolean; // applies to all 15
+  // §11.20 / §11.178b — vendor + quote model 추가 (이전 mock 누락으로 6 case fail).
+  vendors?: boolean; // applies to all vendor entries
+  quotes?: boolean;  // applies to all PILOT_QUOTE_IDS
 };
 
 function makeMockPrisma(p: Presence) {
@@ -46,6 +49,8 @@ function makeMockPrisma(p: Presence) {
     workspace: p.workspace ?? false,
     organization: p.organization ?? false,
     products: p.products ?? false,
+    vendors: p.vendors ?? false,
+    quotes: p.quotes ?? false,
   };
   return {
     workspaceMember: {
@@ -88,6 +93,20 @@ function makeMockPrisma(p: Presence) {
       // present.products toggles all 15 products at once
       findUnique: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
         Promise.resolve(present.products ? { id: where.id } : null),
+      ),
+      delete: vi.fn().mockResolvedValue({ ok: true }),
+    },
+    // §11.20 — vendor surface (이전 mock 누락)
+    vendor: {
+      findUnique: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+        Promise.resolve(present.vendors ? { id: where.id } : null),
+      ),
+      delete: vi.fn().mockResolvedValue({ ok: true }),
+    },
+    // §11.178 — quote surface (orphan 방지 cleanup)
+    quote: {
+      findUnique: vi.fn().mockImplementation(({ where }: { where: { id: string } }) =>
+        Promise.resolve(present.quotes ? { id: where.id } : null),
       ),
       delete: vi.fn().mockResolvedValue({ ok: true }),
     },
@@ -182,20 +201,22 @@ describe("buildPilotCleanupPlan — scoping structure", () => {
 });
 
 describe("runCleanup — dry-run mode", () => {
-  it("probes all 19 entities but never calls delete", async () => {
+  it("probes all 21 entities but never calls delete (§11.20 vendor + §11.178 quote 반영)", async () => {
     const prisma = makeMockPrisma({
       wsMember: true,
       orgMember: true,
       workspace: true,
       organization: true,
       products: true,
+      vendors: true,
+      quotes: true,
     });
     const result = await runCleanup(
       "dry-run",
       prisma as unknown as PilotCleanupPrismaClient,
     );
     expect(result.mode).toBe("dry-run");
-    expect(result.probes).toHaveLength(19);
+    expect(result.probes).toHaveLength(21);
     expect(result.deletedCalls).toEqual([]);
 
     expect(prisma.workspaceMember.delete).not.toHaveBeenCalled();
@@ -203,6 +224,8 @@ describe("runCleanup — dry-run mode", () => {
     expect(prisma.workspace.delete).not.toHaveBeenCalled();
     expect(prisma.organization.delete).not.toHaveBeenCalled();
     expect(prisma.product.delete).not.toHaveBeenCalled();
+    expect(prisma.vendor.delete).not.toHaveBeenCalled();
+    expect(prisma.quote.delete).not.toHaveBeenCalled();
   });
 
   it("reports all entities as not present when absent, still no delete", async () => {
@@ -217,25 +240,29 @@ describe("runCleanup — dry-run mode", () => {
 });
 
 describe("runCleanup — apply mode", () => {
-  it("deletes all 19 entities in order when every row is present", async () => {
+  it("deletes all 21 entities in order when every row is present (§11.20 vendor + §11.178 quote)", async () => {
     const prisma = makeMockPrisma({
       wsMember: true,
       orgMember: true,
       workspace: true,
       organization: true,
       products: true,
+      vendors: true,
+      quotes: true,
     });
     const result = await runCleanup(
       "apply",
       prisma as unknown as PilotCleanupPrismaClient,
     );
-    expect(result.deletedCalls).toHaveLength(19);
+    expect(result.deletedCalls).toHaveLength(21);
     const models = result.deletedCalls.map((d) => d.model);
     expect(models[0]).toBe("workspaceMember");
     expect(models[1]).toBe("organizationMember");
-    expect(models[2]).toBe("workspace");
-    expect(models[3]).toBe("organization");
-    expect(models.slice(4)).toEqual(new Array(15).fill("product"));
+    expect(models[2]).toBe("quote"); // §11.178
+    expect(models[3]).toBe("workspace");
+    expect(models[4]).toBe("organization");
+    expect(models.slice(5, 20)).toEqual(new Array(15).fill("product"));
+    expect(models[20]).toBe("vendor"); // §11.20
 
     expect(prisma.workspaceMember.delete).toHaveBeenCalledExactlyOnceWith({
       where: {
@@ -260,6 +287,8 @@ describe("runCleanup — apply mode", () => {
       where: { id: PILOT_ORG_ID },
     });
     expect(prisma.product.delete).toHaveBeenCalledTimes(15);
+    expect(prisma.vendor.delete).toHaveBeenCalledTimes(1);
+    expect(prisma.quote.delete).toHaveBeenCalledTimes(1);
   });
 
   it("is a safe no-op when nothing is present", async () => {
@@ -274,6 +303,8 @@ describe("runCleanup — apply mode", () => {
     expect(prisma.workspace.delete).not.toHaveBeenCalled();
     expect(prisma.organization.delete).not.toHaveBeenCalled();
     expect(prisma.product.delete).not.toHaveBeenCalled();
+    expect(prisma.vendor.delete).not.toHaveBeenCalled();
+    expect(prisma.quote.delete).not.toHaveBeenCalled();
   });
 
   it("skips entities that are already gone (partial state)", async () => {
@@ -284,12 +315,14 @@ describe("runCleanup — apply mode", () => {
       workspace: false,
       organization: true,
       products: true,
+      vendors: true,
+      quotes: true,
     });
     const result = await runCleanup(
       "apply",
       prisma as unknown as PilotCleanupPrismaClient,
     );
-    expect(result.deletedCalls).toHaveLength(18); // minus the absent workspace
+    expect(result.deletedCalls).toHaveLength(20); // 21 minus the absent workspace
     const models = result.deletedCalls.map((d) => d.model);
     expect(models).not.toContain("workspace");
     expect(prisma.workspace.delete).not.toHaveBeenCalled();
@@ -302,6 +335,8 @@ describe("runCleanup — apply mode", () => {
       workspace: true,
       organization: true,
       products: true,
+      vendors: true,
+      quotes: true,
     });
     await runCleanup(
       "apply",
@@ -328,6 +363,8 @@ describe("runCleanup — apply mode", () => {
     checkExact(prisma.workspace.findUnique);
     checkExact(prisma.organization.findUnique);
     checkExact(prisma.product.findUnique);
+    checkExact(prisma.vendor.findUnique);
+    checkExact(prisma.quote.findUnique);
   });
 
   it("never reaches for deleteMany — client surface does not expose it", () => {

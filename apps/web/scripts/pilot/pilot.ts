@@ -365,6 +365,37 @@ export const PILOT_INVENTORY_IDS: readonly string[] =
   PILOT_INVENTORY_CATALOG.map((i) => i.id);
 
 // ──────────────────────────────────────────────────────────
+// §11.178b — Pilot Order 카탈로그 (1건 — 발주/입고 surface 활성화)
+//
+// Order.quoteId 는 onDelete: Cascade 라 quote cleanup 으로 자동 삭제됨.
+// cleanup operation 별도 등록 불필요 (PilotCleanupOperation 에 order model 0).
+// orderNumber 는 deterministic 으로 고정 (re-run 시 conflict 0).
+// ──────────────────────────────────────────────────────────
+
+export interface PilotOrderSpec {
+  readonly id: string;
+  readonly quoteId: string;
+  readonly orderNumber: string;
+  readonly totalAmount: number;
+  readonly status: "ORDERED" | "SHIPPED" | "DELIVERED" | "CANCELLED";
+  readonly notes: string;
+}
+
+export const PILOT_ORDER_CATALOG: readonly PilotOrderSpec[] = [
+  {
+    id: "order-pilot-cell-culture-starter",
+    quoteId: "quote-pilot-cell-culture-starter",
+    orderNumber: "ORD-PILOT-2026-0001",
+    totalAmount: 320_000,
+    status: "ORDERED",
+    notes: "Pilot order — Cell Culture Starter Pack (DMEM/FBS/Trypsin)",
+  },
+];
+
+export const PILOT_ORDER_IDS: readonly string[] =
+  PILOT_ORDER_CATALOG.map((o) => o.id);
+
+// ──────────────────────────────────────────────────────────
 // Cleanup plan — declarative, consumed by pilot-cleanup.ts
 // ──────────────────────────────────────────────────────────
 

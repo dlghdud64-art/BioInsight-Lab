@@ -50,6 +50,8 @@ import {
   // §11.178 — Quote + Inventory pilot fixtures
   PILOT_QUOTE_CATALOG,
   PILOT_INVENTORY_CATALOG,
+  // §11.178b — Order pilot fixtures
+  PILOT_ORDER_CATALOG,
 } from "./pilot";
 
 async function main() {
@@ -289,11 +291,42 @@ async function main() {
           });
         }
 
-        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, quotes, inventories };
+        // 11. §11.178b — Order pilot fixtures (1 row, 1:1 with quote).
+        //     Order.quoteId 는 unique 이고 onDelete: Cascade — Quote 삭제 시
+        //     자동 삭제되어 cleanup operation 등록 불필요.
+        //     orderNumber 는 deterministic 으로 고정 (`ORD-PILOT-2026-0001`).
+        const orders: Array<{ id: string; quoteId: string; orderNumber: string }> = [];
+        for (const spec of PILOT_ORDER_CATALOG) {
+          const ord = await tx.order.upsert({
+            where: { id: spec.id },
+            create: {
+              id: spec.id,
+              userId: ownerUserId,
+              organizationId: PILOT_ORG_ID,
+              quoteId: spec.quoteId,
+              orderNumber: spec.orderNumber,
+              totalAmount: spec.totalAmount,
+              status: spec.status as never,
+              notes: spec.notes,
+            },
+            update: {
+              totalAmount: spec.totalAmount,
+              status: spec.status as never,
+              notes: spec.notes,
+            },
+          });
+          orders.push({
+            id: ord.id,
+            quoteId: ord.quoteId,
+            orderNumber: ord.orderNumber,
+          });
+        }
+
+        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, quotes, inventories, orders };
       },
       {
         // 15 product upserts + 1 vendor + 15 productVendor + 4 parent
-        // rows + §11.178 1 quote + 3 inventory = 39 writes. 30s 여전 충분.
+        // rows + §11.178 1 quote + 3 inventory + §11.178b 1 order = 40 writes. 30s 여전 충분.
         timeout: 30_000,
         maxWait: 10_000,
       },
@@ -357,6 +390,15 @@ async function main() {
     for (const inv of summary.inventories) {
       // eslint-disable-next-line no-console
       console.log(`  - ${inv.id}  product=${inv.productId}  qty=${inv.currentQuantity}`);
+    }
+    // §11.178b — order log
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] orders: ${summary.orders.length} upserted`,
+    );
+    for (const ord of summary.orders) {
+      // eslint-disable-next-line no-console
+      console.log(`  - ${ord.id}  quoteId=${ord.quoteId}  orderNumber=${ord.orderNumber}`);
     }
     // eslint-disable-next-line no-console
     console.log("[pilot-seed] PASS");

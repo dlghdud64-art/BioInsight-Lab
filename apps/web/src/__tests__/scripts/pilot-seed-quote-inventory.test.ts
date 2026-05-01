@@ -12,6 +12,8 @@ import {
   PILOT_QUOTE_IDS,
   PILOT_INVENTORY_CATALOG,
   PILOT_INVENTORY_IDS,
+  PILOT_ORDER_CATALOG,
+  PILOT_ORDER_IDS,
   PILOT_PRODUCT_IDS,
   buildPilotCleanupPlan,
 } from "../../../scripts/pilot/pilot";
@@ -68,6 +70,40 @@ describe("§11.178 PILOT_INVENTORY_CATALOG", () => {
   });
 });
 
+describe("§11.178b PILOT_ORDER_CATALOG", () => {
+  it("정확히 1건 (Phase 1 minimum fixture, quote-pilot 1:1 매핑)", () => {
+    expect(PILOT_ORDER_CATALOG).toHaveLength(1);
+  });
+
+  it("필수 field — id / quoteId / orderNumber / totalAmount / status", () => {
+    const o = PILOT_ORDER_CATALOG[0];
+    expect(o.id).toMatch(/^order-pilot-/);
+    expect(o.quoteId).toMatch(/^quote-pilot-/);
+    expect(o.orderNumber).toMatch(/^ORD-PILOT-/);
+    expect(o.totalAmount).toBeGreaterThan(0);
+    expect(["ORDERED", "SHIPPED", "DELIVERED", "CANCELLED"]).toContain(o.status);
+  });
+
+  it("quoteId 가 PILOT_QUOTE_IDS 안에 존재 — FK orphan 0", () => {
+    const quoteIdSet = new Set(PILOT_QUOTE_IDS);
+    for (const o of PILOT_ORDER_CATALOG) {
+      expect(quoteIdSet.has(o.quoteId), `${o.quoteId} not in PILOT_QUOTE_IDS`).toBe(true);
+    }
+  });
+
+  it("PILOT_ORDER_IDS 길이 = catalog 길이", () => {
+    expect(PILOT_ORDER_IDS.length).toBe(PILOT_ORDER_CATALOG.length);
+  });
+
+  it("Order cleanup operation 0 — Quote.onDelete: Cascade 로 자동 삭제", () => {
+    const plan = buildPilotCleanupPlan();
+    const orderOps = plan.operations.filter(
+      (o) => (o as unknown as { model: string }).model === "order",
+    );
+    expect(orderOps).toHaveLength(0);
+  });
+});
+
 describe("§11.178 buildPilotCleanupPlan — quote operation 추가", () => {
   it("quote model 정확히 1개 op", () => {
     const plan = buildPilotCleanupPlan();
@@ -105,10 +141,17 @@ describe("§11.178 pilot-seed.ts upsert 로직", () => {
   // REPO_ROOT 가 __dirname 4단계 위 (apps) 이므로 web/scripts/...
   const PATH = "web/scripts/pilot/pilot-seed.ts";
 
-  it("PILOT_QUOTE_CATALOG / PILOT_INVENTORY_CATALOG import", () => {
+  it("PILOT_QUOTE_CATALOG / PILOT_INVENTORY_CATALOG / PILOT_ORDER_CATALOG import", () => {
     const src = read(PATH);
     expect(src).toMatch(/PILOT_QUOTE_CATALOG/);
     expect(src).toMatch(/PILOT_INVENTORY_CATALOG/);
+    expect(src).toMatch(/PILOT_ORDER_CATALOG/);
+  });
+
+  it("§11.178b — tx.order.upsert 호출 (idempotent)", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/tx\.order\.upsert/);
+    expect(src).toMatch(/tx\.order\.upsert[\s\S]*?quoteId:\s*spec\.quoteId/);
   });
 
   it("tx.quote.upsert 호출 (idempotent)", () => {

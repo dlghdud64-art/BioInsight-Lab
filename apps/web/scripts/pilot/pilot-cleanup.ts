@@ -78,6 +78,9 @@ export interface PilotCleanupPrismaClient {
   readonly organization: Surface<IdWhere>;
   readonly product: Surface<IdWhere>;
   readonly vendor: Surface<IdWhere>; // ADR-002 §11.20 — pilot vendor catalog
+  // ADR-002 §11.178 — Quote 는 onDelete: SetNull on org delete 라 별도 cleanup.
+  // Order 는 Quote.onDelete: Cascade 로 자동 삭제되어 surface 등록 0 유지.
+  readonly quote: Surface<IdWhere>;
   // NOTE: no `user` surface on purpose. See PILOT_OWNER_PROTECTION.
 }
 
@@ -136,6 +139,11 @@ export async function runCleanup(
         // covers any ProductVendor rows that survived the product step.
         entity = await prisma.vendor.findUnique({ where: op.where });
         break;
+      case "quote":
+        // ADR-002 §11.178 — Quote cleanup before org delete (SetNull).
+        // Order cascade 로 자동 삭제 (Order.quoteId onDelete: Cascade).
+        entity = await prisma.quote.findUnique({ where: op.where });
+        break;
     }
 
     probes.push({
@@ -163,6 +171,10 @@ export async function runCleanup(
           break;
         case "vendor":
           await prisma.vendor.delete({ where: op.where });
+          break;
+        case "quote":
+          // ADR-002 §11.178 — Quote.delete cascades Order via onDelete: Cascade.
+          await prisma.quote.delete({ where: op.where });
           break;
       }
       deletedCalls.push({ model: op.model, where: op.where });
