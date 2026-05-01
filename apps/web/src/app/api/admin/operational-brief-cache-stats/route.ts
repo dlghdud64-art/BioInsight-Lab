@@ -13,6 +13,7 @@ import {
   getBriefCacheStats,
   computeBriefCacheHitRate,
   computeBriefFitnessPassRate,
+  getTopInjectionPatterns,
 } from "@/lib/ai/operational-brief-cache-metrics";
 import { getBriefCacheSize } from "@/lib/ai/operational-brief-cache";
 
@@ -30,5 +31,7 @@ export async function GET() {
     hitRate: computeBriefCacheHitRate(),
     fitnessPassRate: computeBriefFitnessPassRate(),
     cacheSize: getBriefCacheSize(),
+    // §11.173 — top 5 injection pattern breakdown (count desc)
+    topInjectionPatterns: getTopInjectionPatterns(5),
   });
 }

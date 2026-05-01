@@ -40,6 +40,14 @@ const stats: BriefCacheStats = {
   startedAt: new Date().toISOString(),
 };
 
+/**
+ * §11.173 — injection pattern 별 누적 counter.
+ *   key = "<pattern_name>@<facts_key>" (e.g. "ignore_instructions_kr@blocker").
+ *   value = 누적 횟수.
+ *   admin Card UI 에서 top N pattern 가시화 + drift 추적.
+ */
+const patternCounter: Record<string, number> = Object.create(null);
+
 export function incrementCacheStat(key: BriefCacheStatKey, delta = 1): void {
   stats[key] += delta;
 }
@@ -58,6 +66,29 @@ export function resetBriefCacheStats(): void {
   stats.fitness_pass = 0;
   stats.fitness_fail = 0;
   stats.startedAt = new Date().toISOString();
+  // §11.173 — pattern counter 도 초기화
+  for (const k of Object.keys(patternCounter)) delete patternCounter[k];
+}
+
+/**
+ * §11.173 — injection pattern 누적 counter.
+ *   pattern name 별 increment. fitness_fail 과 함께 호출 (별도 key space).
+ */
+export function incrementInjectionPattern(pattern: string, delta = 1): void {
+  patternCounter[pattern] = (patternCounter[pattern] ?? 0) + delta;
+}
+
+/** §11.173 — readonly snapshot. admin endpoint 가 직접 노출. */
+export function getInjectionPatternBreakdown(): Readonly<Record<string, number>> {
+  return { ...patternCounter };
+}
+
+/** §11.173 — top N (by count desc). admin Card 의 breakdown 표시용. */
+export function getTopInjectionPatterns(limit = 5): Array<{ pattern: string; count: number }> {
+  return Object.entries(patternCounter)
+    .map(([pattern, count]) => ({ pattern, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
 }
 
 /** 운영자용 hit-rate 계산 */

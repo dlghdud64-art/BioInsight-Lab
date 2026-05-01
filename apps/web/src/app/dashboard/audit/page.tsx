@@ -257,6 +257,7 @@ export default function AuditTrailPage() {
 
   // §11.163 — 운영 브리핑 캐시 통계 (ADMIN-only gating, /api/admin/operational-brief-cache-stats)
   // §11.168 — fitness_pass / fitness_fail / fitnessPassRate 추가 (LLM hallucination drift)
+  // §11.173 — topInjectionPatterns 추가 (pattern 별 빈도 breakdown)
   const { data: briefCacheStats } = useQuery<{
     hit: number;
     miss: number;
@@ -269,6 +270,7 @@ export default function AuditTrailPage() {
     fitnessPassRate: number;
     cacheSize: number;
     startedAt: string;
+    topInjectionPatterns: Array<{ pattern: string; count: number }>;
   }>({
     queryKey: ["operational-brief-cache-stats"],
     queryFn: async () => {
@@ -553,6 +555,24 @@ export default function AuditTrailPage() {
             §11.142 ecosystem · 1분 자동 갱신 · ADMIN 전용 가시성. KV 통합 시 cache size 는 -1 (unknown).
             fitness fail &gt; 0 = LLM hallucination 차단 (자동 deterministic fallback). pass rate &lt; 90% = prompt drift 검토.
           </p>
+
+          {/* §11.173 — Top 5 injection pattern breakdown (rose accent — 보안 시그널) */}
+          {briefCacheStats.topInjectionPatterns && briefCacheStats.topInjectionPatterns.length > 0 && (
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-semibold text-rose-700">🛡 Injection 패턴 Top {briefCacheStats.topInjectionPatterns.length}</h3>
+                <span className="text-[10px] text-slate-500">누적 빈도 (process 수명)</span>
+              </div>
+              <ul className="space-y-1">
+                {briefCacheStats.topInjectionPatterns.map((p) => (
+                  <li key={p.pattern} className="flex items-center justify-between text-[11px]">
+                    <code className="font-mono text-slate-700 truncate max-w-[60%]">{p.pattern}</code>
+                    <span className="font-semibold text-rose-600 tabular-nums">{p.count}회</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
 

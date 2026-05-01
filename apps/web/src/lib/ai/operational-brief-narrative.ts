@@ -15,7 +15,7 @@
  */
 
 import { callAnthropicMessage } from "@/lib/ai/anthropic";
-import { incrementCacheStat } from "@/lib/ai/operational-brief-cache-metrics";
+import { incrementCacheStat, incrementInjectionPattern } from "@/lib/ai/operational-brief-cache-metrics";
 import { logBriefInjectionAudit } from "@/lib/ai/operational-brief-injection-audit";
 
 export interface BriefNarrativeFacts {
@@ -190,9 +190,11 @@ export async function generateBriefNarrative(facts: BriefNarrativeFacts): Promis
   // §11.170 — injection pattern detect → LLM skip + deterministic fallback
   // (prompt injection 차단의 first quality gate. fitness_fail 누적해 admin 가시화)
   // §11.171 — 감지 시 audit log persistence (보안 감사성).
+  // §11.173 — pattern 별 누적 counter increment (admin Card breakdown).
   const injectionPattern = detectPromptInjectionPattern(safe);
   if (injectionPattern !== null) {
     incrementCacheStat("fitness_fail");
+    incrementInjectionPattern(injectionPattern);
     console.warn(`[operational-brief] prompt injection 감지 (${injectionPattern}) — deterministic fallback`);
     // audit log fire-and-forget — caller/lib 동작 영향 0
     logBriefInjectionAudit({ pattern: injectionPattern, factsKeys: Object.keys(safe) });
