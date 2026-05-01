@@ -51,14 +51,40 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(read(PATH)).toMatch(/"use client"/);
   });
 
-  it("§11.182 — non-modal Sheet (modal={false}) + width 400 (mobile w-full)", () => {
+  it("§11.182/183 — Sheet modal 분기 (mobile=true, desktop=false) + width 400 desktop", () => {
     const src = read(PATH);
-    // SheetPrimitive.Root modal={false} — desktop dim/backdrop 0
-    expect(src).toMatch(/SheetPrimitive\.Root[\s\S]*?modal=\{false\}/);
-    // 너비 400
-    expect(src).toMatch(/w-full sm:w-\[400px\]/);
+    // §11.183 — modal={isMobile} (mobile dim, desktop non-modal)
+    expect(src).toMatch(/SheetPrimitive\.Root[\s\S]*?modal=\{isMobile\}/);
+    // desktop 너비 md:w-[400px]
+    expect(src).toMatch(/md:w-\[400px\]/);
     // SheetContent 사용 안 함 (자체 SheetPrimitive.Content)
     expect(src).toMatch(/SheetPrimitive\.Content/);
+  });
+
+  it("§11.183 — useIsMobile hook + matchMedia(max-width: 767px) + cleanup", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/function\s+useIsMobile/);
+    expect(src).toMatch(/matchMedia\(["'`]\(max-width:\s*767px\)["'`]\)/);
+    expect(src).toMatch(/removeEventListener\(["']change["']/);
+  });
+
+  it("§11.183 — mobile bottom sheet vs desktop right rail responsive className", () => {
+    const src = read(PATH);
+    // mobile: max-md inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
+    expect(src).toMatch(/max-md:inset-x-0[\s\S]*?max-md:bottom-0[\s\S]*?max-md:h-\[85vh\][\s\S]*?max-md:rounded-t-2xl/);
+    // desktop: md:inset-y-0 md:right-0 md:h-full md:w-[400px]
+    expect(src).toMatch(/md:inset-y-0[\s\S]*?md:right-0[\s\S]*?md:h-full[\s\S]*?md:w-\[400px\]/);
+    // animation 분기: mobile slide-from-bottom, desktop slide-from-right
+    expect(src).toMatch(/max-md:data-\[state=open\]:slide-in-from-bottom/);
+    expect(src).toMatch(/md:data-\[state=open\]:slide-in-from-right/);
+  });
+
+  it("§11.183 — mobile only Overlay mount (desktop dim 0) + onInteractOutside 분기", () => {
+    const src = read(PATH);
+    // {isMobile && <SheetPrimitive.Overlay ...>} — mobile만 backdrop
+    expect(src).toMatch(/\{isMobile\s*&&[\s\S]*?<SheetPrimitive\.Overlay/);
+    // onInteractOutside 안에서 desktop만 preventDefault (mobile은 backdrop close 허용)
+    expect(src).toMatch(/onInteractOutside[\s\S]*?if\s*\(\s*!isMobile\s*\)\s*e\.preventDefault/);
   });
 
   it("priority list (상위 5건) + brief detail stack 분기", () => {

@@ -23,7 +23,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import { ArrowLeft, AlertTriangle, X } from "lucide-react";
@@ -75,10 +75,29 @@ function formatOwner(o: string | null | undefined): string {
   return OWNER_HUMAN_LABEL[o] ?? o;
 }
 
+/**
+ * §11.183 — viewport 감지 hook (SSR safe).
+ * mobile (max-width: 767px) → bottom sheet + dim. desktop (≥768px) → right rail + non-modal.
+ */
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 767px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
+
 /** Popup root — list ↔ detail stack. */
 export function OperationalBriefPopup() {
   const { isOpen, close, selectedItemId, setSelectedItemId } = useOperationalBriefPopup();
   const store = useOpsStore();
+  // §11.183 — mobile bottom sheet vs desktop right rail 분기
+  const isMobile = useIsMobile();
 
   const allItems = useMemo(
     () =>
@@ -116,26 +135,36 @@ export function OperationalBriefPopup() {
     : null;
 
   return (
-    // §11.182 — modal={false} : desktop dim/backdrop 0, body scroll lock 0,
-    //          본문 그대로 사용 가능. mobile bottom sheet 는 §11.183 별도 분기.
-    <SheetPrimitive.Root open={isOpen} onOpenChange={(v) => !v && close()} modal={false}>
+    // §11.182/183 — desktop: modal={false} (dim 0, 본문 클릭 가능 rail).
+    //               mobile: modal={true} (dim + body scroll lock, OS bottom sheet 패턴).
+    <SheetPrimitive.Root open={isOpen} onOpenChange={(v) => !v && close()} modal={isMobile}>
       <SheetPrimitive.Portal>
+        {/* §11.183 — mobile 만 backdrop dim. desktop overlay 0 */}
+        {isMobile && (
+          <SheetPrimitive.Overlay
+            className={cn(
+              "fixed inset-0 z-30 bg-black/50",
+              "data-[state=open]:animate-in data-[state=closed]:animate-out",
+              "data-[state=open]:fade-in data-[state=closed]:fade-out",
+            )}
+          />
+        )}
         <SheetPrimitive.Content
           className={cn(
-            "fixed inset-y-0 right-0 z-40 h-full",
-            // §11.182 — 너비 400 desktop, mobile w-full
-            "w-full sm:w-[400px] sm:max-w-[400px]",
-            "bg-background border-l border-bd shadow-lg",
-            "overflow-y-auto",
-            // slide animation (Radix data-state)
+            "fixed z-40 bg-background shadow-lg overflow-y-auto",
+            // §11.183 — mobile bottom sheet (max-md): inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
+            "max-md:inset-x-0 max-md:bottom-0 max-md:h-[85vh] max-md:rounded-t-2xl max-md:border-t max-md:border-bd",
+            // §11.182 — desktop right rail (md+): inset-y-0 right-0 h-full w-[400px]
+            "md:inset-y-0 md:right-0 md:h-full md:w-[400px] md:max-w-[400px] md:border-l md:border-bd",
+            // slide animation — mobile slide-up, desktop slide-right
             "transition ease-in-out duration-300",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
-            "data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right",
+            "max-md:data-[state=open]:slide-in-from-bottom max-md:data-[state=closed]:slide-out-to-bottom",
+            "md:data-[state=open]:slide-in-from-right md:data-[state=closed]:slide-out-to-right",
           )}
-          // §11.182 — outside click 시 close 허용 (modal=false 이미 동일 동작), focus trap 0
           onInteractOutside={(e) => {
-            // 본문 클릭 시 popup 그대로 유지 (rail 으로 동작) — close 차단
-            e.preventDefault();
+            // §11.183 — desktop: 본문 클릭 시 popup 유지 (rail). mobile: backdrop click 시 close 허용.
+            if (!isMobile) e.preventDefault();
           }}
         >
           {/* §11.182 — 단일 close X (우상단). PopupPriorityList/PopupBriefDetail header 의 X 제거 */}
