@@ -99,6 +99,47 @@ function formatOwner(o: string | null | undefined): string {
 }
 
 /**
+ * §11.185 — CTA copy shortener (nextAction → button label).
+ *
+ * nextAction 은 자연어 문장이라 button label 로 길어질 수 있음 (예: "비교 검토 후
+ * 공급사 선정" 13자, "공급사에 문서 재요청" 11자, "격리 검사 실행 후 판정" 14자).
+ * button 가독성을 위해 14자 이내 short label 로 압축.
+ *
+ * 매핑 우선순위:
+ *   1. explicit short label (운영 ontology + 호영님 §11.182 예시)
+ *   2. nextAction ≤ 14자 → 그대로
+ *   3. > 14자 → 14자 + "…" truncate
+ */
+const CTA_SHORT_LABEL: Array<{ pattern: RegExp; short: string }> = [
+  // §11.182 호영님 예시 매핑
+  { pattern: /격리\s*검사/, short: "격리 검사 처리" },
+  { pattern: /문서\s*재요청|문서\s*요청/, short: "문서 요청 보내기" },
+  { pattern: /공급사\s*확인/, short: "공급사 확인하기" },
+  { pattern: /비교\s*검토.*공급사\s*선정/, short: "공급사 선정" },
+  { pattern: /발주서\s*발행/, short: "발주서 발행" },
+  { pattern: /재주문|재발주/, short: "재주문 검토" },
+  { pattern: /교체\s*발주/, short: "교체 발주" },
+  { pattern: /견적\s*요청|견적\s*만들기/, short: "견적 요청" },
+  { pattern: /응답\s*독촉|미응답/, short: "공급사 독촉" },
+  { pattern: /PO\s*상태\s*확인/, short: "PO 상태 확인" },
+];
+
+const CTA_MAX_LENGTH = 14;
+
+export function shortenCtaLabel(nextAction: string | null | undefined): string | null {
+  const trimmed = nextAction?.trim();
+  if (!trimmed) return null;
+  // 1. explicit short label
+  for (const { pattern, short } of CTA_SHORT_LABEL) {
+    if (pattern.test(trimmed)) return short;
+  }
+  // 2. ≤ 14자 → 그대로
+  if (trimmed.length <= CTA_MAX_LENGTH) return trimmed;
+  // 3. > 14자 → truncate + ellipsis
+  return trimmed.slice(0, CTA_MAX_LENGTH) + "…";
+}
+
+/**
  * §11.183 — viewport 감지 hook (SSR safe).
  * mobile (max-width: 767px) → bottom sheet + dim. desktop (≥768px) → right rail + non-modal.
  */
@@ -322,8 +363,9 @@ function PopupBriefDetail({
     enabled: !!item.id,
   });
 
-  // §11.182 — CTA copy = item.nextAction (canonical ontology). 없으면 CTA 미렌더 (dead button 0).
-  const ctaLabel = item.nextAction?.trim() ? item.nextAction.trim() : null;
+  // §11.182/185 — CTA copy = item.nextAction shortened (canonical ontology + 14자 cap).
+  // nextAction 없으면 CTA 미렌더 (dead button 0).
+  const ctaLabel = shortenCtaLabel(item.nextAction);
 
   return (
     <>

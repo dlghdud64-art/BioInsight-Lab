@@ -136,13 +136,27 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/"담당자"/);
   });
 
-  it("§11.182 — CTA copy = item.nextAction (canonical, dead button 0)", () => {
+  it("§11.182/185 — CTA copy = shortenCtaLabel(item.nextAction) + dead button 0", () => {
     const src = read(PATH);
-    expect(src).toMatch(/ctaLabel\s*=\s*item\.nextAction/);
+    // §11.185 — shortenCtaLabel 함수 사용
+    expect(src).toMatch(/shortenCtaLabel\(item\.nextAction\)/);
     // ctaLabel falsy 시 CTA 미렌더 (dead button 0)
     expect(src).toMatch(/\{ctaLabel\s*&&/);
     // CTA 클릭 시 popup close + entityRoute navigate
     expect(src).toMatch(/onClose\(\)[\s\S]*?router\.push\(item\.entityRoute\)/);
+  });
+
+  it("§11.185 — shortenCtaLabel: explicit pattern + 14자 cap + truncate ellipsis", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/CTA_SHORT_LABEL/);
+    expect(src).toMatch(/CTA_MAX_LENGTH\s*=\s*14/);
+    expect(src).toMatch(/export\s+function\s+shortenCtaLabel/);
+    // explicit patterns (호영님 §11.182 예시)
+    expect(src).toMatch(/short:\s*"격리 검사 처리"/);
+    expect(src).toMatch(/short:\s*"문서 요청 보내기"/);
+    expect(src).toMatch(/short:\s*"공급사 확인하기"/);
+    // truncate ellipsis (length > 14)
+    expect(src).toMatch(/slice\(0,\s*CTA_MAX_LENGTH\)\s*\+\s*"…"/);
   });
 });
 
