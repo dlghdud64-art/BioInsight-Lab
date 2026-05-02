@@ -8,6 +8,13 @@ import {
   AUDIT_EVENT_LABELS,
   AUDIT_TONE_DOT_CLASSES,
 } from "@/lib/audit/event-labels";
+// §11.193d Phase 2.3 — workflow capabilities canonical resolver + 라벨/색상 매핑.
+//   single role badge → multi-badge (1인 동시 Lab Manager + Approver + Requester).
+import {
+  resolveWorkflowCapabilities,
+  WORKFLOW_CAPABILITY_LABEL,
+  WORKFLOW_CAPABILITY_BADGE_CLS,
+} from "@/lib/permissions/workflow-capabilities";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -346,7 +353,15 @@ function SettingsPageContent() {
   // → "운영 정책 미설정" 솔직한 empty state. schema 필드 추가는 별도 트랙
   // (#user-approval-policy-schema-add deferred).
   const { data: orgsData } = useQuery<{
-    organizations: Array<{ id: string; name: string; role: string }>;
+    // §11.193d Phase 2.3 — workflowCapabilities forward (multi-badge UI).
+    //   raw Json (unknown) 으로 받고 client 의 resolveWorkflowCapabilities 가
+    //   defensive parse + role fallback 처리.
+    organizations: Array<{
+      id: string;
+      name: string;
+      role: string;
+      workflowCapabilities?: unknown;
+    }>;
   }>({
     queryKey: ["settings-organizations"],
     queryFn: async () => {
@@ -677,35 +692,18 @@ function SettingsPageContent() {
                     layout 정형화. */}
                 <SectionCard title="운영 역할 및 업무 범위" icon={Shield} description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다.">
                   <div className="space-y-5">
-                    {/* §11.87 활성 운영 역할 — real session.user.role + organizations[].role
-                        매핑. system ADMIN 은 별도 badge, 각 조직 멤버십은 한국어 라벨
-                        매핑 (ADMIN/OWNER/MEMBER/VIEWER). */}
+                    {/* §11.87 + §11.193d Phase 2.3 활성 운영 역할 (workflow capabilities multi-badge).
+                        §11.193d Phase 1: orgRoleLabel single-role mapping (RBAC).
+                        §11.193d Phase 2.3: workflowCapabilities multi-badge per org
+                          (1인 동시 Lab Manager + Approver + Requester 보유).
+                        resolveWorkflowCapabilities: DB 우선 + role 기반 fallback.
+                    */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">활성 운영 역할</p>
                       <div className="flex flex-wrap items-center gap-2">
                         {(() => {
                           const sysRole = session?.user?.role as string | undefined;
                           const orgs = orgsData?.organizations ?? [];
-                          // §11.193d Phase 1 — OrganizationRole enum 5종 모두
-                          // 매핑 (이전 4종, REQUESTER/APPROVER 누락). 호영님
-                          // prototype 시안 정합:
-                          //   ADMIN     → "Lab Manager" (운영 책임자, purple)
-                          //   OWNER     → "Owner" (조직 최고 책임자, rose)
-                          //   APPROVER  → "Approver" (승인 권한, emerald)
-                          //   REQUESTER → "Requester" (요청 권한, blue)
-                          //   MEMBER    → "Member" (일반 멤버, slate-strong)
-                          //   VIEWER    → "Viewer" (조회만, slate-mute)
-                          // schema 변경 0 — 기존 OrganizationRole enum 직접 매핑.
-                          // multi-capability (1인 동시 보유) 는 §11.193d Phase 2
-                          // 별도 batch (Membership.workflowCapabilities schema 추가).
-                          const orgRoleLabel: Record<string, { label: string; cls: string }> = {
-                            ADMIN: { label: "Lab Manager", cls: "bg-purple-50 text-purple-700 border-purple-200" },
-                            OWNER: { label: "Owner", cls: "bg-rose-50 text-rose-700 border-rose-200" },
-                            APPROVER: { label: "Approver", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-                            REQUESTER: { label: "Requester", cls: "bg-blue-50 text-blue-700 border-blue-200" },
-                            MEMBER: { label: "Member", cls: "bg-slate-100 text-slate-700 border-slate-300" },
-                            VIEWER: { label: "Viewer", cls: "bg-slate-50 text-slate-600 border-slate-200" },
-                          };
                           const badges: React.ReactNode[] = [];
                           if (sysRole === "ADMIN") {
                             badges.push(
@@ -714,13 +712,36 @@ function SettingsPageContent() {
                               </Badge>
                             );
                           }
+                          // §11.193d Phase 2.3 — org 별 capabilities 배열 → 각 capability 별 별도 badge.
+                          //   org 1개에 capability 3개 보유 시 badge 3개 노출 (시안 정합).
+                          //   resolver fallback (DB 비어 있으면 role 기반 mirror).
                           orgs.forEach((org) => {
-                            const meta = orgRoleLabel[org.role] ?? { label: org.role, cls: "bg-slate-50 text-slate-600 border-slate-200" };
-                            badges.push(
-                              <Badge key={org.id} className={`${meta.cls} text-xs font-medium`}>
-                                {org.name} · {meta.label}
-                              </Badge>
-                            );
+                            const capabilities = resolveWorkflowCapabilities({
+                              workflowCapabilities: org.workflowCapabilities,
+                              role: org.role,
+                            });
+                            if (capabilities.length === 0) {
+                              // capabilities 0 + role=VIEWER 같은 case → 조직 라벨만 노출 (대시 표기)
+                              badges.push(
+                                <Badge
+                                  key={org.id}
+                                  className="bg-slate-50 text-slate-600 border-slate-200 text-xs font-medium"
+                                >
+                                  {org.name} · 운영 권한 없음
+                                </Badge>
+                              );
+                              return;
+                            }
+                            capabilities.forEach((cap) => {
+                              badges.push(
+                                <Badge
+                                  key={`${org.id}-${cap}`}
+                                  className={`${WORKFLOW_CAPABILITY_BADGE_CLS[cap]} text-xs font-medium`}
+                                >
+                                  {org.name} · {WORKFLOW_CAPABILITY_LABEL[cap]}
+                                </Badge>
+                              );
+                            });
                           });
                           if (badges.length === 0) {
                             return (

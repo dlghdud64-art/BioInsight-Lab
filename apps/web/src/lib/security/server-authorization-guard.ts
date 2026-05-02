@@ -87,6 +87,10 @@ export type IrreversibleActionType =
   | 'receiving_status_change'
   // ── Organization chain ──
   | 'member_role_change'
+  // §11.193d Phase 2.4 — workflow capabilities edit (RBAC role 과 별도 audit).
+  //   member_role_change 와 분리 — capabilities 변경은 운영 tag 만 영향, RBAC
+  //   permission 변경 0. audit log 에서 양 action 구분 가치 있음 (security review).
+  | 'member_capabilities_change'
   | 'organization_update'
   | 'organization_invite'
   | 'organization_security_change'

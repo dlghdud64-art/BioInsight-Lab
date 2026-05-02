@@ -65,26 +65,37 @@ assertImportsForJsxComponents({
   describeLabel: "§11.193e settings/page.tsx import-completeness smoke",
 });
 
-describe("§11.193d Phase 1 — OrganizationRole label mapping (시안 정합)", () => {
-  it("Lab Manager 라벨 = ADMIN 매핑 (운영 책임자)", () => {
-    expect(SOURCE).toMatch(/ADMIN:\s*\{\s*label:\s*["']Lab Manager["']/);
+describe("§11.193d Phase 2.3 — workflow capabilities multi-badge (시안 정합)", () => {
+  /**
+   * Phase 1 의 inline `orgRoleLabel` mapping 은 Phase 2.3 에서
+   * workflow-capabilities.ts 의 WORKFLOW_CAPABILITY_LABEL/BADGE_CLS 로 이관.
+   * settings/page.tsx 는 resolveWorkflowCapabilities 호출 + multi-badge 렌더만.
+   * 라벨/색상 정합 검증은 lib level test (workflow-capabilities.test.ts) 가 담당.
+   */
+  it("resolveWorkflowCapabilities import + 호출 (DB 우선 + role fallback)", () => {
+    expect(SOURCE).toMatch(
+      /import\s*\{[\s\S]*?resolveWorkflowCapabilities[\s\S]*?\}\s*from\s+["']@\/lib\/permissions\/workflow-capabilities["']/,
+    );
+    expect(SOURCE).toMatch(/resolveWorkflowCapabilities\(/);
   });
 
-  it("Approver 라벨 = APPROVER 매핑 (승인 권한)", () => {
-    expect(SOURCE).toMatch(/APPROVER:\s*\{\s*label:\s*["']Approver["']/);
+  it("WORKFLOW_CAPABILITY_LABEL + WORKFLOW_CAPABILITY_BADGE_CLS import (multi-badge 렌더)", () => {
+    expect(SOURCE).toMatch(/WORKFLOW_CAPABILITY_LABEL/);
+    expect(SOURCE).toMatch(/WORKFLOW_CAPABILITY_BADGE_CLS/);
   });
 
-  it("Requester 라벨 = REQUESTER 매핑 (요청 권한)", () => {
-    expect(SOURCE).toMatch(/REQUESTER:\s*\{\s*label:\s*["']Requester["']/);
+  it("capabilities 배열 iteration (org 1개에 capability N개 → badge N개)", () => {
+    // capabilities.forEach 또는 capabilities.map 으로 multi-badge 분기
+    expect(SOURCE).toMatch(/capabilities\.(?:forEach|map)/);
   });
 
-  it("OrganizationRole 5종 모두 mapping (이전 4종 → 6종, REQUESTER+APPROVER 추가)", () => {
-    // 5 OrganizationRole enum members + MEMBER (legacy data 호환) = 6 entries
-    const ORG_ROLES = ["ADMIN", "OWNER", "APPROVER", "REQUESTER", "MEMBER", "VIEWER"];
-    for (const role of ORG_ROLES) {
-      const re = new RegExp(`${role}:\\s*\\{\\s*label:\\s*["']`);
-      expect(SOURCE, `${role} 라벨 매핑 부재 — orgRoleLabel 정합 위반`).toMatch(re);
-    }
+  it("empty state — capabilities 0 일 때 '운영 권한 없음' 표시 (raw key 노출 0)", () => {
+    expect(SOURCE).toMatch(/운영 권한 없음/);
+  });
+
+  it("organizations API response shape — workflowCapabilities forward", () => {
+    // useQuery type 안에 workflowCapabilities 필드 (unknown) 명시
+    expect(SOURCE).toMatch(/workflowCapabilities\?\s*:\s*unknown/);
   });
 });
 

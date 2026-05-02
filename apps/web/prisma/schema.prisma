@@ -106,6 +106,12 @@ model OrganizationMember {
   userId         String
   organizationId String
   role           OrganizationRole @default(VIEWER)
+  // §11.193d Phase 2 — workflow capabilities (운영 tag, RBAC role 과 별도 layer).
+  //   호영님 prototype 시안 — "1인 동시 Lab Manager + Approver + Requester 보유".
+  //   값은 lib/permissions/workflow-capabilities.ts 의 WORKFLOW_CAPABILITIES
+  //   whitelist (LAB_MANAGER / APPROVER / REQUESTER). getWorkflowCapabilities()
+  //   가 array/null/object/string 모든 input 안전 처리.
+  workflowCapabilities Json @default("[]")
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
