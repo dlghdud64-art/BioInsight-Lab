@@ -77,16 +77,11 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     landingRole: 'hub',
     description: '오늘 운영 시작점',
   },
-  {
-    module: 'inbox',
-    label: '작업함',
-    shortLabel: '작업함',
-    icon: 'Inbox',
-    href: '/dashboard/inbox',
-    landingRole: 'queue',
-    badgeType: 'actionable_count',
-    description: '전체 open work triage',
-  },
+  // §11.191e — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
+  // MODULE_CONFIGS 는 외부 caller 0 (dead export) 이지만 향후 sidebar 또는
+  // navigation widget 잠재 사용 대비 유지. inbox entry 만 제거 — canonical
+  // entry 는 'today' (메인 dashboard) 가 흡수. 'inbox' TopLevelModule type
+  // member 는 별도 batch (§11.191f) 로 caller 정합 후 제거 예정.
   {
     module: 'search',
     label: '검색',
