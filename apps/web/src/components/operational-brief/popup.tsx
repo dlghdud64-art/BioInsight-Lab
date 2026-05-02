@@ -272,8 +272,10 @@ function PopupPriorityList({
 }) {
   return (
     <>
-      {/* Header — §11.182 한국어 eyebrow + Top N subtitle */}
-      <div className="px-6 py-5 border-b border-bd">
+      {/* Header — §11.182 한국어 eyebrow + Top N subtitle.
+          §11.192b — pr-12 추가: close button (absolute right-4 top-4) 영역
+          회피하여 eyebrow / title / subtitle 겹침/잘림 방지. */}
+      <div className="px-6 py-5 pr-12 border-b border-bd">
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
           운영 브리핑
         </div>
@@ -392,10 +394,22 @@ function PopupBriefDetail({
   // nextAction 없으면 CTA 미렌더 (dead button 0).
   const ctaLabel = shortenCtaLabel(item.nextAction);
 
+  // §11.192b — detail header tone accent (list mode card 와 일관)
+  const headerToneBorder =
+    item.priority === "p0"
+      ? "border-l-rose-500"
+      : item.priority === "p1"
+        ? "border-l-amber-400"
+        : item.priority === "p2"
+          ? "border-l-blue-400"
+          : "border-l-slate-300";
+
   return (
     <>
-      {/* Header — §11.182 back / 한국어 eyebrow / 단일 X (Sheet root) */}
-      <div className="px-6 py-5 border-b border-bd pr-12">
+      {/* Header — §11.182 back / 한국어 eyebrow / 단일 X (Sheet root).
+          §11.192b — priority badge 추가 + tone accent border-l-4 (list mode
+          card 와 일관 Google snippet 패턴). */}
+      <div className={cn("px-6 py-5 pr-12 border-b border-bd border-l-4", headerToneBorder)}>
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
@@ -410,11 +424,19 @@ function PopupBriefDetail({
           </span>
           <span
             className={cn(
-              "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium",
+              "inline-flex px-1.5 py-0.5 rounded text-[11px] font-medium",
               SOURCE_MODULE_COLORS[item.sourceModule],
             )}
           >
             {WORK_TYPE_LABELS[item.workType]}
+          </span>
+          <span
+            className={cn(
+              "inline-flex px-1.5 py-0.5 rounded text-xs font-bold",
+              PRIORITY_BADGE[item.priority],
+            )}
+          >
+            {PRIORITY_HUMAN[item.priority] ?? item.priority}
           </span>
         </div>
         <h3 className="text-lg font-bold text-slate-900 leading-tight">{item.title}</h3>
