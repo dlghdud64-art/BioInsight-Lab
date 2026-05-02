@@ -98,12 +98,16 @@ export function TodayHubStrip() {
           운영 현황
         </span>
         <span className="text-slate-700">|</span>
+        {/* §11.191d — KPI Link 5개 → display-only span (운영작업함 deprecated
+            후 self-link dead-button 회피). aria-label 보존하여 screen reader
+            정합. 운영자는 아래 priority list 또는 운영 브리핑 popup 으로
+            진입 (canonical destination). */}
         {(Object.keys(HEADER_STAT_META) as (keyof TodayHeaderStats)[]).map(
           (key) => (
-            <Link
+            <span
               key={key}
-              href={HEADER_STAT_META[key].route}
-              className="flex items-center gap-1 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-1"
+              aria-label={`${HEADER_STAT_META[key].label} ${headerStats[key]}건`}
             >
               <span className="text-[10px] text-slate-500">
                 {HEADER_STAT_META[key].label}
@@ -111,7 +115,7 @@ export function TodayHubStrip() {
               <span className={`text-xs font-semibold tabular-nums ${statColor(key)}`}>
                 {headerStats[key]}
               </span>
-            </Link>
+            </span>
           ),
         )}
         {blockerTotal > 0 && (
