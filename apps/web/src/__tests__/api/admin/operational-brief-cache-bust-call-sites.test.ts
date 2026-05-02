@@ -27,11 +27,8 @@ const SURFACES = [
     path: "../../../app/dashboard/inventory/inventory-content.tsx",
     moduleKey: "inventory",
   },
-  {
-    label: "inbox (handleAction)",
-    path: "../../../app/dashboard/inbox/page.tsx",
-    moduleKey: "inbox",
-  },
+  // §11.191 — inbox surface deprecated (hidden redirect → /dashboard).
+  // cache-bust call site 자연 drop (mutation 발생 surface 가 redirect-only).
   {
     label: "quotes (handleSendSuccess)",
     path: "../../../app/dashboard/quotes/page.tsx",

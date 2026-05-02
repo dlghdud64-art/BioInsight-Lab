@@ -41,19 +41,12 @@ describe("§11.176 shared brief parts 추출", () => {
     expect(src).toMatch(/export\s+function\s+formatRelativeKr/);
   });
 
-  it("inbox 가 shared MetricCell + formatRelativeKr import 로 마이그레이션", () => {
-    const src = read("src/app/dashboard/inbox/page.tsx");
-    expect(src).toMatch(/from\s+["']@\/components\/operational-brief\/metric-cell["']/);
-    expect(src).toMatch(/from\s+["']@\/components\/operational-brief\/relative-time["']/);
-    // local 정의 잔존 0 (실제 함수 정의가 사라졌는지 확인 — comment 무시)
-    expect(src).not.toMatch(/^function\s+MetricCell\s*\(/m);
-    expect(src).not.toMatch(/^function\s+formatRelativeKr\s*\(/m);
-  });
+  // §11.191 — inbox surface deprecated (hidden redirect → /dashboard).
+  // Shared MetricCell migration 검증은 inbox redirect-only swap 으로 자연 drop.
 });
 
-describe("§11.176 4 surface floating entry mount", () => {
+describe("§11.176 floating entry mount (§11.191 inbox drop 후 3 surface)", () => {
   const SURFACES: { name: string; path: string }[] = [
-    { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
     { name: "dashboard", path: "src/app/dashboard/page.tsx" },
     { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },

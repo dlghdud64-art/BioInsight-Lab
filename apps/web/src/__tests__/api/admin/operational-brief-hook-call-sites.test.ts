@@ -28,12 +28,8 @@ const SURFACES = [
     moduleKey: "quote_detail",
     fallbackMatch: /selectedSignals\.summary/,
   },
-  {
-    label: "inbox",
-    path: "../../../app/dashboard/inbox/page.tsx",
-    moduleKey: "inbox",
-    fallbackMatch: /selectedItem\.summary|item\.summary/,
-  },
+  // §11.191 — inbox surface deprecated (hidden redirect → /dashboard).
+  // hook call site 자연 drop, narrative cache 는 dashboard 메인이 흡수.
   {
     label: "inventory",
     path: "../../../components/inventory/inventory-context-panel.tsx",

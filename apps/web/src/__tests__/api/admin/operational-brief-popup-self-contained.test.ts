@@ -196,8 +196,9 @@ describe("§11.181 FloatingEntry default = popup open", () => {
 
 describe("§11.181 7 surface FAB onClick prop 제거", () => {
   const SURFACES: { name: string; path: string }[] = [
+    // §11.191 — inbox surface deprecated (hidden redirect → /dashboard).
+    // FAB drop 자연스러운 결과 (redirect-only page 17 lines).
     { name: "dashboard", path: "src/app/dashboard/page.tsx" },
-    { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
     { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
     { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },
