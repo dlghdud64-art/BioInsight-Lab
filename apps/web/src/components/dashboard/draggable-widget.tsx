@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { GripVertical, Eye, EyeOff, Maximize2, Minimize2, Square } from "lucide-react";
+import { GripVertical, Eye, EyeOff, Square } from "lucide-react";
 import { useDashboardWidgets } from "@/lib/store/dashboard-widgets-store";
 import { cn } from "@/lib/utils";
 

@@ -18,25 +18,7 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import {
-  ChevronRight,
-  ArrowRight,
-  AlertCircle,
-  Clock,
-  Shield,
-  Zap,
-  Sparkles,
-  Loader2,
-  TrendingDown,
-  ShieldAlert,
-  ShieldCheck,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle2,
-  FlaskConical,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 

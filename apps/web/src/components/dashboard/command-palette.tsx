@@ -12,11 +12,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Search, FileText, CreditCard, Package, BarChart2,
-  ArrowRight, Clock, Sparkles, Command, CornerDownLeft,
-  ShoppingCart, ClipboardCheck, Loader2,
-} from "lucide-react";
+import { Search, FileText, Package, ArrowRight, Clock, Sparkles, Command, ShoppingCart, Loader2 } from "lucide-react";
 import {
   buildExecutionPlan,
   setNLLocalOrderProvider,

@@ -9,7 +9,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
-import { ArrowUpRight, ArrowDownRight, AlertTriangle, TrendingUp, Building2, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, ShieldAlert, Activity } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, AlertTriangle, TrendingUp, CloudUpload, FileText, RefreshCcw, FileDown, BarChart2, Layers, ShieldAlert, Activity } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PRODUCT_CATEGORIES } from "@/lib/constants";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";

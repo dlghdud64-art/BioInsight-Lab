@@ -16,14 +16,7 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import {
-  ChevronRight,
-  ArrowRight,
-  AlertCircle,
-  Clock,
-  Zap,
-  Shield,
-} from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ── Bucket tab config (Receiving-specific labels) ─────────────────

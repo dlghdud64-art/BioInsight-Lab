@@ -5,22 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
 import { useDispatchOutboundStore } from "@/lib/store/dispatch-outbound-store";
-import {
-  ChevronDown,
-  ChevronUp,
-  User,
-  ArrowRight,
-  AlertCircle,
-  Clock,
-  CheckCircle2,
-  Package,
-  FileText,
-  Zap,
-  Shield,
-  ExternalLink,
-  CalendarClock,
-  XCircle,
-} from "lucide-react";
+import { ChevronDown, ChevronUp, User, ArrowRight, AlertCircle, Clock, CheckCircle2, Package, FileText, Shield, CalendarClock, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VENDOR_MAP } from "@/lib/ops-console/seed-data";
 import {

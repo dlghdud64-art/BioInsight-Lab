@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Badge } from "@/components/ui/badge";
 // §11.71: native <select> → shadcn Select 통일
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, MessageSquare, Calendar, DollarSign, TrendingUp, History, BarChart3, Clock, Percent, Download, Upload } from "lucide-react";
+import { FileText, MessageSquare, DollarSign, TrendingUp, History, Percent, Download, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";

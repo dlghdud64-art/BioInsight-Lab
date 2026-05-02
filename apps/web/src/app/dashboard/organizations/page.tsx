@@ -6,30 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-  Plus,
-  Users,
-  Loader2,
-  ExternalLink,
-  UserPlus,
-  Clock,
-  AlertTriangle,
-  Settings,
-  Activity,
-  Building2,
-  Shield,
-  ChevronRight,
-  Zap,
-  UserCheck,
-  MailWarning,
-  Search,
-  LayoutGrid,
-  List,
-  MoreVertical,
-  Sparkles,
-  TrendingUp,
-  AlertCircle,
-} from "lucide-react";
+import { Plus, Users, Loader2, ExternalLink, Clock, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

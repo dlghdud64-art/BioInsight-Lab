@@ -76,16 +76,49 @@ function assertNoDeadLucideImport(filePath: string): void {
   ).toEqual([]);
 }
 
-describe("§11.196f lucide-react dead import sweep — 4 cleaned surface regression guard", () => {
+describe("§11.196f/g lucide-react dead import sweep — 31 cleaned surface regression guard", () => {
   /**
-   * §11.196f Phase 1 에서 dead lucide import 제거된 4 surface.
-   * regression guard — 새 dead import 추가 시 즉시 fail.
+   * §11.196f Phase 1 (4 manually cleaned surface) + §11.196g (27 batch
+   * cleaned via perl one-liner) = 31 total. regression guard — 새 dead
+   * import 추가 시 즉시 fail.
+   *
+   * 자동화 패턴: §11.196g 의 perl `s{}{}gex` 가 import block 의 dead
+   * symbol 만 filter — alias `X as Y` 보존, 형식 보존, multi-line 안전.
    */
   const SURFACES = [
+    // §11.196f Phase 1 — 4 manually cleaned
     "src/app/dashboard/inventory/inventory-content.tsx",
     "src/app/dashboard/analytics/page.tsx",
     "src/app/dashboard/organizations/[id]/page.tsx",
     "src/app/dashboard/support-center/page.tsx",
+    // §11.196g — 27 batch cleaned
+    "src/app/dashboard/analytics/_components/team-analytics-view.tsx",
+    "src/app/dashboard/budget/details/[id]/page.tsx",
+    "src/app/dashboard/budget/page.tsx",
+    "src/app/dashboard/budget/[id]/page.tsx",
+    "src/app/dashboard/inventory/blocks/inventory-table-block.tsx",
+    "src/app/dashboard/inventory/scan/page.tsx",
+    "src/app/dashboard/notifications/page.tsx",
+    "src/app/dashboard/organizations/page.tsx",
+    "src/app/dashboard/page.tsx",
+    "src/app/dashboard/purchase-orders/page.tsx",
+    "src/app/dashboard/purchase-orders/[poId]/page.tsx",
+    "src/app/dashboard/quotes/page.tsx",
+    "src/app/dashboard/receiving/page.tsx",
+    "src/app/dashboard/reports/page.tsx",
+    "src/app/dashboard/safety/page.tsx",
+    "src/app/dashboard/safety-spend/page.tsx",
+    "src/app/dashboard/settings/enterprise/page.tsx",
+    "src/app/dashboard/settings/page.tsx",
+    "src/app/dashboard/shared-links/page.tsx",
+    "src/app/dashboard/stock-risk/page.tsx",
+    "src/app/dashboard/supplier/page.tsx",
+    "src/app/dashboard/vendor/quotes/page.tsx",
+    "src/components/dashboard/command-palette.tsx",
+    "src/components/dashboard/draggable-widget.tsx",
+    "src/components/dashboard/Header.tsx",
+    "src/components/dashboard/overlay/workbench-full-overlay.tsx",
+    "src/components/dashboard/work-queue-inbox.tsx",
   ];
 
   for (const surface of SURFACES) {

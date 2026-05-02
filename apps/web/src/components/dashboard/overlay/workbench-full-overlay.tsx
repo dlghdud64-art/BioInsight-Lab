@@ -18,7 +18,7 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
-import { X, ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+import { X, Maximize2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useOverlayChromeStore } from "@/lib/store/overlay-chrome-store";
 import { useDispatchWorkbenchData } from "@/hooks/use-dispatch-workbench-data";

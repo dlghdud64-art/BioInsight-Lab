@@ -39,20 +39,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  AlertTriangle,
-  DollarSign,
-  FileText,
-  TrendingUp,
-  Link as LinkIcon,
-  Search,
-  Loader2,
-  Calendar,
-  X,
-  Download,
-  FileSpreadsheet,
-  FileDown,
-} from "lucide-react";
+import { AlertTriangle, FileText, Link as LinkIcon, Search, Loader2, Download, FileSpreadsheet, FileDown } from "lucide-react";
 import { PageHeader } from "@/app/_components/page-header";
 import { WorkspaceSwitcher } from "@/components/workspace/workspace-switcher";
 import { useToast } from "@/hooks/use-toast";

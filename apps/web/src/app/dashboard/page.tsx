@@ -15,11 +15,7 @@ import { useOrderQueueStore } from "@/lib/store/order-queue-store";
 import { useBudgetStore } from "@/lib/store/budget-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Package, AlertTriangle, DollarSign, FileText, Search, Plus,
-  TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, Calendar, GitCompare,
-  CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight,
-} from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";

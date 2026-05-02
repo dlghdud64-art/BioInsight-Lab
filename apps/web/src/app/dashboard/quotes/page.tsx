@@ -17,12 +17,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
-  AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
-  AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
-  Loader2, Upload, ChevronDown,
-} from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";

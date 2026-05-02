@@ -33,18 +33,7 @@ import { ReentryActionButton } from "../_components/reentry-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  AlertCircle,
-  AlertTriangle,
-  Clock,
-  TrendingDown,
-  Ban,
-  CheckCircle2,
-  ArrowRight,
-  ChevronRight,
-  Zap,
-} from "lucide-react";
+import { Search, AlertCircle, Clock, CheckCircle2, ArrowRight, ChevronRight, Zap } from "lucide-react";
 
 // ── Bucket tab config (Stock Risk-specific labels) ──────────────
 const SR_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
