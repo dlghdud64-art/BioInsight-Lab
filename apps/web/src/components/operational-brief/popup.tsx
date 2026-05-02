@@ -30,6 +30,8 @@ import {
   ArrowLeft,
   AlertTriangle,
   X,
+  Minus,
+  Sparkles,
   FileText,
   ShoppingCart,
   Package,
@@ -184,7 +186,14 @@ function useIsMobile(): boolean {
 
 /** Popup root — list ↔ detail stack. */
 export function OperationalBriefPopup() {
-  const { isOpen, close, selectedItemId, setSelectedItemId } = useOperationalBriefPopup();
+  const {
+    isOpen,
+    close,
+    selectedItemId,
+    setSelectedItemId,
+    isMinimized,
+    toggleMinimize,
+  } = useOperationalBriefPopup();
   const store = useOpsStore();
   // §11.183 — mobile bottom sheet vs desktop right rail 분기
   const isMobile = useIsMobile();
@@ -254,6 +263,26 @@ export function OperationalBriefPopup() {
     return sortedItems.filter((i) => i.sourceModule === selectedCategory);
   }, [sortedItems, selectedCategory]);
 
+  // §11.195 — minimize 시 desktop 에서는 우측 edge 의 작은 dock chip 만
+  // 노출 (full sheet 미렌더). mobile 은 minimize 무시 — 단순 close.
+  // chip 클릭 시 toggleMinimize() 로 다시 expand.
+  const totalUrgent =
+    categoryStats.quote.urgent +
+    categoryStats.po.urgent +
+    categoryStats.receiving.urgent +
+    categoryStats.stock_risk.urgent;
+
+  // dock chip 은 popup 이 isOpen + isMinimized + desktop 조건 만족 시만 mount.
+  if (isOpen && isMinimized && !isMobile) {
+    return (
+      <PopupDockChip
+        urgentCount={totalUrgent}
+        onRestore={toggleMinimize}
+        onClose={close}
+      />
+    );
+  }
+
   return (
     // §11.182/183 — desktop: modal={false} (dim 0, 본문 클릭 가능 rail).
     //               mobile: modal={true} (dim + body scroll lock, OS bottom sheet 패턴).
@@ -276,11 +305,11 @@ export function OperationalBriefPopup() {
             "max-md:inset-x-0 max-md:bottom-0 max-md:h-[85vh] max-md:rounded-t-2xl max-md:border-t max-md:border-bd",
             // §11.192 — desktop right rail (md+): width 400 → 480 (한국어
             // 텍스트 truncate 잘림 해소 + Google snippet 정보 밀도 확보)
-            // §11.193g — md:inset-y-0 (top:0) 가 viewport top 까지 닿아
-            // close button + eyebrow 가 OS/browser chrome 과 겹침 보고. top-4
-            // (16px) 로 push down + bottom-0 유지 (sheet 높이 약간 줄지만
-            // close button 정상 visible).
-            "md:top-4 md:bottom-0 md:right-0 md:h-[calc(100%-1rem)] md:w-[480px] md:max-w-[480px] md:border-l md:border-bd",
+            // §11.195 — md:top-4 (16px) 가 DashboardHeader (sticky top-0
+            // z-50 h-16) 와 겹쳐 eyebrow 가 header 아래로 잘림 보고.
+            // md:top-16 (64px) 으로 push down + h-[calc(100%-4rem)] 으로
+            // 정확히 viewport 의 header 아래 영역만 차지하도록 정합.
+            "md:top-16 md:bottom-0 md:right-0 md:h-[calc(100%-4rem)] md:w-[480px] md:max-w-[480px] md:border-l md:border-bd",
             // slide animation — mobile slide-up, desktop slide-right
             "transition ease-in-out duration-300",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -292,13 +321,29 @@ export function OperationalBriefPopup() {
             if (!isMobile) e.preventDefault();
           }}
         >
-          {/* §11.182 — 단일 close X (우상단). PopupPriorityList/PopupBriefDetail header 의 X 제거 */}
-          <SheetPrimitive.Close
-            className="absolute right-4 top-3 z-10 rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
-            aria-label="브리핑 닫기"
-          >
-            <X className="h-4 w-4" />
-          </SheetPrimitive.Close>
+          {/* §11.195 — 우상단 controls cluster: minimize ↔ close 두 진입점.
+              minimize (Minus) → dock chip 으로 collapse (state 보존).
+              close (X) → fully unmount (state reset).
+              mobile 에서는 minimize 가 의미 약함 (full screen sheet) 이라
+              desktop only 노출. */}
+          <div className="absolute right-3 top-2 z-10 flex items-center gap-1">
+            {!isMobile && (
+              <button
+                type="button"
+                onClick={toggleMinimize}
+                className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                aria-label="브리핑 최소화"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+            )}
+            <SheetPrimitive.Close
+              className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+              aria-label="브리핑 닫기"
+            >
+              <X className="h-4 w-4" />
+            </SheetPrimitive.Close>
+          </div>
 
           {/* §11.194 — 3-tier drill-down dispatch:
                 viewMode 'category' → PopupCategoryGrid (1단계)
@@ -336,6 +381,71 @@ export function OperationalBriefPopup() {
   );
 }
 
+/* ─────────────────── §11.195 dock chip (minimize 상태) ─────────────────── */
+
+/**
+ * popup 이 minimize 된 상태에서 우측 edge 에 노출되는 작은 dock chip.
+ *
+ * lock §11.142 호환:
+ *   - state 보존 (close 와 다름) — 다시 expand 시 이전 viewMode/selection 유지
+ *   - facts 0 노출 (단순 카운터 + label) — 운영 진행 가시성만 표시
+ *   - dead button 0 (onRestore + onClose 모두 wired)
+ *
+ * 디자인:
+ *   - md:top-20 right-0 (header h-16 + 16px gap), z-40 (header 아래)
+ *   - vertical stack — 위에 X (완전 닫기), 아래 chevron (다시 펴기)
+ *   - 긴급 카운트 있으면 rose dot badge 노출
+ */
+function PopupDockChip({
+  urgentCount,
+  onRestore,
+  onClose,
+}: {
+  urgentCount: number;
+  onRestore: () => void;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed right-0 top-20 z-40 flex flex-col items-stretch rounded-l-xl bg-slate-900 text-white shadow-xl shadow-slate-900/30"
+      role="region"
+      aria-label="운영 브리핑 — 최소화됨"
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="flex items-center justify-center px-2 pt-2 pb-1 text-slate-400 hover:text-white transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded-tl-xl"
+        aria-label="브리핑 닫기"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+      <button
+        type="button"
+        onClick={onRestore}
+        className="relative flex flex-col items-center gap-2 px-3 pt-3 pb-4 hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 rounded-bl-xl"
+        aria-label="브리핑 펼치기"
+      >
+        <Sparkles className="h-4 w-4" aria-hidden="true" />
+        <span
+          className="text-[11px] font-semibold tracking-wider"
+          style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
+        >
+          운영 브리핑
+        </span>
+        <ChevronRight className="h-3.5 w-3.5 rotate-180 text-slate-400" />
+        {urgentCount > 0 && (
+          <span
+            className="absolute top-1 left-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold leading-none text-white"
+            aria-label={`긴급 ${urgentCount}건`}
+          >
+            {urgentCount}
+          </span>
+        )}
+      </button>
+    </div>
+  );
+}
+
 /* ─────────────────── §11.194 Tier 1: Category Grid ─────────────────── */
 
 /**
@@ -351,7 +461,10 @@ function PopupCategoryGrid({
 }) {
   return (
     <>
-      <div className="px-6 pt-10 pb-5 pr-12 border-b border-bd">
+      {/* §11.195 — md:top-16 으로 header overlap 해소되어 pt-10 (40px) 불필요.
+          상단 controls cluster (right-3 top-2 = 28px 점유) 와 좌측 라벨 분리만
+          확보 — pt-6 + pr-20 (controls 영역 회피) 로 충분. */}
+      <div className="px-6 pt-6 pb-5 pr-20 border-b border-bd">
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
           운영 브리핑
         </div>
@@ -426,7 +539,9 @@ function PopupCategoryListWithExpand({
 
   return (
     <>
-      <div className="px-6 pt-10 pb-5 pr-12 border-b border-bd">
+      {/* §11.195 — header overlap 해소로 pt-10 → pt-6, controls cluster 영역
+          확보 위해 pr-20 (close + minimize 두 버튼 폭). */}
+      <div className="px-6 pt-6 pb-5 pr-20 border-b border-bd">
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"

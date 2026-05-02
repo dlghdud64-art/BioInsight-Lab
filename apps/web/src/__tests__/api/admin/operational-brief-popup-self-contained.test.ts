@@ -41,6 +41,17 @@ describe("§11.181 OperationalBriefPopupProvider + hook", () => {
     const src = read(PATH);
     expect(src).toMatch(/close[\s\S]*?setIsOpen\(false\)[\s\S]*?setSelectedItemId\(null\)/);
   });
+
+  it("§11.195 — isMinimized state + toggleMinimize action 노출 (dock chip 진입점)", () => {
+    const src = read(PATH);
+    // isMinimized boolean + setter
+    expect(src).toMatch(/isMinimized[^;]*?boolean/);
+    expect(src).toMatch(/toggleMinimize:\s*\(\)\s*=>\s*void/);
+    // useState<boolean>(false) 초기값 (minimized 0)
+    expect(src).toMatch(/useState[\s\S]*?isMinimized|isMinimized[\s\S]*?useState/);
+    // close() 시 isMinimized 도 false 로 reset (다음 open 은 expanded 부터)
+    expect(src).toMatch(/close[\s\S]*?setIsMinimized\(false\)/);
+  });
 });
 
 describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
@@ -68,13 +79,14 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/removeEventListener\(["']change["']/);
   });
 
-  it("§11.183/192/193g — mobile bottom sheet vs desktop right rail responsive className", () => {
+  it("§11.183/192/195 — mobile bottom sheet vs desktop right rail responsive className", () => {
     const src = read(PATH);
     // mobile: max-md inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
     expect(src).toMatch(/max-md:inset-x-0[\s\S]*?max-md:bottom-0[\s\S]*?max-md:h-\[85vh\][\s\S]*?max-md:rounded-t-2xl/);
-    // §11.193g — desktop: md:top-4 (viewport top 16px push) + h-[calc(100%-1rem)]
-    //            + width 480 (§11.192) + right-0
-    expect(src).toMatch(/md:top-4[\s\S]*?md:bottom-0[\s\S]*?md:right-0[\s\S]*?md:h-\[calc\(100%-1rem\)\][\s\S]*?md:w-\[480px\]/);
+    // §11.195 — desktop: md:top-16 (DashboardHeader h-16 = 64px clear) +
+    // h-[calc(100%-4rem)] + width 480 (§11.192) + right-0. md:top-4 (16px)
+    // 는 header z-50 와 겹쳐 eyebrow 잘림 — §11.195 fix.
+    expect(src).toMatch(/md:top-16[\s\S]*?md:bottom-0[\s\S]*?md:right-0[\s\S]*?md:h-\[calc\(100%-4rem\)\][\s\S]*?md:w-\[480px\]/);
     // animation 분기: mobile slide-from-bottom, desktop slide-from-right
     expect(src).toMatch(/max-md:data-\[state=open\]:slide-in-from-bottom/);
     expect(src).toMatch(/md:data-\[state=open\]:slide-in-from-right/);
@@ -169,6 +181,17 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/short:\s*"공급사 확인하기"/);
     // truncate ellipsis (length > 14)
     expect(src).toMatch(/slice\(0,\s*CTA_MAX_LENGTH\)\s*\+\s*"…"/);
+  });
+
+  it("§11.195 — minimize button 노출 + isMinimized 흐름 (dock chip 패턴)", () => {
+    const src = read(PATH);
+    // popup-context 의 isMinimized + toggleMinimize 흡수
+    expect(src).toMatch(/isMinimized/);
+    expect(src).toMatch(/toggleMinimize/);
+    // minimize button (aria-label 한국어) — close X 와 분리된 별도 진입점
+    expect(src).toMatch(/aria-label="브리핑 (?:접기|펼치기|최소화|복원)"|aria-label=\{[^}]*?(?:접기|펼치기|최소화|복원)/);
+    // dock chip 분기 — isMinimized 일 때 small chip 만 노출 (full sheet 0)
+    expect(src).toMatch(/PopupDockChip|isMinimized\s*\?[\s\S]*?dock|dock[\s\S]*?chip/i);
   });
 });
 
