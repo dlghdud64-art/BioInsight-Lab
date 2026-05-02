@@ -686,10 +686,24 @@ function SettingsPageContent() {
                         {(() => {
                           const sysRole = session?.user?.role as string | undefined;
                           const orgs = orgsData?.organizations ?? [];
+                          // §11.193d Phase 1 — OrganizationRole enum 5종 모두
+                          // 매핑 (이전 4종, REQUESTER/APPROVER 누락). 호영님
+                          // prototype 시안 정합:
+                          //   ADMIN     → "Lab Manager" (운영 책임자, purple)
+                          //   OWNER     → "Owner" (조직 최고 책임자, rose)
+                          //   APPROVER  → "Approver" (승인 권한, emerald)
+                          //   REQUESTER → "Requester" (요청 권한, blue)
+                          //   MEMBER    → "Member" (일반 멤버, slate-strong)
+                          //   VIEWER    → "Viewer" (조회만, slate-mute)
+                          // schema 변경 0 — 기존 OrganizationRole enum 직접 매핑.
+                          // multi-capability (1인 동시 보유) 는 §11.193d Phase 2
+                          // 별도 batch (Membership.workflowCapabilities schema 추가).
                           const orgRoleLabel: Record<string, { label: string; cls: string }> = {
-                            ADMIN: { label: "Admin", cls: "bg-purple-50 text-purple-700 border-purple-200" },
+                            ADMIN: { label: "Lab Manager", cls: "bg-purple-50 text-purple-700 border-purple-200" },
                             OWNER: { label: "Owner", cls: "bg-rose-50 text-rose-700 border-rose-200" },
-                            MEMBER: { label: "Member", cls: "bg-blue-50 text-blue-700 border-blue-200" },
+                            APPROVER: { label: "Approver", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+                            REQUESTER: { label: "Requester", cls: "bg-blue-50 text-blue-700 border-blue-200" },
+                            MEMBER: { label: "Member", cls: "bg-slate-100 text-slate-700 border-slate-300" },
                             VIEWER: { label: "Viewer", cls: "bg-slate-50 text-slate-600 border-slate-200" },
                           };
                           const badges: React.ReactNode[] = [];

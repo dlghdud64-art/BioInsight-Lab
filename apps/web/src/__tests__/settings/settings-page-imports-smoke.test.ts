@@ -77,6 +77,29 @@ describe("§11.193e settings/page.tsx import-completeness smoke", () => {
   }
 });
 
+describe("§11.193d Phase 1 — OrganizationRole label mapping (시안 정합)", () => {
+  it("Lab Manager 라벨 = ADMIN 매핑 (운영 책임자)", () => {
+    expect(SOURCE).toMatch(/ADMIN:\s*\{\s*label:\s*["']Lab Manager["']/);
+  });
+
+  it("Approver 라벨 = APPROVER 매핑 (승인 권한)", () => {
+    expect(SOURCE).toMatch(/APPROVER:\s*\{\s*label:\s*["']Approver["']/);
+  });
+
+  it("Requester 라벨 = REQUESTER 매핑 (요청 권한)", () => {
+    expect(SOURCE).toMatch(/REQUESTER:\s*\{\s*label:\s*["']Requester["']/);
+  });
+
+  it("OrganizationRole 5종 모두 mapping (이전 4종 → 6종, REQUESTER+APPROVER 추가)", () => {
+    // 5 OrganizationRole enum members + MEMBER (legacy data 호환) = 6 entries
+    const ORG_ROLES = ["ADMIN", "OWNER", "APPROVER", "REQUESTER", "MEMBER", "VIEWER"];
+    for (const role of ORG_ROLES) {
+      const re = new RegExp(`${role}:\\s*\\{\\s*label:\\s*["']`);
+      expect(SOURCE, `${role} 라벨 매핑 부재 — orgRoleLabel 정합 위반`).toMatch(re);
+    }
+  });
+});
+
 describe("§11.193e settings/page.tsx structural integrity", () => {
   it("export const dynamic = 'force-dynamic' 보존 (auth 의존 RSC)", () => {
     expect(SOURCE).toMatch(/export\s+const\s+dynamic\s*=\s*["']force-dynamic["']/);
