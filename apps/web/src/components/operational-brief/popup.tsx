@@ -220,7 +220,11 @@ export function OperationalBriefPopup() {
             "max-md:inset-x-0 max-md:bottom-0 max-md:h-[85vh] max-md:rounded-t-2xl max-md:border-t max-md:border-bd",
             // §11.192 — desktop right rail (md+): width 400 → 480 (한국어
             // 텍스트 truncate 잘림 해소 + Google snippet 정보 밀도 확보)
-            "md:inset-y-0 md:right-0 md:h-full md:w-[480px] md:max-w-[480px] md:border-l md:border-bd",
+            // §11.193g — md:inset-y-0 (top:0) 가 viewport top 까지 닿아
+            // close button + eyebrow 가 OS/browser chrome 과 겹침 보고. top-4
+            // (16px) 로 push down + bottom-0 유지 (sheet 높이 약간 줄지만
+            // close button 정상 visible).
+            "md:top-4 md:bottom-0 md:right-0 md:h-[calc(100%-1rem)] md:w-[480px] md:max-w-[480px] md:border-l md:border-bd",
             // slide animation — mobile slide-up, desktop slide-right
             "transition ease-in-out duration-300",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -234,7 +238,7 @@ export function OperationalBriefPopup() {
         >
           {/* §11.182 — 단일 close X (우상단). PopupPriorityList/PopupBriefDetail header 의 X 제거 */}
           <SheetPrimitive.Close
-            className="absolute right-4 top-4 z-10 rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            className="absolute right-4 top-3 z-10 rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
             aria-label="브리핑 닫기"
           >
             <X className="h-4 w-4" />
