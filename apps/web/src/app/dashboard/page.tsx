@@ -170,47 +170,44 @@ export default function DashboardPage() {
   });
 
   // §11.196 — page-level synchronous reveal gate.
+  // §11.199 P0 hot fix — store initial isFetching:true 와 충돌하여 영원히
+  //   skeleton stuck 이슈 fix. ordersFetching/budgetsFetching 의존 제거 +
+  //   fetcher trigger 도 단순화. statsLoading 만 page-ready gate.
   //
-  // 카드별 stagger root cause:
-  //   1. dashboardStats useQuery (statsLoading) — /api/dashboard/stats endpoint
-  //   2. ExecutiveSummary 내부 useOrderQueueStore.fetchOrders (ordersFetching)
-  //   3. ExecutiveSummary 내부 useBudgetStore.fetchBudgets (budgetsFetching)
-  //   각 source 의 응답 시점이 다르고, ExecutiveSummary 는 dynamic(ssr:false)
-  //   라 mount 자체가 늦음 → 카드별 reveal 타이밍 stagger.
+  // 이전 (§11.196) bug:
+  //   useOrderQueueStore initial state isFetching:true (order-queue-store.ts:245)
+  //   → useEffect 의 `!ordersFetching` 조건이 false → fetchOrders 영원히
+  //   trigger 안 됨 → store 의 isFetching 도 영원히 true → pageReady 영원히
+  //   false → unified skeleton 영원 stuck.
   //
-  // Fix: page.tsx 가 두 store 의 isFetching state 를 직접 subscribe + mount
-  // 직후 fetchOrders/fetchBudgets 를 explicit trigger → 모든 fetch parallel
-  // 시작 → 가장 느린 source 도착 시점에 unified pageReady=true → 모든 카드
-  // 동시 reveal.
+  // §11.199 fix:
+  //   1. page-ready gate 에서 ordersFetching/budgetsFetching 제거 — store
+  //      의 internal fetching 은 ExecutiveSummary 가 own loading state 처리.
+  //   2. fetcher 는 mount 시 무조건 trigger (idempotent, store 가 ongoing
+  //      fetch managing). hasData 조건만 사용.
   const ordersHasData = useOrderQueueStore((s) => s.orders.length > 0);
-  const ordersFetching = useOrderQueueStore((s) => s.isFetching);
   const fetchOrders = useOrderQueueStore((s) => s.fetchOrders);
 
   const budgetsHasData = useBudgetStore((s) => s.budgets.length > 0);
-  const budgetsFetching = useBudgetStore((s) => s.isFetching);
   const fetchBudgets = useBudgetStore((s) => s.fetchBudgets);
 
-  // mount 시점에 fetch 즉시 trigger (ExecutiveSummary 의 dynamic chunk 로딩
-  // 과 parallel). 이미 hydrated 상태면 noop.
+  // mount 시점에 fetch trigger. hasData 없으면 fetcher 호출 (이미 ongoing
+  // fetch 면 store 가 자체 dedup — fetchOrders 가 set isFetching=true 로
+  // override 하므로 race condition 위험 0). isFetching 조건 의존 0.
   useEffect(() => {
     if (status !== "authenticated") return;
-    if (!ordersHasData && !ordersFetching) {
+    if (!ordersHasData) {
       fetchOrders();
     }
-    if (!budgetsHasData && !budgetsFetching) {
+    if (!budgetsHasData) {
       fetchBudgets();
     }
-  }, [
-    status,
-    ordersHasData,
-    ordersFetching,
-    fetchOrders,
-    budgetsHasData,
-    budgetsFetching,
-    fetchBudgets,
-  ]);
+  }, [status, ordersHasData, fetchOrders, budgetsHasData, fetchBudgets]);
 
-  const pageReady = !statsLoading && !ordersFetching && !budgetsFetching;
+  // §11.199 — pageReady 는 statsLoading 만 의존. dashboardStats endpoint
+  //   응답 도착 시 모든 카드 reveal. ExecutiveSummary 내부 store 데이터는
+  //   자체 loading state 가 처리 (ordersFetching/budgetsFetching 의존 0).
+  const pageReady = !statsLoading;
 
   if (status === "loading" || !pageReady) {
     return (

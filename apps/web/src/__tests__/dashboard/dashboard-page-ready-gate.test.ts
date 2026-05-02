@@ -35,31 +35,31 @@ const PAGE_PATH = resolve(__dirname, "../../app/dashboard/page.tsx");
 const SOURCE = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.196 dashboard page — page-level pageReady gate", () => {
-  it("useOrderQueueStore + useBudgetStore import + fetching state read", () => {
+  it("§11.199 — useOrderQueueStore + useBudgetStore import (fetcher trigger 용)", () => {
     // 두 store 모두 page.tsx 에서 직접 subscribe (ExecutiveSummary 의존 X)
     expect(SOURCE).toMatch(/import\s+\{[\s\S]*?useOrderQueueStore[\s\S]*?\}/);
     expect(SOURCE).toMatch(/import\s+\{[\s\S]*?useBudgetStore[\s\S]*?\}/);
-    // isFetching state read (page-level pageReady 계산 input).
-    // [\s\S]*? 사용 — selector arrow `(s) => s.isFetching` 안의 `)` 가
-    // [^)] 와 충돌하지 않도록.
-    expect(SOURCE).toMatch(/useOrderQueueStore\([\s\S]*?s\.isFetching/);
-    expect(SOURCE).toMatch(/useBudgetStore\([\s\S]*?s\.isFetching/);
+    // §11.199 — isFetching subscribe 제거 (initial state true 와 충돌 issue
+    //   fix). hasData + fetcher 만 사용.
+    expect(SOURCE).toMatch(/useOrderQueueStore\([\s\S]*?s\.orders\.length\s*>\s*0/);
+    expect(SOURCE).toMatch(/useBudgetStore\([\s\S]*?s\.budgets\.length\s*>\s*0/);
   });
 
   it("page mount 직후 fetchOrders + fetchBudgets explicit trigger (useEffect)", () => {
     // ExecutiveSummary mount 까지 기다리지 않고 page.tsx 가 직접 fetch trigger
-    // → store fetching=true 상태로 진입 → unified skeleton 유지
+    // §11.199 — `!ordersFetching` 조건 제거 (store dedup 이 처리).
     expect(SOURCE).toMatch(/fetchOrders/);
     expect(SOURCE).toMatch(/fetchBudgets/);
     expect(SOURCE).toMatch(/useEffect\(\s*\(\)\s*=>[\s\S]*?(?:fetchOrders|fetchBudgets)/);
   });
 
-  it("pageReady 단일 boolean 통합 (statsLoading + ordersFetching + budgetsFetching)", () => {
-    // pageReady (또는 동등 이름) = 모든 source 의 fetching state 통합
-    // 명시적으로 !statsLoading && !ordersFetching && !budgetsFetching 패턴
-    expect(SOURCE).toMatch(
-      /pageReady\s*=[\s\S]*?!\s*statsLoading[\s\S]*?!\s*ordersFetching[\s\S]*?!\s*budgetsFetching/,
-    );
+  it("§11.199 — pageReady = statsLoading 만 (ordersFetching/budgetsFetching 의존 제거)", () => {
+    // §11.199 P0 hot fix: store initial isFetching:true 와 충돌하여 영원히
+    //   skeleton stuck 이슈 fix. pageReady = !statsLoading 만.
+    expect(SOURCE).toMatch(/pageReady\s*=\s*!\s*statsLoading\b/);
+    // 이전 §11.196 의 ordersFetching/budgetsFetching 의존 부재 강제.
+    expect(SOURCE).not.toMatch(/pageReady\s*=[\s\S]*?ordersFetching/);
+    expect(SOURCE).not.toMatch(/pageReady\s*=[\s\S]*?budgetsFetching/);
   });
 
   it("pageReady false → unified skeleton render (early return 또는 분기)", () => {
