@@ -274,8 +274,10 @@ function PopupPriorityList({
     <>
       {/* Header — §11.182 한국어 eyebrow + Top N subtitle.
           §11.192b — pr-12 추가: close button (absolute right-4 top-4) 영역
-          회피하여 eyebrow / title / subtitle 겹침/잘림 방지. */}
-      <div className="px-6 py-5 pr-12 border-b border-bd">
+          회피하여 eyebrow / title / subtitle 겹침/잘림 방지.
+          §11.193c — pt-5 → pt-10: close button bbox (top-4 ~ 40px) 와
+          eyebrow 위쪽 시각 겹침 추가 해소 (호영님 prod 검증 후). */}
+      <div className="px-6 pt-10 pb-5 pr-12 border-b border-bd">
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
           운영 브리핑
         </div>
@@ -408,8 +410,12 @@ function PopupBriefDetail({
     <>
       {/* Header — §11.182 back / 한국어 eyebrow / 단일 X (Sheet root).
           §11.192b — priority badge 추가 + tone accent border-l-4 (list mode
-          card 와 일관 Google snippet 패턴). */}
-      <div className={cn("px-6 py-5 pr-12 border-b border-bd border-l-4", headerToneBorder)}>
+          card 와 일관 Google snippet 패턴).
+          §11.193c — py-5 → pt-10 pb-5: detail header 의 back button + 3 badges
+          (운영브리핑 / workType / priority) 가 close button (absolute top-4)
+          영역과 위쪽 겹쳐 RCV title 위쪽 잘림 호영님 보고 — top padding
+          확장으로 해소. */}
+      <div className={cn("px-6 pt-10 pb-5 pr-12 border-b border-bd border-l-4", headerToneBorder)}>
         <button
           onClick={onBack}
           className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
