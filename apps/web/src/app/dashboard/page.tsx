@@ -2,10 +2,17 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+// §11.196 — page-level pageReady gate. ExecutiveSummarySection 의 자체
+// store fetch 가 mount 후에야 시작되어 카드별 stagger 발생 (호영님 보고).
+// page.tsx 가 두 store 의 isFetching 을 직접 subscribe + mount 직후
+// fetchOrders/fetchBudgets explicit trigger 하여 모든 fetch 를 parallel
+// 시작 → 가장 느린 source 도착 시점에 모든 카드 동시 reveal.
+import { useOrderQueueStore } from "@/lib/store/order-queue-store";
+import { useBudgetStore } from "@/lib/store/budget-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -156,15 +163,86 @@ export default function DashboardPage() {
     refetchOnWindowFocus: false,
   });
 
-  if (status === "loading") {
+  // §11.196 — page-level synchronous reveal gate.
+  //
+  // 카드별 stagger root cause:
+  //   1. dashboardStats useQuery (statsLoading) — /api/dashboard/stats endpoint
+  //   2. ExecutiveSummary 내부 useOrderQueueStore.fetchOrders (ordersFetching)
+  //   3. ExecutiveSummary 내부 useBudgetStore.fetchBudgets (budgetsFetching)
+  //   각 source 의 응답 시점이 다르고, ExecutiveSummary 는 dynamic(ssr:false)
+  //   라 mount 자체가 늦음 → 카드별 reveal 타이밍 stagger.
+  //
+  // Fix: page.tsx 가 두 store 의 isFetching state 를 직접 subscribe + mount
+  // 직후 fetchOrders/fetchBudgets 를 explicit trigger → 모든 fetch parallel
+  // 시작 → 가장 느린 source 도착 시점에 unified pageReady=true → 모든 카드
+  // 동시 reveal.
+  const ordersHasData = useOrderQueueStore((s) => s.orders.length > 0);
+  const ordersFetching = useOrderQueueStore((s) => s.isFetching);
+  const fetchOrders = useOrderQueueStore((s) => s.fetchOrders);
+
+  const budgetsHasData = useBudgetStore((s) => s.budgets.length > 0);
+  const budgetsFetching = useBudgetStore((s) => s.isFetching);
+  const fetchBudgets = useBudgetStore((s) => s.fetchBudgets);
+
+  // mount 시점에 fetch 즉시 trigger (ExecutiveSummary 의 dynamic chunk 로딩
+  // 과 parallel). 이미 hydrated 상태면 noop.
+  useEffect(() => {
+    if (status !== "authenticated") return;
+    if (!ordersHasData && !ordersFetching) {
+      fetchOrders();
+    }
+    if (!budgetsHasData && !budgetsFetching) {
+      fetchBudgets();
+    }
+  }, [
+    status,
+    ordersHasData,
+    ordersFetching,
+    fetchOrders,
+    budgetsHasData,
+    budgetsFetching,
+    fetchBudgets,
+  ]);
+
+  const pageReady = !statsLoading && !ordersFetching && !budgetsFetching;
+
+  if (status === "loading" || !pageReady) {
     return (
-      <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
-        <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
-        <div className="h-[72px] rounded-xl bg-slate-200 animate-pulse" />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-200 animate-pulse" />
+      <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 bg-sh min-h-screen">
+        {/* Page header skeleton */}
+        <div className="flex items-end justify-between gap-3">
+          <div className="space-y-1.5">
+            <div className="h-6 w-32 rounded bg-slate-200 animate-pulse" />
+            <div className="h-4 w-64 rounded bg-slate-100 animate-pulse" />
+          </div>
+          <div className="h-9 w-28 rounded-lg bg-slate-200 animate-pulse" />
+        </div>
+        {/* KPI 4-card skeleton */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-[100px] md:h-[120px] rounded-xl bg-slate-100 animate-pulse"
+            />
           ))}
+        </div>
+        {/* SYSTEM INSIGHT banner skeleton */}
+        <div className="h-[88px] rounded-xl bg-slate-100 animate-pulse" />
+        {/* Chart 2-col skeleton (Spend trend + Category) */}
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+          <div className="h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+        </div>
+        {/* Quick actions 4-card skeleton */}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-[88px] rounded-xl bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+        {/* 3-state center panel skeleton (5-col split) */}
+        <div className="hidden md:grid md:grid-cols-5 gap-4">
+          <div className="col-span-3 h-[240px] rounded-xl bg-slate-100 animate-pulse" />
+          <div className="col-span-2 h-[240px] rounded-xl bg-slate-100 animate-pulse" />
         </div>
       </div>
     );
