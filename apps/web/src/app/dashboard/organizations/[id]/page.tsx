@@ -28,12 +28,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+// §11.196f — dead lucide imports 6 symbol 제거 (BarChart3 Eye RotateCcw
+//   UserCheck UserX Wallet actual 사용 0). 나머지 보존.
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
-  Settings, Wallet, PauseCircle, X, Send, Building2,
-  FileText, Package, ShoppingCart, MoreVertical, Trash2, RotateCcw, UserX,
-  Lock, Clock, UserCheck, Activity, CreditCard, ClipboardCheck, Eye,
-  AlertTriangle, ChevronRight, BarChart3, CheckCircle2, XCircle,
+  Settings, PauseCircle, X, Send, Building2,
+  FileText, Package, ShoppingCart, MoreVertical, Trash2,
+  Lock, Clock, Activity, CreditCard, ClipboardCheck,
+  AlertTriangle, ChevronRight, CheckCircle2, XCircle,
 } from "lucide-react";
 import {
   DropdownMenu,

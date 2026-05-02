@@ -11,12 +11,14 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, Legend,
 } from "recharts";
+// §11.196f — dead lucide imports 6 symbol 제거 (ChevronRight Clock
+//   Download Gauge Search Zap actual 사용 0). 나머지 보존.
 import {
   TrendingUp, TrendingDown, Package, FlaskConical, ShoppingCart,
-  ChevronRight, AlertTriangle, RotateCcw,
-  CreditCard, Users, ExternalLink, Clock,
+  AlertTriangle, RotateCcw,
+  CreditCard, Users, ExternalLink,
   ArrowRight, Sparkles, Loader2,
-  Gauge, Download, Search, Zap, AlertCircle,
+  AlertCircle,
 } from "lucide-react";
 import TeamAnalyticsView from "./_components/team-analytics-view";
 
