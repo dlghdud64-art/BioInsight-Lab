@@ -118,24 +118,36 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/module:\s*["']stock_risk["'][\s\S]*?label:\s*["']재고 관리["']/);
   });
 
-  it("brief detail — 4-section + 4-cell MetricCell + amber alert (§11.182 판단 근거)", () => {
+  it("§11.198 brief detail — 시안 정합 6-section (AI INSIGHT brand + CRITICAL EVIDENCE + DETECTED RISKS rose + 추천 해결책 + 큰 CTA)", () => {
     const src = read(PATH);
-    // §11.182 — RESOLVER 라벨 제거, "판단 근거" 사용
-    expect(src).toMatch(/판단 근거[\s\S]*?grid-cols-2/);
-    expect(src).not.toMatch(/RESOLVER 판별 근거/);
+    // §11.198 — AI INSIGHT brand banner (LABAXIS AI INSIGHT label + Live indicator)
+    expect(src).toMatch(/LABAXIS AI INSIGHT/);
+    expect(src).toMatch(/Real-time Operations Analysis/);
+    // CRITICAL EVIDENCE 영문 emphasis (시안 정합)
+    expect(src).toMatch(/Critical Evidence/);
+    // DETECTED RISKS — rose 톤 (이전 amber → rose 시안 정합)
+    expect(src).toMatch(/Detected Risks/);
+    expect(src).toMatch(/bg-rose-50[\s\S]*?border-rose-200/);
+    // 추천 해결책 영역 신규 (emerald check)
+    expect(src).toMatch(/추천 해결책/);
+    expect(src).toMatch(/bg-emerald-50[\s\S]*?border-emerald-200/);
+    // 큰 primary CTA (h-12 + text-base)
+    expect(src).toMatch(/h-12 text-base/);
+    // §11.198 — 4-cell MetricCell grid → 2 evidence card 로 변경 (RBAC 정합)
     const metricCells = src.match(/<MetricCell\b/g) ?? [];
-    expect(metricCells.length).toBe(4);
-    expect(src).toMatch(/bg-amber-50[\s\S]*?border-amber-200/);
+    expect(metricCells.length).toBe(0);
   });
 
-  it("§11.182 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
+  it("§11.182/198 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
     const src = read(PATH);
-    // 한국어 "운영 브리핑" eyebrow 사용
+    // 한국어 "운영 브리핑" eyebrow 사용 (popup top + dock chip)
     expect(src).toMatch(/운영 브리핑/);
     // 영문 OPERATIONAL BRIEFING 비노출
     expect(src).not.toMatch(/OPERATIONAL BRIEFING/);
-    expect(src).toMatch(/상황 요약/);
-    expect(src).toMatch(/다음 조치/);
+    // §11.198 — "상황 요약" / "판단 근거" / "다음 조치" 라벨은 제거 (시안 정합).
+    //   Critical Evidence + Detected Risks + 추천 해결책 + 큰 CTA 로 대체.
+    expect(src).toMatch(/Critical Evidence/);
+    expect(src).toMatch(/추천 해결책/);
   });
 
   it("§11.182 — priority enum → 사람 라벨 (즉시/높음/보통/낮음)", () => {

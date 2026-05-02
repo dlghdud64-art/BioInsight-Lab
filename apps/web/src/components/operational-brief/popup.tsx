@@ -38,6 +38,7 @@ import {
   AlertCircle,
   ChevronRight,
   ChevronDown,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -676,6 +677,15 @@ function PopupBriefInline({
 
   const ctaLabel = shortenCtaLabel(item.nextAction);
 
+  // §11.198 — 시안 정합 6-section: AI INSIGHT brand banner + narrative +
+  //   CRITICAL EVIDENCE 2-cell + DETECTED RISKS rose + 추천 해결책 emerald
+  //   + 큰 primary CTA. canonical truth (briefNarrative / blockers / item)
+  //   변경 0 — visible hierarchy 만 강화.
+  const priorityHuman = PRIORITY_HUMAN[item.priority] ?? item.priority;
+  const ownerLabel = formatOwner(item.owner);
+  // 추천 해결책 = 첫 blocker 의 whatCanResolveIt (있으면), 없으면 nextAction.
+  const recommendedFix = blockers[0]?.whatCanResolveIt ?? item.nextAction ?? null;
+
   return (
     <div className="px-6 pb-5 pt-1 bg-slate-50/50 border-t border-bd/40 space-y-4">
       {lastUpdatedLabel && (
@@ -684,80 +694,115 @@ function PopupBriefInline({
         </p>
       )}
 
-      {/* § 1. 상황 요약 */}
-      <section>
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
-          상황 요약
+      {/* §11.198 § 1. LABAXIS AI INSIGHT brand banner (시안 정합 dark gradient) */}
+      <section className="rounded-lg overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
+        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-7 h-7 rounded-md bg-white/10 flex items-center justify-center">
+              <Sparkles className="h-3.5 w-3.5 text-blue-300" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold tracking-[0.08em]">LABAXIS AI INSIGHT</p>
+              <p className="text-[9px] uppercase tracking-[0.1em] text-slate-400">
+                Real-time Operations Analysis
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <span className="text-[9px] uppercase tracking-wider text-emerald-300 font-bold">Live</span>
+          </div>
         </div>
-        <div className="rounded-md border-l-2 border-blue-500 bg-white p-2.5">
-          <p className="text-sm text-slate-800 leading-relaxed">{briefNarrative ?? item.summary}</p>
+        <div className="px-4 py-3">
+          <p className="text-sm leading-relaxed text-slate-100">
+            {briefNarrative ?? item.summary}
+          </p>
         </div>
       </section>
 
-      {/* § 2. 판단 근거 (4-cell MetricCell) */}
+      {/* §11.198 § 2. CRITICAL EVIDENCE — 2 cell large evidence card (시안 정합) */}
       <section>
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
-          판단 근거
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+          Critical Evidence
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <MetricCell
-            label="우선순위"
-            value={PRIORITY_HUMAN[item.priority] ?? item.priority}
-            tone={item.priority === "p0" ? "danger" : item.priority === "p1" ? "warn" : "neutral"}
-          />
-          <MetricCell
-            label="기한"
-            value={item.dueState.label}
-            tone={item.dueState.tone === "overdue" ? "danger" : item.dueState.tone === "due_soon" ? "warn" : "neutral"}
-          />
-          <MetricCell label="담당" value={formatOwner(item.owner)} tone="neutral" />
-          <MetricCell
-            label="차단 상태"
-            value={blockers.length === 0 ? "없음" : `${blockers.length}건`}
-            tone={blockers.length === 0 ? "ok" : "danger"}
-          />
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              우선순위
+            </p>
+            <p className="text-base font-bold text-slate-900 mb-1.5">{priorityHuman}</p>
+            <span
+              className={cn(
+                "inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                PRIORITY_BADGE[item.priority],
+              )}
+            >
+              {WORK_TYPE_LABELS[item.workType] ?? item.workType}
+            </span>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
+              담당
+            </p>
+            <p className="text-base font-bold text-slate-900 mb-1.5">{ownerLabel}</p>
+            <span className="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600">
+              {item.dueState.label}
+            </span>
+          </div>
         </div>
       </section>
 
-      {/* § 3. 리스크 */}
+      {/* §11.198 § 3. DETECTED RISKS — rose alert (시안 정합 amber → rose) */}
       {blockers.length > 0 && (
         <section>
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
-            리스크
+          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+            Detected Risks
           </div>
-          <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 space-y-1.5">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-              <span className="text-xs font-semibold text-amber-900">
-                차단 사유 ({blockers.length}건)
-              </span>
-            </div>
+          <div className="bg-rose-50 border border-rose-200 rounded-lg p-3 space-y-2">
             {blockers.map((b) => (
-              <div key={b.summaryKey} className="text-xs">
-                <div className="text-slate-800">• {b.whyBlocked}</div>
-                <div className="pl-3 text-blue-700">→ {b.whatCanResolveIt}</div>
+              <div key={b.summaryKey} className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-rose-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs flex-1">
+                  <div className="font-semibold text-rose-900 mb-0.5">{b.whyBlocked}</div>
+                  <div className="text-rose-700 text-[11px]">
+                    24시간 경과 시 SLA 위반 위험
+                  </div>
+                </div>
               </div>
             ))}
           </div>
         </section>
       )}
 
-      {/* § 4. 다음 조치 + Primary CTA */}
-      {ctaLabel && (
+      {/* §11.198 § 4. 추천 해결책 — emerald check + 본문 (시안 정합 신규) */}
+      {recommendedFix && (
         <section>
-          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
-            다음 조치
+          <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
+            <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 mb-1">
+                추천 해결책
+              </p>
+              <p className="text-xs text-emerald-900 leading-relaxed">{recommendedFix}</p>
+            </div>
           </div>
-          <Button
-            className="w-full h-10 text-sm"
-            onClick={() => {
-              onClose();
-              router.push(item.entityRoute);
-            }}
-          >
-            {ctaLabel}
-          </Button>
         </section>
+      )}
+
+      {/* §11.198 § 5. 큰 Primary CTA (시안 정합 — h-10 → h-12, text-sm → text-base) */}
+      {ctaLabel && (
+        <Button
+          className="w-full h-12 text-base font-semibold"
+          onClick={() => {
+            onClose();
+            router.push(item.entityRoute);
+          }}
+        >
+          {ctaLabel}
+        </Button>
       )}
     </div>
   );
