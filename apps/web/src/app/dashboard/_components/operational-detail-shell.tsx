@@ -93,7 +93,10 @@ export function InboxContextStrip({
   dueLabel,
   dueTone = 'normal',
   owner,
-  returnHref = '/dashboard/inbox',
+  // §11.191b — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
+  // returnHref default 를 canonical destination (/dashboard) 으로 swap →
+  // back button 의 server-side redirect 한 단계 절약.
+  returnHref = '/dashboard',
 }: InboxContextStripProps) {
   const dueBg =
     dueTone === 'overdue'
@@ -515,11 +518,13 @@ export function DetailStateFallback({
             초기화
           </button>
         )}
+        {/* §11.191b — 운영작업함 deprecated → 메인 dashboard 로 복귀.
+            label 도 "작업함" → "메인" 으로 정합 (canonical destination). */}
         <a
-          href="/dashboard/inbox"
+          href="/dashboard"
           className="rounded bg-slate-800 px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 transition-colors"
         >
-          작업함으로 돌아가기
+          메인으로 돌아가기
         </a>
       </div>
     </div>
