@@ -2,17 +2,13 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useEffect } from "react";
+import { Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-// §11.196 — page-level pageReady gate. ExecutiveSummarySection 의 자체
-// store fetch 가 mount 후에야 시작되어 카드별 stagger 발생 (호영님 보고).
-// page.tsx 가 두 store 의 isFetching 을 직접 subscribe + mount 직후
-// fetchOrders/fetchBudgets explicit trigger 하여 모든 fetch 를 parallel
-// 시작 → 가장 느린 source 도착 시점에 모든 카드 동시 reveal.
-import { useOrderQueueStore } from "@/lib/store/order-queue-store";
-import { useBudgetStore } from "@/lib/store/budget-store";
+// §11.199b P0 — page-ready gate revert. 이전 §11.196/§11.199 의 store
+// fetcher trigger 와 isFetching 의존 모두 제거. ExecutiveSummary 가 자체
+// store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight } from "lucide-react";
@@ -169,83 +165,39 @@ export default function DashboardPage() {
     refetchOnWindowFocus: false,
   });
 
-  // §11.196 — page-level synchronous reveal gate.
-  // §11.199 P0 hot fix — store initial isFetching:true 와 충돌하여 영원히
-  //   skeleton stuck 이슈 fix. ordersFetching/budgetsFetching 의존 제거 +
-  //   fetcher trigger 도 단순화. statsLoading 만 page-ready gate.
+  // §11.199b P0 — page-ready unified gate 자체 revert.
   //
-  // 이전 (§11.196) bug:
-  //   useOrderQueueStore initial state isFetching:true (order-queue-store.ts:245)
-  //   → useEffect 의 `!ordersFetching` 조건이 false → fetchOrders 영원히
-  //   trigger 안 됨 → store 의 isFetching 도 영원히 true → pageReady 영원히
-  //   false → unified skeleton 영원 stuck.
+  // 회귀 history:
+  //   §11.196: page-level pageReady gate 도입 (fetch parallel + 동시 reveal)
+  //   §11.199 P0 hot fix: ordersFetching/budgetsFetching 의존 제거
+  //   §11.199b P0 (본 batch): pageReady gate 자체 제거.
   //
-  // §11.199 fix:
-  //   1. page-ready gate 에서 ordersFetching/budgetsFetching 제거 — store
-  //      의 internal fetching 은 ExecutiveSummary 가 own loading state 처리.
-  //   2. fetcher 는 mount 시 무조건 trigger (idempotent, store 가 ongoing
-  //      fetch managing). hasData 조건만 사용.
-  const ordersHasData = useOrderQueueStore((s) => s.orders.length > 0);
-  const fetchOrders = useOrderQueueStore((s) => s.fetchOrders);
-
-  const budgetsHasData = useBudgetStore((s) => s.budgets.length > 0);
-  const fetchBudgets = useBudgetStore((s) => s.fetchBudgets);
-
-  // mount 시점에 fetch trigger. hasData 없으면 fetcher 호출 (이미 ongoing
-  // fetch 면 store 가 자체 dedup — fetchOrders 가 set isFetching=true 로
-  // override 하므로 race condition 위험 0). isFetching 조건 의존 0.
-  useEffect(() => {
-    if (status !== "authenticated") return;
-    if (!ordersHasData) {
-      fetchOrders();
-    }
-    if (!budgetsHasData) {
-      fetchBudgets();
-    }
-  }, [status, ordersHasData, fetchOrders, budgetsHasData, fetchBudgets]);
-
-  // §11.199 — pageReady 는 statsLoading 만 의존. dashboardStats endpoint
-  //   응답 도착 시 모든 카드 reveal. ExecutiveSummary 내부 store 데이터는
-  //   자체 loading state 가 처리 (ordersFetching/budgetsFetching 의존 0).
-  const pageReady = !statsLoading;
-
-  if (status === "loading" || !pageReady) {
+  // Root cause (Chrome prod 검증):
+  //   §11.199 fix 후에도 prod /dashboard 진입 시 unified skeleton 영원 stuck.
+  //   /api/dashboard/stats 200 OK 응답 4번 도착에도 statsLoading false 안 됨.
+  //   /dashboard/inventory 는 정상 → prod 자체 정상, dashboard pageReady gate
+  //   고유 이슈. react-query 의 useQuery 가 disabled→enabled transition 시
+  //   isLoading 동작이 prod build 와 dev build 가 다르거나, dashboard 의 다른
+  //   render path block 가 있음.
+  //
+  // Fix (회귀 0 path):
+  //   pageReady gate 자체 제거. status === "loading" 분기만 auth skeleton 으로
+  //   유지. 모든 카드는 본인 isLoading 분기로 fallback (§11.196b 에서 제거한
+  //   카드별 statsLoading 분기는 별도 batch 로 복원 가능, 현재는 prod 동작
+  //   우선). reveal stagger 회귀 — 그러나 stuck (dashboard 진입 0) 보다 훨씬
+  //   나음. 운영자 즉시 dashboard 사용 가능.
+  //
+  // §11.196 series 의 dead import sweep / chunk wait / brand UX 등은 모두
+  // 보존. pageReady gate 한 가지만 revert.
+  if (status === "loading") {
     return (
-      <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 bg-sh min-h-screen">
-        {/* Page header skeleton */}
-        <div className="flex items-end justify-between gap-3">
-          <div className="space-y-1.5">
-            <div className="h-6 w-32 rounded bg-slate-200 animate-pulse" />
-            <div className="h-4 w-64 rounded bg-slate-100 animate-pulse" />
-          </div>
-          <div className="h-9 w-28 rounded-lg bg-slate-200 animate-pulse" />
-        </div>
-        {/* KPI 4-card skeleton */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-[100px] md:h-[120px] rounded-xl bg-slate-100 animate-pulse"
-            />
+      <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
+        <div className="h-6 w-48 rounded bg-slate-200 animate-pulse" />
+        <div className="h-[72px] rounded-xl bg-slate-200 animate-pulse" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-[100px] md:h-[120px] rounded-xl bg-slate-200 animate-pulse" />
           ))}
-        </div>
-        {/* SYSTEM INSIGHT banner skeleton */}
-        <div className="h-[88px] rounded-xl bg-slate-100 animate-pulse" />
-        {/* Chart 2-col skeleton (Spend trend + Category) */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="lg:col-span-2 h-[280px] rounded-xl bg-slate-100 animate-pulse" />
-          <div className="h-[280px] rounded-xl bg-slate-100 animate-pulse" />
-        </div>
-        {/* Quick actions 4-card skeleton */}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="h-[88px] rounded-xl bg-slate-100 animate-pulse" />
-          ))}
-        </div>
-        {/* 3-state center panel skeleton (5-col split) */}
-        <div className="hidden md:grid md:grid-cols-5 gap-4">
-          <div className="col-span-3 h-[240px] rounded-xl bg-slate-100 animate-pulse" />
-          <div className="col-span-2 h-[240px] rounded-xl bg-slate-100 animate-pulse" />
         </div>
       </div>
     );
