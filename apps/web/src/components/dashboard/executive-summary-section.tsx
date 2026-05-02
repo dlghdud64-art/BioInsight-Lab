@@ -18,17 +18,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Legend,
-} from "recharts";
+// §11.196e — recharts dead import 제거 (9 symbol 모두 actual JSX 사용 0).
+//   ExecutiveSummary 가 사실 recharts 의존 0 인데 import 만 끌고 있어
+//   chunk 에 recharts (~150KB gzipped) 강제 포함시키고 있던 root cause.
+//   §11.196c (static import) 의 trade-off (initial bundle ↑) 가정이
+//   spurious — dead import 제거로 자연 해소. KPI 카드 + projection
+//   table 만 사용하므로 recharts 불필요.
 import {
   TrendingDown,
   ClipboardList,
