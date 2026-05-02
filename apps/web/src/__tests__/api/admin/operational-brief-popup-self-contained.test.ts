@@ -51,12 +51,12 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(read(PATH)).toMatch(/"use client"/);
   });
 
-  it("§11.182/183 — Sheet modal 분기 (mobile=true, desktop=false) + width 400 desktop", () => {
+  it("§11.182/183/192 — Sheet modal 분기 (mobile=true, desktop=false) + width 480 desktop", () => {
     const src = read(PATH);
     // §11.183 — modal={isMobile} (mobile dim, desktop non-modal)
     expect(src).toMatch(/SheetPrimitive\.Root[\s\S]*?modal=\{isMobile\}/);
-    // desktop 너비 md:w-[400px]
-    expect(src).toMatch(/md:w-\[400px\]/);
+    // §11.192 — desktop 너비 400 → 480 (한국어 wrap + Google snippet 정보 밀도)
+    expect(src).toMatch(/md:w-\[480px\]/);
     // SheetContent 사용 안 함 (자체 SheetPrimitive.Content)
     expect(src).toMatch(/SheetPrimitive\.Content/);
   });
@@ -68,12 +68,13 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/removeEventListener\(["']change["']/);
   });
 
-  it("§11.183 — mobile bottom sheet vs desktop right rail responsive className", () => {
+  it("§11.183/192/193g — mobile bottom sheet vs desktop right rail responsive className", () => {
     const src = read(PATH);
     // mobile: max-md inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
     expect(src).toMatch(/max-md:inset-x-0[\s\S]*?max-md:bottom-0[\s\S]*?max-md:h-\[85vh\][\s\S]*?max-md:rounded-t-2xl/);
-    // desktop: md:inset-y-0 md:right-0 md:h-full md:w-[400px]
-    expect(src).toMatch(/md:inset-y-0[\s\S]*?md:right-0[\s\S]*?md:h-full[\s\S]*?md:w-\[400px\]/);
+    // §11.193g — desktop: md:top-4 (viewport top 16px push) + h-[calc(100%-1rem)]
+    //            + width 480 (§11.192) + right-0
+    expect(src).toMatch(/md:top-4[\s\S]*?md:bottom-0[\s\S]*?md:right-0[\s\S]*?md:h-\[calc\(100%-1rem\)\][\s\S]*?md:w-\[480px\]/);
     // animation 분기: mobile slide-from-bottom, desktop slide-from-right
     expect(src).toMatch(/max-md:data-\[state=open\]:slide-in-from-bottom/);
     expect(src).toMatch(/md:data-\[state=open\]:slide-in-from-right/);
@@ -87,11 +88,22 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/onInteractOutside[\s\S]*?if\s*\(\s*!isMobile\s*\)\s*e\.preventDefault/);
   });
 
-  it("priority list (상위 5건) + brief detail stack 분기", () => {
+  it("§11.194 3-tier drill-down: category → list → inline expand 분기", () => {
     const src = read(PATH);
-    expect(src).toMatch(/sortedItems\.slice\(0,\s*5\)/);
-    expect(src).toMatch(/PopupPriorityList/);
-    expect(src).toMatch(/PopupBriefDetail/);
+    // viewMode 'category' (1단계) | 'list' (2+3단계 inline expand)
+    expect(src).toMatch(/viewMode[\s\S]*?["']category["'][\s\S]*?["']list["']/);
+    // PopupCategoryGrid (1단계 카드 grid)
+    expect(src).toMatch(/PopupCategoryGrid/);
+    // PopupCategoryListWithExpand (2단계 list + 3단계 inline expand)
+    expect(src).toMatch(/PopupCategoryListWithExpand/);
+    // PopupItemWithExpand + PopupBriefInline (row card + 3단계 inline AI brief)
+    expect(src).toMatch(/PopupItemWithExpand/);
+    expect(src).toMatch(/PopupBriefInline/);
+    // CATEGORIES array (4 카테고리 매핑) — quote/po/receiving/stock_risk
+    expect(src).toMatch(/module:\s*["']quote["'][\s\S]*?label:\s*["']견적 관리["']/);
+    expect(src).toMatch(/module:\s*["']po["'][\s\S]*?label:\s*["']발주 관리["']/);
+    expect(src).toMatch(/module:\s*["']receiving["'][\s\S]*?label:\s*["']입고 및 검수["']/);
+    expect(src).toMatch(/module:\s*["']stock_risk["'][\s\S]*?label:\s*["']재고 관리["']/);
   });
 
   it("brief detail — 4-section + 4-cell MetricCell + amber alert (§11.182 판단 근거)", () => {

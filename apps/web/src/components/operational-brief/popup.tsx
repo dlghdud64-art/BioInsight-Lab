@@ -26,7 +26,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { ArrowLeft, AlertTriangle, X } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertTriangle,
+  X,
+  FileText,
+  ShoppingCart,
+  Package,
+  AlertCircle,
+  ChevronRight,
+  ChevronDown,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
@@ -36,12 +46,28 @@ import {
   WORK_TYPE_LABELS,
   SOURCE_MODULE_COLORS,
   type UnifiedInboxItem,
+  type InboxSourceModule,
 } from "@/lib/ops-console/inbox-adapter";
 import { buildInboxItemBlockers } from "@/lib/ops-console/blocker-adapter";
 import { useOperationalBriefPopup } from "./popup-context";
 import { useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { MetricCell } from "./metric-cell";
 import { formatRelativeKr } from "./relative-time";
+
+/* §11.194 — 3-tier drill-down 카테고리 매핑 (canonical InboxSourceModule
+   4종 → 운영자 친화 한국어 카테고리 카드). 호영님 prototype 시안 정합 —
+   1단계 카테고리 → 2단계 list → 3단계 inline expand (Google snippet). */
+const CATEGORIES: Array<{
+  module: InboxSourceModule;
+  label: string;
+  description: string;
+  icon: typeof FileText;
+}> = [
+  { module: "quote", label: "견적 관리", description: "RFQ 요청 / 비교 / 발주 전환", icon: FileText },
+  { module: "po", label: "발주 관리", description: "발행 / 공급사 확인 / 입고 인계", icon: ShoppingCart },
+  { module: "receiving", label: "입고 및 검수", description: "격리 / 문서 / 검수 / 반영", icon: Package },
+  { module: "stock_risk", label: "재고 관리", description: "재주문 / 만료 / 위험", icon: AlertCircle },
+];
 
 /* §11.182 — priority 사람 라벨 (raw enum 노출 0). */
 const PRIORITY_HUMAN: Record<string, string> = {
@@ -163,6 +189,20 @@ export function OperationalBriefPopup() {
   // §11.183 — mobile bottom sheet vs desktop right rail 분기
   const isMobile = useIsMobile();
 
+  // §11.194 — 3-tier drill-down state. selectedItemId (popup-context) 는
+  // inline-expand 의 expandedItemId 로 의미 통합 (별도 state 추가 0).
+  const [viewMode, setViewMode] = useState<"category" | "list">("category");
+  const [selectedCategory, setSelectedCategory] = useState<InboxSourceModule | null>(null);
+
+  // popup close 시 카테고리 진입 상태 초기화 (다음 open 때 1단계부터)
+  useEffect(() => {
+    if (!isOpen) {
+      setViewMode("category");
+      setSelectedCategory(null);
+      setSelectedItemId(null);
+    }
+  }, [isOpen, setSelectedItemId]);
+
   const allItems = useMemo(
     () =>
       buildFullInbox(
@@ -192,11 +232,27 @@ export function OperationalBriefPopup() {
   );
 
   const sortedItems = useMemo(() => sortInboxItems(allItems), [allItems]);
-  const top = sortedItems.slice(0, 5);
-  const totalCount = sortedItems.length;
-  const selected = selectedItemId
-    ? sortedItems.find((i) => i.id === selectedItemId) ?? null
-    : null;
+
+  // 카테고리별 stats (urgent = priority p0 count)
+  const categoryStats = useMemo(() => {
+    const stats: Record<InboxSourceModule, { total: number; urgent: number }> = {
+      quote: { total: 0, urgent: 0 },
+      po: { total: 0, urgent: 0 },
+      receiving: { total: 0, urgent: 0 },
+      stock_risk: { total: 0, urgent: 0 },
+    };
+    for (const item of sortedItems) {
+      stats[item.sourceModule].total += 1;
+      if (item.priority === "p0") stats[item.sourceModule].urgent += 1;
+    }
+    return stats;
+  }, [sortedItems]);
+
+  // 선택 카테고리 items
+  const categoryItems = useMemo(() => {
+    if (!selectedCategory) return [];
+    return sortedItems.filter((i) => i.sourceModule === selectedCategory);
+  }, [sortedItems, selectedCategory]);
 
   return (
     // §11.182/183 — desktop: modal={false} (dim 0, 본문 클릭 가능 rail).
@@ -244,17 +300,34 @@ export function OperationalBriefPopup() {
             <X className="h-4 w-4" />
           </SheetPrimitive.Close>
 
-          {selected ? (
-            <PopupBriefDetail
-              item={selected}
-              onBack={() => setSelectedItemId(null)}
-              onClose={close}
+          {/* §11.194 — 3-tier drill-down dispatch:
+                viewMode 'category' → PopupCategoryGrid (1단계)
+                viewMode 'list' → PopupCategoryListWithExpand (2+3단계, inline expand)
+              detail mode (PopupBriefDetail) deprecated — inline expand 가 흡수. */}
+          {viewMode === "category" && (
+            <PopupCategoryGrid
+              stats={categoryStats}
+              onSelectCategory={(cat) => {
+                setSelectedCategory(cat);
+                setViewMode("list");
+                setSelectedItemId(null);
+              }}
             />
-          ) : (
-            <PopupPriorityList
-              items={top}
-              totalCount={totalCount}
-              onSelect={setSelectedItemId}
+          )}
+          {viewMode === "list" && selectedCategory && (
+            <PopupCategoryListWithExpand
+              category={selectedCategory}
+              items={categoryItems}
+              expandedItemId={selectedItemId}
+              onToggleExpand={(id) =>
+                setSelectedItemId(id === selectedItemId ? null : id)
+              }
+              onBack={() => {
+                setViewMode("category");
+                setSelectedCategory(null);
+                setSelectedItemId(null);
+              }}
+              onClose={close}
             />
           )}
         </SheetPrimitive.Content>
@@ -263,118 +336,208 @@ export function OperationalBriefPopup() {
   );
 }
 
-/* ─────────────────── Priority List ─────────────────── */
+/* ─────────────────── §11.194 Tier 1: Category Grid ─────────────────── */
 
-function PopupPriorityList({
-  items,
-  totalCount,
-  onSelect,
+/**
+ * 1단계 — 4 카테고리 카드 grid. 운영자가 먼저 처리할 영역(quote/po/receiving/
+ * stock_risk)을 선택한다. 각 카드 = label + description + 전체/긴급 카운트.
+ */
+function PopupCategoryGrid({
+  stats,
+  onSelectCategory,
 }: {
-  items: UnifiedInboxItem[];
-  totalCount: number;
-  onSelect: (id: string) => void;
+  stats: Record<InboxSourceModule, { total: number; urgent: number }>;
+  onSelectCategory: (cat: InboxSourceModule) => void;
 }) {
   return (
     <>
-      {/* Header — §11.182 한국어 eyebrow + Top N subtitle.
-          §11.192b — pr-12 추가: close button (absolute right-4 top-4) 영역
-          회피하여 eyebrow / title / subtitle 겹침/잘림 방지.
-          §11.193c — pt-5 → pt-10: close button bbox (top-4 ~ 40px) 와
-          eyebrow 위쪽 시각 겹침 추가 해소 (호영님 prod 검증 후). */}
       <div className="px-6 pt-10 pb-5 pr-12 border-b border-bd">
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
           운영 브리핑
         </div>
-        <h3 className="text-xl font-bold text-slate-900 leading-tight">
-          {items.length > 0 ? `오늘 즉시 처리 ${items.length}건` : "오늘 즉시 처리할 항목 없음"}
-        </h3>
-        {totalCount > 0 && (
-          <p className="mt-1 text-xs text-slate-500">
-            전체 {totalCount}건 중 상위 우선순위 기준
-          </p>
-        )}
+        <h3 className="text-xl font-bold text-slate-900 leading-tight">카테고리 선택</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          먼저 처리할 영역을 고르면 작업 큐가 펼쳐집니다.
+        </p>
+      </div>
+      <div className="p-4 grid grid-cols-2 gap-3">
+        {CATEGORIES.map((cat) => {
+          const Icon = cat.icon;
+          const stat = stats[cat.module];
+          return (
+            <button
+              key={cat.module}
+              type="button"
+              onClick={() => onSelectCategory(cat.module)}
+              className="group rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-slate-400 hover:bg-slate-50 transition-all"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <Icon className="h-5 w-5 text-slate-500 group-hover:text-slate-900 transition-colors" />
+                <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-700 transition-colors" />
+              </div>
+              <p className="text-sm font-bold text-slate-900 mb-0.5 leading-snug">
+                {cat.label}
+              </p>
+              <p className="text-[11px] text-slate-500 leading-relaxed mb-2 line-clamp-2">
+                {cat.description}
+              </p>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[11px] text-slate-500">
+                  전체 <span className="font-semibold tabular-nums">{stat.total}</span>건
+                </span>
+                {stat.urgent > 0 && (
+                  <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold">
+                    긴급 {stat.urgent}
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </>
+  );
+}
+
+/* ─────────────────── §11.194 Tier 2+3: List with Inline Expand ─────────────────── */
+
+/**
+ * 2단계 + 3단계 — 카테고리별 work queue list. row click 시 같은 row 안에서
+ * AI brief inline expand (Google snippet 패턴). detail mode 별도 페이지 X —
+ * same-canvas 보존.
+ */
+function PopupCategoryListWithExpand({
+  category,
+  items,
+  expandedItemId,
+  onToggleExpand,
+  onBack,
+  onClose,
+}: {
+  category: InboxSourceModule;
+  items: UnifiedInboxItem[];
+  expandedItemId: string | null;
+  onToggleExpand: (id: string) => void;
+  onBack: () => void;
+  onClose: () => void;
+}) {
+  const categoryMeta = CATEGORIES.find((c) => c.module === category);
+  const categoryLabel = categoryMeta?.label ?? category;
+
+  return (
+    <>
+      <div className="px-6 pt-10 pb-5 pr-12 border-b border-bd">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
+          aria-label="카테고리 목록으로"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          카테고리
+        </button>
+        <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
+          운영 브리핑
+        </div>
+        <h3 className="text-xl font-bold text-slate-900 leading-tight">{categoryLabel}</h3>
+        <p className="mt-1 text-xs text-slate-500">
+          {items.length > 0
+            ? `처리 대상 ${items.length}건 — 항목을 누르면 AI 분석이 펼쳐집니다.`
+            : "현재 이 카테고리의 처리 항목이 없습니다."}
+        </p>
       </div>
 
-      {/* List */}
       {items.length === 0 ? (
         <div className="p-10 text-center text-sm text-slate-500">
-          <p>현재 처리할 우선 작업이 없습니다.</p>
+          <p>현재 이 카테고리에 처리 항목이 없습니다.</p>
         </div>
       ) : (
-        // §11.192 — Google snippet 패턴 list. priority tone border-l-4
-        // + large bold title (line-clamp-2) + medium readable summary
-        // (line-clamp-2 + leading-relaxed) + meta accent.
         <div className="divide-y divide-bd/40">
-          {items.map((item) => {
-            // priority tone — border-l-4 색상 매핑
-            const toneBorder =
-              item.priority === "p0"
-                ? "border-l-rose-500"
-                : item.priority === "p1"
-                  ? "border-l-amber-400"
-                  : item.priority === "p2"
-                    ? "border-l-blue-400"
-                    : "border-l-slate-300";
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onSelect(item.id)}
-                className={cn(
-                  "w-full text-left px-6 py-4 transition-colors",
-                  "border-l-4 hover:bg-slate-50",
-                  toneBorder,
-                )}
-              >
-                {/* Row 1 — workType badge (compact eyebrow) */}
-                <div className="flex items-center gap-2 mb-1.5">
-                  <span
-                    className={cn(
-                      "inline-flex px-1.5 py-0.5 rounded text-[11px] font-medium whitespace-nowrap",
-                      SOURCE_MODULE_COLORS[item.sourceModule],
-                    )}
-                  >
-                    {WORK_TYPE_LABELS[item.workType]}
-                  </span>
-                  <span
-                    className={cn(
-                      "inline-flex px-1.5 py-0.5 rounded text-xs font-bold",
-                      PRIORITY_BADGE[item.priority],
-                    )}
-                  >
-                    {PRIORITY_HUMAN[item.priority] ?? item.priority}
-                  </span>
-                </div>
-                {/* Row 2 — title (large bold, 2-line clamp) */}
-                <p className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
-                  {item.title}
-                </p>
-                {/* Row 3 — summary (readable body, 2-line clamp) */}
-                <p className="mt-1 text-[13px] text-slate-700 leading-relaxed line-clamp-2">
-                  {item.summary}
-                </p>
-                {/* Row 4 — meta (due/blocker info, small) */}
-                <p className="mt-1.5 text-[11px] text-slate-500">
-                  {item.dueState.label}
-                </p>
-              </button>
-            );
-          })}
+          {items.map((item) => (
+            <PopupItemWithExpand
+              key={item.id}
+              item={item}
+              expanded={expandedItemId === item.id}
+              onToggle={() => onToggleExpand(item.id)}
+              onClose={onClose}
+            />
+          ))}
         </div>
       )}
     </>
   );
 }
 
-/* ─────────────────── Brief Detail ─────────────────── */
+/* ─────────────────── §11.194 List item + inline AI brief ─────────────────── */
 
-function PopupBriefDetail({
+function PopupItemWithExpand({
   item,
-  onBack,
+  expanded,
+  onToggle,
   onClose,
 }: {
   item: UnifiedInboxItem;
-  onBack: () => void;
+  expanded: boolean;
+  onToggle: () => void;
+  onClose: () => void;
+}) {
+  const toneBorder =
+    item.priority === "p0"
+      ? "border-l-rose-500"
+      : item.priority === "p1"
+        ? "border-l-amber-400"
+        : item.priority === "p2"
+          ? "border-l-blue-400"
+          : "border-l-slate-300";
+
+  return (
+    <div className={cn("border-l-4", toneBorder)}>
+      {/* Row card (Google snippet 4-row hierarchy) */}
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full text-left px-6 py-4 hover:bg-slate-50 transition-colors"
+        aria-expanded={expanded}
+      >
+        {/* Row 1 — workType + priority badge + expand chevron */}
+        <div className="flex items-center gap-2 mb-1.5">
+          <span
+            className={cn(
+              "inline-flex px-1.5 py-0.5 rounded text-[11px] font-medium whitespace-nowrap",
+              SOURCE_MODULE_COLORS[item.sourceModule],
+            )}
+          >
+            {WORK_TYPE_LABELS[item.workType]}
+          </span>
+          <span
+            className={cn(
+              "inline-flex px-1.5 py-0.5 rounded text-xs font-bold",
+              PRIORITY_BADGE[item.priority],
+            )}
+          >
+            {PRIORITY_HUMAN[item.priority] ?? item.priority}
+          </span>
+          <span className="ml-auto text-slate-400">
+            {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </span>
+        </div>
+        <p className="text-base font-bold text-slate-900 leading-snug line-clamp-2">{item.title}</p>
+        <p className="mt-1 text-[13px] text-slate-700 leading-relaxed line-clamp-2">{item.summary}</p>
+        <p className="mt-1.5 text-[11px] text-slate-500">{item.dueState.label}</p>
+      </button>
+
+      {/* Inline AI brief — 펼친 row 안에 4-section 노출 (구글 스니펫 패턴) */}
+      {expanded && <PopupBriefInline item={item} onClose={onClose} />}
+    </div>
+  );
+}
+
+/* ─────────────────── §11.194 Inline AI brief body (4-section + CTA) ─────────────────── */
+
+function PopupBriefInline({
+  item,
+  onClose,
+}: {
+  item: UnifiedInboxItem;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -396,152 +559,91 @@ function PopupBriefDetail({
     enabled: !!item.id,
   });
 
-  // §11.182/185 — CTA copy = item.nextAction shortened (canonical ontology + 14자 cap).
-  // nextAction 없으면 CTA 미렌더 (dead button 0).
   const ctaLabel = shortenCtaLabel(item.nextAction);
 
-  // §11.192b — detail header tone accent (list mode card 와 일관)
-  const headerToneBorder =
-    item.priority === "p0"
-      ? "border-l-rose-500"
-      : item.priority === "p1"
-        ? "border-l-amber-400"
-        : item.priority === "p2"
-          ? "border-l-blue-400"
-          : "border-l-slate-300";
-
   return (
-    <>
-      {/* Header — §11.182 back / 한국어 eyebrow / 단일 X (Sheet root).
-          §11.192b — priority badge 추가 + tone accent border-l-4 (list mode
-          card 와 일관 Google snippet 패턴).
-          §11.193c — py-5 → pt-10 pb-5: detail header 의 back button + 3 badges
-          (운영브리핑 / workType / priority) 가 close button (absolute top-4)
-          영역과 위쪽 겹쳐 RCV title 위쪽 잘림 호영님 보고 — top padding
-          확장으로 해소. */}
-      <div className={cn("px-6 pt-10 pb-5 pr-12 border-b border-bd border-l-4", headerToneBorder)}>
-        <button
-          onClick={onBack}
-          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
-          aria-label="우선순위 목록으로"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          목록
-        </button>
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase">
-            운영 브리핑
-          </span>
-          <span
-            className={cn(
-              "inline-flex px-1.5 py-0.5 rounded text-[11px] font-medium",
-              SOURCE_MODULE_COLORS[item.sourceModule],
-            )}
-          >
-            {WORK_TYPE_LABELS[item.workType]}
-          </span>
-          <span
-            className={cn(
-              "inline-flex px-1.5 py-0.5 rounded text-xs font-bold",
-              PRIORITY_BADGE[item.priority],
-            )}
-          >
-            {PRIORITY_HUMAN[item.priority] ?? item.priority}
-          </span>
+    <div className="px-6 pb-5 pt-1 bg-slate-50/50 border-t border-bd/40 space-y-4">
+      {lastUpdatedLabel && (
+        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold pt-3">
+          Last Updated · {lastUpdatedLabel}
+        </p>
+      )}
+
+      {/* § 1. 상황 요약 */}
+      <section>
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
+          상황 요약
         </div>
-        <h3 className="text-lg font-bold text-slate-900 leading-tight">{item.title}</h3>
-        {lastUpdatedLabel && (
-          <div className="mt-1.5 text-[11px] text-slate-500">{lastUpdatedLabel} 업데이트</div>
-        )}
-      </div>
+        <div className="rounded-md border-l-2 border-blue-500 bg-white p-2.5">
+          <p className="text-sm text-slate-800 leading-relaxed">{briefNarrative ?? item.summary}</p>
+        </div>
+      </section>
 
-      <div className="p-6 space-y-5">
-        {/* § 1. 상황 요약 */}
-        <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
-            상황 요약
-          </div>
-          <div className="rounded-md border-l-2 border-blue-500 bg-slate-50 p-3">
-            <p className="text-sm text-slate-800 leading-relaxed">
-              {briefNarrative ?? item.summary}
-            </p>
-          </div>
-        </section>
+      {/* § 2. 판단 근거 (4-cell MetricCell) */}
+      <section>
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
+          판단 근거
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MetricCell
+            label="우선순위"
+            value={PRIORITY_HUMAN[item.priority] ?? item.priority}
+            tone={item.priority === "p0" ? "danger" : item.priority === "p1" ? "warn" : "neutral"}
+          />
+          <MetricCell
+            label="기한"
+            value={item.dueState.label}
+            tone={item.dueState.tone === "overdue" ? "danger" : item.dueState.tone === "due_soon" ? "warn" : "neutral"}
+          />
+          <MetricCell label="담당" value={formatOwner(item.owner)} tone="neutral" />
+          <MetricCell
+            label="차단 상태"
+            value={blockers.length === 0 ? "없음" : `${blockers.length}건`}
+            tone={blockers.length === 0 ? "ok" : "danger"}
+          />
+        </div>
+      </section>
 
-        {/* § 2. 판단 근거 — §11.182 내부 용어 라벨 제거, 사람 owner / 사람 priority */}
+      {/* § 3. 리스크 */}
+      {blockers.length > 0 && (
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
-            판단 근거
-          </div>
-          <div className="grid grid-cols-2 gap-2.5">
-            <MetricCell
-              label="우선순위"
-              value={PRIORITY_HUMAN[item.priority] ?? item.priority}
-              tone={item.priority === "p0" ? "danger" : item.priority === "p1" ? "warn" : "neutral"}
-            />
-            <MetricCell
-              label="기한"
-              value={item.dueState.label}
-              tone={item.dueState.tone === "overdue" ? "danger" : item.dueState.tone === "due_soon" ? "warn" : "neutral"}
-            />
-            <MetricCell label="담당" value={formatOwner(item.owner)} tone="neutral" />
-            <MetricCell
-              label="차단 상태"
-              value={blockers.length === 0 ? "없음" : `${blockers.length}건`}
-              tone={blockers.length === 0 ? "ok" : "danger"}
-            />
-          </div>
-        </section>
-
-        {/* § 3. 리스크 */}
-        <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
             리스크
           </div>
-          {blockers.length === 0 ? (
-            <p className="text-sm text-slate-500">차단 없음</p>
-          ) : (
-            <div className="bg-amber-50 border border-amber-200 rounded-md p-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-600" />
-                <span className="text-sm font-semibold text-amber-900">
-                  차단 사유 ({blockers.length}건)
-                </span>
-              </div>
-              {blockers.map((b) => (
-                <div key={b.summaryKey} className="text-xs">
-                  <div className="text-slate-800">• {b.whyBlocked}</div>
-                  <div className="pl-3 text-blue-700">→ {b.whatCanResolveIt}</div>
-                </div>
-              ))}
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-2.5 space-y-1.5">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-900">
+                차단 사유 ({blockers.length}건)
+              </span>
             </div>
-          )}
+            {blockers.map((b) => (
+              <div key={b.summaryKey} className="text-xs">
+                <div className="text-slate-800">• {b.whyBlocked}</div>
+                <div className="pl-3 text-blue-700">→ {b.whatCanResolveIt}</div>
+              </div>
+            ))}
+          </div>
         </section>
+      )}
 
-        {/* § 4. 다음 조치 */}
+      {/* § 4. 다음 조치 + Primary CTA */}
+      {ctaLabel && (
         <section>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-2">
+          <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1.5">
             다음 조치
           </div>
-          <p className="text-sm text-blue-700 font-medium">{item.nextAction ?? "—"}</p>
+          <Button
+            className="w-full h-10 text-sm"
+            onClick={() => {
+              onClose();
+              router.push(item.entityRoute);
+            }}
+          >
+            {ctaLabel}
+          </Button>
         </section>
-
-        {/* §11.182 — Primary CTA (canonical nextAction copy). nextAction 없으면 미렌더 (dead button 0). */}
-        {ctaLabel && (
-          <div className="pt-2">
-            <Button
-              className="w-full h-11 text-sm"
-              onClick={() => {
-                // popup 닫고 detail page 로 이동 — work object 별 처리 surface
-                onClose();
-                router.push(item.entityRoute);
-              }}
-            >
-              {ctaLabel}
-            </Button>
-          </div>
-        )}
-      </div>
-    </>
+      )}
+    </div>
   );
 }
