@@ -21,6 +21,8 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+// §11.193f — settings smoke 의 regex 패턴을 helper 로 추출하여 재사용.
+import { assertImportsForJsxComponents } from "../helpers/page-imports-smoke";
 
 const SETTINGS_PATH = resolve(
   __dirname,
@@ -55,26 +57,12 @@ const UI_LIBRARY_COMPONENTS = [
   "DialogFooter",
 ] as const;
 
-describe("§11.193e settings/page.tsx import-completeness smoke", () => {
-  for (const name of UI_LIBRARY_COMPONENTS) {
-    // JSX usage detect: `<Component ` or `<Component>` or `<Component/>`
-    const usagePattern = new RegExp(`<${name}[\\s>/]`);
-    const isUsed = usagePattern.test(SOURCE);
-    if (!isUsed) continue; // not referenced → no import needed
-
-    it(`uses <${name}> → must import from "@/components/ui/*"`, () => {
-      // import { ..., Component, ... } from "@/components/ui/..."
-      // (또는 default export 또는 namespace import — 본 검증은 named import 만)
-      // word boundary 사용하여 substring 매칭 회피.
-      const importPattern = new RegExp(
-        `import[\\s\\S]*?\\b${name}\\b[\\s\\S]*?from\\s+["']@\\/components\\/ui\\/`,
-      );
-      expect(
-        SOURCE,
-        `<${name}> 가 settings/page.tsx 에 사용됐지만 import "@/components/ui/*" 에서 ${name} identifier 부재 — §11.193a Card 사례와 동일 ReferenceError 위험`,
-      ).toMatch(importPattern);
-    });
-  }
+// §11.193f — helper 사용 (이전 inline regex 와 동일 동작).
+assertImportsForJsxComponents({
+  source: SOURCE,
+  pageLabel: "settings/page.tsx",
+  components: UI_LIBRARY_COMPONENTS,
+  describeLabel: "§11.193e settings/page.tsx import-completeness smoke",
 });
 
 describe("§11.193d Phase 1 — OrganizationRole label mapping (시안 정합)", () => {
