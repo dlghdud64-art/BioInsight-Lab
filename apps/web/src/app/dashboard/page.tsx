@@ -26,27 +26,14 @@ import { Badge } from "@/components/ui/badge";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
-import dynamic_import from "next/dynamic";
-// WorkQueueInbox 제거 — 3상태 중앙 패널이 대체
-const ExecutiveSummarySection = dynamic_import(
-  () => import("@/components/dashboard/executive-summary-section").then(m => m.ExecutiveSummarySection),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="space-y-3">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="h-[88px] rounded-lg bg-slate-100 animate-pulse" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="lg:col-span-2 h-[280px] rounded-xl bg-slate-100 animate-pulse" />
-          <div className="h-[280px] rounded-xl bg-slate-100 animate-pulse" />
-        </div>
-      </div>
-    ),
-  },
-);
+// §11.196c — ExecutiveSummarySection 의 dynamic_import(ssr:false) 제거.
+//   §11.196 page-ready gate 가 store fetch 를 mount 직후 explicit trigger
+//   하지만, dynamic chunk loading 은 여전히 mount 시점에야 다운로드 시작 →
+//   chunk 도착 후에야 KPI 카드 reveal 가능. static import 로 swap 해서
+//   initial bundle 에 포함 → chunk loading wait 0 + §11.196 gate 와 시너지.
+//   ssr:false 의 client-only 의존성 부재 확인 (window/document/localStorage 0
+//   사용, zustand store 는 SSR-safe singleton, "use client" directive 보존).
+import { ExecutiveSummarySection } from "@/components/dashboard/executive-summary-section";
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog

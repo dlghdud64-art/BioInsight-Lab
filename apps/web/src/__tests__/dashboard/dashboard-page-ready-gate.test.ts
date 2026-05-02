@@ -118,3 +118,37 @@ describe("§11.196b dashboard page — dead statsLoading 분기 cleanup", () => 
     expect(SOURCE).toMatch(/!pageReady/);
   });
 });
+
+describe("§11.196c dashboard page — ExecutiveSummary static import (chunk wait 0)", () => {
+  /**
+   * §11.196 page-ready gate 가 store fetch 를 mount 직후 trigger 하지만,
+   * ExecutiveSummary 가 dynamic_import(ssr:false) 면 chunk 도착 후에야
+   * KPI 카드 reveal — chunk loading wait 가 stagger 의 마지막 source.
+   *
+   * Fix: static import 로 swap → initial bundle 에 포함 → chunk wait 0.
+   * 본 test 가 dynamic_import 회귀 차단.
+   */
+
+  it("ExecutiveSummarySection static import (named import from component path)", () => {
+    expect(SOURCE).toMatch(
+      /import\s*\{\s*ExecutiveSummarySection\s*\}\s*from\s*["']@\/components\/dashboard\/executive-summary-section["']/,
+    );
+  });
+
+  it("dynamic_import 패턴 부재 (ExecutiveSummary 한정)", () => {
+    // dynamic_import 자체는 다른 component 에서 사용 가능 — ExecutiveSummary
+    // 만 static 로 강제. 본 test 는 next/dynamic + ExecutiveSummarySection
+    // 조합이 같은 줄에 등장하지 않는지 검증 (regression guard).
+    expect(SOURCE).not.toMatch(
+      /dynamic_import\([^)]*ExecutiveSummarySection|dynamic\([^)]*ExecutiveSummarySection/,
+    );
+  });
+
+  it("ExecutiveSummary loading skeleton fallback 부재 (static import 라 fallback 0)", () => {
+    // dynamic_import 의 loading prop 안에 ExecutiveSummary 자리 placeholder
+    // (h-[88px] grid sm:grid-cols-3 etc) 가 page.tsx 안에 잔존하면 안 됨.
+    // §11.196 page-ready gate 의 unified skeleton 이 ExecutiveSummary 자리도
+    // cover 하므로 별도 fallback 불필요.
+    expect(SOURCE).not.toMatch(/loading:\s*\(\)\s*=>\s*\([\s\S]*?h-\[88px\][\s\S]*?h-\[280px\]/);
+  });
+});
