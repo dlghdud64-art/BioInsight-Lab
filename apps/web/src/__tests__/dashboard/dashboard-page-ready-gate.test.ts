@@ -152,3 +152,44 @@ describe("§11.196c dashboard page — ExecutiveSummary static import (chunk wai
     expect(SOURCE).not.toMatch(/loading:\s*\(\)\s*=>\s*\([\s\S]*?h-\[88px\][\s\S]*?h-\[280px\]/);
   });
 });
+
+describe("§11.196d dashboard page — recharts code split (chart lazy import)", () => {
+  /**
+   * §11.196c 가 ExecutiveSummary 를 static import 했지만, ExecutiveSummary
+   * + SpendTrendCard + CategoryDistributionCard 모두 recharts 의존 →
+   * recharts (~150KB gzipped) 가 page chunk 에 포함되어 initial bundle 부담.
+   *
+   * Fix: recharts 의존 chart card (SpendTrend / CategoryDistribution) 를
+   * next/dynamic lazy 로 swap. KPI 카드는 fold 위쪽 (즉시), chart 는 fold
+   * 아래라 lazy 가능. unified pageReady skeleton 의 chart placeholder 가
+   * lazy chunk 도착 전 자연 cover (loading: () => null).
+   *
+   * 추가로 page.tsx 의 dead recharts import (AreaChart/Area/XAxis/YAxis/
+   * CartesianGrid/Tooltip/ResponsiveContainer 가 actual 사용 0) 제거.
+   */
+
+  it("recharts dead import 제거 (page.tsx 안에 actual 사용 0)", () => {
+    // page.tsx 가 직접 recharts import 하면 안 됨 (모든 chart 는 분리 component)
+    expect(SOURCE).not.toMatch(/import\s*\{[\s\S]*?\}\s*from\s+["']recharts["']/);
+  });
+
+  it("SpendTrendCard 가 next/dynamic lazy import (recharts chunk 분리)", () => {
+    expect(SOURCE).toMatch(
+      /SpendTrendCard\s*=\s*dynamic_import\([\s\S]*?spend-trend-card/,
+    );
+  });
+
+  it("CategoryDistributionCard 가 next/dynamic lazy import (recharts chunk 분리)", () => {
+    expect(SOURCE).toMatch(
+      /CategoryDistributionCard\s*=\s*dynamic_import\([\s\S]*?category-distribution-card/,
+    );
+  });
+
+  it("chart lazy fallback = null (pageReady unified skeleton 이 cover)", () => {
+    // loading: () => null — 별도 fallback 0, gate skeleton 이 chart 자리 cover
+    expect(SOURCE).toMatch(/spend-trend-card[\s\S]*?loading:\s*\(\)\s*=>\s*null/);
+    expect(SOURCE).toMatch(
+      /category-distribution-card[\s\S]*?loading:\s*\(\)\s*=>\s*null/,
+    );
+  });
+});

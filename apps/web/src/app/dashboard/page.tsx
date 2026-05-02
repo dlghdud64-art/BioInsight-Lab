@@ -23,7 +23,11 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+// §11.196d — recharts dead import 제거. AreaChart/Area/XAxis/YAxis/
+// CartesianGrid/Tooltip/ResponsiveContainer 가 page.tsx 안에서 actual 사용 0
+// (모든 chart 는 SpendTrendCard/CategoryDistributionCard 등 분리 component).
+// 본 dead import 가 recharts (~150KB gzipped) 를 page chunk 에 포함시키고
+// 있어 initial bundle 부담. 제거 후 recharts 는 chart component lazy chunk 만.
 import { getGuestKey } from "@/lib/guest-key";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 // §11.196c — ExecutiveSummarySection 의 dynamic_import(ssr:false) 제거.
@@ -39,8 +43,27 @@ import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
 import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
 // §11.84 + §11.85 — 시안 채택 후속 chart 2종 (Area + 카테고리 도넛)
-import { SpendTrendCard } from "@/components/dashboard/spend-trend-card";
-import { CategoryDistributionCard } from "@/components/dashboard/category-distribution-card";
+// §11.196d — recharts code split. SpendTrendCard / CategoryDistributionCard
+// 가 recharts (~150KB gzipped) 의존. KPI 4 카드 / SYSTEM INSIGHT / Quick
+// Actions 는 fold 위쪽 (즉시 노출), chart 는 fold 아래라 lazy 가능.
+// next/dynamic 으로 swap → initial bundle 에서 recharts 분리 → 첫 진입
+// latency ↓. lazy chunk 도착 전엔 unified pageReady skeleton 의 chart
+// placeholder 가 자연스럽게 cover (별도 fallback 불필요).
+import dynamic_import from "next/dynamic";
+const SpendTrendCard = dynamic_import(
+  () =>
+    import("@/components/dashboard/spend-trend-card").then((m) => ({
+      default: m.SpendTrendCard,
+    })),
+  { ssr: false, loading: () => null },
+);
+const CategoryDistributionCard = dynamic_import(
+  () =>
+    import("@/components/dashboard/category-distribution-card").then((m) => ({
+      default: m.CategoryDistributionCard,
+    })),
+  { ssr: false, loading: () => null },
+);
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
