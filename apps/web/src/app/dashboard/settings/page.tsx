@@ -17,6 +17,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+// §11.193a hot fix — billing section 의 LabAxis Enterprise dark card +
+// CurrentPlan badge 가 Card / CardContent 사용. import 누락 시 prod runtime
+// `ReferenceError: Card is not defined` → settings 진입 자체 실패.
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
