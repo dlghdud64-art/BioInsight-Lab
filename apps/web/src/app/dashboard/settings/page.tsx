@@ -803,10 +803,13 @@ function SettingsPageContent() {
                 </SectionCard>
 
                 {/* §11.74 — 현재 워크스페이스 정보 (read-only — WORKSPACE CANONICAL IDENTITY)
-                    워크스페이스 식별 정보는 조직 administrator 권한으로만 변경 — 본
-                    페이지에서는 read-only summary. Metric 단위계 항목은 §11.74 에서
-                    제거 (정규화 로직 부재). */}
+                    §11.193b — eyebrow "WORKSPACE CANONICAL IDENTITY" 추가하여
+                    prototype 시안 톤 정합 (조직 식별 정보의 canonical 강조).
+                    워크스페이스 기본값은 조직 administrator 권한으로만 변경. */}
                 <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 mb-3">
+                    Workspace Canonical Identity
+                  </p>
                   {(() => {
                     // §11.159 — canonical Workspace fetch (mock 제거)
                     // §11.164 — explicit pickActiveWorkspace priority logic
@@ -824,22 +827,37 @@ function SettingsPageContent() {
                     const wsName = activeWs?.name ?? "데이터 미동기화";
                     const wsSlug = activeWs?.slug ?? "—";
                     const wsPlan = activeWs?.plan ? activeWs.plan : "—";
+                    // §11.193b — sub-label 영문 convention 정합 (시안 매핑):
+                    //   "Plan: …"        → "ENTERPRISE EDITION" (또는 plan 별)
+                    //   "URL Identifier" → "AUTO-GENERATED ID"
+                    //   "시스템 기본값"  → "FINANCIAL BASE"
+                    // workspace canonical identity 명시. plan 값 영문 normalize:
+                    const planSubLabel = (() => {
+                      if (!activeWs) return "WORKSPACE NOT FOUND";
+                      const p = (wsPlan || "").toUpperCase();
+                      if (p === "ENTERPRISE") return "ENTERPRISE EDITION";
+                      if (p === "PRO" || p === "PROFESSIONAL") return "PROFESSIONAL EDITION";
+                      if (p === "FREE" || p === "STARTER") return "FREE EDITION";
+                      // plan 값 fallback — uppercase + " EDITION" suffix 유지하여
+                      // canonical identity 톤 일관 (시안 정합).
+                      return p ? `${p} EDITION` : "EDITION 미지정";
+                    })();
                     return (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
                           <p className="text-sm font-bold text-slate-900 break-keep mb-1">{wsName}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{activeWs ? `Plan: ${wsPlan}` : "워크스페이스 없음"}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{planSubLabel}</p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 슬러그</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 코드</p>
                           <p className="text-sm font-bold font-mono text-slate-900 mb-1">{wsSlug}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">URL Identifier</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">AUTO-GENERATED ID</p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
                           <p className="text-sm font-bold text-slate-900 mb-1">KRW (₩)</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">시스템 기본값</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">FINANCIAL BASE</p>
                         </div>
                       </div>
                     );
