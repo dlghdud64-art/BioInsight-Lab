@@ -72,12 +72,15 @@ export const WORKFLOW_CAPABILITY_LABEL: Record<WorkflowCapability, string> = {
 
 /**
  * capability 별 badge 색상 (settings UI multi-badge 색상 정합).
- * §11.193d Phase 1 orgRoleLabel cls 톤 정합.
+ * §11.197 — 시안 정합 톤 (Lab Manager blue / Requester amber / Approver
+ * emerald). 이전 §11.193d 톤 (LAB_MANAGER purple / REQUESTER blue) →
+ * 시안 prototype 정합으로 swap. 시각 hierarchy: blue (운영 책임자) /
+ * amber (요청자, 주의 톤) / emerald (승인 권한, 안정 톤).
  */
 export const WORKFLOW_CAPABILITY_BADGE_CLS: Record<WorkflowCapability, string> = {
-  LAB_MANAGER: "bg-purple-50 text-purple-700 border-purple-200",
+  LAB_MANAGER: "bg-blue-50 text-blue-700 border-blue-200",
   APPROVER: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  REQUESTER: "bg-blue-50 text-blue-700 border-blue-200",
+  REQUESTER: "bg-amber-50 text-amber-700 border-amber-200",
 };
 
 /**

@@ -648,7 +648,12 @@ function SettingsPageContent() {
                     실제 데이터 fetcher 연결은 #user-permission-summary-fetcher
                     별도 트랙. 본 commit 은 시안 visual essence + read-only
                     layout 정형화. */}
-                <SectionCard title="운영 역할 및 업무 범위" icon={Shield} description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다.">
+                <SectionCard
+                  title="운영 역할 및 업무 범위"
+                  icon={Shield}
+                  description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다."
+                  topRightLabel="ASSIGNED BY ADMIN"
+                >
                   <div className="space-y-5">
                     {/* §11.87 + §11.193d Phase 2.3 활성 운영 역할 (workflow capabilities multi-badge).
                         §11.193d Phase 1: orgRoleLabel single-role mapping (RBAC).
@@ -714,37 +719,38 @@ function SettingsPageContent() {
                     </div>
                     <div className="h-px bg-slate-200" />
                     {/* §11.87 승인 권한 — 단일 건 승인 한도 schema 부재 (미설정 표시);
-                        월간 구매 예산은 UserBudget 첫 active 항목 활용. */}
+                        월간 구매 예산은 UserBudget 첫 active 항목 활용.
+                        §11.197 — 시안 정합 visual hierarchy 강화:
+                        label (left, slate-500) + value (right, large bold slate-900 tabular)
+                        2-row inline 정렬. 작은 sub-text 박스 → 정적 label-value row,
+                        large bold 숫자로 시각 강조. */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 권한 (LIMITS)</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
-                          <p className="text-[11px] text-slate-500 mb-0.5">단일 건 승인 한도</p>
-                          {/* §11.97 — User.approvalLimit (BigInt → string serialized) real value */}
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/50 divide-y divide-slate-200">
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-sm text-slate-600">단일 건 승인 한도</span>
                           {userData?.approvalLimit ? (
-                            <p className="text-sm font-bold text-slate-900 tabular-nums">
+                            <span className="text-xl font-bold text-slate-900 tabular-nums">
                               ₩{Number(userData.approvalLimit).toLocaleString("ko-KR")}
-                            </p>
+                            </span>
                           ) : (
-                            <p className="text-sm font-bold text-slate-400 tabular-nums">운영 정책 미설정</p>
+                            <span className="text-sm font-medium text-slate-400 tabular-nums">운영 정책 미설정</span>
                           )}
                         </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
-                          <p className="text-[11px] text-slate-500 mb-0.5">월간 구매 예산</p>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-sm text-slate-600">월간 구매 예산</span>
                           {(() => {
                             const budgets = userBudgetsData?.budgets ?? [];
-                            // isActive 필드가 source 별로 일관 안 함 — 첫 항목 (가장 최신 createdAt)
-                            // 을 활성으로 가정. UserBudget 은 isActive 명시, Budget 변환분은 항상 표시.
                             const active = budgets.find((b) => b.isActive !== false) ?? budgets[0];
                             if (!active) {
-                              return <p className="text-sm font-bold text-slate-400 tabular-nums">예산 미설정</p>;
+                              return <span className="text-sm font-medium text-slate-400 tabular-nums">예산 미설정</span>;
                             }
                             return (
-                              <div>
-                                <p className="text-sm font-bold text-slate-900 tabular-nums">
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-slate-900 tabular-nums leading-tight">
                                   ₩{active.totalAmount.toLocaleString("ko-KR")}
                                 </p>
-                                <p className="text-[10px] text-slate-500 tabular-nums mt-0.5">
+                                <p className="text-[11px] text-slate-500 tabular-nums mt-0.5">
                                   잔여 ₩{active.remainingAmount.toLocaleString("ko-KR")}
                                 </p>
                               </div>
@@ -778,9 +784,9 @@ function SettingsPageContent() {
                         </div>
                       </div>
                     </div>
-                    {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피) —
-                        조직 관리 페이지로 redirect, 거기서 권한 변경 절차. */}
-                    <div className="pt-2">
+                    {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피).
+                        §11.197 — 시안 정합: CTA 우측 정렬 (운영자 default 시선 끝점). */}
+                    <div className="pt-2 flex justify-end">
                       <Button
                         variant="outline"
                         size="sm"
@@ -1375,11 +1381,14 @@ function SettingsPageContent() {
 // Shared Components
 // ══════════════════════════════════════════════
 
-function SectionCard({ title, icon: Icon, description, children }: {
+function SectionCard({ title, icon: Icon, description, children, topRightLabel }: {
   title: string;
   icon: React.ElementType;
   description?: string;
   children: React.ReactNode;
+  // §11.197 — 우상단 작은 라벨 (예: "ASSIGNED BY ADMIN"). 시안 정합 — 운영
+  // 역할 카드 같은 read-only 영역에서 "이 값은 누가 결정하는가" signal.
+  topRightLabel?: string;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -1387,6 +1396,11 @@ function SectionCard({ title, icon: Icon, description, children }: {
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+          {topRightLabel && (
+            <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+              {topRightLabel}
+            </span>
+          )}
         </div>
         {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
       </div>
