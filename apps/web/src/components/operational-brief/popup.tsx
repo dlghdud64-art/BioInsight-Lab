@@ -218,8 +218,9 @@ export function OperationalBriefPopup() {
             "fixed z-40 bg-background shadow-lg overflow-y-auto",
             // §11.183 — mobile bottom sheet (max-md): inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
             "max-md:inset-x-0 max-md:bottom-0 max-md:h-[85vh] max-md:rounded-t-2xl max-md:border-t max-md:border-bd",
-            // §11.182 — desktop right rail (md+): inset-y-0 right-0 h-full w-[400px]
-            "md:inset-y-0 md:right-0 md:h-full md:w-[400px] md:max-w-[400px] md:border-l md:border-bd",
+            // §11.192 — desktop right rail (md+): width 400 → 480 (한국어
+            // 텍스트 truncate 잘림 해소 + Google snippet 정보 밀도 확보)
+            "md:inset-y-0 md:right-0 md:h-full md:w-[480px] md:max-w-[480px] md:border-l md:border-bd",
             // slide animation — mobile slide-up, desktop slide-right
             "transition ease-in-out duration-300",
             "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -292,41 +293,65 @@ function PopupPriorityList({
           <p>현재 처리할 우선 작업이 없습니다.</p>
         </div>
       ) : (
+        // §11.192 — Google snippet 패턴 list. priority tone border-l-4
+        // + large bold title (line-clamp-2) + medium readable summary
+        // (line-clamp-2 + leading-relaxed) + meta accent.
         <div className="divide-y divide-bd/40">
-          {items.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelect(item.id)}
-              className="w-full text-left px-6 py-4 hover:bg-el/30 transition-colors"
-            >
-              <div className="flex items-start gap-2">
-                <span
-                  className={cn(
-                    "inline-flex shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium whitespace-nowrap",
-                    SOURCE_MODULE_COLORS[item.sourceModule],
-                  )}
-                >
-                  {WORK_TYPE_LABELS[item.workType]}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold text-slate-900 truncate">{item.title}</p>
-                  <p className="text-xs text-slate-500 truncate mt-0.5">{item.summary}</p>
-                  <div className="mt-1.5 text-[11px] text-slate-500">
-                    <span
-                      className={cn(
-                        "inline-flex px-1.5 py-0.5 rounded text-[10px] font-medium mr-2",
-                        PRIORITY_BADGE[item.priority],
-                      )}
-                    >
-                      {PRIORITY_HUMAN[item.priority] ?? item.priority}
-                    </span>
-                    {item.dueState.label}
-                  </div>
+          {items.map((item) => {
+            // priority tone — border-l-4 색상 매핑
+            const toneBorder =
+              item.priority === "p0"
+                ? "border-l-rose-500"
+                : item.priority === "p1"
+                  ? "border-l-amber-400"
+                  : item.priority === "p2"
+                    ? "border-l-blue-400"
+                    : "border-l-slate-300";
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => onSelect(item.id)}
+                className={cn(
+                  "w-full text-left px-6 py-4 transition-colors",
+                  "border-l-4 hover:bg-slate-50",
+                  toneBorder,
+                )}
+              >
+                {/* Row 1 — workType badge (compact eyebrow) */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span
+                    className={cn(
+                      "inline-flex px-1.5 py-0.5 rounded text-[11px] font-medium whitespace-nowrap",
+                      SOURCE_MODULE_COLORS[item.sourceModule],
+                    )}
+                  >
+                    {WORK_TYPE_LABELS[item.workType]}
+                  </span>
+                  <span
+                    className={cn(
+                      "inline-flex px-1.5 py-0.5 rounded text-xs font-bold",
+                      PRIORITY_BADGE[item.priority],
+                    )}
+                  >
+                    {PRIORITY_HUMAN[item.priority] ?? item.priority}
+                  </span>
                 </div>
-              </div>
-            </button>
-          ))}
+                {/* Row 2 — title (large bold, 2-line clamp) */}
+                <p className="text-base font-bold text-slate-900 leading-snug line-clamp-2">
+                  {item.title}
+                </p>
+                {/* Row 3 — summary (readable body, 2-line clamp) */}
+                <p className="mt-1 text-[13px] text-slate-700 leading-relaxed line-clamp-2">
+                  {item.summary}
+                </p>
+                {/* Row 4 — meta (due/blocker info, small) */}
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  {item.dueState.label}
+                </p>
+              </button>
+            );
+          })}
         </div>
       )}
     </>
