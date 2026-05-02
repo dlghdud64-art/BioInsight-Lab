@@ -604,42 +604,11 @@ export default function DashboardPage() {
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
-      {/* ═══ 3상태 중앙 패널 (desktop) ═══ */}
-      {statsLoading && (
-        <div className="hidden md:grid md:grid-cols-5 gap-4">
-          <div className="col-span-3 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-2 rounded-full bg-slate-200 animate-pulse" />
-              <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
-            </div>
-            <div className="space-y-3">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-3 p-3 rounded-lg">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3.5 w-32 rounded bg-slate-200 animate-pulse" />
-                    <div className="h-3 w-48 rounded bg-slate-100 animate-pulse" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <div className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-3">
-            <div className="h-4 w-20 rounded bg-slate-200 animate-pulse" />
-            {[0, 1, 2].map((i) => (
-              <div key={i} className="flex items-center gap-3 px-2 py-2.5">
-                <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="h-3.5 w-28 rounded bg-slate-200 animate-pulse" />
-                  <div className="h-3 w-36 rounded bg-slate-100 animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      {!statsLoading && (
-        <div className="hidden md:grid md:grid-cols-5 gap-4">
+      {/* ═══ 3상태 중앙 패널 (desktop) ═══
+          §11.196b — statsLoading skeleton 분기 제거. §11.196 page-level
+          pageReady gate 가 statsLoading 인 동안 unified skeleton 으로
+          short-circuit 하므로 본 분기 도달 0 (dead branch). */}
+      <div className="hidden md:grid md:grid-cols-5 gap-4">
           {/* ── 좌측 상태 요약 카드 (3col) ── */}
           <div className="col-span-3 rounded-xl border border-slate-200/80 bg-white p-5">
             {dashboardState === "zero" && (
@@ -841,31 +810,13 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-      )}
 
-      {/* ═══ 운영 인텔리전스 ═══ */}
-      {statsLoading && (
-        <div className="hidden md:block">
-          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 rounded bg-slate-200 animate-pulse" />
-                <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
-              </div>
-              <div className="h-3 w-12 rounded bg-slate-100 animate-pulse" />
-            </div>
-            <div className="flex items-center gap-3 py-3">
-              <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
-              <div className="space-y-2">
-                <div className="h-3.5 w-40 rounded bg-slate-200 animate-pulse" />
-                <div className="h-3 w-56 rounded bg-slate-100 animate-pulse" />
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {!statsLoading && (
-        <div className="hidden md:block">
+      {/* ═══ 운영 인텔리전스 ═══
+          §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover).
+          이전엔 statsLoading=true 시 placeholder skeleton, false 시 real
+          content 두 분기 — 이젠 page-level gate 가 statsLoading 인 동안
+          unified skeleton 으로 short-circuit 하므로 real content 만 남김. */}
+      <div className="hidden md:block">
           <div className="rounded-xl border border-slate-200/80 bg-white p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[13px] font-extrabold text-slate-900 flex items-center gap-2">
@@ -975,7 +926,6 @@ export default function DashboardPage() {
             })()}
           </div>
         </div>
-      )}
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
@@ -1122,21 +1072,8 @@ export default function DashboardPage() {
       {/* ======= 모바일 전용 레이아웃 ======= */}
       <div className="md:hidden space-y-3 pb-20">
 
-        {/* KPI 판단 카드 2x2 */}
-        {statsLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="rounded-xl border border-slate-200 bg-white shadow-sm p-3.5 space-y-2.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse" />
-                  <div className="h-3 w-14 rounded bg-slate-200 animate-pulse" />
-                </div>
-                <div className="h-7 w-12 rounded bg-slate-200 animate-pulse" />
-                <div className="h-3 w-full rounded bg-slate-100 animate-pulse" />
-              </div>
-            ))}
-          </div>
-        ) : (
+        {/* KPI 판단 카드 2x2
+            §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover). */}
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
@@ -1175,7 +1112,6 @@ export default function DashboardPage() {
             risk: quoteRisk,
           })}
         </div>
-        )}
 
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
         <Card className="bg-white border-slate-200/80 rounded-xl">

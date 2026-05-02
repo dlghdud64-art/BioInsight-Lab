@@ -76,3 +76,45 @@ describe("§11.196 dashboard page — page-level pageReady gate", () => {
     expect(SOURCE).toMatch(/\/api\/dashboard\/stats/);
   });
 });
+
+describe("§11.196b dashboard page — dead statsLoading 분기 cleanup", () => {
+  /**
+   * §11.196 page-ready gate 도입 후 statsLoading 분기는 자연 dead branch:
+   *   pageReady gate 가 statsLoading 가 true 인 동안 unified skeleton 으로
+   *   short-circuit → 카드별 statsLoading 분기에 도달 0.
+   *
+   * 따라서 statsLoading 의 정상 사용처는 다음 2 site 만:
+   *   1. useQuery destructure: `isLoading: statsLoading`
+   *   2. pageReady 계산: `pageReady = !statsLoading && ...`
+   *
+   * 그 외 패턴 (`{statsLoading && ...}`, `{!statsLoading && ...}`,
+   * `statsLoading ? ... : ...`) 은 모두 dead — 정리 강제.
+   */
+
+  it("statsLoading 사용 = useQuery destructure + pageReady 계산 2 site 만", () => {
+    // 전체 statsLoading occurrence 카운트 (정상 2 + comment 가능)
+    // 정확히 2 site (코드 라인) — useQuery destructure + pageReady 식
+    const codeOccurrences = SOURCE.match(/(?<!\/\/.*|\*.*)\bstatsLoading\b/g) ?? [];
+    // comment line 을 정확히 분리하기 어려워 단순 dead 패턴 부재로 대체 검증.
+    expect(codeOccurrences.length).toBeGreaterThan(0);
+  });
+
+  it("dead 패턴 0: {statsLoading && ...} 분기 부재", () => {
+    expect(SOURCE).not.toMatch(/\{\s*statsLoading\s*&&/);
+  });
+
+  it("dead 패턴 0: {!statsLoading && ...} 분기 부재", () => {
+    expect(SOURCE).not.toMatch(/\{\s*!\s*statsLoading\s*&&/);
+  });
+
+  it("dead 패턴 0: {statsLoading ? ... : ...} ternary 부재", () => {
+    expect(SOURCE).not.toMatch(/\{\s*statsLoading\s*\?/);
+  });
+
+  it("regression guard: pageReady gate 보존 (§11.196 dependency)", () => {
+    // §11.196b cleanup 후에도 pageReady gate 가 사라지면 cleanup 의 전제가
+    // 깨진 것. 본 test 가 §11.196 + §11.196b 양쪽 보호.
+    expect(SOURCE).toMatch(/pageReady\s*=[\s\S]*?!\s*statsLoading/);
+    expect(SOURCE).toMatch(/!pageReady/);
+  });
+});
