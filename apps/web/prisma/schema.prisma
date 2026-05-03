@@ -106,6 +106,12 @@ model OrganizationMember {
   userId         String
   organizationId String
   role           OrganizationRole @default(VIEWER)
+  // §11.193d Phase 2 — workflow capabilities (운영 tag, RBAC role 과 별도 layer).
+  //   호영님 prototype 시안 — "1인 동시 Lab Manager + Approver + Requester 보유".
+  //   값은 lib/permissions/workflow-capabilities.ts 의 WORKFLOW_CAPABILITIES
+  //   whitelist (LAB_MANAGER / APPROVER / REQUESTER). getWorkflowCapabilities()
+  //   가 array/null/object/string 모든 input 안전 처리.
+  workflowCapabilities Json @default("[]")
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -2008,6 +2014,17 @@ enum ApprovalStatus {
   REJECTED           // 거절됨 (= DISMISSED)
 }
 
+/// §11.209b-pre — 결재 정책 (workspace / PO candidate 단위 default).
+/// POCandidate.approvalPolicy 의 String → enum 변환 (옵션 B 정합 — schema 만
+/// 통일, application code 의 string literal 그대로 호환). 다른 enum drift
+/// (guardrail.ts / quote-case-contract 의 "in_app_light" / "external_manual"
+/// 등) 정합은 별도 cluster 분리.
+enum ApprovalPolicy {
+  none               // 결재 불필요 (Lab Team Tier default)
+  in_app_approval    // LabAxis 내부 결재 (R&D Operations Tier default)
+  external_approval  // 외부 ERP/그룹웨어 결재 (Enterprise Tier 옵션)
+}
+
 model AiActionItem {
   id                String           @id @default(cuid())
   type              AiActionType
@@ -2506,8 +2523,11 @@ model POCandidate {
   expectedDelivery DateTime?
   selectionReason  String?  @db.Text          // AI 선정 사유
   blockers         String[] @default([])      // blocker 문자열 배열
-  approvalPolicy   String   @default("none")  // none | in_app_approval | external_approval
-  approvalStatus   String   @default("not_required") // ProcurementStage ApprovalStatus (string)
+  // §11.209b-pre — String → ApprovalPolicy enum 통일. application code 의
+  // string literal "none" / "in_app_approval" / "external_approval" 그대로
+  // 호환 (Prisma 가 enum value 와 string literal 자동 매핑).
+  approvalPolicy   ApprovalPolicy @default(none)
+  approvalStatus   String   @default("not_required") // ProcurementStage ApprovalStatus (string) — 별도 cluster (§11.99 후보)
   stage            String   @default("po_conversion_candidate") // ProcurementStage (string)
 
   createdAt        DateTime @default(now())
