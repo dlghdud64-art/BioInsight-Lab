@@ -18,7 +18,13 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useQRScanner } from "@/contexts/QRScannerContext";
-import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package } from "lucide-react";
+import {
+  Search, Bell, HelpCircle, ChevronRight,
+  AlertTriangle, FileText, Truck, BookOpen, Headphones,
+  Settings, CreditCard, LogOut,
+  ShieldAlert, Clock, CheckCircle2,
+  ClipboardCheck, Menu, Package,
+} from "lucide-react";
 import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";

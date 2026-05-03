@@ -16,7 +16,6 @@ import { TYPOGRAPHY, SPACING, SURFACE, SEVERITY_INDICATORS } from "@/lib/work-qu
 import { OWNER_ROLE_LABELS } from "@/lib/work-queue/console-grouping";
 import { ASSIGNMENT_STATE_LABELS } from "@/lib/work-queue/console-assignment";
 import { PRIORITY_TIER_DEFS } from "@/lib/work-queue/console-priorities";
-import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { formatRelativeTime } from "@/lib/work-queue/console-v1-productization";
 import { TASK_STATUS_BADGE, type TaskStatus } from "@/hooks/use-work-queue";
 import type { GroupedItem } from "@/lib/work-queue/console-grouping";
@@ -161,35 +160,27 @@ export function QueueDetailPanel({
             </p>
           </BriefSection>
 
-          {/* ── §11.189 § 2. 판단 근거 — 4-cell MetricCell grid (§11.180/187/188 패턴) ── */}
-          <BriefSection id="facts" title="판단 근거">
-            {(() => {
-              const tier = String(item.priorityTier);
-              const priorityTone: "ok" | "warn" | "danger" | "neutral" =
-                tier === "critical" || tier === "high"
-                  ? "danger"
-                  : tier === "medium"
-                    ? "warn"
-                    : "neutral";
-              return (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <MetricCell
-                    label="우선순위"
-                    value={tierDef?.label ?? item.priorityTier}
-                    tone={priorityTone}
-                  />
-                  <MetricCell label="배정" value={assignmentLabel} tone="neutral" />
-                  <MetricCell label="담당" value={ownerLabel} tone="neutral" />
-                  <MetricCell
-                    label="상태"
-                    value={statusBadge?.label ?? "—"}
-                    tone="neutral"
-                  />
-                </div>
-              );
-            })()}
-            {/* 보조 — 최종 갱신 (정보 보존) */}
-            <div className="mt-3 pt-3 border-t border-bd/30 space-y-1">
+          {/* ── § 2. 핵심 근거 ── */}
+          <BriefSection id="facts" title="핵심 근거">
+            <div className="space-y-1">
+              <MetaRow label="상태">
+                {statusBadge && (
+                  <Badge variant="outline" className={TYPOGRAPHY.badge}>
+                    {statusBadge.label}
+                  </Badge>
+                )}
+              </MetaRow>
+              <MetaRow label="배정">
+                <Badge variant="outline" className={TYPOGRAPHY.badge}>{assignmentLabel}</Badge>
+              </MetaRow>
+              <MetaRow label="담당 역할">
+                <span className={TYPOGRAPHY.metadata}>{ownerLabel}</span>
+              </MetaRow>
+              <MetaRow label="우선순위">
+                <span className={cn(TYPOGRAPHY.metadata, severity.textColor)}>
+                  {tierDef?.label ?? item.priorityTier}
+                </span>
+              </MetaRow>
               <MetaRow label="최종 갱신">
                 <span className={TYPOGRAPHY.timestamp}>{age}</span>
               </MetaRow>

@@ -33,7 +33,18 @@ import { ReentryActionButton } from "../_components/reentry-display";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, AlertCircle, Clock, CheckCircle2, ArrowRight, ChevronRight, Zap } from "lucide-react";
+import {
+  Search,
+  AlertCircle,
+  AlertTriangle,
+  Clock,
+  TrendingDown,
+  Ban,
+  CheckCircle2,
+  ArrowRight,
+  ChevronRight,
+  Zap,
+} from "lucide-react";
 
 // ── Bucket tab config (Stock Risk-specific labels) ──────────────
 const SR_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -228,9 +239,7 @@ export default function StockRiskPage() {
           </p>
         </div>
 
-        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
-            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
-            없으면 display-only span (dead-link 0). */}
+        {/* Stat pills */}
         <div className="flex flex-wrap gap-2 mt-3">
           {(
             Object.keys(MODULE_HEADER_STAT_META) as Array<
@@ -240,38 +249,17 @@ export default function StockRiskPage() {
             const value = headerStats[key];
             const meta = MODULE_HEADER_STAT_META[key];
             const filterKey = STAT_FILTER_MAP[key] ?? key;
-            const matchingTab = SR_BUCKET_TABS.find((t) => t.key === filterKey);
-            const baseClass =
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs";
-            const labelSpan = (
-              <>
+            return (
+              <Link
+                key={key}
+                href={`/dashboard/inbox?module=stock_risk&filter=${filterKey}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
+              >
                 <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
-              </>
-            );
-            if (matchingTab) {
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveTab(matchingTab.key)}
-                  className={`${baseClass} hover:border-slate-300 transition-colors`}
-                  aria-label={`${meta.label} ${value}건 — 상태별 분류 ${matchingTab.label} 보기`}
-                >
-                  {labelSpan}
-                </button>
-              );
-            }
-            return (
-              <span
-                key={key}
-                className={baseClass}
-                aria-label={`${meta.label} ${value}건`}
-              >
-                {labelSpan}
-              </span>
+              </Link>
             );
           })}
         </div>

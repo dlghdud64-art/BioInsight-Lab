@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { Package, Search, MapPin, ChevronRight } from "lucide-react";
+import { Package, Search, AlertTriangle, Calendar, MapPin, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

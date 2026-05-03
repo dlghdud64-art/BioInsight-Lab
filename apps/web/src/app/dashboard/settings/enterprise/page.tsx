@@ -12,7 +12,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { PageHeader } from "@/app/_components/page-header";
-import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Download, Users, Lightbulb } from "lucide-react";
+import { Shield, Key, FileText, AlertCircle, CheckCircle2, Loader2, Save, Eye, Download, Users, Mail, Lightbulb } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";

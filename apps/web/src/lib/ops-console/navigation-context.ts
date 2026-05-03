@@ -14,12 +14,9 @@
 // 1. Top-Level Modules & Screen Role
 // ---------------------------------------------------------------------------
 
-// §11.191f — TopLevelModule 'inbox' member 제거. 운영작업함 deprecated
-// (§11.191 hidden redirect → /dashboard) 후 외부 caller 0 (audit 결과
-// `grep TopLevelModule|topLevelModule` 0 hit) 으로 dead member 확정.
-// canonical entry 는 'today' (메인 dashboard) 가 흡수.
 export type TopLevelModule =
   | 'today'
+  | 'inbox'
   | 'search'
   | 'quotes'
   | 'purchase_orders'
@@ -80,11 +77,16 @@ export const MODULE_CONFIGS: ModuleConfig[] = [
     landingRole: 'hub',
     description: '오늘 운영 시작점',
   },
-  // §11.191e — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
-  // MODULE_CONFIGS 는 외부 caller 0 (dead export) 이지만 향후 sidebar 또는
-  // navigation widget 잠재 사용 대비 유지. inbox entry 만 제거 — canonical
-  // entry 는 'today' (메인 dashboard) 가 흡수. 'inbox' TopLevelModule type
-  // member 는 별도 batch (§11.191f) 로 caller 정합 후 제거 예정.
+  {
+    module: 'inbox',
+    label: '작업함',
+    shortLabel: '작업함',
+    icon: 'Inbox',
+    href: '/dashboard/inbox',
+    landingRole: 'queue',
+    badgeType: 'actionable_count',
+    description: '전체 open work triage',
+  },
   {
     module: 'search',
     label: '검색',
@@ -151,8 +153,7 @@ export const SETTINGS_MODULE: ModuleConfig = {
 
 export function resolveTopLevelModule(pathname: string): TopLevelModule {
   if (pathname === '/dashboard') return 'today';
-  // §11.191f — '/dashboard/inbox' 매칭 dead branch 제거 (TopLevelModule
-  // 'inbox' member 부재 + hidden redirect 으로 hit 0).
+  if (pathname.startsWith('/dashboard/inbox')) return 'inbox';
   if (
     pathname.startsWith('/search') ||
     pathname.startsWith('/search')
@@ -169,9 +170,7 @@ export function resolveTopLevelModule(pathname: string): TopLevelModule {
 
 export function resolveScreenRole(pathname: string): ScreenRole {
   if (pathname === '/dashboard') return 'hub';
-  // §11.191f — '/dashboard/inbox' === 매칭 dead branch 제거. ScreenRole
-  // 'queue' member 는 다른 caller (operational-brief module mapping 등)
-  // 가 사용하므로 type union 보존.
+  if (pathname === '/dashboard/inbox') return 'queue';
   if (pathname.startsWith('/dashboard/settings')) return 'settings';
 
   // Detail pages have dynamic segments
@@ -321,11 +320,19 @@ export function buildModuleBadges(inboxStats: {
 }): ModuleBadge[] {
   const badges: ModuleBadge[] = [];
 
-  // §11.191f — 'inbox' module badge 제거. 운영작업함 deprecated 후
-  // TopLevelModule union 에서 'inbox' member 제거됨. canonical 운영 현황
-  // 시그널은 메인 dashboard (today-hub-strip + KPI) + 운영 브리핑 popup
-  // 으로 흡수. badge aggregator 는 module-specific (receiving/po 등)
-  // surface 만 노출.
+  const inboxCount = inboxStats.totalActionable;
+  if (inboxCount > 0) {
+    badges.push({
+      module: 'inbox',
+      count: inboxCount,
+      severity:
+        inboxStats.overdueCount > 0
+          ? 'critical'
+          : inboxStats.blockedCount > 0
+            ? 'warning'
+            : 'normal',
+    });
+  }
 
   const receivingBlocked = inboxStats.blockedByModule['receiving'] ?? 0;
   if (receivingBlocked > 0) {

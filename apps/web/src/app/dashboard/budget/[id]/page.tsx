@@ -7,7 +7,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { ArrowLeft, FileSpreadsheet, AlertTriangle, CheckCircle2, AlertCircle, Clock, Package, Send, FileCheck } from "lucide-react";
+import {
+  Wallet,
+  ArrowLeft,
+  FileSpreadsheet,
+  FileText,
+  AlertTriangle,
+  CheckCircle2,
+  AlertCircle,
+  ShieldAlert,
+  Clock,
+  ChevronRight,
+  Package,
+  Send,
+  FileCheck,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Budget = {

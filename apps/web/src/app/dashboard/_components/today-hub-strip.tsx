@@ -98,16 +98,12 @@ export function TodayHubStrip() {
           운영 현황
         </span>
         <span className="text-slate-700">|</span>
-        {/* §11.191d — KPI Link 5개 → display-only span (운영작업함 deprecated
-            후 self-link dead-button 회피). aria-label 보존하여 screen reader
-            정합. 운영자는 아래 priority list 또는 운영 브리핑 popup 으로
-            진입 (canonical destination). */}
         {(Object.keys(HEADER_STAT_META) as (keyof TodayHeaderStats)[]).map(
           (key) => (
-            <span
+            <Link
               key={key}
-              className="flex items-center gap-1"
-              aria-label={`${HEADER_STAT_META[key].label} ${headerStats[key]}건`}
+              href={HEADER_STAT_META[key].route}
+              className="flex items-center gap-1 hover:opacity-80 transition-opacity"
             >
               <span className="text-[10px] text-slate-500">
                 {HEADER_STAT_META[key].label}
@@ -115,21 +111,16 @@ export function TodayHubStrip() {
               <span className={`text-xs font-semibold tabular-nums ${statColor(key)}`}>
                 {headerStats[key]}
               </span>
-            </span>
+            </Link>
           ),
         )}
         {blockerTotal > 0 && (
-          // §11.191b — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
-          // 본 strip 이 /dashboard 안에 있어 inbox link 는 self-link 가 되어
-          // dead-button. display-only badge 로 정합 — 운영자는 아래 priority
-          // list 에서 차단 item 을 직접 클릭 (buildDetailHref → canonical
-          // destination routing).
-          <span
+          <Link
+            href="/dashboard/inbox?filter_state=blocked"
             className="ml-auto text-[10px] font-medium px-1.5 py-0.5 rounded bg-red-500/10 text-red-400 shrink-0"
-            aria-label={`차단 ${blockerTotal}건`}
           >
             차단 {blockerTotal}
-          </span>
+          </Link>
         )}
       </div>
 
@@ -164,12 +155,12 @@ export function TodayHubStrip() {
             </Link>
           ))}
           {unifiedInboxItems.length > 4 && (
-            // §11.191b — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
-            // self-link → display-only count + 운영자가 popup (운영 브리핑 FAB)
-            // 으로 전체 priority list 접근. dead-link 0.
-            <span className="text-[10px] text-slate-500 px-2 pt-0.5">
-              + {unifiedInboxItems.length - 4}건 더 (운영 브리핑에서 전체 보기)
-            </span>
+            <Link
+              href="/dashboard/inbox"
+              className="text-[10px] text-blue-400 hover:underline px-2 pt-0.5"
+            >
+              전체 {unifiedInboxItems.length}건 보기 →
+            </Link>
           )}
         </div>
       )}

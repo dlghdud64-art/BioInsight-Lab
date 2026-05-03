@@ -13,8 +13,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 // Select 컴포넌트는 추후 티켓 상세 뷰에서 사용 예정
-// §11.196f — dead lucide imports 6 symbol 제거 (AlertCircle ExternalLink
-//   HelpCircle LifeBuoy MessageCircle RotateCcw actual 사용 0). 나머지 보존.
 import {
   Search,
   Rocket,
@@ -27,11 +25,13 @@ import {
   UserCog,
   ArrowRight,
   BookOpen,
+  HelpCircle,
   MessageSquare,
   ChevronRight,
   ChevronDown,
   ChevronUp,
   Sparkles,
+  ExternalLink,
   Clock,
   LogIn,
   ShoppingCart,
@@ -41,11 +41,15 @@ import {
   FileUp,
   Wrench,
   ClipboardPaste,
+  RotateCcw,
   CreditCard,
+  MessageCircle,
+  LifeBuoy,
   Send,
   Loader2,
   Paperclip,
   CheckCircle2,
+  AlertCircle,
   AlertTriangle,
   X,
   Zap,

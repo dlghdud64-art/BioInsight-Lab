@@ -56,13 +56,9 @@ describe("§11.160 dashboard cleanup — git tree hygiene", () => {
     expect(tracked).toEqual([]);
   });
 
-  it("회귀 0: dashboard/orders/page.tsx 는 §11.162 에서 git index 제거 완료 (8 caller rewire 후)", () => {
-    // §11.160 시점엔 deferred 였으나 §11.162 에서 8 inbound caller 모두
-    // canonical destination (purchase-orders / purchases?view=conversion-ready) 로
-    // rewire 후 redirect-only page 제거 완료. 이 case 는 §11.162 land 이후
-    // "removed" 회귀 guard 로 전환.
+  it("회귀 0: dashboard/orders/page.tsx 는 git index 에 보존 (deferred 트랙)", () => {
     const tracked = gitTrackedFiles("apps/web/src/app/dashboard/orders/page.tsx");
-    expect(tracked).toEqual([]);
+    expect(tracked).toContain("apps/web/src/app/dashboard/orders/page.tsx");
   });
 
   it("회귀 0: 핵심 surface 보존 (purchases/quotes/inbox/inventory/work-queue/settings)", () => {

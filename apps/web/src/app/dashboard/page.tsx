@@ -6,56 +6,47 @@ import { Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-// §11.199b P0 — page-ready gate revert. 이전 §11.196/§11.199 의 store
-// fetcher trigger 와 isFetching 의존 모두 제거. ExecutiveSummary 가 자체
-// store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight } from "lucide-react";
+import {
+  Package, AlertTriangle, DollarSign, FileText, Search, Plus,
+  TrendingUp, TrendingDown, Truck, ChevronRight, Beaker, Calendar, GitCompare,
+  CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-// §11.196d — recharts dead import 제거. AreaChart/Area/XAxis/YAxis/
-// CartesianGrid/Tooltip/ResponsiveContainer 가 page.tsx 안에서 actual 사용 0
-// (모든 chart 는 SpendTrendCard/CategoryDistributionCard 등 분리 component).
-// 본 dead import 가 recharts (~150KB gzipped) 를 page chunk 에 포함시키고
-// 있어 initial bundle 부담. 제거 후 recharts 는 chart component lazy chunk 만.
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { getGuestKey } from "@/lib/guest-key";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
-// §11.196c — ExecutiveSummarySection 의 dynamic_import(ssr:false) 제거.
-//   §11.196 page-ready gate 가 store fetch 를 mount 직후 explicit trigger
-//   하지만, dynamic chunk loading 은 여전히 mount 시점에야 다운로드 시작 →
-//   chunk 도착 후에야 KPI 카드 reveal 가능. static import 로 swap 해서
-//   initial bundle 에 포함 → chunk loading wait 0 + §11.196 gate 와 시너지.
-//   ssr:false 의 client-only 의존성 부재 확인 (window/document/localStorage 0
-//   사용, zustand store 는 SSR-safe singleton, "use client" directive 보존).
-import { ExecutiveSummarySection } from "@/components/dashboard/executive-summary-section";
+import dynamic_import from "next/dynamic";
+// WorkQueueInbox 제거 — 3상태 중앙 패널이 대체
+const ExecutiveSummarySection = dynamic_import(
+  () => import("@/components/dashboard/executive-summary-section").then(m => m.ExecutiveSummarySection),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-[88px] rounded-lg bg-slate-100 animate-pulse" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+          <div className="lg:col-span-2 h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+          <div className="h-[280px] rounded-xl bg-slate-100 animate-pulse" />
+        </div>
+      </div>
+    ),
+  },
+);
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
 import { AIInsightDialog } from "@/components/dashboard/ai-insight-dialog";
 // §11.84 + §11.85 — 시안 채택 후속 chart 2종 (Area + 카테고리 도넛)
-// §11.196d — recharts code split. SpendTrendCard / CategoryDistributionCard
-// 가 recharts (~150KB gzipped) 의존. KPI 4 카드 / SYSTEM INSIGHT / Quick
-// Actions 는 fold 위쪽 (즉시 노출), chart 는 fold 아래라 lazy 가능.
-// next/dynamic 으로 swap → initial bundle 에서 recharts 분리 → 첫 진입
-// latency ↓. lazy chunk 도착 전엔 unified pageReady skeleton 의 chart
-// placeholder 가 자연스럽게 cover (별도 fallback 불필요).
-import dynamic_import from "next/dynamic";
-const SpendTrendCard = dynamic_import(
-  () =>
-    import("@/components/dashboard/spend-trend-card").then((m) => ({
-      default: m.SpendTrendCard,
-    })),
-  { ssr: false, loading: () => null },
-);
-const CategoryDistributionCard = dynamic_import(
-  () =>
-    import("@/components/dashboard/category-distribution-card").then((m) => ({
-      default: m.CategoryDistributionCard,
-    })),
-  { ssr: false, loading: () => null },
-);
+import { SpendTrendCard } from "@/components/dashboard/spend-trend-card";
+import { CategoryDistributionCard } from "@/components/dashboard/category-distribution-card";
 // §11.93 — 운영 바로가기 4 카드 (operator quick actions)
 import { OperatorQuickActions } from "@/components/dashboard/operator-quick-actions";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
@@ -165,30 +156,6 @@ export default function DashboardPage() {
     refetchOnWindowFocus: false,
   });
 
-  // §11.199b P0 — page-ready unified gate 자체 revert.
-  //
-  // 회귀 history:
-  //   §11.196: page-level pageReady gate 도입 (fetch parallel + 동시 reveal)
-  //   §11.199 P0 hot fix: ordersFetching/budgetsFetching 의존 제거
-  //   §11.199b P0 (본 batch): pageReady gate 자체 제거.
-  //
-  // Root cause (Chrome prod 검증):
-  //   §11.199 fix 후에도 prod /dashboard 진입 시 unified skeleton 영원 stuck.
-  //   /api/dashboard/stats 200 OK 응답 4번 도착에도 statsLoading false 안 됨.
-  //   /dashboard/inventory 는 정상 → prod 자체 정상, dashboard pageReady gate
-  //   고유 이슈. react-query 의 useQuery 가 disabled→enabled transition 시
-  //   isLoading 동작이 prod build 와 dev build 가 다르거나, dashboard 의 다른
-  //   render path block 가 있음.
-  //
-  // Fix (회귀 0 path):
-  //   pageReady gate 자체 제거. status === "loading" 분기만 auth skeleton 으로
-  //   유지. 모든 카드는 본인 isLoading 분기로 fallback (§11.196b 에서 제거한
-  //   카드별 statsLoading 분기는 별도 batch 로 복원 가능, 현재는 prod 동작
-  //   우선). reveal stagger 회귀 — 그러나 stuck (dashboard 진입 0) 보다 훨씬
-  //   나음. 운영자 즉시 dashboard 사용 가능.
-  //
-  // §11.196 series 의 dead import sweep / chunk wait / brand UX 등은 모두
-  // 보존. pageReady gate 한 가지만 revert.
   if (status === "loading") {
     return (
       <div className="p-4 pt-4 md:p-8 md:pt-6 space-y-4">
@@ -559,11 +526,42 @@ export default function DashboardPage() {
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
-      {/* ═══ 3상태 중앙 패널 (desktop) ═══
-          §11.196b — statsLoading skeleton 분기 제거. §11.196 page-level
-          pageReady gate 가 statsLoading 인 동안 unified skeleton 으로
-          short-circuit 하므로 본 분기 도달 0 (dead branch). */}
-      <div className="hidden md:grid md:grid-cols-5 gap-4">
+      {/* ═══ 3상태 중앙 패널 (desktop) ═══ */}
+      {statsLoading && (
+        <div className="hidden md:grid md:grid-cols-5 gap-4">
+          <div className="col-span-3 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-slate-200 animate-pulse" />
+              <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
+            </div>
+            <div className="space-y-3">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 p-3 rounded-lg">
+                  <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3.5 w-32 rounded bg-slate-200 animate-pulse" />
+                    <div className="h-3 w-48 rounded bg-slate-100 animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="col-span-2 rounded-xl border border-slate-200 bg-white shadow-sm p-5 space-y-3">
+            <div className="h-4 w-20 rounded bg-slate-200 animate-pulse" />
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-2 py-2.5">
+                <div className="w-8 h-8 rounded-lg bg-slate-100 animate-pulse flex-shrink-0" />
+                <div className="flex-1 space-y-1.5">
+                  <div className="h-3.5 w-28 rounded bg-slate-200 animate-pulse" />
+                  <div className="h-3 w-36 rounded bg-slate-100 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!statsLoading && (
+        <div className="hidden md:grid md:grid-cols-5 gap-4">
           {/* ── 좌측 상태 요약 카드 (3col) ── */}
           <div className="col-span-3 rounded-xl border border-slate-200/80 bg-white p-5">
             {dashboardState === "zero" && (
@@ -765,13 +763,31 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+      )}
 
-      {/* ═══ 운영 인텔리전스 ═══
-          §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover).
-          이전엔 statsLoading=true 시 placeholder skeleton, false 시 real
-          content 두 분기 — 이젠 page-level gate 가 statsLoading 인 동안
-          unified skeleton 으로 short-circuit 하므로 real content 만 남김. */}
-      <div className="hidden md:block">
+      {/* ═══ 운영 인텔리전스 ═══ */}
+      {statsLoading && (
+        <div className="hidden md:block">
+          <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="h-4 w-4 rounded bg-slate-200 animate-pulse" />
+                <div className="h-4 w-24 rounded bg-slate-200 animate-pulse" />
+              </div>
+              <div className="h-3 w-12 rounded bg-slate-100 animate-pulse" />
+            </div>
+            <div className="flex items-center gap-3 py-3">
+              <div className="w-10 h-10 rounded-full bg-slate-100 animate-pulse flex-shrink-0" />
+              <div className="space-y-2">
+                <div className="h-3.5 w-40 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-56 rounded bg-slate-100 animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {!statsLoading && (
+        <div className="hidden md:block">
           <div className="rounded-xl border border-slate-200/80 bg-white p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[13px] font-extrabold text-slate-900 flex items-center gap-2">
@@ -881,6 +897,7 @@ export default function DashboardPage() {
             })()}
           </div>
         </div>
+      )}
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
@@ -1027,8 +1044,21 @@ export default function DashboardPage() {
       {/* ======= 모바일 전용 레이아웃 ======= */}
       <div className="md:hidden space-y-3 pb-20">
 
-        {/* KPI 판단 카드 2x2
-            §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover). */}
+        {/* KPI 판단 카드 2x2 */}
+        {statsLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="rounded-xl border border-slate-200 bg-white shadow-sm p-3.5 space-y-2.5">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-slate-100 animate-pulse" />
+                  <div className="h-3 w-14 rounded bg-slate-200 animate-pulse" />
+                </div>
+                <div className="h-7 w-12 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-full rounded bg-slate-100 animate-pulse" />
+              </div>
+            ))}
+          </div>
+        ) : (
         <div className="grid grid-cols-2 gap-3">
           {renderKpiCard({
             href: "/dashboard/inventory",
@@ -1067,6 +1097,7 @@ export default function DashboardPage() {
             risk: quoteRisk,
           })}
         </div>
+        )}
 
         {/* 운영 패널: 즉시 처리 + 추천 작업 */}
         <Card className="bg-white border-slate-200/80 rounded-xl">

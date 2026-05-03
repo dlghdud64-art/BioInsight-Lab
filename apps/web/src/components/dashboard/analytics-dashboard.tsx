@@ -2,13 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-// §11.196e — recharts dead import 3 symbol 제거 (Bar/BarChart/Legend
-//   actual JSX 사용 0). 나머지 10 symbol (LineChart/Line/PieChart/Pie/Cell/
-//   XAxis/YAxis/CartesianGrid/Tooltip/ResponsiveContainer) 는 chart JSX 에
-//   서 실제 사용 — 보존.
 import {
   LineChart,
   Line,
+  BarChart,
+  Bar,
   PieChart,
   Pie,
   Cell,
@@ -16,6 +14,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, Sparkles } from "lucide-react";

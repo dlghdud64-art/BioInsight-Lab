@@ -598,25 +598,18 @@ export const DASHBOARD_ITEM_TYPE_LABELS: Record<DashboardItemType, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// 20. Header Stats Labels
+// 20. Header Stats Labels (drill-down routes)
 // ---------------------------------------------------------------------------
-//
-// §11.191d — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
-// 기존 `route` field 는 today-hub-strip 가 inbox 로 deep-link 하던 잔여.
-// inbox 가 redirect-only 가 된 후 self-link dead-button. label only 로
-// 단순화 — caller (today-hub-strip) 도 동시에 display-only span 으로 swap.
-// 향후 의미 있는 destination 확정 시 label 별로 자체 page anchor (예:
-// blockedCount → /dashboard/receiving?bucket=blocked) 매핑 가능 (§11.191e).
 
 export const HEADER_STAT_META: Record<
   keyof TodayHeaderStats,
-  { label: string }
+  { label: string; route: string }
 > = {
-  totalActionable: { label: '전체 작업' },
-  blockedCount: { label: '차단' },
-  overdueCount: { label: '기한 초과' },
-  waitingExternalCount: { label: '외부 대기' },
-  readyToExecuteCount: { label: '실행 가능' },
-  myWorkCount: { label: '내 작업' },
-  teamWorkCount: { label: '팀 작업' },
+  totalActionable: { label: '전체 작업', route: '/dashboard/inbox' },
+  blockedCount: { label: '차단', route: '/dashboard/inbox?filter_state=blocked' },
+  overdueCount: { label: '기한 초과', route: '/dashboard/inbox?filter_state=overdue' },
+  waitingExternalCount: { label: '외부 대기', route: '/dashboard/inbox?filter_state=waiting_external' },
+  readyToExecuteCount: { label: '실행 가능', route: '/dashboard/inbox?filter_state=now' },
+  myWorkCount: { label: '내 작업', route: '/dashboard/inbox?filter_owner=my_work' },
+  teamWorkCount: { label: '팀 작업', route: '/dashboard/inbox?filter_owner=team_work' },
 };

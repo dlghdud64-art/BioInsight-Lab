@@ -93,10 +93,7 @@ export function InboxContextStrip({
   dueLabel,
   dueTone = 'normal',
   owner,
-  // §11.191b — 운영작업함 deprecated (§11.191 hidden redirect → /dashboard).
-  // returnHref default 를 canonical destination (/dashboard) 으로 swap →
-  // back button 의 server-side redirect 한 단계 절약.
-  returnHref = '/dashboard',
+  returnHref = '/dashboard/inbox',
 }: InboxContextStripProps) {
   const dueBg =
     dueTone === 'overdue'
@@ -518,13 +515,11 @@ export function DetailStateFallback({
             초기화
           </button>
         )}
-        {/* §11.191b — 운영작업함 deprecated → 메인 dashboard 로 복귀.
-            label 도 "작업함" → "메인" 으로 정합 (canonical destination). */}
         <a
-          href="/dashboard"
+          href="/dashboard/inbox"
           className="rounded bg-slate-800 px-4 py-2 text-xs font-medium text-slate-400 hover:bg-slate-700 transition-colors"
         >
-          메인으로 돌아가기
+          작업함으로 돌아가기
         </a>
       </div>
     </div>
@@ -623,9 +618,9 @@ export function OperationalDetailShell({
         : blockerStrip && <BlockerReviewStrip {...blockerStrip} />}
       </div>
 
-      {/* D+E+F: Main grid — §11.190 § 2. 판단 근거 + § 4. 다음 조치 (§11.182 한국어 정합) */}
+      {/* D+E+F: Main grid — § 2. 핵심 근거 + § 4. 다음 조치 */}
       <div id="brief-facts" className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-3 scroll-mt-4">
-        <span className="sr-only">판단 근거</span>
+        <span className="sr-only">핵심 근거</span>
         {/* D. Primary Work Area */}
         <div className="min-w-0 space-y-3">{children}</div>
 

@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Calendar, MapPin, User, Mail, DollarSign, Crown, Upload, Loader2, X, Building2 } from "lucide-react";
+import { FileText, TrendingUp, Calendar, MapPin, User, Mail, DollarSign, Crown, Upload, Loader2, X, Building2 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { QuoteExtractionResult } from "@/lib/ai/quote-extractor";

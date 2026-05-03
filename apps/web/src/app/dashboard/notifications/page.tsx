@@ -4,7 +4,26 @@ export const dynamic = "force-dynamic";
 
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Package, Clock, FileText, ShieldCheck, Users, CreditCard, Settings, CheckCheck, AlertTriangle, Truck, ClipboardCheck, BrainCircuit, UserPlus, KeyRound, BarChart3, Mail } from "lucide-react";
+import {
+  Bell,
+  Package,
+  Clock,
+  FileText,
+  ShieldCheck,
+  Users,
+  CreditCard,
+  Settings,
+  CheckCheck,
+  AlertTriangle,
+  Truck,
+  ClipboardCheck,
+  BrainCircuit,
+  UserPlus,
+  KeyRound,
+  BarChart3,
+  Mail,
+  Inbox,
+} from "lucide-react";
 
 /* ── 카테고리 정의 ── */
 

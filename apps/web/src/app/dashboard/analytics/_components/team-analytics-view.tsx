@@ -8,7 +8,11 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell,
 } from "recharts";
-import { Users, AlertTriangle, TrendingUp, Shield, ShieldAlert, ChevronRight, Building2, CreditCard, ShoppingCart, Settings, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import {
+  Users, AlertTriangle, TrendingUp, TrendingDown, Shield, ShieldAlert,
+  ChevronRight, Building2, CreditCard, ShoppingCart, Settings,
+  ArrowUpRight, ArrowDownRight, Minus,
+} from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";

@@ -69,9 +69,62 @@ describe("§11.175 floating entry — shared component", () => {
   });
 });
 
-// §11.175 inbox ContextPanel density-up + auto_open describe block 은
-// §11.191 운영작업함 hidden redirect 로 자연 drop (inbox/page.tsx → 27 line redirect-only).
-// dashboard 메인이 priority list + popup 으로 흡수.
+describe("§11.175 inbox ContextPanel density-up", () => {
+  const PATH = "src/app/dashboard/inbox/page.tsx";
+
+  it("패널 너비 560", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/w-\[560px\]/);
+  });
+
+  it("패널 padding p-6 (이전 p-4 흡수)", () => {
+    const src = read(PATH);
+    // ContextPanel 내부 root container 가 p-6 사용
+    expect(src).toMatch(/className="p-6\s|className="[^"]*\sp-6\s/);
+  });
+
+  it("상황 요약 본문 text-base (이전 text-xs 흡수)", () => {
+    const src = read(PATH);
+    // brief-summary section 내부에 text-base + leading-relaxed
+    expect(src).toMatch(/id="brief-summary"[\s\S]*?text-base[\s\S]*?leading-relaxed/);
+  });
+
+  it("핵심 근거 2x2 metric grid + MetricCell (text-3xl 수치는 shared component 책임)", () => {
+    const src = read(PATH);
+    // §11.176 — MetricCell + text-3xl 은 shared 로 추출, inbox 는 grid-cols-2 안에서 MetricCell 사용
+    expect(src).toMatch(/id="brief-facts"[\s\S]*?grid-cols-2[\s\S]*?MetricCell/);
+  });
+
+  it("OPERATIONAL BRIEFING eyebrow", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/OPERATIONAL\s+BRIEFING/);
+  });
+
+  it("LAST UPDATED 상대 시간 표시", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/LAST\s+UPDATED/i);
+  });
+});
+
+describe("§11.175 inbox auto_open URL handler", () => {
+  const PATH = "src/app/dashboard/inbox/page.tsx";
+
+  it("auto_open searchParam 파싱", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/auto_open/);
+  });
+
+  it("priority sort 후 첫 row 자동 hydrate (P0 우선)", () => {
+    const src = read(PATH);
+    // useEffect 또는 useMemo 안에서 setSelectedItemId(autoTarget)
+    expect(src).toMatch(/setSelectedItemId\(\s*[a-zA-Z_$][\w$]*(?:\.id|\.id\s*\?\?\s*null)\s*\)/);
+  });
+
+  it("OperationalBriefFloatingEntry import + 사용", () => {
+    const src = read(PATH);
+    expect(src).toMatch(/OperationalBriefFloatingEntry/);
+  });
+});
 
 describe("§11.175 dashboard 진입점 wire (§11.181 popup default 로 marshall 됨)", () => {
   const PATH = "src/app/dashboard/page.tsx";

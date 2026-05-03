@@ -18,7 +18,25 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical } from "lucide-react";
+import {
+  ChevronRight,
+  ArrowRight,
+  AlertCircle,
+  Clock,
+  Shield,
+  Zap,
+  Sparkles,
+  Loader2,
+  TrendingDown,
+  ShieldAlert,
+  ShieldCheck,
+  DollarSign,
+  AlertTriangle,
+  CheckCircle2,
+  FlaskConical,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 
@@ -118,9 +136,7 @@ export default function PurchaseOrderLandingPage() {
           </p>
         </div>
 
-        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
-            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
-            없으면 display-only span (dead-link 0). */}
+        {/* Stat pills */}
         <div className="flex flex-wrap gap-2 mt-3">
           {(
             Object.keys(MODULE_HEADER_STAT_META) as Array<
@@ -130,38 +146,17 @@ export default function PurchaseOrderLandingPage() {
             const value = headerStats[key];
             const meta = MODULE_HEADER_STAT_META[key];
             const filterKey = STAT_FILTER_MAP[key] ?? key;
-            const matchingTab = PO_BUCKET_TABS.find((t) => t.key === filterKey);
-            const baseClass =
-              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs";
-            const labelSpan = (
-              <>
+            return (
+              <Link
+                key={key}
+                href={`/dashboard/inbox?module=po&filter=${filterKey}`}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
+              >
                 <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
-              </>
-            );
-            if (matchingTab) {
-              return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setActiveTab(matchingTab.key)}
-                  className={`${baseClass} hover:border-slate-300 transition-colors`}
-                  aria-label={`${meta.label} ${value}건 — 상태별 분류 ${matchingTab.label} 보기`}
-                >
-                  {labelSpan}
-                </button>
-              );
-            }
-            return (
-              <span
-                key={key}
-                className={baseClass}
-                aria-label={`${meta.label} ${value}건`}
-              >
-                {labelSpan}
-              </span>
+              </Link>
             );
           })}
         </div>

@@ -777,7 +777,7 @@ function SettingsPageContent() {
                           {userData?.costCenter ? (
                             <span className="text-sm font-mono text-slate-900">{userData.costCenter}</span>
                           ) : (
-                            <span className="text-sm font-mono text-slate-400">운영 정책 미설정</span>
+                            <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">

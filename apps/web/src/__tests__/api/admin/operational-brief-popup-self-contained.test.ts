@@ -41,17 +41,6 @@ describe("§11.181 OperationalBriefPopupProvider + hook", () => {
     const src = read(PATH);
     expect(src).toMatch(/close[\s\S]*?setIsOpen\(false\)[\s\S]*?setSelectedItemId\(null\)/);
   });
-
-  it("§11.195 — isMinimized state + toggleMinimize action 노출 (dock chip 진입점)", () => {
-    const src = read(PATH);
-    // isMinimized boolean + setter
-    expect(src).toMatch(/isMinimized[^;]*?boolean/);
-    expect(src).toMatch(/toggleMinimize:\s*\(\)\s*=>\s*void/);
-    // useState<boolean>(false) 초기값 (minimized 0)
-    expect(src).toMatch(/useState[\s\S]*?isMinimized|isMinimized[\s\S]*?useState/);
-    // close() 시 isMinimized 도 false 로 reset (다음 open 은 expanded 부터)
-    expect(src).toMatch(/close[\s\S]*?setIsMinimized\(false\)/);
-  });
 });
 
 describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
@@ -62,12 +51,12 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(read(PATH)).toMatch(/"use client"/);
   });
 
-  it("§11.182/183/192 — Sheet modal 분기 (mobile=true, desktop=false) + width 480 desktop", () => {
+  it("§11.182/183 — Sheet modal 분기 (mobile=true, desktop=false) + width 400 desktop", () => {
     const src = read(PATH);
     // §11.183 — modal={isMobile} (mobile dim, desktop non-modal)
     expect(src).toMatch(/SheetPrimitive\.Root[\s\S]*?modal=\{isMobile\}/);
-    // §11.192 — desktop 너비 400 → 480 (한국어 wrap + Google snippet 정보 밀도)
-    expect(src).toMatch(/md:w-\[480px\]/);
+    // desktop 너비 md:w-[400px]
+    expect(src).toMatch(/md:w-\[400px\]/);
     // SheetContent 사용 안 함 (자체 SheetPrimitive.Content)
     expect(src).toMatch(/SheetPrimitive\.Content/);
   });
@@ -79,14 +68,12 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/removeEventListener\(["']change["']/);
   });
 
-  it("§11.183/192/195 — mobile bottom sheet vs desktop right rail responsive className", () => {
+  it("§11.183 — mobile bottom sheet vs desktop right rail responsive className", () => {
     const src = read(PATH);
     // mobile: max-md inset-x-0 bottom-0 h-[85vh] rounded-t-2xl
     expect(src).toMatch(/max-md:inset-x-0[\s\S]*?max-md:bottom-0[\s\S]*?max-md:h-\[85vh\][\s\S]*?max-md:rounded-t-2xl/);
-    // §11.195 — desktop: md:top-16 (DashboardHeader h-16 = 64px clear) +
-    // h-[calc(100%-4rem)] + width 480 (§11.192) + right-0. md:top-4 (16px)
-    // 는 header z-50 와 겹쳐 eyebrow 잘림 — §11.195 fix.
-    expect(src).toMatch(/md:top-16[\s\S]*?md:bottom-0[\s\S]*?md:right-0[\s\S]*?md:h-\[calc\(100%-4rem\)\][\s\S]*?md:w-\[480px\]/);
+    // desktop: md:inset-y-0 md:right-0 md:h-full md:w-[400px]
+    expect(src).toMatch(/md:inset-y-0[\s\S]*?md:right-0[\s\S]*?md:h-full[\s\S]*?md:w-\[400px\]/);
     // animation 분기: mobile slide-from-bottom, desktop slide-from-right
     expect(src).toMatch(/max-md:data-\[state=open\]:slide-in-from-bottom/);
     expect(src).toMatch(/md:data-\[state=open\]:slide-in-from-right/);
@@ -100,54 +87,31 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     expect(src).toMatch(/onInteractOutside[\s\S]*?if\s*\(\s*!isMobile\s*\)\s*e\.preventDefault/);
   });
 
-  it("§11.194 3-tier drill-down: category → list → inline expand 분기", () => {
+  it("priority list (상위 5건) + brief detail stack 분기", () => {
     const src = read(PATH);
-    // viewMode 'category' (1단계) | 'list' (2+3단계 inline expand)
-    expect(src).toMatch(/viewMode[\s\S]*?["']category["'][\s\S]*?["']list["']/);
-    // PopupCategoryGrid (1단계 카드 grid)
-    expect(src).toMatch(/PopupCategoryGrid/);
-    // PopupCategoryListWithExpand (2단계 list + 3단계 inline expand)
-    expect(src).toMatch(/PopupCategoryListWithExpand/);
-    // PopupItemWithExpand + PopupBriefInline (row card + 3단계 inline AI brief)
-    expect(src).toMatch(/PopupItemWithExpand/);
-    expect(src).toMatch(/PopupBriefInline/);
-    // CATEGORIES array (4 카테고리 매핑) — quote/po/receiving/stock_risk
-    expect(src).toMatch(/module:\s*["']quote["'][\s\S]*?label:\s*["']견적 관리["']/);
-    expect(src).toMatch(/module:\s*["']po["'][\s\S]*?label:\s*["']발주 관리["']/);
-    expect(src).toMatch(/module:\s*["']receiving["'][\s\S]*?label:\s*["']입고 및 검수["']/);
-    expect(src).toMatch(/module:\s*["']stock_risk["'][\s\S]*?label:\s*["']재고 관리["']/);
+    expect(src).toMatch(/sortedItems\.slice\(0,\s*5\)/);
+    expect(src).toMatch(/PopupPriorityList/);
+    expect(src).toMatch(/PopupBriefDetail/);
   });
 
-  it("§11.198 brief detail — 시안 정합 6-section (AI INSIGHT brand + CRITICAL EVIDENCE + DETECTED RISKS rose + 추천 해결책 + 큰 CTA)", () => {
+  it("brief detail — 4-section + 4-cell MetricCell + amber alert (§11.182 판단 근거)", () => {
     const src = read(PATH);
-    // §11.198 — AI INSIGHT brand banner (LABAXIS AI INSIGHT label + Live indicator)
-    expect(src).toMatch(/LABAXIS AI INSIGHT/);
-    expect(src).toMatch(/Real-time Operations Analysis/);
-    // CRITICAL EVIDENCE 영문 emphasis (시안 정합)
-    expect(src).toMatch(/Critical Evidence/);
-    // DETECTED RISKS — rose 톤 (이전 amber → rose 시안 정합)
-    expect(src).toMatch(/Detected Risks/);
-    expect(src).toMatch(/bg-rose-50[\s\S]*?border-rose-200/);
-    // 추천 해결책 영역 신규 (emerald check)
-    expect(src).toMatch(/추천 해결책/);
-    expect(src).toMatch(/bg-emerald-50[\s\S]*?border-emerald-200/);
-    // 큰 primary CTA (h-12 + text-base)
-    expect(src).toMatch(/h-12 text-base/);
-    // §11.198 — 4-cell MetricCell grid → 2 evidence card 로 변경 (RBAC 정합)
+    // §11.182 — RESOLVER 라벨 제거, "판단 근거" 사용
+    expect(src).toMatch(/판단 근거[\s\S]*?grid-cols-2/);
+    expect(src).not.toMatch(/RESOLVER 판별 근거/);
     const metricCells = src.match(/<MetricCell\b/g) ?? [];
-    expect(metricCells.length).toBe(0);
+    expect(metricCells.length).toBe(4);
+    expect(src).toMatch(/bg-amber-50[\s\S]*?border-amber-200/);
   });
 
-  it("§11.182/198 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
+  it("§11.182 — 한국어 eyebrow + raw key 제거 (OPERATIONAL BRIEFING 0)", () => {
     const src = read(PATH);
-    // 한국어 "운영 브리핑" eyebrow 사용 (popup top + dock chip)
+    // 한국어 "운영 브리핑" eyebrow 사용
     expect(src).toMatch(/운영 브리핑/);
     // 영문 OPERATIONAL BRIEFING 비노출
     expect(src).not.toMatch(/OPERATIONAL BRIEFING/);
-    // §11.198 — "상황 요약" / "판단 근거" / "다음 조치" 라벨은 제거 (시안 정합).
-    //   Critical Evidence + Detected Risks + 추천 해결책 + 큰 CTA 로 대체.
-    expect(src).toMatch(/Critical Evidence/);
-    expect(src).toMatch(/추천 해결책/);
+    expect(src).toMatch(/상황 요약/);
+    expect(src).toMatch(/다음 조치/);
   });
 
   it("§11.182 — priority enum → 사람 라벨 (즉시/높음/보통/낮음)", () => {
@@ -194,17 +158,6 @@ describe("§11.181 OperationalBriefPopup Sheet 컴포넌트", () => {
     // truncate ellipsis (length > 14)
     expect(src).toMatch(/slice\(0,\s*CTA_MAX_LENGTH\)\s*\+\s*"…"/);
   });
-
-  it("§11.195 — minimize button 노출 + isMinimized 흐름 (dock chip 패턴)", () => {
-    const src = read(PATH);
-    // popup-context 의 isMinimized + toggleMinimize 흡수
-    expect(src).toMatch(/isMinimized/);
-    expect(src).toMatch(/toggleMinimize/);
-    // minimize button (aria-label 한국어) — close X 와 분리된 별도 진입점
-    expect(src).toMatch(/aria-label="브리핑 (?:접기|펼치기|최소화|복원)"|aria-label=\{[^}]*?(?:접기|펼치기|최소화|복원)/);
-    // dock chip 분기 — isMinimized 일 때 small chip 만 노출 (full sheet 0)
-    expect(src).toMatch(/PopupDockChip|isMinimized\s*\?[\s\S]*?dock|dock[\s\S]*?chip/i);
-  });
 });
 
 describe("§11.181 dashboard shell mount", () => {
@@ -243,9 +196,8 @@ describe("§11.181 FloatingEntry default = popup open", () => {
 
 describe("§11.181 7 surface FAB onClick prop 제거", () => {
   const SURFACES: { name: string; path: string }[] = [
-    // §11.191 — inbox surface deprecated (hidden redirect → /dashboard).
-    // FAB drop 자연스러운 결과 (redirect-only page 17 lines).
     { name: "dashboard", path: "src/app/dashboard/page.tsx" },
+    { name: "inbox", path: "src/app/dashboard/inbox/page.tsx" },
     { name: "purchases", path: "src/app/dashboard/purchases/page.tsx" },
     { name: "quotes", path: "src/app/dashboard/quotes/page.tsx" },
     { name: "inventory-content", path: "src/app/dashboard/inventory/inventory-content.tsx" },

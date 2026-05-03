@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic';
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
-import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
@@ -17,7 +16,12 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown } from "lucide-react";
+import {
+  ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
+  AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
+  AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
+  Loader2, Upload, ChevronDown,
+} from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -1007,45 +1011,15 @@ function QuotesPageContent() {
             </p>
           </section>
 
-          {/* §11.188 § 2. 판단 근거 — 4-cell MetricCell grid (§11.180/187 패턴) */}
+          {/* § 2. 핵심 근거 — was 운영 요약 (5 canonical fields) */}
           <div id="brief-facts" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">판단 근거</div>
-            {(() => {
-              const totalItems = selectedQuote.items.length;
-              const replyTone: "ok" | "warn" | "danger" =
-                sqResponseCount === 0
-                  ? "danger"
-                  : sqResponseCount >= totalItems
-                    ? "ok"
-                    : "warn";
-              const compareTone: "ok" | "neutral" =
-                selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료"
-                  ? "ok"
-                  : "neutral";
-              const poTone: "ok" | "neutral" =
-                selectedSignals.poReady === "가능" ? "ok" : "neutral";
-              const replyValue = totalItems === 0 ? "—" : `${sqResponseCount}/${totalItems}`;
-              return (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
-                  <MetricCell label="회신" value={replyValue} tone={replyTone} />
-                  <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                  <MetricCell label="발주 전환" value={selectedSignals.poReady} tone={poTone} />
-                </div>
-              );
-            })()}
-            {/* 보조 — 차단/위험 + 다음 액션 (정보 보존) */}
-            <div className="mt-3 pt-3 border-t border-bd/30 space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">차단/위험</span>
-                <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-amber-600"}>
-                  {selectedSignals.blocker}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">다음 액션</span>
-                <span className="text-slate-700">{selectedSignals.nextAction}</span>
-              </div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">핵심 근거</div>
+            <div className="space-y-1.5">
+              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-700">{selectedSignals.nextAction}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.compareReady}</span></div>
+              <div className="flex justify-between text-xs"><span className="text-slate-400">발주 전환 가능</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
             </div>
           </div>
 

@@ -19,10 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-// §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
-//   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
-//   actual JSX/prop 사용 0). 나머지 보존.
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Filter, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine } from "lucide-react";
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight, ScanLine } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -38,7 +35,7 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
-import { Info, FileText, BellRing, Save, Sparkles, Archive } from "lucide-react";
+import { Info, FileText, BellRing, Save, Sparkles, GitBranch, Clock, Archive } from "lucide-react";
 import {
   type LotRecord,
   type LotStatusFilter,

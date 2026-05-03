@@ -9,7 +9,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { QrCode, ArrowLeft, Camera, CameraOff, Package, MapPin, AlertTriangle, Loader2, Search, ScanLine } from "lucide-react";
+import {
+  QrCode,
+  ArrowLeft,
+  Camera,
+  CameraOff,
+  Package,
+  MapPin,
+  AlertTriangle,
+  CheckCircle2,
+  Loader2,
+  Search,
+  ScanLine,
+} from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { useSession } from "next-auth/react";
