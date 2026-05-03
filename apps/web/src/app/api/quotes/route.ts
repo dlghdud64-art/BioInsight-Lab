@@ -162,6 +162,26 @@ export async function POST(request: NextRequest) {
         vendorMessage = `안녕하세요.\n\n아래 품목 ${vendorProductCount}건에 대한 견적을 요청드립니다.\n\n품목 수: ${vendorProductCount}개\n예상 금액: ₩${vendorTotalAmount.toLocaleString("ko-KR")}\n\n빠른 견적 부탁드립니다.\n감사합니다.`;
       }
 
+      // §11.203 — snapshot fields 보존 forward (createQuote 의 itemsDetailed
+      //   path 통과). RequestWizardModal payload 가 catalog/search ref ID 와
+      //   snapshot 정보 (name / catalogNumber / specification) 를 같이 보냄.
+      //   itemsDetailed 가 있으면 createQuote 가 productId DB 검증 후 nullable
+      //   QuoteListItem 으로 저장 — 비-canonical productId 도 안전.
+      //   legacy productIds path 호환성 유지 (productIds 만 들어오는 caller 0 깨짐).
+      const itemsDetailed = items.map((item: any, idx: number) => ({
+        productId: item.productId ?? null,
+        productName: item.name ?? item.productName ?? undefined,
+        vendorName: item.vendorName ?? undefined,
+        brand: item.brand ?? undefined,
+        catalogNumber: item.catalogNumber ?? undefined,
+        lineNumber: item.lineNumber ?? idx + 1,
+        quantity: item.quantity ?? 1,
+        unitPrice: item.unitPrice ?? undefined,
+        currency: item.currency ?? "KRW",
+        lineTotal: item.lineTotal ?? undefined,
+        notes: item.notes ?? undefined,
+      }));
+
       const quote = await createQuote({
         userId: session.user.id,
         organizationId: serverOrgId ?? undefined,
@@ -174,6 +194,7 @@ export async function POST(request: NextRequest) {
         quantities,
         notes: itemNotes,
         vendorIds,
+        itemsDetailed,
       });
 
       // 벤더별 공유 링크 생성: token을 루프 내부에서 매번 새로 생성 (P2002 방지)
@@ -310,6 +331,25 @@ export async function POST(request: NextRequest) {
     // 이는 프론트엔드가 성공으로 오판하여 워크큐에 데이터가 안 뜨는 원인이었다.
     // demo fallback 제거: 실패하면 실패로 응답한다.
 
+    // §11.203 — payload validation failures → structured 400 (not raw 500).
+    //   "No valid products" 같은 client-side payload 결함은 운영자가 다시
+    //   시도 가능한 검증 실패. infrastructure 결함 (Prisma P2003/P2002 외)
+    //   만 500 으로 유지.
+    const isClientValidationError =
+      error?.message?.includes("No valid products") ||
+      error?.message?.includes("최소 1개 이상");
+    if (isClientValidationError) {
+      return NextResponse.json(
+        {
+          error: "QUOTE_SUBMIT_VALIDATION_FAILED",
+          message:
+            "요청 품목 정보가 부족해 견적 요청을 생성할 수 없습니다. 검색에서 품목을 다시 선택해 주세요.",
+          _debug: { message: error?.message },
+        },
+        { status: 400 }
+      );
+    }
+
     // 클라이언트에 의미있는 에러 메시지 반환
     let clientMessage = "견적 생성에 실패했습니다.";
     if (error?.code === "P2003" || error?.message?.includes("Foreign key")) {
@@ -318,8 +358,6 @@ export async function POST(request: NextRequest) {
       clientMessage = "이미 동일한 견적이 존재합니다.";
     } else if (error?.message?.includes("organizationId") || error?.message?.includes("userId")) {
       clientMessage = "조직 또는 사용자 정보가 올바르지 않습니다.";
-    } else if (error?.message?.includes("No valid products")) {
-      clientMessage = error.message;
     }
 
     return NextResponse.json(

@@ -36,8 +36,9 @@ export function ProductCard({
 }: ProductCardProps) {
   const { toast } = useToast();
   const [casCopied, setCasCopied] = useState(false);
-  const [imgError, setImgError] = useState(false);
-  const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
+  // §11.203 — imageUrl 없으면 immediate fallback (404 spam 차단).
+  const [imgError, setImgError] = useState(!product.imageUrl);
+  const imageSrc = product.imageUrl ?? "";
   const showFallback = imgError;
 
   const handleCopyCAS = () => {

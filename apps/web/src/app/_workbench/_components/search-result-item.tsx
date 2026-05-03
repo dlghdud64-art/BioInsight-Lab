@@ -53,11 +53,12 @@ export function SearchResultItem({
   onClick,
   compareSessionCount,
 }: SearchResultItemProps) {
-  const [imgError, setImgError] = useState(false);
+  // §11.203 — imageUrl 없으면 immediate fallback (404 spam 차단).
+  const [imgError, setImgError] = useState(!product.imageUrl);
   const vendor = product.vendors?.[0];
   const unitPrice = vendor?.priceInKRW && vendor.priceInKRW > 0 ? vendor.priceInKRW : null;
   const keySpecs = getKeySpecs(product);
-  const imageSrc = product.imageUrl || `/api/products/${product.id}/image`;
+  const imageSrc = product.imageUrl ?? "";
   const showFallback = imgError;
 
   return (

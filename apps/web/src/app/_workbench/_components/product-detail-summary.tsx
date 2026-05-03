@@ -79,8 +79,9 @@ export function ProductDetailSummary({
   variant = "full",
   showDetailLink = true,
 }: ProductDetailSummaryProps) {
-  const [imgError, setImgError] = useState(false);
-  const imageSrc = data.imageUrl || `/api/products/${data.id}/image`;
+  // §11.203 — imageUrl 없으면 immediate fallback (404 spam 차단).
+  const [imgError, setImgError] = useState(!data.imageUrl);
+  const imageSrc = data.imageUrl ?? "";
   const imgSize = variant === "compact" ? "w-10 h-10" : "w-14 h-14";
   const iconSize = variant === "compact" ? "h-5 w-5" : "h-7 w-7";
 
