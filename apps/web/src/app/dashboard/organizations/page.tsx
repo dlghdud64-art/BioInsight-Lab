@@ -6,30 +6,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import {
-  Plus,
-  Users,
-  Loader2,
-  ExternalLink,
-  UserPlus,
-  Clock,
-  AlertTriangle,
-  Settings,
-  Activity,
-  Building2,
-  Shield,
-  ChevronRight,
-  Zap,
-  UserCheck,
-  MailWarning,
-  Search,
-  LayoutGrid,
-  List,
-  MoreVertical,
-  Sparkles,
-  TrendingUp,
-  AlertCircle,
-} from "lucide-react";
+import { Plus, Users, Loader2, ExternalLink, Clock, AlertTriangle, Building2, Shield, ChevronRight, Zap, UserCheck, MailWarning, Search, LayoutGrid, List, MoreVertical, Sparkles, TrendingUp, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -259,9 +236,13 @@ export default function OrganizationsPage() {
 
     try {
       setIsCreating(true);
-      // csrfFetch 가 CSRF 토큰 획득 실패 시 throw 하므로,
-      // 조직 생성은 일반 fetch 로 직접 호출 (CSRF 토큰 없어도 동작해야 함)
-      const res = await fetch("/api/organizations", {
+      // §11.193d Phase 3 hot fix — raw fetch → csrfFetch swap.
+      // 이전 코멘트 ("csrfFetch 가 토큰 획득 실패 시 throw") 는 사실 오인 —
+      // csrfFetch (api-client.ts:289) 는 token 없을 때 throw 안 하고 header 에서
+      // 빠질 뿐. raw fetch 로 우회해도 server-side CSRF middleware 가 동일하게
+      // reject → 403 "보안 검증이 완료되지 않아". §α-F-followup-csrf-fetch-sweep
+      // 의 dead spot 정합.
+      const res = await csrfFetch("/api/organizations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
