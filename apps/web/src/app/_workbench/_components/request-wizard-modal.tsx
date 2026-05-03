@@ -233,8 +233,16 @@ export function RequestWizardModal({
         return;
       }
 
-      const json = (await res.json().catch(() => ({}))) as { id?: string };
-      if (!json.id) {
+      // §11.203b — server (apps/web/src/app/api/quotes/route.ts:297) 는
+      //   `{ quote: {id, ...}, shareToken, shareUrl }` 반환. 본 wizard 가
+      //   기존에 `{ id }` 기대해 silent fail (201 수신했지만 step 3 진입 0).
+      //   canonical shape 은 quote 객체 — quote.id 로 narrowing.
+      const json = (await res.json().catch(() => ({}))) as {
+        quote?: { id?: string };
+        id?: string; // 호환성 — 미래 어떤 caller 가 평탄화 응답 보낼 경우
+      };
+      const submittedId = json.quote?.id ?? json.id;
+      if (!submittedId) {
         toast({
           title: "견적 제출 실패",
           description: "서버 응답에 견적 ID가 없습니다. 운영팀에 문의하세요.",
@@ -243,7 +251,7 @@ export function RequestWizardModal({
         return;
       }
 
-      setSubmittedRequestId(json.id);
+      setSubmittedRequestId(submittedId);
       onSubmitSuccess?.();
 
       // Move to step 3 — handoff

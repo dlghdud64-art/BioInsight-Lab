@@ -216,6 +216,31 @@ describe("§11.203 /api/quotes POST — snapshot-backed search submission", () =
     expect(enforcementSpies.fail).toHaveBeenCalledTimes(1);
   });
 
+  it("§11.203b — 응답 shape 은 { quote: {id, ...}, shareToken, shareUrl } (wizard 가 quote.id 추출)", async () => {
+    createQuoteMock.mockResolvedValue({
+      id: "q-shape-test",
+      title: "Test",
+      organizationId: null,
+      items: [],
+    });
+    const body = {
+      items: [{ productId: "p1", name: "Test", quantity: 1 }],
+    };
+    const res = await POST(makeRequest(body) as never);
+    expect(res.status).toBe(201);
+    const json = (await (res as { json: () => Promise<unknown> }).json()) as {
+      quote?: { id?: string };
+      shareToken?: string | null;
+      shareUrl?: string | null;
+    };
+    // wizard handleSubmit 이 json.quote?.id 로 narrowing. shape 변경 시 wizard 도 동기.
+    expect(json.quote, "응답에 quote 객체가 있어야 wizard 가 step 3 handoff 진입 가능").toBeDefined();
+    expect(json.quote?.id).toBe("q-shape-test");
+    // shareToken / shareUrl 은 nullable (QuoteShare 생성 실패 시 null)
+    expect(json).toHaveProperty("shareToken");
+    expect(json).toHaveProperty("shareUrl");
+  });
+
   it("snapshot-only items 시 raw productId 가 catalogRef 형태로 createQuote 에 전달됨", async () => {
     createQuoteMock.mockResolvedValue({
       id: "q-1",
