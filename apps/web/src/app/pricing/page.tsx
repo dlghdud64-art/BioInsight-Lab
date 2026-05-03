@@ -12,6 +12,8 @@ import type { ReactNode } from "react";
 import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
 import {
   PLAN_DESCRIPTOR,
+  LABOPS_CREDIT_USAGE_SCENARIOS,
+  LABOPS_CREDIT_PROTECTED_SCENARIOS,
   type PlanDescriptor,
 } from "@/lib/billing/plan-descriptor";
 
@@ -260,6 +262,106 @@ export default function PricingPage() {
                 {selectError}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* ══ §11.201 LabOps Credit 섹션 ════════════════════════════ */}
+        {/* 운영자가 "왜 크레딧이 있는가" 를 한 곳에서 이해. 사용 작업 (AI 차감) +
+            보호 작업 (코어 workflow 항상 가용) 두 list. footnote 로 pilot 무제한 명시.
+            descriptor 의 LABOPS_CREDIT_USAGE_SCENARIOS / LABOPS_CREDIT_PROTECTED_SCENARIOS
+            single source 통과 (DRY). */}
+        <section className="py-16 md:py-20" style={{ backgroundColor: P.bg }}>
+          <div className="max-w-6xl mx-auto px-6 md:px-8">
+            <Reveal>
+              <div className="text-center mb-10 md:mb-12">
+                <p className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-2">
+                  LabOps Credit
+                </p>
+                <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: P.text1 }}>
+                  AI 작업은 LabOps Credit 으로 운영됩니다
+                </h2>
+                <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: P.text3 }}>
+                  AI 가 발화되는 작업은 월 한도 (Credit) 안에서 사용합니다. 코어 운영
+                  workflow 는 Credit 소진 여부와 무관하게 항상 가용합니다.
+                </p>
+              </div>
+            </Reveal>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
+              {/* ── 사용 작업 (AI 차감 대상) ── */}
+              <Reveal delay={0.05}>
+                <div
+                  className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
+                  style={{ backgroundColor: P.bgSoft, border: `1px solid ${P.border}` }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
+                      style={{ backgroundColor: P.blueSoft, color: P.blueText }}
+                    >
+                      사용 작업
+                    </span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.text1 }}>
+                    Credit 으로 차감되는 AI 작업
+                  </h3>
+                  <ul className="flex flex-col gap-2.5 flex-grow">
+                    {LABOPS_CREDIT_USAGE_SCENARIOS.map((scenario) => (
+                      <li key={scenario} className="flex items-start gap-2.5 text-sm" style={{ color: P.text2 }}>
+                        <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.blue }} />
+                        <span className="leading-relaxed">{scenario}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-5 text-xs leading-relaxed" style={{ color: P.text4 }}>
+                    플랜별 월 Credit 한도는 카드를 참고하세요 (Starter 100 / Lab Team 1,500 /
+                    R&D Operations 7,500).
+                  </p>
+                </div>
+              </Reveal>
+
+              {/* ── 차단 안 되는 작업 (코어 workflow 보호) ── */}
+              <Reveal delay={0.1}>
+                <div
+                  className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
+                  style={{ backgroundColor: P.greenSoft, border: `1px solid ${P.green}` }}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
+                      style={{ backgroundColor: "rgba(255,255,255,0.6)", color: P.greenText }}
+                    >
+                      보호되는 코어 workflow
+                    </span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.greenText }}>
+                    크레딧으로 차단되지 않는 작업
+                  </h3>
+                  <ul className="flex flex-col gap-2.5 flex-grow">
+                    {LABOPS_CREDIT_PROTECTED_SCENARIOS.map((scenario) => (
+                      <li key={scenario} className="flex items-start gap-2.5 text-sm" style={{ color: P.greenText }}>
+                        <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+                        <span className="leading-relaxed font-medium">{scenario}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-5 text-xs leading-relaxed font-medium" style={{ color: P.greenText }}>
+                    검색·요청·승인·PO·입고·재고는 Credit 소진 여부와 무관하게 항상 가용합니다.
+                  </p>
+                </div>
+              </Reveal>
+            </div>
+
+            {/* footnote — pilot 기간 정직성 명시 */}
+            <Reveal delay={0.15}>
+              <p
+                className="mt-6 md:mt-8 text-xs text-center leading-relaxed"
+                style={{ color: P.text4 }}
+              >
+                * pilot (시범 운영) 기간 동안 LabOps Credit 은 무제한으로 사용 가능합니다.
+                정식 차감 시점은 별도 공지로 안내됩니다.
+              </p>
+            </Reveal>
           </div>
         </section>
 
