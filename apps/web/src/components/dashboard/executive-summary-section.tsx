@@ -310,20 +310,45 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
 
   const body = (
     <div
-      className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),_0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06),_0_12px_32px_rgba(0,0,0,0.08)] ${hoverBorderMap[tone]} overflow-hidden`}
+      className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_2px_4px_rgba(0,0,0,0.04),_0_8px_24px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(0,0,0,0.08),_0_8px_16px_rgba(0,0,0,0.08),_0_24px_48px_rgba(0,0,0,0.12)] ${hoverBorderMap[tone]} overflow-hidden`}
     >
-      {/* §11.206 — 헤더 row: 아이콘 컨테이너 + glassmorphism delta badge */}
+      {/* §11.206 — 헤더 row: 아이콘 컨테이너 + glassmorphism delta badge.
+          §11.206b — delta = undefined (real data 부재) 시 fallback status
+          chip 노출. fake "+0%" 가 아니라 truthful status (정상 / 주의 / 위험)
+          를 tone 에 따라 표기. 시안 정합 visual 리듬 보존. */}
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainerMap[tone]} transition-transform duration-200 group-hover:scale-105`}>
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${iconContainerMap[tone]} shadow-sm shadow-${tone === "rose" ? "rose" : tone === "amber" ? "amber" : tone === "blue" ? "blue" : "emerald"}-100 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-[-2deg]`}>
           {icon}
         </div>
         <div className="flex items-center gap-1.5">
-          {delta && (
+          {delta ? (
             <span
               className={`inline-flex items-center gap-0.5 px-2 py-1 rounded-full border text-[10px] font-bold tabular-nums ${deltaToneMap[delta.tone]}`}
             >
               <span aria-hidden>{deltaArrowMap[delta.direction]}</span>
               {delta.text}
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-full border text-[10px] font-bold ${
+                tone === "rose"
+                  ? "bg-rose-50/80 text-rose-700 border-rose-200/60 backdrop-blur-sm"
+                  : tone === "amber"
+                    ? "bg-amber-50/80 text-amber-700 border-amber-200/60 backdrop-blur-sm"
+                    : tone === "blue"
+                      ? "bg-blue-50/80 text-blue-700 border-blue-200/60 backdrop-blur-sm"
+                      : "bg-emerald-50/80 text-emerald-700 border-emerald-200/60 backdrop-blur-sm"
+              }`}
+            >
+              <span className="relative flex h-1 w-1">
+                <span className={`relative inline-flex rounded-full h-1 w-1 ${
+                  tone === "rose" ? "bg-rose-500"
+                    : tone === "amber" ? "bg-amber-500"
+                      : tone === "blue" ? "bg-blue-500"
+                        : "bg-emerald-500"
+                }`} />
+              </span>
+              {tone === "rose" ? "위험" : tone === "amber" ? "주의" : tone === "blue" ? "활성" : "정상"}
             </span>
           )}
           {href && (
@@ -341,13 +366,15 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
       </p>
       <p className="mt-2 text-[11px] text-slate-500 break-keep leading-relaxed">{hint}</p>
 
-      {/* §11.206 — 카드 하단 progress bar (delta 또는 risk 시각 리듬) */}
-      <div className="mt-4 h-1 rounded-full bg-slate-100 overflow-hidden">
+      {/* §11.206 — 카드 하단 progress bar (시각 리듬 강화).
+          §11.206b/c — h-1 → h-1.5 + opacity 0.65 → 1.0 + width 더 visible.
+          시안 정합 (호영님 첨부 LabAxis dashboard) — bar 가 명확히 보여야
+          시각 리듬 작동. */}
+      <div className="mt-5 h-1.5 rounded-full bg-slate-100 overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all duration-500 ${progressBarMap[tone]}`}
+          className={`h-full rounded-full transition-all duration-700 ${progressBarMap[tone]}`}
           style={{
-            width: tone === "rose" ? "100%" : tone === "amber" ? "70%" : tone === "blue" ? "55%" : "30%",
-            opacity: 0.65,
+            width: tone === "rose" ? "100%" : tone === "amber" ? "78%" : tone === "blue" ? "62%" : "45%",
           }}
         />
       </div>
