@@ -72,7 +72,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   starter: {
     intent: "starter",
     label: "Starter",
-    tagline: "1인 연구실 — 무료로 검색·견적·재고를 시작",
+    tagline: "1인 연구실 또는 도입 검토 — 14일 전체 운영 흐름 체험",
     priceMonthlyKrw: 0,
     seatsRecommended: 1,
     operatingVolume: {
@@ -82,14 +82,14 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     },
     labOpsCreditMonthly: 100,
     features: [
+      "운영자 1명 포함",
       "통합 검색 / 카탈로그",
       "견적 요청 (월 5건)",
       "PO 발행 (월 5건)",
       "재고 등록 (50 품목)",
-      "AI 견적 비교 (Credit 차감)",
     ],
     ctaRoute: "/dashboard",
-    ctaLabel: "무료로 시작하기",
+    ctaLabel: "무료 파일럿 시작",
     recommendTag: null,
   },
   team: {
@@ -106,6 +106,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     labOpsCreditMonthly: 1500,
     features: [
       "Starter 전체 +",
+      "운영자 5명 포함 (추가 운영자 별도)",
       "견적 요청 (월 30건)",
       "PO 발행 (월 30건)",
       "재고 운영 (500 품목)",
@@ -113,13 +114,13 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "활동 로그 / 권한 관리",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
-    ctaLabel: "Lab Team 결제 진행",
+    ctaLabel: "Lab Team 시작하기",
     recommendTag: "추천: 단일 연구실 운영",
   },
   business: {
     intent: "business",
     label: "R&D Operations",
-    tagline: "다중 연구실 / R&D 센터 — 운영량 확장 + 통합 거버넌스",
+    tagline: "다중 연구실 / R&D 센터 — 운영량 확장 + 통제 기능",
     priceMonthlyKrw: 349000,
     seatsRecommended: 15,
     operatingVolume: {
@@ -130,6 +131,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     labOpsCreditMonthly: 7500,
     features: [
       "Lab Team 전체 +",
+      "운영자 15명 포함 (추가 운영자 별도)",
       "견적 요청 (월 80건)",
       "PO 발행 (월 80건)",
       "재고 운영 (2,000 품목)",
@@ -138,7 +140,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
       "워크플로 템플릿 / 승인자 매트릭스",
     ],
     ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
-    ctaLabel: "R&D Operations 결제 진행",
+    ctaLabel: "R&D 운영 플랜 상담",
     recommendTag: "추천: R&D 센터 운영",
   },
   enterprise: {

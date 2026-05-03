@@ -190,12 +190,12 @@ export default function PricingPage() {
         <section className="pt-16 pb-16 md:pt-24 md:pb-20 text-center" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-4xl mx-auto px-6">
             <Reveal>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-5 leading-[1.1] whitespace-nowrap" style={{ color: P.text1 }}>
-                연구실 규모에 맞는 플랜을 선택하세요
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight mb-5 leading-[1.15]" style={{ color: P.text1 }}>
+                연구 구매 운영량에 맞는 플랜을 선택하세요
               </h1>
               <p className="text-base md:text-lg max-w-3xl mx-auto mb-10 leading-relaxed" style={{ color: P.text3 }}>
-                시약·장비 검색부터 비교·요청 생성, 발주 준비, 입고 반영, 재고 운영까지.<br className="hidden md:block" />
-                현재 팀의 운영 범위에 맞는 플랜으로 시작하고 필요한 단계에 맞춰 확장할 수 있습니다.
+                요청, RFQ, 승인, PO 전환, 입고, 재고, 재주문까지<br className="hidden md:block" />
+                연구 구매 운영 체인에 맞춰 시작하고 확장하세요.
               </p>
             </Reveal>
 
@@ -230,6 +230,7 @@ export default function PricingPage() {
             featured 카드는 recommendTag 가 "단일 연구실" 을 포함하면 dark navy. */}
         <section className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
+            {/* §11.201e — items-stretch + 카드 h-full 로 4 카드 높이 통일 강제. */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               {PLAN_INTENT_VALUES.map((intent, i) => {
                 const descriptor = PLAN_DESCRIPTOR[intent];
@@ -240,7 +241,7 @@ export default function PricingPage() {
                   descriptor.recommendTag !== null &&
                   /단일\s*연구실/.test(descriptor.recommendTag);
                 return (
-                  <Reveal key={descriptor.intent} delay={i * 0.08}>
+                  <Reveal key={descriptor.intent} delay={i * 0.08} className="h-full">
                     <PlanCard
                       descriptor={descriptor}
                       price={price}
@@ -267,7 +268,7 @@ export default function PricingPage() {
 
         {/* ══ §11.201 LabOps Credit 섹션 ════════════════════════════ */}
         {/* 운영자가 "왜 크레딧이 있는가" 를 한 곳에서 이해. 사용 작업 (AI 차감) +
-            보호 작업 (코어 workflow 항상 가용) 두 list. footnote 로 pilot 무제한 명시.
+            보호 작업 (핵심 운영 흐름 항상 가용) 두 list. footnote 로 pilot 무제한 명시.
             descriptor 의 LABOPS_CREDIT_USAGE_SCENARIOS / LABOPS_CREDIT_PROTECTED_SCENARIOS
             single source 통과 (DRY). */}
         <section className="py-16 md:py-20" style={{ backgroundColor: P.bg }}>
@@ -278,11 +279,12 @@ export default function PricingPage() {
                   LabOps Credit
                 </p>
                 <h2 className="text-2xl md:text-3xl font-bold mb-3" style={{ color: P.text1 }}>
-                  AI 작업은 LabOps Credit 으로 운영됩니다
+                  자동화 작업은 LabOps Credit으로 운영됩니다
                 </h2>
                 <p className="text-sm md:text-base max-w-2xl mx-auto leading-relaxed" style={{ color: P.text3 }}>
-                  AI 가 발화되는 작업은 월 한도 (Credit) 안에서 사용합니다. 코어 운영
-                  workflow 는 Credit 소진 여부와 무관하게 항상 가용합니다.
+                  AI 견적 비교, 문서 추출, 운영 브리핑처럼 변동 원가가 발생하는 자동화
+                  작업에만 크레딧이 사용됩니다. 검색, 요청 생성, 승인, PO 전환, 입고,
+                  재고 차감 같은 핵심 운영 흐름은 크레딧 잔량과 관계없이 사용할 수 있습니다.
                 </p>
               </div>
             </Reveal>
@@ -299,11 +301,11 @@ export default function PricingPage() {
                       className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
                       style={{ backgroundColor: P.blueSoft, color: P.blueText }}
                     >
-                      사용 작업
+                      크레딧으로 차감되는 자동화
                     </span>
                   </div>
                   <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.text1 }}>
-                    Credit 으로 차감되는 AI 작업
+                    크레딧이 사용되는 자동화 작업
                   </h3>
                   <ul className="flex flex-col gap-2.5 flex-grow">
                     {LABOPS_CREDIT_USAGE_SCENARIOS.map((scenario) => (
@@ -320,7 +322,7 @@ export default function PricingPage() {
                 </div>
               </Reveal>
 
-              {/* ── 차단 안 되는 작업 (코어 workflow 보호) ── */}
+              {/* ── 차감되지 않는 작업 (핵심 운영 흐름 보호) ── */}
               <Reveal delay={0.1}>
                 <div
                   className="rounded-2xl p-6 md:p-8 h-full flex flex-col"
@@ -331,11 +333,11 @@ export default function PricingPage() {
                       className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-0.5 rounded"
                       style={{ backgroundColor: "rgba(255,255,255,0.6)", color: P.greenText }}
                     >
-                      보호되는 코어 workflow
+                      크레딧으로 차감되지 않는 핵심 운영
                     </span>
                   </div>
                   <h3 className="text-lg md:text-xl font-bold mb-3" style={{ color: P.greenText }}>
-                    크레딧으로 차단되지 않는 작업
+                    크레딧 잔량과 관계없이 사용 가능한 핵심 운영 흐름
                   </h3>
                   <ul className="flex flex-col gap-2.5 flex-grow">
                     {LABOPS_CREDIT_PROTECTED_SCENARIOS.map((scenario) => (
@@ -346,7 +348,7 @@ export default function PricingPage() {
                     ))}
                   </ul>
                   <p className="mt-5 text-xs leading-relaxed font-medium" style={{ color: P.greenText }}>
-                    검색·요청·승인·PO·입고·재고는 Credit 소진 여부와 무관하게 항상 가용합니다.
+                    검색·요청·승인·PO·입고·재고는 크레딧 잔량과 관계없이 항상 사용할 수 있습니다.
                   </p>
                 </div>
               </Reveal>
@@ -399,8 +401,8 @@ export default function PricingPage() {
                     <tr style={{ backgroundColor: P.bgSoft }}>
                       <th className="p-3 md:p-5 text-xs uppercase tracking-wider font-bold whitespace-nowrap" style={{ color: P.text4 }}>운영 항목</th>
                       <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Starter</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Team</th>
-                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>Business</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text1 }}>Lab Team</th>
+                      <th className="p-3 md:p-5 text-center text-xs md:text-sm font-bold whitespace-nowrap" style={{ color: P.text1 }}>{"R&D Operations"}</th>
                       <th className="p-3 md:p-5 text-center text-xs md:text-sm font-semibold whitespace-nowrap" style={{ color: P.text2 }}>Enterprise</th>
                     </tr>
                   </thead>
@@ -565,11 +567,14 @@ function PlanCard({
               }
         }
       >
-        <div className="mb-6">
+        {/* §11.201e — 카드 슬롯 height 통일: 헤더 / 가격 / 운영 범위 박스에
+            min-height 명시. features 가 flex-grow, CTA wrapper 가 mt-auto 로
+            카드 하단 고정. 4 카드 모두 동일 vertical alignment. */}
+        <div className="mb-6 min-h-[120px]">
           <h3 className="text-2xl font-bold mb-2" style={{ color: labelColor }}>{label}</h3>
-          <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: taglineColor }}>{tagline}</p>
+          <p className="text-sm leading-relaxed" style={{ color: taglineColor }}>{tagline}</p>
         </div>
-        <div className="mb-6">
+        <div className="mb-6 min-h-[44px]">
           <span className="text-[30px] font-bold leading-none" style={{ color: labelColor }}>{price}</span>
           {period && <span className="text-sm ml-1" style={{ color: taglineColor }}>{period}</span>}
         </div>
@@ -577,7 +582,7 @@ function PlanCard({
         {/* §11.201 — 운영량 / Credit 정량 근거 (descriptor.seatsRecommended /
             operatingVolume / labOpsCreditMonthly 통과). 카드 안의 "왜 이 가격인가". */}
         <div
-          className="mb-6 p-4 rounded-xl"
+          className="mb-6 p-4 rounded-xl min-h-[148px]"
           style={{
             backgroundColor: isDarkNavy ? D.surface : P.bgSoft,
             border: `1px solid ${isDarkNavy ? D.border : P.border}`,
@@ -587,7 +592,7 @@ function PlanCard({
             className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2"
             style={{ color: isDarkNavy ? D.text2 : P.text4 }}
           >
-            권장 운영 범위
+            운영 범위
           </div>
           <ul className="flex flex-col gap-1.5">
             {operatingVolume.map((line) => (
@@ -602,10 +607,10 @@ function PlanCard({
           </ul>
         </div>
 
-        <ul className="flex flex-col gap-4 mb-12 flex-grow">
+        <ul className="flex flex-col gap-3 mb-6 flex-grow">
           {features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-[15px]">
-              <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+            <li key={f} className="flex items-start gap-2.5 text-[14px]">
+              <CheckCircle2 className="h-[18px] w-[18px] mt-0.5 flex-shrink-0" style={{ color: P.green }} />
               <span style={{ color: isDarkNavy ? D.text1 : P.text2 }}>{f}</span>
             </li>
           ))}
@@ -618,8 +623,8 @@ function PlanCard({
           aria-busy={loading || undefined}
           className={
             isDarkNavy
-              ? "w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-              : "w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              ? "mt-auto w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              : "mt-auto w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
           }
           style={
             isDarkNavy

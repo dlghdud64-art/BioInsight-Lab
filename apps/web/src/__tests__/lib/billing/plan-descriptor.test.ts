@@ -115,11 +115,17 @@ describe("§11.201 plan-descriptor — features + CTA + recommend tag", () => {
     expect(PLAN_DESCRIPTOR.enterprise.ctaRoute).toMatch(/^\/support\?topic=enterprise/);
   });
 
-  it("ctaLabel 한국어 — 시작하기 / 결제 진행 / 영업 문의", () => {
-    expect(PLAN_DESCRIPTOR.starter.ctaLabel).toMatch(/시작|무료/);
-    expect(PLAN_DESCRIPTOR.team.ctaLabel).toMatch(/결제|시작|선택/);
-    expect(PLAN_DESCRIPTOR.business.ctaLabel).toMatch(/결제|시작|선택/);
+  it("ctaLabel 한국어 — 시작하기 / 상담 / 영업 문의 ('결제 진행' fake checkout 폐기)", () => {
+    // §11.201e — real checkout backend 부재 시 "결제 진행" 카피 폐기.
+    //   "시작하기" / "상담" / "영업 문의" 같은 액션 톤만 허용.
+    expect(PLAN_DESCRIPTOR.starter.ctaLabel).toMatch(/시작|무료|파일럿/);
+    expect(PLAN_DESCRIPTOR.team.ctaLabel).toMatch(/시작|선택|상담/);
+    expect(PLAN_DESCRIPTOR.business.ctaLabel).toMatch(/시작|선택|상담|문의/);
     expect(PLAN_DESCRIPTOR.enterprise.ctaLabel).toMatch(/문의|상담|영업/);
+    // fake checkout 카피 sweep
+    for (const intent of PLAN_INTENT_VALUES) {
+      expect(PLAN_DESCRIPTOR[intent].ctaLabel).not.toMatch(/결제\s*진행/);
+    }
   });
 
   it("recommendTag — Lab Team 또는 R&D Operations 한 곳만 noteworthy", () => {

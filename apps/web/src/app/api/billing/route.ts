@@ -63,7 +63,7 @@ const PLAN_INFO: Record<
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.TEAM].maxQuotesPerMonth,
     features: [
       "Starter 전체 +",
-      "운영자 5명 권장",
+      "운영자 5명 포함 (추가 운영자 별도)",
       "견적 요청 (월 30건)",
       "PO 발행 (월 30건)",
       "재고 운영 (500 품목)",
@@ -80,7 +80,7 @@ const PLAN_INFO: Record<
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxQuotesPerMonth,
     features: [
       "Lab Team 전체 +",
-      "운영자 15명 권장",
+      "운영자 15명 포함 (추가 운영자 별도)",
       "견적 요청 (월 80건)",
       "PO 발행 (월 80건)",
       "재고 운영 (2,000 품목)",
