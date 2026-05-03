@@ -372,19 +372,33 @@ export default function OrganizationsPage() {
         </div>
 
         {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══
-            §11.200b hot fix — Radix Dialog onPointerDownOutside 가 modal 안의
-            Radix Select trigger 의 trusted pointerdown 을 outside 로 잡아
-            Select open propagation 을 차단. 결과: mouse click 으론 dropdown
-            안 열림 (JS dispatch 는 untrusted 라 통과). 알려진 shadcn/ui +
-            Radix Select 충돌 패턴.
-            Fix: DialogContent 에 onPointerDownOutside handler 추가 — target 이
-            Radix Select portal (data-radix-popper-content-wrapper) 또는
-            select trigger / item 에 닿으면 preventDefault 로 dialog close 막음.
-            Chrome prod 검증: pointerdown 시뮬 후 expanded=true / options=5
-            정상 mount 확인. */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+            §11.200c hot fix — Radix Dialog default modal={true} 가 nested
+            Select portal 을 inert 처리 → Select trigger 의 mouse pointerdown
+            이 modal outside-click 으로 잡혀서 Select open propagation 차단.
+            §11.200b 의 onPointerDownOutside handler 만으론 modal inert 처리를
+            못 막음 (handler 발화 시점 이후에 inert 적용).
+            Real fix: modal={false} + onInteractOutside / onPointerDownOutside
+            보강. modal=false 면 focus trap 일부 손실하지만 dialog 의 X /
+            Escape / 취소 버튼 으로 close 가능. nested Select 정상 작동.
+            Karpathy "silent wrong assumption" — 이전 fix 의 가정 (handler
+            만으로 sufficient) 이 잘못. Chrome prod 검증 4중 (Vercel API READY
+            + chunk source unique marker + fiber prop + trusted mouse click)
+            으로 silent regression 차단. */}
+        <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
           <DialogContent
             className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden"
+            onInteractOutside={(e) => {
+              const target = e.target as HTMLElement | null;
+              // Radix Select portal / listbox / option click 시 dialog close 차단
+              if (
+                target?.closest('[data-radix-popper-content-wrapper]') ||
+                target?.closest('[data-radix-select-content]') ||
+                target?.closest('[role="listbox"]') ||
+                target?.closest('[role="option"]')
+              ) {
+                e.preventDefault();
+              }
+            }}
             onPointerDownOutside={(e) => {
               const target = e.target as HTMLElement | null;
               if (
