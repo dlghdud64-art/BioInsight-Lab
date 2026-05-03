@@ -28,12 +28,23 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+// §11.193d Phase 3 — capability edit dialog. WORKFLOW_CAPABILITIES whitelist
+// + WORKFLOW_CAPABILITY_LABEL (한국어) + resolveWorkflowCapabilities (DB 우선
+// + role 기반 fallback) 를 canonical source 로 사용 — raw enum 노출 0.
+import {
+  WORKFLOW_CAPABILITIES,
+  WORKFLOW_CAPABILITY_LABEL,
+  resolveWorkflowCapabilities,
+  type WorkflowCapability,
+} from "@/lib/permissions/workflow-capabilities";
+// §11.196f — dead lucide imports 6 symbol 제거 (BarChart3 Eye RotateCcw
+//   UserCheck UserX Wallet actual 사용 0). 나머지 보존.
 import {
   ArrowLeft, UserPlus, Mail, Loader2, Search, Users, ShieldCheck,
-  Settings, Wallet, PauseCircle, X, Send, Building2,
-  FileText, Package, ShoppingCart, MoreVertical, Trash2, RotateCcw, UserX,
-  Lock, Clock, UserCheck, Activity, CreditCard, ClipboardCheck, Eye,
-  AlertTriangle, ChevronRight, BarChart3, CheckCircle2, XCircle,
+  Settings, PauseCircle, X, Send, Building2,
+  FileText, Package, ShoppingCart, MoreVertical, Trash2,
+  Lock, Clock, Activity, CreditCard, ClipboardCheck,
+  AlertTriangle, ChevronRight, CheckCircle2, XCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -374,6 +385,38 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
       toast({ title: "역할 변경 완료" });
     },
     onError: () => toast({ title: "역할 변경 실패", variant: "destructive" }),
+  });
+
+  // §11.193d Phase 3 — capability 토글 (workflow capabilities multi-badge).
+  //   role 변경과 분리된 별도 mutation — capability 는 RBAC 와 별개 layer.
+  //   PATCH /api/organizations/[id]/members/[memberId]/capabilities (Phase 2.4 alive).
+  //   onSuccess: organization-members + settings-organizations 모두 invalidate
+  //     → settings page 의 multi-badge 도 즉시 갱신 (canonical truth 동기화).
+  const updateCapabilitiesMutation = useMutation({
+    mutationFn: async ({
+      memberId,
+      capabilities,
+    }: {
+      memberId: string;
+      capabilities: WorkflowCapability[];
+    }) => {
+      const response = await fetch(
+        `/api/organizations/${params.id}/members/${memberId}/capabilities`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ capabilities }),
+        },
+      );
+      if (!response.ok) throw new Error("Failed to update capabilities");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organization-members", params.id] });
+      queryClient.invalidateQueries({ queryKey: ["settings-organizations"] });
+      toast({ title: "업무 권한 변경 완료" });
+    },
+    onError: () => toast({ title: "업무 권한 변경 실패", variant: "destructive" }),
   });
 
   // 멤버 제거
@@ -1526,6 +1569,67 @@ export default function OrganizationDetailPage({ params }: { params: { id: strin
                     <SelectItem value="ADMIN">관리자</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+              {/* §11.193d Phase 3 — workflow capabilities multi-checkbox.
+                  RBAC role 과 별개 layer — 1인이 동시에 운영 책임자 + 승인자
+                  + 요청자 보유 가능 (호영님 prototype 시안). canonical:
+                  OrganizationMember.workflowCapabilities Json. resolver 가
+                  DB 우선 + role 기반 fallback. */}
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-slate-600">
+                  업무 권한 (다중 선택)
+                </Label>
+                <p className="text-xs text-slate-500">
+                  RBAC 역할과 별개로 운영 권한을 다중 부여할 수 있습니다.
+                </p>
+                <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50/50 p-3">
+                  {(() => {
+                    const raw = members.find(
+                      (m) => m.id === permissionDialogMember.memberId,
+                    );
+                    if (!raw) {
+                      return (
+                        <p className="text-xs text-slate-400">
+                          멤버 정보를 불러오는 중입니다.
+                        </p>
+                      );
+                    }
+                    const current = resolveWorkflowCapabilities({
+                      workflowCapabilities: (raw as { workflowCapabilities?: unknown })
+                        .workflowCapabilities,
+                      role: raw.role,
+                    });
+                    const isPending = updateCapabilitiesMutation.isPending;
+                    return WORKFLOW_CAPABILITIES.map((cap) => {
+                      const checked = current.includes(cap);
+                      return (
+                        <label
+                          key={cap}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            disabled={isPending}
+                            onCheckedChange={(v) => {
+                              const next = v
+                                ? (Array.from(
+                                    new Set([...current, cap]),
+                                  ) as WorkflowCapability[])
+                                : current.filter((c) => c !== cap);
+                              updateCapabilitiesMutation.mutate({
+                                memberId: raw.id,
+                                capabilities: next,
+                              });
+                            }}
+                          />
+                          <span className="text-sm text-slate-700">
+                            {WORKFLOW_CAPABILITY_LABEL[cap]}
+                          </span>
+                        </label>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
           )}
