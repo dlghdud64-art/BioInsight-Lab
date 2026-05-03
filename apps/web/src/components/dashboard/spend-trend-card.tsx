@@ -95,19 +95,29 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
   const isEmpty = !stats || stats.lastMonth.amount === 0;
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-white shadow-sm p-4 md:p-5">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h3 className="text-[13px] font-extrabold text-slate-900">지출 추이</h3>
-          <p className="text-[11px] text-slate-500 mt-0.5">최근 12개월 누적 지출</p>
-        </div>
-        {!isEmpty && stats?.lastMonth && (
-          <div className="text-right">
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-              일평균
+    <div className="rounded-2xl border border-slate-200/80 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05),_0_2px_4px_rgba(0,0,0,0.04),_0_8px_24px_rgba(0,0,0,0.06)] p-5 md:p-6">
+      {/* §11.207 — 시안 정합 헤더: 좌측 icon + 한국어 title + REAL-TIME SPEND
+          TRACKING eyebrow / 우측 최고 지출액 큰 숫자 (font-black tracking-tighter).
+          호영님 첨부 LabAxis 시안 정합. */}
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900 leading-tight">지출 트렌드 분석</h3>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mt-1">
+              Real-time Spend Tracking
             </p>
-            <p className="text-sm font-bold text-slate-900 tabular-nums">
-              ₩{Math.round(stats.avgDaily).toLocaleString("ko-KR")}
+          </div>
+        </div>
+        {!isEmpty && stats?.peak && (
+          <div className="text-right flex-shrink-0">
+            <p className={`text-2xl md:text-[26px] font-black tracking-tighter tabular-nums leading-none text-slate-900`}>
+              ₩{(stats.peak.amount / 1_000_000).toFixed(1)}M
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 mt-1">
+              최고 지출액
             </p>
           </div>
         )}

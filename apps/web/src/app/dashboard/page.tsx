@@ -725,14 +725,29 @@ export default function DashboardPage() {
 
             {dashboardState === "active" && (
               <div className="space-y-3">
-                <h3 className="text-[13px] font-extrabold text-slate-900">최근 운영 활동</h3>
+                {/* §11.207 — 시안 정합: 최근 운영 활동 LIVE badge (animate-ping
+                    emerald dot). 호영님 첨부 LabAxis 시안 정합. */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-[13px] font-extrabold text-slate-900">최근 운영 활동</h3>
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-bold border border-emerald-200/60">
+                    <span className="relative flex h-1.5 w-1.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+                    </span>
+                    Live
+                  </span>
+                </div>
                 {notifications.filter((n) => n.id !== "n-delivery" || stats.totalInventory > 0).length > 0 ? (
-                  <div className="space-y-1.5">
+                  <div className="space-y-2 relative">
+                    {/* §11.207 — 시안 정합: timeline 좌측 vertical line (subtle slate) */}
+                    <div className="absolute left-[7px] top-2 bottom-2 w-px bg-slate-100" aria-hidden="true" />
                     {notifications.slice(0, 5).map((n) => (
-                      <Link key={n.id} href={n.href} className="flex items-start gap-2.5 px-2 py-2 rounded-lg hover:bg-slate-50 transition-colors group">
-                        {renderNotificationIcon(n.type)}
+                      <Link key={n.id} href={n.href} className="relative flex items-start gap-3 pl-0 py-2 rounded-lg hover:bg-slate-50 transition-colors group">
+                        <span className="relative z-10 flex-shrink-0 mt-1">
+                          {renderNotificationIcon(n.type)}
+                        </span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-slate-700 group-hover:text-blue-600 truncate">{n.title}</p>
+                          <p className="text-xs font-semibold text-slate-700 group-hover:text-blue-600 truncate">{n.title}</p>
                           <p className="text-[10px] text-slate-400 mt-0.5">{n.time}</p>
                         </div>
                       </Link>
