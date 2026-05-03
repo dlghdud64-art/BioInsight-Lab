@@ -18,25 +18,7 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import {
-  ChevronRight,
-  ArrowRight,
-  AlertCircle,
-  Clock,
-  Shield,
-  Zap,
-  Sparkles,
-  Loader2,
-  TrendingDown,
-  ShieldAlert,
-  ShieldCheck,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle2,
-  FlaskConical,
-  ChevronDown,
-  ChevronUp,
-} from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 
@@ -129,14 +111,21 @@ export default function PurchaseOrderLandingPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-lg font-bold text-slate-900">발주 관리</h1>
-            <p className="text-xs text-slate-600 mt-0.5">{orientation.role}</p>
+            {/* §11.209 — 실무 담당자 톤 정합. orientation.role 만으로는
+                "관리" 의 실무 의미(발송 후 무엇을 추적) 불명확 → 작업
+                흐름(공급사 확인·납기·입고) 을 직접 명시. Hybrid Tier
+                별 외부 ERP/그룹웨어 hand-off 카피는 실 구현 land 시 별도
+                batch 에서 분기 표기. */}
+            <p className="text-xs text-slate-600 mt-0.5">발주서 발송 후 공급사 확인·납기·입고까지 추적하세요.</p>
           </div>
           <p className="text-xs text-slate-500 max-w-xs text-right">
             {headerStats.nextActionSummary}
           </p>
         </div>
 
-        {/* Stat pills */}
+        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
+            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
+            없으면 display-only span (dead-link 0). */}
         <div className="flex flex-wrap gap-2 mt-3">
           {(
             Object.keys(MODULE_HEADER_STAT_META) as Array<
@@ -146,33 +135,60 @@ export default function PurchaseOrderLandingPage() {
             const value = headerStats[key];
             const meta = MODULE_HEADER_STAT_META[key];
             const filterKey = STAT_FILTER_MAP[key] ?? key;
-            return (
-              <Link
-                key={key}
-                href={`/dashboard/inbox?module=po&filter=${filterKey}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
-              >
+            const matchingTab = PO_BUCKET_TABS.find((t) => t.key === filterKey);
+            const baseClass =
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs";
+            const labelSpan = (
+              <>
                 <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
-              </Link>
+              </>
+            );
+            if (matchingTab) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveTab(matchingTab.key)}
+                  className={`${baseClass} hover:border-slate-300 transition-colors`}
+                  aria-label={`${meta.label} ${value}건 — 상태별 분류 ${matchingTab.label} 보기`}
+                >
+                  {labelSpan}
+                </button>
+              );
+            }
+            return (
+              <span
+                key={key}
+                className={baseClass}
+                aria-label={`${meta.label} ${value}건`}
+              >
+                {labelSpan}
+              </span>
             );
           })}
         </div>
       </div>
 
       {/* ── Fallback: Empty ────────────────────────────────────────── */}
+      {/* §11.209 — 실무 담당자 흐름 정합. 직전 단계(구매 운영)에서
+          발주 전환을 완료해야 여기 항목이 생기므로 CTA 를 견적 관리가
+          아니라 구매 운영으로 직접 연결. surface 귀책 명확화. */}
       {isEmpty && (
         <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
           <p className="text-sm text-slate-600">
-            현재 진행 중인 발주가 없습니다 — 견적에서 발주를 생성하세요
+            발주된 항목이 없습니다
+          </p>
+          <p className="text-xs text-slate-500 mt-1">
+            구매 운영에서 회신 받은 견적을 비교하고 발주로 전환하면 여기서 진행 상태를 추적합니다.
           </p>
           <Link
-            href="/dashboard/quotes"
+            href="/dashboard/purchases"
             className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
           >
-            견적 관리로 이동 <ArrowRight className="h-3 w-3" />
+            구매 운영으로 이동 <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
       )}

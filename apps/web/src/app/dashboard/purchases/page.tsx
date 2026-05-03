@@ -334,7 +334,11 @@ export default function PurchasesPage() {
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">구매 운영</h1>
-            <p className="text-sm text-slate-500 mt-0.5">선택안 검토, 회신 확인, 발주 전환까지 한 화면에서 처리합니다.</p>
+            {/* §11.209 — 실무 담당자 톤 정합. 책임자 보고 톤("처리합니다")
+                이 아니라 담당자가 지금 무엇을 하는지 명시. Hybrid Tier 분기
+                (Lab Team 자체 결재 / R&D Operations 매트릭스 / Enterprise
+                외부 ERP 연동) 는 실 구현 land 시 별도 batch 에서 카피 추가. */}
+            <p className="text-sm text-slate-500 mt-0.5">회신 받은 견적을 비교하고 발주로 전환하세요. 결재가 필요한 항목은 자동으로 결재 라인에 올라갑니다.</p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link href="/app/search">
@@ -483,14 +487,17 @@ export default function PurchasesPage() {
                   {searchQuery.trim()
                     ? `'${searchQuery.trim()}'에 해당하는 항목이 없습니다`
                     : items.length === 0
-                      ? "보유한 견적이 없습니다"
+                      ? "비교할 회신이 아직 없습니다"
                       : "선택한 탭에 항목이 없습니다"}
                 </p>
+                {/* §11.209 — 실무 담당자 다음 액션 명시. surface 흐름
+                    (소싱 → 견적 발송 → 회신 → 여기서 비교·발주 전환) 을
+                    부카피에 노출해 "이 화면이 무엇을 처리하는지" 명확화. */}
                 <p className="text-xs text-slate-400 mb-4">
                   {searchQuery.trim()
                     ? "다른 키워드로 검색해 보세요."
                     : items.length === 0
-                      ? "소싱에서 검색하고 견적을 만들어 시작하세요."
+                      ? "소싱에서 품목을 검색하고 공급사에 견적을 발송하면 회신이 모이는 대로 여기서 비교·선택해 발주로 전환합니다."
                       : "다른 탭을 확인해 보세요."}
                 </p>
                 {!searchQuery.trim() && items.length === 0 && (
