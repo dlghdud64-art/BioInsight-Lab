@@ -1,9 +1,27 @@
 "use client";
 
+/**
+ * §11.210 — Purchase Report 달력 모달 시안 정합.
+ *
+ * 강화 (desktop 분기 한정 — mobile 분기는 기존 유지):
+ *   ① Dual-Month Navigation (numberOfMonths={2}) — 기존 유지
+ *   ② Preset Sidebar (좌측 sidebar 형태로 재배치, 5 항목 + 지난달)
+ *   ③ JetBrains Mono (font-mono — date trigger label + footer indicator)
+ *   ④ Continuous range highlighting (Blue 600 active / Slate 50 middle)
+ *   ⑤ Palette: Slate 900 text / Blue 600 active / Slate 50 backdrop
+ *   ⑥ framer-motion spring entry animation
+ *   ⑦ Start/End footer indicator (시작일 / 종료일 — 표시 only, range 완성
+ *      시 자동 close 동작 유지 — UX 회귀 0)
+ *
+ * canonical truth 보호: props 시그니처 (startDate / endDate / onDateChange)
+ * 변경 0. 호출 지점 (`/dashboard/reports/page.tsx:445`) 변경 0.
+ */
+
 import * as React from "react";
 import { format, subDays, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ko } from "date-fns/locale";
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
 import type { DateRange } from "react-day-picker";
 
 import { cn } from "@/lib/utils";
@@ -142,14 +160,18 @@ export function DateRangePicker({
     setMobileTempDate(undefined);
   };
 
+  // §11.210 — date trigger / footer 의 date 표기는 font-mono (JetBrains Mono)
+  // 적용. 시안의 "precise, technical feel" 정합.
   const triggerLabel = date?.from ? (
     date.to ? (
-      <>
+      <span className="font-mono tabular-nums">
         {format(date.from, "yyyy.MM.dd", { locale: ko })} -{" "}
         {format(date.to, "yyyy.MM.dd", { locale: ko })}
-      </>
+      </span>
     ) : (
-      format(date.from, "yyyy.MM.dd", { locale: ko })
+      <span className="font-mono tabular-nums">
+        {format(date.from, "yyyy.MM.dd", { locale: ko })}
+      </span>
     )
   ) : (
     <span>기간 선택</span>
@@ -157,7 +179,7 @@ export function DateRangePicker({
 
   return (
     <div className={cn("grid gap-2", className)}>
-      {/* ── Desktop: Popover with 2-month calendar ── */}
+      {/* ── §11.210 Desktop: Popover w/ preset sidebar + dual-month + footer ── */}
       <div className="hidden md:block">
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
@@ -173,34 +195,97 @@ export function DateRangePicker({
               {triggerLabel}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-auto p-0 shadow-lg" align="start">
-            <div className="p-4">
-              <div className="grid grid-cols-3 gap-2 mb-4">
+          <PopoverContent
+            className="w-auto p-0 border-slate-200 shadow-[0_10px_40px_rgba(15,23,42,0.12)] bg-white rounded-2xl overflow-hidden"
+            align="start"
+            sideOffset={8}
+          >
+            {/* §11.210 ⑥ — framer-motion spring entry animation */}
+            <motion.div
+              initial={{ opacity: 0, y: -4, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ type: "spring", stiffness: 320, damping: 28 }}
+              className="flex"
+            >
+              {/* §11.210 ② — Preset sidebar (좌측, Slate 50 backdrop) */}
+              <aside className="w-[148px] border-r border-slate-200 bg-slate-50/70 p-2 space-y-0.5 flex-shrink-0">
+                <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-slate-400 px-2 pt-1.5 pb-1">
+                  빠른 선택
+                </p>
                 {PRESETS.map((p) => (
-                  <Button
+                  <button
                     key={p.key}
-                    variant="outline"
-                    size="sm"
+                    type="button"
                     onClick={() => handlePreset(p.key)}
-                    className="text-xs h-8"
+                    className="w-full text-left text-xs font-medium text-slate-700 px-2 py-1.5 rounded-md hover:bg-blue-600 hover:text-white transition-colors"
                   >
                     {p.label}
-                  </Button>
+                  </button>
                 ))}
+              </aside>
+
+              {/* Right — calendar + footer */}
+              <div className="flex flex-col">
+                <div className="p-3">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={date?.from}
+                    selected={date}
+                    onSelect={handleDateSelect}
+                    numberOfMonths={2}
+                    locale={ko}
+                    captionLayout="dropdown"
+                    fromYear={2015}
+                    toYear={2030}
+                    className="rounded-md border-0"
+                    /* §11.210 ④⑤ — continuous range highlight (Blue 600
+                       active edges / Slate 50 middle) + Slate 900 text */
+                    modifiersClassNames={{
+                      range_start: "bg-blue-600 text-white hover:bg-blue-700",
+                      range_end: "bg-blue-600 text-white hover:bg-blue-700",
+                      range_middle: "bg-blue-50 text-slate-900 rounded-none",
+                      selected: "font-semibold",
+                    }}
+                  />
+                </div>
+
+                {/* §11.210 ⑦ — Start/End footer indicator (시작일 / 종료일).
+                    표시 only — range 완성 시 자동 close 동작 유지 (UX 회귀 0). */}
+                <div className="flex items-center justify-between gap-4 px-4 py-3 border-t border-slate-100 bg-slate-50/50">
+                  <div className="flex items-center gap-5 text-xs">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        시작일
+                      </span>
+                      <span className="font-mono tabular-nums text-sm font-semibold text-slate-900 mt-0.5">
+                        {date?.from
+                          ? format(date.from, "yyyy.MM.dd", { locale: ko })
+                          : "—"}
+                      </span>
+                    </div>
+                    <div className="text-slate-300">→</div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        종료일
+                      </span>
+                      <span className="font-mono tabular-nums text-sm font-semibold text-slate-900 mt-0.5">
+                        {date?.to
+                          ? format(date.to, "yyyy.MM.dd", { locale: ko })
+                          : "—"}
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs text-slate-500 hover:text-slate-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    닫기
+                  </Button>
+                </div>
               </div>
-              <Calendar
-                mode="range"
-                defaultMonth={date?.from}
-                selected={date}
-                onSelect={handleDateSelect}
-                numberOfMonths={2}
-                locale={ko}
-                captionLayout="dropdown"
-                fromYear={2015}
-                toYear={2030}
-                className="rounded-md border-0"
-              />
-            </div>
+            </motion.div>
           </PopoverContent>
         </Popover>
       </div>

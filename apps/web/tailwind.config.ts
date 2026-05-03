@@ -20,6 +20,9 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ["Pretendard Variable", "Pretendard", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Noto Sans KR", "Helvetica Neue", "sans-serif"],
+        // §11.210 Phase 1 — JetBrains Mono variable (next/font 의 var) 우선.
+        // ui-monospace fallback 으로 OS native mono 보장. 93 곳 font-mono 정합.
+        mono: ["var(--font-jetbrains-mono)", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "monospace"],
       },
       colors: {
         // ── LabAxis Color System v1 ──

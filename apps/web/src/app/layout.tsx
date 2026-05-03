@@ -1,5 +1,15 @@
 import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+
+// §11.210 Phase 1 — JetBrains Mono variable font (date / amount / id 표기 정합).
+// tailwind.config.ts fontFamily.mono 가 var(--font-jetbrains-mono) 를 우선
+// 잡아 93개 font-mono 사용처 모두 정합. 시안 "precise, technical feel" 정합.
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
+  display: "swap",
+});
 import { QueryProvider } from "@/providers/query-provider";
 import { AuthSessionProvider } from "@/providers/session-provider";
 import { ThemeProvider } from "@/providers/theme-provider";
@@ -78,7 +88,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="" suppressHydrationWarning>
+    <html lang="ko" className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
         <ThemeProvider>
           <LocaleProvider>
