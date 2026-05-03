@@ -60,13 +60,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             onMenuClick={() => setIsMobileMenuOpen((prev) => !prev)}
           />
 
-          <main
-            id="main-content"
-            tabIndex={-1}
-            className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-20 lg:pb-8"
-          >
-            {children}
-          </main>
+          {/* §11.202 — main + 운영 브리핑 rail 을 flex row 로 배치.
+              rail 은 desktop 에서 main 옆 sibling 으로 폭을 차지하며 main 이 reflow.
+              header sticky top-0 z-50 영역은 그대로 보존 (rail 이 header 높이 침범 0). */}
+          <div className="flex flex-1 min-h-0 overflow-hidden">
+            <main
+              id="main-content"
+              tabIndex={-1}
+              className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 pb-20 lg:pb-8"
+            >
+              {children}
+            </main>
+            {/* §11.202 — 운영 브리핑 popup (desktop = aside flex sibling, mobile = Radix Portal Sheet). */}
+            <OperationalBriefPopup />
+          </div>
         </div>
 
         <BottomNav />
@@ -80,8 +87,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <GovernanceDevPanel />
         <GovernedActionComposerBridge />
         <GlobalModal />
-        {/* §11.181 — 운영 브리핑 popup (모든 dashboard surface 에서 단일 인스턴스) */}
-        <OperationalBriefPopup />
       </div>
       </OperationalBriefPopupProvider>
     </OpsStoreProvider>
