@@ -8,6 +8,13 @@ import {
   AUDIT_EVENT_LABELS,
   AUDIT_TONE_DOT_CLASSES,
 } from "@/lib/audit/event-labels";
+// §11.193d Phase 2.3 — workflow capabilities canonical resolver + 라벨/색상 매핑.
+//   single role badge → multi-badge (1인 동시 Lab Manager + Approver + Requester).
+import {
+  resolveWorkflowCapabilities,
+  WORKFLOW_CAPABILITY_LABEL,
+  WORKFLOW_CAPABILITY_BADGE_CLS,
+} from "@/lib/permissions/workflow-capabilities";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,6 +24,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+// §11.193a hot fix — billing section 의 LabAxis Enterprise dark card +
+// CurrentPlan badge 가 Card / CardContent 사용. import 누락 시 prod runtime
+// `ReferenceError: Card is not defined` → settings 진입 자체 실패.
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -33,49 +44,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  User,
-  Upload,
-  Lock,
-  Bell,
-  Mail,
-  Shield,
-  Loader2,
-  ChevronRight,
-  Package,
-  Phone,
-  CreditCard,
-  Receipt,
-  Check,
-  RotateCcw,
-  AlertCircle,
-  Clock,
-  FileText,
-  AlertTriangle,
-  XCircle,
-  Zap,
-  ClipboardCheck,
-  Server,
-  Trash2,
-  UserPlus,
-  KeyRound,
-  Crown,
-  Settings,
-  Brain,
-  Link2,
-  Building2,
-  Globe,
-  Fingerprint,
-  Activity,
-  Gauge,
-  Database,
-  Webhook,
-  ShieldCheck,
-  Users,
-  Eye,
-  Sliders,
-  ArrowRight,
-} from "lucide-react";
+import { User, Upload, Lock, Bell, Mail, Shield, Loader2, ChevronRight, Package, CreditCard, Receipt, Check, RotateCcw, AlertCircle, Clock, FileText, AlertTriangle, XCircle, Zap, ClipboardCheck, Server, Trash2, UserPlus, KeyRound, Crown, Settings, Brain, Link2, Building2, Globe, Fingerprint, Activity, Database, Webhook, ShieldCheck, Users, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ══════════════════════════════════════════════
@@ -342,7 +311,15 @@ function SettingsPageContent() {
   // → "운영 정책 미설정" 솔직한 empty state. schema 필드 추가는 별도 트랙
   // (#user-approval-policy-schema-add deferred).
   const { data: orgsData } = useQuery<{
-    organizations: Array<{ id: string; name: string; role: string }>;
+    // §11.193d Phase 2.3 — workflowCapabilities forward (multi-badge UI).
+    //   raw Json (unknown) 으로 받고 client 의 resolveWorkflowCapabilities 가
+    //   defensive parse + role fallback 처리.
+    organizations: Array<{
+      id: string;
+      name: string;
+      role: string;
+      workflowCapabilities?: unknown;
+    }>;
   }>({
     queryKey: ["settings-organizations"],
     queryFn: async () => {
@@ -623,8 +600,14 @@ function SettingsPageContent() {
             {/* ═══ OPERATOR & WORKSPACE ═══ */}
             {activeSection === "operator" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                {/* 운영자 식별 정보 */}
-                <SectionCard title="운영자 식별 정보" icon={Fingerprint}>
+                {/* 운영자 식별 정보
+                    §11.197b — 운영 역할 카드 (ASSIGNED BY ADMIN) 와 통일된
+                    topRightLabel 패턴. 운영자 self-edit 영역임을 명시. */}
+                <SectionCard
+                  title="운영자 식별 정보"
+                  icon={Fingerprint}
+                  topRightLabel="SELF-MANAGED"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
                     <div className="flex flex-col items-center gap-3">
@@ -671,23 +654,25 @@ function SettingsPageContent() {
                     실제 데이터 fetcher 연결은 #user-permission-summary-fetcher
                     별도 트랙. 본 commit 은 시안 visual essence + read-only
                     layout 정형화. */}
-                <SectionCard title="운영 역할 및 업무 범위" icon={Shield} description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다.">
+                <SectionCard
+                  title="운영 역할 및 업무 범위"
+                  icon={Shield}
+                  description="시스템 권한(RBAC)과 승인 워크플로우에 영향을 줍니다. 직접 변경할 수 없습니다."
+                  topRightLabel="ASSIGNED BY ADMIN"
+                >
                   <div className="space-y-5">
-                    {/* §11.87 활성 운영 역할 — real session.user.role + organizations[].role
-                        매핑. system ADMIN 은 별도 badge, 각 조직 멤버십은 한국어 라벨
-                        매핑 (ADMIN/OWNER/MEMBER/VIEWER). */}
+                    {/* §11.87 + §11.193d Phase 2.3 활성 운영 역할 (workflow capabilities multi-badge).
+                        §11.193d Phase 1: orgRoleLabel single-role mapping (RBAC).
+                        §11.193d Phase 2.3: workflowCapabilities multi-badge per org
+                          (1인 동시 Lab Manager + Approver + Requester 보유).
+                        resolveWorkflowCapabilities: DB 우선 + role 기반 fallback.
+                    */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-2">활성 운영 역할</p>
                       <div className="flex flex-wrap items-center gap-2">
                         {(() => {
                           const sysRole = session?.user?.role as string | undefined;
                           const orgs = orgsData?.organizations ?? [];
-                          const orgRoleLabel: Record<string, { label: string; cls: string }> = {
-                            ADMIN: { label: "Admin", cls: "bg-purple-50 text-purple-700 border-purple-200" },
-                            OWNER: { label: "Owner", cls: "bg-rose-50 text-rose-700 border-rose-200" },
-                            MEMBER: { label: "Member", cls: "bg-blue-50 text-blue-700 border-blue-200" },
-                            VIEWER: { label: "Viewer", cls: "bg-slate-50 text-slate-600 border-slate-200" },
-                          };
                           const badges: React.ReactNode[] = [];
                           if (sysRole === "ADMIN") {
                             badges.push(
@@ -696,13 +681,36 @@ function SettingsPageContent() {
                               </Badge>
                             );
                           }
+                          // §11.193d Phase 2.3 — org 별 capabilities 배열 → 각 capability 별 별도 badge.
+                          //   org 1개에 capability 3개 보유 시 badge 3개 노출 (시안 정합).
+                          //   resolver fallback (DB 비어 있으면 role 기반 mirror).
                           orgs.forEach((org) => {
-                            const meta = orgRoleLabel[org.role] ?? { label: org.role, cls: "bg-slate-50 text-slate-600 border-slate-200" };
-                            badges.push(
-                              <Badge key={org.id} className={`${meta.cls} text-xs font-medium`}>
-                                {org.name} · {meta.label}
-                              </Badge>
-                            );
+                            const capabilities = resolveWorkflowCapabilities({
+                              workflowCapabilities: org.workflowCapabilities,
+                              role: org.role,
+                            });
+                            if (capabilities.length === 0) {
+                              // capabilities 0 + role=VIEWER 같은 case → 조직 라벨만 노출 (대시 표기)
+                              badges.push(
+                                <Badge
+                                  key={org.id}
+                                  className="bg-slate-50 text-slate-600 border-slate-200 text-xs font-medium"
+                                >
+                                  {org.name} · 운영 권한 없음
+                                </Badge>
+                              );
+                              return;
+                            }
+                            capabilities.forEach((cap) => {
+                              badges.push(
+                                <Badge
+                                  key={`${org.id}-${cap}`}
+                                  className={`${WORKFLOW_CAPABILITY_BADGE_CLS[cap]} text-xs font-medium`}
+                                >
+                                  {org.name} · {WORKFLOW_CAPABILITY_LABEL[cap]}
+                                </Badge>
+                              );
+                            });
                           });
                           if (badges.length === 0) {
                             return (
@@ -717,37 +725,38 @@ function SettingsPageContent() {
                     </div>
                     <div className="h-px bg-slate-200" />
                     {/* §11.87 승인 권한 — 단일 건 승인 한도 schema 부재 (미설정 표시);
-                        월간 구매 예산은 UserBudget 첫 active 항목 활용. */}
+                        월간 구매 예산은 UserBudget 첫 active 항목 활용.
+                        §11.197 — 시안 정합 visual hierarchy 강화:
+                        label (left, slate-500) + value (right, large bold slate-900 tabular)
+                        2-row inline 정렬. 작은 sub-text 박스 → 정적 label-value row,
+                        large bold 숫자로 시각 강조. */}
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 mb-3">승인 권한 (LIMITS)</p>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
-                          <p className="text-[11px] text-slate-500 mb-0.5">단일 건 승인 한도</p>
-                          {/* §11.97 — User.approvalLimit (BigInt → string serialized) real value */}
+                      <div className="rounded-lg border border-slate-200 bg-slate-50/50 divide-y divide-slate-200">
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-sm text-slate-600">단일 건 승인 한도</span>
                           {userData?.approvalLimit ? (
-                            <p className="text-sm font-bold text-slate-900 tabular-nums">
+                            <span className="text-xl font-bold text-slate-900 tabular-nums">
                               ₩{Number(userData.approvalLimit).toLocaleString("ko-KR")}
-                            </p>
+                            </span>
                           ) : (
-                            <p className="text-sm font-bold text-slate-400 tabular-nums">운영 정책 미설정</p>
+                            <span className="text-sm font-medium text-slate-400 tabular-nums">운영 정책 미설정</span>
                           )}
                         </div>
-                        <div className="rounded-lg border border-slate-200 bg-slate-50/50 px-3 py-2.5">
-                          <p className="text-[11px] text-slate-500 mb-0.5">월간 구매 예산</p>
+                        <div className="flex items-center justify-between px-4 py-3">
+                          <span className="text-sm text-slate-600">월간 구매 예산</span>
                           {(() => {
                             const budgets = userBudgetsData?.budgets ?? [];
-                            // isActive 필드가 source 별로 일관 안 함 — 첫 항목 (가장 최신 createdAt)
-                            // 을 활성으로 가정. UserBudget 은 isActive 명시, Budget 변환분은 항상 표시.
                             const active = budgets.find((b) => b.isActive !== false) ?? budgets[0];
                             if (!active) {
-                              return <p className="text-sm font-bold text-slate-400 tabular-nums">예산 미설정</p>;
+                              return <span className="text-sm font-medium text-slate-400 tabular-nums">예산 미설정</span>;
                             }
                             return (
-                              <div>
-                                <p className="text-sm font-bold text-slate-900 tabular-nums">
+                              <div className="text-right">
+                                <p className="text-xl font-bold text-slate-900 tabular-nums leading-tight">
                                   ₩{active.totalAmount.toLocaleString("ko-KR")}
                                 </p>
-                                <p className="text-[10px] text-slate-500 tabular-nums mt-0.5">
+                                <p className="text-[11px] text-slate-500 tabular-nums mt-0.5">
                                   잔여 ₩{active.remainingAmount.toLocaleString("ko-KR")}
                                 </p>
                               </div>
@@ -768,7 +777,7 @@ function SettingsPageContent() {
                           {userData?.costCenter ? (
                             <span className="text-sm font-mono text-slate-900">{userData.costCenter}</span>
                           ) : (
-                            <span className="text-sm font-mono text-slate-400">운영 정책 미설정</span>
+                            <span className="text-sm text-slate-400 break-keep">운영 정책 미설정</span>
                           )}
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
@@ -781,9 +790,9 @@ function SettingsPageContent() {
                         </div>
                       </div>
                     </div>
-                    {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피) —
-                        조직 관리 페이지로 redirect, 거기서 권한 변경 절차. */}
-                    <div className="pt-2">
+                    {/* §11.67 lesson: 권한 검토 요청 wired (dead button 회피).
+                        §11.197 — 시안 정합: CTA 우측 정렬 (운영자 default 시선 끝점). */}
+                    <div className="pt-2 flex justify-end">
                       <Button
                         variant="outline"
                         size="sm"
@@ -799,10 +808,21 @@ function SettingsPageContent() {
                 </SectionCard>
 
                 {/* §11.74 — 현재 워크스페이스 정보 (read-only — WORKSPACE CANONICAL IDENTITY)
-                    워크스페이스 식별 정보는 조직 administrator 권한으로만 변경 — 본
-                    페이지에서는 read-only summary. Metric 단위계 항목은 §11.74 에서
-                    제거 (정규화 로직 부재). */}
-                <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
+                    §11.193b — eyebrow "WORKSPACE CANONICAL IDENTITY" 추가하여
+                    prototype 시안 톤 정합 (조직 식별 정보의 canonical 강조).
+                    워크스페이스 기본값은 조직 administrator 권한으로만 변경. */}
+                {/* §11.197b — 운영 역할 카드 ASSIGNED BY ADMIN 와 통일된
+                    topRightLabel 패턴. 워크스페이스 canonical identity 는
+                    조직 관리자만 변경 — 운영자 read-only 시그널 강화. */}
+                <SectionCard
+                  title="현재 워크스페이스 정보"
+                  icon={Building2}
+                  description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다."
+                  topRightLabel="ASSIGNED BY ADMIN"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 mb-3">
+                    Workspace Canonical Identity
+                  </p>
                   {(() => {
                     // §11.159 — canonical Workspace fetch (mock 제거)
                     // §11.164 — explicit pickActiveWorkspace priority logic
@@ -820,30 +840,51 @@ function SettingsPageContent() {
                     const wsName = activeWs?.name ?? "데이터 미동기화";
                     const wsSlug = activeWs?.slug ?? "—";
                     const wsPlan = activeWs?.plan ? activeWs.plan : "—";
+                    // §11.193b — sub-label 영문 convention 정합 (시안 매핑):
+                    //   "Plan: …"        → "ENTERPRISE EDITION" (또는 plan 별)
+                    //   "URL Identifier" → "AUTO-GENERATED ID"
+                    //   "시스템 기본값"  → "FINANCIAL BASE"
+                    // workspace canonical identity 명시. plan 값 영문 normalize:
+                    const planSubLabel = (() => {
+                      if (!activeWs) return "WORKSPACE NOT FOUND";
+                      const p = (wsPlan || "").toUpperCase();
+                      if (p === "ENTERPRISE") return "ENTERPRISE EDITION";
+                      if (p === "PRO" || p === "PROFESSIONAL") return "PROFESSIONAL EDITION";
+                      if (p === "FREE" || p === "STARTER") return "FREE EDITION";
+                      // plan 값 fallback — uppercase + " EDITION" suffix 유지하여
+                      // canonical identity 톤 일관 (시안 정합).
+                      return p ? `${p} EDITION` : "EDITION 미지정";
+                    })();
                     return (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 명칭</p>
                           <p className="text-sm font-bold text-slate-900 break-keep mb-1">{wsName}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{activeWs ? `Plan: ${wsPlan}` : "워크스페이스 없음"}</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">{planSubLabel}</p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 슬러그</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">워크스페이스 코드</p>
                           <p className="text-sm font-bold font-mono text-slate-900 mb-1">{wsSlug}</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">URL Identifier</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">AUTO-GENERATED ID</p>
                         </div>
                         <div className="rounded-xl border border-slate-200 bg-white p-4">
                           <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5">기본 통화</p>
                           <p className="text-sm font-bold text-slate-900 mb-1">KRW (₩)</p>
-                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">시스템 기본값</p>
+                          <p className="text-[10px] text-slate-500 uppercase tracking-wider">FINANCIAL BASE</p>
                         </div>
                       </div>
                     );
                   })()}
                 </SectionCard>
 
-                {/* Password */}
-                <SectionCard title="보안 자격 증명" icon={Lock}>
+                {/* Password
+                    §11.197b — 비밀번호 변경은 운영자 self-managed 영역.
+                    topRightLabel "SELF-MANAGED" 로 통일. */}
+                <SectionCard
+                  title="보안 자격 증명"
+                  icon={Lock}
+                  topRightLabel="SELF-MANAGED"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-700">비밀번호</p>
@@ -890,6 +931,7 @@ function SettingsPageContent() {
                   title="최근 보안 및 활동 로그"
                   icon={Activity}
                   description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 증적은 별도 페이지에서 확인."
+                  topRightLabel="AUDIT TRAIL"
                 >
                   <div className="space-y-2">
                     {(() => {
@@ -970,7 +1012,7 @@ function SettingsPageContent() {
             {/* ═══ ONTOLOGY ENGINE (AI) ═══ */}
             {activeSection === "ontology" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다.">
+                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다." topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-6">
                     <SliderField
                       label="자동 승인 신뢰도 임계값 (Confidence Threshold)"
@@ -998,7 +1040,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="자동화 규칙" icon={Zap}>
+                <SectionCard title="자동화 규칙" icon={Zap} topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1028,7 +1070,7 @@ function SettingsPageContent() {
             {/* ═══ SECURITY & RBAC ═══ */}
             {activeSection === "security" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다.">
+                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다." topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-4">
                     <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
                     <div className="h-px bg-slate-200" />
@@ -1038,7 +1080,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="역할 기반 접근 제어" icon={Users}>
+                <SectionCard title="역할 기반 접근 제어" icon={Users} topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-3">
                     {[
                       { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-600" },
@@ -1065,7 +1107,7 @@ function SettingsPageContent() {
             {/* ═══ INTEGRATIONS ═══ */}
             {activeSection === "integrations" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다.">
+                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다." topRightLabel="ADMIN ONLY">
                   <div className="space-y-3">
                     {[
                       { name: "SAP S/4HANA", type: "ERP 동기화", status: "connected", lastSync: "2분 전", icon: Database },
@@ -1115,7 +1157,7 @@ function SettingsPageContent() {
             {/* ═══ NOTIFICATIONS ═══ */}
             {activeSection === "notifications" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="전역 알림 빈도" icon={Bell}>
+                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="SELF-MANAGED">
                   <div className="flex items-center gap-4">
                     <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
                       <SelectTrigger className="w-48 bg-white border-slate-200 text-slate-900 h-9 text-sm">
@@ -1131,7 +1173,7 @@ function SettingsPageContent() {
                 </SectionCard>
 
                 {notificationsByCategory.map((group) => (
-                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon}>
+                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="SELF-MANAGED">
                     <div className="space-y-1">
                       {group.items.map((n) => {
                         const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
@@ -1227,7 +1269,7 @@ function SettingsPageContent() {
                     /api/billing/invoices alive endpoint 가 Subscription invoices
                     (real) 또는 mock fallback 반환. PDF 다운로드 버튼은
                     invoicePdfUrl 이 있으면 새 탭으로 open, 없으면 솔직한 안내. */}
-                <SectionCard title="최근 청구 내역" icon={Receipt}>
+                <SectionCard title="최근 청구 내역" icon={Receipt} topRightLabel="AUDIT TRAIL">
                   <div className="space-y-2">
                     {(() => {
                       const invoices = invoicesData?.invoices ?? [];
@@ -1360,11 +1402,14 @@ function SettingsPageContent() {
 // Shared Components
 // ══════════════════════════════════════════════
 
-function SectionCard({ title, icon: Icon, description, children }: {
+function SectionCard({ title, icon: Icon, description, children, topRightLabel }: {
   title: string;
   icon: React.ElementType;
   description?: string;
   children: React.ReactNode;
+  // §11.197 — 우상단 작은 라벨 (예: "ASSIGNED BY ADMIN"). 시안 정합 — 운영
+  // 역할 카드 같은 read-only 영역에서 "이 값은 누가 결정하는가" signal.
+  topRightLabel?: string;
 }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -1372,6 +1417,11 @@ function SectionCard({ title, icon: Icon, description, children }: {
         <div className="flex items-center gap-2">
           <Icon className="h-4 w-4 text-slate-500" />
           <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
+          {topRightLabel && (
+            <span className="ml-auto text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+              {topRightLabel}
+            </span>
+          )}
         </div>
         {description && <p className="text-xs text-slate-500 mt-1 ml-6">{description}</p>}
       </div>

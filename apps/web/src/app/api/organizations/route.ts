@@ -57,6 +57,9 @@ export async function GET(request: NextRequest) {
     }
 
     // organization이 null인 경우 필터링 후 role 병합 + 멤버 요약
+    // §11.193d Phase 2.3 — workflowCapabilities 도 forward (settings UI multi-badge).
+    //   resolver (resolveWorkflowCapabilities) 는 caller side 에서 호출 — DB
+    //   값이 빈 배열이면 role 기반 fallback 자동 발동.
     const organizations = memberships
       .filter((m: any) => m.organization != null)
       .map((m: any) => {
@@ -72,6 +75,9 @@ export async function GET(request: NextRequest) {
           adminCount,
           pendingCount: 0,
           role: m.role ?? "VIEWER",
+          // §11.193d Phase 2.3 — Json column raw value forward.
+          //   client 의 resolveWorkflowCapabilities 가 Json 파싱 + role fallback 처리.
+          workflowCapabilities: m.workflowCapabilities ?? [],
         };
       });
 
