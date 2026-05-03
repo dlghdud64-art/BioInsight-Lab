@@ -1012,7 +1012,7 @@ function SettingsPageContent() {
             {/* ═══ ONTOLOGY ENGINE (AI) ═══ */}
             {activeSection === "ontology" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다.">
+                <SectionCard title="AI 추론 매개변수" icon={Brain} description="온톨로지 엔진의 자동 판단 기준을 조정합니다. 값을 변경하면 실시간으로 추론 결과에 반영됩니다." topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-6">
                     <SliderField
                       label="자동 승인 신뢰도 임계값 (Confidence Threshold)"
@@ -1040,7 +1040,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="자동화 규칙" icon={Zap}>
+                <SectionCard title="자동화 규칙" icon={Zap} topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -1070,7 +1070,7 @@ function SettingsPageContent() {
             {/* ═══ SECURITY & RBAC ═══ */}
             {activeSection === "security" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다.">
+                <SectionCard title="결재선 라우팅 규칙" icon={ShieldCheck} description="금액별 전결 규정을 설정합니다. 각 단계의 금액 기준을 초과하면 상위 승인자에게 자동 라우팅됩니다." topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-4">
                     <ApprovalTierRow tier={1} label="자동 승인" description="이 금액 이하는 AI 자동 승인" value={approvalTier1} onChange={setApprovalTier1} color="emerald" />
                     <div className="h-px bg-slate-200" />
@@ -1080,7 +1080,7 @@ function SettingsPageContent() {
                   </div>
                 </SectionCard>
 
-                <SectionCard title="역할 기반 접근 제어" icon={Users}>
+                <SectionCard title="역할 기반 접근 제어" icon={Users} topRightLabel="ASSIGNED BY ADMIN">
                   <div className="space-y-3">
                     {[
                       { role: "관리자", permissions: "전체 설정 / 사용자 관리 / 결재선 변경", count: 1, color: "text-red-600" },
@@ -1107,7 +1107,7 @@ function SettingsPageContent() {
             {/* ═══ INTEGRATIONS ═══ */}
             {activeSection === "integrations" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다.">
+                <SectionCard title="ERP 및 외부 시스템 연동" icon={Server} description="SAP, Oracle 등 기간계 시스템과의 동기화 상태를 관리합니다." topRightLabel="ADMIN ONLY">
                   <div className="space-y-3">
                     {[
                       { name: "SAP S/4HANA", type: "ERP 동기화", status: "connected", lastSync: "2분 전", icon: Database },
@@ -1157,7 +1157,7 @@ function SettingsPageContent() {
             {/* ═══ NOTIFICATIONS ═══ */}
             {activeSection === "notifications" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                <SectionCard title="전역 알림 빈도" icon={Bell}>
+                <SectionCard title="전역 알림 빈도" icon={Bell} topRightLabel="SELF-MANAGED">
                   <div className="flex items-center gap-4">
                     <Select value={notificationFrequency} onValueChange={(v: string) => setNotificationFrequency(v as DeliveryMode)}>
                       <SelectTrigger className="w-48 bg-white border-slate-200 text-slate-900 h-9 text-sm">
@@ -1173,7 +1173,7 @@ function SettingsPageContent() {
                 </SectionCard>
 
                 {notificationsByCategory.map((group) => (
-                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon}>
+                  <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="SELF-MANAGED">
                     <div className="space-y-1">
                       {group.items.map((n) => {
                         const isSafety = SAFETY_CRITICAL_IDS.has(n.id);
@@ -1269,7 +1269,7 @@ function SettingsPageContent() {
                     /api/billing/invoices alive endpoint 가 Subscription invoices
                     (real) 또는 mock fallback 반환. PDF 다운로드 버튼은
                     invoicePdfUrl 이 있으면 새 탭으로 open, 없으면 솔직한 안내. */}
-                <SectionCard title="최근 청구 내역" icon={Receipt}>
+                <SectionCard title="최근 청구 내역" icon={Receipt} topRightLabel="AUDIT TRAIL">
                   <div className="space-y-2">
                     {(() => {
                       const invoices = invoicesData?.invoices ?? [];
