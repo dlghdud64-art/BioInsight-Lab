@@ -1,0 +1,219 @@
+/**
+ * §11.201 #pricing-operating-volume-redefine — Phase 1 GREEN
+ *
+ * Single source of truth for LabAxis plan display layer.
+ * canonical SubscriptionPlan enum (DB) 변경 0 — display-only 매핑.
+ *
+ * 4 PlanIntent (starter/team/business/enterprise) × 운영자 수 + 운영량 +
+ * LabOps Credit + features + CTA route 매핑. pricing 카드 / settings badge /
+ * dashboard upgrade surface 모두 본 모듈 통과.
+ *
+ * §11.142 lock 호환:
+ *   - canonical SubscriptionPlan / WorkspacePlan / Stripe price ID 변경 0
+ *   - dead checkout button 0 (ctaRoute = 기존 alive 라우트만)
+ *   - fake "AI 무제한" / "무제한 워크스페이스" 카피 0
+ *   - LabOps Credit 실 차감 0 (display only — §11.202 defer)
+ *   - 코어 workflow (검색/요청/승인/PO/입고/재고) 차단 0 — Credit 보호 명시
+ */
+
+import type { PlanIntent } from "./plan-select";
+
+/** 운영량 권장치 — pricing 카드 카피의 정량 근거 */
+export interface OperatingVolume {
+  /** 월 RFQ 권장 건수 — null = 계약 기반 (Enterprise) */
+  monthlyRfq: number | null;
+  /** 월 PO 권장 건수 — null = 계약 기반 */
+  monthlyPo: number | null;
+  /** 재고 등록 권장 품목 수 — null = 계약 기반 */
+  inventoryItems: number | null;
+}
+
+/** Plan 의 display layer descriptor — pricing / settings / dashboard 통합 source */
+export interface PlanDescriptor {
+  /** PlanIntent enum 값 (4종) */
+  intent: PlanIntent;
+  /** 한국어 노출 라벨 — Starter / Lab Team / R&D Operations / Enterprise */
+  label: string;
+  /** 운영 범위 한 줄 요약 (raw enum 키 비노출) */
+  tagline: string;
+  /** 월 가격 (KRW) — Enterprise 는 null (계약 기반) */
+  priceMonthlyKrw: number | null;
+  /** 권장 좌석 수 — Enterprise 는 null (무제한 / 계약) */
+  seatsRecommended: number | null;
+  /** 운영량 권장치 (RFQ / PO / 재고) */
+  operatingVolume: OperatingVolume;
+  /** 월 LabOps Credit 한도 — null = 계약 기반 */
+  labOpsCreditMonthly: number | null;
+  /** 핵심 features 배열 (검색/비교/견적/PO/입고/재고 중심) */
+  features: string[];
+  /** CTA 라우트 — 기존 alive 라우트만 (fake checkout 0) */
+  ctaRoute: string;
+  /** CTA button 한국어 라벨 */
+  ctaLabel: string;
+  /** 추천 tag (한국어) — null = 비추천 */
+  recommendTag: string | null;
+}
+
+/**
+ * Single source of truth — pricing 카드 / settings badge / dashboard upgrade
+ * 모든 surface 가 본 매트릭스 통과.
+ *
+ * canonical SubscriptionPlan enum (FREE/TEAM/ORGANIZATION) 은 그대로 유지.
+ * PlanIntent (starter/team/business/enterprise) 가 display layer 의 4 단계 분리.
+ *   - starter → SubscriptionPlan.FREE
+ *   - team → SubscriptionPlan.TEAM (Stripe price: TEAM_MONTHLY)
+ *   - business → SubscriptionPlan.TEAM (Stripe price: BUSINESS_MONTHLY) — same enum, different SKU
+ *   - enterprise → SubscriptionPlan.ORGANIZATION (계약 기반)
+ *
+ * 운영량 / Credit 수치는 호영님 ChatGPT 분석 + LabAxis 운영 OS 정합 매트릭스.
+ * pilot 기간 동안 LabOps Credit 은 display only — 실 차감 §11.202 defer.
+ */
+export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
+  starter: {
+    intent: "starter",
+    label: "Starter",
+    tagline: "1인 연구실 — 무료로 검색·견적·재고를 시작",
+    priceMonthlyKrw: 0,
+    seatsRecommended: 1,
+    operatingVolume: {
+      monthlyRfq: 5,
+      monthlyPo: 5,
+      inventoryItems: 50,
+    },
+    labOpsCreditMonthly: 100,
+    features: [
+      "통합 검색 / 카탈로그",
+      "견적 요청 (월 5건)",
+      "PO 발행 (월 5건)",
+      "재고 등록 (50 품목)",
+      "AI 견적 비교 (Credit 차감)",
+    ],
+    ctaRoute: "/dashboard",
+    ctaLabel: "무료로 시작하기",
+    recommendTag: null,
+  },
+  team: {
+    intent: "team",
+    label: "Lab Team",
+    tagline: "단일 연구실 운영 — 견적·승인·PO·입고·재고를 한 화면에서",
+    priceMonthlyKrw: 129000,
+    seatsRecommended: 5,
+    operatingVolume: {
+      monthlyRfq: 30,
+      monthlyPo: 30,
+      inventoryItems: 500,
+    },
+    labOpsCreditMonthly: 1500,
+    features: [
+      "Starter 전체 +",
+      "견적 요청 (월 30건)",
+      "PO 발행 (월 30건)",
+      "재고 운영 (500 품목)",
+      "운영 브리핑 (AI 인사이트)",
+      "활동 로그 / 권한 관리",
+    ],
+    ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
+    ctaLabel: "Lab Team 결제 진행",
+    recommendTag: "추천: 단일 연구실 운영",
+  },
+  business: {
+    intent: "business",
+    label: "R&D Operations",
+    tagline: "다중 연구실 / R&D 센터 — 운영량 확장 + 통합 거버넌스",
+    priceMonthlyKrw: 349000,
+    seatsRecommended: 15,
+    operatingVolume: {
+      monthlyRfq: 80,
+      monthlyPo: 80,
+      inventoryItems: 2000,
+    },
+    labOpsCreditMonthly: 7500,
+    features: [
+      "Lab Team 전체 +",
+      "견적 요청 (월 80건)",
+      "PO 발행 (월 80건)",
+      "재고 운영 (2,000 품목)",
+      "다중 부서 / 비용센터 분리",
+      "감사 로그 PDF 내보내기",
+      "워크플로 템플릿 / 승인자 매트릭스",
+    ],
+    ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
+    ctaLabel: "R&D Operations 결제 진행",
+    recommendTag: "추천: R&D 센터 운영",
+  },
+  enterprise: {
+    intent: "enterprise",
+    label: "Enterprise",
+    tagline: "기관 / 법인 — 계약 기반 좌석·운영량·Credit",
+    priceMonthlyKrw: null,
+    seatsRecommended: null,
+    operatingVolume: {
+      monthlyRfq: null,
+      monthlyPo: null,
+      inventoryItems: null,
+    },
+    labOpsCreditMonthly: null,
+    features: [
+      "R&D Operations 전체 +",
+      "전용 좌석 / 운영량 협의",
+      "SSO / SAML / 감사 통제",
+      "전담 온보딩 매니저",
+      "기관 SLA / 보안 검토 지원",
+    ],
+    ctaRoute: "/support?topic=enterprise",
+    ctaLabel: "영업 문의하기",
+    recommendTag: null,
+  },
+};
+
+/**
+ * LabOps Credit "사용 작업" — pilot 기간 display only.
+ *
+ * AI 호출이 동반되는 작업은 Credit 차감 대상 (§11.202 실 차감 wiring 진행 시).
+ * pilot 기간 동안 운영자가 "왜 Credit 이 있는가" 를 이해하도록 노출.
+ */
+export const LABOPS_CREDIT_USAGE_SCENARIOS: readonly string[] = [
+  "AI 견적 비교 / rationale 생성",
+  "AI 문서 추출 (PDF / 견적서 / 발주서 OCR)",
+  "AI 운영 브리핑 narrative",
+  "AI 견적 자동 작성 보조",
+];
+
+/**
+ * LabOps Credit "차단 안 되는 작업" — 코어 workflow 보호 약속.
+ *
+ * 검색 / 요청 / 승인 / PO / 입고 / 재고 같은 운영 OS 의 본질적 행위는
+ * Credit 소진 여부와 무관하게 항상 가용. fake "AI 무제한" 약속이 아니라
+ * "코어 workflow 무차단" 약속.
+ */
+export const LABOPS_CREDIT_PROTECTED_SCENARIOS: readonly string[] = [
+  "통합 검색 / 카탈로그 조회",
+  "견적 요청 (RFQ) 생성",
+  "승인 / 반려 결정",
+  "PO 발행 / 공급사 확인",
+  "입고 / 검수 / 격리 처리",
+  "재고 조회 / 조정 / 이동",
+  "활동 로그 / 감사 추적",
+];
+
+/* ─────────────────── helper functions (raw enum 노출 0) ─────────────────── */
+
+/** PlanIntent → PlanDescriptor (defensive — 항상 매핑 보장, enum coverage 100%) */
+export function getPlanDescriptor(intent: PlanIntent): PlanDescriptor {
+  return PLAN_DESCRIPTOR[intent];
+}
+
+/** PlanIntent → 한국어 라벨 (settings badge / pricing 카드 / invoice label) */
+export function getPlanLabel(intent: PlanIntent): string {
+  return PLAN_DESCRIPTOR[intent].label;
+}
+
+/** PlanIntent → 월 가격 (KRW) — Enterprise 는 null (계약 기반) */
+export function getPlanPriceMonthly(intent: PlanIntent): number | null {
+  return PLAN_DESCRIPTOR[intent].priceMonthlyKrw;
+}
+
+/** PlanIntent → 월 LabOps Credit 한도 — Enterprise 는 null (계약 기반) */
+export function getPlanCreditQuota(intent: PlanIntent): number | null {
+  return PLAN_DESCRIPTOR[intent].labOpsCreditMonthly;
+}
