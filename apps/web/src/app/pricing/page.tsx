@@ -537,7 +537,11 @@ function PlanCard({
   const taglineColor = isDarkNavy ? D.text2 : P.text3;
 
   return (
-    <div className="relative">
+    {/* §11.201f — wrapping div 에 h-full + flex flex-col 추가 — grid items-stretch
+        가 motion.div (Reveal) 까지 height 100% 전파하지만 PlanCard root wrapping
+        div 가 이를 받아야 inner card 의 h-full 이 동작. 이전 (§11.201e) 카드 height
+        chain 이 wrapping div 에서 끊겨 4 카드 height 다르게 노출. */}
+    <div className="relative h-full flex flex-col">
       {/* §11.201 — recommendTag 한국어 ("추천: 단일 연구실 운영" 등). 영문 popular badge 폐기. */}
       {recommendTag !== null && (
         <div

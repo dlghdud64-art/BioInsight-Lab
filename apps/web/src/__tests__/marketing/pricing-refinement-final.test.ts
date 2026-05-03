@@ -91,6 +91,13 @@ describe("§11.201e 카드 높이 통일 — Tailwind contract", () => {
     // CTA 영역이 mt-auto 로 카드 하단 고정
     expect(src).toMatch(/mt-auto/);
   });
+
+  it("§11.201f — PlanCard wrapping div (relative) 에 h-full + flex flex-col chain (4 카드 same-height)", () => {
+    const src = read(PRICING);
+    // wrapping div 가 grid items-stretch 의 height 전파 받아야 inner card h-full 동작.
+    // §11.201e 에서 wrapping div 에 h-full 부재 → 4 카드 height 다르게 노출 (호영님 보고).
+    expect(src).toMatch(/className=\{?["'`]?relative\s+h-full\s+flex\s+flex-col/);
+  });
 });
 
 describe("§11.201e LabOps Credit 섹션 — 한국어 정합", () => {
