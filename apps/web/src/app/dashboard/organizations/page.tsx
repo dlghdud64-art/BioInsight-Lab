@@ -15,13 +15,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+// §11.201 — shadcn Select 제거: 조직 유형 필드를 native <select> 로 대체.
+//   Radix Dialog × Select portal 충돌을 글로벌 workaround 로 패치하지 않음.
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -372,45 +367,13 @@ export default function OrganizationsPage() {
         </div>
 
         {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══
-            §11.200c hot fix — Radix Dialog default modal={true} 가 nested
-            Select portal 을 inert 처리 → Select trigger 의 mouse pointerdown
-            이 modal outside-click 으로 잡혀서 Select open propagation 차단.
-            §11.200b 의 onPointerDownOutside handler 만으론 modal inert 처리를
-            못 막음 (handler 발화 시점 이후에 inert 적용).
-            Real fix: modal={false} + onInteractOutside / onPointerDownOutside
-            보강. modal=false 면 focus trap 일부 손실하지만 dialog 의 X /
-            Escape / 취소 버튼 으로 close 가능. nested Select 정상 작동.
-            Karpathy "silent wrong assumption" — 이전 fix 의 가정 (handler
-            만으로 sufficient) 이 잘못. Chrome prod 검증 4중 (Vercel API READY
-            + chunk source unique marker + fiber prop + trusted mouse click)
-            으로 silent regression 차단. */}
-        <Dialog open={isOpen} onOpenChange={setIsOpen} modal={false}>
-          <DialogContent
-            className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden"
-            onInteractOutside={(e) => {
-              const target = e.target as HTMLElement | null;
-              // Radix Select portal / listbox / option click 시 dialog close 차단
-              if (
-                target?.closest('[data-radix-popper-content-wrapper]') ||
-                target?.closest('[data-radix-select-content]') ||
-                target?.closest('[role="listbox"]') ||
-                target?.closest('[role="option"]')
-              ) {
-                e.preventDefault();
-              }
-            }}
-            onPointerDownOutside={(e) => {
-              const target = e.target as HTMLElement | null;
-              if (
-                target?.closest('[data-radix-popper-content-wrapper]') ||
-                target?.closest('[data-radix-select-content]') ||
-                target?.closest('[role="listbox"]') ||
-                target?.closest('[role="option"]')
-              ) {
-                e.preventDefault();
-              }
-            }}
-          >
+            §11.201 — 조직 유형 dropdown 안정화 path 결정. Radix Dialog ×
+            Select portal 충돌을 modal=false / onInteractOutside / pointerdown
+            stop 같은 global workaround 로 패치 시도 → §11.200d 가 운영 브리핑
+            popup 회귀 유발. 회복 절차 적용: Dialog 는 default modal=true 로
+            복귀 + 조직 유형 필드만 native <select> 로 swap (전역 영향 0). */}
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden">
             {/* ── 헤더 ── */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-start gap-4">
@@ -444,21 +407,23 @@ export default function OrganizationsPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="org-type" className="text-sm font-semibold text-slate-700">조직 유형</Label>
-                <Select
-                  value={formData.organizationType || undefined}
-                  onValueChange={(v) => setFormData({ ...formData, organizationType: v })}
+                {/* §11.201 — Radix Select 의 Dialog × portal 충돌 회피.
+                    조직 유형은 옵션 5개 + 한 번 선택하는 governance field —
+                    검색/grouping 기능 불필요. native <select> 로 안정화하여
+                    portal/z-index/inert 문제 0. 전역 shadcn Select 보존. */}
+                <select
+                  id="org-type"
+                  value={formData.organizationType}
+                  onChange={(e) => setFormData({ ...formData, organizationType: e.target.value })}
+                  className="flex h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all"
                 >
-                  <SelectTrigger id="org-type" className="h-11 bg-slate-50 border-slate-200 rounded-xl text-sm focus:bg-white focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
-                    <SelectValue placeholder="조직 유형을 선택하세요" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="R&D 연구소">R&D 연구소</SelectItem>
-                    <SelectItem value="QC/QA 품질관리">QC/QA 품질관리</SelectItem>
-                    <SelectItem value="시험·검사 기관">시험·검사 기관</SelectItem>
-                    <SelectItem value="대학 연구실">대학 연구실</SelectItem>
-                    <SelectItem value="기타">기타</SelectItem>
-                  </SelectContent>
-                </Select>
+                  <option value="" disabled>조직 유형을 선택하세요</option>
+                  <option value="R&D 연구소">R&D 연구소</option>
+                  <option value="QC/QA 품질관리">QC/QA 품질관리</option>
+                  <option value="시험·검사 기관">시험·검사 기관</option>
+                  <option value="대학 연구실">대학 연구실</option>
+                  <option value="기타">기타</option>
+                </select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="org-desc" className="text-sm text-slate-500">
