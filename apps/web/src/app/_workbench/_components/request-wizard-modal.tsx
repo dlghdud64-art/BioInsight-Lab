@@ -105,14 +105,20 @@ export function RequestWizardModal({
   const [submittedRequestId, setSubmittedRequestId] = useState<string | null>(null);
   const [handoffCountdown, setHandoffCountdown] = useState(5);
 
-  // 요청 대상 제품: quoteItems 우선, 없으면 compareIds 기반
+  // 요청 대상 제품: quoteItems 우선, 없으면 compareIds 기반.
+  // §11.208 — qi.name → qi.productName (store schema 정합).
+  //   QuoteCandidateItem (lib/quote/add-product-to-quote.ts:47) schema 가
+  //   productName/vendorName 을 보유하지만 wizard 가 qi.name 으로 잘못 참조 →
+  //   undefined → fallback "제품" generic 라벨이 견적 detail 에 노출되던 issue.
+  //   qi.id 도 store 의 정확한 field 인 productId 로 narrow.
   const targetProducts = useMemo(() => {
     if (quoteItems.length > 0) {
       return quoteItems.map((qi) => {
-        const prod = products.find((p) => p.id === qi.id);
+        const productId = qi.productId ?? qi.id;
+        const prod = products.find((p) => p.id === productId);
         return {
-          id: qi.id,
-          name: qi.name ?? prod?.name ?? "제품",
+          id: productId,
+          name: qi.productName ?? qi.name ?? prod?.name ?? "제품",
           brand: qi.brand ?? prod?.brand ?? null,
           catalogNumber: qi.catalogNumber ?? prod?.catalogNumber ?? null,
           specification: prod?.specification ?? null,
