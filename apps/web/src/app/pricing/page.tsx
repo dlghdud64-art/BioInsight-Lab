@@ -9,7 +9,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import type { PlanIntent } from "@/lib/billing/plan-select";
+import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
+import {
+  PLAN_DESCRIPTOR,
+  type PlanDescriptor,
+} from "@/lib/billing/plan-descriptor";
 
 /* ── Light palette — 인트로 editorial과 동일 톤 ───────────────── */
 const P = {
@@ -39,11 +43,51 @@ const D = {
   border: "rgba(59,130,246,0.25)",
 } as const;
 
-const TEAM_MONTHLY = 129_000;
-const BUSINESS_MONTHLY = 349_000;
+/* §11.201 — 가격 / 운영량 / Credit 매트릭스는 lib/billing/plan-descriptor.ts
+   single source. Hard-coded TEAM_MONTHLY / BUSINESS_MONTHLY magic number 폐기. */
 
 function fmt(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
+}
+
+/** §11.201 — descriptor.priceMonthlyKrw 를 annual 할인 적용 후 표시 문자열로 변환.
+ *  Enterprise (null) 은 "Custom" — 거짓 약속 회피 (PLAN.md §11.201). */
+function formatPlanPrice(descriptor: PlanDescriptor, discount: number): {
+  price: string;
+  period: string;
+} {
+  if (descriptor.priceMonthlyKrw === null) {
+    return { price: "Custom", period: "" };
+  }
+  if (descriptor.priceMonthlyKrw === 0) {
+    return { price: "Free", period: "" };
+  }
+  return {
+    price: fmt(Math.round(descriptor.priceMonthlyKrw * discount)),
+    period: "/월",
+  };
+}
+
+/** §11.201 — 운영량 / Credit 한 줄 요약. 카드 안의 "왜 이 가격인가" 정량 근거. */
+function formatOperatingVolume(descriptor: PlanDescriptor): string[] {
+  if (
+    descriptor.operatingVolume.monthlyRfq === null ||
+    descriptor.operatingVolume.monthlyPo === null ||
+    descriptor.operatingVolume.inventoryItems === null
+  ) {
+    // Enterprise — 계약 기반
+    return ["좌석·운영량·Credit 모두 계약 기반"];
+  }
+  return [
+    descriptor.seatsRecommended !== null
+      ? `운영자 ${descriptor.seatsRecommended}명 권장`
+      : "운영자 무제한 (계약)",
+    `RFQ ${descriptor.operatingVolume.monthlyRfq}건 / PO ${descriptor.operatingVolume.monthlyPo}건 (월)`,
+    `재고 ${descriptor.operatingVolume.inventoryItems.toLocaleString("ko-KR")} 품목`,
+    descriptor.labOpsCreditMonthly !== null
+      ? `LabOps Credit ${descriptor.labOpsCreditMonthly.toLocaleString("ko-KR")}/월`
+      : "LabOps Credit 계약 기반",
+  ];
 }
 
 /* ── Scroll animation wrapper ──────────────────────────────────── */
@@ -179,44 +223,37 @@ export default function PricingPage() {
         </section>
 
         {/* ══ Plan cards ════════════════════════════════════════════ */}
+        {/* §11.201 — PLAN_DESCRIPTOR (lib/billing/plan-descriptor.ts) single
+            source 통과. Hard-coded magic number 폐기. recommendTag 가 한국어 "추천:" 패턴.
+            featured 카드는 recommendTag 가 "단일 연구실" 을 포함하면 dark navy. */}
         <section className="py-12 md:py-16" style={{ backgroundColor: P.bgSoft }}>
           <div className="max-w-7xl mx-auto px-6 md:px-8">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-              {([
-                {
-                  name: "Starter", desc: "개인 단위 검색과 기본 기록 시작",
-                  price: "Free", period: "",
-                  features: ["시약·장비 검색 및 후보 저장", "기본 비교 기록", "기본 재고 등록"],
-                  cta: "무료 플랜 시작하기", planIntent: "starter" as PlanIntent, featured: false,
-                },
-                {
-                  name: "Team", desc: "팀 단위 공유와 비교·요청 연결 시작",
-                  price: fmt(Math.round(TEAM_MONTHLY * discount)), period: "/월",
-                  features: ["최대 5인 팀 공유", "비교 결과·요청 이력 공유", "입고·재고 상태 공동 확인"],
-                  cta: "플랜 선택하기", planIntent: "team" as PlanIntent, featured: true,
-                },
-                {
-                  name: "Business", desc: "요청, 발주 준비, 입고·재고까지 운영 연결",
-                  price: fmt(Math.round(BUSINESS_MONTHLY * discount)), period: "/월",
-                  features: ["운영형 비교·요청 생성 흐름", "발주 준비와 운영 이력 관리", "입고 반영 및 재고 운영", "예산·권한 기준 적용"],
-                  cta: "플랜 선택하기", planIntent: "business" as PlanIntent, featured: false,
-                },
-                {
-                  name: "Enterprise", desc: "조직 기준, 보안, 내부 시스템 연결까지 확장",
-                  price: "Custom", period: "",
-                  features: ["조직 보안 정책·접근 기준 적용", "내부 시스템 맞춤 연동 지원", "다기관 운영과 전담 지원"],
-                  cta: "도입 상담하기", planIntent: "enterprise" as PlanIntent, featured: false,
-                },
-              ] as const).map((plan, i) => (
-                <Reveal key={plan.name} delay={i * 0.08}>
-                  <PlanCard
-                    {...plan}
-                    onSelect={handlePlanSelect}
-                    loading={loadingPlan === plan.planIntent}
-                    disabled={loadingPlan !== null && loadingPlan !== plan.planIntent}
-                  />
-                </Reveal>
-              ))}
+              {PLAN_INTENT_VALUES.map((intent, i) => {
+                const descriptor = PLAN_DESCRIPTOR[intent];
+                const { price, period } = formatPlanPrice(descriptor, discount);
+                const operatingVolume = formatOperatingVolume(descriptor);
+                // featured = "단일 연구실" 추천 카드 (Lab Team) — dark navy 톤
+                const featured =
+                  descriptor.recommendTag !== null &&
+                  /단일\s*연구실/.test(descriptor.recommendTag);
+                return (
+                  <Reveal key={descriptor.intent} delay={i * 0.08}>
+                    <PlanCard
+                      descriptor={descriptor}
+                      price={price}
+                      period={period}
+                      operatingVolume={operatingVolume}
+                      featured={featured}
+                      onSelect={handlePlanSelect}
+                      loading={loadingPlan === descriptor.intent}
+                      disabled={
+                        loadingPlan !== null && loadingPlan !== descriptor.intent
+                      }
+                    />
+                  </Reveal>
+                );
+              })}
             </div>
             {selectError && (
               <div className="max-w-3xl mx-auto mt-6 px-6 py-4 rounded-xl text-sm" style={{ backgroundColor: "#FEF2F2", color: "#991B1B", border: "1px solid #FECACA" }}>
@@ -369,124 +406,136 @@ function CellValue({ value, label, highlight }: { value: string; label?: string;
   return <span className="text-sm" style={{ color: P.text4 }}>{value}</span>;
 }
 
-/* ── Plan Card Component — light design ──────────────────────── */
+/* ── Plan Card Component — descriptor 통과 (light or featured navy) ──────────────────────── */
 function PlanCard({
-  name, desc, price, period, features, cta, featured, planIntent, onSelect, loading, disabled,
+  descriptor, price, period, operatingVolume, featured, onSelect, loading, disabled,
 }: {
-  name: string;
-  desc: string;
+  descriptor: PlanDescriptor;
   price: string;
   period?: string;
-  features: readonly string[];
-  cta: string;
-  planIntent: PlanIntent;
+  operatingVolume: string[];
   featured?: boolean;
   onSelect: (plan: PlanIntent) => void | Promise<void>;
   loading?: boolean;
   disabled?: boolean;
 }) {
+  const { intent, label, tagline, features, ctaLabel, recommendTag } = descriptor;
   const handleClick = () => {
     if (loading || disabled) return;
-    void onSelect(planIntent);
+    void onSelect(intent);
   };
 
-  if (featured) {
-    return (
-      <div className="relative">
-        {/* MOST POPULAR badge */}
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest text-white whitespace-nowrap" style={{ backgroundColor: P.blue }}>
-          MOST POPULAR
-        </div>
+  // §11.201 — featured (dark navy) vs default (light) 두 variant.
+  //   recommendTag 가 있고 "단일 연구실" 추천이면 featured, 그 외는 default.
+  //   recommendTag 가 있고 "R&D 센터" 같은 다른 추천은 light + outline blue badge.
+  const isDarkNavy = featured === true;
+  const labelColor = isDarkNavy ? D.text1 : P.text1;
+  const taglineColor = isDarkNavy ? D.text2 : P.text3;
+
+  return (
+    <div className="relative">
+      {/* §11.201 — recommendTag 한국어 ("추천: 단일 연구실 운영" 등). 영문 popular badge 폐기. */}
+      {recommendTag !== null && (
         <div
-          className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
+          className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wide text-white whitespace-nowrap"
+          style={{ backgroundColor: P.blue }}
+        >
+          {recommendTag}
+        </div>
+      )}
+      <div
+        className={
+          isDarkNavy
+            ? "p-9 md:p-10 rounded-3xl flex flex-col h-full transition-shadow duration-200 hover:shadow-[0_24px_56px_rgba(0,0,0,0.2)]"
+            : "p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
+        }
+        style={
+          isDarkNavy
+            ? {
+                backgroundColor: D.bg,
+                border: `1px solid ${D.border}`,
+                boxShadow: "0 20px 48px rgba(0,0,0,0.15)",
+              }
+            : {
+                backgroundColor: P.bg,
+                border: `1px solid ${P.border}`,
+                boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
+              }
+        }
+      >
+        <div className="mb-6">
+          <h3 className="text-2xl font-bold mb-2" style={{ color: labelColor }}>{label}</h3>
+          <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: taglineColor }}>{tagline}</p>
+        </div>
+        <div className="mb-6">
+          <span className="text-[30px] font-bold leading-none" style={{ color: labelColor }}>{price}</span>
+          {period && <span className="text-sm ml-1" style={{ color: taglineColor }}>{period}</span>}
+        </div>
+
+        {/* §11.201 — 운영량 / Credit 정량 근거 (descriptor.seatsRecommended /
+            operatingVolume / labOpsCreditMonthly 통과). 카드 안의 "왜 이 가격인가". */}
+        <div
+          className="mb-6 p-4 rounded-xl"
           style={{
-            backgroundColor: D.bg,
-            border: `1px solid ${D.border}`,
-            boxShadow: "0 20px 48px rgba(0,0,0,0.15)",
+            backgroundColor: isDarkNavy ? D.surface : P.bgSoft,
+            border: `1px solid ${isDarkNavy ? D.border : P.border}`,
           }}
         >
-          <div className="mb-7">
-            <h3 className="text-2xl font-bold mb-2" style={{ color: D.text1 }}>{name}</h3>
-            <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: D.text2 }}>{desc}</p>
+          <div
+            className="text-[10px] font-bold uppercase tracking-[0.08em] mb-2"
+            style={{ color: isDarkNavy ? D.text2 : P.text4 }}
+          >
+            권장 운영 범위
           </div>
-          <div className="mb-8">
-            <span className="text-[30px] font-bold leading-none" style={{ color: D.text1 }}>{price}</span>
-            {period && <span className="text-sm ml-1" style={{ color: D.text2 }}>{period}</span>}
-          </div>
-          <ul className="flex flex-col gap-4 mb-12 flex-grow">
-            {features.map((f) => (
-              <li key={f} className="flex items-start gap-2.5 text-[15px]">
-                <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
-                <span style={{ color: D.text1 }}>{f}</span>
+          <ul className="flex flex-col gap-1.5">
+            {operatingVolume.map((line) => (
+              <li
+                key={line}
+                className="text-[12px] leading-snug"
+                style={{ color: isDarkNavy ? D.text1 : P.text2 }}
+              >
+                {line}
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={handleClick}
-            disabled={loading || disabled}
-            aria-busy={loading || undefined}
-            className="w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ backgroundColor: P.blue }}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
-              </>
-            ) : (
-              <>
-                {cta} <ArrowRight className="h-4 w-4" />
-              </>
-            )}
-          </button>
         </div>
-      </div>
-    );
-  }
 
-  return (
-    <div
-      className="p-9 md:p-10 rounded-3xl flex flex-col h-full transition-all duration-200 hover:translate-y-[-4px] hover:shadow-xl"
-      style={{
-        backgroundColor: P.bg,
-        border: `1px solid ${P.border}`,
-        boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-      }}
-    >
-      <div className="mb-7">
-        <h3 className="text-2xl font-bold mb-2" style={{ color: P.text1 }}>{name}</h3>
-        <p className="text-sm leading-relaxed min-h-[40px]" style={{ color: P.text3 }}>{desc}</p>
+        <ul className="flex flex-col gap-4 mb-12 flex-grow">
+          {features.map((f) => (
+            <li key={f} className="flex items-start gap-2.5 text-[15px]">
+              <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
+              <span style={{ color: isDarkNavy ? D.text1 : P.text2 }}>{f}</span>
+            </li>
+          ))}
+        </ul>
+
+        <button
+          type="button"
+          onClick={handleClick}
+          disabled={loading || disabled}
+          aria-busy={loading || undefined}
+          className={
+            isDarkNavy
+              ? "w-full py-4 rounded-xl font-bold text-white text-base transition-all hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              : "w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          }
+          style={
+            isDarkNavy
+              ? { backgroundColor: P.blue }
+              : { color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }
+          }
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
+            </>
+          ) : (
+            <>
+              {ctaLabel} <ArrowRight className="h-4 w-4" />
+            </>
+          )}
+        </button>
       </div>
-      <div className="mb-8">
-        <span className="text-[30px] font-bold leading-none" style={{ color: P.text1 }}>{price}</span>
-        {period && <span className="text-sm ml-1" style={{ color: P.text3 }}>{period}</span>}
-      </div>
-      <ul className="flex flex-col gap-4 mb-12 flex-grow">
-        {features.map((f) => (
-          <li key={f} className="flex items-start gap-2.5 text-[15px]">
-            <CheckCircle2 className="h-5 w-5 mt-0.5 flex-shrink-0" style={{ color: P.green }} />
-            <span style={{ color: P.text2 }}>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <button
-        type="button"
-        onClick={handleClick}
-        disabled={loading || disabled}
-        aria-busy={loading || undefined}
-        className="w-full py-4 rounded-xl font-bold text-base transition-all hover:brightness-95 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
-        style={{ color: P.text1, backgroundColor: P.bg, border: `1px solid ${P.text1}` }}
-      >
-        {loading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" /> 확인 중…
-          </>
-        ) : (
-          <>
-            {cta} <ArrowRight className="h-4 w-4" />
-          </>
-        )}
-      </button>
     </div>
   );
 }
