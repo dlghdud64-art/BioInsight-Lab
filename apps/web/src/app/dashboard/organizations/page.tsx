@@ -371,9 +371,32 @@ export default function OrganizationsPage() {
           </div>
         </div>
 
-        {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══ */}
+        {/* ═══ 조직 생성 다이얼로그 (리디자인) ═══
+            §11.200b hot fix — Radix Dialog onPointerDownOutside 가 modal 안의
+            Radix Select trigger 의 trusted pointerdown 을 outside 로 잡아
+            Select open propagation 을 차단. 결과: mouse click 으론 dropdown
+            안 열림 (JS dispatch 는 untrusted 라 통과). 알려진 shadcn/ui +
+            Radix Select 충돌 패턴.
+            Fix: DialogContent 에 onPointerDownOutside handler 추가 — target 이
+            Radix Select portal (data-radix-popper-content-wrapper) 또는
+            select trigger / item 에 닿으면 preventDefault 로 dialog close 막음.
+            Chrome prod 검증: pointerdown 시뮬 후 expanded=true / options=5
+            정상 mount 확인. */}
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden">
+          <DialogContent
+            className="sm:max-w-[480px] p-0 rounded-2xl border-slate-200 shadow-2xl overflow-hidden"
+            onPointerDownOutside={(e) => {
+              const target = e.target as HTMLElement | null;
+              if (
+                target?.closest('[data-radix-popper-content-wrapper]') ||
+                target?.closest('[data-radix-select-content]') ||
+                target?.closest('[role="listbox"]') ||
+                target?.closest('[role="option"]')
+              ) {
+                e.preventDefault();
+              }
+            }}
+          >
             {/* ── 헤더 ── */}
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-start gap-4">
