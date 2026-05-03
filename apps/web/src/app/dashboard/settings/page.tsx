@@ -600,8 +600,14 @@ function SettingsPageContent() {
             {/* ═══ OPERATOR & WORKSPACE ═══ */}
             {activeSection === "operator" && (
               <div className="space-y-5 animate-in fade-in-50 duration-200">
-                {/* 운영자 식별 정보 */}
-                <SectionCard title="운영자 식별 정보" icon={Fingerprint}>
+                {/* 운영자 식별 정보
+                    §11.197b — 운영 역할 카드 (ASSIGNED BY ADMIN) 와 통일된
+                    topRightLabel 패턴. 운영자 self-edit 영역임을 명시. */}
+                <SectionCard
+                  title="운영자 식별 정보"
+                  icon={Fingerprint}
+                  topRightLabel="SELF-MANAGED"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] gap-6">
                     {/* Avatar */}
                     <div className="flex flex-col items-center gap-3">
@@ -805,7 +811,15 @@ function SettingsPageContent() {
                     §11.193b — eyebrow "WORKSPACE CANONICAL IDENTITY" 추가하여
                     prototype 시안 톤 정합 (조직 식별 정보의 canonical 강조).
                     워크스페이스 기본값은 조직 administrator 권한으로만 변경. */}
-                <SectionCard title="현재 워크스페이스 정보" icon={Building2} description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다.">
+                {/* §11.197b — 운영 역할 카드 ASSIGNED BY ADMIN 와 통일된
+                    topRightLabel 패턴. 워크스페이스 canonical identity 는
+                    조직 관리자만 변경 — 운영자 read-only 시그널 강화. */}
+                <SectionCard
+                  title="현재 워크스페이스 정보"
+                  icon={Building2}
+                  description="워크스페이스 기본값은 조직 관리자만 변경할 수 있습니다."
+                  topRightLabel="ASSIGNED BY ADMIN"
+                >
                   <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-blue-700 mb-3">
                     Workspace Canonical Identity
                   </p>
@@ -863,8 +877,14 @@ function SettingsPageContent() {
                   })()}
                 </SectionCard>
 
-                {/* Password */}
-                <SectionCard title="보안 자격 증명" icon={Lock}>
+                {/* Password
+                    §11.197b — 비밀번호 변경은 운영자 self-managed 영역.
+                    topRightLabel "SELF-MANAGED" 로 통일. */}
+                <SectionCard
+                  title="보안 자격 증명"
+                  icon={Lock}
+                  topRightLabel="SELF-MANAGED"
+                >
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-slate-700">비밀번호</p>
@@ -911,6 +931,7 @@ function SettingsPageContent() {
                   title="최근 보안 및 활동 로그"
                   icon={Activity}
                   description="식별 정보·워크스페이스 설정·접근 권한 변경 이력. 전체 감사 증적은 별도 페이지에서 확인."
+                  topRightLabel="AUDIT TRAIL"
                 >
                   <div className="space-y-2">
                     {(() => {
