@@ -18,17 +18,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Legend,
-} from "recharts";
+// §11.196e — recharts dead import 제거 (9 symbol 모두 actual JSX 사용 0).
+//   ExecutiveSummary 가 사실 recharts 의존 0 인데 import 만 끌고 있어
+//   chunk 에 recharts (~150KB gzipped) 강제 포함시키고 있던 root cause.
+//   §11.196c (static import) 의 trade-off (initial bundle ↑) 가정이
+//   spurious — dead import 제거로 자연 해소. KPI 카드 + projection
+//   table 만 사용하므로 recharts 불필요.
 import {
   TrendingDown,
   ClipboardList,
@@ -269,11 +264,29 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
     toneOverride
     ?? (risk === "critical" ? "rose" : risk === "warning" ? "amber" : "emerald");
 
-  const accentMap = {
-    blue: "border-l-2 border-l-blue-500",
-    emerald: "border-l-2 border-l-emerald-500",
-    amber: "border-l-2 border-l-amber-500",
-    rose: "border-l-2 border-l-rose-500",
+  // §11.206 — 시안 정합: 단순 border-l 에서 다층 shadow + 아이콘 컨테이너 +
+  //   font-black tracking-tighter + glassmorphism delta + hover lift 로 upgrade.
+  //   (호영님 시안: Google AI Studio LabAxis "OPERATIONAL INTELLIGENCE
+  //   DASHBOARD" 4 KPI 카드 정합)
+  const iconContainerMap = {
+    blue: "bg-blue-50 text-blue-600",
+    emerald: "bg-emerald-50 text-emerald-600",
+    amber: "bg-amber-50 text-amber-600",
+    rose: "bg-rose-50 text-rose-600",
+  };
+
+  const hoverBorderMap = {
+    blue: "hover:border-blue-200",
+    emerald: "hover:border-emerald-200",
+    amber: "hover:border-amber-200",
+    rose: "hover:border-rose-200",
+  };
+
+  const progressBarMap = {
+    blue: "bg-blue-500",
+    emerald: "bg-emerald-500",
+    amber: "bg-amber-500",
+    rose: "bg-rose-500",
   };
 
   const valueColorMap = {
@@ -283,11 +296,11 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
     rose: "text-rose-700",
   };
 
-  // §11.92 — delta chip 색상 매핑.
+  // §11.92 — delta chip 색상 매핑. §11.206 glassmorphism backdrop-blur.
   const deltaToneMap = {
-    positive: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    negative: "bg-rose-50 text-rose-700 border-rose-200",
-    neutral: "bg-slate-50 text-slate-600 border-slate-200",
+    positive: "bg-emerald-50/80 text-emerald-700 border-emerald-200/60 backdrop-blur-sm",
+    negative: "bg-rose-50/80 text-rose-700 border-rose-200/60 backdrop-blur-sm",
+    neutral: "bg-slate-50/80 text-slate-600 border-slate-200/60 backdrop-blur-sm",
   };
   const deltaArrowMap = {
     up: "↗",
@@ -297,32 +310,47 @@ function KpiCard({ icon, label, value, hint, risk, href, breakdown, toneOverride
 
   const body = (
     <div
-      className={`group relative rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300 ${accentMap[tone]}`}
+      className={`group relative rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_1px_3px_rgba(0,0,0,0.04),_0_4px_12px_rgba(0,0,0,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_2px_6px_rgba(0,0,0,0.06),_0_12px_32px_rgba(0,0,0,0.08)] ${hoverBorderMap[tone]} overflow-hidden`}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-slate-500">
+      {/* §11.206 — 헤더 row: 아이콘 컨테이너 + glassmorphism delta badge */}
+      <div className="flex items-start justify-between mb-4">
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconContainerMap[tone]} transition-transform duration-200 group-hover:scale-105`}>
           {icon}
-          <span>{label}</span>
         </div>
         <div className="flex items-center gap-1.5">
-          {/* §11.92 — delta trend chip (real data 있을 때만). */}
           {delta && (
             <span
-              className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-[10px] font-bold tabular-nums ${deltaToneMap[delta.tone]}`}
+              className={`inline-flex items-center gap-0.5 px-2 py-1 rounded-full border text-[10px] font-bold tabular-nums ${deltaToneMap[delta.tone]}`}
             >
               <span aria-hidden>{deltaArrowMap[delta.direction]}</span>
               {delta.text}
             </span>
           )}
           {href && (
-            <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500" />
+            <ArrowUpRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 transition-colors" />
           )}
         </div>
       </div>
-      <p className={`mt-1.5 text-2xl font-bold tabular-nums ${valueColorMap[tone]}`}>
+
+      {/* §11.206 — label 작게, value 크게 (font-black + tracking-tighter — quant 톤) */}
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-slate-500 mb-1">
+        {label}
+      </p>
+      <p className={`text-3xl md:text-[32px] font-black tracking-tighter tabular-nums leading-none ${valueColorMap[tone]}`}>
         {value}
       </p>
-      <p className="mt-0.5 text-[11px] text-slate-500 break-keep">{hint}</p>
+      <p className="mt-2 text-[11px] text-slate-500 break-keep leading-relaxed">{hint}</p>
+
+      {/* §11.206 — 카드 하단 progress bar (delta 또는 risk 시각 리듬) */}
+      <div className="mt-4 h-1 rounded-full bg-slate-100 overflow-hidden">
+        <div
+          className={`h-full rounded-full transition-all duration-500 ${progressBarMap[tone]}`}
+          style={{
+            width: tone === "rose" ? "100%" : tone === "amber" ? "70%" : tone === "blue" ? "55%" : "30%",
+            opacity: 0.65,
+          }}
+        />
+      </div>
 
       {/* §11.82 Phase 2 — desktop hover Quick Data Breakdown popup.
           desktop only (md+), pointer-events-none 으로 hover 영역 침범 안 함.
@@ -484,7 +512,7 @@ export function ExecutiveSummarySection({
           drived store 에서 derive — mock 0 / fake 0. */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
-          icon={<AlertCircle className="h-3.5 w-3.5" />}
+          icon={<AlertCircle className="h-5 w-5" />}
           label="처리 필요 항목"
           value={`${kpis.pendingApprovalCount + kpis.anomalyCount}건`}
           hint={
@@ -514,7 +542,7 @@ export function ExecutiveSummarySection({
           }
         />
         <KpiCard
-          icon={<ClipboardList className="h-3.5 w-3.5" />}
+          icon={<ClipboardList className="h-5 w-5" />}
           label="진행 중 발주"
           value={`${kpis.pendingApprovalCount}건`}
           hint={
@@ -548,7 +576,7 @@ export function ExecutiveSummarySection({
           }
         />
         <KpiCard
-          icon={<TrendingDown className="h-3.5 w-3.5" />}
+          icon={<TrendingDown className="h-5 w-5" />}
           label="누적 지출"
           value={`₩${(kpis.totalSpent / 1_000_000).toFixed(1)}M`}
           hint={
@@ -591,7 +619,7 @@ export function ExecutiveSummarySection({
           })()}
         />
         <KpiCard
-          icon={<ShieldAlert className="h-3.5 w-3.5" />}
+          icon={<ShieldAlert className="h-5 w-5" />}
           label="신규 이상 징후"
           value={`${kpis.anomalyCount}건`}
           hint={kpis.anomalyDetail}
