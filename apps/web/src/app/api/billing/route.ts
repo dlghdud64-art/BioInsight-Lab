@@ -33,6 +33,12 @@ const PLAN_INFO: Record<
     features: string[];
   }
 > = {
+  // §11.201d — features array 정량 swap (PLAN_DESCRIPTOR 매트릭스 정합).
+  //   이전 hardcoded fake unlimited 약속 → 운영자 N명 / RFQ N건 / 재고 N 품목
+  //   정량. nameKo Team/Business → 한국어 Lab Team / R&D Operations
+  //   (PLAN_DESCRIPTOR.label 정합). canonical SubscriptionPlan enum 변경 0 —
+  //   display layer 만. Future drift 차단을 위해 추후 PLAN_DESCRIPTOR.features
+  //   직접 import 가능 (별도 트랙).
   FREE: {
     name: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName,
     nameKo: "Starter",
@@ -41,45 +47,46 @@ const PLAN_INFO: Record<
     maxSeats: PLAN_LIMITS[SubscriptionPlan.FREE].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.FREE].maxQuotesPerMonth,
     features: [
-      "개인 전용 (팀원 초대 불가)",
-      "기본 검색 및 비교",
-      "품목 등록 (최대 10개)",
-      "기본 견적 요청",
+      "통합 검색 / 카탈로그",
+      "견적 요청 (월 5건)",
+      "PO 발행 (월 5건)",
+      "재고 등록 (50 품목)",
+      "AI 견적 비교 (Credit 차감)",
     ],
   },
   TEAM: {
     name: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName,
-    nameKo: "Team",
+    nameKo: "Lab Team",
     price: PLAN_PRICES[SubscriptionPlan.TEAM],
     priceDisplay: PLAN_DISPLAY[SubscriptionPlan.TEAM].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.TEAM].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.TEAM].maxQuotesPerMonth,
     features: [
-      "팀원 5명까지",
-      "팀원 공유 재고",
-      "후보 품목 공유",
-      "구매 요청 워크플로우",
-      "품목 등록 (최대 50개)",
-      "엑셀 업로드 · CSV 내보내기",
-      "대체품 추천",
+      "Starter 전체 +",
+      "운영자 5명 권장",
+      "견적 요청 (월 30건)",
+      "PO 발행 (월 30건)",
+      "재고 운영 (500 품목)",
+      "운영 브리핑 (AI 인사이트)",
+      "활동 로그 / 권한 관리",
     ],
   },
   ORGANIZATION: {
     name: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName,
-    nameKo: "Business",
+    nameKo: "R&D Operations",
     price: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
     priceDisplay: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxQuotesPerMonth,
     features: [
-      "팀원 무제한",
-      "전자결재 승인 라인",
-      "예산 통합 관리",
-      "Audit Trail",
-      "MSDS 자동 연동",
-      "Lot 관리 · 재고 소진 알림",
-      "관리자 운영 대시보드",
-      "품목 등록 무제한",
+      "Lab Team 전체 +",
+      "운영자 15명 권장",
+      "견적 요청 (월 80건)",
+      "PO 발행 (월 80건)",
+      "재고 운영 (2,000 품목)",
+      "다중 부서 / 비용센터 분리",
+      "감사 로그 PDF 내보내기",
+      "워크플로 템플릿 / 승인자 매트릭스",
     ],
   },
 };
