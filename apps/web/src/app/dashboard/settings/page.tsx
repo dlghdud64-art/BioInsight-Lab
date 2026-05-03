@@ -15,6 +15,8 @@ import {
   WORKFLOW_CAPABILITY_LABEL,
   WORKFLOW_CAPABILITY_BADGE_CLS,
 } from "@/lib/permissions/workflow-capabilities";
+// §11.201 — workspace plan badge 한국어 라벨 (영문 EDITION convention 폐기).
+import { getPlanLabel } from "@/lib/billing/plan-descriptor";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -840,20 +842,21 @@ function SettingsPageContent() {
                     const wsName = activeWs?.name ?? "데이터 미동기화";
                     const wsSlug = activeWs?.slug ?? "—";
                     const wsPlan = activeWs?.plan ? activeWs.plan : "—";
-                    // §11.193b — sub-label 영문 convention 정합 (시안 매핑):
-                    //   "Plan: …"        → "ENTERPRISE EDITION" (또는 plan 별)
-                    //   "URL Identifier" → "AUTO-GENERATED ID"
-                    //   "시스템 기본값"  → "FINANCIAL BASE"
-                    // workspace canonical identity 명시. plan 값 영문 normalize:
+                    // §11.201 — sub-label 한국어 swap (descriptor.label 통과).
+                    //   §11.193b 의 영문 EDITION convention 폐기 — pricing-operating-volume-redefine
+                    //   정합 (운영 OS 정합 한국어 plan 라벨 + "플랜" suffix).
+                    //   canonical WorkspacePlan (FREE | TEAM | ENTERPRISE) 변경 0.
                     const planSubLabel = (() => {
-                      if (!activeWs) return "WORKSPACE NOT FOUND";
+                      if (!activeWs) return "워크스페이스 없음";
                       const p = (wsPlan || "").toUpperCase();
-                      if (p === "ENTERPRISE") return "ENTERPRISE EDITION";
-                      if (p === "PRO" || p === "PROFESSIONAL") return "PROFESSIONAL EDITION";
-                      if (p === "FREE" || p === "STARTER") return "FREE EDITION";
-                      // plan 값 fallback — uppercase + " EDITION" suffix 유지하여
-                      // canonical identity 톤 일관 (시안 정합).
-                      return p ? `${p} EDITION` : "EDITION 미지정";
+                      if (p === "ENTERPRISE")
+                        return `${getPlanLabel("enterprise")} 플랜`;
+                      // PRO 는 legacy display label (Pro/Professional) — Lab Team 매핑.
+                      if (p === "PRO" || p === "PROFESSIONAL" || p === "TEAM")
+                        return `${getPlanLabel("team")} 플랜`;
+                      if (p === "FREE" || p === "STARTER")
+                        return `${getPlanLabel("starter")} 플랜`;
+                      return p ? `${p} 플랜` : "플랜 미지정";
                     })();
                     return (
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
