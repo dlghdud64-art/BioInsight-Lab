@@ -15,7 +15,7 @@ const SelectValue = SelectPrimitive.Value;
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, onPointerDown, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
@@ -29,6 +29,17 @@ const SelectTrigger = React.forwardRef<
       "group flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 bg-el border-bd transition-all duration-150 hover:border-blue-300 hover:shadow-sm data-[state=open]:border-blue-400 data-[state=open]:shadow-md",
       className
     )}
+    // §11.200d global fix — Radix Select × Dialog modal 충돌 차단.
+    //   Dialog modal=true 가 default 일 때 nested Select trigger 의 trusted
+    //   pointerdown 이 dialog 의 outside-click handler 보다 먼저 발화하도록
+    //   propagation 차단. 이전 §11.200b/c 의 fix (DialogContent 측 handler /
+    //   modal=false) 보다 더 근본적인 path — Select 컴포넌트 자체에서 차단해서
+    //   모든 Dialog × Select 사용처 (44+ files) 자동 정합.
+    //   외부 caller 의 onPointerDown override 도 호환 (caller handler 먼저 호출).
+    onPointerDown={(e) => {
+      onPointerDown?.(e);
+      e.stopPropagation();
+    }}
     {...props}
   >
     {children}
