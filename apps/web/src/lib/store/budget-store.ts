@@ -12,6 +12,10 @@
 import { csrfFetch } from "@/lib/api-client";
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+// #supabase-store-cleanup Phase 1 — dead-table console pollution silence.
+//   isSupabaseDeadTableError + logSupabaseSilently 으로 swap.
+//   §11.199 회귀 차단: helper 는 logging only, state mutation 0.
+import { logSupabaseSilently } from "@/lib/store/supabase-error-helpers";
 import {
   mapBudgetRowToObject,
   type SupabaseBudgetRow,
@@ -234,7 +238,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
 
       if (error) {
         // Supabase 테이블 없으면 기존 Prisma API fallback
-        console.warn("[budget-store] Supabase 조회 실패, API fallback:", error.message);
+        logSupabaseSilently(error, "[budget-store] fetchBudgets", "/api/budgets");
         const res = await fetch("/api/budgets");
         if (res.ok) {
           const json = await res.json();
@@ -249,7 +253,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
       const budgets = (data as SupabaseBudgetRow[]).map(mapRowToBudget);
       set({ budgets, isFetching: false });
     } catch (err) {
-      console.error("[budget-store] fetchBudgets error:", err);
+      logSupabaseSilently(err, "[budget-store] fetchBudgets catch", "/api/budgets");
       // 최종 fallback: 기존 API
       try {
         const res = await fetch("/api/budgets");
@@ -294,7 +298,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
           set((state) => ({ budgets: [budget, ...state.budgets] }));
           return budget;
         }
-        console.warn("[budget-store] Supabase insert 실패, API fallback:", error?.message);
+        logSupabaseSilently(error, "[budget-store] createBudget", "/api/budgets POST");
       }
 
       // Fallback: 기존 Prisma API
@@ -324,7 +328,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
       set((state) => ({ budgets: [budget, ...state.budgets] }));
       return budget;
     } catch (err) {
-      console.error("[budget-store] createBudget error:", err);
+      logSupabaseSilently(err, "[budget-store] createBudget catch");
       set({ error: "예산 등록 중 오류가 발생했습니다." });
       return null;
     }
@@ -355,7 +359,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
         .eq("id", id);
 
       if (error) {
-        console.warn("[budget-store] Supabase update 실패, API fallback:", error.message);
+        logSupabaseSilently(error, "[budget-store] updateBudget", `/api/budgets/${id} PATCH`);
         await fetch(`/api/budgets/${id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -363,7 +367,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
         });
       }
     } catch (err) {
-      console.error("[budget-store] updateBudget error:", err);
+      logSupabaseSilently(err, "[budget-store] updateBudget catch");
     }
   },
 
@@ -394,7 +398,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
     try {
       const { error } = await supabase.from("budgets").delete().eq("id", id);
       if (error) {
-        console.warn("[budget-store] Supabase delete 실패, API fallback:", error.message);
+        logSupabaseSilently(error, "[budget-store] deleteBudget", `/api/budgets/${id} DELETE`);
         const res = await fetch(`/api/budgets/${id}`, { method: "DELETE" });
         if (!res.ok) {
           // 롤백
@@ -402,7 +406,7 @@ export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
         }
       }
     } catch (err) {
-      console.error("[budget-store] deleteBudget error:", err);
+      logSupabaseSilently(err, "[budget-store] deleteBudget catch");
       set({ budgets: prev, error: "예산 삭제 중 오류 발생" });
     }
   },

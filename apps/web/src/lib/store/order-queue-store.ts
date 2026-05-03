@@ -12,6 +12,8 @@
  */
 import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
+// #supabase-store-cleanup Phase 1 — dead-table console pollution silence.
+import { logSupabaseSilently } from "@/lib/store/supabase-error-helpers";
 import {
   executeFinalizeApproval,
   executeReceiveOrder,
@@ -264,8 +266,9 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn("[order-queue-store] Supabase 조회 실패:", error.message);
-        set({ isFetching: false, error: "주문 목록 조회 실패" });
+        logSupabaseSilently(error, "[order-queue-store] fetchOrders");
+        // dead-table 일 때 silent — store 동작 보존 (empty orders + isFetching=false)
+        set({ isFetching: false, error: null, orders: [] });
         return;
       }
 
@@ -282,8 +285,9 @@ export const useOrderQueueStore = create<OrderQueueState>((set, get) => ({
 
       set({ orders, isFetching: false });
     } catch (err) {
-      console.error("[order-queue-store] fetchOrders error:", err);
-      set({ isFetching: false, error: "주문 데이터를 불러올 수 없습니다." });
+      logSupabaseSilently(err, "[order-queue-store] fetchOrders catch");
+      // §11.199 회귀 차단: catch 에서 isFetching=false 강제 reset.
+      set({ isFetching: false, error: null, orders: [] });
     }
   },
 
