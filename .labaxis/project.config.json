@@ -1,0 +1,39 @@
+{
+  "product": "LabAxis",
+  "type": "research-procurement-operations-os",
+  "reviewConstitution": "docs/labaxis-review-constitution.md",
+  "releaseGate": "docs/labaxis-release-gate.md",
+  "prd": "docs/ops/labaxis-agent-review-board-prd-v1.md",
+  "orchestrationPlan": "docs/ops/labaxis-agent-orchestration-v1.md",
+  "pilotDir": ".labaxis/pilots",
+  "runOutputDir": ".labaxis/runs",
+  "externalRunner": {
+    "targetName": "labaxis-agent-board",
+    "status": "externalized-local",
+    "path": "C:\\Users\\young\\Documents\\Playground\\labaxis-agent-board",
+    "command": "node C:\\Users\\young\\Documents\\Playground\\labaxis-agent-board\\src\\run.mjs"
+  },
+  "repoOwnership": {
+    "keepInProductRepo": [
+      "product review constitution",
+      "release gate",
+      "project config",
+      "product-specific pilot scenarios"
+    ],
+    "moveToExternalRunner": [
+      "CLI runner",
+      "agent prompt templates",
+      "git diff collector",
+      "report generator",
+      "CI gate integration"
+    ]
+  },
+  "humanGateRequiredFor": [
+    "production push",
+    "destructive data mutation",
+    "migration execution",
+    "source-of-truth rewrite",
+    "blocker bypass",
+    "AI auto-apply behavior"
+  ]
+}

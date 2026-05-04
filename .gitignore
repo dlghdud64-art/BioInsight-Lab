@@ -56,3 +56,6 @@ tmpclaude-*-cwd
 *.tsx.bak
 *.ts.bak
 *.bak
+
+# LabAxis agent review generated reports
+.labaxis/runs/*.md

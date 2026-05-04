@@ -1,0 +1,69 @@
+name: LabAxis Agent Board Preflight
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  preflight:
+    name: Preflight Only
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout LabAxis
+        uses: actions/checkout@v4
+        with:
+          path: labaxis
+          fetch-depth: 0
+
+      - name: Checkout LabAxis Agent Board
+        uses: actions/checkout@v4
+        with:
+          # Replace this with the real repository once agent-board is published.
+          repository: dlghdud64-art/labaxis-agent-board
+          path: labaxis-agent-board
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Run LabAxis preflight gate
+        working-directory: labaxis-agent-board
+        env:
+          LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
+        run: |
+          PILOT="${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}"
+          node src/run.mjs ci \
+            --project "$GITHUB_WORKSPACE/labaxis" \
+            --pilot "$PILOT" \
+            --summary "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
+            --base "origin/${{ github.base_ref }}" \
+            --skip-api \
+            --out "$RUNNER_TEMP/labaxis-review-gate"
+
+      - name: Publish preflight summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/labaxis-review-gate/ci-summary.md" ]; then
+            cat "$RUNNER_TEMP/labaxis-review-gate/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "LabAxis preflight summary was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload preflight bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labaxis-review-preflight
+          path: ${{ runner.temp }}/labaxis-review-gate
+          if-no-files-found: ignore
