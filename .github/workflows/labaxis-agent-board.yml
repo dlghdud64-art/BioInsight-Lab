@@ -1,0 +1,87 @@
+name: LabAxis Agent Board
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  review-gate:
+    name: Review Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout LabAxis
+        uses: actions/checkout@v4
+        with:
+          path: labaxis
+          fetch-depth: 0
+
+      - name: Checkout LabAxis Agent Board
+        uses: actions/checkout@v4
+        with:
+          repository: dlghdud64-art/labaxis-agent-board
+          path: labaxis-agent-board
+          fetch-depth: 1
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate agent-board
+        working-directory: labaxis-agent-board
+        run: npm run check
+
+      - name: Verify OpenAI API secret
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error title=OPENAI_API_KEY missing::Add repository secret OPENAI_API_KEY before enabling the full LabAxis Agent Board gate."
+            exit 1
+          fi
+
+      - name: Run LabAxis review gate
+        working-directory: labaxis-agent-board
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
+        run: |
+          PILOT="${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}"
+          SUMMARY="Manual LabAxis Agent Board run"
+          BASE_ARGS=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SUMMARY="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+            BASE_ARGS="--base origin/${{ github.base_ref }}"
+          fi
+          node src/run.mjs ci \
+            --project "$GITHUB_WORKSPACE/labaxis" \
+            --pilot "$PILOT" \
+            --summary "$SUMMARY" \
+            $BASE_ARGS \
+            --out "$RUNNER_TEMP/labaxis-review-gate"
+
+      - name: Publish gate summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/labaxis-review-gate/ci-summary.md" ]; then
+            cat "$RUNNER_TEMP/labaxis-review-gate/ci-summary.md" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "LabAxis CI summary was not generated." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload review bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: labaxis-review-gate
+          path: ${{ runner.temp }}/labaxis-review-gate
+          if-no-files-found: ignore
