@@ -18,6 +18,9 @@ import {
   recordMutationAudit,
   buildAuditEventKey,
 } from "@/lib/audit/durable-mutation-audit";
+// §11.209d-notification — requester 에게 결재 승인 email (best effort).
+import { sendEmail } from "@/lib/email/sender";
+import { generatePurchaseApprovedEmail } from "@/lib/email/templates";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -283,6 +286,35 @@ export async function POST(
           : undefined,
       },
     });
+
+    // §11.209d-notification — requester 에게 결재 승인 email (best effort).
+    // mutation 성공 후 호출 — email fail 시 mutation 결과 영향 0.
+    if (purchaseRequest.requester?.email) {
+      try {
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        const quoteId = purchaseRequest.quoteId;
+        const quoteUrl = quoteId
+          ? `${appUrl}/dashboard/quotes?focus=${encodeURIComponent(quoteId)}`
+          : `${appUrl}/dashboard/quotes`;
+        const template = generatePurchaseApprovedEmail({
+          requesterName: purchaseRequest.requester.name ?? purchaseRequest.requester.email,
+          approverName: session.user.name ?? session.user.email ?? "결재자",
+          quoteTitle: purchaseRequest.title,
+          totalAmount: purchaseRequest.totalAmount,
+          currency: "KRW",
+          quoteUrl,
+        });
+        await sendEmail({
+          to: purchaseRequest.requester.email,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        });
+      } catch (emailErr) {
+        // graceful — mutation 성공 유지
+        console.error("[request/approve] requester email 발송 실패 (mutation 정합 유지):", emailErr);
+      }
+    }
 
     return NextResponse.json({
       purchaseRequest: result.purchaseRequest,

@@ -30,6 +30,9 @@ import {
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
 import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
+// §11.209d-notification — approver 에게 결재 요청 email 발송 (best effort).
+import { sendEmail } from "@/lib/email/sender";
+import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
 
 export const dynamic = "force-dynamic";
 
@@ -149,16 +152,19 @@ export async function POST(
         role: "ADMIN",
         userId: { not: session.user.id }, // 본인 외 ADMIN
       },
-      select: { userId: true },
+      select: { userId: true, user: { select: { email: true, name: true } } },
     });
     // workspace 에 본인 외 ADMIN 가 없으면 본인 ADMIN 도 가능 (single-admin workspace 호환)
     const fallbackAdmin = adminMember
       ? null
       : await db.workspaceMember.findFirst({
           where: { workspaceId, role: "ADMIN" },
-          select: { userId: true },
+          select: { userId: true, user: { select: { email: true, name: true } } },
         });
-    const approverId = adminMember?.userId ?? fallbackAdmin?.userId ?? null;
+    const resolvedAdmin = adminMember ?? fallbackAdmin;
+    const approverId = resolvedAdmin?.userId ?? null;
+    const approverEmail = resolvedAdmin?.user?.email ?? null;
+    const approverName = resolvedAdmin?.user?.name ?? "관리자";
 
     if (!approverId) {
       enforcement.fail();
@@ -199,6 +205,32 @@ export async function POST(
         status: purchaseRequest.status,
       },
     });
+
+    // §11.209d-notification — approver 에게 결재 요청 email (best effort).
+    // mutation 성공 후 호출 — email fail 시 mutation 결과 영향 0.
+    if (approverEmail) {
+      try {
+        const requesterName = session.user.name ?? session.user.email ?? "요청자";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+        const template = generatePurchaseApprovalRequestEmail({
+          approverName,
+          requesterName,
+          quoteTitle: quote.title,
+          totalAmount: quote.totalAmount,
+          currency: "KRW",
+          quoteUrl: `${appUrl}/dashboard/quotes?focus=${encodeURIComponent(quote.id)}`,
+        });
+        await sendEmail({
+          to: approverEmail,
+          subject: template.subject,
+          html: template.html,
+          text: template.text,
+        });
+      } catch (emailErr) {
+        // graceful — mutation 성공 유지, audit log 만
+        console.error("[request-approval] approver email 발송 실패 (mutation 정합 유지):", emailErr);
+      }
+    }
 
     return NextResponse.json(
       { success: true, purchaseRequest },
