@@ -139,17 +139,19 @@ describe("§11.201e 비교표 플랜명 통일", () => {
 });
 
 describe("§11.201e sweep 정합 — api/billing + settings/plans 동기화", () => {
-  it("api/billing PLAN_INFO TEAM/ORGANIZATION features — '포함' 정합", () => {
+  it("api/billing PLAN_INFO TEAM/ORGANIZATION features — '포함' 정합 (#pricing-descriptor-direct-import 정합)", () => {
     const src = read(BILLING_API);
-    expect(src).toMatch(/운영자\s*5명\s*포함/);
-    expect(src).toMatch(/운영자\s*15명\s*포함/);
+    // direct import 후 정량 단어 OR descriptor import 매칭. PLAN_DESCRIPTOR
+    // 가 single source 이므로 features 가 descriptor 통과 시 정량 약속 보장.
+    expect(src).toMatch(/운영자\s*5명\s*포함|PLAN_DESCRIPTOR\.team\.features/);
+    expect(src).toMatch(/운영자\s*15명\s*포함|PLAN_DESCRIPTOR\.business\.features/);
     expect(src).not.toMatch(/운영자\s*\d+명\s*권장/);
   });
 
-  it("settings/plans PLAN_CARDS features — '포함' 정합", () => {
+  it("settings/plans PLAN_CARDS features — '포함' 정합 (#pricing-descriptor-direct-import 정합)", () => {
     const src = read(SETTINGS_PLANS);
-    expect(src).toMatch(/운영자\s*5명\s*포함/);
-    expect(src).toMatch(/운영자\s*15명\s*포함/);
+    expect(src).toMatch(/운영자\s*5명\s*포함|PLAN_DESCRIPTOR\.team\.features/);
+    expect(src).toMatch(/운영자\s*15명\s*포함|PLAN_DESCRIPTOR\.business\.features/);
     expect(src).not.toMatch(/운영자\s*\d+명\s*권장/);
   });
 

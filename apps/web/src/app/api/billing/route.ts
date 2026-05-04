@@ -19,6 +19,10 @@ import {
   PLAN_ORDER,
   ENTERPRISE_INFO,
 } from "@/lib/plans";
+// #pricing-descriptor-direct-import — §11.201d hand-copy → direct import.
+// PLAN_DESCRIPTOR single source. SubscriptionPlan ↔ PlanIntent 매핑:
+// FREE→starter, TEAM→team, ORGANIZATION→business (R&D Operations SKU).
+import { PLAN_DESCRIPTOR } from "@/lib/billing/plan-descriptor";
 
 // planInfo 응답 형태 (기존 API 호환 유지 + 통일된 가격)
 const PLAN_INFO: Record<
@@ -39,55 +43,36 @@ const PLAN_INFO: Record<
   //   (PLAN_DESCRIPTOR.label 정합). canonical SubscriptionPlan enum 변경 0 —
   //   display layer 만. Future drift 차단을 위해 추후 PLAN_DESCRIPTOR.features
   //   직접 import 가능 (별도 트랙).
+  // #pricing-descriptor-direct-import — features array hand-copy → direct
+  // import. drift 차단 lock. 향후 PLAN_DESCRIPTOR 변경만으로 전 surface
+  // (api/billing + settings/plans + /pricing public + /dashboard/pricing)
+  // 자동 정합. nameKo 도 PLAN_DESCRIPTOR.label single source.
   FREE: {
     name: PLAN_DISPLAY[SubscriptionPlan.FREE].displayName,
-    nameKo: "Starter",
+    nameKo: PLAN_DESCRIPTOR.starter.label,
     price: PLAN_PRICES[SubscriptionPlan.FREE],
     priceDisplay: "무료",
     maxSeats: PLAN_LIMITS[SubscriptionPlan.FREE].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.FREE].maxQuotesPerMonth,
-    features: [
-      "통합 검색 / 카탈로그",
-      "견적 요청 (월 5건)",
-      "PO 발행 (월 5건)",
-      "재고 등록 (50 품목)",
-      "AI 견적 비교 (Credit 차감)",
-    ],
+    features: PLAN_DESCRIPTOR.starter.features,
   },
   TEAM: {
     name: PLAN_DISPLAY[SubscriptionPlan.TEAM].displayName,
-    nameKo: "Lab Team",
+    nameKo: PLAN_DESCRIPTOR.team.label,
     price: PLAN_PRICES[SubscriptionPlan.TEAM],
     priceDisplay: PLAN_DISPLAY[SubscriptionPlan.TEAM].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.TEAM].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.TEAM].maxQuotesPerMonth,
-    features: [
-      "Starter 전체 +",
-      "운영자 5명 포함 (추가 운영자 별도)",
-      "견적 요청 (월 30건)",
-      "PO 발행 (월 30건)",
-      "재고 운영 (500 품목)",
-      "운영 브리핑 (AI 인사이트)",
-      "활동 로그 / 권한 관리",
-    ],
+    features: PLAN_DESCRIPTOR.team.features,
   },
   ORGANIZATION: {
     name: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].displayName,
-    nameKo: "R&D Operations",
+    nameKo: PLAN_DESCRIPTOR.business.label,
     price: PLAN_PRICES[SubscriptionPlan.ORGANIZATION],
     priceDisplay: PLAN_DISPLAY[SubscriptionPlan.ORGANIZATION].priceDisplay,
     maxSeats: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxMembers,
     maxQuotesPerMonth: PLAN_LIMITS[SubscriptionPlan.ORGANIZATION].maxQuotesPerMonth,
-    features: [
-      "Lab Team 전체 +",
-      "운영자 15명 포함 (추가 운영자 별도)",
-      "견적 요청 (월 80건)",
-      "PO 발행 (월 80건)",
-      "재고 운영 (2,000 품목)",
-      "다중 부서 / 비용센터 분리",
-      "감사 로그 PDF 내보내기",
-      "워크플로 템플릿 / 승인자 매트릭스",
-    ],
+    features: PLAN_DESCRIPTOR.business.features,
   },
 };
 

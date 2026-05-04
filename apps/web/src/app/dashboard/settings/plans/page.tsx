@@ -2,6 +2,11 @@
 
 export const dynamic ="force-dynamic";
 
+// #pricing-descriptor-direct-import — §11.201d hand-copy → direct import.
+// PLAN_DESCRIPTOR single source. ORGANIZATION SubscriptionPlan 은
+// business intent (R&D Operations SKU) 와 매핑 (§11.201 ADR).
+import { PLAN_DESCRIPTOR } from "@/lib/billing/plan-descriptor";
+
 import {
   useState,
   useEffect,
@@ -195,40 +200,17 @@ const PLAN_CARDS = [
  {
  id: SubscriptionPlan.FREE,
  icon: Package,
- features: [
-"통합 검색 / 카탈로그",
-"견적 요청 (월 5건)",
-"PO 발행 (월 5건)",
-"재고 등록 (50 품목)",
-"AI 견적 비교 (Credit 차감)",
- ],
+ features: PLAN_DESCRIPTOR.starter.features,
  },
  {
  id: SubscriptionPlan.TEAM,
  icon: Users,
- features: [
-"Starter 전체 +",
-"운영자 5명 포함 (추가 운영자 별도)",
-"견적 요청 (월 30건)",
-"PO 발행 (월 30건)",
-"재고 운영 (500 품목)",
-"운영 브리핑 (AI 인사이트)",
-"활동 로그 / 권한 관리",
- ],
+ features: PLAN_DESCRIPTOR.team.features,
  },
  {
  id: SubscriptionPlan.ORGANIZATION,
  icon: Building,
- features: [
-"Lab Team 전체 +",
-"운영자 15명 포함 (추가 운영자 별도)",
-"견적 요청 (월 80건)",
-"PO 발행 (월 80건)",
-"재고 운영 (2,000 품목)",
-"다중 부서 / 비용센터 분리",
-"감사 로그 PDF 내보내기",
-"워크플로 템플릿 / 승인자 매트릭스",
- ],
+ features: PLAN_DESCRIPTOR.business.features,
  },
 ];
 

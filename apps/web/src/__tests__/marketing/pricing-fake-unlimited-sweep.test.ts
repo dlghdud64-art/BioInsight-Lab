@@ -32,22 +32,27 @@ describe("§11.201d /api/billing — features array 정량 swap", () => {
     expect(src).not.toMatch(/"품목\s*등록\s*무제한"/);
   });
 
-  it("정량 운영자 권장치 노출 ('운영자 N명 권장' 또는 '5명까지' 같은 정량)", () => {
+  it("정량 운영자 권장치 노출 (정량 단어 OR PLAN_DESCRIPTOR import — #pricing-descriptor-direct-import 정합)", () => {
     const src = read(BILLING_API);
     // PLAN_DESCRIPTOR.team.seatsRecommended = 5 / business.seatsRecommended = 15
-    expect(src).toMatch(/운영자\s*\d+\s*명|좌석\s*\d+|\d+명까지/);
+    // direct import 후 source 에는 정량 단어 보이지 않을 수 있음 — descriptor
+    // import 자체가 정량 약속의 lock 이므로 OR 매칭.
+    expect(src).toMatch(/운영자\s*\d+\s*명|좌석\s*\d+|\d+명까지|PLAN_DESCRIPTOR\.\w+\.features/);
   });
 
   it("정량 운영량 (RFQ / 재고) 노출", () => {
     const src = read(BILLING_API);
-    // descriptor 의 monthlyRfq / inventoryItems 정합 매트릭스
-    expect(src).toMatch(/RFQ\s*\d+|견적\s*요청.*\d+|재고\s*\d/);
+    // descriptor 의 monthlyRfq / inventoryItems 정합 매트릭스 OR descriptor import
+    expect(src).toMatch(/RFQ\s*\d+|견적\s*요청.*\d+|재고\s*\d|PLAN_DESCRIPTOR\.\w+\.features/);
   });
 
-  it("nameKo — 한국어 라벨 정합 ('Lab Team' / 'R&D Operations')", () => {
+  it("nameKo — 한국어 라벨 정합 (#pricing-descriptor-direct-import 정합)", () => {
     const src = read(BILLING_API);
-    expect(src).toMatch(/Lab\s*Team/);
-    expect(src).toMatch(/R&D\s*Operations/);
+    // direct import 후 nameKo: PLAN_DESCRIPTOR.X.label 사용 → "Lab Team"
+    // 같은 단어가 source 에 직접 없을 수 있음. descriptor.label import OR
+    // 단어 직접 매칭 둘 다 정합.
+    expect(src).toMatch(/Lab\s*Team|PLAN_DESCRIPTOR\.team\.label/);
+    expect(src).toMatch(/R&D\s*Operations|PLAN_DESCRIPTOR\.business\.label/);
     // 영문 'Business' 단독 nameKo 폐기
     expect(src).not.toMatch(/nameKo:\s*"Business"/);
   });
@@ -62,11 +67,13 @@ describe("§11.201d settings/plans — features array 정량 swap", () => {
     expect(src).not.toMatch(/"품목\s*등록\s*무제한"/);
   });
 
-  it("정량 운영자 / RFQ / 재고 권장치 노출", () => {
+  it("정량 운영자 / RFQ / 재고 권장치 노출 (#pricing-descriptor-direct-import 정합)", () => {
     const src = read(SETTINGS_PLANS);
-    expect(src).toMatch(/운영자\s*\d+\s*명|좌석\s*\d+|\d+명까지/);
-    expect(src).toMatch(/RFQ\s*\d+|견적\s*요청.*\d+/);
-    expect(src).toMatch(/재고.*\d|품목.*\d/);
+    // direct import 후 정량 단어 OR descriptor import 매칭. descriptor 가
+    // 정량 약속의 single source.
+    expect(src).toMatch(/운영자\s*\d+\s*명|좌석\s*\d+|\d+명까지|PLAN_DESCRIPTOR\.\w+\.features/);
+    expect(src).toMatch(/RFQ\s*\d+|견적\s*요청.*\d+|PLAN_DESCRIPTOR\.\w+\.features/);
+    expect(src).toMatch(/재고.*\d|품목.*\d|PLAN_DESCRIPTOR\.\w+\.features/);
   });
 
   it("dynamic 'maxSeats === null ? 무제한' (Enterprise contract) 분기는 보존", () => {
