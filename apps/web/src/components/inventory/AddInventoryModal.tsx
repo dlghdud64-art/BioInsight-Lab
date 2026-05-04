@@ -21,6 +21,10 @@ interface Product {
   name: string;
   brand: string | null;
   catalogNumber: string | null;
+  // §11.203 sweep — caller fallback 정합. imageUrl 부재 시 AvatarImage
+  // render 안 함 → AvatarFallback (product.name.charAt(0)) 즉시 노출.
+  // dead URL 호출 0 (route stub 신설 후에도 caller 자체에서 차단).
+  imageUrl?: string | null;
 }
 
 interface AddInventoryModalProps {
@@ -558,7 +562,12 @@ export function AddInventoryModal({ open, onOpenChange, onSubmit, inventory, isL
                     >
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10 rounded-lg border">
-                          <AvatarImage src={`/api/products/${product.id}/image`} alt={product.name} />
+                          {/* §11.203 sweep — dead URL `/api/products/{id}/image`
+                              fallback 제거. imageUrl 있을 때만 render →
+                              AvatarFallback (letter) 즉시 노출. */}
+                          {product.imageUrl ? (
+                            <AvatarImage src={product.imageUrl} alt={product.name} />
+                          ) : null}
                           <AvatarFallback className="bg-el text-slate-600">
                             {product.name.charAt(0)}
                           </AvatarFallback>
