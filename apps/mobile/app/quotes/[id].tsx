@@ -81,6 +81,8 @@ export default function QuoteDetailScreen() {
   const { data: history } = useQuoteHistory(id);
   // §11.209d-mobile Phase 2 — 결재 정보 (timeline 표시 위해)
   const { data: approval } = useQuoteApproval(id);
+  // §11.209d-history-expand-mobile — 이전 결재 이력 expand state
+  const [historyExpanded, setHistoryExpanded] = useState(false);
 
   if (isLoading) {
     return (
@@ -275,6 +277,74 @@ export default function QuoteDetailScreen() {
                   <Text className="text-xs text-rose-700 leading-5">
                     {approval.rejectionReason}
                   </Text>
+                </View>
+              )}
+              {/* §11.209d-history-expand-mobile — 이전 결재 이력 expand.
+                  historyEntries.length > 1 (latest 외 추가 entries 존재) 시만
+                  button visible. dead button 0. */}
+              {approval.historyEntries && approval.historyEntries.length > 1 && (
+                <View className="pt-2 border-t border-slate-100">
+                  <Pressable
+                    onPress={() => setHistoryExpanded((v) => !v)}
+                    className="flex-row items-center"
+                  >
+                    <Text className="text-xs text-slate-500">
+                      {historyExpanded
+                        ? "이전 결재 이력 숨기기"
+                        : `이전 결재 이력 ${approval.historyEntries.length - 1}건 보기`}
+                    </Text>
+                  </Pressable>
+                  {historyExpanded && (
+                    <View className="mt-2 gap-2">
+                      {approval.historyEntries.slice(1).map((entry) => (
+                        <View
+                          key={entry.id}
+                          className="bg-slate-50 rounded p-2 border border-slate-200"
+                        >
+                          <View className="flex-row items-center justify-between mb-1">
+                            <Text
+                              className={
+                                entry.status === "APPROVED"
+                                  ? "text-xs font-semibold text-emerald-700"
+                                  : entry.status === "REJECTED"
+                                    ? "text-xs font-semibold text-rose-700"
+                                    : entry.status === "CANCELLED"
+                                      ? "text-xs font-semibold text-slate-500"
+                                      : "text-xs font-semibold text-amber-700"
+                              }
+                            >
+                              {entry.status === "APPROVED"
+                                ? "결재 완료"
+                                : entry.status === "REJECTED"
+                                  ? "결재 반려"
+                                  : entry.status === "CANCELLED"
+                                    ? "취소"
+                                    : "결재 대기"}
+                            </Text>
+                            <Text className="text-[10px] font-mono text-slate-500">
+                              {new Date(entry.requestedAt).toLocaleString("ko-KR", {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </Text>
+                          </View>
+                          {entry.approverName && (
+                            <Text className="text-[10px] text-slate-600">
+                              결재자: {entry.approverName}
+                            </Text>
+                          )}
+                          {entry.rejectionReason && (
+                            <Text className="text-[10px] text-rose-700 mt-0.5 leading-4">
+                              반려 사유: {entry.rejectionReason}
+                            </Text>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
                 </View>
               )}
             </View>

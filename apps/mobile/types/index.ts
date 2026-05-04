@@ -45,6 +45,22 @@ export interface QuoteApproval {
   approverPhone: string | null;
   approvalDecidedAt: string | null;
   rejectionReason: string | null;
+  /** §11.209d-history-expand — chronological history list (newest first,
+      CANCELLED 포함). length > 1 시 "이전 결재 이력 N건 보기" expand. */
+  historyEntries?: ApprovalHistoryEntry[];
+}
+
+/**
+ * §11.209d-history-expand — chronological history entry. mobile timeline
+ * expand UI 가 사용. ISO string for dates (JSON serialization).
+ */
+export interface ApprovalHistoryEntry {
+  id: string;
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" | string;
+  requestedAt: string;
+  approverName: string | null;
+  decidedAt: string | null;
+  rejectionReason: string | null;
 }
 
 export interface QuoteDetailWithApproval {
