@@ -24,13 +24,22 @@ jobs:
           path: labaxis
           fetch-depth: 0
 
+      - name: Verify Agent Board repository token
+        env:
+          AGENT_BOARD_TOKEN: ${{ secrets.AGENT_BOARD_TOKEN }}
+        run: |
+          if [ -z "$AGENT_BOARD_TOKEN" ]; then
+            echo "::error title=AGENT_BOARD_TOKEN missing::Add repository secret AGENT_BOARD_TOKEN with read access to the private labaxis-agent-board repo, or make that repo public."
+            exit 1
+          fi
+
       - name: Checkout LabAxis Agent Board
         uses: actions/checkout@v4
         with:
-          # Replace this with the real repository once agent-board is published.
           repository: dlghdud64-art/labaxis-agent-board
           path: labaxis-agent-board
           fetch-depth: 1
+          token: ${{ secrets.AGENT_BOARD_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -43,11 +52,17 @@ jobs:
           LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
         run: |
           PILOT="${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}"
+          SUMMARY="Manual LabAxis Agent Board preflight run"
+          BASE_ARGS=""
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            SUMMARY="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
+            BASE_ARGS="--base origin/${{ github.base_ref }}"
+          fi
           node src/run.mjs ci \
             --project "$GITHUB_WORKSPACE/labaxis" \
             --pilot "$PILOT" \
-            --summary "PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
-            --base "origin/${{ github.base_ref }}" \
+            --summary "$SUMMARY" \
+            $BASE_ARGS \
             --skip-api \
             --out "$RUNNER_TEMP/labaxis-review-gate"
 
