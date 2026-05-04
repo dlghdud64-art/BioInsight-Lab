@@ -22,6 +22,16 @@ import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/ho
 // §11.209b Phase 3 — workspace.plan → approvalPolicy 매핑 (헤더 카피
 // Tier 분기). Lab Team 카피에서 결재 약속 제거 = dead promise 차단.
 import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
+// §11.209d-mutation — reject Dialog (reason input).
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 import type {
   PurchaseConversionItem,
@@ -119,11 +129,22 @@ const RECOMMENDATION_LEVEL_LABEL: Record<AiOption["recommendationLevel"], string
 };
 
 export default function PurchasesPage() {
-  const { status: authStatus } = useSession();
+  const { status: authStatus, data: session } = useSession();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [queueTab, setQueueTab] = useState<QueueTab>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // §11.209d-mutation — approve/reject CTA 권한 check (ADMIN/OWNER 만).
+  // server enforceAction 이 진짜 lock — client check 는 button visibility
+  // 만 (defense in depth).
+  const userRole = (session?.user as { role?: string })?.role;
+  const canApprove = userRole === "ADMIN" || userRole === "OWNER";
+
+  // §11.209d-mutation — reject Dialog state (reason input)
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
 
   const { data, isLoading, isError, error } = useQuery<ConversionResponse>({
     queryKey: ["purchase-conversion-queue"],
@@ -190,6 +211,102 @@ export default function PurchasesPage() {
     onError: (err: Error) => {
       toast({
         title: "일괄 발주 전환 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // §11.209d-mutation — approve/reject PurchaseRequest from purchases
+  // detail panel. mutation API 는 이미 land (/api/request/[id]/approve|reject) —
+  // admin/requests page 의 패턴 흡수. server enforceAction 이 진짜 lock.
+  const approveRequestMutation = useMutation({
+    mutationFn: async (requestId: string) => {
+      const res = await csrfFetch(`/api/request/${requestId}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || body?.message || "결재 승인 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "결재 승인 완료", description: "발주 전환이 가능합니다." });
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "결재 승인 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const rejectRequestMutation = useMutation({
+    mutationFn: async (vars: { requestId: string; reason: string }) => {
+      const res = await csrfFetch(`/api/request/${vars.requestId}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ reason: vars.reason }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.error || body?.message || "결재 반려 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "결재 반려 처리됨", description: "재요청 또는 대안 검토가 필요합니다." });
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+      setRejectDialogOpen(false);
+      setRejectReason("");
+      setRejectingRequestId(null);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "결재 반려 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // §11.209d-pr-auto-create — Quote → PurchaseRequest 결재 요청 mutation.
+  // R&D Operations / Enterprise workspace 의 결재 정책 (in_app_approval)
+  // 활성 시만 호출 가능 (server enforceAction + policy check). 성공 시
+  // PR INSERT (PENDING) → next refetch 에서 internalApprovalStatus="PENDING"
+  // → §11.209d UI 분기 (결재 대기 badge + PO CTA disabled) 자동 활성.
+  const requestApprovalMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      const res = await csrfFetch(
+        `/api/work-queue/purchase-conversion/${quoteId}/request-approval`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body?.message || body?.error || "결재 요청 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "결재 요청 완료",
+        description: "결재자에게 알림이 전송됩니다.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["purchase-conversion-queue"] });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "결재 요청 실패",
         description: err.message,
         variant: "destructive",
       });
@@ -949,6 +1066,75 @@ export default function PurchasesPage() {
                     - "견적 상세 페이지 열기" 는 ready_for_po 에서는 secondary
                       (outline) 로, 그 외 stage 는 primary 로. */}
                 <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 space-y-2">
+                  {/* §11.209d-pr-auto-create — "결재 요청" CTA. R&D Operations
+                      / Enterprise workspace (approvalPolicy === "in_app_approval")
+                      + internalApprovalStatus === "NOT_REQUIRED" 시 visible.
+                      자기 자신이 ADMIN 이면 직접 결재 가능 (canApprove) — 결재
+                      요청 button 대신 approve/reject CTA visible. dead button 0. */}
+                  {approvalPolicy === "in_app_approval" &&
+                    selectedItem.internalApprovalStatus === "NOT_REQUIRED" &&
+                    !canApprove && (
+                      <Button
+                        size="sm"
+                        className="w-full h-9 text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-sm disabled:opacity-50"
+                        disabled={requestApprovalMutation.isPending}
+                        onClick={() => {
+                          if (requestApprovalMutation.isPending) return;
+                          requestApprovalMutation.mutate(selectedItem.id);
+                        }}
+                      >
+                        {requestApprovalMutation.isPending ? (
+                          "요청 중..."
+                        ) : (
+                          <>
+                            <FileText className="h-3.5 w-3.5 mr-1.5" />
+                            결재 요청
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  {/* §11.209d-mutation — approve/reject CTA. ADMIN/OWNER 만,
+                      internalApprovalStatus === "PENDING" + latestPendingRequestId
+                      존재 시. server enforceAction 이 진짜 lock — client check 는
+                      visibility 만 (defense in depth). */}
+                  {canApprove &&
+                    selectedItem.internalApprovalStatus === "PENDING" &&
+                    selectedItem.latestPendingRequestId && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          className="h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-50"
+                          disabled={approveRequestMutation.isPending}
+                          onClick={() => {
+                            if (!selectedItem.latestPendingRequestId) return;
+                            approveRequestMutation.mutate(selectedItem.latestPendingRequestId);
+                          }}
+                        >
+                          {approveRequestMutation.isPending ? (
+                            "승인 중..."
+                          ) : (
+                            <>
+                              <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                              결재 승인
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-9 text-xs font-semibold bg-white border border-rose-200 text-rose-700 hover:bg-rose-50 shadow-sm"
+                          disabled={rejectRequestMutation.isPending}
+                          onClick={() => {
+                            if (!selectedItem.latestPendingRequestId) return;
+                            setRejectingRequestId(selectedItem.latestPendingRequestId);
+                            setRejectReason("");
+                            setRejectDialogOpen(true);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5 mr-1.5" />
+                          결재 반려
+                        </Button>
+                      </div>
+                    )}
                   {selectedItem.conversionStatus === "ready_for_po" && (
                     <>
                       {/* §11.209d — internalApprovalStatus === "PENDING" 시
@@ -1067,6 +1253,60 @@ export default function PurchasesPage() {
 
       {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
       <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+
+      {/* §11.209d-mutation — reject Dialog (reason input). admin/requests
+          page 의 패턴 흡수. server enforceAction 이 진짜 lock. */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>결재 반려</DialogTitle>
+            <DialogDescription>
+              반려 사유를 입력하세요. 요청자에게 전달되어 재요청 또는 대안 검토에 사용됩니다.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="예: 예산 초과 — 다음 분기 재요청 권장"
+              className="min-h-[100px] text-sm"
+              maxLength={500}
+            />
+            <p className="text-[10px] text-slate-400 mt-1 text-right">
+              {rejectReason.length} / 500
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setRejectDialogOpen(false)}
+              disabled={rejectRequestMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              size="sm"
+              className="bg-rose-600 hover:bg-rose-700 text-white"
+              disabled={
+                !rejectReason.trim() ||
+                rejectReason.trim().length < 5 ||
+                !rejectingRequestId ||
+                rejectRequestMutation.isPending
+              }
+              onClick={() => {
+                if (!rejectingRequestId) return;
+                rejectRequestMutation.mutate({
+                  requestId: rejectingRequestId,
+                  reason: rejectReason.trim(),
+                });
+              }}
+            >
+              {rejectRequestMutation.isPending ? "처리 중..." : "반려 처리"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
