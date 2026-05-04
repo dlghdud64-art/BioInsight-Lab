@@ -97,10 +97,19 @@ export async function GET(_request: NextRequest) {
       },
     });
 
+    // §11.209b Phase 3 — user 의 workspace.plan 노출 (page 의 헤더 카피
+    // Tier 분기 위해). billing/checkout 의 workspaceMember.findFirst 패턴
+    // 정합. user 가 다중 workspace 인 경우 first match (보수적).
+    const workspaceMember = await db.workspaceMember.findFirst({
+      where: { userId },
+      include: { workspace: { select: { plan: true } } },
+    });
+    const workspacePlan = workspaceMember?.workspace?.plan ?? null;
+
     if (quotes.length === 0) {
       return NextResponse.json({
         success: true,
-        data: { items: [], stats: { ...EMPTY_STATS } },
+        data: { items: [], stats: { ...EMPTY_STATS }, workspacePlan },
       });
     }
 
@@ -188,7 +197,7 @@ export async function GET(_request: NextRequest) {
       { ...EMPTY_STATS },
     );
 
-    return NextResponse.json({ success: true, data: { items, stats } });
+    return NextResponse.json({ success: true, data: { items, stats, workspacePlan } });
   } catch (error) {
     // Don't leak DB error details — log + generic 500
     console.error("[purchase-conversion] Query failed:", error);

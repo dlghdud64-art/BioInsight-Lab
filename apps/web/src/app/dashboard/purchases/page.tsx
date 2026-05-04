@@ -19,6 +19,9 @@ import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobi
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+// §11.209b Phase 3 — workspace.plan → approvalPolicy 매핑 (헤더 카피
+// Tier 분기). Lab Team 카피에서 결재 약속 제거 = dead promise 차단.
+import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 
 import type {
   PurchaseConversionItem,
@@ -70,6 +73,9 @@ interface ConversionResponse {
   data: {
     items: PurchaseConversionItem[];
     stats: ConversionStats;
+    // §11.209b Phase 3 — workspace.plan (route 가 노출). page 의 헤더
+    // 카피 Tier 분기에 사용. null = 비-회원 또는 workspace 부재.
+    workspacePlan?: string | null;
   };
 }
 
@@ -131,6 +137,12 @@ export default function PurchasesPage() {
     staleTime: 30 * 1000,
     retry: 1,
   });
+
+  // §11.209b Phase 3 — workspace.plan → approvalPolicy 매핑. 헤더 카피
+  // Tier 분기에 사용. 옵션 1 (보수적 wiring) 정합 — Lab Team / Starter 는
+  // approvalPolicy='none' → 결재 약속 카피 제거 (dead promise 차단).
+  const approvalPolicy = resolveApprovalPolicyForPlan(data?.data?.workspacePlan ?? null);
+  const showsApprovalPromise = approvalPolicy !== "none";
 
   // α-D session B (ADR §11.22): atomic bulk-PO conversion. Takes the
   // current ready_for_po quoteIds and POSTs them all-or-nothing. On
@@ -335,10 +347,14 @@ export default function PurchasesPage() {
           <div>
             <h1 className="text-xl md:text-2xl font-extrabold tracking-tight text-slate-900">구매 운영</h1>
             {/* §11.209 — 실무 담당자 톤 정합. 책임자 보고 톤("처리합니다")
-                이 아니라 담당자가 지금 무엇을 하는지 명시. Hybrid Tier 분기
-                (Lab Team 자체 결재 / R&D Operations 매트릭스 / Enterprise
-                외부 ERP 연동) 는 실 구현 land 시 별도 batch 에서 카피 추가. */}
-            <p className="text-sm text-slate-500 mt-0.5">회신 받은 견적을 비교하고 발주로 전환하세요. 결재가 필요한 항목은 자동으로 결재 라인에 올라갑니다.</p>
+                이 아니라 담당자가 지금 무엇을 하는지 명시. */}
+            {/* §11.209b Phase 3 — Tier 분기. Lab Team (approvalPolicy='none')
+                사용자에게는 결재 약속 카피 제거 (dead promise 차단). R&D
+                Operations / Enterprise (in_app_approval) 만 약속 visible. */}
+            <p className="text-sm text-slate-500 mt-0.5">
+              회신 받은 견적을 비교하고 발주로 전환하세요.
+              {showsApprovalPromise && " 결재가 필요한 항목은 자동으로 결재 라인에 올라갑니다."}
+            </p>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link href="/app/search">
