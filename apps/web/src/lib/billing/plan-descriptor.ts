@@ -237,3 +237,56 @@ export function getPlanPriceMonthly(intent: PlanIntent): number | null {
 export function getPlanCreditQuota(intent: PlanIntent): number | null {
   return PLAN_DESCRIPTOR[intent].labOpsCreditMonthly;
 }
+
+/**
+ * §11.209b Phase 2 — canonical workspace.plan (FREE / TEAM / ENTERPRISE /
+ * ORGANIZATION) → PlanIntent 매핑 utility.
+ *
+ * dashboard/pricing/page.tsx 의 inline 정의를 재사용 가능한 utility 로 추출
+ * (single source of truth 정합 — settings/pricing/po-candidates route 모두
+ * 본 함수 호출).
+ *
+ * 옵션 1 정합 — TEAM enum 2 SKU 분리 (Lab Team vs R&D Operations) 미해소,
+ * 보수적으로 "team" 매핑. 미래 workspace tier discriminator (subscriptionPriceId
+ * 등) 추가 시 본 함수가 분기 가능 (caller wiring 자체는 이미 정상).
+ *
+ * canonical SubscriptionPlan enum:
+ *   - FREE → "starter"
+ *   - TEAM → "team" (Lab Team 보수, business 분기 0)
+ *   - ENTERPRISE / ORGANIZATION → "enterprise"
+ *
+ * 대소문자 둔감 + null/undefined/unknown defensive (null 반환).
+ */
+export function workspacePlanToIntent(
+  plan: string | null | undefined,
+): PlanIntent | null {
+  if (!plan) return null;
+  const upper = plan.toUpperCase();
+  if (upper === "FREE") return "starter";
+  if (upper === "TEAM") return "team";
+  if (upper === "ENTERPRISE" || upper === "ORGANIZATION") return "enterprise";
+  return null;
+}
+
+/**
+ * §11.209b Phase 2 — workspace.plan → ApprovalPolicy (POCandidate.approvalPolicy
+ * default 결정).
+ *
+ * 옵션 1 보수적 wiring:
+ *   - FREE / TEAM → "none" (Lab Team / Starter)
+ *   - ENTERPRISE / ORGANIZATION → "in_app_approval"
+ *   - unknown / null → "none" (defensive default)
+ *
+ * /api/po-candidates POST 의 createPOCandidate 호출 시 caller (route handler)
+ * 가 본 함수 통과 → input.approvalPolicy 부재면 fallback 으로 사용.
+ *
+ * 미래 workspace.subscriptionPriceId / planSku 추가 시 R&D Operations 분기
+ * 활성 (PLAN_DESCRIPTOR.business.approvalPolicy = "in_app_approval" 즉시 효과).
+ */
+export function resolveApprovalPolicyForPlan(
+  plan: string | null | undefined,
+): "none" | "in_app_approval" | "external_approval" {
+  const intent = workspacePlanToIntent(plan);
+  if (!intent) return "none";
+  return PLAN_DESCRIPTOR[intent].approvalPolicy;
+}

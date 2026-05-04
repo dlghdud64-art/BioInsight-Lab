@@ -11,6 +11,9 @@ import { PLAN_INTENT_VALUES, type PlanIntent } from "@/lib/billing/plan-select";
 import {
   PLAN_DESCRIPTOR,
   type PlanDescriptor,
+  // §11.209b Phase 2 — inline workspacePlanToIntent 제거 + utility import
+  // (single source of truth — settings/pricing/po-candidates 모두 통일).
+  workspacePlanToIntent,
 } from "@/lib/billing/plan-descriptor";
 import {
   Card,
@@ -21,19 +24,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-/** §11.201 — workspace.plan 영문 enum → display layer PlanIntent 매핑.
- *  canonical WorkspacePlan (FREE | TEAM | ENTERPRISE) 변경 0 — display only.
- *  TEAM 은 Lab Team 또는 R&D Operations 두 PlanIntent 와 동일 enum 매핑이지만
- *  현재 plan badge 는 enum 단위 (TEAM = "Lab Team" 또는 "R&D Operations") 결정 불가 →
- *  보수적으로 "Lab Team" 으로 매핑 (Stripe price ID 분기 별도 트랙). */
-function workspacePlanToIntent(plan: string | null | undefined): PlanIntent | null {
-  if (!plan) return null;
-  const upper = plan.toUpperCase();
-  if (upper === "FREE") return "starter";
-  if (upper === "TEAM") return "team";
-  if (upper === "ENTERPRISE") return "enterprise";
-  return null;
-}
+// §11.201 + §11.209b Phase 2 — inline workspacePlanToIntent 제거. 정의는
+// `lib/billing/plan-descriptor.ts` (single source). 본 page 는 import 사용.
 
 function fmt(n: number) {
   return `₩${n.toLocaleString("ko-KR")}`;
