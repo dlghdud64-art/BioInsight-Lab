@@ -97,19 +97,21 @@ export async function GET(_request: NextRequest) {
       },
     });
 
-    // §11.209b Phase 3 — user 의 workspace.plan 노출 (page 의 헤더 카피
-    // Tier 분기 위해). billing/checkout 의 workspaceMember.findFirst 패턴
-    // 정합. user 가 다중 workspace 인 경우 first match (보수적).
+    // §11.209b Phase 3 + §11.209c Phase 2 — user 의 workspace.plan +
+    // stripePriceId 둘 다 노출 (page 의 헤더 카피 Tier 분기 + R&D
+    // Operations SKU 분기 위해). billing/checkout 의 workspaceMember
+    // .findFirst 패턴 정합.
     const workspaceMember = await db.workspaceMember.findFirst({
       where: { userId },
-      include: { workspace: { select: { plan: true } } },
+      include: { workspace: { select: { plan: true, stripePriceId: true } } },
     });
     const workspacePlan = workspaceMember?.workspace?.plan ?? null;
+    const workspaceStripePriceId = workspaceMember?.workspace?.stripePriceId ?? null;
 
     if (quotes.length === 0) {
       return NextResponse.json({
         success: true,
-        data: { items: [], stats: { ...EMPTY_STATS }, workspacePlan },
+        data: { items: [], stats: { ...EMPTY_STATS }, workspacePlan, workspaceStripePriceId },
       });
     }
 
@@ -197,7 +199,7 @@ export async function GET(_request: NextRequest) {
       { ...EMPTY_STATS },
     );
 
-    return NextResponse.json({ success: true, data: { items, stats, workspacePlan } });
+    return NextResponse.json({ success: true, data: { items, stats, workspacePlan, workspaceStripePriceId } });
   } catch (error) {
     // Don't leak DB error details — log + generic 500
     console.error("[purchase-conversion] Query failed:", error);

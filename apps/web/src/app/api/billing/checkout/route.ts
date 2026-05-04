@@ -17,8 +17,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_placeholder_
   apiVersion: "2025-12-15.clover" as any,
 });
 
+// §11.209c Phase 3 — planIntent optional. caller 미전달 시 보수적 'team'
+// (Lab Team) fallback. 'business' 전달 시 BUSINESS_MONTHLY env 분기.
 const checkoutSchema = z.object({
   workspaceId: z.string().min(1),
+  planIntent: z.enum(["starter", "team", "business", "enterprise"]).optional(),
 });
 
 /**
@@ -60,7 +63,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { workspaceId } = checkoutSchema.parse(body);
+    const { workspaceId, planIntent } = checkoutSchema.parse(body);
 
     enforcement = enforceAction({
       userId: session.user.id,
@@ -109,6 +112,36 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // §11.209c Phase 3 — planIntent 기반 line_items price 분기.
+    // 'business' (R&D Operations) → STRIPE_PRICE_ID_BUSINESS_MONTHLY
+    // 그 외 (또는 미전달) → STRIPE_PRICE_ID_TEAM_MONTHLY (보수적 Lab Team)
+    let stripePriceId: string | undefined;
+    if (planIntent === "business") {
+      stripePriceId = process.env.STRIPE_PRICE_ID_BUSINESS_MONTHLY;
+      // graceful fallback — env 부재 + planIntent='business' → 400
+      // 운영자 친화 메시지 (dead button 0).
+      if (!stripePriceId) {
+        return NextResponse.json(
+          {
+            error: "BUSINESS_PRICE_ID_NOT_CONFIGURED",
+            message: "R&D Operations 결제 설정이 아직 준비되지 않았습니다. 영업팀 문의를 통해 도입 상담을 진행해 주세요.",
+          },
+          { status: 400 },
+        );
+      }
+    } else {
+      stripePriceId = process.env.STRIPE_PRICE_ID_TEAM_MONTHLY;
+      if (!stripePriceId) {
+        return NextResponse.json(
+          {
+            error: "TEAM_PRICE_ID_NOT_CONFIGURED",
+            message: "결제 설정이 아직 준비되지 않았습니다. 잠시 후 다시 시도해 주세요.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -116,7 +149,7 @@ export async function POST(request: NextRequest) {
       payment_method_types: ["card"],
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID_TEAM_MONTHLY!,
+          price: stripePriceId,
           quantity: 1,
         },
       ],

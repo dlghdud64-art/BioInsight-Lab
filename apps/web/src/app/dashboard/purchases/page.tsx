@@ -73,9 +73,11 @@ interface ConversionResponse {
   data: {
     items: PurchaseConversionItem[];
     stats: ConversionStats;
-    // §11.209b Phase 3 — workspace.plan (route 가 노출). page 의 헤더
-    // 카피 Tier 분기에 사용. null = 비-회원 또는 workspace 부재.
+    // §11.209b Phase 3 — workspace.plan (헤더 카피 Tier 분기).
     workspacePlan?: string | null;
+    // §11.209c Phase 2 — workspace.stripePriceId (TEAM SKU 분기).
+    // BUSINESS_MONTHLY 매칭 시 R&D Operations 결재 약속 활성.
+    workspaceStripePriceId?: string | null;
   };
 }
 
@@ -138,10 +140,13 @@ export default function PurchasesPage() {
     retry: 1,
   });
 
-  // §11.209b Phase 3 — workspace.plan → approvalPolicy 매핑. 헤더 카피
-  // Tier 분기에 사용. 옵션 1 (보수적 wiring) 정합 — Lab Team / Starter 는
-  // approvalPolicy='none' → 결재 약속 카피 제거 (dead promise 차단).
-  const approvalPolicy = resolveApprovalPolicyForPlan(data?.data?.workspacePlan ?? null);
+  // §11.209b Phase 3 + §11.209c Phase 2 — workspace.plan + stripePriceId
+  // → approvalPolicy 매핑. TEAM + BUSINESS_MONTHLY 매칭 시 R&D Operations
+  // approvalPolicy 'in_app_approval' → 결재 약속 카피 visible.
+  const approvalPolicy = resolveApprovalPolicyForPlan(
+    data?.data?.workspacePlan ?? null,
+    data?.data?.workspaceStripePriceId ?? null,
+  );
   const showsApprovalPromise = approvalPolicy !== "none";
 
   // α-D session B (ADR §11.22): atomic bulk-PO conversion. Takes the

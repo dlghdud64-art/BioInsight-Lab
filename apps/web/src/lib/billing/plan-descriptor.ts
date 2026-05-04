@@ -243,54 +243,70 @@ export function getPlanCreditQuota(intent: PlanIntent): number | null {
 }
 
 /**
- * §11.209b Phase 2 — canonical workspace.plan (FREE / TEAM / ENTERPRISE /
- * ORGANIZATION) → PlanIntent 매핑 utility.
+ * §11.209b Phase 2 + §11.209c Phase 1 — canonical workspace.plan + optional
+ * stripePriceId → PlanIntent 매핑 utility.
  *
- * dashboard/pricing/page.tsx 의 inline 정의를 재사용 가능한 utility 로 추출
- * (single source of truth 정합 — settings/pricing/po-candidates route 모두
- * 본 함수 호출).
- *
- * 옵션 1 정합 — TEAM enum 2 SKU 분리 (Lab Team vs R&D Operations) 미해소,
- * 보수적으로 "team" 매핑. 미래 workspace tier discriminator (subscriptionPriceId
- * 등) 추가 시 본 함수가 분기 가능 (caller wiring 자체는 이미 정상).
+ * §11.209c 확장: TEAM enum 의 2 SKU 분리 (Lab Team vs R&D Operations) 를
+ * stripePriceId env 매칭으로 분기.
+ *   - TEAM + stripePriceId === STRIPE_PRICE_ID_BUSINESS_MONTHLY → "business"
+ *   - TEAM + (그 외 / null / undefined) → "team" (Lab Team 보수)
  *
  * canonical SubscriptionPlan enum:
  *   - FREE → "starter"
- *   - TEAM → "team" (Lab Team 보수, business 분기 0)
+ *   - TEAM → "team" (또는 stripePriceId 매칭 시 "business")
  *   - ENTERPRISE / ORGANIZATION → "enterprise"
  *
  * 대소문자 둔감 + null/undefined/unknown defensive (null 반환).
+ * 기존 caller (1-arg) 호환 — stripePriceId optional.
  */
 export function workspacePlanToIntent(
   plan: string | null | undefined,
+  stripePriceId?: string | null,
 ): PlanIntent | null {
   if (!plan) return null;
   const upper = plan.toUpperCase();
   if (upper === "FREE") return "starter";
-  if (upper === "TEAM") return "team";
   if (upper === "ENTERPRISE" || upper === "ORGANIZATION") return "enterprise";
+  if (upper === "TEAM") {
+    // §11.209c — stripePriceId 분기. env 매칭 시 R&D Operations 활성.
+    // env 미정의 또는 매칭 실패 시 보수적 "team" (Lab Team) fallback.
+    const businessPriceId = process.env.STRIPE_PRICE_ID_BUSINESS_MONTHLY;
+    if (
+      stripePriceId &&
+      businessPriceId &&
+      stripePriceId === businessPriceId
+    ) {
+      return "business";
+    }
+    return "team";
+  }
   return null;
 }
 
 /**
- * §11.209b Phase 2 — workspace.plan → ApprovalPolicy (POCandidate.approvalPolicy
- * default 결정).
+ * §11.209b Phase 2 + §11.209c Phase 2 — workspace.plan + optional stripePriceId
+ * → ApprovalPolicy (POCandidate.approvalPolicy default 결정).
  *
- * 옵션 1 보수적 wiring:
- *   - FREE / TEAM → "none" (Lab Team / Starter)
+ * §11.209c 확장: TEAM enum 의 SKU 분리 (Lab Team vs R&D Operations) 를
+ * stripePriceId 분기로 활성. workspacePlanToIntent 가 분기 처리 — 본 함수는
+ * 단순 wrapper.
+ *
+ *   - FREE / TEAM (stripePriceId 미매칭) → "none" (Starter / Lab Team)
+ *   - TEAM + STRIPE_PRICE_ID_BUSINESS_MONTHLY 매칭 → "in_app_approval"
+ *     (R&D Operations Tier 결재 약속 활성)
  *   - ENTERPRISE / ORGANIZATION → "in_app_approval"
  *   - unknown / null → "none" (defensive default)
  *
- * /api/po-candidates POST 의 createPOCandidate 호출 시 caller (route handler)
- * 가 본 함수 통과 → input.approvalPolicy 부재면 fallback 으로 사용.
+ * /api/po-candidates POST 의 createPOCandidate fallback / purchases 헤더
+ * 카피 분기 등 모든 caller 가 본 함수 통과.
  *
- * 미래 workspace.subscriptionPriceId / planSku 추가 시 R&D Operations 분기
- * 활성 (PLAN_DESCRIPTOR.business.approvalPolicy = "in_app_approval" 즉시 효과).
+ * 기존 caller (1-arg) 호환 — stripePriceId optional.
  */
 export function resolveApprovalPolicyForPlan(
   plan: string | null | undefined,
+  stripePriceId?: string | null,
 ): "none" | "in_app_approval" | "external_approval" {
-  const intent = workspacePlanToIntent(plan);
+  const intent = workspacePlanToIntent(plan, stripePriceId);
   if (!intent) return "none";
   return PLAN_DESCRIPTOR[intent].approvalPolicy;
 }

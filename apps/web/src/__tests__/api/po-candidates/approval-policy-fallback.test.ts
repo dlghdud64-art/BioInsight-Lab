@@ -34,10 +34,12 @@ describe("§11.209b Phase 2 — po-candidates POST approvalPolicy fallback", () 
       expect(src).toMatch(/import[\s\S]*resolveApprovalPolicyForPlan[\s\S]*from\s+["']@\/lib\/billing\/plan-descriptor["']/);
     });
 
-    it("workspaceMember.findFirst 통한 workspace.plan 조회 (billing/checkout 패턴)", () => {
+    it("workspaceMember.findFirst 통한 workspace.plan 조회 (billing/checkout 패턴 + §11.209c 의 select 확장 호환)", () => {
       const src = read(ROUTE);
       expect(src).toMatch(/workspaceMember\.findFirst/);
-      expect(src).toMatch(/include:\s*\{[\s\S]*workspace:\s*true/);
+      // §11.209c Phase 2 — workspace: true 또는 workspace: { select: ... }
+      // 둘 다 정합 (stripePriceId select 확장 후에도 통과).
+      expect(src).toMatch(/include:\s*\{[\s\S]*workspace:\s*(true|\{)/);
     });
 
     it("input.approvalPolicy fallback 패턴 (body.approvalPolicy ?? resolveApprovalPolicyForPlan(...))", () => {

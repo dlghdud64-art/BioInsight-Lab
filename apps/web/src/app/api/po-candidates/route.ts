@@ -74,14 +74,18 @@ export async function POST(req: NextRequest) {
     // billing/checkout 의 workspaceMember.findFirst 패턴과 정합. user 가 다중
     // workspace 인 경우 first match (보수적 — 후속 batch 에서 active workspace
     // 명시 매핑 가능).
+    // §11.209c Phase 2 — workspace.plan + stripePriceId 둘 다 select.
+    // resolveApprovalPolicyForPlan 의 stripePriceId 분기 활성 (TEAM +
+    // BUSINESS_MONTHLY → "in_app_approval").
     let resolvedApprovalPolicy = body.approvalPolicy;
     if (!resolvedApprovalPolicy) {
       const member = await db.workspaceMember.findFirst({
         where: { userId: session.user.id },
-        include: { workspace: true },
+        include: { workspace: { select: { plan: true, stripePriceId: true } } },
       });
       resolvedApprovalPolicy = resolveApprovalPolicyForPlan(
         member?.workspace?.plan ?? null,
+        member?.workspace?.stripePriceId ?? null,
       );
     }
 
