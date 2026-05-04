@@ -1308,39 +1308,46 @@ function PlansPageContent() {
  <CardContent className="p-0">
  <div className="overflow-x-auto">
  <table className="w-full text-sm">
+ {/* #settings-plans-comparison-table-redesign — column 라벨 한국어
+     descriptor 정합 (Lab Team / R&D Operations). canonical SubscriptionPlan
+     변경 0 — display layer 만. */}
  <thead>
  <tr className="border-b border-slate-200 border-slate-300 bg-slate-50 bg-slate-100/50">
  <th className="text-left py-3 px-4 font-semibold text-slate-600 w-[220px]">
  기능
  </th>
  <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
- Starter
+ {PLAN_DESCRIPTOR.starter.label}
  </th>
  <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
- Team
+ {PLAN_DESCRIPTOR.team.label}
  </th>
- <th className="text-center py-3 px-3 font-semibold text-blue-700 text-blue-600 bg-blue-50/50 bg-blue-50/50 w-[100px]">
- Business
+ <th className="text-center py-3 px-3 font-semibold text-blue-700 text-blue-600 bg-blue-50/50 bg-blue-50/50 w-[110px]">
+ {PLAN_DESCRIPTOR.business.label}
  </th>
  <th className="text-center py-3 px-3 font-semibold text-slate-400 w-[100px]">
- Enterprise
+ {PLAN_DESCRIPTOR.enterprise.label}
  </th>
  </tr>
  </thead>
  <tbody>
+ {/* #settings-plans-comparison-table-redesign — 정량 row 매트릭스
+     PLAN_DESCRIPTOR single source. fake '무제한' (Business=ORGANIZATION
+     SKU) 폐기 → 정량 (15명, 2,000 품목). Enterprise 만 계약 기반
+     '무제한' 보존 (descriptor.enterprise 의 null 값 정합). */}
  <tr className="border-b border-slate-100 border-slate-200 bg-slate-50/50 bg-slate-100/30">
  <td className="py-2.5 px-4 font-medium text-slate-400">팀원 수</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">1명</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">5명</td>
- <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-50/30 text-blue-700 text-blue-600 font-semibold">무제한</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">무제한</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.starter.seatsRecommended}명</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.team.seatsRecommended}명</td>
+ <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-50/30 text-blue-700 text-blue-600 font-semibold">{PLAN_DESCRIPTOR.business.seatsRecommended}명</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.enterprise.seatsRecommended ?? "무제한"}</td>
  </tr>
  <tr className="border-b border-slate-100 border-slate-200 bg-slate-50/50 bg-slate-100/30">
  <td className="py-2.5 px-4 font-medium text-slate-400">품목 등록 수</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">10개</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">50개</td>
- <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-50/30 text-blue-700 text-blue-600 font-semibold">무제한</td>
- <td className="text-center py-2.5 px-3 text-slate-400 font-medium">무제한</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.starter.operatingVolume.inventoryItems}개</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.team.operatingVolume.inventoryItems?.toLocaleString("ko-KR")}개</td>
+ <td className="text-center py-2.5 px-3 bg-blue-50/30 bg-blue-50/30 text-blue-700 text-blue-600 font-semibold">{PLAN_DESCRIPTOR.business.operatingVolume.inventoryItems?.toLocaleString("ko-KR")}개</td>
+ <td className="text-center py-2.5 px-3 text-slate-400 font-medium">{PLAN_DESCRIPTOR.enterprise.operatingVolume.inventoryItems ?? "무제한"}</td>
  </tr>
  {FEATURE_COMPARISON.map((feat) => {
  const starterHas =
