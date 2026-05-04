@@ -152,10 +152,13 @@ export function evaluateGuardrails(ctx: GuardrailContext): GuardrailResult[] {
   }
 
   // 5. Approval Dependency
+  // §11.99 — schema 의 ApprovalPolicy enum 어휘 정합. 이전 application
+  // 어휘 (external manual / in app light) 는 schema 어휘 (external approval
+  // / in app approval) 와 동의어. drift 차단 위해 schema 어휘로 단일화.
   if (ctx.approvalPolicy && ctx.approvalPolicy !== "none" && ctx.approvalStatus) {
     const poStages: ProcurementStage[] = ["po_conversion_candidate", "po_ready"];
     if (poStages.includes(ctx.stage)) {
-      if (ctx.approvalPolicy === "external_manual" && ctx.approvalStatus !== "externally_approved") {
+      if (ctx.approvalPolicy === "external_approval" && ctx.approvalStatus !== "externally_approved") {
         results.push({
           ruleId: "external_approval_pending",
           ruleType: "approval_dependency",
@@ -167,7 +170,7 @@ export function evaluateGuardrails(ctx: GuardrailContext): GuardrailResult[] {
           resolvable: true,
         });
       }
-      if (ctx.approvalPolicy === "in_app_light" && ctx.approvalStatus !== "in_app_approved") {
+      if (ctx.approvalPolicy === "in_app_approval" && ctx.approvalStatus !== "in_app_approved") {
         results.push({
           ruleId: "in_app_approval_pending",
           ruleType: "approval_dependency",

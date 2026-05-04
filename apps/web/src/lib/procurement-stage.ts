@@ -7,7 +7,7 @@
  * → po_conversion_candidate → po_ready → po_created → receiving → stocked
  *
  * Approval은 core stage가 아닌 optional policy layer로 분리:
- * - approval_policy: "none" | "external_manual" | "in_app_light"
+ * - approval_policy: "none" | "external_approval" | "in_app_approval"
  * - approval_status: "not_required" | "external_approval_required" | ...
  *
  * DB 스키마 변경 없이 기존 QuoteStatus enum을 활용합니다.
@@ -30,7 +30,11 @@ export type ProcurementStage =
 
 // ── Approval Policy (optional layer) ────────────────────────────
 
-export type ApprovalPolicy = "none" | "external_manual" | "in_app_light";
+// §11.99 — schema 의 Prisma enum ApprovalPolicy (§11.209b-pre 통일) 정합.
+// 이전 application 어휘 (in app light / external manual) 는 schema 어휘
+// (in app approval / external approval) 와 동의어. drift 차단 위해 schema
+// 어휘로 단일화.
+export type ApprovalPolicy = "none" | "external_approval" | "in_app_approval";
 
 export type ApprovalStatus =
   | "not_required"
@@ -95,8 +99,8 @@ export function getNextActionLabel(stage: ProcurementStage, policy: ApprovalPoli
   if (stage === "po_conversion_candidate") {
     switch (policy) {
       case "none": return "발주 실행 준비";
-      case "external_manual": return "승인 증빙 연결";
-      case "in_app_light": return "간이 승인 확인";
+      case "external_approval": return "승인 증빙 연결";
+      case "in_app_approval": return "간이 승인 확인";
     }
   }
   return getStageInfo(stage).nextAction;
@@ -109,8 +113,8 @@ export function getNextActionLabel(stage: ProcurementStage, policy: ApprovalPoli
 export function canConvertToPO(policy: ApprovalPolicy, approvalStatus: ApprovalStatus): boolean {
   switch (policy) {
     case "none": return true;
-    case "external_manual": return approvalStatus === "externally_approved";
-    case "in_app_light": return approvalStatus === "in_app_approved";
+    case "external_approval": return approvalStatus === "externally_approved";
+    case "in_app_approval": return approvalStatus === "in_app_approved";
   }
 }
 

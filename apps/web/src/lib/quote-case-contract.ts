@@ -63,7 +63,8 @@ export interface QuoteCaseNormalized {
   compareCompleted: boolean;
   conditionIssues: number;
   requiredDocsMissing: boolean;
-  approvalPolicy: "none" | "external_manual" | "in_app_light";
+  // §11.99 — schema enum 정합 (drift 어휘 swap)
+  approvalPolicy: "none" | "external_approval" | "in_app_approval";
   externalApprovalStatus: "not_required" | "external_approval_required" | "external_approval_pending" | "externally_approved" | "externally_rejected";
   poConversionReady: boolean;
   blockerCount: number;
