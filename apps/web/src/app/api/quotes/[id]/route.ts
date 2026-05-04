@@ -85,13 +85,14 @@ export async function GET(
     // §11.209d-mobile Phase 1 — 결재 정보 derive (mobile 견적 상세 timeline).
     // PurchaseRequest 별도 batched query (Quote ↔ PR schema 역관계 0 정합).
     // resolver 의 derive helpers 재사용 = canonical 단일화.
+    // §11.209d-contact — approver { email, phone } 추가 select
     const purchaseRequests = await db.purchaseRequest.findMany({
       where: { quoteId: id },
       select: {
         id: true,
         status: true,
         approverId: true,
-        approver: { select: { name: true } },
+        approver: { select: { name: true, email: true, phone: true } },
         approvedAt: true,
         rejectedAt: true,
         rejectedReason: true,
@@ -103,6 +104,8 @@ export async function GET(
       status: pr.status,
       approverId: pr.approverId,
       approverName: pr.approver?.name ?? null,
+      approverEmail: pr.approver?.email ?? null,
+      approverPhone: pr.approver?.phone ?? null,
       approvedAt: pr.approvedAt,
       rejectedAt: pr.rejectedAt,
       rejectedReason: pr.rejectedReason,
@@ -119,6 +122,8 @@ export async function GET(
         latestPendingRequestId,
         approvalRequestedAt: approvalHistory.approvalRequestedAt,
         approverName: approvalHistory.approverName,
+        approverEmail: approvalHistory.approverEmail,
+        approverPhone: approvalHistory.approverPhone,
         approvalDecidedAt: approvalHistory.approvalDecidedAt,
         rejectionReason: approvalHistory.rejectionReason,
       },

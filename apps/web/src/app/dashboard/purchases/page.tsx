@@ -955,6 +955,30 @@ export default function PurchasesPage() {
                                 </span>
                               </div>
                             )}
+                            {/* §11.209d-contact — approver email/phone (있을 때만 visible).
+                                email 은 mailto:, phone 은 tel: 링크. */}
+                            {selectedItem.approverEmail && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400">이메일</span>
+                                <a
+                                  href={`mailto:${selectedItem.approverEmail}`}
+                                  className="font-mono text-blue-600 hover:underline truncate ml-2"
+                                >
+                                  {selectedItem.approverEmail}
+                                </a>
+                              </div>
+                            )}
+                            {selectedItem.approverPhone && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400">연락처</span>
+                                <a
+                                  href={`tel:${selectedItem.approverPhone}`}
+                                  className="font-mono text-blue-600 hover:underline"
+                                >
+                                  {selectedItem.approverPhone}
+                                </a>
+                              </div>
+                            )}
                             {selectedItem.approvalDecidedAt && (
                               <div className="flex justify-between text-[11px]">
                                 <span className="text-slate-400">

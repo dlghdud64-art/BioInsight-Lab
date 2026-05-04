@@ -5,6 +5,7 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
+  Linking,
 } from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, router } from "expo-router";
@@ -214,6 +215,43 @@ export default function QuoteDetailScreen() {
                     {approval.approverName}
                   </Text>
                 </View>
+              )}
+              {/* §11.209d-contact — approver email/phone (있을 때만 visible).
+                  React Native Linking.openURL 로 외부 mailto:/tel: 호출
+                  (Expo Router 의 router.replace 는 in-app navigation 만). */}
+              {approval.approverEmail && (
+                <Pressable
+                  className="flex-row items-center justify-between"
+                  onPress={() => {
+                    if (approval.approverEmail) {
+                      Linking.openURL(`mailto:${approval.approverEmail}`).catch(() => {
+                        // 사용자 device 에 email 앱 0 시 graceful — toast 또는 silent
+                      });
+                    }
+                  }}
+                >
+                  <Text className="text-xs text-slate-500">이메일</Text>
+                  <Text className="text-xs font-mono text-blue-600">
+                    {approval.approverEmail}
+                  </Text>
+                </Pressable>
+              )}
+              {approval.approverPhone && (
+                <Pressable
+                  className="flex-row items-center justify-between"
+                  onPress={() => {
+                    if (approval.approverPhone) {
+                      Linking.openURL(`tel:${approval.approverPhone}`).catch(() => {
+                        // 사용자 device 에 dialer 0 시 graceful
+                      });
+                    }
+                  }}
+                >
+                  <Text className="text-xs text-slate-500">연락처</Text>
+                  <Text className="text-xs font-mono text-blue-600">
+                    {approval.approverPhone}
+                  </Text>
+                </Pressable>
               )}
               {approval.approvalDecidedAt && (
                 <View className="flex-row items-center justify-between">

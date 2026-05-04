@@ -112,6 +112,10 @@ export interface PurchaseConversionItem {
   readonly approvalRequestedAt: Date | null;
   /** §11.209d-history — latest non-CANCELLED PR.approver.name. */
   readonly approverName: string | null;
+  /** §11.209d-contact — latest non-CANCELLED PR.approver.email. */
+  readonly approverEmail: string | null;
+  /** §11.209d-contact — latest non-CANCELLED PR.approver.phone (optional). */
+  readonly approverPhone: string | null;
   /** §11.209d-history — latest PR.approvedAt 또는 rejectedAt (PENDING 시 null). */
   readonly approvalDecidedAt: Date | null;
   /** §11.209d-history — latest PR.rejectedReason (REJECTED 시 visible). */
@@ -217,6 +221,12 @@ export interface PurchaseRequestInput {
   readonly approverId: string | null;
   /** §11.209d-history — approver.name (optional, composer 가 join 후 forward) */
   readonly approverName?: string | null;
+  /** §11.209d-contact — approver.email (User.email, required field 이므로
+      composer 가 join 후 forward 시 항상 string. resolver 입장은 optional). */
+  readonly approverEmail?: string | null;
+  /** §11.209d-contact — approver.phone (User.phone, optional, §11.69 운영자
+      연락처). null 시 timeline 에서 row 자체 사라짐 (dead button 0). */
+  readonly approverPhone?: string | null;
   readonly approvedAt: Date | null;
   readonly rejectedAt: Date | null;
   /** §11.209d-history — rejected reason (REJECTED 시 visible) */
@@ -558,6 +568,8 @@ export function deriveApprovalHistory(
 ): {
   approvalRequestedAt: Date | null;
   approverName: string | null;
+  approverEmail: string | null;
+  approverPhone: string | null;
   approvalDecidedAt: Date | null;
   rejectionReason: string | null;
 } {
@@ -565,6 +577,8 @@ export function deriveApprovalHistory(
     return {
       approvalRequestedAt: null,
       approverName: null,
+      approverEmail: null,
+      approverPhone: null,
       approvalDecidedAt: null,
       rejectionReason: null,
     };
@@ -572,11 +586,13 @@ export function deriveApprovalHistory(
   const latest = [...purchaseRequests].sort(
     (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
   )[0]!;
-  // CANCELLED — re-set 가능, history 도 null
+  // CANCELLED — re-set 가능, history (contact 포함) 도 null
   if (latest.status === "CANCELLED") {
     return {
       approvalRequestedAt: null,
       approverName: null,
+      approverEmail: null,
+      approverPhone: null,
       approvalDecidedAt: null,
       rejectionReason: null,
     };
@@ -590,6 +606,8 @@ export function deriveApprovalHistory(
   return {
     approvalRequestedAt: latest.createdAt,
     approverName: latest.approverName ?? null,
+    approverEmail: latest.approverEmail ?? null,
+    approverPhone: latest.approverPhone ?? null,
     approvalDecidedAt: decidedAt,
     rejectionReason:
       latest.status === "REJECTED" ? (latest.rejectedReason ?? null) : null,

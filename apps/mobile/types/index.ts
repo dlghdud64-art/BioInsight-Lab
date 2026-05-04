@@ -39,6 +39,10 @@ export interface QuoteApproval {
   latestPendingRequestId: string | null;
   approvalRequestedAt: string | null;
   approverName: string | null;
+  /** §11.209d-contact — approver email (mailto: 링크 가능). */
+  approverEmail: string | null;
+  /** §11.209d-contact — approver phone (tel: 링크 가능, optional). */
+  approverPhone: string | null;
   approvalDecidedAt: string | null;
   rejectionReason: string | null;
 }
