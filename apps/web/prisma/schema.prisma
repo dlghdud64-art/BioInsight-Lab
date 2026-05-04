@@ -2025,6 +2025,21 @@ enum ApprovalPolicy {
   external_approval  // 외부 ERP/그룹웨어 결재 (Enterprise Tier 옵션)
 }
 
+/// §11.99b — POCandidate 단위 결재 상태. AiActionItem.approvalStatus 의
+/// ApprovalStatus enum (4 값 UPPER_CASE) 과 별개 — POCandidate 의 결재 흐름은
+/// 더 세분화된 8 단계 (procurement-stage.ts 의 ApprovalStatus type alias 어휘
+/// 정합). 옵션 A — 별도 enum 이름 (POCandidateApprovalStatus) 으로 충돌 회피.
+enum POCandidateApprovalStatus {
+  not_required                  // 결재 불필요
+  external_approval_required    // 외부 결재 필요
+  external_approval_pending     // 외부 결재 대기 중
+  externally_approved           // 외부 결재 완료
+  externally_rejected           // 외부 결재 반려
+  in_app_approval_pending       // 내부 결재 대기 중
+  in_app_approved               // 내부 결재 완료
+  in_app_rejected               // 내부 결재 반려
+}
+
 model AiActionItem {
   id                String           @id @default(cuid())
   type              AiActionType
@@ -2527,7 +2542,9 @@ model POCandidate {
   // string literal "none" / "in_app_approval" / "external_approval" 그대로
   // 호환 (Prisma 가 enum value 와 string literal 자동 매핑).
   approvalPolicy   ApprovalPolicy @default(none)
-  approvalStatus   String   @default("not_required") // ProcurementStage ApprovalStatus (string) — 별도 cluster (§11.99 후보)
+  // §11.99b — String → POCandidateApprovalStatus enum 통일 (옵션 A —
+  // AiActionItem.approvalStatus 의 ApprovalStatus enum 과 분리, 별도 이름).
+  approvalStatus   POCandidateApprovalStatus @default(not_required)
   stage            String   @default("po_conversion_candidate") // ProcurementStage (string)
 
   createdAt        DateTime @default(now())
