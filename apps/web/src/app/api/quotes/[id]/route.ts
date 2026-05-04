@@ -20,6 +20,7 @@ import {
   deriveInternalApprovalStatus,
   deriveLatestPendingRequestId,
   deriveApprovalHistory,
+  deriveApprovalHistoryEntries,
 } from "@/lib/ontology/purchase-conversion-resolver";
 
 const logger = createLogger("quotes/[id]");
@@ -114,6 +115,7 @@ export async function GET(
     const internalApprovalStatus = deriveInternalApprovalStatus(prInputs);
     const latestPendingRequestId = deriveLatestPendingRequestId(prInputs);
     const approvalHistory = deriveApprovalHistory(prInputs);
+    const approvalHistoryEntries = deriveApprovalHistoryEntries(prInputs);
 
     return NextResponse.json({
       quote,
@@ -126,6 +128,8 @@ export async function GET(
         approverPhone: approvalHistory.approverPhone,
         approvalDecidedAt: approvalHistory.approvalDecidedAt,
         rejectionReason: approvalHistory.rejectionReason,
+        // §11.209d-history-expand — chronological list (newest first, CANCELLED 포함)
+        historyEntries: approvalHistoryEntries,
       },
     });
   } catch (error) {

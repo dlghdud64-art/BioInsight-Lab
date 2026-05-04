@@ -120,6 +120,25 @@ export interface PurchaseConversionItem {
   readonly approvalDecidedAt: Date | null;
   /** §11.209d-history — latest PR.rejectedReason (REJECTED 시 visible). */
   readonly rejectionReason: string | null;
+  /** §11.209d-history-expand — chronological list (newest first). UI "더 보기"
+      expand 시 latest 외 entries 표시. CANCELLED 포함 (history 보존). */
+  readonly approvalHistoryEntries: readonly ApprovalHistoryEntry[];
+}
+
+/**
+ * §11.209d-history-expand — chronological history entry. timeline expand
+ * UI 가 사용. PurchaseConversionItem.approvalHistoryEntries 의 element type.
+ */
+export interface ApprovalHistoryEntry {
+  readonly id: string;
+  /** PurchaseRequestStatus enum: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" */
+  readonly status: string;
+  readonly requestedAt: Date;
+  readonly approverName: string | null;
+  /** APPROVED → approvedAt, REJECTED → rejectedAt, 그 외 → null */
+  readonly decidedAt: Date | null;
+  /** REJECTED 만 visible, 그 외 → null */
+  readonly rejectionReason: string | null;
 }
 
 // ──────────────────────────────────────────────────────────
@@ -563,6 +582,34 @@ export function deriveLatestPendingRequestId(
  * timeline UI 가 사용. CANCELLED 는 internalApprovalStatus="NOT_REQUIRED"
  * 정합으로 history 도 null (re-set 가능 — 새 PR 시작 가능).
  */
+/**
+ * §11.209d-history-expand — chronological history list (newest first).
+ *
+ * timeline UI "더 보기" expand 시 사용. CANCELLED 포함 (history 보존 — 사용자가
+ * 결재 취소 후 재요청한 경우도 흐름 추적 가능).
+ */
+export function deriveApprovalHistoryEntries(
+  purchaseRequests: readonly PurchaseRequestInput[],
+): ApprovalHistoryEntry[] {
+  if (purchaseRequests.length === 0) return [];
+  return [...purchaseRequests]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map((pr) => ({
+      id: pr.id,
+      status: pr.status,
+      requestedAt: pr.createdAt,
+      approverName: pr.approverName ?? null,
+      decidedAt:
+        pr.status === "APPROVED"
+          ? pr.approvedAt
+          : pr.status === "REJECTED"
+            ? pr.rejectedAt
+            : null,
+      rejectionReason:
+        pr.status === "REJECTED" ? (pr.rejectedReason ?? null) : null,
+    }));
+}
+
 export function deriveApprovalHistory(
   purchaseRequests: readonly PurchaseRequestInput[],
 ): {
@@ -685,5 +732,7 @@ export function resolvePurchaseConversion(
     latestPendingRequestId: deriveLatestPendingRequestId(input.purchaseRequests ?? []),
     // §11.209d-history — latest non-CANCELLED PR 의 history fields. timeline UI.
     ...deriveApprovalHistory(input.purchaseRequests ?? []),
+    // §11.209d-history-expand — chronological list (newest first, CANCELLED 포함).
+    approvalHistoryEntries: deriveApprovalHistoryEntries(input.purchaseRequests ?? []),
   };
 }

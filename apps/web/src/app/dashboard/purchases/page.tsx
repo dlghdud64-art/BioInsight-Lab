@@ -146,6 +146,9 @@ export default function PurchasesPage() {
   const [rejectReason, setRejectReason] = useState("");
   const [rejectingRequestId, setRejectingRequestId] = useState<string | null>(null);
 
+  // §11.209d-history-expand — "이전 결재 이력" expand state
+  const [historyExpanded, setHistoryExpanded] = useState(false);
+
   const { data, isLoading, isError, error } = useQuery<ConversionResponse>({
     queryKey: ["purchase-conversion-queue"],
     queryFn: async () => {
@@ -1001,6 +1004,69 @@ export default function PurchasesPage() {
                                 <p className="mt-0.5 text-rose-700 leading-snug break-words">
                                   {selectedItem.rejectionReason}
                                 </p>
+                              </div>
+                            )}
+                            {/* §11.209d-history-expand — 이전 결재 이력 expand.
+                                approvalHistoryEntries 가 2 개 이상 (latest 제외 추가
+                                entries 존재) 시만 button visible. dead button 0. */}
+                            {selectedItem.approvalHistoryEntries.length > 1 && (
+                              <div className="pt-1.5 border-t border-slate-100">
+                                <button
+                                  type="button"
+                                  className="text-[11px] text-slate-500 hover:text-slate-700 flex items-center gap-1"
+                                  onClick={() => setHistoryExpanded((v) => !v)}
+                                >
+                                  {historyExpanded ? "이전 결재 이력 숨기기" : `이전 결재 이력 ${selectedItem.approvalHistoryEntries.length - 1}건 보기`}
+                                </button>
+                                {historyExpanded && (
+                                  <ul className="mt-2 space-y-2">
+                                    {selectedItem.approvalHistoryEntries.slice(1).map((entry) => (
+                                      <li
+                                        key={entry.id}
+                                        className="text-[10px] bg-slate-50 rounded p-2 border border-slate-100"
+                                      >
+                                        <div className="flex items-center justify-between mb-0.5">
+                                          <span
+                                            className={
+                                              entry.status === "APPROVED"
+                                                ? "font-semibold text-emerald-700"
+                                                : entry.status === "REJECTED"
+                                                  ? "font-semibold text-rose-700"
+                                                  : entry.status === "CANCELLED"
+                                                    ? "font-semibold text-slate-500"
+                                                    : "font-semibold text-amber-700"
+                                            }
+                                          >
+                                            {entry.status === "APPROVED"
+                                              ? "결재 완료"
+                                              : entry.status === "REJECTED"
+                                                ? "결재 반려"
+                                                : entry.status === "CANCELLED"
+                                                  ? "취소"
+                                                  : "결재 대기"}
+                                          </span>
+                                          <span className="font-mono tabular-nums text-slate-500">
+                                            {new Date(entry.requestedAt).toLocaleString("ko-KR", {
+                                              year: "numeric",
+                                              month: "2-digit",
+                                              day: "2-digit",
+                                              hour: "2-digit",
+                                              minute: "2-digit",
+                                            })}
+                                          </span>
+                                        </div>
+                                        {entry.approverName && (
+                                          <div className="text-slate-600">결재자: {entry.approverName}</div>
+                                        )}
+                                        {entry.rejectionReason && (
+                                          <div className="text-rose-700 mt-0.5 break-words">
+                                            반려 사유: {entry.rejectionReason}
+                                          </div>
+                                        )}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                               </div>
                             )}
                           </div>
