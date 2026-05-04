@@ -929,6 +929,58 @@ export default function PurchasesPage() {
                             : "결재 불필요"}
                         </span>
                       </div>
+                      {/* §11.209d-history — 결재 timeline. internalApprovalStatus
+                          !== "NOT_REQUIRED" 시만 visible (PENDING / APPROVED /
+                          REJECTED). canonical source = latest non-CANCELLED PR. */}
+                      {selectedItem.internalApprovalStatus !== "NOT_REQUIRED" &&
+                        selectedItem.approvalRequestedAt && (
+                          <div className="rounded-md border border-slate-200 bg-white p-2.5 mt-1 space-y-1.5">
+                            <div className="flex justify-between text-[11px]">
+                              <span className="text-slate-400">결재 요청 시각</span>
+                              <span className="font-mono tabular-nums text-slate-700">
+                                {new Date(selectedItem.approvalRequestedAt).toLocaleString("ko-KR", {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                            {selectedItem.approverName && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400">결재자</span>
+                                <span className="font-medium text-slate-700">
+                                  {selectedItem.approverName}
+                                </span>
+                              </div>
+                            )}
+                            {selectedItem.approvalDecidedAt && (
+                              <div className="flex justify-between text-[11px]">
+                                <span className="text-slate-400">
+                                  {selectedItem.internalApprovalStatus === "APPROVED" ? "승인 시각" : "반려 시각"}
+                                </span>
+                                <span className="font-mono tabular-nums text-slate-700">
+                                  {new Date(selectedItem.approvalDecidedAt).toLocaleString("ko-KR", {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                              </div>
+                            )}
+                            {selectedItem.rejectionReason && (
+                              <div className="text-[11px] pt-1 border-t border-slate-100">
+                                <span className="text-slate-400">반려 사유</span>
+                                <p className="mt-0.5 text-rose-700 leading-snug break-words">
+                                  {selectedItem.rejectionReason}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       <div className="flex justify-between text-xs">
                         <span className="text-slate-500">외부 승인</span>
                         <span className={selectedItem.externalApprovalStatus === "approved"

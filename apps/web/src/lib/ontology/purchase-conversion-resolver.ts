@@ -104,6 +104,18 @@ export interface PurchaseConversionItem {
   /** §11.209d — internal (in-app) approval status. canonical source =
       PurchaseRequest.status (latest by createdAt). */
   readonly internalApprovalStatus: InternalApprovalStatus;
+  /** §11.209d-mutation — latest PENDING PurchaseRequest.id (PurchaseRequest.status
+      === "PENDING" 일 때 그 id, 아니면 null). approve/reject mutation
+      caller 가 사용. */
+  readonly latestPendingRequestId: string | null;
+  /** §11.209d-history — latest non-CANCELLED PR.createdAt. timeline 표시용. */
+  readonly approvalRequestedAt: Date | null;
+  /** §11.209d-history — latest non-CANCELLED PR.approver.name. */
+  readonly approverName: string | null;
+  /** §11.209d-history — latest PR.approvedAt 또는 rejectedAt (PENDING 시 null). */
+  readonly approvalDecidedAt: Date | null;
+  /** §11.209d-history — latest PR.rejectedReason (REJECTED 시 visible). */
+  readonly rejectionReason: string | null;
 }
 
 // ──────────────────────────────────────────────────────────
@@ -194,15 +206,21 @@ export interface AiActionInput {
 /**
  * §11.209d — Minimal PurchaseRequest subset that the resolver reads.
  * Mirrors prisma `model PurchaseRequest`. canonical source for
- * internalApprovalStatus derive.
+ * internalApprovalStatus + approval history derive.
+ *
+ * §11.209d-history: approverName + rejectedReason 추가 (timeline UI 위해).
  */
 export interface PurchaseRequestInput {
   readonly id: string;
   /** PurchaseRequestStatus enum: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" */
   readonly status: string;
   readonly approverId: string | null;
+  /** §11.209d-history — approver.name (optional, composer 가 join 후 forward) */
+  readonly approverName?: string | null;
   readonly approvedAt: Date | null;
   readonly rejectedAt: Date | null;
+  /** §11.209d-history — rejected reason (REJECTED 시 visible) */
+  readonly rejectedReason?: string | null;
   readonly createdAt: Date;
 }
 
@@ -510,6 +528,74 @@ function deriveInternalApprovalStatus(
   return "PENDING";
 }
 
+/**
+ * §11.209d-mutation — latest PENDING PurchaseRequest.id derive.
+ *
+ * approve/reject mutation caller (detail panel CTA) 가 사용. latest PR
+ * 의 status === "PENDING" 일 때 그 id 반환, 아니면 null.
+ *
+ * canonical source: PurchaseRequest (latest by createdAt).
+ */
+function deriveLatestPendingRequestId(
+  purchaseRequests: readonly PurchaseRequestInput[],
+): string | null {
+  if (purchaseRequests.length === 0) return null;
+  const latest = [...purchaseRequests].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  )[0]!;
+  if (latest.status === "PENDING") return latest.id;
+  return null;
+}
+
+/**
+ * §11.209d-history — latest non-CANCELLED PR 의 history fields 추출.
+ *
+ * timeline UI 가 사용. CANCELLED 는 internalApprovalStatus="NOT_REQUIRED"
+ * 정합으로 history 도 null (re-set 가능 — 새 PR 시작 가능).
+ */
+function deriveApprovalHistory(
+  purchaseRequests: readonly PurchaseRequestInput[],
+): {
+  approvalRequestedAt: Date | null;
+  approverName: string | null;
+  approvalDecidedAt: Date | null;
+  rejectionReason: string | null;
+} {
+  if (purchaseRequests.length === 0) {
+    return {
+      approvalRequestedAt: null,
+      approverName: null,
+      approvalDecidedAt: null,
+      rejectionReason: null,
+    };
+  }
+  const latest = [...purchaseRequests].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  )[0]!;
+  // CANCELLED — re-set 가능, history 도 null
+  if (latest.status === "CANCELLED") {
+    return {
+      approvalRequestedAt: null,
+      approverName: null,
+      approvalDecidedAt: null,
+      rejectionReason: null,
+    };
+  }
+  const decidedAt =
+    latest.status === "APPROVED"
+      ? latest.approvedAt
+      : latest.status === "REJECTED"
+        ? latest.rejectedAt
+        : null;
+  return {
+    approvalRequestedAt: latest.createdAt,
+    approverName: latest.approverName ?? null,
+    approvalDecidedAt: decidedAt,
+    rejectionReason:
+      latest.status === "REJECTED" ? (latest.rejectedReason ?? null) : null,
+  };
+}
+
 // ──────────────────────────────────────────────────────────
 // Public entry point
 // ──────────────────────────────────────────────────────────
@@ -576,5 +662,10 @@ export function resolvePurchaseConversion(
     // PurchaseRequest.status (latest by createdAt). undefined → []
     // fallback (Phase 2 composer wiring 전에 caller 호환).
     internalApprovalStatus: deriveInternalApprovalStatus(input.purchaseRequests ?? []),
+    // §11.209d-mutation — latest PENDING PR.id (approve/reject mutation
+    // caller 가 사용). PENDING 외 또는 0개 → null.
+    latestPendingRequestId: deriveLatestPendingRequestId(input.purchaseRequests ?? []),
+    // §11.209d-history — latest non-CANCELLED PR 의 history fields. timeline UI.
+    ...deriveApprovalHistory(input.purchaseRequests ?? []),
   };
 }

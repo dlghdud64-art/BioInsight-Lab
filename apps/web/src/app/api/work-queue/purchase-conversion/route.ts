@@ -168,6 +168,8 @@ export async function GET(_request: NextRequest) {
     // §11.209d — Third batched query: PurchaseRequest by quoteId.
     // Quote ↔ PurchaseRequest schema 역관계 0 → 별도 batched query.
     // resolver 가 internalApprovalStatus derive (latest by createdAt).
+    // §11.209d-history — approver { name } + rejectedReason 추가 select
+    // (timeline UI 위해).
     const purchaseRequests = await db.purchaseRequest.findMany({
       where: { quoteId: { in: quoteIds } },
       select: {
@@ -175,8 +177,10 @@ export async function GET(_request: NextRequest) {
         quoteId: true,
         status: true,
         approverId: true,
+        approver: { select: { name: true } },
         approvedAt: true,
         rejectedAt: true,
+        rejectedReason: true,
         createdAt: true,
       },
     });
@@ -188,8 +192,10 @@ export async function GET(_request: NextRequest) {
         id: string;
         status: string;
         approverId: string | null;
+        approverName: string | null;
         approvedAt: Date | null;
         rejectedAt: Date | null;
+        rejectedReason: string | null;
         createdAt: Date;
       }>
     >();
@@ -201,8 +207,10 @@ export async function GET(_request: NextRequest) {
         id: pr.id,
         status: pr.status,
         approverId: pr.approverId,
+        approverName: pr.approver?.name ?? null,
         approvedAt: pr.approvedAt,
         rejectedAt: pr.rejectedAt,
+        rejectedReason: pr.rejectedReason,
         createdAt: pr.createdAt,
       });
       purchaseRequestsByQuote.set(qid, list);
