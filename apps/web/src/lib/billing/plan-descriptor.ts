@@ -52,6 +52,20 @@ export interface PlanDescriptor {
   ctaLabel: string;
   /** 추천 tag (한국어) — null = 비추천 */
   recommendTag: string | null;
+  /**
+   * §11.209b Phase 1 — Tier 별 결재 정책 default.
+   *
+   * Schema 의 ApprovalPolicy enum (§11.209b-pre 통일) 정합:
+   *   - "none" — 결재 불필요 (Lab Team 이하)
+   *   - "in_app_approval" — LabAxis 내부 결재 (R&D Operations / Enterprise)
+   *   - "external_approval" — 외부 ERP/그룹웨어 (§11.209c 후속, 현재
+   *     Enterprise 도 in_app_approval default)
+   *
+   * caller (createPoCandidate 호출 지점) 가 workspace.plan →
+   * PlanIntent → descriptor.approvalPolicy 로 default 결정. workspace 에
+   * approvalPolicy field 추가는 후속 cluster (§11.209c).
+   */
+  approvalPolicy: "none" | "in_app_approval" | "external_approval";
 }
 
 /**
@@ -91,6 +105,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaRoute: "/dashboard",
     ctaLabel: "무료 파일럿 시작",
     recommendTag: null,
+    approvalPolicy: "none",
   },
   team: {
     intent: "team",
@@ -116,6 +131,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaRoute: "/dashboard/settings/plans?plan=team&intent=checkout",
     ctaLabel: "Lab Team 시작하기",
     recommendTag: "추천: 단일 연구실 운영",
+    approvalPolicy: "none",
   },
   business: {
     intent: "business",
@@ -142,6 +158,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaRoute: "/dashboard/settings/plans?plan=business&intent=checkout",
     ctaLabel: "R&D 운영 플랜 상담",
     recommendTag: "추천: R&D 센터 운영",
+    approvalPolicy: "in_app_approval",
   },
   enterprise: {
     intent: "enterprise",
@@ -165,6 +182,7 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
     ctaRoute: "/support?topic=enterprise",
     ctaLabel: "영업 문의하기",
     recommendTag: null,
+    approvalPolicy: "in_app_approval",
   },
 };
 
