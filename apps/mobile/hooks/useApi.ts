@@ -3,6 +3,7 @@ import { apiClient } from "../lib/api";
 import type {
   Quote,
   QuoteDetail,
+  QuoteApproval,
   QuoteStatusHistory,
   PurchaseRecord,
   ProductInventory,
@@ -75,6 +76,22 @@ export function useQuoteDetail(id: string) {
     queryFn: async () => {
       const res = await apiClient.get(`/api/quotes/${id}`);
       return res.data?.quote ?? res.data;
+    },
+    enabled: !!id,
+  });
+}
+
+/**
+ * §11.209d-mobile Phase 2 — quote 결재 정보 hook.
+ * /api/quotes/[id] response.approval 매핑. Option A (visualization only):
+ * mutation 은 web 또는 §11.209d-mobile-mutation 후속 batch.
+ */
+export function useQuoteApproval(id: string) {
+  return useQuery<QuoteApproval | null>({
+    queryKey: ["quote-approval", id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/quotes/${id}`);
+      return res.data?.approval ?? null;
     },
     enabled: !!id,
   });

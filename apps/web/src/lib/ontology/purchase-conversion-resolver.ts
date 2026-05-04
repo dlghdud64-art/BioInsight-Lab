@@ -515,7 +515,7 @@ function buildAiOptions(input: PurchaseConversionInput): readonly AiOption[] {
  *
  * latest 결정: createdAt 기준 가장 최근.
  */
-function deriveInternalApprovalStatus(
+export function deriveInternalApprovalStatus(
   purchaseRequests: readonly PurchaseRequestInput[],
 ): InternalApprovalStatus {
   if (purchaseRequests.length === 0) return "NOT_REQUIRED";
@@ -536,7 +536,7 @@ function deriveInternalApprovalStatus(
  *
  * canonical source: PurchaseRequest (latest by createdAt).
  */
-function deriveLatestPendingRequestId(
+export function deriveLatestPendingRequestId(
   purchaseRequests: readonly PurchaseRequestInput[],
 ): string | null {
   if (purchaseRequests.length === 0) return null;
@@ -553,7 +553,7 @@ function deriveLatestPendingRequestId(
  * timeline UI 가 사용. CANCELLED 는 internalApprovalStatus="NOT_REQUIRED"
  * 정합으로 history 도 null (re-set 가능 — 새 PR 시작 가능).
  */
-function deriveApprovalHistory(
+export function deriveApprovalHistory(
   purchaseRequests: readonly PurchaseRequestInput[],
 ): {
   approvalRequestedAt: Date | null;

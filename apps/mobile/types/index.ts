@@ -30,6 +30,24 @@ export interface QuoteDetail extends Quote {
   vendorResponses?: VendorResponse[];
 }
 
+/**
+ * §11.209d-mobile Phase 2 — quote 결재 정보 (web 의 §11.209d cluster 와
+ * 동일 source). /api/quotes/[id] response.approval 매핑.
+ */
+export interface QuoteApproval {
+  internalApprovalStatus: "NOT_REQUIRED" | "PENDING" | "APPROVED" | "REJECTED";
+  latestPendingRequestId: string | null;
+  approvalRequestedAt: string | null;
+  approverName: string | null;
+  approvalDecidedAt: string | null;
+  rejectionReason: string | null;
+}
+
+export interface QuoteDetailWithApproval {
+  quote: QuoteDetail;
+  approval: QuoteApproval | null;
+}
+
 export interface VendorResponse {
   id: string;
   vendorName: string;

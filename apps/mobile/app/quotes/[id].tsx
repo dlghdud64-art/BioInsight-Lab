@@ -9,7 +9,7 @@ import {
 import { useState } from "react";
 import { useLocalSearchParams, router } from "expo-router";
 import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck, ChevronRight, Edit3, RefreshCw, Clock, ArrowRight, Send } from "lucide-react-native";
-import { useQuoteDetail, useQuoteHistory } from "../../hooks/useApi";
+import { useQuoteDetail, useQuoteHistory, useQuoteApproval } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ErrorState } from "../../components/ErrorState";
@@ -78,6 +78,8 @@ export default function QuoteDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { data: quote, isLoading, isError, refetch } = useQuoteDetail(id);
   const { data: history } = useQuoteHistory(id);
+  // §11.209d-mobile Phase 2 — 결재 정보 (timeline 표시 위해)
+  const { data: approval } = useQuoteApproval(id);
 
   if (isLoading) {
     return (
@@ -162,6 +164,84 @@ export default function QuoteDetailScreen() {
             )}
           </View>
         </View>
+
+        {/* §11.209d-mobile Phase 2 — 결재 timeline. internalApprovalStatus
+            !== "NOT_REQUIRED" 시만 visible. canonical = PurchaseRequest. */}
+        {approval && approval.internalApprovalStatus !== "NOT_REQUIRED" && (
+          <View className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-sm font-bold text-slate-900">내부 결재</Text>
+              <Text
+                className={
+                  approval.internalApprovalStatus === "APPROVED"
+                    ? "text-xs font-semibold text-emerald-700"
+                    : approval.internalApprovalStatus === "PENDING"
+                      ? "text-xs font-semibold text-amber-700"
+                      : approval.internalApprovalStatus === "REJECTED"
+                        ? "text-xs font-semibold text-rose-700"
+                        : "text-xs font-semibold text-slate-500"
+                }
+              >
+                {approval.internalApprovalStatus === "APPROVED"
+                  ? "결재 완료"
+                  : approval.internalApprovalStatus === "PENDING"
+                    ? "결재 대기"
+                    : approval.internalApprovalStatus === "REJECTED"
+                      ? "결재 반려"
+                      : "결재 불필요"}
+              </Text>
+            </View>
+
+            <View className="gap-2">
+              {approval.approvalRequestedAt && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-slate-500">결재 요청 시각</Text>
+                  <Text className="text-xs font-mono text-slate-700">
+                    {new Date(approval.approvalRequestedAt).toLocaleString("ko-KR", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              )}
+              {approval.approverName && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-slate-500">결재자</Text>
+                  <Text className="text-xs font-medium text-slate-700">
+                    {approval.approverName}
+                  </Text>
+                </View>
+              )}
+              {approval.approvalDecidedAt && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-slate-500">
+                    {approval.internalApprovalStatus === "APPROVED" ? "승인 시각" : "반려 시각"}
+                  </Text>
+                  <Text className="text-xs font-mono text-slate-700">
+                    {new Date(approval.approvalDecidedAt).toLocaleString("ko-KR", {
+                      year: "numeric",
+                      month: "2-digit",
+                      day: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </Text>
+                </View>
+              )}
+              {approval.rejectionReason && (
+                <View className="pt-2 border-t border-slate-100">
+                  <Text className="text-xs text-slate-500 mb-1">반려 사유</Text>
+                  <Text className="text-xs text-rose-700 leading-5">
+                    {approval.rejectionReason}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        )}
 
         {/* 벤더 응답 */}
         {quote.vendorResponses && quote.vendorResponses.length > 0 && (

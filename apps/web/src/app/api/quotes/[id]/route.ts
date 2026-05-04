@@ -13,6 +13,14 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { markQuoteAsPurchased } from "./markPurchased";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// §11.209d-mobile Phase 1 — 결재 정보 노출 (mobile 견적 상세 timeline 위해).
+// canonical truth = PurchaseRequest. resolver 의 derive helpers 재사용으로
+// canonical 단일화 (web 의 §11.209d cluster 와 동일 source).
+import {
+  deriveInternalApprovalStatus,
+  deriveLatestPendingRequestId,
+  deriveApprovalHistory,
+} from "@/lib/ontology/purchase-conversion-resolver";
 
 const logger = createLogger("quotes/[id]");
 
@@ -74,7 +82,47 @@ export async function GET(
       logger.error("Failed to create activity log", error);
     });
 
-    return NextResponse.json({ quote });
+    // §11.209d-mobile Phase 1 — 결재 정보 derive (mobile 견적 상세 timeline).
+    // PurchaseRequest 별도 batched query (Quote ↔ PR schema 역관계 0 정합).
+    // resolver 의 derive helpers 재사용 = canonical 단일화.
+    const purchaseRequests = await db.purchaseRequest.findMany({
+      where: { quoteId: id },
+      select: {
+        id: true,
+        status: true,
+        approverId: true,
+        approver: { select: { name: true } },
+        approvedAt: true,
+        rejectedAt: true,
+        rejectedReason: true,
+        createdAt: true,
+      },
+    });
+    const prInputs = purchaseRequests.map((pr) => ({
+      id: pr.id,
+      status: pr.status,
+      approverId: pr.approverId,
+      approverName: pr.approver?.name ?? null,
+      approvedAt: pr.approvedAt,
+      rejectedAt: pr.rejectedAt,
+      rejectedReason: pr.rejectedReason,
+      createdAt: pr.createdAt,
+    }));
+    const internalApprovalStatus = deriveInternalApprovalStatus(prInputs);
+    const latestPendingRequestId = deriveLatestPendingRequestId(prInputs);
+    const approvalHistory = deriveApprovalHistory(prInputs);
+
+    return NextResponse.json({
+      quote,
+      approval: {
+        internalApprovalStatus,
+        latestPendingRequestId,
+        approvalRequestedAt: approvalHistory.approvalRequestedAt,
+        approverName: approvalHistory.approverName,
+        approvalDecidedAt: approvalHistory.approvalDecidedAt,
+        rejectionReason: approvalHistory.rejectionReason,
+      },
+    });
   } catch (error) {
     return handleApiError(error, "quotes/GET");
   }
