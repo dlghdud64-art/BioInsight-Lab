@@ -8,6 +8,13 @@ import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { ActivityType } from "@prisma/client";
 import { generateShareToken } from "@/lib/api/share-token";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// #quote-payload-zod-schema — §11.203 silent assumption 후속 안전장치.
+// payload validation 의 single source. invalid payload → structured 400
+// + 운영자 친화 한국어 메시지 + enforcement.fail() (§11.21 lock 정합).
+import {
+  quoteCreatePayloadSchema,
+  formatQuoteValidationError,
+} from "@/lib/validation/quote-create-schema";
 
 // 견적 요청 생성
 export async function POST(request: NextRequest) {
@@ -34,6 +41,21 @@ export async function POST(request: NextRequest) {
     if (!enforcement.allowed) return enforcement.deny();
 
     body = await request.json();
+
+    // #quote-payload-zod-schema — §11.203 silent assumption 후속.
+    // hand-rolled validation (빈 items 체크 만) 을 zod schema 로 swap.
+    // caller drift 즉시 catch (예: items[].quantity 가 string 으로 와도
+    // 즉시 400 + 운영자 친화 메시지 + enforcement.fail()).
+    const parseResult = quoteCreatePayloadSchema.safeParse(body);
+    if (!parseResult.success) {
+      const formatted = formatQuoteValidationError(parseResult.error);
+      enforcement?.fail();
+      return NextResponse.json(
+        { error: formatted.error, message: formatted.message, details: formatted.details },
+        { status: 400 },
+      );
+    }
+    const validated = parseResult.data;
     const {
       title,
       message,
@@ -46,18 +68,7 @@ export async function POST(request: NextRequest) {
       quantities,
       notes,
       organizationId: clientOrganizationId,
-    } = body;
-
-    // ── 필수 필드 검증: 품목이 없는 빈 견적 생성 방지 ──
-    const resolvedItems = items ?? (productIds ? productIds.map((pid: string, i: number) => ({
-      productId: pid, quantity: quantities?.[i] ?? 1, notes: notes?.[i] ?? "",
-    })) : []);
-    if (!Array.isArray(resolvedItems) || resolvedItems.length === 0) {
-      return NextResponse.json(
-        { error: "견적 요청에 최소 1개 이상의 품목이 필요합니다." },
-        { status: 400 },
-      );
-    }
+    } = validated;
 
     // 서버 세션 기반 organizationId 결정 (P2003 방지: 실제 Organization 존재 여부까지 검증)
     let serverOrgId: string | null = null;
