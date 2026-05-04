@@ -49,6 +49,25 @@ export type AiRecommendationStatus = "recommended" | "review_needed" | "hold";
 
 export type ExternalApprovalStatus = "approved" | "pending" | "unknown";
 
+/**
+ * §11.209d — Internal approval status (LabAxis 내부 결재 상태).
+ *
+ * canonical source: PurchaseRequest.status (PurchaseRequestStatus enum).
+ * resolver 가 quote 별 latest PurchaseRequest 의 status 를 derive.
+ *
+ * Mapping (Option B 정상화):
+ *   - PurchaseRequest 0 개 → "NOT_REQUIRED"
+ *   - latest === "APPROVED" → "APPROVED"
+ *   - latest === "REJECTED" → "REJECTED"
+ *   - latest === "CANCELLED" → "NOT_REQUIRED" (re-set 가능)
+ *   - 그 외 (PENDING / unknown) → "PENDING"
+ */
+export type InternalApprovalStatus =
+  | "NOT_REQUIRED"
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
+
 export type RecommendationLevel = "primary" | "alternate" | "conservative";
 
 export interface AiOption {
@@ -82,6 +101,9 @@ export interface PurchaseConversionItem {
   readonly aiOptions: readonly AiOption[];
   readonly selectedOptionId: string | null;
   readonly externalApprovalStatus: ExternalApprovalStatus;
+  /** §11.209d — internal (in-app) approval status. canonical source =
+      PurchaseRequest.status (latest by createdAt). */
+  readonly internalApprovalStatus: InternalApprovalStatus;
 }
 
 // ──────────────────────────────────────────────────────────
@@ -169,6 +191,21 @@ export interface AiActionInput {
   readonly result?: Record<string, unknown> | null;
 }
 
+/**
+ * §11.209d — Minimal PurchaseRequest subset that the resolver reads.
+ * Mirrors prisma `model PurchaseRequest`. canonical source for
+ * internalApprovalStatus derive.
+ */
+export interface PurchaseRequestInput {
+  readonly id: string;
+  /** PurchaseRequestStatus enum: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED" */
+  readonly status: string;
+  readonly approverId: string | null;
+  readonly approvedAt: Date | null;
+  readonly rejectedAt: Date | null;
+  readonly createdAt: Date;
+}
+
 export interface PurchaseConversionInput {
   readonly quote: QuoteInput;
   readonly vendors: readonly QuoteVendorInput[];
@@ -176,6 +213,11 @@ export interface PurchaseConversionInput {
   readonly replies: readonly QuoteReplyInput[];
   readonly order: OrderInput | null;
   readonly aiActions: readonly AiActionInput[];
+  /** §11.209d — quote 에 연결된 PurchaseRequest 목록. composer 가
+      별도 batched query 로 조회 후 forward. 0 개 또는 undefined 면
+      internalApprovalStatus = "NOT_REQUIRED". optional — Phase 2 composer
+      wiring 전에 caller 호환 보존. */
+  readonly purchaseRequests?: readonly PurchaseRequestInput[];
   readonly now: Date;
 }
 
@@ -442,6 +484,32 @@ function buildAiOptions(input: PurchaseConversionInput): readonly AiOption[] {
   });
 }
 
+/**
+ * §11.209d — internalApprovalStatus derive.
+ *
+ * canonical source: PurchaseRequest.status (PurchaseRequestStatus enum).
+ * 매핑:
+ *   - 0 개 → "NOT_REQUIRED"
+ *   - latest === "APPROVED" → "APPROVED"
+ *   - latest === "REJECTED" → "REJECTED"
+ *   - latest === "CANCELLED" → "NOT_REQUIRED" (re-set 가능)
+ *   - 그 외 → "PENDING" (defensive default)
+ *
+ * latest 결정: createdAt 기준 가장 최근.
+ */
+function deriveInternalApprovalStatus(
+  purchaseRequests: readonly PurchaseRequestInput[],
+): InternalApprovalStatus {
+  if (purchaseRequests.length === 0) return "NOT_REQUIRED";
+  const latest = [...purchaseRequests].sort(
+    (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+  )[0]!;
+  if (latest.status === "APPROVED") return "APPROVED";
+  if (latest.status === "REJECTED") return "REJECTED";
+  if (latest.status === "CANCELLED") return "NOT_REQUIRED";
+  return "PENDING";
+}
+
 // ──────────────────────────────────────────────────────────
 // Public entry point
 // ──────────────────────────────────────────────────────────
@@ -504,5 +572,9 @@ export function resolvePurchaseConversion(
         : null,
     // v0: no Approval model yet (see plan §0.2)
     externalApprovalStatus: "unknown",
+    // §11.209d — internal (in-app) approval status derive from
+    // PurchaseRequest.status (latest by createdAt). undefined → []
+    // fallback (Phase 2 composer wiring 전에 caller 호환).
+    internalApprovalStatus: deriveInternalApprovalStatus(input.purchaseRequests ?? []),
   };
 }

@@ -165,6 +165,49 @@ export async function GET(_request: NextRequest) {
       aiActionsByQuote.set(qid, list);
     }
 
+    // §11.209d — Third batched query: PurchaseRequest by quoteId.
+    // Quote ↔ PurchaseRequest schema 역관계 0 → 별도 batched query.
+    // resolver 가 internalApprovalStatus derive (latest by createdAt).
+    const purchaseRequests = await db.purchaseRequest.findMany({
+      where: { quoteId: { in: quoteIds } },
+      select: {
+        id: true,
+        quoteId: true,
+        status: true,
+        approverId: true,
+        approvedAt: true,
+        rejectedAt: true,
+        createdAt: true,
+      },
+    });
+
+    // O(1) lookup table — quote 별 PurchaseRequest 목록.
+    const purchaseRequestsByQuote = new Map<
+      string,
+      Array<{
+        id: string;
+        status: string;
+        approverId: string | null;
+        approvedAt: Date | null;
+        rejectedAt: Date | null;
+        createdAt: Date;
+      }>
+    >();
+    for (const pr of purchaseRequests) {
+      const qid = pr.quoteId;
+      if (!qid) continue;
+      const list = purchaseRequestsByQuote.get(qid) ?? [];
+      list.push({
+        id: pr.id,
+        status: pr.status,
+        approverId: pr.approverId,
+        approvedAt: pr.approvedAt,
+        rejectedAt: pr.rejectedAt,
+        createdAt: pr.createdAt,
+      });
+      purchaseRequestsByQuote.set(qid, list);
+    }
+
     const items: PurchaseConversionItem[] = quotes.map((q: any) => {
       const input: PurchaseConversionInput = {
         quote: {
@@ -184,6 +227,9 @@ export async function GET(_request: NextRequest) {
         replies: q.replies,
         order: q.order,
         aiActions: aiActionsByQuote.get(q.id) ?? [],
+        // §11.209d — quote 별 PurchaseRequest 목록 forward (latest by
+        // createdAt 기준 internalApprovalStatus derive).
+        purchaseRequests: purchaseRequestsByQuote.get(q.id) ?? [],
         now,
       };
       return resolvePurchaseConversion(input);

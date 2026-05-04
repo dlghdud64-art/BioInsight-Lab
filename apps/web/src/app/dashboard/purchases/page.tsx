@@ -791,6 +791,27 @@ export default function PurchasesPage() {
                       <p className="text-xs text-blue-700 font-medium leading-snug">{selectedItem.nextStage}</p>
                     </div>
                     <div className="space-y-1.5 mb-3">
+                      {/* §11.209d — 내부 결재 상태. canonical source =
+                          PurchaseRequest.status (resolver derive). 4 값
+                          (NOT_REQUIRED / PENDING / APPROVED / REJECTED)
+                          분기 visible. */}
+                      <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">내부 결재</span>
+                        <span className={
+                          selectedItem.internalApprovalStatus === "APPROVED"
+                            ? "text-emerald-700 font-medium"
+                            : selectedItem.internalApprovalStatus === "PENDING"
+                              ? "text-amber-700 font-medium"
+                              : selectedItem.internalApprovalStatus === "REJECTED"
+                                ? "text-rose-700 font-medium"
+                                : "text-slate-500"
+                        }>
+                          {selectedItem.internalApprovalStatus === "APPROVED" ? "결재 완료"
+                            : selectedItem.internalApprovalStatus === "PENDING" ? "결재 대기"
+                            : selectedItem.internalApprovalStatus === "REJECTED" ? "결재 반려"
+                            : "결재 불필요"}
+                        </span>
+                      </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-slate-500">외부 승인</span>
                         <span className={selectedItem.externalApprovalStatus === "approved"
@@ -929,24 +950,51 @@ export default function PurchasesPage() {
                       (outline) 로, 그 외 stage 는 primary 로. */}
                 <div className="px-5 py-3.5 border-t border-slate-100 bg-slate-50/50 space-y-2">
                   {selectedItem.conversionStatus === "ready_for_po" && (
-                    <Button
-                      size="sm"
-                      className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                      disabled={bulkPoMutation.isPending}
-                      onClick={() => {
-                        if (bulkPoMutation.isPending) return;
-                        bulkPoMutation.mutate([selectedItem.id]);
-                      }}
-                    >
-                      {bulkPoMutation.isPending ? (
-                        "전환 중..."
-                      ) : (
-                        <>
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
-                          발주 전환
-                        </>
+                    <>
+                      {/* §11.209d — internalApprovalStatus === "PENDING" 시
+                          발주 전환 차단. 결재 완료 후 자동 enabled. dead button
+                          0 — 운영자 친화 메시지로 사용자 의도 명확. */}
+                      <Button
+                        size="sm"
+                        className="w-full h-9 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                        disabled={
+                          bulkPoMutation.isPending ||
+                          selectedItem.internalApprovalStatus === "PENDING" ||
+                          selectedItem.internalApprovalStatus === "REJECTED"
+                        }
+                        onClick={() => {
+                          if (bulkPoMutation.isPending) return;
+                          if (selectedItem.internalApprovalStatus === "PENDING") return;
+                          if (selectedItem.internalApprovalStatus === "REJECTED") return;
+                          bulkPoMutation.mutate([selectedItem.id]);
+                        }}
+                      >
+                        {bulkPoMutation.isPending ? (
+                          "전환 중..."
+                        ) : selectedItem.internalApprovalStatus === "PENDING" ? (
+                          <>
+                            <Clock className="h-3.5 w-3.5 mr-1.5" />
+                            결재 대기 중
+                          </>
+                        ) : selectedItem.internalApprovalStatus === "REJECTED" ? (
+                          <>
+                            <X className="h-3.5 w-3.5 mr-1.5" />
+                            결재 반려됨
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="h-3.5 w-3.5 mr-1.5" />
+                            발주 전환
+                          </>
+                        )}
+                      </Button>
+                      {selectedItem.internalApprovalStatus === "PENDING" && (
+                        <p className="text-[11px] text-amber-700 text-center">결재 완료 후 발주 가능</p>
                       )}
-                    </Button>
+                      {selectedItem.internalApprovalStatus === "REJECTED" && (
+                        <p className="text-[11px] text-rose-700 text-center">결재 반려 — 재요청 또는 대안 검토</p>
+                      )}
+                    </>
                   )}
                   <Link href={`/dashboard/quotes/${selectedItem.id}`} className="block">
                     <Button
