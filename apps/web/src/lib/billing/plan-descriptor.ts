@@ -110,7 +110,11 @@ export const PLAN_DESCRIPTOR: Record<PlanIntent, PlanDescriptor> = {
   team: {
     intent: "team",
     label: "Lab Team",
-    tagline: "단일 연구실 운영 — 견적·승인·PO·입고·재고를 한 화면에서",
+    // §11.209b Phase 4 — "승인" 단어 제거 (dead promise 차단). Lab Team
+    // 은 approvalPolicy='none' → 결재/승인 약속 visible 0 lock 정합.
+    // "승인" → "비교" swap (LabAxis canonical workflow 정합 — 검색·견적·
+    // 비교·PO·입고·재고).
+    tagline: "단일 연구실 운영 — 견적·비교·PO·입고·재고를 한 화면에서",
     priceMonthlyKrw: 129000,
     seatsRecommended: 5,
     operatingVolume: {
