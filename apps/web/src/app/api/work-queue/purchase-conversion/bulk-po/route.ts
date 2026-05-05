@@ -36,6 +36,10 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { generateOrderNumber } from "@/lib/api/order-number";
+// #post-approval-purchase-order-flow Phase 1.3-wiring — vendor-aware service.
+// 결재 통과 POCandidate[] 가 quote.id 에 있으면 vendor 별 Order N개 생성,
+// 0개 시 legacy quote.items 기반 1 Order (vendor 정보 없는 single PO).
+import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 import {
   enforceAction,
   type InlineEnforcementHandle,
@@ -131,7 +135,9 @@ export async function POST(request: NextRequest) {
             notes: true,
           },
         },
-        order: { select: { id: true } },
+        // #post-approval-purchase-order-flow Phase 1.2 — Quote → Order 1:N
+        // (vendor 별). 단수 `order` 단일 fetch → 복수 `orders` fetch 정합.
+        orders: { select: { id: true } },
       },
     });
 
@@ -148,8 +154,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Pre-validation: existing Order? selectedReplyId valid?
+    // Phase 1.2 정합 — 1:N relation 으로 swap (vendor 별 Order). 1개라도
+    // 존재하면 이미 발주된 견적으로 판단 (legacy NULL Order 도 동일 처리).
     for (const q of quotes) {
-      if (q.order !== null) {
+      if (q.orders.length > 0) {
         enforcement.fail();
         return NextResponse.json(
           {
@@ -178,20 +186,50 @@ export async function POST(request: NextRequest) {
 
     // Atomic transaction — all Orders created or none. Timeout headroom
     // matches pilot-seed's pattern (§11.7 cold-pooler grace).
+    //
+    // #post-approval-purchase-order-flow Phase 1.3-wiring:
+    //   - quote 별 결재 통과 POCandidate[] fetch (vendor 별 1개씩).
+    //   - candidates.length > 0 → convertPOCandidatesToOrders (vendor 별 N Order)
+    //   - candidates 0개 → legacy fallback (quote.items 기반 1 NULL-vendor Order)
     const results: BulkPoResultEntry[] = await db.$transaction(
       async (tx: any) => {
         const created: BulkPoResultEntry[] = [];
         for (const q of quotes) {
-          // Total amount priority: explicit Quote.totalAmount, else sum
-          // of item.lineTotal (skipping null lines).
+          // 결재 통과 POCandidate fetch — quote.id 기반. vendor 별 1개씩.
+          const candidates = await tx.pOCandidate.findMany({
+            where: { userId: q.userId!, organizationId: q.organizationId },
+            include: { items: true },
+          });
+
+          if (candidates.length > 0) {
+            // vendor-aware path — service 호출 (outer tx 전달, nested 회피).
+            const result = await convertPOCandidatesToOrders(
+              {
+                quoteId: q.id,
+                userId: q.userId!,
+                organizationId: q.organizationId,
+                candidates,
+              },
+              { client: tx },
+            );
+            for (const c of result.created) {
+              created.push({
+                quoteId: q.id,
+                orderId: c.orderId,
+                orderNumber: c.orderNumber,
+              });
+            }
+            continue;
+          }
+
+          // legacy fallback — POCandidate 0개 시 quote.items 기반 1 NULL-vendor
+          // Order. multi-vendor RFQ 가 아닌 단순 1 quote 1 Order 흐름 호환.
           const itemTotal = q.items.reduce(
             (sum: number, it: any) => sum + (it.lineTotal ?? 0),
             0,
           );
           const totalAmount = q.totalAmount ?? itemTotal;
 
-          // Order create — orderNumber is set in a follow-up update so
-          // the cuid that drives the suffix already exists.
           const newOrder = await tx.order.create({
             data: {
               userId: q.userId!,
