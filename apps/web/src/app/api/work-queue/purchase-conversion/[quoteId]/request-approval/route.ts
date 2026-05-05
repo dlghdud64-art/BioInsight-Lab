@@ -122,11 +122,19 @@ export async function POST(
 
     // workspace.plan + stripePriceId → approvalPolicy 매핑.
     // §11.209d-approver-routing — organizationId 추가 select (helper 인자).
+    // §11.209d-approver-routing-threshold — approvalThresholdKrw 추가 select
+    //   (workspace 별 임계치 admin override, default 10000000 fallback).
     const member = await db.workspaceMember.findFirst({
       where: { userId: session.user.id },
       include: {
         workspace: {
-          select: { id: true, plan: true, stripePriceId: true, organizationId: true },
+          select: {
+            id: true,
+            plan: true,
+            stripePriceId: true,
+            organizationId: true,
+            approvalThresholdKrw: true,
+          },
         },
       },
     });
@@ -165,6 +173,8 @@ export async function POST(
       organizationId: orgId,
       totalAmount: quote.totalAmount ?? 0,
       requesterId: session.user.id,
+      // §11.209d-approver-routing-threshold — workspace 별 임계치 (default 10M fallback)
+      threshold: member?.workspace?.approvalThresholdKrw ?? undefined,
     });
     const approverId = candidate?.userId ?? null;
     const approverEmail = candidate?.email ?? null;

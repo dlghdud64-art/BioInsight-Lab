@@ -17,6 +17,8 @@ import {
 } from "@/lib/permissions/workflow-capabilities";
 // §11.201 — workspace plan badge 한국어 라벨 (영문 EDITION convention 폐기).
 import { getPlanLabel } from "@/lib/billing/plan-descriptor";
+// §11.209d-approver-routing — 결재 임계치 admin form section (ADMIN 만 visible).
+import { ApprovalThresholdSection } from "@/components/settings/approval-threshold-section";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1009,6 +1011,16 @@ function SettingsPageContent() {
                     </div>
                   </div>
                 </SectionCard>
+
+                {/* §11.209d-approver-routing — 결재 임계치 admin form (ADMIN 만 visible).
+                    workspaceId / currentUserId 가 있을 때만 mount. workspace 별
+                    임계치 변경 → 즉시 다음 결재 요청부터 반영 (selectApproverByAmount). */}
+                {workspacesData?.workspaces?.[0]?.id && session?.user?.id && (
+                  <ApprovalThresholdSection
+                    workspaceId={workspacesData.workspaces[0].id}
+                    currentUserId={session.user.id}
+                  />
+                )}
               </div>
             )}
 

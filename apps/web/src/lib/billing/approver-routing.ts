@@ -48,13 +48,19 @@ export interface SelectApproverArgs {
   organizationId: string;
   totalAmount: number;
   requesterId: string;
+  /**
+   * §11.209d-approver-routing-threshold — workspace 별 결재 임계치 override.
+   * 미명시 시 APPROVAL_OWNER_ESCALATION_THRESHOLD_KRW (10,000,000) default.
+   * caller (request-approval route) 가 workspace.approvalThresholdKrw 전달.
+   */
+  threshold?: number;
 }
 
 /**
  * 결재 금액 + workspace/organization 컨텍스트로 결재자 자동 매핑.
  * fallback chain 정합:
- *   고액 → org_owner → org_admin → workspace_admin → null
- *   저액 → workspace_admin → self_admin → null
+ *   고액 (>= threshold) → org_owner → org_admin → workspace_admin → null
+ *   저액 (< threshold) → workspace_admin → self_admin → null
  *
  * 모든 후보 0 시 null 반환 — caller (request-approval route) 가 400 처리.
  */
@@ -62,9 +68,12 @@ export async function selectApproverByAmount(
   args: SelectApproverArgs,
 ): Promise<ApproverCandidate | null> {
   const { workspaceId, organizationId, totalAmount, requesterId } = args;
+  // §11.209d-approver-routing-threshold — workspace 별 임계치 또는 default fallback
+  const effectiveThreshold =
+    args.threshold ?? APPROVAL_OWNER_ESCALATION_THRESHOLD_KRW;
 
   // 1. 고액 escalation — organization OWNER 우선
-  if (totalAmount >= APPROVAL_OWNER_ESCALATION_THRESHOLD_KRW) {
+  if (totalAmount >= effectiveThreshold) {
     const ownerMember = await db.organizationMember.findFirst({
       where: {
         organizationId,
@@ -123,7 +132,7 @@ export async function selectApproverByAmount(
   // 4. fallback — single-admin workspace (본인 ADMIN 도 가능)
   // 단 고액 분기에서는 self_admin fallback 의도적 회피 — caller 가 escalation
   // 정합 위해 OWNER/orgADMIN 확보 필요. 저액에서만 self_admin fallback.
-  if (totalAmount < APPROVAL_OWNER_ESCALATION_THRESHOLD_KRW) {
+  if (totalAmount < effectiveThreshold) {
     const selfAdmin = await db.workspaceMember.findFirst({
       where: { workspaceId, role: "ADMIN" },
       include: { user: { select: { email: true, name: true } } },

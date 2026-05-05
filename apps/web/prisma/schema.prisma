@@ -952,6 +952,11 @@ model Workspace {
   stripeCurrentPeriodEnd  DateTime?
   billingStatus           BillingStatus?
 
+  /// §11.209d-approver-routing — 결재 임계치 (KRW). 이 금액 이상 결재
+  /// 요청은 organization OWNER escalation. default 10,000,000 (1,000만원).
+  /// admin UI 또는 /api/workspaces/[id] PATCH (ADMIN only) 로 변경.
+  approvalThresholdKrw    Int     @default(10000000)
+
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
