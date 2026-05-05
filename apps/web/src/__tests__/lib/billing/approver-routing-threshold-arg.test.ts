@@ -50,23 +50,25 @@ describe("#approver-routing-threshold-admin-ui — selectApproverByAmount thresh
     expect(result?.source).toBe("org_owner");
   });
 
-  it("threshold 명시 (50,000,000) — 5,000만원 미만에서 workspace ADMIN 분기 (default 보다 높은 임계치)", async () => {
-    (db.workspaceMember.findFirst as any).mockResolvedValueOnce({
-      userId: "ws-admin",
-      user: { email: "wsadmin@example.com", name: "Admin" },
+  it("threshold 명시 (50,000,000) — 30M (mid tier, default lowThreshold 1M ~ 50M) → org_admin first", async () => {
+    // #approver-routing-multi-tier-threshold update — 본 시나리오 의미 변경.
+    // 직전 single-tier 에선 amount < threshold → low tier (workspace_admin).
+    // multi-tier 후: amount >= lowThreshold (1M default) && < highThreshold
+    // (50M alias) → mid tier → org_admin first.
+    (db.organizationMember.findFirst as any).mockResolvedValueOnce({
+      userId: "org-admin",
+      user: { email: "orgadmin@example.com", name: "Org Admin" },
     });
 
     const result = await selectApproverByAmount({
       workspaceId: "ws1",
       organizationId: "org1",
-      totalAmount: 30_000_000, // > default 10M, but < custom 50M
+      totalAmount: 30_000_000, // > default low 1M, but < custom high 50M → mid tier
       requesterId: "requester-1",
       threshold: 50_000_000,
     });
 
-    expect(result?.source).toBe("workspace_admin");
-    // organizationMember 호출 0 (저액 분기)
-    expect(db.organizationMember.findFirst).not.toHaveBeenCalled();
+    expect(result?.source).toBe("org_admin");
   });
 
   it("threshold 미명시 (undefined) — default APPROVAL_OWNER_ESCALATION_THRESHOLD_KRW 사용 (backward compat)", async () => {

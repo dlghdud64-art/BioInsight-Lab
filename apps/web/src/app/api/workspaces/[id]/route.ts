@@ -20,6 +20,10 @@ const updateWorkspaceSchema = z.object({
   // min 0 = 모든 결재 OWNER escalation 가능, max 10000000000 (100억) = 비현실적
   // 큰 값 차단. ADMIN role 만 변경 (PATCH 의 verifyWorkspaceAccess 게이트).
   approvalThresholdKrw: z.number().int().min(0).max(10_000_000_000).optional(),
+  // #approver-routing-multi-tier-threshold — 중액/저액 구분 임계치 (KRW).
+  // amount < approvalLowThresholdKrw → low tier (workspace_admin first).
+  // default 1,000,000 (100만원). max cap 동일 (100억).
+  approvalLowThresholdKrw: z.number().int().min(0).max(10_000_000_000).optional(),
 });
 
 /**

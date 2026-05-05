@@ -123,7 +123,9 @@ export async function POST(
     // workspace.plan + stripePriceId → approvalPolicy 매핑.
     // §11.209d-approver-routing — organizationId 추가 select (helper 인자).
     // §11.209d-approver-routing-threshold — approvalThresholdKrw 추가 select
-    //   (workspace 별 임계치 admin override, default 10000000 fallback).
+    //   (high tier 임계치, default 10M).
+    // #approver-routing-multi-tier-threshold — approvalLowThresholdKrw 추가
+    //   (mid tier 시작 임계치, default 1M).
     const member = await db.workspaceMember.findFirst({
       where: { userId: session.user.id },
       include: {
@@ -134,6 +136,7 @@ export async function POST(
             stripePriceId: true,
             organizationId: true,
             approvalThresholdKrw: true,
+            approvalLowThresholdKrw: true,
           },
         },
       },
@@ -173,8 +176,9 @@ export async function POST(
       organizationId: orgId,
       totalAmount: quote.totalAmount ?? 0,
       requesterId: session.user.id,
-      // §11.209d-approver-routing-threshold — workspace 별 임계치 (default 10M fallback)
-      threshold: member?.workspace?.approvalThresholdKrw ?? undefined,
+      // #approver-routing-multi-tier-threshold — workspace 별 3 tier 임계치
+      lowThreshold: member?.workspace?.approvalLowThresholdKrw ?? undefined,
+      highThreshold: member?.workspace?.approvalThresholdKrw ?? undefined,
     });
     const approverId = candidate?.userId ?? null;
     const approverEmail = candidate?.email ?? null;
