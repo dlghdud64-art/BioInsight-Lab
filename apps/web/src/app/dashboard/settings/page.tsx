@@ -19,6 +19,8 @@ import {
 import { getPlanLabel } from "@/lib/billing/plan-descriptor";
 // §11.209d-approver-routing — 결재 임계치 admin form section (ADMIN 만 visible).
 import { ApprovalThresholdSection } from "@/components/settings/approval-threshold-section";
+// #approver-routing-per-user-limit-admin-ui — workspace ADMIN 별 결재 한도 form
+import { WorkspaceMembersApprovalLimitSection } from "@/components/settings/workspace-members-approval-limit-section";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1017,6 +1019,16 @@ function SettingsPageContent() {
                     임계치 변경 → 즉시 다음 결재 요청부터 반영 (selectApproverByAmount). */}
                 {workspacesData?.workspaces?.[0]?.id && session?.user?.id && (
                   <ApprovalThresholdSection
+                    workspaceId={workspacesData.workspaces[0].id}
+                    currentUserId={session.user.id}
+                  />
+                )}
+
+                {/* #approver-routing-per-user-limit-admin-ui — workspace ADMIN
+                    별 결재 한도 form (ADMIN 만 visible). workspace_admin /
+                    self_admin 분기에서 amount > approvalLimit 시 자동 escalation. */}
+                {workspacesData?.workspaces?.[0]?.id && session?.user?.id && (
+                  <WorkspaceMembersApprovalLimitSection
                     workspaceId={workspacesData.workspaces[0].id}
                     currentUserId={session.user.id}
                   />
