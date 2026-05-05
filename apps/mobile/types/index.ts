@@ -48,6 +48,14 @@ export interface QuoteApproval {
   /** §11.209d-history-expand — chronological history list (newest first,
       CANCELLED 포함). length > 1 시 "이전 결재 이력 N건 보기" expand. */
   historyEntries?: ApprovalHistoryEntry[];
+  /**
+   * §11.209d-mobile-mutation — current user 의 결재 권한 visibility 분기.
+   * server-side computed: PENDING + (current user.id 가 같은 team 의
+   * ADMIN role) 일 때만 true. mobile UI 가 "승인" / "반려" Pressable
+   * visibility 결정에 사용. canonical 권한은 server enforceAction +
+   * teamMember.role === ADMIN — 본 field 는 dead button 0 visibility 만 보장.
+   */
+  canApprove?: boolean;
 }
 
 /**

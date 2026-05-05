@@ -5,7 +5,7 @@ import { getQuoteById } from "@/lib/api/quotes";
 import { db } from "@/lib/db";
 import { getScope, getScopeKey } from "@/lib/auth/scope";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
-import { ActivityType, Prisma } from "@prisma/client";
+import { ActivityType, Prisma, TeamRole } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseCompleteEmail } from "@/lib/email/templates";
@@ -87,11 +87,14 @@ export async function GET(
     // PurchaseRequest 별도 batched query (Quote ↔ PR schema 역관계 0 정합).
     // resolver 의 derive helpers 재사용 = canonical 단일화.
     // §11.209d-contact — approver { email, phone } 추가 select
+    // §11.209d-mobile-mutation — teamId 추가 select (canApprove computed
+    //   정합: PENDING PR.teamId 기반 current user teamMember.role 체크)
     const purchaseRequests = await db.purchaseRequest.findMany({
       where: { quoteId: id },
       select: {
         id: true,
         status: true,
+        teamId: true,
         approverId: true,
         approver: { select: { name: true, email: true, phone: true } },
         approvedAt: true,
@@ -117,6 +120,30 @@ export async function GET(
     const approvalHistory = deriveApprovalHistory(prInputs);
     const approvalHistoryEntries = deriveApprovalHistoryEntries(prInputs);
 
+    // §11.209d-mobile-mutation — current user 의 결재 권한 visibility 분기.
+    // PENDING + (current user.id 가 latestPending PR.teamId 의 TeamRole.ADMIN)
+    // 일 때만 true. canonical 권한은 server enforceAction + ADMIN role check
+    // (mutation route) — 본 field 는 dead button 0 visibility 만 보장.
+    let canApprove = false;
+    if (internalApprovalStatus === "PENDING" && latestPendingRequestId) {
+      const latestPendingPr = purchaseRequests.find(
+        (pr) => pr.id === latestPendingRequestId,
+      );
+      if (latestPendingPr?.teamId) {
+        const memberForApproval = await db.teamMember.findUnique({
+          where: {
+            userId_teamId: {
+              userId: session.user.id,
+              teamId: latestPendingPr.teamId,
+            },
+          },
+        });
+        if (memberForApproval?.role === TeamRole.ADMIN) {
+          canApprove = true;
+        }
+      }
+    }
+
     return NextResponse.json({
       quote,
       approval: {
@@ -130,6 +157,8 @@ export async function GET(
         rejectionReason: approvalHistory.rejectionReason,
         // §11.209d-history-expand — chronological list (newest first, CANCELLED 포함)
         historyEntries: approvalHistoryEntries,
+        // §11.209d-mobile-mutation — current user CTA visibility
+        canApprove,
       },
     });
   } catch (error) {

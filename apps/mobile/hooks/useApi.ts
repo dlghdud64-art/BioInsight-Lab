@@ -97,6 +97,67 @@ export function useQuoteApproval(id: string) {
   });
 }
 
+/**
+ * §11.209d-mobile-mutation — 결재 승인 mutation.
+ * canonical truth = web POST /api/request/[id]/approve. mobile = thin wrapper.
+ * caller 가 canApprove === true 일 때만 visible (dead button 0).
+ *
+ * Invalidation: quote-approval / quote / quotes / dashboard-summary 모두
+ * 갱신 (status badge + history + 대시보드 결재 대기 카운터 sync).
+ */
+export function useApproveQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      quoteId: _quoteId,
+      requestId,
+    }: {
+      quoteId: string;
+      requestId: string;
+    }) => {
+      const res = await apiClient.post(`/api/request/${requestId}/approve`);
+      return res.data;
+    },
+    onSuccess: (_, { quoteId }) => {
+      qc.invalidateQueries({ queryKey: ["quote-approval", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quote", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
+/**
+ * §11.209d-mobile-mutation — 결재 반려 mutation.
+ * canonical truth = web POST /api/request/[id]/reject. body { reason }.
+ * caller 가 canApprove === true 일 때만 visible.
+ */
+export function useRejectQuote() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      quoteId: _quoteId,
+      requestId,
+      reason,
+    }: {
+      quoteId: string;
+      requestId: string;
+      reason: string;
+    }) => {
+      const res = await apiClient.post(`/api/request/${requestId}/reject`, {
+        reason,
+      });
+      return res.data;
+    },
+    onSuccess: (_, { quoteId }) => {
+      qc.invalidateQueries({ queryKey: ["quote-approval", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quote", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
 export function useUpdateQuoteStatus() {
   const qc = useQueryClient();
   return useMutation({

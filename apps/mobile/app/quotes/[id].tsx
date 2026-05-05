@@ -6,11 +6,20 @@ import {
   ActivityIndicator,
   Alert,
   Linking,
+  Modal,
+  TextInput,
 } from "react-native";
 import { useState } from "react";
 import { useLocalSearchParams, router } from "expo-router";
-import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck, ChevronRight, Edit3, RefreshCw, Clock, ArrowRight, Send } from "lucide-react-native";
-import { useQuoteDetail, useQuoteHistory, useQuoteApproval } from "../../hooks/useApi";
+import { Calendar, Package, User, MessageSquare, ShoppingCart, Truck, ChevronRight, Edit3, RefreshCw, Clock, ArrowRight, Send, Check, X } from "lucide-react-native";
+import {
+  useQuoteDetail,
+  useQuoteHistory,
+  useQuoteApproval,
+  // §11.209d-mobile-mutation — 결재 승인/반려 mutation hooks
+  useApproveQuote,
+  useRejectQuote,
+} from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ErrorState } from "../../components/ErrorState";
@@ -83,6 +92,75 @@ export default function QuoteDetailScreen() {
   const { data: approval } = useQuoteApproval(id);
   // §11.209d-history-expand-mobile — 이전 결재 이력 expand state
   const [historyExpanded, setHistoryExpanded] = useState(false);
+  // §11.209d-mobile-mutation — 반려 사유 RN Modal state. cross-platform —
+  // Alert.prompt 는 iOS 전용. canonical mutation = web /api/request/[id]/reject.
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectReason, setRejectReason] = useState("");
+  const approveQuote = useApproveQuote();
+  const rejectQuote = useRejectQuote();
+  const isMutating = approveQuote.isPending || rejectQuote.isPending;
+
+  // §11.209d-mobile-mutation — 승인 핸들러. Alert.alert 으로 confirm 후 mutation.
+  const handleApprove = () => {
+    if (!approval?.latestPendingRequestId) return;
+    const requestId = approval.latestPendingRequestId;
+    Alert.alert(
+      "결재 승인",
+      "이 결재 요청을 승인하시겠습니까?\n\n승인 시 구매 주문이 자동 생성됩니다.",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "승인",
+          style: "default",
+          onPress: () => {
+            approveQuote.mutate(
+              { quoteId: id, requestId },
+              {
+                onSuccess: () => {
+                  Alert.alert("결재 완료", "결재가 승인되었습니다.");
+                },
+                onError: (err: any) => {
+                  const msg =
+                    err?.response?.data?.error ??
+                    err?.message ??
+                    "결재 승인 중 오류가 발생했습니다.";
+                  Alert.alert("결재 승인 실패", msg);
+                },
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  // §11.209d-mobile-mutation — 반려 핸들러. Modal 의 TextInput 으로 사유 입력 후 mutation.
+  const handleRejectSubmit = () => {
+    if (!approval?.latestPendingRequestId) return;
+    const requestId = approval.latestPendingRequestId;
+    const reason = rejectReason.trim();
+    if (reason.length < 2) {
+      Alert.alert("반려 사유 입력", "반려 사유를 2자 이상 입력해 주세요.");
+      return;
+    }
+    rejectQuote.mutate(
+      { quoteId: id, requestId, reason },
+      {
+        onSuccess: () => {
+          setRejectModalVisible(false);
+          setRejectReason("");
+          Alert.alert("결재 반려", "결재가 반려되었습니다.");
+        },
+        onError: (err: any) => {
+          const msg =
+            err?.response?.data?.error ??
+            err?.message ??
+            "결재 반려 중 오류가 발생했습니다.";
+          Alert.alert("결재 반려 실패", msg);
+        },
+      },
+    );
+  };
 
   if (isLoading) {
     return (
@@ -277,6 +355,48 @@ export default function QuoteDetailScreen() {
                   <Text className="text-xs text-rose-700 leading-5">
                     {approval.rejectionReason}
                   </Text>
+                </View>
+              )}
+              {/* §11.209d-mobile-mutation — 결재자가 모바일에서 직접 승인/반려.
+                  PENDING + canApprove === true 시만 visible (dead button 0).
+                  canonical = web /api/request/[id]/{approve,reject}. 표시 형식만
+                  분기 — server enforceAction + ADMIN role check 가 truth. */}
+              {approval.internalApprovalStatus === "PENDING" && approval.canApprove && (
+                <View className="pt-3 mt-2 border-t border-slate-100 flex-row gap-2">
+                  <Pressable
+                    onPress={handleApprove}
+                    disabled={isMutating}
+                    className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 ${
+                      approveQuote.isPending ? "bg-emerald-400" : "bg-emerald-600"
+                    }`}
+                  >
+                    {approveQuote.isPending ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <>
+                        <Check size={16} color="white" />
+                        <Text className="text-sm font-semibold text-white">승인</Text>
+                      </>
+                    )}
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setRejectModalVisible(true)}
+                    disabled={isMutating}
+                    className={`flex-1 flex-row items-center justify-center gap-1.5 rounded-xl py-3 border ${
+                      rejectQuote.isPending
+                        ? "bg-rose-50 border-rose-200"
+                        : "bg-white border-rose-300"
+                    }`}
+                  >
+                    {rejectQuote.isPending ? (
+                      <ActivityIndicator size="small" color="#e11d48" />
+                    ) : (
+                      <>
+                        <X size={16} color="#e11d48" />
+                        <Text className="text-sm font-semibold text-rose-600">반려</Text>
+                      </>
+                    )}
+                  </Pressable>
                 </View>
               )}
               {/* §11.209d-history-expand-mobile — 이전 결재 이력 expand.
@@ -503,6 +623,69 @@ export default function QuoteDetailScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* §11.209d-mobile-mutation — 반려 사유 입력 Modal.
+          cross-platform (iOS/Android) — Alert.prompt 는 iOS 전용. 사유는
+          server 가 graceful nullable 이지만 모바일 UX 는 2자 이상 강제. */}
+      <Modal
+        visible={rejectModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!rejectQuote.isPending) {
+            setRejectModalVisible(false);
+            setRejectReason("");
+          }
+        }}
+      >
+        <View className="flex-1 items-center justify-center bg-black/40 px-6">
+          <View className="w-full bg-white rounded-2xl p-5">
+            <Text className="text-base font-bold text-slate-900 mb-1">결재 반려</Text>
+            <Text className="text-xs text-slate-500 mb-3 leading-5">
+              요청자에게 반려 사유가 그대로 전달됩니다. 명확하게 작성해 주세요.
+            </Text>
+            <TextInput
+              value={rejectReason}
+              onChangeText={setRejectReason}
+              multiline
+              numberOfLines={4}
+              maxLength={500}
+              placeholder="반려 사유를 입력하세요 (예: 예산 검토 필요)"
+              placeholderTextColor="#94a3b8"
+              editable={!rejectQuote.isPending}
+              className="border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-slate-900 mb-3"
+              style={{ minHeight: 80, textAlignVertical: "top" }}
+            />
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={() => {
+                  if (!rejectQuote.isPending) {
+                    setRejectModalVisible(false);
+                    setRejectReason("");
+                  }
+                }}
+                disabled={rejectQuote.isPending}
+                className="flex-1 items-center justify-center rounded-xl py-3 border border-slate-200 bg-white"
+              >
+                <Text className="text-sm font-semibold text-slate-700">취소</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleRejectSubmit}
+                disabled={rejectQuote.isPending}
+                className={`flex-1 items-center justify-center rounded-xl py-3 ${
+                  rejectQuote.isPending ? "bg-rose-400" : "bg-rose-600"
+                }`}
+              >
+                {rejectQuote.isPending ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text className="text-sm font-semibold text-white">반려</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
