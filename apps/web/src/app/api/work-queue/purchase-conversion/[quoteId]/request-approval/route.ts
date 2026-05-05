@@ -42,6 +42,8 @@ import { dispatchNotificationEvent } from "@/lib/notifications";
 // #approver-routing-audit-log — 결재 매핑 결과 audit (best effort).
 //   candidate.source / appliedThresholds / totalAmount 추적.
 import { createAuditLog } from "@/lib/audit/audit-logger";
+// #mobile-push-notification Phase 2 — approver 에게 push (best effort).
+import { sendPushNotification } from "@/lib/notifications/push-sender";
 
 export const dynamic = "force-dynamic";
 
@@ -332,6 +334,23 @@ export async function POST(
     } catch (auditErr) {
       // graceful — mutation 정합 유지
       console.error("[request-approval] audit log 실패 (mutation 정합 유지):", auditErr);
+    }
+
+    // #mobile-push-notification Phase 2 — approver 에게 push (best effort).
+    // mobile 등록된 device 가 있으면 발송, 없으면 silent skip.
+    try {
+      await sendPushNotification(approverId, {
+        title: "결재 요청 도착",
+        body: `${quote.title} (${quote.totalAmount?.toLocaleString("ko-KR") ?? "0"} KRW)`,
+        data: {
+          type: "purchase_approval_request",
+          quoteId,
+          requestId: purchaseRequest.id,
+        },
+      });
+    } catch (pushErr) {
+      // graceful — mutation 정합 유지
+      console.error("[request-approval] push notification 실패 (mutation 정합 유지):", pushErr);
     }
 
     return NextResponse.json(

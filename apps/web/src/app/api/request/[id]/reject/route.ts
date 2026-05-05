@@ -9,6 +9,8 @@ import { generatePurchaseRejectedEmail } from "@/lib/email/templates";
 // §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림
 // (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
 import { dispatchNotificationEvent } from "@/lib/notifications";
+// #mobile-push-notification Phase 2 — requester 에게 push (best effort).
+import { sendPushNotification } from "@/lib/notifications/push-sender";
 
 /**
  * 구매 요청 거절 (ADMIN/OWNER만 가능)
@@ -182,6 +184,26 @@ export async function POST(
       } catch (notifErr) {
         // graceful — mutation 정합 유지
         console.error("[request/reject] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+    }
+
+    // #mobile-push-notification Phase 2 — requester 에게 push (best effort).
+    // rejection reason 을 body 에 포함.
+    if (rejectedRequest.requesterId) {
+      try {
+        const reasonText = reason || "사유 미명시";
+        await sendPushNotification(rejectedRequest.requesterId, {
+          title: "결재 반려",
+          body: `${rejectedRequest.title} — ${reasonText}`,
+          data: {
+            type: "purchase_rejected",
+            quoteId: rejectedRequest.quoteId,
+            requestId: requestId,
+            rejectionReason: reason || null,
+          },
+        });
+      } catch (pushErr) {
+        console.error("[request/reject] push notification 실패 (mutation 정합 유지):", pushErr);
       }
     }
 

@@ -24,6 +24,8 @@ import { generatePurchaseApprovedEmail } from "@/lib/email/templates";
 // §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림
 // (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
 import { dispatchNotificationEvent } from "@/lib/notifications";
+// #mobile-push-notification Phase 2 — requester 에게 push (best effort).
+import { sendPushNotification } from "@/lib/notifications/push-sender";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -345,6 +347,24 @@ export async function POST(
       } catch (notifErr) {
         // graceful — mutation 정합 유지
         console.error("[request/approve] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+    }
+
+    // #mobile-push-notification Phase 2 — requester 에게 push (best effort).
+    if (purchaseRequest.requesterId) {
+      try {
+        await sendPushNotification(purchaseRequest.requesterId, {
+          title: "결재 승인 완료",
+          body: `${purchaseRequest.title} 결재가 승인되었습니다.`,
+          data: {
+            type: "purchase_approved",
+            quoteId: purchaseRequest.quoteId,
+            requestId: requestId,
+            orderId: result.order?.id ?? null,
+          },
+        });
+      } catch (pushErr) {
+        console.error("[request/approve] push notification 실패 (mutation 정합 유지):", pushErr);
       }
     }
 
