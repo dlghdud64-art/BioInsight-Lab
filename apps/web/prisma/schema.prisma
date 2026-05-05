@@ -961,6 +961,12 @@ model Workspace {
   /// amount < approvalLowThresholdKrw → workspace_admin (low),
   /// amount < approvalThresholdKrw → org_admin (mid), 이상 → org_owner (high).
   /// default 1,000,000 (100만원).
+  ///
+  /// #approver-routing-cross-field-validation-db-check-constraint — DB CHECK
+  /// constraint workspace_approval_threshold_low_le_high 강제 (low_le_high):
+  ///   CHECK (approvalLowThresholdKrw <= approvalThresholdKrw)
+  /// migration SQL only (Prisma 표준 CHECK syntax 0). 4-layer defense in depth
+  /// 의 마지막 lock — 직접 SQL / Prisma raw update 우회 차단.
   approvalLowThresholdKrw Int     @default(1000000)
 
   createdAt        DateTime @default(now())
