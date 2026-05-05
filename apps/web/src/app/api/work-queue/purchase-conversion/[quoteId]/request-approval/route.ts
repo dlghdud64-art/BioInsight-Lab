@@ -30,6 +30,9 @@ import {
   type InlineEnforcementHandle,
 } from "@/lib/security/server-enforcement-middleware";
 import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
+// §11.209d-approver-routing — 결재자 자동 매핑 매트릭스 (금액 임계치).
+//   < 1,000만원 → workspace ADMIN, >= 1,000만원 → org OWNER escalation.
+import { selectApproverByAmount } from "@/lib/billing/approver-routing";
 // §11.209d-notification — approver 에게 결재 요청 email 발송 (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
@@ -117,10 +120,15 @@ export async function POST(
       );
     }
 
-    // workspace.plan + stripePriceId → approvalPolicy 매핑
+    // workspace.plan + stripePriceId → approvalPolicy 매핑.
+    // §11.209d-approver-routing — organizationId 추가 select (helper 인자).
     const member = await db.workspaceMember.findFirst({
       where: { userId: session.user.id },
-      include: { workspace: { select: { id: true, plan: true, stripePriceId: true } } },
+      include: {
+        workspace: {
+          select: { id: true, plan: true, stripePriceId: true, organizationId: true },
+        },
+      },
     });
     const approvalPolicy = resolveApprovalPolicyForPlan(
       member?.workspace?.plan ?? null,
@@ -140,34 +148,27 @@ export async function POST(
       );
     }
 
-    // approver 자동 매핑: workspace 의 첫 ADMIN/OWNER member
+    // §11.209d-approver-routing — 결재자 자동 매핑 매트릭스 helper 호출.
+    // 금액 < 1,000만원 → workspace ADMIN (본인 외) → self_admin fallback.
+    // 금액 >= 1,000만원 → org OWNER → org ADMIN → workspace ADMIN fallback.
     const workspaceId = member?.workspace?.id;
-    if (!workspaceId) {
+    const orgId = member?.workspace?.organizationId;
+    if (!workspaceId || !orgId) {
       enforcement.fail();
       return NextResponse.json(
         { error: "WORKSPACE_NOT_FOUND", message: "워크스페이스 정보를 찾을 수 없습니다." },
         { status: 400 },
       );
     }
-    const adminMember = await db.workspaceMember.findFirst({
-      where: {
-        workspaceId,
-        role: "ADMIN",
-        userId: { not: session.user.id }, // 본인 외 ADMIN
-      },
-      select: { userId: true, user: { select: { email: true, name: true } } },
+    const candidate = await selectApproverByAmount({
+      workspaceId,
+      organizationId: orgId,
+      totalAmount: quote.totalAmount ?? 0,
+      requesterId: session.user.id,
     });
-    // workspace 에 본인 외 ADMIN 가 없으면 본인 ADMIN 도 가능 (single-admin workspace 호환)
-    const fallbackAdmin = adminMember
-      ? null
-      : await db.workspaceMember.findFirst({
-          where: { workspaceId, role: "ADMIN" },
-          select: { userId: true, user: { select: { email: true, name: true } } },
-        });
-    const resolvedAdmin = adminMember ?? fallbackAdmin;
-    const approverId = resolvedAdmin?.userId ?? null;
-    const approverEmail = resolvedAdmin?.user?.email ?? null;
-    const approverName = resolvedAdmin?.user?.name ?? "관리자";
+    const approverId = candidate?.userId ?? null;
+    const approverEmail = candidate?.email ?? null;
+    const approverName = candidate?.name ?? "관리자";
 
     if (!approverId) {
       enforcement.fail();
