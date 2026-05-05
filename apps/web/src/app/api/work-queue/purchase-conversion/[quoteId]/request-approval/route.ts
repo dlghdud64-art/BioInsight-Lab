@@ -276,6 +276,33 @@ export async function POST(
       console.error("[request-approval] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
     }
 
+    // #approver-routing-multi-owner-roundrobin — candidate.source 기반 분기로
+    // workspaceMember 또는 organizationMember 의 lastApprovalAssignedAt update.
+    // round-robin 분산 lock — 다음 결재 매핑 시 가장 오래 안 받은 member 우선.
+    // try/catch graceful (mutation 정합 보호).
+    try {
+      const now = new Date();
+      if (candidate.source === "workspace_admin" || candidate.source === "self_admin") {
+        await db.workspaceMember.update({
+          where: {
+            userId_workspaceId: { userId: approverId, workspaceId },
+          },
+          data: { lastApprovalAssignedAt: now },
+        });
+      } else if (candidate.source === "org_owner" || candidate.source === "org_admin") {
+        await db.organizationMember.update({
+          where: {
+            userId_organizationId: { userId: approverId, organizationId: orgId },
+          },
+          data: { lastApprovalAssignedAt: now },
+        });
+      }
+    } catch (rrErr) {
+      // graceful — round-robin update fail → 다음 매핑에선 동일 candidate 또
+      // 우선 가능 (분산 약화). mutation 정합은 유지.
+      console.error("[request-approval] lastApprovalAssignedAt update 실패 (round-robin):", rrErr);
+    }
+
     // #approver-routing-audit-log — 결재 매핑 결과 audit log (best effort).
     // mutation 성공 후 호출 — fail 시 mutation 결과 영향 0. metadata 에
     // candidate.source + appliedThresholds + totalAmount 기록 (operational

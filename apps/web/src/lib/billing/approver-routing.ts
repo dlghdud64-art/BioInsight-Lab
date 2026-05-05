@@ -110,6 +110,8 @@ export async function selectApproverByAmount(
     // #approver-routing-per-user-limit-organization-member — approvalLimit
     // 검증 (null 무제한 또는 >= totalAmount 통과). DB-side filter — 한도
     // 초과 candidate 자동 skip.
+    // #approver-routing-multi-owner-roundrobin — orderBy lastApprovalAssignedAt
+    // asc (nulls first — 한 번도 안 받은 OWNER 우선) + createdAt asc tie-breaker.
     const ownerMember = await db.organizationMember.findFirst({
       where: {
         organizationId,
@@ -120,6 +122,10 @@ export async function selectApproverByAmount(
           { approvalLimit: { gte: totalAmount } },
         ],
       },
+      orderBy: [
+        { lastApprovalAssignedAt: { sort: "asc", nulls: "first" } },
+        { createdAt: "asc" },
+      ],
       include: { user: { select: { email: true, name: true } } },
     });
     if (ownerMember?.user) {
@@ -133,6 +139,7 @@ export async function selectApproverByAmount(
 
     // OWNER 없음 → organization ADMIN fallback
     // #approver-routing-per-user-limit-organization-member — approvalLimit 검증
+    // #approver-routing-multi-owner-roundrobin — orderBy round-robin
     const orgAdmin = await db.organizationMember.findFirst({
       where: {
         organizationId,
@@ -143,6 +150,10 @@ export async function selectApproverByAmount(
           { approvalLimit: { gte: totalAmount } },
         ],
       },
+      orderBy: [
+        { lastApprovalAssignedAt: { sort: "asc", nulls: "first" } },
+        { createdAt: "asc" },
+      ],
       include: { user: { select: { email: true, name: true } } },
     });
     if (orgAdmin?.user) {
@@ -159,6 +170,7 @@ export async function selectApproverByAmount(
   // ── MID tier: org_admin first ──
   if (isMidTier) {
     // #approver-routing-per-user-limit-organization-member — approvalLimit 검증
+    // #approver-routing-multi-owner-roundrobin — orderBy round-robin
     const orgAdmin = await db.organizationMember.findFirst({
       where: {
         organizationId,
@@ -169,6 +181,10 @@ export async function selectApproverByAmount(
           { approvalLimit: { gte: totalAmount } },
         ],
       },
+      orderBy: [
+        { lastApprovalAssignedAt: { sort: "asc", nulls: "first" } },
+        { createdAt: "asc" },
+      ],
       include: { user: { select: { email: true, name: true } } },
     });
     if (orgAdmin?.user) {
@@ -187,6 +203,7 @@ export async function selectApproverByAmount(
   // #approver-routing-per-user-limit — approvalLimit 검증.
   //   null = 무제한, amount <= approvalLimit = 통과 → 모두 OR 조건으로 통합.
   //   한도 초과 candidate 는 자동 skip (DB 가 fallback).
+  // #approver-routing-multi-owner-roundrobin — orderBy round-robin.
   const wsAdmin = await db.workspaceMember.findFirst({
     where: {
       workspaceId,
@@ -197,6 +214,10 @@ export async function selectApproverByAmount(
         { approvalLimit: { gte: totalAmount } },
       ],
     },
+    orderBy: [
+      { lastApprovalAssignedAt: { sort: "asc", nulls: "first" } },
+      { createdAt: "asc" },
+    ],
     include: { user: { select: { email: true, name: true } } },
   });
   if (wsAdmin?.user) {
@@ -211,7 +232,8 @@ export async function selectApproverByAmount(
   // ── self_admin fallback — high tier 차단 (escalation 보호) ──
   // low + mid tier 만 self_admin 허용 (single-admin workspace/org 정합)
   if (!isHighTier) {
-    // #approver-routing-per-user-limit — self_admin 도 한도 검증
+    // #approver-routing-per-user-limit — self_admin 도 한도 검증.
+    // #approver-routing-multi-owner-roundrobin — orderBy round-robin.
     const selfAdmin = await db.workspaceMember.findFirst({
       where: {
         workspaceId,
@@ -221,6 +243,10 @@ export async function selectApproverByAmount(
           { approvalLimit: { gte: totalAmount } },
         ],
       },
+      orderBy: [
+        { lastApprovalAssignedAt: { sort: "asc", nulls: "first" } },
+        { createdAt: "asc" },
+      ],
       include: { user: { select: { email: true, name: true } } },
     });
     if (selfAdmin?.user) {

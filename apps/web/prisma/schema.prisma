@@ -118,6 +118,9 @@ model OrganizationMember {
   /// workspace_admin chain). 직전 WorkspaceMember.approvalLimit (Phase 1)
   /// 와 동일 패턴.
   approvalLimit Int?
+  /// #approver-routing-multi-owner-roundrobin — 마지막 결재 할당 timestamp
+  /// (organization member 측). org_owner / org_admin candidate 분산 lock.
+  lastApprovalAssignedAt DateTime?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -1000,6 +1003,12 @@ model WorkspaceMember {
   /// 가 다음 fallback 으로 escalation. organization member 는 한도 무제한
   /// (별도 batch — 본 batch 는 workspace member 만).
   approvalLimit Int?
+  /// #approver-routing-multi-owner-roundrobin — 마지막 결재 할당 timestamp.
+  /// helper 가 orderBy lastApprovalAssignedAt asc nulls first + createdAt
+  /// asc tie-breaker — 한 번도 안 받은 member 우선, 그 다음 가장 오래
+  /// 안 받은 member. request-approval route 가 PR INSERT 후 candidate 의
+  /// 본 field update (try/catch graceful).
+  lastApprovalAssignedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
