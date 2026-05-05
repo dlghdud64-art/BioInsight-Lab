@@ -184,6 +184,8 @@ model User {
   approvedRequests    PurchaseRequest[] @relation("ApprovedPurchases") // 승인한 구매 요청 (approverId)
   aiActionItems       AiActionItem[]
   ingestionUploads    IngestionEntry[] @relation("IngestionUploader")
+  // #mobile-push-notification Phase 1 server — 사용자별 등록된 푸시 토큰
+  devices             Device[]
 
   @@index([email])
   @@index([role])
@@ -931,6 +933,24 @@ enum WorkspacePlan {
 enum WorkspaceMemberRole {
   ADMIN
   MEMBER
+}
+
+/// #mobile-push-notification Phase 1 server — mobile push token 저장.
+/// mobile (Expo) 가 registerForPushNotifications 후 apiClient.post(
+/// "/api/devices/register", { pushToken }) 호출. 동일 token 재등록 시
+/// upsert (last seen update). lib/notifications/push-sender.ts 가
+/// userId 기반 token list 조회 후 Expo Push API (exp.host) 호출.
+model Device {
+  id          String   @id @default(cuid())
+  userId      String
+  pushToken   String   @unique
+  platform    String   // "ios" / "android" / "web"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 enum BillingStatus {
