@@ -4,8 +4,18 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { resetWorkbenchSessionOnLogout, invalidateWorkbenchQueryCache } from "@/lib/auth/workbench-session-reset";
+// §11.209d-notification-inapp-web-bell-ui — eventType → 7 카테고리 + 한국어
+// text/href/time 매핑 helper. canonical truth = /api/notifications response.
+import {
+  eventTypeToCategory,
+  buildNotificationText,
+  buildNotificationHref,
+  formatNotificationTime,
+  type NotificationCategory as MappedCategory,
+} from "@/lib/notifications/event-category-map";
+import type { NotificationItem } from "@/lib/notifications/notification-query";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,13 +28,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useQRScanner } from "@/contexts/QRScannerContext";
-import {
-  Search, Bell, HelpCircle, ChevronRight,
-  AlertTriangle, FileText, Truck, BookOpen, Headphones,
-  Settings, CreditCard, LogOut,
-  ShieldAlert, Clock, CheckCircle2,
-  ClipboardCheck, Menu, Package,
-} from "lucide-react";
+import { Search, Bell, HelpCircle, ChevronRight, AlertTriangle, FileText, BookOpen, Headphones, Settings, CreditCard, LogOut, ShieldAlert, Clock, CheckCircle2, ClipboardCheck, Menu, Package } from "lucide-react";
 import { toast } from "sonner";
 import { BioInsightLogo } from "@/components/bioinsight-logo";
 import { CommandPalette } from "@/components/dashboard/command-palette";
@@ -34,27 +38,11 @@ interface DashboardHeaderProps {
 }
 
 /* ── 알림 타입 시스템 ── */
+/* §11.209d-notification-inapp-web-bell-ui — NotificationCategory 는
+   lib/notifications/event-category-map 의 동일 이름과 정합. CATEGORY_CONFIG
+   key 와 매칭 (dead 카테고리 0). */
 
-type NotificationCategory =
-  | "stock_alert"      // 재고 부족
-  | "quote_arrived"    // 견적 도착
-  | "delivery_complete"// 입고 완료
-  | "approval_pending" // 승인 대기
-  | "expiry_warning"   // 유효기간 경고
-  | "safety_alert"     // 안전 관련
-  | "system";          // 시스템
-
-interface Notification {
-  id: number;
-  category: NotificationCategory;
-  read: boolean;
-  /** 알림 텍스트 */
-  text: string;
-  /** 클릭 시 이동 경로 */
-  href: string;
-  /** 발생 시간 */
-  time: string;
-}
+type NotificationCategory = MappedCategory;
 
 /** 카테고리별 아이콘 + 컬러 + 배경색 매핑 */
 const CATEGORY_CONFIG: Record<
@@ -77,16 +65,36 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const queryClient = useQueryClient();
   const { open: openQRScanner } = useQRScanner();
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 1, category: "stock_alert", read: false, text: "재고 부족 품목 3건 — 재주문 검토 필요", href: "/dashboard/inventory?filter=low", time: "10분 전" },
-    { id: 2, category: "expiry_warning", read: false, text: "만료 임박 Lot 1건 (D-3) — 확인 필요", href: "/dashboard/inventory", time: "30분 전" },
-    { id: 3, category: "approval_pending", read: false, text: "승인 대기 견적 2건 — 구매 승인 페이지", href: "/dashboard/purchases", time: "1시간 전" },
-    { id: 4, category: "quote_arrived", read: false, text: "공급사 견적 도착 — Thermo Fisher 외 2건", href: "/dashboard/quotes", time: "2시간 전" },
-    { id: 5, category: "delivery_complete", read: true, text: "입고 완료 — 50ml Conical Tube (100개)", href: "/dashboard/inventory", time: "어제" },
-    { id: 6, category: "safety_alert", read: true, text: "MSDS 등록 완료 — Ethanol 99.5%", href: "/dashboard/safety", time: "2일 전" },
-    { id: 7, category: "system", read: true, text: "일일 요약 메일 발송 완료", href: "/dashboard/notifications", time: "2일 전" },
-    { id: 8, category: "quote_arrived", read: true, text: "PDF BOM 분석 실패 — 텍스트 붙여넣기로 재시도", href: "/protocol/bom", time: "3일 전" },
-  ]);
+  // §11.209d-notification-inapp-web-bell-ui — /api/notifications 실시간
+  // 데이터. actionType=IN_APP 만 필터 (EMAIL_DRAFT / QUEUE_ITEM 별도). 1분
+  // 폴링 (refetchInterval) — 향후 SSE/WebSocket 별도 batch.
+  const { data: notificationData } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await fetch("/api/notifications?actionType=IN_APP&limit=20");
+      if (!res.ok) throw new Error("알림 조회 실패");
+      return (await res.json()) as {
+        notifications: NotificationItem[];
+        unreadCount: number;
+        limit: number;
+        offset: number;
+      };
+    },
+    refetchInterval: 60_000,
+  });
+  const notifications: NotificationItem[] = notificationData?.notifications ?? [];
+
+  // §11.209d-notification-inapp-web-bell-ui — 개별 read mutation
+  const markRead = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+      if (!res.ok) throw new Error("읽음 처리 실패");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   // 글로벌 단축키: Ctrl+Q → QR 스캐너 열기
@@ -188,18 +196,34 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const breadcrumbs = generateBreadcrumbs();
   const user = session?.user;
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // §11.209d-notification-inapp-web-bell-ui — server response 의 unreadCount
+  // 직접 사용 (canonical). client-side filter 는 partial sync 시 drift 위험.
+  const unreadCount = notificationData?.unreadCount ?? 0;
 
-  const handleMarkAllRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  // §11.209d-notification-inapp-web-bell-ui — "모두 읽음" 은 unread 항목
+  // 일괄 POST. 별도 read-all API 신설 회피 (작은 surgical).
+  const handleMarkAllRead = async () => {
+    const unread = notifications.filter((n) => n.readAt === null);
+    if (unread.length === 0) return;
+    try {
+      await Promise.all(
+        unread.map((n) =>
+          fetch(`/api/notifications/${n.id}/read`, { method: "POST" }),
+        ),
+      );
+    } finally {
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    }
   };
 
-  const handleNotificationClick = (notification: Notification) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n))
-    );
+  // §11.209d-notification-inapp-web-bell-ui — 개별 알림 click. unread 시
+  // mark as read mutation + entityType-based navigation.
+  const handleNotificationClick = (notification: NotificationItem) => {
+    if (notification.readAt === null) {
+      markRead.mutate(notification.id);
+    }
     setIsNotificationOpen(false);
-    router.push(notification.href);
+    router.push(buildNotificationHref(notification));
   };
 
   /** 알림 카테고리 아이콘 (둥근 배경 박스 + 카테고리별 색상) */
@@ -326,38 +350,45 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     <p className="text-xs text-slate-400 mt-1">모든 알림을 확인했습니다</p>
                   </div>
                 ) : (
-                  notifications.slice(0, 8).map((n, idx) => (
-                    <button
-                      key={n.id}
-                      type="button"
-                      onClick={() => handleNotificationClick(n)}
-                      className={`w-full text-left flex items-start gap-3 px-5 py-3.5 transition-colors relative
-                        ${!n.read ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50"}
-                        ${idx < notifications.slice(0, 8).length - 1 ? "border-b border-slate-100" : ""}
-                      `}
-                    >
-                      {/* 카테고리 아이콘 박스 */}
-                      {renderCategoryIcon(n.category, n.read)}
+                  notifications.slice(0, 8).map((n, idx) => {
+                    // §11.209d-notification-inapp-web-bell-ui — eventType →
+                    // 7 카테고리 + readAt boolean + helper 의 text/href/time.
+                    const category = eventTypeToCategory(n.event.eventType);
+                    const isRead = n.readAt !== null;
+                    const config = CATEGORY_CONFIG[category];
+                    return (
+                      <button
+                        key={n.id}
+                        type="button"
+                        onClick={() => handleNotificationClick(n)}
+                        className={`w-full text-left flex items-start gap-3 px-5 py-3.5 transition-colors relative
+                          ${!isRead ? "bg-blue-50/40 hover:bg-blue-50/70" : "hover:bg-slate-50"}
+                          ${idx < notifications.slice(0, 8).length - 1 ? "border-b border-slate-100" : ""}
+                        `}
+                      >
+                        {/* 카테고리 아이콘 박스 */}
+                        {renderCategoryIcon(category, isRead)}
 
-                      {/* 텍스트 영역 */}
-                      <div className="flex-1 min-w-0 pt-0.5">
-                        <p className={`text-[13px] leading-snug line-clamp-2 ${n.read ? "text-slate-500" : "text-slate-900 font-medium"}`}>
-                          {n.text}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1.5">
-                          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${!n.read ? CATEGORY_CONFIG[n.category].unreadBg + " " + CATEGORY_CONFIG[n.category].unreadTint : "bg-slate-100 text-slate-400"}`}>
-                            {CATEGORY_CONFIG[n.category].label}
-                          </span>
-                          <span className="text-[11px] text-slate-400">{n.time}</span>
+                        {/* 텍스트 영역 */}
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          <p className={`text-[13px] leading-snug line-clamp-2 ${isRead ? "text-slate-500" : "text-slate-900 font-medium"}`}>
+                            {buildNotificationText(n)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5">
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${!isRead ? config.unreadBg + " " + config.unreadTint : "bg-slate-100 text-slate-400"}`}>
+                              {config.label}
+                            </span>
+                            <span className="text-[11px] text-slate-400">{formatNotificationTime(n.createdAt)}</span>
+                          </div>
                         </div>
-                      </div>
 
-                      {/* 미독 파란 점 */}
-                      {!n.read && (
-                        <span className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
-                      )}
-                    </button>
-                  ))
+                        {/* 미독 파란 점 */}
+                        {!isRead && (
+                          <span className="absolute top-4 right-4 w-2 h-2 bg-blue-500 rounded-full flex-shrink-0" />
+                        )}
+                      </button>
+                    );
+                  })
                 )}
               </div>
 
