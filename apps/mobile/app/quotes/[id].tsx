@@ -21,6 +21,9 @@ import {
   useRejectQuote,
   // §11.209d-mobile-request-approval-cta — 결재 요청 mutation hook
   useRequestApproval,
+  // #post-approval-purchase-order-flow Phase 4.3 — order tracking
+  useOrderByQuote,
+  useUpdateOrderStatus,
 } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -92,6 +95,11 @@ export default function QuoteDetailScreen() {
   const { data: history } = useQuoteHistory(id);
   // §11.209d-mobile Phase 2 — 결재 정보 (timeline 표시 위해)
   const { data: approval } = useQuoteApproval(id);
+  // #post-approval-purchase-order-flow Phase 4.3 + 1.2 — order tracking.
+  // 결재 승인 후 자동 생성된 Order 의 status / 배송 정보. canonical truth =
+  // 1 Quote → N Order (vendor 별, option A). Phase 1.2 swap: single → array.
+  const { data: orders = [] } = useOrderByQuote(id);
+  const updateOrderStatus = useUpdateOrderStatus();
   // §11.209d-history-expand-mobile — 이전 결재 이력 expand state
   const [historyExpanded, setHistoryExpanded] = useState(false);
   // §11.209d-mobile-mutation — 반려 사유 RN Modal state. cross-platform —
@@ -513,6 +521,150 @@ export default function QuoteDetailScreen() {
             </View>
           </View>
         )}
+
+        {/* #post-approval-purchase-order-flow Phase 4.3 + 1.2 — 주문 추적
+            카드. orders empty 시 hide (결재 승인 전 또는 cancelled). vendor
+            별 N개 Order 를 vertically stack (Phase 5 에서 vendor grouping
+            heading 추가). */}
+        {orders.map((order) => (
+          <View key={order.id} className="mx-4 mt-4 bg-white rounded-xl border border-slate-200 p-4">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-sm font-bold text-slate-900">주문 추적</Text>
+              <Text className="text-[11px] font-mono text-slate-400">
+                {order.orderNumber}
+              </Text>
+            </View>
+            <View className="gap-2">
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-slate-500">현재 상태</Text>
+                <Text
+                  className={
+                    order.status === "DELIVERED"
+                      ? "text-xs font-semibold text-emerald-700"
+                      : order.status === "SHIPPING"
+                        ? "text-xs font-semibold text-amber-700"
+                        : order.status === "CANCELLED"
+                          ? "text-xs font-semibold text-rose-700"
+                          : order.status === "CONFIRMED"
+                            ? "text-xs font-semibold text-indigo-700"
+                            : "text-xs font-semibold text-blue-700"
+                  }
+                >
+                  {order.status === "ORDERED"
+                    ? "주문 완료"
+                    : order.status === "CONFIRMED"
+                      ? "확인됨"
+                      : order.status === "SHIPPING"
+                        ? "배송 중"
+                        : order.status === "DELIVERED"
+                          ? "배송 완료"
+                          : order.status === "CANCELLED"
+                            ? "취소됨"
+                            : order.status}
+                </Text>
+              </View>
+              {order.expectedDelivery && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-slate-500">예상 배송일</Text>
+                  <Text className="text-xs font-mono text-slate-700">
+                    {new Date(order.expectedDelivery).toLocaleDateString("ko-KR")}
+                  </Text>
+                </View>
+              )}
+              {order.actualDelivery && (
+                <View className="flex-row items-center justify-between">
+                  <Text className="text-xs text-slate-500">실제 배송일</Text>
+                  <Text className="text-xs font-mono text-slate-700">
+                    {new Date(order.actualDelivery).toLocaleDateString("ko-KR")}
+                  </Text>
+                </View>
+              )}
+              <View className="flex-row items-center justify-between">
+                <Text className="text-xs text-slate-500">총액</Text>
+                <Text className="text-sm font-bold text-blue-600">
+                  ₩{order.totalAmount.toLocaleString("ko-KR")}
+                </Text>
+              </View>
+            </View>
+            {/* 상태 변경 — DELIVERED / CANCELLED 외 다음 단계 button */}
+            {order.status !== "DELIVERED" && order.status !== "CANCELLED" && (
+              <View className="pt-3 mt-2 border-t border-slate-100 flex-row gap-2">
+                {order.status === "ORDERED" && (
+                  <Pressable
+                    onPress={() =>
+                      updateOrderStatus.mutate(
+                        { orderId: order.id, status: "CONFIRMED" },
+                        {
+                          onSuccess: () =>
+                            Alert.alert("주문 추적", "확인됨 상태로 변경되었습니다."),
+                          onError: (err: any) =>
+                            Alert.alert(
+                              "변경 실패",
+                              err?.response?.data?.error ?? err?.message ?? "오류",
+                            ),
+                        },
+                      )
+                    }
+                    disabled={updateOrderStatus.isPending}
+                    className="flex-1 items-center justify-center rounded-xl py-3 bg-indigo-600"
+                  >
+                    <Text className="text-sm font-semibold text-white">
+                      {updateOrderStatus.isPending ? "변경 중..." : "확인 처리"}
+                    </Text>
+                  </Pressable>
+                )}
+                {order.status === "CONFIRMED" && (
+                  <Pressable
+                    onPress={() =>
+                      updateOrderStatus.mutate(
+                        { orderId: order.id, status: "SHIPPING" },
+                        {
+                          onSuccess: () =>
+                            Alert.alert("주문 추적", "배송 중 상태로 변경되었습니다."),
+                          onError: (err: any) =>
+                            Alert.alert(
+                              "변경 실패",
+                              err?.response?.data?.error ?? err?.message ?? "오류",
+                            ),
+                        },
+                      )
+                    }
+                    disabled={updateOrderStatus.isPending}
+                    className="flex-1 items-center justify-center rounded-xl py-3 bg-amber-600"
+                  >
+                    <Text className="text-sm font-semibold text-white">
+                      {updateOrderStatus.isPending ? "변경 중..." : "배송 시작"}
+                    </Text>
+                  </Pressable>
+                )}
+                {order.status === "SHIPPING" && (
+                  <Pressable
+                    onPress={() =>
+                      updateOrderStatus.mutate(
+                        { orderId: order.id, status: "DELIVERED" },
+                        {
+                          onSuccess: () =>
+                            Alert.alert("주문 추적", "배송 완료 처리되었습니다."),
+                          onError: (err: any) =>
+                            Alert.alert(
+                              "변경 실패",
+                              err?.response?.data?.error ?? err?.message ?? "오류",
+                            ),
+                        },
+                      )
+                    }
+                    disabled={updateOrderStatus.isPending}
+                    className="flex-1 items-center justify-center rounded-xl py-3 bg-emerald-600"
+                  >
+                    <Text className="text-sm font-semibold text-white">
+                      {updateOrderStatus.isPending ? "변경 중..." : "배송 완료"}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
+          </View>
+        ))}
 
         {/* 벤더 응답 */}
         {quote.vendorResponses && quote.vendorResponses.length > 0 && (

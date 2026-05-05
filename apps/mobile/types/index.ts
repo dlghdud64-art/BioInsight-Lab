@@ -52,6 +52,24 @@ export interface QuoteItem {
   catalogNumber?: string;
 }
 
+/**
+ * #post-approval-purchase-order-flow Phase 4.3 — Order detail (mobile).
+ * canonical truth = web Order model. Quote → Order 1:1.
+ * status 5 enum (ORDERED / CONFIRMED / SHIPPING / DELIVERED / CANCELLED).
+ */
+export interface OrderDetail {
+  id: string;
+  orderNumber: string;
+  status: string;
+  totalAmount: number;
+  shippingAddress: string | null;
+  expectedDelivery: string | null;
+  actualDelivery: string | null;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface QuoteDetail extends Quote {
   items: QuoteItem[];
   description?: string;

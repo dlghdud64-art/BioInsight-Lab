@@ -12,6 +12,7 @@ import type {
   InspectionResult,
   InspectionChecklist,
   NotificationItem,
+  OrderDetail,
 } from "../types";
 
 // ─── 대시보드 ───────────────────────────────────────────────────────
@@ -463,6 +464,51 @@ export function useInspections(inventoryId: string) {
       return res.data?.inspections ?? [];
     },
     enabled: !!inventoryId,
+  });
+}
+
+// ─── #post-approval-purchase-order-flow Phase 4.3 + 1.2 — Order tracking ─────
+
+/**
+ * canonical truth = 1 Quote → N Order (vendor 별, option A 정합).
+ * Phase 1.2 swap: return type `OrderDetail | null` → `OrderDetail[]`
+ * (response shape `{ order }` → `{ orders }`). orders empty 시 UI 가 hide.
+ */
+export function useOrderByQuote(quoteId: string) {
+  return useQuery<OrderDetail[]>({
+    queryKey: ["order-by-quote", quoteId],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/orders/by-quote/${quoteId}`);
+      return (res.data?.orders ?? []) as OrderDetail[];
+    },
+    enabled: !!quoteId,
+    staleTime: 30_000,
+  });
+}
+
+/**
+ * Order status 변경 (PATCH /api/orders/[id]).
+ * onSuccess invalidate ['order' / 'order-by-quote'].
+ */
+export function useUpdateOrderStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      orderId: _orderId,
+      status,
+      orderId,
+    }: {
+      orderId: string;
+      status: string;
+    }) => {
+      const res = await apiClient.patch(`/api/orders/${orderId}`, { status });
+      return res.data;
+    },
+    onSuccess: (_, { orderId }) => {
+      qc.invalidateQueries({ queryKey: ["order", orderId] });
+      qc.invalidateQueries({ queryKey: ["order-by-quote"] });
+      qc.invalidateQueries({ queryKey: ["quote"] });
+    },
   });
 }
 
