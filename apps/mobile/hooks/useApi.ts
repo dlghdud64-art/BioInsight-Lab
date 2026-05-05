@@ -11,6 +11,7 @@ import type {
   Inspection,
   InspectionResult,
   InspectionChecklist,
+  NotificationItem,
 } from "../types";
 
 // ─── 대시보드 ───────────────────────────────────────────────────────
@@ -462,6 +463,46 @@ export function useInspections(inventoryId: string) {
       return res.data?.inspections ?? [];
     },
     enabled: !!inventoryId,
+  });
+}
+
+// ─── §11.209d-notification-inapp-mobile-screen — in-app 알림 ────────
+
+/**
+ * §11.209d-notification-inapp-mobile-screen — IN_APP 알림 list + unread count.
+ * canonical truth = /api/notifications GET (web/mobile 동일). 1분 폴링 —
+ * SSE/WebSocket 별도 batch.
+ */
+export function useNotifications() {
+  return useQuery<{ notifications: NotificationItem[]; unreadCount: number }>({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      const res = await apiClient.get("/api/notifications", {
+        params: { actionType: "IN_APP", limit: 20 },
+      });
+      return {
+        notifications: res.data?.notifications ?? [],
+        unreadCount: res.data?.unreadCount ?? 0,
+      };
+    },
+    refetchInterval: 60_000,
+  });
+}
+
+/**
+ * §11.209d-notification-inapp-mobile-screen — 개별 알림 read 처리.
+ * server validation: 본인 소유 NotificationAction 만 read 가능.
+ */
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient.post(`/api/notifications/${id}/read`);
+      return res.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
   });
 }
 

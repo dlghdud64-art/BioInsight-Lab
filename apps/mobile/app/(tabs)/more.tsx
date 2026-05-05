@@ -4,9 +4,11 @@ import { router } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
   LogOut, Info, User, Bell, Building2, Settings, ChevronRight,
-  Shield, HelpCircle, ExternalLink,
+  Shield, HelpCircle, ExternalLink, BellRing,
 } from "lucide-react-native";
 import { iconColor } from "../../theme/colors";
+// §11.209d-notification-inapp-mobile-screen — unread count badge for menu entry
+import { useNotifications } from "../../hooks/useApi";
 
 interface MenuItem {
   icon: typeof User;
@@ -18,6 +20,10 @@ interface MenuItem {
 }
 
 export default function MoreScreen() {
+  // §11.209d-notification-inapp-mobile-screen — unread count for "알림" entry
+  const { data: notifData } = useNotifications();
+  const unreadCount = notifData?.unreadCount ?? 0;
+
   const handleLogout = () => {
     Alert.alert("로그아웃", "로그아웃 하시겠습니까?", [
       { text: "취소", style: "cancel" },
@@ -53,6 +59,19 @@ export default function MoreScreen() {
   ];
 
   const settingsItems: MenuItem[] = [
+    // §11.209d-notification-inapp-mobile-screen — in-app 알림 list entry.
+    // unread count > 0 시 description 에 "N건 읽지 않음" 동적 노출.
+    {
+      icon: BellRing,
+      label: "알림",
+      description:
+        unreadCount > 0
+          ? `${unreadCount}건 읽지 않음 — 결재 / 재고 / 견적 알림`
+          : "결재 / 재고 / 견적 알림 모두 확인",
+      color: iconColor.primary,
+      bgColor: unreadCount > 0 ? "bg-blue-50" : "bg-slate-100",
+      onPress: () => router.push("/notifications"),
+    },
     {
       icon: Bell,
       label: "알림 설정",

@@ -70,6 +70,12 @@ function RootLayout() {
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
 
+          {/* §11.209d-notification-inapp-mobile-screen — in-app 알림 list */}
+          <Stack.Screen
+            name="notifications"
+            options={{ headerShown: true, title: "알림", headerBackTitle: "뒤로" }}
+          />
+
           {/* ─── 견적 ─── */}
           <Stack.Screen
             name="quotes/[id]"

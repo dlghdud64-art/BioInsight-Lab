@@ -1,5 +1,34 @@
 // ─── 공용 타입 정의 ────────────────────────────────────────────────
 
+/**
+ * §11.209d-notification-inapp-mobile-screen — in-app 알림 item.
+ * canonical truth = web `/api/notifications` GET response (동일 shape —
+ * apps/web/src/lib/notifications/notification-query.ts NotificationItem).
+ *
+ * Date 필드는 JSON 직렬화 후 string (mobile 은 Date 객체 0).
+ */
+export interface NotificationItem {
+  id: string;
+  actionType: string;
+  status: string;
+  payload: unknown;
+  entityType: string;
+  entityId: string;
+  recipientId: string | null;
+  recipientEmail: string | null;
+  createdAt: string;
+  readAt: string | null;
+  sentAt: string | null;
+  event: {
+    id: string;
+    eventType: string;
+    triggeredBy: string | null;
+    metadata: unknown;
+    createdAt: string;
+  };
+}
+
+
 export interface Quote {
   id: string;
   title: string;
