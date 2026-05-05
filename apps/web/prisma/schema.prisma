@@ -112,6 +112,12 @@ model OrganizationMember {
   //   whitelist (LAB_MANAGER / APPROVER / REQUESTER). getWorkflowCapabilities()
   //   가 array/null/object/string 모든 input 안전 처리.
   workflowCapabilities Json @default("[]")
+  /// #approver-routing-per-user-limit-organization-member — 단일 건 결재
+  /// 한도 (KRW). null = 무제한 (default). amount > approvalLimit 시
+  /// selectApproverByAmount 가 다음 fallback (org_owner → org_admin →
+  /// workspace_admin chain). 직전 WorkspaceMember.approvalLimit (Phase 1)
+  /// 와 동일 패턴.
+  approvalLimit Int?
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 

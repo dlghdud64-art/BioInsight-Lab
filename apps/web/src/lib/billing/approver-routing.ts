@@ -107,11 +107,18 @@ export async function selectApproverByAmount(
 
   // ── HIGH tier: org_owner first ──
   if (isHighTier) {
+    // #approver-routing-per-user-limit-organization-member — approvalLimit
+    // 검증 (null 무제한 또는 >= totalAmount 통과). DB-side filter — 한도
+    // 초과 candidate 자동 skip.
     const ownerMember = await db.organizationMember.findFirst({
       where: {
         organizationId,
         role: "OWNER",
         userId: { not: requesterId },
+        OR: [
+          { approvalLimit: null },
+          { approvalLimit: { gte: totalAmount } },
+        ],
       },
       include: { user: { select: { email: true, name: true } } },
     });
@@ -125,11 +132,16 @@ export async function selectApproverByAmount(
     }
 
     // OWNER 없음 → organization ADMIN fallback
+    // #approver-routing-per-user-limit-organization-member — approvalLimit 검증
     const orgAdmin = await db.organizationMember.findFirst({
       where: {
         organizationId,
         role: "ADMIN",
         userId: { not: requesterId },
+        OR: [
+          { approvalLimit: null },
+          { approvalLimit: { gte: totalAmount } },
+        ],
       },
       include: { user: { select: { email: true, name: true } } },
     });
@@ -146,11 +158,16 @@ export async function selectApproverByAmount(
 
   // ── MID tier: org_admin first ──
   if (isMidTier) {
+    // #approver-routing-per-user-limit-organization-member — approvalLimit 검증
     const orgAdmin = await db.organizationMember.findFirst({
       where: {
         organizationId,
         role: "ADMIN",
         userId: { not: requesterId },
+        OR: [
+          { approvalLimit: null },
+          { approvalLimit: { gte: totalAmount } },
+        ],
       },
       include: { user: { select: { email: true, name: true } } },
     });
