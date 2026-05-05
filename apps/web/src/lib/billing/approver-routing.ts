@@ -167,11 +167,18 @@ export async function selectApproverByAmount(
 
   // ── 일반 결재 — workspace ADMIN (본인 외) ──
   // low tier first / mid+high tier fallback 모두 같은 query
+  // #approver-routing-per-user-limit — approvalLimit 검증.
+  //   null = 무제한, amount <= approvalLimit = 통과 → 모두 OR 조건으로 통합.
+  //   한도 초과 candidate 는 자동 skip (DB 가 fallback).
   const wsAdmin = await db.workspaceMember.findFirst({
     where: {
       workspaceId,
       role: "ADMIN",
       userId: { not: requesterId },
+      OR: [
+        { approvalLimit: null },
+        { approvalLimit: { gte: totalAmount } },
+      ],
     },
     include: { user: { select: { email: true, name: true } } },
   });
@@ -187,8 +194,16 @@ export async function selectApproverByAmount(
   // ── self_admin fallback — high tier 차단 (escalation 보호) ──
   // low + mid tier 만 self_admin 허용 (single-admin workspace/org 정합)
   if (!isHighTier) {
+    // #approver-routing-per-user-limit — self_admin 도 한도 검증
     const selfAdmin = await db.workspaceMember.findFirst({
-      where: { workspaceId, role: "ADMIN" },
+      where: {
+        workspaceId,
+        role: "ADMIN",
+        OR: [
+          { approvalLimit: null },
+          { approvalLimit: { gte: totalAmount } },
+        ],
+      },
       include: { user: { select: { email: true, name: true } } },
     });
     if (selfAdmin?.user) {

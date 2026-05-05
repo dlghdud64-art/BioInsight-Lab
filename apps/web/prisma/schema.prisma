@@ -989,6 +989,11 @@ model WorkspaceMember {
   workspaceId String
   userId      String
   role        WorkspaceMemberRole @default(MEMBER)
+  /// #approver-routing-per-user-limit — 단일 건 결재 한도 (KRW). null =
+  /// 무제한 (default). amount > approvalLimit 시 selectApproverByAmount
+  /// 가 다음 fallback 으로 escalation. organization member 는 한도 무제한
+  /// (별도 batch — 본 batch 는 workspace member 만).
+  approvalLimit Int?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
