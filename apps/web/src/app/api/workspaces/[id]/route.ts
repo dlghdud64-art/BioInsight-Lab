@@ -194,6 +194,30 @@ export async function PATCH(
         })
       : null;
 
+    // #approver-routing-cross-field-validation-runtime-current-vs-pending —
+    // partial update 시 cross-field validation. zod refine 은 둘 다 명시된
+    // 경우만 검증 (request body 만 본다) — partial update (low 또는 high
+    // 단독 변경) 시 DB 의 기존 값과 합성 후 finalLow ≤ finalHigh 검증.
+    // workspace.update 전에 차단 (mutation atomic 보호).
+    if (isThresholdUpdate && beforeThresholds) {
+      const finalLow =
+        updateData.approvalLowThresholdKrw ??
+        beforeThresholds.approvalLowThresholdKrw;
+      const finalHigh =
+        updateData.approvalThresholdKrw ??
+        beforeThresholds.approvalThresholdKrw;
+      if (finalLow > finalHigh) {
+        enforcement?.fail();
+        return NextResponse.json(
+          {
+            error: "INVALID_THRESHOLD_ORDER",
+            message: "저액 임계치는 고액 임계치 이하여야 합니다.",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
     // Check slug uniqueness if changing slug
     if (updateData.slug) {
       const existing = await db.workspace.findFirst({
