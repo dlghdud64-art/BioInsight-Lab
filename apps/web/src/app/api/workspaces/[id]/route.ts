@@ -8,6 +8,12 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // #approver-routing-audit-log — workspace 결재 임계치 변경 audit 추적성.
 // best effort (try/catch graceful — mutation atomic 보호).
 import { createAuditLog } from "@/lib/audit/audit-logger";
+// #approver-routing-validation-error-i18n — validation message i18n.
+//   Accept-Language header 기반 ko/en 분기. unsupported → ko fallback.
+import {
+  getApprovalValidationMessage,
+  resolveApprovalLocale,
+} from "@/lib/i18n/approval-validation-messages";
 
 const logger = createLogger("api/workspaces/[id]");
 
@@ -208,10 +214,11 @@ export async function PATCH(
         beforeThresholds.approvalThresholdKrw;
       if (finalLow > finalHigh) {
         enforcement?.fail();
+        const locale = resolveApprovalLocale(request.headers.get("accept-language"));
         return NextResponse.json(
           {
             error: "INVALID_THRESHOLD_ORDER",
-            message: "저액 임계치는 고액 임계치 이하여야 합니다.",
+            message: getApprovalValidationMessage("INVALID_THRESHOLD_ORDER", locale),
           },
           { status: 400 },
         );
