@@ -98,6 +98,34 @@ export function useQuoteApproval(id: string) {
 }
 
 /**
+ * §11.209d-mobile-request-approval-cta — 결재 요청 mutation.
+ * canonical truth = web POST /api/work-queue/purchase-conversion/[id]/request-approval.
+ * server-side 8-step validation (in_app_approval policy + 본인 소유 +
+ * DUPLICATE_PENDING 차단 + 결재자 자동 매핑 — workspace 첫 ADMIN/OWNER).
+ * caller 가 canRequestApproval === true 일 때만 visible (dead button 0).
+ *
+ * Invalidation: 4 keys 동시 (NOT_REQUIRED → PENDING 전환 시 status badge +
+ * approval card visibility + 카운터 sync).
+ */
+export function useRequestApproval() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ quoteId }: { quoteId: string }) => {
+      const res = await apiClient.post(
+        `/api/work-queue/purchase-conversion/${quoteId}/request-approval`,
+      );
+      return res.data;
+    },
+    onSuccess: (_, { quoteId }) => {
+      qc.invalidateQueries({ queryKey: ["quote-approval", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quote", quoteId] });
+      qc.invalidateQueries({ queryKey: ["quotes"] });
+      qc.invalidateQueries({ queryKey: ["dashboard-summary"] });
+    },
+  });
+}
+
+/**
  * §11.209d-mobile-mutation — 결재 승인 mutation.
  * canonical truth = web POST /api/request/[id]/approve. mobile = thin wrapper.
  * caller 가 canApprove === true 일 때만 visible (dead button 0).

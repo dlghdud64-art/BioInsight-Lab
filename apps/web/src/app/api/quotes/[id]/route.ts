@@ -22,6 +22,10 @@ import {
   deriveApprovalHistory,
   deriveApprovalHistoryEntries,
 } from "@/lib/ontology/purchase-conversion-resolver";
+// §11.209d-mobile-request-approval-cta — workspace.plan 기반 approvalPolicy
+// 매핑 (request-approval route 와 동일 source). canRequestApproval computed
+// 정합 위해.
+import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 
 const logger = createLogger("quotes/[id]");
 
@@ -144,6 +148,33 @@ export async function GET(
       }
     }
 
+    // §11.209d-mobile-request-approval-cta — 결재 요청 가능 여부 computed.
+    // 3 조건 모두 true 일 때만 (mobile 의 "결재 요청" Pressable visibility):
+    //   (a) 본인 소유 (quote.userId === session.user.id)
+    //   (b) internalApprovalStatus === "NOT_REQUIRED" (PR 0개 또는 모두 CANCELLED)
+    //   (c) workspace.plan 의 approvalPolicy === "in_app_approval"
+    // canonical 권한은 server validation 8-step (request-approval route) — 본
+    // field 는 dead button 0 visibility 만 보장.
+    let canRequestApproval = false;
+    if (
+      internalApprovalStatus === "NOT_REQUIRED" &&
+      quote.userId === session.user.id
+    ) {
+      const requesterWorkspaceMember = await db.workspaceMember.findFirst({
+        where: { userId: session.user.id },
+        select: {
+          workspace: { select: { plan: true, stripePriceId: true } },
+        },
+      });
+      const approvalPolicy = resolveApprovalPolicyForPlan(
+        requesterWorkspaceMember?.workspace?.plan ?? null,
+        requesterWorkspaceMember?.workspace?.stripePriceId ?? null,
+      );
+      if (approvalPolicy === "in_app_approval") {
+        canRequestApproval = true;
+      }
+    }
+
     return NextResponse.json({
       quote,
       approval: {
@@ -159,6 +190,8 @@ export async function GET(
         historyEntries: approvalHistoryEntries,
         // §11.209d-mobile-mutation — current user CTA visibility
         canApprove,
+        // §11.209d-mobile-request-approval-cta — 결재 요청 CTA visibility
+        canRequestApproval,
       },
     });
   } catch (error) {

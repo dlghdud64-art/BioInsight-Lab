@@ -82,10 +82,8 @@ describe("§11.209d-mobile-mutation Phase 1 — drift 차단", () => {
     expect(src).toMatch(/§11\.209d-mobile-mutation|11\.209d-mobile-mutation/);
   });
 
-  it("useRequestApproval 미정의 (out of scope — defer 별도 batch)", () => {
-    const src = read(HOOKS);
-    // 결재 요청 hook 은 본 batch out of scope. drift 방지 — 추후 enable
-    // 시 명시적 batch 로 land.
-    expect(src).not.toMatch(/export\s+function\s+useRequestApproval/);
-  });
+  // §11.209d-mobile-request-approval-cta — 직전 batch 의 "useRequestApproval
+  // 미정의" lock 은 후속 batch (§11.209d-mobile-request-approval-cta) 가
+  // 명시적으로 enable 했으므로 자연 해제. drift 차단 의도 = "별도 batch
+  // 로 land" — 후속 batch 의 명시적 ADR entry 로 enable.
 });

@@ -19,6 +19,8 @@ import {
   // §11.209d-mobile-mutation — 결재 승인/반려 mutation hooks
   useApproveQuote,
   useRejectQuote,
+  // §11.209d-mobile-request-approval-cta — 결재 요청 mutation hook
+  useRequestApproval,
 } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -98,7 +100,10 @@ export default function QuoteDetailScreen() {
   const [rejectReason, setRejectReason] = useState("");
   const approveQuote = useApproveQuote();
   const rejectQuote = useRejectQuote();
-  const isMutating = approveQuote.isPending || rejectQuote.isPending;
+  // §11.209d-mobile-request-approval-cta — 결재 요청 mutation
+  const requestApproval = useRequestApproval();
+  const isMutating =
+    approveQuote.isPending || rejectQuote.isPending || requestApproval.isPending;
 
   // §11.209d-mobile-mutation — 승인 핸들러. Alert.alert 으로 confirm 후 mutation.
   const handleApprove = () => {
@@ -125,6 +130,44 @@ export default function QuoteDetailScreen() {
                     err?.message ??
                     "결재 승인 중 오류가 발생했습니다.";
                   Alert.alert("결재 승인 실패", msg);
+                },
+              },
+            );
+          },
+        },
+      ],
+    );
+  };
+
+  // §11.209d-mobile-request-approval-cta — 결재 요청 핸들러.
+  // server validation 8-step 통과 시 NOT_REQUIRED → PENDING 전환.
+  // approver 자동 매핑 = workspace 첫 ADMIN/OWNER (server-side).
+  const handleRequestApproval = () => {
+    Alert.alert(
+      "결재 요청",
+      "워크스페이스 관리자에게 결재 요청을 보냅니다.\n진행하시겠습니까?",
+      [
+        { text: "취소", style: "cancel" },
+        {
+          text: "요청",
+          style: "default",
+          onPress: () => {
+            requestApproval.mutate(
+              { quoteId: id },
+              {
+                onSuccess: () => {
+                  Alert.alert(
+                    "결재 요청 완료",
+                    "결재 요청이 발송되었습니다. 결재자가 검토 후 처리합니다.",
+                  );
+                },
+                onError: (err: any) => {
+                  const msg =
+                    err?.response?.data?.message ??
+                    err?.response?.data?.error ??
+                    err?.message ??
+                    "결재 요청 중 오류가 발생했습니다.";
+                  Alert.alert("결재 요청 실패", msg);
                 },
               },
             );
@@ -586,6 +629,31 @@ export default function QuoteDetailScreen() {
           </View>
           <ChevronRight size={16} color={iconColor.muted} />
         </Pressable>
+
+        {/* §11.209d-mobile-request-approval-cta — 결재 요청 (NOT_REQUIRED +
+            본인 소유 + in_app_approval policy 시 server canRequestApproval
+            === true). 자동 매핑된 결재자에게 요청 발송. dead button 0. */}
+        {approval?.canRequestApproval && (
+          <Pressable
+            className={`flex-row items-center justify-center gap-2 rounded-xl py-3.5 ${
+              requestApproval.isPending ? "bg-violet-400" : "bg-violet-600"
+            }`}
+            onPress={handleRequestApproval}
+            disabled={isMutating}
+          >
+            {requestApproval.isPending ? (
+              <>
+                <ActivityIndicator size="small" color="white" />
+                <Text className="text-sm font-semibold text-white">요청 중...</Text>
+              </>
+            ) : (
+              <>
+                <Send size={16} color="white" />
+                <Text className="text-sm font-semibold text-white">결재 요청</Text>
+              </>
+            )}
+          </Pressable>
+        )}
 
         {/* 견적 발송 */}
         {canSend && (

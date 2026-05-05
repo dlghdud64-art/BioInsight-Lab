@@ -56,6 +56,15 @@ export interface QuoteApproval {
    * teamMember.role === ADMIN — 본 field 는 dead button 0 visibility 만 보장.
    */
   canApprove?: boolean;
+  /**
+   * §11.209d-mobile-request-approval-cta — 결재 요청 가능 여부.
+   * server-side computed: 본인 소유 (quote.userId === session.user.id) +
+   * NOT_REQUIRED + workspace.plan 의 approvalPolicy === "in_app_approval"
+   * 일 때만 true. mobile UI 가 "결재 요청" Pressable visibility 분기에
+   * 사용. canonical 권한은 server validation 8-step (route 안) — 본 field
+   * 는 dead button 0 visibility 만 보장.
+   */
+  canRequestApproval?: boolean;
 }
 
 /**
