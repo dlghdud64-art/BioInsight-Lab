@@ -39,6 +39,9 @@ import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
 // §11.209d-notification-inapp-server-wiring — approver 에게 in-app 알림
 // (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
 import { dispatchNotificationEvent } from "@/lib/notifications";
+// #approver-routing-audit-log — 결재 매핑 결과 audit (best effort).
+//   candidate.source / appliedThresholds / totalAmount 추적.
+import { createAuditLog } from "@/lib/audit/audit-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -271,6 +274,35 @@ export async function POST(
     } catch (notifErr) {
       // graceful — mutation 정합 유지
       console.error("[request-approval] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
+    }
+
+    // #approver-routing-audit-log — 결재 매핑 결과 audit log (best effort).
+    // mutation 성공 후 호출 — fail 시 mutation 결과 영향 0. metadata 에
+    // candidate.source + appliedThresholds + totalAmount 기록 (operational
+    // 추적성 — "왜 X 가 결재자가 됐나" + 어느 임계치 적용됐나).
+    try {
+      await createAuditLog({
+        organizationId: orgId,
+        userId: session.user.id,
+        eventType: "WORK_QUEUE_TASK_GENERATED" as never,
+        entityType: "PURCHASE_REQUEST",
+        entityId: purchaseRequest.id,
+        action: "request_approval_create",
+        metadata: {
+          source: candidate.source,
+          totalAmount: quote.totalAmount,
+          appliedThresholds: {
+            approvalLowThresholdKrw: member?.workspace?.approvalLowThresholdKrw ?? null,
+            approvalThresholdKrw: member?.workspace?.approvalThresholdKrw ?? null,
+          },
+          approverId,
+          requesterId: session.user.id,
+          quoteId,
+        },
+      });
+    } catch (auditErr) {
+      // graceful — mutation 정합 유지
+      console.error("[request-approval] audit log 실패 (mutation 정합 유지):", auditErr);
     }
 
     return NextResponse.json(

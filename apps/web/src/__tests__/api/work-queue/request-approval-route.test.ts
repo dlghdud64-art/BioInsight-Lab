@@ -52,9 +52,11 @@ describe("§11.209d-pr-auto-create Phase 1 — request-approval route", () => {
     expect(src).toMatch(/APPROVAL_POLICY_NOT_ENABLED|결재\s*정책|결재가\s*활성/);
   });
 
-  it("approver 자동 매핑 (workspace 첫 ADMIN/OWNER)", () => {
+  it("approver 자동 매핑 (selectApproverByAmount helper 호출)", () => {
+    // §11.209d-approver-routing 이후 직접 role grep → helper 호출로 swap.
+    // 매트릭스 (multi-tier) 는 helper 안에서 처리.
     const src = read(ROUTE);
-    expect(src).toMatch(/role:\s*["']ADMIN["']|role:\s*\{\s*in:[\s\S]*?(ADMIN|OWNER)/);
+    expect(src).toMatch(/selectApproverByAmount/);
   });
 
   it("approver 미설정 → 400 (graceful)", () => {

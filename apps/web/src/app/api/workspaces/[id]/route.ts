@@ -5,6 +5,9 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// #approver-routing-audit-log — workspace 결재 임계치 변경 audit 추적성.
+// best effort (try/catch graceful — mutation atomic 보호).
+import { createAuditLog } from "@/lib/audit/audit-logger";
 
 const logger = createLogger("api/workspaces/[id]");
 
@@ -175,6 +178,22 @@ export async function PATCH(
     const body = await request.json();
     const updateData = updateWorkspaceSchema.parse(body);
 
+    // #approver-routing-audit-log — threshold 변경 시 before snapshot capture
+    // (audit log 의 changes.before). update 전에 기존 값 fetch.
+    const isThresholdUpdate =
+      updateData.approvalLowThresholdKrw != null ||
+      updateData.approvalThresholdKrw != null;
+    const beforeThresholds = isThresholdUpdate
+      ? await db.workspace.findUnique({
+          where: { id: workspaceId },
+          select: {
+            approvalLowThresholdKrw: true,
+            approvalThresholdKrw: true,
+            organizationId: true,
+          },
+        })
+      : null;
+
     // Check slug uniqueness if changing slug
     if (updateData.slug) {
       const existing = await db.workspace.findFirst({
@@ -215,6 +234,38 @@ export async function PATCH(
       workspaceId,
       userId: session.user.id,
     });
+
+    // #approver-routing-audit-log — 결재 임계치 변경 audit log (best effort).
+    // mutation 성공 후 호출 — fail 시 mutation 결과 영향 0 (try/catch graceful).
+    if (isThresholdUpdate && beforeThresholds) {
+      try {
+        await createAuditLog({
+          organizationId: beforeThresholds.organizationId ?? undefined,
+          userId: session.user.id,
+          eventType: "SETTINGS_CHANGED" as never,
+          entityType: "WORKSPACE",
+          entityId: workspaceId,
+          action: "threshold_update",
+          changes: {
+            before: {
+              approvalLowThresholdKrw: beforeThresholds.approvalLowThresholdKrw,
+              approvalThresholdKrw: beforeThresholds.approvalThresholdKrw,
+            },
+            after: {
+              approvalLowThresholdKrw:
+                updateData.approvalLowThresholdKrw ??
+                beforeThresholds.approvalLowThresholdKrw,
+              approvalThresholdKrw:
+                updateData.approvalThresholdKrw ??
+                beforeThresholds.approvalThresholdKrw,
+            },
+          },
+        });
+      } catch (auditErr) {
+        // graceful — mutation 정합 유지
+        logger.error("[workspaces/PATCH] threshold audit log 실패 (mutation 정합 유지)", auditErr);
+      }
+    }
 
     enforcement.complete({});
     return NextResponse.json({ workspace });
