@@ -21,6 +21,8 @@ import { getPlanLabel } from "@/lib/billing/plan-descriptor";
 import { ApprovalThresholdSection } from "@/components/settings/approval-threshold-section";
 // #approver-routing-per-user-limit-admin-ui — workspace ADMIN 별 결재 한도 form
 import { WorkspaceMembersApprovalLimitSection } from "@/components/settings/workspace-members-approval-limit-section";
+// #approver-routing-per-user-limit-organization-member-admin-ui — org OWNER/ADMIN 결재 한도
+import { OrgMembersApprovalLimitSection } from "@/components/settings/org-members-approval-limit-section";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1029,6 +1031,17 @@ function SettingsPageContent() {
                     self_admin 분기에서 amount > approvalLimit 시 자동 escalation. */}
                 {workspacesData?.workspaces?.[0]?.id && session?.user?.id && (
                   <WorkspaceMembersApprovalLimitSection
+                    workspaceId={workspacesData.workspaces[0].id}
+                    currentUserId={session.user.id}
+                  />
+                )}
+
+                {/* #approver-routing-per-user-limit-organization-member-admin-ui —
+                    organization OWNER/ADMIN 별 결재 한도 form (org OWNER/ADMIN 만
+                    visible). org_owner / org_admin tier 의 escalation 결재자 한도
+                    설정. */}
+                {workspacesData?.workspaces?.[0]?.id && session?.user?.id && (
+                  <OrgMembersApprovalLimitSection
                     workspaceId={workspacesData.workspaces[0].id}
                     currentUserId={session.user.id}
                   />
