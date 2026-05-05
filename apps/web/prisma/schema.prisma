@@ -1310,6 +1310,9 @@ enum AuditEventType {
   // (SETTINGS_CHANGED / WORK_QUEUE_TASK_GENERATED) 재사용 → 의미 명확화.
   WORKSPACE_THRESHOLD_CHANGED     // workspace 결재 임계치 변경 (low/high)
   PURCHASE_REQUEST_CREATED        // PR INSERT + 결재 매핑 (source/appliedThresholds)
+
+  // ── #approver-routing-per-user-limit-audit-log ──
+  MEMBER_APPROVAL_LIMIT_CHANGED   // workspace member 결재 한도 변경 (per-user)
 }
 
 model AuditLog {

@@ -5,6 +5,9 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createLogger } from "@/lib/logger";
 import { z } from "zod";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// #approver-routing-per-user-limit-audit-log — approvalLimit 변경 audit 추적성.
+// best effort (try/catch graceful — mutation atomic 보호).
+import { createAuditLog } from "@/lib/audit/audit-logger";
 
 const logger = createLogger("api/workspaces/[id]/members/[memberId]");
 
@@ -75,6 +78,20 @@ export async function PATCH(
     const body = await request.json();
     const { role, approvalLimit } = updateMemberSchema.parse(body);
 
+    // #approver-routing-per-user-limit-audit-log — approvalLimit 변경 시
+    // before snapshot capture (audit log 의 changes.before).
+    const beforeMember =
+      approvalLimit !== undefined
+        ? await db.workspaceMember.findUnique({
+            where: { id: memberId },
+            select: {
+              userId: true,
+              approvalLimit: true,
+              workspace: { select: { organizationId: true } },
+            },
+          })
+        : null;
+
     // Prevent demoting the last admin
     if (role === "MEMBER") {
       const adminCount = await db.workspaceMember.count({
@@ -123,6 +140,32 @@ export async function PATCH(
       newRole: role,
       updatedBy: session.user.id,
     });
+
+    // #approver-routing-per-user-limit-audit-log — approvalLimit 변경 시
+    // audit log (best effort, mutation atomic 외 try/catch graceful).
+    if (approvalLimit !== undefined && beforeMember) {
+      try {
+        await createAuditLog({
+          organizationId: beforeMember.workspace?.organizationId ?? undefined,
+          userId: session.user.id,
+          eventType: "MEMBER_APPROVAL_LIMIT_CHANGED" as never,
+          entityType: "WORKSPACE_MEMBER",
+          entityId: memberId,
+          action: "approval_limit_update",
+          changes: {
+            before: { approvalLimit: beforeMember.approvalLimit },
+            after: { approvalLimit },
+          },
+          metadata: {
+            targetUserId: beforeMember.userId,
+            workspaceId,
+          },
+        });
+      } catch (auditErr) {
+        // graceful — mutation 정합 유지
+        logger.error("[members/PATCH] approvalLimit audit log 실패 (mutation 정합 유지)", auditErr);
+      }
+    }
 
     enforcement.complete({});
     return NextResponse.json({ member: updatedMember });

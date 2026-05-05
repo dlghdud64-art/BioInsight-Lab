@@ -53,6 +53,8 @@ export const AUDIT_EVENT_LABELS: Record<string, AuditEventLabel> = {
   // #approver-routing-event-type-enum-add — 결재 라우팅 dedicated events
   WORKSPACE_THRESHOLD_CHANGED: { label: "결재 임계치 변경", tone: "storage" },
   PURCHASE_REQUEST_CREATED: { label: "결재 요청 생성", tone: "register" },
+  // #approver-routing-per-user-limit-audit-log
+  MEMBER_APPROVAL_LIMIT_CHANGED: { label: "결재 한도 변경", tone: "storage" },
 };
 
 /**
