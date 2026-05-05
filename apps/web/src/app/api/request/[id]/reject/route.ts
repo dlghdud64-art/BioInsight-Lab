@@ -6,6 +6,9 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // §11.209d-notification — requester 에게 결재 반려 email (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseRejectedEmail } from "@/lib/email/templates";
+// §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림
+// (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
+import { dispatchNotificationEvent } from "@/lib/notifications";
 
 /**
  * 구매 요청 거절 (ADMIN/OWNER만 가능)
@@ -149,6 +152,36 @@ export async function POST(
       } catch (emailErr) {
         // graceful — mutation 성공 유지
         console.error("[request/reject] requester email 발송 실패 (mutation 정합 유지):", emailErr);
+      }
+    }
+
+    // §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림.
+    // mutation 성공 후 호출 — fail 시 mutation 결과 영향 0. metadata 에
+    // rejectionReason 포함 (UI bell 이 요약 노출 가능).
+    if (rejectedRequest.requesterId) {
+      try {
+        await dispatchNotificationEvent({
+          eventType: "PURCHASE_REJECTED",
+          entityType: "PURCHASE_REQUEST",
+          entityId: requestId,
+          triggeredBy: session.user.id,
+          recipients: [
+            {
+              userId: rejectedRequest.requesterId,
+              email: rejectedRequest.requester?.email ?? undefined,
+            },
+          ],
+          metadata: {
+            quoteId: rejectedRequest.quoteId,
+            quoteTitle: rejectedRequest.title,
+            totalAmount: rejectedRequest.totalAmount,
+            approverId: session.user.id,
+            rejectionReason: reason || null,
+          },
+        });
+      } catch (notifErr) {
+        // graceful — mutation 정합 유지
+        console.error("[request/reject] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
       }
     }
 

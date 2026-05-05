@@ -33,6 +33,9 @@ import { resolveApprovalPolicyForPlan } from "@/lib/billing/plan-descriptor";
 // §11.209d-notification — approver 에게 결재 요청 email 발송 (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseApprovalRequestEmail } from "@/lib/email/templates";
+// §11.209d-notification-inapp-server-wiring — approver 에게 in-app 알림
+// (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
+import { dispatchNotificationEvent } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";
 
@@ -230,6 +233,29 @@ export async function POST(
         // graceful — mutation 성공 유지, audit log 만
         console.error("[request-approval] approver email 발송 실패 (mutation 정합 유지):", emailErr);
       }
+    }
+
+    // §11.209d-notification-inapp-server-wiring — approver 에게 in-app 알림.
+    // dispatchNotificationEvent 가 NotificationEvent + IN_APP/QUEUE_ITEM
+    // NotificationAction 을 transaction 으로 자동 생성. mutation 성공 후
+    // 호출 — fail 시 mutation 결과 영향 0.
+    try {
+      await dispatchNotificationEvent({
+        eventType: "PURCHASE_APPROVAL_REQUESTED",
+        entityType: "PURCHASE_REQUEST",
+        entityId: purchaseRequest.id,
+        triggeredBy: session.user.id,
+        recipients: [{ userId: approverId, email: approverEmail ?? undefined }],
+        metadata: {
+          quoteId,
+          quoteTitle: quote.title,
+          totalAmount: quote.totalAmount,
+          requesterId: session.user.id,
+        },
+      });
+    } catch (notifErr) {
+      // graceful — mutation 정합 유지
+      console.error("[request-approval] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
     }
 
     return NextResponse.json(

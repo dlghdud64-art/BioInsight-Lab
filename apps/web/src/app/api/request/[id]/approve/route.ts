@@ -21,6 +21,9 @@ import {
 // §11.209d-notification — requester 에게 결재 승인 email (best effort).
 import { sendEmail } from "@/lib/email/sender";
 import { generatePurchaseApprovedEmail } from "@/lib/email/templates";
+// §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림
+// (best effort). NotificationEvent + IN_APP NotificationAction 자동 생성.
+import { dispatchNotificationEvent } from "@/lib/notifications";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -313,6 +316,35 @@ export async function POST(
       } catch (emailErr) {
         // graceful — mutation 성공 유지
         console.error("[request/approve] requester email 발송 실패 (mutation 정합 유지):", emailErr);
+      }
+    }
+
+    // §11.209d-notification-inapp-server-wiring — requester 에게 in-app 알림.
+    // mutation 성공 후 호출 — fail 시 mutation 결과 영향 0.
+    if (purchaseRequest.requesterId) {
+      try {
+        await dispatchNotificationEvent({
+          eventType: "PURCHASE_APPROVED",
+          entityType: "PURCHASE_REQUEST",
+          entityId: requestId,
+          triggeredBy: session.user.id,
+          recipients: [
+            {
+              userId: purchaseRequest.requesterId,
+              email: purchaseRequest.requester?.email ?? undefined,
+            },
+          ],
+          metadata: {
+            quoteId: purchaseRequest.quoteId,
+            quoteTitle: purchaseRequest.title,
+            totalAmount: purchaseRequest.totalAmount,
+            approverId: session.user.id,
+            orderId: result.order?.id ?? null,
+          },
+        });
+      } catch (notifErr) {
+        // graceful — mutation 정합 유지
+        console.error("[request/approve] in-app notification 발송 실패 (mutation 정합 유지):", notifErr);
       }
     }
 

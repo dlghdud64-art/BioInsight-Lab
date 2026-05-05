@@ -40,6 +40,12 @@ export const NOTIFICATION_EVENT_TYPES = {
   BUDGET_WARNING: "BUDGET_WARNING",
   VENDOR_REPLIED: "VENDOR_REPLIED",
   FAST_TRACK_ELIGIBLE: "FAST_TRACK_ELIGIBLE",
+  // §11.209d-notification-inapp-server-wiring — 결재 lifecycle 3 type.
+  // APPROVAL_NEEDED 와 별개 (defaultActions 의 EMAIL_DRAFT 와 Stage 1
+  // sendEmail contract 충돌 방지). entityType = "PURCHASE_REQUEST".
+  PURCHASE_APPROVAL_REQUESTED: "PURCHASE_APPROVAL_REQUESTED",
+  PURCHASE_APPROVED: "PURCHASE_APPROVED",
+  PURCHASE_REJECTED: "PURCHASE_REJECTED",
 } as const;
 
 export type NotificationEventType =
@@ -163,6 +169,27 @@ export const EVENT_TYPE_META: Record<NotificationEventType, EventTypeMeta> = {
     label: "즉시 승인 가능 권장",
     entityType: "QUOTE",
     defaultActions: ["IN_APP", "QUEUE_ITEM"],
+  },
+
+  // ── §11.209d-notification-inapp-server-wiring — 결재 lifecycle ──
+  // EMAIL_DRAFT 제외 (Stage 1 sendEmail 이 직접 즉시 발송 처리).
+  PURCHASE_APPROVAL_REQUESTED: {
+    key: "PURCHASE_APPROVAL_REQUESTED",
+    label: "결재 요청 도착",
+    entityType: "PURCHASE_REQUEST",
+    defaultActions: ["IN_APP", "QUEUE_ITEM"],
+  },
+  PURCHASE_APPROVED: {
+    key: "PURCHASE_APPROVED",
+    label: "결재 승인 완료",
+    entityType: "PURCHASE_REQUEST",
+    defaultActions: ["IN_APP"],
+  },
+  PURCHASE_REJECTED: {
+    key: "PURCHASE_REJECTED",
+    label: "결재 반려",
+    entityType: "PURCHASE_REQUEST",
+    defaultActions: ["IN_APP"],
   },
 };
 
