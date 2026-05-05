@@ -320,6 +320,8 @@ model Vendor {
   products        ProductVendor[]
   quoteResponses  QuoteResponse[]
   billingRecords  VendorBillingRecord[]
+  // #post-approval-purchase-order-flow Phase 1.2 — vendor 별 발주 (option A)
+  orders          Order[]
 
   @@index([name])
   @@index([isPremium])
@@ -444,7 +446,7 @@ model Quote {
   rfqToken        QuoteRfqToken? // RFQ email token
   replies         QuoteReply[] // Email-based vendor replies
   inboundEmails   InboundEmail[] // Matched inbound emails
-  order            Order? // 주문 (견적 확정 후 생성)
+  orders           Order[] // 주문 (결재 후 vendor 별 1개씩 생성 — 1 Quote → N Order)
   purchaseRequests PurchaseRequest[] // 구매 요청
 
   @@index([userId])
@@ -1577,10 +1579,20 @@ enum OrderStatus {
 }
 
 // 주문 (Order)
+// #post-approval-purchase-order-flow Phase 1.2 — vendor 별 PO 분리 (option A).
+// canonical truth = Order (DB) — 결재 후 vendor 별 발주서. 1 Quote → N Order
+// (vendor 별). legacy data 의 vendorId NULL backward compat.
+//
+// `quoteId @unique` (단독) → composite `@@unique([quoteId, vendorId])` 로 swap.
+// vendor 별 1개 Order 보장 (legacy NULL row 는 1 quote 1 NULL Order 유지).
+//
+// vendor / poCandidate relation 은 SetNull on delete — Order 보존.
 model Order {
   id             String      @id @default(cuid())
   userId         String
-  quoteId        String      @unique // 하나의 견적에 하나의 주문만 가능
+  quoteId        String      // composite unique 로 변경 (`@@unique([quoteId, vendorId])`)
+  vendorId       String?     // vendor 별 발주서 매핑. legacy = NULL.
+  poCandidateId  String?     // POCandidate 1:1 매핑. SetNull on delete.
   organizationId String?
   orderNumber    String      @unique // 주문번호 (ORD-YYYYMMDD-XXXX)
   totalAmount    Int         // 총 주문 금액 (KRW)
@@ -1595,14 +1607,19 @@ model Order {
   // Relations
   user            User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   quote           Quote               @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  vendor          Vendor?             @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  poCandidate     POCandidate?        @relation(fields: [poCandidateId], references: [id], onDelete: SetNull)
   organization    Organization?       @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   purchaseRequest PurchaseRequest?    @relation("PurchaseRequestOrder") // 역방향 relation (PurchaseRequest.orderId -> Order.id)
   items           OrderItem[]
   restocks        InventoryRestock[]  // P7-1: 입고 기록
   budgetTransaction UserBudgetTransaction?
 
+  @@unique([quoteId, vendorId]) // vendor 별 1개 Order — legacy NULL row 도 1개 보장
   @@index([userId])
   @@index([quoteId])
+  @@index([vendorId])
+  @@index([poCandidateId])
   @@index([organizationId])
   @@index([status])
   @@index([createdAt])
@@ -2617,6 +2634,8 @@ model POCandidate {
   updatedAt        DateTime @updatedAt
 
   items            POCandidateItem[]
+  // #post-approval-purchase-order-flow Phase 1.2 — POCandidate → Order 1:1 매핑
+  orders           Order[]
 
   @@index([userId])
   @@index([organizationId])
