@@ -29,9 +29,11 @@ describe("#approver-routing-audit-log — request-approval audit log", () => {
     expect(src).toMatch(/createAuditLog/);
   });
 
-  it("eventType: WORK_QUEUE_TASK_GENERATED 명시", () => {
+  it("eventType: PURCHASE_REQUEST_CREATED 명시 (#approver-routing-event-type-enum-add)", () => {
+    // 직전 audit-log batch 의 WORK_QUEUE_TASK_GENERATED 재사용 → dedicated
+    // enum 으로 swap (#approver-routing-event-type-enum-add).
     const src = read(ROUTE);
-    expect(src).toMatch(/eventType:\s*["']WORK_QUEUE_TASK_GENERATED["']/);
+    expect(src).toMatch(/eventType:\s*["']PURCHASE_REQUEST_CREATED["']/);
   });
 
   it("entityType: PURCHASE_REQUEST 명시", () => {

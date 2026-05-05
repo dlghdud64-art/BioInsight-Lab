@@ -28,9 +28,11 @@ describe("#approver-routing-audit-log — workspace PATCH audit log", () => {
     expect(src).toMatch(/createAuditLog/);
   });
 
-  it("eventType: SETTINGS_CHANGED 명시", () => {
+  it("eventType: WORKSPACE_THRESHOLD_CHANGED 명시 (#approver-routing-event-type-enum-add)", () => {
+    // 직전 audit-log batch 의 SETTINGS_CHANGED 재사용 → dedicated enum
+    // 으로 swap (#approver-routing-event-type-enum-add).
     const src = read(ROUTE);
-    expect(src).toMatch(/eventType:\s*["']SETTINGS_CHANGED["']/);
+    expect(src).toMatch(/eventType:\s*["']WORKSPACE_THRESHOLD_CHANGED["']/);
   });
 
   it("entityType: WORKSPACE 또는 비슷", () => {

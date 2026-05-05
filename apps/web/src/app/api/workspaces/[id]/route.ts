@@ -266,7 +266,9 @@ export async function PATCH(
         await createAuditLog({
           organizationId: beforeThresholds.organizationId ?? undefined,
           userId: session.user.id,
-          eventType: "SETTINGS_CHANGED" as never,
+          // #approver-routing-event-type-enum-add — dedicated enum 사용
+          // (직전 SETTINGS_CHANGED 재사용 → 의미 명확화)
+          eventType: "WORKSPACE_THRESHOLD_CHANGED" as never,
           entityType: "WORKSPACE",
           entityId: workspaceId,
           action: "threshold_update",

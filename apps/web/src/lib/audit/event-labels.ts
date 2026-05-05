@@ -50,6 +50,9 @@ export const AUDIT_EVENT_LABELS: Record<string, AuditEventLabel> = {
   ENTITY_LINKED: { label: "DB 연결", tone: "register" },
   VERIFICATION_COMPLETED: { label: "검증 완료", tone: "storage" },
   WORK_QUEUE_TASK_GENERATED: { label: "작업 생성", tone: "register" },
+  // #approver-routing-event-type-enum-add — 결재 라우팅 dedicated events
+  WORKSPACE_THRESHOLD_CHANGED: { label: "결재 임계치 변경", tone: "storage" },
+  PURCHASE_REQUEST_CREATED: { label: "결재 요청 생성", tone: "register" },
 };
 
 /**

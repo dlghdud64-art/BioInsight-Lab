@@ -284,7 +284,9 @@ export async function POST(
       await createAuditLog({
         organizationId: orgId,
         userId: session.user.id,
-        eventType: "WORK_QUEUE_TASK_GENERATED" as never,
+        // #approver-routing-event-type-enum-add — dedicated enum 사용
+        // (직전 WORK_QUEUE_TASK_GENERATED 재사용 → 의미 명확화)
+        eventType: "PURCHASE_REQUEST_CREATED" as never,
         entityType: "PURCHASE_REQUEST",
         entityId: purchaseRequest.id,
         action: "request_approval_create",

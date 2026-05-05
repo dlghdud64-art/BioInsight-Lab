@@ -1299,6 +1299,12 @@ enum AuditEventType {
   ENTITY_LINKED                   // DB Entity 연결 완료
   VERIFICATION_COMPLETED          // 검증 완료 (auto_verified/review_needed/mismatch/missing)
   WORK_QUEUE_TASK_GENERATED       // Ingestion → Work Queue Task 생성
+
+  // ── #approver-routing-event-type-enum-add (#11.209d-approver-routing) ──
+  // 결재 라우팅 dedicated audit events — 직전 audit-log batch 의 generic
+  // (SETTINGS_CHANGED / WORK_QUEUE_TASK_GENERATED) 재사용 → 의미 명확화.
+  WORKSPACE_THRESHOLD_CHANGED     // workspace 결재 임계치 변경 (low/high)
+  PURCHASE_REQUEST_CREATED        // PR INSERT + 결재 매핑 (source/appliedThresholds)
 }
 
 model AuditLog {
