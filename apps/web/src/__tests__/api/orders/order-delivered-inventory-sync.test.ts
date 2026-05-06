@@ -34,7 +34,9 @@ describe("#post-approval-receiving-auto-wiring — Phase 4.1 PATCH route", () =>
   it("PATCH 안 db.$transaction 사용 — Order update + sync atomic", () => {
     const src = read(ROUTE);
     // PATCH function block 안 $transaction 호출
-    const patchBlock = src.match(/export\s+async\s+function\s+PATCH[\s\S]*?(?=export|\Z)/);
+    // §11.211 후속 hot fix — javascript regex 는 `\Z` 미지원 (PCRE 전용).
+    // PATCH 가 route.ts 의 마지막 export 라 string end 까지 greedy match.
+    const patchBlock = src.match(/export\s+async\s+function\s+PATCH[\s\S]*$/);
     expect(patchBlock).not.toBeNull();
     if (patchBlock) {
       expect(patchBlock[0]).toMatch(/db\.\$transaction/);
