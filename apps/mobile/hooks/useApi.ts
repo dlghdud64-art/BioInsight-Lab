@@ -487,6 +487,20 @@ export function useOrderByQuote(quoteId: string) {
 }
 
 /**
+ * #post-approval-purchase-order-flow Phase 4.2-A2 — vendor email 발송
+ * (POST /api/orders/[id]/send-email). server-side vendor.email 422 분기 +
+ * audit log. mobile 은 현장/엣지 도구 — 출장 중 vendor 발송 트리거에 사용.
+ */
+export function useSendOrderEmail() {
+  return useMutation({
+    mutationFn: async ({ orderId }: { orderId: string }) => {
+      const res = await apiClient.post(`/api/orders/${orderId}/send-email`);
+      return res.data;
+    },
+  });
+}
+
+/**
  * Order status 변경 (PATCH /api/orders/[id]).
  * onSuccess invalidate ['order' / 'order-by-quote'].
  */

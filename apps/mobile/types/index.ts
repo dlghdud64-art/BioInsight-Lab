@@ -53,9 +53,13 @@ export interface QuoteItem {
 }
 
 /**
- * #post-approval-purchase-order-flow Phase 4.3 — Order detail (mobile).
- * canonical truth = web Order model. Quote → Order 1:1.
+ * #post-approval-purchase-order-flow Phase 4.3 + 1.2 + 4.2-A2 — Order detail (mobile).
+ * canonical truth = web Order model. 1 Quote → N Order (vendor 별, option A).
  * status 5 enum (ORDERED / CONFIRMED / SHIPPING / DELIVERED / CANCELLED).
+ *
+ * Phase 4.2-A2 — vendor relation (Phase 1.2 의 Order.vendor). UI 가 공급사
+ * heading + 이메일 발송 button 의 disabled state 분기에 사용. 모바일은
+ * 현장/엣지 도구 — PDF 다운로드는 web 한정 (CLAUDE.md 정합).
  */
 export interface OrderDetail {
   id: string;
@@ -68,6 +72,13 @@ export interface OrderDetail {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  vendor?: {
+    id: string;
+    name: string;
+    nameEn: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 }
 
 export interface QuoteDetail extends Quote {

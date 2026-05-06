@@ -24,6 +24,8 @@ import {
   // #post-approval-purchase-order-flow Phase 4.3 — order tracking
   useOrderByQuote,
   useUpdateOrderStatus,
+  // Phase 4.2-A2 — vendor email 발송 (현장 도구)
+  useSendOrderEmail,
 } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -100,6 +102,8 @@ export default function QuoteDetailScreen() {
   // 1 Quote → N Order (vendor 별, option A). Phase 1.2 swap: single → array.
   const { data: orders = [] } = useOrderByQuote(id);
   const updateOrderStatus = useUpdateOrderStatus();
+  // Phase 4.2-A2 — vendor email 발송 mutation (현장 도구).
+  const sendOrderEmail = useSendOrderEmail();
   // §11.209d-history-expand-mobile — 이전 결재 이력 expand state
   const [historyExpanded, setHistoryExpanded] = useState(false);
   // §11.209d-mobile-mutation — 반려 사유 RN Modal state. cross-platform —
@@ -663,6 +667,85 @@ export default function QuoteDetailScreen() {
                 )}
               </View>
             )}
+
+            {/* #post-approval-purchase-order-flow Phase 4.2-A2 — vendor 정보
+                + 이메일 발송. 모바일은 현장/엣지 도구라 PDF 다운로드는 web
+                한정 — 모바일은 출장 중 vendor 발송 트리거에 집중. dead button
+                0 (vendor 또는 vendor.email 미설정 시 disabled). */}
+            <View className="pt-3 mt-3 border-t border-slate-100">
+              <Text className="text-[10px] uppercase tracking-wider text-slate-400 mb-1">
+                공급사
+              </Text>
+              {order.vendor ? (
+                <>
+                  <Text className="text-sm font-semibold text-slate-900">
+                    {order.vendor.name}
+                    {order.vendor.nameEn ? (
+                      <Text className="text-xs font-normal text-slate-500">
+                        {" "}
+                        ({order.vendor.nameEn})
+                      </Text>
+                    ) : null}
+                  </Text>
+                  <Text className="text-xs text-slate-500 mt-0.5">
+                    {order.vendor.email ?? "이메일 미설정"}
+                    {order.vendor.phone ? ` · ${order.vendor.phone}` : ""}
+                  </Text>
+                </>
+              ) : (
+                <Text className="text-sm text-slate-400">공급사 지정 없음</Text>
+              )}
+              <Pressable
+                onPress={() => {
+                  if (!order.vendor?.email) {
+                    Alert.alert(
+                      "발송 불가",
+                      "공급사 이메일이 설정되지 않아 발송할 수 없습니다.",
+                    );
+                    return;
+                  }
+                  sendOrderEmail.mutate(
+                    { orderId: order.id },
+                    {
+                      onSuccess: () =>
+                        Alert.alert(
+                          "이메일 발송 완료",
+                          "공급사에게 발주서를 발송했습니다.",
+                        ),
+                      onError: (err: any) =>
+                        Alert.alert(
+                          "발송 실패",
+                          err?.response?.data?.error ??
+                            err?.message ??
+                            "오류",
+                        ),
+                    },
+                  );
+                }}
+                disabled={
+                  sendOrderEmail.isPending ||
+                  !order.vendor ||
+                  !order.vendor.email
+                }
+                className={`mt-3 items-center justify-center rounded-xl py-3 ${
+                  !order.vendor || !order.vendor.email
+                    ? "bg-slate-100 border border-slate-200"
+                    : "bg-indigo-600"
+                }`}
+              >
+                <Text
+                  className={`text-sm font-semibold ${
+                    !order.vendor || !order.vendor.email
+                      ? "text-slate-400"
+                      : "text-white"
+                  }`}
+                >
+                  {sendOrderEmail.isPending
+                    ? "발송 중..."
+                    : "공급사 이메일 발송"}
+                </Text>
+              </Pressable>
+            </View>
           </View>
         ))}
 
