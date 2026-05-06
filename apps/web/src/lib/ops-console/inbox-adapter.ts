@@ -15,7 +15,8 @@ import type {
 } from '../review-queue/quote-rfq-contract';
 // #post-approval-purchase-order-flow B+H step 1 — vendor name lookup
 // (mock seed). 호영님 host DB swap 시 graph.vendors 로 변경.
-import { VENDOR_MAP } from './seed-data';
+// step 2 — vendor email 보조 map (button disabled 분기에 사용).
+import { VENDOR_MAP, VENDOR_CONTACT_MAP } from './seed-data';
 
 import type {
   PurchaseOrderContract,
@@ -88,6 +89,11 @@ export interface UnifiedInboxItem {
    */
   vendorId?: string;
   vendorName?: string;
+  /**
+   * step 2 — vendor email (button disabled 분기). VENDOR_CONTACT_MAP 또는
+   * actual graph.vendors 에서 propagate. null = 미설정 → email button disabled.
+   */
+  vendorEmail?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -348,6 +354,7 @@ export function buildInboxFromPOs(
         triageGroup: 'now', // placeholder
         vendorId: po.vendorId,
         vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
+        vendorEmail: VENDOR_CONTACT_MAP[po.vendorId]?.email ?? null,
       };
       issueItem.priority = calculateInboxPriority(issueItem);
       issueItem.triageGroup = calculateTriageGroup(issueItem);
@@ -380,6 +387,7 @@ export function buildInboxFromPOs(
           triageGroup: 'waiting_external', // placeholder
           vendorId: po.vendorId,
           vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
+          vendorEmail: VENDOR_CONTACT_MAP[po.vendorId]?.email ?? null,
         };
         ackItem.priority = calculateInboxPriority(ackItem);
         ackItem.triageGroup = calculateTriageGroup(ackItem);
@@ -416,6 +424,7 @@ export function buildInboxFromPOs(
         triageGroup: 'needs_review', // placeholder
         vendorId: po.vendorId,
         vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
+        vendorEmail: VENDOR_CONTACT_MAP[po.vendorId]?.email ?? null,
       };
       approvalItem.priority = calculateInboxPriority(approvalItem);
       approvalItem.triageGroup = calculateTriageGroup(approvalItem);

@@ -58,6 +58,32 @@ export const VENDOR_MAP: VendorMap = {
   [VENDOR_CORNING.id]: VENDOR_CORNING.name,
 };
 
+/**
+ * #post-approval-purchase-order-flow B+H step 2 — vendor contact 보조 map.
+ * VENDOR_MAP 은 name 만 (8 caller 의 backward compat 보호 위해 그대로),
+ * email/phone 은 별도 map 으로 추가. 호영님 host DB swap 시 graph.vendors
+ * 의 email/phone field 정합.
+ */
+export interface VendorContact {
+  email: string | null;
+  phone: string | null;
+}
+
+export const VENDOR_CONTACT_MAP: Record<string, VendorContact> = {
+  [VENDOR_THERMO.id]: {
+    email: "kr-orders@thermofisher.com",
+    phone: "02-2078-7700",
+  },
+  [VENDOR_SIGMA.id]: {
+    email: "kr-orders@sial.com",
+    phone: "02-3140-6300",
+  },
+  [VENDOR_CORNING.id]: {
+    email: "kr-orders@corning.com",
+    phone: "02-3424-3500",
+  },
+};
+
 // ===========================================================================
 // Scenario 1: QUOTE_PARTIALLY_RESPONDED
 // ===========================================================================

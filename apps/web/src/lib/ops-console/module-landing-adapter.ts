@@ -57,9 +57,13 @@ export interface ModuleLandingItem {
    * #post-approval-purchase-order-flow B+H step 1 — vendor display.
    * po module type 만 populate (UnifiedInboxItem.vendorId/vendorName 정합),
    * 다른 module type (quote / receiving / stock_risk) 은 undefined.
+   *
+   * step 2 — vendorEmail (button disabled 분기). VENDOR_CONTACT_MAP 또는
+   * actual graph.vendors 에서 propagate. null = 미설정.
    */
   vendorId?: string;
   vendorName?: string;
+  vendorEmail?: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -296,9 +300,10 @@ export function buildModuleLandingItems(
     targetRoute: item.entityRoute,
     nextHandoffLabel: resolveHandoffLabel(moduleFilter, item),
     updatedAt: item.updatedAt,
-    // #post-approval-purchase-order-flow B+H step 1 — vendor forward.
+    // #post-approval-purchase-order-flow B+H step 1 + 2 — vendor forward.
     vendorId: item.vendorId,
     vendorName: item.vendorName,
+    vendorEmail: item.vendorEmail ?? null,
   }));
 }
 
@@ -515,9 +520,10 @@ export function buildModulePriorityQueue(
     targetRoute: item.entityRoute,
     nextHandoffLabel: resolveHandoffLabel(moduleFilter, item),
     updatedAt: item.updatedAt,
-    // #post-approval-purchase-order-flow B+H step 1 — vendor forward.
+    // #post-approval-purchase-order-flow B+H step 1 + 2 — vendor forward.
     vendorId: item.vendorId,
     vendorName: item.vendorName,
+    vendorEmail: item.vendorEmail ?? null,
   }));
 }
 
