@@ -26,6 +26,10 @@ import { generatePurchaseApprovedEmail } from "@/lib/email/templates";
 import { dispatchNotificationEvent } from "@/lib/notifications";
 // #mobile-push-notification Phase 2 — requester 에게 push (best effort).
 import { sendPushNotification } from "@/lib/notifications/push-sender";
+// #post-approval-purchase-order-flow Phase 1.3-wiring-D — 결재 통과 자동
+// vendor PO 생성 service. POCandidate[] (vendor 별) 가 있으면 vendor 별
+// Order N개 생성, 0개 시 legacy quote.items 기반 1 Order fallback.
+import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 
 /**
  * 구매 요청 승인 (ADMIN/OWNER만 가능)
@@ -180,7 +184,15 @@ export async function POST(
       });
 
       // 2. Order 생성 (견적이 있는 경우)
-      let order = null;
+      //
+      // #post-approval-purchase-order-flow Phase 1.3-wiring-D — vendor-aware
+      // 결재 통과 자동 vendor PO 생성. POCandidate (vendor 별 1개씩) 가
+      // 있으면 service 호출 → vendor 별 N Order. 없으면 legacy quote.items
+      // 기반 1 NULL-vendor Order (backward compat).
+      //
+      // PurchaseRequest.orderId 는 단수 FK 라 multi-Order 시 첫 Order id 매핑
+      // (canonical 매핑은 by-quote API 가 다룸 — Phase 4.3 + 1.2 정합).
+      let order: any = null;
       if (purchaseRequest.quoteId) {
         const quote = await tx.quote.findUnique({
           where: { id: purchaseRequest.quoteId },
@@ -188,36 +200,72 @@ export async function POST(
         });
 
         if (quote) {
-          const orderNumber = `ORD-${approvalTimestamp.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
-
-          order = await tx.order.create({
-            data: {
+          // 결재 통과 POCandidate fetch — quote 의 user / org 기준 (createPoCandidate
+          // wiring 이 quote.id 가 아닌 user/org 단위로 candidate 생성).
+          const candidates = await tx.pOCandidate.findMany({
+            where: {
               userId: purchaseRequest.requesterId,
-              quoteId: purchaseRequest.quoteId,
-              orderNumber,
-              totalAmount: purchaseRequest.totalAmount || quote.totalAmount || 0,
-              status: OrderStatus.ORDERED,
-              notes: purchaseRequest.message || null,
-              items: {
-                create: quote.items.map((item: any) => ({
-                  productId: item.productId,
-                  name: item.name || "Unknown Product",
-                  brand: item.brand,
-                  catalogNumber: item.catalogNumber,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice || 0,
-                  lineTotal: item.lineTotal || 0,
-                  notes: item.notes,
-                })),
-              },
+              organizationId: purchaseRequest.organizationId,
             },
             include: { items: true },
           });
 
-          await tx.purchaseRequest.update({
-            where: { id: requestId },
-            data: { orderId: order.id },
-          });
+          if (candidates.length > 0) {
+            // vendor-aware path — service 호출 (outer SERIALIZABLE tx 전달,
+            // nested transaction 회피).
+            const result = await convertPOCandidatesToOrders(
+              {
+                quoteId: purchaseRequest.quoteId,
+                userId: purchaseRequest.requesterId,
+                organizationId: purchaseRequest.organizationId,
+                candidates,
+              },
+              { client: tx },
+            );
+            if (result.created.length > 0) {
+              const firstOrderId = result.created[0].orderId;
+              // notification 변수 정합 — order = 첫 Order (multi-Order 시 by-quote API 사용)
+              order = await tx.order.findUnique({
+                where: { id: firstOrderId },
+                include: { items: true },
+              });
+              await tx.purchaseRequest.update({
+                where: { id: requestId },
+                data: { orderId: firstOrderId },
+              });
+            }
+          } else {
+            // legacy fallback — POCandidate 0개 시 quote.items 기반 1 NULL-vendor
+            // Order. multi-vendor RFQ 가 아닌 단순 1 quote 1 Order 흐름 호환.
+            const orderNumber = `ORD-${approvalTimestamp.toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+            order = await tx.order.create({
+              data: {
+                userId: purchaseRequest.requesterId,
+                quoteId: purchaseRequest.quoteId,
+                orderNumber,
+                totalAmount: purchaseRequest.totalAmount || quote.totalAmount || 0,
+                status: OrderStatus.ORDERED,
+                notes: purchaseRequest.message || null,
+                items: {
+                  create: quote.items.map((item: any) => ({
+                    productId: item.productId,
+                    name: item.name || "Unknown Product",
+                    brand: item.brand,
+                    catalogNumber: item.catalogNumber,
+                    quantity: item.quantity,
+                    unitPrice: item.unitPrice || 0,
+                    lineTotal: item.lineTotal || 0,
+                    notes: item.notes,
+                  })),
+                },
+              },
+              include: { items: true },
+            });
+            await tx.purchaseRequest.update({
+              where: { id: requestId },
+              data: { orderId: order.id },
+            });
+          }
         }
       }
 
