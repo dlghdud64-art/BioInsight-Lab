@@ -21,6 +21,10 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { sendEmail } from "@/lib/email/sender";
 import { generatePoVendorEmail } from "@/lib/email/po-vendor-template";
+// #post-approval-purchase-order-flow Phase 3.x-attach — vendor email 의 PDF
+// 첨부. 직전 Phase 3.2 본문만 → PDF binary 첨부 추가. host mailer (Resend
+// /SendGrid) 가 attachments field 를 정합 송부, mock 은 metadata logging.
+import { generatePoPdf } from "@/lib/orders/po-pdf-generator";
 
 export async function POST(
   _request: NextRequest,
@@ -93,6 +97,52 @@ export async function POST(
       })),
     });
 
+    // #post-approval-purchase-order-flow Phase 3.x-attach — PDF 첨부.
+    // generatePoPdf 호출 후 attachments field 로 전달. PDF 생성 실패 시
+    // 본문만 송부 (graceful degradation).
+    let pdfAttachment:
+      | { filename: string; content: Buffer; contentType: string }
+      | undefined;
+    try {
+      const pdfBuffer = await generatePoPdf({
+        order: {
+          id: order.id,
+          orderNumber: order.orderNumber,
+          totalAmount: order.totalAmount,
+          status: order.status,
+          notes: order.notes,
+          expectedDelivery: order.expectedDelivery,
+          createdAt: order.createdAt,
+          vendor: order.vendor
+            ? {
+                id: order.vendor.id,
+                name: order.vendor.name,
+                nameEn: order.vendor.nameEn ?? null,
+                email: order.vendor.email ?? null,
+                phone: order.vendor.phone ?? null,
+              }
+            : null,
+          items: order.items.map((it) => ({
+            name: it.name,
+            brand: it.brand,
+            catalogNumber: it.catalogNumber,
+            quantity: it.quantity,
+            unitPrice: it.unitPrice,
+            lineTotal: it.lineTotal,
+          })),
+        },
+        requesterName: order.user?.name ?? undefined,
+      });
+      pdfAttachment = {
+        filename: `${order.orderNumber}.pdf`,
+        content: pdfBuffer,
+        contentType: "application/pdf",
+      };
+    } catch {
+      // PDF 생성 실패 = graceful degradation, 본문만 송부.
+      pdfAttachment = undefined;
+    }
+
     // sendEmail 호출 — 현재 mock (host config 후 실제 송부).
     // 실패 시 catch 에서 500 반환 (mutation atomic 외라 audit 도 fail).
     await sendEmail({
@@ -100,6 +150,7 @@ export async function POST(
       subject: template.subject,
       html: template.html,
       text: template.text,
+      attachments: pdfAttachment ? [pdfAttachment] : undefined,
     });
 
     // audit log — try/catch graceful (이미 송부 완료, audit 실패가 응답 영향 0).
@@ -120,6 +171,9 @@ export async function POST(
         vendorName: order.vendor.name,
         vendorEmail: order.vendor.email,
         subject: template.subject,
+        // Phase 3.x-attach — PDF 첨부 byte size (실패 시 0).
+        attachmentByteSize: pdfAttachment?.content.length ?? 0,
+        hasAttachment: !!pdfAttachment,
       },
     }).catch(() => {
       // audit log 실패는 응답 영향 0
