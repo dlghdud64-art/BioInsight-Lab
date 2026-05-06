@@ -2,13 +2,10 @@
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FileText, Package, ShoppingCart, AlertTriangle, Clock,
-  CheckCircle2, XCircle, Ban, ChevronRight, ChevronDown,
-  Zap, Eye, RotateCcw, Bell, GitCompare,
-} from "lucide-react";
+import { FileText, Package, ShoppingCart, AlertTriangle, Clock, CheckCircle2, ChevronRight, ChevronDown, Zap, RotateCcw, GitCompare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { useOrderPeekOverlayStore } from "@/lib/store/order-peek-overlay-store";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 import { cn } from "@/lib/utils";
@@ -383,9 +380,11 @@ function WorkQueueCard({
                 </Button>
               )}
 
-              <span className="ml-auto text-[10px] text-slate-400">
-                {timeAgo(item.updatedAt)}
-              </span>
+              <RelativeTimeText
+                iso={item.updatedAt}
+                variant="auto"
+                className="ml-auto text-[10px] text-slate-400"
+              />
             </div>
           </div>
 
@@ -486,7 +485,7 @@ function CompletedCard({ item }: { item: WorkQueueItem }) {
           {RESOLUTION_PATH_LABELS[item.metadata.resolutionPath as CompareResolutionPath] || ""}
         </span>
       )}
-      <span className="text-[10px] text-slate-400 flex-shrink-0">{timeAgo(item.updatedAt)}</span>
+      <RelativeTimeText iso={item.updatedAt} variant="auto" className="text-[10px] text-slate-400 flex-shrink-0" />
     </div>
   );
 }

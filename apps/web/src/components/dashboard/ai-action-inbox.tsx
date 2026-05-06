@@ -6,6 +6,7 @@ import { useAiActions, useApproveAiAction, useDismissAiAction, type AiActionItem
 import { AiDraftPreviewDialog } from "@/components/ai/ai-draft-preview-dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { useToast } from "@/hooks/use-toast";
 import { ActivityStatusLine } from "@/components/ai/activity-timeline";
 import {
@@ -399,9 +400,11 @@ export function AiActionInbox() {
                         {isItemDismissing ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3 mr-0.5" />}
                         무시
                       </Button>
-                      <span className="text-[10px] text-slate-400 text-slate-500 ml-auto">
-                        {timeAgo(item.createdAt)}
-                      </span>
+                      <RelativeTimeText
+                        iso={item.createdAt}
+                        variant="auto"
+                        className="text-[10px] text-slate-400 text-slate-500 ml-auto"
+                      />
                     </div>
                   </div>
                 </div>

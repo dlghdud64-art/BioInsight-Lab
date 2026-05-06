@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
@@ -16,12 +17,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import {
-  ShoppingCart, Search, Filter, Calendar, Package, CheckCircle2, Clock,
-  AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, Truck,
-  AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon,
-  Loader2, Upload, ChevronDown,
-} from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -29,6 +25,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 import Link from "next/link";
@@ -246,10 +243,12 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
   const minPrice = prices.length ? Math.min(...prices) : null;
   const delayed = isDelayed(quote);
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
-  const daysSinceCreated = Math.floor((Date.now() - new Date(quote.createdAt).getTime()) / 86400000);
+  // §11.212 — daysSinceCreated 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
+  // <RelativeTimeText iso={quote.createdAt} /> 가 useEffect mount 후 set.
 
   return (
     <div
+      data-testid="quote-request-card"
       className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up ${opStatus.leftBorder} ${
         isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/30"
@@ -302,7 +301,7 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
             {minPrice !== null && (
               <span className="text-[11px] text-slate-700 font-medium">₩{minPrice.toLocaleString("ko-KR")}</span>
             )}
-            <span className="text-[11px] text-slate-500">{daysSinceCreated === 0 ? "오늘" : `${daysSinceCreated}일 전`}</span>
+            <RelativeTimeText iso={quote.createdAt} className="text-[11px] text-slate-500" />
             {quote.deliveryDate && (
               <span className={`text-[11px] flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
                 <Clock className="h-3 w-3" />납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
@@ -369,6 +368,8 @@ const MODE_CHIPS = [
 function QuotesPageContent() {
   const { data: session, status } = useSession();
   const searchParams = useSearchParams();
+  const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
+  const isBrowserPilotQuoteDispatch = pilotProfile === "quote-dispatch";
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
@@ -496,7 +497,32 @@ function QuotesPageContent() {
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
   const isFilterChanging = isFetching && !isLoading;
 
-  const quotes: Quote[] = quotesData?.quotes || [];
+  const quotes: Quote[] = useMemo(() => {
+    const baseQuotes: Quote[] = quotesData?.quotes || [];
+    if (!isBrowserPilotQuoteDispatch) return baseQuotes;
+
+    const hasPending = baseQuotes.some((quote) => quote.status === "PENDING");
+    if (hasPending) return baseQuotes;
+
+    const pilotQuote: Quote = {
+      id: "pilot-quote-dispatch",
+      title: "Pilot PBS Buffer 견적 요청",
+      status: "PENDING",
+      createdAt: new Date().toISOString(),
+      deliveryDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      deliveryLocation: "LabAxis Pilot Lab",
+      items: [
+        {
+          id: "pilot-quote-item",
+          product: { id: "pilot-pbs-buffer", name: "PBS Buffer 10x, 500ml" },
+          quantity: 2,
+        },
+      ],
+      responses: [],
+    };
+
+    return [pilotQuote, ...baseQuotes];
+  }, [quotesData?.quotes, isBrowserPilotQuoteDispatch]);
 
   // ── AI 견적서 비교 실행 ──
   const runAiQuoteCompare = useCallback(async () => {
@@ -787,7 +813,7 @@ function QuotesPageContent() {
 
       {/* ═══ Main: List + Quote Context Rail ═══ */}
       <div className="flex gap-0">
-      <div className="flex-1 min-w-0 space-y-4">
+      <div data-testid="quote-work-queue" className="flex-1 min-w-0 space-y-4">
 
       {/* ── 로딩: progressive skeleton (list만, header/search는 이미 보임) ── */}
       {isLoading && (
@@ -942,7 +968,8 @@ function QuotesPageContent() {
       {/* ═══ Quote Context Rail (lg+) ═══ */}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {
         const sqResponseCount = selectedQuote.responses?.length ?? 0;
-        const sqDaysSince = Math.floor((Date.now() - new Date(selectedQuote.createdAt).getTime()) / 86400000);
+        // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
+        // <RelativeTimeText iso={selectedQuote.createdAt} /> 가 useEffect mount 후 set.
         const sqDelayed = isDelayed(selectedQuote);
         const sqDeadline = selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate) : null;
         const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
@@ -995,7 +1022,7 @@ function QuotesPageContent() {
               </div>
             </div>
             <h3 className="text-sm font-semibold text-slate-900 truncate mb-1">{selectedQuote.title}</h3>
-            <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · {sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</p>
+            <p className="text-[11px] text-slate-500">{selectedQuote.items.length}건 · 회신 {sqResponseCount}/{selectedQuote.items.length} · <RelativeTimeText iso={selectedQuote.createdAt} /></p>
             <p className="text-[11px] text-slate-400 mt-0.5">{selectedSignals.urgency}</p>
           </div>
 
@@ -1011,15 +1038,45 @@ function QuotesPageContent() {
             </p>
           </section>
 
-          {/* § 2. 핵심 근거 — was 운영 요약 (5 canonical fields) */}
+          {/* §11.188 § 2. 판단 근거 — 4-cell MetricCell grid (§11.180/187 패턴) */}
           <div id="brief-facts" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">핵심 근거</div>
-            <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">현재 상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">차단/위험</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">다음 액션</span><span className="text-slate-700">{selectedSignals.nextAction}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">비교 가능</span><span className={selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.compareReady}</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">발주 전환 가능</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-slate-500"}>{selectedSignals.poReady}</span></div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">판단 근거</div>
+            {(() => {
+              const totalItems = selectedQuote.items.length;
+              const replyTone: "ok" | "warn" | "danger" =
+                sqResponseCount === 0
+                  ? "danger"
+                  : sqResponseCount >= totalItems
+                    ? "ok"
+                    : "warn";
+              const compareTone: "ok" | "neutral" =
+                selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료"
+                  ? "ok"
+                  : "neutral";
+              const poTone: "ok" | "neutral" =
+                selectedSignals.poReady === "가능" ? "ok" : "neutral";
+              const replyValue = totalItems === 0 ? "—" : `${sqResponseCount}/${totalItems}`;
+              return (
+                <div className="grid grid-cols-2 gap-2.5">
+                  <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
+                  <MetricCell label="회신" value={replyValue} tone={replyTone} />
+                  <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
+                  <MetricCell label="발주 전환" value={selectedSignals.poReady} tone={poTone} />
+                </div>
+              );
+            })()}
+            {/* 보조 — 차단/위험 + 다음 액션 (정보 보존) */}
+            <div className="mt-3 pt-3 border-t border-bd/30 space-y-1.5">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">차단/위험</span>
+                <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-amber-600"}>
+                  {selectedSignals.blocker}
+                </span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">다음 액션</span>
+                <span className="text-slate-700">{selectedSignals.nextAction}</span>
+              </div>
             </div>
           </div>
 
@@ -1100,7 +1157,7 @@ function QuotesPageContent() {
             <div className="space-y-1.5">
               <div className="flex items-start gap-2 text-[11px]">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-500 mt-1.5 shrink-0" />
-                <div><span className="text-slate-700">요청 생성</span><span className="text-slate-500 ml-1.5">{sqDaysSince === 0 ? "오늘" : `${sqDaysSince}일 전`}</span></div>
+                <div><span className="text-slate-700">요청 생성</span><RelativeTimeText iso={selectedQuote.createdAt} className="text-slate-500 ml-1.5" /></div>
               </div>
               {selectedQuote.status !== "PENDING" && (
                 <div className="flex items-start gap-2 text-[11px]">
@@ -1185,7 +1242,10 @@ function QuotesPageContent() {
 
           {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
-            <Button size="sm" className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
+            <Button
+              data-testid={selectedSignals.actionKey === "request_send" ? "quote-dispatch-review-cta" : undefined}
+              size="sm"
+              className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
               onClick={() => {
                 if (selectedSignals.actionKey) {
                   console.log("[QuoteQueue] quote_rail_cta_clicked", { caseId: selectedQuote.id, actionKey: selectedSignals.actionKey, uiState: selectedSignals.railState });

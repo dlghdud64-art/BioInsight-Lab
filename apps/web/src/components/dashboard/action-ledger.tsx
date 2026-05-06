@@ -11,6 +11,7 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
+import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import {
   CheckCircle2,
   FileText,
@@ -287,9 +288,11 @@ export function ActionLedger({
               <p className="mt-0.5 text-[11px] text-slate-500 truncate">
                 {ev.detail}
               </p>
-              <p className="mt-0.5 text-[10px] text-slate-400">
-                {formatRelativeTime(ev.timestamp)}
-              </p>
+              <RelativeTimeText
+                iso={ev.timestamp}
+                variant="auto"
+                className="mt-0.5 text-[10px] text-slate-400 block"
+              />
             </div>
           </div>
         );
