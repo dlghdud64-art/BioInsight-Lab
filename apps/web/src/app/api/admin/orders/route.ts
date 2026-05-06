@@ -4,6 +4,9 @@ import { db } from "@/lib/db";
 import { QuoteStatus, OrderStatus } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
+// service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy fallback.
+import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 
 /**
  * §11.80 #order-operator-surface — admin Order list 조회
@@ -197,8 +200,44 @@ export async function POST(request: NextRequest) {
       }
 
       // 3. 주문 생성 (견적 소유자에게 주문 생성)
-      const orderNumber = generateOrderNumber();
-      const order = await tx.order.create({
+      //
+      // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware.
+      // 결재 통과 POCandidate (vendor 별 1개씩) 가 있으면 service 호출 →
+      // vendor 별 N Order. 없으면 legacy quote.items 기반 1 NULL-vendor Order
+      // (backward compat). admin path 의 budget 차감 / state transition
+      // 정합 위해 `order` 변수는 첫 Order 또는 legacy 단일 Order.
+      const candidates = await tx.pOCandidate.findMany({
+        where: {
+          userId: quote.userId,
+          organizationId: quote.organizationId,
+        },
+        include: { items: true },
+      });
+
+      let order: any = null;
+      if (candidates.length > 0) {
+        const result = await convertPOCandidatesToOrders(
+          {
+            quoteId: quote.id,
+            userId: quote.userId,
+            organizationId: quote.organizationId,
+            candidates,
+          },
+          { client: tx },
+        );
+        if (result.created.length > 0) {
+          const firstOrderId = result.created[0].orderId;
+          order = await tx.order.findUnique({
+            where: { id: firstOrderId },
+            include: { items: true },
+          });
+        }
+      }
+
+      // legacy fallback — POCandidate 0개 또는 service 가 0 Order 생성 시.
+      if (!order) {
+        const orderNumber = generateOrderNumber();
+        order = await tx.order.create({
         data: {
           userId: quote.userId, // 견적 소유자
           quoteId: quote.id,
@@ -224,6 +263,7 @@ export async function POST(request: NextRequest) {
           items: true,
         },
       });
+      } // end legacy fallback if (!order)
 
       // 4. 예산 차감 (견적 소유자의 예산)
       const updatedBudget = await tx.userBudget.update({

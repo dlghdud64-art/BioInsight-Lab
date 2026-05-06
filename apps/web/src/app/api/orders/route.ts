@@ -7,6 +7,10 @@ import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { logStateTransition } from "@/lib/operations/state-transition-logger";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+// #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
+// service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy quote.items
+// 기반 1 NULL-vendor Order fallback (backward compat).
+import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -147,35 +151,72 @@ export async function POST(request: NextRequest) {
       }
 
       // 3. 주문 생성
-      const orderNumber = generateOrderNumber();
-      const order = await tx.order.create({
-        data: {
+      //
+      // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware.
+      // 결재 통과한 POCandidate (vendor 별 1개씩) 가 있으면 service 호출 →
+      // vendor 별 N Order. 없으면 legacy quote.items 기반 1 NULL-vendor Order
+      // (backward compat). `order` 변수는 첫 Order 또는 legacy 단일 Order
+      // (후속 budget 차감 / state transition log 정합).
+      const candidates = await tx.pOCandidate.findMany({
+        where: {
           userId: session.user.id,
-          quoteId: quote.id,
           organizationId: quote.organizationId,
-          orderNumber,
-          totalAmount,
-          status: OrderStatus.ORDERED,
-          shippingAddress,
-          notes,
-          expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
-          items: {
-            create: quote.items.map((item: { productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
-              productId: item.productId,
-              name: item.name || "Unknown Product",
-              brand: item.brand,
-              catalogNumber: item.catalogNumber,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice || 0,
-              lineTotal: item.lineTotal || 0,
-              notes: item.notes,
-            })),
-          },
         },
-        include: {
-          items: true,
-        },
+        include: { items: true },
       });
+
+      let order: any = null;
+      if (candidates.length > 0) {
+        const result = await convertPOCandidatesToOrders(
+          {
+            quoteId: quote.id,
+            userId: session.user.id,
+            organizationId: quote.organizationId,
+            candidates,
+          },
+          { client: tx },
+        );
+        if (result.created.length > 0) {
+          const firstOrderId = result.created[0].orderId;
+          order = await tx.order.findUnique({
+            where: { id: firstOrderId },
+            include: { items: true },
+          });
+        }
+      }
+
+      // legacy fallback — POCandidate 0개 또는 service 가 0 Order 생성 시.
+      if (!order) {
+        const orderNumber = generateOrderNumber();
+        order = await tx.order.create({
+          data: {
+            userId: session.user.id,
+            quoteId: quote.id,
+            organizationId: quote.organizationId,
+            orderNumber,
+            totalAmount,
+            status: OrderStatus.ORDERED,
+            shippingAddress,
+            notes,
+            expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : null,
+            items: {
+              create: quote.items.map((item: { productId: string | null; name: string | null; brand: string | null; catalogNumber: string | null; quantity: number; unitPrice: number | null; lineTotal: number | null; notes: string | null }) => ({
+                productId: item.productId,
+                name: item.name || "Unknown Product",
+                brand: item.brand,
+                catalogNumber: item.catalogNumber,
+                quantity: item.quantity,
+                unitPrice: item.unitPrice || 0,
+                lineTotal: item.lineTotal || 0,
+                notes: item.notes,
+              })),
+            },
+          },
+          include: {
+            items: true,
+          },
+        });
+      }
 
       // 4. 예산 차감 (SELECT FOR UPDATE + 원자적 연산)
       await tx.$executeRaw`SELECT id FROM "UserBudget" WHERE id = ${budget.id} FOR UPDATE`;
