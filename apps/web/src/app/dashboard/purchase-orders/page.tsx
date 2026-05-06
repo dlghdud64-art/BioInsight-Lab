@@ -412,6 +412,14 @@ function ActionableRow({
           <p className="text-xs text-slate-600 truncate mt-0.5">
             {item.summary}
           </p>
+          {/* #post-approval-purchase-order-flow B+H step 1 — vendor row.
+              VENDOR_MAP lookup (mock seed). vendor 미설정 row 는 skip. */}
+          {item.vendorName && (
+            <p className="text-[11px] text-slate-500 truncate mt-0.5">
+              <span className="text-slate-400">공급사 ·</span>{" "}
+              {item.vendorName}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {item.currentOwnerName && (

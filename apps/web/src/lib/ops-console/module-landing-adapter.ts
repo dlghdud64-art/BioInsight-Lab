@@ -53,6 +53,13 @@ export interface ModuleLandingItem {
   targetRoute: string;
   nextHandoffLabel?: string;
   updatedAt: string;
+  /**
+   * #post-approval-purchase-order-flow B+H step 1 — vendor display.
+   * po module type 만 populate (UnifiedInboxItem.vendorId/vendorName 정합),
+   * 다른 module type (quote / receiving / stock_risk) 은 undefined.
+   */
+  vendorId?: string;
+  vendorName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -289,6 +296,9 @@ export function buildModuleLandingItems(
     targetRoute: item.entityRoute,
     nextHandoffLabel: resolveHandoffLabel(moduleFilter, item),
     updatedAt: item.updatedAt,
+    // #post-approval-purchase-order-flow B+H step 1 — vendor forward.
+    vendorId: item.vendorId,
+    vendorName: item.vendorName,
   }));
 }
 
@@ -505,6 +515,9 @@ export function buildModulePriorityQueue(
     targetRoute: item.entityRoute,
     nextHandoffLabel: resolveHandoffLabel(moduleFilter, item),
     updatedAt: item.updatedAt,
+    // #post-approval-purchase-order-flow B+H step 1 — vendor forward.
+    vendorId: item.vendorId,
+    vendorName: item.vendorName,
   }));
 }
 

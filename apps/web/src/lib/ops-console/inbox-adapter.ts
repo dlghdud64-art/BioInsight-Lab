@@ -13,6 +13,9 @@ import type {
   QuoteResponseContract,
   QuoteComparisonContract,
 } from '../review-queue/quote-rfq-contract';
+// #post-approval-purchase-order-flow B+H step 1 — vendor name lookup
+// (mock seed). 호영님 host DB swap 시 graph.vendors 로 변경.
+import { VENDOR_MAP } from './seed-data';
 
 import type {
   PurchaseOrderContract,
@@ -78,6 +81,13 @@ export interface UnifiedInboxItem {
   updatedAt: string;
   /** Computed for grouping */
   triageGroup: InboxTriageGroup;
+  /**
+   * #post-approval-purchase-order-flow B+H step 1 — vendor display.
+   * PO inbox 의 row 표시 + 차후 PDF/email quick-action wiring 에 사용.
+   * 다른 module type (quote / receiving / stock_risk) 은 undefined.
+   */
+  vendorId?: string;
+  vendorName?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -336,6 +346,8 @@ export function buildInboxFromPOs(
         riskBadges: dueState.isOverdue ? ['발행 지연'] : [],
         updatedAt: po.createdAt,
         triageGroup: 'now', // placeholder
+        vendorId: po.vendorId,
+        vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
       };
       issueItem.priority = calculateInboxPriority(issueItem);
       issueItem.triageGroup = calculateTriageGroup(issueItem);
@@ -366,6 +378,8 @@ export function buildInboxFromPOs(
           riskBadges: !hasPromisedDelivery ? ['납기 미확정'] : [],
           updatedAt: po.issuedAt ?? po.createdAt,
           triageGroup: 'waiting_external', // placeholder
+          vendorId: po.vendorId,
+          vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
         };
         ackItem.priority = calculateInboxPriority(ackItem);
         ackItem.triageGroup = calculateTriageGroup(ackItem);
@@ -400,6 +414,8 @@ export function buildInboxFromPOs(
         riskBadges: dueState.isOverdue ? ['승인 지연'] : [],
         updatedAt: po.createdAt,
         triageGroup: 'needs_review', // placeholder
+        vendorId: po.vendorId,
+        vendorName: VENDOR_MAP[po.vendorId] ?? po.vendorId,
       };
       approvalItem.priority = calculateInboxPriority(approvalItem);
       approvalItem.triageGroup = calculateTriageGroup(approvalItem);
