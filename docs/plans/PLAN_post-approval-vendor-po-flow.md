@@ -413,8 +413,9 @@ All phases must strictly follow Red-Green-Refactor.
 - [x] Phase 1.2 — Schema GREEN — schema swap + migration + caller 정합 (1곳) + 22/22 PASS
 - [x] Phase 1.3 — POCandidate → Order conversion service — `convertPOCandidatesToOrders` 9/9 PASS
 - [x] Phase 1.3-wiring — bulk-po route 의 vendor-aware swap (schema 1:N 정합 + service 호출 + legacy fallback) — 6/6 PASS, cluster 37/37
-- [ ] Phase 2.1 — PO PDF RED
-- [ ] Phase 2.2 — PO PDF GREEN
+- [x] Phase 1.3-wiring-D — request approve route vendor-aware (결재 통과 자동 vendor PO) — 5/5 PASS, cluster 42/42
+- [x] Phase 2.1 — PO PDF RED — 10 failing test
+- [x] Phase 2.2 — PO PDF GREEN — pdfkit + 한글 Pretendard 임베드 + audit log + Content-Type application/pdf — 10/10 PASS, cluster 52/52
 - [ ] Phase 3.1 — Vendor email RED
 - [ ] Phase 3.2 — Vendor email GREEN
 - [ ] Phase 5 — Smoke + Rollout + ADR + cluster close
