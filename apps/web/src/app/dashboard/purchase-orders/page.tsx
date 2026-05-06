@@ -2,6 +2,9 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo, useCallback } from "react";
+// #post-approval-purchase-order-flow B+H step 3 — ActionableRow 의 PDF/email
+// quick-action mutation. component-scoped useMutation (각 row 마다 독립).
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
@@ -18,12 +21,15 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter } from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter, FileText, Mail } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 // #post-approval-purchase-order-flow I — 빈 상태 한국어 정합. raw text →
 // reusable EmptyState (큰 icon + 한국어 title/description).
 import { EmptyState } from "@/components/ui/empty-state";
+// #post-approval-purchase-order-flow B+H step 3 — quick-action button.
+// row 안 PDF/email 직접 trigger (detail page 진입 0). 호영님 스크린샷 정합.
+import { useToast } from "@/hooks/use-toast";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -392,17 +398,69 @@ function ActionableRow({
   item: ModuleLandingItem;
   onClick: () => void;
 }) {
+  const { toast } = useToast();
   const borderClass = item.dueState.isOverdue
     ? "border-l-2 border-l-red-500"
     : item.blockerSummary
       ? "border-l-2 border-l-amber-500"
       : "";
 
+  // #post-approval-purchase-order-flow B+H step 3 — PDF 다운로드 + 이메일
+  // 발송 quick-action mutation. ActionableRow 안 stopPropagation 으로 row
+  // navigation 영향 0. entityId = ops-console PO id (host actual Order.id
+  // 매핑은 graph swap 후 정합).
+  const pdfMutation = useMutation({
+    mutationFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}/generate-pdf`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "PDF 생성 실패");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${item.title.replace(/[^\w-]/g, "_")}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) =>
+      toast({ title: "PDF 다운로드 실패", description: err.message, variant: "destructive" }),
+  });
+  const emailMutation = useMutation({
+    mutationFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}/send-email`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "이메일 발송 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () =>
+      toast({ title: "이메일 발송 완료", description: "공급사에게 발주서를 발송했습니다." }),
+    onError: (err: Error) =>
+      toast({ title: "발송 실패", description: err.message, variant: "destructive" }),
+  });
+
   return (
     <div className={`w-full text-left px-4 py-2.5 hover:bg-slate-100 transition-colors ${borderClass}`}>
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onClick}
-        className="w-full flex items-center gap-3"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
+        className="w-full flex items-center gap-3 cursor-pointer"
       >
         <span
           className={`h-1.5 w-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[item.priority] ?? PRIORITY_DOT.p3}`}
@@ -437,9 +495,44 @@ function ActionableRow({
             </span>
           )}
           <DueStateBadge dueState={item.dueState} />
+          {/* #post-approval-purchase-order-flow B+H step 3 — quick-action.
+              row click 의 detail navigation 영향 0 (stopPropagation). vendor
+              미설정 row 는 group 자체 hide (PO 가 아닌 row 에서 의미 0). */}
+          {item.vendorName && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  pdfMutation.mutate();
+                }}
+                disabled={pdfMutation.isPending}
+                title="발주서 PDF 다운로드"
+                className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+              >
+                <FileText className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  emailMutation.mutate();
+                }}
+                disabled={emailMutation.isPending || !item.vendorEmail}
+                title={
+                  item.vendorEmail
+                    ? "공급사 이메일 발송"
+                    : "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
+                }
+                className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Mail className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <ChevronRight className="h-3.5 w-3.5 text-slate-500" />
         </div>
-      </button>
+      </div>
       <AiAnalysisPanel item={item} />
     </div>
   );
