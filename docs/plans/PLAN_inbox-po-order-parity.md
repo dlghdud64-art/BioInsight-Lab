@@ -1,10 +1,11 @@
 # Implementation Plan: §11.211 inbox PO mutation Order resolve + production seed parity
 
-- **Status:** 🔄 In Progress (Phase 4 smoke 대기)
+- **Status:** ✅ Complete
 - **Started:** 2026-05-06
 - **Last Updated:** 2026-05-06
-- **Estimated Completion:** 2026-05-07
+- **Completed:** 2026-05-06
 - **Path 채택:** Path V (ActionableRow 안 useQuery resolve) + Phase 3 defer (Sub-3b)
+- **Production smoke:** Vercel `dpl_2DQfk4Mp2ic2Rx2pQsTkRtuCDWaW` (commit `23998bb2`) — Chrome verify GET /api/orders/po-002 → 404 + button disabled + tooltip "발주 row 가 아직 변환되지 않았습니다"
 - **Cluster:** #post-approval-purchase-order-flow (last sub-track)
 - **Track ID:** §11.211
 
@@ -327,7 +328,7 @@ All phases must strictly follow Red-Green-Refactor.
 - [x] Phase 1 complete (RED test — Path V 정합 1 file 유지, 2 file deprecated skip)
 - [x] Phase 2 complete (GREEN — purchase-orders/page.tsx ActionableRow useQuery + orderId 분기)
 - [~] Phase 3 deferred (Sub-3b — production seed parity defer, dead-button 0 자체로 production parity 보장)
-- [ ] Phase 4 in progress (Chrome smoke + ADR §11.211 cluster close)
+- [x] Phase 4 complete (Chrome smoke + ADR §11.211 cluster close)
 
 ---
 
