@@ -20,6 +20,10 @@ import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { generatePoPdf } from "@/lib/orders/po-pdf-generator";
+// #post-approval-purchase-order-flow Phase 2.3 step 2 — storage upload.
+// host config (STORAGE_PROVIDER) 후 helper 가 URL 반환, Order.poDocumentUrl
+// 저장. 미설정 시 graceful fallback (stream 응답만, db update 0).
+import { uploadPoPdf } from "@/lib/orders/po-pdf-storage";
 
 /**
  * mobile 호환 — expo-file-system 의 downloadAsync 가 default GET. server 가
@@ -103,6 +107,38 @@ export async function POST(
       requesterName: order.user?.name ?? undefined,
     });
 
+    // #post-approval-purchase-order-flow Phase 2.3 step 2 — storage upload +
+    // Order.poDocumentUrl / poDocumentGeneratedAt 저장. graceful fallback
+    // (storage 미설정 또는 upload 실패 시 stream 만 반환, db update 0).
+    let storedUrl: string | null = null;
+    let storageProvider: string | null = null;
+    try {
+      const uploadResult = await uploadPoPdf({
+        buffer: pdfBuffer,
+        filename: `${order.orderNumber}.pdf`,
+        prefix: order.organizationId
+          ? `po-pdfs/${order.organizationId}`
+          : "po-pdfs",
+      });
+      storedUrl = uploadResult.url;
+      storageProvider = uploadResult.provider;
+      // db update — best effort. 실패 시 mutation 영향 0.
+      await db.order
+        .update({
+          where: { id: order.id },
+          data: {
+            poDocumentUrl: uploadResult.url,
+            poDocumentGeneratedAt: new Date(),
+          },
+        })
+        .catch(() => {
+          // db update 실패는 PDF 응답 영향 0
+        });
+    } catch {
+      // storage 미설정 또는 upload 실패 — graceful, stream 만 반환.
+      storedUrl = null;
+    }
+
     // audit log — try/catch graceful (mutation 영향 0).
     // #audit-event-type-order — dedicated enum `PO_PDF_GENERATED` 사용
     // (직전 SETTINGS_CHANGED 재사용 → cleanup 정합).
@@ -120,6 +156,9 @@ export async function POST(
         vendorId: order.vendorId,
         vendorName: order.vendor?.name ?? null,
         byteSize: pdfBuffer.length,
+        // Phase 2.3 step 2 — storage upload 결과
+        storedUrl,
+        storageProvider,
       },
     }).catch(() => {
       // audit log 실패는 PDF 응답 영향 0
