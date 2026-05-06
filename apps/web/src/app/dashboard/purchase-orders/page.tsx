@@ -18,9 +18,12 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical } from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// #post-approval-purchase-order-flow I — 빈 상태 한국어 정합. raw text →
+// reusable EmptyState (큰 icon + 한국어 title/description).
+import { EmptyState } from "@/components/ui/empty-state";
 
 // ── Bucket tab config (PO-specific labels) ────────────────────────
 const PO_BUCKET_TABS: { key: ModuleBucketKey; label: string }[] = [
@@ -177,19 +180,20 @@ export default function PurchaseOrderLandingPage() {
           발주 전환을 완료해야 여기 항목이 생기므로 CTA 를 견적 관리가
           아니라 구매 운영으로 직접 연결. surface 귀책 명확화. */}
       {isEmpty && (
-        <div className="bg-white border border-slate-200 rounded-lg p-8 text-center">
-          <p className="text-sm text-slate-600">
-            발주된 항목이 없습니다
-          </p>
-          <p className="text-xs text-slate-500 mt-1">
-            구매 운영에서 회신 받은 견적을 비교하고 발주로 전환하면 여기서 진행 상태를 추적합니다.
-          </p>
-          <Link
-            href="/dashboard/purchases"
-            className="inline-flex items-center gap-1 mt-3 text-xs text-blue-600 hover:text-blue-700"
-          >
-            구매 운영으로 이동 <ArrowRight className="h-3 w-3" />
-          </Link>
+        <div className="bg-white border border-slate-200 rounded-lg">
+          <EmptyState
+            icon={Inbox}
+            title="아직 발주된 항목이 없습니다"
+            description="구매 운영에서 회신 받은 견적을 비교하고 발주로 전환하면 여기서 진행 상태를 추적합니다."
+            action={
+              <Link
+                href="/dashboard/purchases"
+                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700"
+              >
+                구매 운영으로 이동 <ArrowRight className="h-3 w-3" />
+              </Link>
+            }
+          />
         </div>
       )}
 
@@ -255,9 +259,14 @@ export default function PurchaseOrderLandingPage() {
             {/* ── 4. Actionable Queue (bucket items) ───────────────── */}
             <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
               {activeBucketItems.length === 0 ? (
-                <div className="px-4 py-8 text-center text-sm text-slate-600">
-                  이 분류에 해당하는 항목이 없습니다
-                </div>
+                <EmptyState
+                  icon={Filter}
+                  title={`${
+                    PO_BUCKET_TABS.find((t) => t.key === activeTab)?.label ??
+                    "현재"
+                  } 단계에 처리할 항목이 없습니다`}
+                  description="다른 분류 탭을 확인하거나, 우선 처리에서 다음 작업을 시작하세요."
+                />
               ) : (
                 <div className="divide-y divide-slate-200">
                   {activeBucketItems.map((item) => (
