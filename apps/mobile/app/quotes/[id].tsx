@@ -26,6 +26,8 @@ import {
   useUpdateOrderStatus,
   // Phase 4.2-A2 — vendor email 발송 (현장 도구)
   useSendOrderEmail,
+  // Phase 4.2-G — mobile PDF download (현장 도구)
+  useDownloadOrderPdf,
 } from "../../hooks/useApi";
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
@@ -104,6 +106,8 @@ export default function QuoteDetailScreen() {
   const updateOrderStatus = useUpdateOrderStatus();
   // Phase 4.2-A2 — vendor email 발송 mutation (현장 도구).
   const sendOrderEmail = useSendOrderEmail();
+  // Phase 4.2-G — mobile PDF download mutation (현장 도구).
+  const downloadOrderPdf = useDownloadOrderPdf();
   // §11.209d-history-expand-mobile — 이전 결재 이력 expand state
   const [historyExpanded, setHistoryExpanded] = useState(false);
   // §11.209d-mobile-mutation — 반려 사유 RN Modal state. cross-platform —
@@ -695,6 +699,32 @@ export default function QuoteDetailScreen() {
               ) : (
                 <Text className="text-sm text-slate-400">공급사 지정 없음</Text>
               )}
+              {/* #post-approval-purchase-order-flow Phase 4.2-G — PDF
+                  다운로드 + share sheet (현장 도구). expo-file-system +
+                  expo-sharing 의존. 호영님 host install:
+                  `npx expo install expo-file-system`. */}
+              <Pressable
+                onPress={() => {
+                  downloadOrderPdf.mutate(
+                    { orderId: order.id, orderNumber: order.orderNumber },
+                    {
+                      onError: (err: any) =>
+                        Alert.alert(
+                          "PDF 다운로드 실패",
+                          err?.message ?? "오류",
+                        ),
+                    },
+                  );
+                }}
+                disabled={downloadOrderPdf.isPending}
+                className="mt-3 items-center justify-center rounded-xl py-3 bg-white border border-slate-300"
+              >
+                <Text className="text-sm font-semibold text-slate-700">
+                  {downloadOrderPdf.isPending
+                    ? "PDF 생성 중..."
+                    : "발주서 PDF 다운로드"}
+                </Text>
+              </Pressable>
               <Pressable
                 onPress={() => {
                   if (!order.vendor?.email) {

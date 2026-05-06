@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { Sentry } from "./sentry";
 
 // 환경변수에서 API URL 가져오기 (없으면 로컬호스트)
-const API_BASE_URL =
+export const API_BASE_URL =
   process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
 export const apiClient = axios.create({

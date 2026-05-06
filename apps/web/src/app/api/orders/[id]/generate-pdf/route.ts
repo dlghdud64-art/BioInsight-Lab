@@ -21,6 +21,18 @@ import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { generatePoPdf } from "@/lib/orders/po-pdf-generator";
 
+/**
+ * mobile 호환 — expo-file-system 의 downloadAsync 가 default GET. server 가
+ * GET / POST 둘 다 동일 흐름으로 PDF stream 반환 (PDF 생성은 read-only —
+ * idempotent, GET 정합).
+ */
+export async function GET(
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> },
+) {
+  return POST(request, context);
+}
+
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

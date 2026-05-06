@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { apiClient } from "../lib/api";
+import { apiClient, API_BASE_URL } from "../lib/api";
 import type {
   Quote,
   QuoteDetail,
@@ -483,6 +483,52 @@ export function useOrderByQuote(quoteId: string) {
     },
     enabled: !!quoteId,
     staleTime: 30_000,
+  });
+}
+
+/**
+ * #post-approval-purchase-order-flow Phase 4.2-G — mobile PDF download.
+ * 현장/엣지 도구 — 출장 중 vendor 발송 직전 PDF 미리보기 / 외부 share.
+ *
+ * 흐름: server GET /api/orders/[id]/generate-pdf (idempotent, POST 와 동일
+ * 동작) → expo-file-system downloadAsync → cacheDirectory 안 .pdf 저장
+ * → expo-sharing shareAsync (iOS share sheet / Android intent).
+ *
+ * 의존:
+ *   - expo-file-system (host install: `npx expo install expo-file-system`)
+ *   - expo-sharing (이미 설치됨 — apps/mobile/package.json)
+ */
+export function useDownloadOrderPdf() {
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      orderNumber,
+    }: {
+      orderId: string;
+      orderNumber: string;
+    }) => {
+      // dynamic import — host 측 expo-file-system install 후 정상 작동
+      const FileSystem = await import("expo-file-system");
+      const Sharing = await import("expo-sharing");
+      // Authorization header — apiClient 의 default token 정합 (axios 와 동일).
+      const token = (apiClient.defaults.headers as any)?.common?.Authorization;
+      const uri = `${FileSystem.cacheDirectory ?? ""}${orderNumber}.pdf`;
+      const downloadResult = await FileSystem.downloadAsync(
+        `${API_BASE_URL}/api/orders/${orderId}/generate-pdf`,
+        uri,
+        token ? { headers: { Authorization: String(token) } } : undefined,
+      );
+      if (downloadResult.status !== 200) {
+        throw new Error(`PDF 다운로드 실패 (status ${downloadResult.status})`);
+      }
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: "application/pdf",
+          UTI: "com.adobe.pdf",
+        });
+      }
+      return { uri: downloadResult.uri };
+    },
   });
 }
 
