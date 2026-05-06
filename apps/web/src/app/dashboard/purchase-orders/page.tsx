@@ -4,7 +4,7 @@ import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo, useCallback } from "react";
 // #post-approval-purchase-order-flow B+H step 3 — ActionableRow 의 PDF/email
 // quick-action mutation. component-scoped useMutation (각 row 마다 독립).
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
@@ -405,13 +405,36 @@ function ActionableRow({
       ? "border-l-2 border-l-amber-500"
       : "";
 
+  // §11.211 Path V — ActionableRow 안 useQuery 로 entityId → DB Order.id
+  // resolve. mock contract.id ('po-002') 가 그대로 DB Order.id 인 경우
+  // 200 응답 (Sub-B: production seed 시 explicit id), 미존재 시 404 → null.
+  // resolvedOrderId null 이면 PDF/email button disabled + tooltip 명시
+  // (dead-button 0). PO row (vendorName 있음) 만 enabled.
+  const { data: orderData, isLoading: orderResolving } = useQuery<
+    { id: string } | null
+  >({
+    queryKey: ["po-actionable-row-order-resolve", item.entityId],
+    queryFn: async () => {
+      const res = await csrfFetch(`/api/orders/${item.entityId}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error("Order resolve 실패");
+      const data = (await res.json()) as { order?: { id: string } | null };
+      return data.order ?? null;
+    },
+    enabled: Boolean(item.vendorName),
+    staleTime: 60_000, // 1분 캐시
+    retry: false,
+  });
+  const resolvedOrderId: string | null = orderData?.id ?? null;
+
   // #post-approval-purchase-order-flow B+H step 3 — PDF 다운로드 + 이메일
   // 발송 quick-action mutation. ActionableRow 안 stopPropagation 으로 row
-  // navigation 영향 0. entityId = ops-console PO id (host actual Order.id
-  // 매핑은 graph swap 후 정합).
+  // navigation 영향 0. resolvedOrderId 사용 (Path V — entityId 가 mock
+  // contract.id 가 아닌 DB Order.id 정합 보장).
   const pdfMutation = useMutation({
     mutationFn: async () => {
-      const res = await csrfFetch(`/api/orders/${item.entityId}/generate-pdf`, {
+      if (!resolvedOrderId) throw new Error("발주 row 가 아직 변환되지 않았습니다");
+      const res = await csrfFetch(`/api/orders/${resolvedOrderId}/generate-pdf`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -433,7 +456,8 @@ function ActionableRow({
   });
   const emailMutation = useMutation({
     mutationFn: async () => {
-      const res = await csrfFetch(`/api/orders/${item.entityId}/send-email`, {
+      if (!resolvedOrderId) throw new Error("발주 row 가 아직 변환되지 않았습니다");
+      const res = await csrfFetch(`/api/orders/${resolvedOrderId}/send-email`, {
         method: "POST",
       });
       if (!res.ok) {
@@ -506,9 +530,15 @@ function ActionableRow({
                   e.stopPropagation();
                   pdfMutation.mutate();
                 }}
-                disabled={pdfMutation.isPending}
-                title="발주서 PDF 다운로드"
-                className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50"
+                disabled={pdfMutation.isPending || orderResolving || !resolvedOrderId}
+                title={
+                  resolvedOrderId
+                    ? "발주서 PDF 다운로드"
+                    : orderResolving
+                      ? "발주 정보 확인 중…"
+                      : "발주 row 가 아직 변환되지 않았습니다"
+                }
+                className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <FileText className="h-3.5 w-3.5" />
               </button>
@@ -518,11 +548,20 @@ function ActionableRow({
                   e.stopPropagation();
                   emailMutation.mutate();
                 }}
-                disabled={emailMutation.isPending || !item.vendorEmail}
+                disabled={
+                  emailMutation.isPending ||
+                  orderResolving ||
+                  !resolvedOrderId ||
+                  !item.vendorEmail
+                }
                 title={
-                  item.vendorEmail
-                    ? "공급사 이메일 발송"
-                    : "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
+                  !resolvedOrderId
+                    ? orderResolving
+                      ? "발주 정보 확인 중…"
+                      : "발주 row 가 아직 변환되지 않았습니다"
+                    : item.vendorEmail
+                      ? "공급사 이메일 발송"
+                      : "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
                 }
                 className="p-1 rounded text-slate-500 hover:text-slate-700 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
