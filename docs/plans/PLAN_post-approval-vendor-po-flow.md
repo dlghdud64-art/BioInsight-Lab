@@ -416,8 +416,8 @@ All phases must strictly follow Red-Green-Refactor.
 - [x] Phase 1.3-wiring-D — request approve route vendor-aware (결재 통과 자동 vendor PO) — 5/5 PASS, cluster 42/42
 - [x] Phase 2.1 — PO PDF RED — 10 failing test
 - [x] Phase 2.2 — PO PDF GREEN — pdfkit + 한글 Pretendard 임베드 + audit log + Content-Type application/pdf — 10/10 PASS, cluster 52/52
-- [ ] Phase 3.1 — Vendor email RED
-- [ ] Phase 3.2 — Vendor email GREEN
+- [x] Phase 3.1 — Vendor email RED — 10 grep test (template 4 + route 6)
+- [x] Phase 3.2 — Vendor email GREEN — generatePoVendorEmail (한글 본문 + 품목 표 + 총액) + send-email route (vendor.email 422 + sendEmail + audit log) — host vitest 검증 필요
 - [ ] Phase 5 — Smoke + Rollout + ADR + cluster close
 
 ---
