@@ -18,6 +18,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { OrderStatus } from "@prisma/client";
+// #post-approval-receiving-auto-wiring — Phase 5 receiving wiring.
+// status DELIVERED 진입 시 InventoryRestock 자동 생성 (idempotent —
+// before.status !== "DELIVERED" 분기). admin status route 와 동일 helper.
+import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
 import { z } from "zod";
 import { handleApiError } from "@/lib/api-error-handler";
 import { createAuditLog } from "@/lib/audit/audit-logger";
@@ -148,10 +152,31 @@ export async function PATCH(
       );
     }
 
-    const updated = await db.order.update({
-      where: { id },
-      data: updateData,
-      include: { items: true },
+    // #post-approval-receiving-auto-wiring — transaction 안 update + sync.
+    // status DELIVERED 진입 시 (before.status !== "DELIVERED") InventoryRestock
+    // 자동 생성. sync 실패 시 graceful (logging, mutation 결과 그대로 반환 —
+    // 운영자가 receiving page 에서 manual restock 가능).
+    const updated = await db.$transaction(async (tx) => {
+      const result = await tx.order.update({
+        where: { id },
+        data: updateData,
+        include: { items: true },
+      });
+      if (
+        data.status === OrderStatus.DELIVERED &&
+        before.status !== OrderStatus.DELIVERED
+      ) {
+        try {
+          await runDeliveryInventorySync({ tx, orderId: id });
+        } catch (err) {
+          // sync 실패 — Order DELIVERED 는 commit, restock 만 skip.
+          // 운영자가 receiving page 에서 manual restock 가능. canonical
+          // truth 정합 위해 별도 alert (audit log 또는 notification) 권장
+          // — 별도 mini-batch 의 scope.
+          console.error("[orders/[id]/PATCH] delivery sync failed", err);
+        }
+      }
+      return result;
     });
 
     // audit log (best effort — try/catch graceful)
