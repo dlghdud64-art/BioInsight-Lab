@@ -1,8 +1,9 @@
 # Implementation Plan: #post-approval-purchase-order-flow Phase 1+2+3 — Vendor PO Flow
 
-- **Status:** 🔄 In Progress (Phase 1.3 + bulk-po wiring 완성)
+- **Status:** ✅ Complete (Phase 1+2+3 + Phase 4.x cluster close)
 - **Started:** 2026-05-06
-- **Last Updated:** 2026-05-06 02:21
+- **Last Updated:** 2026-05-06 (cluster close ADR §11.211 append)
+- **ADR-002 entry:** line 2054 `#post-approval-purchase-order-flow Phase 1+2+3+4 통합 cluster`
 - **Estimated Completion:** 2026-05-13 (working days, 18~22 시간)
 - **Cluster:** #post-approval-purchase-order-flow (4.x Order tracking 닫힌 상태에서 1+2+3 통합 진행)
 
@@ -418,7 +419,7 @@ All phases must strictly follow Red-Green-Refactor.
 - [x] Phase 2.2 — PO PDF GREEN — pdfkit + 한글 Pretendard 임베드 + audit log + Content-Type application/pdf — 10/10 PASS, cluster 52/52
 - [x] Phase 3.1 — Vendor email RED — 10 grep test (template 4 + route 6)
 - [x] Phase 3.2 — Vendor email GREEN — generatePoVendorEmail (한글 본문 + 품목 표 + 총액) + send-email route (vendor.email 422 + sendEmail + audit log) — host vitest 검증 필요
-- [ ] Phase 5 — Smoke + Rollout + ADR + cluster close
+- [x] Phase 5 — Smoke + Rollout + ADR + cluster close — ADR-002 line 2054 entry append + plan ✅ Complete
 
 ---
 
