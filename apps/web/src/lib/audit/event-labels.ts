@@ -55,6 +55,10 @@ export const AUDIT_EVENT_LABELS: Record<string, AuditEventLabel> = {
   PURCHASE_REQUEST_CREATED: { label: "결재 요청 생성", tone: "register" },
   // #approver-routing-per-user-limit-audit-log
   MEMBER_APPROVAL_LIMIT_CHANGED: { label: "결재 한도 변경", tone: "storage" },
+  // #audit-event-type-order (#post-approval-purchase-order-flow cleanup)
+  ORDER_CREATED_FROM_POCANDIDATE: { label: "발주 자동 생성", tone: "register" },
+  PO_PDF_GENERATED: { label: "발주서 PDF 생성", tone: "register" },
+  VENDOR_EMAIL_SENT: { label: "공급사 이메일 발송", tone: "register" },
 };
 
 /**

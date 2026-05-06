@@ -1350,6 +1350,13 @@ enum AuditEventType {
 
   // ── #approver-routing-per-user-limit-audit-log ──
   MEMBER_APPROVAL_LIMIT_CHANGED   // workspace member 결재 한도 변경 (per-user)
+
+  // ── #audit-event-type-order (#post-approval-purchase-order-flow cluster cleanup) ──
+  // dedicated audit events — 직전 cluster 의 SETTINGS_CHANGED 재사용
+  // (Phase 1.3 / 2.2 / 3.2) → 의미 명확화. audit UI filter / grep 정합.
+  ORDER_CREATED_FROM_POCANDIDATE  // POCandidate 결재 통과 시 vendor 별 Order 자동 생성
+  PO_PDF_GENERATED                // vendor 별 PO 발주서 PDF 생성 (stream 다운로드)
+  VENDOR_EMAIL_SENT               // 공급사 발주 email 송부 (한글 본문)
 }
 
 model AuditLog {

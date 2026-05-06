@@ -92,12 +92,12 @@ export async function POST(
     });
 
     // audit log — try/catch graceful (mutation 영향 0).
-    // eventType SETTINGS_CHANGED 재사용 (Phase 1.3 패턴 정합), action: pdf_generate.
-    // 신규 enum 추가는 Phase 5 ADR cluster close 시 cleanup.
+    // #audit-event-type-order — dedicated enum `PO_PDF_GENERATED` 사용
+    // (직전 SETTINGS_CHANGED 재사용 → cleanup 정합).
     await createAuditLog({
       userId,
       organizationId: order.organizationId ?? undefined,
-      eventType: "SETTINGS_CHANGED",
+      eventType: "PO_PDF_GENERATED",
       entityType: "ORDER",
       entityId: order.id,
       action: "pdf_generate",

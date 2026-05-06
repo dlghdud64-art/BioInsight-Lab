@@ -21,12 +21,31 @@ import { generateOrderNumber } from "@/lib/api/order-number";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import type { POCandidate, POCandidateItem } from "@prisma/client";
 
+/**
+ * caller 가 전달하는 db client. PrismaClient (자체 tx 만듦) 또는
+ * TransactionClient (이미 tx 안, nested transaction 회피).
+ *
+ * `typeof db` 로 두면 TransactionClient 는 호환 가능하지만 `$transaction`
+ * 메서드 호출 회피가 핵심 — caller 가 tx 전달 시 service 가 자체
+ * `$transaction` 만들지 않음.
+ */
+type DbClient = typeof db;
+
 export interface ConvertPOCandidatesParams {
   quoteId: string;
   userId: string;
   organizationId?: string | null;
   /** 결재 통과한 POCandidate (items 포함). vendor 별 1개씩. */
   candidates: Array<POCandidate & { items?: POCandidateItem[] }>;
+}
+
+export interface ConvertPOCandidatesOptions {
+  /**
+   * caller 가 이미 outer transaction 안에 있을 때 tx 전달. service 가
+   * 자체 `$transaction` 만들지 않고 외부 tx 안에서 동작 (nested 회피).
+   * 미전달 시 service 가 자체 transaction 만듦 (default).
+   */
+  client?: DbClient;
 }
 
 export interface ConvertPOCandidatesResult {
@@ -46,11 +65,17 @@ export interface ConvertPOCandidatesResult {
 /**
  * POCandidate[] → vendor 별 Order N개 생성.
  * candidates 가 empty 면 created/skipped 모두 빈 배열 반환.
+ *
+ * caller 가 outer tx 전달 시 service 는 nested $transaction 만들지 않음
+ * (caller 의 atomic mutation 보호).
  */
 export async function convertPOCandidatesToOrders(
   params: ConvertPOCandidatesParams,
+  options: ConvertPOCandidatesOptions = {},
 ): Promise<ConvertPOCandidatesResult> {
   const { quoteId, userId, organizationId, candidates } = params;
+  const client: DbClient = options.client ?? db;
+  const inOuterTx = options.client != null; // caller 가 tx 전달 시 nested 회피
   const created: ConvertPOCandidatesResult["created"] = [];
   const skipped: ConvertPOCandidatesResult["skipped"] = [];
 
@@ -59,7 +84,7 @@ export async function convertPOCandidatesToOrders(
     let vendorId: string | null = null;
     const vendorName = candidate.vendor?.trim();
     if (vendorName) {
-      const vendor = await db.vendor.findFirst({
+      const vendor = await client.vendor.findFirst({
         where: { name: vendorName },
         select: { id: true },
       });
@@ -67,7 +92,7 @@ export async function convertPOCandidatesToOrders(
     }
 
     // duplicate prevention — composite (quoteId, vendorId)
-    const existing = await db.order.findFirst({
+    const existing = await client.order.findFirst({
       where: { quoteId, vendorId },
       select: { id: true },
     });
@@ -85,7 +110,8 @@ export async function convertPOCandidatesToOrders(
     const totalAmount = candidate.totalAmount;
     const tempNumber = `ORD-PENDING-${candidate.id.slice(-6)}`;
 
-    const result = await db.$transaction(async (tx) => {
+    // caller 가 tx 전달 시 nested transaction 회피, 미전달 시 자체 tx
+    const runWork = async (tx: DbClient) => {
       const order = await tx.order.create({
         data: {
           userId,
@@ -117,7 +143,10 @@ export async function convertPOCandidatesToOrders(
         });
       }
       return { orderId: order.id, orderNumber };
-    });
+    };
+    const result = inOuterTx
+      ? await runWork(client)
+      : await db.$transaction(async (tx) => runWork(tx as unknown as DbClient));
 
     created.push({
       orderId: result.orderId,
@@ -127,13 +156,12 @@ export async function convertPOCandidatesToOrders(
     });
 
     // audit log — try/catch graceful (mutation atomic 외).
-    // eventType 은 SETTINGS_CHANGED 재사용 (직전 Phase 4.1 Order PATCH 와
-    // 동일 패턴). 신규 enum `ORDER_CREATED_FROM_POCANDIDATE` 추가는 별도
-    // schema migration batch 로 분리.
+    // #audit-event-type-order — dedicated enum `ORDER_CREATED_FROM_POCANDIDATE`
+    // 사용 (직전 SETTINGS_CHANGED 재사용 → cleanup 정합).
     await createAuditLog({
       userId,
       organizationId: organizationId ?? undefined,
-      eventType: "SETTINGS_CHANGED",
+      eventType: "ORDER_CREATED_FROM_POCANDIDATE",
       entityType: "ORDER",
       entityId: result.orderId,
       action: "create",

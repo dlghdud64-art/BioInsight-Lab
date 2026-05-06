@@ -103,11 +103,12 @@ export async function POST(
     });
 
     // audit log — try/catch graceful (이미 송부 완료, audit 실패가 응답 영향 0).
-    // eventType SETTINGS_CHANGED 재사용 (Phase 1.3 / 2.2 패턴 정합), action: vendor_email_sent.
+    // #audit-event-type-order — dedicated enum `VENDOR_EMAIL_SENT` 사용
+    // (직전 SETTINGS_CHANGED 재사용 → cleanup 정합).
     await createAuditLog({
       userId,
       organizationId: order.organizationId ?? undefined,
-      eventType: "SETTINGS_CHANGED",
+      eventType: "VENDOR_EMAIL_SENT",
       entityType: "ORDER",
       entityId: order.id,
       action: "vendor_email_sent",
