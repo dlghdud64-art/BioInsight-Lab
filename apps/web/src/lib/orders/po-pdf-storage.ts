@@ -72,14 +72,20 @@ export async function uploadPoPdf(
   // 만 — 별도 mini-batch 에서 provider 별 wiring.
   switch (provider) {
     case "vercel-blob": {
-      // host install: `npm install @vercel/blob`
-      // env: BLOB_READ_WRITE_TOKEN
-      // 예시 (별도 batch 에서 wiring):
-      //   const { put } = await import("@vercel/blob");
-      //   const result = await put(key, input.buffer, { access: "public",
-      //     contentType: "application/pdf" });
-      //   return { url: result.url, provider };
-      throw new Error("Vercel Blob wiring not implemented (별도 batch).");
+      // #post-approval-purchase-order-flow Phase 2.3 step 3 — Vercel Blob
+      // SDK wiring. dynamic import — host 측 `npm install @vercel/blob`
+      // 미설치 시 runtime 에 throw → caller graceful fallback (stream 응답).
+      // env: `BLOB_READ_WRITE_TOKEN` (Vercel 환경 자동, 또는 .env).
+      const { put } = await import("@vercel/blob");
+      const result = await put(key, input.buffer, {
+        access: "public",
+        contentType: "application/pdf",
+        // addRandomSuffix=false — orderNumber 기반 deterministic key,
+        // 동일 Order 재생성 시 덮어쓰기 (overwrite=true 명시).
+        addRandomSuffix: false,
+        allowOverwrite: true,
+      });
+      return { url: result.url, provider };
     }
     case "supabase": {
       // host install: `@supabase/supabase-js`

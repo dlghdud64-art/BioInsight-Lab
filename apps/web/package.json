@@ -57,6 +57,7 @@
     "@types/node": "^20.19.26",
     "@types/pdfkit": "^0.17.6",
     "@vercel/analytics": "^1.6.1",
+    "@vercel/blob": "^2.3.3",
     "@zxing/browser": "^0.1.5",
     "@zxing/library": "^0.21.3",
     "class-variance-authority": "^0.7.0",
