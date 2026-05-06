@@ -1608,6 +1608,11 @@ model Order {
   shippingAddress String?    @db.Text // 배송 주소
   expectedDelivery DateTime? // 예상 배송일
   actualDelivery  DateTime?  // 실제 배송일
+  // #post-approval-purchase-order-flow Phase 2.3 step 1 — PDF 영속화.
+  // step 2 (storage upload) 별도 mini-batch — host config (S3/Cloudinary
+  // /Supabase) 후 generate-pdf route 가 upload 결과 URL 저장.
+  poDocumentUrl       String?  @db.Text // 발주서 PDF storage URL (NULL = 미생성)
+  poDocumentGeneratedAt DateTime? // PDF 생성 시각 (재생성 정합)
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
 
