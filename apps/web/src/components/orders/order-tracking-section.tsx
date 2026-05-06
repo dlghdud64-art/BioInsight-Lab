@@ -38,6 +38,15 @@ interface OrderDetail {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+  // #post-approval-purchase-order-flow Phase 4.2-A1 — vendor relation
+  // (Phase 1.2 의 Order.vendor). null = legacy NULL-vendor Order.
+  vendor: {
+    id: string;
+    name: string;
+    nameEn: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
 }
 
 interface Props {
@@ -75,6 +84,64 @@ export function OrderTrackingSection({ orderId }: Props) {
 
   const order = data?.order;
   const currentStatus = order?.status ?? "";
+
+  // #post-approval-purchase-order-flow Phase 4.2-A1 — PDF 다운로드 mutation
+  // (Phase 2.x API). 응답 = PDF binary stream → blob → 즉시 다운로드.
+  const pdfMutation = useMutation({
+    mutationFn: async () => {
+      const res = await csrfFetch(`/api/orders/${orderId}/generate-pdf`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "PDF 생성 실패");
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${order?.orderNumber ?? "order"}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "PDF 다운로드 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // #post-approval-purchase-order-flow Phase 4.2-A1 — 이메일 발송 mutation
+  // (Phase 3.x API). vendor.email 미설정 시 server 가 422 + dead button 차단.
+  const emailMutation = useMutation({
+    mutationFn: async () => {
+      const res = await csrfFetch(`/api/orders/${orderId}/send-email`, {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "이메일 발송 실패");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "이메일 발송 완료",
+        description: "공급사에게 발주서를 발송했습니다.",
+      });
+    },
+    onError: (err: Error) => {
+      toast({
+        title: "이메일 발송 실패",
+        description: err.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const mutation = useMutation({
     mutationFn: async (status: string) => {
@@ -176,6 +243,65 @@ export function OrderTrackingSection({ orderId }: Props) {
           )}
         </div>
       )}
+
+      {/* #post-approval-purchase-order-flow Phase 4.2-A1 — vendor 정보 +
+          PDF/email quick-action. canonical truth = Order.vendor (Phase 1.2).
+          legacy NULL-vendor Order 는 "지정 없음" 표시 + email button disabled. */}
+      <div className="mt-3 pt-3 border-t border-slate-100">
+        <div className="flex items-start justify-between gap-3 mb-3">
+          <div className="min-w-0">
+            <span className="text-[11px] uppercase tracking-wider text-slate-400">
+              공급사
+            </span>
+            {order.vendor ? (
+              <div className="mt-0.5">
+                <p className="text-sm font-semibold text-slate-900 truncate">
+                  {order.vendor.name}
+                  {order.vendor.nameEn && (
+                    <span className="ml-1.5 text-xs font-normal text-slate-500">
+                      ({order.vendor.nameEn})
+                    </span>
+                  )}
+                </p>
+                <p className="mt-0.5 text-xs text-slate-500 truncate">
+                  {order.vendor.email ?? "이메일 미설정"}
+                  {order.vendor.phone && ` · ${order.vendor.phone}`}
+                </p>
+              </div>
+            ) : (
+              <p className="mt-0.5 text-sm text-slate-400">공급사 지정 없음</p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => pdfMutation.mutate()}
+            disabled={pdfMutation.isPending}
+            className="h-8 text-xs"
+          >
+            {pdfMutation.isPending ? "PDF 생성 중..." : "발주서 PDF 다운로드"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => emailMutation.mutate()}
+            disabled={
+              emailMutation.isPending || !order.vendor || !order.vendor.email
+            }
+            title={
+              !order.vendor || !order.vendor.email
+                ? "공급사 이메일이 설정되지 않아 발송할 수 없습니다."
+                : undefined
+            }
+            className="h-8 text-xs"
+          >
+            {emailMutation.isPending ? "발송 중..." : "공급사 이메일 발송"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

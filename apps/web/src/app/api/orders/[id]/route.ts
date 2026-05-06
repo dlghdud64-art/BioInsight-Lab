@@ -44,9 +44,12 @@ export async function GET(
     }
 
     const { id } = await params;
+    // #post-approval-purchase-order-flow Phase 4.2-A1 — vendor include
+    // 추가 (Phase 1.2 의 Order.vendor relation 활용). UI 가 vendor name +
+    // email 표시하고 PDF/email button 의 disabled state 분기에 사용.
     const order = await db.order.findUnique({
       where: { id },
-      include: { items: true },
+      include: { items: true, vendor: true },
     });
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
