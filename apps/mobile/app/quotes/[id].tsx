@@ -706,7 +706,12 @@ export default function QuoteDetailScreen() {
               <Pressable
                 onPress={() => {
                   downloadOrderPdf.mutate(
-                    { orderId: order.id, orderNumber: order.orderNumber },
+                    {
+                      orderId: order.id,
+                      orderNumber: order.orderNumber,
+                      // Phase 2.3 step 4 — storage URL 우선 (재생성 0)
+                      poDocumentUrl: order.poDocumentUrl,
+                    },
                     {
                       onError: (err: any) =>
                         Alert.alert(
@@ -721,8 +726,10 @@ export default function QuoteDetailScreen() {
               >
                 <Text className="text-sm font-semibold text-slate-700">
                   {downloadOrderPdf.isPending
-                    ? "PDF 생성 중..."
-                    : "발주서 PDF 다운로드"}
+                    ? "PDF 처리 중..."
+                    : order.poDocumentUrl
+                      ? "발주서 PDF 열기"
+                      : "발주서 PDF 생성"}
                 </Text>
               </Pressable>
               <Pressable

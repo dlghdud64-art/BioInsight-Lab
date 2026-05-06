@@ -47,6 +47,10 @@ interface OrderDetail {
     email: string | null;
     phone: string | null;
   } | null;
+  // #post-approval-purchase-order-flow Phase 2.3 — PDF 영속화. URL 있으면
+  // 직접 다운로드 (재생성 0), 없으면 generate-pdf mutation fallback.
+  poDocumentUrl: string | null;
+  poDocumentGeneratedAt: string | null;
 }
 
 interface Props {
@@ -278,11 +282,36 @@ export function OrderTrackingSection({ orderId }: Props) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => pdfMutation.mutate()}
+            onClick={() => {
+              // #post-approval-purchase-order-flow Phase 2.3 step 4 —
+              // poDocumentUrl 있으면 storage URL 직접 다운로드 (재생성 0).
+              // 없으면 generate-pdf mutation fallback (PDF 생성 + storage
+              // upload + db update + stream).
+              if (order.poDocumentUrl) {
+                window.open(order.poDocumentUrl, "_blank", "noopener");
+              } else {
+                pdfMutation.mutate();
+              }
+            }}
             disabled={pdfMutation.isPending}
             className="h-8 text-xs"
+            title={
+              order.poDocumentUrl
+                ? `최근 생성: ${
+                    order.poDocumentGeneratedAt
+                      ? new Date(order.poDocumentGeneratedAt).toLocaleString(
+                          "ko-KR",
+                        )
+                      : ""
+                  }`
+                : "발주서 PDF 를 새로 생성합니다"
+            }
           >
-            {pdfMutation.isPending ? "PDF 생성 중..." : "발주서 PDF 다운로드"}
+            {pdfMutation.isPending
+              ? "PDF 생성 중..."
+              : order.poDocumentUrl
+                ? "발주서 PDF 열기"
+                : "발주서 PDF 생성"}
           </Button>
           <Button
             type="button"

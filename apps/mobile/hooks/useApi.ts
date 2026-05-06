@@ -503,20 +503,31 @@ export function useDownloadOrderPdf() {
     mutationFn: async ({
       orderId,
       orderNumber,
+      poDocumentUrl,
     }: {
       orderId: string;
       orderNumber: string;
+      /**
+       * Phase 2.3 step 4 — 영속화된 PDF storage URL. 있으면 직접 download
+       * (재생성 0). 미전달 시 generate-pdf endpoint 호출 (PDF 생성 + storage
+       * upload + db update + stream).
+       */
+      poDocumentUrl?: string | null;
     }) => {
       // dynamic import — host 측 expo-file-system install 후 정상 작동
       const FileSystem = await import("expo-file-system");
       const Sharing = await import("expo-sharing");
-      // Authorization header — apiClient 의 default token 정합 (axios 와 동일).
       const token = (apiClient.defaults.headers as any)?.common?.Authorization;
       const uri = `${FileSystem.cacheDirectory ?? ""}${orderNumber}.pdf`;
+      // poDocumentUrl 우선 — storage URL 이 already public/signed 라 token 0
+      const downloadUrl =
+        poDocumentUrl ?? `${API_BASE_URL}/api/orders/${orderId}/generate-pdf`;
       const downloadResult = await FileSystem.downloadAsync(
-        `${API_BASE_URL}/api/orders/${orderId}/generate-pdf`,
+        downloadUrl,
         uri,
-        token ? { headers: { Authorization: String(token) } } : undefined,
+        token && !poDocumentUrl
+          ? { headers: { Authorization: String(token) } }
+          : undefined,
       );
       if (downloadResult.status !== 200) {
         throw new Error(`PDF 다운로드 실패 (status ${downloadResult.status})`);

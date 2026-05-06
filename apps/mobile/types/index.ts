@@ -79,6 +79,12 @@ export interface OrderDetail {
     email: string | null;
     phone: string | null;
   } | null;
+  /**
+   * #post-approval-purchase-order-flow Phase 2.3 step 4 — PDF 영속화.
+   * URL 있으면 storage 직접 link (재생성 0), 없으면 generate-pdf mutation.
+   */
+  poDocumentUrl?: string | null;
+  poDocumentGeneratedAt?: string | null;
 }
 
 export interface QuoteDetail extends Quote {
