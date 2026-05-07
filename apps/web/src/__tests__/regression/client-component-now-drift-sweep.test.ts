@@ -34,6 +34,22 @@ const SWEEP_FILES = [
   "src/components/dashboard/action-ledger.tsx",
 ];
 
+/**
+ * §11.214 강화 — component render-path (top-level body) 의 인라인 NOW
+ * 의존 변수 정의 (`const ageDays = Math.floor((Date.now() - new Date...`)
+ * 패턴 차단. useEffect / onClick / mutationFn 안의 호출은 허용 (event
+ * handler, render-path 0 → hydration mismatch 0).
+ *
+ * False positive 0:
+ *   - useState/useEffect 안 setDays(Math.floor((Date.now()...)) 매칭 0
+ *   - useAgeDays helper 안 호출 매칭 0
+ *
+ * 매칭:
+ *   - render body 의 `const ageDays = Math.floor((Date.now() - new Date...`
+ *   - render body 의 `const X = Math.floor((Date.now() - new Date...`
+ */
+const INLINE_NOW_PATTERN = /\bconst\s+\w+\s*=\s*Math\.floor\(\(Date\.now\(\)\s*-\s*new Date/;
+
 function read(rel: string): string {
   return readFileSync(join(REPO_ROOT_WEB, rel), "utf8");
 }
@@ -45,4 +61,20 @@ describe("§11.212 client component Date.now drift sweep", () => {
       expect(src).toMatch(/RelativeTimeText/);
     });
   }
+});
+
+describe("§11.214 client component 인라인 Date.now() 차단 (helper 거치지 않은 호출 0)", () => {
+  for (const file of SWEEP_FILES) {
+    it(`${file} — 인라인 \`Date.now() - new Date\` 패턴 0 (RelativeTimeText 또는 useEffect 거쳐야)`, () => {
+      const src = read(file);
+      expect(src).not.toMatch(INLINE_NOW_PATTERN);
+    });
+  }
+
+  it("executive-summary-section.tsx — render-path NOW 의존 차단 (Note: 별도 file 추가 검증)", () => {
+    const src = read("src/components/dashboard/executive-summary-section.tsx");
+    // buildMonthlyProjection 의 NOW prop 으로 받거나 useEffect 분리 검증
+    // 단순 패턴: "const now = new Date()" 0 (또는 useState/useEffect 거쳐야)
+    expect(src).not.toMatch(/^\s*const\s+now\s*=\s*new Date\(\);?\s*$/m);
+  });
 });

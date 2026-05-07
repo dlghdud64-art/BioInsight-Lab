@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Package, ShoppingCart, AlertTriangle, Clock, CheckCircle2, ChevronRight, ChevronDown, Zap, RotateCcw, GitCompare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -399,11 +399,24 @@ function WorkQueueCard({
 }
 
 // ── SLA / status badges (extracted to avoid IIFE unknown-type leak in JSX &&-chains) ──
+// §11.214 — ageDays 가 boolean 분기 + text 모두 NOW 의존 → SSR vs CSR
+// hydration mismatch (#418/#423/#425) root cause. useState + useEffect mount
+// 후 set 패턴으로 SSR 시 null fallback (badge render 0), CSR mount 후 실제
+// 값 set + re-render. SSR HTML 과 CSR initial render 모두 null → mismatch 0.
+function useAgeDays(iso: string): number | null {
+  const [days, setDays] = useState<number | null>(null);
+  useEffect(() => {
+    setDays(Math.floor((Date.now() - new Date(iso).getTime()) / 86400000));
+  }, [iso]);
+  return days;
+}
+
 function CompareSlaBadge({ item }: { item: WorkQueueItem }) {
+  const ageDays = useAgeDays(item.createdAt);
   if (item.type !== "COMPARE_DECISION" || !item.substatus) return null;
   const def = COMPARE_SUBSTATUS_DEFS[item.substatus];
   if (!def) return null;
-  const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
+  if (ageDays === null) return null; // SSR fallback — CSR mount 후 set
   if (!def.isTerminal && def.slaWarningDays > 0 && ageDays >= def.slaWarningDays) {
     return (
       <span className="text-[10px] text-orange-600 font-medium mt-0.5 flex items-center gap-1">
@@ -415,8 +428,9 @@ function CompareSlaBadge({ item }: { item: WorkQueueItem }) {
 }
 
 function ItemSlaBadges({ item }: { item: WorkQueueItem }) {
+  const ageDays = useAgeDays(item.createdAt);
+  if (ageDays === null) return null; // §11.214 SSR fallback
   const parts: React.ReactNode[] = [];
-  const ageDays = Math.floor((Date.now() - new Date(item.createdAt).getTime()) / 86400000);
 
   // SLA aging — ops items
   if (item.type !== "COMPARE_DECISION" && item.substatus) {

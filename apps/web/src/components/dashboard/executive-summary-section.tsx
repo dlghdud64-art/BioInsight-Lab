@@ -130,6 +130,7 @@ interface MonthlyPoint {
 function buildMonthlyProjection(
   orders: OrderQueueItem[],
   totalBudget: number,
+  nowMs: number,
 ): { points: MonthlyPoint[]; depletionMonth: string | null } {
   if (totalBudget <= 0) {
     return { points: [], depletionMonth: null };
@@ -146,7 +147,10 @@ function buildMonthlyProjection(
   }
 
   // 2. 최근 6개월 + 미래 6개월 윈도우 생성
-  const now = new Date();
+  // §11.214 — NOW 의존 부분만 nowMs prop 으로 받음 (caller 가 useEffect mount
+  // 후 set). render-path Date.now()/new Date() 직접 호출 0 → SSR-CSR
+  // hydration mismatch 차단.
+  const now = new Date(nowMs);
   const window: { key: string; label: string; date: Date }[] = [];
   for (let i = -5; i <= 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
@@ -522,9 +526,21 @@ export function ExecutiveSummarySection({
   }, [orders.length, budgets.length, ordersFetching, budgetsFetching, fetchOrders, fetchBudgets]);
 
   const kpis = useMemo(() => deriveKpis(orders, budgets), [orders, budgets]);
+
+  // §11.214 — buildMonthlyProjection 가 NOW 의존 (window 6개월 ± 6개월).
+  // SSR-CSR hydration mismatch 차단 위해 nowMs 를 useEffect mount 후 set.
+  // null 동안은 projection { points: [], depletionMonth: null } fallback.
+  const [nowMs, setNowMs] = useState<number | null>(null);
+  useEffect(() => {
+    setNowMs(Date.now());
+  }, []);
+
   const projection = useMemo(
-    () => buildMonthlyProjection(orders, kpis.totalBudget),
-    [orders, kpis.totalBudget],
+    () =>
+      nowMs === null
+        ? { points: [], depletionMonth: null }
+        : buildMonthlyProjection(orders, kpis.totalBudget, nowMs),
+    [orders, kpis.totalBudget, nowMs],
   );
 
   const isLoading = ordersFetching || budgetsFetching;

@@ -23,7 +23,7 @@
 
 import { useEffect, useState } from "react";
 
-export type RelativeTimeVariant = "day" | "hour" | "minute" | "auto";
+export type RelativeTimeVariant = "day" | "hour" | "minute" | "auto" | "day-elapsed";
 
 export interface RelativeTimeTextProps {
   /** ISO 8601 timestamp (UTC) */
@@ -57,6 +57,11 @@ function formatRelative(iso: string, variant: RelativeTimeVariant): string {
     if (days < 30) return `${days}일 전`;
     const months = Math.floor(days / 30);
     return `${months}개월 전`;
+  }
+  if (variant === "day-elapsed") {
+    // §11.214 — SLA aging UI ("N일 경과") 형식, day variant 와 다른 어미
+    const days = Math.max(0, Math.floor(diffMs / 86_400_000));
+    return days === 0 ? "오늘" : `${days}일 경과`;
   }
   // day (default)
   const days = Math.max(0, Math.floor(diffMs / 86_400_000));
