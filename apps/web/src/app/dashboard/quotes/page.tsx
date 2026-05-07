@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
+import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 import Link from "next/link";
@@ -1658,7 +1659,7 @@ function QuotesPageContent() {
   );
 }
 
-export default function QuotesPage() {
+function QuotesPageInner() {
   return (
     <Suspense fallback={
       <div className="flex min-h-screen items-center justify-center">
@@ -1667,5 +1668,14 @@ export default function QuotesPage() {
     }>
       <QuotesPageContent />
     </Suspense>
+  );
+}
+
+// §11.214b Path Z — NoSSR wrapper.
+export default function QuotesPage() {
+  return (
+    <NoSSR>
+      <QuotesPageInner />
+    </NoSSR>
   );
 }

@@ -2,6 +2,7 @@
 
 import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo, useCallback } from "react";
+import { NoSSR } from "@/components/ui/no-ssr";
 // #post-approval-purchase-order-flow B+H step 3 — ActionableRow 의 PDF/email
 // quick-action mutation. component-scoped useMutation (각 row 마다 독립).
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -57,7 +58,7 @@ const STAT_FILTER_MAP: Record<string, string> = {
 };
 
 // ── Component ─────────────────────────────────────────────────────
-export default function PurchaseOrderLandingPage() {
+function PurchaseOrderLandingPageInner() {
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
   const { unifiedInboxItems } = useOpsStore();
@@ -808,5 +809,14 @@ function AiAnalysisPanel({ item }: { item: ModuleLandingItem }) {
         </div>
       )}
     </div>
+  );
+}
+
+// §11.214b Path Z — NoSSR wrapper.
+export default function PurchaseOrderLandingPage() {
+  return (
+    <NoSSR>
+      <PurchaseOrderLandingPageInner />
+    </NoSSR>
   );
 }

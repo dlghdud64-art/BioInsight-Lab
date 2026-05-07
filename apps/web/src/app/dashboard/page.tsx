@@ -30,6 +30,7 @@ import { useWorkbenchOverlayOpen } from "@/hooks/use-workbench-overlay-open";
 //   ssr:false 의 client-only 의존성 부재 확인 (window/document/localStorage 0
 //   사용, zustand store 는 SSR-safe singleton, "use client" directive 보존).
 import { ExecutiveSummarySection } from "@/components/dashboard/executive-summary-section";
+import { NoSSR } from "@/components/ui/no-ssr";
 import { COMPARE_SUBSTATUS_DEFS, RESOLUTION_PATH_LABELS, HANDOFF_STALL_LABELS } from "@/lib/work-queue/compare-queue-semantics";
 import { OPS_STALL_LABELS } from "@/lib/work-queue/ops-queue-semantics";
 // §11.82 #dashboard-operational-intelligence-redesign Phase 1 — AI 리포트 dialog
@@ -131,7 +132,7 @@ function PlanOnboardingBanner() {
   return null;
 }
 
-export default function DashboardPage() {
+function DashboardPageInner() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
@@ -1221,5 +1222,16 @@ export default function DashboardPage() {
       {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
       <OperationalBriefFloatingEntry controls="operational-brief-popup" />
     </div>
+  );
+}
+
+// §11.214b Path Z — NoSSR wrapper. inventory 패턴 (dynamic + ssr: false) 정합.
+// SSR HTML ≡ CSR initial render → hydration mismatch 0. fallback null
+// (dashboard 진입 시 first paint 약간 늦어짐 ~수백ms, 이후 정상).
+export default function DashboardPage() {
+  return (
+    <NoSSR>
+      <DashboardPageInner />
+    </NoSSR>
   );
 }
