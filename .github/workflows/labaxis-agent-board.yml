@@ -50,6 +50,10 @@ jobs:
         working-directory: labaxis-agent-board
         run: npm run check
 
+      - name: Validate agent-board contracts
+        working-directory: labaxis-agent-board
+        run: npm run test:contracts
+
       - name: Verify OpenAI API secret
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -64,8 +68,12 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
+          OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
+          OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
         run: |
           PILOT="${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}"
+          export OPENAI_AGENT_MODEL="${OPENAI_AGENT_MODEL:-gpt-5.4-mini}"
+          export OPENAI_ARBITER_MODEL="${OPENAI_ARBITER_MODEL:-gpt-5.4-mini}"
           SUMMARY="Manual LabAxis Agent Board run"
           BASE_ARGS=""
           if [ "${{ github.event_name }}" = "pull_request" ]; then

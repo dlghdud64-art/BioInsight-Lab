@@ -46,6 +46,14 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Validate agent-board
+        working-directory: labaxis-agent-board
+        run: npm run check
+
+      - name: Validate agent-board contracts
+        working-directory: labaxis-agent-board
+        run: npm run test:contracts
+
       - name: Run LabAxis preflight gate
         working-directory: labaxis-agent-board
         env:
