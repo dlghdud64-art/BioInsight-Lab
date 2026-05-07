@@ -28,9 +28,9 @@ describe("DashboardShell skip-link — regression guard (§11.125)", () => {
     expect(source).toMatch(/href="#main-content"/);
   });
 
-  it("skip-link 이 sr-only by default + focus 시 노출 (focus:not-sr-only)", () => {
+  it("skip-link 이 sr-only by default + focus-visible 시 노출 (§11.214c — keyboard Tab 시에만, programmatic auto-focus visible 0)", () => {
     expect(source).toMatch(/sr-only/);
-    expect(source).toMatch(/focus:not-sr-only/);
+    expect(source).toMatch(/focus-visible:not-sr-only/);
   });
 
   it("한국어 텍스트 \"본문 바로가기\" 또는 \"Skip to main content\"", () => {

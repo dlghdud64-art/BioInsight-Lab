@@ -37,11 +37,11 @@ describe("admin layout skip-link — regression guard (§11.126)", () => {
     expect(source).toMatch(/tabIndex=\{-1\}|tabIndex="-1"/);
   });
 
-  it("sr-only by default + focus:not-sr-only", () => {
+  it("sr-only by default + focus-visible:not-sr-only (§11.214c — auto-focus 시 visible 0)", () => {
     if (!existsSync(PATH)) return;
     const source = readFileSync(PATH, "utf8");
     expect(source).toMatch(/sr-only/);
-    expect(source).toMatch(/focus:not-sr-only/);
+    expect(source).toMatch(/focus-visible:not-sr-only/);
   });
 
   it("한국어 텍스트 \"본문 바로가기\"", () => {
