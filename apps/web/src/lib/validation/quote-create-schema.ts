@@ -22,23 +22,30 @@ import { z } from "zod";
  * snapshot fields (productId 가 catalog ref 가 아닌 search-backed 이거나
  * vendor 가 새로 보낸 품목인 경우) 와 canonical productId 모두 허용.
  */
+// §11.216 — wizard (request-wizard-modal.tsx) 가 user 미입력 string field
+// 를 `null` 로 보냄 (catalogNumber, specification 등). zod `.optional()`
+// 만으로는 `string | undefined` 만 허용 → null reject → QUOTE_SUBMIT_
+// VALIDATION_FAILED. 모든 string optional field 를 `.nullish()` 로 swap
+// (= `.nullable().optional()`, `null | undefined | string` 모두 valid).
+// caller diversity 정합 (wizard / batch import / mobile / 기타 future
+// caller) — schema 가 canonical contract.
 export const quoteItemPayloadSchema = z.object({
   productId: z.string().nullable().optional(),
   vendorId: z.string().nullable().optional(),
   quantity: z.number().int().positive().optional().default(1),
-  notes: z.string().optional(),
+  notes: z.string().nullish(),
   // ── snapshot fields (createQuote 의 itemsDetailed path) ──
-  name: z.string().optional(),
-  productName: z.string().optional(),
-  vendorName: z.string().optional(),
-  brand: z.string().optional(),
-  catalogNumber: z.string().optional(),
-  specification: z.string().optional(),
-  lineNumber: z.number().int().optional(),
-  unitPrice: z.number().optional(),
-  currency: z.string().optional(),
-  lineTotal: z.number().optional(),
-  allowSubstitute: z.boolean().optional(),
+  name: z.string().nullish(),
+  productName: z.string().nullish(),
+  vendorName: z.string().nullish(),
+  brand: z.string().nullish(),
+  catalogNumber: z.string().nullish(),
+  specification: z.string().nullish(),
+  lineNumber: z.number().int().nullish(),
+  unitPrice: z.number().nullish(),
+  currency: z.string().nullish(),
+  lineTotal: z.number().nullish(),
+  allowSubstitute: z.boolean().nullish(),
 });
 
 export type QuoteItemPayload = z.infer<typeof quoteItemPayloadSchema>;
