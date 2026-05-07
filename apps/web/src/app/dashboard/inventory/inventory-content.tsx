@@ -19,7 +19,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ShoppingCart, ArrowRight, Zap, Check, Upload, Download, Filter, Search, List, LayoutDashboard, X, LayoutGrid, FlaskConical, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, RotateCcw, Truck, ArrowLeftRight, XCircle, ChevronRight, ScanLine } from "lucide-react";
+// §11.196f — dead lucide imports 9 symbol 제거 (ArrowLeftRight Clock
+//   FlaskConical GitBranch LayoutDashboard List RotateCcw ShoppingCart X
+//   actual JSX/prop 사용 0). 나머지 보존.
+import { Plus, Package, AlertTriangle, Edit, Trash2, TrendingDown, History, Calendar, Users, MapPin, Loader2, CheckCircle2, ArrowRight, Zap, Check, Upload, Download, Filter, Search, LayoutGrid, ListFilter, FileDown, QrCode, PackagePlus, MoreVertical, Eye, Printer, Truck, XCircle, ChevronRight, ScanLine } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -35,7 +38,7 @@ import { useQRScanner } from "@/contexts/QRScannerContext";
 const DatePicker = dynamic(() => import("@/components/ui/date-picker").then(m => m.DatePicker), { ssr: false });
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 // Sheet is kept static as it wraps children — radix portal
-import { Info, FileText, BellRing, Save, Sparkles, GitBranch, Clock, Archive } from "lucide-react";
+import { Info, FileText, BellRing, Save, Sparkles, Archive } from "lucide-react";
 import {
   type LotRecord,
   type LotStatusFilter,
@@ -109,6 +112,8 @@ function InventoryPageContent() {
   const { open: openQRScanner } = useQRScanner();
   const searchParams = useSearchParams();
   const aiPanelParam = searchParams.get("ai_panel") === "open";
+  const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
+  const isBrowserPilotInventoryDisposal = pilotProfile === "inventory-disposal";
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   const [isImportStagingOpen, setIsImportStagingOpen] = useState(false);
@@ -301,6 +306,12 @@ function InventoryPageContent() {
     }
   }, [aiPanelParam]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (isBrowserPilotInventoryDisposal) {
+      setActiveInventoryTab("overview");
+    }
+  }, [isBrowserPilotInventoryDisposal]);
+
   const [restockItem, setRestockItem] = useState<ProductInventory | null>(null);
   const [restockForm, setRestockForm] = useState({ addQty: "", lotNumber: "", expiryDate: "" });
   const [restockDoneItem, setRestockDoneItem] = useState<ProductInventory | null>(null);
@@ -398,7 +409,50 @@ function InventoryPageContent() {
 
   // Canonical truth only — mock fallback removed per #P02 (ADR-002 canvas).
   // Empty inventory renders empty state CTA → real /api/inventory POST dialog.
-  const displayInventories = inventories;
+  const displayInventories = useMemo(() => {
+    if (!isBrowserPilotInventoryDisposal) return inventories;
+
+    const hasExpiredAction = inventories.some((inv: ProductInventory) => {
+      if (!inv.expiryDate || inv.currentQuantity <= 0) return false;
+      return new Date(inv.expiryDate).getTime() < Date.now();
+    });
+    if (hasExpiredAction) return inventories;
+
+    const expiredDate = new Date();
+    expiredDate.setDate(expiredDate.getDate() - 2);
+
+    const pilotInventory: ProductInventory = {
+      id: "pilot-expired-lot",
+      productId: "pilot-expired-product",
+      currentQuantity: 2,
+      unit: "ea",
+      safetyStock: 5,
+      minOrderQty: 1,
+      location: "냉동고 1칸",
+      expiryDate: expiredDate.toISOString(),
+      notes: "Browser pilot fixture: expired lot disposal action.",
+      lotNumber: "PILOT-EXP-001",
+      storageCondition: "-20C",
+      hazard: false,
+      testPurpose: "browser-pilot",
+      vendor: "LabAxis Pilot Vendor",
+      deliveryPeriod: "3일",
+      inUseOrUnopened: "unopened",
+      averageExpiry: null,
+      autoReorderEnabled: false,
+      autoReorderThreshold: 0,
+      averageDailyUsage: 1,
+      leadTimeDays: 7,
+      product: {
+        id: "pilot-expired-product",
+        name: "Pilot Expired PBS Buffer",
+        brand: "LabAxis Pilot",
+        catalogNumber: "PILOT-PBS-500ML",
+      },
+    };
+
+    return [pilotInventory, ...inventories];
+  }, [inventories, isBrowserPilotInventoryDisposal]);
   const incomingItems = displayInventories.filter((inv) => {
     // 입고 예정 로직 (간단한 예시)
     return inv.currentQuantity <= (inv.safetyStock || 0) * 0.5;
@@ -1718,7 +1772,11 @@ function InventoryPageContent() {
             {(() => {
               if (!priorityExpiredLot) return null;
               return (
-                <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200">
+                <div
+                  data-testid="labaxis-inventory-priority-banner"
+                  data-legacy-testid="inventory-priority-banner"
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-red-50 border border-red-200"
+                >
                   <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
                   </div>
@@ -1727,6 +1785,8 @@ function InventoryPageContent() {
                     <p className="text-xs text-red-600/70">만료 lot {actionableExpiredLots.length}건 · 잔량 {actionableExpiredQuantity}개. 폐기 처리를 먼저 진행하세요.</p>
                   </div>
                   <Button
+                    data-testid="labaxis-inventory-dispose-lot-cta"
+                    data-legacy-testid="lot-disposal-cta"
                     size="sm"
                     variant="outline"
                     className="h-8 text-xs gap-1.5 border-red-300 text-red-700 hover:bg-red-100 flex-shrink-0"
@@ -3437,6 +3497,7 @@ function InventoryPageContent() {
                               restockRequestMutation.mutate(inventory.id);
                             }}
                             onPrintLabel={() => handleSingleLabelPrint(inventory)}
+                            onDispose={() => openDisposalDock(inventory)}
                             isRestockRequested={hasRequest}
                             isRequestingRestock={restockRequestMutation.isPending && restockRequestMutation.variables === inventory.id}
                             isRecommended={isRecommended}
@@ -3852,6 +3913,7 @@ function InventoryCard({
   onRecordUsage,
   onRestockRequest,
   onPrintLabel,
+  onDispose,
   isRestockRequested = false,
   isRequestingRestock = false,
   isRecommended = false,
@@ -3861,6 +3923,7 @@ function InventoryCard({
   onRecordUsage: (quantity: number, notes?: string) => void;
   onRestockRequest?: () => void;
   onPrintLabel?: () => void;
+  onDispose?: () => void;
   isRestockRequested?: boolean;
   isRequestingRestock?: boolean;
   isRecommended?: boolean;
@@ -3873,6 +3936,11 @@ function InventoryCard({
     inventory.safetyStock !== null && inventory.currentQuantity <= inventory.safetyStock;
   const isOutOfStock = inventory.currentQuantity <= 0;
   const hasRestockRequest = isRestockRequested;
+  const expiryTime = inventory.expiryDate ? new Date(inventory.expiryDate).getTime() : Number.NaN;
+  const isExpiredLotWithQty =
+    Number.isFinite(expiryTime) && expiryTime < Date.now() && inventory.currentQuantity > 0;
+  const needsReorderAfterDisposal =
+    isExpiredLotWithQty && inventory.safetyStock !== null && 0 < inventory.safetyStock;
 
   const handleRecordUsage = () => {
     const qty = parseFloat(usageQuantity);
@@ -3891,7 +3959,9 @@ function InventoryCard({
       className="rounded-xl"
     >
     <Card className={
-      hasRestockRequest
+      isExpiredLotWithQty
+        ? "border-red-300 bg-red-50/70 ring-2 ring-red-100"
+        : hasRestockRequest
         ? "border-red-500 bg-red-950/10 ring-2 ring-red-200"
         : isRecommended
         ? "border-blue-300 bg-blue-50 ring-1 ring-blue-200"
@@ -3911,6 +3981,11 @@ function InventoryCard({
                   재구매 추천
                 </Badge>
               )}
+              {isExpiredLotWithQty && (
+                <Badge variant="outline" dot="red" dotPulse className="bg-red-50 text-red-700 border-red-200 text-[11px]">
+                  우선 처리
+                </Badge>
+              )}
             </div>
             {inventory.product.brand && (
               <CardDescription>{inventory.product.brand}</CardDescription>
@@ -3923,12 +3998,17 @@ function InventoryCard({
                 요청됨
               </Badge>
             )}
-            {isOutOfStock && !hasRestockRequest && (
+            {isExpiredLotWithQty && (
+              <Badge variant="outline" dot="red" className="bg-white text-red-700 border-red-200 text-[11px]">
+                사용 금지
+              </Badge>
+            )}
+            {isOutOfStock && !hasRestockRequest && !isExpiredLotWithQty && (
               <Badge variant="outline" dot="red" dotPulse className="bg-red-950/30 text-red-400 border-red-800">
                 품절
               </Badge>
             )}
-            {isLowStock && !isOutOfStock && !hasRestockRequest && (
+            {isLowStock && !isOutOfStock && !hasRestockRequest && !isExpiredLotWithQty && (
               <Badge variant="outline" dot="amber" className="bg-amber-50 text-amber-400 border-amber-800">
                 재고 부족
               </Badge>
@@ -3937,8 +4017,50 @@ function InventoryCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 재입고 요청 버튼 - 가장 눈에 띄게 */}
-        {onRestockRequest && (
+        {isExpiredLotWithQty && (
+          <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2.5 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs font-bold text-red-800">
+                만료 lot 1건 · 잔량 {inventory.currentQuantity}{inventory.unit}
+              </span>
+              <Badge variant="outline" dot="red" className="bg-white text-red-700 border-red-200 text-[11px]">
+                만료
+              </Badge>
+            </div>
+            <p className="text-[11px] leading-relaxed text-red-700/80">
+              사용 금지 상태입니다. 재입고 요청보다 폐기 처리를 먼저 진행해야 합니다.
+            </p>
+            {needsReorderAfterDisposal && (
+              <p className="text-[11px] leading-relaxed text-blue-700">
+                폐기 후 안전재고 영향이 발생할 수 있어, 폐기 dock에서 재주문 검토로 이어집니다.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* primary action: expired lot disposal takes priority over reorder */}
+        {isExpiredLotWithQty && onDispose ? (
+          <div className="space-y-2">
+            <Button
+              size="lg"
+              onClick={onDispose}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl"
+            >
+              <Trash2 className="h-5 w-5 mr-2" />
+              폐기 처리
+            </Button>
+            {onRestockRequest && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled
+                className="w-full cursor-not-allowed bg-white text-slate-500"
+              >
+                재주문 검토는 폐기 후 진행
+              </Button>
+            )}
+          </div>
+        ) : onRestockRequest && (
           <Button
             size="lg"
             variant={hasRestockRequest ? "secondary" : "default"}
@@ -3977,7 +4099,7 @@ function InventoryCard({
             currentQuantity={inventory.currentQuantity}
             safetyStock={inventory.safetyStock}
             unit={inventory.unit}
-            onReorder={onRestockRequest}
+            onReorder={isExpiredLotWithQty ? undefined : onRestockRequest}
           />
         </div>
 

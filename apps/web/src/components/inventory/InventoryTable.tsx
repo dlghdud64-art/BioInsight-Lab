@@ -487,6 +487,7 @@ export function InventoryTable({
                         return (
                           <div
                             key={lot.id}
+                            data-testid={lotExpired && lot.currentQuantity > 0 ? "labaxis-inventory-expired-lot-row" : undefined}
                             className={`rounded-lg border p-3 ${
                               lotUrgent
                                 ? "border-amber-500/20 bg-amber-500/5"
@@ -953,6 +954,8 @@ export function InventoryTable({
                           return (
                             <TableRow
                               key={lot.id}
+                              data-testid={lotExpired && lot.currentQuantity > 0 ? "labaxis-inventory-expired-lot-row" : undefined}
+                              data-legacy-testid={lotExpired && lot.currentQuantity > 0 ? "inventory-expired-lot-row" : undefined}
                               className={`
                                 transition-colors duration-100
                                 bg-gray-50

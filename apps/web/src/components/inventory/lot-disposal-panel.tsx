@@ -142,6 +142,8 @@ export function LotDisposalPanel({
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
+        data-testid="labaxis-inventory-disposal-dock"
+        data-legacy-testid="lot-disposal-dock"
         side="right"
         className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
       >
@@ -339,7 +341,11 @@ export function LotDisposalPanel({
           <Separator className="bg-slate-100" />
 
           {/* ── 5. 폐기 후 영향 ── */}
-          <div className="p-5">
+          <div
+            data-testid="labaxis-inventory-post-disposal-impact"
+            data-legacy-testid="lot-disposal-impact-summary"
+            className="p-5"
+          >
             <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
               폐기 후 영향
             </h4>
