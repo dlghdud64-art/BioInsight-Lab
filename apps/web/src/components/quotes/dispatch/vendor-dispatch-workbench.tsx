@@ -291,7 +291,10 @@ export function VendorRequestModal({
           as §11.43/§11.48 but expressed in Tailwind classes (the
           §11.45 inline-hex grep can't catch this; future §11.55 may
           extend the script). */}
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 w-full mx-3 md:mx-0">
+      <DialogContent
+        data-testid="quote-dispatch-dock"
+        className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border-slate-200 w-full mx-3 md:mx-0"
+      >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-slate-900 text-base md:text-lg">
             <Send className="h-5 w-5 text-blue-600" />
@@ -307,11 +310,14 @@ export function VendorRequestModal({
         <div className="space-y-4 py-3">
 
           {/* ═══ Readiness Strip ═══ */}
-          <div className={`rounded-lg border px-4 py-3 ${
+          <div
+            data-testid="quote-dispatch-blocker-summary"
+            className={`rounded-lg border px-4 py-3 ${
             sendReadiness === "ready"
               ? "border-emerald-200 bg-emerald-50"
               : "border-amber-200 bg-amber-50"
-          }`}>
+          }`}
+          >
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 {sendReadiness === "ready" ? (
@@ -472,7 +478,7 @@ export function VendorRequestModal({
               </button>
 
               {messageExpanded && (
-                <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
+                <div data-testid="quote-dispatch-message-preview" className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">
                   {messageEditing ? (
                     <>
                       <Textarea

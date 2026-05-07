@@ -29,6 +29,8 @@ import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
+import { BatchActionBar } from "@/components/quotes/dispatch/batch-action-bar";
+import { BatchDispatchSheet } from "@/components/quotes/dispatch/batch-dispatch-sheet";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
@@ -268,7 +270,25 @@ function getQuoteDispatchPreflight(q: Quote | null): QuoteDispatchPreflight {
 const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "전환 준비", "완료"];
 
 // ── 견적 카드 (운영형 density) ──
-function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?: boolean; onSelect?: () => void }) {
+// §11.217 Phase 3 — batch dispatch selection props.
+//   isSelectable: PENDING (request_not_sent) state quote 만 true.
+//   isSelectedForBatch: selectedQuoteIds.has(quote.id) 결과.
+//   onToggleSelect: page-level toggleQuoteSelection handler.
+function QuoteCard({
+  quote,
+  isSelected,
+  onSelect,
+  isSelectable,
+  isSelectedForBatch,
+  onToggleSelect,
+}: {
+  quote: Quote;
+  isSelected?: boolean;
+  onSelect?: () => void;
+  isSelectable?: boolean;
+  isSelectedForBatch?: boolean;
+  onToggleSelect?: () => void;
+}) {
   const opStatus = getOpStatus(quote);
   const signals = getOpSignals(quote);
   const itemCount = quote.items.length;
@@ -300,12 +320,31 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
     <div
       data-testid="quote-request-card"
       className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up ${opStatus.leftBorder} ${
-        isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
+        isSelectedForBatch ? "border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-50/40"
+        : isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/30"
         : "border-bd/80 hover:border-bd"
       }`}
       onClick={onSelect}
     >
+      {/* §11.217 Phase 3 — batch dispatch checkbox (PENDING quote 만 노출) */}
+      {isSelectable && (
+        <div className="flex items-center gap-2 mb-2" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={!!isSelectedForBatch}
+            onChange={onToggleSelect}
+            onClick={(e) => e.stopPropagation()}
+            className="h-4 w-4 rounded border-slate-300 text-violet-600 focus-visible:ring-2 focus-visible:ring-violet-500 cursor-pointer"
+            aria-label={`${displayTitle} 일괄 발송 선택`}
+          />
+          <span className="sr-only">일괄 발송 선택</span>
+          {isSelectedForBatch && (
+            <span className="text-[11px] text-violet-700 font-medium">선택됨</span>
+          )}
+        </div>
+      )}
+
       {/* 운영 신호 3종 — 최상단 */}
       <div className="flex items-center gap-1.5 sm:gap-2 mb-2 flex-wrap">
         <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2 py-0.5 rounded border ${opStatus.bg} ${opStatus.text} ${opStatus.border}`}>
@@ -436,6 +475,23 @@ function QuotesPageContent() {
   // BOM import 분기만 유지.
   const [intakeDockOpen, setIntakeDockOpen] = useState(false);
   const [intakeDockSource, setIntakeDockSource] = useState<"bom_import" | null>(null);
+
+  // §11.217 Phase 3 — batch dispatch selection state.
+  // PENDING (request_not_sent) quote 만 selectable. checkbox click → toggle.
+  // refetch / sheet close 시 clearSelection 으로 reset (canonical truth 정합).
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
+  const [batchSheetOpen, setBatchSheetOpen] = useState(false);
+  const toggleQuoteSelection = useCallback((id: string) => {
+    setSelectedQuoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const clearSelection = useCallback(() => {
+    setSelectedQuoteIds(new Set());
+  }, []);
 
   // URL dock param 감지 (legacy redirect에서 유입)
   useEffect(() => {
@@ -758,6 +814,25 @@ function QuotesPageContent() {
     ? getOpSignals(priorityQuoteForBanner).aiRecommendation
     : null;
 
+  // §11.217 Phase 3 — batch dispatch preflight 합산.
+  // selectedQuotes = selectedQuoteIds 에서 실제 quote object 복원 (filteredQuotes 안).
+  // dispatchableCount = preflight 통과한 quote 수, hardBlockCount = 차단된 quote 수.
+  // canonical truth = getQuoteDispatchPreflight (page-level helper) 그대로 사용.
+  const selectedQuotes = useMemo(
+    () => filteredQuotes.filter((q) => selectedQuoteIds.has(q.id)),
+    [filteredQuotes, selectedQuoteIds],
+  );
+  const { dispatchableCount, hardBlockCount } = useMemo(() => {
+    let dispatchable = 0;
+    let hardBlock = 0;
+    for (const q of selectedQuotes) {
+      const preflight = getQuoteDispatchPreflight(q);
+      if (preflight.hardBlocked) hardBlock += 1;
+      else dispatchable += 1;
+    }
+    return { dispatchableCount: dispatchable, hardBlockCount: hardBlock };
+  }, [selectedQuotes]);
+
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
@@ -852,6 +927,15 @@ function QuotesPageContent() {
           </p>
         </div>
       )}
+
+      {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출) */}
+      <BatchActionBar
+        selectedCount={selectedQuoteIds.size}
+        dispatchableCount={dispatchableCount}
+        hardBlockCount={hardBlockCount}
+        onReviewStart={() => setBatchSheetOpen(true)}
+        onClearSelection={clearSelection}
+      />
 
       {/* ── KPI Control Cards — 모바일: 가로 스와이프 / sm+: 2열 / lg+: 5열 (§11.217 Phase 2 — 발송 대기 cell 추가) ── */}
       <div className="flex gap-2.5 overflow-x-auto snap-x pb-1 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:overflow-visible">
@@ -968,7 +1052,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-600 text-[11px] font-bold">{urgentQuotes.length}</span>
           </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
+          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -980,7 +1064,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-600 text-[11px] font-bold">{inProgressQuotes.length}</span>
           </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
+          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -995,7 +1079,7 @@ function QuotesPageContent() {
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
           </summary>
           <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} />)}
+            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
           </div>
         </details>
       )}
@@ -1497,6 +1581,15 @@ function QuotesPageContent() {
           onSuccess={handleSendSuccess}
         />
       )}
+
+      {/* ═══ §11.217 Phase 3 — 일괄 발송 검토 sheet ═══ */}
+      <BatchDispatchSheet
+        open={batchSheetOpen}
+        onOpenChange={setBatchSheetOpen}
+        selectedQuotes={selectedQuotes as never}
+        getPreflight={getQuoteDispatchPreflight as never}
+        onSuccess={() => { refetch(); clearSelection(); }}
+      />
 
       {/* ═══ Center Work Window — rail CTA에서 열리는 task surface ═══ */}
       {activeWorkWindow && activeWorkWindow !== "request_send" && selectedQuote && selectedSignals && (
