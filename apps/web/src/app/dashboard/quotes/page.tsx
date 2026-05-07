@@ -658,18 +658,30 @@ function QuotesPageContent() {
   // 운영 요약 — canonical state 기반 집계 (row/rail과 같은 selector 사용)
   const quotesWithState = useMemo(() => quotes.map(q => ({ quote: q, state: deriveRailState(q) })), [quotes]);
   const summaryStats = useMemo(() => {
-    const tracking = quotesWithState.filter(({ state }) => RESPONSE_TRACK_STATES.has(state));
+    // §11.217 Phase 2 (Issue 2) — "회신 추적 필요" 의미 분리.
+    // 기존: request_not_sent + awaiting_responses + response_delayed 모두 합산 →
+    //       "회신 추적 필요" label 이 "미발송" 케이스까지 포함 = 의미 mismatch.
+    // 신규: dispatchPending (미발송) + responseTracking (회신 대기/지연) 으로
+    //       2-bucket 분리. 각 bucket 별 filter 도 분리.
+    const dispatchPending = quotesWithState.filter(({ state }) => state === "request_not_sent");
+    const tracking = quotesWithState.filter(({ state }) => state === "awaiting_responses" || state === "response_delayed");
     const delayedCount = tracking.filter(({ state }) => state === "response_delayed").length;
     const review = quotesWithState.filter(({ state }) => COMPARE_STATES.has(state));
     const condCount = review.filter(({ state }) => state === "condition_check_required").length;
     const approval = quotesWithState.filter(({ state }) => state === "external_approval_required" || state === "condition_check_required");
     const convertible = quotesWithState.filter(({ state }) => state === "ready_for_po_conversion");
     return {
+      dispatchPending: {
+        count: dispatchPending.length,
+        insight: dispatchPending.length > 0
+          ? "공급사 견적 요청 발송 우선 — 첫 액션 필요"
+          : "미발송 케이스 없음",
+      },
       responseTracking: {
         count: tracking.length,
         insight: tracking.length > 0
           ? (delayedCount > 0 ? `${delayedCount}건 회신 지연 — 오늘 재요청 판단 필요` : "응답 수집 중 — 비교 가능 여부 대기")
-          : "미응답 또는 미전송 케이스 없음",
+          : "회신 추적 대상 없음",
       },
       compareReview: {
         count: review.length,
@@ -734,6 +746,17 @@ function QuotesPageContent() {
   const urgentQuotes = filteredQuotes.filter(q => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
   const inProgressQuotes = filteredQuotes.filter(q => !urgentQuotes.includes(q) && q.status !== "COMPLETED" && q.status !== "CANCELLED");
   const completedQuotes = filteredQuotes.filter(q => q.status === "COMPLETED" || q.status === "CANCELLED");
+
+  // §11.217 Phase 1B (Issue 5) — AI 추천 page-top banner 1회.
+  // 기존: card 마다 inline AI 추천 row 반복 (4번) → 정보 노이즈.
+  // 신규: page header 직후 1줄 banner — priority highest = urgentQuotes[0]
+  //       → inProgressQuotes[0] fallback. 없으면 banner 0 (no-op).
+  // canonical truth: getOpSignals 의 aiRecommendation 그대로 사용 (rail map
+  // 의 single source).
+  const priorityQuoteForBanner = urgentQuotes[0] ?? inProgressQuotes[0] ?? null;
+  const priorityAiRecommendation = priorityQuoteForBanner
+    ? getOpSignals(priorityQuoteForBanner).aiRecommendation
+    : null;
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -820,10 +843,21 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* ── KPI Control Cards — 모바일: 가로 스와이프 / sm+: 2열 / md+: 4열 ── */}
-      <div className="flex gap-2.5 overflow-x-auto snap-x pb-1 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-4 sm:gap-3 sm:overflow-visible">
+      {/* ── §11.217 Phase 1B — AI 추천 page-top banner (priority highest 1줄) ── */}
+      {priorityAiRecommendation && (
+        <div className="rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 flex items-center gap-2">
+          <Sparkles className="h-3.5 w-3.5 text-violet-600 shrink-0" />
+          <p className="text-[12px] sm:text-xs text-violet-900 line-clamp-1">
+            {priorityAiRecommendation}
+          </p>
+        </div>
+      )}
+
+      {/* ── KPI Control Cards — 모바일: 가로 스와이프 / sm+: 2열 / lg+: 5열 (§11.217 Phase 2 — 발송 대기 cell 추가) ── */}
+      <div className="flex gap-2.5 overflow-x-auto snap-x pb-1 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:overflow-visible">
         {[
-          { label: "회신 추적 필요", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
+          { label: "발송 대기", ...summaryStats.dispatchPending, icon: Send, filter: "PENDING", color: "slate", iconBg: "bg-slate-50", iconText: "text-slate-600", activeBorder: "border-slate-400/50", activeRing: "ring-slate-400/20", activeBg: "bg-slate-50/50", hoverBorder: "hover:border-slate-300", hoverShadow: "hover:shadow-slate-100" },
+          { label: "회신 추적", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
           { label: "비교 검토 필요", ...summaryStats.compareReview, icon: RefreshCw, filter: "RESPONDED", color: "purple", iconBg: "bg-purple-50", iconText: "text-purple-600", activeBorder: "border-purple-400/50", activeRing: "ring-purple-400/20", activeBg: "bg-purple-50/50", hoverBorder: "hover:border-purple-300", hoverShadow: "hover:shadow-purple-100" },
           { label: "승인 / 예외 처리", ...summaryStats.approvalException, icon: AlertCircle, filter: "DEADLINE_TODAY", color: "red", iconBg: "bg-red-50", iconText: "text-red-500", activeBorder: "border-red-400/50", activeRing: "ring-red-400/20", activeBg: "bg-red-50/50", hoverBorder: "hover:border-red-300", hoverShadow: "hover:shadow-red-100" },
           { label: "발주 전환 가능", ...summaryStats.readyToConvert, icon: FileCheck2, filter: "COMPLETED", color: "emerald", iconBg: "bg-emerald-50", iconText: "text-emerald-600", activeBorder: "border-emerald-400/50", activeRing: "ring-emerald-400/20", activeBg: "bg-emerald-50/50", hoverBorder: "hover:border-emerald-300", hoverShadow: "hover:shadow-emerald-100" },
