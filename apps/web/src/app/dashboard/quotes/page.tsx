@@ -33,10 +33,8 @@ import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
 import { PermissionGate } from "@/components/permission-gate";
-import { AiActionButton } from "@/components/ai/ai-action-button";
 import { OpsExecutionContext } from "@/components/ops/ops-execution-context";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
-import { FileText } from "lucide-react";
 import { AiQuoteParseModal } from "@/components/quotes/ai-quote-parse-modal";
 import { QuoteIntakeDock } from "@/components/quotes/intake/quote-intake-dock";
 
@@ -232,6 +230,41 @@ function getOpSignals(q: Quote) {
   };
 }
 
+type QuoteDispatchPreflight = {
+  hardBlocked: boolean;
+  summary: string;
+  blockers: string[];
+};
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function getQuoteDispatchPreflight(q: Quote | null): QuoteDispatchPreflight {
+  if (!q) {
+    return {
+      hardBlocked: true,
+      summary: "견적을 먼저 선택해야 합니다.",
+      blockers: ["견적 선택 없음"],
+    };
+  }
+
+  const suppliers = resolveSuppliers({ quote: q });
+  const includedSuppliers = suppliers.filter((supplier) => supplier.included);
+  const invalidContacts = includedSuppliers.filter((supplier) => !EMAIL_PATTERN.test(supplier.email));
+  const blockers: string[] = [];
+
+  if (!q.id) blockers.push("견적 연결 없음");
+  if (includedSuppliers.length === 0) blockers.push("연락 가능한 공급사 후보 없음");
+  if (invalidContacts.length > 0) blockers.push(`연락 채널 확인 필요 ${invalidContacts.length}건`);
+
+  return {
+    hardBlocked: blockers.length > 0,
+    blockers,
+    summary: blockers.length > 0
+      ? blockers.join(" · ")
+      : `${includedSuppliers.length}개 공급사 후보 전달 가능`,
+  };
+}
+
 const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "전환 준비", "완료"];
 
 // ── 견적 카드 (운영형 density) ──
@@ -246,6 +279,22 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
   // §11.212 — daysSinceCreated 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
   // <RelativeTimeText iso={quote.createdAt} /> 가 useEffect mount 후 set.
+
+  // §11.217 Phase 1 (Issue 1) — 카드 제목 정보 밀도 복구.
+  // 기존: quote.title ("견적 요청 — N개 품목" generic) → 사용자가 카드 식별 불가.
+  // 신규: 첫 품목명 + 추가 건수. snapshot path (productId null, item.name 보존)
+  //       및 canonical path (item.product.name) 양쪽 fallback.
+  const firstItem = quote.items[0];
+  const firstItemName =
+    firstItem?.product?.name ??
+    (firstItem as { name?: string | null } | undefined)?.name ??
+    null;
+  const moreCount = Math.max(0, itemCount - 1);
+  const displayTitle = firstItemName
+    ? moreCount > 0
+      ? `${firstItemName} 외 ${moreCount}건`
+      : firstItemName
+    : quote.title;
 
   return (
     <div
@@ -278,18 +327,13 @@ function QuoteCard({ quote, isSelected, onSelect }: { quote: Quote; isSelected?:
 
       <div className="flex flex-col sm:flex-row items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0 w-full">
-          {/* 제목 */}
-          <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{quote.title}</h3>
+          {/* 제목 — §11.217 Phase 1 (Issue 1): 첫 품목명 (사용자 식별 가능) */}
+          <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{displayTitle}</h3>
 
           {/* Decision summary sentence */}
           <p className="text-xs text-slate-400 leading-relaxed mb-1 line-clamp-2">{signals.summary}</p>
-          {/* AI inline recommendation */}
-          {signals.aiRecommendation && (
-            <div className="flex items-center gap-1.5 mb-2 px-2 py-1.5 rounded-md bg-violet-50 border border-violet-100">
-              <Sparkles className="h-3 w-3 text-violet-500 shrink-0 animate-pulse" />
-              <span className="text-[11px] text-violet-700 line-clamp-1">{signals.aiRecommendation}</span>
-            </div>
-          )}
+          {/* §11.217 Phase 1 (Issue 5) — inline AI 추천 row 4번 반복 제거.
+              page-top banner 1회 (별도 단계) 로 통합 예정. */}
 
           {/* 운영형 메타 — triage 우선 */}
           <div className="flex flex-wrap gap-x-2 sm:gap-x-3 gap-y-1">
@@ -559,6 +603,39 @@ function QuotesPageContent() {
   const today = new Date().toDateString();
   const selectedQuote = selectedQuoteId ? quotes.find(q => q.id === selectedQuoteId) : null;
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
+  const selectedDispatchPreflight = useMemo(
+    () => selectedQuote && selectedSignals?.actionKey === "request_send"
+      ? getQuoteDispatchPreflight(selectedQuote)
+      : null,
+    [selectedQuote, selectedSignals?.actionKey],
+  );
+  const selectedDispatchBlocked = !!selectedDispatchPreflight?.hardBlocked;
+
+  const openQuoteDraftWorkbench = useCallback(() => {
+    const targetQuote = selectedQuote
+      ?? quotes.find((quote) => deriveRailState(quote) === "request_not_sent")
+      ?? quotes.find((quote) => quote.status !== "COMPLETED" && quote.status !== "CANCELLED")
+      ?? quotes[0];
+
+    if (!targetQuote) {
+      toast({
+        title: "견적 요청 초안을 만들 수 없습니다",
+        description: "먼저 비교 후보나 견적 요청 대상을 등록하세요.",
+      });
+      return;
+    }
+
+    setSelectedQuoteId(targetQuote.id);
+    setActiveWorkWindow("request_send");
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("selected", targetQuote.id);
+      url.searchParams.set("task", "request_send");
+      window.history.replaceState({}, "", url.toString());
+      console.log("[QuoteQueue] quote_draft_workbench_opened", { caseId: targetQuote.id, source: "header_cta" });
+    }
+  }, [quotes, selectedQuote, toast]);
 
   // §11.181 — handleFloatingEntryClick 제거: FAB default 가 popup 호출.
 
@@ -689,9 +766,18 @@ function QuotesPageContent() {
             )}
             <span className="hidden sm:inline">견적서 비교</span><span className="sm:hidden">비교</span>
           </button>
-          <AiActionButton label="견적 요청 초안 만들기" icon={FileText} generateEndpoint="/api/ai-actions/generate/quote-draft"
-            generatePayload={{ items: quotes?.slice(0, 3).flatMap((q: Quote) => q.items?.map(item => ({ productName: item.product?.name || "품목", quantity: item.quantity || 1 })) || []) || [] }}
-            variant="outline" size="sm" className="h-9 text-sm hidden sm:flex" />
+          <Button
+            type="button"
+            data-testid="quote-draft-workbench-cta"
+            size="sm"
+            variant="outline"
+            className="h-9 text-sm hidden sm:flex"
+            onClick={openQuoteDraftWorkbench}
+            disabled={isLoading || quotes.length === 0}
+          >
+            <FileTextIcon className="h-4 w-4 mr-1.5" />
+            견적 요청 초안 만들기
+          </Button>
           <PermissionGate permission="quotes.create">
             <div className="flex items-center gap-0 flex-shrink-0 snap-start">
               <Link href="/app/search">
@@ -950,10 +1036,36 @@ function QuotesPageContent() {
             </div>
             {/* Bottom actions */}
             <div className="px-4 py-3 border-t border-bd/50 space-y-2">
+              {selectedDispatchBlocked && selectedDispatchPreflight && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-2">
+                  <div>
+                    <p className="text-[11px] font-semibold text-amber-900">전달 전 보강 필요</p>
+                    <p className="text-[11px] text-amber-700 leading-snug">{selectedDispatchPreflight.summary}</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] border-amber-300 text-amber-800"
+                      onClick={() => setActiveWorkWindow("request_send")}
+                    >
+                      공급사 후보 보강
+                    </Button>
+                    <Link href="/app/search">
+                      <Button size="sm" variant="outline" className="w-full h-8 text-[11px] border-amber-300 text-amber-800">
+                        요청 보완
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              )}
               <Button size="sm" className="w-full h-10 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white active:scale-[0.98]"
-                onClick={() => { if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey); }}
-                disabled={!selectedSignals.actionKey}>
-                {selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                onClick={() => {
+                  if (selectedDispatchBlocked) return;
+                  if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey);
+                }}
+                disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
+                {selectedDispatchBlocked ? "견적 요청 전달 잠김" : selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               <div className="flex gap-2">
                 <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
@@ -1243,18 +1355,52 @@ function QuotesPageContent() {
 
           {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
+            {selectedDispatchBlocked && selectedDispatchPreflight && (
+              <div
+                data-testid="quote-dispatch-blocker-summary"
+                className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-2"
+              >
+                <div>
+                  <p className="text-[11px] font-semibold text-amber-900">전달 전 보강 필요</p>
+                  <p className="text-[11px] text-amber-700 leading-snug">{selectedDispatchPreflight.summary}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button
+                    data-testid="quote-dispatch-supplier-remediation-cta"
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-[11px] border-amber-300 text-amber-800"
+                    onClick={() => setActiveWorkWindow("request_send")}
+                  >
+                    공급사 후보 보강
+                  </Button>
+                  <Link href="/app/search">
+                    <Button
+                      data-testid="quote-dispatch-request-remediation-cta"
+                      size="sm"
+                      variant="outline"
+                      className="w-full h-7 text-[11px] border-amber-300 text-amber-800"
+                    >
+                      요청 보완
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            )}
             <Button
               data-testid={selectedSignals.actionKey === "request_send" ? "quote-dispatch-review-cta" : undefined}
               size="sm"
-              className={`w-full h-8 text-xs font-medium ${selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
+              className={`w-full h-8 text-xs font-medium ${selectedDispatchBlocked ? "bg-slate-200 text-slate-500 cursor-not-allowed" : selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
               onClick={() => {
+                if (selectedDispatchBlocked) return;
                 if (selectedSignals.actionKey) {
                   console.log("[QuoteQueue] quote_rail_cta_clicked", { caseId: selectedQuote.id, actionKey: selectedSignals.actionKey, uiState: selectedSignals.railState });
                   setActiveWorkWindow(selectedSignals.actionKey);
                 }
               }}
-              disabled={!selectedSignals.actionKey}>
-              {selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
+              disabled={!selectedSignals.actionKey || selectedDispatchBlocked}
+              title={selectedDispatchBlocked ? selectedDispatchPreflight?.summary : undefined}>
+              {selectedDispatchBlocked ? "견적 요청 전달 잠김" : selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
             </Button>
             <div className="flex gap-1.5">
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
@@ -1295,7 +1441,10 @@ function QuotesPageContent() {
             </p>
           }
           next={<p className="text-xs text-slate-700">{selectedSignals.handoffTarget}</p>}
-          primaryCta={selectedSignals.actionKey ? {
+          primaryCta={selectedDispatchBlocked ? {
+            label: "공급사 후보 보강",
+            onClick: () => { setActiveWorkWindow("request_send"); },
+          } : selectedSignals.actionKey ? {
             label: selectedSignals.railCtaLabel,
             onClick: () => { setActiveWorkWindow(selectedSignals.actionKey); },
           } : undefined}
@@ -1553,129 +1702,4 @@ function QuotesPageContent() {
           <div className="px-6 pt-6 pb-4 border-b border-slate-100">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2 text-lg text-slate-900">
-                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                  <Sparkles className="h-4 w-4 text-blue-600" />
-                </div>
-                AI 견적서 비교 분석
-              </DialogTitle>
-              <DialogDescription className="text-sm text-slate-500 mt-1">
-                등록된 견적의 공급사별 조건을 비교하고 협상 포인트를 제안합니다
-              </DialogDescription>
-            </DialogHeader>
-          </div>
-
-          <div className="px-6 py-5 max-h-[60vh] overflow-y-auto space-y-4">
-            {aiCompareLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
-                <p className="text-sm text-slate-500">견적 데이터를 분석하고 있습니다...</p>
-              </div>
-            )}
-
-            {aiCompareError && (
-              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-                <p className="text-sm text-red-600">{aiCompareError}</p>
-                <button onClick={runAiQuoteCompare} className="mt-2 text-xs text-red-500 hover:text-red-700 font-medium underline">재시도</button>
-              </div>
-            )}
-
-            {aiCompareResult && (
-              <>
-                {/* 공급사별 비교 테이블 */}
-                {aiCompareResult.comparison.length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-semibold text-slate-900 mb-2">공급사 비교</h4>
-                    <div className="rounded-lg border border-slate-200 overflow-hidden">
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="bg-slate-50 text-slate-600">
-                            <th className="text-left px-3 py-2 font-medium">공급사</th>
-                            <th className="text-left px-3 py-2 font-medium">가격</th>
-                            <th className="text-left px-3 py-2 font-medium">납기</th>
-                            <th className="text-left px-3 py-2 font-medium">배송비</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {aiCompareResult.comparison.map((row, i) => (
-                            <tr key={i} className="hover:bg-slate-50/50">
-                              <td className="px-3 py-2 font-medium text-slate-900">{row.vendor}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.price}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.leadTime}</td>
-                              <td className="px-3 py-2 text-slate-700">{row.shippingFee}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {/* 추천 */}
-                {aiCompareResult.recommendation && (
-                  <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">추천</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed">{aiCompareResult.recommendation}</p>
-                  </div>
-                )}
-
-                {/* 협상 가이드 */}
-                {aiCompareResult.negotiationGuide && (
-                  <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-4">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <AlertTriangle className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-900">협상 포인트</span>
-                    </div>
-                    <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">{aiCompareResult.negotiationGuide}</p>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-
-          <div className="px-6 py-3 border-t border-slate-100 flex justify-end">
-            <Button variant="outline" size="sm" onClick={() => setAiCompareOpen(false)}>닫기</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Intake Dock (외부 견적서 업로드 / BOM 업로드) ── */}
-      <QuoteIntakeDock
-        open={intakeDockOpen}
-        onOpenChange={setIntakeDockOpen}
-        source={intakeDockSource}
-        onCommitSuccess={() => {
-          setIntakeDockOpen(false);
-          setIntakeDockSource(null);
-          refetch();
-        }}
-      />
-
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
-      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
-    </div>
-  );
-}
-
-function QuotesPageInner() {
-  return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent" />
-      </div>
-    }>
-      <QuotesPageContent />
-    </Suspense>
-  );
-}
-
-// §11.214b Path Z — NoSSR wrapper.
-export default function QuotesPage() {
-  return (
-    <NoSSR>
-      <QuotesPageInner />
-    </NoSSR>
-  );
-}
+                <div className="h-8 w-8 rounded-lg bg-blue-50 flex items-center justify
