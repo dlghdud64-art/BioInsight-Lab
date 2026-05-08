@@ -426,6 +426,15 @@ export async function GET(request: NextRequest) {
         ? { createdAt: "asc" }
         : { createdAt: "desc" };
 
+    // #supplier-resolution-quote-vendor-email — vendor email forward chain.
+    //   resolveSuppliers (apps/web/src/components/quotes/dispatch/resolve-suppliers.ts)
+    //   가 3 source 사용:
+    //     1. recent_rfq → vendorRequests[].vendorEmail
+    //     2. supplier_book → items[].product.vendors[].vendor.email
+    //     3. ai_recommended → quote.vendor (top-level, 본 forward 와 무관)
+    //   기존 include 에 vendors join + select 누락 → resolveSuppliers 가 빈 array
+    //   → preflight hardBlocked → batch dispatch 차단. canonical truth path
+    //   (Product.vendors → ProductVendor.vendor → Vendor.email) 그대로 forward.
     const quotes = await db.quote.findMany({
       where,
       orderBy,
@@ -434,7 +443,15 @@ export async function GET(request: NextRequest) {
           orderBy: { lineNumber: "asc" },
           include: {
             product: {
-              select: { id: true, name: true },
+              include: {
+                vendors: {
+                  include: {
+                    vendor: {
+                      select: { id: true, name: true, email: true },
+                    },
+                  },
+                },
+              },
             },
           },
         },
@@ -445,12 +462,53 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: "desc" },
         },
         vendorRequests: {
-          select: { id: true, status: true },
+          select: {
+            id: true,
+            status: true,
+            vendorEmail: true,
+            vendorName: true,
+            respondedAt: true,
+            createdAt: true,
+          },
         },
       },
     });
 
-    const mapped = quotes.map((q: { id: string; title: string; description?: string | null; status: string; createdAt: Date; items?: Array<{ id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }>; responses?: Array<{ id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }>; vendorRequests?: Array<{ id: string; status: string }> }) => ({
+    type MappedProductVendor = {
+      vendor: { id: string; name: string; email: string | null } | null;
+    };
+    type MappedItem = {
+      id: string;
+      name?: string | null;
+      quantity: number;
+      product?: ({ id: string; name: string; vendors?: MappedProductVendor[] }) | null;
+    };
+    type MappedResponse = {
+      id: string;
+      totalPrice?: number | null;
+      createdAt: Date;
+      vendor?: { name: string } | null;
+    };
+    type MappedVendorRequest = {
+      id: string;
+      status: string;
+      vendorEmail?: string | null;
+      vendorName?: string | null;
+      respondedAt?: Date | null;
+      createdAt?: Date;
+    };
+    type MappedQuote = {
+      id: string;
+      title: string;
+      description?: string | null;
+      status: string;
+      createdAt: Date;
+      items?: MappedItem[];
+      responses?: MappedResponse[];
+      vendorRequests?: MappedVendorRequest[];
+    };
+
+    const mapped = quotes.map((q: MappedQuote) => ({
       id: q.id,
       title: q.title,
       description: q.description ?? null,
@@ -458,22 +516,36 @@ export async function GET(request: NextRequest) {
       createdAt: q.createdAt.toISOString(),
       deliveryDate: null,
       deliveryLocation: null,
-      items: (q.items || []).map((item: { id: string; name?: string | null; quantity: number; product?: { id: string; name: string } | null }) => ({
+      items: (q.items || []).map((item: MappedItem) => ({
         id: item.id,
         product: item.product
-          ? { id: item.product.id, name: item.product.name }
-          : { id: "", name: item.name || "(품목)" },
+          ? {
+              id: item.product.id,
+              name: item.product.name,
+              // #supplier-resolution-quote-vendor-email — supplier_book forward.
+              vendors: (item.product.vendors || []).map((pv: MappedProductVendor) => ({
+                vendor: pv.vendor
+                  ? { id: pv.vendor.id, name: pv.vendor.name, email: pv.vendor.email }
+                  : null,
+              })),
+            }
+          : { id: "", name: item.name || "(품목)", vendors: [] },
         quantity: item.quantity,
       })),
-      responses: (q.responses || []).map((r: { id: string; totalPrice?: number | null; createdAt: Date; vendor?: { name: string } | null }) => ({
+      responses: (q.responses || []).map((r: MappedResponse) => ({
         id: r.id,
         vendor: { name: r.vendor?.name || "" },
         totalPrice: r.totalPrice ?? undefined,
         createdAt: r.createdAt.toISOString(),
       })),
-      vendorRequests: (q.vendorRequests || []).map((vr: { id: string; status: string }) => ({
+      // #supplier-resolution-quote-vendor-email — recent_rfq forward.
+      vendorRequests: (q.vendorRequests || []).map((vr: MappedVendorRequest) => ({
         id: vr.id,
         status: vr.status,
+        vendorEmail: vr.vendorEmail ?? null,
+        vendorName: vr.vendorName ?? null,
+        respondedAt: vr.respondedAt ? vr.respondedAt.toISOString() : null,
+        createdAt: vr.createdAt ? vr.createdAt.toISOString() : null,
       })),
     }));
 
