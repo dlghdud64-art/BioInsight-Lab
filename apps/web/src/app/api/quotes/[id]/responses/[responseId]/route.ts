@@ -109,7 +109,37 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { responseId } = await params;
+    const { id: quoteId, responseId } = await params;
+
+    // #quote-responses-organization-scope — info leak 차단.
+    //   responseId → quote ownership 검증 (user owner OR organization member).
+    //   404 fallback (existence leak avoidance) 일관.
+    //   PATCH 의 vendor 본인 분기 (외부 vendor actor) 와는 별개 layer.
+    const quote = await db.quote.findUnique({
+      where: { id: quoteId },
+      select: { id: true, userId: true, organizationId: true },
+    });
+
+    if (!quote) {
+      return NextResponse.json({ error: "견적을 찾을 수 없습니다.", code: "NOT_FOUND" }, { status: 404 });
+    }
+
+    const isOwner = quote.userId === session.user.id;
+    let isOrgMember = false;
+    if (!isOwner && quote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: {
+          userId: session.user.id,
+          organizationId: quote.organizationId,
+        },
+        select: { id: true },
+      });
+      isOrgMember = !!membership;
+    }
+
+    if (!isOwner && !isOrgMember) {
+      return NextResponse.json({ error: "견적을 찾을 수 없습니다.", code: "NOT_FOUND" }, { status: 404 });
+    }
 
     // 협상 이력 조회 (ActivityLog에서)
     const negotiationHistory = await db.activityLog.findMany({
