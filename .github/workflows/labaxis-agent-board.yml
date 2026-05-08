@@ -19,6 +19,30 @@ on:
         description: "Optional explicit changed files, one per line"
         required: false
         default: ""
+      browser_url:
+        description: "Optional staging/local URL. When set, the full gate runs Browser Pilot safe-click checks."
+        required: false
+        default: ""
+      browser_routes:
+        description: "Optional Browser Pilot routes, one per line. Default: /dashboard/inventory"
+        required: false
+        default: "/dashboard/inventory"
+      browser_click_mode:
+        description: "Browser Pilot click mode: none, safe, all"
+        required: false
+        default: "safe"
+      browser_max_clicks:
+        description: "Maximum Browser Pilot safe-click samples"
+        required: false
+        default: "6"
+      browser_assertion_profile:
+        description: "Browser Pilot assertions: auto, all, inventory-disposal, quote-dispatch, sourcing-ai-compare"
+        required: false
+        default: "auto"
+      browser_state_entry_profile:
+        description: "Browser Pilot state entry: auto, none, all, inventory-disposal, quote-dispatch, sourcing-ai-compare"
+        required: false
+        default: "auto"
 
 permissions:
   contents: read
@@ -59,6 +83,10 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Install agent-board dependencies
+        working-directory: labaxis-agent-board
+        run: npm ci
+
       - name: Validate agent-board
         working-directory: labaxis-agent-board
         run: npm run check
@@ -66,6 +94,11 @@ jobs:
       - name: Validate agent-board contracts
         working-directory: labaxis-agent-board
         run: npm run test:contracts
+
+      - name: Install Browser Pilot runtime
+        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url != '') || vars.LABAXIS_BROWSER_URL != '' }}
+        working-directory: labaxis-agent-board
+        run: npx playwright install chromium
 
       - name: Verify OpenAI API secret
         env:
@@ -86,6 +119,13 @@ jobs:
           LABAXIS_REVIEW_INPUT_CHANGED_FILES: ${{ github.event.inputs.changed_files }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
+          LABAXIS_BROWSER_URL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL }}
+          LABAXIS_BROWSER_ROUTES: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_routes || vars.LABAXIS_BROWSER_ROUTES }}
+          LABAXIS_BROWSER_CLICK_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_click_mode || vars.LABAXIS_BROWSER_CLICK_MODE }}
+          LABAXIS_BROWSER_MAX_CLICKS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_max_clicks || vars.LABAXIS_BROWSER_MAX_CLICKS }}
+          LABAXIS_BROWSER_ASSERTION_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_assertion_profile || vars.LABAXIS_BROWSER_ASSERTION_PROFILE }}
+          LABAXIS_BROWSER_STATE_ENTRY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_state_entry_profile || vars.LABAXIS_BROWSER_STATE_ENTRY_PROFILE }}
+          LABAXIS_STORAGE_STATE_JSON: ${{ secrets.LABAXIS_STORAGE_STATE_JSON }}
         run: |
           PILOT="${LABAXIS_REVIEW_INPUT_PILOT:-${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}}"
           export OPENAI_AGENT_MODEL="${OPENAI_AGENT_MODEL:-gpt-5.4-mini}"
@@ -107,12 +147,33 @@ jobs:
               fi
             done <<< "$LABAXIS_REVIEW_INPUT_CHANGED_FILES"
           fi
+          BROWSER_ARGS=()
+          if [ -n "$LABAXIS_BROWSER_URL" ]; then
+            BROWSER_ARGS+=(--url "$LABAXIS_BROWSER_URL")
+            BROWSER_ARGS+=(--click-mode "${LABAXIS_BROWSER_CLICK_MODE:-safe}")
+            BROWSER_ARGS+=(--max-clicks "${LABAXIS_BROWSER_MAX_CLICKS:-6}")
+            BROWSER_ARGS+=(--assertion-profile "${LABAXIS_BROWSER_ASSERTION_PROFILE:-auto}")
+            BROWSER_ARGS+=(--state-entry-profile "${LABAXIS_BROWSER_STATE_ENTRY_PROFILE:-auto}")
+            ROUTES_SOURCE="${LABAXIS_BROWSER_ROUTES:-/dashboard/inventory}"
+            while IFS= read -r route; do
+              route="$(echo "$route" | xargs)"
+              if [ -n "$route" ]; then
+                BROWSER_ARGS+=(--route "$route")
+              fi
+            done <<< "$ROUTES_SOURCE"
+            if [ -n "$LABAXIS_STORAGE_STATE_JSON" ]; then
+              STORAGE_STATE="$RUNNER_TEMP/labaxis-storage-state.json"
+              printf '%s' "$LABAXIS_STORAGE_STATE_JSON" > "$STORAGE_STATE"
+              BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
+            fi
+          fi
           node src/run.mjs ci \
             --project "$GITHUB_WORKSPACE/labaxis" \
             --pilot "$PILOT" \
             --summary "$SUMMARY" \
             "${BASE_ARGS[@]}" \
             "${CHANGED_ARGS[@]}" \
+            "${BROWSER_ARGS[@]}" \
             --out "$RUNNER_TEMP/labaxis-review-gate"
 
       - name: Publish gate summary
