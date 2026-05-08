@@ -213,7 +213,7 @@ model OrganizationVendor {
 - Rollback: migration drop + seed revert.
 
 ### Phase 2 — Server route + zod schema
-- Status: [ ] Pending
+- Status: [x] Complete (sandbox land — vitest 17/17 + tsc 0 new error)
 - 🔴 RED: `/api/organizations/[id]/vendors` CRUD route test (GET / POST / PATCH / DELETE).
 - 🟢 GREEN: route 신설 + zod schema (vendorName / vendorEmail / vendorPhone / notes / isPrimary) + ownership check (organization member 만 access) + audit log.
 - ✋ Quality Gate: vitest 통과 + tsc + auth/permission 정합.
