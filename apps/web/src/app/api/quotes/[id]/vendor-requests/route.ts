@@ -14,6 +14,9 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 const VendorSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().optional(),
+  // #vendor-email-seed-pilot — vendor.id forward (pilot 분기용).
+  // optional — caller 가 보유한 경우만 전달. 미전달 시 sendEmail 의 pilot 분기 0.
+  id: z.string().optional(),
 });
 
 const CreateVendorRequestsSchema = z.object({
@@ -164,11 +167,14 @@ export async function POST(
           expiresAt,
         });
 
+        // #vendor-email-seed-pilot — vendor.id forward (pilot 분기용).
+        // pilot vendor 면 sender.ts 가 SMTP skip + audit-only.
         await sendEmail({
           to: vendor.email,
           subject: emailTemplate.subject,
           html: emailTemplate.html,
           text: emailTemplate.text,
+          vendorId: vendor.id,
         });
 
         emailResults.push({ email: vendor.email, success: true });

@@ -234,7 +234,11 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     id: "vendor-pilot-thermofisher",
     name: "Thermo Fisher Scientific",
     nameEn: "Thermo Fisher Scientific",
-    email: null, // placeholder — pilot tenant only, no real outbound mail
+    // #vendor-email-seed-pilot — RFC 2606 `.invalid` placeholder.
+    // pilot tenant only, no real outbound mail. sender.ts 의 sendEmail
+    // 이 isVendorPilot(vendor.id) 매칭 시 SMTP skip — design intent 보호.
+    // .invalid TLD 가 RFC 2606 placeholder, 실제 DNS resolve 0 보장 다중화.
+    email: "pilot+thermofisher@labaxis.invalid",
     country: "US",
     currency: "USD",
   },
