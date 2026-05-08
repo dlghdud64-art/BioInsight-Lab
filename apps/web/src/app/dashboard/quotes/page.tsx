@@ -51,6 +51,9 @@ interface Quote {
   deliveryLocation?: string;
   items: Array<{ id: string; product: { id: string; name: string }; quantity: number }>;
   responses?: Array<{ id: string; vendor: { name: string }; totalPrice?: number; createdAt: string }>;
+  // §11.218 카드 구분자 — sub-context 표시용 (요청자 / 부서).
+  user?: { id: string; name: string | null; email: string | null } | null;
+  organization?: { id: string; name: string } | null;
 }
 
 // ── 운영 상태 파생 ──────────────────────────────────────────
@@ -368,6 +371,23 @@ function QuoteCard({
         <div className="flex-1 min-w-0 w-full">
           {/* 제목 — §11.217 Phase 1 (Issue 1): 첫 품목명 (사용자 식별 가능) */}
           <h3 className="font-semibold text-slate-900 text-sm leading-snug truncate mb-1">{displayTitle}</h3>
+
+          {/* §11.218 카드 구분자 (sub-context disambiguation) — 같은 품목 다른 quote 식별.
+              요청자 (quote.user.name) + 부서/조직 (quote.organization.name) 노출.
+              둘 다 부재 시 row 0 (no-op render). */}
+          {(quote.user?.name || quote.organization?.name) && (
+            <p className="text-[11px] text-slate-500 mb-1 truncate">
+              {quote.user?.name && (
+                <span className="font-medium text-slate-600">{quote.user.name}</span>
+              )}
+              {quote.user?.name && quote.organization?.name && (
+                <span className="mx-1 text-slate-400">·</span>
+              )}
+              {quote.organization?.name && (
+                <span>{quote.organization.name}</span>
+              )}
+            </p>
+          )}
 
           {/* Decision summary sentence */}
           <p className="text-xs text-slate-400 leading-relaxed mb-1 line-clamp-2">{signals.summary}</p>

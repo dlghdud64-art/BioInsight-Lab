@@ -435,6 +435,11 @@ export async function GET(request: NextRequest) {
     //   기존 include 에 vendors join + select 누락 → resolveSuppliers 가 빈 array
     //   → preflight hardBlocked → batch dispatch 차단. canonical truth path
     //   (Product.vendors → ProductVendor.vendor → Vendor.email) 그대로 forward.
+    //
+    // §11.218 카드 구분자 (card disambiguation) — requester forward.
+    //   같은 품목 다른 quote 의 sub-context 노출 (요청자 / 부서). user.name +
+    //   organization.name 추가 forward — UI (QuoteCard) 가 displayTitle 아래
+    //   sub-context 라벨 노출.
     const quotes = await db.quote.findMany({
       where,
       orderBy,
@@ -471,6 +476,13 @@ export async function GET(request: NextRequest) {
             createdAt: true,
           },
         },
+        // §11.218 — requester / organization forward (card disambiguation).
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+        organization: {
+          select: { id: true, name: true },
+        },
       },
     });
 
@@ -497,6 +509,8 @@ export async function GET(request: NextRequest) {
       respondedAt?: Date | null;
       createdAt?: Date;
     };
+    type MappedUser = { id: string; name: string | null; email: string | null } | null;
+    type MappedOrganization = { id: string; name: string } | null;
     type MappedQuote = {
       id: string;
       title: string;
@@ -506,6 +520,9 @@ export async function GET(request: NextRequest) {
       items?: MappedItem[];
       responses?: MappedResponse[];
       vendorRequests?: MappedVendorRequest[];
+      // §11.218 — requester / organization forward.
+      user?: MappedUser;
+      organization?: MappedOrganization;
     };
 
     const mapped = quotes.map((q: MappedQuote) => ({
@@ -516,6 +533,13 @@ export async function GET(request: NextRequest) {
       createdAt: q.createdAt.toISOString(),
       deliveryDate: null,
       deliveryLocation: null,
+      // §11.218 카드 구분자 — requester forward (UI sub-context).
+      user: q.user
+        ? { id: q.user.id, name: q.user.name, email: q.user.email }
+        : null,
+      organization: q.organization
+        ? { id: q.organization.id, name: q.organization.name }
+        : null,
       items: (q.items || []).map((item: MappedItem) => ({
         id: item.id,
         product: item.product
