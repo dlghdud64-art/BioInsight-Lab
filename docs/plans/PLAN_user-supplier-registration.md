@@ -227,7 +227,7 @@ model OrganizationVendor {
 - Rollback: resolveSuppliers 변경 revert.
 
 ### Phase 4 — Settings surface (`/dashboard/settings/suppliers`)
-- Status: [ ] Pending
+- Status: [x] Complete (sandbox land — vitest 15/15)
 - 🔴 RED: page render test (등록/편집/삭제 button + form + table).
 - 🟢 GREEN: `/dashboard/settings/suppliers/page.tsx` (NEW, ~200-300 line) + 등록 dialog + 편집 inline + 삭제 confirm + table view (vendorName / email / phone / notes / isPrimary / actions).
 - ✋ Quality Gate: settings nav 정합 + a11y (skip-link / focus-visible) + 한국어 라벨.
