@@ -89,6 +89,9 @@ model Organization {
   spendingCategories SpendingCategory[]
   categoryBudgets    CategoryBudget[]
   budgetEvents       BudgetEvent[]
+  // #user-supplier-registration — 조직 단위 supplier-book (한국 연구실
+  // 단위 거래처 명단 정합).
+  organizationVendors OrganizationVendor[]
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B - organization-workspace-bootstrap.md 참조)
   // Phase 2 (2026-04-17): Workspace.organizationId 는 NOT NULL 로 승격됐지만, 반대 방향인 이 필드는
   // optional 유지. 이유: Organization 테이블에는 Workspace 를 가리키는 FK 가 없으므로 DB 레벨에서
@@ -170,6 +173,8 @@ model User {
   inventoryUsage      InventoryUsage[]
   inventoryRestocks   InventoryRestock[]
   inspections         Inspection[]
+  // #user-supplier-registration — 누가 등록한 organization vendor (audit).
+  createdOrganizationVendors OrganizationVendor[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
   dataAuditLogs       DataAuditLog[]
@@ -322,6 +327,8 @@ model Vendor {
   billingRecords  VendorBillingRecord[]
   // #post-approval-purchase-order-flow Phase 1.2 — vendor 별 발주 (option A)
   orders          Order[]
+  // #user-supplier-registration — 조직 단위 supplier-book 의 platform Vendor 연결.
+  organizationLinks OrganizationVendor[]
 
   @@index([name])
   @@index([isPremium])
@@ -355,6 +362,38 @@ model ProductVendor {
   @@index([vendorId])
   @@index([priceInKRW])
   @@index([isPremiumFeatured, premiumPriority])
+}
+
+// #user-supplier-registration — 조직 단위 supplier-book.
+//   한국 연구실 단위 거래처 명단 정합 (호영님 사업 확장 1단계).
+//   - operator-input: vendorName / vendorEmail / vendorPhone / notes / isPrimary
+//   - vendorId optional: 기존 platform Vendor table 연결 가능 (선택). 없어도
+//     inline 만으로 동작 (operator 가 platform 미등록 vendor 도 등록 가능).
+//   - createdById: audit (누가 등록했는지).
+//   - @@unique([organizationId, vendorEmail]): 동일 조직 중복 차단.
+//   - resolveSuppliers 의 'org_book' source 로 합산 (priority: recent_rfq →
+//     org_book → supplier_book → ai_recommended).
+model OrganizationVendor {
+  id             String       @id @default(cuid())
+  organizationId String
+  vendorId       String?      // 기존 platform Vendor 연결 (optional)
+  vendorName     String       // operator-input
+  vendorEmail    String       // operator-input
+  vendorPhone    String?
+  isPrimary      Boolean      @default(false)  // 우선 거래처 marker
+  notes          String?      @db.Text         // 메모 (예: "신규 거래, 단가 협상 중")
+  createdById    String       // audit — 누가 등록했는지
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor       Vendor?      @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  createdBy    User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, vendorEmail])
+  @@index([organizationId])
+  @@index([vendorId])
+  @@index([createdById])
 }
 
 // 비교 ?이?

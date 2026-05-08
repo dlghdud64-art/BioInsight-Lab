@@ -229,18 +229,63 @@ export interface PilotVendorSpec {
   readonly currency: string;
 }
 
+// #user-supplier-registration Phase 1 — Vendor seed 다양화.
+//   호영님 사업 확장 1단계 정합 — 한국 시약 시장의 글로벌 제조사 + 국내 총판
+//   다양화. 모든 email 이 .invalid placeholder (pilot tenant, no real outbound).
+//   id prefix `vendor-pilot-*` (isVendorPilot 매칭).
+//
+// 글로벌 제조사: Thermo Fisher (US/USD)
+// 국내 총판: 바이오마트 / 코아바이오텍 / 다인바이오 / 지니아텍 / 머크코리아 (KR/KRW)
 export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
+  // 글로벌 제조사
   {
     id: "vendor-pilot-thermofisher",
     name: "Thermo Fisher Scientific",
     nameEn: "Thermo Fisher Scientific",
-    // #vendor-email-seed-pilot — RFC 2606 `.invalid` placeholder.
-    // pilot tenant only, no real outbound mail. sender.ts 의 sendEmail
-    // 이 isVendorPilot(vendor.id) 매칭 시 SMTP skip — design intent 보호.
-    // .invalid TLD 가 RFC 2606 placeholder, 실제 DNS resolve 0 보장 다중화.
     email: "pilot+thermofisher@labaxis.invalid",
     country: "US",
     currency: "USD",
+  },
+  // 국내 총판/대리점 — 한국 시약 시장 정합 (호영님 분석)
+  {
+    id: "vendor-pilot-biomart",
+    name: "바이오마트",
+    nameEn: "Biomart Korea",
+    email: "pilot+biomart@labaxis.invalid",
+    country: "KR",
+    currency: "KRW",
+  },
+  {
+    id: "vendor-pilot-koabiotech",
+    name: "코아바이오텍",
+    nameEn: "Koa Biotech",
+    email: "pilot+koabiotech@labaxis.invalid",
+    country: "KR",
+    currency: "KRW",
+  },
+  {
+    id: "vendor-pilot-dainbio",
+    name: "다인바이오",
+    nameEn: "Dain Bio",
+    email: "pilot+dainbio@labaxis.invalid",
+    country: "KR",
+    currency: "KRW",
+  },
+  {
+    id: "vendor-pilot-giniatech",
+    name: "지니아텍",
+    nameEn: "Ginia Tech",
+    email: "pilot+giniatech@labaxis.invalid",
+    country: "KR",
+    currency: "KRW",
+  },
+  {
+    id: "vendor-pilot-merckkorea",
+    name: "머크코리아",
+    nameEn: "Merck Korea",
+    email: "pilot+merckkorea@labaxis.invalid",
+    country: "KR",
+    currency: "KRW",
   },
 ];
 
