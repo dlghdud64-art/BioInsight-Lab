@@ -101,9 +101,16 @@ export async function POST(
     }
 
     // ── Security enforcement ──
+    // #quote-vendor-requests-organization-scope post-fix —
+    //   userId / userRole 을 session 에서 forward (이전 `quote.userId` /
+    //   `undefined` drift 차단). enforceAction 의 actor 는 logged-in user
+    //   (호영님 ADMIN → ops_admin) 이지 quote owner 가 아님.
+    //   `userRole: undefined` 시 mapUserRole(undefined) → ['requester'] →
+    //   `quote_request_resend: ['buyer', 'ops_admin']` 매칭 fail → 403.
+    const session = await auth();
     enforcement = enforceAction({
-      userId: quote.userId,
-      userRole: undefined,
+      userId: session?.user?.id ?? quote.userId,
+      userRole: session?.user?.role,
       action: 'quote_request_resend',
       targetEntityType: 'quote',
       targetEntityId: id,
@@ -214,7 +221,9 @@ export async function POST(
     }
 
     // 활동 로그: 이메일 발송 기록
-    const session = await auth();
+    // #quote-vendor-requests-organization-scope post-fix — 위 enforceAction
+    //   에서 이미 const session = await auth() 선언 (line 110). 중복 선언
+    //   제거 (tsc duplicate identifier error 차단).
     const { ipAddress, userAgent } = extractRequestMeta(request);
     const actorRole = session?.user?.id
       ? await getActorRole(session.user.id, quote.organizationId)
