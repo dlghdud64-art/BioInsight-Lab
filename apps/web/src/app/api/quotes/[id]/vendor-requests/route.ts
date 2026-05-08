@@ -26,7 +26,15 @@ const CreateVendorRequestsSchema = z.object({
 });
 
 /**
- * Helper function to check quote access
+ * Helper function to check quote access.
+ *
+ * #quote-vendor-requests-organization-scope — 3-source priority:
+ *   1. user owner — quote.userId === session.user.id (기존)
+ *   2. organization member — quote.organizationId 가 user 의
+ *      OrganizationMember.organizationId 와 매칭 (NEW, multi-user
+ *      collaboration 정합). LabAxis 가 organization 단위 운영 — 같은 조직
+ *      member 가 만든 다른 user 의 quote 도 dispatch 가능해야 함.
+ *   3. guest key — quote.guestKey 매칭 (기존)
  */
 async function checkQuoteAccess(quoteId: string, request: NextRequest) {
   const session = await auth();
@@ -47,9 +55,25 @@ async function checkQuoteAccess(quoteId: string, request: NextRequest) {
     return { allowed: false, quote: null, error: "Quote not found", status: 404 };
   }
 
-  // Check if user has access
+  // #quote-vendor-requests-organization-scope — organization member 매칭.
+  //   같은 조직 내 다른 user 의 quote 도 dispatch 가능. user-level ownership /
+  //   guest key 보존 (3-source priority chain).
+  let isOrgMember = false;
+  if (session?.user?.id && quote.organizationId) {
+    const membership = await db.organizationMember.findFirst({
+      where: {
+        userId: session.user.id,
+        organizationId: quote.organizationId,
+      },
+      select: { id: true },
+    });
+    isOrgMember = !!membership;
+  }
+
+  // Check if user has access (3 source priority).
   const hasAccess =
     (session?.user?.id && quote.userId === session.user.id) ||
+    isOrgMember ||
     (quote.guestKey && (quote.guestKey === headerGuestKey || quote.guestKey === (await getOrCreateGuestKey())));
 
   if (!hasAccess) {
