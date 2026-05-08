@@ -13,7 +13,15 @@ const CreateShareSchema = z.object({
 });
 
 /**
- * Helper function to check quote access (owner or guestKey match)
+ * Helper function to check quote access.
+ *
+ * #quote-share-organization-scope — 3-source priority:
+ *   1. user owner — quote.userId === session.user.id (기존)
+ *   2. organization member — quote.organizationId 가 user 의
+ *      OrganizationMember.organizationId 와 매칭 (NEW, multi-user
+ *      collaboration 정합). vendor-requests cluster sweep 정합 — 같은
+ *      조직 내 다른 user 의 quote 도 share 가능해야 함.
+ *   3. guest key — quote.guestKey 매칭 (기존)
  */
 async function checkQuoteAccess(quoteId: string, request: NextRequest) {
   const session = await auth();
@@ -27,9 +35,25 @@ async function checkQuoteAccess(quoteId: string, request: NextRequest) {
     return { allowed: false, quote: null, error: "Quote not found", status: 404 };
   }
 
-  // Check if user has access
+  // #quote-share-organization-scope — organization member 매칭.
+  //   같은 조직 내 다른 user 의 quote 도 share 가능. user-level ownership /
+  //   guest key 보존 (3-source priority chain).
+  let isOrgMember = false;
+  if (session?.user?.id && quote.organizationId) {
+    const membership = await db.organizationMember.findFirst({
+      where: {
+        userId: session.user.id,
+        organizationId: quote.organizationId,
+      },
+      select: { id: true },
+    });
+    isOrgMember = !!membership;
+  }
+
+  // Check if user has access (3 source priority).
   const hasAccess =
     (session?.user?.id && quote.userId === session.user.id) ||
+    isOrgMember || // organizationMember 매칭 — 같은 조직 내 다른 user 의 quote 도 share 가능
     (quote.guestKey && (quote.guestKey === headerGuestKey || quote.guestKey === (await getOrCreateGuestKey())));
 
   if (!hasAccess) {
@@ -57,9 +81,16 @@ export async function POST(
     }
 
     // ── Security enforcement ──
+    // #quote-share-organization-scope — userId / userRole 을 session 에서
+    //   forward (이전 `quote.userId` / `undefined` drift 차단). enforceAction
+    //   의 actor 는 logged-in user (호영님 ADMIN → ops_admin) 이지 quote
+    //   owner 가 아님. role 미forward (i.e. literal undefined) 시
+    //   mapUserRole 의 fallback ['requester'] → matrix mismatch → 403
+    //   (vendor-requests cluster 동일 pattern).
+    const session = await auth();
     enforcement = enforceAction({
-      userId: quote.userId,
-      userRole: undefined,
+      userId: session?.user?.id ?? quote.userId,
+      userRole: session?.user?.role,
       action: 'quote_share',
       targetEntityType: 'quote',
       targetEntityId: id,
@@ -166,9 +197,12 @@ export async function DELETE(
     }
 
     // ── Security enforcement ──
+    // #quote-share-organization-scope — DELETE 분기도 동일 actor forward.
+    //   POST 와 동일 pattern (vendor-requests cluster sweep).
+    const session = await auth();
     enforcement = enforceAction({
-      userId: quote.userId,
-      userRole: undefined,
+      userId: session?.user?.id ?? quote.userId,
+      userRole: session?.user?.role,
       action: 'quote_share',
       targetEntityType: 'quote',
       targetEntityId: id,
