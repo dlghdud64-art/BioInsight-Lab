@@ -304,13 +304,34 @@ export async function csrfFetch(
     ? Object.fromEntries(init.headers.entries())
     : (init?.headers as Record<string, string>) || {};
 
-  return fetch(input, {
+  const response = await fetch(input, {
     ...init,
     headers: {
       ...existingHeaders,
       ...(csrfToken ? { [CSRF_HEADER_NAME]: csrfToken } : {}),
     },
   });
+
+  // #csrf-fetch-race-condition-fix — 첫 hydration 시 stale/absent cookie 로
+  //   middleware 가 403 deny 하는 race condition 의 표면 증상 직접 차단.
+  //   refreshCsrfToken 호출 → 새 token 발급 → 같지 않으면 한 번 retry.
+  //   token 이 refresh 후 같으면 skip (RBAC deny / actual permission 차단은
+  //   보존). retry 1회만 — 무한 loop 차단.
+  if (response.status === 403 && csrfToken) {
+    await refreshCsrfToken();
+    const fresh = await acquireCsrfToken();
+    if (fresh && fresh !== csrfToken) {
+      return fetch(input, {
+        ...init,
+        headers: {
+          ...existingHeaders,
+          [CSRF_HEADER_NAME]: fresh,
+        },
+      });
+    }
+  }
+
+  return response;
 }
 
 
