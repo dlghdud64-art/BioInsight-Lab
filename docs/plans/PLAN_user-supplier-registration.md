@@ -1,9 +1,9 @@
 # Implementation Plan: #user-supplier-registration (1단계 — 사용자 공급사 직접 등록)
 
-- **Status:** 🔄 In Progress — 호영님 결정 완료 (Schema A + Vertical 다양화 + Settings sub-section + 추천 priority + #vendor-master-seed-from-search 별도)
+- **Status:** ✅ Complete (2026-05-08, Path A close — Phase 1~5 production 검증 + ADR cluster-close + 별도 트랙 #quote-vendor-requests-organization-scope spawn)
 - **Started:** 2026-05-08
 - **Last Updated:** 2026-05-08
-- **Estimated Completion:** 2026-05-10 ~ 12 (5-7 phase, ~15-20h, multi-day cluster)
+- **Actual Completion:** 2026-05-08 (~6h actual, single-day cluster)
 
 ⛔ DO NOT start implementation 전 호영님 schema 결정 + Vertical scope 승인 필요
 ⛔ DO NOT skip Phase 0 audit (UserVendor / OrganizationVendor / WorkspaceVendor 옵션 비교)
@@ -241,7 +241,7 @@ model OrganizationVendor {
 - Rollback: combobox + picker 변경 revert.
 
 ### Phase 6 — Verify + Chrome smoke + ADR + cluster close
-- Status: [ ] Pending
+- Status: [x] Complete (Chrome smoke production 검증 — settings 등록 → batch action bar "발송 가능 2건" 직접 효과 입증)
 - 🔴 RED: Chrome smoke scenario — 호영님 본인이 거래처 5건 등록 → quote 1건 발송 (org_book vendor 선택) → toast 성공.
 - 🟢 GREEN: sandbox vitest sweep + tsc + 호영님 host commit + push + Vercel deploy + Chrome smoke + ADR entry.
 - ✋ Quality Gate: production 의 OrganizationVendor 등록 → wizard 노출 → dispatch 성공 + KPI 반영.

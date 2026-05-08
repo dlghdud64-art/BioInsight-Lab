@@ -1068,6 +1068,30 @@ function QuotesPageContent() {
           {modeChip && (
             <button onClick={() => setModeChip(null)} className="text-[11px] text-slate-500 hover:text-slate-900 ml-1">초기화</button>
           )}
+
+          {/* §11.220 — 전체 선택 CTA (PENDING quote 일괄 선택). 호영님 피드백
+              "체크박스 박스 외에 일괄 선택 가능하게도". PENDING 0건이면 noop. */}
+          {(() => {
+            const selectablePending = filteredQuotes.filter(q => deriveRailState(q) === "request_not_sent");
+            if (selectablePending.length === 0) return null;
+            const allSelected = selectablePending.every(q => selectedQuoteIds.has(q.id));
+            return (
+              <button
+                type="button"
+                onClick={() => {
+                  if (allSelected) {
+                    clearSelection();
+                  } else {
+                    setSelectedQuoteIds(new Set(selectablePending.map(q => q.id)));
+                  }
+                }}
+                className="ml-auto inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all text-violet-700 border-violet-300/60 bg-violet-50/50 hover:bg-violet-100"
+                aria-label={allSelected ? "전체 선택 해제" : "발송 대기 견적 전체 선택"}
+              >
+                {allSelected ? "전체 해제" : `전체 선택 (${selectablePending.length}건)`}
+              </button>
+            );
+          })()}
         </div>
       </div>
 

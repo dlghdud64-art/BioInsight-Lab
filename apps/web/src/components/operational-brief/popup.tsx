@@ -367,43 +367,53 @@ export function OperationalBriefPopup() {
     );
   }
 
-  // §11.202 — desktop: plain <aside> flex sibling. 부모 flex row 가 rail
-  //   폭만큼 main canvas 를 reflow. fixed/top-N/h-[calc] 0 — 부모가 처리.
-  //   header overlap 0 — rail 자체가 header 높이 영역 침범 안 함.
-  //   md:w-[400px] — 호영님 시안 정합 (380~420 range, 한국어 wrap 충분).
+  // §11.219 — desktop: floating overlay (mobile sheet 패턴 정합).
+  //   호영님 피드백 — 기존 §11.202 의 <aside> flex sibling 이 main canvas 를
+  //   push (reflow) → "운영브리핑이 화면을 밀어버린다". fixed inset-y-0 right-0
+  //   으로 floating 변환 — main canvas 영향 0, popup 만 화면 위에 띄움.
+  //   backdrop 으로 밖 click 시 close — mobile 패턴 정합.
+  //   z-40 > NoSSR / sticky / Vercel toolbar (z-30) — 다른 surface 의 overlay
+  //   는 침범 0.
   return (
-    <aside
-      role="complementary"
-      aria-label="운영 브리핑"
-      className={cn(
-        "relative hidden md:flex md:flex-col",
-        "md:w-[400px] md:flex-shrink-0",
-        "md:border-l md:border-bd md:bg-white",
-        "md:overflow-y-auto",
-      )}
-    >
-      {/* §11.202 — desktop close cluster: minimize + close. absolute 유지
-          (aside 가 relative + overflow-y-auto 이므로 안전 — header 침범 0). */}
-      <div className="absolute right-3 top-2 z-10 flex items-center gap-1">
-        <button
-          type="button"
-          onClick={toggleMinimize}
-          className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
-          aria-label="브리핑 최소화"
-        >
-          <Minus className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={close}
-          className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
-          aria-label="브리핑 닫기"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
-      {briefBody}
-    </aside>
+    <>
+      {/* §11.219 — backdrop (밖 click 닫기) */}
+      <div
+        className="fixed inset-0 z-30 hidden md:block bg-black/20"
+        onClick={close}
+        aria-hidden="true"
+      />
+      <aside
+        role="complementary"
+        aria-label="운영 브리핑"
+        className={cn(
+          "fixed top-0 right-0 z-40 hidden md:flex md:flex-col",
+          "h-full md:w-[400px]",
+          "border-l border-bd bg-white shadow-xl",
+          "overflow-y-auto",
+        )}
+      >
+        {/* §11.219 — desktop close cluster: minimize + close. */}
+        <div className="absolute right-3 top-2 z-10 flex items-center gap-1">
+          <button
+            type="button"
+            onClick={toggleMinimize}
+            className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            aria-label="브리핑 최소화"
+          >
+            <Minus className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            onClick={close}
+            className="rounded-sm p-1 text-slate-400 opacity-70 transition-opacity hover:opacity-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-slate-400"
+            aria-label="브리핑 닫기"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        {briefBody}
+      </aside>
+    </>
   );
 }
 
