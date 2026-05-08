@@ -5,19 +5,20 @@
  * VendorRequestModal에 resolvedSuppliers prop으로 전달하여
  * manual compose 대신 readiness-first UX를 기본 경로로 만듭니다.
  *
- * 우선순위:
+ * 우선순위 (#user-supplier-registration Phase 3 정합 — 호영님 결정):
  *   1. 과거 발송 이력 (recent_rfq) — 이미 이 견적에 발송한 적 있는 공급사
- *   2. 견적 품목에 연결된 공급사 (supplier_book) — 제품 vendor DB
- *   3. AI 추출 공급사 (ai_recommended) — quote.vendor 필드
+ *   2. 조직 거래처 (org_book) — operator 가 명시 등록한 OrganizationVendor
+ *   3. 견적 품목에 연결된 공급사 (supplier_book) — 제품 vendor DB
+ *   4. AI 추출 공급사 (ai_recommended) — quote.vendor 필드
  *
- * 동일 이메일은 중복 제거하며, 가장 높은 confidence가 우선합니다.
+ * 동일 이메일은 중복 제거하며, 가장 높은 우선순위/confidence 가 보존됩니다.
  */
 
 export interface ResolvedSupplier {
   vendorId: string;
   vendorName: string;
   email: string;
-  contactSource: "supplier_book" | "recent_rfq" | "ai_recommended" | "manual";
+  contactSource: "supplier_book" | "recent_rfq" | "ai_recommended" | "manual" | "org_book";
   confidence: "high" | "medium" | "low";
   reason?: string;
   lastUsed?: string;
@@ -54,12 +55,26 @@ interface ResolveInput {
     respondedAt?: string | null;
     createdAt?: string;
   }>;
+  /**
+   * #user-supplier-registration Phase 3 — Organization 단위 supplier-book.
+   * caller 가 `/api/organization-vendors` 응답을 forward — operator 직접
+   * 등록한 거래처. recent_rfq 보다 낮고 supplier_book 보다 높은 우선순위.
+   * 미전달 시 빈 array fallback (backward compat).
+   */
+  organizationVendors?: Array<{
+    id: string;
+    vendorName: string;
+    vendorEmail: string;
+    vendorPhone?: string | null;
+    isPrimary?: boolean;
+    notes?: string | null;
+  }>;
 }
 
 const CONFIDENCE_ORDER = { high: 3, medium: 2, low: 1 };
 
 export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
-  const { quote, vendorRequests = [] } = input;
+  const { quote, vendorRequests = [], organizationVendors = [] } = input;
   const seen = new Map<string, ResolvedSupplier>(); // key: lowercase email
 
   // ── 1. Past vendor requests (highest priority — known contacts) ──
@@ -83,7 +98,29 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
     });
   }
 
-  // ── 2. Product-linked vendors (supplier book) ──
+  // ── 2. Organization vendors (#user-supplier-registration Phase 3) ──
+  // operator 가 명시적으로 등록한 거래처 — recent_rfq 보다 낮지만 supplier_book
+  // 보다 높은 우선순위. 같은 email 이 recent_rfq 에 이미 있으면 skip (recent_rfq
+  // 의 lastUsed 정보 보존).
+  for (const ov of organizationVendors) {
+    if (!ov.vendorEmail) continue;
+    const email = ov.vendorEmail.trim().toLowerCase();
+    if (!email || seen.has(email)) continue;
+
+    seen.set(email, {
+      vendorId: ov.id,
+      vendorName: ov.vendorName || email.split("@")[0],
+      email: ov.vendorEmail.trim(),
+      contactSource: "org_book",
+      confidence: ov.isPrimary ? "high" : "medium",
+      reason: ov.isPrimary
+        ? "조직 거래처 (우선)"
+        : "조직 거래처",
+      included: true, // operator 직접 등록 → 기본 포함
+    });
+  }
+
+  // ── 3. Product-linked vendors (supplier book) ──
   const items = quote.items || [];
   for (const item of items) {
     const productVendors = item.product?.vendors || [];
@@ -92,7 +129,7 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
       if (!vendor?.email) continue;
       const email = vendor.email.trim().toLowerCase();
       if (seen.has(email)) {
-        // Already from recent_rfq — upgrade if needed
+        // Already from recent_rfq 또는 org_book — upgrade confidence if needed.
         const existing = seen.get(email)!;
         if (CONFIDENCE_ORDER[existing.confidence] < CONFIDENCE_ORDER.high) {
           existing.confidence = "high";

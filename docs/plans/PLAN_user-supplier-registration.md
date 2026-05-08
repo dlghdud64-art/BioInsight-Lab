@@ -220,7 +220,7 @@ model OrganizationVendor {
 - Rollback: route file 삭제.
 
 ### Phase 3 — resolveSuppliers org_book source 추가
-- Status: [ ] Pending
+- Status: [x] Complete (sandbox land — vitest 18/18 + tsc 0 new error)
 - 🔴 RED: resolveSuppliers 4 source 합산 test (recent_rfq → org_book → supplier_book → ai_recommended priority).
 - 🟢 GREEN: ResolvedSupplier interface 에 `org_book` contactSource 추가 + helper signature 에 `organizationVendors?: OrganizationVendor[]` 추가 + priority 합산 로직.
 - ✋ Quality Gate: 기존 resolveSuppliers 호출 caller 영향 0 (optional param).
