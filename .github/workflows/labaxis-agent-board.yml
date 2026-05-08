@@ -6,6 +6,19 @@ on:
       - main
       - develop
   workflow_dispatch:
+    inputs:
+      pilot:
+        description: "Pilot scenario id to review"
+        required: false
+        default: "03-expired-lot-disposal"
+      base_ref:
+        description: "Manual diff base ref. Use HEAD~1 to review the latest pushed commit."
+        required: false
+        default: "HEAD~1"
+      changed_files:
+        description: "Optional explicit changed files, one per line"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -68,23 +81,38 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
+          LABAXIS_REVIEW_INPUT_PILOT: ${{ github.event.inputs.pilot }}
+          LABAXIS_REVIEW_INPUT_BASE: ${{ github.event.inputs.base_ref }}
+          LABAXIS_REVIEW_INPUT_CHANGED_FILES: ${{ github.event.inputs.changed_files }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
         run: |
-          PILOT="${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}"
+          PILOT="${LABAXIS_REVIEW_INPUT_PILOT:-${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}}"
           export OPENAI_AGENT_MODEL="${OPENAI_AGENT_MODEL:-gpt-5.4-mini}"
           export OPENAI_ARBITER_MODEL="${OPENAI_ARBITER_MODEL:-gpt-5.4-mini}"
           SUMMARY="Manual LabAxis Agent Board run"
-          BASE_ARGS=""
+          BASE_ARGS=()
+          CHANGED_ARGS=()
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             SUMMARY="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
-            BASE_ARGS="--base origin/${{ github.base_ref }}"
+            BASE_ARGS=(--base "origin/${{ github.base_ref }}")
+          else
+            MANUAL_BASE="${LABAXIS_REVIEW_INPUT_BASE:-HEAD~1}"
+            SUMMARY="Manual LabAxis Agent Board run (base: ${MANUAL_BASE})"
+            BASE_ARGS=(--base "$MANUAL_BASE")
+            while IFS= read -r file; do
+              file="$(echo "$file" | xargs)"
+              if [ -n "$file" ]; then
+                CHANGED_ARGS+=(--changed "$file")
+              fi
+            done <<< "$LABAXIS_REVIEW_INPUT_CHANGED_FILES"
           fi
           node src/run.mjs ci \
             --project "$GITHUB_WORKSPACE/labaxis" \
             --pilot "$PILOT" \
             --summary "$SUMMARY" \
-            $BASE_ARGS \
+            "${BASE_ARGS[@]}" \
+            "${CHANGED_ARGS[@]}" \
             --out "$RUNNER_TEMP/labaxis-review-gate"
 
       - name: Publish gate summary
