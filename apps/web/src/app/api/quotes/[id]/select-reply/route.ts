@@ -97,18 +97,45 @@ export async function POST(
 
     const { replyId } = parsed.data;
 
-    // Ownership + reply membership in a single fetch so we never need a
-    // separate quote lookup.
+    // #quote-select-reply-organization-scope — ownership + reply membership
+    //   single fetch. organizationId 추가 — 같은 organization 내 다른 user 의
+    //   quote 도 select-reply 가능 (multi-user collaboration 정합,
+    //   vendor-requests / share cluster 동일 sweep pattern).
     const quote = await db.quote.findUnique({
       where: { id: quoteId },
       select: {
         id: true,
         userId: true,
+        organizationId: true,
         replies: { select: { id: true } },
       },
     });
 
-    if (!quote || quote.userId !== session.user.id) {
+    if (!quote) {
+      enforcement.fail();
+      return NextResponse.json(
+        { success: false, error: "견적을 찾을 수 없습니다.", code: "NOT_FOUND" },
+        { status: 404 },
+      );
+    }
+
+    // #quote-select-reply-organization-scope — 2-source ownership:
+    //   user owner OR organization member. 404 fallback 보존 — "not yours"
+    //   구분 회피 (existence leak 차단).
+    const isOwner = quote.userId === session.user.id;
+    let isOrgMember = false;
+    if (!isOwner && quote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: {
+          userId: session.user.id,
+          organizationId: quote.organizationId,
+        },
+        select: { id: true },
+      });
+      isOrgMember = !!membership;
+    }
+
+    if (!isOwner && !isOrgMember) {
       enforcement.fail();
       // Don't distinguish "not found" from "not yours" — same response.
       return NextResponse.json(
