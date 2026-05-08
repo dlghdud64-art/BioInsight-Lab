@@ -52,6 +52,15 @@ interface PreflightResult {
   blockers: string[];
 }
 
+interface OrgVendor {
+  id: string;
+  vendorName: string;
+  vendorEmail: string;
+  vendorPhone?: string | null;
+  isPrimary?: boolean;
+  notes?: string | null;
+}
+
 interface BatchDispatchSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -60,6 +69,12 @@ interface BatchDispatchSheetProps {
   getPreflight: (quote: BatchQuote) => PreflightResult;
   /** 발송 완료 후 page-level refetch + clearSelection trigger */
   onSuccess: () => void;
+  /**
+   * #user-supplier-registration Phase 5 — 조직 거래처 (org_book source).
+   * page-level useQuery `/api/organization-vendors` 응답 forward.
+   * 미전달 시 빈 array fallback (backward compat).
+   */
+  organizationVendors?: OrgVendor[];
 }
 
 // ── Per-quote dispatch ──
@@ -71,8 +86,10 @@ async function dispatchSingleQuote(
   quote: BatchQuote,
   message: string,
   expiresInDays: number,
+  organizationVendors: OrgVendor[] = [],
 ): Promise<DispatchOutcome> {
-  const suppliers = resolveSuppliers({ quote: quote as never });
+  // #user-supplier-registration Phase 5 — org_book source forward.
+  const suppliers = resolveSuppliers({ quote: quote as never, organizationVendors });
   const includedSuppliers = suppliers.filter((s) => s.included && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.email));
 
   if (includedSuppliers.length === 0) {
@@ -131,6 +148,7 @@ export function BatchDispatchSheet({
   selectedQuotes,
   getPreflight,
   onSuccess,
+  organizationVendors = [],
 }: BatchDispatchSheetProps) {
   const { toast } = useToast();
   const [message, setMessage] = useState("");
@@ -161,8 +179,10 @@ export function BatchDispatchSheet({
 
     // §11.217 Phase 3 — Promise.allSettled (partial failure 수용).
     // dispatchable quote 만 fetch 발송, hardBlock 은 client-side 제외.
+    // #user-supplier-registration Phase 5 — organizationVendors forward
+    //   to dispatchSingleQuote → resolveSuppliers org_book source 활성화.
     const fetches = dispatchableQuotes.map(({ quote }) =>
-      dispatchSingleQuote(quote, message, expiresInDays).then((outcome) => {
+      dispatchSingleQuote(quote, message, expiresInDays, organizationVendors).then((outcome) => {
         setProgress((prev) => ({ done: prev.done + 1, total: prev.total }));
         return outcome;
       }),

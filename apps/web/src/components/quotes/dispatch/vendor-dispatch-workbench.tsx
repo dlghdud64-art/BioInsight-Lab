@@ -60,6 +60,8 @@ const CONTACT_SOURCE_LABEL: Record<ResolvedSupplier["contactSource"], string> = 
   recent_rfq: "견적 이력",
   ai_recommended: "AI 추천",
   manual: "수동 입력",
+  // #user-supplier-registration Phase 5 — operator 직접 등록한 조직 거래처.
+  org_book: "조직 거래처",
 };
 
 const CONTACT_SOURCE_ICON: Record<ResolvedSupplier["contactSource"], string> = {
@@ -67,6 +69,7 @@ const CONTACT_SOURCE_ICON: Record<ResolvedSupplier["contactSource"], string> = {
   recent_rfq: "이력",
   ai_recommended: "AI",
   manual: "수동",
+  org_book: "거래처",
 };
 
 const CONFIDENCE_COLOR: Record<ResolvedSupplier["confidence"], string> = {

@@ -234,7 +234,7 @@ model OrganizationVendor {
 - Rollback: page + dialog 파일 삭제.
 
 ### Phase 5 — Wizard combobox + batch sheet picker
-- Status: [ ] Pending
+- Status: [x] Complete (sandbox land — wiring 7/7 + label/icon org_book + caller forward 정합)
 - 🔴 RED: wizard `/app/quote` 의 supplier 선택 단계 + batch sheet 의 picker 3-path test (org_book / 직접 입력 / LabAxis 추천 placeholder).
 - 🟢 GREEN: wizard 의 supplier select combobox 확장 (org_book + 직접 입력) + batch-dispatch-sheet.tsx 의 picker 분기 (3-path).
 - ✋ Quality Gate: 기존 dispatch flow 회귀 0 + dead-button 0 (LabAxis 추천 path 는 `coming soon` placeholder + tooltip).

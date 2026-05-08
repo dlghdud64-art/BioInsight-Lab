@@ -243,7 +243,20 @@ type QuoteDispatchPreflight = {
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function getQuoteDispatchPreflight(q: Quote | null): QuoteDispatchPreflight {
+// #user-supplier-registration Phase 5 — organizationVendors optional param.
+//   resolveSuppliers 의 org_book source 정합 — operator 직접 등록한 거래처
+//   가 있으면 preflight 의 includedSuppliers 에 자동 포함.
+function getQuoteDispatchPreflight(
+  q: Quote | null,
+  organizationVendors: Array<{
+    id: string;
+    vendorName: string;
+    vendorEmail: string;
+    vendorPhone?: string | null;
+    isPrimary?: boolean;
+    notes?: string | null;
+  }> = [],
+): QuoteDispatchPreflight {
   if (!q) {
     return {
       hardBlocked: true,
@@ -252,7 +265,7 @@ function getQuoteDispatchPreflight(q: Quote | null): QuoteDispatchPreflight {
     };
   }
 
-  const suppliers = resolveSuppliers({ quote: q });
+  const suppliers = resolveSuppliers({ quote: q, organizationVendors });
   const includedSuppliers = suppliers.filter((supplier) => supplier.included);
   const invalidContacts = includedSuppliers.filter((supplier) => !EMAIL_PATTERN.test(supplier.email));
   const blockers: string[] = [];
@@ -615,6 +628,28 @@ function QuotesPageContent() {
     refetchOnWindowFocus: true,
   });
 
+  // #user-supplier-registration Phase 5 — 조직 거래처 (org_book source) fetch.
+  //   resolveSuppliers / preflight / batch sheet 모두 정합 forward.
+  //   organization 미가입 user 또는 거래처 0건 → 빈 array (graceful).
+  const { data: organizationVendorsData } = useQuery({
+    queryKey: ["organization-vendors"],
+    queryFn: async () => {
+      const response = await fetch("/api/organization-vendors", { credentials: "include" });
+      if (!response.ok) return { vendors: [] };
+      return response.json();
+    },
+    enabled: status === "authenticated",
+    staleTime: 60_000,
+  });
+  const organizationVendors: Array<{
+    id: string;
+    vendorName: string;
+    vendorEmail: string;
+    vendorPhone?: string | null;
+    isPrimary?: boolean;
+    notes?: string | null;
+  }> = useMemo(() => organizationVendorsData?.vendors ?? [], [organizationVendorsData]);
+
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
   const isFilterChanging = isFetching && !isLoading;
 
@@ -681,7 +716,7 @@ function QuotesPageContent() {
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
   const selectedDispatchPreflight = useMemo(
     () => selectedQuote && selectedSignals?.actionKey === "request_send"
-      ? getQuoteDispatchPreflight(selectedQuote)
+      ? getQuoteDispatchPreflight(selectedQuote, organizationVendors)
       : null,
     [selectedQuote, selectedSignals?.actionKey],
   );
@@ -846,7 +881,7 @@ function QuotesPageContent() {
     let dispatchable = 0;
     let hardBlock = 0;
     for (const q of selectedQuotes) {
-      const preflight = getQuoteDispatchPreflight(q);
+      const preflight = getQuoteDispatchPreflight(q, organizationVendors);
       if (preflight.hardBlocked) hardBlock += 1;
       else dispatchable += 1;
     }
@@ -1596,18 +1631,22 @@ function QuotesPageContent() {
           onOpenChange={(open) => { if (!open) setActiveWorkWindow(null); }}
           quoteId={selectedQuote.id}
           quoteSummary={selectedQuote.title}
-          resolvedSuppliers={resolveSuppliers({ quote: selectedQuote })}
+          // #user-supplier-registration Phase 5 — org_book source forward.
+          resolvedSuppliers={resolveSuppliers({ quote: selectedQuote, organizationVendors })}
           draftMessage={buildDraftMessage(selectedQuote)}
           onSuccess={handleSendSuccess}
         />
       )}
 
       {/* ═══ §11.217 Phase 3 — 일괄 발송 검토 sheet ═══ */}
+      {/* #user-supplier-registration Phase 5 — getPreflight 가 organizationVendors
+          를 closure 로 capture. BatchDispatchSheet 가 props 로도 받음. */}
       <BatchDispatchSheet
         open={batchSheetOpen}
         onOpenChange={setBatchSheetOpen}
         selectedQuotes={selectedQuotes as never}
-        getPreflight={getQuoteDispatchPreflight as never}
+        getPreflight={((q: Quote) => getQuoteDispatchPreflight(q, organizationVendors)) as never}
+        organizationVendors={organizationVendors}
         onSuccess={() => { refetch(); clearSelection(); }}
       />
 
