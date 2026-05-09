@@ -55,11 +55,27 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
+    //   organizationId queryString 없을 때도 user 가 속한 모든 organization 의
+    //   라벨 export 자동 노출 — 조직 멤버 collaboration 정합 + pilot row 가시성.
+    //   explicit queryString single-org override 보존 (위 OrganizationMember
+    //   findFirst membership 검증 통과 path).
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const orgIds = memberships.map((m) => m.organizationId);
+
     // ── 재고 목록 조회 ──────────────────────────────────────────────────────
     const inventories = await db.productInventory.findMany({
       where: organizationId
         ? { organizationId }
-        : { userId: session.user.id },
+        : {
+            OR: [
+              { userId: session.user.id },
+              ...orgIds.map((id) => ({ organizationId: id })),
+            ],
+          },
       include: {
         product: {
           select: {

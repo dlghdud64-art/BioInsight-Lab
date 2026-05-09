@@ -31,12 +31,24 @@ export async function POST(request: NextRequest) {
     const { organizationId, dryRun = false } = body;
 
     // ìë ì¬ì£¼ë¬¸ì´ íì±íë ì¬ê³  ì¡°í
+    // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
+    //   organizationId body 없을 때도 user 가 속한 모든 organization 의 자동
+    //   재주문 inventory 가 자동 노출 — 조직 멤버 collaboration 정합 + pilot
+    //   row 가시성. explicit organizationId body 는 single-org override 보존.
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const orgIds = memberships.map((m) => m.organizationId);
+
     const inventories = await db.productInventory.findMany({
       where: {
         autoReorderEnabled: true,
         OR: [
           { userId: session.user.id },
-          ...(organizationId ? [{ organizationId }] : []),
+          ...(organizationId
+            ? [{ organizationId }]
+            : orgIds.map((id) => ({ organizationId: id }))),
         ],
       },
       include: {

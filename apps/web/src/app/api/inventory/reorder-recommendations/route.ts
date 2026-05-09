@@ -14,11 +14,22 @@ export async function GET(request: NextRequest) {
     const organizationId = searchParams.get("organizationId");
 
     // ì¬ì©ì ëë ì¡°ì§ì ì¬ê³  ì¡°í
+    // #api-inventory-read-org-scope-auto — auto organization scope (M2 mirror).
+    //   organizationId queryString 없을 때도 user 가 속한 모든 organization 의
+    //   재주문 추천 inventory 자동 노출. explicit queryString single-org override 보존.
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: session.user.id },
+      select: { organizationId: true },
+    });
+    const orgIds = memberships.map((m) => m.organizationId);
+
     const inventories = await db.productInventory.findMany({
       where: {
         OR: [
           { userId: session.user.id },
-          ...(organizationId ? [{ organizationId }] : []),
+          ...(organizationId
+            ? [{ organizationId }]
+            : orgIds.map((id) => ({ organizationId: id }))),
         ],
       },
       include: {
