@@ -54,6 +54,11 @@ import {
   Loader2,
   Star,
   Users,
+  ChevronDown,
+  ChevronUp,
+  Package,
+  X,
+  Search,
 } from "lucide-react";
 
 // ── Types ──
@@ -121,6 +126,35 @@ function getEffectivePartnershipTier(vendor: OrganizationVendor): PartnershipTie
   return vendor.partnershipTier ?? vendor.vendor?.partnershipTier ?? "GENERAL";
 }
 
+// #vendor-catalog-product-matching Phase 2b — vendor 가 carry 하는 product 매핑.
+//   organizationVendorProducts API 의 GET response 매핑.
+interface OrganizationVendorProductEntry {
+  id: string;
+  organizationId: string;
+  vendorId: string;
+  productId: string;
+  notes: string | null;
+  createdAt: string;
+  updatedAt: string;
+  vendor?: { id: string; name: string };
+  product: {
+    id: string;
+    name: string;
+    brand: string | null;
+    category: string | null;
+    catalogNumber: string | null;
+  };
+  createdBy?: { id: string; name: string | null; email: string | null };
+}
+
+interface ProductSearchResult {
+  id: string;
+  name: string;
+  brand?: string | null;
+  category?: string | null;
+  catalogNumber?: string | null;
+}
+
 const EMPTY_FORM: VendorFormData = {
   vendorName: "",
   vendorEmail: "",
@@ -142,6 +176,26 @@ export default function SuppliersSettingsPage() {
   const [formData, setFormData] = useState<VendorFormData>(EMPTY_FORM);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
+  // #vendor-catalog-product-matching Phase 2b — vendor 별 carry 제품 expand state.
+  const [expandedVendors, setExpandedVendors] = useState<Set<string>>(new Set());
+  const [addProductDialogOpen, setAddProductDialogOpen] = useState(false);
+  const [addProductVendorId, setAddProductVendorId] = useState<string | null>(null);
+  const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<ProductSearchResult | null>(null);
+  const [productNotes, setProductNotes] = useState("");
+
+  function toggleVendorExpand(vendorId: string) {
+    setExpandedVendors((prev) => {
+      const next = new Set(prev);
+      if (next.has(vendorId)) {
+        next.delete(vendorId);
+      } else {
+        next.add(vendorId);
+      }
+      return next;
+    });
+  }
+
   // ── Query ──
   const { data, isLoading, isError } = useQuery({
     queryKey: ["organization-vendors"],
@@ -152,6 +206,106 @@ export default function SuppliersSettingsPage() {
     },
   });
   const vendors = useMemo(() => data?.vendors ?? [], [data]);
+
+  // #vendor-catalog-product-matching Phase 2b — carry product list (모든 vendor).
+  //   1 query 로 organization 전체 entries, vendorId 별 client-side group.
+  const { data: vpData } = useQuery({
+    queryKey: ["organization-vendor-products"],
+    queryFn: async () => {
+      const res = await fetch("/api/organization-vendor-products", {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("거래처-제품 매핑을 불러오지 못했습니다");
+      return (await res.json()) as { entries: OrganizationVendorProductEntry[] };
+    },
+  });
+  const vendorProductsByVendor = useMemo(() => {
+    const map = new Map<string, OrganizationVendorProductEntry[]>();
+    for (const entry of vpData?.entries ?? []) {
+      const arr = map.get(entry.vendorId) ?? [];
+      arr.push(entry);
+      map.set(entry.vendorId, arr);
+    }
+    return map;
+  }, [vpData]);
+
+  // #vendor-catalog-product-matching Phase 2b — product search.
+  const { data: searchData, isFetching: isSearching } = useQuery({
+    queryKey: ["product-search", productSearchQuery],
+    queryFn: async () => {
+      if (!productSearchQuery.trim()) return { products: [] as ProductSearchResult[] };
+      const res = await fetch(
+        `/api/products/search?q=${encodeURIComponent(productSearchQuery.trim())}&limit=10`,
+        { credentials: "include" },
+      );
+      if (!res.ok) return { products: [] as ProductSearchResult[] };
+      return (await res.json()) as { products: ProductSearchResult[] };
+    },
+    enabled: addProductDialogOpen && productSearchQuery.trim().length > 0,
+  });
+
+  const addVendorProductMutation = useMutation({
+    mutationFn: async (input: { vendorId: string; productId: string; notes: string }) => {
+      const res = await csrfFetch("/api/organization-vendor-products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          vendorId: input.vendorId,
+          productId: input.productId,
+          notes: input.notes || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || err.error || "제품 매핑 등록에 실패했습니다");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "제품 매핑 등록 완료" });
+      queryClient.invalidateQueries({ queryKey: ["organization-vendor-products"] });
+      closeAddProductDialog();
+    },
+    onError: (err: Error) => {
+      toast({ title: "등록 실패", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteVendorProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await csrfFetch(`/api/organization-vendor-products/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "제품 매핑 삭제에 실패했습니다");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "제품 매핑 삭제 완료" });
+      queryClient.invalidateQueries({ queryKey: ["organization-vendor-products"] });
+    },
+    onError: (err: Error) => {
+      toast({ title: "삭제 실패", description: err.message, variant: "destructive" });
+    },
+  });
+
+  function openAddProductDialog(vendorId: string) {
+    setAddProductVendorId(vendorId);
+    setProductSearchQuery("");
+    setSelectedProduct(null);
+    setProductNotes("");
+    setAddProductDialogOpen(true);
+  }
+
+  function closeAddProductDialog() {
+    setAddProductDialogOpen(false);
+    setAddProductVendorId(null);
+    setProductSearchQuery("");
+    setSelectedProduct(null);
+    setProductNotes("");
+  }
 
   // ── Mutations ──
   const createMutation = useMutation({
@@ -352,7 +506,8 @@ export default function SuppliersSettingsPage() {
         <div className="rounded-xl border border-bd/80 bg-pn overflow-hidden">
           <ul className="divide-y divide-bd/60">
             {vendors.map((vendor) => (
-              <li key={vendor.id} className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-slate-50/50 transition-colors">
+              <li key={vendor.id} className="border-b border-bd/40 last:border-b-0">
+                <div className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-3 hover:bg-slate-50/50 transition-colors">
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="text-sm font-semibold text-slate-900 truncate">
@@ -403,6 +558,28 @@ export default function SuppliersSettingsPage() {
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
+                  {/* #vendor-catalog-product-matching Phase 2b — carry 제품 expand toggle. */}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => toggleVendorExpand(vendor.id)}
+                    className="h-8 text-xs"
+                    aria-label={`${vendor.vendorName} 취급 제품 ${expandedVendors.has(vendor.id) ? "접기" : "펼치기"}`}
+                  >
+                    <Package className="h-3.5 w-3.5 mr-1" />
+                    취급 제품
+                    {expandedVendors.has(vendor.id) ? (
+                      <ChevronUp className="h-3.5 w-3.5 ml-1" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                    )}
+                    {(() => {
+                      const count = vendorProductsByVendor.get(vendor.id)?.length ?? 0;
+                      return count > 0 ? (
+                        <span className="ml-1 text-[10px] text-violet-700">({count})</span>
+                      ) : null;
+                    })()}
+                  </Button>
                   <Button
                     size="sm"
                     variant="outline"
@@ -423,6 +600,76 @@ export default function SuppliersSettingsPage() {
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
+                </div>
+
+                {/* #vendor-catalog-product-matching Phase 2b — expanded carry list. */}
+                {expandedVendors.has(vendor.id) && (
+                  <div className="bg-slate-50/40 border-t border-bd/40 px-4 sm:px-5 py-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-semibold text-slate-700 inline-flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5 text-violet-600" />
+                        {vendor.vendorName}이(가) 취급하는 제품
+                      </h4>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => openAddProductDialog(vendor.id)}
+                        className="h-7 text-[11px]"
+                        aria-label="취급 제품 추가"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        제품 추가
+                      </Button>
+                    </div>
+                    {(() => {
+                      const list = vendorProductsByVendor.get(vendor.id) ?? [];
+                      if (list.length === 0) {
+                        return (
+                          <p className="text-[11px] text-slate-500 italic">
+                            아직 등록된 취급 제품이 없습니다. "+ 제품 추가" 로 매핑하세요.
+                          </p>
+                        );
+                      }
+                      return (
+                        <ul className="divide-y divide-bd/30 rounded-md border border-bd/40 bg-bg-default">
+                          {list.map((entry) => (
+                            <li
+                              key={entry.id}
+                              className="px-3 py-2 flex items-center gap-2 text-xs"
+                            >
+                              <div className="flex-1 min-w-0">
+                                <div className="font-medium text-slate-900 truncate">
+                                  {entry.product.name}
+                                </div>
+                                <div className="text-[10px] text-slate-500 inline-flex items-center gap-1.5">
+                                  {entry.product.brand && <span>{entry.product.brand}</span>}
+                                  {entry.product.catalogNumber && (
+                                    <span>· {entry.product.catalogNumber}</span>
+                                  )}
+                                </div>
+                                {entry.notes && (
+                                  <div className="text-[10px] text-slate-500 mt-0.5">
+                                    메모: {entry.notes}
+                                  </div>
+                                )}
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteVendorProductMutation.mutate(entry.id)}
+                                disabled={deleteVendorProductMutation.isPending}
+                                className="h-7 w-7 p-0 text-red-600 hover:bg-red-50"
+                                aria-label="취급 제품 매핑 삭제"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
+                  </div>
+                )}
               </li>
             ))}
           </ul>
@@ -551,6 +798,132 @@ export default function SuppliersSettingsPage() {
             >
               {isMutating && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
               {dialogMode === "create" ? "등록" : "저장"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* #vendor-catalog-product-matching Phase 2b — 취급 제품 추가 Dialog. */}
+      <Dialog open={addProductDialogOpen} onOpenChange={(open) => !open && closeAddProductDialog()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>취급 제품 추가</DialogTitle>
+            <DialogDescription>
+              이 거래처가 공급하는 제품을 등록합니다. 검색해서 선택하세요.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="productSearch" className="text-xs font-semibold text-slate-700">
+                제품 검색 <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+                <Input
+                  id="productSearch"
+                  value={productSearchQuery}
+                  onChange={(e) => {
+                    setProductSearchQuery(e.target.value);
+                    setSelectedProduct(null);
+                  }}
+                  placeholder="제품명 / 브랜드 / 카탈로그 번호"
+                  className="pl-8"
+                  disabled={addVendorProductMutation.isPending}
+                  autoFocus
+                />
+              </div>
+              {productSearchQuery.trim().length > 0 && !selectedProduct && (
+                <div className="border border-bd/40 rounded-md bg-bg-default max-h-56 overflow-y-auto">
+                  {isSearching ? (
+                    <p className="text-[11px] text-slate-500 text-center py-3">검색 중...</p>
+                  ) : (searchData?.products ?? []).length === 0 ? (
+                    <p className="text-[11px] text-slate-500 text-center py-3">
+                      검색 결과가 없습니다
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-bd/30">
+                      {(searchData?.products ?? []).map((p) => (
+                        <li key={p.id}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedProduct(p);
+                              setProductSearchQuery(p.name);
+                            }}
+                            className="w-full text-left px-3 py-2 hover:bg-slate-50 transition-colors"
+                          >
+                            <div className="text-xs font-medium text-slate-900 truncate">
+                              {p.name}
+                            </div>
+                            <div className="text-[10px] text-slate-500">
+                              {p.brand && <span>{p.brand}</span>}
+                              {p.catalogNumber && <span> · {p.catalogNumber}</span>}
+                            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+              {selectedProduct && (
+                <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs">
+                  <div className="font-medium text-violet-900 truncate">
+                    선택됨: {selectedProduct.name}
+                  </div>
+                  <div className="text-[10px] text-violet-700 inline-flex items-center gap-1.5">
+                    {selectedProduct.brand && <span>{selectedProduct.brand}</span>}
+                    {selectedProduct.catalogNumber && (
+                      <span>· {selectedProduct.catalogNumber}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="productNotes" className="text-xs font-semibold text-slate-700">
+                메모 <span className="text-slate-400 text-[10px] ml-1">(선택)</span>
+              </Label>
+              <Textarea
+                id="productNotes"
+                value={productNotes}
+                onChange={(e) => setProductNotes(e.target.value)}
+                placeholder="예: 정기 거래 / 대량 할인"
+                rows={2}
+                disabled={addVendorProductMutation.isPending}
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={closeAddProductDialog}
+              disabled={addVendorProductMutation.isPending}
+            >
+              취소
+            </Button>
+            <Button
+              onClick={() => {
+                if (!addProductVendorId || !selectedProduct) return;
+                addVendorProductMutation.mutate({
+                  vendorId: addProductVendorId,
+                  productId: selectedProduct.id,
+                  notes: productNotes,
+                });
+              }}
+              disabled={
+                !selectedProduct ||
+                !addProductVendorId ||
+                addVendorProductMutation.isPending
+              }
+            >
+              {addVendorProductMutation.isPending && (
+                <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
+              )}
+              매핑 저장
             </Button>
           </DialogFooter>
         </DialogContent>
