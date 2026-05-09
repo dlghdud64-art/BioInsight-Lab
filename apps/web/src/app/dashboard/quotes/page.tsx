@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -489,6 +489,9 @@ function QuotesPageContent() {
   const isBrowserPilotQuoteDispatch = pilotProfile === "quote-dispatch";
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  // §11.221 — 운영 브리핑 판단 근거 collapsible (호영님 5월 8일 결론).
+  //   default 접힘 — 1차 노출은 한 줄 인과관계 요약, "상세 보기" 클릭 시 4 cell.
+  const [factsExpanded, setFactsExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
@@ -1377,46 +1380,100 @@ function QuotesPageContent() {
             </p>
           </section>
 
-          {/* §11.188 § 2. 판단 근거 — 4-cell MetricCell grid (§11.180/187 패턴) */}
+          {/* §11.221 § 2. 판단 근거 — 인과관계 한 줄 요약 + collapsible 4 cell.
+              호영님 5월 8일 결론: "상태 반복" → "인과관계 + 실행 이유". 1차 노출은
+              한 줄 ("→" + emoji + 굵게), 4 cell grid 는 "상세 보기" 클릭 시 펼침.
+              §11.188 의 4 cell grid (현재 상태 / 회신 / 비교 가능 / 발주 전환) 는
+              collapsed 안에 보존 — canonical truth 영향 0. */}
           <div id="brief-facts" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">판단 근거</div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500">판단 근거</div>
+              <button
+                type="button"
+                onClick={() => setFactsExpanded(prev => !prev)}
+                className="text-[10px] text-slate-500 hover:text-slate-700 inline-flex items-center gap-0.5 transition-colors"
+                aria-label={factsExpanded ? "판단 근거 상세 접기" : "판단 근거 상세 보기"}
+              >
+                {factsExpanded ? "접기" : "상세 보기"}
+                {factsExpanded ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+              </button>
+            </div>
+
+            {/* 1차 노출 — 한 줄 인과관계 요약 (always visible). */}
             {(() => {
               const totalItems = selectedQuote.items.length;
-              const replyTone: "ok" | "warn" | "danger" =
-                sqResponseCount === 0
-                  ? "danger"
-                  : sqResponseCount >= totalItems
-                    ? "ok"
-                    : "warn";
-              const compareTone: "ok" | "neutral" =
-                selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료"
-                  ? "ok"
-                  : "neutral";
-              const poTone: "ok" | "neutral" =
-                selectedSignals.poReady === "가능" ? "ok" : "neutral";
-              const replyValue = totalItems === 0 ? "—" : `${sqResponseCount}/${totalItems}`;
+              const replyCount = sqResponseCount;
+              const status = selectedSignals.status;
+              const blocker = selectedSignals.blocker;
+              const compareReady = selectedSignals.compareReady;
+              const poReady = selectedSignals.poReady;
+              const nextAction = selectedSignals.nextAction;
+
+              let summary: string;
+              if (blocker?.includes("공급사 미전송") || status?.includes("요청 생성")) {
+                summary = "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.";
+              } else if (selectedQuote.status === "SENT" && replyCount === 0) {
+                summary = "📤 발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.";
+              } else if (replyCount > 0 && replyCount < totalItems) {
+                summary = `📥 회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`;
+              } else if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
+                summary = "📊 회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.";
+              } else if (poReady === "가능") {
+                summary = "✅ 비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.";
+              } else {
+                summary = `${blocker && blocker !== "차단 없음" ? `⚠️ 차단: ${blocker} → ` : "→ "}다음 단계: ${nextAction ?? "-"}`;
+              }
               return (
-                <div className="grid grid-cols-2 gap-2.5">
-                  <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
-                  <MetricCell label="회신" value={replyValue} tone={replyTone} />
-                  <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
-                  <MetricCell label="발주 전환" value={selectedSignals.poReady} tone={poTone} />
-                </div>
+                <p className="text-xs leading-relaxed text-slate-800 font-medium">{summary}</p>
               );
             })()}
-            {/* 보조 — 차단/위험 + 다음 액션 (정보 보존) */}
-            <div className="mt-3 pt-3 border-t border-bd/30 space-y-1.5">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">차단/위험</span>
-                <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-amber-600"}>
-                  {selectedSignals.blocker}
-                </span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">다음 액션</span>
-                <span className="text-slate-700">{selectedSignals.nextAction}</span>
-              </div>
-            </div>
+
+            {/* 2차 — collapsible: 4 cell grid + 보조 (차단/위험 + 다음 액션). */}
+            {factsExpanded && (
+              <>
+                {(() => {
+                  const totalItems = selectedQuote.items.length;
+                  const replyTone: "ok" | "warn" | "danger" =
+                    sqResponseCount === 0
+                      ? "danger"
+                      : sqResponseCount >= totalItems
+                        ? "ok"
+                        : "warn";
+                  const compareTone: "ok" | "neutral" =
+                    selectedSignals.compareReady === "가능" || selectedSignals.compareReady === "완료"
+                      ? "ok"
+                      : "neutral";
+                  const poTone: "ok" | "neutral" =
+                    selectedSignals.poReady === "가능" ? "ok" : "neutral";
+                  const replyValue = totalItems === 0 ? "—" : `${sqResponseCount}/${totalItems}`;
+                  return (
+                    <div className="grid grid-cols-2 gap-2.5 mt-3">
+                      <MetricCell label="현재 상태" value={selectedSignals.status} tone="neutral" />
+                      <MetricCell label="회신" value={replyValue} tone={replyTone} />
+                      <MetricCell label="비교 가능" value={selectedSignals.compareReady} tone={compareTone} />
+                      <MetricCell label="발주 전환" value={selectedSignals.poReady} tone={poTone} />
+                    </div>
+                  );
+                })()}
+                {/* 보조 — 차단/위험 + 다음 액션 (정보 보존) */}
+                <div className="mt-3 pt-3 border-t border-bd/30 space-y-1.5">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">차단/위험</span>
+                    <span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-600" : "text-amber-600"}>
+                      {selectedSignals.blocker}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">다음 액션</span>
+                    <span className="text-slate-700">{selectedSignals.nextAction}</span>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* § 2 cont. 핵심 근거 (회신/비교) — response delta */}
