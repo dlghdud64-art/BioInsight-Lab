@@ -57,8 +57,18 @@ export async function POST(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    // 본인의 리스트만 버전 생성 가능
-    if (originalQuote.userId !== session.user.id) {
+    // #quote-multi-user-ownership-sweep-final — 2-source ownership: user owner
+    // OR organization member. multi-user collaboration 정합.
+    const isOwner = originalQuote.userId === session.user.id;
+    let isOrgMember = false;
+    if (!isOwner && originalQuote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: originalQuote.organizationId },
+        select: { id: true },
+      });
+      isOrgMember = !!membership;
+    }
+    if (!isOwner && !isOrgMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -175,6 +185,7 @@ export async function GET(
       select: {
         id: true,
         userId: true,
+        organizationId: true,
         parentQuoteId: true,
       },
     });
@@ -183,8 +194,17 @@ export async function GET(
       return NextResponse.json({ error: "Quote not found" }, { status: 404 });
     }
 
-    // 본인의 리스트만 조회 가능
-    if (originalQuote.userId !== session.user.id) {
+    // #quote-multi-user-ownership-sweep-final — 2-source ownership 정합.
+    const isOwner = originalQuote.userId === session.user.id;
+    let isOrgMember = false;
+    if (!isOwner && originalQuote.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: originalQuote.organizationId },
+        select: { id: true },
+      });
+      isOrgMember = !!membership;
+    }
+    if (!isOwner && !isOrgMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
