@@ -64,12 +64,26 @@ export async function POST(
       );
     }
 
-    // 소유권 확인
-    if (inventory.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Forbidden: Not your inventory" },
-        { status: 403 }
-      );
+    // #api-inventory-restock-request-org-scope — isOwner OR isOrgMember 분기.
+    //   기존 user-level only ownership 은 같은 organization 의 다른 user 가 만든
+    //   inventory (pilot 의 organizationId-only row 포함) 의 restock-request
+    //   생성 차단 — multi-user collaboration drift. C/D cluster 패턴 mirror.
+    {
+      const isOwner = inventory.userId === session.user.id;
+      let isOrgMember = false;
+      if (!isOwner && inventory.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: inventory.organizationId },
+          select: { id: true },
+        });
+        isOrgMember = !!membership;
+      }
+      if (!isOwner && !isOrgMember) {
+        return NextResponse.json(
+          { error: "Forbidden: Not your inventory" },
+          { status: 403 }
+        );
+      }
     }
 
     // 사용자의 팀 조회
