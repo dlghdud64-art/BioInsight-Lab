@@ -15,16 +15,24 @@ on:
         description: "Manual diff base ref. Use HEAD~1 to review the latest pushed commit."
         required: false
         default: "HEAD~1"
-      changed_files:
-        description: "Optional explicit changed files, one per line"
+      changed_file_1:
+        description: "Optional changed file 1"
+        required: false
+        default: ""
+      changed_file_2:
+        description: "Optional changed file 2"
+        required: false
+        default: ""
+      changed_file_3:
+        description: "Optional changed file 3"
         required: false
         default: ""
       browser_url:
-        description: "Optional staging/local URL. When set, the full gate runs Browser Pilot safe-click checks."
+        description: "Staging/production URL for Browser Pilot safe-click checks."
         required: false
-        default: ""
+        default: "https://bio-insight-lab-web.vercel.app"
       browser_routes:
-        description: "Optional Browser Pilot routes, one per line. Default: /dashboard/inventory"
+        description: "Browser Pilot routes. Newline, comma, or space separated. Default: /dashboard/inventory"
         required: false
         default: "/dashboard/inventory"
       browser_click_mode:
@@ -37,10 +45,6 @@ on:
         default: "6"
       browser_assertion_profile:
         description: "Browser Pilot assertions: auto, all, inventory-disposal, quote-dispatch, sourcing-ai-compare"
-        required: false
-        default: "auto"
-      browser_state_entry_profile:
-        description: "Browser Pilot state entry: auto, none, all, inventory-disposal, quote-dispatch, sourcing-ai-compare"
         required: false
         default: "auto"
 
@@ -116,7 +120,10 @@ jobs:
           LABAXIS_REVIEW_PILOT: ${{ vars.LABAXIS_REVIEW_PILOT }}
           LABAXIS_REVIEW_INPUT_PILOT: ${{ github.event.inputs.pilot }}
           LABAXIS_REVIEW_INPUT_BASE: ${{ github.event.inputs.base_ref }}
-          LABAXIS_REVIEW_INPUT_CHANGED_FILES: ${{ github.event.inputs.changed_files }}
+          LABAXIS_REVIEW_INPUT_CHANGED_FILES_LEGACY: ${{ github.event.inputs.changed_files }}
+          LABAXIS_REVIEW_INPUT_CHANGED_FILE_1: ${{ github.event.inputs.changed_file_1 }}
+          LABAXIS_REVIEW_INPUT_CHANGED_FILE_2: ${{ github.event.inputs.changed_file_2 }}
+          LABAXIS_REVIEW_INPUT_CHANGED_FILE_3: ${{ github.event.inputs.changed_file_3 }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
           LABAXIS_BROWSER_URL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL }}
@@ -124,7 +131,7 @@ jobs:
           LABAXIS_BROWSER_CLICK_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_click_mode || vars.LABAXIS_BROWSER_CLICK_MODE }}
           LABAXIS_BROWSER_MAX_CLICKS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_max_clicks || vars.LABAXIS_BROWSER_MAX_CLICKS }}
           LABAXIS_BROWSER_ASSERTION_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_assertion_profile || vars.LABAXIS_BROWSER_ASSERTION_PROFILE }}
-          LABAXIS_BROWSER_STATE_ENTRY_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_state_entry_profile || vars.LABAXIS_BROWSER_STATE_ENTRY_PROFILE }}
+          LABAXIS_BROWSER_STATE_ENTRY_PROFILE: ${{ vars.LABAXIS_BROWSER_STATE_ENTRY_PROFILE }}
           LABAXIS_STORAGE_STATE_JSON: ${{ secrets.LABAXIS_STORAGE_STATE_JSON }}
         run: |
           PILOT="${LABAXIS_REVIEW_INPUT_PILOT:-${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}}"
@@ -140,12 +147,17 @@ jobs:
             MANUAL_BASE="${LABAXIS_REVIEW_INPUT_BASE:-HEAD~1}"
             SUMMARY="Manual LabAxis Agent Board run (base: ${MANUAL_BASE})"
             BASE_ARGS=(--base "$MANUAL_BASE")
+            MANUAL_CHANGED_FILES="$(printf '%s\n%s\n%s\n%s\n' \
+              "$LABAXIS_REVIEW_INPUT_CHANGED_FILES_LEGACY" \
+              "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_1" \
+              "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_2" \
+              "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_3")"
             while IFS= read -r file; do
               file="$(echo "$file" | xargs)"
               if [ -n "$file" ]; then
                 CHANGED_ARGS+=(--changed "$file")
               fi
-            done <<< "$LABAXIS_REVIEW_INPUT_CHANGED_FILES"
+            done <<< "$MANUAL_CHANGED_FILES"
           fi
           BROWSER_ARGS=()
           if [ -n "$LABAXIS_BROWSER_URL" ]; then
@@ -155,11 +167,14 @@ jobs:
             BROWSER_ARGS+=(--assertion-profile "${LABAXIS_BROWSER_ASSERTION_PROFILE:-auto}")
             BROWSER_ARGS+=(--state-entry-profile "${LABAXIS_BROWSER_STATE_ENTRY_PROFILE:-auto}")
             ROUTES_SOURCE="${LABAXIS_BROWSER_ROUTES:-/dashboard/inventory}"
+            ROUTES_SOURCE="$(printf '%s' "$ROUTES_SOURCE" | tr ',;' '\n')"
             while IFS= read -r route; do
-              route="$(echo "$route" | xargs)"
-              if [ -n "$route" ]; then
-                BROWSER_ARGS+=(--route "$route")
-              fi
+              for route_token in $route; do
+                route_token="$(echo "$route_token" | xargs)"
+                if [ -n "$route_token" ]; then
+                  BROWSER_ARGS+=(--route "$route_token")
+                fi
+              done
             done <<< "$ROUTES_SOURCE"
             if [ -n "$LABAXIS_STORAGE_STATE_JSON" ]; then
               STORAGE_STATE="$RUNNER_TEMP/labaxis-storage-state.json"
