@@ -16,15 +16,15 @@ on:
         required: false
         default: "HEAD~1"
       changed_file_1:
-        description: "Optional changed file 1"
+        description: "Repo file path 1 only. Example: apps/web/src/... Do NOT enter /dashboard routes here."
         required: false
         default: ""
       changed_file_2:
-        description: "Optional changed file 2"
+        description: "Repo file path 2 only. Leave blank unless reviewing a specific file."
         required: false
         default: ""
       changed_file_3:
-        description: "Optional changed file 3"
+        description: "Repo file path 3 only. Browser routes belong in browser_routes below."
         required: false
         default: ""
       browser_url:
@@ -32,7 +32,7 @@ on:
         required: false
         default: "https://bio-insight-lab-web.vercel.app"
       browser_routes:
-        description: "Browser Pilot routes. Newline, comma, or space separated. Default: /dashboard/inventory"
+        description: "Screen routes for Browser Pilot, not files. Example: /dashboard/inventory,/dashboard/quotes,/app/search"
         required: false
         default: "/dashboard/inventory"
       browser_click_mode:
