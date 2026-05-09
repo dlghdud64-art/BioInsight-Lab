@@ -178,6 +178,8 @@ async function main() {
         //    keyed on the exact id, not a filter.
         const vendors: Array<{ id: string; name: string }> = [];
         for (const spec of PILOT_VENDOR_CATALOG) {
+          // #vendor-partnership-tier Phase 1 — partnershipTier forward.
+          //   create + update 모두 upsert 시 tier 정합 (re-run idempotent).
           const v = await tx.vendor.upsert({
             where: { id: spec.id },
             create: {
@@ -187,8 +189,11 @@ async function main() {
               email: spec.email ?? undefined,
               country: spec.country,
               currency: spec.currency,
+              partnershipTier: spec.partnershipTier,
             },
-            update: {},
+            update: {
+              partnershipTier: spec.partnershipTier,
+            },
           });
           vendors.push({ id: v.id, name: v.name });
         }

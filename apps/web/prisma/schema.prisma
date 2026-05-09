@@ -302,6 +302,19 @@ model Product {
   @@index([name])
 }
 
+// #vendor-partnership-tier Phase 1 — 4단계 partnership tier enum.
+//   호영님 한국 시약 시장 strategy 정합:
+//   - DIRECT_PARTNER: 직접 파트너십 / MOU (글로벌 제조사 본사 직거래)
+//   - VERIFIED: 검증된 거래 (국내 총판, 정기 거래)
+//   - GENERAL: 일반 거래 (default)
+//   - UNVERIFIED: 미검증 (신규, 검토 필요)
+enum VendorPartnershipTier {
+  DIRECT_PARTNER
+  VERIFIED
+  GENERAL
+  UNVERIFIED
+}
+
 // 벤더/공급??
 model Vendor {
   id                String    @id @default(cuid())
@@ -312,6 +325,9 @@ model Vendor {
   website           String?
   country           String?   @default("KR")
   currency          String?   @default("KRW")
+  // #vendor-partnership-tier — 글로벌 baseline.
+  //   OrganizationVendor.partnershipTier 가 null 이면 본 값 사용 (overlay).
+  partnershipTier   VendorPartnershipTier @default(GENERAL)
   // ?익 모델 관???드
   isPremium         Boolean   @default(false) // ?리미엄 ?랜 ??
   premiumExpiresAt  DateTime? // ?리미엄 만료??
@@ -381,6 +397,11 @@ model OrganizationVendor {
   vendorEmail    String       // operator-input
   vendorPhone    String?
   isPrimary      Boolean      @default(false)  // 우선 거래처 marker
+  // #vendor-partnership-tier — 조직 override (nullable).
+  //   null 이면 Vendor.partnershipTier (글로벌 baseline) 사용 (overlay pattern).
+  //   Phase 2 에서 settings/suppliers form 으로 입력. Phase 3 에서
+  //   resolveSuppliers confidence boost 에 반영.
+  partnershipTier VendorPartnershipTier?
   notes          String?      @db.Text         // 메모 (예: "신규 거래, 단가 협상 중")
   createdById    String       // audit — 누가 등록했는지
   createdAt      DateTime     @default(now())

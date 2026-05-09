@@ -227,6 +227,9 @@ export interface PilotVendorSpec {
   readonly email: string | null;
   readonly country: string;
   readonly currency: string;
+  // #vendor-partnership-tier Phase 1 — 4단계 enum (string literal type 으로
+  // pilot.ts 가 prisma client 의존하지 않도록 분리). pilot-seed.ts 가 forward.
+  readonly partnershipTier: "DIRECT_PARTNER" | "VERIFIED" | "GENERAL" | "UNVERIFIED";
 }
 
 // #user-supplier-registration Phase 1 — Vendor seed 다양화.
@@ -237,7 +240,7 @@ export interface PilotVendorSpec {
 // 글로벌 제조사: Thermo Fisher (US/USD)
 // 국내 총판: 바이오마트 / 코아바이오텍 / 다인바이오 / 지니아텍 / 머크코리아 (KR/KRW)
 export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
-  // 글로벌 제조사
+  // 글로벌 제조사 — 본사 직거래 / MOU
   {
     id: "vendor-pilot-thermofisher",
     name: "Thermo Fisher Scientific",
@@ -245,8 +248,9 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+thermofisher@labaxis.invalid",
     country: "US",
     currency: "USD",
+    partnershipTier: "DIRECT_PARTNER",
   },
-  // 국내 총판/대리점 — 한국 시약 시장 정합 (호영님 분석)
+  // 국내 총판/대리점 — 한국 시약 시장 정합 (호영님 분석). 정기 거래 = VERIFIED.
   {
     id: "vendor-pilot-biomart",
     name: "바이오마트",
@@ -254,6 +258,7 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+biomart@labaxis.invalid",
     country: "KR",
     currency: "KRW",
+    partnershipTier: "VERIFIED",
   },
   {
     id: "vendor-pilot-koabiotech",
@@ -262,6 +267,7 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+koabiotech@labaxis.invalid",
     country: "KR",
     currency: "KRW",
+    partnershipTier: "VERIFIED",
   },
   {
     id: "vendor-pilot-dainbio",
@@ -270,6 +276,7 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+dainbio@labaxis.invalid",
     country: "KR",
     currency: "KRW",
+    partnershipTier: "VERIFIED",
   },
   {
     id: "vendor-pilot-giniatech",
@@ -278,6 +285,7 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+giniatech@labaxis.invalid",
     country: "KR",
     currency: "KRW",
+    partnershipTier: "VERIFIED",
   },
   {
     id: "vendor-pilot-merckkorea",
@@ -286,6 +294,7 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
     email: "pilot+merckkorea@labaxis.invalid",
     country: "KR",
     currency: "KRW",
+    partnershipTier: "VERIFIED",
   },
 ];
 
