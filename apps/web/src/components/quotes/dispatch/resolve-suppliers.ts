@@ -14,6 +14,24 @@
  * 동일 이메일은 중복 제거하며, 가장 높은 우선순위/confidence 가 보존됩니다.
  */
 
+// #vendor-partnership-tier Phase 3 — 4단계 enum (Phase 1 schema 정합).
+//   resolveSuppliers 의 confidence 결정에 반영 (호영님 결정 5A).
+export type PartnershipTier = "DIRECT_PARTNER" | "VERIFIED" | "GENERAL" | "UNVERIFIED";
+
+const PARTNERSHIP_TIER_TO_CONFIDENCE: Record<PartnershipTier, "high" | "medium" | "low"> = {
+  DIRECT_PARTNER: "high",
+  VERIFIED: "high",
+  GENERAL: "medium",
+  UNVERIFIED: "low",
+};
+
+function tierToConfidence(
+  tier: string | null | undefined,
+): "high" | "medium" | "low" | null {
+  if (!tier) return null;
+  return PARTNERSHIP_TIER_TO_CONFIDENCE[tier as PartnershipTier] ?? null;
+}
+
 export interface ResolvedSupplier {
   vendorId: string;
   vendorName: string;
@@ -41,6 +59,8 @@ interface ResolveInput {
             id?: string;
             name?: string;
             email?: string;
+            // #vendor-partnership-tier Phase 3 — 글로벌 baseline.
+            partnershipTier?: PartnershipTier;
           };
         }>;
       };
@@ -68,6 +88,8 @@ interface ResolveInput {
     vendorPhone?: string | null;
     isPrimary?: boolean;
     notes?: string | null;
+    // #vendor-partnership-tier Phase 3 — 조직 override (null fallback to baseline).
+    partnershipTier?: PartnershipTier | null;
   }>;
 }
 
@@ -76,6 +98,10 @@ const CONFIDENCE_ORDER = { high: 3, medium: 2, low: 1 };
 export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
   const { quote, vendorRequests = [], organizationVendors = [] } = input;
   const seen = new Map<string, ResolvedSupplier>(); // key: lowercase email
+  // #vendor-partnership-tier Phase 3 — overlay lock.
+  //   email 의 tier 가 명시적으로 결정되면 후속 source 가 confidence 덮어쓰지
+  //   않음 (org override > vendor baseline 정합 보호).
+  const tierLocked = new Set<string>();
 
   // ── 1. Past vendor requests (highest priority — known contacts) ──
   for (const vr of vendorRequests) {
@@ -102,25 +128,37 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
   // operator 가 명시적으로 등록한 거래처 — recent_rfq 보다 낮지만 supplier_book
   // 보다 높은 우선순위. 같은 email 이 recent_rfq 에 이미 있으면 skip (recent_rfq
   // 의 lastUsed 정보 보존).
+  // #vendor-partnership-tier Phase 3 — partnershipTier 명시 시 tierConf 사용
+  // (DIRECT_PARTNER/VERIFIED → high, GENERAL → medium, UNVERIFIED → low).
+  // 명시 없으면 기존 isPrimary 분기 (backward compat).
   for (const ov of organizationVendors) {
     if (!ov.vendorEmail) continue;
     const email = ov.vendorEmail.trim().toLowerCase();
     if (!email || seen.has(email)) continue;
+
+    const tierConf = tierToConfidence(ov.partnershipTier);
+    const confidence: "high" | "medium" | "low" =
+      tierConf ?? (ov.isPrimary ? "high" : "medium");
+    const tierReason = ov.partnershipTier
+      ? ` · ${ov.partnershipTier}`
+      : "";
 
     seen.set(email, {
       vendorId: ov.id,
       vendorName: ov.vendorName || email.split("@")[0],
       email: ov.vendorEmail.trim(),
       contactSource: "org_book",
-      confidence: ov.isPrimary ? "high" : "medium",
-      reason: ov.isPrimary
-        ? "조직 거래처 (우선)"
-        : "조직 거래처",
+      confidence,
+      reason: (ov.isPrimary ? "조직 거래처 (우선)" : "조직 거래처") + tierReason,
       included: true, // operator 직접 등록 → 기본 포함
     });
+    if (tierConf) tierLocked.add(email);
   }
 
   // ── 3. Product-linked vendors (supplier book) ──
+  // #vendor-partnership-tier Phase 3 — vendor.partnershipTier (글로벌 baseline)
+  //   가 confidence 결정. tier 명시 없으면 기존 "high" 보존 (backward compat).
+  //   overlay: org override 가 이미 결정되어 tierLocked 면 confidence 보존.
   const items = quote.items || [];
   for (const item of items) {
     const productVendors = item.product?.vendors || [];
@@ -128,11 +166,16 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
       const vendor = pv.vendor;
       if (!vendor?.email) continue;
       const email = vendor.email.trim().toLowerCase();
+      const baselineConf = tierToConfidence(vendor.partnershipTier);
+
       if (seen.has(email)) {
-        // Already from recent_rfq 또는 org_book — upgrade confidence if needed.
+        // Already from recent_rfq 또는 org_book.
+        if (tierLocked.has(email)) continue; // overlay 보호 — org override winner.
+        // backward compat upgrade — tier 명시 없을 때만 기존 동작.
         const existing = seen.get(email)!;
-        if (CONFIDENCE_ORDER[existing.confidence] < CONFIDENCE_ORDER.high) {
-          existing.confidence = "high";
+        const targetConf: "high" | "medium" | "low" = baselineConf ?? "high";
+        if (CONFIDENCE_ORDER[existing.confidence] < CONFIDENCE_ORDER[targetConf]) {
+          existing.confidence = targetConf;
           existing.reason = `${existing.reason} + 제품 공급사 DB 일치`;
         }
         continue;
@@ -143,10 +186,11 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
         vendorName: vendor.name || email.split("@")[0],
         email: vendor.email.trim(),
         contactSource: "supplier_book",
-        confidence: "high",
+        confidence: baselineConf ?? "high",
         reason: `${item.product?.name || "품목"} 등록 공급사`,
         included: true,
       });
+      if (baselineConf) tierLocked.add(email);
     }
   }
 
