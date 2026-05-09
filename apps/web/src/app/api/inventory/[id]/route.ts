@@ -35,8 +35,20 @@ export async function GET(
       return NextResponse.json({ error: "Inventory not found" }, { status: 404 });
     }
 
-    // 권한 확인: 자신의 재고 또는 같은 조직의 재고인지 확인
-    if (inventory.userId !== session.user.id && !inventory.organizationId) {
+    // #api-inventory-id-info-leak — isOwner OR isOrgMember 분기.
+    //   기존 `userId !== session.user.id && !organizationId` 는 organizationId
+    //   있는 row 를 어떤 user 든 통과시켜 multi-tenant info leak 위험. 조직 멤버
+    //   verification 추가 (vendor-requests cluster 패턴).
+    const isOwner = inventory.userId === session.user.id;
+    let isOrgMember = false;
+    if (!isOwner && inventory.organizationId) {
+      const membership = await db.organizationMember.findFirst({
+        where: { userId: session.user.id, organizationId: inventory.organizationId },
+        select: { id: true },
+      });
+      isOrgMember = !!membership;
+    }
+    if (!isOwner && !isOrgMember) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -82,9 +94,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Inventory not found" }, { status: 404 });
     }
 
-    // 권한 확인
-    if (existingInventory.userId !== session.user.id && !existingInventory.organizationId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // #api-inventory-id-info-leak — isOwner OR isOrgMember 분기 (PATCH).
+    {
+      const isOwner = existingInventory.userId === session.user.id;
+      let isOrgMember = false;
+      if (!isOwner && existingInventory.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: existingInventory.organizationId },
+          select: { id: true },
+        });
+        isOrgMember = !!membership;
+      }
+      if (!isOwner && !isOrgMember) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const body = await request.json();
@@ -245,9 +268,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Inventory not found" }, { status: 404 });
     }
 
-    // 권한 확인
-    if (existingInventory.userId !== session.user.id && !existingInventory.organizationId) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // #api-inventory-id-info-leak — isOwner OR isOrgMember 분기 (DELETE).
+    {
+      const isOwner = existingInventory.userId === session.user.id;
+      let isOrgMember = false;
+      if (!isOwner && existingInventory.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: existingInventory.organizationId },
+          select: { id: true },
+        });
+        isOrgMember = !!membership;
+      }
+      if (!isOwner && !isOrgMember) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
     }
 
     const { ipAddress, userAgent } = extractRequestMeta(request);
