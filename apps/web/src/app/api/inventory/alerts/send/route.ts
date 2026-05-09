@@ -60,6 +60,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // #api-inventory-mutation-info-leak — alertSetting.inventory ownership
+    //   검증 (trigger leak 차단). 기존 코드는 alertSettingId 받으면 누구든
+    //   trigger 가능 → 다른 organization 의 alert email 발송 가능. isOwner
+    //   OR isOrgMember 검증 후 sendEmail 진행.
+    {
+      const inv = alertSetting.inventory;
+      const isOwner = inv.userId === session.user.id;
+      let isOrgMember = false;
+      if (!isOwner && inv.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: inv.organizationId },
+          select: { id: true },
+        });
+        isOrgMember = !!membership;
+      }
+      if (!isOwner && !isOrgMember) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     // 재고 부족 확인
     const inventory = alertSetting.inventory;
     if (

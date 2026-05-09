@@ -386,8 +386,12 @@ export function OperationalBriefPopup() {
         role="complementary"
         aria-label="운영 브리핑"
         className={cn(
-          "fixed top-0 right-0 z-40 hidden md:flex md:flex-col",
-          "h-full md:w-[400px]",
+          // #operational-brief-popup-header-cutoff — DashboardHeader 가 sticky
+          // top-0 z-50 h-14 md:h-16. popup 이 top-0 z-40 이면 header 뒤로
+          // 위쪽 64px 가 가려져 "운영 브리핑" eyebrow + "카테고리 선택" h3 가
+          // 짤림. popup 을 header 아래로 offset (top-16 md+) + height 보정.
+          "fixed top-16 right-0 z-40 hidden md:flex md:flex-col",
+          "h-[calc(100vh-4rem)] md:w-[400px]",
           "border-l border-bd bg-white shadow-xl",
           "overflow-y-auto",
         )}

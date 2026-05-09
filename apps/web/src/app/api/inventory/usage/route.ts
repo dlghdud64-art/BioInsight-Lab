@@ -124,6 +124,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // #api-inventory-mutation-info-leak — inventory ownership 검증 (write leak
+    //   차단). 기존 코드는 inventoryId 만 받아 어떤 user 든 어떤 inventory 든
+    //   사용 기록 생성 + quantity 감소 가능 (multi-tenant write leak). isOwner
+    //   OR isOrgMember 검증 후 mutation 진행.
+    const inventory = await db.productInventory.findUnique({
+      where: { id: inventoryId },
+      select: { id: true, userId: true, organizationId: true, currentQuantity: true },
+    });
+    if (!inventory) {
+      return NextResponse.json(
+        { error: "Inventory not found" },
+        { status: 404 }
+      );
+    }
+    {
+      const isOwner = inventory.userId === session.user.id;
+      let isOrgMember = false;
+      if (!isOwner && inventory.organizationId) {
+        const membership = await db.organizationMember.findFirst({
+          where: { userId: session.user.id, organizationId: inventory.organizationId },
+          select: { id: true },
+        });
+        isOrgMember = !!membership;
+      }
+      if (!isOwner && !isOrgMember) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
+
     // 재고 사용 기록 생성
     const usage = await db.inventoryUsage.create({
       data: {
@@ -137,18 +166,12 @@ export async function POST(request: NextRequest) {
     });
 
     // 재고 수량 업데이트 (감소)
-    const inventory = await db.productInventory.findUnique({
+    await db.productInventory.update({
       where: { id: inventoryId },
+      data: {
+        currentQuantity: Math.max(0, inventory.currentQuantity - quantity),
+      },
     });
-
-    if (inventory) {
-      await db.productInventory.update({
-        where: { id: inventoryId },
-        data: {
-          currentQuantity: Math.max(0, inventory.currentQuantity - quantity),
-        },
-      });
-    }
 
     enforcement.complete({});
     return NextResponse.json({ usage }, { status: 201 });
