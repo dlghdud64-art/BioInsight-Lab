@@ -483,3 +483,5 @@ if (isDirectRun) {
     // eslint-disable-next-line no-console
     console.error("[pilot-seed] ERROR:", err);
     process.exit(1);
+  });
+}
