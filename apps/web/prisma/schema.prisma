@@ -92,6 +92,8 @@ model Organization {
   // #user-supplier-registration — 조직 단위 supplier-book (한국 연구실
   // 단위 거래처 명단 정합).
   organizationVendors OrganizationVendor[]
+  // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
+  organizationVendorProducts OrganizationVendorProduct[]
   // Organization ↔ Workspace 1:1 bootstrap (옵션 B - organization-workspace-bootstrap.md 참조)
   // Phase 2 (2026-04-17): Workspace.organizationId 는 NOT NULL 로 승격됐지만, 반대 방향인 이 필드는
   // optional 유지. 이유: Organization 테이블에는 Workspace 를 가리키는 FK 가 없으므로 DB 레벨에서
@@ -175,6 +177,8 @@ model User {
   inspections         Inspection[]
   // #user-supplier-registration — 누가 등록한 organization vendor (audit).
   createdOrganizationVendors OrganizationVendor[]
+  // #vendor-catalog-product-matching Phase 1 — 누가 매핑한 vendor-product (audit).
+  createdOrganizationVendorProducts OrganizationVendorProduct[]
   activityLogs        ActivityLog[]
   auditLogs           AuditLog[]
   dataAuditLogs       DataAuditLog[]
@@ -296,6 +300,8 @@ model Product {
   quoteListItems  QuoteListItem[]
   inventories     ProductInventory[]
   cartItems       CartItem[]
+  // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
+  organizationVendorLinks OrganizationVendorProduct[]
 
   @@index([category])
   @@index([brand])
@@ -345,6 +351,8 @@ model Vendor {
   orders          Order[]
   // #user-supplier-registration — 조직 단위 supplier-book 의 platform Vendor 연결.
   organizationLinks OrganizationVendor[]
+  // #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry.
+  organizationProductLinks OrganizationVendorProduct[]
 
   @@index([name])
   @@index([isPremium])
@@ -414,6 +422,38 @@ model OrganizationVendor {
   @@unique([organizationId, vendorEmail])
   @@index([organizationId])
   @@index([vendorId])
+  @@index([createdById])
+}
+
+// #vendor-catalog-product-matching Phase 1 — 조직 단위 vendor-product carry 매핑.
+//   호영님 사업 확장 strategy 3단계 정합 (1단계 OrganizationVendor + 2단계
+//   partnershipTier 위에 부착). operator 직접 입력 (Phase 2 UI), Phase 3 에서
+//   resolveSuppliers 의 product 매칭 confidence boost 에 사용.
+//   - organizationId × vendorId × productId 3-way unique.
+//   - notes optional (operator memo).
+//   - createdById audit (1단계 패턴).
+//   - ProductVendor (platform-wide pricing) 와 의미 분리: ProductVendor 는
+//     플랫폼 차원 catalog source, OrganizationVendorProduct 는 lab carry
+//     record (어떤 vendor 가 어떤 product 를 organization 에 공급하는지).
+model OrganizationVendorProduct {
+  id             String       @id @default(cuid())
+  organizationId String
+  vendorId       String
+  productId      String
+  notes          String?      @db.Text
+  createdById    String       // audit
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  vendor       Vendor       @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  product      Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, vendorId, productId])
+  @@index([organizationId])
+  @@index([vendorId])
+  @@index([productId])
   @@index([createdById])
 }
 
