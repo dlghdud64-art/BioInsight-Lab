@@ -57,6 +57,32 @@ import {
 } from "lucide-react";
 
 // ── Types ──
+// #vendor-partnership-tier Phase 2 — 4단계 enum (Phase 1 schema 정합).
+//   글로벌 baseline (Vendor.partnershipTier) + 조직 override
+//   (OrganizationVendor.partnershipTier, nullable). null 시 baseline fallback.
+type PartnershipTier = "DIRECT_PARTNER" | "VERIFIED" | "GENERAL" | "UNVERIFIED";
+
+const PARTNERSHIP_TIER_LABEL: Record<PartnershipTier, string> = {
+  DIRECT_PARTNER: "직접 파트너",
+  VERIFIED: "검증 거래",
+  GENERAL: "일반",
+  UNVERIFIED: "미검증",
+};
+
+const PARTNERSHIP_TIER_TONE: Record<PartnershipTier, string> = {
+  DIRECT_PARTNER: "border-violet-300 bg-violet-50 text-violet-700",
+  VERIFIED: "border-emerald-300 bg-emerald-50 text-emerald-700",
+  GENERAL: "border-slate-300 bg-slate-50 text-slate-700",
+  UNVERIFIED: "border-amber-300 bg-amber-50 text-amber-700",
+};
+
+const PARTNERSHIP_TIER_OPTIONS: ReadonlyArray<PartnershipTier> = [
+  "DIRECT_PARTNER",
+  "VERIFIED",
+  "GENERAL",
+  "UNVERIFIED",
+];
+
 interface OrganizationVendor {
   id: string;
   vendorName: string;
@@ -64,11 +90,17 @@ interface OrganizationVendor {
   vendorPhone: string | null;
   notes: string | null;
   isPrimary: boolean;
+  partnershipTier: PartnershipTier | null;
   vendorId: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: { id: string; name: string | null; email: string | null };
-  vendor?: { id: string; name: string; country: string | null } | null;
+  vendor?: {
+    id: string;
+    name: string;
+    country: string | null;
+    partnershipTier?: PartnershipTier;
+  } | null;
 }
 
 interface VendorFormData {
@@ -77,6 +109,16 @@ interface VendorFormData {
   vendorPhone: string;
   notes: string;
   isPrimary: boolean;
+  // null = 글로벌 baseline fallback (Vendor.partnershipTier 사용).
+  partnershipTier: PartnershipTier | null;
+}
+
+/**
+ * #vendor-partnership-tier — overlay helper. OrganizationVendor 의 override
+ * 가 null 이면 platform Vendor 의 baseline tier 사용. 둘 다 null 이면 GENERAL.
+ */
+function getEffectivePartnershipTier(vendor: OrganizationVendor): PartnershipTier {
+  return vendor.partnershipTier ?? vendor.vendor?.partnershipTier ?? "GENERAL";
 }
 
 const EMPTY_FORM: VendorFormData = {
@@ -85,6 +127,8 @@ const EMPTY_FORM: VendorFormData = {
   vendorPhone: "",
   notes: "",
   isPrimary: false,
+  // null = 글로벌 baseline fallback (Vendor.partnershipTier 사용).
+  partnershipTier: null,
 };
 
 // ── Page ──
@@ -121,6 +165,7 @@ export default function SuppliersSettingsPage() {
           vendorPhone: input.vendorPhone || null,
           notes: input.notes || null,
           isPrimary: input.isPrimary,
+          partnershipTier: input.partnershipTier,
         }),
       });
       if (!res.ok) {
@@ -150,6 +195,7 @@ export default function SuppliersSettingsPage() {
           vendorPhone: input.vendorPhone || null,
           notes: input.notes || null,
           isPrimary: input.isPrimary,
+          partnershipTier: input.partnershipTier,
         }),
       });
       if (!res.ok) {
@@ -206,6 +252,7 @@ export default function SuppliersSettingsPage() {
       vendorPhone: vendor.vendorPhone ?? "",
       notes: vendor.notes ?? "",
       isPrimary: vendor.isPrimary,
+      partnershipTier: vendor.partnershipTier,
     });
     setDialogOpen(true);
   }
@@ -317,6 +364,20 @@ export default function SuppliersSettingsPage() {
                         우선 거래처
                       </Badge>
                     )}
+                    {/* #vendor-partnership-tier — overlay badge.
+                        조직 override (partnershipTier) 우선, 없으면 글로벌 baseline. */}
+                    {(() => {
+                      const tier = getEffectivePartnershipTier(vendor);
+                      return (
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] ${PARTNERSHIP_TIER_TONE[tier]}`}
+                          aria-label={`파트너십 등급: ${PARTNERSHIP_TIER_LABEL[tier]}`}
+                        >
+                          {PARTNERSHIP_TIER_LABEL[tier]}
+                        </Badge>
+                      );
+                    })()}
                     {vendor.vendor && (
                       <Badge variant="outline" className="text-[10px] text-slate-600">
                         {vendor.vendor.name}
@@ -433,6 +494,34 @@ export default function SuppliersSettingsPage() {
                 rows={2}
                 disabled={isMutating}
               />
+            </div>
+
+            {/* #vendor-partnership-tier Phase 2 — 4단계 select.
+                null = 글로벌 baseline (Vendor.partnershipTier) fallback. */}
+            <div className="space-y-1.5">
+              <Label htmlFor="partnershipTier" className="text-xs font-semibold text-slate-700">
+                파트너십 등급 <span className="text-slate-400 text-[10px] ml-1">(선택 — 미설정 시 플랫폼 기본값)</span>
+              </Label>
+              <select
+                id="partnershipTier"
+                value={formData.partnershipTier ?? ""}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    partnershipTier: (e.target.value || null) as PartnershipTier | null,
+                  })
+                }
+                disabled={isMutating}
+                className="flex h-9 w-full rounded-md border border-bd/60 bg-bg-default px-3 py-1 text-sm text-slate-900 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-violet-300"
+                aria-label="파트너십 등급 선택"
+              >
+                <option value="">플랫폼 기본값 사용</option>
+                {PARTNERSHIP_TIER_OPTIONS.map((tier) => (
+                  <option key={tier} value={tier}>
+                    {PARTNERSHIP_TIER_LABEL[tier]}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex items-center justify-between rounded-lg border border-bd/60 px-3 py-2">

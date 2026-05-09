@@ -23,12 +23,14 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("api/organization-vendors/[id]");
 
 // ── zod schema (partial update) ──
+// #vendor-partnership-tier Phase 2 — partnershipTier optional enum 추가.
 const UpdateOrganizationVendorSchema = z.object({
   vendorName: z.string().min(1).max(200).optional(),
   vendorEmail: z.string().email("이메일 형식이 올바르지 않습니다").optional(),
   vendorPhone: z.string().max(50).nullish(),
   notes: z.string().max(2000).nullish(),
   isPrimary: z.boolean().optional(),
+  partnershipTier: z.enum(["DIRECT_PARTNER", "VERIFIED", "GENERAL", "UNVERIFIED"]).nullish(),
   vendorId: z.string().nullish(),
 });
 
@@ -123,6 +125,8 @@ export async function PATCH(
     if (data.vendorPhone !== undefined) updateData.vendorPhone = data.vendorPhone ?? null;
     if (data.notes !== undefined) updateData.notes = data.notes ?? null;
     if (data.isPrimary !== undefined) updateData.isPrimary = data.isPrimary;
+    // #vendor-partnership-tier — null 명시적 전달 시 글로벌 baseline fallback.
+    if (data.partnershipTier !== undefined) updateData.partnershipTier = data.partnershipTier ?? null;
     if (data.vendorId !== undefined) updateData.vendorId = data.vendorId ?? null;
 
     try {
@@ -136,6 +140,7 @@ export async function PATCH(
           vendorPhone: true,
           notes: true,
           isPrimary: true,
+          partnershipTier: true,
           vendorId: true,
           createdAt: true,
           updatedAt: true,

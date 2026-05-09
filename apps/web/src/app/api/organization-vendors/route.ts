@@ -24,12 +24,15 @@ import { createLogger } from "@/lib/logger";
 const logger = createLogger("api/organization-vendors");
 
 // ── zod schema ──
+// #vendor-partnership-tier Phase 2 — partnershipTier optional enum 추가.
+//   null/undefined 시 Vendor.partnershipTier (글로벌 baseline) fallback 사용.
 const CreateOrganizationVendorSchema = z.object({
   vendorName: z.string().min(1, "공급사 이름을 입력해 주세요").max(200),
   vendorEmail: z.string().email("이메일 형식이 올바르지 않습니다"),
   vendorPhone: z.string().max(50).nullish(),
   notes: z.string().max(2000).nullish(),
   isPrimary: z.boolean().nullish(),
+  partnershipTier: z.enum(["DIRECT_PARTNER", "VERIFIED", "GENERAL", "UNVERIFIED"]).nullish(),
   // 기존 platform Vendor 연결 (선택). 없으면 inline 만으로 등록.
   vendorId: z.string().nullish(),
 });
@@ -74,6 +77,7 @@ export async function GET(request: NextRequest) {
         vendorPhone: true,
         notes: true,
         isPrimary: true,
+        partnershipTier: true,
         vendorId: true,
         createdAt: true,
         updatedAt: true,
@@ -81,7 +85,7 @@ export async function GET(request: NextRequest) {
           select: { id: true, name: true, email: true },
         },
         vendor: {
-          select: { id: true, name: true, country: true },
+          select: { id: true, name: true, country: true, partnershipTier: true },
         },
       },
     });
@@ -150,6 +154,9 @@ export async function POST(request: NextRequest) {
           vendorPhone: data.vendorPhone ?? null,
           notes: data.notes ?? null,
           isPrimary: data.isPrimary ?? false,
+          // #vendor-partnership-tier — null 시 Vendor.partnershipTier
+          //   (글로벌 baseline) fallback 사용 (overlay pattern).
+          partnershipTier: data.partnershipTier ?? null,
           vendorId: data.vendorId ?? null,
         },
         select: {
@@ -159,6 +166,7 @@ export async function POST(request: NextRequest) {
           vendorPhone: true,
           notes: true,
           isPrimary: true,
+          partnershipTier: true,
           vendorId: true,
           createdAt: true,
           updatedAt: true,
