@@ -29,6 +29,12 @@ import { RelativeTimeText } from "@/components/ui/relative-time-text";
 import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
+// #quote-rationale-inventory-context Phase 2 — 인과관계 helper + inventory match.
+import {
+  buildBriefRationaleSummary,
+  findMostUrgentInventoryForQuote,
+  type InventoryRow,
+} from "@/lib/operational-brief/build-rationale";
 import { BatchActionBar } from "@/components/quotes/dispatch/batch-action-bar";
 import { BatchDispatchSheet } from "@/components/quotes/dispatch/batch-dispatch-sheet";
 import Link from "next/link";
@@ -782,6 +788,24 @@ function QuotesPageContent() {
         }),
       ),
     [organizationVendorProductsData],
+  );
+
+  // #quote-rationale-inventory-context Phase 2 — 재고 데이터 fetch.
+  //   인과관계 한 줄에 "재고 X일 남음 / 예상 수령일 +Y일" tail append.
+  //   호영님 5/8 결론의 "킬러 피처" — inventory 0건 시 graceful fallback (tail X).
+  const { data: inventoryData } = useQuery({
+    queryKey: ["inventory"],
+    queryFn: async () => {
+      const response = await fetch("/api/inventory", { credentials: "include" });
+      if (!response.ok) return { inventories: [] as InventoryRow[] };
+      return response.json() as Promise<{ inventories: InventoryRow[] }>;
+    },
+    enabled: status === "authenticated",
+    staleTime: 60_000,
+  });
+  const inventories: InventoryRow[] = useMemo(
+    () => inventoryData?.inventories ?? [],
+    [inventoryData],
   );
 
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
@@ -1652,32 +1676,30 @@ function QuotesPageContent() {
               </button>
             </div>
 
-            {/* 1차 노출 — 한 줄 인과관계 요약 (always visible). */}
+            {/* 1차 노출 — 한 줄 인과관계 요약 (always visible).
+                #quote-rationale-inventory-context Phase 2 — helper call.
+                inventory 매칭 시 tail append ("⏰ FBS 5일 남음 / 예상 수령일 +5일"). */}
             {(() => {
               const totalItems = selectedQuote.items.length;
-              const replyCount = sqResponseCount;
-              const status = selectedSignals.status;
-              const blocker = selectedSignals.blocker;
-              const compareReady = selectedSignals.compareReady;
-              const poReady = selectedSignals.poReady;
-              const nextAction = selectedSignals.nextAction;
-
-              let summary: string;
-              if (blocker?.includes("공급사 미전송") || status?.includes("요청 생성")) {
-                summary = "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.";
-              } else if (selectedQuote.status === "SENT" && replyCount === 0) {
-                summary = "📤 발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.";
-              } else if (replyCount > 0 && replyCount < totalItems) {
-                summary = `📥 회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`;
-              } else if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
-                summary = "📊 회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.";
-              } else if (poReady === "가능") {
-                summary = "✅ 비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.";
-              } else {
-                summary = `${blocker && blocker !== "차단 없음" ? `⚠️ 차단: ${blocker} → ` : "→ "}다음 단계: ${nextAction ?? "-"}`;
-              }
+              const mostUrgent = findMostUrgentInventoryForQuote(
+                selectedQuote.items as never,
+                inventories,
+              );
+              const summary = buildBriefRationaleSummary({
+                status: selectedSignals.status,
+                blocker: selectedSignals.blocker,
+                nextAction: selectedSignals.nextAction,
+                compareReady: selectedSignals.compareReady,
+                poReady: selectedSignals.poReady,
+                replyCount: sqResponseCount,
+                totalItems,
+                isSent: selectedQuote.status === "SENT",
+                inventoryContext: { mostUrgent },
+              });
               return (
-                <p className="text-xs leading-relaxed text-slate-800 font-medium">{summary}</p>
+                <p className="text-xs leading-relaxed text-slate-800 font-medium whitespace-pre-line">
+                  {summary}
+                </p>
               );
             })()}
 
@@ -1961,36 +1983,31 @@ function QuotesPageContent() {
           ]}
           summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>}
           facts={
-            // §11.222 — mobile bottom sheet 인과관계 정합 (§11.221 desktop 동일 메시지).
-            //   1차 노출 한 줄 (→ + emoji) + collapsible 3-row (기존 보존).
+            // §11.222 + #quote-rationale-inventory-context Phase 2 — helper call.
+            //   1차 노출 한 줄 (desktop §11.221 동일 메시지 + inventory tail).
             //   같은 factsExpanded state 공유 (desktop + mobile 동일 toggle).
-            //   helper 추출은 별도 트랙 (현재는 inline duplicate 일시 허용 — minimal-diff).
             <div className="space-y-2 text-xs">
               {(() => {
                 const totalItems = selectedQuote.items.length;
-                const replyCount = (selectedQuote.responses?.length ?? 0);
-                const status = selectedSignals.status;
-                const blocker = selectedSignals.blocker;
-                const compareReady = selectedSignals.compareReady;
-                const poReady = selectedSignals.poReady;
-                const nextAction = selectedSignals.nextAction;
-
-                let summary: string;
-                if (blocker?.includes("공급사 미전송") || status?.includes("요청 생성")) {
-                  summary = "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.";
-                } else if (selectedQuote.status === "SENT" && replyCount === 0) {
-                  summary = "📤 발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.";
-                } else if (replyCount > 0 && replyCount < totalItems) {
-                  summary = `📥 회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`;
-                } else if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
-                  summary = "📊 회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.";
-                } else if (poReady === "가능") {
-                  summary = "✅ 비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.";
-                } else {
-                  summary = `${blocker && blocker !== "차단 없음" ? `⚠️ 차단: ${blocker} → ` : "→ "}다음 단계: ${nextAction ?? "-"}`;
-                }
+                const mostUrgent = findMostUrgentInventoryForQuote(
+                  selectedQuote.items as never,
+                  inventories,
+                );
+                const summary = buildBriefRationaleSummary({
+                  status: selectedSignals.status,
+                  blocker: selectedSignals.blocker,
+                  nextAction: selectedSignals.nextAction,
+                  compareReady: selectedSignals.compareReady,
+                  poReady: selectedSignals.poReady,
+                  replyCount: selectedQuote.responses?.length ?? 0,
+                  totalItems,
+                  isSent: selectedQuote.status === "SENT",
+                  inventoryContext: { mostUrgent },
+                });
                 return (
-                  <p className="text-xs leading-relaxed text-slate-800 font-medium">{summary}</p>
+                  <p className="text-xs leading-relaxed text-slate-800 font-medium whitespace-pre-line">
+                    {summary}
+                  </p>
                 );
               })()}
               <button

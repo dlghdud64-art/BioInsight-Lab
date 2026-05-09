@@ -24,12 +24,15 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const src = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.222 — mobile bottom sheet 인과관계 정합", () => {
-  it("MobileOperationalBriefSheet 의 facts prop 영역에 인과관계 메시지 (mobile + desktop 둘 다 매칭)", () => {
-    // §11.221 desktop 도 같은 메시지 — 적어도 한 곳 매칭 (mobile inline duplicate).
-    // mobile 영역 마커: "facts={" 직후 200~600 byte 안에 "→" + emoji 가 있어야.
-    const mobileFactsMatch = src.match(/MobileOperationalBriefSheet[\s\S]*?facts=\{[\s\S]{0,1500}/);
+  it("MobileOperationalBriefSheet 의 facts prop 영역에 인과관계 helper call (또는 inline emoji)", () => {
+    // §11.222 land 시 inline emoji + → 매칭, Phase 2 helper 추출 후 buildBriefRationaleSummary call.
+    // 둘 다 허용 — mobile 영역에 인과관계 source 가 있어야.
+    const mobileFactsMatch = src.match(/MobileOperationalBriefSheet[\s\S]*?facts=\{[\s\S]{0,2500}/);
     expect(mobileFactsMatch).toBeTruthy();
-    expect(mobileFactsMatch?.[0]).toMatch(/(📋|📤|📥|📊|✅|⚠️)[\s\S]{0,100}→/);
+    const block = mobileFactsMatch?.[0] ?? "";
+    const hasHelperCall = /buildBriefRationaleSummary/.test(block);
+    const hasInlineEmoji = /(📋|📤|📥|📊|✅|⚠️)[\s\S]{0,100}→/.test(block);
+    expect(hasHelperCall || hasInlineEmoji).toBe(true);
   });
 
   it("같은 factsExpanded state 재사용 (desktop + mobile 동일)", () => {

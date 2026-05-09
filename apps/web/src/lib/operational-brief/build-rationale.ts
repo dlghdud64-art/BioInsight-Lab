@@ -101,6 +101,96 @@ function buildInventoryTail(ctx: BriefRationaleInventoryContext | undefined): st
 }
 
 /**
+ * #quote-rationale-inventory-context Phase 2 — match helper.
+ *
+ * quote.items 의 productId × ProductInventory.productId 매칭 → 가장 위급한
+ * 1개 추출. low-stock 판정: safetyStock OR 소진속도 (호영님 결정 2C).
+ *
+ *   (a) safetyStock != null && currentQuantity < safetyStock
+ *   (b) averageDailyUsage > 0 && leadTimeDays > 0 &&
+ *       (currentQuantity / averageDailyUsage) < leadTimeDays × 1.5
+ *
+ * mostUrgent: low-stock 인 row 중 daysRemaining 최소 (undefined 마지막).
+ * 매칭 0 또는 모두 정상 → null (graceful).
+ */
+export interface InventoryRow {
+  productId: string;
+  currentQuantity: number;
+  safetyStock?: number | null;
+  averageDailyUsage?: number | null;
+  leadTimeDays?: number | null;
+  product?: { name?: string | null } | null;
+}
+
+export interface QuoteItemForMatch {
+  product?: { id?: string | null; name?: string | null } | null;
+}
+
+export function findMostUrgentInventoryForQuote(
+  quoteItems: ReadonlyArray<QuoteItemForMatch>,
+  inventories: ReadonlyArray<InventoryRow>,
+): BriefRationaleInventoryUrgent | null {
+  if (!quoteItems.length || !inventories.length) return null;
+
+  const productIds = new Set<string>();
+  for (const item of quoteItems) {
+    if (item.product?.id) productIds.add(item.product.id);
+  }
+  if (productIds.size === 0) return null;
+
+  type Candidate = BriefRationaleInventoryUrgent & { _rank: number };
+  const candidates: Candidate[] = [];
+
+  for (const inv of inventories) {
+    if (!productIds.has(inv.productId)) continue;
+    const productName = inv.product?.name ?? quoteItems.find(
+      (q) => q.product?.id === inv.productId,
+    )?.product?.name ?? inv.productId;
+
+    const usage = inv.averageDailyUsage;
+    const leadTime = inv.leadTimeDays;
+    const daysRemaining =
+      usage !== undefined && usage !== null && usage > 0
+        ? inv.currentQuantity / usage
+        : undefined;
+
+    const safetyTrigger =
+      inv.safetyStock !== undefined &&
+      inv.safetyStock !== null &&
+      inv.currentQuantity < inv.safetyStock;
+    const leadTimeTrigger =
+      daysRemaining !== undefined &&
+      leadTime !== undefined &&
+      leadTime !== null &&
+      leadTime > 0 &&
+      daysRemaining < leadTime * 1.5;
+
+    const isLowStock = safetyTrigger || leadTimeTrigger;
+    if (!isLowStock) continue;
+
+    candidates.push({
+      productName,
+      daysRemaining,
+      isLowStock: true,
+      leadTimeDays: leadTime ?? undefined,
+      // _rank: 정렬 키 — daysRemaining 작을수록 위급. undefined 는 큰 값으로.
+      _rank: daysRemaining !== undefined ? daysRemaining : Number.POSITIVE_INFINITY,
+    });
+  }
+
+  if (candidates.length === 0) return null;
+
+  candidates.sort((a, b) => a._rank - b._rank);
+  const winner = candidates[0];
+  return {
+    productName: winner.productName,
+    daysRemaining: winner.daysRemaining,
+    isLowStock: winner.isLowStock,
+    leadTimeDays: winner.leadTimeDays,
+  };
+}
+
+/**
  * 인과관계 한 줄 요약 (호영님 5/8 합의).
  *
  * @example
