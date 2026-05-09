@@ -244,7 +244,7 @@ async function main() {
             where: { id: spec.id },
             create: {
               id: spec.id,
-              userId: ownerUserId,
+              userId: resolvedOwnerId,
               organizationId: PILOT_ORG_ID,
               workspaceId: PILOT_WORKSPACE_ID,
               title: spec.title,
@@ -306,7 +306,7 @@ async function main() {
             where: { id: spec.id },
             create: {
               id: spec.id,
-              userId: ownerUserId,
+              userId: resolvedOwnerId,
               organizationId: PILOT_ORG_ID,
               quoteId: spec.quoteId,
               orderNumber: spec.orderNumber,
