@@ -38,8 +38,6 @@ import {
   type InventoryRow,
   type BriefRationaleTone,
 } from "@/lib/operational-brief/build-rationale";
-// #operational-brief-emoji-sweep — Clock icon for inventory tail (B2B 톤).
-import { Clock } from "lucide-react";
 
 /**
  * #operational-brief-emoji-sweep — tone → 컬러 도트 className 매핑.
