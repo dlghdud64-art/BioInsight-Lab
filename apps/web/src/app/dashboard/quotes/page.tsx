@@ -30,11 +30,31 @@ import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
 // #quote-rationale-inventory-context Phase 2 — 인과관계 helper + inventory match.
+// #operational-brief-emoji-sweep — 새 structured helper (case + tone + icon).
 import {
+  buildBriefRationale,
   buildBriefRationaleSummary,
   findMostUrgentInventoryForQuote,
   type InventoryRow,
+  type BriefRationaleTone,
 } from "@/lib/operational-brief/build-rationale";
+// #operational-brief-emoji-sweep — Clock icon for inventory tail (B2B 톤).
+import { Clock } from "lucide-react";
+
+/**
+ * #operational-brief-emoji-sweep — tone → 컬러 도트 className 매핑.
+ *   호영님 redesign Phase B-1: 이모지 prefix 제거 후 메시지 옆 컬러 도트로
+ *   시각 위계. tone 별 bg-{color}-500 (slate/amber/blue/emerald/red).
+ */
+function rationaleToneDotClass(tone: BriefRationaleTone): string {
+  switch (tone) {
+    case "slate": return "bg-slate-400";
+    case "amber": return "bg-amber-500";
+    case "blue": return "bg-blue-500";
+    case "emerald": return "bg-emerald-500";
+    case "red": return "bg-red-500";
+  }
+}
 import { BatchActionBar } from "@/components/quotes/dispatch/batch-action-bar";
 import { BatchDispatchSheet } from "@/components/quotes/dispatch/batch-dispatch-sheet";
 import Link from "next/link";
@@ -1678,14 +1698,15 @@ function QuotesPageContent() {
 
             {/* 1차 노출 — 한 줄 인과관계 요약 (always visible).
                 #quote-rationale-inventory-context Phase 2 — helper call.
-                inventory 매칭 시 tail append ("⏰ FBS 5일 남음 / 예상 수령일 +5일"). */}
+                #operational-brief-emoji-sweep — 이모지 제거 후 컬러 도트
+                + Clock icon (inventory tail) 시각 위계. B2B 톤 정합. */}
             {(() => {
               const totalItems = selectedQuote.items.length;
               const mostUrgent = findMostUrgentInventoryForQuote(
                 selectedQuote.items as never,
                 inventories,
               );
-              const summary = buildBriefRationaleSummary({
+              const result = buildBriefRationale({
                 status: selectedSignals.status,
                 blocker: selectedSignals.blocker,
                 nextAction: selectedSignals.nextAction,
@@ -1697,9 +1718,25 @@ function QuotesPageContent() {
                 inventoryContext: { mostUrgent },
               });
               return (
-                <p className="text-xs leading-relaxed text-slate-800 font-medium whitespace-pre-line">
-                  {summary}
-                </p>
+                <div className="space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <span
+                      className={`mt-1 h-2 w-2 shrink-0 rounded-full ${rationaleToneDotClass(result.tone)}`}
+                      aria-hidden="true"
+                    />
+                    <p className="text-xs leading-relaxed text-slate-800 font-medium">
+                      {result.message}
+                    </p>
+                  </div>
+                  {result.inventoryTail && (
+                    <div className="flex items-start gap-2">
+                      <Clock className="mt-0.5 h-3 w-3 shrink-0 text-amber-600" aria-hidden="true" />
+                      <p className="text-[11px] leading-relaxed text-slate-600">
+                        {result.inventoryTail.message}
+                      </p>
+                    </div>
+                  )}
+                </div>
               );
             })()}
 
@@ -1870,7 +1907,10 @@ function QuotesPageContent() {
                 </div>
               )}
               {sqDelayed && (
-                <p className="text-[11px] text-amber-600 mt-1">⚠ 회신 지연 — 재요청 권장</p>
+                <p className="text-[11px] text-amber-600 mt-1 inline-flex items-center gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-hidden="true" />
+                  회신 지연 — 재요청 권장
+                </p>
               )}
             </div>
           </section>
@@ -1987,13 +2027,15 @@ function QuotesPageContent() {
             //   1차 노출 한 줄 (desktop §11.221 동일 메시지 + inventory tail).
             //   같은 factsExpanded state 공유 (desktop + mobile 동일 toggle).
             <div className="space-y-2 text-xs">
+              {/* #operational-brief-emoji-sweep — mobile mirror desktop §11.221.
+                  컬러 도트 + Clock icon (B2B 톤). */}
               {(() => {
                 const totalItems = selectedQuote.items.length;
                 const mostUrgent = findMostUrgentInventoryForQuote(
                   selectedQuote.items as never,
                   inventories,
                 );
-                const summary = buildBriefRationaleSummary({
+                const result = buildBriefRationale({
                   status: selectedSignals.status,
                   blocker: selectedSignals.blocker,
                   nextAction: selectedSignals.nextAction,
@@ -2005,9 +2047,25 @@ function QuotesPageContent() {
                   inventoryContext: { mostUrgent },
                 });
                 return (
-                  <p className="text-xs leading-relaxed text-slate-800 font-medium whitespace-pre-line">
-                    {summary}
-                  </p>
+                  <div className="space-y-1.5">
+                    <div className="flex items-start gap-2">
+                      <span
+                        className={`mt-1 h-2 w-2 shrink-0 rounded-full ${rationaleToneDotClass(result.tone)}`}
+                        aria-hidden="true"
+                      />
+                      <p className="text-xs leading-relaxed text-slate-800 font-medium">
+                        {result.message}
+                      </p>
+                    </div>
+                    {result.inventoryTail && (
+                      <div className="flex items-start gap-2">
+                        <Clock className="mt-0.5 h-3 w-3 shrink-0 text-amber-600" aria-hidden="true" />
+                        <p className="text-[11px] leading-relaxed text-slate-600">
+                          {result.inventoryTail.message}
+                        </p>
+                      </div>
+                    )}
+                  </div>
                 );
               })()}
               <button

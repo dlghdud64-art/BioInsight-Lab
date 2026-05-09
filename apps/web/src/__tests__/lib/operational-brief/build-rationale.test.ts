@@ -23,7 +23,9 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       totalItems: 1,
       isSent: false,
     });
-    expect(result).toMatch(/📋 견적 미발송 → 비교·발주 차단 중\. 발송이 첫 단계입니다\./);
+    // #operational-brief-emoji-sweep — 이모지 제거 후 텍스트 keyword 매칭.
+    expect(result).toMatch(/견적 미발송 → 비교·발주 차단 중\. 발송이 첫 단계입니다\./);
+    expect(result).not.toMatch(/📋|📤|📥|📊|✅|⚠️|⏰/);
   });
 
   it("SENT + 회신 0 → 📤 발송 완료", () => {
@@ -34,7 +36,7 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       totalItems: 1,
       isSent: true,
     });
-    expect(result).toMatch(/📤 발송 완료 → 회신 대기 중/);
+    expect(result).toMatch(/발송 완료 → 회신 대기 중/);
   });
 
   it("부분 회신 → 📥 회신 N/M", () => {
@@ -43,7 +45,7 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       totalItems: 3,
       isSent: true,
     });
-    expect(result).toMatch(/📥 회신 1\/3/);
+    expect(result).toMatch(/회신 1\/3/);
   });
 
   it("수집 완료 → 📊 회신 수집 완료", () => {
@@ -53,7 +55,7 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       compareReady: "가능",
       isSent: true,
     });
-    expect(result).toMatch(/📊 회신 수집 완료 → 비교 검토 가능/);
+    expect(result).toMatch(/회신 수집 완료 → 비교 검토 가능/);
   });
 
   it("poReady → ✅ 비교 완료", () => {
@@ -67,7 +69,7 @@ describe("#quote-rationale-inventory-context Phase 1 — base 6-case (no invento
       blocker: "차단 없음",
       poReady: "가능",
     });
-    expect(result).toMatch(/✅ 비교 완료 → 발주 전환 가능/);
+    expect(result).toMatch(/비교 완료 → 발주 전환 가능/);
   });
 
   it("fallback (모든 case 미충족)", () => {
@@ -98,7 +100,8 @@ describe("#quote-rationale-inventory-context Phase 1 — inventoryContext tail a
         },
       },
     });
-    expect(result).toMatch(/📋 견적 미발송[\s\S]*?⏰[\s\S]*?FBS[\s\S]*?5일 남음/);
+    expect(result).toMatch(/견적 미발송[\s\S]*?FBS[\s\S]*?5일 남음/);
+    expect(result).not.toMatch(/📋|⏰/);
     expect(result).toMatch(/예상 수령일 \+5일|예상 수령 \+5일/);
   });
 
@@ -111,8 +114,8 @@ describe("#quote-rationale-inventory-context Phase 1 — inventoryContext tail a
       isSent: false,
       inventoryContext: { mostUrgent: null },
     });
-    expect(result).toMatch(/📋 견적 미발송/);
-    expect(result).not.toMatch(/⏰/);
+    expect(result).toMatch(/견적 미발송/);
+    expect(result).not.toMatch(/📋|⏰/);
   });
 
   it("inventoryContext 미전달 → base 그대로", () => {
@@ -142,8 +145,9 @@ describe("#quote-rationale-inventory-context Phase 1 — inventoryContext tail a
         },
       },
     });
-    expect(result).toMatch(/⏰[\s\S]*?PBS/);
+    expect(result).toMatch(/PBS/);
     expect(result).toMatch(/\+7일/);
+    expect(result).not.toMatch(/⏰/);
   });
 
   it("isLowStock === false 이고 daysRemaining 도 없으면 tail 없음", () => {

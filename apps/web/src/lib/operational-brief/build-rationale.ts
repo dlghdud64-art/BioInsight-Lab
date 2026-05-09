@@ -55,39 +55,104 @@ export interface BriefRationaleInput {
 }
 
 /**
- * 6-case base 인과관계 메시지.
+ * #operational-brief-emoji-sweep — 6 canonical case ID.
+ *   Phase B-1 (호영님 redesign) — 이모지 prefix 제거 후 caller 가 case + tone
+ *   따라 Lucide icon + 컬러 도트 매핑. 메시지는 텍스트만 (B2B 톤 정합).
  */
-function buildBaseSummary(input: BriefRationaleInput): string {
+export type BriefRationaleCase =
+  | "not_sent"
+  | "awaiting_reply"
+  | "partial_reply"
+  | "reply_complete"
+  | "po_ready"
+  | "fallback";
+
+export type BriefRationaleTone = "slate" | "amber" | "blue" | "emerald" | "red";
+
+export interface BriefRationaleInventoryTail {
+  /** 텍스트 message (이모지 0). caller 가 Clock icon 별도 표시. */
+  message: string;
+  productName: string;
+  daysRemaining?: number;
+  leadTimeDays?: number;
+  isLowStock: boolean;
+}
+
+export interface BriefRationaleResult {
+  /** 인과관계 한 줄 message (이모지 0, 텍스트만). */
+  message: string;
+  case: BriefRationaleCase;
+  tone: BriefRationaleTone;
+  /** mostUrgent 매칭 시 inventory tail (별도 row 로 표시). */
+  inventoryTail?: BriefRationaleInventoryTail;
+}
+
+/**
+ * 6-case base 인과관계 메시지 — case + tone + 이모지 0 message 반환.
+ */
+function buildBaseResult(
+  input: BriefRationaleInput,
+): { message: string; case: BriefRationaleCase; tone: BriefRationaleTone } {
   const { status, blocker, nextAction, compareReady, poReady, replyCount, totalItems, isSent } = input;
 
   if (blocker?.includes("공급사 미전송") || status?.includes("요청 생성")) {
-    return "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.";
+    return {
+      message: "견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.",
+      case: "not_sent",
+      tone: "slate",
+    };
   }
   if (isSent && replyCount === 0) {
-    return "📤 발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.";
+    return {
+      message: "발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.",
+      case: "awaiting_reply",
+      tone: "amber",
+    };
   }
   if (replyCount > 0 && replyCount < totalItems) {
-    return `📥 회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`;
+    return {
+      message: `회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`,
+      case: "partial_reply",
+      tone: "blue",
+    };
   }
   if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
-    return "📊 회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.";
+    return {
+      message: "회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.",
+      case: "reply_complete",
+      tone: "blue",
+    };
   }
   if (poReady === "가능") {
-    return "✅ 비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.";
+    return {
+      message: "비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.",
+      case: "po_ready",
+      tone: "emerald",
+    };
   }
-  return `${blocker && blocker !== "차단 없음" ? `⚠️ 차단: ${blocker} → ` : "→ "}다음 단계: ${nextAction ?? "-"}`;
+  const hasBlocker = blocker && blocker !== "차단 없음";
+  return {
+    message: hasBlocker
+      ? `차단: ${blocker} → 다음 단계: ${nextAction ?? "-"}`
+      : `다음 단계: ${nextAction ?? "-"}`,
+    case: "fallback",
+    tone: hasBlocker ? "red" : "slate",
+  };
 }
 
 /**
  * inventory tail — mostUrgent 가 있고 (isLowStock OR daysRemaining 정의) 일 때만.
+ * #operational-brief-emoji-sweep — 이모지 (⏰) 제거. caller 가 Clock icon 별도 표시.
  */
-function buildInventoryTail(ctx: BriefRationaleInventoryContext | undefined): string | null {
+function buildInventoryTailResult(
+  ctx: BriefRationaleInventoryContext | undefined,
+): BriefRationaleInventoryTail | null {
   if (!ctx?.mostUrgent) return null;
   const { productName, daysRemaining, isLowStock, leadTimeDays } = ctx.mostUrgent;
   // 의미 있는 정보 — isLowStock 또는 daysRemaining 정의돼야.
   if (!isLowStock && daysRemaining === undefined) return null;
 
-  const parts: string[] = ["⏰"];
+  const parts: string[] = [];
   if (productName) parts.push(productName);
   if (daysRemaining !== undefined && Number.isFinite(daysRemaining)) {
     parts.push(`${Math.max(0, Math.round(daysRemaining))}일 남음`);
@@ -97,7 +162,13 @@ function buildInventoryTail(ctx: BriefRationaleInventoryContext | undefined): st
   if (leadTimeDays !== undefined && Number.isFinite(leadTimeDays) && leadTimeDays > 0) {
     parts.push(`/ 예상 수령일 +${leadTimeDays}일`);
   }
-  return parts.join(" ");
+  return {
+    message: parts.join(" "),
+    productName,
+    daysRemaining,
+    leadTimeDays,
+    isLowStock,
+  };
 }
 
 /**
@@ -191,24 +262,45 @@ export function findMostUrgentInventoryForQuote(
 }
 
 /**
- * 인과관계 한 줄 요약 (호영님 5/8 합의).
+ * #operational-brief-emoji-sweep — 새 structured helper (Phase B-1).
+ *
+ * caller (quotes/page.tsx desktop §11.221 + mobile §11.222) 가 case + tone
+ * 따라 Lucide icon + 컬러 도트 별도 표시. 메시지는 텍스트만.
+ *
+ * @example
+ * const r = buildBriefRationale({
+ *   blocker: "차단 없음", status: "회신 대기",
+ *   replyCount: 0, totalItems: 1, isSent: true,
+ * });
+ * // r = { message: "발송 완료 → 회신 대기 중. ...", case: "awaiting_reply", tone: "amber" }
+ */
+export function buildBriefRationale(input: BriefRationaleInput): BriefRationaleResult {
+  const base = buildBaseResult(input);
+  const tail = buildInventoryTailResult(input.inventoryContext);
+  return tail
+    ? { message: base.message, case: base.case, tone: base.tone, inventoryTail: tail }
+    : { message: base.message, case: base.case, tone: base.tone };
+}
+
+/**
+ * 인과관계 한 줄 요약 (호영님 5/8 합의) — backward compat.
+ *
+ * #operational-brief-emoji-sweep — 이모지 제거 (텍스트만). caller 가 새 structured
+ * helper buildBriefRationale 로 점진 마이그레이션 권장. 본 helper 는 text-only
+ * 단일 string 반환 (기존 caller 호환).
  *
  * @example
  * buildBriefRationaleSummary({
- *   blocker: "공급사 미전송",
- *   status: "요청 생성 완료",
- *   replyCount: 0,
- *   totalItems: 1,
- *   isSent: false,
- *   inventoryContext: {
- *     mostUrgent: { productName: "FBS", daysRemaining: 5, isLowStock: true, leadTimeDays: 5 },
- *   },
+ *   blocker: "공급사 미전송", status: "요청 생성 완료",
+ *   replyCount: 0, totalItems: 1, isSent: false,
+ *   inventoryContext: { mostUrgent: { productName: "FBS", daysRemaining: 5, isLowStock: true, leadTimeDays: 5 } },
  * });
- * // → "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.
- * //    ⏰ FBS 5일 남음 / 예상 수령일 +5일"
+ * // → "견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.
+ * //    FBS 5일 남음 / 예상 수령일 +5일"
  */
 export function buildBriefRationaleSummary(input: BriefRationaleInput): string {
-  const base = buildBaseSummary(input);
-  const tail = buildInventoryTail(input.inventoryContext);
-  return tail ? `${base}\n${tail}` : base;
+  const result = buildBriefRationale(input);
+  return result.inventoryTail
+    ? `${result.message}\n${result.inventoryTail.message}`
+    : result.message;
 }
