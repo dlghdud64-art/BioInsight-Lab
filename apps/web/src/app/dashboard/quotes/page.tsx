@@ -526,6 +526,10 @@ function QuotesPageContent() {
   // §11.221 — 운영 브리핑 판단 근거 collapsible (호영님 5월 8일 결론).
   //   default 접힘 — 1차 노출은 한 줄 인과관계 요약, "상세 보기" 클릭 시 4 cell.
   const [factsExpanded, setFactsExpanded] = useState(false);
+  // §11.217 Phase 5 — chip scroll-spy active highlight.
+  //   IntersectionObserver 로 detail panel scroll 시 visible section 의 chip
+  //   자동 highlight. chip click 시 scrollIntoView + setActiveChipId 즉시 update.
+  const [activeChipId, setActiveChipId] = useState<string | null>("summary");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
@@ -649,6 +653,45 @@ function QuotesPageContent() {
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [entityIdParam]);
+
+  // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
+  //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
+  //   로 감시 → 가장 위에 visible 한 section 의 chip 을 active 로 highlight.
+  //   selectedQuoteId 가 set 된 후 mount 됨 (panel 안 element 가 DOM 에 있어야 attach).
+  useEffect(() => {
+    if (!selectedQuoteId) return;
+    // detail panel 이 DOM 에 mount 될 때까지 microtask defer.
+    let observer: IntersectionObserver | null = null;
+    const attach = () => {
+      const sectionIds = ["summary", "facts", "facts2", "next"] as const;
+      const elements = sectionIds
+        .map((id) => ({ id, el: document.getElementById(`brief-${id}`) }))
+        .filter((x): x is { id: string; el: HTMLElement } => x.el !== null);
+      if (elements.length === 0) return;
+
+      observer = new IntersectionObserver(
+        (entries) => {
+          const visible = entries
+            .filter((e) => e.isIntersecting)
+            .sort(
+              (a, b) => a.boundingClientRect.top - b.boundingClientRect.top,
+            );
+          if (visible.length > 0) {
+            const targetId = visible[0].target.id.replace("brief-", "");
+            setActiveChipId(targetId);
+          }
+        },
+        { rootMargin: "-20% 0px -50% 0px", threshold: 0 },
+      );
+      elements.forEach(({ el }) => observer?.observe(el));
+    };
+    // 다음 frame 에서 attach (panel 의 brief sections 가 mount 된 후).
+    const raf = requestAnimationFrame(attach);
+    return () => {
+      cancelAnimationFrame(raf);
+      observer?.disconnect();
+    };
+  }, [selectedQuoteId]);
 
   const { data: quotesData, isLoading, isFetching, isError, refetch } = useQuery({
     queryKey: ["quotes", statusFilter],
@@ -1358,7 +1401,8 @@ function QuotesPageContent() {
             <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
           </div>
 
-          {/* §11.144 4 preset chips — anchor jump to brief sections */}
+          {/* §11.144 4 preset chips — anchor jump to brief sections.
+              §11.217 Phase 5 — scroll-spy active highlight (activeChipId 매칭 시 blue tone). */}
           <div className="px-4 py-2 border-b border-bd/50 flex flex-wrap gap-1.5">
             {[
               { id: "summary", label: "상태 요약" },
@@ -1373,8 +1417,14 @@ function QuotesPageContent() {
                   e.stopPropagation();
                   const el = document.getElementById(`brief-${c.id}`);
                   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  setActiveChipId(c.id);
                 }}
-                className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+                aria-pressed={activeChipId === c.id}
+                className={
+                  activeChipId === c.id
+                    ? "px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-100 text-blue-700 transition-colors"
+                    : "px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors"
+                }
               >
                 {c.label}
               </button>
