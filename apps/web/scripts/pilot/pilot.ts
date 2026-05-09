@@ -302,6 +302,50 @@ export const PILOT_VENDOR_CATALOG: readonly PilotVendorSpec[] = [
 export const PILOT_VENDOR_IDS: readonly string[] =
   PILOT_VENDOR_CATALOG.map((v) => v.id);
 
+// ──────────────────────────────────────────────────────────
+// #pilot-organization-vendor-seed-missing — Pilot OrganizationVendor 매핑
+//
+// PILOT_VENDOR_CATALOG 가 Vendor 테이블에는 들어가지만 settings/suppliers
+// UI 는 OrganizationVendor scoped fetch — pilot 6 vendor 가 호영님 org 에
+// 매핑되지 않아 노출 0 인 마찰 (M1, Chrome audit 2026-05-09) 차단.
+//
+// schema lock:
+//   - OrganizationVendor.organization onDelete: Cascade (org 삭제 시 자동
+//     정리 — pilot-cleanup 별도 op 불필요).
+//   - @@unique([organizationId, vendorEmail]) — re-run idempotent.
+//   - vendorId 는 Vendor row 와 link (optional, 단 catalog matching path
+//     활성화 위해 항상 wire).
+//   - createdById 는 PILOT_OWNER_USER_ID (audit, FK).
+// ──────────────────────────────────────────────────────────
+
+export interface PilotOrganizationVendorLinkSpec {
+  readonly organizationId: string;
+  readonly vendorId: string;
+  readonly vendorName: string;
+  readonly vendorEmail: string;
+  readonly createdById: string;
+  readonly partnershipTier: "DIRECT_PARTNER" | "VERIFIED" | "GENERAL" | "UNVERIFIED";
+}
+
+/**
+ * 6 OrganizationVendor rows — one per PILOT_VENDOR_CATALOG entry, all
+ * scoped to PILOT_ORG_ID. partnershipTier overlay 는 vendor baseline 과
+ * 같은 값으로 시작 (operator 가 settings/suppliers 에서 override 가능).
+ *
+ * 정합 메모: vendorEmail 이 PILOT_VENDOR_CATALOG.email 과 1:1 — pilot vendor
+ * 6 email 모두 unique `.invalid` placeholder 라 (organizationId, vendorEmail)
+ * compound unique 충돌 0.
+ */
+export const PILOT_ORGANIZATION_VENDOR_LINKS: readonly PilotOrganizationVendorLinkSpec[] =
+  PILOT_VENDOR_CATALOG.map((v) => ({
+    organizationId: PILOT_ORG_ID,
+    vendorId: v.id,
+    vendorName: v.name,
+    vendorEmail: v.email ?? `${v.id}@labaxis.invalid`,
+    createdById: PILOT_OWNER_USER_ID,
+    partnershipTier: v.partnershipTier,
+  }));
+
 export interface PilotProductVendorLinkSpec {
   readonly id: string; // ProductVendor.id (deterministic, idempotent upsert key)
   readonly productId: string;

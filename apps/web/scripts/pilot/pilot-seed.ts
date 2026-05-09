@@ -47,6 +47,8 @@ import {
   PILOT_PRODUCT_CATALOG,
   PILOT_VENDOR_CATALOG,
   PILOT_PRODUCT_VENDOR_LINKS,
+  // #pilot-organization-vendor-seed-missing — settings/suppliers UI 노출용
+  PILOT_ORGANIZATION_VENDOR_LINKS,
   // §11.178 — Quote + Inventory pilot fixtures
   PILOT_QUOTE_CATALOG,
   PILOT_INVENTORY_CATALOG,
@@ -232,6 +234,52 @@ async function main() {
           });
         }
 
+        // 8b. #pilot-organization-vendor-seed-missing — OrganizationVendor.
+        //     PILOT_VENDOR_CATALOG 는 Vendor (글로벌 테이블) 에만 들어감 →
+        //     settings/suppliers UI 는 OrganizationVendor scoped fetch 라
+        //     pilot org 매핑이 없으면 노출 0. Chrome audit (2026-05-09 M1)
+        //     마찰 차단. compound unique (organizationId, vendorEmail) 로
+        //     idempotent — re-run 시 partnershipTier overlay refresh.
+        //     OrganizationVendor.organization onDelete: Cascade 라 cleanup
+        //     자동 (pilot-cleanup.ts 별도 op 불필요).
+        const organizationVendors: Array<{
+          id: string;
+          organizationId: string;
+          vendorId: string | null;
+          vendorEmail: string;
+        }> = [];
+        for (const link of PILOT_ORGANIZATION_VENDOR_LINKS) {
+          const ov = await tx.organizationVendor.upsert({
+            where: {
+              organizationId_vendorEmail: {
+                organizationId: link.organizationId,
+                vendorEmail: link.vendorEmail,
+              },
+            },
+            create: {
+              organizationId: link.organizationId,
+              vendorId: link.vendorId,
+              vendorName: link.vendorName,
+              vendorEmail: link.vendorEmail,
+              partnershipTier: link.partnershipTier,
+              createdById: link.createdById,
+              isPrimary: false,
+            },
+            update: {
+              // re-run 시 vendorId/Name 정합 + partnershipTier overlay refresh
+              vendorId: link.vendorId,
+              vendorName: link.vendorName,
+              partnershipTier: link.partnershipTier,
+            },
+          });
+          organizationVendors.push({
+            id: ov.id,
+            organizationId: ov.organizationId,
+            vendorId: ov.vendorId,
+            vendorEmail: ov.vendorEmail,
+          });
+        }
+
         // 9. §11.178 — Quote pilot fixtures (1 row).
         //    Quote.organizationId 는 onDelete: SetNull 이라 cleanup 시 별도 op 필요.
         //    userId 는 PILOT_OWNER_USER_ID 로 고정 (canonical user 보호: cascade
@@ -327,7 +375,7 @@ async function main() {
           });
         }
 
-        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, quotes, inventories, orders };
+        return { org, workspace, orgMember, workspaceMember, products, vendors, productVendors, organizationVendors, quotes, inventories, orders };
       },
       {
         // 15 product upserts + 1 vendor + 15 productVendor + 4 parent
@@ -379,6 +427,15 @@ async function main() {
     console.log(
       `[pilot-seed] productVendor links: ${summary.productVendors.length} upserted`,
     );
+    // #pilot-organization-vendor-seed-missing — log
+    // eslint-disable-next-line no-console
+    console.log(
+      `[pilot-seed] organizationVendor links: ${summary.organizationVendors.length} upserted (settings/suppliers UI 노출)`,
+    );
+    for (const ov of summary.organizationVendors) {
+      // eslint-disable-next-line no-console
+      console.log(`  - ${ov.id}  vendorEmail=${ov.vendorEmail}  vendorId=${ov.vendorId}`);
+    }
     // §11.178 — quote + inventory log
     // eslint-disable-next-line no-console
     console.log(
@@ -426,5 +483,3 @@ if (isDirectRun) {
     // eslint-disable-next-line no-console
     console.error("[pilot-seed] ERROR:", err);
     process.exit(1);
-  });
-}
