@@ -443,6 +443,40 @@ function QuoteCard({
         </div>
       </div>
 
+      {/* §11.217 Phase 4 — 회신 수집 progress bar.
+          quote card 의 readiness strip 직전에 inline 진행률 시각화.
+          PENDING hide (회신 의미 없음) — SENT/RESPONDED 만 노출.
+          color: 0% slate, partial blue, 완료(N≥M) emerald. */}
+      {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 && (
+        <div className="mt-2.5 flex items-center gap-2" aria-label="회신 수집 진행률">
+          <span className="text-[10px] font-medium text-slate-600 shrink-0 tabular-nums">
+            회신 {responseCount}/{itemCount}
+          </span>
+          <div className="flex-1 h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div
+              role="progressbar"
+              aria-valuenow={responseCount}
+              aria-valuemin={0}
+              aria-valuemax={itemCount}
+              aria-label={`회신 ${responseCount}/${itemCount}`}
+              className={`h-full rounded-full transition-all ${
+                responseCount === 0
+                  ? "bg-slate-200"
+                  : responseCount >= itemCount
+                    ? "bg-emerald-500"
+                    : "bg-blue-500"
+              }`}
+              style={{
+                width: `${Math.min(100, (responseCount / itemCount) * 100)}%`,
+              }}
+            />
+          </div>
+          {responseCount >= itemCount && (
+            <span className="text-[10px] font-medium text-emerald-700 shrink-0">완료</span>
+          )}
+        </div>
+      )}
+
       {/* Readiness strip */}
       <div className="mt-3 pt-2.5 border-t border-bd/50">
         <div className="flex items-center gap-0.5 sm:gap-1">
