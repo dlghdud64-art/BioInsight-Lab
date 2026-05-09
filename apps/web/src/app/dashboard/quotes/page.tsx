@@ -1712,10 +1712,58 @@ function QuotesPageContent() {
           ]}
           summary={<p className="text-xs text-slate-700 leading-relaxed">{selectedSignals.summary}</p>}
           facts={
-            <div className="space-y-1 text-xs">
-              <div className="flex justify-between"><span className="text-slate-400">현재 상태</span><span className="font-medium">{selectedSignals.status}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">다음 액션</span><span>{selectedSignals.nextAction}</span></div>
-              <div className="flex justify-between"><span className="text-slate-400">수신 견적</span><span>{(selectedQuote.responses?.length ?? 0)}건</span></div>
+            // §11.222 — mobile bottom sheet 인과관계 정합 (§11.221 desktop 동일 메시지).
+            //   1차 노출 한 줄 (→ + emoji) + collapsible 3-row (기존 보존).
+            //   같은 factsExpanded state 공유 (desktop + mobile 동일 toggle).
+            //   helper 추출은 별도 트랙 (현재는 inline duplicate 일시 허용 — minimal-diff).
+            <div className="space-y-2 text-xs">
+              {(() => {
+                const totalItems = selectedQuote.items.length;
+                const replyCount = (selectedQuote.responses?.length ?? 0);
+                const status = selectedSignals.status;
+                const blocker = selectedSignals.blocker;
+                const compareReady = selectedSignals.compareReady;
+                const poReady = selectedSignals.poReady;
+                const nextAction = selectedSignals.nextAction;
+
+                let summary: string;
+                if (blocker?.includes("공급사 미전송") || status?.includes("요청 생성")) {
+                  summary = "📋 견적 미발송 → 비교·발주 차단 중. 발송이 첫 단계입니다.";
+                } else if (selectedQuote.status === "SENT" && replyCount === 0) {
+                  summary = "📤 발송 완료 → 회신 대기 중. 응답 수집이 다음 단계입니다.";
+                } else if (replyCount > 0 && replyCount < totalItems) {
+                  summary = `📥 회신 ${replyCount}/${totalItems} → 일부 수신 중. 추가 회신 대기 또는 비교 검토 진입 가능.`;
+                } else if (replyCount > 0 && replyCount >= totalItems && (compareReady === "가능" || compareReady === "완료")) {
+                  summary = "📊 회신 수집 완료 → 비교 검토 가능. 최적안 선택이 다음 단계입니다.";
+                } else if (poReady === "가능") {
+                  summary = "✅ 비교 완료 → 발주 전환 가능. 결재 또는 PO 생성이 다음 단계입니다.";
+                } else {
+                  summary = `${blocker && blocker !== "차단 없음" ? `⚠️ 차단: ${blocker} → ` : "→ "}다음 단계: ${nextAction ?? "-"}`;
+                }
+                return (
+                  <p className="text-xs leading-relaxed text-slate-800 font-medium">{summary}</p>
+                );
+              })()}
+              <button
+                type="button"
+                onClick={() => setFactsExpanded(prev => !prev)}
+                className="text-[10px] text-slate-500 hover:text-slate-700 inline-flex items-center gap-0.5 transition-colors"
+                aria-label={factsExpanded ? "판단 근거 상세 접기" : "판단 근거 상세 보기"}
+              >
+                {factsExpanded ? "접기" : "상세 보기"}
+                {factsExpanded ? (
+                  <ChevronUp className="h-3 w-3" />
+                ) : (
+                  <ChevronDown className="h-3 w-3" />
+                )}
+              </button>
+              {factsExpanded && (
+                <div className="space-y-1 pt-2 border-t border-slate-200">
+                  <div className="flex justify-between"><span className="text-slate-400">현재 상태</span><span className="font-medium">{selectedSignals.status}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">다음 액션</span><span>{selectedSignals.nextAction}</span></div>
+                  <div className="flex justify-between"><span className="text-slate-400">수신 견적</span><span>{(selectedQuote.responses?.length ?? 0)}건</span></div>
+                </div>
+              )}
             </div>
           }
           risks={
