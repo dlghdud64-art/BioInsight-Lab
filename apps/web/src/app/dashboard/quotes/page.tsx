@@ -530,6 +530,10 @@ function QuotesPageContent() {
   //   IntersectionObserver 로 detail panel scroll 시 visible section 의 chip
   //   자동 highlight. chip click 시 scrollIntoView + setActiveChipId 즉시 update.
   const [activeChipId, setActiveChipId] = useState<string | null>("summary");
+  // §11.217 Phase 6 — quote list 보기 모드 (카드 ↔ 테이블 toggle).
+  //   localStorage "labaxis-quote-view-mode" persist — 사용자 선호 기억.
+  //   default "card" (호영님 기존 패턴 정합).
+  const [viewMode, setViewMode] = useState<"card" | "table">("card");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
@@ -653,6 +657,27 @@ function QuotesPageContent() {
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     }
   }, [entityIdParam]);
+
+  // §11.217 Phase 6 — localStorage persist (mount 시 read).
+  useEffect(() => {
+    try {
+      const saved = window.localStorage.getItem("labaxis-quote-view-mode");
+      if (saved === "card" || saved === "table") {
+        setViewMode(saved);
+      }
+    } catch {
+      // localStorage unavailable (SSR / private mode) — fallback to "card".
+    }
+  }, []);
+
+  // §11.217 Phase 6 — localStorage persist (viewMode change 시 write).
+  useEffect(() => {
+    try {
+      window.localStorage.setItem("labaxis-quote-view-mode", viewMode);
+    } catch {
+      // ignore
+    }
+  }, [viewMode]);
 
   // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
   //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
@@ -1208,6 +1233,146 @@ function QuotesPageContent() {
       <div className="flex gap-0">
       <div data-testid="quote-work-queue" className="flex-1 min-w-0 space-y-4">
 
+      {/* §11.217 Phase 6 — 보기 모드 toggle (카드 ↔ 테이블).
+          localStorage persist + aria-pressed (a11y). 대량 quote audit 용 테이블. */}
+      {!isLoading && filteredQuotes.length > 0 && (
+        <div className="flex items-center justify-end gap-1.5">
+          <span className="text-[11px] text-slate-500 mr-1">보기</span>
+          <button
+            type="button"
+            onClick={() => setViewMode("card")}
+            aria-pressed={viewMode === "card"}
+            aria-label="카드 보기"
+            className={
+              viewMode === "card"
+                ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
+                : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+            }
+          >
+            <Package className="h-3 w-3" />
+            카드
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("table")}
+            aria-pressed={viewMode === "table"}
+            aria-label="테이블 보기"
+            className={
+              viewMode === "table"
+                ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
+                : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+            }
+          >
+            <FileTextIcon className="h-3 w-3" />
+            테이블
+          </button>
+        </div>
+      )}
+
+      {/* §11.217 Phase 6 — 테이블 보기 (단일 통합 테이블, 3 section 구분 row).
+          card 와 같은 데이터 (filteredQuotes) 다른 layout. 클릭 → 같은 detail panel. */}
+      {!isLoading && viewMode === "table" && filteredQuotes.length > 0 && (
+        <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
+          <table className="w-full text-xs">
+            <thead className="bg-slate-50 border-b border-bd">
+              <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-3 py-2">제목</th>
+                <th className="px-3 py-2">상태</th>
+                <th className="px-3 py-2 text-center">품목</th>
+                <th className="px-3 py-2 text-center">회신</th>
+                <th className="px-3 py-2 text-center">우선순위</th>
+                <th className="px-3 py-2">등록</th>
+                <th className="px-3 py-2 text-right">액션</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-bd/40">
+              {filteredQuotes.map((quote) => {
+                const signals = getOpSignals(quote);
+                const itemCount = quote.items?.length ?? 0;
+                const responseCount = quote.responses?.length ?? 0;
+                const railState = deriveRailState(quote);
+                const isSelected = selectedQuoteId === quote.id;
+                return (
+                  <tr
+                    key={quote.id}
+                    onClick={() => openQuoteContextRail(quote.id, "row")}
+                    className={
+                      isSelected
+                        ? "bg-blue-50/60 cursor-pointer"
+                        : "hover:bg-slate-50/60 cursor-pointer transition-colors"
+                    }
+                  >
+                    <td className="px-3 py-2 font-medium text-slate-900 max-w-[280px] truncate">
+                      {quote.title}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                        railState === "request_not_sent" ? "bg-slate-100 text-slate-700"
+                        : railState === "awaiting_responses" ? "bg-blue-100 text-blue-700"
+                        : railState === "compare_review" ? "bg-purple-100 text-purple-700"
+                        : railState === "approval_prep" ? "bg-amber-100 text-amber-700"
+                        : "bg-emerald-100 text-emerald-700"
+                      }`}>
+                        {signals.badge}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-center text-slate-600 tabular-nums">{itemCount}</td>
+                    <td className="px-3 py-2 text-center">
+                      {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
+                        <div className="flex items-center justify-center gap-1.5">
+                          <span className="text-[10px] tabular-nums text-slate-600">
+                            {responseCount}/{itemCount}
+                          </span>
+                          <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
+                            <div
+                              role="progressbar"
+                              aria-valuenow={responseCount}
+                              aria-valuemin={0}
+                              aria-valuemax={itemCount}
+                              className={`h-full rounded-full ${
+                                responseCount === 0 ? "bg-slate-200"
+                                : responseCount >= itemCount ? "bg-emerald-500"
+                                : "bg-blue-500"
+                              }`}
+                              style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`inline-block w-2 h-2 rounded-full ${
+                        signals.priority === "critical" ? "bg-red-500"
+                        : signals.priority === "high" ? "bg-amber-500"
+                        : "bg-slate-300"
+                      }`} aria-label={`우선순위 ${signals.priority}`} />
+                    </td>
+                    <td className="px-3 py-2 text-slate-500">
+                      <RelativeTimeText iso={quote.createdAt} />
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <Button
+                        size="sm"
+                        variant={signals.ctaVariant}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openQuoteContextRail(quote.id, "row");
+                        }}
+                        className={`h-7 text-[11px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+                      >
+                        {signals.ctaLabel}
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* ── 로딩: progressive skeleton (list만, header/search는 이미 보임) ── */}
       {isLoading && (
         <div className="space-y-2">
@@ -1233,7 +1398,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 즉시 처리 필요 ── */}
-      {!isLoading && urgentQuotes.length > 0 && (
+      {!isLoading && viewMode === "card" && urgentQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4 text-red-600" />
@@ -1245,7 +1410,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 진행 중 ── */}
-      {!isLoading && inProgressQuotes.length > 0 && (
+      {!isLoading && viewMode === "card" && inProgressQuotes.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Clock className="h-4 w-4 text-amber-600" />
@@ -1257,7 +1422,7 @@ function QuotesPageContent() {
       )}
 
       {/* ── 섹션: 완료 ── */}
-      {!isLoading && completedQuotes.length > 0 && (
+      {!isLoading && viewMode === "card" && completedQuotes.length > 0 && (
         <details className="group">
           <summary className="flex items-center gap-2 cursor-pointer list-none select-none">
             <CheckCircle2 className="h-4 w-4 text-emerald-400" />
