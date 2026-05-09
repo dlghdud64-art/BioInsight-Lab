@@ -27,12 +27,24 @@ export async function GET(request: NextRequest) {
       searchParams.get("lowStock") === "true" || status === "low";
 
     // -----------------------------------------------------------------------
-    // 소유권 조건 (userId OR organizationId)
+    // #api-inventory-organization-scope-auto — auto organization scope.
+    //   queryString 없을 때도 user 가 속한 모든 organization 의 ProductInventory
+    //   가 자동 노출 (조직 멤버 collaboration 정합 + pilot row 가시성). explicit
+    //   `?organizationId=` queryString 은 그대로 single-org 우선 (override) 보존.
+    //   { userId: user.id } 분기 보존 (legacy single-user row 호환).
     // -----------------------------------------------------------------------
+    const memberships = await db.organizationMember.findMany({
+      where: { userId: user.id },
+      select: { organizationId: true },
+    });
+    const orgIds = memberships.map((m) => m.organizationId);
+
     const ownerCondition: any = {
       OR: [
         { userId: user.id },
-        ...(organizationId ? [{ organizationId }] : []),
+        ...(organizationId
+          ? [{ organizationId }]
+          : orgIds.map((id) => ({ organizationId: id }))),
       ],
     };
 
