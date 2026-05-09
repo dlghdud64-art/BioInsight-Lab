@@ -52,6 +52,8 @@ interface ResolveInput {
     confidence?: string | null;
     items?: Array<{
       product?: {
+        // #vendor-catalog-product-matching Phase 3 — productId for matching.
+        id?: string;
         name?: string;
         brand?: string;
         vendors?: Array<{
@@ -91,12 +93,27 @@ interface ResolveInput {
     // #vendor-partnership-tier Phase 3 — 조직 override (null fallback to baseline).
     partnershipTier?: PartnershipTier | null;
   }>;
+  /**
+   * #vendor-catalog-product-matching Phase 3 — 조직 단위 vendor-product carry 매핑.
+   *   resolved supplier 의 vendorId 와 매칭 + quote.items 의 productId 매칭 시
+   *   confidence 한 단계 boost (low → medium, medium → high). 호영님 결정 4A.
+   *   미전달 시 빈 array fallback (backward compat).
+   */
+  organizationVendorProducts?: Array<{
+    vendorId: string;
+    productId: string;
+  }>;
 }
 
 const CONFIDENCE_ORDER = { high: 3, medium: 2, low: 1 };
 
 export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
-  const { quote, vendorRequests = [], organizationVendors = [] } = input;
+  const {
+    quote,
+    vendorRequests = [],
+    organizationVendors = [],
+    organizationVendorProducts = [],
+  } = input;
   const seen = new Map<string, ResolvedSupplier>(); // key: lowercase email
   // #vendor-partnership-tier Phase 3 — overlay lock.
   //   email 의 tier 가 명시적으로 결정되면 후속 source 가 confidence 덮어쓰지
@@ -209,6 +226,41 @@ export function resolveSuppliers(input: ResolveInput): ResolvedSupplier[] {
         reason: "AI가 견적서에서 추출한 공급사",
         included: false, // AI 추출은 기본 미포함, 사용자 확인 필요
       });
+    }
+  }
+
+  // #vendor-catalog-product-matching Phase 3 — product matching → confidence boost.
+  //   quote.items 의 productId 와 organizationVendorProducts 의 productId 매칭 시,
+  //   해당 vendorId 보유한 supplier 의 confidence 를 한 단계 boost
+  //   (low → medium, medium → high, high stays). 호영님 결정 4A.
+  //   reason 에 "취급 제품 일치" marker 추가.
+  if (organizationVendorProducts.length > 0) {
+    const quoteProductIds = new Set<string>();
+    for (const item of quote.items || []) {
+      if (item.product?.id) quoteProductIds.add(item.product.id);
+    }
+    if (quoteProductIds.size > 0) {
+      const matchedVendorIds = new Set<string>();
+      for (const ovp of organizationVendorProducts) {
+        if (quoteProductIds.has(ovp.productId)) {
+          matchedVendorIds.add(ovp.vendorId);
+        }
+      }
+      if (matchedVendorIds.size > 0) {
+        for (const supplier of seen.values()) {
+          if (matchedVendorIds.has(supplier.vendorId)) {
+            // boost: low → medium, medium → high, high stays.
+            if (supplier.confidence === "low") {
+              supplier.confidence = "medium";
+            } else if (supplier.confidence === "medium") {
+              supplier.confidence = "high";
+            }
+            supplier.reason = supplier.reason
+              ? `${supplier.reason} + 취급 제품 일치`
+              : "취급 제품 일치";
+          }
+        }
+      }
     }
   }
 

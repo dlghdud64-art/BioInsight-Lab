@@ -265,7 +265,7 @@ function getQuoteDispatchPreflight(
     };
   }
 
-  const suppliers = resolveSuppliers({ quote: q, organizationVendors });
+  const suppliers = resolveSuppliers({ quote: q, organizationVendors, organizationVendorProducts });
   const includedSuppliers = suppliers.filter((supplier) => supplier.included);
   const invalidContacts = includedSuppliers.filter((supplier) => !EMAIL_PATTERN.test(supplier.email));
   const blockers: string[] = [];
@@ -649,6 +649,35 @@ function QuotesPageContent() {
     isPrimary?: boolean;
     notes?: string | null;
   }> = useMemo(() => organizationVendorsData?.vendors ?? [], [organizationVendorsData]);
+
+  // #vendor-catalog-product-matching Phase 3 — vendor-product carry 매핑 fetch.
+  //   resolveSuppliers 에 forward → product 매칭 시 vendor confidence boost.
+  //   미등록 시 빈 array fallback (backward compat).
+  const { data: organizationVendorProductsData } = useQuery({
+    queryKey: ["organization-vendor-products"],
+    queryFn: async () => {
+      const response = await fetch("/api/organization-vendor-products", {
+        credentials: "include",
+      });
+      if (!response.ok) return { entries: [] };
+      return response.json();
+    },
+    enabled: status === "authenticated",
+    staleTime: 60_000,
+  });
+  const organizationVendorProducts: Array<{
+    vendorId: string;
+    productId: string;
+  }> = useMemo(
+    () =>
+      (organizationVendorProductsData?.entries ?? []).map(
+        (e: { vendorId: string; productId: string }) => ({
+          vendorId: e.vendorId,
+          productId: e.productId,
+        }),
+      ),
+    [organizationVendorProductsData],
+  );
 
   // 필터 변경 중 indicator (기존 list 유지하면서 상단에만 표시)
   const isFilterChanging = isFetching && !isLoading;
@@ -1656,7 +1685,7 @@ function QuotesPageContent() {
           quoteId={selectedQuote.id}
           quoteSummary={selectedQuote.title}
           // #user-supplier-registration Phase 5 — org_book source forward.
-          resolvedSuppliers={resolveSuppliers({ quote: selectedQuote, organizationVendors })}
+          resolvedSuppliers={resolveSuppliers({ quote: selectedQuote, organizationVendors, organizationVendorProducts })}
           draftMessage={buildDraftMessage(selectedQuote)}
           onSuccess={handleSendSuccess}
         />
