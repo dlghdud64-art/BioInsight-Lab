@@ -114,14 +114,15 @@ export async function apiClient<T = any>(
     // CSRF token 부착 (state-changing method만)
     const method = (fetchOptions.method || 'GET').toUpperCase();
     const csrfHeaders: Record<string, string> = {};
+    let csrfToken: string | null = null;
     if (!skipCsrf && STATE_CHANGING_METHODS.has(method)) {
-      const csrfToken = await acquireCsrfToken();
+      csrfToken = await acquireCsrfToken();
       if (csrfToken) {
         csrfHeaders[CSRF_HEADER_NAME] = csrfToken;
       }
     }
 
-    const response = await fetch(url, {
+    let response = await fetch(url, {
       ...fetchOptions,
       headers: {
         "Content-Type": "application/json",
@@ -129,6 +130,27 @@ export async function apiClient<T = any>(
         ...fetchOptions.headers,
       },
     });
+
+    // #api-client-csrf-retry-parity (G-1+2) — csrfFetch 의 race condition
+    //   retry-with-refresh 패턴 mirror. 첫 hydration 시 stale/absent cookie 로
+    //   middleware 가 403 deny 하는 race condition 의 표면 증상 직접 차단.
+    //   refreshCsrfToken → fresh token !== 이전 token 시 한 번 retry. token 이
+    //   refresh 후 같으면 skip (RBAC deny / actual permission 차단은 보존).
+    //   retry 1회만 — 무한 loop 차단.
+    if (response.status === 403 && csrfToken) {
+      await refreshCsrfToken();
+      const fresh = await acquireCsrfToken();
+      if (fresh && fresh !== csrfToken) {
+        response = await fetch(url, {
+          ...fetchOptions,
+          headers: {
+            "Content-Type": "application/json",
+            [CSRF_HEADER_NAME]: fresh,
+            ...fetchOptions.headers,
+          },
+        });
+      }
+    }
 
     // Handle non-JSON responses (e.g., file downloads)
     const contentType = response.headers.get("content-type");
