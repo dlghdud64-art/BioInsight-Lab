@@ -573,6 +573,10 @@ function PopupCategoryGrid({
           // #operational-brief-category-color-e1 — tone-별 border/icon className.
           const toneBorderClass = CATEGORY_TONE_BORDER[cat.tone];
           const toneIconClass = CATEGORY_TONE_ICON[cat.tone];
+          // #operational-brief-visual-uplift-f1 — 비활성 카테고리 (count 0)
+          //   grayscale 처리. 호영님 spec: 활성 카테고리에 시선 집중 + 비활성
+          //   은 시각 무게 ↓. opacity-60 + grayscale literal class (purge safe).
+          const isInactive = stat.total === 0;
           return (
             <button
               key={cat.module}
@@ -582,6 +586,7 @@ function PopupCategoryGrid({
                 "group rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left",
                 "hover:border-slate-400 hover:bg-slate-50 transition-all",
                 toneBorderClass,
+                isInactive && "opacity-60 grayscale",
               )}
             >
               <div className="flex items-start justify-between mb-2">
@@ -658,12 +663,15 @@ function PopupCategoryListWithExpand({
       {/* §11.195 — header overlap 해소로 pt-10 → pt-6, controls cluster 영역
           확보 위해 pr-20 (close + minimize 두 버튼 폭). */}
       <div className="px-6 pt-6 pb-5 pr-20 border-b border-bd">
+        {/* #operational-brief-visual-uplift-f1 — back button 큰 클릭 영역.
+            기존 text-xs (h-3.5 ArrowLeft) 가 너무 작아 호영님 spec 정합:
+            text-sm + px-3 py-2 + h-4 ArrowLeft + hover bg 강화. */}
         <button
           onClick={onBack}
-          className="inline-flex items-center gap-1 text-xs text-slate-500 hover:text-slate-900 transition-colors mb-3"
+          className="-ml-1 inline-flex items-center gap-1.5 rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors mb-2"
           aria-label="카테고리 목록으로"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-4 w-4" />
           카테고리
         </button>
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
@@ -865,9 +873,15 @@ function PopupBriefInline({
         </p>
       )}
 
-      {/* §11.198 § 1. LABAXIS AI INSIGHT brand banner (시안 정합 dark gradient) */}
-      <section className="rounded-lg overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+      {/* §11.198 § 1. LABAXIS AI INSIGHT brand banner.
+          #operational-brief-visual-uplift-f1 — 호영님 Gemini mockup 정합:
+          glow gradient (bg-blue-500/10 blur-2xl absolute) 으로 시선 집중도 ↑.
+          rounded-lg → rounded-xl, gradient bg → solid slate-900, LIVE 뱃지
+          pill 형태로 통합. */}
+      <section className="relative overflow-hidden rounded-xl bg-slate-900 text-white">
+        {/* glow gradient — 우측 상단 코너 blue glow (디자인 강조 element) */}
+        <div className="pointer-events-none absolute -top-8 -right-8 h-32 w-32 rounded-full bg-blue-500/10 blur-2xl" />
+        <div className="relative px-4 py-3 border-b border-white/10 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-white/10 flex items-center justify-center">
               <Sparkles className="h-3.5 w-3.5 text-blue-300" />
@@ -879,15 +893,13 @@ function PopupBriefInline({
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span className="text-[9px] uppercase tracking-wider text-emerald-300 font-bold">Live</span>
-          </div>
+          {/* LIVE pill — 기존 점 + 텍스트 분리 → pill 통합 (animate-pulse dot inside) */}
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+            <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+            Live
+          </span>
         </div>
-        <div className="px-4 py-3">
+        <div className="relative px-4 py-3">
           <p className="text-sm leading-relaxed text-slate-100">
             {briefNarrative ?? item.summary}
           </p>
