@@ -153,7 +153,10 @@ const CTA_SHORT_LABEL: Array<{ pattern: RegExp; short: string }> = [
   { pattern: /격리\s*검사/, short: "격리 검사 처리" },
   { pattern: /문서\s*재요청|문서\s*요청/, short: "문서 요청 보내기" },
   { pattern: /공급사\s*확인/, short: "공급사 확인하기" },
-  { pattern: /비교\s*검토.*공급사\s*선정/, short: "공급사 선정" },
+  // #operational-brief-cta-shorten-d1 — 호영님 production 마찰: "비교표 검토
+  //   후 공급사 선..." 잘림. 기존 pattern 이 "비교" 만 매칭 → "비교표" 매칭 실패.
+  //   `비교(?:표)?` 분기로 표 포함 매칭.
+  { pattern: /비교(?:표)?\s*검토.*공급사\s*선정/, short: "공급사 선정" },
   { pattern: /발주서\s*발행/, short: "발주서 발행" },
   { pattern: /재주문|재발주/, short: "재주문 검토" },
   { pattern: /교체\s*발주/, short: "교체 발주" },
@@ -749,9 +752,12 @@ function PopupBriefInline({
 
   return (
     <div className="px-6 pb-5 pt-1 bg-slate-50/50 border-t border-bd/40 space-y-4">
+      {/* #operational-brief-last-updated-label-d2 — 호영님 spec: "AI 분석이 5분
+          전인지 데이터가 5분 전인지 모호". "마지막 분석" 으로 명확화 (AI 분석
+          기준 timestamp). */}
       {lastUpdatedLabel && (
         <p className="text-[10px] uppercase tracking-wider text-slate-400 font-semibold pt-3">
-          Last Updated · {lastUpdatedLabel}
+          마지막 분석 · {lastUpdatedLabel}
         </p>
       )}
 
