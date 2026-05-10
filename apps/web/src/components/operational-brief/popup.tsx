@@ -354,7 +354,11 @@ export function OperationalBriefPopup() {
     categoryStats.stock_risk.urgent;
 
   // dock chip 은 popup 이 isOpen + isMinimized + desktop 조건 만족 시만 mount.
-  if (isOpen && isMinimized && !isMobile) {
+  // #operational-brief-rail-conversion-g1c — desktop rail 모드 (2xl+) 는
+  //   minimize 의미 0 (rail 영구 노출). isMinimized=true 인 채로 viewport
+  //   resize 시 dock chip 만 노출 + rail 안 보이는 회귀 차단. tablet 에서
+  //   minimize → desktop resize 시 자동 rail 복귀.
+  if (isOpen && isMinimized && !isMobile && !isDesktopRail) {
     return (
       <PopupDockChip
         urgentCount={totalUrgent}

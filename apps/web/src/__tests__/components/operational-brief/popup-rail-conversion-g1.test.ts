@@ -82,6 +82,14 @@ describe("#operational-brief-rail-conversion-g1b — Path C rail width 축소", 
   });
 });
 
+describe("#operational-brief-rail-conversion-g1c — dock chip desktop rail 모드 무시", () => {
+  it("dock chip 분기에 !isDesktopRail 추가 — minimize 잔존 state 회귀 차단", () => {
+    // tablet minimize 후 desktop resize 시 dock chip 만 노출 + rail 안 보이는 회귀 차단.
+    // 분기 패턴: isOpen && isMinimized && !isMobile && !isDesktopRail.
+    expect(popup).toMatch(/isMinimized\s*&&\s*!isMobile\s*&&\s*!isDesktopRail/);
+  });
+});
+
 describe("#operational-brief-rail-conversion-g1 — invariant 보존 (19 cluster)", () => {
   it("F1 LABAXIS AI INSIGHT 다크 + glow 보존", () => {
     expect(popup).toMatch(/bg-slate-900/);
