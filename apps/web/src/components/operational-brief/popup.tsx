@@ -218,6 +218,26 @@ function useIsMobile(): boolean {
   return isMobile;
 }
 
+/**
+ * #operational-brief-rail-conversion-g1 — viewport 감지 hook (SSR safe).
+ *
+ * 호영님 Gemini Studio mockup Option A 정합 — desktop xl 이상 (≥ 1280px) 에서
+ * popup → rail 영구 노출 전환. md~xl 에서는 popup overlay 유지 (호영님 §11.219
+ * floating overlay path 보존). 본 hook 으로 isDesktopRail 분기.
+ */
+function useIsXlDesktop(): boolean {
+  const [isXl, setIsXl] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1280px)");
+    setIsXl(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsXl(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isXl;
+}
+
 /** Popup root — list ↔ detail stack. */
 export function OperationalBriefPopup() {
   const {
@@ -231,6 +251,9 @@ export function OperationalBriefPopup() {
   const store = useOpsStore();
   // §11.183 — mobile bottom sheet vs desktop right rail 분기
   const isMobile = useIsMobile();
+  // #operational-brief-rail-conversion-g1 — xl 이상 desktop rail 모드 분기.
+  //   isOpen 무관 항상 mount + close/minimize/floating-entry 모두 hide.
+  const isDesktopRail = useIsXlDesktop();
 
   // §11.194 — 3-tier drill-down state. selectedItemId (popup-context) 는
   // inline-expand 의 expandedItemId 로 의미 통합 (별도 state 추가 0).
@@ -332,7 +355,9 @@ export function OperationalBriefPopup() {
   }
 
   // §11.202 — popup 닫혀 있으면 mount 0 (desktop rail 도 자리 차지 0).
-  if (!isOpen) return null;
+  // #operational-brief-rail-conversion-g1 — desktop rail 모드는 isOpen 무관
+  //   항상 mount (rail 영구 노출). md~xl 또는 mobile 은 isOpen=true 시만 mount.
+  if (!isOpen && !isDesktopRail) return null;
 
   // 운영 브리핑 컨텐츠 (desktop / mobile 공통 — 4-section + drill-down)
   const briefBody = (
@@ -423,9 +448,11 @@ export function OperationalBriefPopup() {
   //   는 침범 0.
   return (
     <>
-      {/* §11.219 — backdrop (밖 click 닫기) */}
+      {/* §11.219 — backdrop (밖 click 닫기).
+          #operational-brief-rail-conversion-g1 — desktop rail 모드는 backdrop
+          의미 0 (rail 영구 노출). xl 에서 hide. */}
       <div
-        className="fixed inset-0 z-30 hidden md:block bg-black/20"
+        className="fixed inset-0 z-30 hidden md:block xl:hidden bg-black/20"
         onClick={close}
         aria-hidden="true"
       />
@@ -442,14 +469,22 @@ export function OperationalBriefPopup() {
           //   텍스트 잘린다, 판단 근거 카드 '불가·수신...' 말줄임". 400px →
           //   540px 확대 (호영님 spec 정합 폭). xl:1280px+ 에서 main canvas
           //   reflow 없이 양쪽 같이 보기 가능. mobile sheet 분기 영향 0.
+          // #operational-brief-rail-conversion-g1 — desktop rail 모드 (xl+):
+          //   fixed → static (main sibling reflow). 호영님 mockup 정합.
+          //   tablet (md~xl): fixed top-16 right-0 floating overlay 보존.
           "fixed top-16 right-0 z-40 hidden md:flex md:flex-col",
+          "xl:static xl:top-auto xl:right-auto xl:z-auto xl:h-auto",
           "h-[calc(100vh-4rem)] md:w-[400px] xl:w-[540px]",
-          "border-l border-bd bg-white shadow-xl",
+          "xl:flex-shrink-0",
+          "border-l border-bd bg-white shadow-xl xl:shadow-none",
           "overflow-y-auto",
         )}
       >
-        {/* §11.219 — desktop close cluster: minimize + close. */}
-        <div className="absolute right-3 top-2 z-10 flex items-center gap-1">
+        {/* §11.219 — desktop close cluster: minimize + close.
+            #operational-brief-rail-conversion-g1 — desktop rail 모드 (xl+) 는
+            rail 영구 노출이라 minimize/close 의미 0 → xl:hidden 으로 hide.
+            tablet (md~xl) overlay 모드에서는 보존. */}
+        <div className="absolute right-3 top-2 z-10 flex items-center gap-1 xl:hidden">
           <button
             type="button"
             onClick={toggleMinimize}
@@ -557,7 +592,7 @@ function PopupCategoryGrid({
           sticky top-0 z-50 가 별도 row 차지). 상단 controls cluster (right-3
           top-2 = 28px 점유) 와 좌측 라벨 분리만 확보 — pt-6 + pr-20 (controls
           영역 회피) 로 충분. */}
-      <div className="px-6 pt-6 pb-5 pr-20 border-b border-bd">
+      <div className="px-6 pt-6 pb-5 pr-20 xl:pt-4 xl:pb-3 xl:pr-6 border-b border-bd">
         <div className="text-[11px] font-bold tracking-[0.08em] text-blue-700 uppercase mb-1">
           운영 브리핑
         </div>
@@ -662,7 +697,7 @@ function PopupCategoryListWithExpand({
     <>
       {/* §11.195 — header overlap 해소로 pt-10 → pt-6, controls cluster 영역
           확보 위해 pr-20 (close + minimize 두 버튼 폭). */}
-      <div className="px-6 pt-6 pb-5 pr-20 border-b border-bd">
+      <div className="px-6 pt-6 pb-5 pr-20 xl:pt-4 xl:pb-3 xl:pr-6 border-b border-bd">
         {/* #operational-brief-visual-uplift-f1 — back button 큰 클릭 영역.
             기존 text-xs (h-3.5 ArrowLeft) 가 너무 작아 호영님 spec 정합:
             text-sm + px-3 py-2 + h-4 ArrowLeft + hover bg 강화. */}
