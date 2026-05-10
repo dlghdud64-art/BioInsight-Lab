@@ -355,6 +355,7 @@ export function OperationalBriefPopup() {
         <PopupCategoryListWithExpand
           category={selectedCategory}
           items={categoryItems}
+          stats={categoryStats}
           expandedItemId={selectedItemId}
           onToggleExpand={(id) =>
             setSelectedItemId(id === selectedItemId ? null : id)
@@ -362,6 +363,12 @@ export function OperationalBriefPopup() {
           onBack={() => {
             setViewMode("category");
             setSelectedCategory(null);
+            setSelectedItemId(null);
+          }}
+          // #operational-brief-category-tabs-d5 — 호영님 spec: 다른 카테고리
+          //   브리핑 1 click 직접 전환. back + 새 카테고리 진입 = 1 click.
+          onSwitchCategory={(cat) => {
+            setSelectedCategory(cat);
             setSelectedItemId(null);
           }}
           onClose={close}
@@ -615,19 +622,32 @@ function PopupCategoryGrid({
  * AI brief inline expand (Google snippet 패턴). detail mode 별도 페이지 X —
  * same-canvas 보존.
  */
+// #operational-brief-category-tabs-d5 — chip active state tone 매핑
+//   (E1 CATEGORY_TONE_BORDER 와 1:1 정합 design system).
+const CATEGORY_TONE_ACTIVE_BG: Record<"blue" | "purple" | "emerald" | "amber", string> = {
+  blue: "bg-blue-100 text-blue-700",
+  purple: "bg-purple-100 text-purple-700",
+  emerald: "bg-emerald-100 text-emerald-700",
+  amber: "bg-amber-100 text-amber-700",
+};
+
 function PopupCategoryListWithExpand({
   category,
   items,
+  stats,
   expandedItemId,
   onToggleExpand,
   onBack,
+  onSwitchCategory,
   onClose,
 }: {
   category: InboxSourceModule;
   items: UnifiedInboxItem[];
+  stats: Record<InboxSourceModule, { total: number; urgent: number }>;
   expandedItemId: string | null;
   onToggleExpand: (id: string) => void;
   onBack: () => void;
+  onSwitchCategory: (cat: InboxSourceModule) => void;
   onClose: () => void;
 }) {
   const categoryMeta = CATEGORIES.find((c) => c.module === category);
@@ -655,6 +675,45 @@ function PopupCategoryListWithExpand({
             ? `처리 대상 ${items.length}건 — 항목을 누르면 AI 분석이 펼쳐집니다.`
             : "현재 이 카테고리의 처리 항목이 없습니다."}
         </p>
+      </div>
+
+      {/* #operational-brief-category-tabs-d5 — 4 chip 탭 strip. 호영님 spec:
+          "상단에 카테고리 탭(견적 | 발주 | 입고 | 재고)을 넣으면 한 번에 전환
+          가능". active chip = E1 tone 강조 + aria-pressed. inactive chip =
+          slate subtle + click 시 onSwitchCategory 직접 전환. */}
+      <div className="px-4 py-2 border-b border-bd/40 flex flex-wrap gap-1.5">
+        {CATEGORIES.map((cat) => {
+          const isActive = cat.module === category;
+          const stat = stats[cat.module];
+          return (
+            <button
+              key={cat.module}
+              type="button"
+              onClick={() => {
+                if (!isActive) onSwitchCategory(cat.module);
+              }}
+              aria-pressed={isActive}
+              className={cn(
+                "px-2.5 py-1 rounded-full text-[11px] font-medium inline-flex items-center gap-1 transition-colors",
+                isActive
+                  ? CATEGORY_TONE_ACTIVE_BG[cat.tone]
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900",
+              )}
+            >
+              <span>{cat.label}</span>
+              {stat.urgent > 0 && (
+                <span
+                  className={cn(
+                    "ml-0.5 px-1 rounded text-[9px] font-bold",
+                    isActive ? "bg-rose-500 text-white" : "bg-rose-500 text-white",
+                  )}
+                >
+                  {stat.urgent}
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {items.length === 0 ? (
