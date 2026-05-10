@@ -71,17 +71,36 @@ import { formatRelativeKr } from "./relative-time";
 /* §11.194 — 3-tier drill-down 카테고리 매핑 (canonical InboxSourceModule
    4종 → 운영자 친화 한국어 카테고리 카드). 호영님 prototype 시안 정합 —
    1단계 카테고리 → 2단계 list → 3단계 inline expand (Google snippet). */
+// #operational-brief-category-color-e1 — 호영님 spec: 카테고리별 컬러 코드
+//   (견적=블루 / 발주=퍼플 / 입고=그린 / 재고=앰버). 카드 좌측 컬러 바 +
+//   Icon 색으로 시각적 구분. design system 기반 — 향후 다른 surface 도 동일
+//   tone 매핑 가능.
 const CATEGORIES: Array<{
   module: InboxSourceModule;
   label: string;
   description: string;
   icon: typeof FileText;
+  tone: "blue" | "purple" | "emerald" | "amber";
 }> = [
-  { module: "quote", label: "견적 관리", description: "RFQ 요청 / 비교 / 발주 전환", icon: FileText },
-  { module: "po", label: "발주 관리", description: "발행 / 공급사 확인 / 입고 인계", icon: ShoppingCart },
-  { module: "receiving", label: "입고 및 검수", description: "격리 / 문서 / 검수 / 반영", icon: Package },
-  { module: "stock_risk", label: "재고 관리", description: "재주문 / 만료 / 위험", icon: AlertCircle },
+  { module: "quote", label: "견적 관리", description: "RFQ 요청 / 비교 / 발주 전환", icon: FileText, tone: "blue" },
+  { module: "po", label: "발주 관리", description: "발행 / 공급사 확인 / 입고 인계", icon: ShoppingCart, tone: "purple" },
+  { module: "receiving", label: "입고 및 검수", description: "격리 / 문서 / 검수 / 반영", icon: Package, tone: "emerald" },
+  { module: "stock_risk", label: "재고 관리", description: "재주문 / 만료 / 위험", icon: AlertCircle, tone: "amber" },
 ];
+
+// #operational-brief-category-color-e1 — tone → className 매핑 (Tailwind safelist).
+const CATEGORY_TONE_BORDER: Record<"blue" | "purple" | "emerald" | "amber", string> = {
+  blue: "border-l-blue-500",
+  purple: "border-l-purple-500",
+  emerald: "border-l-emerald-500",
+  amber: "border-l-amber-500",
+};
+const CATEGORY_TONE_ICON: Record<"blue" | "purple" | "emerald" | "amber", string> = {
+  blue: "text-blue-600",
+  purple: "text-purple-600",
+  emerald: "text-emerald-600",
+  amber: "text-amber-600",
+};
 
 /* §11.182 — priority 사람 라벨 (raw enum 노출 0). */
 const PRIORITY_HUMAN: Record<string, string> = {
@@ -544,15 +563,22 @@ function PopupCategoryGrid({
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           const stat = stats[cat.module];
+          // #operational-brief-category-color-e1 — tone-별 border/icon className.
+          const toneBorderClass = CATEGORY_TONE_BORDER[cat.tone];
+          const toneIconClass = CATEGORY_TONE_ICON[cat.tone];
           return (
             <button
               key={cat.module}
               type="button"
               onClick={() => onSelectCategory(cat.module)}
-              className="group rounded-xl border border-slate-200 bg-white p-4 text-left hover:border-slate-400 hover:bg-slate-50 transition-all"
+              className={cn(
+                "group rounded-xl border border-slate-200 border-l-4 bg-white p-4 text-left",
+                "hover:border-slate-400 hover:bg-slate-50 transition-all",
+                toneBorderClass,
+              )}
             >
               <div className="flex items-start justify-between mb-2">
-                <Icon className="h-5 w-5 text-slate-500 group-hover:text-slate-900 transition-colors" />
+                <Icon className={cn("h-5 w-5 transition-colors", toneIconClass)} />
                 <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-700 transition-colors" />
               </div>
               <p className="text-sm font-bold text-slate-900 mb-0.5 leading-snug">
@@ -565,8 +591,11 @@ function PopupCategoryGrid({
                 <span className="text-[11px] text-slate-500">
                   전체 <span className="font-semibold tabular-nums">{stat.total}</span>건
                 </span>
+                {/* #operational-brief-urgent-badge-e2 — 호영님 spec: solid red
+                    강조. 기존 bg-rose-50 text-rose-700 (subtle) → bg-rose-500
+                    text-white (solid) — 한눈에 주의 식별. */}
                 {stat.urgent > 0 && (
-                  <span className="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 text-[10px] font-bold">
+                  <span className="px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold">
                     긴급 {stat.urgent}
                   </span>
                 )}
