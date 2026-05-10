@@ -34,6 +34,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 // #operational-brief-context-aware-category — pathname → category 자동 매핑.
 import { deriveActiveCategoryFromPath } from "./derive-active-category-from-path";
+// #operational-brief-critical-evidence-reason-d3 — priority + dueState 한 줄 이유.
+import { derivePriorityReason } from "./derive-priority-reason";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
   ArrowLeft,
@@ -669,13 +671,27 @@ function PopupItemWithExpand({
           ? "border-l-blue-400"
           : "border-l-slate-300";
 
+  // #operational-brief-card-priority-hierarchy-d4 — 호영님 spec: 상위 건은
+  //   더 크게/테두리 강조, 하위 건은 축소. p0/p1 (urgent) → border-l-[6px]
+  //   강조 + 기본 padding/title size. p2/p3 (non-urgent) → border-l-2 얇게
+  //   + py-3 + title text-sm 축소.
+  const isUrgent = item.priority === "p0" || item.priority === "p1";
+  const borderWidth = isUrgent ? "border-l-[6px]" : "border-l-2";
+  const buttonPadding = isUrgent ? "px-6 py-4" : "px-6 py-3";
+  const titleClass = isUrgent
+    ? "text-base font-bold text-slate-900 leading-snug line-clamp-2"
+    : "text-sm font-semibold text-slate-700 leading-snug line-clamp-2";
+
   return (
-    <div className={cn("border-l-4", toneBorder)}>
+    <div className={cn(borderWidth, toneBorder)}>
       {/* Row card (Google snippet 4-row hierarchy) */}
       <button
         type="button"
         onClick={onToggle}
-        className="w-full text-left px-6 py-4 hover:bg-slate-50 transition-colors"
+        className={cn(
+          buttonPadding,
+          "w-full text-left hover:bg-slate-50 transition-colors",
+        )}
         aria-expanded={expanded}
       >
         {/* Row 1 — workType + priority badge + expand chevron */}
@@ -700,7 +716,7 @@ function PopupItemWithExpand({
             {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </span>
         </div>
-        <p className="text-base font-bold text-slate-900 leading-snug line-clamp-2">{item.title}</p>
+        <p className={titleClass}>{item.title}</p>
         <p className="mt-1 text-[13px] text-slate-700 leading-relaxed line-clamp-2">{item.summary}</p>
         <p className="mt-1.5 text-[11px] text-slate-500">{item.dueState.label}</p>
       </button>
@@ -800,7 +816,13 @@ function PopupBriefInline({
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">
               우선순위
             </p>
-            <p className="text-base font-bold text-slate-900 mb-1.5">{priorityHuman}</p>
+            <p className="text-base font-bold text-slate-900 mb-0.5">{priorityHuman}</p>
+            {/* #operational-brief-critical-evidence-reason-d3 — 호영님 spec:
+                "우선순위: 높음" 만으로는 왜 높은지 모름. priority + dueState
+                결합 한 줄 이유 ("3일 남음 — 즉시 확인 필요"). */}
+            <p className="text-[11px] text-slate-600 leading-snug mb-1.5">
+              {derivePriorityReason({ priority: item.priority, dueState: item.dueState })}
+            </p>
             <span
               className={cn(
                 "inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
