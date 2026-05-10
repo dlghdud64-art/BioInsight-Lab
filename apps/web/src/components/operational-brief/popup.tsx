@@ -31,7 +31,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+// #operational-brief-context-aware-category — pathname → category 자동 매핑.
+import { deriveActiveCategoryFromPath } from "./derive-active-category-from-path";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
 import {
   ArrowLeft,
@@ -220,6 +222,20 @@ export function OperationalBriefPopup() {
     }
   }, [isOpen, setSelectedItemId]);
 
+  // #operational-brief-context-aware-category — popup open 시 pathname 자동
+  //   인식 → 매핑되는 카테고리가 있으면 모달 skip 후 작업 큐 바로 진입.
+  //   호영님 마찰 ("견적 관리 페이지에서 또 카테고리 선택?") 차단. 매핑 실패
+  //   (dashboard 메인 / settings 등) 시 기존 category grid fallback 보존.
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!isOpen) return;
+    const auto = deriveActiveCategoryFromPath(pathname);
+    if (auto) {
+      setSelectedCategory(auto);
+      setViewMode("list");
+    }
+  }, [isOpen, pathname]);
+
   const allItems = useMemo(
     () =>
       buildFullInbox(
@@ -390,8 +406,13 @@ export function OperationalBriefPopup() {
           // top-0 z-50 h-14 md:h-16. popup 이 top-0 z-40 이면 header 뒤로
           // 위쪽 64px 가 가려져 "운영 브리핑" eyebrow + "카테고리 선택" h3 가
           // 짤림. popup 을 header 아래로 offset (top-16 md+) + height 보정.
+          // #operational-brief-popup-width-expand (Phase C2) — 호영님 피드백:
+          //   "popup 이 견적 카드 위에 겹쳐서 양쪽 다 못 본다, 폭이 좁아서
+          //   텍스트 잘린다, 판단 근거 카드 '불가·수신...' 말줄임". 400px →
+          //   540px 확대 (호영님 spec 정합 폭). xl:1280px+ 에서 main canvas
+          //   reflow 없이 양쪽 같이 보기 가능. mobile sheet 분기 영향 0.
           "fixed top-16 right-0 z-40 hidden md:flex md:flex-col",
-          "h-[calc(100vh-4rem)] md:w-[400px]",
+          "h-[calc(100vh-4rem)] md:w-[400px] xl:w-[540px]",
           "border-l border-bd bg-white shadow-xl",
           "overflow-y-auto",
         )}

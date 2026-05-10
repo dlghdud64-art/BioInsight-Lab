@@ -25,6 +25,11 @@ describe("#operational-brief-popup-header-cutoff — desktop popup top offset", 
     expect(popup).toMatch(/fixed\s+top-16\s+right-0\s+z-40\s+hidden\s+md:flex/);
   });
 
+  it("#operational-brief-popup-width-expand — xl:540px 분기 (Phase C2)", () => {
+    // 호영님 폭 확대 spec: md:400px (기본) + xl:540px (1280px+ 에서 더 넓게).
+    expect(popup).toMatch(/md:w-\[400px\]\s+xl:w-\[540px\]/);
+  });
+
   it("desktop popup height 가 calc(100vh-4rem) 보정", () => {
     expect(popup).toMatch(/h-\[calc\(100vh-4rem\)\]/);
   });
