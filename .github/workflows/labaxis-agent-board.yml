@@ -24,17 +24,29 @@ on:
         required: false
         default: ""
       changed_file_3:
-        description: "Repo file path 3 only. Browser routes belong in browser_routes below."
+        description: "Repo file path 3 only. Browser routes use browser_route_1/2/3 below."
         required: false
         default: ""
       browser_url:
         description: "Staging/production URL for Browser Pilot safe-click checks."
         required: false
         default: "https://bio-insight-lab-web.vercel.app"
-      browser_routes:
-        description: "Screen routes for Browser Pilot, not files. Example: /dashboard/inventory,/dashboard/quotes,/app/search"
+      browser_route_1:
+        description: "Browser Pilot route 1. Screen route, not a repo file."
         required: false
         default: "/dashboard/inventory"
+      browser_route_2:
+        description: "Browser Pilot route 2. Leave blank to skip."
+        required: false
+        default: "/dashboard/quotes"
+      browser_route_3:
+        description: "Browser Pilot route 3. Query routes are OK, e.g. /app/search?q=PBS."
+        required: false
+        default: "/app/search?q=PBS"
+      browser_routes:
+        description: "Advanced/legacy extra Browser Pilot routes. Comma, newline, or space separated."
+        required: false
+        default: ""
       browser_click_mode:
         description: "Browser Pilot click mode: none, safe, all"
         required: false
@@ -127,6 +139,9 @@ jobs:
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
           LABAXIS_BROWSER_URL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL }}
+          LABAXIS_BROWSER_ROUTE_1: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_1 || '' }}
+          LABAXIS_BROWSER_ROUTE_2: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_2 || '' }}
+          LABAXIS_BROWSER_ROUTE_3: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_3 || '' }}
           LABAXIS_BROWSER_ROUTES: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_routes || vars.LABAXIS_BROWSER_ROUTES }}
           LABAXIS_BROWSER_CLICK_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_click_mode || vars.LABAXIS_BROWSER_CLICK_MODE }}
           LABAXIS_BROWSER_MAX_CLICKS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_max_clicks || vars.LABAXIS_BROWSER_MAX_CLICKS }}
@@ -166,13 +181,24 @@ jobs:
             BROWSER_ARGS+=(--max-clicks "${LABAXIS_BROWSER_MAX_CLICKS:-6}")
             BROWSER_ARGS+=(--assertion-profile "${LABAXIS_BROWSER_ASSERTION_PROFILE:-auto}")
             BROWSER_ARGS+=(--state-entry-profile "${LABAXIS_BROWSER_STATE_ENTRY_PROFILE:-auto}")
-            ROUTES_SOURCE="${LABAXIS_BROWSER_ROUTES:-/dashboard/inventory}"
+            ROUTES_SOURCE="$(printf '%s\n%s\n%s\n' \
+              "$LABAXIS_BROWSER_ROUTE_1" \
+              "$LABAXIS_BROWSER_ROUTE_2" \
+              "$LABAXIS_BROWSER_ROUTE_3")"
+            if [ -n "${LABAXIS_BROWSER_ROUTES:-}" ]; then
+              ROUTES_SOURCE="$(printf '%s\n%s\n' "$ROUTES_SOURCE" "$LABAXIS_BROWSER_ROUTES")"
+            fi
+            if [ -z "$(printf '%s' "$ROUTES_SOURCE" | tr -d '[:space:]')" ]; then
+              ROUTES_SOURCE="/dashboard/inventory"
+            fi
             ROUTES_SOURCE="$(printf '%s' "$ROUTES_SOURCE" | tr ',;' '\n')"
+            SEEN_ROUTES=""
             while IFS= read -r route; do
               for route_token in $route; do
                 route_token="$(echo "$route_token" | xargs)"
-                if [ -n "$route_token" ]; then
+                if [ -n "$route_token" ] && ! printf '%s\n' "$SEEN_ROUTES" | grep -Fxq "$route_token"; then
                   BROWSER_ARGS+=(--route "$route_token")
+                  SEEN_ROUTES="$(printf '%s\n%s' "$SEEN_ROUTES" "$route_token")"
                 fi
               done
             done <<< "$ROUTES_SOURCE"
