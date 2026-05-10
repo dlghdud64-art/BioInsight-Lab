@@ -548,8 +548,16 @@ function QuotesPageContent() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   // §11.221 — 운영 브리핑 판단 근거 collapsible (호영님 5월 8일 결론).
-  //   default 접힘 — 1차 노출은 한 줄 인과관계 요약, "상세 보기" 클릭 시 4 cell.
-  const [factsExpanded, setFactsExpanded] = useState(false);
+  // #operational-brief-3-section-compress (Phase B-2) — state 통합 + scope 확장.
+  //   호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세 아코디언).
+  //   default 접힘 — visible: § 1 narrative + § 2 한 줄 + § 4 다음 조치 + bottom CTA.
+  //   collapsed: § 2 4 cell + § 2 cont 회신·비교 + 최근 활동 + § 3 리스크 + AI 판단.
+  //   chip click → 자동 setBriefDetailExpanded(true) + scrollIntoView (collapsed 시
+  //   anchor 가 mount 되어야 scrollIntoView 작동 — expand 후 scroll).
+  const [briefDetailExpanded, setBriefDetailExpanded] = useState(false);
+  // backward compat alias — 기존 factsExpanded 사용처 (mobile §11.222 등) 보호.
+  const factsExpanded = briefDetailExpanded;
+  const setFactsExpanded = setBriefDetailExpanded;
   // §11.217 Phase 5 — chip scroll-spy active highlight.
   //   IntersectionObserver 로 detail panel scroll 시 visible section 의 chip
   //   자동 highlight. chip click 시 scrollIntoView + setActiveChipId 즉시 update.
@@ -1622,9 +1630,16 @@ function QuotesPageContent() {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  const el = document.getElementById(`brief-${c.id}`);
-                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  // #operational-brief-3-section-compress — collapsed 시 anchor 가
+                  //   mount 되어야 scrollIntoView 작동 → 자동 expand 후 next tick 에 scroll.
+                  if (c.id !== "summary" && c.id !== "next") {
+                    setBriefDetailExpanded(true);
+                  }
                   setActiveChipId(c.id);
+                  requestAnimationFrame(() => {
+                    const el = document.getElementById(`brief-${c.id}`);
+                    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  });
                 }}
                 aria-pressed={activeChipId === c.id}
                 className={
@@ -1782,6 +1797,13 @@ function QuotesPageContent() {
             )}
           </div>
 
+          {/* #operational-brief-3-section-compress Phase B-2 — 5 섹션 collapse.
+              호영님 redesign: 7 섹션 → 3 섹션 (한 줄 요약 + 다음 액션 + 상세).
+              brief-facts2 / 최근 활동 / brief-risks / AI 판단 4 영역 모두
+              briefDetailExpanded conditional 안 wrap. visible 보존: brief-summary
+              (§ 1) + brief-facts (§ 2 한 줄) + brief-next (§ 4) + bottom CTA. */}
+          {briefDetailExpanded && (<>
+
           {/* § 2 cont. 핵심 근거 (회신/비교) — response delta */}
           <div id="brief-facts2" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-2">회신 · 비교 현황</div>
@@ -1923,6 +1945,8 @@ function QuotesPageContent() {
               </p>
             )}
           </div>
+
+          </>)}{/* end #operational-brief-3-section-compress collapse */}
 
           {/* § 4. 다음 조치 — 연결 작업 + 발주 전환 정보 */}
           <section id="brief-next" className="px-4 py-3 scroll-mt-4">

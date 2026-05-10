@@ -35,10 +35,13 @@ describe("§11.222 — mobile bottom sheet 인과관계 정합", () => {
     expect(hasHelperCall || hasInlineEmoji).toBe(true);
   });
 
-  it("같은 factsExpanded state 재사용 (desktop + mobile 동일)", () => {
-    // factsExpanded state 1개만 정의 — mobile 도 같은 state 사용.
-    const stateMatches = src.match(/const\s+\[factsExpanded,\s*setFactsExpanded\]/g);
-    expect(stateMatches?.length).toBe(1);
+  it("같은 collapse state 재사용 (desktop + mobile 동일)", () => {
+    // #operational-brief-3-section-compress (Phase B-2) — factsExpanded 가 새
+    //   briefDetailExpanded 로 rename + alias 보존. mobile 도 같은 state 사용.
+    const newStateMatches = src.match(/const\s+\[briefDetailExpanded,\s*setBriefDetailExpanded\]/g);
+    expect(newStateMatches?.length).toBe(1);
+    // backward compat alias 보존 — factsExpanded = briefDetailExpanded.
+    expect(src).toMatch(/factsExpanded\s*=\s*briefDetailExpanded/);
   });
 
   it("mobile facts 의 3-row table (현재 상태 / 다음 액션 / 수신 견적) collapsed 안에 보존", () => {
