@@ -36,49 +36,49 @@ describe("#operational-brief-rail-conversion-g1 — desktop rail 영구 노출",
     expect(popup).toMatch(/isDesktopRail|desktopRail|isXlDesktop|!isOpen\s*&&\s*!/);
   });
 
-  it("desktop breakpoint detection — xl 또는 useMediaQuery / 등가 helper", () => {
-    // 현재 useIsMobile 만 있음. xl breakpoint detection (md~xl tablet vs xl rail) 분기 필요.
-    expect(popup).toMatch(/useIsXlDesktop|xl-breakpoint|matchMedia.*1280|isDesktopRail/);
+  it("desktop breakpoint detection — 2xl (1536px) breakpoint helper (Path C 상향)", () => {
+    // Path C: xl(1280) → 2xl(1536) 상향. useIsRailDesktop hook + matchMedia 1536.
+    expect(popup).toMatch(/useIsRailDesktop|matchMedia.*1536|isDesktopRail/);
   });
 });
 
 describe("#operational-brief-rail-conversion-g1 — desktop variant sticky / inline", () => {
-  it("desktop variant 가 fixed overlay 가 아닌 inline / sticky 분기 보유", () => {
-    // 현재 `fixed top-16 right-0 z-40 hidden md:flex` — fixed overlay.
-    // rail 모드: sticky 또는 그냥 inline (sibling reflow). xl: 분기 추가.
-    expect(popup).toMatch(/xl:sticky|xl:relative|xl:static|xl:flex|sticky\s+top-16|relative\s+md:flex/);
+  it("desktop variant 가 fixed overlay 가 아닌 inline / sticky 분기 보유 (2xl: Path C)", () => {
+    // Path C: xl→2xl breakpoint 상향. 2xl:static 분기.
+    expect(popup).toMatch(/2xl:sticky|2xl:relative|2xl:static|2xl:flex/);
   });
 
-  it("backdrop desktop hide (`xl:hidden`) — rail 영구 노출이라 backdrop 0", () => {
-    // line 427-431 backdrop `hidden md:block` 는 tablet 에서 backdrop 노출.
-    // xl 에서는 hidden 추가 — rail 모드 backdrop 의미 0.
-    expect(popup).toMatch(/backdrop[\s\S]{0,300}xl:hidden|xl:hidden[\s\S]{0,300}backdrop|hidden md:block xl:hidden|md:block xl:hidden/);
+  it("backdrop desktop hide (`2xl:hidden`) — rail 영구 노출이라 backdrop 0 (Path C)", () => {
+    // Path C: xl→2xl 상향. md:block 다음 2xl:hidden.
+    expect(popup).toMatch(/md:block 2xl:hidden|hidden md:block 2xl:hidden/);
   });
 });
 
 describe("#operational-brief-rail-conversion-g1 — desktop close / minimize hide", () => {
-  it("desktop close X 버튼 xl:hidden — rail 영구 노출이라 close 의미 0", () => {
-    // outer div 에 xl:hidden 적용. minimize + close 두 버튼 모두 hide.
-    // close cluster outer wrapper 패턴 매칭 (xl:hidden 다음 minimize → close 순).
-    expect(popup).toMatch(/xl:hidden[\s\S]{0,800}브리핑 닫기|브리핑 닫기[\s\S]{0,800}xl:hidden/);
+  it("desktop close X 버튼 2xl:hidden — rail 영구 노출이라 close 의미 0 (Path C)", () => {
+    expect(popup).toMatch(/2xl:hidden[\s\S]{0,800}브리핑 닫기|브리핑 닫기[\s\S]{0,800}2xl:hidden/);
   });
 
-  it("desktop minimize 버튼 xl:hidden — rail 모드 minimize 의미 0", () => {
-    // line 453-460 의 minimize button — xl 에서 hide.
-    expect(popup).toMatch(/브리핑 최소화[\s\S]{0,300}xl:hidden|xl:hidden[\s\S]{0,300}브리핑 최소화/);
+  it("desktop minimize 버튼 2xl:hidden — rail 모드 minimize 의미 0 (Path C)", () => {
+    expect(popup).toMatch(/브리핑 최소화[\s\S]{0,300}2xl:hidden|2xl:hidden[\s\S]{0,300}브리핑 최소화/);
   });
 });
 
-describe("#operational-brief-rail-conversion-g1 — floating-entry desktop hide", () => {
-  it("floating-entry button 에 xl:hidden 추가 — desktop rail 모드 진입점 중복 차단", () => {
-    expect(floating).toMatch(/xl:hidden/);
+describe("#operational-brief-rail-conversion-g1 — floating-entry desktop hide (Path C)", () => {
+  it("floating-entry button 에 2xl:hidden 추가 — desktop rail 모드 진입점 중복 차단", () => {
+    expect(floating).toMatch(/2xl:hidden/);
   });
 });
 
-describe("#operational-brief-rail-conversion-g1 — E4 상단 여백 rail 모드 압축", () => {
-  it("PopupCategoryGrid + PopupCategoryListWithExpand header padding xl 분기 — pt-6 pb-5 pr-20 → xl:pt-4 xl:pb-3 xl:pr-6", () => {
-    // close cluster hide 됐으니 pr-20 (close button width) 도 불필요. xl:pr-6 으로 축소.
-    expect(popup).toMatch(/xl:pt-4[\s\S]{0,40}xl:pb-3[\s\S]{0,40}xl:pr-6|xl:pt-4 xl:pb-3 xl:pr-6/);
+describe("#operational-brief-rail-conversion-g1 — E4 상단 여백 rail 모드 압축 (Path C)", () => {
+  it("PopupCategoryGrid + PopupCategoryListWithExpand header padding 2xl 분기 — pt-6 pb-5 pr-20 → 2xl:pt-4 2xl:pb-3 2xl:pr-6", () => {
+    expect(popup).toMatch(/2xl:pt-4[\s\S]{0,40}2xl:pb-3[\s\S]{0,40}2xl:pr-6|2xl:pt-4 2xl:pb-3 2xl:pr-6/);
+  });
+});
+
+describe("#operational-brief-rail-conversion-g1b — Path C rail width 축소", () => {
+  it("rail width 축소 — 2xl:w-[420px] 적용 (mockup spec)", () => {
+    expect(popup).toMatch(/2xl:w-\[420px\]/);
   });
 });
 
