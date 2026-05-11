@@ -67,11 +67,9 @@ export function OperationalBriefFloatingEntry({
       aria-expanded={open}
       aria-controls={controls}
       className={cn(
-        // #operational-brief-rail-conversion-g1 — desktop rail 모드 (2xl+) 는
-        //   rail 영구 노출이라 floating entry 진입점 중복 → 2xl:hidden 으로
-        //   hide. md~2xl / mobile (<md) 에서는 popup overlay 트리거 보존.
-        //   Path C: xl→2xl 상향 (1280~1536px 구간 popup overlay fallback).
-        "fixed bottom-6 right-6 z-40 2xl:hidden",
+        // #operational-brief-rail-conversion-g2 — G1 의 viewport hide 분기 revert.
+        //   모든 viewport 에서 button toggle (button click → popup open).
+        "fixed bottom-6 right-6 z-40",
         "inline-flex items-center gap-2",
         "h-12 px-5 rounded-full",
         "bg-slate-900 text-white",

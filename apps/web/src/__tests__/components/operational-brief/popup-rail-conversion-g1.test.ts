@@ -1,22 +1,18 @@
 /**
- * #operational-brief-rail-conversion-g1
+ * #operational-brief-rail-conversion-g2
  *
- * 호영님 Gemini Studio mockup Option A — popup overlay → desktop sticky right
- * rail 영구 노출 전환.
+ * G1 / g1b / g1c (rail 영구 노출 모드) revert. 호영님 spec 변경:
+ * popup overlay 모델 + button toggle + 노출 시 header 영역 (top-0)
+ * 까지 full-height + z-[60] (DashboardHeader z-50 위).
  *
- * 5 spec:
- *   1. desktop (xl 이상) rail 모드: isOpen 무관 항상 mount
- *      (현재 line 335 `if (!isOpen) return null` guard 가 desktop 에서는 무시).
- *   2. desktop variant: fixed top-16 right-0 → sticky 또는 main sibling
- *      (main content 와 reflow 균형, floating overlay 0).
- *   3. desktop close X 버튼 hide (`xl:hidden`) — rail 영구 노출이라 close 의미 0.
- *   4. desktop minimize 버튼 hide (`xl:hidden`) — rail 모드 minimize 의미 0.
- *   5. floating-entry 버튼 desktop hide (`xl:hidden`) — rail 항상 노출이라 trigger 0.
+ * Behavior:
+ *   desktop / tablet / mobile 모두 button (floating-entry) click → isOpen
+ *   toggle. isOpen=true 시 viewport top 부터 bottom 까지 full-height popup
+ *   노출. mobile = Radix Sheet (변경 0).
  *
  * canonical truth lock:
- *   - popup.tsx 의 19 cluster invariant 보존 (Phase A + D1~D5 + E1+E2 + F1)
- *   - mobile (Radix Sheet) + tablet (popup overlay) touch 0
- *   - mobile breakpoint < md, tablet breakpoint md~xl, desktop breakpoint ≥ xl
+ *   - 19 cluster invariant 보존 (Phase A + D1~D5 + E1+E2 + F1)
+ *   - mobile (`MobileOperationalBriefSheet` + Radix Sheet) touch 0
  *   - popup-context.tsx (isMinimized §11.195) touch 0
  */
 
@@ -29,68 +25,77 @@ const FLOATING_PATH = resolve(__dirname, "../../../components/operational-brief/
 const popup = readFileSync(POPUP_PATH, "utf8");
 const floating = readFileSync(FLOATING_PATH, "utf8");
 
-describe("#operational-brief-rail-conversion-g1 — desktop rail 영구 노출", () => {
-  it("isOpen guard 가 desktop rail 모드에서 무시 — !isOpen && !isDesktopRail 패턴 또는 등가", () => {
-    // line 335 의 단독 `if (!isOpen) return null` 는 desktop 에서도 unmount 시켜
-    // rail 영구 노출 spec 위반. desktop rail 분기 필요.
-    expect(popup).toMatch(/isDesktopRail|desktopRail|isXlDesktop|!isOpen\s*&&\s*!/);
+describe("#operational-brief-rail-conversion-g2 — G1 rail 영구 모드 revert", () => {
+  it("isOpen guard 단순화 — !isOpen 만 (G1 의 !isDesktopRail 분기 제거)", () => {
+    expect(popup).toMatch(/if\s*\(\s*!isOpen\s*\)\s*return\s+null/);
   });
 
-  it("desktop breakpoint detection — 2xl (1536px) breakpoint helper (Path C 상향)", () => {
-    // Path C: xl(1280) → 2xl(1536) 상향. useIsRailDesktop hook + matchMedia 1536.
-    expect(popup).toMatch(/useIsRailDesktop|matchMedia.*1536|isDesktopRail/);
-  });
-});
-
-describe("#operational-brief-rail-conversion-g1 — desktop variant sticky / inline", () => {
-  it("desktop variant 가 fixed overlay 가 아닌 inline / sticky 분기 보유 (2xl: Path C)", () => {
-    // Path C: xl→2xl breakpoint 상향. 2xl:static 분기.
-    expect(popup).toMatch(/2xl:sticky|2xl:relative|2xl:static|2xl:flex/);
+  it("useIsRailDesktop hook 제거됨", () => {
+    expect(popup).not.toMatch(/function useIsRailDesktop|useIsRailDesktop\(\)/);
   });
 
-  it("backdrop desktop hide (`2xl:hidden`) — rail 영구 노출이라 backdrop 0 (Path C)", () => {
-    // Path C: xl→2xl 상향. md:block 다음 2xl:hidden.
-    expect(popup).toMatch(/md:block 2xl:hidden|hidden md:block 2xl:hidden/);
+  it("isDesktopRail 변수 제거됨", () => {
+    expect(popup).not.toMatch(/const\s+isDesktopRail\s*=/);
   });
 });
 
-describe("#operational-brief-rail-conversion-g1 — desktop close / minimize hide", () => {
-  it("desktop close X 버튼 2xl:hidden — rail 영구 노출이라 close 의미 0 (Path C)", () => {
-    expect(popup).toMatch(/2xl:hidden[\s\S]{0,800}브리핑 닫기|브리핑 닫기[\s\S]{0,800}2xl:hidden/);
+describe("#operational-brief-rail-conversion-g2 — desktop popup full-height + header 영역", () => {
+  it("desktop variant top-0 (header 영역까지 노출)", () => {
+    // 기존 top-16 → top-0 swap.
+    expect(popup).toMatch(/fixed top-0 right-0 z-\[60\]/);
   });
 
-  it("desktop minimize 버튼 2xl:hidden — rail 모드 minimize 의미 0 (Path C)", () => {
-    expect(popup).toMatch(/브리핑 최소화[\s\S]{0,300}2xl:hidden|2xl:hidden[\s\S]{0,300}브리핑 최소화/);
+  it("desktop variant h-screen (full viewport height)", () => {
+    expect(popup).toMatch(/h-screen/);
   });
-});
 
-describe("#operational-brief-rail-conversion-g1 — floating-entry desktop hide (Path C)", () => {
-  it("floating-entry button 에 2xl:hidden 추가 — desktop rail 모드 진입점 중복 차단", () => {
-    expect(floating).toMatch(/2xl:hidden/);
+  it("desktop variant z-[60] — DashboardHeader z-50 위", () => {
+    expect(popup).toMatch(/z-\[60\]/);
   });
-});
 
-describe("#operational-brief-rail-conversion-g1 — E4 상단 여백 rail 모드 압축 (Path C)", () => {
-  it("PopupCategoryGrid + PopupCategoryListWithExpand header padding 2xl 분기 — pt-6 pb-5 pr-20 → 2xl:pt-4 2xl:pb-3 2xl:pr-6", () => {
-    expect(popup).toMatch(/2xl:pt-4[\s\S]{0,40}2xl:pb-3[\s\S]{0,40}2xl:pr-6|2xl:pt-4 2xl:pb-3 2xl:pr-6/);
-  });
-});
-
-describe("#operational-brief-rail-conversion-g1b — Path C rail width 축소", () => {
-  it("rail width 축소 — 2xl:w-[420px] 적용 (mockup spec)", () => {
+  it("기존 width 분기 보존 (md=400 / xl=540 / 2xl=420)", () => {
+    expect(popup).toMatch(/md:w-\[400px\]/);
+    expect(popup).toMatch(/xl:w-\[540px\]/);
     expect(popup).toMatch(/2xl:w-\[420px\]/);
   });
 });
 
-describe("#operational-brief-rail-conversion-g1c — dock chip desktop rail 모드 무시", () => {
-  it("dock chip 분기에 !isDesktopRail 추가 — minimize 잔존 state 회귀 차단", () => {
-    // tablet minimize 후 desktop resize 시 dock chip 만 노출 + rail 안 보이는 회귀 차단.
-    // 분기 패턴: isOpen && isMinimized && !isMobile && !isDesktopRail.
-    expect(popup).toMatch(/isMinimized\s*&&\s*!isMobile\s*&&\s*!isDesktopRail/);
+describe("#operational-brief-rail-conversion-g2 — close cluster + backdrop + button 항상 노출", () => {
+  it("desktop close X 버튼 2xl:hidden 제거됨 (close 항상 노출)", () => {
+    // close cluster outer div 에 2xl:hidden 잔존하지 않음.
+    expect(popup).not.toMatch(/right-3 top-2 z-10 flex items-center gap-1 2xl:hidden/);
+  });
+
+  it("backdrop 2xl:hidden 제거됨 (backdrop 항상 노출)", () => {
+    // hidden md:block 만 잔존 (2xl:hidden 추가 0).
+    expect(popup).toMatch(/hidden md:block bg-black/);
+    expect(popup).not.toMatch(/hidden md:block 2xl:hidden bg-black/);
+  });
+
+  it("floating-entry 2xl:hidden 제거됨 (button 모든 viewport 노출)", () => {
+    expect(floating).not.toMatch(/2xl:hidden/);
   });
 });
 
-describe("#operational-brief-rail-conversion-g1 — invariant 보존 (19 cluster)", () => {
+describe("#operational-brief-card-format-h1 — popup 내부 카드 디자인 강화", () => {
+  it("list container space-y-3 + 카드별 spacing", () => {
+    expect(popup).toMatch(/px-4 py-3 space-y-3/);
+  });
+
+  it("PopupItemRow 카드 형식 — rounded-xl + border + bg-white + shadow-sm", () => {
+    expect(popup).toMatch(/rounded-xl[\s\S]{0,80}border border-slate-200[\s\S]{0,40}bg-white[\s\S]{0,40}shadow-sm/);
+  });
+
+  it("hover shadow 강화 — hover:shadow-md", () => {
+    expect(popup).toMatch(/hover:shadow-md/);
+  });
+
+  it("기존 divide-y flat list 패턴 잔존하지 않음 (drift 차단)", () => {
+    expect(popup).not.toMatch(/divide-y divide-bd\/40[\s\S]{0,60}items\.map/);
+  });
+});
+
+describe("#operational-brief-rail-conversion-g2 — invariant 보존 (19 cluster)", () => {
   it("F1 LABAXIS AI INSIGHT 다크 + glow 보존", () => {
     expect(popup).toMatch(/bg-slate-900/);
     expect(popup).toMatch(/blur-2xl/);
@@ -103,7 +108,6 @@ describe("#operational-brief-rail-conversion-g1 — invariant 보존 (19 cluster
   });
 
   it("F1 back button 큰 영역 보존", () => {
-    // 양방향 매칭 — className 위 / aria-label 아래 또는 반대.
     expect(popup).toMatch(/aria-label="카테고리 목록으로"[\s\S]{0,400}px-3|px-3[\s\S]{0,400}aria-label="카테고리 목록으로"/);
   });
 
@@ -144,12 +148,12 @@ describe("#operational-brief-rail-conversion-g1 — invariant 보존 (19 cluster
     expect(popup).toMatch(/SheetPrimitive\.Root|SheetPrimitive\.Portal/);
   });
 
-  it("§11.195 minimize state 보존 (popup-context 와 정합)", () => {
+  it("§11.195 minimize state 보존", () => {
     expect(popup).toMatch(/isMinimized/);
     expect(popup).toMatch(/toggleMinimize/);
   });
 
   it("cluster trace marker", () => {
-    expect(popup).toMatch(/#operational-brief-rail-conversion-g1|rail conversion|rail 영구/);
+    expect(popup).toMatch(/#operational-brief-rail-conversion-g2|G1[\s\S]{0,30}revert/);
   });
 });
