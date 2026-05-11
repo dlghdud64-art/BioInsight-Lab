@@ -1,58 +1,48 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CalendarClock,
+  FlaskConical,
+  Info,
+  MapPin,
+  Package,
+  ShieldAlert,
+  ShieldCheck,
+  Trash2,
+} from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
-  SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  AlertTriangle,
-  Trash2,
-  ShieldAlert,
-  MapPin,
-  CalendarClock,
-  FlaskConical,
-  Package,
-  ArrowRight,
-  Info,
-  ShieldCheck,
-  ChevronRight,
-} from "lucide-react";
 import {
   resolveDisposal,
-  DISPOSAL_REASON_LABELS,
   type DisposalInput,
   type DisposalReason,
   type DisposalResolution,
 } from "@/lib/ontology/contextual-action/disposal-resolver";
 
-// ── Props ──
-
 export interface DisposalTarget {
-  /** 품목 정보 */
   productName: string;
   brand?: string;
   catalogNumber?: string;
   unit?: string;
-
-  /** LOT 정보 */
   lotNumber: string;
   lotQuantity: number;
   expiryDate: string;
   location?: string;
-
-  /** 위험물 */
   isHazardous?: boolean;
   hasMsds?: boolean;
   requiresIsolation?: boolean;
-
-  /** 전체 재고 */
   totalItemQuantity: number;
   safetyStock?: number;
   averageDailyUsage?: number;
@@ -73,6 +63,45 @@ interface LotDisposalPanelProps {
   onNavigateToReorder?: (productName: string) => void;
 }
 
+const REASON_LABELS: Record<DisposalReason, string> = {
+  expiry: "유효기간 만료",
+  contamination: "오염 또는 변질",
+  damage: "파손",
+  other: "기타",
+};
+
+function formatDate(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "확인 필요";
+  return date.toLocaleDateString("ko-KR");
+}
+
+function daysFromNow(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.ceil((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+}
+
+function buildResolution(target: DisposalTarget): DisposalResolution {
+  const input: DisposalInput = {
+    productName: target.productName,
+    brand: target.brand,
+    catalogNumber: target.catalogNumber,
+    unit: target.unit,
+    lotNumber: target.lotNumber,
+    lotQuantity: target.lotQuantity,
+    expiryDate: target.expiryDate,
+    location: target.location,
+    isHazardous: target.isHazardous,
+    hasMsds: target.hasMsds,
+    requiresIsolation: target.requiresIsolation,
+    totalItemQuantity: target.totalItemQuantity,
+    safetyStock: target.safetyStock,
+    averageDailyUsage: target.averageDailyUsage,
+  };
+  return resolveDisposal(input);
+}
+
 export function LotDisposalPanel({
   open,
   onOpenChange,
@@ -82,51 +111,36 @@ export function LotDisposalPanel({
   onNavigateToReorder,
 }: LotDisposalPanelProps) {
   const [disposalQty, setDisposalQty] = useState<number | null>(null);
-  const [selectedReason, setSelectedReason] = useState<DisposalReason | null>(null);
+  const [selectedReason, setSelectedReason] = useState<DisposalReason | null>(
+    null,
+  );
   const [reasonDetail, setReasonDetail] = useState("");
   const [quarantineChecked, setQuarantineChecked] = useState(false);
 
-  // Ontology resolution
-  const resolution: DisposalResolution | null = useMemo(() => {
-    if (!target) return null;
-    const input: DisposalInput = {
-      productName: target.productName,
-      brand: target.brand,
-      catalogNumber: target.catalogNumber,
-      unit: target.unit,
-      lotNumber: target.lotNumber,
-      lotQuantity: target.lotQuantity,
-      expiryDate: target.expiryDate,
-      location: target.location,
-      isHazardous: target.isHazardous,
-      hasMsds: target.hasMsds,
-      requiresIsolation: target.requiresIsolation,
-      totalItemQuantity: target.totalItemQuantity,
-      safetyStock: target.safetyStock,
-      averageDailyUsage: target.averageDailyUsage,
-    };
-    return resolveDisposal(input);
-  }, [target]);
-
-  // 패널 열릴 때 기본값 세팅
-  const effectiveQty = disposalQty ?? target?.lotQuantity ?? 0;
-  const effectiveReason = selectedReason ?? resolution?.defaultReason ?? "expiry";
-  const effectiveQuarantine = quarantineChecked || (resolution?.requiresQuarantine ?? false);
+  const resolution = useMemo(
+    () => (target ? buildResolution(target) : null),
+    [target],
+  );
 
   if (!target || !resolution) {
     return (
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="right" className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden" />
+        <SheetContent side="right" className="w-full p-0 sm:max-w-[460px]" />
       </Sheet>
     );
   }
 
   const unit = target.unit || "ea";
-  const expiryDate = new Date(target.expiryDate);
-  const isExpired = expiryDate.getTime() < Date.now();
-  const daysUntilExpiry = Math.ceil(
-    (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+  const effectiveQty = disposalQty ?? target.lotQuantity;
+  const effectiveReason = selectedReason ?? resolution.defaultReason;
+  const effectiveQuarantine =
+    quarantineChecked || resolution.requiresQuarantine;
+  const remainingAfterLotDisposal = Math.max(
+    target.totalItemQuantity - effectiveQty,
+    0,
   );
+  const daysUntilExpiry = daysFromNow(target.expiryDate);
+  const isExpired = daysUntilExpiry !== null && daysUntilExpiry < 0;
 
   const handleConfirm = () => {
     if (isSubmitting) return;
@@ -145,296 +159,345 @@ export function LotDisposalPanel({
         data-testid="labaxis-inventory-disposal-dock"
         data-legacy-testid="lot-disposal-dock"
         side="right"
-        className="w-full sm:max-w-[440px] p-0 flex flex-col overflow-hidden"
+        className="flex w-full flex-col overflow-hidden p-0 sm:max-w-[460px]"
       >
-        {/* ═══ 헤더 ═══ */}
-        <SheetHeader className="px-5 pt-5 pb-3 border-b border-slate-200/80 flex-shrink-0">
+        <SheetHeader className="border-b border-slate-200 px-5 pb-4 pt-5">
           <div className="flex items-center gap-2">
-            {resolution.requiresQuarantine && (
-              <ShieldAlert className="h-4 w-4 text-amber-500 flex-shrink-0" />
+            {effectiveQuarantine ? (
+              <ShieldAlert className="h-4 w-4 text-amber-600" />
+            ) : (
+              <Trash2 className="h-4 w-4 text-red-600" />
             )}
-            {!resolution.requiresQuarantine && (
-              <Trash2 className="h-4 w-4 text-red-500 flex-shrink-0" />
-            )}
-            <SheetTitle className="text-[15px] font-extrabold text-slate-900">
-              {resolution.title}
+            <SheetTitle className="text-[15px] font-extrabold text-slate-950">
+              폐기 승인 검토
             </SheetTitle>
           </div>
-          <SheetDescription className="text-[11px] text-slate-500 mt-0.5">
-            {resolution.description}
+          <SheetDescription className="text-[11px] leading-relaxed text-slate-500">
+            만료 또는 사용 금지 LOT는 재주문보다 먼저 폐기 영향을 확인합니다.
           </SheetDescription>
         </SheetHeader>
 
-        {/* ═══ 스크롤 영역 ═══ */}
         <div className="flex-1 overflow-y-auto">
-
-          {/* ── 1. 대상 정보 ── */}
-          <div className="p-5">
-            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              대상 정보
-            </h4>
-
-            {/* 품목명 */}
-            <div className="flex items-center gap-2 mb-3">
-              <FlaskConical className="h-4 w-4 text-slate-400" />
-              <span className="text-[13px] font-bold text-slate-900 truncate">
-                {target.productName}
-              </span>
-              {target.brand && (
-                <Badge variant="outline" className="text-[10px] h-4 px-1.5 border-slate-200 text-slate-500">
-                  {target.brand}
-                </Badge>
-              )}
+          <section className="space-y-3 p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase text-slate-400">
+                  대상 LOT
+                </p>
+                <h3 className="mt-1 truncate text-sm font-extrabold text-slate-950">
+                  {target.productName}
+                </h3>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {target.brand && (
+                    <Badge variant="outline">{target.brand}</Badge>
+                  )}
+                  {target.catalogNumber && (
+                    <Badge variant="outline">{target.catalogNumber}</Badge>
+                  )}
+                </div>
+              </div>
+              <Badge
+                className={
+                  isExpired
+                    ? "bg-red-600 text-white"
+                    : "bg-amber-600 text-white"
+                }
+              >
+                {isExpired ? "만료" : "검토"}
+              </Badge>
             </div>
 
-            {/* LOT / 위치 / 만료일 / 잔량 그리드 */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="px-3 py-2.5 rounded-lg border border-slate-100 bg-slate-50">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <FlaskConical className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-[10px] font-semibold text-slate-400">LOT</span>
-                </div>
-                <p className="text-sm font-extrabold text-slate-900">#{target.lotNumber}</p>
-              </div>
+              <Fact
+                icon={FlaskConical}
+                label="Lot ID"
+                value={target.lotNumber}
+                strong
+              />
+              <Fact
+                icon={Package}
+                label="폐기 수량"
+                value={`${effectiveQty} / ${target.lotQuantity} ${unit}`}
+                strong
+              />
+              <Fact
+                icon={CalendarClock}
+                label="Expiry"
+                value={formatDate(target.expiryDate)}
+                detail={
+                  daysUntilExpiry === null
+                    ? "날짜 확인 필요"
+                    : isExpired
+                      ? `${Math.abs(daysUntilExpiry)}일 경과`
+                      : `D-${daysUntilExpiry}`
+                }
+                danger={isExpired}
+              />
+              <Fact
+                icon={MapPin}
+                label="Location"
+                value={target.location || "미지정"}
+              />
+            </div>
+          </section>
 
-              <div className={`px-3 py-2.5 rounded-lg border border-slate-100 ${
-                isExpired ? "bg-red-50" : "bg-slate-50"
-              }`}>
-                <div className="flex items-center gap-1.5 mb-1">
-                  <CalendarClock className={`h-3.5 w-3.5 ${isExpired ? "text-red-500" : "text-slate-400"}`} />
-                  <span className="text-[10px] font-semibold text-slate-400">만료일</span>
-                </div>
-                <p className={`text-sm font-extrabold ${isExpired ? "text-red-600" : "text-slate-900"}`}>
-                  {expiryDate.toLocaleDateString("ko-KR")}
+          <Separator />
+
+          <section className="space-y-3 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase text-slate-400">
+                  폐기 사유
                 </p>
-                {isExpired && (
-                  <p className="text-[10px] font-bold text-red-500 mt-0.5">
-                    {Math.abs(daysUntilExpiry)}일 경과
-                  </p>
-                )}
-              </div>
-
-              <div className="px-3 py-2.5 rounded-lg border border-slate-100 bg-slate-50">
-                <div className="flex items-center gap-1.5 mb-1">
-                  <Package className="h-3.5 w-3.5 text-slate-400" />
-                  <span className="text-[10px] font-semibold text-slate-400">현재 잔량</span>
-                </div>
-                <p className="text-sm font-extrabold text-slate-900">
-                  {target.lotQuantity}<span className="text-xs font-normal text-slate-400 ml-0.5">{unit}</span>
+                <p className="text-xs text-slate-500">
+                  기본값은 LOT 상태에서 자동 제안됩니다.
                 </p>
               </div>
+              <Badge
+                variant="outline"
+                className="border-red-200 bg-red-50 text-red-700"
+              >
+                {REASON_LABELS[effectiveReason]}
+              </Badge>
+            </div>
 
-              {target.location && (
-                <div className="px-3 py-2.5 rounded-lg border border-slate-100 bg-slate-50">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    <span className="text-[10px] font-semibold text-slate-400">보관 위치</span>
-                  </div>
-                  <p className="text-sm font-bold text-slate-900 truncate">{target.location}</p>
-                </div>
+            <div className="grid grid-cols-2 gap-2">
+              {(Object.keys(REASON_LABELS) as DisposalReason[]).map(
+                (reason) => {
+                  const selected = effectiveReason === reason;
+                  return (
+                    <button
+                      key={reason}
+                      type="button"
+                      onClick={() => setSelectedReason(reason)}
+                      className={`rounded-md border px-3 py-2 text-left text-xs font-bold transition-colors ${
+                        selected
+                          ? "border-red-300 bg-red-50 text-red-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                      }`}
+                    >
+                      {REASON_LABELS[reason]}
+                    </button>
+                  );
+                },
               )}
             </div>
-          </div>
 
-          <Separator className="bg-slate-100" />
-
-          {/* ── 2. 폐기 사유 ── */}
-          <div className="p-5">
-            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              폐기 사유
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              {(Object.keys(DISPOSAL_REASON_LABELS) as DisposalReason[]).map((reason) => {
-                const isSelected = effectiveReason === reason;
-                return (
-                  <button
-                    key={reason}
-                    type="button"
-                    onClick={() => setSelectedReason(reason)}
-                    className={`px-3 py-2 rounded-lg border text-xs font-semibold transition-colors text-left ${
-                      isSelected
-                        ? "border-blue-300 bg-blue-50 text-blue-700"
-                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                    }`}
-                  >
-                    {DISPOSAL_REASON_LABELS[reason]}
-                  </button>
-                );
-              })}
-            </div>
             {effectiveReason === "other" && (
               <textarea
-                className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-300 resize-none"
-                rows={2}
-                placeholder="폐기 사유를 입력하세요..."
+                className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-red-200"
+                placeholder="폐기 사유 상세를 입력하세요."
                 value={reasonDetail}
-                onChange={(e) => setReasonDetail(e.target.value)}
+                onChange={(event) => setReasonDetail(event.target.value)}
               />
             )}
-          </div>
+          </section>
 
-          <Separator className="bg-slate-100" />
+          <Separator />
 
-          {/* ── 3. 처리 수량 ── */}
-          <div className="p-5">
-            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              처리 수량
-            </h4>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="number"
-                  min={1}
-                  max={target.lotQuantity}
-                  value={effectiveQty}
-                  onChange={(e) => setDisposalQty(Math.min(Number(e.target.value), target.lotQuantity))}
-                  className="w-20 h-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-bold text-slate-900 text-center focus:outline-none focus:ring-1 focus:ring-blue-300"
-                />
-                <span className="text-xs text-slate-500">/ {target.lotQuantity} {unit}</span>
+          <section className="space-y-3 p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase text-slate-400">
+                  처리 수량
+                </p>
+                <p className="text-xs text-slate-500">
+                  기본 CTA는 전체 LOT 폐기입니다.
+                </p>
               </div>
               <Button
+                type="button"
                 variant="outline"
                 size="sm"
-                className="h-8 text-[11px] border-slate-200"
+                className="h-8 text-[11px]"
                 onClick={() => setDisposalQty(target.lotQuantity)}
               >
-                전량 폐기
+                전체 LOT
               </Button>
             </div>
-          </div>
+            <input
+              type="number"
+              min={1}
+              max={target.lotQuantity}
+              value={effectiveQty}
+              onChange={(event) => {
+                const next = Math.max(
+                  1,
+                  Math.min(Number(event.target.value), target.lotQuantity),
+                );
+                setDisposalQty(
+                  Number.isFinite(next) ? next : target.lotQuantity,
+                );
+              }}
+              className="h-10 w-28 rounded-md border border-slate-200 px-3 text-center text-sm font-extrabold outline-none focus:ring-2 focus:ring-red-200"
+            />
+          </section>
 
-          <Separator className="bg-slate-100" />
+          <Separator />
 
-          {/* ── 4. 격리 필요 여부 ── */}
-          <div className="p-5">
-            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              격리 필요 여부
-            </h4>
-            {resolution.requiresQuarantine ? (
-              <div className="flex items-start gap-2 p-3 rounded-lg border border-amber-200 bg-amber-50/80">
-                <ShieldAlert className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
+          <section
+            data-testid="labaxis-inventory-post-disposal-impact"
+            data-legacy-testid="lot-disposal-impact-summary"
+            className="space-y-3 p-5"
+          >
+            <p className="text-[11px] font-bold uppercase text-slate-400">
+              재고 영향 고정 표시
+            </p>
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+                <ImpactRow
+                  label="현재 전체 재고"
+                  value={`${target.totalItemQuantity} ${unit}`}
+                />
+                <ImpactRow
+                  label="폐기 후 재고"
+                  value={`${remainingAfterLotDisposal} ${unit}`}
+                  strong
+                />
+                <ImpactRow
+                  label="안전 재고"
+                  value={
+                    target.safetyStock
+                      ? `${target.safetyStock} ${unit}`
+                      : "미설정"
+                  }
+                />
+                <ImpactRow
+                  label="상태"
+                  value={
+                    resolution.causesStockBreach
+                      ? "재고 부족 검토 필요"
+                      : "폐기 가능"
+                  }
+                  danger={resolution.causesStockBreach}
+                />
+              </dl>
+            </div>
+
+            {resolution.causesStockBreach ? (
+              <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
                 <div>
-                  <p className="text-xs font-bold text-slate-900">격리 조치 필요</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    {resolution.needsMsdsCheck
-                      ? "MSDS 미확보 위험물입니다. 격리 보관 후 MSDS 확인이 필요합니다."
-                      : "위험물 또는 격리 대상입니다. 별도 격리 보관 후 폐기를 진행합니다."}
+                  <p className="text-xs font-extrabold text-slate-950">
+                    폐기 후 재고 부족 가능
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                    재주문 검토는 폐기 승인 이후 보조 액션으로 이동합니다.
                   </p>
                 </div>
               </div>
             ) : (
-              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-slate-200 bg-white cursor-pointer hover:bg-slate-50 transition-colors">
-                <input
-                  type="checkbox"
-                  checked={quarantineChecked}
-                  onChange={(e) => setQuarantineChecked(e.target.checked)}
-                  className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-300"
-                />
+              <div className="flex gap-2 rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                 <div>
-                  <p className="text-xs font-semibold text-slate-700">격리 보관 후 폐기</p>
-                  <p className="text-[10px] text-slate-400">즉시 폐기가 어려운 경우 격리 구역으로 이동합니다</p>
+                  <p className="text-xs font-extrabold text-slate-950">
+                    폐기 후 안전 재고 유지
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-600">
+                    LOT 상태와 수량 차감 결과가 감사 로그에 남습니다.
+                  </p>
                 </div>
-              </label>
+              </div>
             )}
-          </div>
 
-          <Separator className="bg-slate-100" />
-
-          {/* ── 5. 폐기 후 영향 ── */}
-          <div
-            data-testid="labaxis-inventory-post-disposal-impact"
-            data-legacy-testid="lot-disposal-impact-summary"
-            className="p-5"
-          >
-            <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider mb-3">
-              폐기 후 영향
-            </h4>
-            <div className="space-y-2">
-              {/* 안전재고 미달 여부 */}
-              {resolution.causesStockBreach ? (
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-red-200 bg-red-50/80">
-                  <AlertTriangle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">안전재고 미달 발생</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      폐기 후 잔여 수량 {resolution.remainingAfterDisposal}{unit}으로, 안전재고({target.safetyStock}{unit}) 미만입니다.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-start gap-2 p-3 rounded-lg border border-slate-200 bg-slate-50">
-                  <ShieldCheck className="h-4 w-4 text-emerald-500 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-xs font-bold text-slate-900">안전재고 유지</p>
-                    <p className="text-[11px] text-slate-500 mt-0.5">
-                      폐기 후 잔여 수량 {resolution.remainingAfterDisposal}{unit}
-                      {target.safetyStock ? ` (안전재고 ${target.safetyStock}${unit})` : ""}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* 재주문 검토 필요 */}
-              {resolution.needsReorderReview && (
-                <button
-                  type="button"
-                  onClick={() => onNavigateToReorder?.(target.productName)}
-                  className="w-full flex items-center gap-2 p-3 rounded-lg border border-blue-200 bg-blue-50/80 hover:bg-blue-50 transition-colors text-left group"
-                >
-                  <ArrowRight className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs font-bold text-slate-900">재주문 검토 필요</p>
-                    <p className="text-[11px] text-slate-500">폐기 확정 후 재발주를 검토하세요</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-blue-400 group-hover:text-blue-600 flex-shrink-0" />
-                </button>
-              )}
+            <div className="flex gap-2 px-1 text-[10px] leading-relaxed text-slate-500">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <p>폐기 전에는 재주문 CTA를 주 행동으로 노출하지 않습니다.</p>
             </div>
-
-            {/* 감사 로그 안내 */}
-            <div className="flex items-start gap-2 mt-3 px-1">
-              <Info className="h-3.5 w-3.5 text-slate-300 mt-0.5 flex-shrink-0" />
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                폐기 기록은 감사 로그에 자동 반영되며, 수량 차감 및 LOT 상태 변경이 즉시 적용됩니다.
-              </p>
-            </div>
-          </div>
+          </section>
         </div>
 
-        {/* ═══ CTA (Sticky Bottom) ═══ */}
-        <div className="flex-shrink-0 border-t border-slate-200 bg-white px-5 py-3">
-          <div className="flex gap-2">
-            <Button
-              disabled={isSubmitting}
-              className={`flex-1 h-10 text-xs font-bold ${
-                effectiveQuarantine
-                  ? "bg-amber-600 hover:bg-amber-700 text-white"
-                  : "bg-red-600 hover:bg-red-700 text-white"
-              }`}
-              onClick={handleConfirm}
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-              {isSubmitting
-                ? "처리 중..."
-                : effectiveQuarantine
-                  ? "격리 후 폐기"
-                  : "폐기 확정"}
-            </Button>
-          </div>
+        <div className="border-t border-slate-200 bg-white px-5 py-3">
+          <Button
+            data-testid="labaxis-inventory-confirm-disposal-cta"
+            disabled={isSubmitting}
+            className="h-10 w-full bg-red-600 text-xs font-extrabold text-white hover:bg-red-700"
+            onClick={handleConfirm}
+          >
+            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+            {isSubmitting ? "폐기 반영 중..." : "폐기 승인"}
+          </Button>
 
           {resolution.needsReorderReview && onNavigateToReorder && (
             <Button
+              type="button"
               variant="ghost"
               size="sm"
-              className="w-full mt-2 h-7 text-[11px] text-slate-500 hover:text-slate-700"
+              className="mt-2 h-8 w-full text-[11px] text-slate-500"
               onClick={() => onNavigateToReorder(target.productName)}
             >
-              <ArrowRight className="h-3 w-3 mr-1" />
-              재주문 검토로 이동
+              <ArrowRight className="mr-1 h-3 w-3" />
+              폐기 후 재주문 검토로 이동
             </Button>
           )}
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function Fact({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  strong,
+  danger,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  detail?: string;
+  strong?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-lg border px-3 py-2.5 ${danger ? "border-red-200 bg-red-50" : "border-slate-100 bg-slate-50"}`}
+    >
+      <div className="mb-1 flex items-center gap-1.5">
+        <Icon
+          className={`h-3.5 w-3.5 ${danger ? "text-red-500" : "text-slate-400"}`}
+        />
+        <span className="text-[10px] font-bold uppercase text-slate-400">
+          {label}
+        </span>
+      </div>
+      <p
+        className={`truncate text-sm ${strong ? "font-extrabold" : "font-bold"} ${danger ? "text-red-700" : "text-slate-950"}`}
+      >
+        {value}
+      </p>
+      {detail && (
+        <p
+          className={`mt-0.5 text-[10px] font-bold ${danger ? "text-red-600" : "text-slate-500"}`}
+        >
+          {detail}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function ImpactRow({
+  label,
+  value,
+  strong,
+  danger,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+  danger?: boolean;
+}) {
+  return (
+    <>
+      <dt className="text-slate-500">{label}</dt>
+      <dd
+        className={`text-right ${strong ? "font-extrabold" : "font-bold"} ${danger ? "text-amber-700" : "text-slate-950"}`}
+      >
+        {value}
+      </dd>
+    </>
   );
 }
