@@ -2003,10 +2003,16 @@ function QuotesPageContent() {
                 </div>
               </div>
             )}
+            {/* #quotes-rail-cta-outline-contrast — 호영님 spec: outline variant
+                ("회신 검토 시작" 등) 가 Button default 의 bg-primary (blue) 위에
+                text-slate-700 만 override 되어 contrast 부족 (파란 배경 + 어두운
+                텍스트). bg-white + text-slate-900 + border 명시로 outline 본 의도
+                (흰 배경 + 어두운 글자 + 테두리) 정합. */}
             <Button
               data-testid={selectedSignals.actionKey === "request_send" ? "quote-dispatch-review-cta" : undefined}
               size="sm"
-              className={`w-full h-8 text-xs font-medium ${selectedDispatchBlocked ? "bg-slate-200 text-slate-500 cursor-not-allowed" : selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "border-bd text-slate-700"}`}
+              variant={selectedSignals.ctaVariant === "outline" ? "outline" : "default"}
+              className={`w-full h-8 text-xs font-medium ${selectedDispatchBlocked ? "bg-slate-200 text-slate-500 cursor-not-allowed" : selectedSignals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-white text-slate-900 border border-slate-300 hover:bg-slate-50"}`}
               onClick={() => {
                 if (selectedDispatchBlocked) return;
                 if (selectedSignals.actionKey) {
