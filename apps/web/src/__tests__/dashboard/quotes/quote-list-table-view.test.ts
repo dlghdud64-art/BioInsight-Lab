@@ -43,9 +43,9 @@ describe("§11.217 Phase 6 — quote list 카드 ↔ 테이블 toggle", () => {
   });
 
   it("table column header — 제목 / 상태 / 품목 / 회신", () => {
-    // table th 또는 thead 안 한국어 컬럼 라벨
-    expect(src).toMatch(/<th[\s\S]{0,200}제목/);
-    expect(src).toMatch(/<th[\s\S]{0,200}회신/);
+    // table th 또는 thead 안 한국어 컬럼 라벨 (sortable 분기 시 span wrap 허용).
+    expect(src).toMatch(/<th[\s\S]{0,500}제목/);
+    expect(src).toMatch(/<th[\s\S]{0,500}회신/);
   });
 
   it("§11.217 Phase 6 cluster trace marker", () => {

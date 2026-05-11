@@ -26,7 +26,8 @@ const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.226 #1 — 테이블 상태 뱃지 nowrap + min-width lock", () => {
   it("thead 상태 컬럼 min-w-[100px]", () => {
-    expect(page).toMatch(/<th[^>]{0,200}min-w-\[100px\][^>]{0,80}>상태<\/th>|<th[^>]{0,200}>상태<\/th>[\s\S]{0,200}min-w-\[100px\]/);
+    // §11.227 #9 — sortable wrap (span + onClick) 허용.
+    expect(page).toMatch(/<th[\s\S]{0,500}min-w-\[100px\][\s\S]{0,500}상태|상태[\s\S]{0,500}min-w-\[100px\]/);
   });
 
   it("tbody 상태 뱃지 whitespace-nowrap", () => {

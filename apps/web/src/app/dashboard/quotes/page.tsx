@@ -590,6 +590,43 @@ function QuoteCard({
         </div>
       </div>
 
+      {/* §11.227 #10c — 공급사 응답 미니 타임라인 (호영님 v2 P1 Phase B).
+          "발송 → 대기 → 수신" 3 stage 시각화. canonical truth = quote.status +
+          responseCount (별도 vendorRequests 데이터 모델 변경 0).
+          stage 분기:
+            - stage1 발송: quote.status !== 'PENDING' (SENT 이상)
+            - stage2 대기: quote.status === 'SENT' && responseCount === 0 (active amber)
+                         responseCount > 0 (done emerald) / PENDING (waiting slate)
+            - stage3 수신: responseCount > 0 (done emerald) / 미수신 (waiting slate) */}
+      <div className="mt-2.5 pt-2 border-t border-bd/50" aria-label="공급사 응답 진행">
+        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+          <span className="font-medium uppercase tracking-wider">공급사 응답</span>
+          {(() => {
+            const sent = quote.status !== "PENDING";
+            const waiting = quote.status === "SENT" && responseCount === 0;
+            const received = responseCount > 0;
+            // stage1 발송: sent → emerald / 미발송 → slate
+            const stage1Color = sent ? "bg-emerald-500" : "bg-slate-300";
+            // stage2 대기: received → emerald (지났음) / waiting → amber (active) / sent === false → slate
+            const stage2Color = received ? "bg-emerald-500" : waiting ? "bg-amber-500" : "bg-slate-300";
+            // stage3 수신: received → emerald / 미수신 → slate
+            const stage3Color = received ? "bg-emerald-500" : "bg-slate-300";
+            return (
+              <div className="flex items-center gap-1 ml-1">
+                <span className={`inline-block w-2 h-2 rounded-full ${stage1Color}`} aria-label={sent ? "발송 완료" : "발송 전"} />
+                <span className="text-slate-300">·</span>
+                <span className={`inline-block w-2 h-2 rounded-full ${stage2Color}`} aria-label={received ? "응답 수집 완료" : waiting ? "응답 대기 중" : "응답 대기 전"} />
+                <span className="text-slate-300">·</span>
+                <span className={`inline-block w-2 h-2 rounded-full ${stage3Color}`} aria-label={received ? "수신 완료" : "수신 전"} />
+                <span className="ml-1.5 text-slate-500">
+                  {sent ? "발송" : "미발송"} → {received ? "수신" : waiting ? "대기" : "대기 전"} → {received ? "완료" : "대기 중"}
+                </span>
+              </div>
+            );
+          })()}
+        </div>
+      </div>
+
       {/* 운영 실행 현황 */}
       <OpsExecutionContext entityType="QUOTE" entityId={quote.id} compact className="mt-2.5 pt-2.5 border-t border-bd/50" />
     </div>
@@ -634,7 +671,17 @@ function QuotesPageContent() {
   // §11.217 Phase 6 — quote list 보기 모드 (카드 ↔ 테이블 toggle).
   //   localStorage "labaxis-quote-view-mode" persist — 사용자 선호 기억.
   //   default "card" (호영님 기존 패턴 정합).
-  const [viewMode, setViewMode] = useState<"card" | "table">("card");
+  // §11.227 #9 — 테이블을 default 뷰로 전환 (호영님 v2 Phase B spec).
+  //   "실무자는 12건 이상을 한 화면에서 스캔" — 카드는 보조 뷰.
+  //   localStorage 우선 (§11.217 Phase 6) 정합 — 처음 1회만 영향.
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+
+  // §11.227 #9 — 테이블 sort state. column header 클릭 시 sortable.
+  //   key = null (initial) → DB 순서 그대로. key 설정 시 sortedQuotes derive.
+  const [sortState, setSortState] = useState<{
+    key: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+    direction: "asc" | "desc";
+  }>({ key: null, direction: "desc" });
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
@@ -1108,6 +1155,43 @@ function QuotesPageContent() {
     return result.sort((a, b) => getOpPriority(a) - getOpPriority(b));
   }, [quotes, searchQuery, statusFilter, modeChip, today]);
 
+  // §11.227 #9 — 테이블 sortedQuotes (sortState 가 set 됐을 때 column 별 정렬).
+  //   sortState.key === null 시 filteredQuotes 그대로 (default priority order).
+  //   key 별 사람-친화 비교: title (한국어 localeCompare), status/createdAt/itemCount/responseCount
+  //   모두 stable sort + ascending 또는 descending.
+  const sortedQuotes = useMemo(() => {
+    if (sortState.key === null) return filteredQuotes;
+    const sorted = [...filteredQuotes].sort((a, b) => {
+      let cmp = 0;
+      if (sortState.key === "title") {
+        cmp = (a.title || "").localeCompare(b.title || "", "ko");
+      } else if (sortState.key === "status") {
+        cmp = (a.status || "").localeCompare(b.status || "");
+      } else if (sortState.key === "itemCount") {
+        cmp = (a.items?.length ?? 0) - (b.items?.length ?? 0);
+      } else if (sortState.key === "responseCount") {
+        cmp = (a.responses?.length ?? 0) - (b.responses?.length ?? 0);
+      } else if (sortState.key === "createdAt") {
+        cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      }
+      return sortState.direction === "asc" ? cmp : -cmp;
+    });
+    return sorted;
+  }, [filteredQuotes, sortState]);
+
+  // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
+  const handleSortColumn = useCallback(
+    (key: "title" | "status" | "itemCount" | "responseCount" | "createdAt") => {
+      setSortState((prev) => {
+        if (prev.key === key) {
+          return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
+        }
+        return { key, direction: "asc" };
+      });
+    },
+    [],
+  );
+
   // ── Trace logging ──
   useEffect(() => {
     if (isLoading) console.log("[QuoteQueue] quote_queue_page_loading_started", { statusFilter, modeChip, searchQuery });
@@ -1435,15 +1519,49 @@ function QuotesPageContent() {
             #4 빈 컬럼 (가격/납기) 자동 hide — priceColumnHasData/deliveryColumnHasData
             #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
             #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
-      {!isLoading && viewMode === "table" && filteredQuotes.length > 0 && (
+      {!isLoading && viewMode === "table" && sortedQuotes.length > 0 && (
         <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
           <table className="w-full text-xs">
             <thead className="bg-slate-50 border-b border-bd">
               <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="px-3 py-2 min-w-[200px]">제목</th>
-                <th className="px-3 py-2 min-w-[100px]">상태</th>
-                <th className="px-3 py-2 text-center">품목</th>
-                <th className="px-3 py-2 text-center">회신</th>
+                {/* §11.227 #9 — sortable column header. 클릭 시 sortState toggle.
+                    activeSort 분기: ChevronUp / ChevronDown 노출. */}
+                <th
+                  className="px-3 py-2 min-w-[200px] cursor-pointer select-none hover:bg-slate-100"
+                  onClick={() => handleSortColumn("title")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    제목
+                    {sortState.key === "title" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </span>
+                </th>
+                <th
+                  className="px-3 py-2 min-w-[100px] cursor-pointer select-none hover:bg-slate-100"
+                  onClick={() => handleSortColumn("status")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    상태
+                    {sortState.key === "status" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </span>
+                </th>
+                <th
+                  className="px-3 py-2 text-center cursor-pointer select-none hover:bg-slate-100"
+                  onClick={() => handleSortColumn("itemCount")}
+                >
+                  <span className="inline-flex items-center gap-1 justify-center">
+                    품목
+                    {sortState.key === "itemCount" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </span>
+                </th>
+                <th
+                  className="px-3 py-2 text-center cursor-pointer select-none hover:bg-slate-100"
+                  onClick={() => handleSortColumn("responseCount")}
+                >
+                  <span className="inline-flex items-center gap-1 justify-center">
+                    회신
+                    {sortState.key === "responseCount" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </span>
+                </th>
                 {priceColumnHasData && (
                   <th className="px-3 py-2 text-right">가격</th>
                 )}
@@ -1451,12 +1569,20 @@ function QuotesPageContent() {
                   <th className="px-3 py-2">납기</th>
                 )}
                 <th className="px-3 py-2 text-center">우선순위</th>
-                <th className="px-3 py-2">등록</th>
+                <th
+                  className="px-3 py-2 cursor-pointer select-none hover:bg-slate-100"
+                  onClick={() => handleSortColumn("createdAt")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    등록
+                    {sortState.key === "createdAt" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
+                  </span>
+                </th>
                 <th className="px-3 py-2 text-right min-w-[120px]">액션</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-bd/40">
-              {filteredQuotes.map((quote) => {
+              {sortedQuotes.map((quote) => {
                 const signals = getOpSignals(quote);
                 const itemCount = quote.items?.length ?? 0;
                 const responseCount = quote.responses?.length ?? 0;
