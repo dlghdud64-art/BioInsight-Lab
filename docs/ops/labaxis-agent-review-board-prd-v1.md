@@ -2,15 +2,16 @@
 
 ## 1. Problem
 
-LabAxis is a research procurement operations OS. A small UI or state change can break source-of-truth lineage, handoff clarity, action hierarchy, or operator trust.
+LabAxis is a research procurement operations OS for research labs, biotech, pharma, hospitals, and clinical procurement teams. A small UI or state change can break source-of-truth lineage, handoff clarity, action hierarchy, or operator trust.
 
-Manual review alone is not enough because LabAxis changes must be checked across five axes every time:
+Manual review alone is not enough because LabAxis changes must be checked across six axes every time:
 
 - Strategy
 - Operations
 - Product
 - UX/UI
 - Conversion
+- Finance
 
 The current risk is that builder agents can optimize a single screen while accidentally weakening the full chain:
 
@@ -40,6 +41,8 @@ The board must:
 ## 4. Users
 
 - CEO / operating owner: final decision maker and priority setter.
+- COO / operations owner: protects execution ownership, queue control, escalation, and handoff reliability.
+- CFO / finance owner: protects budget visibility, approval integrity, spend risk, and auditability.
 - Builder agent: implements product changes.
 - Structure Guard: reviews canonical truth, lineage, preview boundaries, and mutation safety.
 - Ops Guard: reviews blocker, next action, handoff, and workflow continuity.
@@ -75,9 +78,12 @@ The runner should live outside the LabAxis product repo. The current local exter
 3. Structure Guard reviews truth and mutation boundaries.
 4. Ops Guard reviews operational clarity.
 5. UX Guard reviews workbench and visual hierarchy.
-6. Pilot User runs the selected scenario.
-7. Release Arbiter returns `go`, `revise`, or `hold`.
-8. Human operator approves merge or production deployment.
+6. CEO Reviewer reviews strategy, product positioning, and adoption confidence.
+7. COO Reviewer reviews operations ownership, queue control, escalation, and handoff continuity.
+8. CFO Reviewer reviews budget control, approval integrity, spend risk, and auditability.
+9. Pilot User runs the selected scenario.
+10. Release Arbiter returns `go`, `revise`, or `hold`.
+11. Human operator approves merge or production deployment.
 
 ## 7. Inputs
 
@@ -98,6 +104,9 @@ The board produces:
 - Structure Guard report
 - Ops Guard report
 - UX Guard report
+- CEO Reviewer report
+- COO Reviewer report
+- CFO Reviewer report
 - Pilot User report
 - Release Arbiter decision
 - required minimal diff before release
@@ -117,7 +126,8 @@ The board must return `hold` if any of these are true:
 - AI can auto-commit without operator review
 - critical CTA is clickable but not implemented
 - pilot scenario cannot complete
-- production data, migration, or authorization risk is unresolved
+- production data, purchasing, budget, supplier-send, migration, or authorization risk is unresolved
+- financially meaningful actions bypass approval or audit state
 - compare / request / review regresses to disconnected page-per-feature flow without product approval
 
 ## 10. CLI MVP

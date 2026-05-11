@@ -4,7 +4,7 @@ This document is the shared operating contract for LabAxis review agents, pilot 
 
 ## Product Definition
 
-LabAxis is a research procurement operations OS.
+LabAxis is a research procurement operations OS for research labs, biotech, pharma, hospitals, and clinical procurement teams.
 
 It is not a simple landing page, generic SaaS dashboard, or disconnected AI showcase. The core chain is:
 
@@ -12,13 +12,14 @@ Search -> Compare -> Request Quote -> Re-request / Reopen -> Approval -> PO -> D
 
 ## Review Axes
 
-Every judgment must map to these five axes:
+Every judgment must map to these six axes:
 
 - Strategy: does this strengthen LabAxis as a research procurement operations OS?
 - Operations: can an operator immediately understand the next action, blocker, and handoff?
 - Product: does this preserve the procurement-to-inventory chain rather than becoming a standalone feature page?
 - UX/UI: does the screen preserve workbench grammar, information hierarchy, and decision clarity?
 - Conversion: does the user know what to do next without visual or conceptual noise?
+- Finance: does this protect budget visibility, approval control, spend risk, and auditability?
 
 ## Absolute Non-Regression Rules
 
@@ -30,6 +31,7 @@ Every judgment must map to these five axes:
 - AI must remain tri-option decision support with human review before application.
 - Never expose dead buttons, placeholders, debug labels, raw internal keys, or unclear global icons.
 - Do not rewrite working structures without an explicit product reason.
+- Treat budget, approval, PO, supplier-send, receiving, stock, and reorder state as financial and operational control surfaces, not decorative dashboard data.
 
 ## Workbench Grammar
 
@@ -71,17 +73,23 @@ Do not repeat action needs as passive text when they should surface as row CTA, 
 All review and pilot agents must use this shape:
 
 ```md
-## 핵심 판단
-- Highest-risk issue first.
+## Priority Judgment
+- Highest priority: P0/P1/P2/P3/P4/None
+- Axis: Strategy / Operations / Product / UX/UI / Conversion / Finance
+- Release recommendation: go/revise/hold
 
-## 수정 제안
-1. 수정 대상
-2. 문제
-3. 변경점
-4. 제거 대상
-5. 대체안
-6. 검증 기준
-7. 완료 조건
+## Core Judgment
+- Problem: Highest-risk issue first.
+- User impact: What task, trust, cost, approval, or handoff is affected.
+
+## Fix Proposal
+1. Target
+2. Problem
+3. Change
+4. Remove
+5. Alternative
+6. Verification
+7. Done
 ```
 
 Findings must be concrete enough for a builder agent or engineer to implement with a minimal diff.
