@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
+import { RelativeDeliveryText } from "@/components/quotes/relative-delivery-text";
 import { NoSSR } from "@/components/ui/no-ssr";
 import { VendorRequestModal } from "@/components/quotes/dispatch/vendor-dispatch-workbench";
 import { resolveSuppliers, buildDraftMessage } from "@/components/quotes/dispatch/resolve-suppliers";
@@ -335,6 +336,10 @@ function QuoteCard({
   const responseCount = quote.responses?.length ?? 0;
   const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
+  // §11.223 #quote-card-batch3-price-delivery — 호영님 spec #4: 가격 범위 +
+  //   회신 수 통합 ("₩{min} ~ ₩{max} ({n}건 수신)"). minPrice === maxPrice 시
+  //   단일 값. prices.length === 0 시 "회신 N건 (가격 미기재)".
+  const maxPrice = prices.length ? Math.max(...prices) : null;
   const delayed = isDelayed(quote);
   const quoteRef = `#${quote.id.slice(0, 8).toUpperCase()}`;
   // §11.212 — daysSinceCreated 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
@@ -445,17 +450,33 @@ function QuoteCard({
             <span className="text-[11px] text-slate-500 flex items-center gap-1">
               <Package className="h-3 w-3" />{itemCount}건
             </span>
-            <span className={`text-[11px] flex items-center gap-1 ${responseCount > 0 ? "text-blue-600 font-medium" : "text-slate-500"}`}>
-              <Send className="h-3 w-3" />{responseCount > 0 ? `회신 ${responseCount}` : "미회신"}
-            </span>
-            {minPrice !== null && (
-              <span className="text-[11px] text-slate-700 font-medium">₩{minPrice.toLocaleString("ko-KR")}</span>
+            {/* §11.223 #quote-card-batch3-price-delivery — 호영님 spec #4:
+                회신 + 가격 통합 (수신 상태 / 미수신 상태 명시). 기존 분리된
+                회신 element + minPrice element → 1 element 로 통합. */}
+            {responseCount === 0 ? (
+              <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                <Send className="h-3 w-3" />견적 미수신
+              </span>
+            ) : (
+              <span className="text-[11px] text-slate-700 font-medium flex items-center gap-1">
+                <Send className="h-3 w-3 text-blue-600" />
+                {prices.length === 0
+                  ? `회신 ${responseCount}건 (가격 미기재)`
+                  : minPrice === maxPrice
+                    ? `₩${minPrice!.toLocaleString("ko-KR")} (${responseCount}건 수신)`
+                    : `₩${minPrice!.toLocaleString("ko-KR")} ~ ₩${maxPrice!.toLocaleString("ko-KR")} (${responseCount}건 수신)`}
+              </span>
             )}
             <RelativeTimeText iso={quote.createdAt} className="text-[11px] text-slate-500" />
+            {/* §11.223 #quote-card-batch3-price-delivery — 호영님 spec #4:
+                납기 절대 날짜 ("2026-05-15") → 상대 일수 ("X일 남음" / "오늘
+                마감" / "Y일 지연"). RelativeDeliveryText helper (useEffect
+                mount 후 set, §11.212 SSR/CSR drift 차단 패턴 mirror). */}
             {quote.deliveryDate && (
-              <span className={`text-[11px] flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}>
-                <Clock className="h-3 w-3" />납기 {new Date(quote.deliveryDate).toLocaleDateString("ko-KR")}
-              </span>
+              <RelativeDeliveryText
+                iso={quote.deliveryDate}
+                className={`text-[11px] flex items-center gap-1 ${delayed ? "text-red-600 font-semibold" : "text-slate-500"}`}
+              />
             )}
           </div>
         </div>
