@@ -178,11 +178,14 @@ jobs:
               BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
             elif [ -n "${AUTH_SECRET:-${NEXTAUTH_SECRET:-}}" ]; then
               STORAGE_STATE="$RUNNER_TEMP/labaxis-storage-state.json"
-              node src/run.mjs auth-token-state \
+              if node src/run.mjs auth-token-state \
                 --project "$GITHUB_WORKSPACE/labaxis" \
                 --url "$LABAXIS_BROWSER_URL" \
-                --storage-state "$STORAGE_STATE"
-              BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
+                --storage-state "$STORAGE_STATE"; then
+                BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
+              else
+                echo "::warning title=Auth state mint failed::Continuing without storage state so Agent Board can report the auth blocker."
+              fi
             fi
           fi
           node src/run.mjs ci \
