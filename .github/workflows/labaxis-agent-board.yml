@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       pilot:
-        description: "Pilot scenario id to review"
+        description: "Pilot scenario id to review. Use auto to infer from changed files."
         required: false
-        default: "03-expired-lot-disposal"
+        default: "auto"
       base_ref:
         description: "Manual diff base ref. Use HEAD~1 to review the latest pushed commit."
         required: false
@@ -24,7 +24,7 @@ on:
         required: false
         default: ""
       changed_file_3:
-        description: "Repo file path 3 only. Browser routes use browser_route_1/2/3 below."
+        description: "Repo file path 3 only. Browser routes belong in browser_routes below."
         required: false
         default: ""
       browser_url:
@@ -32,17 +32,17 @@ on:
         required: false
         default: "https://labaxis.co.kr"
       browser_route_1:
-        description: "Browser Pilot route 1. Screen route, not a repo file."
+        description: "Browser Pilot route 1. Use auto to infer from pilot/changed files."
         required: false
-        default: "/dashboard/inventory"
+        default: "auto"
       browser_route_2:
         description: "Browser Pilot route 2. Leave blank to skip."
         required: false
-        default: "/dashboard/quotes"
+        default: ""
       browser_route_3:
         description: "Browser Pilot route 3. Query routes are OK, e.g. /app/search?q=PBS."
         required: false
-        default: "/app/search?q=PBS"
+        default: ""
       browser_routes:
         description: "Advanced/legacy extra Browser Pilot routes. Comma, newline, or space separated."
         required: false
@@ -149,15 +149,20 @@ jobs:
           LABAXIS_BROWSER_STATE_ENTRY_PROFILE: ${{ vars.LABAXIS_BROWSER_STATE_ENTRY_PROFILE }}
           LABAXIS_STORAGE_STATE_JSON: ${{ secrets.LABAXIS_STORAGE_STATE_JSON }}
         run: |
-          PILOT="${LABAXIS_REVIEW_INPUT_PILOT:-${LABAXIS_REVIEW_PILOT:-03-expired-lot-disposal}}"
+          PILOT="${LABAXIS_REVIEW_INPUT_PILOT:-${LABAXIS_REVIEW_PILOT:-auto}}"
+          if [ -z "$PILOT" ]; then
+            PILOT="auto"
+          fi
           export OPENAI_AGENT_MODEL="${OPENAI_AGENT_MODEL:-gpt-5.4-mini}"
           export OPENAI_ARBITER_MODEL="${OPENAI_ARBITER_MODEL:-gpt-5.4-mini}"
           SUMMARY="Manual LabAxis Agent Board run"
           BASE_ARGS=()
           CHANGED_ARGS=()
+          REVIEW_CHANGED_FILES=""
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             SUMMARY="PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}"
             BASE_ARGS=(--base "origin/${{ github.base_ref }}")
+            REVIEW_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "origin/${{ github.base_ref }}"...HEAD || true)"
           else
             MANUAL_BASE="${LABAXIS_REVIEW_INPUT_BASE:-HEAD~1}"
             SUMMARY="Manual LabAxis Agent Board run (base: ${MANUAL_BASE})"
@@ -167,6 +172,10 @@ jobs:
               "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_1" \
               "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_2" \
               "$LABAXIS_REVIEW_INPUT_CHANGED_FILE_3")"
+            if [ -z "$(printf '%s' "$MANUAL_CHANGED_FILES" | tr -d '[:space:]')" ]; then
+              MANUAL_CHANGED_FILES="$(git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "$MANUAL_BASE"...HEAD || git -C "$GITHUB_WORKSPACE/labaxis" diff --name-only "$MANUAL_BASE" HEAD || true)"
+            fi
+            REVIEW_CHANGED_FILES="$MANUAL_CHANGED_FILES"
             while IFS= read -r file; do
               file="$(echo "$file" | xargs)"
               if [ -n "$file" ]; then
@@ -188,17 +197,30 @@ jobs:
             if [ -n "${LABAXIS_BROWSER_ROUTES:-}" ]; then
               ROUTES_SOURCE="$(printf '%s\n%s\n' "$ROUTES_SOURCE" "$LABAXIS_BROWSER_ROUTES")"
             fi
-            if [ -z "$(printf '%s' "$ROUTES_SOURCE" | tr -d '[:space:]')" ]; then
-              ROUTES_SOURCE="/dashboard/inventory"
+            ROUTES_COMPACT="$(printf '%s' "$ROUTES_SOURCE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+            if [ -z "$ROUTES_COMPACT" ] || [ "$ROUTES_COMPACT" = "auto" ]; then
+              ROUTE_HINT="$(printf '%s\n%s\n' "$PILOT" "$REVIEW_CHANGED_FILES" | tr '[:upper:]' '[:lower:]')"
+              if printf '%s' "$ROUTE_HINT" | grep -Eq 'quote|rfq|dashboard/quotes'; then
+                ROUTES_SOURCE="/dashboard/quotes"
+              elif printf '%s' "$ROUTE_HINT" | grep -Eq 'inventory|expired|lot|dashboard/inventory'; then
+                ROUTES_SOURCE="/dashboard/inventory"
+              elif printf '%s' "$ROUTE_HINT" | grep -Eq 'sourcing|search|compare|app/search|app/compare'; then
+                ROUTES_SOURCE="/app/search?q=PBS"
+              else
+                ROUTES_SOURCE="/dashboard/inventory /dashboard/quotes /app/search?q=PBS"
+              fi
             fi
             ROUTES_SOURCE="$(printf '%s' "$ROUTES_SOURCE" | tr ',;' '\n')"
-            SEEN_ROUTES=""
+            SEEN_ROUTES="|"
             while IFS= read -r route; do
               for route_token in $route; do
                 route_token="$(echo "$route_token" | xargs)"
-                if [ -n "$route_token" ] && ! printf '%s\n' "$SEEN_ROUTES" | grep -Fxq "$route_token"; then
+                if [ -n "$route_token" ]; then
+                  if printf '%s' "$SEEN_ROUTES" | grep -Fq "|$route_token|"; then
+                    continue
+                  fi
+                  SEEN_ROUTES="${SEEN_ROUTES}${route_token}|"
                   BROWSER_ARGS+=(--route "$route_token")
-                  SEEN_ROUTES="$(printf '%s\n%s' "$SEEN_ROUTES" "$route_token")"
                 fi
               done
             done <<< "$ROUTES_SOURCE"
