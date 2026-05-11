@@ -401,6 +401,15 @@ function QuoteCard({
             <AlertTriangle className="h-2.5 w-2.5" />{signals.blocker.length > 25 ? signals.blocker.substring(0, 25) + "…" : signals.blocker}
           </span>
         )}
+        {/* #quote-card-batch1-density — 호영님 spec #1: 긴급도 뱃지.
+            delayed=true (회신 지연) 시 solid red 뱃지 (E2 패턴 mirror —
+            bg-rose-500 + text-white). 한눈에 주의 식별. #9 정합 (이모지 →
+            컬러 도트 + 텍스트). */}
+        {delayed && (
+          <span className="inline-flex items-center px-1.5 py-0.5 rounded bg-rose-500 text-white text-[10px] font-bold">
+            긴급
+          </span>
+        )}
         <span className="text-[11px] text-slate-500 font-mono ml-auto">{quoteRef}</span>
       </div>
 
@@ -514,7 +523,15 @@ function QuoteCard({
                     ? current ? "bg-blue-500 shadow-sm shadow-blue-200" : "bg-emerald-500/50"
                     : "bg-slate-100"
                 }`} />
-                <span className={`text-[9px] sm:text-[8px] leading-tight whitespace-nowrap ${current ? "text-blue-600 font-semibold" : active ? "text-emerald-600/60" : "text-slate-300"}`}>{label}</span>
+                {/* #quote-card-batch1-density — 호영님 spec #2: 활성 단계 강조.
+                    기존 text-[8/9px] 단일 → current 분기 시 text-sm font-bold
+                    (14px) 강조. 호영님 spec "활성 단계 라벨만 14px bold" 정합.
+                    나머지 단계는 기존 작은 크기 유지 (시각 위계 보존). */}
+                <span className={`leading-tight whitespace-nowrap ${
+                  current ? "text-sm font-bold text-blue-700"
+                  : active ? "text-[8px] sm:text-[9px] text-emerald-600/60"
+                  : "text-[8px] sm:text-[9px] text-slate-300"
+                }`}>{label}</span>
               </div>
             );
           })}
