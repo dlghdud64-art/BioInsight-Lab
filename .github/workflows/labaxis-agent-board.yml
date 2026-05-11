@@ -6,59 +6,6 @@ on:
       - main
       - develop
   workflow_dispatch:
-    inputs:
-      pilot:
-        description: "Pilot scenario id to review. Use auto to infer from changed files."
-        required: false
-        default: "auto"
-      base_ref:
-        description: "Manual diff base ref. Use HEAD~1 to review the latest pushed commit."
-        required: false
-        default: "HEAD~1"
-      changed_file_1:
-        description: "Repo file path 1 only. Example: apps/web/src/... Do NOT enter /dashboard routes here."
-        required: false
-        default: ""
-      changed_file_2:
-        description: "Repo file path 2 only. Leave blank unless reviewing a specific file."
-        required: false
-        default: ""
-      changed_file_3:
-        description: "Repo file path 3 only. Browser routes belong in browser_routes below."
-        required: false
-        default: ""
-      browser_url:
-        description: "Staging/production URL for Browser Pilot safe-click checks."
-        required: false
-        default: "https://labaxis.co.kr"
-      browser_route_1:
-        description: "Browser Pilot route 1. Use auto to infer from pilot/changed files."
-        required: false
-        default: "auto"
-      browser_route_2:
-        description: "Browser Pilot route 2. Leave blank to skip."
-        required: false
-        default: ""
-      browser_route_3:
-        description: "Browser Pilot route 3. Query routes are OK, e.g. /app/search?q=PBS."
-        required: false
-        default: ""
-      browser_routes:
-        description: "Advanced/legacy extra Browser Pilot routes. Comma, newline, or space separated."
-        required: false
-        default: ""
-      browser_click_mode:
-        description: "Browser Pilot click mode: none, safe, all"
-        required: false
-        default: "safe"
-      browser_max_clicks:
-        description: "Maximum Browser Pilot safe-click samples"
-        required: false
-        default: "6"
-      browser_assertion_profile:
-        description: "Browser Pilot assertions: auto, all, inventory-disposal, quote-dispatch, sourcing-ai-compare"
-        required: false
-        default: "auto"
 
 permissions:
   contents: read
@@ -112,7 +59,6 @@ jobs:
         run: npm run test:contracts
 
       - name: Install Browser Pilot runtime
-        if: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url != '') || vars.LABAXIS_BROWSER_URL != '' }}
         working-directory: labaxis-agent-board
         run: npx playwright install chromium
 
@@ -138,14 +84,14 @@ jobs:
           LABAXIS_REVIEW_INPUT_CHANGED_FILE_3: ${{ github.event.inputs.changed_file_3 }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
-          LABAXIS_BROWSER_URL: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL }}
-          LABAXIS_BROWSER_ROUTE_1: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_1 || '' }}
-          LABAXIS_BROWSER_ROUTE_2: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_2 || '' }}
-          LABAXIS_BROWSER_ROUTE_3: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_route_3 || '' }}
+          LABAXIS_BROWSER_URL: ${{ github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL || 'https://labaxis.co.kr' }}
+          LABAXIS_BROWSER_ROUTE_1: ${{ github.event.inputs.browser_route_1 || 'auto' }}
+          LABAXIS_BROWSER_ROUTE_2: ${{ github.event.inputs.browser_route_2 || '' }}
+          LABAXIS_BROWSER_ROUTE_3: ${{ github.event.inputs.browser_route_3 || '' }}
           LABAXIS_BROWSER_ROUTES: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_routes || vars.LABAXIS_BROWSER_ROUTES }}
-          LABAXIS_BROWSER_CLICK_MODE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_click_mode || vars.LABAXIS_BROWSER_CLICK_MODE }}
-          LABAXIS_BROWSER_MAX_CLICKS: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_max_clicks || vars.LABAXIS_BROWSER_MAX_CLICKS }}
-          LABAXIS_BROWSER_ASSERTION_PROFILE: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.browser_assertion_profile || vars.LABAXIS_BROWSER_ASSERTION_PROFILE }}
+          LABAXIS_BROWSER_CLICK_MODE: ${{ github.event.inputs.browser_click_mode || vars.LABAXIS_BROWSER_CLICK_MODE || 'safe' }}
+          LABAXIS_BROWSER_MAX_CLICKS: ${{ github.event.inputs.browser_max_clicks || vars.LABAXIS_BROWSER_MAX_CLICKS || '6' }}
+          LABAXIS_BROWSER_ASSERTION_PROFILE: ${{ github.event.inputs.browser_assertion_profile || vars.LABAXIS_BROWSER_ASSERTION_PROFILE || 'auto' }}
           LABAXIS_BROWSER_STATE_ENTRY_PROFILE: ${{ vars.LABAXIS_BROWSER_STATE_ENTRY_PROFILE }}
           LABAXIS_STORAGE_STATE_JSON: ${{ secrets.LABAXIS_STORAGE_STATE_JSON }}
         run: |
