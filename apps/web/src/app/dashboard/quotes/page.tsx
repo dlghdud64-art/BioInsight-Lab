@@ -1358,7 +1358,9 @@ function QuotesPageContent() {
       )}
 
       {/* §11.217 Phase 6 — 테이블 보기 (단일 통합 테이블, 3 section 구분 row).
-          card 와 같은 데이터 (filteredQuotes) 다른 layout. 클릭 → 같은 detail panel. */}
+          card 와 같은 데이터 (filteredQuotes) 다른 layout. 클릭 → 같은 detail panel.
+          §11.224 #quote-table-price-delivery-parity — 카드 뷰 §11.223 spec parity
+          위해 가격/납기 2 컬럼 추가 (회신 옆 가격, 등록 옆 납기). 테이블 뷰 가격/납기 parity. */}
       {!isLoading && viewMode === "table" && filteredQuotes.length > 0 && (
         <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
           <table className="w-full text-xs">
@@ -1368,6 +1370,8 @@ function QuotesPageContent() {
                 <th className="px-3 py-2">상태</th>
                 <th className="px-3 py-2 text-center">품목</th>
                 <th className="px-3 py-2 text-center">회신</th>
+                <th className="px-3 py-2 text-right">가격</th>
+                <th className="px-3 py-2">납기</th>
                 <th className="px-3 py-2 text-center">우선순위</th>
                 <th className="px-3 py-2">등록</th>
                 <th className="px-3 py-2 text-right">액션</th>
@@ -1380,6 +1384,12 @@ function QuotesPageContent() {
                 const responseCount = quote.responses?.length ?? 0;
                 const railState = deriveRailState(quote);
                 const isSelected = selectedQuoteId === quote.id;
+                // §11.224 — 가격 range (테이블 row scope). 카드 분기 변수와 동일 의미.
+                const prices = (quote.responses ?? [])
+                  .map((r) => r.totalPrice)
+                  .filter((v): v is number => typeof v === "number" && v > 0);
+                const minPrice = prices.length ? Math.min(...prices) : null;
+                const maxPrice = prices.length ? Math.max(...prices) : null;
                 return (
                   <tr
                     key={quote.id}
@@ -1428,6 +1438,29 @@ function QuotesPageContent() {
                         </div>
                       ) : (
                         <span className="text-[10px] text-slate-400">—</span>
+                      )}
+                    </td>
+                    {/* §11.224 — 가격 range (카드 뷰 §11.223 mirror). */}
+                    <td className="px-3 py-2 text-right text-[11px] tabular-nums">
+                      {responseCount === 0 ? (
+                        <span className="text-slate-400">미수신</span>
+                      ) : prices.length === 0 ? (
+                        <span className="text-slate-400">가격 미기재</span>
+                      ) : minPrice === maxPrice ? (
+                        <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
+                      ) : (
+                        <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
+                      )}
+                    </td>
+                    {/* §11.224 — 납기 (RelativeDeliveryText reuse). */}
+                    <td className="px-3 py-2 text-[11px]">
+                      {quote.deliveryDate ? (
+                        <RelativeDeliveryText
+                          iso={quote.deliveryDate}
+                          className="text-slate-600"
+                        />
+                      ) : (
+                        <span className="text-slate-400">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2 text-center">
