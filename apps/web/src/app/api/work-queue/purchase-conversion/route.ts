@@ -91,8 +91,12 @@ export async function GET(_request: NextRequest) {
         replies: {
           select: { id: true, vendorName: true, fromEmail: true, receivedAt: true },
         },
-        order: {
+        orders: {
+          // 1 Quote → N Order (vendor 별 생성). resolver 는 단일 Order 기대.
+          // 가장 최근 Order 1개만 forward (latest-first).
           select: { id: true, orderNumber: true, status: true },
+          orderBy: { createdAt: "desc" as const },
+          take: 1,
         },
       },
     });
@@ -237,7 +241,7 @@ export async function GET(_request: NextRequest) {
         vendors: q.vendors,
         vendorRequests: q.vendorRequests,
         replies: q.replies,
-        order: q.order,
+        order: q.orders[0] ?? null,
         aiActions: aiActionsByQuote.get(q.id) ?? [],
         // §11.209d — quote 별 PurchaseRequest 목록 forward (latest by
         // createdAt 기준 internalApprovalStatus derive).
