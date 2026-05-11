@@ -7,6 +7,7 @@ import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobi
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
+import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
 import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -222,6 +223,25 @@ const RAIL_STATE_MAP: Record<RailState, {
     actionKey: "po_conversion",
   },
 };
+
+// §11.226 #quote-management-v2-phase-a — 호영님 v2 P0 #2 spec.
+//   테이블 뷰 한정 CTA 텍스트 축약 — 좁은 cell 폭에서 잘림 차단.
+//   카드 뷰는 원본 ctaLabel 유지 (시각 면적 충분).
+//   "12자 이내" 축약 룰 정합 (호영님 v2 spec sheet 디자인 원칙 9).
+//   매핑 외 label 은 원본 그대로 통과 (graceful fallback).
+function shortenActionLabel(ctaLabel: string): string {
+  const TABLE_ACTION_LABEL_SHORTCUTS: Record<string, string> = {
+    "견적 요청 발송": "발송",
+    "새 회신 보기": "회신 확인",
+    "재요청 보내기": "재요청",
+    "추가 회신 확보": "추가 회신",
+    "비교 결과 정리": "비교 정리",
+    "조건 확인": "조건 확인",
+    "승인 증빙 연결": "승인 연결",
+    "발주 실행 준비": "발주 준비",
+  };
+  return TABLE_ACTION_LABEL_SHORTCUTS[ctaLabel] ?? ctaLabel;
+}
 
 // ── 운영 신호 파생 (canonical state 기반) ──
 function getOpSignals(q: Quote) {
@@ -490,12 +510,14 @@ function QuoteCard({
           </div>
         </div>
 
-        {/* State-aware CTA — 모바일: 가로 전폭, sm+: 오른쪽 세로 */}
-        <div className="flex sm:flex-col gap-1.5 flex-shrink-0 w-full sm:w-auto sm:min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+        {/* State-aware CTA — 모바일: 가로 전폭, sm+: 오른쪽 세로
+            §11.226 #8 — 카드 CTA min-w-[140px] (sm+ 한정). 모바일은 가로 전폭으로
+            min-w 의미 없음. nowrap 강제로 텍스트 잘림 차단. */}
+        <div className="flex sm:flex-col gap-1.5 flex-shrink-0 w-full sm:w-auto sm:min-w-[140px]" onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"
             variant={signals.ctaVariant}
-            className={`h-9 sm:h-7 text-xs flex-1 sm:flex-none sm:w-full ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+            className={`h-9 sm:h-7 text-xs flex-1 sm:flex-none sm:w-full sm:min-w-[140px] whitespace-nowrap ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
             onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
           >
             {signals.ctaLabel}
@@ -757,6 +779,19 @@ function QuotesPageContent() {
       // ignore
     }
   }, [viewMode]);
+
+  // §11.226 #3 — 테이블 뷰 진입 시 popup 자동 close.
+  //   호영님 v2 spec sheet P0 #3: "테이블 뷰에서는 브리핑 패널을 기본 닫힘
+  //   상태로 전환 + 행 클릭 시 브리핑이 오버레이 드로어로 열림".
+  //   본 batch 는 자동 close 만 land — 행 클릭 자동 open 은 Phase B park
+  //   (§11.220d popup overlay model 회귀 위험 회피).
+  //   §11.142 lock 정합: popup-context spec 변경 0, close() 호출만.
+  const { close: closeOperationalBrief } = useOperationalBriefPopup();
+  useEffect(() => {
+    if (viewMode === "table") {
+      closeOperationalBrief();
+    }
+  }, [viewMode, closeOperationalBrief]);
 
   // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
   //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
@@ -1119,6 +1154,26 @@ function QuotesPageContent() {
     return { dispatchableCount: dispatchable, hardBlockCount: hardBlock };
   }, [selectedQuotes, organizationVendors, organizationVendorProducts]);
 
+  // §11.226 #4 — 빈 컬럼 자동 hide (가격 / 납기).
+  //   호영님 v2 spec sheet P0 #4: "컬럼 내 전체 행이 '—' 또는 null 이면 해당
+  //   컬럼 자동 숨김. 1건이라도 데이터가 있으면 컬럼 표시." filteredQuotes 전체
+  //   scan 으로 데이터 존재 여부 derive — useMemo 비용 negligible (100건 기준).
+  //   §11.142 lock 정합: canonical truth (quote.responses[].totalPrice / quote.deliveryDate)
+  //   변경 0. 표시만 hide.
+  const priceColumnHasData = useMemo(
+    () =>
+      filteredQuotes.some((q) =>
+        (q.responses ?? []).some(
+          (r) => typeof r.totalPrice === "number" && r.totalPrice > 0,
+        ),
+      ),
+    [filteredQuotes],
+  );
+  const deliveryColumnHasData = useMemo(
+    () => filteredQuotes.some((q) => Boolean(q.deliveryDate)),
+    [filteredQuotes],
+  );
+
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
@@ -1369,21 +1424,31 @@ function QuotesPageContent() {
       {/* §11.217 Phase 6 — 테이블 보기 (단일 통합 테이블, 3 section 구분 row).
           card 와 같은 데이터 (filteredQuotes) 다른 layout. 클릭 → 같은 detail panel.
           §11.224 #quote-table-price-delivery-parity — 카드 뷰 §11.223 spec parity
-          위해 가격/납기 2 컬럼 추가 (회신 옆 가격, 등록 옆 납기). 테이블 뷰 가격/납기 parity. */}
+          위해 가격/납기 2 컬럼 추가 (회신 옆 가격, 등록 옆 납기). 테이블 뷰 가격/납기 parity.
+          §11.226 #quote-management-v2-phase-a — 호영님 v2 P0 CRITICAL spec:
+            #1 상태 뱃지 nowrap + min-width 72px / 컬럼 100px
+            #2 액션 버튼 nowrap + min-width 80px + shortenActionLabel 축약
+            #4 빈 컬럼 (가격/납기) 자동 hide — priceColumnHasData/deliveryColumnHasData
+            #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
+            #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
       {!isLoading && viewMode === "table" && filteredQuotes.length > 0 && (
         <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
           <table className="w-full text-xs">
             <thead className="bg-slate-50 border-b border-bd">
               <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                <th className="px-3 py-2">제목</th>
-                <th className="px-3 py-2">상태</th>
+                <th className="px-3 py-2 min-w-[200px]">제목</th>
+                <th className="px-3 py-2 min-w-[100px]">상태</th>
                 <th className="px-3 py-2 text-center">품목</th>
                 <th className="px-3 py-2 text-center">회신</th>
-                <th className="px-3 py-2 text-right">가격</th>
-                <th className="px-3 py-2">납기</th>
+                {priceColumnHasData && (
+                  <th className="px-3 py-2 text-right">가격</th>
+                )}
+                {deliveryColumnHasData && (
+                  <th className="px-3 py-2">납기</th>
+                )}
                 <th className="px-3 py-2 text-center">우선순위</th>
                 <th className="px-3 py-2">등록</th>
-                <th className="px-3 py-2 text-right">액션</th>
+                <th className="px-3 py-2 text-right min-w-[120px]">액션</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-bd/40">
@@ -1399,6 +1464,17 @@ function QuotesPageContent() {
                   .filter((v): v is number => typeof v === "number" && v > 0);
                 const minPrice = prices.length ? Math.min(...prices) : null;
                 const maxPrice = prices.length ? Math.max(...prices) : null;
+                // §11.226 #5 — 테이블 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse).
+                //   카드 분기 (QuoteCard line 362~370) 와 동일 derive. firstItemName 없으면
+                //   quote.title fallback (graceful) — 데이터 모델 안정성 보장.
+                const firstItemName =
+                  quote.items?.[0]?.product?.name ?? quote.items?.[0]?.name ?? null;
+                const moreCount = Math.max(0, itemCount - 1);
+                const tableDisplayTitle = firstItemName
+                  ? moreCount > 0
+                    ? `${firstItemName} 외 ${moreCount}건`
+                    : firstItemName
+                  : quote.title;
                 return (
                   <tr
                     key={quote.id}
@@ -1410,10 +1486,10 @@ function QuotesPageContent() {
                     }
                   >
                     <td className="px-3 py-2 font-medium text-slate-900 max-w-[280px] truncate">
-                      {quote.title}
+                      {tableDisplayTitle}
                     </td>
                     <td className="px-3 py-2">
-                      <span className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                      <span className={`inline-flex justify-center whitespace-nowrap min-w-[72px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
                         railState === "request_not_sent" ? "bg-slate-100 text-slate-700"
                         : railState === "awaiting_responses" ? "bg-blue-100 text-blue-700"
                         : railState === "compare_review" ? "bg-purple-100 text-purple-700"
@@ -1449,29 +1525,35 @@ function QuotesPageContent() {
                         <span className="text-[10px] text-slate-400">—</span>
                       )}
                     </td>
-                    {/* §11.224 — 가격 range (카드 뷰 §11.223 mirror). */}
-                    <td className="px-3 py-2 text-right text-[11px] tabular-nums">
-                      {responseCount === 0 ? (
-                        <span className="text-slate-400">미수신</span>
-                      ) : prices.length === 0 ? (
-                        <span className="text-slate-400">가격 미기재</span>
-                      ) : minPrice === maxPrice ? (
-                        <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
-                      ) : (
-                        <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
-                      )}
-                    </td>
-                    {/* §11.224 — 납기 (RelativeDeliveryText reuse). */}
-                    <td className="px-3 py-2 text-[11px]">
-                      {quote.deliveryDate ? (
-                        <RelativeDeliveryText
-                          iso={quote.deliveryDate}
-                          className="text-slate-600"
-                        />
-                      ) : (
-                        <span className="text-slate-400">—</span>
-                      )}
-                    </td>
+                    {/* §11.224 — 가격 range (카드 뷰 §11.223 mirror).
+                        §11.226 #4 — 컬럼 hide 조건 추가 (priceColumnHasData). */}
+                    {priceColumnHasData && (
+                      <td className="px-3 py-2 text-right text-[11px] tabular-nums">
+                        {responseCount === 0 ? (
+                          <span className="text-slate-400">미수신</span>
+                        ) : prices.length === 0 ? (
+                          <span className="text-slate-400">가격 미기재</span>
+                        ) : minPrice === maxPrice ? (
+                          <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
+                        ) : (
+                          <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
+                        )}
+                      </td>
+                    )}
+                    {/* §11.224 — 납기 (RelativeDeliveryText reuse).
+                        §11.226 #4 — 컬럼 hide 조건 추가 (deliveryColumnHasData). */}
+                    {deliveryColumnHasData && (
+                      <td className="px-3 py-2 text-[11px]">
+                        {quote.deliveryDate ? (
+                          <RelativeDeliveryText
+                            iso={quote.deliveryDate}
+                            className="text-slate-600"
+                          />
+                        ) : (
+                          <span className="text-slate-400">—</span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-3 py-2 text-center">
                       <span className={`inline-block w-2 h-2 rounded-full ${
                         signals.priority === "critical" ? "bg-red-500"
@@ -1483,6 +1565,8 @@ function QuotesPageContent() {
                       <RelativeTimeText iso={quote.createdAt} />
                     </td>
                     <td className="px-3 py-2 text-right">
+                      {/* §11.226 #2 — 액션 Button nowrap + min-w-[80px] + shortenActionLabel 축약.
+                          호영님 v2 P0 #2 spec: 액션 셀 좁아 잘림 차단. */}
                       <Button
                         size="sm"
                         variant={signals.ctaVariant}
@@ -1490,9 +1574,9 @@ function QuotesPageContent() {
                           e.stopPropagation();
                           openQuoteContextRail(quote.id, "row");
                         }}
-                        className={`h-7 text-[11px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+                        className={`h-7 text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
                       >
-                        {signals.ctaLabel}
+                        {shortenActionLabel(signals.ctaLabel)}
                       </Button>
                     </td>
                   </tr>

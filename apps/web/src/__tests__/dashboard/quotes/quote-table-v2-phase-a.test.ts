@@ -1,0 +1,167 @@
+/**
+ * §11.226 #quote-management-v2-phase-a — 호영님 v2 P0 CRITICAL 6항목
+ *
+ * 호영님 v2 spec sheet (2026-05-11):
+ *   #1 테이블 상태 뱃지 nowrap + min-width 72px (열 100px) + 축약 규칙
+ *   #2 테이블 액션 버튼 nowrap + min-width 80px (열 120px) + 축약
+ *   #3 테이블 뷰 진입 시 popup 자동 닫음 (가로 스크롤 차단)
+ *   #4 가격/납기 컬럼 데이터 0 시 자동 hide
+ *   #5 테이블 제목 열 = firstItemName + 외 N건 (§11.217 helper reuse)
+ *   #8 CTA min-width — 카드 140px / 테이블 80px
+ *
+ * canonical truth lock:
+ *   - quote.responses[].totalPrice / quote.deliveryDate / quote.items[0].name 변경 0
+ *   - popup-context spec 변경 0 (page.tsx 에서 close() 호출만)
+ *   - RAIL_STATE_MAP badge / ctaLabel 변경 0 (축약은 별도 함수)
+ *   - §11.217 firstItemName + §11.220d popup model + §11.221 + §11.223 +
+ *     §11.224 + §11.225 cluster invariant 보존
+ */
+
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
+const page = readFileSync(PAGE_PATH, "utf8");
+
+describe("§11.226 #1 — 테이블 상태 뱃지 nowrap + min-width lock", () => {
+  it("thead 상태 컬럼 min-w-[100px]", () => {
+    expect(page).toMatch(/<th[^>]{0,200}min-w-\[100px\][^>]{0,80}>상태<\/th>|<th[^>]{0,200}>상태<\/th>[\s\S]{0,200}min-w-\[100px\]/);
+  });
+
+  it("tbody 상태 뱃지 whitespace-nowrap", () => {
+    // viewMode === 'table' 분기 안 상태 td 의 span 에 whitespace-nowrap
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?signals\.badge[\s\S]{0,800}whitespace-nowrap|viewMode === "table"[\s\S]*?whitespace-nowrap[\s\S]{0,800}signals\.badge/);
+  });
+
+  it("tbody 상태 뱃지 min-w-[72px]", () => {
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?signals\.badge[\s\S]{0,800}min-w-\[72px\]|viewMode === "table"[\s\S]*?min-w-\[72px\][\s\S]{0,800}signals\.badge/);
+  });
+});
+
+describe("§11.226 #2 — 테이블 액션 버튼 nowrap + min-width + 축약", () => {
+  it("thead 액션 컬럼 min-w-[120px]", () => {
+    expect(page).toMatch(/<th[^>]{0,200}min-w-\[120px\][^>]{0,80}>액션<\/th>|<th[^>]{0,200}>액션<\/th>[\s\S]{0,200}min-w-\[120px\]/);
+  });
+
+  it("tbody 액션 Button whitespace-nowrap + min-w-[80px]", () => {
+    // 테이블 분기 안 Button className 에 nowrap + min-w-[80px]
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,500}whitespace-nowrap[\s\S]{0,200}min-w-\[80px\]|viewMode === "table"[\s\S]*?Button[\s\S]{0,500}min-w-\[80px\][\s\S]{0,200}whitespace-nowrap/);
+  });
+
+  it("shortenActionLabel 함수 정의 (테이블 한정 축약)", () => {
+    // 축약 매핑: '견적 요청 발송' → '발송', '새 회신 보기' → '회신 확인',
+    // '재요청 보내기' → '재요청', '추가 회신 확보' → '추가 회신', '비교 결과 정리' → '비교 정리'
+    expect(page).toMatch(/function shortenActionLabel|const shortenActionLabel/);
+  });
+
+  it("shortenActionLabel 매핑 — '견적 요청 발송' → '발송'", () => {
+    expect(page).toMatch(/shortenActionLabel[\s\S]{0,1500}견적 요청 발송[\s\S]{0,200}["']발송["']/);
+  });
+
+  it("shortenActionLabel 매핑 — '새 회신 보기' → '회신 확인'", () => {
+    expect(page).toMatch(/shortenActionLabel[\s\S]{0,1500}새 회신 보기[\s\S]{0,200}["']회신 확인["']/);
+  });
+
+  it("테이블 분기 Button 안 shortenActionLabel(signals.ctaLabel) 호출", () => {
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?shortenActionLabel\(signals\.ctaLabel\)|viewMode === "table"[\s\S]*?\{shortenActionLabel/);
+  });
+});
+
+describe("§11.226 #3 — 테이블 진입 시 popup auto-close", () => {
+  it("useOperationalBriefPopup hook import", () => {
+    expect(page).toMatch(/useOperationalBriefPopup/);
+  });
+
+  it("close 함수 useEffect 안 호출 (viewMode === 'table' 분기)", () => {
+    // useEffect deps [viewMode] + viewMode === 'table' → close() 패턴
+    expect(page).toMatch(/useEffect\([\s\S]{0,500}viewMode === "table"[\s\S]{0,300}close\(\)|useEffect\([\s\S]{0,500}close\(\)[\s\S]{0,300}viewMode === "table"/);
+  });
+
+  it("useEffect deps 에 viewMode 포함", () => {
+    expect(page).toMatch(/useEffect\([\s\S]{0,800}viewMode === "table"[\s\S]{0,500}\},\s*\[[\s\S]{0,200}viewMode/);
+  });
+});
+
+describe("§11.226 #4 — 빈 컬럼 자동 hide (가격/납기)", () => {
+  it("priceColumnHasData useMemo 정의 (filteredQuotes scan)", () => {
+    expect(page).toMatch(/priceColumnHasData[\s\S]{0,80}useMemo|const priceColumnHasData/);
+  });
+
+  it("deliveryColumnHasData useMemo 정의", () => {
+    expect(page).toMatch(/deliveryColumnHasData[\s\S]{0,80}useMemo|const deliveryColumnHasData/);
+  });
+
+  it("thead 가격 컬럼 조건 render — priceColumnHasData &&", () => {
+    expect(page).toMatch(/priceColumnHasData\s*&&\s*\(?[\s\S]{0,300}<th[^>]{0,100}>가격<\/th>/);
+  });
+
+  it("thead 납기 컬럼 조건 render — deliveryColumnHasData &&", () => {
+    expect(page).toMatch(/deliveryColumnHasData\s*&&\s*\(?[\s\S]{0,300}<th[^>]{0,100}>납기<\/th>/);
+  });
+
+  it("tbody 가격 td 조건 render", () => {
+    expect(page).toMatch(/priceColumnHasData\s*&&\s*\(?[\s\S]{0,800}responseCount === 0/);
+  });
+
+  it("tbody 납기 td 조건 render", () => {
+    expect(page).toMatch(/deliveryColumnHasData\s*&&\s*\(?[\s\S]{0,500}quote\.deliveryDate/);
+  });
+});
+
+describe("§11.226 #5 — 테이블 제목 열 품목명 (§11.217 helper reuse)", () => {
+  it("테이블 tbody 안 deriveTitle helper 호출 또는 displayTitle inline", () => {
+    // (a) helper 함수 deriveQuoteDisplayTitle / (b) tbody scope 안 inline derive
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?(deriveQuoteDisplayTitle|firstItemName[\s\S]{0,100}moreCount[\s\S]{0,200}외 \$\{moreCount\}건)/);
+  });
+
+  it("테이블 제목 td 가 quote.title 단순 노출이 아님 (drift sentinel)", () => {
+    // tbody 안 첫 td (제목) 에서 직접 quote.title 사용 0 (helper / displayTitle 통과)
+    expect(page).not.toMatch(/viewMode === "table"[\s\S]*?<td className="px-3 py-2 font-medium[\s\S]{0,300}\{quote\.title\}/);
+  });
+});
+
+describe("§11.226 #8 — CTA min-width 강제", () => {
+  it("카드 분기 Button min-w-[140px] (테이블 분기 외 영역)", () => {
+    // 카드 QuoteCard / 카드 분기 안 Button className 에 min-w-[140px]
+    expect(page).toMatch(/min-w-\[140px\]/);
+  });
+
+  it("테이블 분기 Button min-w-[80px] (이미 #2 에서 검증)", () => {
+    // #2 에서 검증한 패턴 재확인
+    expect(page).toMatch(/viewMode === "table"[\s\S]*?Button[\s\S]{0,800}min-w-\[80px\]/);
+  });
+});
+
+describe("§11.226 invariant 보존 (cluster lineage)", () => {
+  it("§11.217 firstItemName + displayTitle helper 보존", () => {
+    expect(page).toMatch(/firstItemName/);
+    expect(page).toMatch(/displayTitle/);
+  });
+
+  it("§11.220d popup-context spec 변경 0 — close() 호출만", () => {
+    // close 호출만 추가, setIsOpen 직접 호출 없음
+    expect(page).not.toMatch(/popupContext\.setIsOpen\(/);
+  });
+
+  it("§11.221 긴급 뱃지 (delayed bg-rose-500) 보존", () => {
+    expect(page).toMatch(/bg-rose-500[\s\S]{0,80}긴급|긴급[\s\S]{0,80}bg-rose-500/);
+  });
+
+  it("§11.223 RelativeDeliveryText helper 보존", () => {
+    expect(page).toMatch(/RelativeDeliveryText/);
+  });
+
+  it("§11.224 테이블 thead 9 컬럼 유지 — 가격 + 납기 포함", () => {
+    expect(page).toMatch(/<th[^>]{0,200}>가격<\/th>/);
+    expect(page).toMatch(/<th[^>]{0,200}>납기<\/th>/);
+  });
+
+  it("§11.225 organizationVendorProducts 인자 3 caller forward 보존", () => {
+    expect(page).toMatch(/getQuoteDispatchPreflight\([\s\S]{0,200}organizationVendorProducts/);
+  });
+
+  it("cluster trace marker (§11.226)", () => {
+    expect(page).toMatch(/§11\.226|#quote-management-v2-phase-a|v2 P0 CRITICAL/);
+  });
+});
