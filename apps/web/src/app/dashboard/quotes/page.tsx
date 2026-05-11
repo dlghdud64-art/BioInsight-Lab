@@ -271,6 +271,11 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // #user-supplier-registration Phase 5 — organizationVendors optional param.
 //   resolveSuppliers 의 org_book source 정합 — operator 직접 등록한 거래처
 //   가 있으면 preflight 의 includedSuppliers 에 자동 포함.
+// §11.225 #quote-dispatch-preflight-org-vendor-products-arg — P0 hot fix.
+//   organizationVendorProducts 인자 추가. line 293 resolveSuppliers 호출이
+//   3 변수를 받아야 하는데 함수 시그니처가 2 인자만이라 module-scope 함수가
+//   QuotesPageContent 안 useMemo (line 843) closure 시도 → runtime
+//   ReferenceError. caller 3 spot (single / bulk / BatchSheet) 도 forward.
 function getQuoteDispatchPreflight(
   q: Quote | null,
   organizationVendors: Array<{
@@ -280,6 +285,10 @@ function getQuoteDispatchPreflight(
     vendorPhone?: string | null;
     isPrimary?: boolean;
     notes?: string | null;
+  }> = [],
+  organizationVendorProducts: Array<{
+    vendorId: string;
+    productId: string;
   }> = [],
 ): QuoteDispatchPreflight {
   if (!q) {
@@ -938,9 +947,9 @@ function QuotesPageContent() {
   const selectedSignals = selectedQuote ? getOpSignals(selectedQuote) : null;
   const selectedDispatchPreflight = useMemo(
     () => selectedQuote && selectedSignals?.actionKey === "request_send"
-      ? getQuoteDispatchPreflight(selectedQuote, organizationVendors)
+      ? getQuoteDispatchPreflight(selectedQuote, organizationVendors, organizationVendorProducts)
       : null,
-    [selectedQuote, selectedSignals?.actionKey],
+    [selectedQuote, selectedSignals?.actionKey, organizationVendors, organizationVendorProducts],
   );
   const selectedDispatchBlocked = !!selectedDispatchPreflight?.hardBlocked;
 
@@ -1103,12 +1112,12 @@ function QuotesPageContent() {
     let dispatchable = 0;
     let hardBlock = 0;
     for (const q of selectedQuotes) {
-      const preflight = getQuoteDispatchPreflight(q, organizationVendors);
+      const preflight = getQuoteDispatchPreflight(q, organizationVendors, organizationVendorProducts);
       if (preflight.hardBlocked) hardBlock += 1;
       else dispatchable += 1;
     }
     return { dispatchableCount: dispatchable, hardBlockCount: hardBlock };
-  }, [selectedQuotes]);
+  }, [selectedQuotes, organizationVendors, organizationVendorProducts]);
 
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
@@ -2228,7 +2237,7 @@ function QuotesPageContent() {
         open={batchSheetOpen}
         onOpenChange={setBatchSheetOpen}
         selectedQuotes={selectedQuotes as never}
-        getPreflight={((q: Quote) => getQuoteDispatchPreflight(q, organizationVendors)) as never}
+        getPreflight={((q: Quote) => getQuoteDispatchPreflight(q, organizationVendors, organizationVendorProducts)) as never}
         organizationVendors={organizationVendors}
         onSuccess={() => { refetch(); clearSelection(); }}
       />
