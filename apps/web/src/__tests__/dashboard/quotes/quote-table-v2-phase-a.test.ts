@@ -74,12 +74,30 @@ describe("§11.226 #3 — 테이블 진입 시 popup auto-close", () => {
   });
 
   it("close 함수 useEffect 안 호출 (viewMode === 'table' 분기)", () => {
-    // useEffect deps [viewMode] + viewMode === 'table' → close() 패턴
-    expect(page).toMatch(/useEffect\([\s\S]{0,500}viewMode === "table"[\s\S]{0,300}close\(\)|useEffect\([\s\S]{0,500}close\(\)[\s\S]{0,300}viewMode === "table"/);
+    // useEffect deps [viewMode] + viewMode === 'table' → close 호출 패턴
+    // close / closeOperationalBrief 등 prefix 일치 (rename 허용).
+    expect(page).toMatch(/useEffect\([\s\S]{0,500}viewMode === "table"[\s\S]{0,300}close[a-zA-Z]*\(\)|useEffect\([\s\S]{0,500}close[a-zA-Z]*\(\)[\s\S]{0,300}viewMode === "table"/);
   });
 
   it("useEffect deps 에 viewMode 포함", () => {
     expect(page).toMatch(/useEffect\([\s\S]{0,800}viewMode === "table"[\s\S]{0,500}\},\s*\[[\s\S]{0,200}viewMode/);
+  });
+
+  // §11.226b hot fix — viewMode 가 이미 'table' 인 fresh load 시 사용자가
+  //   popup 을 새로 open 해도 close() 가 호출 안 되는 회귀 차단.
+  //   isOpen dep 추가로 popup open 시점마다 viewMode 'table' 분기 trigger.
+  it("§11.226b — isOpen / briefIsOpen destructure 추가 (useOperationalBriefPopup)", () => {
+    // const { isOpen: briefIsOpen, close } = useOperationalBriefPopup() 또는
+    // const { isOpen, close } = useOperationalBriefPopup() 패턴
+    expect(page).toMatch(/useOperationalBriefPopup\(\)[\s\S]{0,200}isOpen|isOpen[\s\S]{0,200}useOperationalBriefPopup\(\)|const\s*\{\s*isOpen[\s\S]{0,200}close[\s\S]{0,200}\}\s*=\s*useOperationalBriefPopup/);
+  });
+
+  it("§11.226b — useEffect 안 briefIsOpen && close 분기 (popup 열린 상태에서만 close)", () => {
+    expect(page).toMatch(/useEffect\([\s\S]{0,500}viewMode === "table"[\s\S]{0,200}(briefIsOpen|isOpen)[\s\S]{0,200}close[a-zA-Z]*\(\)|useEffect\([\s\S]{0,500}(briefIsOpen|isOpen)[\s\S]{0,200}viewMode === "table"[\s\S]{0,200}close[a-zA-Z]*\(\)/);
+  });
+
+  it("§11.226b — useEffect deps 에 briefIsOpen / isOpen 포함", () => {
+    expect(page).toMatch(/useEffect\([\s\S]{0,800}viewMode === "table"[\s\S]{0,500}\},\s*\[[\s\S]{0,200}(briefIsOpen|isOpen)/);
   });
 });
 

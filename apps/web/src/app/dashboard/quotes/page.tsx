@@ -786,12 +786,16 @@ function QuotesPageContent() {
   //   본 batch 는 자동 close 만 land — 행 클릭 자동 open 은 Phase B park
   //   (§11.220d popup overlay model 회귀 위험 회피).
   //   §11.142 lock 정합: popup-context spec 변경 0, close() 호출만.
-  const { close: closeOperationalBrief } = useOperationalBriefPopup();
+  // §11.226b hot fix — viewMode 가 이미 'table' 인 fresh load (localStorage
+  //   persist) 시 사용자가 popup 새로 open 해도 close() 호출 안 되던 회귀
+  //   차단. briefIsOpen dep 추가로 popup open 변경 시점마다 viewMode 'table'
+  //   분기 trigger. open() 호출 → render → useEffect → close() 즉시.
+  const { isOpen: briefIsOpen, close: closeOperationalBrief } = useOperationalBriefPopup();
   useEffect(() => {
-    if (viewMode === "table") {
+    if (viewMode === "table" && briefIsOpen) {
       closeOperationalBrief();
     }
-  }, [viewMode, closeOperationalBrief]);
+  }, [viewMode, briefIsOpen, closeOperationalBrief]);
 
   // §11.217 Phase 5 — chip scroll-spy. detail panel 의 4 brief section
   //   (brief-summary / brief-facts / brief-facts2 / brief-next) 을 IntersectionObserver
