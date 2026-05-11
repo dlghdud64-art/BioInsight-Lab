@@ -1965,12 +1965,14 @@ function QuotesPageContent() {
 
           </>)}{/* end #operational-brief-3-section-compress collapse */}
 
-          {/* § 4. 다음 조치 — 연결 작업 + 발주 전환 정보 */}
+          {/* § 4. 다음 조치 — 연결 작업 + 발주 전환 정보.
+              §11.222 #quote-brief-next-prune — 호영님 spec #5: 값이 "없음"/
+              "불필요"/"해당없음" 인 hardcoded row 는 hide (해당없는 정보가
+              "할 게 있다" 정보만큼 면적 점유). 실제 액션 항목 (handoffTarget +
+              handoffStatus) 만 노출. */}
           <section id="brief-next" className="px-4 py-3 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
             <div className="space-y-1.5">
-              <div className="flex justify-between text-xs"><span className="text-slate-400">승인 정책</span><span className="text-slate-500">없음</span></div>
-              <div className="flex justify-between text-xs"><span className="text-slate-400">외부 승인</span><span className="text-slate-500">불필요</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">다음 연결</span><span className="text-slate-700">{selectedSignals.handoffTarget}</span></div>
               <div className="flex justify-between text-xs"><span className="text-slate-400">전환 상태</span><span className={selectedSignals.poReady === "가능" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.handoffStatus}</span></div>
             </div>
