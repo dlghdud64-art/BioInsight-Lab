@@ -30,7 +30,7 @@ on:
       browser_url:
         description: "Staging/production URL for Browser Pilot safe-click checks."
         required: false
-        default: "https://bio-insight-lab-web.vercel.app"
+        default: "https://labaxis.co.kr"
       browser_route_1:
         description: "Browser Pilot route 1. Screen route, not a repo file."
         required: false

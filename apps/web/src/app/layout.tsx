@@ -23,6 +23,7 @@ import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 import { BRAND } from "@/lib/brand";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(`https://${BRAND.domain}`),
   title: {
     default: `${BRAND.name} - 바이오 R&D 구매 플랫폼`,
     template: `%s | ${BRAND.name}`,

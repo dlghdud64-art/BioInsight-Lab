@@ -24,7 +24,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://bio-insight-lab-web.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://labaxis.co.kr",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
         "EXPO_PUBLIC_PROJECT_ID": "${EAS_PROJECT_ID}",
         "EXPO_PUBLIC_SENTRY_DSN": "${SENTRY_DSN}"
@@ -34,7 +34,7 @@
       "channel": "production",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://bio-insight-lab-web.vercel.app",
+        "EXPO_PUBLIC_API_URL": "https://labaxis.co.kr",
         "EXPO_PUBLIC_GOOGLE_CLIENT_ID": "${GOOGLE_CLIENT_ID}",
         "EXPO_PUBLIC_PROJECT_ID": "${EAS_PROJECT_ID}",
         "EXPO_PUBLIC_SENTRY_DSN": "${SENTRY_DSN}"
