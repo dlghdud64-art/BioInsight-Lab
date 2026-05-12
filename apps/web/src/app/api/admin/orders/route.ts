@@ -7,6 +7,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // #post-approval-purchase-order-flow Phase 1.3-wiring-K — vendor-aware
 // service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy fallback.
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
+import { buildOrderDispatchReadiness } from "@/lib/orders/dispatch-readiness";
 
 /**
  * §11.80 #order-operator-surface — admin Order list 조회
@@ -232,7 +233,7 @@ export async function POST(request: NextRequest) {
           const firstOrderId = result.created[0].orderId;
           order = await tx.order.findUnique({
             where: { id: firstOrderId },
-            include: { items: true },
+            include: { items: true, vendor: true },
           });
         }
       }
@@ -266,6 +267,7 @@ export async function POST(request: NextRequest) {
         },
         include: {
           items: true,
+          vendor: true,
         },
       });
       } // end legacy fallback if (!order)
@@ -313,6 +315,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       order: result.order,
+      dispatchReadiness: buildOrderDispatchReadiness(result.order),
     });
   } catch (error: any) {
     enforcement?.fail();

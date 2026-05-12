@@ -11,6 +11,7 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 // service. POCandidate ≥ 1 → vendor 별 N Order, 0개 시 legacy quote.items
 // 기반 1 NULL-vendor Order fallback (backward compat).
 import { convertPOCandidatesToOrders } from "@/lib/orders/convert-pocandidate-to-orders";
+import { buildOrderDispatchReadiness } from "@/lib/orders/dispatch-readiness";
 
 // 주문번호 생성 함수
 function generateOrderNumber(): string {
@@ -181,7 +182,7 @@ export async function POST(request: NextRequest) {
           const firstOrderId = result.created[0].orderId;
           order = await tx.order.findUnique({
             where: { id: firstOrderId },
-            include: { items: true },
+            include: { items: true, vendor: true },
           });
         }
       }
@@ -217,6 +218,7 @@ export async function POST(request: NextRequest) {
           },
           include: {
             items: true,
+            vendor: true,
           },
         });
       }
@@ -344,6 +346,7 @@ export async function POST(request: NextRequest) {
       message: "주문이 성공적으로 생성되었습니다.",
       order: result.order,
       budget: result.budget,
+      dispatchReadiness: buildOrderDispatchReadiness(result.order),
     });
   } catch (error: any) {
     enforcement?.fail();

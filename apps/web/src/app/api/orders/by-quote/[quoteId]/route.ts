@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { handleApiError } from "@/lib/api-error-handler";
+import { buildOrderDispatchReadiness, summarizeOrderDispatchReadiness } from "@/lib/orders/dispatch-readiness";
 
 export async function GET(
   _request: NextRequest,
@@ -31,7 +32,7 @@ export async function GET(
     // §11.234 — Prisma findMany return type implicit any drift. explicit annotation.
     type OrderRow = Awaited<ReturnType<typeof db.order.findMany>>[number] & {
       items?: unknown[];
-      vendor?: unknown;
+      vendor?: { id?: string | null; name?: string | null; email?: string | null } | null;
     };
     const orders: OrderRow[] = await db.order.findMany({
       where: { quoteId },
@@ -41,7 +42,10 @@ export async function GET(
 
     if (orders.length === 0) {
       // 결재 승인 전 또는 cancelled — empty 반환 (UI 가 hide)
-      return NextResponse.json({ orders: [] });
+      return NextResponse.json({
+        orders: [],
+        dispatchReadiness: summarizeOrderDispatchReadiness([]),
+      });
     }
 
     // ownership 검증 — per-row (defense in depth, vendor 별 row 가 다른
@@ -71,7 +75,15 @@ export async function GET(
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ orders: authorized });
+    const ordersWithDispatchReadiness = authorized.map((order: OrderRow) => ({
+      ...order,
+      dispatchReadiness: buildOrderDispatchReadiness(order),
+    }));
+
+    return NextResponse.json({
+      orders: ordersWithDispatchReadiness,
+      dispatchReadiness: summarizeOrderDispatchReadiness(authorized),
+    });
   } catch (error) {
     return handleApiError(error, "orders/by-quote/[quoteId]/GET");
   }
