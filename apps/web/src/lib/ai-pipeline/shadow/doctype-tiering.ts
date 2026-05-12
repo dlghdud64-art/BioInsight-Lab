@@ -9,7 +9,8 @@
  * 규칙: 동시에 TIER_3 이상 2개 승격 금지
  */
 
-import { db } from "@@/lib/db";
+// §11.232b — module path drift (@@/lib/db → @/lib/db).
+import { db } from "@/lib/db";
 
 export type RiskTier = "TIER_1_STABLE" | "TIER_2_MODERATE" | "TIER_3_ELEVATED" | "TIER_4_HIGH_VARIANCE";
 

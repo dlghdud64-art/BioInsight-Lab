@@ -110,15 +110,15 @@ export async function proposeBandTuning(
   const proposals: BandTuningProposal[] = [];
   const currentBands = getCurrentBands(documentType);
 
+  // §11.232b — $queryRawUnsafe 는 untyped, generic 미지원. type cast 로 정합.
+  interface BandStatRow {
+    confidence_band: string;
+    total_count: number;
+    false_safe_count: number;
+    avg_confidence: number;
+  }
   // DB에서 구간별 통계 조회
-  const bandStats = await db.$queryRawUnsafe<
-    Array<{
-      confidence_band: string;
-      total_count: number;
-      false_safe_count: number;
-      avg_confidence: number;
-    }>
-  >(
+  const bandStats = (await db.$queryRawUnsafe(
     `
     SELECT
       confidence_band,
@@ -130,11 +130,11 @@ export async function proposeBandTuning(
     GROUP BY confidence_band
     `,
     documentType
-  );
+  )) as BandStatRow[];
 
   // 구간별 통계를 맵으로 변환
   const statsMap = new Map(
-    bandStats.map((s) => [
+    bandStats.map((s: BandStatRow) => [
       s.confidence_band,
       {
         totalCount: Number(s.total_count),

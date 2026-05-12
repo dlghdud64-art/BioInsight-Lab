@@ -69,11 +69,15 @@ export type { LifecycleState, TransitionRequest, TransitionResult, TransitionTyp
 export { initializeRegistry, getRegistryEntry, updateRegistryEntry, getAllRegistryEntries, markAsFirstDocType, getFirstDocTypeState } from "./doctype-registry";
 export type { DocTypeRegistryEntry } from "./doctype-registry";
 export { createApprovalRequest, approveRequest, rejectRequest, markExecuted, getValidApproval, expireStaleApprovals, getPendingApprovals, requiresApproval } from "./approval-store";
-export type { ApprovalRequest, ApprovalStatus } from "./approval-store";
+// §11.232b — re-export name drift fix:
+//   ApprovalRequest → ApprovalRecord (approval-store actual export)
+//   GuardCheck → GuardCheckItem (stage-transition-guard actual export)
+//   AlertEvent → Alert (alerting-service actual export)
+export type { ApprovalRecord as ApprovalRequest, ApprovalStatus } from "./approval-store";
 export { runTransitionGuard } from "./stage-transition-guard";
-export type { GuardResult, GuardCheck } from "./stage-transition-guard";
+export type { GuardResult, GuardCheckItem as GuardCheck } from "./stage-transition-guard";
 export { emitAlert, acknowledgeAlert, getAlertFeed, alertInvariantViolation, alertFalseSafe, alertRollback, alertApprovalPending } from "./alerting-service";
-export type { AlertEvent, AlertSeverity, AlertEventType } from "./alerting-service";
+export type { Alert as AlertEvent, AlertSeverity, AlertEventType } from "./alerting-service";
 export { runCertification } from "./certification-runner";
 export type { CertificationReport, CertificationMode, CertificationResult } from "./certification-runner";
 export { generateStageHealthReport, generatePromotionReadinessReport, generateAutoVerifySafetyReport, generateStabilizationReport, generateRollbackIncidentReport, generateSecondDocTypeReport, getPortfolioSummary } from "./rollout-reporting";

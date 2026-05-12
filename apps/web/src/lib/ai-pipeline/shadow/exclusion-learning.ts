@@ -104,15 +104,15 @@ export async function proposeExclusionChanges(
 ): Promise<ExclusionProposal[]> {
   const proposals: ExclusionProposal[] = [];
 
+  // §11.232b — $queryRawUnsafe untyped, type cast 정합.
+  interface FrequentPatternRow {
+    pattern: string;
+    pattern_type: string;
+    occurrence_count: number;
+    false_safe_count: number;
+  }
   // --- ADD 제안: 반복적으로 리뷰 트리거되는 패턴 감지 ---
-  const frequentPatterns = await db.$queryRawUnsafe<
-    Array<{
-      pattern: string;
-      pattern_type: string;
-      occurrence_count: number;
-      false_safe_count: number;
-    }>
-  >(
+  const frequentPatterns = (await db.$queryRawUnsafe(
     `
     SELECT
       vendor_pattern as pattern,
@@ -131,7 +131,7 @@ export async function proposeExclusionChanges(
     ORDER BY COUNT(*) DESC
     `,
     documentType
-  );
+  )) as FrequentPatternRow[];
 
   for (const fp of frequentPatterns) {
     // ADD 제안은 안전성 향상이므로 자동 승인 (차단 없음)
@@ -159,10 +159,8 @@ export async function proposeExclusionChanges(
       (now.getTime() - exclusion.addedAt.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    // DB에서 해당 패턴의 false-safe 이력 조회
-    const falseSafeResult = await db.$queryRawUnsafe<
-      Array<{ false_safe_count: number }>
-    >(
+    // §11.232b — $queryRawUnsafe untyped cast.
+    const falseSafeResult = (await db.$queryRawUnsafe(
       `
       SELECT COUNT(*) as false_safe_count
       FROM "ProcessingLog"
@@ -172,7 +170,7 @@ export async function proposeExclusionChanges(
       `,
       documentType,
       exclusion.pattern
-    );
+    )) as Array<{ false_safe_count: number }>;
 
     const falseSafeHistory = Number(falseSafeResult[0]?.false_safe_count ?? 0);
 

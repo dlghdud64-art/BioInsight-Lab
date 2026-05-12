@@ -5,6 +5,9 @@
  * 비용 효율성, 지연 시간, false-safe 비율 등을 분석합니다.
  */
 
+// §11.232b — db import 누락 fix.
+import { db } from "@/lib/db";
+
 // --- 타입 정의 ---
 
 /** 비용-품질 분석 세그먼트 */
@@ -37,17 +40,17 @@ export interface CostQualitySegment {
 export async function analyzeCostQuality(
   documentType: string
 ): Promise<CostQualitySegment[]> {
+  // §11.232b — $queryRawUnsafe untyped cast + db import 정합.
+  interface CostQualityRow {
+    confidence_band: string;
+    avg_token_cost: number;
+    avg_latency_ms: number;
+    false_safe_count: number;
+    review_avoided_count: number;
+    total_processed: number;
+  }
   // DB에서 문서 유형별, 신뢰도 구간별 집계 데이터 조회
-  const rawResults = await db.$queryRawUnsafe<
-    Array<{
-      confidence_band: string;
-      avg_token_cost: number;
-      avg_latency_ms: number;
-      false_safe_count: number;
-      review_avoided_count: number;
-      total_processed: number;
-    }>
-  >(
+  const rawResults = (await db.$queryRawUnsafe(
     `
     SELECT
       confidence_band,
@@ -62,10 +65,10 @@ export async function analyzeCostQuality(
     ORDER BY confidence_band
     `,
     documentType
-  );
+  )) as CostQualityRow[];
 
   // 결과를 CostQualitySegment 형태로 변환
-  return rawResults.map((row) => {
+  return rawResults.map((row: CostQualityRow) => {
     const totalCost = row.avg_token_cost * row.total_processed;
     const falseSafeRate =
       row.total_processed > 0

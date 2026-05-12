@@ -75,14 +75,21 @@ export async function runLearningCycle(
   const proposals: ProposalReference[] = [];
 
   // ── 1) 비용·품질 분석 ──
+  // §11.232b — cost-quality-analyzer 의 "TIGHTEN"/"RELAX" → canonical
+  //   "TIGHTENING"/"LOOSENING" mapping (ProposalReference.direction 정합).
   const costQualityResult = await runCostQualityAnalysis(documentType);
+  const directionMap: Record<"TIGHTEN" | "RELAX", "TIGHTENING" | "LOOSENING"> = {
+    TIGHTEN: "TIGHTENING",
+    RELAX: "LOOSENING",
+  };
   for (const p of costQualityResult.proposals ?? []) {
+    const canonicalDirection = directionMap[p.direction];
     proposals.push({
       proposalId: generateId("prop"),
       source: "COST_QUALITY",
-      direction: p.direction,
+      direction: canonicalDirection,
       description: p.description,
-      autoApplicable: isSafetyHardening(p.direction),
+      autoApplicable: isSafetyHardening(canonicalDirection),
     });
   }
 

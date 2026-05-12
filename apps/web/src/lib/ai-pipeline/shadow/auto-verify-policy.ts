@@ -334,7 +334,9 @@ export async function evaluateAutoVerifyEligibility(
   let suggestedMinConfidence: number | null = null;
   let suggestedPolicy: AutoVerifyPolicy | null = null;
 
-  if (decision === "ELIGIBLE_RESTRICTED" || decision === "ELIGIBLE_WITH_VENDOR_EXCLUSIONS" || decision === "ELIGIBLE_WITH_TEMPLATE_EXCLUSIONS") {
+  // §11.232b — control flow narrowing 후 ELIGIBLE 3가지 분기 검사 (cast 로 narrow 해제).
+  const decisionForEligibilityCheck = decision as AutoVerifyEligibilityDecision;
+  if (decisionForEligibilityCheck === "ELIGIBLE_RESTRICTED" || decisionForEligibilityCheck === "ELIGIBLE_WITH_VENDOR_EXCLUSIONS" || decisionForEligibilityCheck === "ELIGIBLE_WITH_TEMPLATE_EXCLUSIONS") {
     // 안전한 최저 confidence 경계 찾기
     for (const b of confidenceBands) {
       if (b.processedCount >= 5 && b.mismatchRate === 0 && b.falseSafeRiskCount === 0) {
