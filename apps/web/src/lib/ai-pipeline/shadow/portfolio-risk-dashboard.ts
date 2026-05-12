@@ -67,8 +67,8 @@ export function getPortfolioRiskDashboard(): PortfolioRiskDashboardData {
   const exclusionStats = getExclusionStats();
   const queueStats = getQueueStats();
 
-  const unackSev0 = alerts.filter((a) => a.severity === "SEV0" && !a.acknowledged).length;
-  const unackSev1 = alerts.filter((a) => a.severity === "SEV1" && !a.acknowledged).length;
+  const unackSev0 = alerts.filter((a) => a.severity === "CRITICAL" && !a.acknowledged).length;
+  const unackSev1 = alerts.filter((a) => a.severity === "HIGH" && !a.acknowledged).length;
 
   let overallRisk: PortfolioRiskDashboardData["overallRisk"] = "LOW";
   if (unackSev0 > 0 || mode.current === "FREEZE") overallRisk = "CRITICAL";
@@ -84,8 +84,8 @@ export function getPortfolioRiskDashboard(): PortfolioRiskDashboardData {
       state: e.lifecycleState,
       isFirstDocType: e.isFirstDocType,
       autoVerifyEnabled: e.restrictedAutoVerifyEnabled,
-      haltCount: e.haltCount,
-      rollbackCount: e.rollbackCount,
+      haltCount: e.haltCount ?? 0,
+      rollbackCount: e.rollbackCount ?? 0,
     })),
     promotionQueue: {
       total: queueStats.total,
@@ -173,10 +173,10 @@ export function generateExpansionCouncilReport(): ExpansionCouncilReport {
       documentType: e.documentType,
       currentStage: e.lifecycleState,
       readinessScore: 0, // would be computed from ops-load-scoring
-      recommendation: e.haltCount === 0 && e.rollbackCount === 0 ? "승격 검토 가능" : "안정화 필요",
+      recommendation: (e.haltCount ?? 0) === 0 && (e.rollbackCount ?? 0) === 0 ? "승격 검토 가능" : "안정화 필요",
     }));
 
-  const unackSev0 = alerts.filter((a) => a.severity === "SEV0" && !a.acknowledged).length;
+  const unackSev0 = alerts.filter((a) => a.severity === "CRITICAL" && !a.acknowledged).length;
   const overallRisk = unackSev0 > 0 ? "CRITICAL" : mode.current !== "NORMAL" ? "ELEVATED" : "NORMAL";
 
   const actionItems: string[] = [];

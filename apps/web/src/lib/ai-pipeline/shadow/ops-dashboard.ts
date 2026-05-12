@@ -57,17 +57,17 @@ export function getPortfolioDashboardData(): PortfolioDashboardData {
       lifecycleState: entry.lifecycleState,
       isFirstDocType: entry.isFirstDocType,
       autoVerifyEnabled: entry.restrictedAutoVerifyEnabled,
-      lastTransitionAt: entry.lastTransitionAt,
-      haltCount: entry.haltCount,
-      rollbackCount: entry.rollbackCount,
+      lastTransitionAt: entry.lastTransitionAt ?? null,
+      haltCount: entry.haltCount ?? 0,
+      rollbackCount: entry.rollbackCount ?? 0,
     });
   }
 
   const activeDocTypes = entries.filter((e) => e.lifecycleState !== "OFF" && e.lifecycleState !== "SHADOW_ONLY").length;
 
   // Health indicator
-  const hasSev0 = alerts.some((a) => a.severity === "SEV0" && !a.acknowledged);
-  const hasSev1 = alerts.some((a) => a.severity === "SEV1" && !a.acknowledged);
+  const hasSev0 = alerts.some((a) => a.severity === "CRITICAL" && !a.acknowledged);
+  const hasSev1 = alerts.some((a) => a.severity === "HIGH" && !a.acknowledged);
   const reviewOverloaded = reviewStats.capacityPercent > 80;
   const healthIndicator = hasSev0 ? "RED" : (hasSev1 || reviewOverloaded || freezeWindows.length > 0) ? "YELLOW" : "GREEN";
 
@@ -85,7 +85,7 @@ export function getPortfolioDashboardData(): PortfolioDashboardData {
       severity: a.severity,
       eventType: a.eventType,
       documentType: a.documentType,
-      timestamp: a.timestamp,
+      timestamp: a.triggeredAt,
     })),
     healthIndicator,
   };
@@ -125,11 +125,11 @@ export function generateWeeklyCouncilReport(): WeeklyCouncilReport {
   const reviewStats = getReviewQueueStats();
 
   // Alert counts by severity
-  const weekAlerts = alerts.filter((a) => new Date(a.timestamp) >= weekAgo);
-  const sev0 = weekAlerts.filter((a) => a.severity === "SEV0").length;
-  const sev1 = weekAlerts.filter((a) => a.severity === "SEV1").length;
-  const sev2 = weekAlerts.filter((a) => a.severity === "SEV2").length;
-  const sev3 = weekAlerts.filter((a) => a.severity === "SEV3").length;
+  const weekAlerts = alerts.filter((a) => new Date(a.triggeredAt) >= weekAgo);
+  const sev0 = weekAlerts.filter((a) => a.severity === "CRITICAL").length;
+  const sev1 = weekAlerts.filter((a) => a.severity === "HIGH").length;
+  const sev2 = weekAlerts.filter((a) => a.severity === "MEDIUM").length;
+  const sev3 = weekAlerts.filter((a) => a.severity === "LOW").length;
 
   // Promotion candidates
   const promotionCandidates = entries
@@ -196,8 +196,8 @@ export function generateDailyOpsSummary(): DailyOpsSummary {
   const reviewStats = getReviewQueueStats();
   const today = new Date().toISOString().slice(0, 10);
 
-  const todayAlerts = alerts.filter((a) => a.timestamp.startsWith(today));
-  const hasCritical = todayAlerts.some((a) => a.severity === "SEV0" || a.severity === "SEV1");
+  const todayAlerts = alerts.filter((a) => a.triggeredAt.startsWith(today));
+  const hasCritical = todayAlerts.some((a) => a.severity === "CRITICAL" || a.severity === "HIGH");
 
   return {
     date: today,

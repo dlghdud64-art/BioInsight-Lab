@@ -33,6 +33,12 @@ export interface DocTypeRegistryEntry {
   stabilizationStatus: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETE";
   isFirstDocType: boolean;
   rolloutOrder: number;
+  // §11.232 — caller (ops-dashboard / capacity-manager / portfolio-risk-dashboard)
+  //   가 사용하는 운영 지표 property. 현재 in-memory registry 라 default 0/null,
+  //   향후 DB-backed 시 actual count/timestamp 로 hydrate.
+  lastTransitionAt?: string | null;
+  haltCount?: number;
+  rollbackCount?: number;
 }
 
 // In-memory registry (production: DB-backed)

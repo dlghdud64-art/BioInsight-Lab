@@ -133,10 +133,10 @@ export function collectCapacityInput(params: {
   const entries = getAllRegistryEntries();
 
   const openIncidents = alerts.filter(
-    (a) => !a.acknowledged && (a.severity === "SEV0" || a.severity === "SEV1"),
+    (a) => !a.acknowledged && (a.severity === "CRITICAL" || a.severity === "HIGH"),
   ).length;
 
-  const recentRollbacks = entries.reduce((sum, e) => sum + e.rollbackCount, 0);
+  const recentRollbacks = entries.reduce((sum, e) => sum + (e.rollbackCount ?? 0), 0);
 
   return {
     reviewQueueCapacityPercent: reviewStats.capacityPercent,
