@@ -174,10 +174,12 @@ jobs:
                 fi
               done
             done <<< "$ROUTES_SOURCE"
+            AUTH_STATE_SOURCE="none"
             if [ -n "$LABAXIS_STORAGE_STATE_JSON" ]; then
               STORAGE_STATE="$RUNNER_TEMP/labaxis-storage-state.json"
               printf '%s' "$LABAXIS_STORAGE_STATE_JSON" > "$STORAGE_STATE"
               BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
+              AUTH_STATE_SOURCE="secret:LABAXIS_STORAGE_STATE_JSON"
             elif [ -n "${AUTH_SECRET:-${NEXTAUTH_SECRET:-}}" ]; then
               STORAGE_STATE="$RUNNER_TEMP/labaxis-storage-state.json"
               if node src/run.mjs auth-token-state \
@@ -185,10 +187,16 @@ jobs:
                 --url "$LABAXIS_BROWSER_URL" \
                 --storage-state "$STORAGE_STATE"; then
                 BROWSER_ARGS+=(--storage-state "$STORAGE_STATE")
+                AUTH_STATE_SOURCE="minted:AUTH_SECRET/NEXTAUTH_SECRET"
               else
+                AUTH_STATE_SOURCE="mint-failed:AUTH_SECRET/NEXTAUTH_SECRET"
                 echo "::warning title=Auth state mint failed::Continuing without storage state so Agent Board can report the auth blocker."
               fi
+            else
+              AUTH_STATE_SOURCE="missing:LABAXIS_STORAGE_STATE_JSON/AUTH_SECRET/NEXTAUTH_SECRET"
             fi
+            export LABAXIS_AUTH_STATE_SOURCE="$AUTH_STATE_SOURCE"
+            echo "LabAxis auth state source: $LABAXIS_AUTH_STATE_SOURCE"
           fi
           node src/run.mjs ci \
             --project "$GITHUB_WORKSPACE/labaxis" \
