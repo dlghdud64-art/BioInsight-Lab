@@ -148,7 +148,9 @@ jobs:
             ROUTES_COMPACT="$(printf '%s' "$ROUTES_SOURCE" | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
             if [ -z "$ROUTES_COMPACT" ] || [ "$ROUTES_COMPACT" = "auto" ]; then
               ROUTE_HINT="$(printf '%s\n%s\n' "$PILOT" "$REVIEW_CHANGED_FILES" | tr '[:upper:]' '[:lower:]')"
-              if printf '%s' "$ROUTE_HINT" | grep -Eq 'quote|rfq|dashboard/quotes'; then
+              if printf '%s' "$ROUTE_HINT" | grep -Eq 'agent-board-dispatch|dispatch-control|\.github/workflows/labaxis-agent-board\.ya?ml'; then
+                ROUTES_SOURCE="/"
+              elif printf '%s' "$ROUTE_HINT" | grep -Eq 'quote|rfq|dashboard/quotes'; then
                 ROUTES_SOURCE="/dashboard/quotes"
               elif printf '%s' "$ROUTE_HINT" | grep -Eq 'inventory|expired|lot|dashboard/inventory'; then
                 ROUTES_SOURCE="/dashboard/inventory"
