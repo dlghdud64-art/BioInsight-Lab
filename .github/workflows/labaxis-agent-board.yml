@@ -6,68 +6,6 @@ on:
       - main
       - develop
   workflow_dispatch:
-    # Agent Board template 25a9eff 정합 — workflow_dispatch 기본값 명시.
-    #   pilot=auto: 자동 pilot 선택 (LABAXIS_REVIEW_PILOT var override 가능)
-    #   browser_url=https://labaxis.co.kr: apex domain 기본
-    #   browser_route_1=auto: pilot/changed-files 기반 자동 route 추론
-    #   manual changed files empty 시 HEAD~1...HEAD diff 로 자동 추론 (line 124 logic).
-    inputs:
-      pilot:
-        description: "Pilot mode (auto / specific pilot id)"
-        required: false
-        default: "auto"
-      base_ref:
-        description: "Base ref for manual diff (defaults to HEAD~1)"
-        required: false
-        default: "HEAD~1"
-      changed_files:
-        description: "Legacy changed files (one per line, optional)"
-        required: false
-        default: ""
-      changed_file_1:
-        description: "Manual changed file 1 (optional — empty 시 HEAD~1...HEAD 자동 추론)"
-        required: false
-        default: ""
-      changed_file_2:
-        description: "Manual changed file 2 (optional)"
-        required: false
-        default: ""
-      changed_file_3:
-        description: "Manual changed file 3 (optional)"
-        required: false
-        default: ""
-      browser_url:
-        description: "Browser URL (default: production apex)"
-        required: false
-        default: "https://labaxis.co.kr"
-      browser_route_1:
-        description: "Browser route 1 (auto = pilot/changed-files 기반 추론)"
-        required: false
-        default: "auto"
-      browser_route_2:
-        description: "Browser route 2 (optional)"
-        required: false
-        default: ""
-      browser_route_3:
-        description: "Browser route 3 (optional)"
-        required: false
-        default: ""
-      browser_routes:
-        description: "Browser routes legacy multi-line (optional)"
-        required: false
-        default: ""
-      browser_click_mode:
-        description: "Browser click mode (safe / pilot / all)"
-        required: false
-        default: "safe"
-      browser_max_clicks:
-        description: "Browser max clicks"
-        required: false
-        default: "6"
-      browser_assertion_profile:
-        description: "Browser assertion profile (auto / strict / lenient)"
-        required: false
-        default: "auto"
 
 permissions:
   contents: read
@@ -148,7 +86,7 @@ jobs:
           LABAXIS_REVIEW_INPUT_CHANGED_FILE_3: ${{ github.event.inputs.changed_file_3 }}
           OPENAI_AGENT_MODEL: ${{ vars.OPENAI_AGENT_MODEL }}
           OPENAI_ARBITER_MODEL: ${{ vars.OPENAI_ARBITER_MODEL }}
-          LABAXIS_BROWSER_URL: ${{ github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL || 'https://labaxis.co.kr' }}
+          LABAXIS_BROWSER_URL: ${{ github.event.inputs.browser_url || vars.LABAXIS_BROWSER_URL || 'https://www.labaxis.co.kr' }}
           LABAXIS_BROWSER_ROUTE_1: ${{ github.event.inputs.browser_route_1 || 'auto' }}
           LABAXIS_BROWSER_ROUTE_2: ${{ github.event.inputs.browser_route_2 || '' }}
           LABAXIS_BROWSER_ROUTE_3: ${{ github.event.inputs.browser_route_3 || '' }}
