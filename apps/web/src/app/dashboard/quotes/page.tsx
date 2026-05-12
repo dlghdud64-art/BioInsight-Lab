@@ -1004,10 +1004,12 @@ function QuotesPageContent() {
     // detail panel 이 DOM 에 mount 될 때까지 microtask defer.
     let observer: IntersectionObserver | null = null;
     const attach = () => {
+      // §11.231 — type predicate fix: id type 정확히 narrow.
       const sectionIds = ["summary", "facts", "facts2", "next"] as const;
+      type SectionId = typeof sectionIds[number];
       const elements = sectionIds
         .map((id) => ({ id, el: document.getElementById(`brief-${id}`) }))
-        .filter((x): x is { id: string; el: HTMLElement } => x.el !== null);
+        .filter((x): x is { id: SectionId; el: HTMLElement } => x.el !== null);
       if (elements.length === 0) return;
 
       observer = new IntersectionObserver(
@@ -1877,8 +1879,11 @@ function QuotesPageContent() {
                 // §11.226 #5 — 테이블 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse).
                 //   카드 분기 (QuoteCard line 362~370) 와 동일 derive. firstItemName 없으면
                 //   quote.title fallback (graceful) — 데이터 모델 안정성 보장.
+                // §11.231 — item.name optional fallback (type drift fix, items[0] 가 cart-origin 시
+                //   product 부재 + name 직접 carry 케이스 보존).
+                const firstItem = quote.items?.[0] as { product?: { name?: string }; name?: string } | undefined;
                 const firstItemName =
-                  quote.items?.[0]?.product?.name ?? quote.items?.[0]?.name ?? null;
+                  firstItem?.product?.name ?? firstItem?.name ?? null;
                 const moreCount = Math.max(0, itemCount - 1);
                 const tableDisplayTitle = firstItemName
                   ? moreCount > 0
@@ -1947,11 +1952,13 @@ function QuotesPageContent() {
                       if (key === "status") {
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2">
+                            {/* §11.231 — railState enum drift fix: compare_review → compare_review_required,
+                                approval_prep → external_approval_required (canonical RailState enum 정합). */}
                             <span className={`inline-flex justify-center whitespace-nowrap min-w-[72px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                              railState === "request_not_sent" ? "bg-slate-100 text-slate-700"
-                              : railState === "awaiting_responses" ? "bg-blue-100 text-blue-700"
-                              : railState === "compare_review" ? "bg-purple-100 text-purple-700"
-                              : railState === "approval_prep" ? "bg-amber-100 text-amber-700"
+                              railState === "response_delayed" ? "bg-slate-100 text-slate-700"
+                              : railState === "compare_not_ready" ? "bg-blue-100 text-blue-700"
+                              : railState === "compare_review_required" ? "bg-purple-100 text-purple-700"
+                              : railState === "external_approval_required" ? "bg-amber-100 text-amber-700"
                               : "bg-emerald-100 text-emerald-700"
                             }`}>
                               {signals.badge}
@@ -2021,13 +2028,20 @@ function QuotesPageContent() {
                         );
                       }
                       if (key === "priority") {
+                        // §11.231 — priority derive (railState 기반, signals 의 priority 부재 fix).
+                        //   delayed/external_approval_required = critical, compare_review_required = high,
+                        //   그 외 = normal. canonical RailState 정합 + 시각화 분기 보존.
+                        const priorityLevel: "critical" | "high" | "normal" =
+                          (railState === "response_delayed" || railState === "external_approval_required") ? "critical"
+                          : railState === "compare_review_required" ? "high"
+                          : "normal";
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
                             <span className={`inline-block w-2 h-2 rounded-full ${
-                              signals.priority === "critical" ? "bg-red-500"
-                              : signals.priority === "high" ? "bg-amber-500"
+                              priorityLevel === "critical" ? "bg-red-500"
+                              : priorityLevel === "high" ? "bg-amber-500"
                               : "bg-slate-300"
-                            }`} aria-label={`우선순위 ${signals.priority}`} />
+                            }`} aria-label={`우선순위 ${priorityLevel}`} />
                           </td>
                         );
                       }
