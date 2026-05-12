@@ -57,6 +57,9 @@ function rationaleToneDotClass(tone: BriefRationaleTone): string {
 }
 import { BatchActionBar } from "@/components/quotes/dispatch/batch-action-bar";
 import { BatchDispatchSheet } from "@/components/quotes/dispatch/batch-dispatch-sheet";
+// §11.228 #quote-management-v2-phase-c1 — 호영님 v2 #20 일괄 처리 강화.
+import { BatchReminderSheet } from "@/components/quotes/dispatch/batch-reminder-sheet";
+import { BatchStatusChangeSheet } from "@/components/quotes/dispatch/batch-status-change-sheet";
 import Link from "next/link";
 import { usePermission } from "@/hooks/use-permission";
 import { useOntologyContextBridge } from "@/hooks/use-ontology-context-bridge";
@@ -707,6 +710,11 @@ function QuotesPageContent() {
   // refetch / sheet close 시 clearSelection 으로 reset (canonical truth 정합).
   const [selectedQuoteIds, setSelectedQuoteIds] = useState<Set<string>>(new Set());
   const [batchSheetOpen, setBatchSheetOpen] = useState(false);
+  // §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화 sheet state.
+  // BatchReminderSheet (responseCount === 0 filter) + BatchStatusChangeSheet
+  // (PATCH /api/quotes/[id]/status 일괄). BatchDispatchSheet 와 동등한 lifecycle.
+  const [batchReminderOpen, setBatchReminderOpen] = useState(false);
+  const [batchStatusChangeOpen, setBatchStatusChangeOpen] = useState(false);
   const toggleQuoteSelection = useCallback((id: string) => {
     setSelectedQuoteIds((prev) => {
       const next = new Set(prev);
@@ -1242,6 +1250,17 @@ function QuotesPageContent() {
     return { dispatchableCount: dispatchable, hardBlockCount: hardBlock };
   }, [selectedQuotes, organizationVendors, organizationVendorProducts]);
 
+  // §11.228 #quote-management-v2-phase-c1 — 리마인더 대상 수 합산.
+  //   responseCount === 0 quote 만 리마인더 대상. server-side resolve 가 truth,
+  //   client preview 만 client-side filter — 일괄 처리 강화 (#20) lineage.
+  const reminderEligibleCount = useMemo(() => {
+    let count = 0;
+    for (const q of selectedQuotes) {
+      if ((q.responses?.length ?? 0) === 0) count += 1;
+    }
+    return count;
+  }, [selectedQuotes]);
+
   // §11.226 #4 — 빈 컬럼 자동 hide (가격 / 납기).
   //   호영님 v2 spec sheet P0 #4: "컬럼 내 전체 행이 '—' 또는 null 이면 해당
   //   컬럼 자동 숨김. 1건이라도 데이터가 있으면 컬럼 표시." filteredQuotes 전체
@@ -1357,12 +1376,16 @@ function QuotesPageContent() {
         </div>
       )}
 
-      {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출) */}
+      {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출)
+          §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화: 리마인더 + 상태 변경 CTA 추가 */}
       <BatchActionBar
         selectedCount={selectedQuoteIds.size}
         dispatchableCount={dispatchableCount}
         hardBlockCount={hardBlockCount}
+        reminderEligibleCount={reminderEligibleCount}
         onReviewStart={() => setBatchSheetOpen(true)}
+        onReminderStart={() => setBatchReminderOpen(true)}
+        onStatusChangeStart={() => setBatchStatusChangeOpen(true)}
         onClearSelection={clearSelection}
       />
 
@@ -2453,6 +2476,27 @@ function QuotesPageContent() {
         selectedQuotes={selectedQuotes as never}
         getPreflight={((q: Quote) => getQuoteDispatchPreflight(q, organizationVendors, organizationVendorProducts)) as never}
         organizationVendors={organizationVendors}
+        onSuccess={() => { refetch(); clearSelection(); }}
+      />
+
+      {/* ═══ §11.228 #quote-management-v2-phase-c1 — 일괄 리마인더 sheet ═══ */}
+      {/* responseCount === 0 quote 만 filter → vendor-requests POST 재호출.
+          §11.225 organizationVendorProducts 정합으로 organizationVendors forward. */}
+      <BatchReminderSheet
+        open={batchReminderOpen}
+        onOpenChange={setBatchReminderOpen}
+        selectedQuotes={selectedQuotes as never}
+        organizationVendors={organizationVendors}
+        onSuccess={() => { refetch(); clearSelection(); }}
+      />
+
+      {/* ═══ §11.228 #quote-management-v2-phase-c1 — 일괄 상태 변경 sheet ═══ */}
+      {/* PATCH /api/quotes/[id]/status N회 Promise.allSettled.
+          ALLOWED_STATUS_TRANSITIONS server-side validate — UI 는 partial failure 통계. */}
+      <BatchStatusChangeSheet
+        open={batchStatusChangeOpen}
+        onOpenChange={setBatchStatusChangeOpen}
+        selectedQuotes={selectedQuotes as never}
         onSuccess={() => { refetch(); clearSelection(); }}
       />
 
