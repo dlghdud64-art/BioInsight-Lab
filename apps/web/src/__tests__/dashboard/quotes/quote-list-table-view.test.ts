@@ -42,10 +42,11 @@ describe("§11.217 Phase 6 — quote list 카드 ↔ 테이블 toggle", () => {
     expect(src).toMatch(/viewMode\s*===\s*["']table["']/);
   });
 
-  it("table column header — 제목 / 상태 / 품목 / 회신", () => {
-    // table th 또는 thead 안 한국어 컬럼 라벨 (sortable 분기 시 span wrap 허용).
-    expect(src).toMatch(/<th[\s\S]{0,500}제목/);
-    expect(src).toMatch(/<th[\s\S]{0,500}회신/);
+  it("table column header — 제목 / 상태 / 품목 / 회신 (§11.230b COLUMN_LABEL 매핑)", () => {
+    // §11.230b dynamic refactor 후 thead = visibleColumns.map() + COLUMN_LABEL.
+    // 한국어 라벨 string 자체는 module-scope COLUMN_LABEL 안 잔존.
+    expect(src).toMatch(/"제목"/);
+    expect(src).toMatch(/"회신"/);
   });
 
   it("§11.217 Phase 6 cluster trace marker", () => {

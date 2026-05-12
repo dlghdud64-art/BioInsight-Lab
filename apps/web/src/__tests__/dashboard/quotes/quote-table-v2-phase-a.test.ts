@@ -25,9 +25,9 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("§11.226 #1 — 테이블 상태 뱃지 nowrap + min-width lock", () => {
-  it("thead 상태 컬럼 min-w-[100px]", () => {
-    // §11.227 #9 — sortable wrap (span + onClick) 허용.
-    expect(page).toMatch(/<th[\s\S]{0,500}min-w-\[100px\][\s\S]{0,500}상태|상태[\s\S]{0,500}min-w-\[100px\]/);
+  it("thead 상태 컬럼 min-w-[100px] (§11.230b dynamic 후 status key 분기)", () => {
+    // §11.230b dynamic refactor — minWClass 분기 안 key === "status" → "min-w-[100px]"
+    expect(page).toMatch(/key\s*===\s*["']status["'][\s\S]{0,200}min-w-\[100px\]|<th[\s\S]{0,500}min-w-\[100px\][\s\S]{0,500}상태|상태[\s\S]{0,500}min-w-\[100px\]/);
   });
 
   it("tbody 상태 뱃지 whitespace-nowrap", () => {
@@ -41,8 +41,9 @@ describe("§11.226 #1 — 테이블 상태 뱃지 nowrap + min-width lock", () =
 });
 
 describe("§11.226 #2 — 테이블 액션 버튼 nowrap + min-width + 축약", () => {
-  it("thead 액션 컬럼 min-w-[120px]", () => {
-    expect(page).toMatch(/<th[^>]{0,200}min-w-\[120px\][^>]{0,80}>액션<\/th>|<th[^>]{0,200}>액션<\/th>[\s\S]{0,200}min-w-\[120px\]/);
+  it("thead 액션 컬럼 min-w-[120px] (§11.230b dynamic 후 actions key 분기)", () => {
+    // §11.230b dynamic refactor — minWClass 분기 안 key === "actions" → "min-w-[120px]"
+    expect(page).toMatch(/key\s*===\s*["']actions["'][\s\S]{0,200}min-w-\[120px\]|<th[^>]{0,200}min-w-\[120px\][^>]{0,80}>액션<\/th>|<th[^>]{0,200}>액션<\/th>[\s\S]{0,200}min-w-\[120px\]/);
   });
 
   it("tbody 액션 Button whitespace-nowrap + min-w-[80px]", () => {
@@ -111,20 +112,22 @@ describe("§11.226 #4 — 빈 컬럼 자동 hide (가격/납기)", () => {
     expect(page).toMatch(/deliveryColumnHasData[\s\S]{0,80}useMemo|const deliveryColumnHasData/);
   });
 
-  it("thead 가격 컬럼 조건 render — priceColumnHasData &&", () => {
-    expect(page).toMatch(/priceColumnHasData\s*&&\s*\(?[\s\S]{0,300}<th[^>]{0,100}>가격<\/th>/);
+  it("thead 가격 컬럼 조건 render — priceColumnHasData (§11.230b visibleColumns 분기)", () => {
+    // §11.230b dynamic refactor — visibleColumns useMemo 안 if (key === "price") return priceColumnHasData
+    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,300}return priceColumnHasData|priceColumnHasData\s*&&/);
   });
 
-  it("thead 납기 컬럼 조건 render — deliveryColumnHasData &&", () => {
-    expect(page).toMatch(/deliveryColumnHasData\s*&&\s*\(?[\s\S]{0,300}<th[^>]{0,100}>납기<\/th>/);
+  it("thead 납기 컬럼 조건 render — deliveryColumnHasData (§11.230b visibleColumns 분기)", () => {
+    expect(page).toMatch(/key\s*===\s*["']delivery["'][\s\S]{0,300}return deliveryColumnHasData|deliveryColumnHasData\s*&&/);
   });
 
-  it("tbody 가격 td 조건 render", () => {
-    expect(page).toMatch(/priceColumnHasData\s*&&\s*\(?[\s\S]{0,800}responseCount === 0/);
+  it("tbody 가격 td 조건 render — visibleColumns price 분기", () => {
+    // §11.230b — tbody dynamic td: if (key === "price") { ... responseCount === 0 ... }
+    expect(page).toMatch(/key\s*===\s*["']price["'][\s\S]{0,2000}responseCount === 0/);
   });
 
-  it("tbody 납기 td 조건 render", () => {
-    expect(page).toMatch(/deliveryColumnHasData\s*&&\s*\(?[\s\S]{0,500}quote\.deliveryDate/);
+  it("tbody 납기 td 조건 render — visibleColumns delivery 분기", () => {
+    expect(page).toMatch(/key\s*===\s*["']delivery["'][\s\S]{0,1500}quote\.deliveryDate/);
   });
 });
 

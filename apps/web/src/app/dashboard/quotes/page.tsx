@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, Settings2, GripVertical } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -245,6 +245,74 @@ function shortenActionLabel(ctaLabel: string): string {
   };
   return TABLE_ACTION_LABEL_SHORTCUTS[ctaLabel] ?? ctaLabel;
 }
+
+// ── §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b) ──
+//   테이블 9 컬럼 사용자 선호 (폭 / 보임 / 순서) localStorage persist.
+//   호영님 분할 결정 (2026-05-12): §11.230a (c+d, a11y+tooltip) → §11.230b (a+b 일괄).
+//   canonical truth 보호: §11.226 #4 priceColumnHasData / deliveryColumnHasData 우선
+//   (visibility false 라도 hasData true 시 노출). sortedQuotes / sortState / focusedRowIndex
+//   변경 0 — UI preference layer 만 추가.
+export type ColumnKey =
+  | "title"
+  | "status"
+  | "itemCount"
+  | "responseCount"
+  | "price"
+  | "delivery"
+  | "priority"
+  | "createdAt"
+  | "actions";
+
+export interface ColumnPrefs {
+  widths: Record<ColumnKey, number>;
+  visibility: Record<ColumnKey, boolean>;
+  order: ColumnKey[];
+}
+
+export const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
+  widths: {
+    title: 280,
+    status: 100,
+    itemCount: 80,
+    responseCount: 120,
+    price: 140,
+    delivery: 120,
+    priority: 80,
+    createdAt: 120,
+    actions: 120,
+  },
+  visibility: {
+    title: true,
+    status: true,
+    itemCount: true,
+    responseCount: true,
+    price: true,
+    delivery: true,
+    priority: true,
+    createdAt: true,
+    actions: true,
+  },
+  order: ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "actions"],
+};
+
+export const COLUMN_LABEL: Record<ColumnKey, string> = {
+  title: "제목",
+  status: "상태",
+  itemCount: "품목",
+  responseCount: "회신",
+  price: "가격",
+  delivery: "납기",
+  priority: "우선순위",
+  createdAt: "등록",
+  actions: "액션",
+};
+
+// localStorage key
+export const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
+
+// 컬럼 폭 guard (px)
+export const COLUMN_MIN_WIDTH = 60;
+export const COLUMN_MAX_WIDTH = 500;
 
 // ── 운영 신호 파생 (canonical state 기반) ──
 function getOpSignals(q: Quote) {
@@ -722,6 +790,74 @@ function QuotesPageContent() {
   //   default -1 (no focus) — Tab 진입 시 첫 row 부터 활성화.
   //   canonical truth 변경 0 — UI focus only (selectedQuoteId 와 별개).
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
+
+  // §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b) 컬럼 prefs.
+  //   widths / visibility / order localStorage persist.
+  //   §11.226 #4 hasData 우선 — 가격/납기 컬럼은 데이터 있으면 visibility 무시.
+  const [columnPrefs, setColumnPrefs] = useState<ColumnPrefs>(DEFAULT_COLUMN_PREFS);
+  const [columnPrefsPopoverOpen, setColumnPrefsPopoverOpen] = useState(false);
+  const [resizingColumn, setResizingColumn] = useState<ColumnKey | null>(null);
+  const [dragColumn, setDragColumn] = useState<ColumnKey | null>(null);
+
+  // §11.230b hydrate from localStorage (mount only)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(COLUMN_PREFS_LS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Partial<ColumnPrefs>;
+      // graceful: missing field 는 DEFAULT 사용
+      setColumnPrefs({
+        widths: { ...DEFAULT_COLUMN_PREFS.widths, ...(parsed.widths ?? {}) },
+        visibility: { ...DEFAULT_COLUMN_PREFS.visibility, ...(parsed.visibility ?? {}) },
+        order: parsed.order && parsed.order.length === DEFAULT_COLUMN_PREFS.order.length
+          ? parsed.order
+          : DEFAULT_COLUMN_PREFS.order,
+      });
+    } catch {
+      // schema drift / parse error — DEFAULT 유지
+    }
+  }, []);
+
+  // §11.230b write on mutation
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(COLUMN_PREFS_LS_KEY, JSON.stringify(columnPrefs));
+    } catch {
+      // quota / disabled — silent fail
+    }
+  }, [columnPrefs]);
+
+  // §11.230b column resize — document-level mousemove/mouseup (drag 안전 종료)
+  useEffect(() => {
+    if (!resizingColumn) return;
+    let startX = 0;
+    let startWidth = columnPrefs.widths[resizingColumn] ?? 120;
+    let initialized = false;
+    const onMouseMove = (e: MouseEvent) => {
+      if (!initialized) {
+        startX = e.clientX;
+        initialized = true;
+        return;
+      }
+      const delta = e.clientX - startX;
+      const next = Math.min(COLUMN_MAX_WIDTH, Math.max(COLUMN_MIN_WIDTH, startWidth + delta));
+      setColumnPrefs((prev) => ({
+        ...prev,
+        widths: { ...prev.widths, [resizingColumn]: next },
+      }));
+    };
+    const onMouseUp = () => setResizingColumn(null);
+    // first event seeds startX
+    document.addEventListener("mousemove", onMouseMove);
+    document.addEventListener("mouseup", onMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingColumn, columnPrefs.widths]);
+
   const toggleQuoteSelection = useCallback((id: string) => {
     setSelectedQuoteIds((prev) => {
       const next = new Set(prev);
@@ -1288,6 +1424,17 @@ function QuotesPageContent() {
     [filteredQuotes],
   );
 
+  // §11.230b — 컬럼 visibility filter (§11.226 #4 hasData 우선 — 가격/납기 컬럼은
+  //   데이터 있으면 사용자 visibility false 라도 노출. canonical truth 보호).
+  //   columnPrefs.order 기반 + visibility 분기. 9 컬럼 모두 노출 가능 키.
+  const visibleColumns = useMemo<ColumnKey[]>(() => {
+    return columnPrefs.order.filter((key) => {
+      if (key === "price") return priceColumnHasData;
+      if (key === "delivery") return deliveryColumnHasData;
+      return columnPrefs.visibility[key];
+    });
+  }, [columnPrefs.order, columnPrefs.visibility, priceColumnHasData, deliveryColumnHasData]);
+
   return (
     <div className="p-4 md:p-8 pt-4 md:pt-6 space-y-5 max-w-7xl mx-auto w-full">
 
@@ -1536,6 +1683,106 @@ function QuotesPageContent() {
             <FileTextIcon className="h-3 w-3" />
             테이블
           </button>
+          {/* §11.230b #quote-table-column-prefs — 컬럼 설정 popover trigger.
+              테이블 뷰 한정 노출 + popover 안 9 컬럼 visibility checkbox +
+              HTML5 drag-and-drop reorder (호영님 v2 #23 b1+b2). */}
+          {viewMode === "table" && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setColumnPrefsPopoverOpen((prev) => !prev)}
+                aria-label="컬럼 설정"
+                aria-expanded={columnPrefsPopoverOpen}
+                className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+              >
+                <Settings2 className="h-3 w-3" />
+                컬럼 설정
+              </button>
+              {columnPrefsPopoverOpen && (
+                <>
+                  {/* backdrop click → close */}
+                  <div
+                    className="fixed inset-0 z-30"
+                    onClick={() => setColumnPrefsPopoverOpen(false)}
+                  />
+                  <div
+                    className="absolute right-0 top-9 z-40 w-72 rounded-lg border border-bd bg-pn shadow-lg p-3 space-y-1"
+                    role="dialog"
+                    aria-label="컬럼 설정 패널"
+                  >
+                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-bd/60">
+                      <span className="text-xs font-semibold text-slate-900">컬럼 설정</span>
+                      <button
+                        type="button"
+                        onClick={() => setColumnPrefs(DEFAULT_COLUMN_PREFS)}
+                        className="text-[11px] text-blue-600 hover:text-blue-700"
+                      >
+                        기본값 복원
+                      </button>
+                    </div>
+                    <p className="text-[10px] text-slate-500 mb-1.5">
+                      체크박스로 보임/숨김 · 손잡이를 끌어 순서 변경
+                    </p>
+                    {columnPrefs.order.map((key) => {
+                      const isProtected = (key === "price" && priceColumnHasData) || (key === "delivery" && deliveryColumnHasData);
+                      return (
+                        <div
+                          key={key}
+                          draggable
+                          onDragStart={() => setDragColumn(key)}
+                          onDragOver={(e) => e.preventDefault()}
+                          onDrop={() => {
+                            if (!dragColumn || dragColumn === key) {
+                              setDragColumn(null);
+                              return;
+                            }
+                            // §11.230b (b2) — 순서 재정렬: dragColumn → key 위치 swap.
+                            const nextOrder = columnPrefs.order.slice();
+                            const fromIdx = nextOrder.indexOf(dragColumn);
+                            const toIdx = nextOrder.indexOf(key);
+                            if (fromIdx === -1 || toIdx === -1) {
+                              setDragColumn(null);
+                              return;
+                            }
+                            nextOrder.splice(fromIdx, 1);
+                            nextOrder.splice(toIdx, 0, dragColumn);
+                            setColumnPrefs((prev) => ({ ...prev, order: nextOrder }));
+                            setDragColumn(null);
+                          }}
+                          onDragEnd={() => setDragColumn(null)}
+                          className={`flex items-center gap-2 px-1.5 py-1 rounded hover:bg-slate-50 cursor-move ${dragColumn === key ? "opacity-50" : ""}`}
+                        >
+                          <GripVertical className="h-3 w-3 text-slate-400 shrink-0" />
+                          <input
+                            type="checkbox"
+                            id={`col-vis-${key}`}
+                            checked={columnPrefs.visibility[key]}
+                            onChange={(e) =>
+                              setColumnPrefs((prev) => ({
+                                ...prev,
+                                visibility: { ...prev.visibility, [key]: e.target.checked },
+                              }))
+                            }
+                            disabled={isProtected && !columnPrefs.visibility[key]}
+                            className="h-3 w-3 accent-blue-600 shrink-0"
+                          />
+                          <label
+                            htmlFor={`col-vis-${key}`}
+                            className="text-[11px] text-slate-700 cursor-pointer flex-1"
+                          >
+                            {COLUMN_LABEL[key]}
+                          </label>
+                          {isProtected && (
+                            <span className="text-[10px] text-amber-600">데이터 있음</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1552,63 +1799,61 @@ function QuotesPageContent() {
       {!isLoading && viewMode === "table" && sortedQuotes.length > 0 && (
         <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
           <table className="w-full text-xs">
+            {/* §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b).
+                visibleColumns.map() 으로 dynamic generate. canonical truth:
+                - sortState (§11.227) sortable 5 컬럼 유지
+                - priceColumnHasData / deliveryColumnHasData (§11.226 #4) 우선
+                - tbody td 순서 일치 — 같은 visibleColumns.map() */}
             <thead className="bg-slate-50 border-b border-bd">
               <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {/* §11.227 #9 — sortable column header. 클릭 시 sortState toggle.
-                    activeSort 분기: ChevronUp / ChevronDown 노출. */}
-                <th
-                  className="px-3 py-2 min-w-[200px] cursor-pointer select-none hover:bg-slate-100"
-                  onClick={() => handleSortColumn("title")}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    제목
-                    {sortState.key === "title" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-                  </span>
-                </th>
-                <th
-                  className="px-3 py-2 min-w-[100px] cursor-pointer select-none hover:bg-slate-100"
-                  onClick={() => handleSortColumn("status")}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    상태
-                    {sortState.key === "status" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-                  </span>
-                </th>
-                <th
-                  className="px-3 py-2 text-center cursor-pointer select-none hover:bg-slate-100"
-                  onClick={() => handleSortColumn("itemCount")}
-                >
-                  <span className="inline-flex items-center gap-1 justify-center">
-                    품목
-                    {sortState.key === "itemCount" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-                  </span>
-                </th>
-                <th
-                  className="px-3 py-2 text-center cursor-pointer select-none hover:bg-slate-100"
-                  onClick={() => handleSortColumn("responseCount")}
-                >
-                  <span className="inline-flex items-center gap-1 justify-center">
-                    회신
-                    {sortState.key === "responseCount" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-                  </span>
-                </th>
-                {priceColumnHasData && (
-                  <th className="px-3 py-2 text-right">가격</th>
-                )}
-                {deliveryColumnHasData && (
-                  <th className="px-3 py-2">납기</th>
-                )}
-                <th className="px-3 py-2 text-center">우선순위</th>
-                <th
-                  className="px-3 py-2 cursor-pointer select-none hover:bg-slate-100"
-                  onClick={() => handleSortColumn("createdAt")}
-                >
-                  <span className="inline-flex items-center gap-1">
-                    등록
-                    {sortState.key === "createdAt" && (sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />)}
-                  </span>
-                </th>
-                <th className="px-3 py-2 text-right min-w-[120px]">액션</th>
+                {visibleColumns.map((key) => {
+                  const width = columnPrefs.widths[key];
+                  const isSortable = key === "title" || key === "status" || key === "itemCount" || key === "responseCount" || key === "createdAt";
+                  const isCenter = key === "itemCount" || key === "responseCount" || key === "priority";
+                  const isRight = key === "price" || key === "actions";
+                  const label = COLUMN_LABEL[key];
+                  // §11.226 #1/#2 invariant — column-specific min-width 보존
+                  // title 200px / status 100px / actions 120px (§11.226 spec).
+                  // 그 외 fallback COLUMN_MIN_WIDTH (60px).
+                  const colMinWidth =
+                    key === "title" ? 200
+                    : key === "status" ? 100
+                    : key === "actions" ? 120
+                    : COLUMN_MIN_WIDTH;
+                  // §11.226 #4 — Tailwind sentinel class 보존 (drift test 호환).
+                  const minWClass =
+                    key === "title" ? "min-w-[200px]"
+                    : key === "status" ? "min-w-[100px]"
+                    : key === "actions" ? "min-w-[120px]"
+                    : "";
+                  return (
+                    <th
+                      key={key}
+                      style={{ width, minWidth: colMinWidth, position: "relative" }}
+                      className={`px-3 py-2 ${minWClass} ${isCenter ? "text-center" : isRight ? "text-right" : ""} ${isSortable ? "cursor-pointer select-none hover:bg-slate-100" : ""}`}
+                      onClick={isSortable ? () => handleSortColumn(key as Parameters<typeof handleSortColumn>[0]) : undefined}
+                    >
+                      <span className={`inline-flex items-center gap-1 ${isCenter ? "justify-center" : ""}`}>
+                        {label}
+                        {isSortable && sortState.key === key && (
+                          sortState.direction === "asc" ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />
+                        )}
+                      </span>
+                      {/* §11.230b (a) — drag handle (resize). 우측 끝 4px width zone. */}
+                      <span
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={`${label} 컬럼 폭 조정`}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          setResizingColumn(key);
+                        }}
+                        className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-blue-400/50 select-none"
+                      />
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-bd/40">
@@ -1682,103 +1927,136 @@ function QuotesPageContent() {
                         : "hover:bg-slate-50/60 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
                     }
                   >
-                    <td
-                      className="px-3 py-2 font-medium text-slate-900 max-w-[280px] truncate"
-                      title={tableDisplayTitle}
-                    >
-                      {tableDisplayTitle}
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex justify-center whitespace-nowrap min-w-[72px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
-                        railState === "request_not_sent" ? "bg-slate-100 text-slate-700"
-                        : railState === "awaiting_responses" ? "bg-blue-100 text-blue-700"
-                        : railState === "compare_review" ? "bg-purple-100 text-purple-700"
-                        : railState === "approval_prep" ? "bg-amber-100 text-amber-700"
-                        : "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {signals.badge}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2 text-center text-slate-600 tabular-nums">{itemCount}</td>
-                    <td className="px-3 py-2 text-center">
-                      {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
-                        <div className="flex items-center justify-center gap-1.5">
-                          <span className="text-[10px] tabular-nums text-slate-600">
-                            {responseCount}/{itemCount}
-                          </span>
-                          <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
-                            <div
-                              role="progressbar"
-                              aria-valuenow={responseCount}
-                              aria-valuemin={0}
-                              aria-valuemax={itemCount}
-                              className={`h-full rounded-full ${
-                                responseCount === 0 ? "bg-slate-200"
-                                : responseCount >= itemCount ? "bg-emerald-500"
-                                : "bg-blue-500"
-                              }`}
-                              style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-[10px] text-slate-400">—</span>
-                      )}
-                    </td>
-                    {/* §11.224 — 가격 range (카드 뷰 §11.223 mirror).
-                        §11.226 #4 — 컬럼 hide 조건 추가 (priceColumnHasData). */}
-                    {priceColumnHasData && (
-                      <td className="px-3 py-2 text-right text-[11px] tabular-nums">
-                        {responseCount === 0 ? (
-                          <span className="text-slate-400">미수신</span>
-                        ) : prices.length === 0 ? (
-                          <span className="text-slate-400">가격 미기재</span>
-                        ) : minPrice === maxPrice ? (
-                          <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
-                        ) : (
-                          <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
-                        )}
-                      </td>
-                    )}
-                    {/* §11.224 — 납기 (RelativeDeliveryText reuse).
-                        §11.226 #4 — 컬럼 hide 조건 추가 (deliveryColumnHasData). */}
-                    {deliveryColumnHasData && (
-                      <td className="px-3 py-2 text-[11px]">
-                        {quote.deliveryDate ? (
-                          <RelativeDeliveryText
-                            iso={quote.deliveryDate}
-                            className="text-slate-600"
-                          />
-                        ) : (
-                          <span className="text-slate-400">—</span>
-                        )}
-                      </td>
-                    )}
-                    <td className="px-3 py-2 text-center">
-                      <span className={`inline-block w-2 h-2 rounded-full ${
-                        signals.priority === "critical" ? "bg-red-500"
-                        : signals.priority === "high" ? "bg-amber-500"
-                        : "bg-slate-300"
-                      }`} aria-label={`우선순위 ${signals.priority}`} />
-                    </td>
-                    <td className="px-3 py-2 text-slate-500">
-                      <RelativeTimeText iso={quote.createdAt} />
-                    </td>
-                    <td className="px-3 py-2 text-right">
-                      {/* §11.226 #2 — 액션 Button nowrap + min-w-[80px] + shortenActionLabel 축약.
-                          호영님 v2 P0 #2 spec: 액션 셀 좁아 잘림 차단. */}
-                      <Button
-                        size="sm"
-                        variant={signals.ctaVariant}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openQuoteContextRail(quote.id, "row");
-                        }}
-                        className={`h-7 text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-                      >
-                        {shortenActionLabel(signals.ctaLabel)}
-                      </Button>
-                    </td>
+                    {/* §11.230b — visibleColumns.map() dynamic td. column key 별 render
+                        분기. §11.224 가격/납기 분기 + §11.226 #4 hasData 우선 +
+                        §11.226 #5 tableDisplayTitle + §11.230a title attr 보존. */}
+                    {visibleColumns.map((key) => {
+                      const width = columnPrefs.widths[key];
+                      if (key === "title") {
+                        return (
+                          <td
+                            key={key}
+                            style={{ width, maxWidth: width }}
+                            className="px-3 py-2 font-medium text-slate-900 truncate"
+                            title={tableDisplayTitle}
+                          >
+                            {tableDisplayTitle}
+                          </td>
+                        );
+                      }
+                      if (key === "status") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2">
+                            <span className={`inline-flex justify-center whitespace-nowrap min-w-[72px] px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                              railState === "request_not_sent" ? "bg-slate-100 text-slate-700"
+                              : railState === "awaiting_responses" ? "bg-blue-100 text-blue-700"
+                              : railState === "compare_review" ? "bg-purple-100 text-purple-700"
+                              : railState === "approval_prep" ? "bg-amber-100 text-amber-700"
+                              : "bg-emerald-100 text-emerald-700"
+                            }`}>
+                              {signals.badge}
+                            </span>
+                          </td>
+                        );
+                      }
+                      if (key === "itemCount") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-center text-slate-600 tabular-nums">{itemCount}</td>
+                        );
+                      }
+                      if (key === "responseCount") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-center">
+                            {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <span className="text-[10px] tabular-nums text-slate-600">
+                                  {responseCount}/{itemCount}
+                                </span>
+                                <div className="w-12 h-1 bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    role="progressbar"
+                                    aria-valuenow={responseCount}
+                                    aria-valuemin={0}
+                                    aria-valuemax={itemCount}
+                                    className={`h-full rounded-full ${
+                                      responseCount === 0 ? "bg-slate-200"
+                                      : responseCount >= itemCount ? "bg-emerald-500"
+                                      : "bg-blue-500"
+                                    }`}
+                                    style={{ width: `${Math.min(100, (responseCount / itemCount) * 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ) : (
+                              <span className="text-[10px] text-slate-400">—</span>
+                            )}
+                          </td>
+                        );
+                      }
+                      if (key === "price") {
+                        // §11.226 #4 — priceColumnHasData 우선 (visibleColumns 가 이미 hasData 분기).
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-right text-[11px] tabular-nums">
+                            {responseCount === 0 ? (
+                              <span className="text-slate-400">미수신</span>
+                            ) : prices.length === 0 ? (
+                              <span className="text-slate-400">가격 미기재</span>
+                            ) : minPrice === maxPrice ? (
+                              <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
+                            ) : (
+                              <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")} ~ ₩{maxPrice!.toLocaleString("ko-KR")}</span>
+                            )}
+                          </td>
+                        );
+                      }
+                      if (key === "delivery") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-[11px]">
+                            {quote.deliveryDate ? (
+                              <RelativeDeliveryText iso={quote.deliveryDate} className="text-slate-600" />
+                            ) : (
+                              <span className="text-slate-400">—</span>
+                            )}
+                          </td>
+                        );
+                      }
+                      if (key === "priority") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-center">
+                            <span className={`inline-block w-2 h-2 rounded-full ${
+                              signals.priority === "critical" ? "bg-red-500"
+                              : signals.priority === "high" ? "bg-amber-500"
+                              : "bg-slate-300"
+                            }`} aria-label={`우선순위 ${signals.priority}`} />
+                          </td>
+                        );
+                      }
+                      if (key === "createdAt") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-slate-500">
+                            <RelativeTimeText iso={quote.createdAt} />
+                          </td>
+                        );
+                      }
+                      if (key === "actions") {
+                        return (
+                          <td key={key} style={{ width }} className="px-3 py-2 text-right">
+                            <Button
+                              size="sm"
+                              variant={signals.ctaVariant}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openQuoteContextRail(quote.id, "row");
+                              }}
+                              className={`h-7 text-[11px] whitespace-nowrap min-w-[80px] ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
+                            >
+                              {shortenActionLabel(signals.ctaLabel)}
+                            </Button>
+                          </td>
+                        );
+                      }
+                      return null;
+                    })}
                   </tr>
                 );
               })}

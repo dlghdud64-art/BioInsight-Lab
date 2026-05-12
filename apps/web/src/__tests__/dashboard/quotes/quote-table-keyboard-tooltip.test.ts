@@ -27,8 +27,10 @@ describe("§11.230a #1 — 제목 셀 truncate 시 native title attribute", () =
     expect(page).toMatch(/tableDisplayTitle[\s\S]{0,400}title=\{tableDisplayTitle\}|title=\{tableDisplayTitle\}[\s\S]{0,400}tableDisplayTitle/);
   });
 
-  it("기존 truncate 클래스 보존 (max-w-[280px] truncate)", () => {
-    expect(page).toMatch(/max-w-\[280px\][\s\S]{0,80}truncate|truncate[\s\S]{0,80}max-w-\[280px\]/);
+  it("기존 truncate 클래스 보존 (§11.230b 후 inline maxWidth: width)", () => {
+    // §11.230b dynamic refactor 후 max-w-[280px] hardcoded → inline style maxWidth: width
+    // (title 컬럼 DEFAULT_COLUMN_PREFS.widths.title = 280)
+    expect(page).toMatch(/key === ["']title["'][\s\S]{0,400}truncate|truncate[\s\S]{0,400}title=\{tableDisplayTitle\}|max-w-\[280px\][\s\S]{0,80}truncate/);
   });
 });
 

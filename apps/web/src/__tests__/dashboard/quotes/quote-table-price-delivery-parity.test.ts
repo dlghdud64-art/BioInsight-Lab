@@ -65,16 +65,16 @@ describe("#quote-table-price-delivery-parity — tbody 납기 (RelativeDeliveryT
 });
 
 describe("#quote-table-price-delivery-parity — 기존 7 컬럼 invariant 보존", () => {
-  it("§11.217 Phase 6 — 7 기존 컬럼 thead 보존 (sortable span wrap 허용)", () => {
-    // §11.227 #9 — sortable column header 시 <th><span>제목 {icon}</span></th>
-    //   패턴으로 wrap. 라벨 text 자체는 thead 안에 잔존 — 더 느슨한 regex.
-    expect(page).toMatch(/<th[\s\S]{0,500}제목[\s\S]{0,300}<\/th>/);
-    expect(page).toMatch(/<th[\s\S]{0,500}상태[\s\S]{0,300}<\/th>/);
-    expect(page).toMatch(/<th[\s\S]{0,500}품목[\s\S]{0,300}<\/th>/);
-    expect(page).toMatch(/<th[\s\S]{0,500}회신[\s\S]{0,300}<\/th>/);
-    expect(page).toMatch(/<th[^>]{0,200}>우선순위<\/th>/);
-    expect(page).toMatch(/<th[\s\S]{0,500}등록[\s\S]{0,300}<\/th>/);
-    expect(page).toMatch(/<th[^>]{0,200}>액션<\/th>/);
+  it("§11.217 Phase 6 — 7 기존 컬럼 thead 보존 (§11.230b dynamic 후 COLUMN_LABEL 매핑)", () => {
+    // §11.230b dynamic refactor 후 thead 가 visibleColumns.map() + COLUMN_LABEL 매핑.
+    // 라벨 string 자체는 module-scope COLUMN_LABEL 안에 잔존.
+    expect(page).toMatch(/"제목"/);
+    expect(page).toMatch(/"상태"/);
+    expect(page).toMatch(/"품목"/);
+    expect(page).toMatch(/"회신"/);
+    expect(page).toMatch(/"우선순위"/);
+    expect(page).toMatch(/"등록"/);
+    expect(page).toMatch(/"액션"/);
   });
 
   it("회신 progress bar tbody 보존 (responseCount/itemCount)", () => {
