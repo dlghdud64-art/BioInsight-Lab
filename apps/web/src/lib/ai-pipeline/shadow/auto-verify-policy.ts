@@ -5,7 +5,7 @@
  * 3계층 구조:
  *  1. Runtime Gate: 개별 요청에 대해 auto-verify 허용 여부 판정
  *  2. Eligibility Evaluator: 데이터 기반 6단계 eligibility 평가
- *  3. False-Safe Detector: AI가 자동 승인하면 안 되는 패턴 식별
+ *  3. False-Safe Detector: AI 결과를 operator review 없이 신뢰하면 위험한 패턴 식별
  *
  * 기본 정책: allowAutoVerify=false (global default)
  * opt-in 조건: documentType + confidence band + exclusion + semantic gate 전부 통과
@@ -423,7 +423,7 @@ export async function detectFalseSafePatterns(
   if (p1Rows.length > 0) {
     patterns.push({
       type: "AI_AUTO_VS_RULES_MANUAL",
-      description: "AI는 자동 승인 가능으로 판단했지만 Rules는 수동 리뷰 필요",
+      description: "AI confidence는 통과했지만 Rules는 operator review 필요",
       count: p1Rows.length,
       severity: "HIGH",
       samples: p1Rows.slice(0, 5).map((r: { requestId: string }) => r.requestId),
@@ -476,5 +476,6 @@ export async function detectFalseSafePatterns(
     });
   }
 
+  // §11.234 — file truncation 복구 (sandbox sync drift).
   return patterns;
 }

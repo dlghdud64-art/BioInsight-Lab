@@ -4,7 +4,7 @@
  * 처리 이력을 분석하여 제외 패턴의 추가(ADD) 및 제거(REMOVE)를 제안합니다.
  *
  * 안전 규칙:
- * - ADD 제안: 안전성 향상이므로 자동 승인 (승인 절차 불필요)
+ * - ADD 제안: 안전성 향상 후보로 기록하고 operator review 이후 반영
  * - REMOVE 제안: 최소 90일 안정성 + false-safe 제로 조건 필수
  * - false-safe 이력이 있는 패턴의 REMOVE는 절대 차단
  */
@@ -88,7 +88,7 @@ function generateProposalId(
 /**
  * 특정 문서 유형에 대해 제외 패턴 추가/제거를 제안합니다.
  *
- * ADD 제안: 자동 승인 가능 (안전성 향상)
+ * ADD 제안: 안전성 향상 후보로 operator review 대기
  * REMOVE 제안: 아래 조건을 모두 충족해야 함
  *   - 최소 90일 이상 안정적으로 유지
  *   - false-safe 이력 제로
@@ -134,7 +134,7 @@ export async function proposeExclusionChanges(
   )) as FrequentPatternRow[];
 
   for (const fp of frequentPatterns) {
-    // ADD 제안은 안전성 향상이므로 자동 승인 (차단 없음)
+    // ADD 제안은 안전성 향상 후보로 남기며 operator review 전에는 반영하지 않는다.
     proposals.push({
       proposalId: generateProposalId(documentType, "ADD", fp.pattern),
       documentType,
@@ -236,7 +236,8 @@ export async function runExclusionLearning(
       }));
     return { proposals };
   } catch {
-    // DB 연동 전 또는 ProcessingLog 테이블 미존재 시 빈 결과 반환
+    // §11.234 — DB 연동 전 또는 ProcessingLog 테이블 미존재 시 빈 결과 반환.
+    //   file truncation 복구 (sandbox sync drift).
     return { proposals: [] };
   }
 }
