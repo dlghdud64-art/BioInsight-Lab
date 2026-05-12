@@ -128,6 +128,33 @@ export function VendorRequestModal({
   const resolvedCount = suppliers.length;
   const includedCount = includedSuppliers.length;
 
+  // §11.229 #quote-management-v2-phase-c2 — 호영님 v2 #21 공급사 DB UI 3 source grouping.
+  //   resolveSuppliers (4 priority source) 의 contactSource 를 3 UX section
+  //   으로 grouping. canonical truth 변경 0 — UI derive only.
+  //
+  //   Section 1 등록된 공급사 = recent_rfq + org_book + supplier_book (백엔드 등록)
+  //   Section 2 LabAxis 추천   = ai_recommended (LabAxis 자동 추출)
+  //   Section 3 이메일 직접 입력 = manual (운영자 직접 추가) — form always-visible
+  //
+  //   호영님 결정 (2026-05-12): (c) section header grouping (Tabs 거부 —
+  //   same-canvas + canonical truth 정합) + 3 section default.
+  const { registeredSuppliers, recommendedSuppliers, manualSuppliers } = useMemo(() => {
+    const registered: ResolvedSupplier[] = [];
+    const recommended: ResolvedSupplier[] = [];
+    const manual: ResolvedSupplier[] = [];
+    for (const s of suppliers) {
+      if (s.contactSource === "ai_recommended") {
+        recommended.push(s);
+      } else if (s.contactSource === "manual") {
+        manual.push(s);
+      } else {
+        // recent_rfq / org_book / supplier_book
+        registered.push(s);
+      }
+    }
+    return { registeredSuppliers: registered, recommendedSuppliers: recommended, manualSuppliers: manual };
+  }, [suppliers]);
+
   // ── Readiness checks ──
   const readinessChecks = useMemo<ReadinessCheck[]>(() => {
     const checks: ReadinessCheck[] = [];
@@ -202,6 +229,7 @@ export function VendorRequestModal({
     setSuppliers((prev) => [...prev, newSupplier]);
     setManualEmail("");
     setManualName("");
+    // §11.229 — showManualFallback state 는 Section 3 always-visible 후 deprecated.
     setShowManualFallback(false);
   }, [manualEmail, manualName]);
 
@@ -361,13 +389,15 @@ export function VendorRequestModal({
             )}
           </div>
 
-          {/* ═══ Resolved Supplier List — review-only ═══ */}
-          <div className="space-y-2">
+          {/* ═══ §11.229 #quote-management-v2-phase-c2 — 3 source grouping ═══
+              호영님 v2 #21 공급사 DB UI 3 경로 modal. 단일 scroll list 안
+              3 section 으로 grouping (Tabs 도입 0 — same-canvas 보존). */}
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-blue-600" />
                 <span className="text-sm font-semibold text-slate-900">
-                  선별된 공급사 후보
+                  공급사 후보
                 </span>
                 {includedCount > 0 && (
                   <span className="text-xs text-slate-500">
@@ -383,46 +413,83 @@ export function VendorRequestModal({
               )}
             </div>
 
-            {/* Supplier cards */}
-            <div className="space-y-1.5 max-h-[220px] overflow-y-auto overflow-x-hidden">
-              {suppliers.map((supplier) => (
-                <SupplierReviewCard
-                  key={supplier.vendorId}
-                  supplier={supplier}
-                  onToggle={() => toggleSupplier(supplier.vendorId)}
-                />
-              ))}
+            {/* Section 1 — 등록된 공급사 (recent_rfq + org_book + supplier_book) */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 px-1">
+                <span className="text-xs font-semibold text-slate-700">등록된 공급사</span>
+                <span className="text-[11px] text-slate-500 tabular-nums">
+                  {registeredSuppliers.length}건
+                </span>
+              </div>
+              {registeredSuppliers.length > 0 ? (
+                <div className="space-y-1.5 max-h-[180px] overflow-y-auto overflow-x-hidden">
+                  {registeredSuppliers.map((supplier) => (
+                    <SupplierReviewCard
+                      key={supplier.vendorId}
+                      supplier={supplier}
+                      onToggle={() => toggleSupplier(supplier.vendorId)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-slate-400 px-1 py-1.5">
+                  등록된 공급사 후보 없음
+                </p>
+              )}
             </div>
 
-            {/* Empty: no suppliers resolved
-                §11.54 — primary "공급사 직접 추가" CTA removed from
-                this empty-state block (was duplicated with the footer
-                primary).  Footer is now the single primary action
-                location; this block carries guidance text only. */}
-            {!hasResolved && !showManualFallback && (
-              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">공급사 후보 선별 실패</p>
-                    <p className="text-xs text-slate-600 mt-1">
-                      해당 품목에 매칭되는 공급사가 없거나, 플랫폼 공급사 DB에 연락 채널이 등록되지 않았습니다.
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      플랫폼 운영팀에서 공급사 데이터를 보강 중입니다. 급한 경우 아래 <span className="font-medium text-slate-700">"공급사 직접 추가"</span>로 수동 추가할 수 있습니다.
-                    </p>
-                  </div>
-                </div>
+            {/* Section 2 — LabAxis 추천 (ai_recommended) */}
+            <div className="space-y-1.5 border-t border-slate-100 pt-3">
+              <div className="flex items-center gap-2 px-1">
+                <Sparkles className="h-3 w-3 text-blue-500" />
+                <span className="text-xs font-semibold text-slate-700">LabAxis 추천</span>
+                <span className="text-[11px] text-slate-500 tabular-nums">
+                  {recommendedSuppliers.length}건
+                </span>
               </div>
-            )}
-
-            {/* Manual fallback — only when explicitly opened or no suppliers */}
-            {showManualFallback && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
-                <div className="flex items-center gap-2 mb-1">
-                  <UserPlus className="h-3.5 w-3.5 text-slate-500" />
-                  <p className="text-xs font-medium text-slate-700">AI 후보에 없는 공급사를 직접 추가</p>
+              {recommendedSuppliers.length > 0 ? (
+                <div className="space-y-1.5 max-h-[140px] overflow-y-auto overflow-x-hidden">
+                  {recommendedSuppliers.map((supplier) => (
+                    <SupplierReviewCard
+                      key={supplier.vendorId}
+                      supplier={supplier}
+                      onToggle={() => toggleSupplier(supplier.vendorId)}
+                    />
+                  ))}
                 </div>
+              ) : (
+                <p className="text-[11px] text-slate-400 px-1 py-1.5">
+                  추천 가능한 공급사 없음
+                </p>
+              )}
+            </div>
+
+            {/* Section 3 — 이메일 직접 입력 (manual, always-visible form) */}
+            <div className="space-y-2 border-t border-slate-100 pt-3">
+              <div className="flex items-center gap-2 px-1">
+                <UserPlus className="h-3 w-3 text-slate-500" />
+                <span className="text-xs font-semibold text-slate-700">이메일 직접 입력</span>
+                {manualSuppliers.length > 0 && (
+                  <span className="text-[11px] text-slate-500 tabular-nums">
+                    추가됨 {manualSuppliers.length}건
+                  </span>
+                )}
+              </div>
+              {manualSuppliers.length > 0 && (
+                <div className="space-y-1.5 max-h-[120px] overflow-y-auto overflow-x-hidden">
+                  {manualSuppliers.map((supplier) => (
+                    <SupplierReviewCard
+                      key={supplier.vendorId}
+                      supplier={supplier}
+                      onToggle={() => toggleSupplier(supplier.vendorId)}
+                    />
+                  ))}
+                </div>
+              )}
+              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 space-y-2">
+                <p className="text-[11px] text-slate-500">
+                  후보에 없는 공급사를 직접 추가
+                </p>
                 <div className="flex gap-2">
                   <Input
                     type="email"
@@ -438,26 +505,36 @@ export function VendorRequestModal({
                     onChange={(e) => setManualName(e.target.value)}
                     className="h-8 text-xs bg-white border-slate-200 text-slate-900 w-36"
                   />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => { setShowManualFallback(false); setManualEmail(""); setManualName(""); }}
-                    className="h-7 text-xs text-slate-500 hover:text-slate-700"
-                  >
-                    닫기
-                  </Button>
                   <Button
                     type="button"
                     size="sm"
                     onClick={addManualVendor}
                     disabled={!manualEmail.trim()}
-                    className="h-7 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                    className="h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white shrink-0"
                   >
                     추가
                   </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* §11.229 — empty state 안내 (선별된 공급사 0건 시).
+                기존 §11.54 empty block + manual fallback panel 은
+                Section 3 (이메일 직접 입력) 가 always-visible 로 대체.
+                empty 안내 자체는 sourcing 보강 흐름 유지. */}
+            {!hasResolved && (
+              <div className="rounded-lg border border-dashed border-amber-200 bg-amber-50 px-4 py-4">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-slate-900">공급사 후보 선별 실패</p>
+                    <p className="text-xs text-slate-600 mt-1">
+                      해당 품목에 매칭되는 공급사가 없거나, 플랫폼 공급사 DB에 연락 채널이 등록되지 않았습니다.
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
+                      위 <span className="font-medium text-slate-700">"이메일 직접 입력"</span>으로 공급사를 직접 추가할 수 있습니다.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -546,19 +623,10 @@ export function VendorRequestModal({
           </div>
         </div>
 
-        {/* ═══ Dock — Footer is the single primary-action zone (§11.54) ═══ */}
+        {/* ═══ Dock — Footer is the single primary-action zone (§11.54) ═══
+            §11.229 — footer manual link 제거 (Section 3 always-visible 가 대체).
+            sendReadiness === "blocked" CTA 도 Section 3 의 input 으로 focus 유도. */}
         <DialogFooter className="gap-2 pt-2 border-t border-slate-200 flex-col md:flex-row">
-          {/* Fallback: manual add link — visible whenever manual panel is collapsed */}
-          {!showManualFallback && (
-            <button
-              type="button"
-              onClick={() => setShowManualFallback(true)}
-              className="text-xs text-blue-600 hover:text-blue-700 mr-auto transition-colors text-left"
-            >
-              + 후보에 없는 공급사 직접 추가
-            </button>
-          )}
-
           <Button
             type="button"
             variant="ghost"
@@ -570,7 +638,12 @@ export function VendorRequestModal({
           </Button>
           {sendReadiness === "blocked" ? (
             <Button
-              onClick={() => setShowManualFallback(true)}
+              onClick={() => {
+                // §11.229 — Section 3 의 이메일 input 으로 focus
+                const emailInput = document.querySelector<HTMLInputElement>('input[type="email"][placeholder="이메일"]');
+                emailInput?.focus();
+                emailInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+              }}
               disabled={isSubmitting}
               className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
             >
