@@ -142,11 +142,14 @@ export async function POST(request: NextRequest) {
     // 트랜잭션으로 모든 작업 처리
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. 견적 검증
+      // §11.234 — Quote.order (1:1) → Quote.orders (1:N) schema 정합.
+      //   §11.211 Order.id Sub-B 채택 후 relation cardinality 변경. ALREADY_ORDERED
+      //   는 orders.length > 0 으로 derive.
       const quote = await tx.quote.findUnique({
         where: { id: quoteId },
         include: {
           items: true,
-          order: true,
+          orders: true,
           user: {
             select: {
               id: true,
@@ -169,8 +172,8 @@ export async function POST(request: NextRequest) {
         throw new Error("QUOTE_NOT_COMPLETED");
       }
 
-      // 이미 주문된 견적인지 확인
-      if (quote.order) {
+      // §11.234 — 이미 주문된 견적인지 확인 (1:N relation, orders[].length > 0).
+      if (quote.orders && quote.orders.length > 0) {
         throw new Error("ALREADY_ORDERED");
       }
 
@@ -235,8 +238,10 @@ export async function POST(request: NextRequest) {
       }
 
       // legacy fallback — POCandidate 0개 또는 service 가 0 Order 생성 시.
+      // §11.234 — orderNumber 를 outer scope 로 hoist (line 285 description 참조).
+      let orderNumber: string | null = null;
       if (!order) {
-        const orderNumber = generateOrderNumber();
+        orderNumber = generateOrderNumber();
         order = await tx.order.create({
         data: {
           userId: quote.userId, // 견적 소유자
@@ -282,7 +287,8 @@ export async function POST(request: NextRequest) {
           orderId: order.id,
           amount: -totalAmount,
           type: "ORDER",
-          description: `주문 생성: ${orderNumber}`,
+          // §11.234 — orderNumber 가 null (POCandidate path) 시 order.orderNumber 사용.
+          description: `주문 생성: ${orderNumber ?? order.orderNumber ?? "—"}`,
           balanceBefore: budget.remainingAmount,
           balanceAfter: updatedBudget.remainingAmount,
         },

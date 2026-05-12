@@ -94,11 +94,12 @@ export async function POST(request: NextRequest) {
     // 트랜잭션으로 모든 작업 처리
     const result = await db.$transaction(async (tx: Prisma.TransactionClient) => {
       // 1. 견적 검증
+      // §11.234 — Quote.order (1:1) → Quote.orders (1:N) §11.211 정합.
       const quote = await tx.quote.findUnique({
         where: { id: quoteId },
         include: {
           items: true,
-          order: true,
+          orders: true,
         },
       });
 
@@ -116,8 +117,8 @@ export async function POST(request: NextRequest) {
         throw new Error("QUOTE_NOT_COMPLETED");
       }
 
-      // 이미 주문된 견적인지 확인
-      if (quote.order) {
+      // §11.234 — 이미 주문된 견적인지 확인 (1:N, orders[].length > 0).
+      if (quote.orders && quote.orders.length > 0) {
         throw new Error("ALREADY_ORDERED");
       }
 
@@ -186,8 +187,10 @@ export async function POST(request: NextRequest) {
       }
 
       // legacy fallback — POCandidate 0개 또는 service 가 0 Order 생성 시.
+      // §11.234 — orderNumber hoist (line 247 description 참조).
+      let orderNumber: string | null = null;
       if (!order) {
-        const orderNumber = generateOrderNumber();
+        orderNumber = generateOrderNumber();
         order = await tx.order.create({
           data: {
             userId: session.user.id,
@@ -244,7 +247,8 @@ export async function POST(request: NextRequest) {
           orderId: order.id,
           type: "DEBIT",
           amount: totalAmount,
-          description: `주문 ${orderNumber} - ${quote.title}`,
+          // §11.234 — orderNumber null 시 order.orderNumber 사용.
+          description: `주문 ${orderNumber ?? order.orderNumber ?? "—"} - ${quote.title}`,
           balanceBefore,
           balanceAfter,
         },

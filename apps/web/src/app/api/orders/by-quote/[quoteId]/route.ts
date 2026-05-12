@@ -28,11 +28,16 @@ export async function GET(
     }
 
     const { quoteId } = await params;
-    const orders = await db.order.findMany({
+    // §11.234 — Prisma findMany return type implicit any drift. explicit annotation.
+    type OrderRow = Awaited<ReturnType<typeof db.order.findMany>>[number] & {
+      items?: unknown[];
+      vendor?: unknown;
+    };
+    const orders: OrderRow[] = await db.order.findMany({
       where: { quoteId },
       include: { items: true, vendor: true },
       orderBy: { createdAt: "asc" },
-    });
+    }) as OrderRow[];
 
     if (orders.length === 0) {
       // 결재 승인 전 또는 cancelled — empty 반환 (UI 가 hide)
@@ -45,8 +50,8 @@ export async function GET(
     const orgIds = Array.from(
       new Set(
         orders
-          .map((o) => o.organizationId)
-          .filter((id): id is string => !!id),
+          .map((o: OrderRow) => o.organizationId)
+          .filter((id: string | null): id is string => !!id),
       ),
     );
     let allowedOrgIds = new Set<string>();
@@ -55,9 +60,9 @@ export async function GET(
         where: { userId, organizationId: { in: orgIds } },
         select: { organizationId: true },
       });
-      allowedOrgIds = new Set(members.map((m) => m.organizationId));
+      allowedOrgIds = new Set(members.map((m: { organizationId: string }) => m.organizationId));
     }
-    const authorized = orders.filter((o) => {
+    const authorized = orders.filter((o: OrderRow) => {
       if (o.userId === userId) return true;
       if (o.organizationId && allowedOrgIds.has(o.organizationId)) return true;
       return false;
