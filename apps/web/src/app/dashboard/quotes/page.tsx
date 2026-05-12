@@ -715,6 +715,13 @@ function QuotesPageContent() {
   // (PATCH /api/quotes/[id]/status 일괄). BatchDispatchSheet 와 동등한 lifecycle.
   const [batchReminderOpen, setBatchReminderOpen] = useState(false);
   const [batchStatusChangeOpen, setBatchStatusChangeOpen] = useState(false);
+
+  // §11.230a #quote-table-keyboard-tooltip — 호영님 v2 #23 (c+d) 키보드 navigation.
+  //   tbody tr 의 keyboard focus index. ArrowUp/Down 으로 인접 row 이동.
+  //   Enter 로 openQuoteContextRail / Escape 로 closeQuoteContextRail.
+  //   default -1 (no focus) — Tab 진입 시 첫 row 부터 활성화.
+  //   canonical truth 변경 0 — UI focus only (selectedQuoteId 와 별개).
+  const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
   const toggleQuoteSelection = useCallback((id: string) => {
     setSelectedQuoteIds((prev) => {
       const next = new Set(prev);
@@ -1605,7 +1612,12 @@ function QuotesPageContent() {
               </tr>
             </thead>
             <tbody className="divide-y divide-bd/40">
-              {sortedQuotes.map((quote) => {
+              {/* §11.230a #quote-table-keyboard-tooltip — 호영님 v2 #23 (c+d).
+                  키보드 navigation: ArrowUp/Down row 이동 + Enter row 진입 +
+                  Escape rail close. focusedRowIndex (UI focus only) + DOM
+                  focus() 로 native focus ring 시각화. canonical mutation
+                  (openQuoteContextRail / closeQuoteContextRail) 재사용. */}
+              {sortedQuotes.map((quote, rowIndex) => {
                 const signals = getOpSignals(quote);
                 const itemCount = quote.items?.length ?? 0;
                 const responseCount = quote.responses?.length ?? 0;
@@ -1631,14 +1643,49 @@ function QuotesPageContent() {
                 return (
                   <tr
                     key={quote.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`견적 ${tableDisplayTitle} · 상태 ${signals.badge}`}
                     onClick={() => openQuoteContextRail(quote.id, "row")}
+                    onFocus={() => setFocusedRowIndex(rowIndex)}
+                    onKeyDown={(e) => {
+                      // §11.230a #quote-table-keyboard-tooltip — 4 key 분기
+                      if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        const nextIndex = Math.min(rowIndex + 1, sortedQuotes.length - 1);
+                        setFocusedRowIndex(nextIndex);
+                        // DOM focus — querySelector tbody tr[data-row-index]
+                        const next = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="${nextIndex}"]`,
+                        );
+                        next?.focus();
+                      } else if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        const prevIndex = Math.max(rowIndex - 1, 0);
+                        setFocusedRowIndex(prevIndex);
+                        const prev = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="${prevIndex}"]`,
+                        );
+                        prev?.focus();
+                      } else if (e.key === "Enter") {
+                        e.preventDefault();
+                        openQuoteContextRail(quote.id, "row");
+                      } else if (e.key === "Escape") {
+                        e.preventDefault();
+                        closeQuoteContextRail("esc_key");
+                      }
+                    }}
+                    data-row-index={rowIndex}
                     className={
                       isSelected
-                        ? "bg-blue-50/60 cursor-pointer"
-                        : "hover:bg-slate-50/60 cursor-pointer transition-colors"
+                        ? "bg-blue-50/60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
+                        : "hover:bg-slate-50/60 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
                     }
                   >
-                    <td className="px-3 py-2 font-medium text-slate-900 max-w-[280px] truncate">
+                    <td
+                      className="px-3 py-2 font-medium text-slate-900 max-w-[280px] truncate"
+                      title={tableDisplayTitle}
+                    >
                       {tableDisplayTitle}
                     </td>
                     <td className="px-3 py-2">
