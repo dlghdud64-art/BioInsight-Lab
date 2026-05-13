@@ -91,16 +91,23 @@ export interface RecommendedAction {
 function generateMockLots(item: ContextPanelItem): ContextLotInfo[] {
   const lots: ContextLotInfo[] = [];
   if (item.lotNumber) {
-    const isExpiring = item.expiryDate
-      ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000) <= 7
-      : false;
+    const daysUntilExpiry = item.expiryDate
+      ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
+      : null;
     lots.push({
       lotNumber: item.lotNumber,
       quantity: Math.max(1, Math.floor(item.currentQuantity * 0.6)),
       receivedDate: "2025-11-15",
       expiryDate: item.expiryDate || null,
       location: item.location || null,
-      status: isExpiring ? "expiring" : "active",
+      status:
+        daysUntilExpiry === null
+          ? "active"
+          : daysUntilExpiry <= 0
+            ? "expired"
+            : daysUntilExpiry <= 7
+              ? "expiring"
+              : "active",
     });
   }
   // Add a second mock lot
@@ -393,6 +400,16 @@ export function InventoryContextPanel({
   const risks = generateMockRisks(item);
   const flows = generateMockConnectedFlows(item);
   const actions = generateMockActions(item);
+  const expiryDays = item.expiryDate
+    ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000)
+    : null;
+  const isExpiredLotWithQty = expiryDays !== null && expiryDays <= 0 && item.currentQuantity > 0;
+  const afterDisposalQty = isExpiredLotWithQty ? 0 : item.currentQuantity;
+  const belowSafetyAfterDisposal =
+    item.safetyStock !== null ? afterDisposalQty < item.safetyStock : afterDisposalQty <= 0;
+  const visibleActions = isExpiredLotWithQty
+    ? actions.filter((action) => action.type !== "reorder")
+    : actions;
 
   // §11.161 — 운영 브리핑 narrative hook
   const inventorySummary =
@@ -491,6 +508,45 @@ export function InventoryContextPanel({
           </Button>
         </div>
       </div>
+
+      {isExpiredLotWithQty && (
+        <div
+          data-testid="labaxis-inventory-context-disposal-strip"
+          className="border-b border-red-200 bg-red-50 px-5 py-3"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-2">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <Badge className="border border-red-300 bg-white text-red-700 text-[10px] px-1.5 py-0">
+                  만료
+                </Badge>
+                <Badge className="border border-red-300 bg-white text-red-700 text-[10px] px-1.5 py-0">
+                  사용 금지
+                </Badge>
+                <Badge className="border border-amber-300 bg-white text-amber-700 text-[10px] px-1.5 py-0">
+                  재주문은 폐기 후
+                </Badge>
+              </div>
+              <p className="text-xs font-semibold text-red-900">
+                만료 lot {item.lotNumber || item.id} · {item.currentQuantity} {item.unit} 폐기 처리가 먼저입니다.
+              </p>
+              <p className="text-[11px] leading-relaxed text-red-700/80">
+                폐기 전 재주문 CTA는 보조 흐름으로 내립니다. 폐기 후 재고 {afterDisposalQty} {item.unit}
+                {belowSafetyAfterDisposal ? " · 안전재고 영향 있음" : " · 안전재고 영향 없음"}.
+              </p>
+            </div>
+            <Button
+              data-testid="labaxis-inventory-context-dispose-cta"
+              size="sm"
+              className="h-8 shrink-0 bg-red-600 px-3 text-xs font-semibold text-white hover:bg-red-500"
+              onClick={() => onDispose?.(item)}
+            >
+              <Trash2 className="mr-1 h-3.5 w-3.5" />
+              폐기 처리 시작
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook */}
       <section id="brief-summary" className="px-5 py-3 border-b border-bd/50 scroll-mt-4">
@@ -755,7 +811,7 @@ export function InventoryContextPanel({
         <section>
           <SectionHeader icon={Sparkles} label="권장 액션 + 추천 이유" />
           <div className="mt-2.5 space-y-2">
-            {actions.map((action, idx) => (
+            {visibleActions.map((action, idx) => (
               <div
                 key={idx}
                 className={`rounded-lg border border-bd bg-pn px-3 py-2.5 border-l-2 ${ACTION_PRIORITY_STYLE[action.priority]}`}
@@ -785,6 +841,28 @@ export function InventoryContextPanel({
                 </p>
               </div>
             ))}
+            {isExpiredLotWithQty && (
+              <div
+                data-testid="labaxis-inventory-context-reorder-after-disposal"
+                className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 border-l-2 border-l-blue-500"
+              >
+                <div className="mb-1 flex items-center justify-between">
+                  <p className="text-xs font-bold text-blue-900">폐기 후 재주문 검토</p>
+                  <Badge className="border border-blue-200 bg-white text-blue-700 text-[10px] px-1.5 py-0">
+                    보조 액션
+                  </Badge>
+                </div>
+                <p className="flex items-start gap-1 text-[11px] leading-relaxed text-blue-700/80">
+                  <Info className="mt-px h-3 w-3 shrink-0 text-blue-600" />
+                  <span>
+                    폐기 완료 후 재고가 {afterDisposalQty} {item.unit}로 내려가며
+                    {belowSafetyAfterDisposal
+                      ? " 안전재고 경고가 표시되면 재주문 검토로 이동합니다."
+                      : " 안전재고 이상이면 재주문을 보류합니다."}
+                  </span>
+                </p>
+              </div>
+            )}
           </div>
         </section>
 
@@ -815,10 +893,9 @@ export function InventoryContextPanel({
           // 상태별 primary action 차등 노출
           const isLow = item.safetyStock !== null && item.currentQuantity <= item.safetyStock;
           const isExpiring = item.expiryDate ? Math.ceil((new Date(item.expiryDate).getTime() - Date.now()) / 86400000) <= 7 : false;
-          const isExpired = item.expiryDate ? new Date(item.expiryDate).getTime() < Date.now() : false;
           const isOut = item.currentQuantity === 0;
 
-          if (isExpired) {
+          if (isExpiredLotWithQty) {
             return (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" className="flex-1 h-8 text-xs border-bd bg-pn text-slate-600" onClick={() => onEdit?.(item)}>정보 수정</Button>
