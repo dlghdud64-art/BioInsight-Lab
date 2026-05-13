@@ -795,6 +795,10 @@ function QuotesPageContent() {
   //   canonical truth 변경 0 — UI focus only (selectedQuoteId 와 별개).
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
 
+  // §11.241 #6b — Shift+클릭 범위 선택용 마지막 선택 row index. -1 = 미선택.
+  //   사용자가 Shift+클릭 시 lastSelectedIndex ~ 클릭 row 범위 모두 toggle.
+  const [lastSelectedIndex, setLastSelectedIndex] = useState<number>(-1);
+
   // §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b) 컬럼 prefs.
   //   widths / visibility / order localStorage persist.
   //   §11.226 #4 hasData 우선 — 가격/납기 컬럼은 데이터 있으면 visibility 무시.
@@ -1346,6 +1350,28 @@ function QuotesPageContent() {
       setFocusedRowIndex(-1);
     }
   }, [sortedQuotes.length, focusedRowIndex]);
+
+  // §11.241 #6c — Ctrl/Cmd + A 전체 선택 document-level keydown listener.
+  //   viewMode === "table" 일 때만 활성. input/textarea/contentEditable focus 시
+  //   native a 입력 보호 (e.target tag 검사). 호영님 P1 키보드 접근성 spec 정합.
+  //   필터 연동 (§11.241 #5) — sortedQuotes 가 filteredQuotes 기반이므로 자동 정합.
+  useEffect(() => {
+    const handleSelectAll = (e: KeyboardEvent) => {
+      if (viewMode !== "table") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      if (e.key !== "a" && e.key !== "A") return;
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === "input" || tag === "textarea" || target?.isContentEditable) {
+        return; // native a 보호
+      }
+      e.preventDefault();
+      const allIds = new Set(sortedQuotes.map((q) => q.id));
+      setSelectedQuoteIds(allIds);
+    };
+    document.addEventListener("keydown", handleSelectAll);
+    return () => document.removeEventListener("keydown", handleSelectAll);
+  }, [viewMode, sortedQuotes]);
 
   // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
   const handleSortColumn = useCallback(
@@ -1959,7 +1985,24 @@ function QuotesPageContent() {
                     role="button"
                     tabIndex={0}
                     aria-label={`견적 ${tableDisplayTitle} · 상태 ${signals.badge}`}
-                    onClick={() => openQuoteContextRail(quote.id, "row")}
+                    onClick={(e) => {
+                      // §11.241 #6b — Shift+클릭 = lastSelectedIndex ~ rowIndex 범위 선택.
+                      if (e.shiftKey && lastSelectedIndex >= 0) {
+                        e.preventDefault();
+                        const start = Math.min(lastSelectedIndex, rowIndex);
+                        const end = Math.max(lastSelectedIndex, rowIndex);
+                        const next = new Set(selectedQuoteIds);
+                        for (let i = start; i <= end; i += 1) {
+                          const q = sortedQuotes[i];
+                          if (q) next.add(q.id);
+                        }
+                        setSelectedQuoteIds(next);
+                        setLastSelectedIndex(rowIndex);
+                        return;
+                      }
+                      setLastSelectedIndex(rowIndex);
+                      openQuoteContextRail(quote.id, "row");
+                    }}
                     onFocus={() => setFocusedRowIndex(rowIndex)}
                     onKeyDown={(e) => {
                       // §11.230a #quote-table-keyboard-tooltip — 4 key 분기
@@ -2016,9 +2059,20 @@ function QuotesPageContent() {
                       } else if (e.key === "Enter") {
                         e.preventDefault();
                         openQuoteContextRail(quote.id, "row");
+                      } else if (e.key === " ") {
+                        // §11.241 #6a — Space = 선택/해제 (페이지 scroll 차단)
+                        e.preventDefault();
+                        toggleQuoteSelection(quote.id);
+                        setLastSelectedIndex(rowIndex);
                       } else if (e.key === "Escape") {
                         e.preventDefault();
-                        closeQuoteContextRail("esc_key");
+                        // §11.241 #6d — selectedQuoteIds.size > 0 시 clearSelection 우선,
+                        //   else 기존 §11.230a rail close.
+                        if (selectedQuoteIds.size > 0) {
+                          clearSelection();
+                        } else {
+                          closeQuoteContextRail("esc_key");
+                        }
                       }
                     }}
                     data-row-index={rowIndex}

@@ -134,8 +134,9 @@ describe("§11.230b invariant 보존 (cluster lineage)", () => {
 
   it("§11.230a focusedRowIndex / tabIndex / onKeyDown 보존", () => {
     expect(page).toMatch(/focusedRowIndex/);
-    expect(page).toMatch(/<tr[\s\S]{0,800}tabIndex=/);
-    expect(page).toMatch(/<tr[\s\S]{0,800}onKeyDown=/);
+    // §11.241 — onClick 가 inline arrow function expand 후 tr → tabIndex / onKeyDown 거리 ↑.
+    expect(page).toMatch(/<tr[\s\S]{0,1600}tabIndex=/);
+    expect(page).toMatch(/<tr[\s\S]{0,1600}onKeyDown=/);
   });
 
   it("§11.230a native title attribute 보존 (제목 td)", () => {

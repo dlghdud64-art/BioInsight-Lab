@@ -53,7 +53,9 @@ describe("§11.230a #2 — 키보드 navigation (tbody tr)", () => {
   });
 
   it("tbody tr 에 onKeyDown handler", () => {
-    expect(page).toMatch(/<tr[\s\S]{0,800}onKeyDown=/);
+    // §11.241 — onClick 가 inline arrow function 으로 확장됨 (Shift+클릭 분기 추가)
+    //   → tr 시작 부터 onKeyDown 까지 거리 ↑. {0,800} → {0,1600} 완화.
+    expect(page).toMatch(/<tr[\s\S]{0,1600}onKeyDown=/);
   });
 
   it("onKeyDown body — ArrowUp 분기", () => {
@@ -103,7 +105,9 @@ describe("§11.230a invariant 보존 (cluster lineage)", () => {
   });
 
   it("tbody tr onClick 기존 동작 보존 (마우스 클릭 흐름)", () => {
-    expect(page).toMatch(/<tr[\s\S]{0,800}onClick=\{[\s\S]{0,200}openQuoteContextRail/);
+    // §11.241 — onClick body 가 Shift+클릭 분기 추가로 확장 → openQuoteContextRail 거리 ↑.
+    //   <tr> 시작부터 onClick 까지 + onClick 안 inline arrow expand 으로 거리 1600+.
+    expect(page).toMatch(/<tr[\s\S]{0,1600}onClick=\{[\s\S]{0,1600}openQuoteContextRail/);
   });
 
   it("cluster trace marker (§11.230a)", () => {
