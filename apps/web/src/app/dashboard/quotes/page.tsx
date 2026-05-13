@@ -8,7 +8,7 @@ import { OperationalBriefFloatingEntry } from "@/components/operational-brief/fl
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
-import { useState, useEffect, useMemo, useCallback, Suspense } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
@@ -797,6 +797,7 @@ function QuotesPageContent() {
   //   default -1 (no focus) — Tab 진입 시 첫 row 부터 활성화.
   //   canonical truth 변경 0 — UI focus only (selectedQuoteId 와 별개).
   const [focusedRowIndex, setFocusedRowIndex] = useState<number>(-1);
+  const pendingSortFocusAnchorRef = useRef(false);
 
   // §11.241 #6b — Shift+클릭 범위 선택용 마지막 선택 row index. -1 = 미선택.
   //   사용자가 Shift+클릭 시 lastSelectedIndex ~ 클릭 row 범위 모두 toggle.
@@ -1343,16 +1344,37 @@ function QuotesPageContent() {
     return sorted;
   }, [filteredQuotes, sortState]);
 
-  // §11.230c (d) #quote-table-focus-reset — sortedQuotes change 시 focus reset.
-  //   §11.230a Out of scope (e) 명시 park 항목 — filter/sort 변경으로 sortedQuotes.length
-  //   가 줄어 focusedRowIndex 가 out-of-bounds 될 때 -1 reset.
-  //   length-only check — 사용자가 sort 변경 후 같은 index row 유지 시도 보존.
-  //   canonical truth 변경 0 — focus UI only.
+  const focusQuoteTableRow = useCallback((rowIndex: number) => {
+    if (typeof document === "undefined" || rowIndex < 0) return;
+    window.requestAnimationFrame(() => {
+      const row = document.querySelector<HTMLTableRowElement>(
+        `tr[data-row-index="${rowIndex}"]`,
+      );
+      row?.focus();
+    });
+  }, []);
+
+  // §11.230c (d) #quote-table-focus-reset — sortedQuotes change 시 focus anchor.
+  //   Sort/filter 이후 포커스를 비우지 않고 직전 선택 quote 또는 첫 행으로 재지정한다.
+  //   Keyboard 이동/Enter 상세 확인이 다음 1회 조작으로 이어지게 하는 UI focus only 보정.
   useEffect(() => {
-    if (focusedRowIndex >= sortedQuotes.length) {
+    if (sortedQuotes.length === 0) {
+      pendingSortFocusAnchorRef.current = false;
       setFocusedRowIndex(-1);
+      return;
     }
-  }, [sortedQuotes.length, focusedRowIndex]);
+
+    const selectedIndex = selectedQuoteId
+      ? sortedQuotes.findIndex((quote) => quote.id === selectedQuoteId)
+      : -1;
+    const nextFocusIndex = selectedIndex >= 0 ? selectedIndex : 0;
+
+    if (pendingSortFocusAnchorRef.current || focusedRowIndex >= sortedQuotes.length) {
+      pendingSortFocusAnchorRef.current = false;
+      setFocusedRowIndex(nextFocusIndex);
+      focusQuoteTableRow(nextFocusIndex);
+    }
+  }, [sortedQuotes, selectedQuoteId, focusedRowIndex, focusQuoteTableRow]);
 
   // §11.241 #6c — Ctrl/Cmd + A 전체 선택 document-level keydown listener.
   //   viewMode === "table" 일 때만 활성. input/textarea/contentEditable focus 시
@@ -1379,6 +1401,7 @@ function QuotesPageContent() {
   // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
   const handleSortColumn = useCallback(
     (key: "title" | "status" | "itemCount" | "responseCount" | "createdAt") => {
+      pendingSortFocusAnchorRef.current = true;
       setSortState((prev) => {
         if (prev.key === key) {
           return { key, direction: prev.direction === "asc" ? "desc" : "asc" };
