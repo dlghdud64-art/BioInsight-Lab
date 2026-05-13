@@ -92,14 +92,17 @@ function isDelayed(q: Quote): boolean {
   return new Date(q.deliveryDate) < new Date();
 }
 
-const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string; leftBorder: string }> = {
-  지연:           { label: "지연",            bg: "bg-red-600/10",     text: "text-red-600",     border: "border-red-600/30",   leftBorder: "border-l-red-500" },
-  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200",   leftBorder: "border-l-purple-500" },
-  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-600/10",    text: "text-blue-600",    border: "border-blue-600/30",  leftBorder: "border-l-blue-500" },
-  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-600/10",   text: "text-amber-600",   border: "border-amber-600/30", leftBorder: "border-l-amber-500" },
-  요청_접수:      { label: "요청 접수",       bg: "bg-el",             text: "text-slate-400",   border: "border-bd",           leftBorder: "border-l-slate-300" },
-  발주_완료:      { label: "발주 완료",       bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200",  leftBorder: "border-l-emerald-500" },
-  취소됨:         { label: "취소됨",          bg: "bg-red-600/5",      text: "text-red-600",     border: "border-red-600/20",   leftBorder: "border-l-red-300" },
+// §11.242 #3 — 호영님 P0 spec: 5색 status 뱃지 + 좌측 컬러 도트.
+//   회신 대기 (amber) / 요청 발송 전 (red) / 요청 발송 완 (blue) / 비교 검토 (purple) / 발주 전환 가능 (green).
+//   bg-{color}-100 + text-{color}-800 + border-{color}-300 + dotColor (bg-{color}-500).
+const OP_STATUS: Record<string, { label: string; bg: string; text: string; border: string; leftBorder: string; dotColor: string }> = {
+  지연:           { label: "지연",            bg: "bg-red-100",    text: "text-red-800",     border: "border-red-300",     leftBorder: "border-l-red-500",     dotColor: "bg-red-500" },
+  비교_검토:      { label: "비교 검토 필요",  bg: "bg-purple-100", text: "text-purple-800",  border: "border-purple-300",  leftBorder: "border-l-purple-500",  dotColor: "bg-purple-500" },
+  일부_회신:      { label: "일부 회신 도착",  bg: "bg-blue-100",   text: "text-blue-800",    border: "border-blue-300",    leftBorder: "border-l-blue-500",    dotColor: "bg-blue-500" },
+  회신_대기:      { label: "회신 대기 중",    bg: "bg-amber-100",  text: "text-amber-800",   border: "border-amber-300",   leftBorder: "border-l-amber-500",   dotColor: "bg-amber-500" },
+  요청_접수:      { label: "요청 발송 전",    bg: "bg-red-100",    text: "text-red-800",     border: "border-red-300",     leftBorder: "border-l-red-400",     dotColor: "bg-red-500" },
+  발주_완료:      { label: "발주 전환 가능",  bg: "bg-emerald-100",text: "text-emerald-800", border: "border-emerald-300", leftBorder: "border-l-emerald-500", dotColor: "bg-emerald-500" },
+  취소됨:         { label: "취소됨",          bg: "bg-slate-100",  text: "text-slate-600",   border: "border-slate-300",   leftBorder: "border-l-slate-300",   dotColor: "bg-slate-400" },
 };
 
 function getOpStatus(q: Quote) {
@@ -1864,13 +1867,14 @@ function QuotesPageContent() {
                 - sortState (§11.227) sortable 5 컬럼 유지
                 - priceColumnHasData / deliveryColumnHasData (§11.226 #4) 우선
                 - tbody td 순서 일치 — 같은 visibleColumns.map() */}
-            <thead className="bg-slate-50 border-b border-bd">
-              <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                {/* §11.240 — 첫 column = batch selection checkbox (3-state indeterminate). */}
+            {/* §11.242 #6 — 헤더 sticky + 배경 강화 (bg-gray-100 + uppercase + tracking-wide + border-b-2). */}
+            <thead className="bg-gray-100 border-b-2 border-gray-200 sticky top-0 z-10">
+              <tr className="text-left text-xs font-semibold uppercase tracking-wide text-gray-600">
+                {/* §11.240 + §11.242 #10 — 첫 column = batch selection checkbox + sticky left-0. */}
                 <th
                   data-batch-select-header
                   style={{ width: 40, minWidth: 40 }}
-                  className="px-2 py-2 text-center"
+                  className="px-2 py-2 text-center sticky left-0 bg-gray-100 z-20"
                   aria-label="전체 견적 선택/해제"
                 >
                   <input
@@ -1953,12 +1957,37 @@ function QuotesPageContent() {
                   Escape rail close. focusedRowIndex (UI focus only) + DOM
                   focus() 로 native focus ring 시각화. canonical mutation
                   (openQuoteContextRail / closeQuoteContextRail) 재사용. */}
+              {/*
+                §11.242 #quote-table-readability — 호영님 P0 가독성 10항목.
+                  zebra (rowIndex % 2) + hover (bg-gray-100 transition) + 5색 뱃지 (OP_STATUS swap) +
+                  우선순위 left border (priorityLevel hoist) + 중복 품목 (isDuplicateOfPrev) +
+                  헤더 sticky top-0 + 첫 td sticky left-0 + 빈 데이터 text-gray-300 +
+                  selected row bg-blue-50 + border-l-blue-500 (§11.240 bg-indigo-50 swap).
+              */}
               {sortedQuotes.map((quote, rowIndex) => {
                 const signals = getOpSignals(quote);
                 const itemCount = quote.items?.length ?? 0;
                 const responseCount = quote.responses?.length ?? 0;
                 const railState = deriveRailState(quote);
                 const isSelected = selectedQuoteId === quote.id;
+                // §11.242 #4 — 우선순위 left border tr scope derive (canonical RailState 기반).
+                //   critical: response_delayed / external_approval_required (호영님 "긴급").
+                //   high: compare_review_required (호영님 "높음").
+                //   normal: 그 외 (보더 없음).
+                const priorityLevel: "critical" | "high" | "normal" =
+                  railState === "response_delayed" || railState === "external_approval_required"
+                    ? "critical"
+                    : railState === "compare_review_required"
+                      ? "high"
+                      : "normal";
+                // §11.242 #5 — 중복 품목 그룹핑 derive (인접 prev row 의 firstItemName 비교).
+                //   같은 firstItemName 이 연속될 때 isDuplicateOfPrev=true → 텍스트 회색.
+                const prevQuote = rowIndex > 0 ? sortedQuotes[rowIndex - 1] : null;
+                const prevFirstItem = prevQuote?.items?.[0]?.product?.name?.trim() ?? null;
+                const currentFirstItem = quote.items?.[0]?.product?.name?.trim() ?? null;
+                const isDuplicateOfPrev = Boolean(
+                  prevFirstItem && currentFirstItem && prevFirstItem === currentFirstItem,
+                );
                 // §11.224 — 가격 range (테이블 row scope). 카드 분기 변수와 동일 의미.
                 const prices = (quote.responses ?? [])
                   .map((r) => r.totalPrice)
@@ -2076,20 +2105,32 @@ function QuotesPageContent() {
                       }
                     }}
                     data-row-index={rowIndex}
-                    className={
-                      // §11.240 — batch selected row 하이라이트 (bg-indigo-50) > §11.220 isSelected (rail open)
-                      selectedQuoteIds.has(quote.id)
-                        ? "bg-indigo-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
+                    className={(() => {
+                      // §11.242 #1+#2+#4 — zebra + hover + 우선순위 left border + selected.
+                      //   호영님 spec 우선: selected = bg-blue-50 + border-l-blue-500 (§11.240 bg-indigo-50 swap).
+                      //   우선순위 left border: critical → red, high → amber, normal → transparent.
+                      //   zebra: 짝수 bg-white / 홀수 bg-gray-50. 호버: hover:bg-gray-100.
+                      const focusRing = "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset";
+                      const priorityBorder =
+                        priorityLevel === "critical" ? "border-l-4 border-red-500"
+                        : priorityLevel === "high" ? "border-l-4 border-amber-400"
+                        : "border-l-4 border-transparent";
+                      const isBatchSelected = selectedQuoteIds.has(quote.id);
+                      const bgClass = isBatchSelected
+                        ? "bg-blue-50 border-l-blue-500 hover:bg-blue-100"
                         : isSelected
-                          ? "bg-blue-50/60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
-                          : "hover:bg-slate-50/60 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
-                    }
+                          ? "bg-blue-50/60 hover:bg-blue-100/60"
+                          : `${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`;
+                      return `${bgClass} ${priorityBorder} cursor-pointer transition-colors duration-150 ${focusRing}`;
+                    })()}
                   >
-                    {/* §11.240 — 첫 td = row checkbox (batch selection toggle). */}
+                    {/* §11.240 + §11.242 #10 — 첫 td = row checkbox + sticky left-0. */}
                     <td
                       data-batch-select-row
                       style={{ width: 40, minWidth: 40 }}
-                      className="px-2 py-2 text-center"
+                      className={`px-2 py-3 text-center sticky left-0 z-10 ${
+                        selectedQuoteIds.has(quote.id) ? "bg-blue-50" : rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"
+                      }`}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <input
@@ -2106,14 +2147,20 @@ function QuotesPageContent() {
                     {visibleColumns.map((key) => {
                       const width = columnPrefs.widths[key];
                       if (key === "title") {
+                        // §11.242 #5 — 중복 품목: prev row 와 같은 firstItemName 이면 text-gray-400 + "〃"
+                        //   첫 표시 row 만 강조, 연속 row 는 시각 noise ↓.
                         return (
                           <td
                             key={key}
                             style={{ width, maxWidth: width }}
-                            className="px-3 py-2 font-medium text-slate-900 truncate"
+                            className={`px-4 py-3 truncate ${
+                              isDuplicateOfPrev
+                                ? "font-normal text-gray-400 pl-6"
+                                : "font-medium text-gray-900"
+                            }`}
                             title={tableDisplayTitle}
                           >
-                            {tableDisplayTitle}
+                            {isDuplicateOfPrev ? `〃 ${tableDisplayTitle}` : tableDisplayTitle}
                           </td>
                         );
                       }
@@ -2172,10 +2219,11 @@ function QuotesPageContent() {
                         // §11.226 #4 — priceColumnHasData 우선 (visibleColumns 가 이미 hasData 분기).
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-right text-[11px] tabular-nums">
+                            {/* §11.242 #8 — 빈 데이터 색상 약화 (호영님 spec: text-gray-300). */}
                             {responseCount === 0 ? (
-                              <span className="text-slate-400">미수신</span>
+                              <span className="text-gray-300">미수신</span>
                             ) : prices.length === 0 ? (
-                              <span className="text-slate-400">가격 미기재</span>
+                              <span className="text-gray-300">가격 미기재</span>
                             ) : minPrice === maxPrice ? (
                               <span className="text-slate-700">₩{minPrice!.toLocaleString("ko-KR")}</span>
                             ) : (
@@ -2197,12 +2245,9 @@ function QuotesPageContent() {
                       }
                       if (key === "priority") {
                         // §11.231 — priority derive (railState 기반, signals 의 priority 부재 fix).
+                        //   §11.242 — outer tr scope priorityLevel reuse (shadow drop).
                         //   delayed/external_approval_required = critical, compare_review_required = high,
                         //   그 외 = normal. canonical RailState 정합 + 시각화 분기 보존.
-                        const priorityLevel: "critical" | "high" | "normal" =
-                          (railState === "response_delayed" || railState === "external_approval_required") ? "critical"
-                          : railState === "compare_review_required" ? "high"
-                          : "normal";
                         return (
                           <td key={key} style={{ width }} className="px-3 py-2 text-center">
                             <span className={`inline-block w-2 h-2 rounded-full ${

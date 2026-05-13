@@ -37,9 +37,9 @@ const batchBar = readFileSync(BATCH_BAR_PATH, "utf8");
 
 describe("§11.240 #1 — 테이블 row + thead 체크박스", () => {
   it("page.tsx 테이블 thead 첫 column = checkbox cell (data-testid 또는 select column)", () => {
-    // thead 안 첫 column 으로 checkbox + role / data-testid sentinel
+    // §11.242 — th attribute order 변경 (sticky left-0 등 추가) → regex range 완화.
     expect(page).toMatch(
-      /<th[\s\S]{0,200}data-batch-select-header[\s\S]{0,200}<input[\s\S]{0,100}type="checkbox"/,
+      /<th[\s\S]{0,500}data-batch-select-header[\s\S]{0,500}<input[\s\S]{0,200}type="checkbox"/,
     );
   });
 
