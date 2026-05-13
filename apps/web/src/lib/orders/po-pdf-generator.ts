@@ -69,7 +69,8 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     const doc = new PDFDocument({ size: "A4", margin: 48 });
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    // §11.238 — Buffer.concat type drift (Uint8Array[] expected). cast.
+    doc.on("end", () => resolve(Buffer.concat(chunks as unknown as Uint8Array[])));
     doc.on("error", reject);
 
     // 한글 폰트 임베드 — Pretendard. 미존재 시 helvetica fallback.

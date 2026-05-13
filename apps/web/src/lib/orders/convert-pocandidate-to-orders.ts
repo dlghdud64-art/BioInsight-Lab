@@ -146,7 +146,8 @@ export async function convertPOCandidatesToOrders(
     };
     const result = inOuterTx
       ? await runWork(client)
-      : await db.$transaction(async (tx) => runWork(tx as unknown as DbClient));
+      // §11.238 — TransactionClient implicit any cast.
+      : await db.$transaction(async (tx: any) => runWork(tx as unknown as DbClient));
 
     created.push({
       orderId: result.orderId,

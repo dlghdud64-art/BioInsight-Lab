@@ -96,7 +96,8 @@ export async function deriveCurrentSnapshotMetrics(opts: {
   }
 
   // 3) totalSpent = PurchaseRecord 누적 amount
-  let totalSpent = 0n;
+  // §11.238 — BigInt literal `0n` ES2020+ — BigInt(0) swap (ES2017 호환).
+  let totalSpent = BigInt(0);
   try {
     const result = await db.purchaseRecord.aggregate({
       where: orgFilter,
@@ -108,7 +109,8 @@ export async function deriveCurrentSnapshotMetrics(opts: {
   }
 
   // 4) totalBudget = UserBudget 활성 totalAmount sum
-  let totalBudget = 0n;
+  // §11.238 — BigInt literal swap.
+  let totalBudget = BigInt(0);
   try {
     const result = await db.userBudget.aggregate({
       where: { ...(userId ? { userId } : {}), isActive: true },

@@ -115,7 +115,8 @@ export async function createOrganization(
     { name: data.name },
   ];
 
-  return await db.$transaction(async (tx) => {
+  // §11.238 — Prisma TransactionClient implicit any cast.
+  return await db.$transaction(async (tx: any) => {
     // 1) Organization 생성 — DB 스키마 변동성 대비 방어적 재시도
     let organization: Prisma.OrganizationGetPayload<{}> | null = null;
     for (const attempt of orgCreatePayloads) {

@@ -95,7 +95,8 @@ export async function POST(
               phone: order.vendor.phone ?? null,
             }
           : null,
-        items: order.items.map((it) => ({
+        // §11.238 — Order.items implicit any narrow.
+        items: order.items.map((it: typeof order.items[number]) => ({
           name: it.name,
           brand: it.brand,
           catalogNumber: it.catalogNumber,

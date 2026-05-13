@@ -156,7 +156,8 @@ export async function PATCH(
     // status DELIVERED 진입 시 (before.status !== "DELIVERED") InventoryRestock
     // 자동 생성. sync 실패 시 graceful (logging, mutation 결과 그대로 반환 —
     // 운영자가 receiving page 에서 manual restock 가능).
-    const updated = await db.$transaction(async (tx) => {
+    // §11.238 — Prisma TransactionClient implicit any cast (sandbox sync drift 재fix).
+    const updated = await db.$transaction(async (tx: any) => {
       const result = await tx.order.update({
         where: { id },
         data: updateData,

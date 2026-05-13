@@ -261,7 +261,8 @@ function generateMockActions(item: ContextPanelItem): RecommendedAction[] {
         type: "dispose",
         label: "폐기 처리",
         reasoning: `만료 lot 폐기 처리 시작: 유효기간 만료 ${Math.abs(days)}일 경과, 사용 금지 — 즉시 격리 후 폐기 기록 필수. 재발주는 폐기 처리 완료 후 진행`,
-        priority: "critical",
+        // §11.238 — "critical" → "high" mapping (priority type 정합).
+        priority: "high",
       });
     }
   }
