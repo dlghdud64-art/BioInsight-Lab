@@ -64,7 +64,8 @@ export async function GET(request: NextRequest) {
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
-    const orgIds = memberships.map((m) => m.organizationId);
+    // §11.236 — Prisma select implicit any narrow.
+    const orgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
 
     // ── 재고 목록 조회 ──────────────────────────────────────────────────────
     const inventories = await db.productInventory.findMany({
@@ -73,7 +74,7 @@ export async function GET(request: NextRequest) {
         : {
             OR: [
               { userId: session.user.id },
-              ...orgIds.map((id) => ({ organizationId: id })),
+              ...orgIds.map((id: string) => ({ organizationId: id })),
             ],
           },
       include: {

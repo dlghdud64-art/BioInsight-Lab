@@ -39,7 +39,8 @@ export async function POST(request: NextRequest) {
       where: { userId: session.user.id },
       select: { organizationId: true },
     });
-    const orgIds = memberships.map((m) => m.organizationId);
+    // §11.236 — Prisma select implicit any narrow.
+    const orgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
 
     const inventories = await db.productInventory.findMany({
       where: {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
           { userId: session.user.id },
           ...(organizationId
             ? [{ organizationId }]
-            : orgIds.map((id) => ({ organizationId: id }))),
+            : orgIds.map((id: string) => ({ organizationId: id }))),
         ],
       },
       include: {

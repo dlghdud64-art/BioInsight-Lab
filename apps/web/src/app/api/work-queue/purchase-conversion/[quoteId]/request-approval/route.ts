@@ -189,7 +189,7 @@ export async function POST(
     const approverEmail = candidate?.email ?? null;
     const approverName = candidate?.name ?? "관리자";
 
-    if (!approverId) {
+    if (!approverId || !candidate) {
       enforcement.fail();
       return NextResponse.json(
         {
@@ -200,6 +200,8 @@ export async function POST(
         { status: 400 },
       );
     }
+    // §11.236 — candidate type narrow (approverId 분기 후 not-null 보장).
+    //   line 287/294/323 의 candidate.source 접근 typecheck.
 
     // PR INSERT
     const purchaseRequest = await db.purchaseRequest.create({

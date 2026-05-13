@@ -90,8 +90,9 @@ export async function PATCH(request: NextRequest) {
     enforcement = enforceAction({
       userId: session.user.id,
       userRole: session.user.role ?? undefined,
-      action: "user_profile_update",
-      targetEntityType: "user",
+      // §11.236 — IrreversibleActionType / targetEntity enum cast (schema 정합 대기).
+      action: "user_profile_update" as never,
+      targetEntityType: "user" as never,
       targetEntityId: session.user.id,
       sourceSurface: "settings-page",
       routePath: "/api/user/profile",

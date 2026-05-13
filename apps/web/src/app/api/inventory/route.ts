@@ -8,7 +8,8 @@ import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-en
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    const user = await getAuthUser(session, request);
+    // §11.236 — Session type drift (NextAuth Session vs getAuthUser narrow). cast.
+    const user = await getAuthUser(session as Parameters<typeof getAuthUser>[0], request);
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -37,14 +38,15 @@ export async function GET(request: NextRequest) {
       where: { userId: user.id },
       select: { organizationId: true },
     });
-    const orgIds = memberships.map((m) => m.organizationId);
+    // §11.236 — Prisma select return implicit any narrow.
+    const orgIds = memberships.map((m: { organizationId: string }) => m.organizationId);
 
     const ownerCondition: any = {
       OR: [
         { userId: user.id },
         ...(organizationId
           ? [{ organizationId }]
-          : orgIds.map((id) => ({ organizationId: id }))),
+          : orgIds.map((id: string) => ({ organizationId: id }))),
       ],
     };
 
