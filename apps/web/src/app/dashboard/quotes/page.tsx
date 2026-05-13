@@ -1421,6 +1421,19 @@ function QuotesPageContent() {
     return count;
   }, [selectedQuotes]);
 
+  // §11.240 #quote-batch-selection-p0 — 호영님 P0: row checkbox + dropdown + guardrail.
+  //   P0 4 항목: (1) row+thead checkbox 3-state / (2) batch bar dropdown + 개별 X /
+  //   (3) 상태 혼재 가드레일 (응답 없는 quote 포함 시 검토 시작 disabled) / (4) invariant
+  //   §11.228 BatchActionBar + selectedQuoteIds Set 위 확장.
+  // 호영님 P0 상태 혼재 가드레일: 응답 없는 quote 포함 시 "검토 시작" disabled.
+  //   "검토 시작" 의 (compare review) 의미 = 응답을 비교하여 발주 진입 — 응답 없는 quote
+  //   포함 시 검토할 데이터 없음 → disabled. 기존 dispatchableCount === 0 disabled 와 OR
+  //   처리 (BatchActionBar 내부).
+  const reviewDisabled = useMemo(
+    () => selectedQuotes.some((q) => (q.responses?.length ?? 0) === 0),
+    [selectedQuotes],
+  );
+
   // §11.226 #4 — 빈 컬럼 자동 hide (가격 / 납기).
   //   호영님 v2 spec sheet P0 #4: "컬럼 내 전체 행이 '—' 또는 null 이면 해당
   //   컬럼 자동 숨김. 1건이라도 데이터가 있으면 컬럼 표시." filteredQuotes 전체
@@ -1549,11 +1562,15 @@ function QuotesPageContent() {
 
       {/* §11.217 Phase 3 — Batch action bar (sticky, selectedCount > 0 시만 노출)
           §11.228 #quote-management-v2-phase-c1 — 일괄 처리 강화: 리마인더 + 상태 변경 CTA 추가 */}
+      {/* §11.240 — dropdown + 가드레일 prop 확장 */}
       <BatchActionBar
         selectedCount={selectedQuoteIds.size}
         dispatchableCount={dispatchableCount}
         hardBlockCount={hardBlockCount}
         reminderEligibleCount={reminderEligibleCount}
+        selectedQuotes={selectedQuotes}
+        reviewDisabled={reviewDisabled}
+        onRemoveOne={(id) => toggleQuoteSelection(id)}
         onReviewStart={() => setBatchSheetOpen(true)}
         onReminderStart={() => setBatchReminderOpen(true)}
         onStatusChangeStart={() => setBatchStatusChangeOpen(true)}
@@ -1823,6 +1840,37 @@ function QuotesPageContent() {
                 - tbody td 순서 일치 — 같은 visibleColumns.map() */}
             <thead className="bg-slate-50 border-b border-bd">
               <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                {/* §11.240 — 첫 column = batch selection checkbox (3-state indeterminate). */}
+                <th
+                  data-batch-select-header
+                  style={{ width: 40, minWidth: 40 }}
+                  className="px-2 py-2 text-center"
+                  aria-label="전체 견적 선택/해제"
+                >
+                  <input
+                    type="checkbox"
+                    aria-label="전체 견적 선택/해제"
+                    className="accent-violet-600 cursor-pointer h-4 w-4"
+                    checked={sortedQuotes.length > 0 && sortedQuotes.every((q) => selectedQuoteIds.has(q.id))}
+                    ref={(el) => {
+                      if (el) {
+                        const selectedCount = sortedQuotes.filter((q) => selectedQuoteIds.has(q.id)).length;
+                        el.indeterminate = selectedCount > 0 && selectedCount < sortedQuotes.length;
+                      }
+                    }}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        sortedQuotes.forEach((q) => {
+                          if (!selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
+                        });
+                      } else {
+                        sortedQuotes.forEach((q) => {
+                          if (selectedQuoteIds.has(q.id)) toggleQuoteSelection(q.id);
+                        });
+                      }
+                    }}
+                  />
+                </th>
                 {visibleColumns.map((key) => {
                   const width = columnPrefs.widths[key];
                   const isSortable = key === "title" || key === "status" || key === "itemCount" || key === "responseCount" || key === "createdAt";
@@ -1975,11 +2023,29 @@ function QuotesPageContent() {
                     }}
                     data-row-index={rowIndex}
                     className={
-                      isSelected
-                        ? "bg-blue-50/60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
-                        : "hover:bg-slate-50/60 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
+                      // §11.240 — batch selected row 하이라이트 (bg-indigo-50) > §11.220 isSelected (rail open)
+                      selectedQuoteIds.has(quote.id)
+                        ? "bg-indigo-50 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
+                        : isSelected
+                          ? "bg-blue-50/60 cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
+                          : "hover:bg-slate-50/60 cursor-pointer transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset"
                     }
                   >
+                    {/* §11.240 — 첫 td = row checkbox (batch selection toggle). */}
+                    <td
+                      data-batch-select-row
+                      style={{ width: 40, minWidth: 40 }}
+                      className="px-2 py-2 text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        aria-label={`견적 ${tableDisplayTitle} 선택/해제`}
+                        className="accent-violet-600 cursor-pointer h-4 w-4"
+                        checked={selectedQuoteIds.has(quote.id)}
+                        onChange={() => toggleQuoteSelection(quote.id)}
+                      />
+                    </td>
                     {/* §11.230b — visibleColumns.map() dynamic td. column key 별 render
                         분기. §11.224 가격/납기 분기 + §11.226 #4 hasData 우선 +
                         §11.226 #5 tableDisplayTitle + §11.230a title attr 보존. */}
