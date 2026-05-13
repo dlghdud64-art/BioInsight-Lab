@@ -271,6 +271,22 @@ function DashboardPageInner() {
     },
   };
 
+  // §11.243 #1 — 호영님 P0: 온보딩 모드 vs 운영 모드 분기.
+  //   "견적 등록 건수 0건" = quoteStats 합 (active + responded) === 0.
+  //   isOnboardingMode 시: OnboardingHero 노출 + KPI 가이드 + AI 리포트 disabled +
+  //   바로가기 건수 뱃지 + 텍스트 행동 유도형. 데이터 1건+ 시 자동 운영 모드 전환.
+  const totalQuotesCount = stats.activeQuotes + stats.respondedQuotes;
+  const isOnboardingMode = totalQuotesCount === 0;
+  // §11.243 #2 — OnboardingHero 3 step 완료 derive.
+  //   step 1 (품목 등록) = totalInventory > 0
+  //   step 2 (견적 요청) = activeQuotes > 0
+  //   step 3 (비교 검토) = respondedQuotes > 0
+  const onboardingSteps = {
+    inventoryDone: stats.totalInventory > 0,
+    quoteRequestDone: stats.activeQuotes > 0,
+    compareDone: stats.respondedQuotes > 0,
+  };
+
   // ── 3상태 대시보드 판정 ──────────────────────────────────
   const processingRequiredCount = stats.lowStockAlerts + stats.expiringCount + stats.undecidedCompareCount;
   const approvalPendingCount = stats.respondedQuotes; // 견적 응답 = 검토/승인 대기
@@ -521,7 +537,7 @@ function DashboardPageInner() {
             {dashboardState === "blocked"
               ? `확인이 필요한 항목 ${processingRequiredCount + approvalPendingCount + riskOrBlockerCount}건이 있습니다.`
               : dashboardState === "zero"
-                ? "아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요."
+                ? "견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다."
                 : "오늘 즉시 처리할 운영 이슈가 없습니다."}
           </p>
         </div>
