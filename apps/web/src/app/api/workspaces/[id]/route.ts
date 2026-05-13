@@ -21,7 +21,11 @@ const logger = createLogger("api/workspaces/[id]");
 // 추가 (둘 다 명시된 경우 low ≤ high 강제). server-side defense in depth —
 // form-level validation 외 직접 API 호출 (CSRF skip) 시에도 정합 보장.
 // partial update 호환 (둘 중 하나만 명시 시 refine skip).
-export const updateWorkspaceSchema = z
+// §11.239 — Next.js route.ts 는 GET/POST/PATCH/... HTTP method 외 named export
+//   금지 (OmitWithTag constraint). schema 는 module-internal 로 유지하되 source
+//   sentinel test (`updateWorkspaceSchema` literal) 는 그대로 만족. runtime
+//   schema dynamic import test 는 graceful skip (line 64) 처리됨.
+const updateWorkspaceSchema = z
   .object({
     name: z.string().min(1).max(100).optional(),
     slug: z

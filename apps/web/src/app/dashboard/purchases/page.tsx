@@ -1180,7 +1180,7 @@ export default function PurchasesPage() {
                                     leadDays: opt.leadDays,
                                     moq: opt.moq,
                                     currency: selectedItem.currency,
-                                    quoteTitle: selectedItem.title,
+                                    quoteTitle: selectedItem.requestTitle,
                                     totalSuppliers: selectedItem.totalSuppliers,
                                   });
                                 }}

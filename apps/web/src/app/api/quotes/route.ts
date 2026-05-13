@@ -106,11 +106,15 @@ export async function POST(request: NextRequest) {
     }
 
     // items가 있으면 새로운 형식, 없으면 기존 형식
+    // §11.239 — quantities / notes 는 legacy form 의 Record<string, ...> payload.
+    // implicit any index sig 차단 — 명시 cast.
+    const legacyQuantities = (quantities as Record<string, number> | undefined) ?? undefined;
+    const legacyNotes = (notes as Record<string, string> | undefined) ?? undefined;
     const quoteItems = items || (productIds ? productIds.map((pid: string, idx: number) => ({
       productId: pid,
       vendorId: null, // 기존 형식은 vendorId 없음
-      quantity: quantities?.[pid] || 1,
-      notes: notes?.[pid] || "",
+      quantity: legacyQuantities?.[pid] || 1,
+      notes: legacyNotes?.[pid] || "",
     })) : []);
 
     // title 자동 생성: 클라이언트가 빈 값으로 보내도 서버에서 fallback
@@ -145,7 +149,12 @@ export async function POST(request: NextRequest) {
       const productIds = items.map((item: any) => item.productId);
       const quantities = Object.fromEntries(items.map((item: any) => [item.productId, item.quantity || 1]));
       const itemNotes = Object.fromEntries(items.map((item: any) => [item.productId, item.notes || ""]));
-      const vendorIds = Object.fromEntries(items.map((item: any) => [item.productId, item.vendorId]).filter(([_, vid]: [string, any]) => vid));
+      // §11.239 — map → filter chain tuple narrow. `as [string, any]` 로 ([string,any])[] 정합.
+      const vendorIds = Object.fromEntries(
+        items
+          .map((item: any) => [item.productId, item.vendorId] as [string, any])
+          .filter(([, vid]) => vid)
+      );
 
       // 벤더별 제목 생성
       const vendorTitle = vendorId !== "unknown"
@@ -386,7 +395,8 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
-    const user = await getAuthUser(session, request);
+    // §11.239 — Session.user.name nullable drift cast (§11.236 패턴 정합).
+    const user = await getAuthUser(session as Parameters<typeof getAuthUser>[0], request);
     if (!user?.id) {
       return NextResponse.json({ error: "Unauthorized", quotes: [] }, { status: 401 });
     }

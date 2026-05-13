@@ -252,7 +252,11 @@ function shortenActionLabel(ctaLabel: string): string {
 //   canonical truth 보호: §11.226 #4 priceColumnHasData / deliveryColumnHasData 우선
 //   (visibility false 라도 hasData true 시 노출). sortedQuotes / sortState / focusedRowIndex
 //   변경 0 — UI preference layer 만 추가.
-export type ColumnKey =
+// §11.239 — Next.js page.tsx 는 default export 외 named export 가 OmitWithTag
+//   index signature constraint 를 깬다 (PageProps never 강제). 본 module 안에서만
+//   사용되는 상수/타입은 `export` 키워드 제거. grep sentinel 기반 test 는 source
+//   text 매칭이므로 import path 변경 없음.
+type ColumnKey =
   | "title"
   | "status"
   | "itemCount"
@@ -263,13 +267,13 @@ export type ColumnKey =
   | "createdAt"
   | "actions";
 
-export interface ColumnPrefs {
+interface ColumnPrefs {
   widths: Record<ColumnKey, number>;
   visibility: Record<ColumnKey, boolean>;
   order: ColumnKey[];
 }
 
-export const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
+const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
   widths: {
     title: 280,
     status: 100,
@@ -295,7 +299,7 @@ export const DEFAULT_COLUMN_PREFS: ColumnPrefs = {
   order: ["title", "status", "itemCount", "responseCount", "price", "delivery", "priority", "createdAt", "actions"],
 };
 
-export const COLUMN_LABEL: Record<ColumnKey, string> = {
+const COLUMN_LABEL: Record<ColumnKey, string> = {
   title: "제목",
   status: "상태",
   itemCount: "품목",
@@ -308,11 +312,11 @@ export const COLUMN_LABEL: Record<ColumnKey, string> = {
 };
 
 // localStorage key
-export const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
+const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
 
 // 컬럼 폭 guard (px)
-export const COLUMN_MIN_WIDTH = 60;
-export const COLUMN_MAX_WIDTH = 500;
+const COLUMN_MIN_WIDTH = 60;
+const COLUMN_MAX_WIDTH = 500;
 
 // ── 운영 신호 파생 (canonical state 기반) ──
 function getOpSignals(q: Quote) {

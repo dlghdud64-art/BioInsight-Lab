@@ -24,6 +24,10 @@
 // build-time 에서는 module 미존재 시 typecheck error (host install 후 해소).
 import PDFDocument from "pdfkit";
 import { join } from "node:path";
+// §11.239 — pdfkit type 정의가 global Buffer (typeof Buffer) 를 namespace
+// merge 로 가리는 케이스 존재. node:buffer 의 Buffer 를 NodeBuffer alias 로
+// import 해 static concat 안전 호출. runtime 동작 0 변경.
+import { Buffer as NodeBuffer } from "node:buffer";
 
 /** PO PDF generator 입력. caller 는 vendor / items 포함된 Order 전달. */
 export interface GeneratePoPdfInput {
@@ -69,8 +73,12 @@ export async function generatePoPdf(input: GeneratePoPdfInput): Promise<Buffer> 
     const doc = new PDFDocument({ size: "A4", margin: 48 });
     const chunks: Buffer[] = [];
     doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    // §11.238 — Buffer.concat type drift (Uint8Array[] expected). cast.
-    doc.on("end", () => resolve(Buffer.concat(chunks as unknown as Uint8Array[])));
+    // §11.238 / §11.239 — Buffer.concat type drift (pdfkit type 가 global
+    //   Buffer namespace 와 merge 되며 typeof Buffer 의 static concat 가림).
+    //   any cast 로 production-grade Buffer.concat 직접 호출. runtime 동작 0 변경.
+    doc.on("end", () =>
+      resolve((NodeBuffer as any).concat(chunks as unknown as Uint8Array[]) as Buffer),
+    );
     doc.on("error", reject);
 
     // 한글 폰트 임베드 — Pretendard. 미존재 시 helvetica fallback.

@@ -132,6 +132,14 @@ function AuditLogsPageContent() {
       ENTITY_LINKED: "엔티티 연결",
       VERIFICATION_COMPLETED: "검증 완료",
       WORK_QUEUE_TASK_GENERATED: "작업 생성",
+      // §11.239 — canonical AuditEventType enum 신규 추가 멤버 보강.
+      // 라벨은 한국어 정합 (§11.182). raw enum 노출 차단.
+      WORKSPACE_THRESHOLD_CHANGED: "워크스페이스 결재 한도 변경",
+      PURCHASE_REQUEST_CREATED: "구매 요청 생성",
+      MEMBER_APPROVAL_LIMIT_CHANGED: "결재자 승인 한도 변경",
+      ORDER_CREATED_FROM_POCANDIDATE: "발주 자동 생성",
+      PO_PDF_GENERATED: "발주서 PDF 생성",
+      VENDOR_EMAIL_SENT: "공급사 발주 이메일 송부",
     };
     return labels[eventType] || eventType;
   };

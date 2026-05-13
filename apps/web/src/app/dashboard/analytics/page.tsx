@@ -284,7 +284,7 @@ export default function AnalyticsPage() {
         id: "vendor-concentration",
         icon: <AlertCircle className="h-4 w-4" />,
         title: "공급사 집중도 위험",
-        description: `${topVendor.vendorName ?? "상위 공급사"}에 지출의 ${vendorConcentration}%가 집중되어 있습니다.`,
+        description: `${topVendor.vendor ?? "상위 공급사"}에 지출의 ${vendorConcentration}%가 집중되어 있습니다.`,
         cta: "공급사별 분석",
         href: "/dashboard/reports",
         color: "amber",
@@ -604,7 +604,7 @@ export default function AnalyticsPage() {
             const palette = ["#3b82f6", "#10b981", "#f59e0b", "#94a3b8"]; // blue / emerald / amber / slate
             top3.forEach((v, i) => {
               supplierBars.push({
-                name: v.vendorName ?? "공급사",
+                name: v.vendor ?? "공급사",
                 amount: v.totalAmount,
                 percent: Math.round((v.totalAmount / vendorTotal) * 1000) / 10,
                 color: palette[i] ?? "#94a3b8",

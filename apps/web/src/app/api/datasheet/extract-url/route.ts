@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { NextRequest, NextResponse } from "next/server";
 import { extractProductInfoFromDatasheet } from "@/lib/ai/datasheet-extractor";
 import { Readability } from "@mozilla/readability";
+// §11.239 — jsdom declaration 미존재 → @types/jsdom 미설치 환경에서 implicit any.
+// host install 단계에서 @types/jsdom 추가 권장. 임시로 ts-ignore 로 module any 통과.
+// @ts-ignore — jsdom types host install pending
 import { JSDOM } from "jsdom";
 
 // URL에서 데이터시트 본문 추출 및 분석 API

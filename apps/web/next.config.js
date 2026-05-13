@@ -32,10 +32,16 @@ const nextConfig = {
     } : false,
   },
 
-  // recharts 등 서드파티 라이브러리의 타입 불일치로 빌드 실패 방지
-  // 런타임에는 영향 없으며, 개발 시 tsc --noEmit으로 별도 확인
+  // §11.225 hot fix root cause 차단 (§11.231 ~ §11.239 release-prep batches):
+  //   `ignoreBuildErrors: true` 가 tsc error 를 build pass 시켜 silent type drift
+  //   가 production runtime 까지 통과하던 패턴 차단 (`quote.order` 무존재,
+  //   `orderNumber` legacy fallback ReferenceError 등). tsc --noEmit 0 errors
+  //   달성 (§11.239) — production build 도 strict 검증 통과.
+  //
+  // 회귀 시 절대 다시 enable 하지 말 것. 새 type error 가 production build 를
+  // 막을 경우 source 수정으로 해결 (release-prep batches 패턴 정합).
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
 
   // 압축 설정

@@ -47,6 +47,11 @@ interface QuoteItemForWizard {
   name?: string;
   brand?: string | null;
   catalogNumber?: string | null;
+  // §11.208 / §11.239 — store schema (QuoteCandidateItem) 의 productId/productName 정합.
+  //   wizard 가 fallback chain (qi.productId ?? qi.id, qi.productName ?? qi.name) 으로
+  //   참조 — interface 에 optional 로 명시하여 implicit any 차단.
+  productId?: string;
+  productName?: string;
 }
 
 interface ItemConfig {
