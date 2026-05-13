@@ -1336,6 +1336,17 @@ function QuotesPageContent() {
     return sorted;
   }, [filteredQuotes, sortState]);
 
+  // §11.230c (d) #quote-table-focus-reset — sortedQuotes change 시 focus reset.
+  //   §11.230a Out of scope (e) 명시 park 항목 — filter/sort 변경으로 sortedQuotes.length
+  //   가 줄어 focusedRowIndex 가 out-of-bounds 될 때 -1 reset.
+  //   length-only check — 사용자가 sort 변경 후 같은 index row 유지 시도 보존.
+  //   canonical truth 변경 0 — focus UI only.
+  useEffect(() => {
+    if (focusedRowIndex >= sortedQuotes.length) {
+      setFocusedRowIndex(-1);
+    }
+  }, [sortedQuotes.length, focusedRowIndex]);
+
   // §11.227 #9 — column header 클릭 시 sort 전환. 같은 컬럼 재클릭 시 direction toggle.
   const handleSortColumn = useCallback(
     (key: "title" | "status" | "itemCount" | "responseCount" | "createdAt") => {
