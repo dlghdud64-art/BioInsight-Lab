@@ -690,6 +690,11 @@ function SupplierReviewCard({
   supplier: ResolvedSupplier;
   onToggle: () => void;
 }) {
+  const contactVerified = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplier.email);
+  const contactBadgeClass = contactVerified
+    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+    : "border-rose-200 bg-rose-50 text-rose-700";
+
   return (
     <div className={`rounded-lg border px-3 md:px-3.5 py-2 md:py-2.5 transition-all ${
       supplier.included
@@ -723,6 +728,22 @@ function SupplierReviewCard({
         {/* Contact source badge */}
         <span className="text-[10px] text-slate-500 shrink-0 ml-auto md:ml-0">
           {CONTACT_SOURCE_LABEL[supplier.contactSource]}
+        </span>
+        <span
+          data-testid="quote-dispatch-selected-badge"
+          className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${
+            supplier.included
+              ? "border-blue-200 bg-blue-50 text-blue-700"
+              : "border-slate-200 bg-slate-50 text-slate-500"
+          }`}
+        >
+          {supplier.included ? "선택됨" : "제외됨"}
+        </span>
+        <span
+          data-testid="quote-dispatch-contact-badge"
+          className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${contactBadgeClass}`}
+        >
+          {contactVerified ? "연락처 확인됨" : "연락처 없음"}
         </span>
       </div>
 

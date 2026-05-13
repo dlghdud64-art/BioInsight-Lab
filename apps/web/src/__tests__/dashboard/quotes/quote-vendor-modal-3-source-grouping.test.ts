@@ -50,6 +50,21 @@ describe("§11.229 #1 — 3 section header grouping", () => {
   });
 });
 
+describe("quote dispatch supplier readiness badges", () => {
+  it("supplier cards expose selected and contact state badges", () => {
+    expect(modal).toContain("quote-dispatch-selected-badge");
+    expect(modal).toContain("quote-dispatch-contact-badge");
+    expect(modal).toContain("선택됨");
+    expect(modal).toContain("연락처 없음");
+    expect(modal).toContain("연락처 확인됨");
+  });
+
+  it("Send to supplier stays blocked by supplier/contact readiness checks", () => {
+    expect(modal).toMatch(/HARD_BLOCKER_KEYS[\s\S]{0,120}\["supplier",\s*"quote",\s*"contact"\]/);
+    expect(modal).toMatch(/sendReadiness\s*===\s*"blocked"/);
+  });
+});
+
 describe("§11.229 #2 — groupResolvedSuppliers helper (UI derive only)", () => {
   it("groupResolvedSuppliers 또는 동등 grouping helper 정의 (function 또는 const)", () => {
     // helper 함수 또는 useMemo 안 grouping logic
