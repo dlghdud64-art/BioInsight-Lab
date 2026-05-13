@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getAuthUser } from "@/lib/auth/mobile-jwt";
+import {
+  buildInventoryDisposalPriority,
+  summarizeInventoryDisposalPriorities,
+} from "@/lib/inventory/disposal-readiness";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // 재고 목록 조회
@@ -160,7 +164,15 @@ export async function GET(request: NextRequest) {
         })
       : inventories;
 
-    return NextResponse.json({ inventories: filtered });
+    const inventoriesWithDisposalPriority = filtered.map((inventory: any) => ({
+      ...inventory,
+      disposalPriority: buildInventoryDisposalPriority(inventory),
+    }));
+
+    return NextResponse.json({
+      inventories: inventoriesWithDisposalPriority,
+      disposalPrioritySummary: summarizeInventoryDisposalPriorities(filtered),
+    });
   } catch (error) {
     console.error("Error fetching inventories:", error);
     return NextResponse.json(
