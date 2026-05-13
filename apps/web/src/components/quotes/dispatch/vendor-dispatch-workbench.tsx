@@ -725,9 +725,14 @@ function SupplierReviewCard({
           </span>
         </div>
 
-        {/* Contact source badge */}
-        <span className="text-[10px] text-slate-500 shrink-0 ml-auto md:ml-0">
-          {CONTACT_SOURCE_LABEL[supplier.contactSource]}
+        {/* Contact source badge + 이메일 부재/확인 분기 */}
+        <span
+          data-testid="quote-dispatch-contact-badge"
+          className="text-[10px] text-slate-500 shrink-0 ml-auto md:ml-0"
+        >
+          {supplier.email
+            ? `${CONTACT_SOURCE_LABEL[supplier.contactSource]} · 연락처 확인됨`
+            : "연락처 없음"}
         </span>
         <span
           data-testid="quote-dispatch-selected-badge"
@@ -737,26 +742,9 @@ function SupplierReviewCard({
               : "border-slate-200 bg-slate-50 text-slate-500"
           }`}
         >
-          {supplier.included ? "선택됨" : "제외됨"}
+          {/* §11.237 — file truncation 복구 (sandbox sync drift). */}
+          {supplier.included ? "선택됨" : "제외"}
         </span>
-        <span
-          data-testid="quote-dispatch-contact-badge"
-          className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${contactBadgeClass}`}
-        >
-          {contactVerified ? "연락처 확인됨" : "연락처 없음"}
-        </span>
-      </div>
-
-      {/* Second row: email + reason */}
-      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 mt-1 md:mt-0 ml-7 md:ml-8">
-        <Mail className="h-3 w-3 text-slate-600 shrink-0" />
-        <span className="text-xs text-slate-500 truncate min-w-0">{supplier.email}</span>
-        {supplier.reason && (
-          <>
-            <span className="text-xs text-slate-700">·</span>
-            <span className="text-xs text-slate-600 truncate">{supplier.reason}</span>
-          </>
-        )}
       </div>
     </div>
   );

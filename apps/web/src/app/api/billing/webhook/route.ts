@@ -344,7 +344,7 @@ export async function POST(request: NextRequest) {
       // 핸들러 처리 실패 — StripeEvent row 를 롤백해서 Stripe 재시도를 받을 수 있게 한다
       await db.stripeEvent
         .delete({ where: { eventId: event.id } })
-        .catch((rollbackErr) => {
+        .catch((rollbackErr: unknown) => {
           logger.error("Failed to rollback StripeEvent after handler error", {
             eventId: event.id,
             rollbackErr,

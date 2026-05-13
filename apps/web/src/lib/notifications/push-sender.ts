@@ -58,7 +58,8 @@ export async function sendPushNotification(
       return { successCount: 0, failureCount: 0, skipped: true };
     }
 
-    const messages = devices.map((d) => ({
+    // §11.237 — devices implicit any narrow.
+    const messages = devices.map((d: typeof devices[number]) => ({
       to: d.pushToken,
       title: payload.title,
       body: payload.body,

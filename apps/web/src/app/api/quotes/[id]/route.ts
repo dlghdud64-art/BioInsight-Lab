@@ -107,7 +107,7 @@ export async function GET(
         createdAt: true,
       },
     });
-    const prInputs = purchaseRequests.map((pr) => ({
+    const prInputs = purchaseRequests.map((pr: typeof purchaseRequests[number]) => ({
       id: pr.id,
       status: pr.status,
       approverId: pr.approverId,
@@ -131,7 +131,7 @@ export async function GET(
     let canApprove = false;
     if (internalApprovalStatus === "PENDING" && latestPendingRequestId) {
       const latestPendingPr = purchaseRequests.find(
-        (pr) => pr.id === latestPendingRequestId,
+        (pr: typeof purchaseRequests[number]) => pr.id === latestPendingRequestId,
       );
       if (latestPendingPr?.teamId) {
         const memberForApproval = await db.teamMember.findUnique({

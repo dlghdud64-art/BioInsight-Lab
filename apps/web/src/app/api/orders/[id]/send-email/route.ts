@@ -87,7 +87,7 @@ export async function POST(
       requesterEmail: order.user?.email ?? null,
       expectedDelivery: order.expectedDelivery,
       notes: order.notes,
-      items: order.items.map((it) => ({
+      items: order.items.map((it: typeof order.items[number]) => ({
         name: it.name,
         brand: it.brand,
         catalogNumber: it.catalogNumber,
@@ -122,7 +122,7 @@ export async function POST(
                 phone: order.vendor.phone ?? null,
               }
             : null,
-          items: order.items.map((it) => ({
+          items: order.items.map((it: typeof order.items[number]) => ({
             name: it.name,
             brand: it.brand,
             catalogNumber: it.catalogNumber,

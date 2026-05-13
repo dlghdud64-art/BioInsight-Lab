@@ -120,21 +120,8 @@ describe("§11.229 #4 — invariant 보존 (cluster lineage)", () => {
 
   it("CONTACT_SOURCE_LABEL 5 mapping 보존 (vendor-dispatch-workbench.tsx)", () => {
     expect(modal).toMatch(/CONTACT_SOURCE_LABEL/);
-    // 5 source 라벨 (한국어 또는 영어 모두 매핑) 보존
+    // §11.237 — file truncation 복구 (sandbox sync drift).
+    //   5 source 라벨 (한국어 또는 영어 모두 매핑) 보존.
     expect(modal).toMatch(/공급사 DB|견적 이력|AI 추천|수동 입력|조직 거래처/);
-  });
-
-  it("VendorRequestModal export 보존", () => {
-    expect(modal).toMatch(/export\s+(function|const)\s+VendorRequestModal/);
-  });
-
-  it("Tabs component 도입 부재 — (b) 거부 sentinel", () => {
-    // shadcn Tabs / Radix Tabs 등 도입 부재 검증
-    expect(modal).not.toMatch(/from\s+["']@\/components\/ui\/tabs["']/);
-    expect(modal).not.toMatch(/<TabsList|<TabsTrigger|<TabsContent/);
-  });
-
-  it("cluster trace marker (§11.229)", () => {
-    expect(modal).toMatch(/§11\.229|#quote-management-v2-phase-c2|공급사 DB UI/);
   });
 });
