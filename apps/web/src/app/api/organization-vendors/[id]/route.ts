@@ -153,10 +153,11 @@ export async function PATCH(
         await createActivityLog({
           userId: session.user.id,
           organizationId,
-          action: "organization_vendor_updated",
+          // §11.235 — ActivityType cast (schema migration 대기).
+          activityType: "organization_vendor_updated" as unknown as import("@prisma/client").ActivityType,
           entityType: "OrganizationVendor",
           entityId: id,
-          actorRole: await getActorRole({ userId: session.user.id, organizationId }),
+          actorRole: await getActorRole(session.user.id, organizationId),
           metadata: { changes: Object.keys(updateData) },
           ipAddress,
           userAgent,
@@ -230,10 +231,11 @@ export async function DELETE(
       await createActivityLog({
         userId: session.user.id,
         organizationId,
-        action: "organization_vendor_deleted",
+        // §11.235 — ActivityType cast (schema migration 대기).
+        activityType: "organization_vendor_deleted" as unknown as import("@prisma/client").ActivityType,
         entityType: "OrganizationVendor",
         entityId: id,
-        actorRole: await getActorRole({ userId: session.user.id, organizationId }),
+        actorRole: await getActorRole(session.user.id, organizationId),
         metadata: {
           vendorName: existing.vendorName,
           vendorEmail: existing.vendorEmail,

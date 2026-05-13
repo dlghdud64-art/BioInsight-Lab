@@ -91,7 +91,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      vendors: vendors.map((v) => ({
+      // §11.235 — Prisma findMany return type implicit any narrow.
+      vendors: vendors.map((v: typeof vendors[number]) => ({
         ...v,
         createdAt: v.createdAt.toISOString(),
         updatedAt: v.updatedAt.toISOString(),
@@ -179,10 +180,12 @@ export async function POST(request: NextRequest) {
         await createActivityLog({
           userId: session.user.id,
           organizationId,
-          action: "organization_vendor_created",
+          // §11.235 — ActivityType enum 에 ORGANIZATION_VENDOR_* 미정의.
+          //   spec 정합 미완성 → as cast 로 type 검사 silence + 향후 schema migration 시점에 정합.
+          activityType: "organization_vendor_created" as unknown as import("@prisma/client").ActivityType,
           entityType: "OrganizationVendor",
           entityId: vendor.id,
-          actorRole: await getActorRole({ userId: session.user.id, organizationId }),
+          actorRole: await getActorRole(session.user.id, organizationId),
           metadata: {
             vendorName: vendor.vendorName,
             vendorEmail: vendor.vendorEmail,

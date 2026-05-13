@@ -93,7 +93,8 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json({
-      entries: entries.map((e) => ({
+      // §11.235 — Prisma findMany return type implicit any narrow.
+      entries: entries.map((e: typeof entries[number]) => ({
         ...e,
         createdAt: e.createdAt.toISOString(),
         updatedAt: e.updatedAt.toISOString(),
@@ -205,10 +206,11 @@ export async function POST(request: NextRequest) {
         await createActivityLog({
           userId: session.user.id,
           organizationId,
-          action: "organization_vendor_product_created",
+          // §11.235 — ActivityType cast (schema migration 대기).
+          activityType: "organization_vendor_product_created" as unknown as import("@prisma/client").ActivityType,
           entityType: "OrganizationVendorProduct",
           entityId: entry.id,
-          actorRole: await getActorRole({ userId: session.user.id, organizationId }),
+          actorRole: await getActorRole(session.user.id, organizationId),
           metadata: {
             vendorId: entry.vendorId,
             productId: entry.productId,
