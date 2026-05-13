@@ -17,6 +17,17 @@ describe("inventory context panel disposal priority", () => {
     expect(source).toContain("안전재고 영향 있음");
   });
 
+  it("keeps disposal evidence visible in the same top panel", () => {
+    expect(source).toContain("data-testid=\"labaxis-inventory-context-disposal-evidence-grid\"");
+    expect(source).toContain("label=\"수량\"");
+    expect(source).toContain("label=\"만료일\"");
+    expect(source).toContain("label=\"위치\"");
+    expect(source).toContain("label=\"사유\"");
+    expect(source).toContain("label=\"재고 영향\"");
+    expect(source).toContain("유효기간 만료");
+    expect(source).toContain("stockImpactLabel");
+  });
+
   it("keeps reorder behind disposal for expired lots with quantity", () => {
     expect(source).toContain("const isExpiredLotWithQty");
     expect(source).toContain("actions.filter((action) => action.type !== \"reorder\")");

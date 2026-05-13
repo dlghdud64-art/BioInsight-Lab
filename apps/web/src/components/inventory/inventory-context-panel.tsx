@@ -407,6 +407,10 @@ export function InventoryContextPanel({
   const afterDisposalQty = isExpiredLotWithQty ? 0 : item.currentQuantity;
   const belowSafetyAfterDisposal =
     item.safetyStock !== null ? afterDisposalQty < item.safetyStock : afterDisposalQty <= 0;
+  const expiryLabel = item.expiryDate ? format(new Date(item.expiryDate), "yyyy.MM.dd") : "-";
+  const disposalReason =
+    expiryDays !== null ? `유효기간 만료 ${Math.abs(expiryDays)}일 경과` : "유효기간 만료";
+  const stockImpactLabel = `${item.currentQuantity} ${item.unit} → ${afterDisposalQty} ${item.unit}`;
   const visibleActions = isExpiredLotWithQty
     ? actions.filter((action) => action.type !== "reorder")
     : actions;
@@ -534,6 +538,24 @@ export function InventoryContextPanel({
                 폐기 전 재주문 CTA는 보조 흐름으로 내립니다. 폐기 후 재고 {afterDisposalQty} {item.unit}
                 {belowSafetyAfterDisposal ? " · 안전재고 영향 있음" : " · 안전재고 영향 없음"}.
               </p>
+              <div
+                data-testid="labaxis-inventory-context-disposal-evidence-grid"
+                className="grid grid-cols-2 gap-1.5 rounded-md border border-red-200 bg-white/70 p-2 text-[11px]"
+              >
+                <DisposalEvidence label="수량" value={`${item.currentQuantity} ${item.unit}`} />
+                <DisposalEvidence label="만료일" value={expiryLabel} />
+                <DisposalEvidence label="위치" value={item.location || "미지정"} />
+                <DisposalEvidence label="사유" value={disposalReason} />
+                <DisposalEvidence label="재고 영향" value={stockImpactLabel} />
+                <DisposalEvidence
+                  label="안전재고"
+                  value={
+                    belowSafetyAfterDisposal
+                      ? "폐기 후 안전재고 경고"
+                      : "폐기 후 안전재고 유지"
+                  }
+                />
+              </div>
             </div>
             <Button
               data-testid="labaxis-inventory-context-dispose-cta"
@@ -971,6 +993,17 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
     <div className="flex items-baseline justify-between gap-1">
       <span className="text-[11px] text-slate-600 shrink-0">{label}</span>
       <span className="text-xs text-right">{children}</span>
+    </div>
+  );
+}
+
+function DisposalEvidence({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-[10px] font-medium text-red-500">{label}</div>
+      <div className="truncate font-semibold text-red-900" title={value}>
+        {value}
+      </div>
     </div>
   );
 }
