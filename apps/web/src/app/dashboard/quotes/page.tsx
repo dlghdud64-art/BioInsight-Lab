@@ -1915,6 +1915,8 @@ function QuotesPageContent() {
                     onFocus={() => setFocusedRowIndex(rowIndex)}
                     onKeyDown={(e) => {
                       // §11.230a #quote-table-keyboard-tooltip — 4 key 분기
+                      // §11.230c (c) — Home / End / PageUp / PageDown 4 key 확장.
+                      //   Out of scope (b) park 항목 land. 큰 테이블 운영 흐름 강화.
                       if (e.key === "ArrowDown") {
                         e.preventDefault();
                         const nextIndex = Math.min(rowIndex + 1, sortedQuotes.length - 1);
@@ -1932,6 +1934,37 @@ function QuotesPageContent() {
                           `tr[data-row-index="${prevIndex}"]`,
                         );
                         prev?.focus();
+                      } else if (e.key === "Home") {
+                        e.preventDefault();
+                        setFocusedRowIndex(0);
+                        const first = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="0"]`,
+                        );
+                        first?.focus();
+                      } else if (e.key === "End") {
+                        e.preventDefault();
+                        const lastIndex = sortedQuotes.length - 1;
+                        setFocusedRowIndex(sortedQuotes.length - 1);
+                        const last = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="${lastIndex}"]`,
+                        );
+                        last?.focus();
+                      } else if (e.key === "PageDown") {
+                        e.preventDefault();
+                        const jumpIndex = Math.min(rowIndex + 10, sortedQuotes.length - 1);
+                        setFocusedRowIndex(jumpIndex);
+                        const jump = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="${jumpIndex}"]`,
+                        );
+                        jump?.focus();
+                      } else if (e.key === "PageUp") {
+                        e.preventDefault();
+                        const jumpIndex = Math.max(rowIndex - 10, 0);
+                        setFocusedRowIndex(jumpIndex);
+                        const jump = document.querySelector<HTMLTableRowElement>(
+                          `tr[data-row-index="${jumpIndex}"]`,
+                        );
+                        jump?.focus();
                       } else if (e.key === "Enter") {
                         e.preventDefault();
                         openQuoteContextRail(quote.id, "row");
