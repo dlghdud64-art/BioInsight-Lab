@@ -105,12 +105,48 @@ const QUOTE_DISPATCH_STEPS = [
   "전송 확인",
 ] as const;
 
+const QUOTE_DISPATCH_STATE_MATRIX = [
+  {
+    key: "no-supplier",
+    label: "공급사 없음",
+    button: "버튼 비활성",
+    preview: "미리보기 대기",
+    result: "공급사 선택 필요",
+  },
+  {
+    key: "missing-contact",
+    label: "연락처 없음",
+    button: "버튼 비활성",
+    preview: "초안만 표시",
+    result: "연락처 필요",
+  },
+  {
+    key: "ready",
+    label: "정상 입력",
+    button: "버튼 활성",
+    preview: "전송 전 미리보기",
+    result: "dispatch 이벤트 추적",
+  },
+] as const;
+
+export interface OperatorQuickActionsQuoteDispatchReadiness {
+  supplierSelected?: boolean;
+  contactValid?: boolean;
+  previewReady?: boolean;
+  dispatchEventTracked?: boolean;
+  serverError?: boolean;
+}
+
 interface OperatorQuickActionsProps {
   /** §11.243 #5 — 카드 우측 상단 건수 뱃지 (count > 0 시 노출). caller forward. */
   counts?: OperatorQuickActionsCounts;
+  quoteDispatchReadiness?: OperatorQuickActionsQuoteDispatchReadiness;
 }
 
-export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {}) {
+export function OperatorQuickActions({
+  counts,
+  quoteDispatchReadiness,
+}: OperatorQuickActionsProps = {}) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -126,7 +162,28 @@ export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {})
           // §11.243 #5 — count > 0 시 우측 상단 뱃지. ChevronRight 자리 swap.
           const count = counts ? counts[action.countKey] : 0;
           if (action.countKey === "quotes") {
-            const hasQuoteDispatchCandidate = count > 0;
+            const quoteReadiness = {
+              supplierSelected: count > 0,
+              contactValid: false,
+              previewReady: false,
+              dispatchEventTracked: false,
+              serverError: false,
+              ...quoteDispatchReadiness,
+            };
+            const canSendToSupplier =
+              quoteReadiness.supplierSelected &&
+              quoteReadiness.contactValid &&
+              quoteReadiness.previewReady &&
+              !quoteReadiness.serverError;
+            const sendBlockReason = quoteReadiness.serverError
+              ? "서버 오류"
+              : !quoteReadiness.supplierSelected
+                ? "공급사 선택 필요"
+                : !quoteReadiness.contactValid
+                  ? "연락처 필요"
+                  : !quoteReadiness.previewReady
+                    ? "메시지 미리보기 필요"
+                    : "전송 가능";
             return (
               <div
                 key={action.href}
@@ -164,10 +221,26 @@ export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {})
                   ))}
                 </div>
                 <div
+                  className="mt-2 space-y-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5"
+                  data-testid="dashboard-quote-dispatch-state-matrix"
+                >
+                  {QUOTE_DISPATCH_STATE_MATRIX.map((row) => (
+                    <div
+                      key={row.key}
+                      data-testid={`dashboard-quote-dispatch-case-${row.key}`}
+                      className="grid grid-cols-[0.8fr_0.8fr_1fr] gap-1 text-[10px] text-slate-600"
+                    >
+                      <span className="font-semibold text-slate-800">{row.label}</span>
+                      <span>{row.button}</span>
+                      <span>{row.preview} · {row.result}</span>
+                    </div>
+                  ))}
+                </div>
+                <div
                   className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] text-amber-800"
                   data-testid="dashboard-quote-dispatch-contact-warning"
                 >
-                  <span className="break-keep">연락처 확인 후 발송 가능</span>
+                  <span className="break-keep">{sendBlockReason}</span>
                   <Link
                     href="/dashboard/quotes?labaxisPilot=quote-dispatch&manualSupplier=1"
                     className="shrink-0 text-slate-600 underline-offset-2 hover:underline"
@@ -176,12 +249,23 @@ export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {})
                     수동 공급사 추가
                   </Link>
                 </div>
+                <div
+                  className="mt-2 grid gap-1 text-[10px] text-slate-500"
+                  data-testid="dashboard-quote-dispatch-preview-tracking"
+                >
+                  <span data-testid="dashboard-quote-dispatch-preview-status">
+                    미리보기: {quoteReadiness.previewReady ? "전송 전 확인됨" : "메시지 미리보기 필요"}
+                  </span>
+                  <span data-testid="dashboard-quote-dispatch-tracking-status">
+                    전송 결과: {quoteReadiness.dispatchEventTracked ? "dispatch 이벤트 추적됨" : "발송 후 새로고침에도 dispatch 이벤트 추적"}
+                  </span>
+                </div>
                 <div className="mt-3 flex items-center gap-2">
                   <Link
                     href="/dashboard/quotes?labaxisPilot=quote-dispatch"
-                    aria-disabled={!hasQuoteDispatchCandidate}
+                    aria-disabled={!canSendToSupplier}
                     className={`inline-flex min-h-[32px] flex-1 items-center justify-center rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 ${
-                      !hasQuoteDispatchCandidate ? "pointer-events-none opacity-60" : ""
+                      !canSendToSupplier ? "pointer-events-none opacity-60" : ""
                     }`}
                     data-testid="dashboard-quote-dispatch-primary-cta"
                   >
