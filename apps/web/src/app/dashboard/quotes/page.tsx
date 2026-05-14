@@ -1944,11 +1944,16 @@ function QuotesPageContent() {
                     : key === "status" ? "min-w-[100px]"
                     : key === "actions" ? "min-w-[120px]"
                     : "";
+                  // §11.242c #1 — 액션 column sticky right-0 (가로 스크롤 시 항상 보임).
+                  //   첫 column sticky left-0 (§11.242 #10 a) 와 대칭 lock.
+                  //   thead 배경 bg-gray-100 매칭 + z-20 (다른 sticky 보다 우선).
+                  const isStickyAction = key === "actions";
+                  const stickyClass = isStickyAction ? "sticky right-0 bg-gray-100 z-20" : "";
                   return (
                     <th
                       key={key}
-                      style={{ width, minWidth: colMinWidth, position: "relative" }}
-                      className={`px-3 py-2 ${minWClass} ${isCenter ? "text-center" : isRight ? "text-right" : ""} ${isSortable ? "cursor-pointer select-none hover:bg-slate-100" : ""}`}
+                      style={{ width, minWidth: colMinWidth, position: isStickyAction ? "sticky" : "relative" }}
+                      className={`px-3 py-2 ${minWClass} ${stickyClass} ${isCenter ? "text-center" : isRight ? "text-right" : ""} ${isSortable ? "cursor-pointer select-none hover:bg-slate-100" : ""}`}
                       onClick={isSortable ? () => handleSortColumn(key as Parameters<typeof handleSortColumn>[0]) : undefined}
                     >
                       <span className={`inline-flex items-center gap-1 ${isCenter ? "justify-center" : ""}`}>
@@ -1986,6 +1991,11 @@ function QuotesPageContent() {
                   우선순위 left border (priorityLevel hoist) + 중복 품목 (isDuplicateOfPrev) +
                   헤더 sticky top-0 + 첫 td sticky left-0 + 빈 데이터 text-gray-300 +
                   selected row bg-blue-50 + border-l-blue-500 (§11.240 bg-indigo-50 swap).
+
+                §11.242c #quote-table-sticky-action-h12 — 호영님 P0 가독성 백로그 close.
+                  #9 tr h-12 통일 (px-3/4 + py-2/3 혼재 → 일관 행 간격).
+                  #10 마지막 액션 column sticky right-0 (첫 column sticky left-0 대칭 lock).
+                  가로 스크롤 시 행 선택 (좌측 checkbox) + 즉시 액션 (우측 CTA) 항상 보임.
               */}
               {sortedQuotes.map((quote, rowIndex) => {
                 const signals = getOpSignals(quote);
@@ -2133,6 +2143,8 @@ function QuotesPageContent() {
                       //   호영님 spec 우선: selected = bg-blue-50 + border-l-blue-500 (§11.240 bg-indigo-50 swap).
                       //   우선순위 left border: critical → red, high → amber, normal → transparent.
                       //   zebra: 짝수 bg-white / 홀수 bg-gray-50. 호버: hover:bg-gray-100.
+                      // §11.242c #2 — tr 행 높이 h-12 통일 (호영님 P0 가독성 백로그 close).
+                      //   px-3 py-2 ~ px-4 py-3 혼재 → h-12 강제로 일관 행 간격 확보.
                       const focusRing = "focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-inset";
                       const priorityBorder =
                         priorityLevel === "critical" ? "border-l-4 border-red-500"
@@ -2144,7 +2156,7 @@ function QuotesPageContent() {
                         : isSelected
                           ? "bg-blue-50/60 hover:bg-blue-100/60"
                           : `${rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-gray-100`;
-                      return `${bgClass} ${priorityBorder} cursor-pointer transition-colors duration-150 ${focusRing}`;
+                      return `h-12 ${bgClass} ${priorityBorder} cursor-pointer transition-colors duration-150 ${focusRing}`;
                     })()}
                   >
                     {/* §11.240 + §11.242 #10 — 첫 td = row checkbox + sticky left-0. */}
@@ -2289,8 +2301,19 @@ function QuotesPageContent() {
                         );
                       }
                       if (key === "actions") {
+                        // §11.242c #1 — tbody 액션 td sticky right-0. zebra bg + selected blue-50
+                        //   분기로 가로 스크롤 시 행 배경 매칭 보존 (§11.242 first td sticky 대칭).
+                        const actionBg = selectedQuoteIds.has(quote.id)
+                          ? "bg-blue-50"
+                          : rowIndex % 2 === 0
+                            ? "bg-white"
+                            : "bg-gray-50";
                         return (
-                          <td key={key} style={{ width }} className="px-3 py-2 text-right">
+                          <td
+                            key={key}
+                            style={{ width }}
+                            className={`px-3 py-2 text-right sticky right-0 z-10 ${actionBg}`}
+                          >
                             <Button
                               size="sm"
                               variant={signals.ctaVariant}
