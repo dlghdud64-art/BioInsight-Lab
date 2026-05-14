@@ -118,7 +118,7 @@ export function VendorRequestModal({
     setShowManualFallback(false);
     setManualEmail("");
     setManualName("");
-    setMessageExpanded(false);
+    setMessageExpanded(true);
   }, [open, resolvedSuppliersInput, draftMessageInput]);
 
   // ── Derived ──
@@ -207,6 +207,17 @@ export function VendorRequestModal({
     );
     return hasHardBlocker ? "blocked" : "needs_review";
   }, [readinessChecks]);
+  const firstReadinessBlocker = readinessChecks.find((check) => !check.ready)?.blocker;
+  const contactBlocker = readinessChecks.find((check) => check.key === "contact" && !check.ready)?.blocker;
+  const selectedStateLabel = includedCount > 0 ? `${includedCount}개 선택됨` : "공급사 미선택";
+  const contactStateLabel = contactBlocker ? "연락처 필요" : includedCount > 0 ? "연락처 확인됨" : "연락처 필요";
+  const previewStateLabel = message.trim().length > 10 ? "미리보기 준비됨" : "미리보기 필요";
+  const sendStateLabel =
+    sendReadiness === "ready" ? "전송 가능" : sendReadiness === "needs_review" ? "검토 필요" : "연락처 필요";
+  const sendGateDetail =
+    sendReadiness === "ready"
+      ? "전송 전 미리보기와 수신자 검증이 완료되었습니다."
+      : firstReadinessBlocker ?? "검토가 필요합니다.";
 
   // ── Actions ──
   const toggleSupplier = useCallback((vendorId: string) => {
@@ -339,6 +350,35 @@ export function VendorRequestModal({
         </DialogHeader>
 
         <div className="space-y-4 py-3">
+          <div
+            className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700 md:grid-cols-4"
+            data-testid="quote-dispatch-recipient-evidence"
+          >
+            <div>
+              <span className="block text-[10px] uppercase tracking-wide text-slate-500">공급사</span>
+              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-selected-state">
+                {selectedStateLabel}
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase tracking-wide text-slate-500">연락처</span>
+              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-contact-state">
+                {contactStateLabel}
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase tracking-wide text-slate-500">미리보기</span>
+              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-preview-state">
+                {previewStateLabel}
+              </strong>
+            </div>
+            <div>
+              <span className="block text-[10px] uppercase tracking-wide text-slate-500">전송 상태</span>
+              <strong className="font-semibold text-slate-950" data-testid="quote-dispatch-send-state">
+                {sendStateLabel}
+              </strong>
+            </div>
+          </div>
 
           {/* ═══ Readiness Strip ═══ */}
           <div
@@ -626,6 +666,21 @@ export function VendorRequestModal({
         {/* ═══ Dock — Footer is the single primary-action zone (§11.54) ═══
             §11.229 — footer manual link 제거 (Section 3 always-visible 가 대체).
             sendReadiness === "blocked" CTA 도 Section 3 의 input 으로 focus 유도. */}
+        <div
+          className={`mt-1 rounded-lg border px-4 py-3 text-sm ${
+            sendReadiness === "ready"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : sendReadiness === "needs_review"
+                ? "border-amber-200 bg-amber-50 text-amber-900"
+                : "border-red-200 bg-red-50 text-red-900"
+          }`}
+          data-testid="quote-dispatch-send-gate"
+        >
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <strong>{sendStateLabel}</strong>
+            <span className="text-xs sm:text-right">{sendGateDetail}</span>
+          </div>
+        </div>
         <DialogFooter className="gap-2 pt-2 border-t border-slate-200 flex-col md:flex-row">
           <Button
             type="button"
@@ -637,19 +692,25 @@ export function VendorRequestModal({
             취소
           </Button>
           {sendReadiness === "blocked" ? (
-            <Button
-              onClick={() => {
-                // §11.229 — Section 3 의 이메일 input 으로 focus
-                const emailInput = document.querySelector<HTMLInputElement>('input[type="email"][placeholder="이메일"]');
-                emailInput?.focus();
-                emailInput?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
-              disabled={isSubmitting}
-              className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              공급사 직접 추가
-            </Button>
+            <>
+              <Button type="button" disabled variant="secondary" data-testid="quote-dispatch-send-disabled">
+                <Send className="h-4 w-4 mr-2" />
+                선택 공급사에 요청 전달
+              </Button>
+              <Button
+                onClick={() => {
+                  // §11.229 — Section 3 의 이메일 input 으로 focus
+                  const emailInput = document.querySelector<HTMLInputElement>('input[type="email"][placeholder="이메일"]');
+                  emailInput?.focus();
+                  emailInput?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+                disabled={isSubmitting}
+                className="min-h-[40px] font-semibold active:scale-95 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                공급사 직접 추가
+              </Button>
+            </>
           ) : (
             <Button
               onClick={handleSubmit}

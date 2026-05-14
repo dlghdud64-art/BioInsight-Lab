@@ -63,6 +63,31 @@ describe("quote dispatch supplier readiness badges", () => {
     expect(modal).toMatch(/HARD_BLOCKER_KEYS[\s\S]{0,120}\["supplier",\s*"quote",\s*"contact"\]/);
     expect(modal).toMatch(/sendReadiness\s*===\s*"blocked"/);
   });
+
+  it("recipient evidence is fixed above the send action", () => {
+    expect(modal).toContain("quote-dispatch-recipient-evidence");
+    expect(modal).toContain("quote-dispatch-selected-state");
+    expect(modal).toContain("quote-dispatch-contact-state");
+    expect(modal).toContain("quote-dispatch-preview-state");
+    expect(modal).toContain("quote-dispatch-send-state");
+    expect(modal).toContain("공급사 미선택");
+    expect(modal).toContain("연락처 필요");
+    expect(modal).toContain("전송 가능");
+    expect(modal).toContain("검토 필요");
+  });
+
+  it("message preview and send gate stay visible before dispatch", () => {
+    expect(modal).toMatch(/setMessageExpanded\(true\)/);
+    expect(modal).toContain("quote-dispatch-message-preview");
+    expect(modal).toContain("quote-dispatch-send-gate");
+    expect(modal).toContain("전송 전 미리보기와 수신자 검증이 완료되었습니다.");
+  });
+
+  it("blocked readiness shows disabled send plus manual add path", () => {
+    expect(modal).toContain("quote-dispatch-send-disabled");
+    expect(modal).toMatch(/sendReadiness\s*===\s*"blocked"[\s\S]{0,600}disabled/);
+    expect(modal).toContain("공급사 직접 추가");
+  });
 });
 
 describe("§11.229 #2 — groupResolvedSuppliers helper (UI derive only)", () => {
