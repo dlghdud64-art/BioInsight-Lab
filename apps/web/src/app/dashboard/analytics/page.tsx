@@ -180,6 +180,9 @@ export default function AnalyticsPage() {
   const topSpending = data?.topSpending ?? [];
 
   const hasMonthlyData = monthlySpending.some((m) => m.amount > 0);
+  // §11.244 #6 — 호영님 P0: AI 리포트 disabled derive. monthly spending 0 = AI
+  //   분석 무의미 (Anthropic/Gemini 호출 시 빈 데이터 → 빈 리포트 또는 에러).
+  const dataInsufficient = !hasMonthlyData;
 
   // 이번 달 / 전월 지출
   const validMonths = monthlySpending.filter((m) => m.amount > 0);
@@ -356,9 +359,17 @@ export default function AnalyticsPage() {
               {tab.label}
             </button>
           ))}
+          {/* §11.244 #6 — 호영님 P0: 데이터 부족 시 AI 리포트 disabled + tooltip.
+              dataInsufficient = !hasMonthlyData (월별 지출 0건 시). aiLoading 과
+              OR 처리 → 데이터 없을 때 mutation 호출 자체 차단. */}
           <button
             onClick={runAiAnalysis}
-            disabled={aiLoading}
+            disabled={aiLoading || dataInsufficient}
+            title={
+              dataInsufficient
+                ? "리포트 생성에 최소 1건의 완료된 발주 데이터가 필요합니다"
+                : undefined
+            }
             className="px-3 sm:px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-1.5 ml-auto whitespace-nowrap touch-manipulation active:scale-95"
           >
             {aiLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}

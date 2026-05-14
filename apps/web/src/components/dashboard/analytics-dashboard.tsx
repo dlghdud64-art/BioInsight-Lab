@@ -2,11 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+// §11.196e — recharts dead import 3 symbol 제거 (Bar/BarChart/Legend
+//   actual JSX 사용 0). 나머지 10 symbol (LineChart/Line/PieChart/Pie/Cell/
+//   XAxis/YAxis/CartesianGrid/Tooltip/ResponsiveContainer) 는 chart JSX 에
+//   서 실제 사용 — 보존.
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
@@ -14,7 +16,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
 } from "recharts";
 import { DollarSign, TrendingUp, TrendingDown, Package, AlertCircle, Sparkles } from "lucide-react";
@@ -31,6 +32,16 @@ interface DashboardStats {
   categorySpending: Array<{ category: string; amount: number }>;
 }
 
+/**
+ * §11.244 Phase A — 호영님 P0 분석 페이지 로딩 UX (KPI 카드 빈 상태).
+ *
+ *   #5 KPI 카드 빈 상태 — 라벨 즉시 표시 (이미 CardTitle 외부에 위치 ✓) +
+ *     숫자 "₩0" 자동 fallback + 데이터 부재 시 footer 안내
+ *     "데이터 축적 시 표시됩니다" (text-xs text-gray-400). isLoading=false 이고
+ *     이번 달 지출 === 0 일 때 hasNoKpiData = true.
+ *   #2 Shimmer 애니메이션 — Skeleton 컴포넌트 자체에 적용 (§11.244 #2),
+ *     이 컴포넌트는 Skeleton 사용만 하므로 자동 정합 — caller drift 0.
+ */
 export function AnalyticsDashboard() {
   const { data, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ["dashboard-stats"],
@@ -62,6 +73,9 @@ export function AnalyticsDashboard() {
 
   const monthOverMonthChangeNum = parseFloat(data?.monthOverMonthChange || "0");
   const isPositive = monthOverMonthChangeNum >= 0;
+  // §11.244 #5 — KPI 카드 빈 상태 derive. isLoading=false 이고 이번 달 지출
+  //   === 0 시 hasNoKpiData = true → 4 KPI 카드 footer 에 "데이터 축적 시 표시됩니다".
+  const hasNoKpiData = !isLoading && (data?.thisMonthPurchaseAmount ?? 0) === 0;
 
   // 인사이트 생성
   const insights = generateInsights(data);
@@ -113,6 +127,9 @@ export function AnalyticsDashboard() {
                     <TrendingDown className="h-3 w-3 text-red-600" />
                   )}
                 </div>
+                {hasNoKpiData && (
+                  <p className="text-xs text-gray-400 mt-1">데이터 축적 시 표시됩니다</p>
+                )}
               </>
             )}
           </CardContent>
@@ -145,6 +162,9 @@ export function AnalyticsDashboard() {
                 <p className="text-xs text-muted-foreground mt-1">
                   {isPositive ? "지출이 증가했습니다" : "지출이 감소했습니다"}
                 </p>
+                {hasNoKpiData && (
+                  <p className="text-xs text-gray-400 mt-1">데이터 축적 시 표시됩니다</p>
+                )}
               </>
             )}
           </CardContent>
@@ -165,6 +185,9 @@ export function AnalyticsDashboard() {
                   ₩{data?.totalAssetValue.toLocaleString("ko-KR") || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">인벤토리 총 가치</p>
+                {hasNoKpiData && (
+                  <p className="text-xs text-gray-400 mt-1">데이터 축적 시 표시됩니다</p>
+                )}
               </>
             )}
           </CardContent>
@@ -186,6 +209,9 @@ export function AnalyticsDashboard() {
                   <span className="text-lg font-normal text-muted-foreground ml-1">개</span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">재고 부족 또는 품절</p>
+                {hasNoKpiData && (
+                  <p className="text-xs text-gray-400 mt-1">데이터 축적 시 표시됩니다</p>
+                )}
               </>
             )}
           </CardContent>

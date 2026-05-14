@@ -241,6 +241,21 @@ div.quote-table td.no-column-cell {
   animation: marquee 20s linear infinite;
 }
 
+/* §11.244 #2 — Shimmer Animation for Skeleton (로딩 중 명확 시각화).
+   호영님 P0 spec: 정적 회색 박스 → 좌→우 그라데이션 반복 으로 빈 상태와 구분. */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 1.5s linear infinite;
+}
+
 .animate-marquee:hover {
   animation-play-state: paused;
 }
