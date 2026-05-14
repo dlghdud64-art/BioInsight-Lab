@@ -98,6 +98,13 @@ const TONE_MAP = {
   purple: { accent: "border-l-purple-500", iconBg: "bg-purple-50", iconColor: "text-purple-600" },
 };
 
+const QUOTE_DISPATCH_STEPS = [
+  "공급사 없음",
+  "연락처 필요",
+  "메시지 미리보기",
+  "전송 확인",
+] as const;
+
 interface OperatorQuickActionsProps {
   /** §11.243 #5 — 카드 우측 상단 건수 뱃지 (count > 0 시 노출). caller forward. */
   counts?: OperatorQuickActionsCounts;
@@ -118,6 +125,78 @@ export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {})
           const tone = TONE_MAP[action.tone];
           // §11.243 #5 — count > 0 시 우측 상단 뱃지. ChevronRight 자리 swap.
           const count = counts ? counts[action.countKey] : 0;
+          if (action.countKey === "quotes") {
+            const hasQuoteDispatchCandidate = count > 0;
+            return (
+              <div
+                key={action.href}
+                className={`rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
+                data-testid="dashboard-quote-dispatch-card"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div className={`w-8 h-8 rounded-lg ${tone.iconBg} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-4 w-4 ${tone.iconColor}`} />
+                  </div>
+                  <span className="text-[10px] font-semibold text-slate-500">
+                    대기 {count > 99 ? "99+" : count}건
+                  </span>
+                </div>
+                <p className="text-sm font-bold text-slate-900 break-keep">견적 발송</p>
+                <p className="text-[11px] text-slate-500 mt-0.5 break-keep">
+                  공급사 선택부터 전송 확인까지 한 화면에서 검토합니다
+                </p>
+                <div
+                  className="mt-3 grid grid-cols-2 gap-1.5"
+                  data-testid="dashboard-quote-dispatch-readiness"
+                >
+                  {QUOTE_DISPATCH_STEPS.map((step) => (
+                    <span
+                      key={step}
+                      data-testid="dashboard-quote-dispatch-stage"
+                      className={`rounded-md border px-2 py-1 text-[10px] font-semibold ${
+                        step === "연락처 필요"
+                          ? "border-amber-200 bg-amber-50 text-amber-700"
+                          : "border-slate-200 bg-slate-50 text-slate-600"
+                      }`}
+                    >
+                      {step}
+                    </span>
+                  ))}
+                </div>
+                <div
+                  className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[10px] text-amber-800"
+                  data-testid="dashboard-quote-dispatch-contact-warning"
+                >
+                  <span className="break-keep">연락처 확인 후 발송 가능</span>
+                  <Link
+                    href="/dashboard/quotes?labaxisPilot=quote-dispatch&manualSupplier=1"
+                    className="shrink-0 text-slate-600 underline-offset-2 hover:underline"
+                    data-testid="dashboard-quote-dispatch-manual-link"
+                  >
+                    수동 공급사 추가
+                  </Link>
+                </div>
+                <div className="mt-3 flex items-center gap-2">
+                  <Link
+                    href="/dashboard/quotes?labaxisPilot=quote-dispatch"
+                    aria-disabled={!hasQuoteDispatchCandidate}
+                    className={`inline-flex min-h-[32px] flex-1 items-center justify-center rounded-md bg-blue-600 px-3 text-xs font-semibold text-white transition-colors hover:bg-blue-700 ${
+                      !hasQuoteDispatchCandidate ? "pointer-events-none opacity-60" : ""
+                    }`}
+                    data-testid="dashboard-quote-dispatch-primary-cta"
+                  >
+                    Send to supplier
+                  </Link>
+                  <Link
+                    href="/dashboard/quotes"
+                    className="min-h-[32px] shrink-0 rounded-md px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                  >
+                    검토
+                  </Link>
+                </div>
+              </div>
+            );
+          }
           return (
             <Link
               key={action.href}
