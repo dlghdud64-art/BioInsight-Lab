@@ -105,9 +105,9 @@ describe("#quote-dispatch-preflight-org-vendor-products-arg — invariant 보존
     expect(page).toMatch(/\/api\/organization-vendor-products/);
   });
 
-  it("§11.224 테이블 뷰 9 컬럼 + §11.223 RelativeDeliveryText 보존", () => {
-    expect(page).toMatch(/<th[^>]{0,80}>가격<\/th>/);
-    expect(page).toMatch(/<th[^>]{0,80}>납기<\/th>/);
+  it("§11.224 테이블 뷰 9 컬럼 + §11.223 RelativeDeliveryText 보존 (§11.230b dynamic 정합)", () => {
+    expect(page).toMatch(/(<th[^>]{0,80}>가격<\/th>|price:\s*"가격")/);
+    expect(page).toMatch(/(<th[^>]{0,80}>납기<\/th>|delivery:\s*"납기")/);
     expect(page).toMatch(/<RelativeDeliveryText/);
   });
 

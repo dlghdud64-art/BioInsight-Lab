@@ -24,12 +24,14 @@ const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
 describe("#quote-table-price-delivery-parity — thead 가격/납기 컬럼 추가", () => {
-  it("thead 안 <th>가격</th> 추가 (text-right 가격 정렬)", () => {
-    expect(page).toMatch(/<th[^>]{0,80}>가격<\/th>/);
+  // §11.230b dynamic visibleColumns.map() + COLUMN_LABEL 매핑 정합 — inline
+  // <th>가격</th> 또는 COLUMN_LABEL price: "가격" 양방향 매칭으로 cluster lineage 보존.
+  it("가격 컬럼 — inline <th> 또는 COLUMN_LABEL price 매핑", () => {
+    expect(page).toMatch(/(<th[^>]{0,80}>가격<\/th>|COLUMN_LABEL[\s\S]{0,300}price:\s*"가격")/);
   });
 
-  it("thead 안 <th>납기</th> 추가", () => {
-    expect(page).toMatch(/<th[^>]{0,80}>납기<\/th>/);
+  it("납기 컬럼 — inline <th> 또는 COLUMN_LABEL delivery 매핑", () => {
+    expect(page).toMatch(/(<th[^>]{0,80}>납기<\/th>|COLUMN_LABEL[\s\S]{0,300}delivery:\s*"납기")/);
   });
 });
 

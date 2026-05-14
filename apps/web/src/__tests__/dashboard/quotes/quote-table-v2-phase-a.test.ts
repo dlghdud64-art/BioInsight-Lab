@@ -174,9 +174,11 @@ describe("§11.226 invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/RelativeDeliveryText/);
   });
 
-  it("§11.224 테이블 thead 9 컬럼 유지 — 가격 + 납기 포함", () => {
-    expect(page).toMatch(/<th[^>]{0,200}>가격<\/th>/);
-    expect(page).toMatch(/<th[^>]{0,200}>납기<\/th>/);
+  it("§11.224 테이블 thead 9 컬럼 유지 — 가격 + 납기 포함 (§11.230b dynamic 정합)", () => {
+    // §11.230b dynamic visibleColumns.map() + COLUMN_LABEL 매핑 → inline 또는
+    // COLUMN_LABEL price/delivery 양방향 매칭.
+    expect(page).toMatch(/(<th[^>]{0,200}>가격<\/th>|price:\s*"가격")/);
+    expect(page).toMatch(/(<th[^>]{0,200}>납기<\/th>|delivery:\s*"납기")/);
   });
 
   it("§11.225 organizationVendorProducts 인자 3 caller forward 보존", () => {

@@ -95,9 +95,9 @@ describe("§11.227 invariant 보존 (cluster lineage)", () => {
     expect(page).toMatch(/RelativeDeliveryText/);
   });
 
-  it("§11.224 thead 9 컬럼 (가격/납기 conditional) 보존", () => {
-    expect(page).toMatch(/<th[^>]{0,200}>가격<\/th>/);
-    expect(page).toMatch(/<th[^>]{0,200}>납기<\/th>/);
+  it("§11.224 thead 9 컬럼 (가격/납기 conditional) 보존 (§11.230b dynamic 정합)", () => {
+    expect(page).toMatch(/(<th[^>]{0,200}>가격<\/th>|price:\s*"가격")/);
+    expect(page).toMatch(/(<th[^>]{0,200}>납기<\/th>|delivery:\s*"납기")/);
   });
 
   it("§11.225 organizationVendorProducts 인자 forward 보존", () => {
