@@ -41,6 +41,17 @@ interface CategoryDistributionCardProps {
 
 const CATEGORY_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#94a3b8"];
 
+/** §11.243b #4 — 호영님 P0: 빈 차트 mockup 데이터.
+ *  실제 LabAxis 카테고리 분포 정합 sample (회색 톤 표시 전용).
+ *  isEmpty 시에만 사용 — overlay 안내로 실제 데이터와 혼동 0. */
+const MOCKUP_CATEGORY_DATA = [
+  { category: "REAGENT", displayName: "시약/시료", amount: 4_800_000, pct: 42 },
+  { category: "TOOL", displayName: "소모품/도구", amount: 2_900_000, pct: 25 },
+  { category: "EQUIPMENT", displayName: "장비/기기", amount: 2_300_000, pct: 20 },
+  { category: "RAW_MATERIAL", displayName: "원료/시약 원료", amount: 1_500_000, pct: 13 },
+];
+const MOCKUP_CATEGORY_COLORS = ["#cbd5e1", "#94a3b8", "#64748b", "#475569"];
+
 function ChartTooltip({
   active,
   payload,
@@ -101,11 +112,58 @@ export function CategoryDistributionCard({ categorySpending }: CategoryDistribut
       </div>
 
       {isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-slate-500">아직 지출 기록이 없습니다.</p>
-          <p className="text-[11px] text-slate-400 mt-1 break-keep">
-            카테고리별 분포는 발주가 시작되면 표시됩니다.
-          </p>
+        /* §11.243b #4 — 호영님 P0: 빈 도넛 mockup + 반투명 overlay.
+           회색 톤 sample 차트 + 안내 메시지로 "쌓이면 무엇을 볼 수 있는지"
+           사전 인지. backdrop-blur overlay 안 안내 텍스트 정합. */
+        <div className="relative grid grid-cols-1 md:grid-cols-2 gap-3 items-center opacity-90">
+          <div className="h-[160px] opacity-50 grayscale pointer-events-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={MOCKUP_CATEGORY_DATA}
+                  dataKey="amount"
+                  nameKey="displayName"
+                  innerRadius={42}
+                  outerRadius={70}
+                  paddingAngle={2}
+                  stroke="none"
+                >
+                  {MOCKUP_CATEGORY_DATA.map((entry, idx) => (
+                    <Cell
+                      key={entry.category}
+                      fill={MOCKUP_CATEGORY_COLORS[idx % MOCKUP_CATEGORY_COLORS.length]}
+                    />
+                  ))}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="space-y-1.5 opacity-50 grayscale pointer-events-none">
+            {MOCKUP_CATEGORY_DATA.map((d, idx) => (
+              <div key={d.category} className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span
+                    className="inline-block w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: MOCKUP_CATEGORY_COLORS[idx % MOCKUP_CATEGORY_COLORS.length] }}
+                  />
+                  <span className="text-slate-700 truncate break-keep">{d.displayName}</span>
+                </div>
+                <span className="font-bold text-slate-900 tabular-nums flex-shrink-0 ml-2">
+                  {d.pct}%
+                </span>
+              </div>
+            ))}
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px] bg-white/40 col-span-1 md:col-span-2">
+            <div className="text-center px-6">
+              <p className="text-sm font-semibold text-slate-700 mb-1">
+                발주가 시작되면 카테고리 분포가 표시됩니다
+              </p>
+              <p className="text-[11px] text-slate-500 break-keep">
+                위 차트는 예시 데이터 — 실제 데이터 1건+ 시 자동 활성화됩니다.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-center">

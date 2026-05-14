@@ -31,6 +31,7 @@ import {
   AlertCircle,
   ArrowUpRight,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -740,8 +741,12 @@ export function ExecutiveSummarySection({
           호영님 시안의 SYSTEM INSIGHT 다크 accent card 흡수.
           real signal — 진행 중 발주 / 이상 신호 / 예산 burn rate 기반으로
           한 줄짜리 운영 시그니처 메시지 자동 derive. fake percentage 0,
-          marketing decorative 0. */}
-      <SystemInsightCard kpis={kpis} ordersCount={orders.length} />
+          marketing decorative 0.
+          §11.243b #3 — 호영님 P0: onboardingMode 시 hide. 운영 데이터 0 일 때는
+          시그니처 의미 없음. dismiss + sessionStorage 도 함께 적용. */}
+      {!onboardingMode && (
+        <SystemInsightCard kpis={kpis} ordersCount={orders.length} />
+      )}
 
       {/* 차트/활동 피드는 대시보드에서 제거.
           월별 추이는 지출 분석 페이지로 이관.
@@ -756,6 +761,11 @@ export function ExecutiveSummarySection({
 // pending order 의 조합으로 short message 결정. AI 호출은 별도 dialog
 // (AIInsightDialog) 가 수행 — 이 카드는 항상 표시되는 ambient signal.
 
+/** §11.243b #3 — 호영님 P0: SystemInsightCard dismiss + sessionStorage.
+ *  사용자가 X button 으로 dismiss 시 sessionStorage 'systemInsightDismissed'
+ *  에 저장 → 같은 세션 내 hide. 새 세션 시작 시 자동 다시 노출 (운영자가
+ *  매일 한 번은 시그니처 확인 + 당일 작업 중 noise 제거).
+ *  canonical truth lock: kpis derive 로직 변경 0 — visibility state only. */
 function SystemInsightCard({
   kpis,
   ordersCount,
@@ -763,6 +773,27 @@ function SystemInsightCard({
   kpis: DashboardKpis;
   ordersCount: number;
 }) {
+  // §11.243b #3 — dismiss state + sessionStorage hydration (CSR-safe).
+  const [dismissed, setDismissed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = window.sessionStorage.getItem("systemInsightDismissed");
+      if (stored === "true") setDismissed(true);
+    } catch {
+      // sessionStorage 차단 환경 — 기본 false 유지
+    }
+  }, []);
+  const handleDismiss = () => {
+    setDismissed(true);
+    try {
+      window.sessionStorage.setItem("systemInsightDismissed", "true");
+    } catch {
+      // sessionStorage 차단 환경 — state 만 set (refresh 시 재노출 허용)
+    }
+  };
+  if (dismissed) return null;
+
   // signal derivation — risk 우선순위로 message 선정
   let title = "운영 흐름이 안정적입니다";
   let detail = "현재 즉시 조치가 필요한 운영 이슈가 없습니다.";
@@ -815,7 +846,7 @@ function SystemInsightCard({
 
   return (
     <div
-      className={`rounded-xl border border-slate-700/50 bg-gradient-to-br ${gradientMap[accent]} text-white shadow-md p-4 md:p-5`}
+      className={`relative rounded-xl border border-slate-700/50 bg-gradient-to-br ${gradientMap[accent]} text-white shadow-md p-4 md:p-5`}
     >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
@@ -824,7 +855,7 @@ function SystemInsightCard({
             <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotMap[accent]}`} />
           </div>
         </div>
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-6">
           <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1.5">
             System Insight
           </p>
@@ -833,6 +864,16 @@ function SystemInsightCard({
             {detail}
           </p>
         </div>
+        {/* §11.243b #3 — 호영님 P0: dismiss button + sessionStorage. */}
+        <button
+          type="button"
+          onClick={handleDismiss}
+          aria-label="System Insight 카드 닫기"
+          title="이번 세션에서 숨기기"
+          className="absolute top-3 right-3 inline-flex items-center justify-center h-6 w-6 rounded-md text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
       </div>
     </div>
   );

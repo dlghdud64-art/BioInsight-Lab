@@ -41,6 +41,18 @@ interface MonthlyPoint {
   amount: number;
 }
 
+/** §11.243b #4 — 호영님 P0: 빈 차트 mockup 데이터.
+ *  실제 LabAxis 데이터 구조 정합 6개월 sample (회색 톤 표시 전용).
+ *  isEmpty 시에만 사용되며 실제 운영 데이터와 혼동 0 (overlay 안내 명시). */
+const MOCKUP_SPEND_DATA: MonthlyPoint[] = [
+  { month: "12월", amount: 3_200_000 },
+  { month: "1월", amount: 4_100_000 },
+  { month: "2월", amount: 3_800_000 },
+  { month: "3월", amount: 5_200_000 },
+  { month: "4월", amount: 4_700_000 },
+  { month: "5월", amount: 5_900_000 },
+];
+
 interface SpendTrendCardProps {
   monthlySpending: MonthlyPoint[];
 }
@@ -124,11 +136,56 @@ export function SpendTrendCard({ monthlySpending }: SpendTrendCardProps) {
       </div>
 
       {isEmpty ? (
-        <div className="py-12 text-center">
-          <p className="text-sm text-slate-500">아직 지출 기록이 없습니다.</p>
-          <p className="text-[11px] text-slate-400 mt-1 break-keep">
-            발주가 시작되면 월별 지출 추이가 여기에 표시됩니다.
-          </p>
+        /* §11.243b #4 — 호영님 P0: 빈 차트 mockup + 반투명 overlay.
+           단순 빈 메시지 대신 회색 톤 mockup 차트 (sample data) 를 렌더링하고
+           backdrop-blur overlay 로 "데이터가 쌓이면 이런 차트가 그려집니다"
+           안내. 운영자가 "쌓이면 무엇을 볼 수 있는지" 사전 인지. */
+        <div className="relative">
+          <div className="h-[180px] -mx-2 opacity-40 grayscale pointer-events-none">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={MOCKUP_SPEND_DATA}
+                margin={{ top: 5, right: 8, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="spendGradientMockup" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="#94a3b8" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke="#f1f5f9" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "#cbd5e1" }}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fontSize: 10, fill: "#cbd5e1" }}
+                  tickFormatter={(v) => (v >= 1_000_000 ? `${(v / 1_000_000).toFixed(0)}M` : `${(v / 1_000).toFixed(0)}K`)}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="amount"
+                  stroke="#94a3b8"
+                  strokeWidth={2}
+                  fill="url(#spendGradientMockup)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px] bg-white/40">
+            <div className="text-center px-6">
+              <p className="text-sm font-semibold text-slate-700 mb-1">
+                발주가 시작되면 이런 지출 추이가 그려집니다
+              </p>
+              <p className="text-[11px] text-slate-500 break-keep">
+                위 차트는 예시 데이터 — 실제 데이터 1건+ 시 자동 활성화됩니다.
+              </p>
+            </div>
+          </div>
         </div>
       ) : (
         <>

@@ -923,7 +923,12 @@ function DashboardPageInner() {
           §11.196b — statsLoading skeleton 분기 제거 (pageReady gate cover).
           이전엔 statsLoading=true 시 placeholder skeleton, false 시 real
           content 두 분기 — 이젠 page-level gate 가 statsLoading 인 동안
-          unified skeleton 으로 short-circuit 하므로 real content 만 남김. */}
+          unified skeleton 으로 short-circuit 하므로 real content 만 남김.
+          §11.243b #5/#6 — 호영님 P0: isOnboardingMode 시 hide. 운영 데이터
+          0 일 때는 "자동 감지된 이슈" 자체가 0 이므로 카드 자체 의미 없음.
+          OnboardingHero + KPI 가이드 banner 와 시각적 정합 (모두 데이터
+          쌓인 후 활성). */}
+      {!isOnboardingMode && (
       <div className="hidden md:block">
           <div className="rounded-xl border border-slate-200/80 bg-white p-5">
             <div className="flex items-center justify-between mb-4">
@@ -1034,6 +1039,7 @@ function DashboardPageInner() {
             })()}
           </div>
         </div>
+      )}
 
       {/* --- 1순위: 오늘의 우선 작업 (모바일용 fallback, md 이하) --- */}
       <div className="md:hidden rounded-xl border border-slate-200/80 bg-white overflow-hidden">
