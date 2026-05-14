@@ -364,6 +364,15 @@ type QuoteDispatchPreflight = {
   blockers: string[];
 };
 
+type QuoteDispatchEvidence = {
+  supplierStatus: string;
+  contactStatus: string;
+  previewStatus: string;
+  sendStatus: string;
+  blockReason: string;
+  canSend: boolean;
+};
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // #user-supplier-registration Phase 5 — organizationVendors optional param.
@@ -412,6 +421,42 @@ function getQuoteDispatchPreflight(
     summary: blockers.length > 0
       ? blockers.join(" · ")
       : `${includedSuppliers.length}개 공급사 후보 전달 가능`,
+  };
+}
+
+function getQuoteDispatchEvidence(preflight: QuoteDispatchPreflight | null): QuoteDispatchEvidence {
+  if (!preflight) {
+    return {
+      supplierStatus: "공급사 선택 필요",
+      contactStatus: "연락처 필요",
+      previewStatus: "미리보기 대기",
+      sendStatus: "전송 차단",
+      blockReason: "견적 선택 필요",
+      canSend: false,
+    };
+  }
+
+  const supplierMissing = preflight.blockers.some((blocker) => blocker.includes("공급사 후보 없음"));
+  const contactMissing = preflight.blockers.some((blocker) => blocker.includes("연락 채널 확인 필요"));
+  const quoteMissing = preflight.blockers.some((blocker) => blocker.includes("견적 선택 없음") || blocker.includes("견적 연결 없음"));
+  const canSend = !preflight.hardBlocked && !supplierMissing && !contactMissing && !quoteMissing;
+  const blockReason = quoteMissing
+    ? "견적 선택 필요"
+    : supplierMissing
+      ? "공급사 선택 필요"
+      : contactMissing
+        ? "연락처 필요"
+        : canSend
+          ? "전송 가능"
+          : preflight.summary;
+
+  return {
+    supplierStatus: supplierMissing || quoteMissing ? "공급사 선택 필요" : "공급사 1개 이상 선택됨",
+    contactStatus: contactMissing || quoteMissing ? "연락처 필요" : "유효 연락처 확인됨",
+    previewStatus: canSend ? "메시지 미리보기 준비" : "미리보기 대기",
+    sendStatus: canSend ? "전송 확인 대기" : "전송 차단",
+    blockReason,
+    canSend,
   };
 }
 
@@ -1202,7 +1247,13 @@ function QuotesPageContent() {
       : null,
     [selectedQuote, selectedSignals?.actionKey, organizationVendors, organizationVendorProducts],
   );
-  const selectedDispatchBlocked = !!selectedDispatchPreflight?.hardBlocked;
+  const selectedDispatchEvidence = useMemo(
+    () => selectedSignals?.actionKey === "request_send"
+      ? getQuoteDispatchEvidence(selectedDispatchPreflight)
+      : null,
+    [selectedDispatchPreflight, selectedSignals?.actionKey],
+  );
+  const selectedDispatchBlocked = selectedDispatchEvidence ? !selectedDispatchEvidence.canSend : false;
 
   const openQuoteDraftWorkbench = useCallback(() => {
     const targetQuote = selectedQuote
@@ -2472,6 +2523,25 @@ function QuotesPageContent() {
             </div>
             {/* Bottom actions */}
             <div className="px-4 py-3 border-t border-bd/50 space-y-2">
+              {selectedDispatchEvidence && (
+                <div
+                  data-testid="quote-dispatch-readiness-strip"
+                  className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1.5"
+                >
+                  <div
+                    data-testid="quote-dispatch-readiness-row"
+                    className="grid grid-cols-2 gap-1 text-[10px] text-slate-600"
+                  >
+                    <span>공급사: {selectedDispatchEvidence.supplierStatus}</span>
+                    <span>연락처: {selectedDispatchEvidence.contactStatus}</span>
+                    <span>미리보기: {selectedDispatchEvidence.previewStatus}</span>
+                    <span>전송 확인: {selectedDispatchEvidence.sendStatus}</span>
+                  </div>
+                  <p data-testid="quote-dispatch-block-reason" className="text-[11px] font-medium text-amber-700">
+                    차단 사유: {selectedDispatchEvidence.blockReason}
+                  </p>
+                </div>
+              )}
               {selectedDispatchBlocked && selectedDispatchPreflight && (
                 <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 space-y-2">
                   <div>
@@ -2501,7 +2571,9 @@ function QuotesPageContent() {
                   if (selectedSignals.actionKey) setActiveWorkWindow(selectedSignals.actionKey);
                 }}
                 disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
-                {selectedDispatchBlocked ? "견적 요청 전달 잠김" : selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+                {selectedSignals.actionKey === "request_send"
+                  ? selectedDispatchBlocked ? "Send to supplier 잠김" : "Send to supplier"
+                  : selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               <div className="flex gap-2">
                 <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
@@ -2888,6 +2960,25 @@ function QuotesPageContent() {
 
           {/* G. Bottom sticky action — 3 canonical CTA (rail-first, no default page nav) */}
           <div className="px-4 py-3 border-t border-bd bg-el/30 space-y-1.5">
+            {selectedDispatchEvidence && (
+              <div
+                data-testid="quote-dispatch-readiness-strip"
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 space-y-1.5"
+              >
+                <div
+                  data-testid="quote-dispatch-readiness-row"
+                  className="grid grid-cols-4 gap-2 text-[10px] text-slate-600"
+                >
+                  <span>공급사: {selectedDispatchEvidence.supplierStatus}</span>
+                  <span>연락처: {selectedDispatchEvidence.contactStatus}</span>
+                  <span>미리보기: {selectedDispatchEvidence.previewStatus}</span>
+                  <span>전송 확인: {selectedDispatchEvidence.sendStatus}</span>
+                </div>
+                <p data-testid="quote-dispatch-block-reason" className="text-[11px] font-medium text-amber-700">
+                  차단 사유: {selectedDispatchEvidence.blockReason}
+                </p>
+              </div>
+            )}
             {selectedDispatchBlocked && selectedDispatchPreflight && (
               <div
                 data-testid="quote-dispatch-blocker-summary"
@@ -2939,7 +3030,9 @@ function QuotesPageContent() {
               }}
               disabled={!selectedSignals.actionKey || selectedDispatchBlocked}
               title={selectedDispatchBlocked ? selectedDispatchPreflight?.summary : undefined}>
-              {selectedDispatchBlocked ? "견적 요청 전달 잠김" : selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
+              {selectedSignals.actionKey === "request_send"
+                ? selectedDispatchBlocked ? "Send to supplier 잠김" : "Send to supplier"
+                : selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
             </Button>
             <div className="flex gap-1.5">
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
