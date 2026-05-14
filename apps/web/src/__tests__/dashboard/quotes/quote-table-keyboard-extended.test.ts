@@ -94,8 +94,11 @@ describe("§11.230c (c) #4 — invariant 보존", () => {
   });
 
   it("§11.230c (d) sortedQuotes change focus reset useEffect 보존", () => {
+    // #quote-table-focus-reset-anchor 진화 정합 — setFocusedRowIndex(-1) →
+    //   setFocusedRowIndex(nextFocusIndex) 양방향 매칭 (anchor 진화 후
+    //   selectedIndex 또는 0 으로 focus 이동).
     expect(page).toMatch(
-      /useEffect\(\s*\(\)\s*=>\s*\{[\s\S]{0,400}focusedRowIndex\s*>=\s*sortedQuotes\.length[\s\S]{0,200}setFocusedRowIndex\(-1\)/,
+      /useEffect\(\s*\(\)\s*=>\s*\{[\s\S]{0,500}focusedRowIndex\s*>=\s*sortedQuotes\.length[\s\S]{0,300}setFocusedRowIndex\((-1|nextFocusIndex)/,
     );
   });
 

@@ -34,6 +34,11 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
+/** §11.243 #5 — 호영님 P0: 운영 바로가기 4 카드 건수 뱃지.
+ *  countKey 로 stats 매핑 (caller forward). count > 0 시 우측 상단 badge,
+ *  0 시 hide. canonical truth lock: count 자체 mutation 0 — display only. */
+type ActionCountKey = "quotes" | "purchases" | "receiving" | "inventory";
+
 interface QuickAction {
   label: string;
   description: string;
@@ -41,6 +46,14 @@ interface QuickAction {
   icon: LucideIcon;
   /** accent border color (좌측 thin line — KpiCard 4-tone palette 와 일관) */
   tone: "blue" | "emerald" | "amber" | "purple";
+  countKey: ActionCountKey;
+}
+
+export interface OperatorQuickActionsCounts {
+  quotes: number;
+  purchases: number;
+  receiving: number;
+  inventory: number;
 }
 
 const ACTIONS: QuickAction[] = [
@@ -50,6 +63,7 @@ const ACTIONS: QuickAction[] = [
     href: "/dashboard/quotes",
     icon: FileText,
     tone: "blue",
+    countKey: "quotes",
   },
   {
     label: "발주 전환",
@@ -57,6 +71,7 @@ const ACTIONS: QuickAction[] = [
     href: "/dashboard/purchases",
     icon: ShoppingCart,
     tone: "emerald",
+    countKey: "purchases",
   },
   {
     label: "입고 처리",
@@ -64,6 +79,7 @@ const ACTIONS: QuickAction[] = [
     href: "/dashboard/purchase-orders",
     icon: Truck,
     tone: "amber",
+    countKey: "receiving",
   },
   {
     label: "재고 점검",
@@ -71,6 +87,7 @@ const ACTIONS: QuickAction[] = [
     href: "/dashboard/inventory?filter=low",
     icon: Package,
     tone: "purple",
+    countKey: "inventory",
   },
 ];
 
@@ -81,7 +98,12 @@ const TONE_MAP = {
   purple: { accent: "border-l-purple-500", iconBg: "bg-purple-50", iconColor: "text-purple-600" },
 };
 
-export function OperatorQuickActions() {
+interface OperatorQuickActionsProps {
+  /** §11.243 #5 — 카드 우측 상단 건수 뱃지 (count > 0 시 노출). caller forward. */
+  counts?: OperatorQuickActionsCounts;
+}
+
+export function OperatorQuickActions({ counts }: OperatorQuickActionsProps = {}) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -94,6 +116,8 @@ export function OperatorQuickActions() {
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           const tone = TONE_MAP[action.tone];
+          // §11.243 #5 — count > 0 시 우측 상단 뱃지. ChevronRight 자리 swap.
+          const count = counts ? counts[action.countKey] : 0;
           return (
             <Link
               key={action.href}
@@ -106,7 +130,16 @@ export function OperatorQuickActions() {
                 >
                   <Icon className={`h-4 w-4 ${tone.iconColor}`} />
                 </div>
-                <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 mt-1" />
+                {count > 0 ? (
+                  <span
+                    data-quick-action-badge={action.countKey}
+                    className={`inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 rounded-full text-[10px] font-bold ${tone.iconBg} ${tone.iconColor}`}
+                  >
+                    {count > 99 ? "99+" : count}
+                  </span>
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5 text-slate-300 group-hover:text-slate-500 mt-1" />
+                )}
               </div>
               <p className="text-sm font-bold text-slate-900 break-keep">{action.label}</p>
               <p className="text-[11px] text-slate-500 mt-0.5 break-keep">

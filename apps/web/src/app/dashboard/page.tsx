@@ -541,15 +541,99 @@ function DashboardPageInner() {
                 : "오늘 즉시 처리할 운영 이슈가 없습니다."}
           </p>
         </div>
-        <div className="flex-shrink-0">
-          <AIInsightDialog />
+        <div className="flex-shrink-0 flex flex-col items-end gap-1">
+          {/* §11.243 #4 — 호영님 P0: isOnboardingMode 시 AI 리포트 disabled +
+              tooltip. mutation 호출 차단으로 0 데이터 분석 방지. */}
+          <AIInsightDialog disabled={isOnboardingMode} />
+          {isOnboardingMode && (
+            <p className="text-[10px] text-slate-400 break-keep">
+              리포트 생성에 최소 1건의 완료된 견적 데이터가 필요합니다
+            </p>
+          )}
         </div>
       </div>
 
+      {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
+          3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.
+          데이터 1건+ 시 자동 숨김. canonical truth: onboardingSteps derive
+          (line 284) — stats.totalInventory / activeQuotes / respondedQuotes. */}
+      {isOnboardingMode && (
+        <div className="bg-white border border-blue-200 rounded-xl p-6 shadow-sm">
+          <div className="mb-5">
+            <div className="flex items-baseline justify-between mb-1.5">
+              <h3 className="text-base font-bold text-slate-900">시작하기</h3>
+              {/* §11.243 #7 — 호영님 P0: 회색 progress 바로 진행도 표시
+                  (KPI 카드 0건 가이드 정합). 완료 step 수 / 3 단계. */}
+              <span className="text-[11px] text-slate-500 font-medium">
+                {[onboardingSteps.inventoryDone, onboardingSteps.quoteRequestDone, onboardingSteps.compareDone].filter(Boolean).length} / 3 단계 완료
+              </span>
+            </div>
+            <div className="h-1 w-full bg-slate-200 rounded-full overflow-hidden mb-2">
+              <div
+                className="h-full bg-emerald-500 transition-all duration-300"
+                style={{
+                  width: `${([onboardingSteps.inventoryDone, onboardingSteps.quoteRequestDone, onboardingSteps.compareDone].filter(Boolean).length / 3) * 100}%`,
+                }}
+              />
+            </div>
+            <p className="text-sm text-slate-500">3단계로 운영 흐름을 시작하세요</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Step 1: 품목 등록 */}
+            <div className={`border rounded-lg p-4 ${onboardingSteps.inventoryDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.inventoryDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {onboardingSteps.inventoryDone ? <CheckCircle2 className="h-4 w-4" /> : "1"}
+                </span>
+                <span className={`text-sm font-semibold ${onboardingSteps.inventoryDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>품목 등록</span>
+              </div>
+              <p className="text-xs text-slate-500 mb-3 leading-relaxed">실험실에서 사용하는 재고를 먼저 등록하세요.</p>
+              <Link href="/dashboard/inventory">
+                <Button size="sm" variant={onboardingSteps.inventoryDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
+                  <Plus className="h-3 w-3" /> {onboardingSteps.inventoryDone ? "추가 등록" : "지금 등록"}
+                </Button>
+              </Link>
+            </div>
+            {/* Step 2: 견적 요청 */}
+            <div className={`border rounded-lg p-4 ${onboardingSteps.quoteRequestDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.quoteRequestDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {onboardingSteps.quoteRequestDone ? <CheckCircle2 className="h-4 w-4" /> : "2"}
+                </span>
+                <span className={`text-sm font-semibold ${onboardingSteps.quoteRequestDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>견적 요청</span>
+              </div>
+              <p className="text-xs text-slate-500 mb-3 leading-relaxed">공급사에 견적을 요청해 가격을 비교하세요.</p>
+              <Link href="/dashboard/quotes">
+                <Button size="sm" variant={onboardingSteps.quoteRequestDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
+                  <FileText className="h-3 w-3" /> {onboardingSteps.quoteRequestDone ? "추가 요청" : "지금 요청"}
+                </Button>
+              </Link>
+            </div>
+            {/* Step 3: 비교 검토 */}
+            <div className={`border rounded-lg p-4 ${onboardingSteps.compareDone ? "bg-emerald-50/50 border-emerald-200" : "bg-white border-slate-200"}`}>
+              <div className="flex items-center gap-2 mb-2">
+                <span className={`inline-flex items-center justify-center h-6 w-6 rounded-full text-xs font-bold ${onboardingSteps.compareDone ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-600"}`}>
+                  {onboardingSteps.compareDone ? <CheckCircle2 className="h-4 w-4" /> : "3"}
+                </span>
+                <span className={`text-sm font-semibold ${onboardingSteps.compareDone ? "text-emerald-700 line-through" : "text-slate-900"}`}>비교 검토</span>
+              </div>
+              <p className="text-xs text-slate-500 mb-3 leading-relaxed">받은 견적을 비교해 최적의 공급사를 선택하세요.</p>
+              <Link href="/dashboard/quotes">
+                <Button size="sm" variant={onboardingSteps.compareDone ? "ghost" : "outline"} className="w-full h-8 text-xs gap-1.5">
+                  <GitCompare className="h-3 w-3" /> {onboardingSteps.compareDone ? "추가 검토" : "검토 시작"}
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- Executive Summary (예산/승인/Anomaly + 추이 + 활동 피드) ---
           §11.92: deltas prop 으로 monthOverMonthChange real delta forward.
-          KpiCard 의 우측 trend chip 에 표시 (real data only). */}
+          KpiCard 의 우측 trend chip 에 표시 (real data only).
+          §11.243 #3 — onboardingMode forward: 데이터 0 시 KPI dim + 가이드 banner. */}
       <ExecutiveSummarySection
+        onboardingMode={isOnboardingMode}
         deltas={{
           monthOverMonthChange: stats.monthOverMonthChange,
           weekOverWeekChange: stats.weekOverWeekChange,
@@ -587,8 +671,19 @@ function DashboardPageInner() {
       {/* §11.93 — 운영 바로가기 4 카드 (LabAxis 운영 verb 정합).
           호영님 시안의 "운영 바로가기" visual essence 흡수, 운영 verb 4개:
           견적 등록 / 발주 전환 / 입고 처리 / 재고 점검. sidebar 와 부분
-          duplicate 이지만 dashboard 종합 surface single-click 단축이 가치. */}
-      <OperatorQuickActions />
+          duplicate 이지만 dashboard 종합 surface single-click 단축이 가치.
+          §11.243 #5 — 호영님 P0: 카드 우측 상단 건수 뱃지 forward.
+          quotes = 진행중 견적 / purchases = 응답 검토 대기 (발주 전환
+          candidate) / receiving = 발주→입고 funnel / inventory = 안전재고
+          미달. canonical truth: stats 그대로 forward, count mutation 0. */}
+      <OperatorQuickActions
+        counts={{
+          quotes: stats.activeQuotes,
+          purchases: stats.respondedQuotes,
+          receiving: stats.compareStats.purchaseToReceivingCount,
+          inventory: stats.lowStockAlerts,
+        }}
+      />
 
       {/* WorkQueueInbox 제거 — 3상태 중앙 패널이 대체 */}
 
@@ -609,11 +704,21 @@ function DashboardPageInner() {
                   <div className="w-11 h-11 rounded-full bg-slate-50 flex items-center justify-center mx-auto mb-3">
                     <Package className="h-5 w-5 text-slate-400" />
                   </div>
-                  <p className="text-[13px] font-bold text-slate-900 mb-1">아직 운영 데이터가 없습니다</p>
+                  <p className="text-[13px] font-bold text-slate-900 mb-1">견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다</p>
                   <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
                     품목 등록, 비교 시작, 견적 요청 생성 중 하나로 첫 운영 흐름을 시작하세요.
                   </p>
                   <p className="text-[11px] text-slate-400 mt-2">첫 데이터가 생성되면 처리 필요 항목과 최근 활동이 여기에 표시됩니다.</p>
+                  {/* §11.243 #5/#6 — 호영님 P0: 데이터 부재 시 LabAxis 가 자동 감지하는
+                      이슈 타입을 미리 안내. 운영자가 "쌓이면 무엇을 알려주는지" 사전 인지. */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 max-w-sm mx-auto">
+                    <p className="text-[10px] font-semibold text-slate-500 mb-1.5">이런 이슈를 자동으로 감지합니다</p>
+                    <div className="flex flex-wrap justify-center gap-1.5">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-medium">납기 지연</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 text-[10px] font-medium">가격 이상</span>
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 text-[10px] font-medium">재고 소진</span>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex flex-wrap justify-center gap-2 pt-2 border-t border-slate-100">
                   <Link href="/dashboard/inventory">
@@ -1048,7 +1153,7 @@ function DashboardPageInner() {
               <p className="text-sm text-slate-500">오늘 즉시 처리할 운영 이슈가 없습니다. 수동 빠른 실행에서 업무를 시작하세요.</p>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-slate-500">아직 운영 데이터가 없습니다. 아래에서 첫 업무를 시작하세요.</p>
+                <p className="text-sm text-slate-500">견적 요청을 시작하면 운영 데이터가 쌓이기 시작합니다. 아래에서 첫 업무를 시작하세요.</p>
                 <div className="flex flex-wrap gap-2">
                   <Link href="/dashboard/inventory">
                     <Button size="sm" variant="outline" className="h-8 text-xs gap-1.5 border-slate-200">
@@ -1191,7 +1296,7 @@ function DashboardPageInner() {
           </CardHeader>
           <CardContent className="p-3 pt-0 space-y-2">
             {stats.recentPurchases.length === 0 ? (
-              <p className="text-xs text-slate-500 py-2">아직 처리된 운영 이력이 없습니다</p>
+              <p className="text-xs text-slate-500 py-2">첫 업무가 완료되면 처리 이력이 여기에 기록됩니다</p>
             ) : (
               stats.recentPurchases.slice(0, 3).map((p, i) => (
                 <div key={p.id || `p-${i}`} className="flex items-center gap-2.5 py-1.5 border-b border-slate-100 last:border-0">

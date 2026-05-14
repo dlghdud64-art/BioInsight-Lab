@@ -498,10 +498,17 @@ interface ExecutiveSummaryDeltas {
   anomalyDelta?: { value: number; period: "day" | "week" };
 }
 
+/** §11.243 #3 — 호영님 P0: 온보딩 모드 시 KPI 가이드.
+ *  onboardingMode=true 시 KPI grid 위에 안내 banner + KPI 카드 dim
+ *  (opacity-60 + pointer-events-none + grayscale). 가이드 메시지로 운영
+ *  데이터 부재를 명확히 전달, 사용자가 OnboardingHero 로 시선 이동 유도.
+ *  canonical truth lock: KPI 자체 derive 로직 변경 0 — display only. */
 export function ExecutiveSummarySection({
   deltas,
+  onboardingMode = false,
 }: {
   deltas?: ExecutiveSummaryDeltas;
+  onboardingMode?: boolean;
 } = {}) {
   // store hydration
   const orders = useOrderQueueStore((s) => s.orders);
@@ -547,13 +554,40 @@ export function ExecutiveSummarySection({
 
   return (
     <section className="space-y-4">
+      {/* §11.243 #3 — 호영님 P0: 온보딩 모드 KPI 가이드 banner.
+          데이터 부재 시 KPI 카드가 0/-/0건 으로만 채워지므로 사용자에게
+          맥락 없음. banner 로 "운영 데이터 누적 후 활성화" 명시 + KPI grid
+          opacity 분기로 시각적 dim. */}
+      {onboardingMode && (
+        <div
+          data-onboarding-kpi-guide
+          className="rounded-lg bg-slate-50 border border-slate-200 px-4 py-3 flex items-start gap-2"
+        >
+          <AlertCircle className="h-4 w-4 text-slate-400 mt-0.5 flex-shrink-0" />
+          <div>
+            <p className="text-xs font-semibold text-slate-700 mb-0.5">
+              운영 데이터가 쌓이면 KPI 지표가 활성화됩니다
+            </p>
+            <p className="text-[11px] text-slate-500 leading-relaxed">
+              위 시작하기 단계를 완료하면 처리 필요 항목 · 진행 중 발주 · 예산 소진율 · 이상 신호 KPI 가 실시간으로 채워집니다.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* ── KPI Row ─────────────────────────────────────── */}
       {/* §11.82 #dashboard-operational-intelligence-redesign Phase 2.
           호영님 시안의 4-card visual essence 흡수 — hover Quick Data
           Breakdown popup 추가 + tone 4분류 (정상=emerald, 경고=amber,
           지출=blue, 위험=rose). breakdown 데이터는 모두 real Prisma
           drived store 에서 derive — mock 0 / fake 0. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div
+        className={
+          onboardingMode
+            ? "grid grid-cols-2 gap-3 sm:grid-cols-4 opacity-60 grayscale pointer-events-none"
+            : "grid grid-cols-2 gap-3 sm:grid-cols-4"
+        }
+      >
         <KpiCard
           icon={<AlertCircle className="h-5 w-5" />}
           label="처리 필요 항목"

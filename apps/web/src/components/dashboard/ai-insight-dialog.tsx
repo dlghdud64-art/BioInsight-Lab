@@ -50,7 +50,21 @@ interface AIInsightResponse {
   error?: string;
 }
 
-export function AIInsightDialog() {
+/**
+ * §11.243 #4 — 호영님 P0: 온보딩 모드(데이터 0건) 시 AI 리포트 비활성화.
+ *   disabled prop 추가 — 운영 데이터가 없을 때 button + dialog 진입 차단,
+ *   tooltip 으로 "운영 데이터가 쌓이면 AI 리포트를 생성할 수 있습니다" 안내.
+ *   canonical truth lock: mutation 호출 자체를 차단하여 0 데이터 분석 방지.
+ */
+interface AIInsightDialogProps {
+  disabled?: boolean;
+  disabledReason?: string;
+}
+
+export function AIInsightDialog({
+  disabled = false,
+  disabledReason = "운영 데이터가 쌓이면 AI 리포트를 생성할 수 있습니다",
+}: AIInsightDialogProps = {}) {
   const [open, setOpen] = useState(false);
   const [insight, setInsight] = useState<AIInsightResponse | null>(null);
 
@@ -69,6 +83,8 @@ export function AIInsightDialog() {
   });
 
   const handleOpen = (next: boolean) => {
+    // §11.243 #4 — disabled 시 dialog open 차단 (mutation 호출 방지)
+    if (disabled && next) return;
     setOpen(next);
     if (next && !insight && !mutation.isPending) {
       mutation.mutate();
@@ -87,7 +103,13 @@ export function AIInsightDialog() {
     <Dialog open={open} onOpenChange={handleOpen}>
       <Button
         size="sm"
-        className="h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-sm"
+        disabled={disabled}
+        title={disabled ? disabledReason : undefined}
+        className={
+          disabled
+            ? "h-8 text-xs gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+            : "h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-sm"
+        }
         onClick={() => handleOpen(true)}
       >
         <Sparkles className="h-3.5 w-3.5" />
