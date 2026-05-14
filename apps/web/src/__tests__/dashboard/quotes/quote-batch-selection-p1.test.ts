@@ -104,9 +104,10 @@ describe("§11.241 #7 — invariant 보존", () => {
     expect(page).toMatch(/e\.key === "End"[\s\S]{0,400}data-row-index/);
   });
 
-  it("§11.230c (d) sortedQuotes change focus reset useEffect 보존", () => {
+  it("§11.230c (d) sortedQuotes change focus reset useEffect 보존 (anchor 진화 정합)", () => {
+    // #quote-table-focus-reset-anchor — setFocusedRowIndex(-1) → setFocusedRowIndex(nextFocusIndex)
     expect(page).toMatch(
-      /useEffect\(\s*\(\)\s*=>\s*\{[\s\S]{0,400}focusedRowIndex\s*>=\s*sortedQuotes\.length[\s\S]{0,200}setFocusedRowIndex\(-1\)/,
+      /useEffect\(\s*\(\)\s*=>\s*\{[\s\S]{0,500}focusedRowIndex\s*>=\s*sortedQuotes\.length[\s\S]{0,300}setFocusedRowIndex\((-1|nextFocusIndex)/,
     );
   });
 
