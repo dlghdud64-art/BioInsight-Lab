@@ -1,0 +1,54 @@
+name: Lighthouse CI
+
+# §11.246e-cont #lighthouse-ci-automation — 호영님 §11.246e baseline 자연 후속.
+#
+# §11.246e (PageSpeed Insights API 일회성 측정) → continuous CI 자동화. PR 마다
+# Core Web Vitals (LCP/CLS/INP) + Performance score 회귀 차단. §11.246d 클러스터
+# (observer + 4 metric + server POST + DB persist) 와 정합 — synthetic baseline
+# (Lighthouse) + real user metric (RUM) 양쪽 확보.
+#
+# Strategy:
+#   - 3 public URL (/, /pricing, /login) 측정 — auth 필요 dashboard 제외.
+#   - numberOfRuns 3 — variance 감소.
+#   - desktop preset — initial scope. mobile preset 별도 백로그.
+#   - assertion warn level — 초기 도입. baseline 안정화 후 error 로 강화.
+#
+# canonical truth lock:
+#   - 기존 5 workflow 보존 (check-deleted-files / db-drift-detector /
+#     labaxis-agent-board / labaxis-agent-board-preflight-only / labaxis-surface-guard).
+#   - Node 20 LTS + actions/checkout@v4 (기존 workflow 패턴 reuse).
+#   - temporary-public-storage 으로 LHCI 결과 업로드 — GitHub token 불필요.
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lighthouse-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli@0.13.x
+
+      - name: Run Lighthouse CI
+        run: lhci autorun --config=./.lighthouserc.json
+        env:
+          # temporary-public-storage 으로 결과 자동 업로드 — GitHub token 불필요.
+          # 결과 URL 은 step output 으로 노출됨 (PR 리뷰어 직접 클릭).
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
