@@ -1730,8 +1730,10 @@ function QuotesPageContent() {
         onClearSelection={clearSelection}
       />
 
-      {/* ── KPI Control Cards — 모바일: 가로 스와이프 / sm+: 2열 / lg+: 5열 (§11.217 Phase 2 — 발송 대기 cell 추가) ── */}
-      <div className="flex gap-2.5 overflow-x-auto snap-x pb-1 sm:pb-0 sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 sm:gap-3 sm:overflow-visible">
+      {/* ── KPI Control Cards — 5 카드 단계적 반응형 (§11.248c 호영님 P0 견적 관리 #3).
+          모바일 가로 스와이프 → 1열 grid 통일 (호영님 spec "<800px 1열" 정합).
+          breakpoint: <sm 1열 / sm 2열 / md 3열 / lg 5열. (§11.217 Phase 2 발송 대기 cell 추가 보존) ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         {[
           { label: "발송 대기", ...summaryStats.dispatchPending, icon: Send, filter: "PENDING", color: "slate", iconBg: "bg-slate-50", iconText: "text-slate-600", activeBorder: "border-slate-400/50", activeRing: "ring-slate-400/20", activeBg: "bg-slate-50/50", hoverBorder: "hover:border-slate-300", hoverShadow: "hover:shadow-slate-100" },
           { label: "회신 추적", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
@@ -1753,7 +1755,8 @@ function QuotesPageContent() {
                 <div className={`w-8 h-8 rounded-lg ${iconBg} flex items-center justify-center transition-transform group-hover:scale-110`}>
                   <Icon className={`h-4 w-4 ${iconText}`} />
                 </div>
-                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider truncate">{label}</span>
+                {/* §11.248c — label truncate 제거 (호영님 spec "라벨 우선순위 배치 — 잘리지 않도록"). break-keep 으로 어절 단위 wrap 허용. */}
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider break-keep">{label}</span>
               </div>
               <div className={`text-3xl font-extrabold tracking-tight mb-1 ${isZero ? "text-slate-300" : "text-slate-900"}`}>
                 {isLoading ? <span className="inline-block w-8 h-7 bg-el/50 rounded animate-pulse" /> : count}
