@@ -4,8 +4,22 @@ import { db } from "@/lib/db";
 import { getOrCreateGuestKey } from "@/lib/api/guest-key";
 import { generateVendorRequestToken } from "@/lib/api/vendor-request-token";
 import { sendEmail } from "@/lib/email/sender";
-import { generateVendorQuoteRequestEmail } from "@/lib/email/vendor-request-templates";
+import {
+  generateVendorQuoteRequestEmail,
+  generateVendorQuoteReminderEmail,
+} from "@/lib/email/vendor-request-templates";
 import { z } from "zod";
+
+/**
+ * §11.228b #reminder-enhancement — 호영님 v2 P0 메일 리마인더 강화 (3 sub-항목):
+ *   (1) Template 강화 — isReminder=true 시 generateVendorQuoteReminderEmail
+ *       (escalation tone + daysSinceRequest)
+ *   (2) Reason 입력 — BatchReminderSheet Textarea 보강 (client layer)
+ *   (3) Rate-limit — 같은 quote + vendorEmail 의 가장 최근 createdAt 기준 24h
+ *       cooldown. schema 변경 0, QuoteVendorRequest.createdAt 으로 lookup.
+ */
+const REMINDER_COOLDOWN_HOURS = 24;
+const REMINDER_COOLDOWN_MS = REMINDER_COOLDOWN_HOURS * 60 * 60 * 1000;
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
@@ -23,6 +37,9 @@ const CreateVendorRequestsSchema = z.object({
   vendors: z.array(VendorSchema).min(1, "At least one vendor required"),
   message: z.string().optional(),
   expiresInDays: z.number().int().min(1).max(90).default(14),
+  // §11.228b — client BatchReminderSheet 가 true 로 전송 시 Reminder template
+  //   분기 + 24h cooldown check 적용. initial dispatch flow 영향 0 (default false).
+  isReminder: z.boolean().optional().default(false),
 });
 
 /**
@@ -130,7 +147,62 @@ export async function POST(
       );
     }
 
-    const { vendors, message, expiresInDays } = validation.data;
+    const { vendors, message, expiresInDays, isReminder } = validation.data;
+
+    // §11.228b — Rate-limit cooldown check (24h 내 같은 quote+vendor 차단).
+    //   isReminder=true 인 경우만 적용 — initial dispatch 는 cooldown 미적용.
+    //   각 vendor 마다 가장 최근 createdAt 의 quoteVendorRequest 조회 후 24h 이내면 429.
+    let effectiveVendors = vendors;
+    /**
+     * §11.228b — 이전 발송 createdAt (Reminder template 의 daysSinceRequest 계산용).
+     *   같은 quote+vendor 의 가장 오래된 createdAt = 최초 발송 시점 기준.
+     *   isReminder=false 또는 lookup 실패 시 undefined.
+     */
+    const firstRequestAtByEmail = new Map<string, Date>();
+    if (isReminder) {
+      const now = Date.now();
+      const rateLimitedVendors: Array<{ email: string; hoursRemaining: number }> = [];
+      for (const vendor of vendors) {
+        const lastRequest = await db.quoteVendorRequest.findFirst({
+          where: { quoteId: id, vendorEmail: vendor.email },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+        });
+        if (lastRequest) {
+          const elapsedMs = now - new Date(lastRequest.createdAt).getTime();
+          if (elapsedMs < REMINDER_COOLDOWN_MS) {
+            const hoursRemaining = Math.ceil((REMINDER_COOLDOWN_MS - elapsedMs) / (60 * 60 * 1000));
+            rateLimitedVendors.push({ email: vendor.email, hoursRemaining });
+          }
+        }
+        // daysSinceRequest 계산용 — 같은 quote+vendor 의 가장 오래된 createdAt
+        const firstRequest = await db.quoteVendorRequest.findFirst({
+          where: { quoteId: id, vendorEmail: vendor.email },
+          orderBy: { createdAt: "asc" },
+          select: { createdAt: true },
+        });
+        if (firstRequest) {
+          firstRequestAtByEmail.set(vendor.email, new Date(firstRequest.createdAt));
+        }
+      }
+      if (rateLimitedVendors.length === vendors.length) {
+        // 모든 vendor 가 cooldown 안 — 전면 차단 (429)
+        return NextResponse.json(
+          {
+            error: "RATE_LIMIT_EXCEEDED",
+            message: `최근 ${REMINDER_COOLDOWN_HOURS}시간 이내 발송된 vendor 입니다. 잠시 후 다시 시도해주세요.`,
+            cooldownHours: REMINDER_COOLDOWN_HOURS,
+            rateLimitedVendors,
+          },
+          { status: 429 },
+        );
+      }
+      // 부분 cooldown — 차단된 vendor 제외 후 진행
+      if (rateLimitedVendors.length > 0) {
+        const rateLimitedEmails = new Set(rateLimitedVendors.map((v) => v.email));
+        effectiveVendors = vendors.filter((v) => !rateLimitedEmails.has(v.email));
+      }
+    }
 
     // Calculate expiration date
     const expiresAt = new Date(Date.now() + expiresInDays * 24 * 60 * 60 * 1000);
@@ -158,7 +230,7 @@ export async function POST(
     const createdRequests = [];
     const emailResults = [];
 
-    for (const vendor of vendors) {
+    for (const vendor of effectiveVendors) {
       // Generate unique token
       const token = generateVendorRequestToken();
 
@@ -187,9 +259,26 @@ export async function POST(
         createdAt: vendorRequest.createdAt,
       });
 
-      // Send email
-      try {
-        const emailTemplate = generateVendorQuoteRequestEmail({
+      // §11.228b — isReminder=true 분기 — Reminder template (escalation tone +
+      //   daysSinceRequest). isReminder=false 또는 daysSinceRequest 계산 불가 시
+      //   기존 initial template 그대로 (canonical lock).
+      let emailTemplate;
+      if (isReminder) {
+        const firstAt = firstRequestAtByEmail.get(vendor.email);
+        const daysSinceRequest = firstAt
+          ? Math.max(1, Math.floor((Date.now() - firstAt.getTime()) / (24 * 60 * 60 * 1000)))
+          : 1;
+        emailTemplate = generateVendorQuoteReminderEmail({
+          vendorName: vendor.name,
+          quoteTitle: quote.title,
+          itemCount: quote.items.length,
+          message: message,
+          responseUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/vendor/${vendorRequest.token}`,
+          expiresAt,
+          daysSinceRequest,
+        });
+      } else {
+        emailTemplate = generateVendorQuoteRequestEmail({
           vendorName: vendor.name,
           quoteTitle: quote.title,
           itemCount: quote.items.length,
@@ -197,6 +286,8 @@ export async function POST(
           responseUrl: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/vendor/${vendorRequest.token}`,
           expiresAt,
         });
+      }
+      try {
 
         // #vendor-email-seed-pilot — vendor.id forward (pilot 분기용).
         // pilot vendor 면 sender.ts 가 SMTP skip + audit-only.

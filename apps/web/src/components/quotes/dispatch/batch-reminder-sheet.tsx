@@ -110,6 +110,17 @@ async function sendReminderForQuote(
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: "리마인더 발송 실패" }));
+      // §11.228b — 429 rate-limit cooldown 명확 사용자 인지.
+      //   server response { error: "RATE_LIMIT_EXCEEDED", cooldownHours, rateLimitedVendors }
+      //   → 사용자에게 cooldown 사유 + 재시도 가능 시각 안내.
+      if (response.status === 429 || error.error === "RATE_LIMIT_EXCEEDED") {
+        const hours = error.cooldownHours ?? 24;
+        return {
+          quoteId: quote.id,
+          status: "error",
+          message: `최근 ${hours}시간 이내 발송된 공급사입니다. 잠시 후 다시 시도해주세요.`,
+        };
+      }
       return {
         quoteId: quote.id,
         status: "error",
@@ -289,11 +300,12 @@ export function BatchReminderSheet({
             </div>
           )}
 
-          {/* 공통 메시지 */}
+          {/* §11.228b — 발송 사유 + 추가 메시지 (운영자 컨텍스트 + Reminder 본문 보강).
+              label/placeholder 보강 — "발송 사유 또는 추가 메시지" 명시화. */}
           {eligibleCount > 0 && (
             <div className="space-y-1.5">
               <label htmlFor="reminder-message" className="text-xs font-medium text-slate-700">
-                공통 메시지 (선택)
+                발송 사유 또는 추가 메시지 (선택)
               </label>
               <Textarea
                 id="reminder-message"
@@ -301,8 +313,11 @@ export function BatchReminderSheet({
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
                 className="text-sm"
-                placeholder="리마인더 메일 본문에 추가할 메시지"
+                placeholder="예: 회신 기한이 임박했습니다. 빠른 답변 부탁드립니다."
               />
+              <p className="text-[11px] text-slate-500 break-keep">
+                입력한 메시지는 Reminder 메일 본문의 &quot;담당자 추가 메시지&quot; 섹션에 노출됩니다.
+              </p>
             </div>
           )}
 
