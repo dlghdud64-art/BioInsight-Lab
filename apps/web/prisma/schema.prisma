@@ -1488,6 +1488,32 @@ model AuditLog {
   @@index([success])
 }
 
+// §11.246d-4-cont #rum-metric-db-persistence — Core Web Vitals 4 metric 영속화.
+//
+//   §11.246d-3 observeLCP + §11.246d-5 observeCLS/FID/INP client RUM 측정 →
+//   §11.246d-4 server POST endpoint (zod validation + structured log) →
+//   본 model 으로 raw row 영속화. p75 aggregate view 는 별도 백로그.
+//
+//   4 metric Float? — client beacon 도 모두 optional (browser 미지원 graceful
+//   fallback). FK 강제 0 — anonymous RUM 강제. session correlation 보류.
+model RumMetric {
+  id        String   @id @default(cuid())
+  lcp       Float?   // Largest Contentful Paint (ms)
+  cls       Float?   // Cumulative Layout Shift (unitless)
+  fid       Float?   // First Input Delay (ms)
+  inp       Float?   // Interaction to Next Paint (ms)
+  pathname  String?  // page route (max 500 chars zod)
+  userAgent String?  // user agent (max 500 chars zod)
+  sessionId String?  // anonymous session marker (max 64 chars zod, optional)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([pathname])
+  @@index([lcp])
+  @@index([cls])
+  @@index([inp])
+}
+
 // RFQ Token for email-based quote replies
 model QuoteRfqToken {
   id        String    @id @default(cuid())
