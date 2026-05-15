@@ -20,13 +20,31 @@ import { z } from "zod";
  */
 const REMINDER_COOLDOWN_HOURS = 24;
 const REMINDER_COOLDOWN_MS = REMINDER_COOLDOWN_HOURS * 60 * 60 * 1000;
+
+/**
+ * §11.229c #vendor-email-domain-validation — 호영님 P0 vendor.email 도메인 검증 강화.
+ *   RFC 5322 기본 검증 (z.email) 외에:
+ *     (a) RFC 6761 invalid TLD (.test/.invalid/.example/.localhost) 차단
+ *     (b) bare IP 주소 (user@127.0.0.1 등) 차단 — 도메인 이름 강제
+ *   server zod schema level 검증 — client bypass 0 (canonical truth).
+ */
+const INVALID_TLDS = new Set(["test", "invalid", "example", "localhost"]);
+const BARE_IP_REGEX = /^[^@]+@\d+\.\d+\.\d+\.\d+$/;
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
 import { extractRequestMeta } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
 
 // Schema for POST /api/quotes/:id/vendor-requests
 const VendorSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  // §11.229c — email 도메인 검증 강화. z.email RFC 5322 + TLD blacklist + bare IP 차단.
+  email: z.string()
+    .email("Invalid email address")
+    .refine((email) => {
+      const tld = email.split(".").pop()?.toLowerCase();
+      return !!tld && !INVALID_TLDS.has(tld);
+    }, "테스트/예제 도메인 (.test/.invalid/.example/.localhost) 은 사용할 수 없습니다")
+    .refine((email) => !BARE_IP_REGEX.test(email),
+      "도메인 이름 대신 IP 주소를 사용할 수 없습니다"),
   name: z.string().optional(),
   // #vendor-email-seed-pilot — vendor.id forward (pilot 분기용).
   // optional — caller 가 보유한 경우만 전달. 미전달 시 sendEmail 의 pilot 분기 0.
