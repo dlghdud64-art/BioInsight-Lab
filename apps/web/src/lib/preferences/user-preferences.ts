@@ -30,8 +30,25 @@ export interface UserPreferencesJson {
   };
   // §11.230c (a)-2 — briefingCollapsed server-persist. §11.248e-2 localStorage reuse.
   briefingCollapsed?: boolean;
+  // §11.230c (a)-3 — quotes/page viewMode + sortState server-persist.
+  quotesView?: {
+    mode?: "card" | "table";
+    sort?: {
+      key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+      direction?: "asc" | "desc";
+    };
+  };
   [key: string]: unknown;
 }
+
+// §11.230c (a)-3 — QuotesView patch type (partial — mode 만 또는 sort 만 가능).
+export type QuotesViewPatch = {
+  mode?: "card" | "table";
+  sort?: {
+    key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+    direction?: "asc" | "desc";
+  };
+};
 
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
@@ -43,10 +60,11 @@ type ColumnPrefsPatch = {
   order?: string[];
 };
 
-// §11.230c (a)-2 — PATCH body type 확장 (briefingCollapsed top-level optional).
+// §11.230c (a)-2/(a)-3 — PATCH body type 확장 (briefingCollapsed + quotesView optional).
 type UserPreferencesPatch = {
   columnPrefs?: { quotes?: ColumnPrefsPatch };
   briefingCollapsed?: boolean;
+  quotesView?: QuotesViewPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -117,6 +135,17 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-3 — quotesView (mode + sort) server-persist (debounced).
+  //   §11.217 Phase 6 localStorage labaxis-quote-view-mode 와 양립 (viewMode).
+  //   sortState 는 localStorage 0 → server-only persistence.
+  //   partial update — mode 만 변경 시 sort 보존, sort 만 변경 시 mode 보존.
+  const updateQuotesView = (patch: QuotesViewPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ quotesView: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -130,6 +159,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     isError: query.isError,
     updateColumnPrefs,
     updateBriefingCollapsed,
+    updateQuotesView,
     isPatching: mutation.isPending,
   };
 }

@@ -1147,6 +1147,46 @@ function QuotesPageContent() {
     }
   }, [viewMode]);
 
+  // §11.230c (a)-3 #quotes-view-server-persist — server-first hydration.
+  //   preferences.quotesView 도착 시 setViewMode + setSortState (server canonical).
+  //   §11.217 localStorage hydration 위 override (server 우선).
+  useEffect(() => {
+    const view = userPrefs.preferences?.quotesView;
+    if (!view) return;
+    if (view.mode === "card" || view.mode === "table") {
+      setViewMode(view.mode);
+    }
+    if (view.sort) {
+      const validKeys = [
+        "title",
+        "status",
+        "itemCount",
+        "responseCount",
+        "createdAt",
+      ] as const;
+      const k = view.sort.key;
+      const validKey =
+        k === null || (typeof k === "string" && (validKeys as readonly string[]).includes(k))
+          ? (k as typeof validKeys[number] | null)
+          : null;
+      const validDir = view.sort.direction === "asc" || view.sort.direction === "desc"
+        ? view.sort.direction
+        : "desc";
+      setSortState({ key: validKey, direction: validDir });
+    }
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-3 — debounced server PATCH on viewMode/sortState change.
+  //   §11.217 localStorage (viewMode 만) 와 양립 — 두 layer 모두 update.
+  //   sortState 는 localStorage 0 → server-only.
+  useEffect(() => {
+    userPrefs.updateQuotesView({
+      mode: viewMode,
+      sort: { key: sortState.key, direction: sortState.direction },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewMode, sortState]);
+
   // §11.226 #3 — 테이블 뷰 진입 시 popup 자동 close.
   //   호영님 v2 spec sheet P0 #3: "테이블 뷰에서는 브리핑 패널을 기본 닫힘
   //   상태로 전환 + 행 클릭 시 브리핑이 오버레이 드로어로 열림".

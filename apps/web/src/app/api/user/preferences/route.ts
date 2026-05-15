@@ -29,6 +29,22 @@ const ColumnPrefsSchema = z.object({
   order: z.array(z.string()).optional(),
 });
 
+// §11.230c (a)-3 — quotes/page viewMode + sortState server-persist.
+//   viewMode: §11.217 Phase 6 labaxis-quote-view-mode localStorage reuse.
+//   sortState: §11.227 #9 (key SortKey | null + direction asc/desc) — localStorage 0 → server-only.
+const QuotesViewSchema = z.object({
+  mode: z.enum(["card", "table"]).optional(),
+  sort: z
+    .object({
+      key: z
+        .enum(["title", "status", "itemCount", "responseCount", "createdAt"])
+        .nullable()
+        .optional(),
+      direction: z.enum(["asc", "desc"]).optional(),
+    })
+    .optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -38,6 +54,8 @@ const UserPreferencesPatchSchema = z.object({
   // §11.230c (a)-2 — briefingCollapsed server-persist. §11.248e-2 localStorage
   // reuse + cross-device sync. boolean 단일 값.
   briefingCollapsed: z.boolean().optional(),
+  // §11.230c (a)-3 — quotes view (viewMode + sortState) server-persist.
+  quotesView: QuotesViewSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -50,6 +68,14 @@ interface UserPreferencesJson {
   };
   // §11.230c (a)-2 — briefingCollapsed nested key.
   briefingCollapsed?: boolean;
+  // §11.230c (a)-3 — quotes view (viewMode + sortState) nested key.
+  quotesView?: {
+    mode?: "card" | "table";
+    sort?: {
+      key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
+      direction?: "asc" | "desc";
+    };
+  };
   [key: string]: unknown;
 }
 
@@ -121,6 +147,21 @@ export async function PATCH(request: NextRequest) {
       // §11.230c (a)-2 — briefingCollapsed override if present in patch.
       ...(validation.data.briefingCollapsed !== undefined
         ? { briefingCollapsed: validation.data.briefingCollapsed }
+        : {}),
+      // §11.230c (a)-3 — quotesView nested merge (mode + sort 부분 update).
+      ...(validation.data.quotesView
+        ? {
+            quotesView: {
+              ...(currentPrefs.quotesView ?? {}),
+              ...(validation.data.quotesView.mode !== undefined
+                ? { mode: validation.data.quotesView.mode }
+                : {}),
+              sort: {
+                ...(currentPrefs.quotesView?.sort ?? {}),
+                ...(validation.data.quotesView.sort ?? {}),
+              },
+            },
+          }
         : {}),
     };
 
