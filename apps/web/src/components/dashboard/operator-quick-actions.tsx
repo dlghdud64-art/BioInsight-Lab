@@ -25,14 +25,27 @@
  */
 
 import Link from "next/link";
+import { useState } from "react";
 import {
   FileText,
   ShoppingCart,
   Truck,
   Package,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+
+/**
+ * §11.247 #operator-quick-actions-responsive — 호영님 P0 반응형 + Progressive Disclosure.
+ *
+ * (1) Progressive Disclosure — 견적 발송 카드 기본 접힘 (다른 3 카드와 동일 높이),
+ *     클릭 시 상태 흐름표 + Send 버튼 영역 펼침. transition 300ms ease-in-out.
+ * (2) 반응형 grid — `repeat(auto-fit, minmax(280px, 1fr))` 으로 자동 분기
+ *     (≥1200px 4열 / 800-1199px 2x2 / <800px 1열).
+ * (3) min-h-[140px] 균일 — 4 카드 시각적 정렬.
+ */
 
 /** §11.243 #5 — 호영님 P0: 운영 바로가기 4 카드 건수 뱃지.
  *  countKey 로 stats 매핑 (caller forward). count > 0 시 우측 상단 badge,
@@ -147,6 +160,10 @@ export function OperatorQuickActions({
   counts,
   quoteDispatchReadiness,
 }: OperatorQuickActionsProps = {}) {
+  // §11.247 #1 — 견적 발송 카드 Progressive Disclosure. default false 로
+  //   접힌 상태 (다른 3 카드와 동일 높이). 클릭/Enter/Space 시 toggle.
+  const [isQuoteDispatchExpanded, setIsQuoteDispatchExpanded] = useState(false);
+
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -155,7 +172,9 @@ export function OperatorQuickActions({
           가장 자주 쓰는 운영 동선 4개
         </p>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* §11.247 #2 — 반응형 grid auto-fit minmax(280px, 1fr).
+          ≥1200px 4열 / 800-1199px 2x2 / <800px 1열 자동 분기. */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           const tone = TONE_MAP[action.tone];
@@ -184,24 +203,59 @@ export function OperatorQuickActions({
                   : !quoteReadiness.previewReady
                     ? "메시지 미리보기 필요"
                     : "전송 가능";
+            // §11.247 #1 — Progressive Disclosure.
+            //   접힌 상태: minimal layout (다른 3 카드와 동일 높이) + 자세히 보기 hint.
+            //   펼친 상태: 전체 상태 흐름표 + Send to supplier 버튼 + 접기 CTA.
+            //   카드 클릭/Enter/Space 으로 toggle. min-h-[140px] 균일 + transition 300ms.
+            const toggle = () => setIsQuoteDispatchExpanded((prev) => !prev);
             return (
               <div
                 key={action.href}
-                className={`rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300`}
+                role="button"
+                tabIndex={0}
+                aria-expanded={isQuoteDispatchExpanded}
+                aria-label={`견적 발송 카드 ${isQuoteDispatchExpanded ? "접기" : "펼치기"}`}
+                onClick={(e) => {
+                  // 카드 자체 클릭으로 toggle — 단, 내부 Link/Button 클릭 시는 propagation stop
+                  if ((e.target as HTMLElement).closest("a, button")) return;
+                  toggle();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    toggle();
+                  }
+                }}
+                className={`rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 min-h-[140px] cursor-pointer focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2`}
                 data-testid="dashboard-quote-dispatch-card"
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className={`w-8 h-8 rounded-lg ${tone.iconBg} flex items-center justify-center flex-shrink-0`}>
                     <Icon className={`h-4 w-4 ${tone.iconColor}`} />
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-500">
-                    대기 {count > 99 ? "99+" : count}건
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-semibold text-slate-500">
+                      대기 {count > 99 ? "99+" : count}건
+                    </span>
+                    {isQuoteDispatchExpanded ? (
+                      <ChevronUp className="h-3.5 w-3.5 text-slate-400" />
+                    ) : (
+                      <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+                    )}
+                  </div>
                 </div>
                 <p className="text-sm font-bold text-slate-900 break-keep">견적 발송</p>
                 <p className="text-[11px] text-slate-500 mt-0.5 break-keep">
                   공급사 선택부터 전송 확인까지 한 화면에서 검토합니다
                 </p>
+                {/* §11.247 #1 — 접힌 상태: minimal hint, 펼친 상태: full content. */}
+                {!isQuoteDispatchExpanded && (
+                  <p className="mt-2 text-[10px] font-semibold text-blue-600 break-keep">
+                    클릭하여 상세 흐름 + 전송 보기 →
+                  </p>
+                )}
+                {isQuoteDispatchExpanded && (
+                <>
                 <div
                   className="mt-3 grid grid-cols-2 gap-1.5"
                   data-testid="dashboard-quote-dispatch-readiness"
@@ -277,7 +331,21 @@ export function OperatorQuickActions({
                   >
                     검토
                   </Link>
+                  {/* §11.247 #1 — 접기 CTA */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggle();
+                    }}
+                    className="min-h-[32px] shrink-0 rounded-md px-2 py-2 text-[11px] font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                    aria-label="견적 발송 카드 접기"
+                  >
+                    접기
+                  </button>
                 </div>
+                </>
+                )}
               </div>
             );
           }
@@ -285,7 +353,7 @@ export function OperatorQuickActions({
             <Link
               key={action.href}
               href={action.href}
-              className={`group rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all hover:shadow-md hover:border-slate-300 cursor-pointer`}
+              className={`group rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 cursor-pointer min-h-[140px]`}
             >
               <div className="flex items-start justify-between mb-2">
                 <div
