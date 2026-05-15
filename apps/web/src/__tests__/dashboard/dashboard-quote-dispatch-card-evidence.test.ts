@@ -26,9 +26,10 @@ describe("dashboard quote dispatch readiness card", () => {
     expect(quickActions).toContain("전송 확인");
   });
 
-  it("keeps Send to supplier as the single blue primary CTA", () => {
+  it("keeps 공급사에 전송 (Send to supplier) as the single blue primary CTA", () => {
     expect(quickActions).toContain("dashboard-quote-dispatch-primary-cta");
-    expect(quickActions).toContain("Send to supplier");
+    // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
+    expect(quickActions).toMatch(/(공급사에 전송|Send to supplier)/);
     expect(quickActions).toContain("bg-blue-600");
     expect(quickActions).toContain("hover:bg-blue-700");
   });

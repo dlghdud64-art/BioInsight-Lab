@@ -2580,7 +2580,7 @@ function QuotesPageContent() {
                 }}
                 disabled={!selectedSignals.actionKey || selectedDispatchBlocked}>
                 {selectedSignals.actionKey === "request_send"
-                  ? selectedDispatchBlocked ? "Send to supplier 잠김" : "Send to supplier"
+                  ? selectedDispatchBlocked ? "공급사에 전송 잠김" : "공급사에 전송"
                   : selectedSignals.railCtaLabel}<ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
               <div className="flex gap-2">

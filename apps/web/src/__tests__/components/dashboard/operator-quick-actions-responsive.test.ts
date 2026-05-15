@@ -99,8 +99,9 @@ describe("§11.247 #5 — invariant 보존", () => {
     expect(component).toMatch(/대기/);
   });
 
-  it("Send to supplier 버튼 (펼친 상태) 보존 — canonical CTA + readiness", () => {
-    expect(component).toMatch(/Send to supplier/);
+  it("공급사 전송 button (펼친 상태) 보존 — canonical CTA + readiness", () => {
+    // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
+    expect(component).toMatch(/(공급사에 전송|Send to supplier)/);
     expect(component).toMatch(/canSendToSupplier/);
   });
 

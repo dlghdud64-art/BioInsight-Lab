@@ -46,10 +46,11 @@ describe("quote dispatch sticky action readiness evidence", () => {
     expect(page).toContain("sendStatus");
   });
 
-  it("enables Send to supplier only when supplier and contact preflight pass", () => {
+  it("enables 공급사에 전송 (Send to supplier) only when supplier and contact preflight pass", () => {
     expect(page).toMatch(/const selectedDispatchBlocked = selectedDispatchEvidence \? !selectedDispatchEvidence\.canSend : false/);
     expect(page).toMatch(/const canSend = !preflight\.hardBlocked[\s\S]{0,160}!supplierMissing[\s\S]{0,160}!contactMissing/);
-    expect(page).toContain("Send to supplier");
+    // §11.248a — "Send to supplier" → "공급사에 전송" 한글화. 양방향 매칭 (cluster lineage 보존).
+    expect(page).toMatch(/(공급사에 전송|Send to supplier)/);
     expect(page).toContain("selectedDispatchEvidence.canSend");
     expect(page).toContain("blockReason");
   });

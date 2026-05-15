@@ -323,7 +323,7 @@ export function OperatorQuickActions({
                     }`}
                     data-testid="dashboard-quote-dispatch-primary-cta"
                   >
-                    Send to supplier
+                    공급사에 전송
                   </Link>
                   <Link
                     href="/dashboard/quotes"
