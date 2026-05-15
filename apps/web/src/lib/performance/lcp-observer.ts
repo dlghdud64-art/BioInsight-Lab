@@ -19,12 +19,29 @@
  */
 
 // §11.246d-3 — window 객체 augmentation (debug + RUM 측정).
+// §11.246d-5 #web-vitals-cls-fid-inp — Core Web Vitals 4 metric (LCP/CLS/FID/INP)
+//   모두 expose. observeCLS/FID/INP 추가 export. 기존 LCP API 보존.
 declare global {
   interface Window {
     __labaxisLCP?: {
       value: number;
       element?: string;
       url?: string;
+      updatedAt: number;
+    };
+    __labaxisCLS?: {
+      value: number;
+      entryCount: number;
+      updatedAt: number;
+    };
+    __labaxisFID?: {
+      value: number;
+      eventType?: string;
+      updatedAt: number;
+    };
+    __labaxisINP?: {
+      value: number;
+      eventType?: string;
       updatedAt: number;
     };
   }
@@ -73,6 +90,136 @@ export function observeLCP(): () => void {
     };
   } catch {
     // PerformanceObserver constructor 또는 observe() 실패 — silent fallback.
+    return () => {};
+  }
+}
+
+/**
+ * §11.246d-5 #web-vitals-cls-fid-inp — CLS (Cumulative Layout Shift) observer.
+ *   layout-shift entry 누적 합산. hadRecentInput=true 는 사용자 의도적 input 으로 인한
+ *   shift 이므로 제외 (W3C CLS spec).
+ *   window.__labaxisCLS = { value, entryCount, updatedAt } expose.
+ */
+export function observeCLS(): () => void {
+  if (typeof window === "undefined") return () => {};
+  if (!("PerformanceObserver" in window)) return () => {};
+
+  let clsValue = 0;
+  let entryCount = 0;
+
+  try {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const ls = entry as PerformanceEntry & { value?: number; hadRecentInput?: boolean };
+        // hadRecentInput=true 제외 — 사용자 의도적 클릭/입력 후 100ms 내 발생한 shift.
+        if (ls.hadRecentInput) continue;
+        clsValue += ls.value ?? 0;
+        entryCount += 1;
+      }
+      window.__labaxisCLS = {
+        value: clsValue,
+        entryCount,
+        updatedAt: Date.now(),
+      };
+    });
+
+    observer.observe({ type: "layout-shift", buffered: true });
+
+    return () => {
+      try {
+        observer.disconnect();
+      } catch {
+        // silent
+      }
+    };
+  } catch {
+    return () => {};
+  }
+}
+
+/**
+ * §11.246d-5 #web-vitals-cls-fid-inp — FID (First Input Delay) observer.
+ *   first-input entry 의 processingStart - startTime = input delay.
+ *   legacy metric (web-vitals 가 INP 으로 대체 권장) 이지만 호영님 spec 정합 위해 보존.
+ *   window.__labaxisFID = { value, eventType, updatedAt } expose.
+ */
+export function observeFID(): () => void {
+  if (typeof window === "undefined") return () => {};
+  if (!("PerformanceObserver" in window)) return () => {};
+
+  try {
+    const observer = new PerformanceObserver((list) => {
+      const entries = list.getEntries();
+      const first = entries[0] as
+        | (PerformanceEntry & { processingStart?: number; name?: string })
+        | undefined;
+      if (!first || first.processingStart === undefined) return;
+
+      window.__labaxisFID = {
+        value: first.processingStart - first.startTime,
+        eventType: first.name,
+        updatedAt: Date.now(),
+      };
+    });
+
+    observer.observe({ type: "first-input", buffered: true });
+
+    return () => {
+      try {
+        observer.disconnect();
+      } catch {
+        // silent
+      }
+    };
+  } catch {
+    return () => {};
+  }
+}
+
+/**
+ * §11.246d-5 #web-vitals-cls-fid-inp — INP (Interaction to Next Paint) observer.
+ *   event entry 의 duration 최대값 = interaction latency.
+ *   web-vitals 2024 표준 (FID 대체). pointerdown / keydown / click 등 event type
+ *   에 대해 duration tracking.
+ *   window.__labaxisINP = { value, eventType, updatedAt } expose.
+ */
+export function observeINP(): () => void {
+  if (typeof window === "undefined") return () => {};
+  if (!("PerformanceObserver" in window)) return () => {};
+
+  let maxDuration = 0;
+  let maxEventType: string | undefined;
+
+  try {
+    const observer = new PerformanceObserver((list) => {
+      for (const entry of list.getEntries()) {
+        const ev = entry as PerformanceEntry & { duration?: number; name?: string; interactionId?: number };
+        // interactionId === 0 은 non-interactive event (예: scroll) — 제외.
+        if (!ev.interactionId) continue;
+        const dur = ev.duration ?? 0;
+        if (dur > maxDuration) {
+          maxDuration = dur;
+          maxEventType = ev.name;
+          window.__labaxisINP = {
+            value: maxDuration,
+            eventType: maxEventType,
+            updatedAt: Date.now(),
+          };
+        }
+      }
+    });
+
+    // durationThreshold 16 (기본) — 16ms 이하 event 는 보고 안 됨 (1 frame budget).
+    observer.observe({ type: "event", buffered: true, durationThreshold: 16 } as PerformanceObserverInit);
+
+    return () => {
+      try {
+        observer.disconnect();
+      } catch {
+        // silent
+      }
+    };
+  } catch {
     return () => {};
   }
 }

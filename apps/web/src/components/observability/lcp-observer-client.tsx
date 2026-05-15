@@ -12,12 +12,23 @@
  */
 
 import { useEffect } from "react";
-import { observeLCP } from "@/lib/performance/lcp-observer";
+// §11.246d-5 — Core Web Vitals 4 metric (LCP §11.246d-3 + CLS + FID + INP).
+import {
+  observeLCP,
+  observeCLS,
+  observeFID,
+  observeINP,
+} from "@/lib/performance/lcp-observer";
 
 export function LcpObserverClient() {
   useEffect(() => {
-    const cleanup = observeLCP();
-    return cleanup;
+    // §11.246d-5 — 4 observer 병렬 mount. 각각 cleanup 반환.
+    const cleanups = [observeLCP(), observeCLS(), observeFID(), observeINP()];
+    return () => {
+      for (const cleanup of cleanups) {
+        cleanup();
+      }
+    };
   }, []);
 
   return null;
