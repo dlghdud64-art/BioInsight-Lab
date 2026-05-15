@@ -37,10 +37,28 @@ interface AnalyticsDashboardData {
 }
 
 // ── 데이터 패칭 ───────────────────────────────────────────
+/**
+ * §11.244 Phase C #1 — 호영님 P0: 10초 timeout + AbortController.
+ *   10초 초과 시 fetch abort + "지연" error throw. useQuery 가 isError 분기
+ *   trigger → 재시도 button 노출. 사용자 무한 스켈레톤 차단.
+ */
+const ANALYTICS_TIMEOUT_MS = 10000;
+
 async function fetchAnalyticsDashboard(): Promise<AnalyticsDashboardData> {
-  const res = await fetch("/api/analytics/dashboard");
-  if (!res.ok) throw new Error("Failed to fetch analytics data");
-  return res.json();
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ANALYTICS_TIMEOUT_MS);
+  try {
+    const res = await fetch("/api/analytics/dashboard", { signal: controller.signal });
+    if (!res.ok) throw new Error("Failed to fetch analytics data");
+    return await res.json();
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error("데이터 로딩이 지연되고 있습니다 (Timeout 10s)");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ── 색상 팔레트 ──────────────────────────────────────────
@@ -167,7 +185,7 @@ export default function AnalyticsPage() {
     }
   };
 
-  const { data, isLoading, isError } = useQuery<AnalyticsDashboardData>({
+  const { data, isLoading, isError, refetch } = useQuery<AnalyticsDashboardData>({
     queryKey: ["analytics-dashboard"],
     queryFn: fetchAnalyticsDashboard,
     staleTime: 1000 * 60 * 5,
@@ -396,10 +414,21 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* 데이터 오류 */}
+      {/* §11.244 Phase C #2 — 호영님 P0: 데이터 오류 + 10초 timeout + 재시도 button.
+          AbortController abort 시 "데이터 로딩이 지연되고 있습니다 (Timeout 10s)"
+          error throw → isError true → refetch() onClick 으로 즉시 재시도. */}
       {isError && (
-        <div className="rounded-lg border border-red-200 bg-red-50/50 px-4 py-3 text-sm text-red-600">
-          데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+        <div className="rounded-lg border border-red-200 bg-red-50/50 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="text-sm text-red-600">
+            데이터를 불러오는 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.
+          </div>
+          <button
+            onClick={() => refetch()}
+            className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-white border border-red-200 text-red-700 hover:bg-red-50 transition-colors"
+          >
+            <RotateCcw className="h-3 w-3" />
+            재시도
+          </button>
         </div>
       )}
 
