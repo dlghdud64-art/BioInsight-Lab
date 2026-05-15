@@ -2546,9 +2546,12 @@ function QuotesPageContent() {
 
       </div>{/* end list column */}
 
-      {/* ═══ Mobile Quote Context Sheet (lg 미만) ═══ */}
+      {/* ═══ Mobile Quote Context Sheet — §11.248e #quote-briefing-panel-responsive.
+            호영님 P0 견적 관리 #5: breakpoint 1024px → 1200px 상향 (1024-1199px 구간
+            bottom-sheet 적용, 테이블 가용 너비 회복). word-break 어절 단위 wrap +
+            "전체 상세 열기" / "닫기" Button 44px 터치 영역 확보. ═══ */}
       {selectedQuote && selectedSignals && selectedOpStatus && (
-        <div className="lg:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
+        <div className="min-[1200px]:hidden fixed inset-0 z-40" onClick={() => closeQuoteContextRail("overlay_click")}>
           <div className="absolute inset-0 bg-black/30" />
           <div
             className="absolute bottom-0 left-0 right-0 bg-pn rounded-t-2xl border-t border-bd max-h-[75vh] flex flex-col animate-slide-up safe-area-pb"
@@ -2660,7 +2663,10 @@ function QuotesPageContent() {
         const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
 
         return (
-        <div className="hidden lg:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
+        /* §11.248e #quote-briefing-panel-responsive — 호영님 P0 견적 관리 #5.
+            breakpoint lg (1024px) → min-[1200px] 상향. 1024-1199px 구간 = bottom-sheet 자동 적용
+            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널. */
+        <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
           {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일) */}
           <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
             <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">OPERATIONAL BRIEFING</span>
@@ -2728,10 +2734,12 @@ function QuotesPageContent() {
           {/* Rail scrollable body */}
           <div className="flex-1 overflow-y-auto">
 
-          {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook */}
+          {/* § 1. 상황 요약 — resolver-derived 1-line + §11.161 LLM narrative hook.
+              §11.248e — selectedQuote.title / summary 영역 break-keep (어절 단위 wrap)
+              으로 좁은 너비에서도 어색한 줄바꿈 방지 (호영님 spec). */}
           <section id="brief-summary" className="px-4 py-3 border-b border-bd/50 scroll-mt-4">
             <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
-            <p className="text-xs text-slate-700 leading-relaxed">
+            <p className="text-xs text-slate-700 leading-relaxed break-keep">
               {briefNarrative ?? selectedSignals.summary}
               {briefCached && <span className="ml-1 text-[10px] text-slate-400">· 캐시</span>}
             </p>
@@ -3095,14 +3103,16 @@ function QuotesPageContent() {
               disabled={!selectedSignals.actionKey || selectedDispatchBlocked}
               title={selectedDispatchBlocked ? selectedDispatchPreflight?.summary : undefined}>
               {selectedSignals.actionKey === "request_send"
-                ? selectedDispatchBlocked ? "Send to supplier 잠김" : "Send to supplier"
+                ? selectedDispatchBlocked ? "공급사에 전송 잠김" : "공급사에 전송"
                 : selectedSignals.railCtaLabel}<ArrowRight className="h-3 w-3 ml-1.5" />
             </Button>
+            {/* §11.248e — '전체 상세 열기' / '닫기' Button 44px 터치 영역 확보 (호영님 spec).
+                h-7 (28px) → min-h-[44px] + h-11 (Tailwind 44px) 적용. */}
             <div className="flex gap-1.5">
               <Link href={`/quotes/${selectedQuote.id}`} className="flex-1">
-                <Button size="sm" variant="outline" className="w-full h-7 text-[11px] text-slate-400 border-bd">전체 상세 열기</Button>
+                <Button size="sm" variant="outline" className="w-full min-h-[44px] h-11 text-[11px] text-slate-400 border-bd">전체 상세 열기</Button>
               </Link>
-              <Button size="sm" variant="ghost" className="flex-1 h-7 text-[11px] text-slate-500" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}>{selectedSignals.tertiaryCta}</Button>
+              <Button size="sm" variant="ghost" className="flex-1 min-h-[44px] h-11 text-[11px] text-slate-500" onClick={(e) => { e.stopPropagation(); closeQuoteContextRail("x_button"); }}>{selectedSignals.tertiaryCta}</Button>
             </div>
           </div>
         </div>
