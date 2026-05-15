@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, Settings2, GripVertical } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -1585,40 +1585,82 @@ function QuotesPageContent() {
           <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900">견적 관리</h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-0.5 hidden sm:block">처리가 필요한 견적 케이스를 우선순위 순으로 확인합니다.</p>
         </div>
-        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 overflow-x-auto snap-x pb-0.5 sm:pb-0">
-          {/* 견적서 파싱 버튼 */}
+        {/* §11.248b #quote-header-actions-responsive — 호영님 P0 상단 액션 버튼 반응형.
+            - flex-wrap (lg:flex-nowrap): ≤1024px 2행 줄바꿈 허용 (호영님 spec).
+            - 모바일 (<md) 더보기 ⋯ DropdownMenu 분리 (견적서 비교 + 초안 항목 접기).
+            - 각 버튼 min-w-[80px]~min-w-[120px] 로 텍스트 잘림 방지. */}
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 flex-wrap lg:flex-nowrap">
+          {/* 견적서 파싱 버튼 — 모바일 + tablet + desktop 모두 노출 (주요 액션) */}
           <button
             onClick={() => setAiParseModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 snap-start"
+            className="inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors active:scale-95 shrink-0 min-w-[80px] sm:min-w-[120px]"
           >
             <Upload className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
             <span className="hidden sm:inline">견적서 파싱</span><span className="sm:hidden">파싱</span>
           </button>
-          {/* 견적서 비교 버튼 */}
+          {/* 견적서 비교 버튼 — md+ 노출 (모바일은 더보기 드롭다운에서) */}
           <button
             onClick={runAiQuoteCompare}
             disabled={aiCompareLoading || !quotes || quotes.length < 2}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0 snap-start"
+            className="hidden md:inline-flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed shrink-0 min-w-[120px]"
           >
             {aiCompareLoading ? (
               <Loader2 className="h-3.5 sm:h-4 w-3.5 sm:w-4 animate-spin" />
             ) : (
               <Sparkles className="h-3.5 sm:h-4 w-3.5 sm:w-4" />
             )}
-            <span className="hidden sm:inline">견적서 비교</span><span className="sm:hidden">비교</span>
+            견적서 비교
           </button>
+          {/* 견적 요청 초안 만들기 — md+ 노출 (모바일은 더보기 드롭다운에서) */}
           <Button
             type="button"
             data-testid="quote-draft-workbench-cta"
             size="sm"
             variant="outline"
-            className="h-9 text-sm hidden sm:flex"
+            className="h-9 text-sm hidden md:flex min-w-[140px]"
             onClick={openQuoteDraftWorkbench}
             disabled={isLoading || quotes.length === 0}
           >
             <FileTextIcon className="h-4 w-4 mr-1.5" />
             견적 요청 초안 만들기
           </Button>
+          {/* §11.248b — 모바일 더보기 ⋯ 드롭다운 (md 미만 한정).
+              견적서 비교 + 초안 만들기 항목을 접어서 모바일 화면 vertical space 확보. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 px-2 md:hidden min-w-[40px]"
+                aria-label="더보기 액션"
+                data-testid="quote-header-more-actions-mobile"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 !bg-white">
+              <DropdownMenuItem
+                className="cursor-pointer gap-2 py-2.5"
+                disabled={aiCompareLoading || !quotes || quotes.length < 2}
+                onClick={runAiQuoteCompare}
+              >
+                {aiCompareLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Sparkles className="h-4 w-4" />
+                )}
+                견적서 비교
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="cursor-pointer gap-2 py-2.5"
+                disabled={isLoading || quotes.length === 0}
+                onClick={openQuoteDraftWorkbench}
+              >
+                <FileTextIcon className="h-4 w-4" />
+                견적 요청 초안 만들기
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <PermissionGate permission="quotes.create">
             <div className="flex items-center gap-0 flex-shrink-0 snap-start">
               <Link href="/app/search">
