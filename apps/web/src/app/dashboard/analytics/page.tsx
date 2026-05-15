@@ -184,6 +184,24 @@ export default function AnalyticsPage() {
   //   분석 무의미 (Anthropic/Gemini 호출 시 빈 데이터 → 빈 리포트 또는 에러).
   const dataInsufficient = !hasMonthlyData;
 
+  // §11.244 Phase B #4 — 호영님 P0: 빈 차트 mockup data (§11.243b 패턴 reuse).
+  //   실제 데이터 1건+ 시 자동 hide (hasMonthlyData / vendorItems / anomalies 분기).
+  //   회색 톤 표시 전용 — overlay 안내로 실제 데이터와 혼동 0.
+  const MOCKUP_MONTHLY_DATA = [
+    { month: "12월", amount: 3_200_000 },
+    { month: "1월", amount: 4_100_000 },
+    { month: "2월", amount: 3_800_000 },
+    { month: "3월", amount: 5_200_000 },
+    { month: "4월", amount: 4_700_000 },
+    { month: "5월", amount: 5_900_000 },
+  ];
+  const MOCKUP_VENDOR_DATA = [
+    { vendor: "공급사 A", pct: 42 },
+    { vendor: "공급사 B", pct: 28 },
+    { vendor: "공급사 C", pct: 18 },
+    { vendor: "기타", pct: 12 },
+  ];
+
   // 이번 달 / 전월 지출
   const validMonths = monthlySpending.filter((m) => m.amount > 0);
   const currentMonth = validMonths[validMonths.length - 1] ?? null;
@@ -551,10 +569,37 @@ export default function AnalyticsPage() {
                   </AreaChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex flex-col items-center justify-center h-[260px] gap-2">
-                  <TrendingUp className="h-8 w-8 text-slate-200" />
-                  <p className="text-sm text-slate-400">구매 데이터가 축적되면 월별 추이가 표시됩니다.</p>
-                  <p className="text-xs text-slate-400">현재 {recent90dCount}건 수집됨</p>
+                /* §11.244 Phase B #4a — 호영님 P0: 빈 차트 mockup + 반투명 overlay
+                   (§11.243b 패턴 reuse). 회색 톤 sample AreaChart + backdrop-blur
+                   안내 — "쌓이면 무엇을 볼 수 있는지" 사전 인지. */
+                <div className="relative h-[260px]">
+                  <div className="h-full opacity-40 grayscale pointer-events-none">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={MOCKUP_MONTHLY_DATA} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="colorMockup" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.25} />
+                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                        <XAxis dataKey="month" tick={{ fill: "#cbd5e1", fontSize: 11 }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fill: "#cbd5e1", fontSize: 10 }} axisLine={false} tickLine={false} />
+                        <Area type="monotone" dataKey="amount" stroke="#94a3b8" strokeWidth={2} fill="url(#colorMockup)" isAnimationActive={false} />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px] bg-white/40">
+                    <div className="text-center px-6 max-w-md">
+                      <TrendingUp className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-slate-700 mb-1">
+                        발주 데이터가 쌓이면 월별 지출 트렌드와 카테고리별 비중을 확인할 수 있습니다
+                      </p>
+                      <p className="text-xs text-slate-500 break-keep">
+                        첫 발주 완료 후 자동 활성화 · 현재 {recent90dCount}건 수집됨
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -851,9 +896,35 @@ export default function AnalyticsPage() {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-[200px] gap-2">
-                  <Users className="h-8 w-8 text-slate-200" />
-                  <p className="text-sm text-slate-400">공급사 데이터가 축적되면 집중도 분석이 표시됩니다.</p>
+                /* §11.244 Phase B #4b — 호영님 P0: 공급사 의존도 mockup + overlay. */
+                <div className="relative h-[200px]">
+                  <div className="space-y-3 opacity-40 grayscale pointer-events-none">
+                    {MOCKUP_VENDOR_DATA.map((v, idx) => (
+                      <div key={v.vendor} className="flex items-center gap-3">
+                        <span className="text-xs font-bold text-slate-400 w-4 text-right shrink-0">{idx + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-sm font-medium truncate text-slate-700">{v.vendor}</span>
+                          </div>
+                          <div className="h-1.5 bg-el rounded-full overflow-hidden">
+                            <div className="h-full rounded-full bg-slate-400" style={{ width: `${v.pct}%` }} />
+                          </div>
+                        </div>
+                        <span className="text-xs font-bold shrink-0 text-slate-400 w-8 text-right">{v.pct}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px] bg-white/40">
+                    <div className="text-center px-6 max-w-md">
+                      <Users className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                      <p className="text-sm font-semibold text-slate-700 mb-1">
+                        복수 공급사 거래 시 특정 공급사에 대한 의존도를 분석합니다
+                      </p>
+                      <p className="text-xs text-slate-500 break-keep">
+                        집중도가 높으면 리스크 알림을 제공합니다 · 2개 이상 공급사 거래 데이터 필요
+                      </p>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -941,13 +1012,22 @@ export default function AnalyticsPage() {
                   ))}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center py-10 gap-2">
+                /* §11.244 Phase B #4c + #7 — 호영님 P0: 이상 지출 빈 상태 메시지
+                   강화 + mockup 안내. "쌓이면 무엇을 감지하는지" 사전 인지. */
+                <div className="flex flex-col items-center justify-center py-10 gap-2 text-center px-6">
                   <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
                     <Sparkles className="h-5 w-5 text-emerald-400" />
                   </div>
-                  <p className="text-sm text-slate-500">현재 이상 지출이 감지되지 않았습니다.</p>
-                  <p className="text-xs text-slate-400">
-                    {recent90dCount >= 10 ? "최근 90일 데이터 기준 정상" : `데이터 ${recent90dCount}건 — 10건 이상 필요`}
+                  <p className="text-sm font-semibold text-slate-700">
+                    {recent90dCount >= 10 ? "현재 이상 지출이 감지되지 않았습니다" : "이상 지출 감지가 활성화되지 않았습니다"}
+                  </p>
+                  <p className="text-xs text-slate-500 max-w-md break-keep leading-relaxed">
+                    과거 거래 대비 비정상적인 가격 변동, 비정상 발주 패턴을 자동으로 감지합니다.
+                  </p>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {recent90dCount >= 10
+                      ? "최근 90일 데이터 기준 정상"
+                      : `데이터 ${recent90dCount}건 — 3개월 이상 데이터 축적 시 활성화 (최소 10건 필요)`}
                   </p>
                 </div>
               )}
