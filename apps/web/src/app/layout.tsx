@@ -19,6 +19,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "sonner";
 import { Analytics } from "@vercel/analytics/react";
 
+// §11.246d-2 #nprogress-page-transition — 호영님 P0 성능 #10 페이지 전환 NProgress 바.
+//   indigo-500 / 4px / showSpinner:false. body 안 client-only render.
+import { NProgressBar } from "@/components/nprogress-bar";
+
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 import { BRAND } from "@/lib/brand";
 
@@ -91,6 +95,7 @@ export default function RootLayout({
   return (
     <html lang="ko" className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
+        <NProgressBar />
         <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
