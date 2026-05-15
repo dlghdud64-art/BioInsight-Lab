@@ -8,6 +8,7 @@ import { OperationalBriefFloatingEntry } from "@/components/operational-brief/fl
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -806,6 +807,11 @@ function QuotesPageContent() {
     direction: "asc" | "desc";
   }>({ key: null, direction: "desc" });
   const [searchQuery, setSearchQuery] = useState("");
+  // §11.246d-1 — 호영님 P0 #11 필터 디바운스 300ms.
+  //   input value (searchQuery) 는 즉시 setState (UI 반응 보존) 하되, filteredQuotes
+  //   재계산은 debouncedSearchQuery (300ms 후 안정 값) 기반. 연속 keystroke 시
+  //   .filter() 매번 호출 부담 ↓ → 큰 quotes list 의 페이지 응답 성능 ↑.
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
@@ -1349,11 +1355,13 @@ function QuotesPageContent() {
   }, [quotesWithState]);
 
   // 필터링 + 운영 우선순위 정렬
+  // §11.246d-1 — searchQuery → debouncedSearchQuery (300ms) 으로 filter 입력.
+  //   input UI 즉시 반응 + .filter() 호출은 300ms delay 후 안정 값 기반.
   const filteredQuotes = useMemo(() => {
     let result = quotes
       .filter(quote => {
-        if (!searchQuery) return true;
-        const q = searchQuery.toLowerCase();
+        if (!debouncedSearchQuery) return true;
+        const q = debouncedSearchQuery.toLowerCase();
         return quote.title.toLowerCase().includes(q) || quote.id.toLowerCase().includes(q) || quote.items.some(item => item.product.name.toLowerCase().includes(q));
       })
       .filter(quote => {
@@ -1369,7 +1377,7 @@ function QuotesPageContent() {
     }
 
     return result.sort((a, b) => getOpPriority(a) - getOpPriority(b));
-  }, [quotes, searchQuery, statusFilter, modeChip, today]);
+  }, [quotes, debouncedSearchQuery, statusFilter, modeChip, today]);
 
   // §11.227 #9 — 테이블 sortedQuotes (sortState 가 set 됐을 때 column 별 정렬).
   //   sortState.key === null 시 filteredQuotes 그대로 (default priority order).
