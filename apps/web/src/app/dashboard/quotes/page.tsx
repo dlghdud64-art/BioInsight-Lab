@@ -1061,9 +1061,6 @@ function QuotesPageContent() {
   // ── Rail open/close — single source of truth ──
   const openQuoteContextRail = (caseId: string, source: string = "row") => {
     const next = selectedQuoteId === caseId ? null : caseId;
-    if (typeof window !== "undefined") {
-      console.log("[QuoteQueue]", next ? "quote_queue_open_rail" : "quote_queue_close_rail", { caseId, source, pathname: window.location.pathname });
-    }
     if (next) {
       setSelectedQuoteId(next);
       // URL query에 selected 반영
@@ -1076,9 +1073,6 @@ function QuotesPageContent() {
   };
 
   const closeQuoteContextRail = (source: string = "x_button") => {
-    if (typeof window !== "undefined") {
-      console.log("[QuoteQueue] quote_context_rail_closed", { selectedRecordId: selectedQuoteId, activeWorkWindow, source, path: window.location.pathname });
-    }
     setSelectedQuoteId(null);
     setActiveWorkWindow(null);
     // URL query 정리 — path 유지, selected/task 제거
@@ -1373,7 +1367,6 @@ function QuotesPageContent() {
       url.searchParams.set("selected", targetQuote.id);
       url.searchParams.set("task", "request_send");
       window.history.replaceState({}, "", url.toString());
-      console.log("[QuoteQueue] quote_draft_workbench_opened", { caseId: targetQuote.id, source: "header_cta" });
     }
   }, [quotes, selectedQuote, toast]);
 
@@ -1561,20 +1554,6 @@ function QuotesPageContent() {
     [],
   );
 
-  // ── Trace logging ──
-  useEffect(() => {
-    if (isLoading) console.log("[QuoteQueue] quote_queue_page_loading_started", { statusFilter, modeChip, searchQuery });
-  }, [isLoading]);
-  useEffect(() => {
-    if (!isLoading && quotes.length > 0) console.log("[QuoteQueue] quote_queue_list_ready", { count: quotes.length, statusFilter, modeChip });
-  }, [isLoading, quotes.length]);
-  useEffect(() => {
-    if (!isLoading && filteredQuotes.length === 0 && quotes.length === 0) console.log("[QuoteQueue] quote_queue_empty_shown");
-    if (!isLoading && filteredQuotes.length === 0 && quotes.length > 0) console.log("[QuoteQueue] quote_queue_filter_empty_shown", { statusFilter, modeChip, searchQuery });
-  }, [isLoading, filteredQuotes.length, quotes.length]);
-  useEffect(() => {
-    if (isError) console.log("[QuoteQueue] quote_queue_page_fatal_error", { statusFilter });
-  }, [isError]);
 
   // 섹션 분류
   const urgentQuotes = filteredQuotes.filter(q => q.status === "RESPONDED" || (q.status === "SENT" && (q.responses?.length ?? 0) > 0) || isDelayed(q));
@@ -3218,7 +3197,6 @@ function QuotesPageContent() {
               onClick={() => {
                 if (selectedDispatchBlocked) return;
                 if (selectedSignals.actionKey) {
-                  console.log("[QuoteQueue] quote_rail_cta_clicked", { caseId: selectedQuote.id, actionKey: selectedSignals.actionKey, uiState: selectedSignals.railState });
                   setActiveWorkWindow(selectedSignals.actionKey);
                 }
               }}
@@ -3402,7 +3380,6 @@ function QuotesPageContent() {
               ? "승인 패키지 준비 완료"
               : selectedSignals.ctaLabel,
             onClick: () => {
-              console.log("[QuoteQueue] quote_work_window_action", { caseId: selectedQuote.id, actionKey: activeWorkWindow });
               setActiveWorkWindow(null);
             },
           }}
