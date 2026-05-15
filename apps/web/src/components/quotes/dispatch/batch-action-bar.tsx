@@ -26,6 +26,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { CheckCircle2, AlertTriangle, X, Send, Bell, RefreshCw, Clock, ChevronDown, ChevronUp } from "lucide-react";
 
 /** §11.240 — dropdown row 표시용 minimal Quote shape (canonical Quote 의 subset).
@@ -222,31 +223,43 @@ export function BatchActionBar({
           <RefreshCw className="h-3.5 w-3.5 mr-1" />
           상태 변경
         </Button>
-        {/* §11.228 — 리마인더 CTA */}
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={onReminderStart}
-          disabled={reminderDisabled}
-          title={reminderTooltip}
-          className="h-8 text-xs border-blue-300 text-blue-800 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          aria-label="선택 견적 리마인더 발송"
-        >
-          <Bell className="h-3.5 w-3.5 mr-1" />
-          리마인더
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          onClick={onReviewStart}
-          disabled={reviewDisabled}
-          title={reviewTooltip}
-          className="h-8 text-xs bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-200 disabled:text-violet-400"
-        >
-          <Send className="h-3.5 w-3.5 mr-1" />
-          검토 시작
-        </Button>
+        {/* §11.228 — 리마인더 CTA.
+            §11.230c (b)-2 — 호영님 v2 Tooltip caller swap. native title attribute →
+            Tooltip wrapper 으로 swap (delay 200ms + focus 시 즉시 노출 + ESC 닫기 +
+            role="tooltip" + aria-describedby chain). disabled state 의 tooltip 이
+            가장 a11y 가치 ↑ (키보드 사용자에게 disabled 사유 즉시 노출). */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onReminderStart}
+              disabled={reminderDisabled}
+              className="h-8 text-xs border-blue-300 text-blue-800 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-label="선택 견적 리마인더 발송"
+            >
+              <Bell className="h-3.5 w-3.5 mr-1" />
+              리마인더
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{reminderTooltip}</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="sm"
+              onClick={onReviewStart}
+              disabled={reviewDisabled}
+              className="h-8 text-xs bg-violet-600 hover:bg-violet-700 text-white disabled:bg-violet-200 disabled:text-violet-400"
+            >
+              <Send className="h-3.5 w-3.5 mr-1" />
+              검토 시작
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{reviewTooltip}</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   );

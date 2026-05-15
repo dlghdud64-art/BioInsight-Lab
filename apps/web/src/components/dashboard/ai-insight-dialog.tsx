@@ -38,6 +38,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Sparkles, Loader2, RefreshCw, AlertCircle } from "lucide-react";
 import { csrfFetch } from "@/lib/api-client";
 import { format } from "date-fns";
@@ -99,22 +100,35 @@ export function AIInsightDialog({
     ? format(new Date(insight.analyzedAt), "yyyy-MM-dd HH:mm", { locale: ko })
     : null;
 
+  /* §11.230c (b)-2 — Tooltip wrapper swap (disabled 시만 노출).
+     enhanced Tooltip 의 focus 즉시 노출 + ESC 닫기 + aria-describedby chain
+     으로 키보드 사용자에게 disabled 사유 명확 전달. enabled 시 wrapper 만 통과. */
+  const button = (
+    <Button
+      size="sm"
+      disabled={disabled}
+      className={
+        disabled
+          ? "h-8 text-xs gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
+          : "h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-sm"
+      }
+      onClick={() => handleOpen(true)}
+    >
+      <Sparkles className="h-3.5 w-3.5" />
+      AI 리포트 생성
+    </Button>
+  );
+
   return (
     <Dialog open={open} onOpenChange={handleOpen}>
-      <Button
-        size="sm"
-        disabled={disabled}
-        title={disabled ? disabledReason : undefined}
-        className={
-          disabled
-            ? "h-8 text-xs gap-1.5 bg-slate-200 text-slate-400 cursor-not-allowed shadow-none"
-            : "h-8 text-xs gap-1.5 bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-sm"
-        }
-        onClick={() => handleOpen(true)}
-      >
-        <Sparkles className="h-3.5 w-3.5" />
-        AI 리포트 생성
-      </Button>
+      {disabled ? (
+        <Tooltip>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent>{disabledReason}</TooltipContent>
+        </Tooltip>
+      ) : (
+        button
+      )}
       <DialogContent className="max-w-xl bg-white">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

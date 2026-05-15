@@ -99,12 +99,14 @@ describe("§11.240 #3 — 상태 혼재 가드레일 (disabled + tooltip)", () =
     expect(batchBar).toMatch(/reviewDisabled\s*:\s*boolean/);
   });
 
-  it("검토 시작 button — reviewDisabled 시 disabled + title tooltip", () => {
-    // JSX 안 disabled / title attribute 가 검토 시작 라벨 위/아래 둘 다 가능 (양방향 매칭).
+  it("검토 시작 button — reviewDisabled 시 disabled + tooltip", () => {
+    // JSX 안 disabled / tooltip attribute 가 검토 시작 라벨 위/아래 둘 다 가능 (양방향 매칭).
     expect(batchBar).toMatch(
       /(검토 시작[\s\S]{0,500}disabled=\{[\s\S]{0,30}reviewDisabled|disabled=\{[\s\S]{0,30}reviewDisabled[\s\S]{0,500}검토 시작)/,
     );
-    expect(batchBar).toMatch(/reviewDisabled[\s\S]{0,500}title=/);
+    // §11.230c (b)-2 — title attribute → Tooltip wrapper 진화. native title= 또는
+    //   Tooltip + TooltipContent 양방향 매칭. caller drift 0.
+    expect(batchBar).toMatch(/reviewDisabled[\s\S]{0,500}(title=|TooltipContent)/);
   });
 
   it("page.tsx reviewDisabled useMemo — responseCount === 0 quote 포함 분석", () => {
