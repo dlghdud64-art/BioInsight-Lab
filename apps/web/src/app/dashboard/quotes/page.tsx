@@ -12,6 +12,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -923,7 +924,8 @@ function QuotesPageContent() {
     }
   }, [isBriefingCollapsed]);
 
-  // §11.230b hydrate from localStorage (mount only)
+  // §11.230b hydrate from localStorage (mount only) — backwards compat fallback.
+  //   §11.230c (a) server-first 의 fallback chain: server → localStorage → DEFAULT.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -943,7 +945,26 @@ function QuotesPageContent() {
     }
   }, []);
 
-  // §11.230b write on mutation
+  // §11.230c (a) #user-preferences-server-persist — server-first hydration.
+  //   useUserPreferences fetch → preferences.columnPrefs.quotes 도착 시 setColumnPrefs.
+  //   localStorage hydration 위에 override (server = canonical, localStorage = fallback).
+  //   server fetch 실패 시 useUserPreferences hook 안 retry 1 + silent fallback.
+  const userPrefs = useUserPreferences();
+  useEffect(() => {
+    const serverQuotes = userPrefs.preferences?.columnPrefs?.quotes;
+    if (!serverQuotes) return;
+    setColumnPrefs({
+      widths: { ...DEFAULT_COLUMN_PREFS.widths, ...(serverQuotes.widths ?? {}) } as ColumnPrefs["widths"],
+      visibility: { ...DEFAULT_COLUMN_PREFS.visibility, ...(serverQuotes.visibility ?? {}) } as ColumnPrefs["visibility"],
+      order: (serverQuotes.order && serverQuotes.order.length === DEFAULT_COLUMN_PREFS.order.length
+        ? (serverQuotes.order as ColumnKey[])
+        : DEFAULT_COLUMN_PREFS.order),
+    });
+  }, [userPrefs.preferences]);
+
+  // §11.230b write on mutation — localStorage immediate.
+  //   §11.230c (a) server-first: localStorage + debounced server PATCH 동시.
+  //   userPrefs.updateColumnPrefs 안에 setTimeout debounce (400ms) — rapid resize 차단.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -951,7 +972,15 @@ function QuotesPageContent() {
     } catch {
       // quota / disabled — silent fail
     }
-  }, [columnPrefs]);
+    // §11.230c (a) — debounced server PATCH (mount 시 server hydration 직후
+    //   동일값 set 으로 인한 noise 도 debounce 가 차단 — 직전 값과 같으면
+    //   서버 PATCH 가 무해, 마지막 PATCH 만 도달).
+    userPrefs.updateColumnPrefs({
+      widths: columnPrefs.widths,
+      visibility: columnPrefs.visibility,
+      order: columnPrefs.order,
+    });
+  }, [columnPrefs, userPrefs]);
 
   // §11.230b column resize — document-level mousemove/mouseup (drag 안전 종료)
   useEffect(() => {

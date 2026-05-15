@@ -152,6 +152,10 @@ model User {
   approvalLimit    BigInt? // 단일 건 승인 한도 (KRW). null = 정책 미설정.
   costCenter       String? // 기본 Cost Center 코드 (예: "RND-BIO-SITE01")
   defaultLocation  String? // 기본 입고 위치 (예: "제1R&D센터 중앙창고")
+  // §11.230c (a) #user-preferences-server-persist — generic preferences JSON.
+  //   shape: { columnPrefs: { quotes: { widths, visibility, order } } }.
+  //   후속 cluster 통합 가능 (briefing collapse 등). zod 가드 client/server.
+  preferences      Json?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   // §11.133 #admin-user-soft-delete — soft delete marker. null=active,
