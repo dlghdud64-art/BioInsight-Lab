@@ -1987,8 +1987,14 @@ function QuotesPageContent() {
             #5 제목 열 = firstItemName + 외 N건 (§11.217 helper inline reuse)
             #8 카드 CTA min-w-[140px] / 테이블 CTA min-w-[80px] 강제 */}
       {!isLoading && viewMode === "table" && sortedQuotes.length > 0 && (
-        <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
-          <table className="w-full text-xs">
+        /* §11.248d #quote-table-fade-hint — 호영님 P0 견적 관리 #4 (scope 축소).
+           가로 스크롤 존재 시 좌우 fade gradient overlay 으로 스크롤 가능 표시.
+           CSS-only 패턴 (JS scroll position 감지 별도 §11.248d-2 백로그).
+           title 컬럼 min-width 240px 보장 (DEFAULT_COLUMN_PREFS.widths.title = 280, 호영님 spec 정합).
+           pointer-events-none 으로 테이블 상호작용 방해 0. */
+        <div className="relative">
+          <div className="overflow-x-auto bg-pn rounded-xl border border-bd/80">
+            <table className="w-full text-xs">
             {/* §11.230b #quote-table-column-prefs — 호영님 v2 #23 (a+b).
                 visibleColumns.map() 으로 dynamic generate. canonical truth:
                 - sortState (§11.227) sortable 5 컬럼 유지
@@ -2439,6 +2445,11 @@ function QuotesPageContent() {
               })}
             </tbody>
           </table>
+          </div>
+          {/* §11.248d — 가로 스크롤 좌우 fade gradient overlay (테이블 자체는 inner div).
+              from-white → transparent 으로 자연스러운 페이드. rounded-l-xl / rounded-r-xl 으로 모서리 정합. */}
+          <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white to-transparent pointer-events-none rounded-l-xl" aria-hidden="true" />
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white to-transparent pointer-events-none rounded-r-xl" aria-hidden="true" />
         </div>
       )}
 
