@@ -23,6 +23,10 @@ import { Analytics } from "@vercel/analytics/react";
 //   indigo-500 / 4px / showSpinner:false. body 안 client-only render.
 import { NProgressBar } from "@/components/nprogress-bar";
 
+// §11.246d-3 #lcp-buffered-observer — 호영님 P0 §11.246e baseline 보강 (LCP RUM).
+//   PerformanceObserver buffered:true 으로 LCP entry 캡처 → window.__labaxisLCP expose.
+import { LcpObserverClient } from "@/components/observability/lcp-observer-client";
+
 import { CompareFlowGuard } from "@/components/layout/compare-flow-guard";
 import { BRAND } from "@/lib/brand";
 
@@ -96,6 +100,7 @@ export default function RootLayout({
     <html lang="ko" className={jetbrainsMono.variable} suppressHydrationWarning>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased">
         <NProgressBar />
+        <LcpObserverClient />
         <ThemeProvider>
           <LocaleProvider>
             <AuthSessionProvider>
