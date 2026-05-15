@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
+import { Search, Filter, Package, CheckCircle2, Clock, AlertCircle, Send, FileCheck2, ArrowRight, Plus, RefreshCw, AlertTriangle, Sparkles, X, ExternalLink, FileText as FileTextIcon, Loader2, Upload, ChevronDown, ChevronUp, ChevronsRight, ChevronsLeft, Settings2, GripVertical, MoreHorizontal } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from "@/components/ui/dialog";
@@ -317,6 +317,9 @@ const COLUMN_LABEL: Record<ColumnKey, string> = {
 
 // localStorage key
 const COLUMN_PREFS_LS_KEY = "labaxis-quote-column-prefs";
+
+// §11.248e-2 #quote-briefing-collapse-toggle — 1200px+ Briefing 패널 접힘/펼침 영구화 key.
+const BRIEFING_COLLAPSED_LS_KEY = "labaxis-briefing-collapsed";
 
 // 컬럼 폭 guard (px)
 const COLUMN_MIN_WIDTH = 60;
@@ -861,6 +864,27 @@ function QuotesPageContent() {
   const [columnPrefsPopoverOpen, setColumnPrefsPopoverOpen] = useState(false);
   const [resizingColumn, setResizingColumn] = useState<ColumnKey | null>(null);
   const [dragColumn, setDragColumn] = useState<ColumnKey | null>(null);
+
+  // §11.248e-2 #quote-briefing-collapse-toggle — 호영님 P0 §11.248 #5 잔여 백로그.
+  //   1200px+ Briefing 패널 접힘/펼침 토글 + localStorage 영구화. <1200px 영향 0.
+  const [isBriefingCollapsed, setIsBriefingCollapsed] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const raw = localStorage.getItem(BRIEFING_COLLAPSED_LS_KEY);
+      if (raw === "true") setIsBriefingCollapsed(true);
+    } catch {
+      // localStorage 차단 환경 graceful fallback (default false)
+    }
+  }, []);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      localStorage.setItem(BRIEFING_COLLAPSED_LS_KEY, String(isBriefingCollapsed));
+    } catch {
+      // sandboxed iframe 등에서 localStorage 차단 시 silent skip
+    }
+  }, [isBriefingCollapsed]);
 
   // §11.230b hydrate from localStorage (mount only)
   useEffect(() => {
@@ -2654,6 +2678,22 @@ function QuotesPageContent() {
       )}
 
       {/* ═══ Quote Context Rail (lg+) ═══ */}
+      {/* §11.248e-2 — 1200px+ Briefing 패널 접힘 시 floating expand button.
+          collapsed && selectedQuote 일 때만 노출. min-[1200px]:flex 으로 1200px+ 한정,
+          <1200px 는 bottom-sheet 분기 유지. sticky top-20 right-0 으로 화면 우측 가장자리 고정. */}
+      {selectedQuote && selectedSignals && selectedOpStatus && isBriefingCollapsed && (
+        <button
+          type="button"
+          onClick={() => setIsBriefingCollapsed(false)}
+          aria-label="Briefing 패널 펼치기"
+          data-testid="briefing-floating-expand"
+          className="hidden min-[1200px]:flex fixed top-20 right-0 z-30 items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white text-[11px] font-semibold px-2 py-3 rounded-l-md shadow-md transition-colors writing-mode-vertical"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          <ChevronsLeft className="h-4 w-4" />
+          BRIEFING
+        </button>
+      )}
       {selectedQuote && selectedSignals && selectedOpStatus && (() => {
         const sqResponseCount = selectedQuote.responses?.length ?? 0;
         // §11.212 — sqDaysSince 인라인 계산 제거 (SSR-CSR Date.now() drift 차단).
@@ -2662,15 +2702,31 @@ function QuotesPageContent() {
         const sqDeadline = selectedQuote.deliveryDate ? new Date(selectedQuote.deliveryDate) : null;
         const sqDaysToDeadline = sqDeadline ? Math.ceil((sqDeadline.getTime() - Date.now()) / 86400000) : null;
 
+        // §11.248e-2 — isBriefingCollapsed=true 시 패널 자체 mount 0 (full hide).
+        //   floating expand button (위쪽 분기) 으로만 펼치기.
+        if (isBriefingCollapsed) return null;
         return (
         /* §11.248e #quote-briefing-panel-responsive — 호영님 P0 견적 관리 #5.
             breakpoint lg (1024px) → min-[1200px] 상향. 1024-1199px 구간 = bottom-sheet 자동 적용
-            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널. */
+            (테이블 가용 너비 회복). 1200px+ 에서만 우측 480px 패널.
+            §11.248e-2 — isBriefingCollapsed 분기 + 헤더 우측 접기 button 추가. */
         <div className="hidden min-[1200px]:flex w-[480px] shrink-0 border-l border-bd flex-col bg-pn ml-5 rounded-xl overflow-hidden self-start sticky top-20" style={{ maxHeight: "calc(100vh - 120px)" }}>
-          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일) */}
-          <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between">
+          {/* §11.144 Brief header — 운영 브리핑 + 선택한 견적 (lock §11.142, §11.179 eyebrow 통일).
+              §11.248e-2 — 우측에 접기 button (ChevronsRight) 추가. 클릭 시 패널 hide + floating expand button 노출. */}
+          <div className="px-4 py-2 border-b border-bd bg-el/30 flex items-center justify-between gap-2">
             <span className="text-[11px] font-bold tracking-[0.12em] text-blue-700 uppercase">OPERATIONAL BRIEFING</span>
-            <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-slate-500 uppercase tracking-wide">선택한 견적</span>
+              <button
+                type="button"
+                onClick={() => setIsBriefingCollapsed(true)}
+                aria-label="Briefing 패널 접기"
+                data-testid="briefing-collapse-button"
+                className="inline-flex items-center justify-center h-6 w-6 rounded text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              >
+                <ChevronsRight className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* §11.144 4 preset chips — anchor jump to brief sections.
