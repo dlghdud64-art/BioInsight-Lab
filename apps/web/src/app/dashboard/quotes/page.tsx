@@ -471,6 +471,10 @@ const READINESS_LABELS = ["요청 생성", "회신 수집", "비교 검토", "�
 //   isSelectable: PENDING (request_not_sent) state quote 만 true.
 //   isSelectedForBatch: selectedQuoteIds.has(quote.id) 결과.
 //   onToggleSelect: page-level toggleQuoteSelection handler.
+// §11.230c (e) #quote-card-keyboard-nav — 호영님 v2 #23 sub-spec (e) 잔여 백로그.
+//   카드 뷰 unified index (urgent + inProgress + completed 합산) + Home/End 4 키.
+//   §11.230c (c) 테이블 패턴 reuse — outer wrapper 에 data-card-index + tabIndex=0
+//   부여 + page 안 keyboard handler. card 시그니처 변경 0 (cardIndex optional prop 추가).
 function QuoteCard({
   quote,
   isSelected,
@@ -478,6 +482,7 @@ function QuoteCard({
   isSelectable,
   isSelectedForBatch,
   onToggleSelect,
+  cardIndex,
 }: {
   quote: Quote;
   isSelected?: boolean;
@@ -485,6 +490,8 @@ function QuoteCard({
   isSelectable?: boolean;
   isSelectedForBatch?: boolean;
   onToggleSelect?: () => void;
+  /** §11.230c (e) — unified index for keyboard nav (urgent + inProgress + completed). */
+  cardIndex?: number;
 }) {
   const opStatus = getOpStatus(quote);
   const signals = getOpSignals(quote);
@@ -520,13 +527,38 @@ function QuoteCard({
   return (
     <div
       data-testid="quote-request-card"
-      className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up ${opStatus.leftBorder} ${
+      data-card-index={cardIndex}
+      tabIndex={0}
+      className={`bg-pn rounded-xl border border-l-[3px] transition-all duration-200 p-4 cursor-pointer hover:shadow-md hover:-translate-y-0.5 animate-stagger-up focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2 ${opStatus.leftBorder} ${
         isSelectedForBatch ? "border-violet-500/60 ring-1 ring-violet-500/30 bg-violet-50/40"
         : isSelected ? "border-blue-600/40 ring-1 ring-blue-600/20 bg-blue-600/5"
         : delayed ? "border-red-600/30"
         : "border-bd/80 hover:border-bd"
       }`}
       onClick={onSelect}
+      onKeyDown={(e) => {
+        // §11.230c (e) #quote-card-keyboard-nav — Home/End/PageUp/PageDown 4 키.
+        //   §11.230c (c) 테이블 패턴 reuse. unified index (urgent + inProgress + completed).
+        //   sortedQuotes.length 계산 어려우니 DOM query 으로 모든 card 수집 후 분기.
+        if (typeof window === "undefined") return;
+        if (e.key === "Home" || e.key === "End" || e.key === "PageUp" || e.key === "PageDown") {
+          e.preventDefault();
+          const allCards = document.querySelectorAll<HTMLElement>("[data-card-index]");
+          if (allCards.length === 0) return;
+          const lastIndex = allCards.length - 1;
+          const currentIndex = cardIndex ?? 0;
+          let nextIndex = currentIndex;
+          if (e.key === "Home") nextIndex = 0;
+          else if (e.key === "End") nextIndex = lastIndex;
+          else if (e.key === "PageUp") nextIndex = Math.max(0, currentIndex - 5);
+          else if (e.key === "PageDown") nextIndex = Math.min(lastIndex, currentIndex + 5);
+          const target = allCards[nextIndex];
+          if (target) target.focus();
+        } else if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.();
+        }
+      }}
     >
       {/* §11.217 Phase 3 — batch dispatch checkbox (PENDING quote 만 노출) */}
       {isSelectable && (
@@ -864,6 +896,11 @@ function QuotesPageContent() {
   const [columnPrefsPopoverOpen, setColumnPrefsPopoverOpen] = useState(false);
   const [resizingColumn, setResizingColumn] = useState<ColumnKey | null>(null);
   const [dragColumn, setDragColumn] = useState<ColumnKey | null>(null);
+
+  // §11.230c (e) #quote-card-keyboard-nav — 호영님 v2 #23 sub-spec (e) 잔여 백로그.
+  //   카드 뷰 키보드 nav (Home/End/PageUp/PageDown). focused index 는 DOM 의 document.activeElement
+  //   으로 tracking — 별도 state 없이 querySelector("[data-card-index]") + element.focus()
+  //   으로 충분. minimum-diff (state 폭증 회피).
 
   // §11.248e-2 #quote-briefing-collapse-toggle — 호영님 P0 §11.248 #5 잔여 백로그.
   //   1200px+ Briefing 패널 접힘/펼침 토글 + localStorage 영구화. <1200px 영향 0.
@@ -2509,7 +2546,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-600 text-[11px] font-bold">{urgentQuotes.length}</span>
           </div>
-          {urgentQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {urgentQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -2521,7 +2558,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-600 text-[11px] font-bold">{inProgressQuotes.length}</span>
           </div>
-          {inProgressQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {inProgressQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -2536,7 +2573,7 @@ function QuotesPageContent() {
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
           </summary>
           <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote) => <QuoteCard key={quote.id} quote={quote} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+            {completedQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + inProgressQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
           </div>
         </details>
       )}
