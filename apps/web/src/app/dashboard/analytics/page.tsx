@@ -6,11 +6,21 @@ import { csrfFetch } from "@/lib/api-client";
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
+// §11.246b-1 — Next.js route segment config `export const dynamic` 와 충돌 회피
+//   위해 alias 로 import (canonical Next.js convention).
+import nextDynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area, Legend,
-} from "recharts";
+
+// §11.246b-1 #recharts-dynamic-bundle-split — 호영님 P0 성능 #1+#5.
+//   recharts (~200KB) 를 lazy load 으로 모바일 초기 hydration 단축.
+//   ssr:false (recharts 는 client only), Skeleton 260px 동일 높이 placeholder.
+const SpendTrendAreaChart = nextDynamic(
+  () => import("@/components/analytics/spend-trend-area-chart"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-[260px] w-full rounded-lg" />,
+  },
+);
 // §11.196f — dead lucide imports 6 symbol 제거 (ChevronRight Clock
 //   Download Gauge Search Zap actual 사용 0). 나머지 보존.
 import {
@@ -558,65 +568,14 @@ export default function AnalyticsPage() {
                 </h3>
               </div>
               {hasMonthlyData ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={monthlySpending} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="colorActual" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                    <XAxis dataKey="month" tick={{ fill: "#64748b", fontSize: 11 }} axisLine={false} tickLine={false} />
-                    <YAxis
-                      tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false}
-                      tickFormatter={(v: number) => `₩${Math.round(v / 10000)}만`}
-                    />
-                    <Tooltip
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", backgroundColor: "#ffffff", color: "#1e293b", fontSize: "12px" }}
-                      formatter={(value: number) => [`₩${value.toLocaleString("ko-KR")}`, "지출"]}
-                    />
-                    <Legend
-                      verticalAlign="top"
-                      align="right"
-                      iconType="circle"
-                      iconSize={8}
-                      wrapperStyle={{ fontSize: "11px", color: "#64748b" }}
-                    />
-                    <Area
-                      name="실제 지출"
-                      type="monotone"
-                      dataKey="amount"
-                      stroke="#3b82f6"
-                      strokeWidth={2.5}
-                      fill="url(#colorActual)"
-                      dot={{ r: 3, fill: "#3b82f6", stroke: "#fff", strokeWidth: 2 }}
-                      isAnimationActive
-                      animationDuration={1200}
-                      animationEasing="ease-out"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <SpendTrendAreaChart data={monthlySpending} variant="real" />
               ) : (
                 /* §11.244 Phase B #4a — 호영님 P0: 빈 차트 mockup + 반투명 overlay
                    (§11.243b 패턴 reuse). 회색 톤 sample AreaChart + backdrop-blur
                    안내 — "쌓이면 무엇을 볼 수 있는지" 사전 인지. */
                 <div className="relative h-[260px]">
                   <div className="h-full opacity-40 grayscale pointer-events-none">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={MOCKUP_MONTHLY_DATA} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="colorMockup" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#94a3b8" stopOpacity={0.25} />
-                            <stop offset="95%" stopColor="#94a3b8" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
-                        <XAxis dataKey="month" tick={{ fill: "#cbd5e1", fontSize: 11 }} axisLine={false} tickLine={false} />
-                        <YAxis tick={{ fill: "#cbd5e1", fontSize: 10 }} axisLine={false} tickLine={false} />
-                        <Area type="monotone" dataKey="amount" stroke="#94a3b8" strokeWidth={2} fill="url(#colorMockup)" isAnimationActive={false} />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <SpendTrendAreaChart data={MOCKUP_MONTHLY_DATA} variant="mockup" />
                   </div>
                   <div className="absolute inset-0 flex items-center justify-center backdrop-blur-[1px] bg-white/40">
                     <div className="text-center px-6 max-w-md">
