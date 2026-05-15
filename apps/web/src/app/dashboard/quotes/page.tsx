@@ -905,7 +905,9 @@ function QuotesPageContent() {
 
   // §11.248e-2 #quote-briefing-collapse-toggle — 호영님 P0 §11.248 #5 잔여 백로그.
   //   1200px+ Briefing 패널 접힘/펼침 토글 + localStorage 영구화. <1200px 영향 0.
+  //   §11.230c (a)-2 — server-persist 추가 (preferences endpoint reuse).
   const [isBriefingCollapsed, setIsBriefingCollapsed] = useState(false);
+  // §11.248e-2 — localStorage hydration (backwards compat, server fallback).
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -915,6 +917,7 @@ function QuotesPageContent() {
       // localStorage 차단 환경 graceful fallback (default false)
     }
   }, []);
+  // §11.248e-2 — localStorage write on toggle.
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -961,6 +964,25 @@ function QuotesPageContent() {
         : DEFAULT_COLUMN_PREFS.order),
     });
   }, [userPrefs.preferences]);
+
+  // §11.230c (a)-2 #briefing-collapsed-server-persist — server-first hydration.
+  //   preferences.briefingCollapsed override localStorage (server canonical).
+  //   server null → §11.248e-2 localStorage hydration 그대로 (backwards compat).
+  useEffect(() => {
+    const serverCollapsed = userPrefs.preferences?.briefingCollapsed;
+    if (typeof serverCollapsed !== "boolean") return;
+    setIsBriefingCollapsed(serverCollapsed);
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-2 — debounced server PATCH on isBriefingCollapsed change.
+  //   §11.248e-2 localStorage write 와 양립 (3-layer: state + localStorage + server).
+  //   debounce 400ms = 마지막 클릭만 server 도달 (rapid toggle 차단).
+  useEffect(() => {
+    userPrefs.updateBriefingCollapsed(isBriefingCollapsed);
+    // userPrefs 는 외부 deps 이지만 hook signature 가 stable 보장 (useCallback X
+    // 이지만 react-query setQueryData 가 referential stability 유지).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isBriefingCollapsed]);
 
   // §11.230b write on mutation — localStorage immediate.
   //   §11.230c (a) server-first: localStorage + debounced server PATCH 동시.

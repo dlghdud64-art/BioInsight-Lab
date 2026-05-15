@@ -35,6 +35,9 @@ const UserPreferencesPatchSchema = z.object({
       quotes: ColumnPrefsSchema.optional(),
     })
     .optional(),
+  // §11.230c (a)-2 — briefingCollapsed server-persist. §11.248e-2 localStorage
+  // reuse + cross-device sync. boolean 단일 값.
+  briefingCollapsed: z.boolean().optional(),
 });
 
 interface UserPreferencesJson {
@@ -45,6 +48,8 @@ interface UserPreferencesJson {
       order?: string[];
     };
   };
+  // §11.230c (a)-2 — briefingCollapsed nested key.
+  briefingCollapsed?: boolean;
   [key: string]: unknown;
 }
 
@@ -113,6 +118,10 @@ export async function PATCH(request: NextRequest) {
           ...(validation.data.columnPrefs?.quotes ?? {}),
         },
       },
+      // §11.230c (a)-2 — briefingCollapsed override if present in patch.
+      ...(validation.data.briefingCollapsed !== undefined
+        ? { briefingCollapsed: validation.data.briefingCollapsed }
+        : {}),
     };
 
     const updated = await db.user.update({

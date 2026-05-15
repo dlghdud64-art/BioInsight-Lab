@@ -28,6 +28,8 @@ export interface UserPreferencesJson {
       order?: string[];
     };
   };
+  // §11.230c (a)-2 — briefingCollapsed server-persist. §11.248e-2 localStorage reuse.
+  briefingCollapsed?: boolean;
   [key: string]: unknown;
 }
 
@@ -39,6 +41,12 @@ type ColumnPrefsPatch = {
   widths?: Record<string, number>;
   visibility?: Record<string, boolean>;
   order?: string[];
+};
+
+// §11.230c (a)-2 — PATCH body type 확장 (briefingCollapsed top-level optional).
+type UserPreferencesPatch = {
+  columnPrefs?: { quotes?: ColumnPrefsPatch };
+  briefingCollapsed?: boolean;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -53,7 +61,7 @@ async function fetchUserPreferences(): Promise<UserPreferencesResponse> {
 }
 
 async function patchUserPreferences(
-  patch: { columnPrefs?: { quotes?: ColumnPrefsPatch } },
+  patch: UserPreferencesPatch,
 ): Promise<UserPreferencesResponse> {
   const res = await fetch("/api/user/preferences", {
     method: "PATCH",
@@ -98,6 +106,17 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-2 — briefingCollapsed server-persist (debounced).
+  //   §11.248e-2 localStorage 와 양립 — 두 layer 모두 update.
+  //   click 1 회당 1 mutation 이므로 debounce 가 큰 의미는 없지만,
+  //   updateColumnPrefs 와 일관성 + queueing pattern 유지.
+  const updateBriefingCollapsed = (value: boolean) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ briefingCollapsed: value });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -110,6 +129,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     isLoading: query.isLoading,
     isError: query.isError,
     updateColumnPrefs,
+    updateBriefingCollapsed,
     isPatching: mutation.isPending,
   };
 }
