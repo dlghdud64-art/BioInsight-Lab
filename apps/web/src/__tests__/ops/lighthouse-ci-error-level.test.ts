@@ -101,3 +101,19 @@ describe("§11.246e-cont-2 #3 — invariant 보존 (§11.246e-cont 구조)", () 
     expect(lhci).toMatch(/§11\.246e-cont-2|11\.246e-cont-2/);
   });
 });
+
+describe("§11.246e-cont-3 #4 — 운영 경로별 실패 기준 한국어 근거", () => {
+  it("랜딩, 요금, 로그인 3개 경로에 LCP/CLS/INP 실패 수치를 직접 명시한다", () => {
+    for (const routeLabel of ["랜딩 /", "요금 /pricing", "로그인 /login"]) {
+      expect(lhci).toMatch(new RegExp(`${routeLabel}[\\s\\S]{0,160}LCP>2500ms`));
+      expect(lhci).toMatch(new RegExp(`${routeLabel}[\\s\\S]{0,160}CLS>0\\.1`));
+      expect(lhci).toMatch(new RegExp(`${routeLabel}[\\s\\S]{0,160}INP>200ms`));
+    }
+  });
+
+  it("Lighthouse 실패 경고와 2회 연속 재현 시 release hold 판독 기준을 노출한다", () => {
+    expect(lhci).toMatch(/Core Web Vitals error/);
+    expect(lhci).toMatch(/2회 연속/);
+    expect(lhci).toMatch(/release hold/);
+  });
+});

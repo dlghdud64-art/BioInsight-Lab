@@ -2,6 +2,11 @@
   "//": "§11.246e-cont #lighthouse-ci-automation — 호영님 §11.246e baseline 자연 후속.",
   "//strategy": "§11.246e (PageSpeed Insights API 일회성 측정) → continuous CI 자동화. PR 마다 Core Web Vitals 회귀 차단.",
   "//public-urls-only": "auth 필요 dashboard 제외. /, /pricing, /login 만 측정. labaxis.co.kr production 정합.",
+  "//route-thresholds-ko": "운영 주요 경로 3개 실패 기준: 랜딩(/), 요금(/pricing), 로그인(/login)은 모두 LCP 2500ms 초과, CLS 0.1 초과, INP 200ms 초과 시 Core Web Vitals error로 판정합니다.",
+  "//route-landing-ko": "랜딩 / — 브랜드 확인과 도입 CTA 진입 화면. 실패 기준: LCP>2500ms, CLS>0.1, INP>200ms.",
+  "//route-pricing-ko": "요금 /pricing — 플랜 비교와 도입 문의 화면. 실패 기준: LCP>2500ms, CLS>0.1, INP>200ms.",
+  "//route-login-ko": "로그인 /login — 운영자 인증 시작 화면. 실패 기준: LCP>2500ms, CLS>0.1, INP>200ms.",
+  "//failure-message-ko": "경고 문구: Core Web Vitals error — 해당 경로에서 LCP/CLS/INP 실패 기준을 넘었습니다. 같은 경고가 2회 연속 재현되면 release hold로 판독합니다.",
   "ci": {
     "collect": {
       "url": [
