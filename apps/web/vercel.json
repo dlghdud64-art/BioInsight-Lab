@@ -17,6 +17,14 @@
       "schedule": "0 2 * * *"
     },
     {
+      "path": "/api/cron/inventory-check",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/order-followup-check",
+      "schedule": "0 9 * * *"
+    },
+    {
       "path": "/api/cron/quote-expiry-check",
       "schedule": "0 10 * * *"
     }
