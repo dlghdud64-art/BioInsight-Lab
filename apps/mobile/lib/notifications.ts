@@ -30,6 +30,7 @@ type NotificationType =
   | "low_stock"
   | "expiry_warning"
   | "approval_pending"
+  | "compare"
   | "system";
 
 interface NotificationPayload {
@@ -91,6 +92,12 @@ const ROUTE_MAP: Record<NotificationType, RouteTarget> = {
   approval_pending: {
     detail: (id) => `/quotes/${id}`,
     fallback: "/(tabs)/quotes",
+  },
+  compare: {
+    // §11.250g — AI 비교 분석 완료 → dashboard 진입 (compare result 표시).
+    //   mobile compare detail surface 없음 → /(tabs)/index fallback 동일.
+    detail: () => "/(tabs)",
+    fallback: "/(tabs)",
   },
   system: {
     detail: () => "/(tabs)",
