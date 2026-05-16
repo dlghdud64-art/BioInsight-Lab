@@ -6,6 +6,21 @@ import { sendEmail } from "@/lib/email/sender";
 import { generateQuoteResponseEmail } from "@/lib/email/templates";
 import { ActivityType } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
+import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+
+/**
+ * §11.229b-5 #vendor-replied-notification-dispatch — 호영님 §11.229b cluster 자연 후속.
+ *
+ *   vendor 가 quote response 제출 시 견적 요청자 (quote.userId) 에게
+ *   VENDOR_REPLIED inApp notification 자동 dispatch. mobile NotificationsScreen
+ *   에서 tap 시 buildNotificationHref 가 entityType "QUOTE" → /quotes/{id}
+ *   deep-link 자동 진입.
+ *
+ *   기존 createQuoteResponse + sendEmail + createActivityLogServer 모두 보존.
+ *   dispatchNotificationEvent 는 try/catch graceful — mutation 정합 유지.
+ *   §11.209d-notification-inapp-server-wiring PURCHASE_APPROVAL_REQUESTED
+ *   패턴 정확 reuse.
+ */
 
 // 견적 응답 생성/업데이트
 export async function POST(
@@ -112,6 +127,37 @@ export async function POST(
       });
     } catch (logError) {
       console.error("Failed to create activity log for vendor quote response:", logError);
+    }
+
+    // §11.229b-5 — VENDOR_REPLIED inApp notification dispatch.
+    //   견적 요청자 (quote.userId) 에게 in-app 알림 자동 생성 + queue item.
+    //   guest quote (userId null) 는 dispatch skip — anonymous quote 는 notification recipient 0.
+    //   mutation 정합 보호: try/catch graceful — 알림 fail 시 mutation 결과 영향 0.
+    //   §11.209d-notification-inapp-server-wiring PURCHASE_APPROVAL_REQUESTED 패턴 reuse.
+    if (quote?.userId) {
+      try {
+        await dispatchNotificationEvent({
+          eventType: "VENDOR_REPLIED",
+          entityType: "QUOTE",
+          entityId: quoteId,
+          triggeredBy: session.user.id,
+          recipients: [
+            {
+              userId: quote.userId,
+              email: quote.user?.email ?? undefined,
+            },
+          ],
+          metadata: {
+            quoteTitle: quote.title,
+            vendorName: vendor.name,
+            totalPrice: response.totalPrice,
+            currency: response.currency,
+          },
+        });
+      } catch (notifErr) {
+        // graceful — mutation 정합 유지
+        console.error("[vendor/response] VENDOR_REPLIED notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
     }
 
     return NextResponse.json({ response }, { status: 201 });
