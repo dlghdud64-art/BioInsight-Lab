@@ -2,7 +2,8 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
@@ -14,34 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Shield,
-  ShieldAlert,
-  ShieldCheck,
-  AlertTriangle,
-  Download,
-  FileWarning,
-  Flame,
-  FlameKindling,
-  Skull,
-  Droplets,
-  Search,
-  Hand,
-  Glasses,
-  Shirt,
-  Loader2,
-  CheckCircle2,
-  ChevronRight,
-  ArrowRight,
-  X,
-  Calendar,
-  FileText,
-  Sparkles,
-  Filter,
-  MoreHorizontal,
-  TrendingUp,
-  ClipboardCheck,
-} from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, AlertTriangle, Download, FileWarning, Flame, FlameKindling, Skull, Droplets, Search, Hand, Glasses, Shirt, Loader2, CheckCircle2, ChevronRight, ArrowRight, X, Calendar, FileText, Filter, TrendingUp, ClipboardCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -197,6 +171,28 @@ export default function SafetyManagerPage() {
 
   // ── Strategy ──
   const [activeFrame, setActiveFrame] = useState<StrategyFrame>("balanced_ops");
+
+  // §11.230c (a)-7 #safety-filter-sync — server-first hydration.
+  //   preferences.safetyFilter.activeFrame 도착 시 StrategyFrame validation
+  //   (3 가지 enum 정합) 후 setActiveFrame. inbox 는 useState 0 → 제외.
+  const userPrefs = useUserPreferences();
+  useEffect(() => {
+    const serverFrame = userPrefs.preferences?.safetyFilter?.activeFrame;
+    if (!serverFrame) return;
+    if (
+      serverFrame === "risk_minimize" ||
+      serverFrame === "compliance_first" ||
+      serverFrame === "balanced_ops"
+    ) {
+      setActiveFrame(serverFrame as StrategyFrame);
+    }
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-7 — debounced server PATCH on activeFrame change.
+  useEffect(() => {
+    userPrefs.updateSafetyFilter({ activeFrame });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFrame]);
 
   // ── Rail ──
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);

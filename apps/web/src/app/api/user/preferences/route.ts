@@ -78,6 +78,13 @@ const PurchaseOrdersFilterSchema = z.object({
   activeTab: z.string().max(50).optional(),
 });
 
+// §11.230c (a)-7 — safety page activeFrame server-persist.
+//   StrategyFrame ("balanced_ops" | ... ) 자유 string (정합은 page UI 가드).
+//   inbox 는 useState 0 → 제외. minimum diff scope (호영님 결정).
+const SafetyFilterSchema = z.object({
+  activeFrame: z.string().max(50).optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -99,6 +106,8 @@ const UserPreferencesPatchSchema = z.object({
   purchasesFilter: PurchasesFilterSchema.optional(),
   // §11.230c (a)-6 — purchase-orders page activeTab server-persist.
   purchaseOrdersFilter: PurchaseOrdersFilterSchema.optional(),
+  // §11.230c (a)-7 — safety page activeFrame server-persist.
+  safetyFilter: SafetyFilterSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -139,6 +148,10 @@ interface UserPreferencesJson {
   // §11.230c (a)-6 — purchase-orders page activeTab nested key.
   purchaseOrdersFilter?: {
     activeTab?: string;
+  };
+  // §11.230c (a)-7 — safety page activeFrame nested key.
+  safetyFilter?: {
+    activeFrame?: string;
   };
   [key: string]: unknown;
 }
@@ -281,6 +294,17 @@ export async function PATCH(request: NextRequest) {
               ...(currentPrefs.purchaseOrdersFilter ?? {}),
               ...(validation.data.purchaseOrdersFilter.activeTab !== undefined
                 ? { activeTab: validation.data.purchaseOrdersFilter.activeTab }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.230c (a)-7 — safetyFilter nested merge (activeFrame 부분 update).
+      ...(validation.data.safetyFilter
+        ? {
+            safetyFilter: {
+              ...(currentPrefs.safetyFilter ?? {}),
+              ...(validation.data.safetyFilter.activeFrame !== undefined
+                ? { activeFrame: validation.data.safetyFilter.activeFrame }
                 : {}),
             },
           }

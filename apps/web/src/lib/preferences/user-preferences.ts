@@ -59,6 +59,10 @@ export interface UserPreferencesJson {
   purchaseOrdersFilter?: {
     activeTab?: string;
   };
+  // §11.230c (a)-7 — safety page activeFrame server-persist.
+  safetyFilter?: {
+    activeFrame?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -97,6 +101,12 @@ export type PurchaseOrdersFilterPatch = {
   activeTab?: string;
 };
 
+// §11.230c (a)-7 — SafetyFilter patch type.
+//   StrategyFrame ("balanced_ops" | ... ) 자유 string (정합은 page UI 가드).
+export type SafetyFilterPatch = {
+  activeFrame?: string;
+};
+
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
 }
@@ -107,7 +117,7 @@ type ColumnPrefsPatch = {
   order?: string[];
 };
 
-// §11.230c (a)-2/(a)-3/(a)-4/(a)-5/(a)-6 — PATCH body type 확장.
+// §11.230c (a)-2/(a)-3/(a)-4/(a)-5/(a)-6/(a)-7 — PATCH body type 확장.
 type UserPreferencesPatch = {
   columnPrefs?: { quotes?: ColumnPrefsPatch };
   briefingCollapsed?: boolean;
@@ -117,6 +127,7 @@ type UserPreferencesPatch = {
   receivingFilter?: ReceivingFilterPatch;
   purchasesFilter?: PurchasesFilterPatch;
   purchaseOrdersFilter?: PurchaseOrdersFilterPatch;
+  safetyFilter?: SafetyFilterPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -244,6 +255,16 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-7 — safety page activeFrame server-persist (debounced).
+  //   StrategyFrame ("balanced_ops" | "cost_first" | ...) 자유 string.
+  //   inbox 는 useState 0 → 제외 (호영님 minimum diff 결정).
+  const updateSafetyFilter = (patch: SafetyFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ safetyFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -263,6 +284,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updateReceivingFilter,
     updatePurchasesFilter,
     updatePurchaseOrdersFilter,
+    updateSafetyFilter,
     isPatching: mutation.isPending,
   };
 }
