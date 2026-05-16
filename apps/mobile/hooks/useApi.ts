@@ -655,3 +655,28 @@ export function useCreateInspection() {
     },
   });
 }
+
+/**
+ * §11.229b-4 #mobile-vendor-request-org-book — 호영님 §11.229b-3 자연 후속.
+ *
+ * useOrgVendors(organizationId) — 조직 등록 vendor directory query.
+ *   GET /api/organizations/[id]/vendors. modal "공급사 등록 목록" section 용.
+ */
+export function useOrgVendors(organizationId: string | null | undefined) {
+  return useQuery<{
+    vendors: Array<{
+      id: string;
+      vendorName: string;
+      vendorEmail: string;
+      isPrimary: boolean;
+    }>;
+  }>({
+    queryKey: ["org-vendors", organizationId ?? "none"],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/organizations/${organizationId}/vendors`);
+      return res.data;
+    },
+    enabled: !!organizationId,
+    staleTime: 60_000,
+  });
+}

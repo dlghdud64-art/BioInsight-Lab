@@ -1,4 +1,9 @@
 /**
+ * §11.229b-4 #mobile-vendor-request-org-book — 호영님 §11.229b-3 자연 후속.
+ *   modal 안 "공급사 등록 목록" section 추가 (multi-select checkbox).
+ *   server GET /api/organizations/[id]/vendors 의 OrganizationVendor list forward.
+ *   handleSubmit 3-source merge — recall + orgVendor + manual (pushedEmails dedup).
+ *
  * §11.229b-3 #mobile-vendor-request-recall — 호영님 §11.229b-2 자연 후속.
  *   modal 안 "최근 발송 공급사" recall section 추가 (multi-select checkbox).
  *   server GET /api/quotes/[id] 의 dedup vendorRequests forward 정합.
@@ -50,6 +55,15 @@ interface RecallVendor {
   vendorName: string | null;
 }
 
+// §11.229b-4 — 조직 등록 vendor directory type.
+//   server GET /api/organizations/[id]/vendors 정합.
+interface OrgBookVendor {
+  id: string;
+  vendorName: string;
+  vendorEmail: string;
+  isPrimary: boolean;
+}
+
 interface VendorRequestModalProps {
   visible: boolean;
   onClose: () => void;
@@ -61,6 +75,12 @@ interface VendorRequestModalProps {
    * 다중 선택 + 수동 입력 vendor 와 merge 후 발송.
    */
   vendorRequests?: RecallVendor[];
+  /**
+   * §11.229b-4 — 조직 등록 vendor directory (OrganizationVendor). isPrimary
+   * 우선 정렬 후 vendorName asc. recall section 옆 별도 "공급사 등록 목록"
+   * section. recall vendor email 과 dedup (3-source pushedEmails).
+   */
+  orgVendors?: OrgBookVendor[];
 }
 
 export function VendorRequestModal({
@@ -70,6 +90,7 @@ export function VendorRequestModal({
   quoteTitle,
   onSuccess,
   vendorRequests = [],
+  orgVendors = [],
 }: VendorRequestModalProps) {
   const [vendorEmail, setVendorEmail] = useState("");
   const [vendorName, setVendorName] = useState("");
@@ -77,12 +98,16 @@ export function VendorRequestModal({
   const [message, setMessage] = useState("");
   // §11.229b-3 — 이전 발송 공급사 multi-select. email 기준 Set.
   const [selectedRecall, setSelectedRecall] = useState<Set<string>>(new Set());
+  // §11.229b-4 — 조직 등록 vendor multi-select. email 기준 Set.
+  const [selectedOrgVendor, setSelectedOrgVendor] = useState<Set<string>>(new Set());
   const mutation = useVendorRequestMutation();
 
   const isPending = mutation.isPending;
   const manualEmail = vendorEmail.trim();
   const hasManualVendor = manualEmail.length > 0;
-  const hasSupplierSelection = selectedRecall.size > 0 || hasManualVendor;
+  // §11.229b-4 — 3-source supplier selection (recall + orgVendor + manual).
+  const hasSupplierSelection =
+    selectedRecall.size > 0 || selectedOrgVendor.size > 0 || hasManualVendor;
   const hasInvalidManualContact =
     hasManualVendor && !CONTACT_EMAIL_PATTERN.test(manualEmail);
   const hasValidContact = hasSupplierSelection && !hasInvalidManualContact;
@@ -134,11 +159,22 @@ export function VendorRequestModal({
     });
   };
 
+  // §11.229b-4 — orgVendor toggle (recall 와 동일 패턴).
+  const toggleOrgVendor = (email: string) => {
+    setSelectedOrgVendor((prev) => {
+      const next = new Set(prev);
+      if (next.has(email)) next.delete(email);
+      else next.add(email);
+      return next;
+    });
+  };
+
   const reset = () => {
     setVendorEmail("");
     setVendorName("");
     setMessage("");
     setSelectedRecall(new Set());
+    setSelectedOrgVendor(new Set());
     mutation.reset();
   };
 
@@ -155,6 +191,8 @@ export function VendorRequestModal({
     //   수동 입력 email 이 있고 trim 후 비어있지 않으면 추가.
     //   동일 email 이 recall + 수동 입력 모두에 있으면 manual 우선 (운영자 의도 정합).
     const vendorsArray: Array<{ email: string; name?: string }> = [];
+    // §11.229b-4 — 3-source dedup pushedEmails Set 으로 중복 push 차단.
+    const pushedEmails = new Set<string>();
 
     // recall 먼저 push
     for (const email of selectedRecall) {
@@ -164,6 +202,17 @@ export function VendorRequestModal({
         email,
         name: found?.vendorName ?? undefined,
       });
+      pushedEmails.add(email);
+    }
+    // §11.229b-4 — orgVendor 추가 (recall + manual 중복 시 skip).
+    for (const email of selectedOrgVendor) {
+      if (manualEmail === email || pushedEmails.has(email)) continue;
+      const found = orgVendors.find((v) => v.vendorEmail === email);
+      vendorsArray.push({
+        email,
+        name: found?.vendorName ?? undefined,
+      });
+      pushedEmails.add(email);
     }
     // 수동 입력 추가
     if (manualEmail.length > 0) {
@@ -330,9 +379,66 @@ export function VendorRequestModal({
               </View>
             )}
 
+            {/* §11.229b-4 — 공급사 등록 목록 (조직 vendor directory).
+                orgVendors 0개 시 hide. 1개 이상 시 checkbox list. isPrimary
+                는 vendorName 옆 "기본" badge 로 노출. */}
+            {orgVendors.length > 0 && (
+              <View className="mb-3">
+                <Text className="text-xs font-semibold text-slate-700 mb-1.5">
+                  공급사 등록 목록 (다중 선택 가능)
+                </Text>
+                <View className="border border-slate-200 rounded-xl bg-emerald-50/30 divide-y divide-slate-200">
+                  {orgVendors.map((v) => {
+                    const isSelected = selectedOrgVendor.has(v.vendorEmail);
+                    return (
+                      <Pressable
+                        key={v.id}
+                        onPress={() => !isPending && toggleOrgVendor(v.vendorEmail)}
+                        disabled={isPending}
+                        className="flex-row items-center px-3 py-2.5"
+                      >
+                        <View
+                          className={`w-5 h-5 rounded border mr-3 items-center justify-center ${
+                            isSelected
+                              ? "bg-emerald-600 border-emerald-600"
+                              : "bg-white border-slate-300"
+                          }`}
+                        >
+                          {isSelected && (
+                            <Text className="text-white text-xs font-bold">✓</Text>
+                          )}
+                        </View>
+                        <View className="flex-1">
+                          <View className="flex-row items-center gap-1.5">
+                            <Text
+                              className="text-sm text-slate-900"
+                              numberOfLines={1}
+                            >
+                              {v.vendorName}
+                            </Text>
+                            {v.isPrimary && (
+                              <Text className="text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded">
+                                기본
+                              </Text>
+                            )}
+                          </View>
+                          <Text
+                            className="text-[11px] text-slate-500"
+                            numberOfLines={1}
+                          >
+                            {v.vendorEmail}
+                          </Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
             {/* Vendor email (필수) */}
             <Text className="text-xs font-semibold text-slate-700 mb-1">
-              공급사 이메일 {vendorRequests.length > 0 ? "(추가 입력)" : "*"}
+              공급사 이메일 {vendorRequests.length > 0 || orgVendors.length > 0 ? "(추가 입력)" : "*"}
             </Text>
             <TextInput
               value={vendorEmail}
