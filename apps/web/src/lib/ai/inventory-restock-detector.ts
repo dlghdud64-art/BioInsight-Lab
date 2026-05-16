@@ -16,6 +16,20 @@
 import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createActivityLog, getActorRole } from "@/lib/activity-log";
+import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+import { sendPushNotification } from "@/lib/notifications/push-sender";
+
+/**
+ * §11.250b #inventory-expiring-notification-dispatch — dead path audit P0 마지막 cluster.
+ *
+ *   detectInventoryIssues 안 expiry loop 안 dispatch + push 추가 — INVENTORY_EXPIRING 알림.
+ *   기존 cron /api/cron/inventory-check 가 매일 0 8 * * * 호출 → expiry 임박 자동 감지.
+ *   `created === true` 신규 expiry 만 dispatch + push (createExpiryAction 중복 방지 정합).
+ *   schema 0 / migration 0 / cron 신규 0 — minimum diff scope.
+ *
+ *   §11.229b-5/-6 + §11.250a/cd 패턴 정확 reuse (dispatch + push 1:1, try/catch graceful).
+ *   mobile expiry_warning NotificationType + ROUTE_MAP.expiry_warning.detail = /inventory/{id}.
+ */
 
 // ── Configuration ──
 
@@ -127,6 +141,57 @@ export async function detectInventoryIssues(
         const created = await createExpiryAction(candidate, triggerUserId);
         if (created) result.actionsCreated++;
         else result.skippedDuplicate++;
+
+        // §11.250b — INVENTORY_EXPIRING dispatch + push.
+        //   created === true 인 신규 expiry 만 알림 (중복 방지 정합).
+        //   guest expiry (userId null) skip — multi-recipient org broadcast 별도 cluster.
+        //   §11.229b-5/-6 + §11.250a/cd 패턴 reuse (dispatch + push 1:1).
+        if (created && candidate.userId) {
+          // inApp dispatch
+          try {
+            await dispatchNotificationEvent({
+              eventType: "INVENTORY_EXPIRING",
+              entityType: "INVENTORY",
+              entityId: candidate.inventoryId,
+              triggeredBy: triggerUserId ?? undefined,
+              recipients: [{ userId: candidate.userId }],
+              metadata: {
+                productName: candidate.productName,
+                brand: candidate.brand,
+                lotNumber: candidate.lotNumber,
+                expiryDate: candidate.expiryDate.toISOString(),
+                daysUntilExpiry: candidate.daysUntilExpiry,
+                currentQuantity: candidate.currentQuantity,
+                unit: candidate.unit,
+                location: candidate.location,
+                suggestedAction: candidate.suggestedAction,
+              },
+            });
+          } catch (notifErr) {
+            // graceful — cron 정합 유지
+            console.error("[inventory-restock-detector] INVENTORY_EXPIRING notification 발송 실패:", notifErr);
+          }
+
+          // Expo OS-level push (외근 운영자 즉시 인지)
+          try {
+            const daysLabel = candidate.daysUntilExpiry <= 0
+              ? "오늘 만료"
+              : `D-${candidate.daysUntilExpiry}일`;
+            await sendPushNotification(candidate.userId, {
+              title: "유효기한 임박 경고",
+              body: `${candidate.productName} — ${daysLabel} (${candidate.currentQuantity}${candidate.unit})`,
+              data: {
+                type: "expiry_warning",
+                id: candidate.inventoryId,
+                productName: candidate.productName,
+                daysUntilExpiry: candidate.daysUntilExpiry,
+              },
+            });
+          } catch (pushErr) {
+            // graceful — cron 정합 유지
+            console.error("[inventory-restock-detector] INVENTORY_EXPIRING push notification 실패:", pushErr);
+          }
+        }
       } catch (err) {
         result.errors.push(`Expiry ${candidate.productName}: ${String(err)}`);
       }
