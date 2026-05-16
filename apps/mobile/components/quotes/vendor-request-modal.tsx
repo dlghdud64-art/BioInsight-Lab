@@ -51,6 +51,8 @@ export function VendorRequestModal({
 }: VendorRequestModalProps) {
   const [vendorEmail, setVendorEmail] = useState("");
   const [vendorName, setVendorName] = useState("");
+  // §11.229b-2 — 운영자 현장 메모 (서버 message?: optional 정합).
+  const [message, setMessage] = useState("");
   const mutation = useVendorRequestMutation();
 
   const isPending = mutation.isPending;
@@ -59,6 +61,7 @@ export function VendorRequestModal({
   const reset = () => {
     setVendorEmail("");
     setVendorName("");
+    setMessage("");
     mutation.reset();
   };
 
@@ -79,6 +82,8 @@ export function VendorRequestModal({
             name: vendorName.trim() || undefined,
           },
         ],
+        // §11.229b-2 — 운영자 현장 메모 (trim 후 empty 시 omit, 서버 default 안내 메시지 사용).
+        message: message.trim() || undefined,
       },
       {
         onSuccess: () => {
@@ -160,7 +165,25 @@ export function VendorRequestModal({
               placeholder="예: ABC 시약"
               placeholderTextColor="#94a3b8"
               editable={!isPending}
+              className="border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-slate-900 mb-3"
+            />
+
+            {/* §11.229b-2 — 운영자 현장 메모 (선택). 서버 default 안내 메시지
+                 외 추가 컨텍스트가 필요할 때 입력. empty 시 omit. */}
+            <Text className="text-xs font-semibold text-slate-700 mb-1">
+              메시지 (선택)
+            </Text>
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              multiline
+              numberOfLines={3}
+              maxLength={500}
+              placeholder="견적 요청 메시지를 입력하세요 (선택)"
+              placeholderTextColor="#94a3b8"
+              editable={!isPending}
               className="border border-slate-300 rounded-xl px-3 py-2.5 text-sm text-slate-900 mb-4"
+              style={{ minHeight: 64, textAlignVertical: "top" }}
             />
 
             {/* Footer */}
