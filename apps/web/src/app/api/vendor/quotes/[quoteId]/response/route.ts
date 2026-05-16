@@ -7,6 +7,7 @@ import { generateQuoteResponseEmail } from "@/lib/email/templates";
 import { ActivityType } from "@prisma/client";
 import { createActivityLogServer } from "@/lib/api/activity-logs";
 import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+import { sendPushNotification } from "@/lib/notifications/push-sender";
 
 /**
  * §11.229b-5 #vendor-replied-notification-dispatch — 호영님 §11.229b cluster 자연 후속.
@@ -20,6 +21,15 @@ import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher"
  *   dispatchNotificationEvent 는 try/catch graceful — mutation 정합 유지.
  *   §11.209d-notification-inapp-server-wiring PURCHASE_APPROVAL_REQUESTED
  *   패턴 정확 reuse.
+ *
+ * §11.229b-6 #vendor-replied-push-notification — §11.229b-5 자연 후속.
+ *
+ *   §11.229b-5 inApp 위에 Expo OS-level push 추가 — 3 채널 (email + inApp + OS push).
+ *   sendPushNotification(quote.userId, { type "quote_response", id quoteId,
+ *   title 한국어, body vendor.name+quote.title 요약 }) 호출.
+ *   mobile addNotificationResponseReceivedListener 가 ROUTE_MAP.quote_response.detail
+ *   → router.push(/quotes/{id}) deep-link 자동 매핑.
+ *   #mobile-push-notification PURCHASE_APPROVAL_REQUESTED push 패턴 정확 reuse.
  */
 
 // 견적 응답 생성/업데이트
@@ -157,6 +167,29 @@ export async function POST(
       } catch (notifErr) {
         // graceful — mutation 정합 유지
         console.error("[vendor/response] VENDOR_REPLIED notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+
+      // §11.229b-6 — Expo OS-level push notification.
+      //   §11.229b-5 inApp 위에 OS-level 알림 추가 — 모바일 background 에서도 즉시 인지.
+      //   payload type "quote_response" 가 mobile ROUTE_MAP 안 등록됨 → /quotes/{id} deep-link 자동.
+      //   guest quote (userId null) 는 위 if 가 이미 skip. best-effort (push fail → mutation 정합 유지).
+      //   #mobile-push-notification PURCHASE_APPROVAL_REQUESTED push 패턴 정확 reuse.
+      try {
+        const priceLabel = response.totalPrice != null
+          ? `${response.totalPrice.toLocaleString("ko-KR")} ${response.currency || "KRW"}`
+          : "금액 미정";
+        await sendPushNotification(quote.userId, {
+          title: "공급사 응답 도착",
+          body: `${vendor.name} — ${quote.title} (${priceLabel})`,
+          data: {
+            type: "quote_response",
+            id: quoteId,
+            vendorName: vendor.name,
+          },
+        });
+      } catch (pushErr) {
+        // graceful — mutation 정합 유지
+        console.error("[vendor/response] push notification 실패 (mutation 정합 유지):", pushErr);
       }
     }
 
