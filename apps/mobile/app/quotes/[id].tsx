@@ -32,6 +32,8 @@ import {
 import type { QuoteStatusHistory } from "../../types";
 import { StatusBadge } from "../../components/StatusBadge";
 import { ErrorState } from "../../components/ErrorState";
+// §11.229b #mobile-vendor-request-modal — 호영님 P0 모바일 운영 (send-only scope).
+import { VendorRequestModal } from "../../components/quotes/vendor-request-modal";
 import { iconColor, spinnerColor } from "../../theme/colors";
 
 function formatDate(iso: string) {
@@ -243,28 +245,15 @@ export default function QuoteDetailScreen() {
 
   const canConvert = ["COMPLETED", "RESPONDED"].includes(quote.status);
   const canSend = quote.status === "PENDING";
-  const [sendState, setSendState] = useState<"idle" | "sending" | "sent">("idle");
+
+  // §11.229b #mobile-vendor-request-modal — 호영님 P0 모바일 운영.
+  //   기존 Alert.alert + setTimeout fake success (dead button + front-only) 제거.
+  //   진정한 wiring — VendorRequestModal mount → useVendorRequestMutation POST
+  //   /api/quotes/[id]/vendor-requests. 서버 §11.229c zod 가 vendor email 검증.
+  const [vendorModalVisible, setVendorModalVisible] = useState(false);
 
   const handleSendRequest = () => {
-    Alert.alert(
-      "견적 요청 발송",
-      `"${quote.title}" 견적을 공급사에 발송하시겠습니까?\n\n발송 후에는 취소할 수 없습니다.`,
-      [
-        { text: "취소", style: "cancel" },
-        {
-          text: "발송",
-          style: "destructive",
-          onPress: async () => {
-            setSendState("sending");
-            // TODO: API 연동 — sendQuoteRequest(id)
-            setTimeout(() => {
-              setSendState("sent");
-              refetch();
-            }, 1200);
-          },
-        },
-      ]
-    );
+    setVendorModalVisible(true);
   };
 
   return (
@@ -963,6 +952,17 @@ export default function QuoteDetailScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* §11.229b #mobile-vendor-request-modal — 공급사 발송 Modal.
+          기존 Alert.alert + setTimeout fake success 제거 (dead button → real wiring).
+          실제 POST /api/quotes/[id]/vendor-requests + §11.229c zod 검증. */}
+      <VendorRequestModal
+        visible={vendorModalVisible}
+        onClose={() => setVendorModalVisible(false)}
+        quoteId={id}
+        quoteTitle={quote.title}
+        onSuccess={() => refetch()}
+      />
 
       {/* §11.209d-mobile-mutation — 반려 사유 입력 Modal.
           cross-platform (iOS/Android) — Alert.prompt 는 iOS 전용. 사유는
