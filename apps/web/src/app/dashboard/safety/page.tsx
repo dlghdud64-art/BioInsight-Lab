@@ -281,6 +281,21 @@ export default function SafetyManagerPage() {
   // ── AI Decision Engine ──
   const decision = useMemo(() => buildSafetyDecision(items), [items]);
   const activeOption = decision.options.find((o: StrategyOption) => o.frame === activeFrame) || decision.options[2];
+  const safetyServerFrame = userPrefs.preferences?.safetyFilter?.activeFrame;
+  const safetyFrameMatchesServer = Boolean(safetyServerFrame) && safetyServerFrame === activeFrame;
+  const safetyAppliedCount = safetyFrameMatchesServer && !userPrefs.isPatching && !userPrefs.isPatchError ? 1 : 0;
+  const safetyPendingCount =
+    userPrefs.isPatching || (!userPrefs.isLoading && !safetyFrameMatchesServer && !userPrefs.isPatchError) ? 1 : 0;
+  const safetySaveFailureReason = userPrefs.isPatchError
+    ? "서버 반영 실패"
+    : userPrefs.isError
+      ? "현재 설정 불러오기 실패"
+      : "실패 사유 없음";
+  const safetySaveBoundaryLabel = userPrefs.isPatching
+    ? "저장 중"
+    : safetyAppliedCount === 1
+      ? "현재 설정 서버 반영 완료"
+      : "저장 대기 중";
 
   const classifiedMap = useMemo(() => {
     const map = new Map<number, ClassifiedSafetyItem>();
@@ -421,6 +436,34 @@ export default function SafetyManagerPage() {
         </div>
 
         {/* ═══ KPI 카드 4개 (호버 상세 팝업 포함) ═══ */}
+        <div
+          data-testid="safety-preferences-save-state"
+          className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-400">안전 설정 저장 상태</p>
+            <p className="mt-1 text-sm font-semibold text-slate-800">{safetySaveBoundaryLabel}</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="outline" dot="emerald" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              현재 적용됨 {safetyAppliedCount}
+            </Badge>
+            <Badge variant="outline" dot="amber" className="border-amber-200 bg-amber-50 text-amber-700">
+              저장 대기 {safetyPendingCount}
+            </Badge>
+            <span
+              data-testid="safety-preferences-failure-reason"
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                userPrefs.isPatchError || userPrefs.isError
+                  ? "border-red-200 bg-red-50 text-red-700"
+                  : "border-slate-200 bg-slate-50 text-slate-600"
+              }`}
+            >
+              {safetySaveFailureReason}
+            </span>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {/* 전체 화학물질 */}
           <div className="group/kpi relative rounded-xl border border-slate-200 bg-white p-5 hover:shadow-md hover:border-blue-200 transition-all cursor-default">

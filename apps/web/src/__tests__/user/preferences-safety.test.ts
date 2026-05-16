@@ -46,6 +46,26 @@ describe("§11.230c (a)-7 #1 — preferences route zod 확장", () => {
   });
 });
 
+describe("§11.230c (a)-7b — safety save state evidence", () => {
+  it("safety page exposes numeric applied/pending badges near the save boundary", () => {
+    expect(safety).toMatch(/safety-preferences-save-state/);
+    expect(safety).toMatch(/현재 적용됨[\s\S]{0,120}\{safetyAppliedCount\}/);
+    expect(safety).toMatch(/저장 대기[\s\S]{0,120}\{safetyPendingCount\}/);
+  });
+
+  it("safety page shows a fixed Korean server failure reason", () => {
+    expect(safety).toMatch(/safety-preferences-failure-reason/);
+    expect(safety).toMatch(/서버 반영 실패/);
+    expect(safety).toMatch(/실패 사유 없음/);
+  });
+
+  it("useUserPreferences exposes preference patch boundary state", () => {
+    expect(helper).toMatch(/isPatchError/);
+    expect(helper).toMatch(/isPatchSuccess/);
+    expect(helper).toMatch(/patchErrorMessage/);
+  });
+});
+
 describe("§11.230c (a)-7 #2 — useUserPreferences helper 확장", () => {
   it("updateSafetyFilter function export", () => {
     expect(helper).toMatch(/updateSafetyFilter/);

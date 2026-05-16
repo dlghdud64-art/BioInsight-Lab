@@ -278,6 +278,13 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     };
   }, []);
 
+  const patchErrorMessage =
+    mutation.error instanceof Error
+      ? mutation.error.message
+      : mutation.error
+        ? "Unknown preference update error"
+        : null;
+
   return {
     preferences: query.data?.preferences ?? null,
     isLoading: query.isLoading,
@@ -292,5 +299,8 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updatePurchaseOrdersFilter,
     updateSafetyFilter,
     isPatching: mutation.isPending,
+    isPatchError: mutation.isError,
+    isPatchSuccess: mutation.isSuccess,
+    patchErrorMessage,
   };
 }
