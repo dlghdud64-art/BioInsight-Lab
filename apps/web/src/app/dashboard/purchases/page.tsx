@@ -2,9 +2,10 @@
 
 export const dynamic = 'force-dynamic';
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -134,6 +135,22 @@ export default function PurchasesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [queueTab, setQueueTab] = useState<QueueTab>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  // §11.230c (a)-6 #purchases-orders-filter-sync — server-first hydration.
+  //   preferences.purchasesFilter.queueTab 도착 시 QueueTab validation 후 setQueueTab.
+  const userPrefs = useUserPreferences();
+  useEffect(() => {
+    const serverTab = userPrefs.preferences?.purchasesFilter?.queueTab;
+    if (!serverTab) return;
+    // QueueTab = "all" | ConversionStatus. 자유 string → page UI 가드 (잘못된 값은 setQueueTab 후 UI default).
+    setQueueTab(serverTab as QueueTab);
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-6 — debounced server PATCH on queueTab change.
+  useEffect(() => {
+    userPrefs.updatePurchasesFilter({ queueTab });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queueTab]);
 
   // §11.209d-mutation — approve/reject CTA 권한 check (ADMIN/OWNER 만).
   // server enforceAction 이 진짜 lock — client check 는 button visibility

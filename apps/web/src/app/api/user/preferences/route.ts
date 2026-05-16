@@ -66,6 +66,18 @@ const ReceivingFilterSchema = z.object({
   activeTab: z.string().max(50).optional(),
 });
 
+// §11.230c (a)-6 — purchases page queueTab server-persist.
+//   QueueTab ("all" | ConversionStatus) 자유 string (정합은 page UI 가드).
+const PurchasesFilterSchema = z.object({
+  queueTab: z.string().max(50).optional(),
+});
+
+// §11.230c (a)-6 — purchase-orders page activeTab server-persist.
+//   ModuleBucketKey ("ready" | ... ) 자유 string (정합은 page UI 가드).
+const PurchaseOrdersFilterSchema = z.object({
+  activeTab: z.string().max(50).optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -83,6 +95,10 @@ const UserPreferencesPatchSchema = z.object({
   inventoryFilter: InventoryFilterSchema.optional(),
   // §11.230c (a)-5 — receiving page activeTab server-persist.
   receivingFilter: ReceivingFilterSchema.optional(),
+  // §11.230c (a)-6 — purchases page queueTab server-persist.
+  purchasesFilter: PurchasesFilterSchema.optional(),
+  // §11.230c (a)-6 — purchase-orders page activeTab server-persist.
+  purchaseOrdersFilter: PurchaseOrdersFilterSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -114,6 +130,14 @@ interface UserPreferencesJson {
   };
   // §11.230c (a)-5 — receiving page activeTab nested key.
   receivingFilter?: {
+    activeTab?: string;
+  };
+  // §11.230c (a)-6 — purchases page queueTab nested key.
+  purchasesFilter?: {
+    queueTab?: string;
+  };
+  // §11.230c (a)-6 — purchase-orders page activeTab nested key.
+  purchaseOrdersFilter?: {
     activeTab?: string;
   };
   [key: string]: unknown;
@@ -235,6 +259,28 @@ export async function PATCH(request: NextRequest) {
               ...(currentPrefs.receivingFilter ?? {}),
               ...(validation.data.receivingFilter.activeTab !== undefined
                 ? { activeTab: validation.data.receivingFilter.activeTab }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.230c (a)-6 — purchasesFilter nested merge (queueTab 부분 update).
+      ...(validation.data.purchasesFilter
+        ? {
+            purchasesFilter: {
+              ...(currentPrefs.purchasesFilter ?? {}),
+              ...(validation.data.purchasesFilter.queueTab !== undefined
+                ? { queueTab: validation.data.purchasesFilter.queueTab }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.230c (a)-6 — purchaseOrdersFilter nested merge (activeTab 부분 update).
+      ...(validation.data.purchaseOrdersFilter
+        ? {
+            purchaseOrdersFilter: {
+              ...(currentPrefs.purchaseOrdersFilter ?? {}),
+              ...(validation.data.purchaseOrdersFilter.activeTab !== undefined
+                ? { activeTab: validation.data.purchaseOrdersFilter.activeTab }
                 : {}),
             },
           }

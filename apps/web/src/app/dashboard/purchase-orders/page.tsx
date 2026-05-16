@@ -1,8 +1,9 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { NoSSR } from "@/components/ui/no-ssr";
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
 // #post-approval-purchase-order-flow B+H step 3 — ActionableRow 의 PDF/email
 // quick-action mutation. component-scoped useMutation (각 row 마다 독립).
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -63,6 +64,21 @@ function PurchaseOrderLandingPageInner() {
   const openOverlay = useWorkbenchOverlayOpen();
   const { unifiedInboxItems } = useOpsStore();
   const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
+
+  // §11.230c (a)-6 #purchases-orders-filter-sync — server-first hydration.
+  //   preferences.purchaseOrdersFilter.activeTab 도착 시 setActiveTab.
+  const userPrefs = useUserPreferences();
+  useEffect(() => {
+    const serverTab = userPrefs.preferences?.purchaseOrdersFilter?.activeTab;
+    if (!serverTab) return;
+    setActiveTab(serverTab as ModuleBucketKey);
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-6 — debounced server PATCH on activeTab change.
+  useEffect(() => {
+    userPrefs.updatePurchaseOrdersFilter({ activeTab });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Header stats
   const headerStats = useMemo(

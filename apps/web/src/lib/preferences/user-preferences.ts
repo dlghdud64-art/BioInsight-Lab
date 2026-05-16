@@ -51,6 +51,14 @@ export interface UserPreferencesJson {
   receivingFilter?: {
     activeTab?: string;
   };
+  // §11.230c (a)-6 — purchases page queueTab server-persist.
+  purchasesFilter?: {
+    queueTab?: string;
+  };
+  // §11.230c (a)-6 — purchase-orders page activeTab server-persist.
+  purchaseOrdersFilter?: {
+    activeTab?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -79,6 +87,16 @@ export type ReceivingFilterPatch = {
   activeTab?: string;
 };
 
+// §11.230c (a)-6 — PurchasesFilter patch type.
+export type PurchasesFilterPatch = {
+  queueTab?: string;
+};
+
+// §11.230c (a)-6 — PurchaseOrdersFilter patch type.
+export type PurchaseOrdersFilterPatch = {
+  activeTab?: string;
+};
+
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
 }
@@ -89,7 +107,7 @@ type ColumnPrefsPatch = {
   order?: string[];
 };
 
-// §11.230c (a)-2/(a)-3/(a)-4/(a)-5 — PATCH body type 확장.
+// §11.230c (a)-2/(a)-3/(a)-4/(a)-5/(a)-6 — PATCH body type 확장.
 type UserPreferencesPatch = {
   columnPrefs?: { quotes?: ColumnPrefsPatch };
   briefingCollapsed?: boolean;
@@ -97,6 +115,8 @@ type UserPreferencesPatch = {
   quotesFilter?: QuotesFilterPatch;
   inventoryFilter?: InventoryFilterPatch;
   receivingFilter?: ReceivingFilterPatch;
+  purchasesFilter?: PurchasesFilterPatch;
+  purchaseOrdersFilter?: PurchaseOrdersFilterPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -207,6 +227,23 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-6 — purchases page queueTab server-persist (debounced).
+  //   QueueTab ("all" | ConversionStatus) 자유 string.
+  const updatePurchasesFilter = (patch: PurchasesFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ purchasesFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
+  // §11.230c (a)-6 — purchase-orders page activeTab server-persist (debounced).
+  const updatePurchaseOrdersFilter = (patch: PurchaseOrdersFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ purchaseOrdersFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -224,6 +261,8 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updateQuotesFilter,
     updateInventoryFilter,
     updateReceivingFilter,
+    updatePurchasesFilter,
+    updatePurchaseOrdersFilter,
     isPatching: mutation.isPending,
   };
 }
