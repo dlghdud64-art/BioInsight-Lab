@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useOpsStore } from "@/lib/ops-console/ops-store";
+import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import {
   buildModuleHeaderStats,
   buildModulePriorityQueue,
@@ -16,14 +17,7 @@ import {
   type ModuleBucketKey,
   type ModuleLandingItem,
 } from "@/lib/ops-console/module-landing-adapter";
-import {
-  ChevronRight,
-  ArrowRight,
-  AlertCircle,
-  Clock,
-  Zap,
-  Shield,
-} from "lucide-react";
+import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 
 // ── Bucket tab config (Receiving-specific labels) ─────────────────
@@ -56,6 +50,23 @@ export default function ReceivingLandingPage() {
   const router = useRouter();
   const { unifiedInboxItems } = useOpsStore();
   const [activeTab, setActiveTab] = useState<ModuleBucketKey>("ready");
+
+  // §11.230c (a)-5 #inventory-receiving-filter-sync — server-first hydration.
+  //   preferences.receivingFilter.activeTab 도착 시 ModuleBucketKey validation
+  //   (RCV_BUCKET_TABS key 정합) 후 setActiveTab.
+  const userPrefs = useUserPreferences();
+  useEffect(() => {
+    const serverTab = userPrefs.preferences?.receivingFilter?.activeTab;
+    if (!serverTab) return;
+    const validKey = RCV_BUCKET_TABS.find((t) => t.key === serverTab)?.key;
+    if (validKey) setActiveTab(validKey as ModuleBucketKey);
+  }, [userPrefs.preferences]);
+
+  // §11.230c (a)-5 — debounced server PATCH on activeTab change.
+  useEffect(() => {
+    userPrefs.updateReceivingFilter({ activeTab });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   // Header stats
   const headerStats = useMemo(
@@ -118,7 +129,9 @@ export default function ReceivingLandingPage() {
           </p>
         </div>
 
-        {/* Stat pills */}
+        {/* Stat pills — §11.191c self-filter (inbox redirect 제거, 자체
+            페이지 bucket tab 으로 즉시 분기). matching bucket 있으면 button,
+            없으면 display-only span (dead-link 0). */}
         <div className="flex flex-wrap gap-2 mt-3">
           {(
             Object.keys(MODULE_HEADER_STAT_META) as Array<
@@ -128,17 +141,38 @@ export default function ReceivingLandingPage() {
             const value = headerStats[key];
             const meta = MODULE_HEADER_STAT_META[key];
             const filterKey = STAT_FILTER_MAP[key] ?? key;
-            return (
-              <Link
-                key={key}
-                href={`/dashboard/inbox?module=receiving&filter=${filterKey}`}
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs hover:border-slate-300 transition-colors"
-              >
+            const matchingTab = RCV_BUCKET_TABS.find((t) => t.key === filterKey);
+            const baseClass =
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs";
+            const labelSpan = (
+              <>
                 <span className="text-slate-600">{meta.label}</span>
                 <span className="font-mono font-medium text-slate-700 tabular-nums">
                   {value}
                 </span>
-              </Link>
+              </>
+            );
+            if (matchingTab) {
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setActiveTab(matchingTab.key)}
+                  className={`${baseClass} hover:border-slate-300 transition-colors`}
+                  aria-label={`${meta.label} ${value}건 — 상태별 분류 ${matchingTab.label} 보기`}
+                >
+                  {labelSpan}
+                </button>
+              );
+            }
+            return (
+              <span
+                key={key}
+                className={baseClass}
+                aria-label={`${meta.label} ${value}건`}
+              >
+                {labelSpan}
+              </span>
             );
           })}
         </div>

@@ -54,6 +54,18 @@ const QuotesFilterSchema = z.object({
   modeChip: z.string().max(50).nullable().optional(),
 });
 
+// §11.230c (a)-5 — inventory page statusFilter server-persist.
+//   URL `?filter` param 우선 (URL > server > default). locationFilter / categoryFilter / searchQuery / lotStatusFilter 제외.
+const InventoryFilterSchema = z.object({
+  status: z.string().max(50).optional(),
+});
+
+// §11.230c (a)-5 — receiving page activeTab server-persist.
+//   ModuleBucketKey ("ready" | ... ) 자유 string (정합은 page UI 가드).
+const ReceivingFilterSchema = z.object({
+  activeTab: z.string().max(50).optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -67,6 +79,10 @@ const UserPreferencesPatchSchema = z.object({
   quotesView: QuotesViewSchema.optional(),
   // §11.230c (a)-4 — quotes filter (statusFilter + modeChip) server-persist.
   quotesFilter: QuotesFilterSchema.optional(),
+  // §11.230c (a)-5 — inventory page statusFilter server-persist.
+  inventoryFilter: InventoryFilterSchema.optional(),
+  // §11.230c (a)-5 — receiving page activeTab server-persist.
+  receivingFilter: ReceivingFilterSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -91,6 +107,14 @@ interface UserPreferencesJson {
   quotesFilter?: {
     status?: string;
     modeChip?: string | null;
+  };
+  // §11.230c (a)-5 — inventory page statusFilter nested key.
+  inventoryFilter?: {
+    status?: string;
+  };
+  // §11.230c (a)-5 — receiving page activeTab nested key.
+  receivingFilter?: {
+    activeTab?: string;
   };
   [key: string]: unknown;
 }
@@ -189,6 +213,28 @@ export async function PATCH(request: NextRequest) {
                 : {}),
               ...(validation.data.quotesFilter.modeChip !== undefined
                 ? { modeChip: validation.data.quotesFilter.modeChip }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.230c (a)-5 — inventoryFilter nested merge (status 부분 update).
+      ...(validation.data.inventoryFilter
+        ? {
+            inventoryFilter: {
+              ...(currentPrefs.inventoryFilter ?? {}),
+              ...(validation.data.inventoryFilter.status !== undefined
+                ? { status: validation.data.inventoryFilter.status }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.230c (a)-5 — receivingFilter nested merge (activeTab 부분 update).
+      ...(validation.data.receivingFilter
+        ? {
+            receivingFilter: {
+              ...(currentPrefs.receivingFilter ?? {}),
+              ...(validation.data.receivingFilter.activeTab !== undefined
+                ? { activeTab: validation.data.receivingFilter.activeTab }
                 : {}),
             },
           }

@@ -43,6 +43,14 @@ export interface UserPreferencesJson {
     status?: string;
     modeChip?: string | null;
   };
+  // §11.230c (a)-5 — inventory page statusFilter server-persist.
+  inventoryFilter?: {
+    status?: string;
+  };
+  // §11.230c (a)-5 — receiving page activeTab server-persist.
+  receivingFilter?: {
+    activeTab?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -61,6 +69,16 @@ export type QuotesFilterPatch = {
   modeChip?: string | null;
 };
 
+// §11.230c (a)-5 — InventoryFilter patch type.
+export type InventoryFilterPatch = {
+  status?: string;
+};
+
+// §11.230c (a)-5 — ReceivingFilter patch type.
+export type ReceivingFilterPatch = {
+  activeTab?: string;
+};
+
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
 }
@@ -71,12 +89,14 @@ type ColumnPrefsPatch = {
   order?: string[];
 };
 
-// §11.230c (a)-2/(a)-3/(a)-4 — PATCH body type 확장 (briefingCollapsed + quotesView + quotesFilter optional).
+// §11.230c (a)-2/(a)-3/(a)-4/(a)-5 — PATCH body type 확장.
 type UserPreferencesPatch = {
   columnPrefs?: { quotes?: ColumnPrefsPatch };
   briefingCollapsed?: boolean;
   quotesView?: QuotesViewPatch;
   quotesFilter?: QuotesFilterPatch;
+  inventoryFilter?: InventoryFilterPatch;
+  receivingFilter?: ReceivingFilterPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -169,6 +189,24 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-5 — inventory page statusFilter server-persist (debounced).
+  //   URL `?filter` param 우선. locationFilter / categoryFilter / lotStatusFilter 제외.
+  const updateInventoryFilter = (patch: InventoryFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ inventoryFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
+  // §11.230c (a)-5 — receiving page activeTab server-persist (debounced).
+  //   ModuleBucketKey ("ready" | ... ) 자유 string.
+  const updateReceivingFilter = (patch: ReceivingFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ receivingFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -184,6 +222,8 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updateBriefingCollapsed,
     updateQuotesView,
     updateQuotesFilter,
+    updateInventoryFilter,
+    updateReceivingFilter,
     isPatching: mutation.isPending,
   };
 }
