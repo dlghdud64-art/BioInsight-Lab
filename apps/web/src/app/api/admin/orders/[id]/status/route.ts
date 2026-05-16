@@ -17,6 +17,23 @@ import {
   buildAuditEventKey,
 } from "@/lib/audit/durable-mutation-audit";
 import { runDeliveryInventorySync } from "@/lib/inventory/delivery-sync";
+import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+import { sendPushNotification } from "@/lib/notifications/push-sender";
+
+/**
+ * §11.250cd #order-status-notification-dispatch — dead path audit P0 batch (ORDER_SHIPPED + ORDER_DELIVERED).
+ *
+ *   admin/orders/[id]/status PATCH 안 newStatus 분기 dispatch + push:
+ *   - SHIPPING transition → ORDER_SHIPPED dispatch + push (배송 시작 알림)
+ *   - DELIVERED transition → ORDER_DELIVERED dispatch + push (입고 처리 trigger)
+ *
+ *   recipient = order.userId. mobile NotificationType `purchase` reuse →
+ *   ROUTE_MAP.purchase.detail = `/purchases/${id}` deep-link 자동.
+ *
+ *   기존 sendOrderDeliveredEmail + createActivityLog + runDeliveryInventorySync +
+ *   releasePOVoided 모두 보존. dispatch + push 는 try/catch graceful.
+ *   §11.229b-5/-6 + §11.250a 패턴 정확 reuse.
+ */
 
 // 주문 상태 전이 규칙
 const STATUS_TRANSITIONS: Record<string, string[]> = {
@@ -286,6 +303,80 @@ export async function PATCH(
       ipAddress,
       userAgent,
     });
+
+    // §11.250cd #order-status-notification-dispatch — SHIPPING/DELIVERED 분기 dispatch + push.
+    //   recipient = order.userId (Order.user relation). mobile push deep-link → /purchases/{id}.
+    //   guest order (userId null) skip. dispatch + push 각각 try/catch graceful.
+    //   §11.229b-5/-6 + §11.250a 패턴 정확 reuse.
+    //   if-else literal 분기로 sentinel 강도 ↑ (eventType literal 유지).
+    if (order.userId && newStatus === "SHIPPING") {
+      // ORDER_SHIPPED — 배송 시작 알림.
+      try {
+        await dispatchNotificationEvent({
+          eventType: "ORDER_SHIPPED",
+          entityType: "ORDER",
+          entityId: orderId,
+          triggeredBy: session.user.id,
+          recipients: [{ userId: order.userId, email: order.user?.email ?? undefined }],
+          metadata: {
+            orderNumber: order.orderNumber,
+            previousStatus: order.status,
+            newStatus,
+            itemCount: order.items.length,
+          },
+        });
+      } catch (notifErr) {
+        console.error("[admin/orders/status] ORDER_SHIPPED notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+      try {
+        await sendPushNotification(order.userId, {
+          title: "주문 배송 시작",
+          body: `${order.orderNumber} — 운송 추적 가능`,
+          data: {
+            type: "purchase",
+            id: orderId,
+            orderNumber: order.orderNumber,
+            status: "SHIPPING",
+          },
+        });
+      } catch (pushErr) {
+        console.error("[admin/orders/status] ORDER_SHIPPED push notification 실패 (mutation 정합 유지):", pushErr);
+      }
+    } else if (order.userId && newStatus === "DELIVERED") {
+      // ORDER_DELIVERED — 입고 처리 trigger.
+      try {
+        await dispatchNotificationEvent({
+          eventType: "ORDER_DELIVERED",
+          entityType: "ORDER",
+          entityId: orderId,
+          triggeredBy: session.user.id,
+          recipients: [{ userId: order.userId, email: order.user?.email ?? undefined }],
+          metadata: {
+            orderNumber: order.orderNumber,
+            previousStatus: order.status,
+            newStatus,
+            itemCount: order.items.length,
+            inventoryCreated: result.inventoryItems.length,
+          },
+        });
+      } catch (notifErr) {
+        console.error("[admin/orders/status] ORDER_DELIVERED notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+      try {
+        await sendPushNotification(order.userId, {
+          title: "주문 배송 완료",
+          body: `${order.orderNumber} — 입고 처리 준비`,
+          data: {
+            type: "purchase",
+            id: orderId,
+            orderNumber: order.orderNumber,
+            status: "DELIVERED",
+          },
+        });
+      } catch (pushErr) {
+        console.error("[admin/orders/status] ORDER_DELIVERED push notification 실패 (mutation 정합 유지):", pushErr);
+      }
+    }
 
     enforcement.complete({
       beforeState: { status: order.status, orderId },
