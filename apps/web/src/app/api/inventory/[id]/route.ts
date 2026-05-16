@@ -4,6 +4,22 @@ import { db } from "@/lib/db";
 import { Prisma } from "@prisma/client";
 import { createAuditLog, extractRequestMeta, AuditAction, AuditEntityType } from "@/lib/audit";
 import { enforceAction, InlineEnforcementHandle } from "@/lib/security/server-enforcement-middleware";
+import { dispatchNotificationEvent } from "@/lib/notifications/event-dispatcher";
+import { sendPushNotification } from "@/lib/notifications/push-sender";
+
+/**
+ * §11.250a #inventory-low-notification-dispatch — 호영님 dead path audit 후속 (P0).
+ *
+ *   inventory PATCH 안 quantity 변경 시 transition detection (was OK → now low)
+ *   → INVENTORY_LOW dispatch + push.
+ *
+ *   조건: existingInventory.safetyStock != null && existing > safetyStock &&
+ *   updated.currentQuantity <= safetyStock (transition 만 알림 — noise 회피).
+ *   §11.229b-5/-6 dispatch + push 1:1 정합 패턴 정확 reuse.
+ *
+ *   inventory.userId null (organizationId 만) 인 경우 skip — multi-recipient
+ *   org broadcast 는 별도 cluster.
+ */
 
 // 개별 재고 조회
 export async function GET(
@@ -223,6 +239,66 @@ export async function PATCH(
 
       return updated;
     });
+
+    // §11.250a #inventory-low-notification-dispatch — transition detection (was OK → now low).
+    //   조건: safetyStock 정의됨 + 이전 quantity > safetyStock + 신규 quantity <= safetyStock.
+    //   transition 만 알림 (noise 회피). dispatch + push 1:1 정합 (§11.229b-5/-6 패턴 reuse).
+    //   userId null (org-only) 인 경우 skip — multi-recipient org broadcast 별도 cluster.
+    {
+      const safetyStock = existingInventory.safetyStock;
+      const prevQty = existingInventory.currentQuantity;
+      const newQty = updatedInventory.currentQuantity;
+      const userId = updatedInventory.userId ?? existingInventory.userId;
+
+      if (
+        safetyStock != null &&
+        safetyStock > 0 &&
+        prevQty > safetyStock &&
+        newQty <= safetyStock &&
+        userId
+      ) {
+        const productName = updatedInventory.product?.name ?? "재고 항목";
+        const unit = updatedInventory.unit ?? "개";
+
+        // §11.250a — INVENTORY_LOW inApp notification dispatch.
+        try {
+          await dispatchNotificationEvent({
+            eventType: "INVENTORY_LOW",
+            entityType: "INVENTORY",
+            entityId: params.id,
+            triggeredBy: session.user.id,
+            recipients: [{ userId }],
+            metadata: {
+              productName,
+              currentQuantity: newQty,
+              safetyStock,
+              unit,
+              location: updatedInventory.location ?? null,
+            },
+          });
+        } catch (notifErr) {
+          // graceful — mutation 정합 유지
+          console.error("[inventory/[id]] INVENTORY_LOW notification 발송 실패 (mutation 정합 유지):", notifErr);
+        }
+
+        // §11.250a — Expo OS-level push (외근 운영자 즉시 인지).
+        //   payload type "low_stock" 가 mobile ROUTE_MAP 안 등록됨 → /inventory/{id} deep-link 자동.
+        try {
+          await sendPushNotification(userId, {
+            title: "재고 부족 경고",
+            body: `${productName} — ${newQty}${unit} (안전재고 ${safetyStock}${unit})`,
+            data: {
+              type: "low_stock",
+              id: params.id,
+              productName,
+            },
+          });
+        } catch (pushErr) {
+          // graceful — mutation 정합 유지
+          console.error("[inventory/[id]] INVENTORY_LOW push notification 실패 (mutation 정합 유지):", pushErr);
+        }
+      }
+    }
 
     enforcement.complete({});
     return NextResponse.json({ success: true, data: updatedInventory });
