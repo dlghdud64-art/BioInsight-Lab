@@ -2732,6 +2732,28 @@ function QuotesPageContent() {
             </div>
             {/* Scrollable body — 운영 요약 compact */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+              {selectedDispatchEvidence && (
+                <div
+                  data-testid="quote-dispatch-priority-gate"
+                  className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2.5 space-y-2"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-blue-900">현재 단계</span>
+                    <span className="text-[11px] font-medium text-blue-700">
+                      {selectedDispatchEvidence.canSend ? "발송 확인" : selectedDispatchEvidence.blockReason}
+                    </span>
+                  </div>
+                  <div
+                    data-testid="quote-dispatch-priority-order"
+                    className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-700"
+                  >
+                    <span>1. 공급사: {selectedDispatchEvidence.supplierStatus}</span>
+                    <span>2. 연락처: {selectedDispatchEvidence.contactStatus}</span>
+                    <span>3. 메시지 미리보기: {selectedDispatchEvidence.previewStatus}</span>
+                    <span>4. 발송 확인: {selectedDispatchEvidence.sendStatus}</span>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div><span className="text-slate-400 block text-[10px]">상태</span><span className="text-slate-700 font-medium">{selectedSignals.status}</span></div>
                 <div><span className="text-slate-400 block text-[10px]">차단</span><span className={selectedSignals.blocker === "차단 없음" ? "text-emerald-400" : "text-amber-600"}>{selectedSignals.blocker}</span></div>

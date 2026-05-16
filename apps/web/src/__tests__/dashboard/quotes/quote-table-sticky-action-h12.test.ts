@@ -40,6 +40,8 @@ describe("quote dispatch sticky action readiness evidence", () => {
     expect(page).toContain("quote-dispatch-readiness-strip");
     expect(page).toContain("quote-dispatch-readiness-row");
     expect(page).toContain("quote-dispatch-block-reason");
+    expect(page).toContain("quote-dispatch-priority-gate");
+    expect(page).toContain("quote-dispatch-priority-order");
     expect(page).toContain("supplierStatus");
     expect(page).toContain("contactStatus");
     expect(page).toContain("previewStatus");
@@ -53,5 +55,12 @@ describe("quote dispatch sticky action readiness evidence", () => {
     expect(page).toMatch(/(공급사에 전송|Send to supplier)/);
     expect(page).toContain("selectedDispatchEvidence.canSend");
     expect(page).toContain("blockReason");
+  });
+
+  it("places dispatch recipient gate before generic status/transition copy in the quote rail", () => {
+    expect(page).toMatch(
+      /data-testid="quote-dispatch-priority-gate"[\s\S]{0,1400}<div className="grid grid-cols-2 gap-2 text-xs">/,
+    );
+    expect(page).toMatch(/1\. 공급사[\s\S]{0,320}2\. 연락처[\s\S]{0,320}3\. 메시지 미리보기[\s\S]{0,320}4\. 발송 확인/);
   });
 });
