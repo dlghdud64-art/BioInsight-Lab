@@ -416,6 +416,64 @@ export async function POST(
       }
     }
 
+    // §11.250f #budget-warning-notification-dispatch — P1 마지막 cluster.
+    //   validateCategoryBudgetInTransaction warning/soft_limit level 발생 시
+    //   BUDGET_WARNING dispatch + push. hard_stop 은 BudgetBlockedError 로 이미 차단됨.
+    //   recipient = requester (org admin broadcast 별도 cluster).
+    //   §11.229b-5/-6 + §11.250a/cd/b/g/e 패턴 정확 reuse.
+    if (result.budgetWarnings.length > 0 && purchaseRequest.requesterId) {
+      const budgetWarnings = result.budgetWarnings;
+      const topWarning = budgetWarnings[0];
+      const summary = budgetWarnings
+        .map((w: any) => `${w.categoryDisplayName} ${w.projectedUsagePercent}%`)
+        .join(", ");
+
+      // inApp dispatch
+      try {
+        await dispatchNotificationEvent({
+          eventType: "BUDGET_WARNING",
+          entityType: "BUDGET",
+          entityId: requestId,
+          triggeredBy: session.user.id,
+          recipients: [{ userId: purchaseRequest.requesterId }],
+          metadata: {
+            warnings: budgetWarnings.map((w: any) => ({
+              categoryDisplayName: w.categoryDisplayName,
+              projectedUsagePercent: w.projectedUsagePercent,
+              level: w.level,
+              budgetAmount: w.budgetAmount,
+              projectedCommitted: w.projectedCommitted,
+            })),
+            warningCount: budgetWarnings.length,
+            requestTitle: purchaseRequest.title,
+          },
+        });
+      } catch (notifErr) {
+        // graceful — mutation 정합 유지
+        console.error("[request/approve] BUDGET_WARNING notification 발송 실패 (mutation 정합 유지):", notifErr);
+      }
+
+      // Expo OS-level push
+      try {
+        const titleKo = topWarning.level === "soft_limit"
+          ? "예산 소프트 리밋 초과 경고"
+          : "예산 사용률 경고";
+        await sendPushNotification(purchaseRequest.requesterId, {
+          title: titleKo,
+          body: `${purchaseRequest.title} — ${summary}`,
+          data: {
+            type: "system",
+            id: requestId,
+            warningCount: budgetWarnings.length,
+            level: topWarning.level,
+          },
+        });
+      } catch (pushErr) {
+        // graceful — mutation 정합 유지
+        console.error("[request/approve] BUDGET_WARNING push notification 실패 (mutation 정합 유지):", pushErr);
+      }
+    }
+
     return NextResponse.json({
       purchaseRequest: result.purchaseRequest,
       order: result.order,
