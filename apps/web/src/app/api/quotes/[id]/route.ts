@@ -107,6 +107,31 @@ export async function GET(
         createdAt: true,
       },
     });
+
+    // §11.229b-3 #mobile-vendor-request-recall — 모바일 vendor request modal 안
+    //   "최근 발송 공급사" recall section 용 batched query.
+    //   QuoteVendorRequest 의 vendorEmail/vendorName 만 select (다른 field 제외).
+    //   PurchaseRequest 패턴 reuse (Quote ↔ VendorRequest 역관계 0 정합).
+    //   dedup by vendorEmail (same vendor 재발송 history 압축).
+    const vendorRequestsRaw = await db.quoteVendorRequest.findMany({
+      where: { quoteId: id },
+      select: {
+        vendorEmail: true,
+        vendorName: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    const vendorRequestsDedup: Array<{ vendorEmail: string; vendorName: string | null }> = [];
+    const seenEmails = new Set<string>();
+    for (const vr of vendorRequestsRaw) {
+      if (!vr.vendorEmail || seenEmails.has(vr.vendorEmail)) continue;
+      seenEmails.add(vr.vendorEmail);
+      vendorRequestsDedup.push({
+        vendorEmail: vr.vendorEmail,
+        vendorName: vr.vendorName ?? null,
+      });
+    }
     const prInputs = purchaseRequests.map((pr: typeof purchaseRequests[number]) => ({
       id: pr.id,
       status: pr.status,
@@ -176,7 +201,12 @@ export async function GET(
     }
 
     return NextResponse.json({
-      quote,
+      quote: {
+        ...quote,
+        // §11.229b-3 #mobile-vendor-request-recall — 모바일 multi-vendor recall
+        //   용 dedup vendorRequests forward. quote object 안 nested key.
+        vendorRequests: vendorRequestsDedup,
+      },
       approval: {
         internalApprovalStatus,
         latestPendingRequestId,

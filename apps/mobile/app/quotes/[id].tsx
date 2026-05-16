@@ -956,12 +956,14 @@ export default function QuoteDetailScreen() {
       {/* §11.229b #mobile-vendor-request-modal — 공급사 발송 Modal.
           기존 Alert.alert + setTimeout fake success 제거 (dead button → real wiring).
           실제 POST /api/quotes/[id]/vendor-requests + §11.229c zod 검증. */}
+      {/* §11.229b-3 — server forward dedup vendorRequests (이전 발송 공급사 recall). */}
       <VendorRequestModal
         visible={vendorModalVisible}
         onClose={() => setVendorModalVisible(false)}
         quoteId={id}
         quoteTitle={quote.title}
         onSuccess={() => refetch()}
+        vendorRequests={(quote as any).vendorRequests ?? []}
       />
 
       {/* §11.209d-mobile-mutation — 반려 사유 입력 Modal.

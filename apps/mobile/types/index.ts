@@ -92,6 +92,15 @@ export interface QuoteDetail extends Quote {
   description?: string;
   notes?: string;
   vendorResponses?: VendorResponse[];
+  /**
+   * §11.229b-3 #mobile-vendor-request-recall — server GET 이 dedup
+   * vendorRequests forward. modal 안 "최근 발송 공급사" recall section 용.
+   * email 기준 unique. vendorName nullable (운영자가 이름 없이 보낸 경우).
+   */
+  vendorRequests?: Array<{
+    vendorEmail: string;
+    vendorName: string | null;
+  }>;
 }
 
 /**
