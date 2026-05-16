@@ -38,6 +38,11 @@ export interface UserPreferencesJson {
       direction?: "asc" | "desc";
     };
   };
+  // §11.230c (a)-4 — quotes/page statusFilter + modeChip server-persist.
+  quotesFilter?: {
+    status?: string;
+    modeChip?: string | null;
+  };
   [key: string]: unknown;
 }
 
@@ -50,6 +55,12 @@ export type QuotesViewPatch = {
   };
 };
 
+// §11.230c (a)-4 — QuotesFilter patch type (partial — status 만 또는 modeChip 만 가능).
+export type QuotesFilterPatch = {
+  status?: string;
+  modeChip?: string | null;
+};
+
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
 }
@@ -60,11 +71,12 @@ type ColumnPrefsPatch = {
   order?: string[];
 };
 
-// §11.230c (a)-2/(a)-3 — PATCH body type 확장 (briefingCollapsed + quotesView optional).
+// §11.230c (a)-2/(a)-3/(a)-4 — PATCH body type 확장 (briefingCollapsed + quotesView + quotesFilter optional).
 type UserPreferencesPatch = {
   columnPrefs?: { quotes?: ColumnPrefsPatch };
   briefingCollapsed?: boolean;
   quotesView?: QuotesViewPatch;
+  quotesFilter?: QuotesFilterPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -146,6 +158,17 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.230c (a)-4 — quotesFilter (statusFilter + modeChip) server-persist (debounced).
+  //   URL search param 우선 (URL > server > default) — page hydration logic 책임.
+  //   searchQuery 는 ad-hoc 제외 (호영님 결정).
+  //   partial update — status 만 변경 시 modeChip 보존, vice versa.
+  const updateQuotesFilter = (patch: QuotesFilterPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ quotesFilter: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -160,6 +183,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updateColumnPrefs,
     updateBriefingCollapsed,
     updateQuotesView,
+    updateQuotesFilter,
     isPatching: mutation.isPending,
   };
 }

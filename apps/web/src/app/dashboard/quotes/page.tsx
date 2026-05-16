@@ -1187,6 +1187,32 @@ function QuotesPageContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewMode, sortState]);
 
+  // §11.230c (a)-4 #quotes-filter-server-persist — server-first hydration.
+  //   우선순위: URL search param > server preferences > default.
+  //   URL param 이미 있으면 useState initial value 가 URL 우선 적용됨 (line 851).
+  //   URL param 없을 때만 server 값 적용 — searchParams.get("status") null 체크.
+  useEffect(() => {
+    const filter = userPrefs.preferences?.quotesFilter;
+    if (!filter) return;
+    const urlStatus = searchParams.get("status");
+    if (!urlStatus && typeof filter.status === "string") {
+      setStatusFilter(filter.status);
+    }
+    if (filter.modeChip !== undefined) {
+      setModeChip(filter.modeChip);
+    }
+  }, [userPrefs.preferences, searchParams]);
+
+  // §11.230c (a)-4 — debounced server PATCH on statusFilter/modeChip change.
+  //   localStorage 0 → server-only persistence. searchQuery 는 ad-hoc 제외.
+  useEffect(() => {
+    userPrefs.updateQuotesFilter({
+      status: statusFilter,
+      modeChip: modeChip,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [statusFilter, modeChip]);
+
   // §11.226 #3 — 테이블 뷰 진입 시 popup 자동 close.
   //   호영님 v2 spec sheet P0 #3: "테이블 뷰에서는 브리핑 패널을 기본 닫힘
   //   상태로 전환 + 행 클릭 시 브리핑이 오버레이 드로어로 열림".

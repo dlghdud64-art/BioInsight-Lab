@@ -45,6 +45,15 @@ const QuotesViewSchema = z.object({
     .optional(),
 });
 
+// §11.230c (a)-4 — quotes/page statusFilter + modeChip server-persist.
+//   URL search param 우선 (URL > server > default). searchQuery 는 ad-hoc 제외.
+//   status: "all" | UserStatusLabel 자유 (정합은 page UI 가드).
+//   modeChip: MODE_CHIPS key | null (mutually exclusive with statusFilter 변경).
+const QuotesFilterSchema = z.object({
+  status: z.string().max(50).optional(),
+  modeChip: z.string().max(50).nullable().optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -56,6 +65,8 @@ const UserPreferencesPatchSchema = z.object({
   briefingCollapsed: z.boolean().optional(),
   // §11.230c (a)-3 — quotes view (viewMode + sortState) server-persist.
   quotesView: QuotesViewSchema.optional(),
+  // §11.230c (a)-4 — quotes filter (statusFilter + modeChip) server-persist.
+  quotesFilter: QuotesFilterSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -75,6 +86,11 @@ interface UserPreferencesJson {
       key?: "title" | "status" | "itemCount" | "responseCount" | "createdAt" | null;
       direction?: "asc" | "desc";
     };
+  };
+  // §11.230c (a)-4 — quotes filter (statusFilter + modeChip) nested key.
+  quotesFilter?: {
+    status?: string;
+    modeChip?: string | null;
   };
   [key: string]: unknown;
 }
@@ -160,6 +176,20 @@ export async function PATCH(request: NextRequest) {
                 ...(currentPrefs.quotesView?.sort ?? {}),
                 ...(validation.data.quotesView.sort ?? {}),
               },
+            },
+          }
+        : {}),
+      // §11.230c (a)-4 — quotesFilter nested merge (status + modeChip 부분 update).
+      ...(validation.data.quotesFilter
+        ? {
+            quotesFilter: {
+              ...(currentPrefs.quotesFilter ?? {}),
+              ...(validation.data.quotesFilter.status !== undefined
+                ? { status: validation.data.quotesFilter.status }
+                : {}),
+              ...(validation.data.quotesFilter.modeChip !== undefined
+                ? { modeChip: validation.data.quotesFilter.modeChip }
+                : {}),
             },
           }
         : {}),
