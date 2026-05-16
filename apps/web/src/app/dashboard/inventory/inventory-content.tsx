@@ -153,21 +153,39 @@ function InventoryPageContent() {
   // §11.230c (a)-5 #inventory-receiving-filter-sync — server-first hydration.
   //   우선순위: URL `?filter` > server preferences > default.
   //   URL param 없을 때만 server preferences.inventoryFilter.status 적용.
+  // §11.230c (a)-8 — locationFilter + categoryFilter 추가 (잔여 백로그 처리).
+  //   URL param 은 statusFilter 만 (location/category 는 URL 없음).
   const userPrefs = useUserPreferences();
   useEffect(() => {
-    const serverStatus = userPrefs.preferences?.inventoryFilter?.status;
-    if (!serverStatus) return;
-    const urlFilter = searchParams.get("filter");
-    if (urlFilter) return; // URL 우선
-    setStatusFilter(serverStatus);
+    const serverInv = userPrefs.preferences?.inventoryFilter;
+    if (!serverInv) return;
+    // statusFilter — URL ?filter 우선.
+    if (serverInv.status) {
+      const urlFilter = searchParams.get("filter");
+      if (!urlFilter) setStatusFilter(serverInv.status);
+    }
+    // §11.230c (a)-8 — locationFilter / categoryFilter URL 분기 없음.
+    if (serverInv.location) setLocationFilter(serverInv.location);
+    if (serverInv.category) setCategoryFilter(serverInv.category);
   }, [userPrefs.preferences, searchParams]);
 
   // §11.230c (a)-5 — debounced server PATCH on statusFilter change.
-  //   locationFilter / categoryFilter / lotStatusFilter / searchQuery 제외 (호영님 scope).
+  // §11.230c (a)-8 — locationFilter / categoryFilter 도 server-persist (잔여 백로그 처리).
+  //   lotStatusFilter / searchQuery 제외 (호영님 scope).
   useEffect(() => {
     userPrefs.updateInventoryFilter({ status: statusFilter });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
+
+  useEffect(() => {
+    userPrefs.updateInventoryFilter({ location: locationFilter });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationFilter]);
+
+  useEffect(() => {
+    userPrefs.updateInventoryFilter({ category: categoryFilter });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFilter]);
 
   // 라벨 스캔 결과로 AddInventoryModal 자동 오픈 + 프리필
   useEffect(() => {

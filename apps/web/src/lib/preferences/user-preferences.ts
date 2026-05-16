@@ -44,8 +44,11 @@ export interface UserPreferencesJson {
     modeChip?: string | null;
   };
   // §11.230c (a)-5 — inventory page statusFilter server-persist.
+  // §11.230c (a)-8 — location + category 추가 (잔여 백로그 처리).
   inventoryFilter?: {
     status?: string;
+    location?: string;
+    category?: string;
   };
   // §11.230c (a)-5 — receiving page activeTab server-persist.
   receivingFilter?: {
@@ -82,8 +85,11 @@ export type QuotesFilterPatch = {
 };
 
 // §11.230c (a)-5 — InventoryFilter patch type.
+// §11.230c (a)-8 — location + category 추가 (잔여 백로그 처리).
 export type InventoryFilterPatch = {
   status?: string;
+  location?: string;
+  category?: string;
 };
 
 // §11.230c (a)-5 — ReceivingFilter patch type.

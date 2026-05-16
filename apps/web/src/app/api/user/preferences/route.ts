@@ -55,9 +55,13 @@ const QuotesFilterSchema = z.object({
 });
 
 // §11.230c (a)-5 — inventory page statusFilter server-persist.
-//   URL `?filter` param 우선 (URL > server > default). locationFilter / categoryFilter / searchQuery / lotStatusFilter 제외.
+//   URL `?filter` param 우선 (URL > server > default). lotStatusFilter / searchQuery 제외.
+// §11.230c (a)-8 — locationFilter + categoryFilter 추가 (잔여 백로그 처리).
+//   호영님 minimum diff scope — lotStatusFilter / searchQuery 는 여전히 제외.
 const InventoryFilterSchema = z.object({
   status: z.string().max(50).optional(),
+  location: z.string().max(50).optional(),
+  category: z.string().max(50).optional(),
 });
 
 // §11.230c (a)-5 — receiving page activeTab server-persist.
@@ -134,8 +138,11 @@ interface UserPreferencesJson {
     modeChip?: string | null;
   };
   // §11.230c (a)-5 — inventory page statusFilter nested key.
+  // §11.230c (a)-8 — location + category 추가 (잔여 백로그 처리).
   inventoryFilter?: {
     status?: string;
+    location?: string;
+    category?: string;
   };
   // §11.230c (a)-5 — receiving page activeTab nested key.
   receivingFilter?: {
@@ -255,12 +262,19 @@ export async function PATCH(request: NextRequest) {
           }
         : {}),
       // §11.230c (a)-5 — inventoryFilter nested merge (status 부분 update).
+      // §11.230c (a)-8 — location + category 추가 (잔여 백로그 처리).
       ...(validation.data.inventoryFilter
         ? {
             inventoryFilter: {
               ...(currentPrefs.inventoryFilter ?? {}),
               ...(validation.data.inventoryFilter.status !== undefined
                 ? { status: validation.data.inventoryFilter.status }
+                : {}),
+              ...(validation.data.inventoryFilter.location !== undefined
+                ? { location: validation.data.inventoryFilter.location }
+                : {}),
+              ...(validation.data.inventoryFilter.category !== undefined
+                ? { category: validation.data.inventoryFilter.category }
                 : {}),
             },
           }
