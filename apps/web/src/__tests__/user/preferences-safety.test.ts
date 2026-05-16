@@ -59,6 +59,13 @@ describe("§11.230c (a)-7b — safety save state evidence", () => {
     expect(safety).toMatch(/실패 사유 없음/);
   });
 
+  it("safety page keeps saved confirmation visible and ties it to purchase review", () => {
+    expect(safety).toMatch(/safety-preferences-saved-badge/);
+    expect(safety).toMatch(/저장됨/);
+    expect(safety).toMatch(/구매 검토에 반영됨/);
+    expect(safety).toMatch(/duration:\s*3000/);
+  });
+
   it("useUserPreferences exposes preference patch boundary state", () => {
     expect(helper).toMatch(/isPatchError/);
     expect(helper).toMatch(/isPatchSuccess/);

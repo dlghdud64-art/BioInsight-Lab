@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useUserPreferences } from "@/lib/preferences/user-preferences";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -171,6 +171,7 @@ export default function SafetyManagerPage() {
 
   // ── Strategy ──
   const [activeFrame, setActiveFrame] = useState<StrategyFrame>("balanced_ops");
+  const safetySaveToastShownRef = useRef(false);
 
   // §11.230c (a)-7 #safety-filter-sync — server-first hydration.
   //   preferences.safetyFilter.activeFrame 도착 시 StrategyFrame validation
@@ -193,6 +194,20 @@ export default function SafetyManagerPage() {
     userPrefs.updateSafetyFilter({ activeFrame });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFrame]);
+
+  useEffect(() => {
+    if (userPrefs.isPatching) {
+      safetySaveToastShownRef.current = false;
+      return;
+    }
+    if (!userPrefs.isPatchSuccess || safetySaveToastShownRef.current) return;
+    safetySaveToastShownRef.current = true;
+    toast({
+      title: "저장됨",
+      description: "안전 선호값이 구매 검토에 반영됨",
+      duration: 3000,
+    });
+  }, [toast, userPrefs.isPatching, userPrefs.isPatchSuccess]);
 
   // ── Rail ──
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
@@ -291,10 +306,11 @@ export default function SafetyManagerPage() {
     : userPrefs.isError
       ? "현재 설정 불러오기 실패"
       : "실패 사유 없음";
+  const safetySavedBadgeVisible = safetyAppliedCount === 1 || userPrefs.isPatchSuccess;
   const safetySaveBoundaryLabel = userPrefs.isPatching
     ? "저장 중"
-    : safetyAppliedCount === 1
-      ? "현재 설정 서버 반영 완료"
+    : safetySavedBadgeVisible
+      ? "저장됨"
       : "저장 대기 중";
 
   const classifiedMap = useMemo(() => {
@@ -443,8 +459,16 @@ export default function SafetyManagerPage() {
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">안전 설정 저장 상태</p>
             <p className="mt-1 text-sm font-semibold text-slate-800">{safetySaveBoundaryLabel}</p>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              구매 검토에 반영됨 · 다음 검토 대상 {decision.brief.reviewRequiredCount}건
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            {safetySavedBadgeVisible && (
+              <Badge data-testid="safety-preferences-saved-badge" variant="outline" dot="emerald" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                저장됨
+              </Badge>
+            )}
             <Badge variant="outline" dot="emerald" className="border-emerald-200 bg-emerald-50 text-emerald-700">
               현재 적용됨 {safetyAppliedCount}
             </Badge>
