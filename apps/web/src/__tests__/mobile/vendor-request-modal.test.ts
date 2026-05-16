@@ -168,3 +168,30 @@ describe("§11.229b #4 — invariant 보존", () => {
     expect(combined).toMatch(/§11\.229b|11\.229b/);
   });
 });
+
+describe("§11.229b-4 — mobile vendor request send gate evidence", () => {
+  it("공급사 선택 → 연락처 확인 → 메시지 미리보기 → 최종 발송 4단계를 고정 노출", () => {
+    expect(modal).toMatch(/mobile-vendor-request-readiness/);
+    expect(modal).toMatch(/1\. 공급사 선택/);
+    expect(modal).toMatch(/2\. 연락처 확인/);
+    expect(modal).toMatch(/3\. 메시지 미리보기/);
+    expect(modal).toMatch(/4\. 최종 발송/);
+  });
+
+  it("전송 버튼은 공급사와 유효 연락처와 미리보기가 준비된 뒤에만 활성화", () => {
+    expect(modal).toMatch(/hasSupplierSelection[\s\S]{0,260}hasValidContact[\s\S]{0,260}previewReady[\s\S]{0,260}!isPending/);
+    expect(modal).toMatch(/disabled=\{!canSubmit\}/);
+    expect(modal).toMatch(/최종 확인 후 전송/);
+  });
+
+  it("빈 공급사, 무효 연락처, 서버 오류를 각각 다른 문구로 표시", () => {
+    expect(modal).toMatch(/공급사 없음:[\s\S]{0,80}공급사 선택 필요/);
+    expect(modal).toMatch(/무효 연락처:[\s\S]{0,80}연락처 확인 필요/);
+    expect(modal).toMatch(/서버 오류:[\s\S]{0,80}API 오류 확인 필요/);
+  });
+
+  it("발송 전 메시지 미리보기를 실제 화면에 노출", () => {
+    expect(modal).toMatch(/mobile-vendor-request-message-preview/);
+    expect(modal).toMatch(/메시지 미리보기/);
+  });
+});

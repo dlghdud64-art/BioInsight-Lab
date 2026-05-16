@@ -17,13 +17,13 @@
  *   - vendor email TextInput (필수) + vendor name TextInput (선택).
  *   - read-only quote summary (title) — 발송 대상 견적 확인.
  *   - send → useVendorRequestMutation.
- *   - empty email → primary button disabled.
+ *   - supplier/contact readiness → primary button disabled until safe to submit.
  *   - pending → ActivityIndicator + 모든 input disabled.
  *
  * canonical truth lock:
  *   - vendor email 검증은 서버 zod (§11.229c TLD blacklist + bare IP).
  *   - canSend gate (quote.status === "PENDING") 는 caller (quotes/[id]) 책임.
- *   - 모바일 client validation 0 (서버 single source of truth).
+ *   - 모바일 client 는 발송 전 readiness만 표시하고, 서버 zod가 canonical validation.
  *   - dead button / front-only success 0 (실제 mutation).
  */
 
@@ -40,6 +40,8 @@ import {
   Alert,
 } from "react-native";
 import { useVendorRequestMutation } from "../../hooks/use-vendor-request-mutation";
+
+const CONTACT_EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // §11.229b-3 #mobile-vendor-request-recall — 이전 발송 공급사 type.
 //   server GET /api/quotes/[id] dedup vendorRequests forward 정합.
@@ -78,9 +80,50 @@ export function VendorRequestModal({
   const mutation = useVendorRequestMutation();
 
   const isPending = mutation.isPending;
-  // §11.229b-3 — canSubmit: 수동 입력 email 있거나 recall 선택 있으면 true.
+  const manualEmail = vendorEmail.trim();
+  const hasManualVendor = manualEmail.length > 0;
+  const hasSupplierSelection = selectedRecall.size > 0 || hasManualVendor;
+  const hasInvalidManualContact =
+    hasManualVendor && !CONTACT_EMAIL_PATTERN.test(manualEmail);
+  const hasValidContact = hasSupplierSelection && !hasInvalidManualContact;
+  const previewText =
+    message.trim() || `${quoteTitle.trim() || "선택한 견적"} 요청 링크를 전송합니다.`;
+  const previewReady = previewText.trim().length > 0;
+  const serverErrorMessage =
+    mutation.error instanceof Error ? mutation.error.message : null;
   const canSubmit =
-    (vendorEmail.trim().length > 0 || selectedRecall.size > 0) && !isPending;
+    hasSupplierSelection && hasValidContact && previewReady && !isPending;
+  const currentBlockReason = !hasSupplierSelection
+    ? "공급사 선택 필요"
+    : hasInvalidManualContact
+      ? "연락처 확인 필요: 이메일 형식을 확인하세요."
+      : !previewReady
+        ? "메시지 미리보기 필요"
+        : serverErrorMessage
+          ? `API 오류 확인 필요: ${serverErrorMessage}`
+          : "최종 확인 후 전송 가능";
+  const readinessSteps = [
+    {
+      label: "1. 공급사 선택",
+      value: hasSupplierSelection ? "선택됨" : "필요",
+      ready: hasSupplierSelection,
+    },
+    {
+      label: "2. 연락처 확인",
+      value: hasValidContact ? "확인됨" : "연락처 필요",
+      ready: hasValidContact,
+    },
+    {
+      label: "3. 메시지 미리보기",
+      value: previewReady ? "표시됨" : "필요",
+      ready: previewReady,
+    },
+    {
+      label: "4. 최종 발송",
+      value: canSubmit ? "가능" : "대기",
+      ready: canSubmit,
+    },
+  ];
 
   const toggleRecall = (email: string) => {
     setSelectedRecall((prev) => {
@@ -112,7 +155,6 @@ export function VendorRequestModal({
     //   수동 입력 email 이 있고 trim 후 비어있지 않으면 추가.
     //   동일 email 이 recall + 수동 입력 모두에 있으면 manual 우선 (운영자 의도 정합).
     const vendorsArray: Array<{ email: string; name?: string }> = [];
-    const manualEmail = vendorEmail.trim();
 
     // recall 먼저 push
     for (const email of selectedRecall) {
@@ -190,6 +232,53 @@ export function VendorRequestModal({
               >
                 {quoteTitle}
               </Text>
+            </View>
+
+            <View
+              testID="mobile-vendor-request-readiness"
+              className="border border-blue-100 bg-blue-50 rounded-xl px-3 py-2.5 mb-3"
+            >
+              <Text className="text-xs font-bold text-blue-900 mb-2">
+                발송 전 확인
+              </Text>
+              {readinessSteps.map((step) => (
+                <View
+                  key={step.label}
+                  className="flex-row items-center justify-between py-0.5"
+                >
+                  <Text className="text-[11px] text-slate-700">
+                    {step.label}
+                  </Text>
+                  <Text
+                    className={`text-[11px] font-semibold ${
+                      step.ready ? "text-blue-700" : "text-amber-700"
+                    }`}
+                  >
+                    {step.value}
+                  </Text>
+                </View>
+              ))}
+              <Text
+                testID="mobile-vendor-request-block-reason"
+                className="mt-2 text-[11px] font-semibold text-slate-800"
+              >
+                {currentBlockReason}
+              </Text>
+              {!hasSupplierSelection && (
+                <Text className="mt-1 text-[11px] text-amber-700">
+                  공급사 없음: 공급사 선택 필요
+                </Text>
+              )}
+              {hasInvalidManualContact && (
+                <Text className="mt-1 text-[11px] text-amber-700">
+                  무효 연락처: 연락처 확인 필요
+                </Text>
+              )}
+              {serverErrorMessage && (
+                <Text className="mt-1 text-[11px] text-red-700">
+                  서버 오류: API 오류 확인 필요
+                </Text>
+              )}
             </View>
 
             {/* §11.229b-3 — 최근 발송 공급사 recall section (multi-select).
@@ -288,6 +377,18 @@ export function VendorRequestModal({
               style={{ minHeight: 64, textAlignVertical: "top" }}
             />
 
+            <View
+              testID="mobile-vendor-request-message-preview"
+              className="bg-slate-50 rounded-xl px-3 py-2.5 mb-4"
+            >
+              <Text className="text-[11px] font-semibold text-slate-500 mb-1">
+                메시지 미리보기
+              </Text>
+              <Text className="text-xs text-slate-700 leading-5">
+                {previewText}
+              </Text>
+            </View>
+
             {/* Footer */}
             <View className="flex-row gap-2">
               <Pressable
@@ -307,7 +408,9 @@ export function VendorRequestModal({
                 {isPending ? (
                   <ActivityIndicator size="small" color="white" />
                 ) : (
-                  <Text className="text-sm font-semibold text-white">전송</Text>
+                  <Text className="text-sm font-semibold text-white">
+                    최종 확인 후 전송
+                  </Text>
                 )}
               </Pressable>
             </View>
