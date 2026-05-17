@@ -144,52 +144,81 @@ export async function detectInventoryIssues(
 
         // §11.250b — INVENTORY_EXPIRING dispatch + push.
         //   created === true 인 신규 expiry 만 알림 (중복 방지 정합).
-        //   guest expiry (userId null) skip — multi-recipient org broadcast 별도 cluster.
         //   §11.229b-5/-6 + §11.250a/cd 패턴 reuse (dispatch + push 1:1).
-        if (created && candidate.userId) {
-          // inApp dispatch
-          try {
-            await dispatchNotificationEvent({
-              eventType: "INVENTORY_EXPIRING",
-              entityType: "INVENTORY",
-              entityId: candidate.inventoryId,
-              triggeredBy: triggerUserId ?? undefined,
-              recipients: [{ userId: candidate.userId }],
-              metadata: {
-                productName: candidate.productName,
-                brand: candidate.brand,
-                lotNumber: candidate.lotNumber,
-                expiryDate: candidate.expiryDate.toISOString(),
-                daysUntilExpiry: candidate.daysUntilExpiry,
-                currentQuantity: candidate.currentQuantity,
-                unit: candidate.unit,
-                location: candidate.location,
-                suggestedAction: candidate.suggestedAction,
-              },
-            });
-          } catch (notifErr) {
-            // graceful — cron 정합 유지
-            console.error("[inventory-restock-detector] INVENTORY_EXPIRING notification 발송 실패:", notifErr);
+        // §11.250b-org — organizationMember OWNER+ADMIN 다중 recipient.
+        //   §11.250acd-2 패턴 정확 reuse (Set dedup + recipients array + push for-of).
+        if (created) {
+          // §11.250b-org — recipients dedup (single userId + org broadcast).
+          const recipientUserIds = new Set<string>();
+          if (candidate.userId) recipientUserIds.add(candidate.userId);
+          if (candidate.organizationId) {
+            try {
+              const orgMembers = await db.organizationMember.findMany({
+                where: {
+                  organizationId: candidate.organizationId,
+                  role: { in: ["OWNER", "ADMIN"] },
+                },
+                select: { userId: true },
+              });
+              for (const m of orgMembers as Array<{ userId: string }>) {
+                if (m.userId) recipientUserIds.add(m.userId);
+              }
+            } catch (orgErr) {
+              // graceful — single fallback
+              console.error("[inventory-restock-detector] INVENTORY_EXPIRING org broadcast member 조회 실패 (single fallback):", orgErr);
+            }
           }
 
-          // Expo OS-level push (외근 운영자 즉시 인지)
-          try {
+          if (recipientUserIds.size > 0) {
+            const recipients = Array.from(recipientUserIds).map((uid) => ({ userId: uid }));
+
+            // inApp dispatch
+            try {
+              await dispatchNotificationEvent({
+                eventType: "INVENTORY_EXPIRING",
+                entityType: "INVENTORY",
+                entityId: candidate.inventoryId,
+                triggeredBy: triggerUserId ?? undefined,
+                recipients,
+                metadata: {
+                  productName: candidate.productName,
+                  brand: candidate.brand,
+                  lotNumber: candidate.lotNumber,
+                  expiryDate: candidate.expiryDate.toISOString(),
+                  daysUntilExpiry: candidate.daysUntilExpiry,
+                  currentQuantity: candidate.currentQuantity,
+                  unit: candidate.unit,
+                  location: candidate.location,
+                  suggestedAction: candidate.suggestedAction,
+                  recipientCount: recipients.length,
+                },
+              });
+            } catch (notifErr) {
+              // graceful — cron 정합 유지
+              console.error("[inventory-restock-detector] INVENTORY_EXPIRING notification 발송 실패:", notifErr);
+            }
+
+            // §11.250b-org — Expo OS-level push for-of multi-recipient.
             const daysLabel = candidate.daysUntilExpiry <= 0
               ? "오늘 만료"
               : `D-${candidate.daysUntilExpiry}일`;
-            await sendPushNotification(candidate.userId, {
-              title: "유효기한 임박 경고",
-              body: `${candidate.productName} — ${daysLabel} (${candidate.currentQuantity}${candidate.unit})`,
-              data: {
-                type: "expiry_warning",
-                id: candidate.inventoryId,
-                productName: candidate.productName,
-                daysUntilExpiry: candidate.daysUntilExpiry,
-              },
-            });
-          } catch (pushErr) {
-            // graceful — cron 정합 유지
-            console.error("[inventory-restock-detector] INVENTORY_EXPIRING push notification 실패:", pushErr);
+            for (const recipientUserId of recipientUserIds) {
+              try {
+                await sendPushNotification(recipientUserId, {
+                  title: "유효기한 임박 경고",
+                  body: `${candidate.productName} — ${daysLabel} (${candidate.currentQuantity}${candidate.unit})`,
+                  data: {
+                    type: "expiry_warning",
+                    id: candidate.inventoryId,
+                    productName: candidate.productName,
+                    daysUntilExpiry: candidate.daysUntilExpiry,
+                  },
+                });
+              } catch (pushErr) {
+                // graceful — cron 정합 유지
+                console.error("[inventory-restock-detector] INVENTORY_EXPIRING push notification 실패:", pushErr);
+              }
+            }
           }
         }
       } catch (err) {
