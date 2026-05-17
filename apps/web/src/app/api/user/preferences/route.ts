@@ -89,6 +89,19 @@ const SafetyFilterSchema = z.object({
   activeFrame: z.string().max(50).optional(),
 });
 
+// §11.250-pref-ui — role-aware notification preference (7 카테고리 토글).
+//   §11.250-pref backend filter 와 1:1 정합 (event-category-map.ts 7 카테고리).
+//   default true 보존 — 명시적 false 만 dispatch filter 안 제외 (기존 사용자 회귀 0).
+const NotificationTogglesSchema = z.object({
+  stock_alert: z.boolean().optional(),
+  quote_arrived: z.boolean().optional(),
+  approval_pending: z.boolean().optional(),
+  expiry_warning: z.boolean().optional(),
+  safety_alert: z.boolean().optional(),
+  delivery_complete: z.boolean().optional(),
+  system: z.boolean().optional(),
+});
+
 const UserPreferencesPatchSchema = z.object({
   columnPrefs: z
     .object({
@@ -112,6 +125,8 @@ const UserPreferencesPatchSchema = z.object({
   purchaseOrdersFilter: PurchaseOrdersFilterSchema.optional(),
   // §11.230c (a)-7 — safety page activeFrame server-persist.
   safetyFilter: SafetyFilterSchema.optional(),
+  // §11.250-pref-ui — role-aware notification toggles (7 카테고리).
+  notificationToggles: NotificationTogglesSchema.optional(),
 });
 
 interface UserPreferencesJson {
@@ -159,6 +174,16 @@ interface UserPreferencesJson {
   // §11.230c (a)-7 — safety page activeFrame nested key.
   safetyFilter?: {
     activeFrame?: string;
+  };
+  // §11.250-pref-ui — role-aware notification toggles (7 카테고리).
+  notificationToggles?: {
+    stock_alert?: boolean;
+    quote_arrived?: boolean;
+    approval_pending?: boolean;
+    expiry_warning?: boolean;
+    safety_alert?: boolean;
+    delivery_complete?: boolean;
+    system?: boolean;
   };
   [key: string]: unknown;
 }
@@ -319,6 +344,35 @@ export async function PATCH(request: NextRequest) {
               ...(currentPrefs.safetyFilter ?? {}),
               ...(validation.data.safetyFilter.activeFrame !== undefined
                 ? { activeFrame: validation.data.safetyFilter.activeFrame }
+                : {}),
+            },
+          }
+        : {}),
+      // §11.250-pref-ui — notificationToggles deep merge (7 카테고리 부분 update).
+      ...(validation.data.notificationToggles
+        ? {
+            notificationToggles: {
+              ...(currentPrefs.notificationToggles ?? {}),
+              ...(validation.data.notificationToggles.stock_alert !== undefined
+                ? { stock_alert: validation.data.notificationToggles.stock_alert }
+                : {}),
+              ...(validation.data.notificationToggles.quote_arrived !== undefined
+                ? { quote_arrived: validation.data.notificationToggles.quote_arrived }
+                : {}),
+              ...(validation.data.notificationToggles.approval_pending !== undefined
+                ? { approval_pending: validation.data.notificationToggles.approval_pending }
+                : {}),
+              ...(validation.data.notificationToggles.expiry_warning !== undefined
+                ? { expiry_warning: validation.data.notificationToggles.expiry_warning }
+                : {}),
+              ...(validation.data.notificationToggles.safety_alert !== undefined
+                ? { safety_alert: validation.data.notificationToggles.safety_alert }
+                : {}),
+              ...(validation.data.notificationToggles.delivery_complete !== undefined
+                ? { delivery_complete: validation.data.notificationToggles.delivery_complete }
+                : {}),
+              ...(validation.data.notificationToggles.system !== undefined
+                ? { system: validation.data.notificationToggles.system }
                 : {}),
             },
           }

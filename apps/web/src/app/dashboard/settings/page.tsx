@@ -23,6 +23,8 @@ import { ApprovalThresholdSection } from "@/components/settings/approval-thresho
 import { WorkspaceMembersApprovalLimitSection } from "@/components/settings/workspace-members-approval-limit-section";
 // #approver-routing-per-user-limit-organization-member-admin-ui — org OWNER/ADMIN 결재 한도
 import { OrgMembersApprovalLimitSection } from "@/components/settings/org-members-approval-limit-section";
+// §11.250-pref-ui — 7 카테고리 server-persist 알림 토글 (notifications 섹션 mount).
+import { NotificationPreferenceToggles } from "@/components/settings/notification-preference-toggles";
 import { useState, Suspense, useEffect, useMemo, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -1211,6 +1213,9 @@ function SettingsPageContent() {
                     <span className="text-xs text-slate-500">안전 중요 알림은 항상 즉시 전송됩니다.</span>
                   </div>
                 </SectionCard>
+
+                {/* §11.250-pref-ui — 7 카테고리 server-persist 토글 (cross-device sync). */}
+                <NotificationPreferenceToggles />
 
                 {notificationsByCategory.map((group) => (
                   <SectionCard key={group.category} title={group.category} icon={group.items[0].icon} topRightLabel="SELF-MANAGED">

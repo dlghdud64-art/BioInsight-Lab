@@ -66,6 +66,16 @@ export interface UserPreferencesJson {
   safetyFilter?: {
     activeFrame?: string;
   };
+  // §11.250-pref-ui — role-aware notification toggles (7 카테고리, default true).
+  notificationToggles?: {
+    stock_alert?: boolean;
+    quote_arrived?: boolean;
+    approval_pending?: boolean;
+    expiry_warning?: boolean;
+    safety_alert?: boolean;
+    delivery_complete?: boolean;
+    system?: boolean;
+  };
   [key: string]: unknown;
 }
 
@@ -113,6 +123,18 @@ export type SafetyFilterPatch = {
   activeFrame?: string;
 };
 
+// §11.250-pref-ui — role-aware notification toggles patch type (7 카테고리).
+//   default true 보존 — 명시 false 만 dispatch filter 안 제외.
+export type NotificationTogglesPatch = {
+  stock_alert?: boolean;
+  quote_arrived?: boolean;
+  approval_pending?: boolean;
+  expiry_warning?: boolean;
+  safety_alert?: boolean;
+  delivery_complete?: boolean;
+  system?: boolean;
+};
+
 interface UserPreferencesResponse {
   preferences: UserPreferencesJson | null;
 }
@@ -134,6 +156,7 @@ type UserPreferencesPatch = {
   purchasesFilter?: PurchasesFilterPatch;
   purchaseOrdersFilter?: PurchaseOrdersFilterPatch;
   safetyFilter?: SafetyFilterPatch;
+  notificationToggles?: NotificationTogglesPatch;
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -271,6 +294,16 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.250-pref-ui — role-aware notification toggles (7 카테고리, debounced).
+  //   default true 보존 — toggle off 시 명시 false 만 server 도달.
+  //   dispatch filter (§11.250-pref) 안 false 시 recipient skip.
+  const updateNotificationToggles = (patch: NotificationTogglesPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ notificationToggles: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -298,6 +331,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updatePurchasesFilter,
     updatePurchaseOrdersFilter,
     updateSafetyFilter,
+    updateNotificationToggles,
     isPatching: mutation.isPending,
     isPatchError: mutation.isError,
     isPatchSuccess: mutation.isSuccess,
