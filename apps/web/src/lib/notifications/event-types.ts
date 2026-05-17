@@ -78,6 +78,15 @@ export const EVENT_TYPE_META: Record<NotificationEventType, EventTypeMeta> = {
     entityType: "QUOTE",
     defaultActions: ["IN_APP", "QUEUE_ITEM"],
   },
+  /**
+   * §11.250-p2-review #event-types-semantic-drift — P2 REVIEW cleanup.
+   *
+   * @deprecated dead path audit 발견 — dispatchNotificationEvent caller 0 (orphan).
+   *   vendor 가 quote 응답을 보낸 경우는 VENDOR_REPLIED 를 사용 권장 (§11.229b-5/-6 active path).
+   *   QUOTE_RECEIVED 는 향후 quote-level (multi-vendor 응답 집계 / quote document scan 등)
+   *   semantic 으로 재정의되지 않는 한 신규 caller 추가 금지.
+   *   호환성 위해 enum + meta 보존 (event-category-map 매핑 + isValidEventType 정합).
+   */
   QUOTE_RECEIVED: {
     key: "QUOTE_RECEIVED",
     label: "견적서 수신",
@@ -138,6 +147,20 @@ export const EVENT_TYPE_META: Record<NotificationEventType, EventTypeMeta> = {
     entityType: "COMPARE",
     defaultActions: ["IN_APP", "QUEUE_ITEM"],
   },
+  /**
+   * §11.250-p2-review #event-types-semantic-drift — P2 REVIEW cleanup.
+   *
+   * semantic note: APPROVAL_NEEDED 는 governance-bridge.ts 가 active caller (3 mapping):
+   *   - approval_snapshot_invalidated (승인 스냅샷 무효화)
+   *   - dispatch_prep_blocked (발송 준비 차단)
+   *   - po_data_changed_after_approval (승인 후 PO 본문 변경)
+   *
+   * PURCHASE_APPROVAL_REQUESTED (§11.209d 결재 lifecycle) 와 의도 분리:
+   *   - APPROVAL_NEEDED entityType=APPROVAL, governance-level event (snapshot/dispatch 보호 관점)
+   *   - PURCHASE_APPROVAL_REQUESTED entityType=PURCHASE_REQUEST, purchase request 결재 진입 알림
+   *   두 path 가 서로 다른 surface (governance ledger vs purchase queue) 에 정합.
+   *   신규 caller 는 의도에 맞는 type 을 명시적으로 선택.
+   */
   APPROVAL_NEEDED: {
     key: "APPROVAL_NEEDED",
     label: "승인 요청",
