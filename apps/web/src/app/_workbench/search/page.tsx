@@ -813,9 +813,43 @@ export default function SearchPage() {
               <div className="w-14 h-14 rounded-xl bg-el border border-slate-200 flex items-center justify-center mx-auto mb-5">
                 <Search className="h-7 w-7 text-blue-600" />
               </div>
-              <h2 className="text-lg font-bold text-slate-900 mb-2">시약·장비를 검색하세요</h2>
-              <p className="text-sm text-slate-600 mb-2 leading-relaxed">시약명, CAS No., 제조사, 카탈로그 번호로 500만+ 품목을 검색할 수 있습니다.</p>
-              <p className="text-xs text-slate-500 mb-6">검색 후 비교 목록 추가 · 견적 요청 · 재고 연결까지 하나의 흐름으로 이어집니다</p>
+              {/* §11.252e #2 — 빈 화면 설명 텍스트 모바일 어절 분리 어색 fix.
+                  짧은 문장 swap + break-keep 으로 어절 단위 줄바꿈 보장. */}
+              <h2 className="text-lg font-bold text-slate-900 mb-2 break-keep">시약·장비를 검색하세요</h2>
+              <p className="text-sm text-slate-600 mb-2 leading-relaxed break-keep">시약명·CAS·제조사·카탈로그 번호로 500만+ 품목 검색</p>
+              <p className="text-xs text-slate-500 mb-6 break-keep">검색 → 비교 → 견적 → 재고까지 한 흐름으로 연결됩니다</p>
+
+              {/* §11.252e #3 — card-position: 품목 등록 / 재고 확인 / 비교 목록 카드를
+                  검색 입력 직하단 (샘플 칩 위) 로 이동. 호영님 spec "검색 전에 먼저 노출".
+                  로그인 사용자만 노출 — 비로그인은 하단 fallback 버튼 유지. */}
+              {session?.user && (
+                <div className="grid grid-cols-3 gap-2 max-w-md mx-auto mb-6">
+                  <Link
+                    href="/protocol/bom"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="품목 등록 페이지로 이동"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium break-keep">품목 등록</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/inventory"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="재고 확인 페이지로 이동"
+                  >
+                    <Package className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium break-keep">재고 확인</span>
+                  </Link>
+                  <Link
+                    href="/app/compare"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="비교 목록 페이지로 이동"
+                  >
+                    <PenLine className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium break-keep">비교 목록</span>
+                  </Link>
+                </div>
+              )}
 
               {/* 예시 검색어 chip */}
               <div className="flex items-center gap-1.5 flex-wrap justify-center mb-6">
@@ -875,40 +909,9 @@ export default function SearchPage() {
                 </div>
               )}
 
-              {session?.user ? (
-                /* §11.251b — 모바일 UX: BOM 등록 / 재고 확인 / 비교 목록 텍스트 링크 →
-                   카드형 (아이콘 + 텍스트) 으로 swap. 탭 가능한 요소임을 명확히 표현 +
-                   모바일 터치 영역 44px 확보 (min-h-[44px]). */
-                <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
-                  {/* §11.251-bom-label — "BOM 등록" → "품목 등록" 라벨 통일
-                      (대시보드 온보딩 "품목 등록" + 사용자 행위 관점 정합).
-                      href /protocol/bom 보존 (변수 path 유지). */}
-                  <Link
-                    href="/protocol/bom"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    aria-label="품목 등록 페이지로 이동"
-                  >
-                    <FileText className="h-3.5 w-3.5 text-blue-600/70" />
-                    <span className="text-[11px] font-medium">품목 등록</span>
-                  </Link>
-                  <Link
-                    href="/dashboard/inventory"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    aria-label="재고 확인 페이지로 이동"
-                  >
-                    <Package className="h-3.5 w-3.5 text-blue-600/70" />
-                    <span className="text-[11px] font-medium">재고 확인</span>
-                  </Link>
-                  <Link
-                    href="/app/compare"
-                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
-                    aria-label="비교 목록 페이지로 이동"
-                  >
-                    <PenLine className="h-3.5 w-3.5 text-blue-600/70" />
-                    <span className="text-[11px] font-medium">비교 목록</span>
-                  </Link>
-                </div>
-              ) : (
+              {/* §11.252e #3 — 기존 하단 카드 제거 (검색 입력 직하단으로 이동, line ~825).
+                  비로그인 사용자만 fallback 버튼 노출. */}
+              {!session?.user && (
                 <Button
                   className="h-9 px-6 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium"
                   onClick={() => setIsLoginPromptOpen(true)}
@@ -942,9 +945,13 @@ export default function SearchPage() {
       )}
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
+      {/* §11.252e #1 — 액션 바 3줄 → 2줄 압축 (호영님 spec). 모바일 flex-wrap →
+          flex-nowrap + overflow-x-auto (가로 스크롤) 으로 1줄 강제 + 휴지통 잘림 차단.
+          ≥sm: 기존 flex-wrap 보존 (데스크탑 충분한 폭). pr-4 으로 padding-right
+          16px 확보 (호영님 spec "padding-right 16px 이상"). */}
       {hasSearched && !!session?.user && isSourcingOwner && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
-          <div className="px-4 py-3 flex items-center gap-4 flex-wrap">
+          <div className="px-4 pr-4 py-3 flex items-center gap-2 sm:gap-4 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-x-visible">
             {/* Compare segment */}
             <div className="flex items-center gap-2.5">
               <div className="flex items-center gap-1.5">
