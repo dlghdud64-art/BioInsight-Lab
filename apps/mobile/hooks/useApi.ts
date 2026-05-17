@@ -680,3 +680,76 @@ export function useOrgVendors(organizationId: string | null | undefined) {
     staleTime: 60_000,
   });
 }
+
+// ─── §11.250-pref-mobile — Notification Preference Toggles (mobile sync) ────
+//
+// 호영님 spec: §11.250-pref (in-app filter) + §11.250-pref-ui (web settings 토글)
+//   + §11.250-pref-push (mobile push filter) 의 mobile UI 동기.
+//   사용자가 mobile/web 어느 surface 에서든 토글 → server preference (User.
+//   preferences.notificationToggles) 즉시 sync → cross-platform 1:1 정합.
+//
+// canonical truth lock:
+//   - web `/api/user/preferences` GET/PATCH 시그니처 reuse (별도 mobile route 0).
+//   - User.preferences.notificationToggles Json field reuse (schema 0).
+//   - 7 카테고리 (event-category-map) — web + mobile 1:1.
+//   - default true 보존 (preference 미설정 사용자 영향 0).
+
+export interface UserPreferencesJson {
+  notificationToggles?: {
+    stock_alert?: boolean;
+    quote_arrived?: boolean;
+    approval_pending?: boolean;
+    expiry_warning?: boolean;
+    safety_alert?: boolean;
+    delivery_complete?: boolean;
+    system?: boolean;
+  };
+  [key: string]: unknown;
+}
+
+export interface NotificationTogglesPatch {
+  stock_alert?: boolean;
+  quote_arrived?: boolean;
+  approval_pending?: boolean;
+  expiry_warning?: boolean;
+  safety_alert?: boolean;
+  delivery_complete?: boolean;
+  system?: boolean;
+}
+
+/**
+ * §11.250-pref-mobile — server preference fetch (mobile).
+ *   web `/api/user/preferences` GET 시그니처 reuse. Bearer token 자동 주입.
+ */
+export function useUserPreferences() {
+  return useQuery<{ preferences: UserPreferencesJson | null }>({
+    queryKey: ["user-preferences"],
+    queryFn: async () => {
+      const res = await apiClient.get("/api/user/preferences");
+      return res.data;
+    },
+    staleTime: 60_000,
+    retry: 1,
+  });
+}
+
+/**
+ * §11.250-pref-mobile — notification toggle mutation (mobile).
+ *   web `/api/user/preferences` PATCH 시그니처 reuse. partial update
+ *   (한 카테고리 토글 시 다른 카테고리 보존). invalidateQueries 으로 cache sync.
+ */
+export function useUpdateNotificationToggles() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (patch: NotificationTogglesPatch) => {
+      const res = await apiClient.patch("/api/user/preferences", {
+        notificationToggles: patch,
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      qc.setQueryData(["user-preferences"], data);
+      qc.invalidateQueries({ queryKey: ["user-preferences"] });
+    },
+  });
+}

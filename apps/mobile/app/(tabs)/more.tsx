@@ -72,13 +72,15 @@ export default function MoreScreen() {
       bgColor: unreadCount > 0 ? "bg-blue-50" : "bg-slate-100",
       onPress: () => router.push("/notifications"),
     },
+    // §11.250-pref-mobile — 7 카테고리 알림 토글 (cross-platform sync).
+    //   dead button 제거 (Alert "준비 중" → router.push("/notification-preferences")).
     {
       icon: Bell,
       label: "알림 설정",
-      description: "푸시 알림, 재고 알림 설정",
+      description: "카테고리별 알림 수신 토글 (모바일·웹 동기)",
       color: iconColor.warning,
       bgColor: "bg-amber-50",
-      onPress: () => Alert.alert("알림 설정", "알림 설정 기능은 준비 중입니다."),
+      onPress: () => router.push("/notification-preferences"),
     },
     {
       icon: Settings,
