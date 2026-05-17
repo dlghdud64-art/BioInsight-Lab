@@ -201,7 +201,7 @@ export async function POST(
             requestId: requestId,
             rejectionReason: reason || null,
           },
-        });
+        }, "PURCHASE_REJECTED");
       } catch (pushErr) {
         console.error("[request/reject] push notification 실패 (mutation 정합 유지):", pushErr);
       }

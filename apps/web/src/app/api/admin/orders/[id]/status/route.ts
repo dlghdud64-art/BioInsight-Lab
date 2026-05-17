@@ -370,7 +370,7 @@ export async function PATCH(
                   orderNumber: order.orderNumber,
                   status: "SHIPPING",
                 },
-              });
+              }, "ORDER_SHIPPED");
             } catch (pushErr) {
               console.error("[admin/orders/status] ORDER_SHIPPED push notification 실패 (mutation 정합 유지):", pushErr);
             }
@@ -407,7 +407,7 @@ export async function PATCH(
                   orderNumber: order.orderNumber,
                   status: "DELIVERED",
                 },
-              });
+              }, "ORDER_DELIVERED");
             } catch (pushErr) {
               console.error("[admin/orders/status] ORDER_DELIVERED push notification 실패 (mutation 정합 유지):", pushErr);
             }

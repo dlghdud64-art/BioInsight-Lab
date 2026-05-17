@@ -186,7 +186,7 @@ export async function POST(
             id: quoteId,
             vendorName: vendor.name,
           },
-        });
+        }, "VENDOR_REPLIED");
       } catch (pushErr) {
         // graceful — mutation 정합 유지
         console.error("[vendor/response] push notification 실패 (mutation 정합 유지):", pushErr);

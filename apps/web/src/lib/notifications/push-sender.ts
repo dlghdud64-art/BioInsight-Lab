@@ -9,6 +9,12 @@
  *   - try/catch graceful (push fail 시 mutation 영향 0 — best effort)
  *   - 빈 token list 시 silent skip (사용자가 mobile 앱 미설치 / 권한 거부)
  *
+ * §11.250-pref-push — optional eventType 3rd param 추가. eventType 제공 시
+ *   isUserPreferenceAllowed (preference-filter) 으로 사용자 카테고리 토글 확인.
+ *   명시 false → skipped:true 즉시 return (Device.findMany 호출 0 — DB load 절감).
+ *   eventType 미제공 시 기존 동작 보존 (backward compat).
+ *   §11.250-pref (in-app filter) + §11.250-pref-ui (settings 토글) 와 1:1 정합.
+ *
  * 향후 (Phase 2):
  *   - 결재 mutation route 에 sendPushNotification 호출 추가
  *
@@ -19,6 +25,7 @@
  */
 
 import { db } from "@/lib/db";
+import { isUserPreferenceAllowed } from "./preference-filter";
 
 const EXPO_PUSH_API = "https://exp.host/--/api/v2/push/send";
 
@@ -47,8 +54,18 @@ export interface SendPushResult {
 export async function sendPushNotification(
   userId: string,
   payload: PushPayload,
+  eventType?: string,
 ): Promise<SendPushResult> {
   try {
+    // §11.250-pref-push — eventType 제공 시 user preference 확인. 명시 false 면 즉시 skip.
+    //   eventType 미제공 시 backward compat (기존 caller 영향 0).
+    if (eventType) {
+      const allowed = await isUserPreferenceAllowed(userId, eventType);
+      if (!allowed) {
+        return { successCount: 0, failureCount: 0, skipped: true };
+      }
+    }
+
     const devices = await db.device.findMany({
       where: { userId },
       select: { pushToken: true },

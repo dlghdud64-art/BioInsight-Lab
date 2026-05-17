@@ -135,7 +135,7 @@ export async function POST(
             id,
             keyChangesCount: insight.keyChanges.length,
           },
-        });
+        }, "COMPARE_COMPLETED");
       } catch (pushErr) {
         // graceful — mutation 정합 유지
         console.error("[compare-sessions/insight] COMPARE_COMPLETED push notification 실패:", pushErr);

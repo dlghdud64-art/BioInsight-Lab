@@ -410,7 +410,7 @@ export async function POST(
             requestId: requestId,
             orderId: result.order?.id ?? null,
           },
-        });
+        }, "PURCHASE_APPROVED");
       } catch (pushErr) {
         console.error("[request/approve] push notification 실패 (mutation 정합 유지):", pushErr);
       }
@@ -419,14 +419,49 @@ export async function POST(
     // §11.250f #budget-warning-notification-dispatch — P1 마지막 cluster.
     //   validateCategoryBudgetInTransaction warning/soft_limit level 발생 시
     //   BUDGET_WARNING dispatch + push. hard_stop 은 BudgetBlockedError 로 이미 차단됨.
-    //   recipient = requester (org admin broadcast 별도 cluster).
     //   §11.229b-5/-6 + §11.250a/cd/b/g/e 패턴 정확 reuse.
-    if (result.budgetWarnings.length > 0 && purchaseRequest.requesterId) {
+    // §11.250f-org #budget-warning-org-broadcast — organizationMember OWNER+ADMIN
+    //   다중 recipient. 관리자가 예산 임박/소프트 리밋 초과 즉시 인지.
+    //   §11.250acd-2 패턴 정확 reuse (Set dedup + recipients array + push for-of).
+    if (result.budgetWarnings.length > 0) {
       const budgetWarnings = result.budgetWarnings;
       const topWarning = budgetWarnings[0];
       const summary = budgetWarnings
         .map((w: any) => `${w.categoryDisplayName} ${w.projectedUsagePercent}%`)
         .join(", ");
+
+      // §11.250f-org — recipients dedup (requester + org broadcast).
+      const recipientUserIds = new Set<string>();
+      if (purchaseRequest.requesterId) recipientUserIds.add(purchaseRequest.requesterId);
+      if (purchaseRequest.organizationId) {
+        try {
+          const orgMembers = await db.organizationMember.findMany({
+            where: {
+              organizationId: purchaseRequest.organizationId,
+              role: { in: ["OWNER", "ADMIN"] },
+            },
+            select: { userId: true },
+          });
+          for (const m of orgMembers as Array<{ userId: string }>) {
+            if (m.userId) recipientUserIds.add(m.userId);
+          }
+        } catch (orgErr) {
+          // graceful — requester single fallback
+          console.error("[request/approve] BUDGET_WARNING org broadcast member 조회 실패 (single fallback):", orgErr);
+        }
+      }
+
+      if (recipientUserIds.size === 0) return NextResponse.json({
+        purchaseRequest: result.purchaseRequest,
+        order: result.order,
+        ...(result.budgetWarnings.length > 0 && {
+          budgetWarnings: result.budgetWarnings.map((w: any) =>
+            `${w.categoryDisplayName}: 예상 사용률 ${w.projectedUsagePercent}% (${w.level === "soft_limit" ? "소프트 리밋 초과" : "주의"})`,
+          ),
+        }),
+      });
+
+      const recipients = Array.from(recipientUserIds).map((uid) => ({ userId: uid }));
 
       // inApp dispatch
       try {
@@ -435,7 +470,7 @@ export async function POST(
           entityType: "BUDGET",
           entityId: requestId,
           triggeredBy: session.user.id,
-          recipients: [{ userId: purchaseRequest.requesterId }],
+          recipients,
           metadata: {
             warnings: budgetWarnings.map((w: any) => ({
               categoryDisplayName: w.categoryDisplayName,
@@ -446,6 +481,7 @@ export async function POST(
             })),
             warningCount: budgetWarnings.length,
             requestTitle: purchaseRequest.title,
+            recipientCount: recipients.length,
           },
         });
       } catch (notifErr) {
@@ -453,24 +489,26 @@ export async function POST(
         console.error("[request/approve] BUDGET_WARNING notification 발송 실패 (mutation 정합 유지):", notifErr);
       }
 
-      // Expo OS-level push
-      try {
-        const titleKo = topWarning.level === "soft_limit"
-          ? "예산 소프트 리밋 초과 경고"
-          : "예산 사용률 경고";
-        await sendPushNotification(purchaseRequest.requesterId, {
-          title: titleKo,
-          body: `${purchaseRequest.title} — ${summary}`,
-          data: {
-            type: "system",
-            id: requestId,
-            warningCount: budgetWarnings.length,
-            level: topWarning.level,
-          },
-        });
-      } catch (pushErr) {
-        // graceful — mutation 정합 유지
-        console.error("[request/approve] BUDGET_WARNING push notification 실패 (mutation 정합 유지):", pushErr);
+      // §11.250f-org — Expo OS-level push for-of multi-recipient.
+      const titleKo = topWarning.level === "soft_limit"
+        ? "예산 소프트 리밋 초과 경고"
+        : "예산 사용률 경고";
+      for (const recipientUserId of recipientUserIds) {
+        try {
+          await sendPushNotification(recipientUserId, {
+            title: titleKo,
+            body: `${purchaseRequest.title} — ${summary}`,
+            data: {
+              type: "system",
+              id: requestId,
+              warningCount: budgetWarnings.length,
+              level: topWarning.level,
+            },
+          }, "BUDGET_WARNING");
+        } catch (pushErr) {
+          // graceful — mutation 정합 유지
+          console.error("[request/approve] BUDGET_WARNING push notification 실패 (mutation 정합 유지):", pushErr);
+        }
       }
     }
 

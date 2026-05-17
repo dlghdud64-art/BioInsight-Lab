@@ -213,7 +213,7 @@ export async function detectInventoryIssues(
                     productName: candidate.productName,
                     daysUntilExpiry: candidate.daysUntilExpiry,
                   },
-                });
+                }, "INVENTORY_EXPIRING");
               } catch (pushErr) {
                 // graceful — cron 정합 유지
                 console.error("[inventory-restock-detector] INVENTORY_EXPIRING push notification 실패:", pushErr);

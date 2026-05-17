@@ -81,3 +81,44 @@ export async function filterRecipientsByPreference<T extends PreferenceRecipient
     return !blockedUserIds.has(r.userId);
   });
 }
+
+/**
+ * §11.250-pref-push #isUserPreferenceAllowed — single-userId 변형.
+ *
+ * 호영님 spec: sendPushNotification (push-sender.ts) 안 preference filter 적용
+ *   위해 single-userId 형태 helper. filterRecipientsByPreference 와 동일 로직
+ *   (default true + 명시 false 만 차단 + graceful DB fail).
+ *
+ * @param userId - push 발송 대상 사용자 id.
+ * @param eventType - NotificationEvent.eventType (category 매핑용).
+ * @returns true → 발송 허용, false → 명시적 차단. DB fail 시 true (보존 동작).
+ */
+export async function isUserPreferenceAllowed(
+  userId: string,
+  eventType: string,
+): Promise<boolean> {
+  if (!userId) return true; // 안전망 — caller 가 빈 userId 전달 시 통과 (push-sender 가 skip).
+
+  const category: NotificationCategory = eventTypeToCategory(eventType);
+
+  try {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { preferences: true },
+    });
+
+    if (!user) return true; // user 없음 → 보존 동작 (push-sender 가 device 0 으로 skip).
+
+    const prefs = (user.preferences ?? {}) as Record<string, unknown>;
+    const toggles = (prefs.notificationToggles ?? {}) as Record<string, unknown>;
+    const toggleValue = toggles[category];
+
+    // 명시 false 만 차단. 그 외 (undefined/null/missing/true) → 통과.
+    if (toggleValue === false) return false;
+    return true;
+  } catch (err) {
+    // graceful — DB 조회 실패 시 통과 (push 정상 전송 보장).
+    console.error("[isUserPreferenceAllowed] DB 조회 실패 (통과 fallback):", err);
+    return true;
+  }
+}

@@ -320,7 +320,7 @@ export async function PATCH(
               id: params.id,
               productName,
             },
-          });
+          }, "INVENTORY_LOW");
           } catch (pushErr) {
             // graceful — mutation 정합 유지
             console.error("[inventory/[id]] INVENTORY_LOW push notification 실패 (mutation 정합 유지):", pushErr);

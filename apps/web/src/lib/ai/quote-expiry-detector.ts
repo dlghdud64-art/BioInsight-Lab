@@ -135,7 +135,7 @@ export async function detectExpiredQuotes(
               id: candidate.id,
               quoteTitle: candidate.title,
             },
-          });
+          }, "QUOTE_EXPIRED");
         } catch (pushErr) {
           // graceful — cron 정합 유지
           console.error("[quote-expiry-detector] QUOTE_EXPIRED push notification 실패:", pushErr);
