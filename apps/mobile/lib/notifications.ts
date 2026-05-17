@@ -94,9 +94,10 @@ const ROUTE_MAP: Record<NotificationType, RouteTarget> = {
     fallback: "/(tabs)/quotes",
   },
   compare: {
-    // §11.250g — AI 비교 분석 완료 → dashboard 진입 (compare result 표시).
-    //   mobile compare detail surface 없음 → /(tabs)/index fallback 동일.
-    detail: () => "/(tabs)",
+    // §11.250g — AI 비교 분석 완료 push notification.
+    // §11.250g-2 — mobile compare detail surface 추가 (push tap 즉시 진입).
+    //   id 있을 때 /compare/{id} screen 으로 deep-link. id 없을 시 dashboard.
+    detail: (id) => `/compare/${id}`,
     fallback: "/(tabs)",
   },
   system: {
@@ -271,6 +272,9 @@ const NOTIFICATION_LABELS: Record<NotificationType, string> = {
   low_stock: "재고 부족",
   expiry_warning: "유효기한 임박",
   approval_pending: "승인 대기",
+  // §11.250g-2 — AI 비교 분석 알림 라벨 (§11.250g 시 NotificationType union 추가됨,
+  //   두 Record 에는 누락되었던 pre-existing tsc drift 정합).
+  compare: "AI 비교 분석",
   system: "시스템 알림",
 };
 
@@ -284,6 +288,8 @@ const NOTIFICATION_COLORS: Record<NotificationType, string> = {
   low_stock: "#ef4444",
   expiry_warning: "#f97316",
   approval_pending: "#6366f1",
+  // §11.250g-2 — AI 비교 violet (sparkles 톤 정합).
+  compare: "#8b5cf6",
   system: "#64748b",
 };
 

@@ -753,3 +753,62 @@ export function useUpdateNotificationToggles() {
     },
   });
 }
+
+// ─── §11.250g-2 — Compare Session Detail (mobile detail surface) ────────────
+//
+// 호영님 spec: §11.250g push notification ("AI 비교 분석 완료") tap 시 ROUTE_MAP
+//   .compare 가 /(tabs) dashboard fallback → 사용자 confusion. detail screen
+//   `/compare/[id]` 가 본 hook 으로 server fetch + insight 표시.
+//
+// canonical truth lock:
+//   - GET /api/compare-sessions/[id] route reuse (server schema 0).
+//   - CompareSession.aiInsight Json (keyChanges + recommendedActions) 표시.
+
+export interface CompareInsightShape {
+  keyChanges?: string[];
+  recommendedActions?: string[];
+  [key: string]: unknown;
+}
+
+export interface CompareSessionDetail {
+  session: {
+    id: string;
+    productIds?: string[];
+    aiInsight?: CompareInsightShape | null;
+    userId?: string | null;
+    organizationId?: string | null;
+    createdAt?: string;
+    updatedAt?: string;
+    decisionState?: string | null;
+    decisionNote?: string | null;
+  };
+  linkedQuotes?: Array<{
+    id: string;
+    title: string;
+    status: string;
+    createdAt: string;
+  }>;
+  inquiryDrafts?: Array<{
+    id: string;
+    vendorName: string;
+    productName: string;
+    status: string;
+  }>;
+  latestActionAt?: string;
+}
+
+/**
+ * §11.250g-2 — Compare Session detail fetch (mobile).
+ *   web GET /api/compare-sessions/[id] reuse. Bearer token 자동 주입.
+ */
+export function useCompareSession(id: string) {
+  return useQuery<CompareSessionDetail>({
+    queryKey: ["compare-session", id],
+    queryFn: async () => {
+      const res = await apiClient.get(`/api/compare-sessions/${id}`);
+      return res.data;
+    },
+    enabled: !!id,
+    staleTime: 60_000,
+  });
+}
