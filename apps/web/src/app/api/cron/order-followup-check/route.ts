@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { detectAndCreateFollowups } from "@/lib/ai/order-followup-detector";
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history wrapper.
+import { logCronExecution } from "@/lib/cron/execution-logger";
 
 /**
  * GET /api/cron/order-followup-check
@@ -30,7 +32,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const result = await detectAndCreateFollowups(null, null);
+    // #cron-monitoring — handler wrap.
+    const result = await logCronExecution(
+      "/api/cron/order-followup-check",
+      () => detectAndCreateFollowups(null, null),
+    );
 
     return NextResponse.json({
       success: true,

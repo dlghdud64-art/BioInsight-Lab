@@ -1518,6 +1518,26 @@ model RumMetric {
   @@index([inp])
 }
 
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history (admin dashboard).
+//   호영님 backlog audit P0 (b). §11.250b-fix 같은 dead cron 사건 사전 감지.
+//   각 cron route handler 를 logCronExecution 으로 wrap → 본 table INSERT.
+//   admin/cron page 가 본 model 을 시각화 (last execution / success rate / p95).
+model CronExecutionLog {
+  id            String    @id @default(cuid())
+  cronPath      String    // e.g. "/api/cron/inventory-check"
+  startedAt     DateTime  // handler 진입 시각
+  completedAt   DateTime? // handler 완료 시각 (try/finally 보장)
+  durationMs    Int       // completedAt - startedAt (ms). 실패 시도 계산.
+  success       Boolean   // true = handler resolved, false = throw
+  errorMessage  String?   @db.Text // catch 된 Error.message (truncated)
+  metadata      Json?     // handler 결과 또는 contextual data (선택적)
+  createdAt     DateTime  @default(now())
+
+  @@index([cronPath])
+  @@index([startedAt])
+  @@index([success])
+}
+
 // RFQ Token for email-based quote replies
 model QuoteRfqToken {
   id        String    @id @default(cuid())

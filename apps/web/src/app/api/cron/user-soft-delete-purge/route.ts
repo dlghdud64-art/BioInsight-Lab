@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createAuditLog } from "@/lib/audit/audit-logger";
 import { AuditEventType } from "@prisma/client";
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history wrapper.
+import { logCronExecution } from "@/lib/cron/execution-logger";
 
 /**
  * §11.138 #admin-user-soft-delete-purge-cron
@@ -42,6 +44,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // #cron-monitoring — handler wrap (전체 purge logic 통째 wrap).
+    const result = await logCronExecution(
+      "/api/cron/user-soft-delete-purge",
+      async () => {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - PURGE_AFTER_DAYS);
 
@@ -125,13 +131,17 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
-      cutoff: cutoff.toISOString(),
-      candidatesFound: candidates.length,
-      purgedCount,
-      failedCount: errors.length,
-      errors,
-    });
+        return {
+          cutoff: cutoff.toISOString(),
+          candidatesFound: candidates.length,
+          purgedCount,
+          failedCount: errors.length,
+          errors,
+        };
+      },
+    );
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("[cron/user-soft-delete-purge] error:", error);
     return NextResponse.json(

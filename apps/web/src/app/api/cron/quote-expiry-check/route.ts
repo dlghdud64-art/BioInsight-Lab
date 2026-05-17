@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { detectExpiredQuotes } from "@/lib/ai/quote-expiry-detector";
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history wrapper.
+import { logCronExecution } from "@/lib/cron/execution-logger";
 
 /**
  * GET /api/cron/quote-expiry-check
@@ -25,7 +27,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const result = await detectExpiredQuotes(null);
+    // #cron-monitoring — handler wrap.
+    const result = await logCronExecution(
+      "/api/cron/quote-expiry-check",
+      () => detectExpiredQuotes(null),
+    );
 
     return NextResponse.json({
       success: true,

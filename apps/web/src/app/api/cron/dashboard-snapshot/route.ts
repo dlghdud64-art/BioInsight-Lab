@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { captureDashboardSnapshot } from "@/lib/dashboard/snapshot-helper";
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history wrapper.
+import { logCronExecution } from "@/lib/cron/execution-logger";
 
 /**
  * §11.106 #dashboard-stats-snapshot-table
@@ -29,33 +31,39 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 모든 활성 organization 별 snapshot
-    let orgSuccessCount = 0;
-    const orgFailures: Array<{ organizationId: string; error: string }> = [];
-    try {
-      const organizations = await db.organization.findMany({
-        select: { id: true },
-      });
-      for (const org of organizations) {
+    // #cron-monitoring — handler wrap (organization scan 통째 wrap).
+    const result = await logCronExecution(
+      "/api/cron/dashboard-snapshot",
+      async () => {
+        let orgSuccessCount = 0;
+        const orgFailures: Array<{ organizationId: string; error: string }> = [];
         try {
-          await captureDashboardSnapshot({
-            organizationId: org.id,
-            source: "auto",
+          const organizations = await db.organization.findMany({
+            select: { id: true },
           });
-          orgSuccessCount += 1;
+          for (const org of organizations) {
+            try {
+              await captureDashboardSnapshot({
+                organizationId: org.id,
+                source: "auto",
+              });
+              orgSuccessCount += 1;
+            } catch (err: any) {
+              orgFailures.push({ organizationId: org.id, error: err?.message ?? "unknown" });
+            }
+          }
         } catch (err: any) {
-          orgFailures.push({ organizationId: org.id, error: err?.message ?? "unknown" });
+          console.error("[Cron] Organization scan failed:", err);
         }
-      }
-    } catch (err: any) {
-      console.error("[Cron] Organization scan failed:", err);
-    }
+        return { orgSuccessCount, orgFailures };
+      },
+    );
 
     return NextResponse.json({
       success: true,
-      orgSuccessCount,
-      orgFailureCount: orgFailures.length,
-      failures: orgFailures.slice(0, 10),
+      orgSuccessCount: result.orgSuccessCount,
+      orgFailureCount: result.orgFailures.length,
+      failures: result.orgFailures.slice(0, 10),
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

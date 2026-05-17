@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { detectInventoryIssues } from "@/lib/ai/inventory-restock-detector";
+// #cron-monitoring-admin-dashboard — Vercel cron 실행 history wrapper.
+import { logCronExecution } from "@/lib/cron/execution-logger";
 
 /**
  * GET /api/cron/inventory-check
@@ -22,7 +24,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const result = await detectInventoryIssues(null, null);
+    // #cron-monitoring — handler wrap (CronExecutionLog INSERT 자동).
+    const result = await logCronExecution(
+      "/api/cron/inventory-check",
+      () => detectInventoryIssues(null, null),
+    );
 
     return NextResponse.json({
       success: true,
