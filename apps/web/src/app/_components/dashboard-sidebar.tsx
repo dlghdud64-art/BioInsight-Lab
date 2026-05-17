@@ -232,9 +232,14 @@ export function DashboardSidebar({ isMobileOpen: externalIsMobileOpen, onMobileO
   const SidebarContent = () => (
     <div className="h-full flex flex-col">
       {/* 사이드바 헤더 (로고) - 데스크탑 전용 */}
+      {/* #mobile-header-logo-home-link — 데스크탑 사이드바 로고 home link 정합 fix.
+          기존 href="/" 은 marketing landing 으로 빠짐 → dashboard 사용자 UX 충돌.
+          호영님 spec "양쪽 모두 동일하게 홈 링크 동작 보장" 정합으로 href="/dashboard"
+          로 swap. aria-label 추가. 모바일 헤더 로고와 같은 destination. */}
       <div className="h-16 hidden lg:flex items-center px-4 border-b border-slate-200 flex-shrink-0">
         <Link
-          href="/"
+          href="/dashboard"
+          aria-label="LabAxis 홈으로 이동"
           className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity relative z-50 w-full"
         >
           <span className="text-xl font-bold tracking-tight text-slate-900">LabAxis</span>
