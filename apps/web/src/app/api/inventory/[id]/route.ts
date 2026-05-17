@@ -243,22 +243,47 @@ export async function PATCH(
     // §11.250a #inventory-low-notification-dispatch — transition detection (was OK → now low).
     //   조건: safetyStock 정의됨 + 이전 quantity > safetyStock + 신규 quantity <= safetyStock.
     //   transition 만 알림 (noise 회피). dispatch + push 1:1 정합 (§11.229b-5/-6 패턴 reuse).
-    //   userId null (org-only) 인 경우 skip — multi-recipient org broadcast 별도 cluster.
+    // §11.250acd-2 #notification-org-broadcast — organizationMember OWNER+ADMIN 다중 recipient.
+    //   기존 single userId + org broadcast 합산. userId Set dedup. push for-of multi-call.
+    //   org-only 인벤토리 (userId null) 도 organizationMember 있으면 broadcast 가능.
     {
       const safetyStock = existingInventory.safetyStock;
       const prevQty = existingInventory.currentQuantity;
       const newQty = updatedInventory.currentQuantity;
       const userId = updatedInventory.userId ?? existingInventory.userId;
+      const organizationId = updatedInventory.organizationId ?? existingInventory.organizationId;
+
+      // §11.250acd-2 — recipients dedup (single userId + org broadcast).
+      const recipientUserIds = new Set<string>();
+      if (userId) recipientUserIds.add(userId);
+      if (organizationId) {
+        try {
+          const orgMembers = await db.organizationMember.findMany({
+            where: {
+              organizationId,
+              role: { in: ["OWNER", "ADMIN"] },
+            },
+            select: { userId: true },
+          });
+          for (const m of orgMembers as Array<{ userId: string }>) {
+            if (m.userId) recipientUserIds.add(m.userId);
+          }
+        } catch (orgErr) {
+          // graceful — single userId fallback
+          console.error("[inventory/[id]] INVENTORY_LOW org broadcast member 조회 실패 (single fallback):", orgErr);
+        }
+      }
 
       if (
         safetyStock != null &&
         safetyStock > 0 &&
         prevQty > safetyStock &&
         newQty <= safetyStock &&
-        userId
+        recipientUserIds.size > 0
       ) {
         const productName = updatedInventory.product?.name ?? "재고 항목";
         const unit = updatedInventory.unit ?? "개";
+        const recipients = Array.from(recipientUserIds).map((uid) => ({ userId: uid }));
 
         // §11.250a — INVENTORY_LOW inApp notification dispatch.
         try {
@@ -267,13 +292,14 @@ export async function PATCH(
             entityType: "INVENTORY",
             entityId: params.id,
             triggeredBy: session.user.id,
-            recipients: [{ userId }],
+            recipients,
             metadata: {
               productName,
               currentQuantity: newQty,
               safetyStock,
               unit,
               location: updatedInventory.location ?? null,
+              recipientCount: recipients.length,
             },
           });
         } catch (notifErr) {
@@ -282,20 +308,23 @@ export async function PATCH(
         }
 
         // §11.250a — Expo OS-level push (외근 운영자 즉시 인지).
+        // §11.250acd-2 — multi-recipient for-of (sendPushNotification 은 single userId per call).
         //   payload type "low_stock" 가 mobile ROUTE_MAP 안 등록됨 → /inventory/{id} deep-link 자동.
-        try {
-          await sendPushNotification(userId, {
-            title: "재고 부족 경고",
-            body: `${productName} — ${newQty}${unit} (안전재고 ${safetyStock}${unit})`,
+        for (const recipientUserId of recipientUserIds) {
+          try {
+            await sendPushNotification(recipientUserId, {
+              title: "재고 부족 경고",
+              body: `${productName} — ${newQty}${unit} (안전재고 ${safetyStock}${unit})`,
             data: {
               type: "low_stock",
               id: params.id,
               productName,
             },
           });
-        } catch (pushErr) {
-          // graceful — mutation 정합 유지
-          console.error("[inventory/[id]] INVENTORY_LOW push notification 실패 (mutation 정합 유지):", pushErr);
+          } catch (pushErr) {
+            // graceful — mutation 정합 유지
+            console.error("[inventory/[id]] INVENTORY_LOW push notification 실패 (mutation 정합 유지):", pushErr);
+          }
         }
       }
     }
