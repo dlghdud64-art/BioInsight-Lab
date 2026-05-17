@@ -4,6 +4,8 @@
  * §11.217 Phase 3 — BatchActionBar (initial 도입)
  * §11.228 #quote-management-v2-phase-c1 — 호영님 v2 #20 일괄 처리 강화
  * §11.240 #quote-batch-selection-p0 — 호영님 P0 dropdown + 상태 혼재 가드레일
+ * §11.251a — 모바일 UX: "선택 해제" → "전체 해제" + 44px 터치 영역 + X 버튼
+ *   잘림 방지 (min-w-[44px] hit area 확장).
  *
  * 견적 관리 surface 의 PENDING quote 들을 batch 로 선택했을 때 노출되는 sticky
  * action bar. selectedCount > 0 시에만 render.
@@ -182,11 +184,14 @@ export function BatchActionBar({
                         {quote.status}
                       </span>
                     </div>
+                    {/* §11.251a — X 버튼 hit area 24px → 44x44 (Apple HIG / Material 표준).
+                        실제 시각 크기는 -m-2.5 으로 보정해 layout shift 0. 잘림 방지 위한
+                        shrink-0 + 내부 정렬 유지. */}
                     <button
                       type="button"
                       onClick={() => onRemoveOne(quote.id)}
                       aria-label={`${itemName} 선택 해제`}
-                      className="shrink-0 inline-flex items-center justify-center h-6 w-6 rounded hover:bg-violet-100 text-violet-600 hover:text-violet-800"
+                      className="shrink-0 inline-flex items-center justify-center min-w-[44px] min-h-[44px] -m-2.5 rounded hover:bg-violet-100 text-violet-600 hover:text-violet-800"
                     >
                       <X className="h-3.5 w-3.5" />
                     </button>
@@ -200,16 +205,19 @@ export function BatchActionBar({
 
       {/* CTA */}
       <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+        {/* §11.251a — "선택 해제" → "전체 해제" 라벨 정합 + min-h-[44px]
+            (Apple HIG / Material 표준 터치 영역). 호영님 spec 의 "전체 해제"
+            표현 매칭. */}
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={onClearSelection}
-          className="h-8 text-xs text-violet-700 hover:bg-violet-100"
-          aria-label="선택 해제"
+          className="min-h-[44px] px-3 text-xs text-violet-700 hover:bg-violet-100"
+          aria-label="전체 해제"
         >
           <X className="h-3.5 w-3.5 mr-1" />
-          선택 해제
+          전체 해제
         </Button>
         {/* §11.228 — 상태 변경 CTA */}
         <Button

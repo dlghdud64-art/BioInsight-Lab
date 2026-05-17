@@ -150,45 +150,50 @@ export function BarcodeScanFab() {
                 </p>
               ) : scanned ? (
                 <div className="mt-3 space-y-3">
-                  <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-                    <p className="text-sm font-semibold text-slate-900">
+                  {/* §11.251c — bottom sheet 안 정보 표기를 2열 라벨/값 grid 4행 으로
+                      재구성 (호영님 spec: 품목명/LOT/수량/보관 균일 배치). 기존
+                      grid-cols-3 (LOT/수량/보관) 는 라벨 간격 불균일 + 품목명 별도 위치 →
+                      통합 dl 으로 4행 정렬. */}
+                  <dl className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 grid grid-cols-[64px_1fr] gap-x-3 gap-y-1.5 text-xs">
+                    <dt className="uppercase tracking-wide text-[10px] text-slate-500 self-center">
+                      품목명
+                    </dt>
+                    <dd className="text-sm font-semibold text-slate-900 break-keep">
                       {scanned.name}
-                    </p>
-                    <dl className="mt-1 grid grid-cols-3 gap-2 text-[11px] text-slate-600">
-                      <div>
-                        <dt className="uppercase tracking-wide text-slate-500">
-                          LOT
-                        </dt>
-                        <dd className="font-medium tabular-nums">{scanned.lotCode}</dd>
-                      </div>
-                      <div>
-                        <dt className="uppercase tracking-wide text-slate-500">
-                          수량
-                        </dt>
-                        <dd className="font-medium tabular-nums">
-                          {scanned.qty} {scanned.unit}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="uppercase tracking-wide text-slate-500">
-                          보관
-                        </dt>
-                        <dd className="font-medium">{scanned.storage}</dd>
-                      </div>
-                    </dl>
-                  </div>
+                    </dd>
+                    <dt className="uppercase tracking-wide text-[10px] text-slate-500 self-center">
+                      LOT
+                    </dt>
+                    <dd className="font-medium tabular-nums text-slate-700">{scanned.lotCode}</dd>
+                    <dt className="uppercase tracking-wide text-[10px] text-slate-500 self-center">
+                      수량
+                    </dt>
+                    <dd className="font-medium tabular-nums text-slate-700">
+                      {scanned.qty} {scanned.unit}
+                    </dd>
+                    <dt className="uppercase tracking-wide text-[10px] text-slate-500 self-center">
+                      보관
+                    </dt>
+                    <dd className="font-medium text-slate-700">{scanned.storage}</dd>
+                  </dl>
+                  {/* §11.251c — BOM 파서로 보내기 + 다시 스캔 둘 다 flex-1 동일 너비 +
+                      min-h-[44px] 터치 영역 (Apple HIG / Material 표준). 기존 BOM 만
+                      flex-1 인 비대칭 비율 해소. */}
                   <div className="flex gap-2">
+                    {/* §11.251-bom-label — "BOM 파서로 보내기" → "품목 등록하기" 라벨
+                        통일 (호영님 spec: 대시보드 온보딩 "품목 등록" + 사용자 행위
+                        관점 정합). 변수명/주석은 기존 BOM 유지. */}
                     <button
                       type="button"
                       onClick={handleAccept}
-                      className="flex-1 rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
+                      className="flex-1 min-h-[44px] rounded-lg bg-slate-900 px-3 py-2.5 text-xs font-semibold text-white hover:bg-slate-800"
                     >
-                      BOM 파서로 보내기
+                      품목 등록하기
                     </button>
                     <button
                       type="button"
                       onClick={handleRescan}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                      className="flex-1 min-h-[44px] rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
                     >
                       다시 스캔
                     </button>

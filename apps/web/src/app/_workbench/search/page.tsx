@@ -74,11 +74,11 @@ import type { RequestSubmissionEvent, QuoteWorkqueueHandoff } from "@/lib/ai/req
 import { buildQuoteWorkqueueHandoff as buildQWHandoff } from "@/lib/ai/request-submission-engine";
 import type { QuoteNormalizationHandoff } from "@/lib/ai/quote-workqueue-engine";
 import { buildQuoteNormalizationHandoff as buildNormHandoff } from "@/lib/ai/quote-workqueue-engine";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertDialog,
@@ -127,6 +127,10 @@ export default function SearchPage() {
   const { getDisplayName: getStoredName } = useCompareStore();
   const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pilotProfile = searchParams.get("labaxisPilot") ?? searchParams.get("pilot");
+  const isBrowserPilotSourcingAiCompare = pilotProfile === "sourcing-ai-compare";
+  const pilotCompareSeededRef = useRef(false);
   // ── Step 2: activeResultId (ID only) — rail은 products에서 derive ──
   const [activeResultId, setActiveResultId] = useState<string | null>(null);
   const railProduct = useMemo(() => activeResultId ? products.find((p: any) => p.id === activeResultId) ?? null : null, [activeResultId, products]);
@@ -186,6 +190,18 @@ export default function SearchPage() {
   const [comparisonModalOpen, setComparisonModalOpen] = useState(false);
   const [requestWizardOpen, setRequestWizardOpen] = useState(false);
   const [previewStrategy, setPreviewStrategy] = useState<"conservative" | "balanced" | "alternative">("balanced");
+
+  useEffect(() => {
+    if (!isBrowserPilotSourcingAiCompare || pilotCompareSeededRef.current || products.length < 2) return;
+
+    products.slice(0, 2).forEach((product: any) => {
+      if (!compareIds.includes(product.id)) {
+        toggleCompare(product.id, { name: product.name, brand: product.brand });
+      }
+    });
+    pilotCompareSeededRef.current = true;
+    setWorkWindowMode("compare");
+  }, [compareIds, isBrowserPilotSourcingAiCompare, products, toggleCompare]);
   const [preSelectionSnapshot, setPreSelectionSnapshot] = useState<string[] | null>(null);
 
   // Batch-fetch compare status for visible products
@@ -860,12 +876,37 @@ export default function SearchPage() {
               )}
 
               {session?.user ? (
-                <div className="flex items-center justify-center gap-3 text-xs text-slate-500">
-                  <Link href="/protocol/bom" className="hover:text-slate-600 transition-colors">BOM 등록</Link>
-                  <span>·</span>
-                  <Link href="/dashboard/inventory" className="hover:text-slate-600 transition-colors">재고 확인</Link>
-                  <span>·</span>
-                  <Link href="/app/compare" className="hover:text-slate-600 transition-colors">비교 목록</Link>
+                /* §11.251b — 모바일 UX: BOM 등록 / 재고 확인 / 비교 목록 텍스트 링크 →
+                   카드형 (아이콘 + 텍스트) 으로 swap. 탭 가능한 요소임을 명확히 표현 +
+                   모바일 터치 영역 44px 확보 (min-h-[44px]). */
+                <div className="grid grid-cols-3 gap-2 max-w-md mx-auto">
+                  {/* §11.251-bom-label — "BOM 등록" → "품목 등록" 라벨 통일
+                      (대시보드 온보딩 "품목 등록" + 사용자 행위 관점 정합).
+                      href /protocol/bom 보존 (변수 path 유지). */}
+                  <Link
+                    href="/protocol/bom"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="품목 등록 페이지로 이동"
+                  >
+                    <FileText className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium">품목 등록</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/inventory"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="재고 확인 페이지로 이동"
+                  >
+                    <Package className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium">재고 확인</span>
+                  </Link>
+                  <Link
+                    href="/app/compare"
+                    className="min-h-[44px] inline-flex flex-col items-center justify-center gap-1 px-2 py-2 rounded-lg border border-slate-200 bg-el/50 text-xs text-slate-600 hover:bg-st hover:text-slate-900 hover:border-slate-300 transition-colors"
+                    aria-label="비교 목록 페이지로 이동"
+                  >
+                    <PenLine className="h-3.5 w-3.5 text-blue-600/70" />
+                    <span className="text-[11px] font-medium">비교 목록</span>
+                  </Link>
                 </div>
               ) : (
                 <Button
@@ -1995,10 +2036,11 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           <div className="flex items-center flex-1 bg-white border border-white/20 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
             <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
             <Input
+              data-testid="sourcing-search-input"
               type="text"
               value={localQuery}
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
-              placeholder="시약명 / CAS / 제조사 / 카탈로그 번호"
+              placeholder="시약명·CAS·제조사"
               className="h-10 px-2.5 text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             />
             <Button
