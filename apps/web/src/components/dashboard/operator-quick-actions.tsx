@@ -172,9 +172,11 @@ export function OperatorQuickActions({
           가장 자주 쓰는 운영 동선 4개
         </p>
       </div>
-      {/* §11.247 #2 — 반응형 grid auto-fit minmax(280px, 1fr).
-          ≥1200px 4열 / 800-1199px 2x2 / <800px 1열 자동 분기. */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
+      {/* §11.247 #2 — 반응형 grid auto-fit minmax(280px, 1fr) (≥sm).
+          §11.252a — 모바일 (<640px) 1열 fallback 차단: grid-cols-2 강제 (2x2 컴팩트).
+          호영님 spec: 카드당 높이 과도 → 2x2 + 카드 min-h 모바일 축소 (스크롤 40% 감소).
+          breakpoint 분기: 모바일 = grid-cols-2 + min-h-[110px], sm+ = auto-fit + min-h-[140px]. */}
+      <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3">
         {ACTIONS.map((action) => {
           const Icon = action.icon;
           const tone = TONE_MAP[action.tone];
@@ -226,7 +228,8 @@ export function OperatorQuickActions({
                     toggle();
                   }
                 }}
-                className={`rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 min-h-[140px] cursor-pointer focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2`}
+                /* §11.252a — 모바일 min-h-[110px] + sm+ 140px (다른 카드와 동일). */
+                className={`rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 min-h-[110px] sm:min-h-[140px] cursor-pointer focus-visible:outline-2 focus-visible:outline-blue-500 focus-visible:outline-offset-2`}
                 data-testid="dashboard-quote-dispatch-card"
               >
                 <div className="flex items-start justify-between mb-2">
@@ -245,7 +248,8 @@ export function OperatorQuickActions({
                   </div>
                 </div>
                 <p className="text-sm font-bold text-slate-900 break-keep">견적 발송</p>
-                <p className="text-[11px] text-slate-500 mt-0.5 break-keep">
+                {/* §11.252a — 설명 line-clamp-1 모바일 (1줄) + sm+ 전체. */}
+                <p className="text-[11px] text-slate-500 mt-0.5 break-keep line-clamp-1 sm:line-clamp-none">
                   공급사 선택부터 전송 확인까지 한 화면에서 검토합니다
                 </p>
                 {/* §11.247 #1 — 접힌 상태: minimal hint, 펼친 상태: full content. */}
@@ -353,7 +357,9 @@ export function OperatorQuickActions({
             <Link
               key={action.href}
               href={action.href}
-              className={`group rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 cursor-pointer min-h-[140px]`}
+              /* §11.252a — 모바일 min-h-[110px] (스크롤 축소) + sm+ 140px 보존.
+                 설명 line-clamp-1 으로 1줄 강제 (호영님 spec "설명 1줄 축약"). */
+              className={`group rounded-lg border border-slate-200 border-l-2 ${tone.accent} bg-white px-4 py-3 shadow-sm transition-all duration-300 ease-in-out hover:shadow-md hover:border-slate-300 cursor-pointer min-h-[110px] sm:min-h-[140px]`}
             >
               <div className="flex items-start justify-between mb-2">
                 <div
@@ -373,7 +379,7 @@ export function OperatorQuickActions({
                 )}
               </div>
               <p className="text-sm font-bold text-slate-900 break-keep">{action.label}</p>
-              <p className="text-[11px] text-slate-500 mt-0.5 break-keep">
+              <p className="text-[11px] text-slate-500 mt-0.5 break-keep line-clamp-1 sm:line-clamp-none">
                 {action.description}
               </p>
             </Link>
