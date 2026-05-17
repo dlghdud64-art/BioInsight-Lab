@@ -119,23 +119,25 @@ function getDaysUntilExpiry(inv: ProductInventory): number | null {
   return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
 }
 
-function getRecommendedAction(inv: ProductInventory): { label: string; type: "reorder" | "dispose" | "use_first" | "assign_location" | "none" } {
+/* §11.251d — 카드 안 배지용 짧은 라벨 매핑. 호영님 spec "긴급/검토" 같은
+   짧은 라벨 축약 정합. 상세 권장 액션 섹션 (line 624) 은 기존 긴 label 유지. */
+function getRecommendedAction(inv: ProductInventory): { label: string; shortLabel: string; type: "reorder" | "dispose" | "use_first" | "assign_location" | "none" } {
   const issue = classifyIssue(inv);
   switch (issue) {
     case "out_of_stock":
-      return { label: "긴급 재발주 필요", type: "reorder" };
+      return { label: "긴급 재발주 필요", shortLabel: "긴급", type: "reorder" };
     case "low_stock":
-      return { label: "재발주 검토", type: "reorder" };
+      return { label: "재발주 검토", shortLabel: "검토", type: "reorder" };
     case "reorder_lead":
-      return { label: "리드타임 기반 재주문", type: "reorder" };
+      return { label: "리드타임 기반 재주문", shortLabel: "재주문", type: "reorder" };
     case "expired":
-      return { label: "폐기 검토 필요", type: "dispose" };
+      return { label: "폐기 검토 필요", shortLabel: "폐기", type: "dispose" };
     case "expiring":
-      return { label: "우선 사용 권장", type: "use_first" };
+      return { label: "우선 사용 권장", shortLabel: "임박", type: "use_first" };
     case "no_location":
-      return { label: "보관 위치 지정", type: "assign_location" };
+      return { label: "보관 위치 지정", shortLabel: "위치", type: "assign_location" };
     default:
-      return { label: "", type: "none" };
+      return { label: "", shortLabel: "", type: "none" };
   }
 }
 
@@ -290,15 +292,21 @@ function MobilePriorityQueue({
                     )}
                   </div>
                 </div>
+                {/* §11.251d — 카드 배지 짧은 라벨 (shortLabel) + max-w + truncate
+                    으로 줄바꿈 차단. 호영님 spec "긴급" 축약 정합. 상세 권장 액션은
+                    detail sheet 안 별도 표시 (line 624 기존 label 보존). */}
                 <div className="flex items-center gap-1.5 shrink-0">
                   {action.type !== "none" && (
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md ${
-                      action.type === "reorder" ? "bg-red-950/30 text-red-400" :
-                      action.type === "dispose" ? "bg-orange-950/30 text-orange-400" :
-                      action.type === "use_first" ? "bg-amber-950/30 text-amber-400" :
-                      "bg-violet-950/30 text-violet-400"
-                    }`}>
-                      {action.label}
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-md max-w-[64px] truncate whitespace-nowrap ${
+                        action.type === "reorder" ? "bg-red-950/30 text-red-400" :
+                        action.type === "dispose" ? "bg-orange-950/30 text-orange-400" :
+                        action.type === "use_first" ? "bg-amber-950/30 text-amber-400" :
+                        "bg-violet-950/30 text-violet-400"
+                      }`}
+                      title={action.label}
+                    >
+                      {action.shortLabel}
                     </span>
                   )}
                   <ChevronRight className="h-3.5 w-3.5 text-slate-600" />
