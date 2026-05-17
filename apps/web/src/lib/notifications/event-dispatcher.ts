@@ -25,6 +25,7 @@ import {
   getDefaultActionsForEvent,
   getActionTemplate,
 } from "./event-action-map";
+import { filterRecipientsByPreference } from "./preference-filter";
 
 // ── 디스패치 파라미터 ──
 
@@ -100,9 +101,15 @@ export async function dispatchNotificationEvent(
     const defaultActions = getDefaultActionsForEvent(eventType);
 
     // 3. 수신자별 × 액션별 NotificationAction 생성
-    const recipients = params.recipients?.length
+    // §11.250-pref — recipients 전처리: User.preferences.notificationToggles[category]
+    //   false 인 사용자 제외. default true 보존 (기존 사용자 영향 0). graceful fallback.
+    const rawRecipients = params.recipients?.length
       ? params.recipients
       : [{}]; // 수신자 미지정 시 빈 수신자로 액션만 생성
+
+    const recipients = params.recipients?.length
+      ? await filterRecipientsByPreference(params.recipients, eventType)
+      : rawRecipients;
 
     const actionRecords: Array<{
       eventId: string;
