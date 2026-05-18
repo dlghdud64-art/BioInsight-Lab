@@ -76,6 +76,14 @@ export interface UserPreferencesJson {
     delivery_complete?: boolean;
     system?: boolean;
   };
+  // §11.250-pref-silence-ui — 방해 금지 시간 (push silence window).
+  //   default off (enabled === false 또는 미설정 시 silence 적용 0).
+  //   start/end "HH:mm" KST timezone. backend (§11.250-pref-silence) 정합.
+  silenceWindow?: {
+    enabled?: boolean;
+    start?: string;
+    end?: string;
+  };
   [key: string]: unknown;
 }
 
@@ -125,6 +133,13 @@ export type SafetyFilterPatch = {
 
 // §11.250-pref-ui — role-aware notification toggles patch type (7 카테고리).
 //   default true 보존 — 명시 false 만 dispatch filter 안 제외.
+// §11.250-pref-silence-ui — SilenceWindow patch type (partial — enabled / start / end 부분 patch 가능).
+export type SilenceWindowPatch = {
+  enabled?: boolean;
+  start?: string;
+  end?: string;
+};
+
 export type NotificationTogglesPatch = {
   stock_alert?: boolean;
   quote_arrived?: boolean;
@@ -157,6 +172,7 @@ type UserPreferencesPatch = {
   purchaseOrdersFilter?: PurchaseOrdersFilterPatch;
   safetyFilter?: SafetyFilterPatch;
   notificationToggles?: NotificationTogglesPatch;
+  silenceWindow?: { enabled?: boolean; start?: string; end?: string };
 };
 
 const QUERY_KEY = ["user-preferences"];
@@ -304,6 +320,16 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     }, DEBOUNCE_MS);
   };
 
+  // §11.250-pref-silence-ui — silenceWindow (enabled / start / end) debounced patch.
+  //   backend isUserInSilenceWindow (§11.250-pref-silence) 안 false 시 push skip.
+  //   default off — enabled 미설정 시 silence 적용 0 (기존 사용자 영향 0).
+  const updateSilenceWindow = (patch: SilenceWindowPatch) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      mutation.mutate({ silenceWindow: patch });
+    }, DEBOUNCE_MS);
+  };
+
   // Cleanup on unmount — pending mutation 발화 차단.
   useEffect(() => {
     return () => {
@@ -332,6 +358,7 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updatePurchaseOrdersFilter,
     updateSafetyFilter,
     updateNotificationToggles,
+    updateSilenceWindow,
     isPatching: mutation.isPending,
     isPatchError: mutation.isError,
     isPatchSuccess: mutation.isSuccess,

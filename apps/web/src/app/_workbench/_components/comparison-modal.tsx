@@ -287,7 +287,9 @@ export function ComparisonModal({
                   <span className="text-[11px] text-slate-400">{sortedAnalysis.length}개 제품</span>
                 </div>
 
-                {/* 모바일: 가로 스와이프 / 데스크톱: 그리드 */}
+                {/* 모바일: 가로 스와이프 (2개 동시 노출, 3개 이상 스크롤) / 데스크톱: 그리드 */}
+                {/* §11.255 — 호영님 spec: 모바일 2개 제품 동시 비교. carousel 보존 +
+                    카드 너비 calc(50%-6px) 으로 2개 fit + 3개 이상은 자연 스크롤. */}
                 <div className="max-md:flex max-md:gap-3 max-md:overflow-x-auto max-md:snap-x max-md:snap-mandatory max-md:pb-2 max-md:-mx-5 max-md:px-5 md:grid md:grid-cols-2 md:gap-4">
                   {sortedAnalysis.map((pa) => {
                     const product = compareProducts.find((p) => p.id === pa.productId);
@@ -299,7 +301,7 @@ export function ComparisonModal({
                     return (
                       <div
                         key={pa.productId}
-                        className={`max-md:min-w-[280px] max-md:snap-start rounded-2xl border bg-white p-4 md:p-5 transition-all ${
+                        className={`max-md:min-w-[calc(50%-6px)] max-md:snap-start rounded-2xl border bg-white p-3 md:p-5 transition-all ${
                           isRecommended
                             ? "border-blue-200 ring-1 ring-blue-100 shadow-sm"
                             : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
@@ -425,7 +427,9 @@ export function ComparisonModal({
                 className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm max-md:flex-[2]"
                 onClick={handleOpenRequestWizard}
               >
-                견적 요청 조립하기
+                {/* §11.255 — 모바일 라벨 축약 ("견적 요청 만들기"). 데스크탑 정합 보존. */}
+                <span className="hidden sm:inline">견적 요청 조립하기</span>
+                <span className="sm:hidden">견적 요청 만들기</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             )}
