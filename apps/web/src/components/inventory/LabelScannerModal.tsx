@@ -19,13 +19,26 @@ import {
   X, Sparkles, Upload, FileText, Edit,
 } from "lucide-react";
 import type { LabelParseResult } from "@/lib/ocr/label-parser";
+// §11.253b-1 — RelativeTimeText hydration-safe helper reuse (§11.212 lineage)
+//   "X분 전" / "X시간 전" 표시 — conflict banner 시간 정보 ⑤.
+import { RelativeTimeText } from "@/components/ui/relative-time-text";
 
 /* ── 타입 ── */
 interface ScanApiResponse {
   success: boolean;
   parsed: LabelParseResult;
   matchedProduct: { id: string; name: string; brand: string | null; catalogNumber: string | null } | null;
-  matchedInventory: { id: string; lotNumber: string | null; currentQuantity: number; unit: string | null } | null;
+  // §11.253b-1 — matchedInventory shape 확장: updatedAt (시간 정보 ⑤) +
+  //   user.name (행위자 ③). RelativeTimeText 가 ISO string 받으므로 updatedAt
+  //   string serialized (Date → JSON.stringify Date → ISO string).
+  matchedInventory: {
+    id: string;
+    lotNumber: string | null;
+    currentQuantity: number;
+    unit: string | null;
+    updatedAt: string;
+    user: { name: string | null } | null;
+  } | null;
   suggestions: {
     isNewProduct: boolean;
     isNewLot: boolean;
@@ -478,6 +491,21 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
                     {" "}— Lot {scanResult.matchedInventory.lotNumber ?? "—"}
                     {" "}(현재 {scanResult.matchedInventory.currentQuantity}{" "}
                     {scanResult.matchedInventory.unit ?? ""})
+                    <br />
+                    {/* §11.253b-1 — 행위자 ③ + 시간 ⑤ 정보 inline. user.name
+                        없으면 "나" fallback (matchedInventory 는 userId session
+                        본인 만 매칭 — 같은 사용자의 다른 입력). updatedAt 은
+                        RelativeTimeText "X분 전" hydration-safe. */}
+                    <span className="font-medium">
+                      {scanResult.matchedInventory.user?.name ?? "나"}
+                    </span>
+                    님이{" "}
+                    <RelativeTimeText
+                      iso={scanResult.matchedInventory.updatedAt}
+                      variant="minute"
+                      fallback="이전에"
+                    />{" "}
+                    마지막으로 수정했습니다.
                     <br />
                     계속 진행 시 기존 재고에 수량이 추가됩니다.
                   </p>

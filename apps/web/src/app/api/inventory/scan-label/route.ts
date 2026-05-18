@@ -131,11 +131,19 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 기존 재고에서도 매칭 시도 ──
+    // §11.253b-1 — matchedInventory shape 확장: updatedAt + user.name 추가.
+    //   호영님 spec ③ 행위자 표시 + ⑤ 시간 정보 즉시 충족 (신규 model 0,
+    //   migration 0). 기존 4 fields (id/lotNumber/currentQuantity/unit) 보존.
+    //   §11.253 conflict banner 안 "X분 전" RelativeTimeText + 행위자 inline.
+    //   case 1/2 정확 detection 은 §11.253b-2 (InventoryLock) / §11.253b-3
+    //   (BroadcastChannel) 별도 cluster.
     let matchedInventory: {
       id: string;
       lotNumber: string | null;
       currentQuantity: number;
       unit: string | null;
+      updatedAt: Date;
+      user: { name: string | null } | null;
     } | null = null;
 
     if (matchedProduct && parsed.lotNo) {
@@ -153,6 +161,12 @@ export async function POST(req: NextRequest) {
           lotNumber: true,
           currentQuantity: true,
           unit: true,
+          updatedAt: true,
+          user: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
