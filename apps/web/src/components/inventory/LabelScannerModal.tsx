@@ -22,6 +22,9 @@ import type { LabelParseResult } from "@/lib/ocr/label-parser";
 // §11.253b-1 — RelativeTimeText hydration-safe helper reuse (§11.212 lineage)
 //   "X분 전" / "X시간 전" 표시 — conflict banner 시간 정보 ⑤.
 import { RelativeTimeText } from "@/components/ui/relative-time-text";
+// §11.253b-3 — 본인 다른 탭 detection (case 1). BroadcastChannel 으로 같은
+//   origin 의 다른 탭이 동일 productId/lotNumber 작업 중인지 감지. backend 0.
+import { useInventoryEditBroadcast } from "@/hooks/use-inventory-edit-broadcast";
 
 /* ── 타입 ── */
 interface ScanApiResponse {
@@ -146,6 +149,18 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   // → banner hide. [취소] click → onOpenChange(false) 모달 닫기. scanResult 변경
   // (재스캔) 또는 모달 close 시 자동 reset.
   const [conflictAck, setConflictAck] = useState(false);
+  // §11.253b-3 — 본인 다른 탭 detection (case 1). BroadcastChannel hook.
+  // scanResult 가 matchedInventory 보유 시 broadcast 발화. 다른 탭에서 같은
+  // productId/lotNumber 작업 중이면 otherTabActive=true → Info banner 노출.
+  const { otherTabActive, broadcast: broadcastEdit, acknowledge: acknowledgeOtherTab } =
+    useInventoryEditBroadcast();
+  useEffect(() => {
+    if (!open) return;
+    const matched = scanResult?.matchedInventory;
+    const product = scanResult?.matchedProduct;
+    if (!matched || !product) return;
+    broadcastEdit(product.id, matched.lotNumber);
+  }, [open, scanResult, broadcastEdit]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* ── 리셋 ── */
@@ -466,6 +481,33 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
               <div className="flex items-center gap-2">
                 <Package className="h-3.5 w-3.5 text-emerald-600" />
                 <span className="text-xs font-semibold text-emerald-700">DB 매칭: {scanResult.matchedProduct.name}</span>
+              </div>
+            </div>
+          )}
+
+          {/* §11.253b-3 — case 1 Info banner (본인 다른 탭). BroadcastChannel
+              으로 같은 origin 의 다른 탭이 동일 productId/lotNumber 작업 중일 때
+              파란 톤 Info 노출. case 3 (red Error) 와 별개 surface — case 1 +
+              case 3 동시 가능 (드물지만 사용자 명시 인지 필요). [확인] 후 hide. */}
+          {otherTabActive && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50/60 px-3 py-2.5">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 text-blue-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-blue-700 mb-0.5 break-keep">
+                    다른 탭에서 같은 항목 작업 중입니다
+                  </p>
+                  <p className="text-[11px] text-blue-600/90 leading-relaxed break-keep">
+                    이 탭에서 계속하시겠습니까? 동시에 진행하면 의도하지 않은 중복 입고가 발생할 수 있습니다.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={acknowledgeOtherTab}
+                    className="mt-2 inline-flex items-center justify-center h-8 px-3 rounded-md border border-blue-200 bg-white text-blue-700 text-xs font-medium hover:bg-blue-50 active:scale-95 transition-all"
+                  >
+                    확인
+                  </button>
+                </div>
               </div>
             </div>
           )}
