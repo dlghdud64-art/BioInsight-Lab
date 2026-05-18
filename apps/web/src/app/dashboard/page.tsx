@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -136,6 +136,10 @@ function DashboardPageInner() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const openOverlay = useWorkbenchOverlayOpen();
+
+  // §11.252b — 모바일 (<lg) 차트 영역 탭 전환 state (트렌드 / 카테고리).
+  // 데스크탑 (≥lg) 은 기존 grid 보존 (회귀 0).
+  const [activeChartTab, setActiveChartTab] = useState<"trend" | "category">("trend");
 
   /** Link 대신 overlay를 열 수 있는 경로면 overlay를, 아니면 router.push */
   const handleNavigateOrOverlay = (href: string, origin: "dashboard" | "queue" | "card" = "dashboard") => {
@@ -659,7 +663,47 @@ function DashboardPageInner() {
           는 deep-dive 그대로 유지 (duplicate 아님 — same canonical truth, different
           angle). data: dashboard/stats endpoint 의 monthlySpending +
           categorySpending unused fields 활용 (새 endpoint 0). */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      {/* §11.252b — 모바일 차트 영역 탭 전환 (트렌드 / 카테고리).
+          호영님 spec: 두 카드 모바일에서 1.5 화면 차지 → 탭 전환으로 한
+          영역에 합치기. canonical truth lock: SpendTrendCard +
+          CategoryDistributionCard import / props / dynamic_import 보존,
+          데스크탑 lg:grid-cols-3 + lg:col-span-2 layout 보존 (회귀 0). */}
+      <div className="lg:hidden">
+        <div className="flex border-b border-slate-200 mb-3" role="tablist" aria-label="차트 영역 탭">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeChartTab === "trend"}
+            onClick={() => setActiveChartTab("trend")}
+            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
+              activeChartTab === "trend"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "border-b-2 border-transparent text-slate-500"
+            }`}
+          >
+            지출 트렌드
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={activeChartTab === "category"}
+            onClick={() => setActiveChartTab("category")}
+            className={`flex-1 min-h-[44px] text-sm font-semibold transition-colors ${
+              activeChartTab === "category"
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "border-b-2 border-transparent text-slate-500"
+            }`}
+          >
+            카테고리 비중
+          </button>
+        </div>
+        {activeChartTab === "trend" ? (
+          <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
+        ) : (
+          <CategoryDistributionCard categorySpending={stats.categorySpending} />
+        )}
+      </div>
+      <div className="hidden lg:grid lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <SpendTrendCard monthlySpending={stats.monthlySpendingChart} />
         </div>
