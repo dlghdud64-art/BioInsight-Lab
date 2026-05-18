@@ -8,7 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PriceDisplay } from "@/components/products/price-display";
-import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera } from "lucide-react";
+import { Loader2, PenLine, X, Trash2, Search, FileText, Package, SlidersHorizontal, TrendingDown, AlertTriangle, AlertCircle, Sparkles, Check, Camera, Menu, LayoutDashboard, ShoppingCart, Settings } from "lucide-react";
+// §11.254b — 소싱 헤더 햄버거 메뉴 (소싱 → 대시보드 동선 보완).
+//   하단 탭 바 추가 0 (액션 바 공간 충돌 방지). 헤더 우측 ≡ 으로 5 entry 노출.
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import Image from "next/image";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
@@ -2046,9 +2056,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           </div>
         </form>
 
-        {/* 유틸리티 — AI 라벨 스캔 */}
+        {/* 유틸리티 — AI 라벨 스캔 + 햄버거 메뉴 (§11.254b) */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* AI 라벨 스캔 */}
+          {/* AI 라벨 스캔 — 소싱 핵심 기능, 항상 노출 */}
           <button
             onClick={() => setLabelScanOpen(true)}
             className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
@@ -2056,6 +2066,54 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
             <Camera className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">AI 라벨 스캔</span>
           </button>
+          {/* §11.254b — 햄버거 메뉴 (대시보드 / 견적 / 구매 / 재고 / 설정 바로가기).
+              하단 탭 바 추가 0 (액션 바 공간 충돌). 헤더 우측 ≡ 으로 5 entry. */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="메뉴 열기"
+                className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] -mr-1 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>주요 화면</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard" className="flex items-center gap-2 cursor-pointer">
+                  <LayoutDashboard className="h-4 w-4 text-slate-500" />
+                  <span>대시보드</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/quotes" className="flex items-center gap-2 cursor-pointer">
+                  <FileText className="h-4 w-4 text-slate-500" />
+                  <span>견적 관리</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/purchases" className="flex items-center gap-2 cursor-pointer">
+                  <ShoppingCart className="h-4 w-4 text-slate-500" />
+                  <span>구매 운영</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/inventory" className="flex items-center gap-2 cursor-pointer">
+                  <Package className="h-4 w-4 text-slate-500" />
+                  <span>재고 관리</span>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard/settings" className="flex items-center gap-2 cursor-pointer">
+                  <Settings className="h-4 w-4 text-slate-500" />
+                  <span>설정</span>
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <LabelScannerModal

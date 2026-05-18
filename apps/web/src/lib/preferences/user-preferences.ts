@@ -360,8 +360,8 @@ export function useUserPreferences(options?: { enabled?: boolean }) {
     updateNotificationToggles,
     updateSilenceWindow,
     isPatching: mutation.isPending,
-    isPatchError: mutation.isError,
     isPatchSuccess: mutation.isSuccess,
+    isPatchError: mutation.isError,
     patchErrorMessage,
   };
 }
