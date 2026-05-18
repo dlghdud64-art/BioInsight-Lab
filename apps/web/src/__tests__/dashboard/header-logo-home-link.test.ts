@@ -46,9 +46,11 @@ const header = safeRead(HEADER_PATH);
 const sidebar = safeRead(SIDEBAR_PATH);
 
 describe("#mobile-header-logo-home-link #1 — Header.tsx 모바일 로고 터치 영역 44x44px", () => {
-  it("Link href=/dashboard 보존 (모바일 헤더 로고)", () => {
-    // lg:hidden 분기 안 Link href="/dashboard" 보존.
-    expect(header).toMatch(/Link[\s\S]{0,200}href=["']\/dashboard["'][\s\S]{0,300}lg:hidden/);
+  it("Link href=/ 보존 (모바일 헤더 로고, §11.254 reversal)", () => {
+    // §11.254 — /dashboard → / (메인 홈) destination 변경.
+    // 이전 #mobile-header-logo-home-link 결정 ("양쪽 모두 /dashboard") 의도적 reversal.
+    // 사유: "LabAxis" 로고는 최상위 홈 mental model 정합 (소싱/대시보드/견적 등 모든 영역 통일).
+    expect(header).toMatch(/Link[\s\S]{0,200}href=["']\/["'][\s\S]{0,300}lg:hidden/);
   });
 
   it("Link className 안 min-h-\\[44px\\] (터치 영역 최소 44x44)", () => {
@@ -76,10 +78,10 @@ describe("#mobile-header-logo-home-link #1 — Header.tsx 모바일 로고 터�
 });
 
 describe("#mobile-header-logo-home-link #2 — sidebar.tsx 데스크톱 로고 dashboard 진입", () => {
-  it("Link href=/dashboard 으로 swap (기존 / marketing 진입 fix)", () => {
-    // 데스크톱 사이드바 로고 — href="/" → "/dashboard" swap.
-    //   "h-16 hidden lg:flex" 블록 안 Link href.
-    expect(sidebar).toMatch(/h-16\s+hidden\s+lg:flex[\s\S]{0,800}Link[\s\S]{0,500}href=["']\/dashboard["']/);
+  it("Link href=/ 으로 swap (§11.254 reversal — 메인 홈 통일)", () => {
+    // §11.254 — 사이드바 로고도 /dashboard → / 으로 통일.
+    // 이전 결정 ("양쪽 /dashboard") 의도적 reversal — 호영님 spec 우선.
+    expect(sidebar).toMatch(/h-16\s+hidden\s+lg:flex[\s\S]{0,800}Link[\s\S]{0,500}href=["']\/["']/);
   });
 
   it("Link aria-label 추가 (a11y)", () => {

@@ -1998,19 +1998,28 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   return (
     <div className="shrink-0">
       {/* ── 1행: LabAxis 소싱 + 검색바 + 유틸리티 — 한 줄 ── */}
+      {/* §11.254 — 소싱 헤더 로고 분리:
+          - "LabAxis" Link href="/" (메인 홈, 모든 서비스 영역 통일)
+          - "소싱" 서브 라벨 Link href="/app/search" (소싱 검색 초기 화면)
+          이전 단일 Link → 두 독립 Link 분리. dead span ("소싱" 텍스트 only) →
+          탐색 가능 Link 으로 wiring 강화. aria-label 추가 a11y 정합. */}
       <div className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-2.5 md:py-3" style={{ backgroundColor: '#0f172a' }}>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Link href="/dashboard" className="flex items-center">
+          <Link href="/" className="flex items-center" aria-label="LabAxis 홈으로 이동">
             <span className="text-lg font-bold text-white tracking-tight">LabAxis</span>
           </Link>
           {stageOwner !== "sourcing" ? (
             <>
-              <span className="text-slate-500 text-sm ml-1">소싱</span>
+              <Link href="/app/search" className="ml-1" aria-label="소싱 검색으로 이동">
+                <span className="text-slate-500 text-sm hover:text-slate-300 transition-colors">소싱</span>
+              </Link>
               <span className="text-slate-600 text-sm">/</span>
               <span className="text-sm font-semibold text-slate-200">{STAGE_LABELS[stageOwner] || stageOwner}</span>
             </>
           ) : (
-            <span className="text-sm font-semibold text-slate-400 ml-1">소싱</span>
+            <Link href="/app/search" className="ml-1" aria-label="소싱 검색으로 이동">
+              <span className="text-sm font-semibold text-slate-400 hover:text-slate-200 transition-colors">소싱</span>
+            </Link>
           )}
         </div>
 

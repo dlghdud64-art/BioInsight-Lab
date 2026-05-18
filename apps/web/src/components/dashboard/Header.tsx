@@ -245,13 +245,17 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         {/* 좌측 영역: 모바일=로고, 데스크탑=브레드크럼 */}
         <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
           {/* 로고 (모바일 전용 - 데스크탑은 고정 사이드바에서 표시) */}
-          {/* #mobile-header-logo-home-link — 로고 탭 시 홈 이동 버그 fix.
-              근본 원인: Link 자체 height/padding 0 → 터치 영역 ~28px (44x44 미달).
-              fix: inline-flex items-center + min-h-[44px] min-w-[44px] + px-3 -mx-3
-              (시각 layout shift 0, 실제 hit area 44+ 확장) + hover/active 시각 피드백
-              + aria-label 으로 사용자 인지 및 a11y 보완. */}
+          {/* §11.254 — LabAxis 로고 destination 변경 (/dashboard → /).
+              호영님 spec: "LabAxis" 로고는 메인 홈페이지 (labaxis.co.kr 루트)
+              으로 이동. 소싱/대시보드/견적/재고/구매 운영 모든 서비스 영역에서
+              동일 적용. 사유: 소싱은 구매 운영 대시보드와 별개 서비스 영역이며,
+              사용자는 로고를 "최상위 홈" 으로 인지. /dashboard 는 사용자가 사이드바
+              또는 검색으로 이동.
+              #mobile-header-logo-home-link (이전) — 로고 탭 시 홈 이동 버그 fix
+              (Link 자체 height/padding 0 → 터치 영역 ~28px) 가 본 fix 의 기반.
+              min-h/min-w-[44px] + px-3 -mx-3 + hover/active + aria-label 보존. */}
           <Link
-            href="/dashboard"
+            href="/"
             className="flex-shrink-0 lg:hidden inline-flex items-center min-h-[44px] min-w-[44px] px-3 -mx-3 rounded-md hover:bg-slate-100 active:bg-slate-200 transition-colors"
             aria-label="LabAxis 홈으로 이동"
           >
