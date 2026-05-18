@@ -69,7 +69,10 @@ export function OperationalBriefFloatingEntry({
       className={cn(
         // #operational-brief-rail-conversion-g2 — G1 의 viewport hide 분기 revert.
         //   모든 viewport 에서 button toggle (button click → popup open).
-        "fixed bottom-6 right-6 z-40",
+        // §11.252c — 모바일 (<lg) FAB 하단 72px+ 강제 (BottomNav h-14 = 56px +
+        //   16px 안전 마진). 데스크탑 (≥lg) 은 BottomNav 없어서 기존 bottom-6
+        //   유지. 가로 마진도 모바일 right-4 + 데스크탑 right-6 분기.
+        "fixed bottom-[72px] right-4 lg:bottom-6 lg:right-6 z-40",
         "inline-flex items-center gap-2",
         "h-12 px-5 rounded-full",
         "bg-slate-900 text-white",
