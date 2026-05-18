@@ -55,6 +55,19 @@ interface CompareReviewWorkWindowProps {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const FRAME_ICON: Record<StrategyFrame, any> = { cost: Zap, balanced: Scale, spec: ShieldCheck };
+
+function getAiOptionTestId(frame: StrategyFrame) {
+  if (frame === "cost") {
+    return "ai-option-exact-match";
+  }
+
+  if (frame === "balanced") {
+    return "ai-option-equivalent";
+  }
+
+  return "ai-option-substitute";
+}
+
 const FRAME_COLOR: Record<StrategyFrame, { bg: string; border: string; text: string; accent: string }> = {
   cost: { bg: "bg-emerald-950/30", border: "border-emerald-500/20", text: "text-emerald-300", accent: "bg-emerald-500/15" },
   balanced: { bg: "bg-blue-950/30", border: "border-blue-500/20", text: "text-blue-300", accent: "bg-blue-500/15" },
@@ -222,7 +235,7 @@ export function CompareReviewWorkWindow({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-[2px] flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-[#1C2028] border border-slate-600/40 rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
+      <div data-testid="compare-decision-surface" className="bg-[#1C2028] border border-slate-600/40 rounded-xl shadow-[0_8px_40px_rgba(0,0,0,0.5)] w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col">
 
         {/* ═══ HEADER — Identity + Mode Switch ═══ */}
         <div className="px-5 py-3.5 border-b border-slate-600/30 bg-[#262930]">
@@ -325,7 +338,7 @@ export function CompareReviewWorkWindow({
                     const colors = FRAME_COLOR[opt.frame];
                     const isActive = activeFrame === opt.frame;
                     return (
-                      <button key={opt.frame} type="button" onClick={() => { setActiveFrame(opt.frame); }}
+                      <button key={opt.frame} data-testid={getAiOptionTestId(opt.frame)} type="button" onClick={() => { setActiveFrame(opt.frame); }}
                         className={`text-left px-3.5 py-3 rounded-lg border-2 transition-all ${
                           isActive ? `${colors.bg} ${colors.border} ring-1 ring-offset-0 ring-${opt.frame === "cost" ? "emerald" : opt.frame === "balanced" ? "blue" : "amber"}-500/20` : "border-slate-600/30 hover:border-slate-500/40 bg-[#24272c]"
                         }`}>

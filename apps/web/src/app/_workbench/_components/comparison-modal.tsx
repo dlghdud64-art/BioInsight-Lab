@@ -149,9 +149,12 @@ export function ComparisonModal({
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "분석 실패");
       setResult(json.data);
-      // 추천 시나리오 자동 선택
-      const rec = json.data.scenarios?.find((s: Scenario) => s.isRecommended);
-      setActiveScenario(rec?.type ?? null);
+      // #comparison-human-gate — Agent Board ai-auto-apply P0 해소.
+      //   AI 분석 결과는 setResult(json.data)까지만. activeScenario 는
+      //   사용자가 시나리오 button 을 직접 클릭해야만 set 된다 (line 384 toggle).
+      //   AI 추천 시나리오는 "AI 추천" 배지 (s.isRecommended) 로만 표시 —
+      //   운영 truth 선택은 사람 확인 필요 흐름. 다음 CTA ("견적 요청") 는
+      //   activeScenario null 시 disabled + "전략 선택 필요" 사유 1줄.
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "AI 분석 중 오류가 발생했습니다.");
     } finally {
@@ -421,17 +424,27 @@ export function ComparisonModal({
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-slate-500 max-md:flex-1">
               닫기
             </Button>
+            {/* #comparison-human-gate — 다음 CTA gating. activeScenario null
+                (사용자가 시나리오 미선택) 시 disabled + 사유 라벨 1줄.
+                사용자가 시나리오 button (line ~384) 클릭 → setActiveScenario
+                → CTA 활성화 → 다음 단계 (mutation/wizard) 진행 가능. */}
             {onOpenRequestWizard && result && (
-              <Button
-                size="sm"
-                className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm max-md:flex-[2]"
-                onClick={handleOpenRequestWizard}
-              >
-                {/* §11.255 — 모바일 라벨 축약 ("견적 요청 만들기"). 데스크탑 정합 보존. */}
-                <span className="hidden sm:inline">견적 요청 조립하기</span>
-                <span className="sm:hidden">견적 요청 만들기</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
+              <div className="flex flex-col items-end gap-1 max-md:flex-[2]">
+                <Button
+                  size="sm"
+                  disabled={!activeScenario}
+                  className="bg-blue-600 hover:bg-blue-700 text-white gap-1.5 shadow-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={handleOpenRequestWizard}
+                >
+                  {/* §11.255 — 모바일 라벨 축약 ("견적 요청 만들기"). 데스크탑 정합 보존. */}
+                  <span className="hidden sm:inline">견적 요청 조립하기</span>
+                  <span className="sm:hidden">견적 요청 만들기</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+                {!activeScenario && (
+                  <p className="text-[10px] text-slate-500">전략 선택 필요</p>
+                )}
+              </div>
             )}
           </div>
         </div>
