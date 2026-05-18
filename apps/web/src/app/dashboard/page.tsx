@@ -526,7 +526,12 @@ function DashboardPageInner() {
   );
 
   return (
-    <div className="p-4 pt-5 md:p-8 md:pt-7 space-y-5 md:space-y-6 overflow-x-hidden bg-sh min-h-screen">
+    // §11.252d-4 — 모바일 스크롤 ~40% 축소 (호영님 spec).
+    //   AS-IS: p-4 pt-5 + space-y-5 (모바일).
+    //   TO-BE: p-3 pt-4 + space-y-3 (모바일만 압축). 데스크탑 (md:p-8 md:pt-7
+    //   md:space-y-6) 모두 보존 (회귀 0). overflow-x-hidden / bg-sh /
+    //   min-h-screen 시그니처 보존.
+    <div className="p-3 pt-4 md:p-8 md:pt-7 space-y-3 md:space-y-6 overflow-x-hidden bg-sh min-h-screen">
 
       {/* --- 플랜 온보딩 배너 (pricing resolver 경유 시) --- */}
       <Suspense fallback={null}>
@@ -586,7 +591,10 @@ function DashboardPageInner() {
           §11.252d-1 — 호영님 spec: 사용자 명시적 dismiss + localStorage persist.
           render 조건 강화 — isOnboardingMode + !onboardingDismissed 양립. */}
       {isOnboardingMode && !onboardingDismissed && (
-        <div className="bg-white border border-blue-200 rounded-xl p-6 shadow-sm relative">
+        // §11.252d-4 — 모바일 padding 압축 (p-6 → p-4 md:p-6). 헤더 mb 도 모바일
+        //   축소 (mb-5 → mb-3 md:mb-5). 데스크탑 보존. shadow-sm + rounded-xl +
+        //   border-blue-200 시그니처 보존.
+        <div className="bg-white border border-blue-200 rounded-xl p-4 md:p-6 shadow-sm relative">
           {/* §11.252d-1 — 우상단 X dismiss button. min-h-[44px] + min-w-[44px]
               터치 타깃 (Apple HIG / Material Design 표준). aria-label 명시. */}
           <button
@@ -597,7 +605,7 @@ function DashboardPageInner() {
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
-          <div className="mb-5 pr-10">
+          <div className="mb-3 md:mb-5 pr-10">
             <div className="flex items-baseline justify-between mb-1.5">
               <h3 className="text-base font-bold text-slate-900">시작하기</h3>
               {/* §11.243 #7 — 호영님 P0: 회색 progress 바로 진행도 표시
