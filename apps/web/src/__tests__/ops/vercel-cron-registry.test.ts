@@ -21,6 +21,7 @@
 import { describe, it, expect } from "vitest";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
+import { VERCEL_CRON_REGISTRY } from "../../lib/ops-console/vercel-cron-registry";
 
 function safeRead(p: string): string {
   return existsSync(p) ? readFileSync(p, "utf8") : "";
@@ -36,6 +37,11 @@ describe("§11.250b-fix #1 — vercel.json valid JSON", () => {
 
   it("valid JSON parse", () => {
     expect(() => JSON.parse(vercelJsonRaw)).not.toThrow();
+  });
+
+  it("schema points to official Vercel config contract", () => {
+    const config = JSON.parse(vercelJsonRaw);
+    expect(config.$schema).toBe("https://openapi.vercel.sh/vercel.json");
   });
 
   it("crons array 존재", () => {
@@ -118,6 +124,39 @@ describe("§11.250b-fix #4 — crons 총 5 entry (3 기존 + 2 신규)", () => {
     const config = JSON.parse(vercelJsonRaw);
     for (const entry of config.crons) {
       expect(entry.path).toMatch(/^\/api\/cron\//);
+    }
+  });
+});
+
+describe("§11.250b-fix #5 — 운영 경계와 수동 차단 지점", () => {
+  it("vercel.json cron은 운영 레지스트리와 1:1로 맞는다", () => {
+    const config = JSON.parse(vercelJsonRaw);
+    const configPaths = config.crons.map((entry: { path: string }) => entry.path).sort();
+    const registryPaths = VERCEL_CRON_REGISTRY.map((entry) => entry.path).sort();
+
+    expect(registryPaths).toEqual(configPaths);
+  });
+
+  it("모든 cron은 목적, prod-only 대상 환경, 수동 차단 지점을 가진다", () => {
+    const config = JSON.parse(vercelJsonRaw);
+    for (const cron of config.crons as Array<{ path: string; schedule: string }>) {
+      const registry = VERCEL_CRON_REGISTRY.find((entry) => entry.path === cron.path);
+
+      expect(registry).toBeDefined();
+      expect(registry?.schedule).toBe(cron.schedule);
+      expect(registry?.purposeKo).toMatch(/./);
+      expect(registry?.environment).toBe("prod-only");
+      expect(registry?.runBoundaryKo).toMatch(/production/);
+      expect(registry?.manualGateKo).toMatch(/Vercel Dashboard|CRON_SECRET/);
+      expect(registry?.operatorCheckKo).toMatch(/확인/);
+      expect(registry?.expectedResultKo).toMatch(/./);
+    }
+  });
+
+  it("운영자가 3초 안에 읽을 scheduleKst와 목적이 비어 있지 않다", () => {
+    for (const registry of VERCEL_CRON_REGISTRY) {
+      expect(registry.scheduleKst).toMatch(/KST/);
+      expect(registry.purposeKo.length).toBeGreaterThan(10);
     }
   });
 });

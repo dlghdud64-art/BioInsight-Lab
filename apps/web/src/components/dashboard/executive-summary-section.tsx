@@ -845,8 +845,12 @@ function SystemInsightCard({
   };
 
   return (
+    // §11.252d-3 — 모바일 padding 압축 (p-4 → p-3, md:p-5 보존). 헤더 mb-1.5 →
+    //   mb-1 미세 축소. 시각 hierarchy (gradient + animate-ping + icon) +
+    //   §11.243b #3 dismiss button + sessionStorage 모두 보존. canonical
+    //   truth (kpis derive 6 분기 message) 변경 0.
     <div
-      className={`relative rounded-xl border border-slate-700/50 bg-gradient-to-br ${gradientMap[accent]} text-white shadow-md p-4 md:p-5`}
+      className={`relative rounded-xl border border-slate-700/50 bg-gradient-to-br ${gradientMap[accent]} text-white shadow-md p-3 md:p-5`}
     >
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0 mt-0.5">
@@ -856,7 +860,7 @@ function SystemInsightCard({
           </div>
         </div>
         <div className="flex-1 min-w-0 pr-6">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-white/70 mb-1">
             System Insight
           </p>
           <p className="text-sm md:text-base font-bold text-white break-keep">{title}</p>
