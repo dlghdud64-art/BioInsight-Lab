@@ -898,8 +898,13 @@ function DashboardPageInner() {
           </div>
 
           {/* ── 우측 보조 카드 (2col) ── */}
+          {/* §11.252d-2 — 호영님 spec "품목 등록 1회": OnboardingHero (§11.252d-1)
+              와 "빠른 시작" 카드가 같은 액션 (품목 등록 / 견적 요청) 노출 →
+              중복 제거. OnboardingHero 활성 시 (isOnboardingMode &&
+              !onboardingDismissed) "빠른 시작" hide. dismiss 후 또는 onboarding
+              모드 아니면 정상 노출. dashboardState === "zero" 분기 자체 보존. */}
           <div className="col-span-2 rounded-xl border border-slate-200/80 bg-white p-5">
-            {dashboardState === "zero" && (
+            {dashboardState === "zero" && (!isOnboardingMode || onboardingDismissed) && (
               <div className="space-y-3">
                 <h3 className="text-[13px] font-extrabold text-slate-900">빠른 시작</h3>
                 <div className="space-y-1.5">
