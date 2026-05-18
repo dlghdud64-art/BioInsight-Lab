@@ -1984,7 +1984,50 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [labelScanOpen, setLabelScanOpen] = useState(false);
 
+  // §11.258a #4 — 최근 검색어 dropdown (모바일). localStorage
+  // "bioinsight-recent-searches" 가 이미 handleSubmit 안 저장 중 (page.tsx:2001-2003).
+  // 본 hook 은 그 저장값을 mount 시 + setRecentSearches 후 동기.
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  // §11.258a #4 — input focus 시 + 빈 query 시 dropdown open. submit/clear 시 close.
+  const [recentOpen, setRecentOpen] = useState(false);
+
   useEffect(() => { setLocalQuery(searchQuery); }, [searchQuery]);
+  useEffect(() => {
+    try {
+      const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
+      setRecentSearches(stored.slice(0, 5));
+    } catch {}
+  }, []);
+
+  // §11.258a #2 — X 클리어 button onClick handler. localQuery + searchQuery 동시 빈 값.
+  const handleClearQuery = () => {
+    setLocalQuery("");
+    setSearchQuery("");
+    setRecentOpen(false);
+  };
+  // §11.258a #4 — 최근 검색어 pick (탭 → 즉시 검색 실행).
+  const handlePickRecent = (q: string) => {
+    setLocalQuery(q);
+    setSearchQuery(q);
+    setRecentOpen(false);
+    if (isLoggedIn) runSearch();
+  };
+  // §11.258a #4 — 최근 검색어 개별 삭제 (✕ button).
+  const handleRemoveRecent = (q: string) => {
+    const updated = recentSearches.filter((s) => s !== q);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+    } catch {}
+  };
+  // §11.258a #4 — 최근 검색어 전체 삭제 ("전체 삭제" button).
+  const handleClearAllRecent = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem("bioinsight-recent-searches");
+    } catch {}
+    setRecentOpen(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -2001,7 +2044,11 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
       const stored = JSON.parse(localStorage.getItem("bioinsight-recent-searches") || "[]") as string[];
       const updated = [localQuery.trim(), ...stored.filter((s: string) => s !== localQuery.trim())].slice(0, 5);
       localStorage.setItem("bioinsight-recent-searches", JSON.stringify(updated));
+      // §11.258a #4 — state 동기 (UI dropdown 즉시 반영).
+      setRecentSearches(updated);
     } catch {}
+    // §11.258a #4 — submit 시 dropdown close.
+    setRecentOpen(false);
     runSearch();
   };
 
@@ -2013,6 +2060,10 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           - "소싱" 서브 라벨 Link href="/app/search" (소싱 검색 초기 화면)
           이전 단일 Link → 두 독립 Link 분리. dead span ("소싱" 텍스트 only) →
           탐색 가능 Link 으로 wiring 강화. aria-label 추가 a11y 정합. */}
+      {/* §11.258a — 모바일 헤더 2행 분리 (방안 A, 호영님 spec).
+          1행: LabAxis + 소싱 + AI 스캔 + 햄버거 (nav + utility).
+          2행 (모바일 한정, md:hidden): 검색바 풀너비 + X 클리어 + 최근 검색어.
+          데스크탑 (md+) 은 1행 안에 inline 검색 form 보존. */}
       <div className="flex items-center gap-3 md:gap-4 px-4 md:px-6 py-2.5 md:py-3" style={{ backgroundColor: '#0f172a' }}>
         <div className="flex items-center gap-1.5 shrink-0">
           <Link href="/" className="flex items-center" aria-label="LabAxis 홈으로 이동">
@@ -2033,8 +2084,8 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           )}
         </div>
 
-        {/* 검색 인풋 — 인라인 */}
-        <form onSubmit={handleSubmit} className="flex items-center flex-1 min-w-0">
+        {/* §11.258a — 데스크탑 한정 검색 인풋 (인라인). md+ 에서만 1행 안. */}
+        <form onSubmit={handleSubmit} className="hidden md:flex items-center flex-1 min-w-0">
           <div className="flex items-center flex-1 bg-white border border-white/20 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
             <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
             <Input
@@ -2045,6 +2096,17 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               placeholder="시약명·CAS·제조사"
               className="h-10 px-2.5 text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             />
+            {/* §11.258a #2 — X 클리어 button. localQuery > 0 시 노출. */}
+            {localQuery.length > 0 && (
+              <button
+                type="button"
+                onClick={handleClearQuery}
+                aria-label="검색어 지우기"
+                className="inline-flex items-center justify-center h-9 w-9 text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
             <Button
               type="submit"
               size="sm"
@@ -2129,6 +2191,87 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           }}
         />
       </div>
+
+      {/* §11.258a #3 — 모바일 한정 검색 form (2행, md:hidden).
+          헤더 1행 (LabAxis + 소싱 + 스캔 + 햄버거) 직후 풀너비 검색바.
+          placeholder 완전 표시 (잘림 0) + Input text-base (16px) 으로 iOS Safari
+          줌인 차단. X 클리어 button + 최근 검색어 dropdown 함께. */}
+      <form
+        onSubmit={handleSubmit}
+        className="md:hidden flex items-center gap-2 px-4 pb-2.5 relative"
+        style={{ backgroundColor: '#0f172a' }}
+      >
+        <div className="flex items-center flex-1 bg-white border border-white/20 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
+          <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
+          <Input
+            data-testid="sourcing-search-input-mobile"
+            type="text"
+            value={localQuery}
+            onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
+            onFocus={() => { if (!localQuery && recentSearches.length > 0) setRecentOpen(true); }}
+            onBlur={() => { setTimeout(() => setRecentOpen(false), 200); }}
+            placeholder="시약명·CAS·제조사·카탈로그 번호 검색"
+            className="h-11 px-2.5 text-base border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
+          />
+          {/* §11.258a #2 — X 클리어 button (모바일). 44px touch target. */}
+          {localQuery.length > 0 && (
+            <button
+              type="button"
+              onClick={handleClearQuery}
+              aria-label="검색어 지우기"
+              className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-400 hover:text-slate-600 transition-colors shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
+        <Button
+          type="submit"
+          size="sm"
+          className="h-11 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-md shrink-0"
+          disabled={!localQuery.trim()}
+        >
+          검색
+        </Button>
+
+        {/* §11.258a #4 — 최근 검색어 dropdown (input focus + 빈 query 시). */}
+        {recentOpen && !localQuery && recentSearches.length > 0 && (
+          <div className="absolute left-4 right-4 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 max-h-72 overflow-y-auto z-20">
+            <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+              <span className="text-xs font-semibold text-slate-600">최근 검색어</span>
+              <button
+                type="button"
+                onClick={handleClearAllRecent}
+                className="text-xs text-slate-500 hover:text-slate-700"
+              >
+                전체 삭제
+              </button>
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {recentSearches.map((q) => (
+                <li key={q} className="flex items-center">
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); handlePickRecent(q); }}
+                    className="flex-1 min-h-[44px] px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+                  >
+                    <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span className="truncate">{q}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); handleRemoveRecent(q); }}
+                    aria-label={`${q} 삭제`}
+                    className="inline-flex items-center justify-center min-h-[44px] min-w-[44px] text-slate-400 hover:text-slate-600"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </form>
     </div>
   );
 }

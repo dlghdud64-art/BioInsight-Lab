@@ -169,6 +169,7 @@ export function SourcingResultRow({
 
   return (
     <div
+      data-testid="sourcing-result-row"
       className={`group relative rounded-lg border transition-all duration-150 cursor-pointer ${rowStyle}`}
       onClick={onSelect}
     >
@@ -192,9 +193,12 @@ export function SourcingResultRow({
             <p className="text-xs font-medium text-slate-500 mt-1 line-clamp-1 leading-tight">{staticMeta}</p>
           )}
 
-          {/* 3행: 동적 운영 신호 */}
+          {/* 3행: 동적 운영 신호.
+              §11.258a — chip wrapper 잘림 해소. overflow-hidden 제거 +
+              flex-wrap 추가하여 3개 이상 시 자연 줄바꿈 (모바일 우측 잘림
+              0). 각 chip 의 shrink-0 + h-22px 보존. */}
           {opSignals.length > 0 && (
-            <div className="flex items-center gap-1.5 mt-1.5 overflow-hidden">
+            <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
               {opSignals.map((sig, idx) => (
                 <span
                   key={idx}
@@ -238,6 +242,7 @@ export function SourcingResultRow({
             </motion.button>
           ) : (
             <motion.button
+              data-testid="compare-add-cta"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 transition-colors inline-flex items-center"
@@ -289,7 +294,7 @@ export function SourcingResultRow({
               <Check className="h-3.5 w-3.5" />비교 후보
             </motion.button>
           ) : (
-            <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
+            <motion.button data-testid="compare-add-cta" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}
               className="h-8 px-3 rounded-md text-sm font-medium text-slate-600 border border-slate-200 inline-flex items-center"
               onClick={() => { onToggleCompare(); toast.success("비교 후보에 추가되었습니다."); }}>
               <PenLine className="h-3.5 w-3.5 mr-1" />비교 추가
