@@ -945,112 +945,88 @@ export default function SearchPage() {
       )}
 
       {/* ═══ D. Sticky Action Dock — sourcing stage only ═══ */}
-      {/* §11.252e #1 — 액션 바 3줄 → 2줄 압축 (호영님 spec). 모바일 flex-wrap →
-          flex-nowrap + overflow-x-auto (가로 스크롤) 으로 1줄 강제 + 휴지통 잘림 차단.
-          ≥sm: 기존 flex-wrap 보존 (데스크탑 충분한 폭). pr-4 으로 padding-right
-          16px 확보 (호영님 spec "padding-right 16px 이상"). */}
-      {hasSearched && !!session?.user && isSourcingOwner && (
+      {/* §11.252f — 액션 바 2행 분리 (호영님 spec).
+          AS-IS: 1줄 강제 (§11.252e flex-nowrap + overflow-x-auto) 였으나 가로
+          스크롤 시 정보 인지 cost ↑ + 금액/CTA 화면 밖 잘림 가능.
+          TO-BE: 비교/견적 각각 독립 행 (총 2행). 비교 0건 → 1행 숨김, 견적 0건 →
+          2행 숨김. 각 행 min-h-[44px] + 행 사이 border-b border-white/10 subtle
+          divider. 금액 shrink-0 (잘림 0). CTA 라벨 모바일 축약 (견적 요청서 만들기
+          → 견적 요청). iPhone SE 375px 잘림 0 정합. */}
+      {hasSearched && !!session?.user && isSourcingOwner && (compareIds.length > 0 || quoteItems.length > 0) && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
-          <div className="px-4 pr-4 py-3 flex items-center gap-2 sm:gap-4 flex-nowrap sm:flex-wrap overflow-x-auto sm:overflow-x-visible">
-            {/* Compare segment */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <PenLine className={`h-4 w-4 ${compareIds.length > 0 ? "text-blue-600" : "text-slate-500"}`} />
-                <span className={`text-sm font-semibold ${compareIds.length > 0 ? "text-slate-100" : "text-slate-400"}`}>비교</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${compareIds.length > 0 ? "bg-blue-600 text-white" : "bg-slate-800 text-slate-500"}`}>{compareIds.length}</Badge>
-              </div>
-              {compareIds.length > 0 ? (
-                <>
-                  {compareReady ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
-                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                      비교 검토
-                    </Button>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 text-xs text-amber-600">
-                      <AlertTriangle className="h-3 w-3" />2개 이상 필요
-                    </span>
-                  )}
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-500" onClick={() => clearCompare()}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <span className="text-xs text-slate-500">후보 없음</span>
-              )}
-            </div>
-
-            {/* Divider */}
-            <div className="w-px h-6 bg-white/20" />
-
-            {/* Request segment */}
-            <div className="flex items-center gap-2.5">
-              <div className="flex items-center gap-1.5">
-                <FileText className={`h-4 w-4 ${quoteItems.length > 0 ? "text-emerald-600" : "text-slate-500"}`} />
-                <span className={`text-sm font-semibold ${quoteItems.length > 0 ? "text-slate-100" : "text-slate-400"}`}>견적</span>
-                <Badge variant="secondary" className={`h-5 min-w-5 px-1.5 text-xs ${quoteItems.length > 0 ? "bg-emerald-600 text-white" : "bg-slate-800 text-slate-500"}`}>{quoteItems.length}</Badge>
-              </div>
-              {quoteItems.length > 0 ? (
-                <>
-                  {requestReadiness.summary.review > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600">
-                      <AlertTriangle className="h-3 w-3" />검토 {requestReadiness.summary.review}
-                    </span>
-                  )}
-                  {requestReadiness.summary.blocked > 0 && (
-                    <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-500">
-                      <AlertCircle className="h-3 w-3" />차단 {requestReadiness.summary.blocked}
-                    </span>
-                  )}
-                  <span className="text-xs text-slate-400 tabular-nums font-medium">₩{totalAmount.toLocaleString("ko-KR")}</span>
-                  {requestHandoff ? (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setWorkWindowMode("request-assembly"))}>
-                      <FileText className="h-3.5 w-3.5 mr-1.5" />
-                      견적 요청 조립
-                    </Button>
-                  ) : (
-                    <Button size="sm" className="h-8 px-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium" onClick={() => handleProtectedAction(() => setRequestWizardOpen(true))}>
-                      <FileText className="h-3.5 w-3.5 mr-1.5" />
-                      견적 요청서 만들기
-                    </Button>
-                  )}
-                  <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500 hover:text-red-500" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}>
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </>
-              ) : (
-                <span className="text-xs text-slate-500">후보 없음</span>
-              )}
-            </div>
-
-            {/* 현재 검색 결과 밖 후보 안내 */}
-            {(() => {
-              const visibleIds = new Set(products.map((p: any) => p.id));
-              const hiddenCompare = compareIds.filter((id: string) => !visibleIds.has(id)).length;
-              const hiddenRequest = quoteItems.filter((q: any) => !visibleIds.has(q.productId)).length;
-              const total = hiddenCompare + hiddenRequest;
-              if (total === 0) return null;
-              return (
-                <span className="text-[10px] text-slate-500 hidden sm:inline">
-                  이전 검색 후보 {total}개 유지 중
+          {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출) */}
+          {compareIds.length > 0 && (
+            <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3 border-b border-white/10">
+              <PenLine className="h-4 w-4 text-blue-600 shrink-0" />
+              <span className="text-sm font-semibold text-slate-100 shrink-0">비교</span>
+              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-blue-600 text-white shrink-0">{compareIds.length}</Badge>
+              {!compareReady && (
+                <span className="inline-flex items-center gap-1 text-xs text-amber-500 whitespace-nowrap">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />2개 이상 필요
                 </span>
-              );
-            })()}
-
-            {/* Spacer + clear all */}
-            {(compareIds.length > 0 || quoteItems.length > 0) && (
-              <>
-                <div className="flex-1" />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-3 text-xs text-slate-500 hover:text-red-500"
-                  onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
-                >
-                  전체 해제
+              )}
+              <div className="ml-auto flex items-center gap-2 shrink-0">
+                {compareReady && (
+                  <Button size="sm" className="h-8 px-3 text-xs bg-blue-600 hover:bg-blue-500 text-white font-medium" onClick={() => handleProtectedAction(() => setComparisonModalOpen(true))}>
+                    <Sparkles className="h-3.5 w-3.5 mr-1" />
+                    비교 검토
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 hover:text-red-500" onClick={() => clearCompare()} aria-label="비교 후보 비우기">
+                  <Trash2 className="h-3.5 w-3.5" />
                 </Button>
-              </>
-            )}
+              </div>
+            </div>
+          )}
+
+          {/* §11.252f 2행 — 견적 (quoteItems.length > 0 일 때만 노출) */}
+          {quoteItems.length > 0 && (
+            <div className="px-4 min-h-[44px] flex items-center gap-2 sm:gap-3">
+              <FileText className="h-4 w-4 text-emerald-500 shrink-0" />
+              <span className="text-sm font-semibold text-slate-100 shrink-0">견적</span>
+              <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-xs bg-emerald-600 text-white shrink-0">{quoteItems.length}</Badge>
+              {requestReadiness.summary.review > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 shrink-0">
+                  <AlertTriangle className="h-3 w-3 shrink-0" />검토 {requestReadiness.summary.review}
+                </span>
+              )}
+              {requestReadiness.summary.blocked > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-red-600/10 text-red-500 shrink-0">
+                  <AlertCircle className="h-3 w-3 shrink-0" />차단 {requestReadiness.summary.blocked}
+                </span>
+              )}
+              <div className="ml-auto flex items-center gap-2 shrink-0">
+                <span className="text-xs text-slate-300 tabular-nums font-medium shrink-0 whitespace-nowrap">₩{totalAmount.toLocaleString("ko-KR")}</span>
+                {requestHandoff ? (
+                  <Button size="sm" className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shrink-0" onClick={() => handleProtectedAction(() => setWorkWindowMode("request-assembly"))}>
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    <span className="hidden sm:inline">견적 요청 조립</span>
+                    <span className="sm:hidden">요청 조립</span>
+                  </Button>
+                ) : (
+                  <Button size="sm" className="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium shrink-0" onClick={() => handleProtectedAction(() => setRequestWizardOpen(true))}>
+                    <FileText className="h-3.5 w-3.5 mr-1" />
+                    <span className="hidden sm:inline">견적 요청서 만들기</span>
+                    <span className="sm:hidden">견적 요청</span>
+                  </Button>
+                )}
+                <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-slate-500 hover:text-red-500" onClick={() => { quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }} aria-label="견적 후보 비우기">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* §11.252f — 전체 해제 (2행 하단 우측 텍스트 링크) */}
+          <div className="px-4 py-1 flex justify-end border-t border-white/5">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 px-2 text-[11px] text-slate-500 hover:text-red-500"
+              onClick={() => { clearCompare(); quoteItems.forEach((item: any) => removeQuoteItem(item.id)); }}
+            >
+              전체 해제
+            </Button>
           </div>
         </div>
       )}
