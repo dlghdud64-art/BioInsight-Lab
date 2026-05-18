@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -11,7 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 // store fetch 처리 (이전 mount 동작 회복).
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight } from "lucide-react";
+import { Package, AlertTriangle, DollarSign, FileText, Search, Plus, TrendingUp, Truck, ChevronRight, Beaker, Calendar, GitCompare, CheckCircle2, Clock, ClipboardList, ShieldAlert, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -140,6 +140,28 @@ function DashboardPageInner() {
   // §11.252b — 모바일 (<lg) 차트 영역 탭 전환 state (트렌드 / 카테고리).
   // 데스크탑 (≥lg) 은 기존 grid 보존 (회귀 0).
   const [activeChartTab, setActiveChartTab] = useState<"trend" | "category">("trend");
+
+  // §11.252d-1 — OnboardingHero dismiss state + localStorage persist.
+  // 호영님 spec: 사용자가 명시적으로 닫기 가능 + 페이지 새로고침 시 dismiss 상태 유지.
+  // SSR hydration safe — default false + useEffect mount 시 localStorage 읽기.
+  // localStorage key: "labaxis-onboarding-dismissed" (boolean string).
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("labaxis-onboarding-dismissed");
+      if (stored === "true") setOnboardingDismissed(true);
+    } catch {
+      // localStorage 접근 실패 (private mode 등) — silent fallback, default false 유지.
+    }
+  }, []);
+  const dismissOnboarding = () => {
+    setOnboardingDismissed(true);
+    try {
+      localStorage.setItem("labaxis-onboarding-dismissed", "true");
+    } catch {
+      // silent fallback — state 만 변경, 새로고침 시 다시 노출.
+    }
+  };
 
   /** Link 대신 overlay를 열 수 있는 경로면 overlay를, 아니면 router.push */
   const handleNavigateOrOverlay = (href: string, origin: "dashboard" | "queue" | "card" = "dashboard") => {
@@ -560,10 +582,22 @@ function DashboardPageInner() {
       {/* §11.243 #2 — 호영님 P0: OnboardingHero (isOnboardingMode 한정).
           3 step 시각화 (품목 등록 → 견적 요청 → 비교 검토) + 체크마크 + CTA.
           데이터 1건+ 시 자동 숨김. canonical truth: onboardingSteps derive
-          (line 284) — stats.totalInventory / activeQuotes / respondedQuotes. */}
-      {isOnboardingMode && (
-        <div className="bg-white border border-blue-200 rounded-xl p-6 shadow-sm">
-          <div className="mb-5">
+          (line 284) — stats.totalInventory / activeQuotes / respondedQuotes.
+          §11.252d-1 — 호영님 spec: 사용자 명시적 dismiss + localStorage persist.
+          render 조건 강화 — isOnboardingMode + !onboardingDismissed 양립. */}
+      {isOnboardingMode && !onboardingDismissed && (
+        <div className="bg-white border border-blue-200 rounded-xl p-6 shadow-sm relative">
+          {/* §11.252d-1 — 우상단 X dismiss button. min-h-[44px] + min-w-[44px]
+              터치 타깃 (Apple HIG / Material Design 표준). aria-label 명시. */}
+          <button
+            type="button"
+            onClick={dismissOnboarding}
+            aria-label="시작 가이드 닫기"
+            className="absolute top-3 right-3 inline-flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 active:bg-slate-200 transition-colors"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+          <div className="mb-5 pr-10">
             <div className="flex items-baseline justify-between mb-1.5">
               <h3 className="text-base font-bold text-slate-900">시작하기</h3>
               {/* §11.243 #7 — 호영님 P0: 회색 progress 바로 진행도 표시
