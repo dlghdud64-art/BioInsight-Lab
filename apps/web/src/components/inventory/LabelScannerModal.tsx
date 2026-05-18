@@ -128,6 +128,11 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
   const [isDragOver, setIsDragOver] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [manualText, setManualText] = useState("");
+  // §11.253 — 충돌 경고 acknowledge state. matchedInventory 존재 (case 3: 이미
+  // 등록된 Lot 중복) 시 conflict banner 노출. 사용자 [그래도 진행] click → ack=true
+  // → banner hide. [취소] click → onOpenChange(false) 모달 닫기. scanResult 변경
+  // (재스캔) 또는 모달 close 시 자동 reset.
+  const [conflictAck, setConflictAck] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   /* ── 리셋 ── */
@@ -140,6 +145,7 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
     setIsDragOver(false);
     setManualMode(false);
     setManualText("");
+    setConflictAck(false);
   }, []);
 
   useEffect(() => {
@@ -451,14 +457,47 @@ export function LabelScannerModal({ open, onOpenChange, onScanComplete, onDirect
             </div>
           )}
 
-          {/* 동일 Lot 경고 */}
-          {scanResult?.matchedInventory && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2.5">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-600" />
-                <span className="text-xs text-amber-700">
-                  동일 Lot 재고 존재 (현재: {scanResult.matchedInventory.currentQuantity} {scanResult.matchedInventory.unit}) — 입고 시 추가됩니다
-                </span>
+          {/* §11.253 — 충돌 경고 banner 강화 (case 3 = 이미 등록된 Lot 중복).
+              호영님 spec 4 요구사항 정합:
+                ① 항목 특정 — matchedProduct.name + lotNumber inline 노출.
+                ② 작업 유형 — "입고 처리" 명시.
+                ④ 액션 — [그래도 진행] / [취소] button 2개.
+              톤 — Error (red) — 이미 완료된 입고 항목 중복 시도 case 정합.
+              ack 후 (conflictAck === true) banner 자동 hide → 폼 그대로 사용.
+              ③ 행위자 / ⑤ 시간 정보 — backend lock infra 필요 (§11.253b 별도 cluster). */}
+          {scanResult?.matchedInventory && !conflictAck && (
+            <div className="rounded-lg border border-red-200 bg-red-50/60 px-3 py-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-red-700 mb-1 break-keep">
+                    이미 등록된 항목에 입고 처리를 시도하고 있습니다
+                  </p>
+                  <p className="text-[11px] text-red-600/90 leading-relaxed break-keep">
+                    <span className="font-medium">{scanResult.matchedProduct?.name ?? "동일 제품"}</span>
+                    {" "}— Lot {scanResult.matchedInventory.lotNumber ?? "—"}
+                    {" "}(현재 {scanResult.matchedInventory.currentQuantity}{" "}
+                    {scanResult.matchedInventory.unit ?? ""})
+                    <br />
+                    계속 진행 시 기존 재고에 수량이 추가됩니다.
+                  </p>
+                  <div className="flex items-center gap-2 mt-2.5">
+                    <button
+                      type="button"
+                      onClick={() => setConflictAck(true)}
+                      className="inline-flex items-center justify-center h-9 px-3 rounded-md bg-red-600 text-white text-xs font-semibold hover:bg-red-500 active:scale-95 transition-all"
+                    >
+                      그래도 진행
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onOpenChange(false)}
+                      className="inline-flex items-center justify-center h-9 px-3 rounded-md border border-red-200 bg-white text-red-700 text-xs font-medium hover:bg-red-50 active:scale-95 transition-all"
+                    >
+                      취소
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
