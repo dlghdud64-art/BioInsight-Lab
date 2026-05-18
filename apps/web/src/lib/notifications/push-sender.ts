@@ -26,6 +26,9 @@
 
 import { db } from "@/lib/db";
 import { isUserPreferenceAllowed } from "./preference-filter";
+// §11.250-pref-silence — 방해 금지 시간 (KST 22:00~08:00 등) push 차단.
+//   in-app NotificationAction 은 영향 0 (silence 는 push 전용).
+import { isUserInSilenceWindow } from "./silence-window";
 
 const EXPO_PUSH_API = "https://exp.host/--/api/v2/push/send";
 
@@ -64,6 +67,15 @@ export async function sendPushNotification(
       if (!allowed) {
         return { successCount: 0, failureCount: 0, skipped: true };
       }
+    }
+
+    // §11.250-pref-silence — 방해 금지 시간 (KST) push 차단. preference-push
+    //   다음 layer 으로 적용 — 카테고리 통과해도 silence window 안이면 push skip.
+    //   in-app NotificationAction 은 dispatcher 가 이미 생성 (silence 영향 0).
+    //   DB fail / silence 미설정 시 false (push 정상 전송).
+    const inSilence = await isUserInSilenceWindow(userId);
+    if (inSilence) {
+      return { successCount: 0, failureCount: 0, skipped: true };
     }
 
     const devices = await db.device.findMany({
