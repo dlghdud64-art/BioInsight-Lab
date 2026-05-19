@@ -517,6 +517,64 @@ export default function SearchPage() {
   // Preview option for overlay
   const previewOption = sourcingOptions.find(o => o.frame === previewStrategy) ?? null;
 
+  // 11.263c - Sourcing result triage evidence for Browser Pilot.
+  const sourcingTriage = useMemo(() => {
+    if (!hasSearched || products.length === 0) return null;
+
+    const queryToken = searchQuery.trim().toLowerCase().split(/\s+/).find(Boolean) ?? "";
+    const hasVendorEvidence = (product: any) => {
+      const vendor = product.vendors?.[0];
+      return Boolean(vendor?.vendor?.name || vendor?.name || (vendor?.priceInKRW ?? 0) > 0);
+    };
+    const matchesQuery = (product: any) => {
+      if (!queryToken) return false;
+      const haystack = [
+        product.name,
+        product.brand,
+        product.catalogNumber,
+        product.specification,
+        product.category,
+      ].filter(Boolean).join(" ").toLowerCase();
+      return haystack.includes(queryToken);
+    };
+
+    const availableProducts = products.filter((product: any) => hasVendorEvidence(product));
+    const blockedProducts = products.filter((product: any) => !hasVendorEvidence(product));
+    const exactProducts = availableProducts.filter((product: any) => matchesQuery(product));
+    const exactIds = new Set(exactProducts.map((product: any) => product.id));
+    const anchorCategory = exactProducts[0]?.category ?? availableProducts[0]?.category ?? null;
+    const equivalentProducts = availableProducts.filter((product: any) => {
+      return !exactIds.has(product.id) && anchorCategory && product.category === anchorCategory;
+    });
+    const equivalentIds = new Set(equivalentProducts.map((product: any) => product.id));
+    const alternativeProducts = availableProducts.filter((product: any) => {
+      return !exactIds.has(product.id) && !equivalentIds.has(product.id);
+    });
+
+    const firstActionProduct = exactProducts[0] ?? equivalentProducts[0] ?? alternativeProducts[0] ?? products[0] ?? null;
+    const blockedReason = blockedProducts.length > 0
+      ? `${blockedProducts.length}건은 공급사/가격 확인 후 보류 또는 제외가 필요합니다.`
+      : "차단 사유 없음. 비교 후보를 같은 화면에서 검토할 수 있습니다.";
+
+    return {
+      firstActionProduct,
+      blockedReason,
+      sections: [
+        { key: "exact", label: "Exact Match", sublabel: "정확 일치", count: exactProducts.length, tone: "blue" },
+        { key: "equivalent", label: "Cross-Vendor Equivalent", sublabel: "동등 후보", count: equivalentProducts.length, tone: "violet" },
+        { key: "alternative", label: "Alternative Pack", sublabel: "대체 팩", count: alternativeProducts.length, tone: "emerald" },
+        { key: "blocked", label: "Blocked", sublabel: "차단/보류", count: blockedProducts.length, tone: "red" },
+      ],
+    };
+  }, [hasSearched, products, searchQuery]);
+
+  const openSourcingTriageReview = () => handleProtectedAction(() => {
+    if (sourcingTriage?.firstActionProduct?.id) {
+      setActiveResultId(sourcingTriage.firstActionProduct.id);
+    }
+    setWorkWindowMode("result-review");
+  });
+
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
@@ -948,6 +1006,88 @@ export default function SearchPage() {
                   </div>
                 </div>
               </div>
+            )}
+
+            {sourcingTriage && (
+              <section
+                data-testid="sourcing-result-triage"
+                aria-label="Sourcing Result Triage"
+                className="px-3 pt-2"
+              >
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                        Sourcing Result Triage
+                      </p>
+                      <p className="mt-0.5 text-xs text-slate-600">
+                        Exact / Equivalent / Substitute / Blocked 후보를 먼저 분리하고 비교로 넘깁니다.
+                      </p>
+                    </div>
+                    <Button
+                      type="button"
+                      size="sm"
+                      data-testid="sourcing-triage-compare-cta"
+                      className="h-8 shrink-0 bg-blue-600 px-3 text-xs font-semibold text-white hover:bg-blue-500"
+                      onClick={openSourcingTriageReview}
+                    >
+                      비교 검토 열기
+                    </Button>
+                  </div>
+                  <div className="mt-2 grid grid-cols-4 gap-1.5 sm:gap-2">
+                    {sourcingTriage.sections.map((section) => {
+                      const toneClass = section.tone === "blue"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : section.tone === "violet"
+                          ? "border-violet-200 bg-violet-50 text-violet-700"
+                          : section.tone === "emerald"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700";
+                      return (
+                        <div
+                          key={section.key}
+                          data-testid={`sourcing-triage-${section.key}`}
+                          className={`min-w-0 rounded-md border px-2 py-2 sm:px-2.5 ${toneClass}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate text-[11px] font-semibold">{section.label}</span>
+                            <span className="text-base font-bold tabular-nums">{section.count}</span>
+                          </div>
+                          <p className="mt-0.5 text-[10px] opacity-80">{section.sublabel}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-2 flex flex-col gap-2 border-t border-slate-100 pt-2 sm:flex-row sm:items-center">
+                    <p
+                      data-testid="sourcing-triage-blocked-reason"
+                      className="min-w-0 flex-1 truncate text-[11px] font-medium text-slate-600"
+                    >
+                      차단 사유: {sourcingTriage.blockedReason}
+                    </p>
+                    <div className="flex shrink-0 items-center gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-7 px-2 text-[11px]"
+                        onClick={openSourcingTriageReview}
+                      >
+                        보류 검토
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px] text-red-600 hover:text-red-700"
+                        onClick={openSourcingTriageReview}
+                      >
+                        제외 사유
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </section>
             )}
 
             {/* Result rows */}

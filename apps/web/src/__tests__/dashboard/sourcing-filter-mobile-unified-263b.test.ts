@@ -135,3 +135,22 @@ describe("§11.263b #3 — invariant 보존 (canonical truth)", () => {
     expect(page).toMatch(/flex-1 md:hidden/);
   });
 });
+
+describe("11.263c sourcing result triage evidence", () => {
+  it("renders the fixed four-way triage header and counts", () => {
+    expect(page).toMatch(/11\.263c/);
+    expect(page).toMatch(/data-testid="sourcing-result-triage"/);
+    expect(page).toMatch(/Sourcing Result Triage/);
+    expect(page).toMatch(/Exact Match/);
+    expect(page).toMatch(/Cross-Vendor Equivalent/);
+    expect(page).toMatch(/Alternative Pack/);
+    expect(page).toMatch(/Blocked/);
+  });
+
+  it("exposes compare, hold, exclude actions outside result-card overlays", () => {
+    expect(page).toMatch(/data-testid="sourcing-triage-compare-cta"/);
+    expect(page).toMatch(/data-testid="sourcing-triage-blocked-reason"/);
+    expect(page).toMatch(/보류 검토/);
+    expect(page).toMatch(/제외 사유/);
+  });
+});
