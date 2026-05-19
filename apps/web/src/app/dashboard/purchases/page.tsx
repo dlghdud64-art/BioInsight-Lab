@@ -589,9 +589,12 @@ export default function PurchasesPage() {
           />
         </div>
 
-        {/* ═══ 탭 + 검색 ═══ */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="flex items-center gap-1 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+        {/* ═══ 탭 + 검색 ═══
+            §11.260b — 호영님 §11.259c 패턴 reuse. 모바일에서도 가로 1줄 압축
+            (sm:flex-row → flex-row 강제). 탭 영역 flex-1 min-w-0 (좌측 차지 +
+            가로 스크롤). 검색 input 모바일 w-[140px] 고정, sm+ flex-1 + max-w-xs. */}
+        <div className="flex flex-row items-center gap-2">
+          <div className="flex items-center gap-1 overflow-x-auto flex-1 min-w-0" style={{ scrollbarWidth: "none" }}>
             {([
               { key: "all" as QueueTab,             label: "전체",      count: stats.total },
               { key: "review_required" as QueueTab, label: "검토 필요", count: stats.review_required },
@@ -612,7 +615,7 @@ export default function PurchasesPage() {
               </button>
             ))}
           </div>
-          <div className="relative flex-1 min-w-0 sm:max-w-xs sm:ml-auto">
+          <div className="relative w-[140px] sm:w-auto sm:flex-1 sm:max-w-xs sm:ml-auto shrink-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
             <Input placeholder="제목, 견적번호 검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-10 text-sm bg-white border-slate-200" />
