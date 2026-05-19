@@ -332,6 +332,7 @@ export default function SearchPage() {
       catResult,
     };
   }, [compareReady, compareIds, products]);
+  const showSourcingActionDock = hasSearched && !!session?.user && isSourcingOwner && (compareIds.length > 0 || quoteItems.length > 0);
 
   // ── Ontology Contextual Action Layer — sourcing detail ──
   const sourcingDetailForBridge = useMemo(() => {
@@ -1115,7 +1116,7 @@ export default function SearchPage() {
           2행 숨김. 각 행 min-h-[44px] + 행 사이 border-b border-white/10 subtle
           divider. 금액 shrink-0 (잘림 0). CTA 라벨 모바일 축약 (견적 요청서 만들기
           → 견적 요청). iPhone SE 375px 잘림 0 정합. */}
-      {hasSearched && !!session?.user && isSourcingOwner && (compareIds.length > 0 || quoteItems.length > 0) && (
+      {showSourcingActionDock && (
         <div className="border-t border-white/10 shrink-0" style={{ backgroundColor: '#0f172a' }}>
           {/* §11.252f 1행 — 비교 (compareIds.length > 0 일 때만 노출) */}
           {compareIds.length > 0 && (
@@ -1908,12 +1909,15 @@ export default function SearchPage() {
 
       {/* ═══ AI Decision Layer — right-anchored, workbench context 유지 ═══ */}
       {isStrategyOverlayOpen && canOpenStrategyOverlay && (
-        <div className="fixed inset-0 z-[70]" onClick={closeStrategyOverlay}>
+        <div
+          className={`fixed left-0 right-0 top-[60px] z-[70] ${showSourcingActionDock ? "bottom-[128px]" : "bottom-0"}`}
+          onClick={closeStrategyOverlay}
+        >
           {/* Minimal backdrop — workbench 맥락 유지 */}
           <div className="absolute inset-0 bg-black/15" />
           {/* Anchored decision layer — right edge, rail과 연결된 느낌 */}
           <div
-            className="absolute top-[60px] right-0 bottom-[64px] w-[400px] bg-white border-l border-blue-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden"
+            className="absolute top-0 right-0 bottom-0 w-[400px] bg-white border-l border-blue-200 shadow-xl shadow-slate-200/50 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Layer header — strong AI branding */}
