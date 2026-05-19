@@ -996,9 +996,12 @@ export default function SearchPage() {
               </div>
             )}
 
-            {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
+            {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══
+                §11.265b-1 — 모바일 hidden (호영님 spec "AI 분석은 AI 분석 영역").
+                  §11.265c 의 1줄 요약 row 안 "AI 분석" 버튼이 §11.265b-2 의
+                  AiAnalysisBottomSheet 트리거 — 본 inline 은 데스크탑 한정. */}
             {!shouldShowSourcingStrip && aiShouldShow && (
-              <div className="px-4 pt-1.5">
+              <div className="hidden md:block px-4 pt-1.5">
                 <div className="flex items-center gap-2 px-2.5 py-1.5 rounded border border-blue-200 bg-blue-50">
                   <span className="text-[10px] font-semibold text-blue-600 shrink-0">AI 제안</span>
                   <span className="text-[10px] text-slate-600 flex-1 truncate">{aiSearchSummary[0]?.text}</span>
@@ -1017,11 +1020,15 @@ export default function SearchPage() {
               </div>
             )}
 
+            {/* §11.265b-1 — TRIAGE 블록 모바일 hidden (호영님 spec "검색 본질 회복").
+                  데스크탑 한정 inline 표시. 모바일은 §11.265b-2 NEW
+                  AiAnalysisBottomSheet 안으로 이동 예정. content / state /
+                  handler / data-testid 보존 (parent hidden 으로 비표시). */}
             {sourcingTriage && (
               <section
                 data-testid="sourcing-result-triage"
                 aria-label="Sourcing Result Triage"
-                className="px-3 pt-2"
+                className="hidden md:block px-3 pt-2"
               >
                 <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
