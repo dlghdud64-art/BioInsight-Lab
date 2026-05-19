@@ -4095,5 +4095,3 @@ export default function QuotesPage() {
     </NoSSR>
   );
 }
-  );
-}
