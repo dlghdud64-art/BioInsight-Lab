@@ -1938,15 +1938,20 @@ function QuotesPageContent() {
         })}
       </div>
 
-      {/* ── 검색 + 필터 ── */}
+      {/* ── 검색 + 필터 ──
+          §11.259c — 호영님 spec 견적 관리 모바일 #3 "필터 + 뷰 전환 영역 1줄 압축".
+          모바일에서도 검색/상태 필터 가로 1줄 (sm:flex-row → flex-row 강제) +
+          상태 Select width 모바일 압축 (w-[110px] sm:w-[160px]). mode chips 는
+          가로 스크롤 (flex-nowrap + overflow-x-auto) 으로 무한 줄바꿈 차단.
+          뷰 toggle 위치 이동은 별도 backlog (line 2014-2044 = 80+ line, 큰 구조 변경). */}
       <div className="flex flex-col gap-2">
-        <div className="flex flex-col sm:flex-row gap-2">
-          <div className="relative flex-1">
+        <div className="flex flex-row gap-2">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
             <Input placeholder="견적명 / 품목명 / 요청 번호 검색..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9 h-9 text-sm" />
           </div>
           <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setModeChip(null); }}>
-            <SelectTrigger className="w-full sm:w-[160px] h-9 text-sm">
+            <SelectTrigger className="w-[110px] sm:w-[160px] h-9 text-sm shrink-0">
               <Filter className="h-3.5 w-3.5 mr-2 text-slate-400" /><SelectValue placeholder="상태 필터" />
             </SelectTrigger>
             <SelectContent>
@@ -1960,8 +1965,8 @@ function QuotesPageContent() {
             </SelectContent>
           </Select>
         </div>
-        {/* Operating mode chips */}
-        <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제). */}
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
           {MODE_CHIPS.map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
