@@ -138,7 +138,9 @@ export default function SearchPage() {
     sortBy,
     setSortBy,
     minPrice,
+    setMinPrice,
     maxPrice,
+    setMaxPrice,
     grade,
   } = useTestFlow();
   const { getDisplayName: getStoredName } = useCompareStore();
@@ -574,6 +576,8 @@ export default function SearchPage() {
                     <option value="price_low">가격 낮은순</option>
                     <option value="price_high">가격 높은순</option>
                     <option value="lead_time">배송기간순</option>
+                    {/* §11.258d-1 — "이름순" (server line 119 a.name.localeCompare(b.name)). */}
+                    <option value="name">이름순</option>
                   </select>
                 </label>
                 <Sheet>
@@ -658,6 +662,66 @@ export default function SearchPage() {
                 }`}
               >
                 {PRODUCT_CATEGORIES.EQUIPMENT}
+              </button>
+            </div>
+
+            {/* §11.258d-1 — 가격대 필터칩 (전체 / ~5만 / 5~20만 / 20만~).
+                setMinPrice + setMaxPrice 동시 호출 → useQuery key 안 양쪽 모두 포함
+                (정합 line 174) → server fetch 재요청 (route line 182-183). 4 chip
+                동일 height/style (카테고리 chip row 정합). active 기준: 양 범위
+                완전 일치. 가로 스크롤 모바일 정합. */}
+            <div className="px-4 md:px-6 py-2 border-b border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto">
+              <button
+                type="button"
+                data-testid="sourcing-price-chip-all"
+                onClick={() => { setMinPrice(undefined); setMaxPrice(undefined); }}
+                aria-pressed={minPrice === undefined && maxPrice === undefined}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  minPrice === undefined && maxPrice === undefined
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                전체 가격
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-price-chip-low"
+                onClick={() => { setMinPrice(undefined); setMaxPrice(50000); }}
+                aria-pressed={minPrice === undefined && maxPrice === 50000}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  minPrice === undefined && maxPrice === 50000
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                ~5만
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-price-chip-mid"
+                onClick={() => { setMinPrice(50000); setMaxPrice(200000); }}
+                aria-pressed={minPrice === 50000 && maxPrice === 200000}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  minPrice === 50000 && maxPrice === 200000
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                5~20만
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-price-chip-high"
+                onClick={() => { setMinPrice(200000); setMaxPrice(undefined); }}
+                aria-pressed={minPrice === 200000 && maxPrice === undefined}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  minPrice === 200000 && maxPrice === undefined
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                20만~
               </button>
             </div>
 

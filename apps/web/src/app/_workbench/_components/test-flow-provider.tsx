@@ -22,8 +22,11 @@ interface TestFlowContextType {
   setSearchCategory: (category: string) => void;
   searchBrand: string;
   setSearchBrand: (brand: string) => void;
-  sortBy: "relevance" | "price_low" | "price_high" | "lead_time";
-  setSortBy: (sort: "relevance" | "price_low" | "price_high" | "lead_time") => void;
+  // §11.258d-1 — "name" 옵션 추가 (server route /api/products/search line 119 의
+  //   `sortBy === "name"` 분기 이미 처리, a.name.localeCompare(b.name)).
+  //   호영님 spec #7 "이름순" 정렬 client UI 노출.
+  sortBy: "relevance" | "price_low" | "price_high" | "lead_time" | "name";
+  setSortBy: (sort: "relevance" | "price_low" | "price_high" | "lead_time" | "name") => void;
   // 필터 상태
   minPrice: number | undefined;
   setMinPrice: (price: number | undefined) => void;
@@ -81,7 +84,8 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<string>("");
   const [searchBrand, setSearchBrand] = useState<string>("");
-  const [sortBy, setSortBy] = useState<"relevance" | "price_low" | "price_high" | "lead_time">("relevance");
+  // §11.258d-1 — "name" enum 추가 (server line 119 분기 정합, default "relevance" 유지).
+  const [sortBy, setSortBy] = useState<"relevance" | "price_low" | "price_high" | "lead_time" | "name">("relevance");
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [stockStatus, setStockStatus] = useState<string | undefined>(undefined);
