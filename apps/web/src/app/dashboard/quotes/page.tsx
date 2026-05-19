@@ -5,6 +5,8 @@ export const dynamic = 'force-dynamic';
 import { csrfFetch } from "@/lib/api-client";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
+import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 import { useOperationalBriefPopup } from "@/components/operational-brief/popup-context";
@@ -3818,6 +3820,8 @@ function QuotesPageContent() {
       <div className="hidden lg:block">
         <OperationalBriefFloatingEntry controls="operational-brief-popup" />
       </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
     </div>
   );
 }

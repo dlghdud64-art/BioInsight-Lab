@@ -60,6 +60,9 @@ const PriorityActionQueue = dynamic(() => import("@/components/inventory/priorit
 const InventoryContextPanel = dynamic(() => import("@/components/inventory/inventory-context-panel").then((m) => m.InventoryContextPanel), { ssr: false });
 const MobileOperationalBriefSheet = dynamic(() => import("@/components/operational-brief/mobile-bottom-sheet").then((m) => m.MobileOperationalBriefSheet), { ssr: false });
 const OperationalBriefFloatingEntry = dynamic(() => import("@/components/operational-brief/floating-entry").then((m) => m.OperationalBriefFloatingEntry), { ssr: false });
+// §11.258-sweep-2 — 모바일 한정 좌측 하단 floating 진입 (방안 1 위치 분리).
+//   BarcodeScanFab (right-4) 와 분리 (left-4). dashboard inline link 와 별개.
+const MobileBriefInlineButton = dynamic(() => import("@/components/operational-brief/mobile-inline-button").then((m) => m.MobileBriefInlineButton), { ssr: false });
 const StorageLocationView = dynamic(() => import("@/components/inventory/storage-location-view").then((m) => m.StorageLocationView), { ssr: false });
 const InventoryFlowView = dynamic(() => import("@/components/inventory/inventory-flow-view").then((m) => m.InventoryFlowView), { ssr: false });
 const MobileInventoryView = dynamic(() => import("@/components/inventory/mobile-inventory-view").then((m) => m.MobileInventoryView), { ssr: false });
@@ -3952,8 +3955,15 @@ function InventoryPageContent() {
         }}
       />
 
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
-      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
+          §11.258-sweep — §11.257 후속: 모바일 (<lg) 에서 BarcodeScanFab 과
+          좌표 겹침 (둘 다 bottom-[72px] right-4 z-40) 해소. 데스크탑 한정 노출.
+          모바일 inline 진입 동선은 §11.258-sweep-2 백로그. */}
+      <div className="hidden lg:block">
+        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
     </div>
   );
 }

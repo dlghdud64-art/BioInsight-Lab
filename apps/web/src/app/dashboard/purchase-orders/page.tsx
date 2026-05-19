@@ -26,6 +26,8 @@ import {
 import { ChevronRight, ArrowRight, AlertCircle, Clock, Zap, Sparkles, Loader2, ShieldAlert, ShieldCheck, DollarSign, AlertTriangle, CheckCircle2, FlaskConical, Inbox, Filter, FileText, Mail } from "lucide-react";
 import { buildDetailHref } from "@/lib/ops-console/navigation-context";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
+import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 // #post-approval-purchase-order-flow I — 빈 상태 한국어 정합. raw text →
 // reusable EmptyState (큰 icon + 한국어 title/description).
 import { EmptyState } from "@/components/ui/empty-state";
@@ -351,6 +353,8 @@ function PurchaseOrderLandingPageInner() {
       <div className="hidden lg:block">
         <OperationalBriefFloatingEntry controls="operational-brief-popup" />
       </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
     </div>
   );
 }

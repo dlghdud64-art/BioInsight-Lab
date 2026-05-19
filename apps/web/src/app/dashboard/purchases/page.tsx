@@ -18,6 +18,8 @@ import { csrfFetch } from "@/lib/api-client";
 import { toast } from "@/hooks/use-toast";
 import { MobileOperationalBriefSheet } from "@/components/operational-brief/mobile-bottom-sheet";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
+import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 import { MetricCell } from "@/components/operational-brief/metric-cell";
 import { invalidateBriefNarrative, useOperationalBriefNarrative } from "@/lib/hooks/use-operational-brief";
 // §11.209b Phase 3 — workspace.plan → approvalPolicy 매핑 (헤더 카피
@@ -1416,6 +1418,8 @@ export default function PurchasesPage() {
       <div className="hidden lg:block">
         <OperationalBriefFloatingEntry controls="operational-brief-popup" />
       </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
 
       {/* §11.209d-mutation — reject Dialog (reason input). admin/requests
           page 의 패턴 흡수. server enforceAction 이 진짜 lock. */}

@@ -32,6 +32,8 @@ import { ConsoleEmptyState } from "./console/console-empty-state";
 import { QueueRow, QueueColumnHeader } from "./console/queue-row";
 import { QueueDetailPanel } from "./console/queue-detail-panel";
 import { OperationalBriefFloatingEntry } from "@/components/operational-brief/floating-entry";
+// §11.258-sweep-2 — 모바일 좌측 하단 ✨ 진입 (방안 1 위치 분리).
+import { MobileBriefInlineButton } from "@/components/operational-brief/mobile-inline-button";
 import { DailyReviewRow, DailyReviewColumnHeader } from "./console/daily-review-row";
 import { GovernanceView } from "./console/governance-table";
 import { RemediationView } from "./console/remediation-table";
@@ -244,6 +246,8 @@ export function WorkQueueConsole() {
       <div className="hidden lg:block">
         <OperationalBriefFloatingEntry controls="operational-brief-popup" />
       </div>
+      {/* §11.258-sweep-2 — 모바일 좌측 하단 ✨ 운영 브리핑 진입 (방안 1). */}
+      <MobileBriefInlineButton />
     </div>
   );
 }
