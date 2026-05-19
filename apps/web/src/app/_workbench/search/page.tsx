@@ -676,8 +676,17 @@ export default function SearchPage() {
                 1 row + 가로 스크롤. 카테고리 4 + 구분자 + 가격 4 + 구분자 + 제조사 N.
                 구분자 = w-px h-5 bg-slate-300 (aria-hidden). 모든 chip 동일
                 onClick / state setter / aria-pressed 보존 (데스크탑 3 row 와 동일).
-                data-testid 는 "sourcing-mobile-*" prefix 으로 데스크탑 testid 와 구분. */}
-            <div className="md:hidden flex items-center gap-1.5 overflow-x-auto px-4 py-2 border-b border-slate-100 bg-white">
+                data-testid 는 "sourcing-mobile-*" prefix 으로 데스크탑 testid 와 구분.
+
+                §11.265a — 호영님 spec "소싱 모바일 — 검색 본질 회복": 인라인
+                필터 칩 row 를 hidden 으로 전환 → 검색 결과까지 도달 거리 단축
+                (~140px 절약). SearchUtilityBar 의 필터 버튼 (line 581) 이
+                isMobileFilterOpen Sheet 트리거 → SearchPanel (line 587) 의
+                풀 필터 (카테고리/가격/제조사) 모바일 entry 역할. 기능 손실 0,
+                JSX 트리는 보존 (separator data-testid 보존, parent hidden 으로
+                자동 비표시). 후속 §11.265b (AI 분석 바텀시트) + §11.265c
+                (1줄 요약 row) 별도 cluster. */}
+            <div className="hidden items-center gap-1.5 overflow-x-auto px-4 py-2 border-b border-slate-100 bg-white">
               {/* 카테고리 4 chip */}
               <button
                 type="button"
