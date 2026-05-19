@@ -1410,8 +1410,12 @@ export default function PurchasesPage() {
 
       </div>
 
-      {/* §11.181 — 운영 브리핑 floating entry (default = popup open) */}
-      <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      {/* §11.181 — 운영 브리핑 floating entry (default = popup open).
+          §11.258-sweep — §11.257 후속: 모바일 (<lg) BarcodeScanFab 겹침 해소,
+          데스크탑 한정 노출. 모바일 inline 진입은 §11.258-sweep-2 백로그. */}
+      <div className="hidden lg:block">
+        <OperationalBriefFloatingEntry controls="operational-brief-popup" />
+      </div>
 
       {/* §11.209d-mutation — reject Dialog (reason input). admin/requests
           page 의 패턴 흡수. server enforceAction 이 진짜 lock. */}
