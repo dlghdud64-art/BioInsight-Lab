@@ -26,17 +26,17 @@ import { resolve } from "node:path";
 const PAGE_PATH = resolve(__dirname, "../../../app/dashboard/quotes/page.tsx");
 const page = readFileSync(PAGE_PATH, "utf8");
 
-describe("§11.248c #1 — 모바일 1열 grid (호영님 spec <800px 1열 정합)", () => {
-  it("KPI Control Cards 외부 컨테이너 grid-cols-1 적용 (모바일)", () => {
-    // 호영님 spec: 5 → 3 → 2 → 1 단계적 반응형
-    // grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5
+describe("§11.248c #1 — 모바일 1열 grid (§11.259a 가 supersede)", () => {
+  // §11.259a 정책 변경: 모바일 1열 grid → 가로 스크롤 방안 A (snap-x mandatory).
+  // 이하 두 assertion 은 §11.259a 정책과 충돌하므로 it.skip 처리.
+  // 새 정책 검증은 quotes-kpi-mobile-scroll-259a.test.ts 가 담당.
+  it.skip("[SUPERSEDED §11.259a] KPI Control Cards 외부 컨테이너 grid-cols-1 적용 (모바일)", () => {
     expect(page).toMatch(
       /KPI Control Cards[\s\S]{0,300}grid-cols-1[\s\S]{0,300}sm:grid-cols-2[\s\S]{0,300}md:grid-cols-3[\s\S]{0,300}lg:grid-cols-5/,
     );
   });
 
-  it("기존 모바일 가로 스크롤 (flex + overflow-x-auto + snap-x) 제거", () => {
-    // KPI Control Cards 영역에서 가로 스크롤 패턴 제거
+  it.skip("[SUPERSEDED §11.259a] 기존 모바일 가로 스크롤 제거", () => {
     expect(page).not.toMatch(
       /KPI Control Cards[\s\S]{0,400}flex gap-2\.5 overflow-x-auto snap-x/,
     );

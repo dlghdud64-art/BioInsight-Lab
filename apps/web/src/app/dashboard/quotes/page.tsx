@@ -1889,10 +1889,11 @@ function QuotesPageContent() {
         onClearSelection={clearSelection}
       />
 
-      {/* ── KPI Control Cards — 5 카드 단계적 반응형 (§11.248c 호영님 P0 견적 관리 #3).
-          모바일 가로 스와이프 → 1열 grid 통일 (호영님 spec "<800px 1열" 정합).
-          breakpoint: <sm 1열 / sm 2열 / md 3열 / lg 5열. (§11.217 Phase 2 발송 대기 cell 추가 보존) ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+      {/* ── KPI Control Cards — 5 카드 단계적 반응형.
+          §11.259a #1 — 모바일 가로 스크롤 (방안 A, snap-x mandatory) supersede §11.248c "<800px 1열".
+          §11.259a #5 — 0건 카드 회색 톤다운 (isZero opacity-50 + text-slate-300/400, 기존 로직 보존).
+          breakpoint: <sm flex 가로 스크롤 / sm 2열 / md 3열 / lg 5열. (§11.217 Phase 2 발송 대기 cell 보존 / §11.248c P0 라벨 wrap 보존) ── */}
+      <div className="flex sm:grid overflow-x-auto sm:overflow-visible snap-x snap-mandatory sm:snap-none grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3 -mx-3 sm:mx-0 px-3 sm:px-0 pb-2 sm:pb-0">
         {[
           { label: "발송 대기", ...summaryStats.dispatchPending, icon: Send, filter: "PENDING", color: "slate", iconBg: "bg-slate-50", iconText: "text-slate-600", activeBorder: "border-slate-400/50", activeRing: "ring-slate-400/20", activeBg: "bg-slate-50/50", hoverBorder: "hover:border-slate-300", hoverShadow: "hover:shadow-slate-100" },
           { label: "회신 추적", ...summaryStats.responseTracking, icon: Clock, filter: "SENT", color: "amber", iconBg: "bg-amber-50", iconText: "text-amber-600", activeBorder: "border-amber-400/50", activeRing: "ring-amber-400/20", activeBg: "bg-amber-50/50", hoverBorder: "hover:border-amber-300", hoverShadow: "hover:shadow-amber-100" },
