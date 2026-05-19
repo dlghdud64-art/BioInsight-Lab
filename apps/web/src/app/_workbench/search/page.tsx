@@ -205,6 +205,11 @@ export default function SearchPage() {
   const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [isLoginPromptOpen, setIsLoginPromptOpen] = useState(false);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+  // §11.265b-2 — AI 분석 바텀시트 (호영님 spec "AI 분석은 AI 분석 영역").
+  //   §11.265b-1 hidden 으로 모바일 비표시된 인라인 AI 제안 fallback + TRIAGE 블록을
+  //   바텀시트 안에서 동일 markup 으로 노출. 트리거는 §11.265c 1줄 row 안 "AI 분석"
+  //   버튼 (별도 cluster). 본 phase 는 shell + state + content 만.
+  const [aiAnalysisSheetOpen, setAiAnalysisSheetOpen] = useState(false);
   // ── AI suggestion orchestration (contextHash 기반, SSR-safe) ──
   const [aiDismissedHash, setAiDismissedHash] = useState<string | null>(null);
   // ── P2: Sourcing tri-option operating layer ──
@@ -584,6 +589,120 @@ export default function SearchPage() {
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
         <SheetContent side="bottom" className="h-[75vh] overflow-y-auto">
           <div className="pt-2"><SearchPanel /></div>
+        </SheetContent>
+      </Sheet>
+
+      {/* ═══ §11.265b-2 AI 분석 바텀시트 ═══
+            호영님 spec "AI 분석은 AI 분석 영역". §11.265b-1 hidden 으로 모바일 비표시
+            된 인라인 AI 제안 fallback + TRIAGE 블록 markup 을 sheet 안에서 동일 content
+            노출. content / state / handler 는 inline 과 동일 closure 변수 사용 →
+            별도 컴포넌트 분리 X (markup duplication ~80 line acceptable). 트리거는
+            §11.265c 1줄 요약 row 안 "AI 분석" 버튼 (별도 cluster) → 본 phase 는
+            진입 path 0 = dead component 아닌 latent component (사용자 영향 0). */}
+      <Sheet open={aiAnalysisSheetOpen} onOpenChange={setAiAnalysisSheetOpen}>
+        <SheetContent
+          data-testid="sourcing-ai-analysis-sheet"
+          side="bottom"
+          className="h-[85vh] overflow-y-auto p-0"
+        >
+          <div className="px-4 py-3 border-b border-slate-200">
+            <h2 className="text-base font-semibold text-slate-900">AI 분석</h2>
+            <p className="mt-0.5 text-[11px] text-slate-500">
+              SOURCING RESULT TRIAGE · AI 제안 · 차단 사유
+            </p>
+          </div>
+          <div className="px-3 py-3 space-y-3">
+            {/* AI 제안 fallback (§11.265b-1 inline 과 동일 content) */}
+            {!shouldShowSourcingStrip && aiShouldShow && aiSearchSummary[0] && (
+              <div className="flex items-center gap-2 px-2.5 py-2 rounded border border-blue-200 bg-blue-50">
+                <span className="text-[10px] font-semibold text-blue-600 shrink-0">AI 제안</span>
+                <span className="text-[11px] text-slate-700 flex-1 break-words">{aiSearchSummary[0].text}</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {aiSearchSummary.some(l => l.signal === "compare") && compareIds.length === 0 && (
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-[11px] text-blue-600 hover:bg-blue-50 border border-blue-200"
+                      onClick={() => handleProtectedAction(() => {
+                        products.filter((p: any) => p.vendors?.[0]?.priceInKRW > 0 && !compareIds.includes(p.id)).slice(0, 3)
+                          .forEach((p: any) => toggleCompare(p.id, { name: p.name, brand: p.brand }));
+                      })}>비교 후보 담기</Button>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* TRIAGE 블록 (§11.265b-1 inline 과 동일 content) */}
+            {sourcingTriage && (
+              <section aria-label="Sourcing Result Triage Mobile">
+                <div className="rounded-lg border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                    Sourcing Result Triage
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-slate-600">
+                    Exact / Equivalent / Substitute / Blocked 후보를 먼저 분리하고 비교로 넘깁니다.
+                  </p>
+                  <div className="mt-2 grid grid-cols-2 gap-1.5">
+                    {sourcingTriage.sections.map((section) => {
+                      const toneClass = section.tone === "blue"
+                        ? "border-blue-200 bg-blue-50 text-blue-700"
+                        : section.tone === "violet"
+                          ? "border-violet-200 bg-violet-50 text-violet-700"
+                          : section.tone === "emerald"
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                            : "border-red-200 bg-red-50 text-red-700";
+                      return (
+                        <div
+                          key={`mobile-${section.key}`}
+                          className={`min-w-0 rounded-md border px-2.5 py-2 ${toneClass}`}
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="truncate text-[11px] font-semibold">{section.label}</span>
+                            <span className="text-base font-bold tabular-nums">{section.count}</span>
+                          </div>
+                          <p className="mt-0.5 text-[10px] opacity-80">{section.sublabel}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <p className="mt-2 text-[11px] font-medium text-slate-600 break-words">
+                    차단 사유: {sourcingTriage.blockedReason}
+                  </p>
+                  <div className="mt-2 flex flex-col gap-1.5">
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-9 w-full bg-blue-600 text-xs font-semibold text-white hover:bg-blue-500"
+                      onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
+                    >
+                      비교 검토 열기
+                    </Button>
+                    <div className="flex gap-1.5">
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-8 flex-1 text-[11px]"
+                        onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
+                      >
+                        보류 검토
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 flex-1 text-[11px] text-red-600 hover:text-red-700"
+                        onClick={() => { setAiAnalysisSheetOpen(false); openSourcingTriageReview(); }}
+                      >
+                        제외 사유
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+            {!sourcingTriage && (
+              <div className="px-4 py-6 text-center text-xs text-slate-500">
+                현재 분석할 검색 결과가 없습니다.
+              </div>
+            )}
+          </div>
         </SheetContent>
       </Sheet>
 
