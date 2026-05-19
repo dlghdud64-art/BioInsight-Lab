@@ -765,9 +765,14 @@ export default function SearchPage() {
                     <option value="name">이름순</option>
                   </select>
                 </label>
+                {/* §11.265c — Operating Status Bar 필터 버튼 모바일 표시 (호영님 spec
+                    "검색바 바로 아래 1줄"). 기존 hidden md:inline-flex → inline-flex.
+                    데스크탑은 그대로, 모바일에도 inline 노출. activeFilterCount badge
+                    보존 (필터 적용 시 파란 배지). SearchUtilityBar 필터 entry 와의
+                    중복 정합은 §11.265d 백로그. */}
                 <Sheet>
                   <SheetTrigger asChild>
-                    <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
+                    <button className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
                       <SlidersHorizontal className="h-3.5 w-3.5" />
                       필터
                       {activeFilterCount > 0 && (
@@ -779,6 +784,21 @@ export default function SearchPage() {
                     <SearchPanel />
                   </SheetContent>
                 </Sheet>
+                {/* §11.265c — AI 분석 트리거 버튼 (호영님 spec 1줄 row 4번째 요소).
+                    §11.265b-2 의 aiAnalysisSheetOpen state 활성 → bottom sheet 진입.
+                    모바일에서 §11.265b-1 hidden 된 인라인 AI 제안 + TRIAGE 의
+                    access path 복원. 데스크탑은 inline TRIAGE 가 정상 표시되지만
+                    동일 트리거 노출 (UX 일관성) — 데스크탑 사용자도 sheet 진입 가능. */}
+                <button
+                  type="button"
+                  data-testid="sourcing-ai-analysis-trigger"
+                  aria-label="AI 분석 열기"
+                  onClick={() => setAiAnalysisSheetOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-violet-700 hover:bg-violet-50 border border-violet-200 transition-colors"
+                >
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI 분석
+                </button>
                 {!!session?.user && hasSearched && searchQuery && (
                   <Link href={`/dashboard/inventory?q=${encodeURIComponent(searchQuery)}`}>
                     <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
@@ -2846,12 +2866,16 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           )}
         </form>
 
-        {/* 유틸리티 — AI 라벨 스캔 + 햄버거 메뉴 (§11.254b) */}
+        {/* 유틸리티 — AI 라벨 스캔 + 햄버거 메뉴 (§11.254b)
+            §11.264f — 호영님 spec "FAB 통합". 모바일에서는 헤더 inline 제거 + 우하단
+            fixed FAB 으로 단일화 (행압 절약 + 핵심 기능 굵게 돌출). 데스크탑은 inline
+            보존 (헤더 공간 충분 + DropdownMenu 와 일관). */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* AI 라벨 스캔 — 소싱 핵심 기능, 항상 노출 */}
+          {/* AI 라벨 스캔 — 소싱 핵심 기능. §11.264f — 데스크탑 (md+) 한정 inline,
+              모바일은 우하단 FAB (이 컴포넌트 트리 끝 부근 신규 button). */}
           <button
             onClick={() => setLabelScanOpen(true)}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
+            className="hidden md:flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
           >
             <Camera className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">AI 라벨 스캔</span>
@@ -2919,6 +2943,22 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           }}
         />
       </div>
+
+      {/* §11.264f — AI 라벨 스캔 모바일 FAB (호영님 spec "FAB 통합").
+            소싱 surface 의 핵심 기능 = AI 라벨 스캔. 모바일 헤더에서 inline 제거
+            후 우하단 fixed FAB 으로 굵게 돌출. md:hidden 으로 데스크탑은 비표시
+            (헤더 inline 버튼 정상 표시). 동일 setLabelScanOpen(true) 트리거 →
+            기존 LabelScannerModal 로 연결. emerald 톤 보존 (헤더 inline 과 visual
+            연속성). 56x56 (h-14 w-14) 터치 영역 + shadow-lg 으로 강조. */}
+      <button
+        type="button"
+        data-testid="sourcing-label-scan-fab"
+        aria-label="AI 라벨 스캔 열기"
+        onClick={() => setLabelScanOpen(true)}
+        className="fixed bottom-6 right-6 z-40 md:hidden h-14 w-14 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center"
+      >
+        <Camera className="h-6 w-6" />
+      </button>
 
       {/* §11.258a #3 — 모바일 한정 검색 form (2행, md:hidden).
           헤더 1행 (LabAxis + 소싱 + 스캔 + 햄버거) 직후 풀너비 검색바.
