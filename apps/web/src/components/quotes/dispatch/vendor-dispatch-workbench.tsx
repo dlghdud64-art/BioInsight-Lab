@@ -347,6 +347,33 @@ export function VendorRequestModal({
               ? `플랫폼이 ${resolvedCount}개 공급사 후보를 선별했습니다. 검토 후 전달을 승인하세요.`
               : "공급사를 직접 추가하거나 플랫폼 DB 보강을 기다려 주세요."}
           </DialogDescription>
+          <div
+            data-testid="quote-dispatch-review-visible"
+            className="mt-3 flex flex-wrap gap-2"
+            aria-label="견적 발송 전 검증 상태"
+          >
+            <Badge
+              variant="outline"
+              data-testid="quote-dispatch-supplier-badge"
+              className={includedCount > 0 ? "border-blue-200 bg-blue-50 text-blue-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+            >
+              공급사 · {selectedStateLabel}
+            </Badge>
+            <Badge
+              variant="outline"
+              data-testid="quote-dispatch-contact-badge-top"
+              className={contactBlocker ? "border-amber-200 bg-amber-50 text-amber-800" : "border-emerald-200 bg-emerald-50 text-emerald-800"}
+            >
+              연락처 · {contactStateLabel}
+            </Badge>
+            <Badge
+              variant="outline"
+              data-testid="quote-dispatch-send-readiness-badge"
+              className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+            >
+              발송 · {sendStateLabel}
+            </Badge>
+          </div>
         </DialogHeader>
 
         <div className="space-y-4 py-3">
@@ -693,7 +720,13 @@ export function VendorRequestModal({
           </Button>
           {sendReadiness === "blocked" ? (
             <>
-              <Button type="button" disabled variant="secondary" data-testid="quote-dispatch-send-disabled">
+              <Button
+                type="button"
+                disabled
+                variant="secondary"
+                data-testid="quote-dispatch-send-disabled"
+                aria-label="Send to supplier disabled"
+              >
                 <Send className="h-4 w-4 mr-2" />
                 선택 공급사에 요청 전달
               </Button>
@@ -715,6 +748,7 @@ export function VendorRequestModal({
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting}
+              aria-label="Send to supplier"
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
                   ? "bg-emerald-600 hover:bg-emerald-700 text-white"
