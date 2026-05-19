@@ -48,9 +48,12 @@ describe("§11.265a #1 — 모바일 unified filter row hidden", () => {
 });
 
 describe("§11.265a #2 — invariant 보존 (canonical truth)", () => {
-  it("SearchUtilityBar import + onOpenFilter wiring 보존", () => {
-    expect(page).toMatch(/SearchUtilityBar/);
-    expect(page).toMatch(/onOpenFilter=\{\(\) => setIsMobileFilterOpen\(true\)\}/);
+  it("SearchUtilityBar 사용 보존 (§11.265e supersede — onOpenFilter dead prop 제거됨)", () => {
+    // §11.265e 이후: onOpenFilter prop 제거. SearchUtilityBar 컴포넌트 자체 사용은 보존.
+    //   필터 entry path 는 §11.265c Operating Status Bar 필터 button + SheetTrigger asChild.
+    expect(page).toMatch(/<SearchUtilityBar/);
+    // onOpenFilter prop 전달 없어야 함 (§11.265e dead prop 제거)
+    expect(page).not.toMatch(/<SearchUtilityBar[\s\S]{0,200}onOpenFilter=\{/);
   });
 
   it("isMobileFilterOpen useState 보존 (Sheet 트리거)", () => {

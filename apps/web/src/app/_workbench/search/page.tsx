@@ -583,7 +583,8 @@ export default function SearchPage() {
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden" style={{ backgroundColor: '#F8FAFC' }}>
       {/* ═══ A. Search Utility Bar — compact, not hero ═══ */}
-      <SearchUtilityBar activeFilterCount={activeFilterCount} onOpenFilter={() => setIsMobileFilterOpen(true)} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
+      {/* §11.265e — onOpenFilter prop 제거 (dead prop, SearchUtilityBar body 사용 0). */}
+      <SearchUtilityBar activeFilterCount={activeFilterCount} onAuthRequired={() => setIsLoginPromptOpen(true)} isLoggedIn={!!session?.user} stageOwner={stageOwner} onBackToSourcing={() => setWorkWindowMode(null)} />
 
       {/* ═══ Mobile filter sheet ═══ */}
       <Sheet open={isMobileFilterOpen} onOpenChange={setIsMobileFilterOpen}>
@@ -2630,7 +2631,10 @@ const STAGE_LABELS: Record<string, string> = {
   "post-quote": "발주 · 운영",
 };
 
-function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isLoggedIn, stageOwner = "sourcing", onBackToSourcing }: { activeFilterCount: number; onOpenFilter: () => void; onAuthRequired: () => void; isLoggedIn: boolean; stageOwner?: string; onBackToSourcing?: () => void }) {
+// §11.265e — onOpenFilter dead prop 제거. SearchUtilityBar body 안 사용 0 이었음.
+//   필터 entry 는 §11.265c (Operating Status Bar 필터 button + SheetTrigger asChild
+//   + SearchPanel) 가 유일. dead prop drift 차단 + 명확성.
+function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stageOwner = "sourcing", onBackToSourcing }: { activeFilterCount: number; onAuthRequired: () => void; isLoggedIn: boolean; stageOwner?: string; onBackToSourcing?: () => void }) {
   const { searchQuery, setSearchQuery, runSearch, hasSearched } = useTestFlow();
   const [localQuery, setLocalQuery] = useState(searchQuery);
   const [labelScanOpen, setLabelScanOpen] = useState(false);
