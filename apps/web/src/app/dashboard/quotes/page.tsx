@@ -1969,14 +1969,23 @@ function QuotesPageContent() {
             모바일: 2 sub-row (chips 위, 뷰 toggle 아래). 데스크탑 sm+: 같은 줄.
             mode chips flex-1 min-w-0 (좌측 차지) + 뷰 toggle shrink-0 (우측). */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        {/* §11.262a — mode chips 가로 스크롤 fade hint (§11.248d 패턴 reuse).
+            outer wrapper relative + flex-1 min-w-0 (sm+ 좌측 차지). inner mode
+            chips row 의 좌/우 끝에 fade gradient overlay (모바일 only sm:hidden) →
+            우측에 더 많은 chip 이 있음을 시각 단서로 표시. pointer-events-none
+            으로 chip 상호작용 방해 0. aria-hidden 으로 SR 무시. */}
+        <div className="relative flex-1 min-w-0">
         {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제) + §11.259c-2 sm+ 좌측 flex-1. */}
-        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0 flex-1 min-w-0">
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
           {MODE_CHIPS.map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
             return (
               <button key={chip.key} onClick={() => setModeChip(isActive ? null : chip.key)}
-                className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all ${
+                /* §11.264h — chip 내부 텍스트 줄바꿈 차단 (호영님 spec 견적 모바일 #4).
+                   flex-nowrap 은 chip 끼리 줄바꿈 차단, whitespace-nowrap 은
+                   chip 내부 텍스트 wrap 차단 ("우선\n처리" 같은 깨짐 방지). */
+                className={`inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap ${
                   isActive ? "bg-blue-600/10 text-blue-600 border-blue-600/30" : "text-slate-500 border-bd/50 hover:border-bd hover:text-slate-900"
                 }`}>
                 {chip.label}
@@ -2004,13 +2013,21 @@ function QuotesPageContent() {
                     setSelectedQuoteIds(new Set(selectablePending.map(q => q.id)));
                   }
                 }}
-                className="ml-auto inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all text-violet-700 border-violet-300/60 bg-violet-50/50 hover:bg-violet-100"
+                /* §11.264h — 전체 선택 CTA 줄바꿈 차단 ("전체 선택\n(8건)" 깨짐 방지). */
+                className="ml-auto inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap text-violet-700 border-violet-300/60 bg-violet-50/50 hover:bg-violet-100"
                 aria-label={allSelected ? "전체 선택 해제" : "발송 대기 견적 전체 선택"}
               >
                 {allSelected ? "전체 해제" : `전체 선택 (${selectablePending.length}건)`}
               </button>
             );
           })()}
+        </div>
+        {/* §11.262a — 모바일 fade gradient overlay (가로 스크롤 시각 단서).
+            좌측: from-white → transparent. 우측: from-white ← transparent.
+            pointer-events-none + aria-hidden 으로 상호작용/SR 영향 0.
+            sm:hidden 으로 데스크탑 hide (chips 모두 한 줄에 표시되므로 fade 불필요). */}
+        <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
+        <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white to-transparent pointer-events-none sm:hidden" aria-hidden="true" />
         </div>
         {/* §11.259c-2 — 뷰 toggle (카드 ↔ 테이블 + §11.230b column prefs) 통합.
             §11.217 Phase 6 보기 모드 + §11.230b 컬럼 설정 popover trigger.
