@@ -68,3 +68,31 @@ describe("#user-supplier-registration Phase 5 — vendor-dispatch-workbench labe
     expect(source).toMatch(/CONTACT_SOURCE_ICON[\s\S]*?org_book:\s*["']/);
   });
 });
+
+describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
+  const source = readFileSync(WORKBENCH_PATH, "utf8");
+
+  it("opens a final confirmation modal before sending", () => {
+    expect(source).toContain("confirmationOpen");
+    expect(source).toContain("setConfirmationOpen(true)");
+    expect(source).toContain("quote-dispatch-confirm-before-send");
+    expect(source).toContain("quote-dispatch-confirmation-modal");
+    expect(source).toContain("quote-dispatch-confirmation-recipient");
+    expect(source).toContain("quote-dispatch-confirmation-preview");
+  });
+
+  it("keeps Send to supplier disabled until readiness is valid and no sent tracking exists", () => {
+    expect(source).toMatch(
+      /disabled=\{isSubmitting \|\| sendReadiness !== "ready" \|\| Boolean\(sentTracking\)\}/,
+    );
+    expect(source).toContain('disabled={isSubmitting || sendReadiness !== "ready"}');
+  });
+
+  it("shows sent tracking evidence after a successful dispatch", () => {
+    expect(source).toContain("quote-dispatch-sent-tracking-state");
+    expect(source).toContain("quote-dispatch-sent-tracking-id");
+    expect(source).toContain("dispatchEventId");
+    expect(source).toContain("vendorRequestBatchId");
+    expect(source).toContain("createdRequests?.[0]?.id");
+  });
+});

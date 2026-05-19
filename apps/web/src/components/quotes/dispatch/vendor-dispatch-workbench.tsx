@@ -11,6 +11,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +58,12 @@ interface ReadinessCheck {
   label: string;
   ready: boolean;
   blocker?: string;
+}
+
+interface SentTrackingEvidence {
+  id: string;
+  recipientCount: number;
+  statusLabel: string;
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -104,6 +119,8 @@ export function VendorRequestModal({
   const [manualEmail, setManualEmail] = useState("");
   const [manualName, setManualName] = useState("");
   const [messageExpanded, setMessageExpanded] = useState(false);
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
+  const [sentTracking, setSentTracking] = useState<SentTrackingEvidence | null>(null);
 
   // ── Initialize from resolved data ──
   useEffect(() => {
@@ -119,6 +136,8 @@ export function VendorRequestModal({
     setManualEmail("");
     setManualName("");
     setMessageExpanded(true);
+    setConfirmationOpen(false);
+    setSentTracking(null);
   }, [open, resolvedSuppliersInput, draftMessageInput]);
 
   // ── Derived ──
@@ -245,7 +264,8 @@ export function VendorRequestModal({
   }, [manualEmail, manualName]);
 
   const handleSubmit = async () => {
-    if (sendReadiness === "blocked") return;
+    if (sentTracking) return;
+    if (sendReadiness !== "ready") return;
 
     if (includedSuppliers.length === 0) {
       toast({ title: "전달 대상 없음", description: "최소 1개 공급사를 선택해주세요.", variant: "destructive" });
@@ -296,6 +316,10 @@ export function VendorRequestModal({
       const result = await response.json();
       const sentCount = result.summary?.emailsSent ?? result.createdRequests?.length ?? 0;
       const failedCount = result.summary?.emailsFailed ?? 0;
+      const trackingId = result.dispatchEventId
+        ?? result.vendorRequestBatchId
+        ?? result.createdRequests?.[0]?.id
+        ?? `dispatch-${quoteId}-${Date.now()}`;
       toast({
         title: failedCount > 0 ? "견적 요청 부분 전달" : "견적 요청 전달 완료",
         description: failedCount > 0
@@ -304,10 +328,12 @@ export function VendorRequestModal({
         variant: failedCount > 0 ? "destructive" : "default",
       });
 
-      setSuppliers([]);
-      setMessage("");
-      setExpiresInDays(14);
-      onOpenChange(false);
+      setSentTracking({
+        id: String(trackingId),
+        recipientCount: sentCount,
+        statusLabel: failedCount > 0 ? "부분 전송 추적" : "sent tracking",
+      });
+      setConfirmationOpen(false);
       onSuccess?.();
     } catch (error: any) {
       toast({
@@ -325,6 +351,7 @@ export function VendorRequestModal({
   // ══════════════════════════════════════════════════════════════
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* §11.54 — light-theme alignment.
           Pre-§11.54: bg-pg + border-slate-600/40 + bg-amber-950/10 +
@@ -693,6 +720,23 @@ export function VendorRequestModal({
         {/* ═══ Dock — Footer is the single primary-action zone (§11.54) ═══
             §11.229 — footer manual link 제거 (Section 3 always-visible 가 대체).
             sendReadiness === "blocked" CTA 도 Section 3 의 input 으로 focus 유도. */}
+        {sentTracking && (
+          <div
+            data-testid="quote-dispatch-sent-tracking-state"
+            className="mt-1 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+          >
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+              <strong>{sentTracking.statusLabel}</strong>
+              <span data-testid="quote-dispatch-sent-tracking-id" className="font-mono text-xs">
+                {sentTracking.id}
+              </span>
+            </div>
+            <p className="mt-1 text-xs text-emerald-700">
+              {sentTracking.recipientCount}개 수신처 발송 이력이 남았습니다. 새로고침 후에도 이 견적의 vendor request로 추적합니다.
+            </p>
+          </div>
+        )}
+
         <div
           className={`mt-1 rounded-lg border px-4 py-3 text-sm ${
             sendReadiness === "ready"
@@ -746,8 +790,9 @@ export function VendorRequestModal({
             </>
           ) : (
             <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting}
+              onClick={() => setConfirmationOpen(true)}
+              disabled={isSubmitting || sendReadiness !== "ready" || Boolean(sentTracking)}
+              data-testid="quote-dispatch-confirm-before-send"
               aria-label="Send to supplier"
               className={`min-h-[40px] font-semibold active:scale-95 ${
                 sendReadiness === "ready"
@@ -760,10 +805,20 @@ export function VendorRequestModal({
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   전달 중…
                 </>
+              ) : sentTracking ? (
+                <>
+                  <Check className="h-4 w-4 mr-2" />
+                  전송 추적 확인됨
+                </>
+              ) : sendReadiness !== "ready" ? (
+                <>
+                  <AlertTriangle className="h-4 w-4 mr-2" />
+                  전송 전 확인 필요
+                </>
               ) : (
                 <>
                   <Send className="h-4 w-4 mr-2" />
-                  선택 공급사에 요청 전달
+                  최종 확인 후 전송
                 </>
               )}
             </Button>
@@ -771,6 +826,43 @@ export function VendorRequestModal({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+    <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
+      <AlertDialogContent data-testid="quote-dispatch-confirmation-modal" className="bg-white border-slate-200">
+        <AlertDialogHeader>
+          <AlertDialogTitle>발송 전 최종 확인</AlertDialogTitle>
+          <AlertDialogDescription>
+            수신처와 메시지 미리보기를 확인한 뒤에만 공급사로 전송합니다.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-3 text-sm">
+          <div data-testid="quote-dispatch-confirmation-recipient" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[11px] font-semibold text-slate-500">수신처</p>
+            <p className="mt-1 font-medium text-slate-900">
+              {includedSuppliers.map((supplier) => `${supplier.vendorName} <${supplier.email}>`).join(", ") || "선택된 공급사 없음"}
+            </p>
+          </div>
+          <div data-testid="quote-dispatch-confirmation-preview" className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+            <p className="text-[11px] font-semibold text-slate-500">메시지 미리보기</p>
+            <p className="mt-1 line-clamp-5 whitespace-pre-wrap text-slate-700">
+              {message.trim() || "전송할 메시지가 없습니다."}
+            </p>
+          </div>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isSubmitting}>다시 검토</AlertDialogCancel>
+          <Button
+            type="button"
+            disabled={isSubmitting || sendReadiness !== "ready"}
+            className="bg-emerald-600 text-white hover:bg-emerald-700"
+            onClick={() => { void handleSubmit(); }}
+          >
+            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
+            확인 후 전송
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
