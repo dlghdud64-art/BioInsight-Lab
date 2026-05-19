@@ -1129,11 +1129,20 @@ function QuotesPageContent() {
   }, [entityIdParam]);
 
   // §11.217 Phase 6 — localStorage persist (mount 시 read).
+  // §11.259b — 모바일(<768px, max-width: 767px) 진입 + localStorage 미저장 시
+  //   viewMode 기본 "card" 분기 (호영님 spec 견적 관리 모바일 #2).
+  //   사용자가 명시적으로 table 선택했다면 saved 우선 (canonical truth 보호).
+  //   server preferences 도 잡히면 그 값 우선 (line 1155+ §11.230c (a)-3).
   useEffect(() => {
     try {
       const saved = window.localStorage.getItem("labaxis-quote-view-mode");
       if (saved === "card" || saved === "table") {
         setViewMode(saved);
+        return;
+      }
+      // §11.259b — saved 없을 때만 모바일 매체쿼리 분기 적용.
+      if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+        setViewMode("card");
       }
     } catch {
       // localStorage unavailable (SSR / private mode) — fallback to "card".
