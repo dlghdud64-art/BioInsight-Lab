@@ -2293,6 +2293,13 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           )}
         </div>
 
+        {/* §11.263a — 모바일 한정 spacer (헤더 우측 배치 root cause fix).
+            데스크탑은 아래 검색 form `hidden md:flex flex-1` 이 spacer 역할 →
+            AI 스캔+햄버거 우측 정렬. 모바일은 form 이 hidden 이라 spacer 부재
+            → 4 element 가 좌측에 붙음. 이 spacer 추가로 AI 스캔+햄버거
+            우측 끝 정렬 (호영님 spec 소싱 모바일 #1 긴급). */}
+        <div className="flex-1 md:hidden" aria-hidden="true" />
+
         {/* §11.258a — 데스크탑 한정 검색 인풋 (인라인). md+ 에서만 1행 안.
             §11.258c-2 — relative wrapper 추가 (안 absolute dropdown 의 positioning 기준). */}
         <form onSubmit={handleSubmit} className="hidden md:flex items-center flex-1 min-w-0 relative">
@@ -2328,6 +2335,48 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               검색
             </Button>
           </div>
+
+          {/* §11.258c-3 — 데스크탑 inline 최근 검색어 dropdown. 자동완성 dropdown
+              과 mutually exclusive (autocomplete = 2글자+, recent = 빈 query).
+              §11.258a 모바일 dropdown 패턴 reuse — handlePickRecent /
+              handleRemoveRecent / handleClearAllRecent helper 100% reuse.
+              hidden md:block 으로 데스크탑 한정 노출. */}
+          {desktopOpen && !localQuery && recentSearches.length > 0 && (
+            <div className="hidden md:block absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 max-h-72 overflow-y-auto z-30">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100">
+                <span className="text-xs font-semibold text-slate-600">최근 검색어</span>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); handleClearAllRecent(); setDesktopOpen(false); }}
+                  className="text-xs text-slate-500 hover:text-slate-700"
+                >
+                  전체 삭제
+                </button>
+              </div>
+              <ul className="divide-y divide-slate-100">
+                {recentSearches.map((q) => (
+                  <li key={`desktop-recent-${q}`} className="flex items-center">
+                    <button
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); handlePickRecent(q); setDesktopOpen(false); }}
+                      className="flex-1 min-h-[40px] px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+                    >
+                      <Search className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{q}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); handleRemoveRecent(q); }}
+                      aria-label={`${q} 삭제`}
+                      className="inline-flex items-center justify-center min-h-[40px] min-w-[40px] text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* §11.258c-2 — 데스크탑 inline 자동완성 dropdown. md+ 한정 (hidden md:block).
               모바일 dropdown 과 mutually exclusive (다른 form 안). desktopOpen +
