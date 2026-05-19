@@ -3381,7 +3381,13 @@ function QuotesPageContent() {
         <MobileOperationalBriefSheet
           open={!!selectedQuote}
           onClose={() => closeQuoteContextRail("x_button")}
-          objectLabel="선택한 견적"
+          /* §11.264d — 견적명 동적 결합 (호영님 spec #3-2 P1).
+             기존 정적 "선택한 견적" → "선택한 견적 · {견적명}" 으로 변경.
+             root cause: caller 정적 string. 컴포넌트 변경 0 (5 surface 영향 0).
+             selectedQuote.title 은 이미 page 다른 위치 (line 2775, 2985, 3482,
+             3529) 에서 사용 중. canonical truth lock: chips override
+             (§11.264a 정합) / props 시그니처 보존. */
+          objectLabel={`선택한 견적 · ${selectedQuote.title}`}
           chips={[
             { id: "summary", label: "상태 요약" },
             { id: "facts",   label: "회신 현황" },
