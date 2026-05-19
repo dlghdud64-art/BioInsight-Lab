@@ -519,7 +519,13 @@ function QuoteCard({
 }: {
   quote: Quote;
   isSelected?: boolean;
-  onSelect?: () => void;
+  /**
+   * §11.264e — onSelect 시그니처에 ctaLabel 전달.
+   *   parent (QuotesPageContent) 가 ctaLabel === "새 회신 보기" 일 때 vendor
+   *   section 으로 auto-scroll. 다른 CTA (발송/조건/승인/...) 는 기존 동작.
+   *   기존 caller (row click) 는 ctaLabel 없이 호출 (undefined) — 변경 0.
+   */
+  onSelect?: (ctaLabel?: string) => void;
   isSelectable?: boolean;
   isSelectedForBatch?: boolean;
   onToggleSelect?: () => void;
@@ -529,6 +535,11 @@ function QuoteCard({
   const opStatus = getOpStatus(quote);
   const signals = getOpSignals(quote);
   const itemCount = quote.items.length;
+  // §11.264g — 카드 2단계 접힘/펼침 (호영님 spec 견적 모바일 #2 P1).
+  //   모바일 한정 default collapsed (요약 = 운영 신호 + 제목 + 본문 + CTA).
+  //   확장 시 progress + readiness + 공급사 timeline 노출. 데스크탑 (md+)
+  //   변경 0 — wrapper className 의 `hidden md:block` 으로 mutex.
+  const [isExpanded, setIsExpanded] = useState(false);
   const responseCount = quote.responses?.length ?? 0;
   const prices = (quote.responses ?? []).map(r => r.totalPrice).filter((p): p is number => typeof p === "number" && p > 0);
   const minPrice = prices.length ? Math.min(...prices) : null;
@@ -568,7 +579,7 @@ function QuoteCard({
         : delayed ? "border-red-600/30"
         : "border-bd/80 hover:border-bd"
       }`}
-      onClick={onSelect}
+      onClick={() => onSelect?.()}
       onKeyDown={(e) => {
         // §11.230c (e) #quote-card-keyboard-nav — Home/End/PageUp/PageDown 4 키.
         //   §11.230c (c) 테이블 패턴 reuse. unified index (urgent + inProgress + completed).
@@ -710,7 +721,9 @@ function QuoteCard({
             size="sm"
             variant={signals.ctaVariant}
             className={`h-9 sm:h-7 text-xs flex-1 sm:flex-none sm:w-full sm:min-w-[140px] whitespace-nowrap ${signals.ctaVariant === "default" ? "bg-blue-600 hover:bg-blue-700 text-white" : ""}`}
-            onClick={(e) => { e.stopPropagation(); onSelect?.(); }}
+            /* §11.264e — CTA 클릭 시 ctaLabel 을 parent 에 전달 (예: "새 회신 보기").
+               parent 가 vendor section auto-scroll 분기 결정. 다른 CTA 는 무시. */
+            onClick={(e) => { e.stopPropagation(); onSelect?.(signals.ctaLabel); }}
           >
             {signals.ctaLabel}
             <ArrowRight className="h-3 w-3 ml-1" />
@@ -720,12 +733,26 @@ function QuoteCard({
         </div>
       </div>
 
+      {/* §11.264g — 모바일 한정 토글 버튼 (자세히 보기 / 접기).
+          데스크탑 (md+) 영향 0 — 모든 row 항상 표시. */}
+      <button
+        type="button"
+        data-testid="quote-card-expand-toggle"
+        aria-expanded={isExpanded}
+        onClick={(e) => { e.stopPropagation(); setIsExpanded((prev) => !prev); }}
+        className="md:hidden mt-2 w-full flex items-center justify-center gap-1 text-[11px] text-slate-500 hover:text-slate-700 hover:bg-slate-50 py-1.5 rounded transition-colors"
+      >
+        {isExpanded ? "접기" : "자세히 보기"}
+        <span aria-hidden="true">{isExpanded ? "↑" : "↓"}</span>
+      </button>
+
       {/* §11.217 Phase 4 — 회신 수집 progress bar.
           quote card 의 readiness strip 직전에 inline 진행률 시각화.
           PENDING hide (회신 의미 없음) — SENT/RESPONDED 만 노출.
-          color: 0% slate, partial blue, 완료(N≥M) emerald. */}
+          color: 0% slate, partial blue, 완료(N≥M) emerald.
+          §11.264g — 모바일 collapsed 시 hidden (확장 시 표시), 데스크탑 always. */}
       {(quote.status === "SENT" || quote.status === "RESPONDED") && itemCount > 0 && (
-        <div className="mt-2.5 flex items-center gap-2" aria-label="회신 수집 진행률">
+        <div className={`mt-2.5 flex items-center gap-2 ${isExpanded ? "" : "hidden md:flex"}`} aria-label="회신 수집 진행률">
           <span className="text-[10px] font-medium text-slate-600 shrink-0 tabular-nums">
             회신 {responseCount}/{itemCount}
           </span>
@@ -754,8 +781,9 @@ function QuoteCard({
         </div>
       )}
 
-      {/* Readiness strip */}
-      <div className="mt-3 pt-2.5 border-t border-bd/50">
+      {/* Readiness strip
+          §11.264g — 모바일 collapsed 시 hidden, 데스크탑 always. */}
+      <div className={`mt-3 pt-2.5 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`}>
         <div className="flex items-center gap-0.5 sm:gap-1">
           {READINESS_LABELS.map((label, idx) => {
             const active = idx <= signals.readinessStage;
@@ -790,7 +818,8 @@ function QuoteCard({
             - stage2 대기: quote.status === 'SENT' && responseCount === 0 (active amber)
                          responseCount > 0 (done emerald) / PENDING (waiting slate)
             - stage3 수신: responseCount > 0 (done emerald) / 미수신 (waiting slate) */}
-      <div className="mt-2.5 pt-2 border-t border-bd/50" aria-label="공급사 응답 진행">
+      {/* §11.264g — 모바일 collapsed 시 hidden, 데스크탑 always. */}
+      <div className={`mt-2.5 pt-2 border-t border-bd/50 ${isExpanded ? "" : "hidden md:block"}`} aria-label="공급사 응답 진행">
         <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
           <span className="font-medium uppercase tracking-wider">공급사 응답</span>
           {(() => {
@@ -889,6 +918,12 @@ function QuotesPageContent() {
   //   신규: briefSheetOpen state 분리. §11.248e header 의 ✦ 버튼으로만 진입.
   //         closeQuoteContextRail 시 setBriefSheetOpen(false) 동기 (orphan 방지).
   const [briefSheetOpen, setBriefSheetOpen] = useState<boolean>(false);
+  // §11.264e — "새 회신 보기" CTA → vendor response section auto-scroll
+  //   (호영님 spec #3-3 P1). status="SENT" 회신_대기 견적에서 CTA 누르면
+  //   sheet 열리고 동시에 공급사별 회신 현황 section 으로 scrollIntoView →
+  //   사용자가 회신 정보 즉시 확인. mount 후 useEffect 로 ref scroll + reset.
+  const [autoScrollToVendorSection, setAutoScrollToVendorSection] = useState<boolean>(false);
+  const vendorResponseSectionRef = useRef<HTMLDivElement | null>(null);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
@@ -1116,6 +1151,34 @@ function QuotesPageContent() {
     }
     setActiveWorkWindow(null);
   }, [queryClient, selectedQuoteId]);
+
+  // §11.264e — "새 회신 보기" CTA → vendor response section auto-scroll.
+  //   selectedQuoteId 가 바뀐 직후 (sheet mount 완료) + autoScroll flag = true 면
+  //   vendor section ref 로 scrollIntoView. reset 으로 flag 0 → 다음 CTA 까지
+  //   trigger 안 함. requestAnimationFrame 으로 DOM mount 완전 보장.
+  useEffect(() => {
+    if (!autoScrollToVendorSection) return;
+    if (!selectedQuoteId) return;
+    const raf = requestAnimationFrame(() => {
+      const el = vendorResponseSectionRef.current;
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      setAutoScrollToVendorSection(false);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [autoScrollToVendorSection, selectedQuoteId]);
+
+  // §11.264e — QuoteCard onSelect handler. ctaLabel === "새 회신 보기" 면
+  //   openQuoteContextRail 호출 후 autoScroll flag 설정. 다른 CTA (발송/조건/
+  //   승인/...) 또는 row 클릭 (ctaLabel undefined) 은 기존 동작.
+  const handleQuoteCardSelect = useCallback((quoteId: string, ctaLabel?: string) => {
+    openQuoteContextRail(quoteId, "row");
+    if (ctaLabel === "새 회신 보기") {
+      setAutoScrollToVendorSection(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
 
   // ── Rail open/close — single source of truth ──
@@ -2069,8 +2132,13 @@ function QuotesPageContent() {
                     setSelectedQuoteIds(new Set(selectablePending.map(q => q.id)));
                   }
                 }}
-                /* §11.264h — 전체 선택 CTA 줄바꿈 차단 ("전체 선택\n(8건)" 깨짐 방지). */
-                className="ml-auto inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full border font-medium transition-all whitespace-nowrap text-violet-700 border-violet-300/60 bg-violet-50/50 hover:bg-violet-100"
+                /* §11.264h — 전체 선택 CTA 줄바꿈 차단 ("전체 선택\n(8건)" 깨짐 방지).
+                   §11.264h-2 — 호영님 spec 견적 #4-2: "칩이 아닌 우측 끝 텍스트 링크".
+                   기존 chip 톤 (rounded-full + border + bg-violet-50/50) 제거 →
+                   underline-offset + hover:underline 으로 텍스트 링크 톤 전환.
+                   ml-auto (우측 정렬), text-violet-700 (시각 연속성), whitespace-nowrap
+                   (§11.264h), onClick / aria-label 보존. */
+                className="ml-auto inline-flex items-center gap-1 text-[11px] px-1 py-1 font-medium underline-offset-2 hover:underline transition-colors whitespace-nowrap text-violet-700 hover:text-violet-900"
                 aria-label={allSelected ? "전체 선택 해제" : "발송 대기 견적 전체 선택"}
               >
                 {allSelected ? "전체 해제" : `전체 선택 (${selectablePending.length}건)`}
@@ -2743,7 +2811,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">즉시 처리 필요</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-600/15 text-red-600 text-[11px] font-bold">{urgentQuotes.length}</span>
           </div>
-          {urgentQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {urgentQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -2755,7 +2823,7 @@ function QuotesPageContent() {
             <h2 className="text-sm font-semibold text-slate-700">진행 중</h2>
             <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-600/15 text-amber-600 text-[11px] font-bold">{inProgressQuotes.length}</span>
           </div>
-          {inProgressQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+          {inProgressQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
         </div>
       )}
 
@@ -2770,7 +2838,7 @@ function QuotesPageContent() {
             <span className="ml-1 text-xs text-slate-500 hidden group-open:inline">▼</span>
           </summary>
           <div className="mt-2 space-y-2">
-            {completedQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + inProgressQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={() => openQuoteContextRail(quote.id, "row")} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
+            {completedQuotes.map((quote, i) => <QuoteCard key={quote.id} quote={quote} cardIndex={urgentQuotes.length + inProgressQuotes.length + i} isSelected={selectedQuoteId === quote.id} onSelect={(ctaLabel) => handleQuoteCardSelect(quote.id, ctaLabel)} isSelectable={deriveRailState(quote) === "request_not_sent"} isSelectedForBatch={selectedQuoteIds.has(quote.id)} onToggleSelect={() => toggleQuoteSelection(quote.id)} />)}
           </div>
         </details>
       )}
@@ -2893,6 +2961,7 @@ function QuotesPageContent() {
               {selectedQuote.vendorRequests && selectedQuote.vendorRequests.length > 0 && (
                 <div
                   data-testid="quote-vendor-response-status"
+                  ref={vendorResponseSectionRef}
                   className="rounded-lg border border-bd/60 bg-slate-50/60 px-3 py-2.5 space-y-1.5"
                 >
                   <div className="text-[11px] font-semibold text-slate-700">공급사별 회신 현황</div>
