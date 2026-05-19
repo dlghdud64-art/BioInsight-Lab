@@ -84,6 +84,18 @@ interface Quote {
   deliveryLocation?: string;
   items: Array<{ id: string; product: { id: string; name: string }; quantity: number }>;
   responses?: Array<{ id: string; vendor: { name: string }; totalPrice?: number; createdAt: string }>;
+  // §11.264j — vendorRequests (invited 공급사 리스트 + 회신 상태).
+  //   API /api/quotes 가 이미 fetch 중 (route.ts:479-487) — caller type 만 확장.
+  //   §11.248e mobile context sheet body 에서 공급사별 회신 현황 렌더에 사용.
+  //   status: SENT (미회신) / RESPONDED (회신 완료) / EXPIRED (만료).
+  vendorRequests?: Array<{
+    id: string;
+    status: "SENT" | "RESPONDED" | "EXPIRED";
+    vendorName: string;
+    vendorEmail?: string | null;
+    createdAt: string;
+    respondedAt?: string | null;
+  }>;
   // §11.218 카드 구분자 — sub-context 표시용 (요청자 / 부서).
   user?: { id: string; name: string | null; email: string | null } | null;
   organization?: { id: string; name: string } | null;
@@ -238,6 +250,24 @@ const RAIL_STATE_MAP: Record<RailState, {
 //   테이블 뷰 한정 CTA 텍스트 축약 — 좁은 cell 폭에서 잘림 차단.
 //   카드 뷰는 원본 ctaLabel 유지 (시각 면적 충분).
 //   "12자 이내" 축약 룰 정합 (호영님 v2 spec sheet 디자인 원칙 9).
+// §11.264j — 공급사별 회신 현황 (§11.248e mobile context sheet body) 에서 사용.
+//   ISO date 기준 "N일 경과" 텍스트 렌더링. SSR 시 placeholder 출력 →
+//   client mount 후 setText 으로 실제 일수 계산. §11.214 hydration 안전 패턴
+//   (RelativeTimeText 동일 mount-after-set 전략).
+function ElapsedDaysText({ iso }: { iso: string }): JSX.Element {
+  const [text, setText] = useState<string>("·일 경과");
+  useEffect(() => {
+    const sentAt = new Date(iso).getTime();
+    if (Number.isNaN(sentAt)) {
+      setText("·일 경과");
+      return;
+    }
+    const days = Math.max(0, Math.floor((Date.now() - sentAt) / 86400000));
+    setText(`${days}일 경과`);
+  }, [iso]);
+  return <span>{text}</span>;
+}
+
 //   매핑 외 label 은 원본 그대로 통과 (graceful fallback).
 function shortenActionLabel(ctaLabel: string): string {
   const TABLE_ACTION_LABEL_SHORTCUTS: Record<string, string> = {
@@ -2850,6 +2880,61 @@ function QuotesPageContent() {
                 <div className="flex items-center gap-1.5 px-2 py-1.5 rounded-md bg-violet-50 border border-violet-100">
                   <Sparkles className="h-3 w-3 text-violet-500 shrink-0" />
                   <span className="text-[11px] text-violet-700 line-clamp-2">{selectedSignals.aiRecommendation}</span>
+                </div>
+              )}
+              {/* §11.264j — 공급사별 회신 현황 (호영님 spec #2 P1).
+                  기존: 카드 표면 정보 (badge/title/summary) 만 반복 = dead content.
+                  신규: vendorRequests.map 으로 ● 회신 완료 / ○ 미회신 + 가격/경과일 표시.
+                  데이터 source: API /api/quotes 의 vendorRequests (이미 fetch 중,
+                  composer/schema 변경 0). 가격은 responses[].vendor.name 매칭.
+                  경과일: <RelativeTimeText iso={createdAt} /> (§11.214 hydration 안전).
+                  per-vendor 납기 ("5영업일") 는 §11.264j-2 별도 cluster
+                  (QuoteResponse.deliveryDays 컬럼 신규 필요). */}
+              {selectedQuote.vendorRequests && selectedQuote.vendorRequests.length > 0 && (
+                <div
+                  data-testid="quote-vendor-response-status"
+                  className="rounded-lg border border-bd/60 bg-slate-50/60 px-3 py-2.5 space-y-1.5"
+                >
+                  <div className="text-[11px] font-semibold text-slate-700">공급사별 회신 현황</div>
+                  <ul className="space-y-1">
+                    {selectedQuote.vendorRequests.map((req) => {
+                      const isResponded = req.status === "RESPONDED";
+                      const matchedResponse = isResponded
+                        ? (selectedQuote.responses ?? []).find(
+                            (r) => r.vendor.name === req.vendorName,
+                          )
+                        : undefined;
+                      return (
+                        <li key={req.id} className="flex items-center gap-2 text-[11px]">
+                          <span
+                            className={isResponded ? "text-emerald-500" : "text-slate-400"}
+                            aria-hidden="true"
+                          >
+                            {isResponded ? "●" : "○"}
+                          </span>
+                          <span className="font-medium text-slate-700 truncate">{req.vendorName}</span>
+                          <span className="text-slate-300">—</span>
+                          {isResponded ? (
+                            <span className="text-slate-600">
+                              회신 완료
+                              {typeof matchedResponse?.totalPrice === "number" && matchedResponse.totalPrice > 0 && (
+                                <span className="ml-1 font-medium text-slate-900">
+                                  (₩{matchedResponse.totalPrice.toLocaleString("ko-KR")})
+                                </span>
+                              )}
+                            </span>
+                          ) : (
+                            <span className="text-slate-500">
+                              {/* §11.264j — "N일 경과" 표시. ElapsedDaysText 가 mount 후 day diff
+                                  계산 → "11일 경과" 같은 호영님 spec verbatim 출력. §11.214
+                                  hydration 안전 (useState + useEffect mount-after-set). */}
+                              미회신 (<ElapsedDaysText iso={req.createdAt} />)
+                            </span>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
                 </div>
               )}
             </div>
