@@ -1489,11 +1489,14 @@ function KpiCard({ icon, iconBg, label, value, valueColor, sub, active, onClick 
   active: boolean;
   onClick: () => void;
 }) {
+  // §11.260a — 0건 카드 시각 우선순위 낮춤 (§11.259a #5 견적 패턴 reuse).
+  //   active 시 opacity-100 (활성 카드 톤다운 안 함). hover 시 opacity-100 복원.
+  const isZero = value === 0 && !active;
   return (
     <button type="button" onClick={onClick}
       className={`rounded-xl border bg-white p-5 text-left transition-all hover:shadow-md ${
         active ? "border-blue-300 ring-1 ring-blue-100 shadow-md" : "border-slate-200 hover:border-slate-300"
-      }`}>
+      } ${isZero ? "opacity-50 hover:opacity-100" : ""}`}>
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center`}>{icon}</div>
         <span className="text-xs text-slate-400">{label}</span>
