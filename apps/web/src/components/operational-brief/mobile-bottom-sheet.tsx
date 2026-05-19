@@ -26,7 +26,7 @@
  *   />
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { X, ArrowRight } from "lucide-react";
 
 export interface MobileBriefChip {
@@ -70,6 +70,13 @@ export function MobileOperationalBriefSheet({
   next,
   primaryCta,
 }: MobileOperationalBriefSheetProps) {
+  // §11.264a — 4 chip 을 탭으로 전환 (호영님 spec 견적 모바일 #3-1 긴급).
+  //   기존 §11.183: chip onClick = scrollToBrief (anchor link) → 모든 4 section
+  //   항상 함께 표시. 호영님 신규 spec: chip = 탭 → 활성 tab content 만 표시.
+  //   §11.183 chip scroll 정의 → §11.264a tab switch 으로 supersede.
+  //   default activeTab = "summary" (호영님 spec "상태 요약 기본 표시" 정합).
+  const [activeTab, setActiveTab] = useState<string>("summary");
+
   // Esc to close
   useEffect(() => {
     if (!open) return;
@@ -89,11 +96,6 @@ export function MobileOperationalBriefSheet({
   }, [open]);
 
   if (!open) return null;
-
-  const scrollToBrief = (id: string) => {
-    const el = document.getElementById(`mb-brief-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   return (
     <div
@@ -133,41 +135,52 @@ export function MobileOperationalBriefSheet({
           </div>
         </div>
 
-        {/* 4 chips */}
-        <div className="px-4 py-2 border-b border-slate-100 flex flex-wrap gap-1.5">
+        {/* §11.264a — 4 chip 탭 (호영님 spec 견적 모바일 #3-1 긴급).
+            chip onClick = setActiveTab. 활성 chip: text-blue-700 + border-b-2 + border-blue-600.
+            비활성 chip: text-slate-600 + border-b-2 + border-transparent (hover bg-slate-100).
+            aria-pressed 으로 탭 a11y 정합. */}
+        <div className="px-4 border-b border-slate-100 flex items-center gap-0" role="tablist">
           {chips.map((c) => (
             <button
               key={c.id}
               type="button"
-              onClick={() => scrollToBrief(c.id)}
-              className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 hover:bg-slate-200 text-slate-700"
+              role="tab"
+              onClick={() => setActiveTab(c.id)}
+              aria-pressed={activeTab === c.id}
+              aria-selected={activeTab === c.id}
+              className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors ${
+                activeTab === c.id
+                  ? "text-blue-700 border-blue-600"
+                  : "text-slate-600 border-transparent hover:bg-slate-100"
+              }`}
             >
               {c.label}
             </button>
           ))}
         </div>
 
-        {/* Scrollable 4-section body */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
-          {summary != null && (
+        {/* §11.264a — 활성 탭 content 만 표시 (4 section render 분기).
+            anchor IDs (mb-brief-*) 보존 (a11y / deep linking 용). */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
+          {activeTab === "summary" && summary != null && (
             <section id="mb-brief-summary" className="scroll-mt-4">
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">상황 요약</div>
               {summary}
             </section>
           )}
-          {facts != null && (
+          {activeTab === "facts" && facts != null && (
             <section id="mb-brief-facts" className="scroll-mt-4">
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">핵심 근거</div>
               {facts}
             </section>
           )}
-          {risks != null && (
+          {activeTab === "risks" && risks != null && (
             <section id="mb-brief-risks" className="scroll-mt-4">
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">리스크</div>
               {risks}
             </section>
           )}
-          {next != null && (
+          {activeTab === "next" && next != null && (
             <section id="mb-brief-next" className="scroll-mt-4">
               <div className="text-[11px] font-medium uppercase tracking-wider text-slate-500 mb-1.5">다음 조치</div>
               {next}
