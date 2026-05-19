@@ -26,6 +26,10 @@ import Image from "next/image";
 //   (relevance/price_low/price_high/lead_time/review) 모두 lib/constants 정의 +
 //   test-flow-provider 의 sortBy/searchCategory + server fetch 정합.
 import { PRODUCT_CATEGORIES, SORT_OPTIONS } from "@/lib/constants";
+// §11.258c — 자동완성 client hook (호영님 spec #6).
+//   useAutocomplete(query) → { items, isLoading }. debounce 300ms + fetch.
+//   server route /api/search/autocomplete + Product.name/brand/catalogNumber 3 type.
+import { useAutocomplete } from "@/hooks/use-autocomplete";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
@@ -2139,6 +2143,10 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   // §11.258a #4 — input focus 시 + 빈 query 시 dropdown open. submit/clear 시 close.
   const [recentOpen, setRecentOpen] = useState(false);
+  // §11.258c — 자동완성 hook (debounce 300ms + 2글자+ fetch). localQuery 변경
+  //   시 즉시 호출. 결과는 모바일 dropdown 안 별도 section 으로 노출 (최근 검색어
+  //   dropdown 과 분리 — focus 상태로 양쪽 모두 가능).
+  const { items: autocompleteItems } = useAutocomplete(localQuery);
 
   useEffect(() => { setLocalQuery(searchQuery); }, [searchQuery]);
   useEffect(() => {
@@ -2382,6 +2390,44 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
         >
           검색
         </Button>
+
+        {/* §11.258c — 자동완성 dropdown (모바일). 2글자+ 입력 시 server top 5
+            (품목 / 제조사 / 카탈로그) 노출. debounce 300ms (hook 안). 최근 검색어
+            dropdown 과 mutually exclusive (recent = 빈 query, autocomplete = 2글자+).
+            클릭 → setLocalQuery + 즉시 submit (logged in 시 runSearch). */}
+        {recentOpen && localQuery.trim().length >= 2 && autocompleteItems.length > 0 && (
+          <div className="absolute left-4 right-4 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 max-h-72 overflow-y-auto z-20">
+            <div className="px-3 py-2 border-b border-slate-100 text-xs font-semibold text-slate-600">
+              자동완성 ({autocompleteItems.length}건)
+            </div>
+            <ul className="divide-y divide-slate-100">
+              {autocompleteItems.map((item, idx) => {
+                const typeLabel =
+                  item.type === "product" ? "품목" :
+                  item.type === "brand" ? "제조사" :
+                  "카탈로그";
+                const typeColor =
+                  item.type === "product" ? "text-blue-600 bg-blue-50" :
+                  item.type === "brand" ? "text-emerald-600 bg-emerald-50" :
+                  "text-slate-600 bg-slate-100";
+                return (
+                  <li key={`${item.type}-${item.value}-${idx}`}>
+                    <button
+                      type="button"
+                      onMouseDown={(e) => { e.preventDefault(); handlePickRecent(item.value); }}
+                      className="w-full min-h-[44px] px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+                    >
+                      <span className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${typeColor}`}>
+                        {typeLabel}
+                      </span>
+                      <span className="truncate">{item.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
 
         {/* §11.258a #4 — 최근 검색어 dropdown (input focus + 빈 query 시). */}
         {recentOpen && !localQuery && recentSearches.length > 0 && (
