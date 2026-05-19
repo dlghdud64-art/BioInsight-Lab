@@ -230,6 +230,11 @@ export function VendorRequestModal({
   const contactBlocker = readinessChecks.find((check) => check.key === "contact" && !check.ready)?.blocker;
   const selectedStateLabel = includedCount > 0 ? `${includedCount}개 선택됨` : "공급사 미선택";
   const contactStateLabel = contactBlocker ? "연락처 필요" : includedCount > 0 ? "연락처 확인됨" : "연락처 필요";
+  const validContactCount = includedSuppliers.filter((supplier) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supplier.email)).length;
+  const selectedSupplierNames = includedSuppliers.map((supplier) => supplier.vendorName).join(", ") || "공급사 미선택";
+  const selectedContactList = includedSuppliers
+    .map((supplier) => `${supplier.vendorName}: ${supplier.email || "연락처 없음"}`)
+    .join(", ") || "연락처 필요";
   const previewStateLabel = message.trim().length > 10 ? "미리보기 준비됨" : "미리보기 필요";
   const sendStateLabel =
     sendReadiness === "ready" ? "전송 가능" : sendReadiness === "needs_review" ? "검토 필요" : "연락처 필요";
@@ -400,6 +405,34 @@ export function VendorRequestModal({
             >
               발송 · {sendStateLabel}
             </Badge>
+          </div>
+          <div
+            data-testid="quote-dispatch-recipient-summary"
+            className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 px-3 py-2 text-xs text-slate-700"
+          >
+            <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+              <Badge
+                variant="outline"
+                data-testid="quote-dispatch-recipient-count-badge"
+                className={sendReadiness === "ready" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-amber-200 bg-amber-50 text-amber-800"}
+              >
+                공급사 {includedCount}곳 선택됨 · 회신 담당자 {validContactCount}명 확인됨
+              </Badge>
+              <span
+                data-testid="quote-dispatch-next-required-action"
+                className={sendReadiness === "ready" ? "text-emerald-700" : "text-amber-700"}
+              >
+                {sendReadiness === "ready" ? "다음: 메시지 미리보기 확인" : `다음: ${firstReadinessBlocker ?? "공급사 선택"}`}
+              </span>
+            </div>
+            <div className="grid gap-1 sm:grid-cols-2">
+              <p data-testid="quote-dispatch-selected-supplier-names" className="truncate">
+                <span className="font-semibold text-slate-900">공급사</span> · {selectedSupplierNames}
+              </p>
+              <p data-testid="quote-dispatch-selected-contact-list" className="truncate">
+                <span className="font-semibold text-slate-900">연락처</span> · {selectedContactList}
+              </p>
+            </div>
           </div>
         </DialogHeader>
 

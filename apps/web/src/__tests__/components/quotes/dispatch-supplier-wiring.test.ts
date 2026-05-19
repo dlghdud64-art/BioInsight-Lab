@@ -96,3 +96,21 @@ describe("#quote-dispatch-final-confirmation - send gate evidence", () => {
     expect(source).toContain("createdRequests?.[0]?.id");
   });
 });
+
+describe("#quote-dispatch-recipient-summary - top evidence", () => {
+  const source = readFileSync(WORKBENCH_PATH, "utf8");
+
+  it("pins selected supplier names and contacts above the send flow", () => {
+    expect(source).toContain("quote-dispatch-recipient-summary");
+    expect(source).toContain("quote-dispatch-recipient-count-badge");
+    expect(source).toContain("quote-dispatch-selected-supplier-names");
+    expect(source).toContain("quote-dispatch-selected-contact-list");
+    expect(source).toContain("quote-dispatch-next-required-action");
+  });
+
+  it("shows supplier count, verified contact count, and the next action in Korean", () => {
+    expect(source).toContain("공급사 {includedCount}곳 선택됨");
+    expect(source).toContain("회신 담당자 {validContactCount}명 확인됨");
+    expect(source).toContain("다음: 메시지 미리보기 확인");
+  });
+});
