@@ -139,6 +139,9 @@ export default function SearchPage() {
     searchCategory,
     setSearchCategory,
     searchBrand,
+    setSearchBrand,
+    // §11.258d-2 — server vendorCounts facet 으로 동적 chip row 생성 (top 5).
+    vendorFacets,
     sortBy,
     setSortBy,
     minPrice,
@@ -729,6 +732,47 @@ export default function SearchPage() {
                 20만~
               </button>
             </div>
+
+            {/* §11.258d-2 — 제조사 chip row (호영님 spec #7 마지막). server facets
+                vendorCounts top 20 중 client top 5 노출. setSearchBrand → useQuery key
+                포함 → server fetch 재요청. 전체 제조사 chip = reset. 결과 0 시 row
+                자체 0 (조건부 render). 가로 스크롤 모바일 정합. */}
+            {vendorFacets.length > 0 && (
+              <div className="px-4 md:px-6 py-2 border-b border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto">
+                <button
+                  type="button"
+                  data-testid="sourcing-vendor-chip-all"
+                  onClick={() => setSearchBrand("")}
+                  aria-pressed={searchBrand === ""}
+                  className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                    searchBrand === ""
+                      ? "bg-blue-600 text-white border border-blue-600"
+                      : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                >
+                  전체 제조사
+                </button>
+                {vendorFacets.slice(0, 5).map((v) => (
+                  <button
+                    key={v.vendorId}
+                    type="button"
+                    data-testid={`sourcing-vendor-chip-${v.vendorId}`}
+                    onClick={() => setSearchBrand(v.vendorName)}
+                    aria-pressed={searchBrand === v.vendorName}
+                    className={`shrink-0 inline-flex items-center gap-1 min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      searchBrand === v.vendorName
+                        ? "bg-blue-600 text-white border border-blue-600"
+                        : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                    }`}
+                  >
+                    <span className="truncate max-w-[120px]">{v.vendorName}</span>
+                    <span className={`text-[10px] ${searchBrand === v.vendorName ? "text-blue-100" : "text-slate-400"}`}>
+                      {v.count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}
             {!shouldShowSourcingStrip && aiShouldShow && (

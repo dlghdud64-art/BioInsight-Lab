@@ -39,6 +39,9 @@ interface TestFlowContextType {
   grade: string | undefined;
   setGrade: (grade: string | undefined) => void;
   products: any[];
+  // §11.258d-2 — vendorFacets (server top 20 distinct vendor + count) UI chip 소스.
+  //   /api/products/search?facets=true 응답 의 data.facets.vendorCounts.
+  vendorFacets: Array<{ vendorId: string; vendorName: string; count: number }>;
   isSearchLoading: boolean;
   queryAnalysis: any;
   
@@ -188,6 +191,9 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
         ...(stockStatus && { stockStatus }),
         ...(leadTime && { leadTime }),
         ...(grade && { grade }),
+        // §11.258d-2 — server vendorCounts facet 요청 (route.ts line 160-189 정합).
+        //   응답 의 data.facets.vendorCounts (top 20) 를 client UI chip 으로 노출.
+        facets: "true",
         limit: "10",
       });
       const response = await fetch(`/api/products/search?${params.toString()}`);
@@ -586,6 +592,8 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
         grade,
         setGrade,
         products,
+        // §11.258d-2 — server facets.vendorCounts (top 20) expose. 미응답 시 빈 array.
+        vendorFacets: (searchData?.facets?.vendorCounts ?? []) as Array<{ vendorId: string; vendorName: string; count: number }>,
         isSearchLoading,
         queryAnalysis,
         protocolText,
@@ -654,6 +662,7 @@ function TestFlowProviderFallback({ children }: { children: ReactNode }) {
         grade: undefined,
         setGrade: () => {},
         products: [],
+        vendorFacets: [],
         isSearchLoading: false,
         queryAnalysis: null,
         protocolText: "",
