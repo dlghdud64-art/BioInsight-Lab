@@ -1965,8 +1965,12 @@ function QuotesPageContent() {
             </SelectContent>
           </Select>
         </div>
-        {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제). */}
-        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0">
+        {/* §11.259c-2 — mode chips + 뷰 toggle 데스크탑 1줄 통합 sub-wrapper.
+            모바일: 2 sub-row (chips 위, 뷰 toggle 아래). 데스크탑 sm+: 같은 줄.
+            mode chips flex-1 min-w-0 (좌측 차지) + 뷰 toggle shrink-0 (우측). */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        {/* Operating mode chips — §11.259c 가로 스크롤 (1줄 강제) + §11.259c-2 sm+ 좌측 flex-1. */}
+        <div className="flex items-center gap-1.5 flex-nowrap overflow-x-auto -mx-3 sm:mx-0 px-3 sm:px-0 pb-1 sm:pb-0 flex-1 min-w-0">
           {MODE_CHIPS.map(chip => {
             const isActive = modeChip === chip.key;
             const chipCount = quotes.filter(chip.filter).length;
@@ -2008,147 +2012,154 @@ function QuotesPageContent() {
             );
           })()}
         </div>
+        {/* §11.259c-2 — 뷰 toggle (카드 ↔ 테이블 + §11.230b column prefs) 통합.
+            §11.217 Phase 6 보기 모드 + §11.230b 컬럼 설정 popover trigger.
+            기존 main column 위치 (data-testid="quote-work-queue" 직후) 에서
+            검색/필터 wrapper 안 sub-wrapper 안으로 이동. 호영님 §11.259 spec
+            "필터 + 뷰 전환 영역 1줄 압축" 완전 정합. */}
+        {!isLoading && filteredQuotes.length > 0 && (
+          <div className="flex items-center justify-end gap-1.5 shrink-0">
+            <span className="text-[11px] text-slate-500 mr-1">보기</span>
+            <button
+              type="button"
+              onClick={() => setViewMode("card")}
+              aria-pressed={viewMode === "card"}
+              aria-label="카드 보기"
+              className={
+                viewMode === "card"
+                  ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
+                  : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+              }
+            >
+              <Package className="h-3 w-3" />
+              카드
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("table")}
+              aria-pressed={viewMode === "table"}
+              aria-label="테이블 보기"
+              className={
+                viewMode === "table"
+                  ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
+                  : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+              }
+            >
+              <FileTextIcon className="h-3 w-3" />
+              테이블
+            </button>
+            {/* §11.230b #quote-table-column-prefs — 컬럼 설정 popover trigger.
+                테이블 뷰 한정 노출 + popover 안 9 컬럼 visibility checkbox +
+                HTML5 drag-and-drop reorder (호영님 v2 #23 b1+b2). */}
+            {viewMode === "table" && (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setColumnPrefsPopoverOpen((prev) => !prev)}
+                  aria-label="컬럼 설정"
+                  aria-expanded={columnPrefsPopoverOpen}
+                  className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
+                >
+                  <Settings2 className="h-3 w-3" />
+                  컬럼 설정
+                </button>
+                {columnPrefsPopoverOpen && (
+                  <>
+                    {/* backdrop click → close */}
+                    <div
+                      className="fixed inset-0 z-30"
+                      onClick={() => setColumnPrefsPopoverOpen(false)}
+                    />
+                    <div
+                      className="absolute right-0 top-9 z-40 w-72 rounded-lg border border-bd bg-pn shadow-lg p-3 space-y-1"
+                      role="dialog"
+                      aria-label="컬럼 설정 패널"
+                    >
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-bd/60">
+                        <span className="text-xs font-semibold text-slate-900">컬럼 설정</span>
+                        <button
+                          type="button"
+                          onClick={() => setColumnPrefs(DEFAULT_COLUMN_PREFS)}
+                          className="text-[11px] text-blue-600 hover:text-blue-700"
+                        >
+                          기본값 복원
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-500 mb-1.5">
+                        체크박스로 보임/숨김 · 손잡이를 끌어 순서 변경
+                      </p>
+                      {columnPrefs.order.map((key) => {
+                        const isProtected = (key === "price" && priceColumnHasData) || (key === "delivery" && deliveryColumnHasData);
+                        return (
+                          <div
+                            key={key}
+                            draggable
+                            onDragStart={() => setDragColumn(key)}
+                            onDragOver={(e) => e.preventDefault()}
+                            onDrop={() => {
+                              if (!dragColumn || dragColumn === key) {
+                                setDragColumn(null);
+                                return;
+                              }
+                              // §11.230b (b2) — 순서 재정렬: dragColumn → key 위치 swap.
+                              const nextOrder = columnPrefs.order.slice();
+                              const fromIdx = nextOrder.indexOf(dragColumn);
+                              const toIdx = nextOrder.indexOf(key);
+                              if (fromIdx === -1 || toIdx === -1) {
+                                setDragColumn(null);
+                                return;
+                              }
+                              nextOrder.splice(fromIdx, 1);
+                              nextOrder.splice(toIdx, 0, dragColumn);
+                              setColumnPrefs((prev) => ({ ...prev, order: nextOrder }));
+                              setDragColumn(null);
+                            }}
+                            onDragEnd={() => setDragColumn(null)}
+                            className={`flex items-center gap-2 px-1.5 py-1 rounded hover:bg-slate-50 cursor-move ${dragColumn === key ? "opacity-50" : ""}`}
+                          >
+                            <GripVertical className="h-3 w-3 text-slate-400 shrink-0" />
+                            <input
+                              type="checkbox"
+                              id={`col-vis-${key}`}
+                              checked={columnPrefs.visibility[key]}
+                              onChange={(e) =>
+                                setColumnPrefs((prev) => ({
+                                  ...prev,
+                                  visibility: { ...prev.visibility, [key]: e.target.checked },
+                                }))
+                              }
+                              disabled={isProtected && !columnPrefs.visibility[key]}
+                              className="h-3 w-3 accent-blue-600 shrink-0"
+                            />
+                            <label
+                              htmlFor={`col-vis-${key}`}
+                              className="text-[11px] text-slate-700 cursor-pointer flex-1"
+                            >
+                              {COLUMN_LABEL[key]}
+                            </label>
+                            {isProtected && (
+                              <span className="text-[10px] text-amber-600">데이터 있음</span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+        </div>
       </div>
 
       {/* ═══ Main: List + Quote Context Rail ═══ */}
       <div className="flex gap-0">
       <div data-testid="quote-work-queue" className="flex-1 min-w-0 space-y-4">
 
-      {/* §11.217 Phase 6 — 보기 모드 toggle (카드 ↔ 테이블).
-          localStorage persist + aria-pressed (a11y). 대량 quote audit 용 테이블. */}
-      {!isLoading && filteredQuotes.length > 0 && (
-        <div className="flex items-center justify-end gap-1.5">
-          <span className="text-[11px] text-slate-500 mr-1">보기</span>
-          <button
-            type="button"
-            onClick={() => setViewMode("card")}
-            aria-pressed={viewMode === "card"}
-            aria-label="카드 보기"
-            className={
-              viewMode === "card"
-                ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
-                : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
-            }
-          >
-            <Package className="h-3 w-3" />
-            카드
-          </button>
-          <button
-            type="button"
-            onClick={() => setViewMode("table")}
-            aria-pressed={viewMode === "table"}
-            aria-label="테이블 보기"
-            className={
-              viewMode === "table"
-                ? "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold bg-blue-100 text-blue-700"
-                : "h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
-            }
-          >
-            <FileTextIcon className="h-3 w-3" />
-            테이블
-          </button>
-          {/* §11.230b #quote-table-column-prefs — 컬럼 설정 popover trigger.
-              테이블 뷰 한정 노출 + popover 안 9 컬럼 visibility checkbox +
-              HTML5 drag-and-drop reorder (호영님 v2 #23 b1+b2). */}
-          {viewMode === "table" && (
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setColumnPrefsPopoverOpen((prev) => !prev)}
-                aria-label="컬럼 설정"
-                aria-expanded={columnPrefsPopoverOpen}
-                className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors"
-              >
-                <Settings2 className="h-3 w-3" />
-                컬럼 설정
-              </button>
-              {columnPrefsPopoverOpen && (
-                <>
-                  {/* backdrop click → close */}
-                  <div
-                    className="fixed inset-0 z-30"
-                    onClick={() => setColumnPrefsPopoverOpen(false)}
-                  />
-                  <div
-                    className="absolute right-0 top-9 z-40 w-72 rounded-lg border border-bd bg-pn shadow-lg p-3 space-y-1"
-                    role="dialog"
-                    aria-label="컬럼 설정 패널"
-                  >
-                    <div className="flex items-center justify-between mb-2 pb-2 border-b border-bd/60">
-                      <span className="text-xs font-semibold text-slate-900">컬럼 설정</span>
-                      <button
-                        type="button"
-                        onClick={() => setColumnPrefs(DEFAULT_COLUMN_PREFS)}
-                        className="text-[11px] text-blue-600 hover:text-blue-700"
-                      >
-                        기본값 복원
-                      </button>
-                    </div>
-                    <p className="text-[10px] text-slate-500 mb-1.5">
-                      체크박스로 보임/숨김 · 손잡이를 끌어 순서 변경
-                    </p>
-                    {columnPrefs.order.map((key) => {
-                      const isProtected = (key === "price" && priceColumnHasData) || (key === "delivery" && deliveryColumnHasData);
-                      return (
-                        <div
-                          key={key}
-                          draggable
-                          onDragStart={() => setDragColumn(key)}
-                          onDragOver={(e) => e.preventDefault()}
-                          onDrop={() => {
-                            if (!dragColumn || dragColumn === key) {
-                              setDragColumn(null);
-                              return;
-                            }
-                            // §11.230b (b2) — 순서 재정렬: dragColumn → key 위치 swap.
-                            const nextOrder = columnPrefs.order.slice();
-                            const fromIdx = nextOrder.indexOf(dragColumn);
-                            const toIdx = nextOrder.indexOf(key);
-                            if (fromIdx === -1 || toIdx === -1) {
-                              setDragColumn(null);
-                              return;
-                            }
-                            nextOrder.splice(fromIdx, 1);
-                            nextOrder.splice(toIdx, 0, dragColumn);
-                            setColumnPrefs((prev) => ({ ...prev, order: nextOrder }));
-                            setDragColumn(null);
-                          }}
-                          onDragEnd={() => setDragColumn(null)}
-                          className={`flex items-center gap-2 px-1.5 py-1 rounded hover:bg-slate-50 cursor-move ${dragColumn === key ? "opacity-50" : ""}`}
-                        >
-                          <GripVertical className="h-3 w-3 text-slate-400 shrink-0" />
-                          <input
-                            type="checkbox"
-                            id={`col-vis-${key}`}
-                            checked={columnPrefs.visibility[key]}
-                            onChange={(e) =>
-                              setColumnPrefs((prev) => ({
-                                ...prev,
-                                visibility: { ...prev.visibility, [key]: e.target.checked },
-                              }))
-                            }
-                            disabled={isProtected && !columnPrefs.visibility[key]}
-                            className="h-3 w-3 accent-blue-600 shrink-0"
-                          />
-                          <label
-                            htmlFor={`col-vis-${key}`}
-                            className="text-[11px] text-slate-700 cursor-pointer flex-1"
-                          >
-                            {COLUMN_LABEL[key]}
-                          </label>
-                          {isProtected && (
-                            <span className="text-[10px] text-amber-600">데이터 있음</span>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {/* §11.259c-2 — 뷰 toggle (보기 모드 + column prefs) 영역 검색/필터
+          wrapper 안 sub-wrapper 로 이동. 기존 main column 위치는 비움.
+          §11.217 Phase 6 + §11.230b 정합 보존. */}
 
       {/* §11.217 Phase 6 — 테이블 보기 (단일 통합 테이블, 3 section 구분 row).
           card 와 같은 데이터 (filteredQuotes) 다른 layout. 클릭 → 같은 detail panel.
