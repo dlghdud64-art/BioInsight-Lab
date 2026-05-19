@@ -21,6 +21,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import Image from "next/image";
+// §11.258b — 검색 결과 toolbar 정렬 + 카테고리 필터칩 (호영님 spec #7 client-side scope).
+//   PRODUCT_CATEGORIES (REAGENT/TOOL/EQUIPMENT/RAW_MATERIAL) + SORT_OPTIONS
+//   (relevance/price_low/price_high/lead_time/review) 모두 lib/constants 정의 +
+//   test-flow-provider 의 sortBy/searchCategory + server fetch 정합.
+import { PRODUCT_CATEGORIES, SORT_OPTIONS } from "@/lib/constants";
 import { SourcingResultRow } from "../_components/sourcing-result-row";
 import { SourcingContextRail } from "../_components/sourcing-context-rail";
 import { CenterWorkWindow } from "@/components/work-window/center-work-window";
@@ -128,8 +133,10 @@ export default function SearchPage() {
     setSearchQuery,
     runSearch,
     searchCategory,
+    setSearchCategory,
     searchBrand,
     sortBy,
+    setSortBy,
     minPrice,
     maxPrice,
     grade,
@@ -551,6 +558,24 @@ export default function SearchPage() {
               </div>
               {/* 필터 / 재고 — 흰 배경 오른쪽 */}
               <div className="flex items-center gap-1.5 shrink-0">
+                {/* §11.258b — 정렬 select (server 지원 4 옵션, "이름순" 은 §11.258d 백로그).
+                    setSortBy → test-flow-provider state → useQuery key 안 sortBy →
+                    server fetch 재요청 (정합 line 174). */}
+                <label className="inline-flex items-center gap-1.5">
+                  <span className="sr-only">정렬 기준</span>
+                  <select
+                    data-testid="sourcing-sort-select"
+                    aria-label="정렬 기준"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                    className="text-xs font-medium px-2.5 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 border border-slate-200 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                  >
+                    <option value="relevance">AI 추천순</option>
+                    <option value="price_low">가격 낮은순</option>
+                    <option value="price_high">가격 높은순</option>
+                    <option value="lead_time">배송기간순</option>
+                  </select>
+                </label>
                 <Sheet>
                   <SheetTrigger asChild>
                     <button className="hidden md:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors">
@@ -574,6 +599,66 @@ export default function SearchPage() {
                   </Link>
                 )}
               </div>
+            </div>
+
+            {/* §11.258b — 카테고리 필터칩 (전체 / 시약 / 기구 / 장비).
+                setSearchCategory → useQuery key 안 searchCategory → server fetch
+                재요청 (정합 line 174 + 179). 모바일/데스크탑 공통 노출 — 가로 스크롤
+                허용 (overflow-x-auto + shrink-0 chip). 가격대 / 제조사 필터 +
+                "이름순" 정렬은 §11.258d 백로그 (server 의존 추가 검토 필요). */}
+            <div className="px-4 md:px-6 py-2 border-b border-slate-100 bg-white flex items-center gap-1.5 overflow-x-auto">
+              <button
+                type="button"
+                data-testid="sourcing-category-chip-all"
+                onClick={() => setSearchCategory("")}
+                aria-pressed={searchCategory === ""}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  searchCategory === ""
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                전체
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-category-chip-reagent"
+                onClick={() => setSearchCategory("REAGENT")}
+                aria-pressed={searchCategory === "REAGENT"}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  searchCategory === "REAGENT"
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                {PRODUCT_CATEGORIES.REAGENT}
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-category-chip-tool"
+                onClick={() => setSearchCategory("TOOL")}
+                aria-pressed={searchCategory === "TOOL"}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  searchCategory === "TOOL"
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                {PRODUCT_CATEGORIES.TOOL}
+              </button>
+              <button
+                type="button"
+                data-testid="sourcing-category-chip-equipment"
+                onClick={() => setSearchCategory("EQUIPMENT")}
+                aria-pressed={searchCategory === "EQUIPMENT"}
+                className={`shrink-0 inline-flex items-center min-h-[36px] px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                  searchCategory === "EQUIPMENT"
+                    ? "bg-blue-600 text-white border border-blue-600"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                }`}
+              >
+                {PRODUCT_CATEGORIES.EQUIPMENT}
+              </button>
             </div>
 
             {/* ═══ P1 AI 제안 fallback (sourcing strip이 안 보일 때) ═══ */}

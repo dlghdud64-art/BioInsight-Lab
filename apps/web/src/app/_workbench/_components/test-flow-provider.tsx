@@ -1,7 +1,7 @@
 "use client";
 
 import { csrfFetch } from "@/lib/api-client";
-import { createContext, useContext, useState, ReactNode, useEffect, useRef, Suspense } from "react";
+import { createContext, useContext, useState, ReactNode, useEffect, useRef, useMemo, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -481,7 +481,82 @@ function TestFlowProviderContent({ children }: { children: ReactNode }) {
     return result;
   };
 
-  const products = searchData?.products || [];
+  const pilotProfile = searchParams?.get("labaxisPilot") ?? searchParams?.get("pilot");
+  const isBrowserPilotSourcingAiCompare = pilotProfile === "sourcing-ai-compare";
+  const pilotSourcingProducts = useMemo(() => [
+    {
+      id: "pilot-pbs-sigma",
+      name: "PBS Buffer 10x, 500ml",
+      brand: "Sigma-Aldrich",
+      catalogNumber: "P5493",
+      category: "REAGENT",
+      specification: "10x, 500ml",
+      stockStatus: "available",
+      imageUrl: null,
+      vendors: [
+        {
+          id: "pilot-vendor-product-sigma-pbs",
+          vendorId: "pilot-vendor-sigma",
+          vendor: { id: "pilot-vendor-sigma", name: "Sigma-Aldrich" },
+          priceInKRW: 38000,
+          price: 38000,
+          currency: "KRW",
+          leadTimeDays: 3,
+          leadTime: "3",
+        },
+      ],
+    },
+    {
+      id: "pilot-pbs-thermo",
+      name: "Dulbecco's PBS 10X (500mL)",
+      brand: "Thermo Fisher",
+      catalogNumber: "70011044",
+      category: "REAGENT",
+      specification: "10x, 500mL",
+      stockStatus: "available",
+      imageUrl: null,
+      vendors: [
+        {
+          id: "pilot-vendor-product-thermo-pbs",
+          vendorId: "pilot-vendor-thermo",
+          vendor: { id: "pilot-vendor-thermo", name: "Thermo Fisher" },
+          priceInKRW: 41500,
+          price: 41500,
+          currency: "KRW",
+          leadTimeDays: 5,
+          leadTime: "5",
+        },
+      ],
+    },
+    {
+      id: "pilot-pbs-biorad",
+      name: "10X PBS Concentrate (500mL)",
+      brand: "Bio-Rad",
+      catalogNumber: "1610780",
+      category: "REAGENT",
+      specification: "10x concentrate, 500mL",
+      stockStatus: "available",
+      imageUrl: null,
+      vendors: [
+        {
+          id: "pilot-vendor-product-biorad-pbs",
+          vendorId: "pilot-vendor-biorad",
+          vendor: { id: "pilot-vendor-biorad", name: "Bio-Rad" },
+          priceInKRW: 45200,
+          price: 45200,
+          currency: "KRW",
+          leadTimeDays: 7,
+          leadTime: "7",
+        },
+      ],
+    },
+  ], []);
+  const products = useMemo(() => {
+    const realProducts = searchData?.products || [];
+    if (!isBrowserPilotSourcingAiCompare) return realProducts;
+    if (realProducts.length >= 2) return realProducts;
+    return pilotSourcingProducts;
+  }, [isBrowserPilotSourcingAiCompare, pilotSourcingProducts, searchData?.products]);
   const queryAnalysis = intentData?.intent || null;
   const protocolAnalysis = extractProtocolMutation.data;
 
