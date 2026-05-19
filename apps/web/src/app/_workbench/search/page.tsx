@@ -2151,6 +2151,10 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
   //   시 즉시 호출. 결과는 모바일 dropdown 안 별도 section 으로 노출 (최근 검색어
   //   dropdown 과 분리 — focus 상태로 양쪽 모두 가능).
   const { items: autocompleteItems } = useAutocomplete(localQuery);
+  // §11.258c-2 — 데스크탑 inline form 의 자동완성 dropdown open state.
+  //   모바일 recentOpen 과 별개 (분리된 input → 분리된 focus state).
+  //   Input focus 시 true + blur 200ms timeout 으로 false (link click race 방지).
+  const [desktopOpen, setDesktopOpen] = useState(false);
 
   useEffect(() => { setLocalQuery(searchQuery); }, [searchQuery]);
   useEffect(() => {
@@ -2245,8 +2249,9 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
           )}
         </div>
 
-        {/* §11.258a — 데스크탑 한정 검색 인풋 (인라인). md+ 에서만 1행 안. */}
-        <form onSubmit={handleSubmit} className="hidden md:flex items-center flex-1 min-w-0">
+        {/* §11.258a — 데스크탑 한정 검색 인풋 (인라인). md+ 에서만 1행 안.
+            §11.258c-2 — relative wrapper 추가 (안 absolute dropdown 의 positioning 기준). */}
+        <form onSubmit={handleSubmit} className="hidden md:flex items-center flex-1 min-w-0 relative">
           <div className="flex items-center flex-1 bg-white border border-white/20 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/30 transition-all">
             <Search className="h-4 w-4 text-slate-400 ml-3 shrink-0" />
             <Input
@@ -2254,6 +2259,8 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               type="text"
               value={localQuery}
               onChange={(e) => { setLocalQuery(e.target.value); setSearchQuery(e.target.value); }}
+              onFocus={() => setDesktopOpen(true)}
+              onBlur={() => { setTimeout(() => setDesktopOpen(false), 200); }}
               placeholder="시약명·CAS·제조사"
               className="h-10 px-2.5 text-sm border-0 bg-transparent text-slate-900 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-slate-400"
             />
@@ -2277,6 +2284,43 @@ function SearchUtilityBar({ activeFilterCount, onOpenFilter, onAuthRequired, isL
               검색
             </Button>
           </div>
+
+          {/* §11.258c-2 — 데스크탑 inline 자동완성 dropdown. md+ 한정 (hidden md:block).
+              모바일 dropdown 과 mutually exclusive (다른 form 안). desktopOpen +
+              localQuery 2글자+ + items > 0 시 노출. type chip + label 동일 패턴. */}
+          {desktopOpen && localQuery.trim().length >= 2 && autocompleteItems.length > 0 && (
+            <div className="hidden md:block absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-lg border border-slate-200 max-h-72 overflow-y-auto z-30">
+              <div className="px-3 py-2 border-b border-slate-100 text-xs font-semibold text-slate-600">
+                자동완성 ({autocompleteItems.length}건)
+              </div>
+              <ul className="divide-y divide-slate-100">
+                {autocompleteItems.map((item, idx) => {
+                  const typeLabel =
+                    item.type === "product" ? "품목" :
+                    item.type === "brand" ? "제조사" :
+                    "카탈로그";
+                  const typeColor =
+                    item.type === "product" ? "text-blue-600 bg-blue-50" :
+                    item.type === "brand" ? "text-emerald-600 bg-emerald-50" :
+                    "text-slate-600 bg-slate-100";
+                  return (
+                    <li key={`desktop-${item.type}-${item.value}-${idx}`}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); handlePickRecent(item.value); setDesktopOpen(false); }}
+                        className="w-full min-h-[40px] px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 inline-flex items-center gap-2"
+                      >
+                        <span className={`shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold ${typeColor}`}>
+                          {typeLabel}
+                        </span>
+                        <span className="truncate">{item.label}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
         </form>
 
         {/* 유틸리티 — AI 라벨 스캔 + 햄버거 메뉴 (§11.254b) */}
