@@ -853,6 +853,12 @@ function QuotesPageContent() {
   const [statusFilter, setStatusFilter] = useState<string>(searchParams.get("status") ?? "all");
   const [modeChip, setModeChip] = useState<string | null>(null);
   const [selectedQuoteId, setSelectedQuoteId] = useState<string | null>(searchParams.get("selected") ?? null);
+  // §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
+  //   기존: §11.155 MobileOperationalBriefSheet 가 selectedQuote 와 단일 truth 공유
+  //         → §11.248e mobile context sheet 와 < 1200px viewport 에서 동시 렌더.
+  //   신규: briefSheetOpen state 분리. §11.248e header 의 ✦ 버튼으로만 진입.
+  //         closeQuoteContextRail 시 setBriefSheetOpen(false) 동기 (orphan 방지).
+  const [briefSheetOpen, setBriefSheetOpen] = useState<boolean>(false);
   const [activeWorkWindow, setActiveWorkWindow] = useState<WorkWindowKey>(null);
   const [aiCompareOpen, setAiCompareOpen] = useState(false);
   const [aiCompareLoading, setAiCompareLoading] = useState(false);
@@ -1099,6 +1105,9 @@ function QuotesPageContent() {
   const closeQuoteContextRail = (source: string = "x_button") => {
     setSelectedQuoteId(null);
     setActiveWorkWindow(null);
+    // §11.264i — briefSheetOpen 동기 (orphan state 방지). 견적 자체 닫힐 때
+    // 운영 브리핑도 함께 닫힘 — 두 sheet 가 mutually exclusive.
+    setBriefSheetOpen(false);
     // URL query 정리 — path 유지, selected/task 제거
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
@@ -1938,6 +1947,23 @@ function QuotesPageContent() {
         })}
       </div>
 
+      {/* §11.264i — KPI 5 카드 모바일 가로 스크롤 도트 인디케이터 (호영님 spec P2).
+          §11.259a 가로 스크롤 (flex sm:grid + snap-x) 은 이미 적용 — 사용자가
+          "더 있다" 인지하지 못한다는 호영님 보고. 5 도트 시각 hint 만 추가.
+          sm:hidden — 데스크탑은 5 cell grid 로 모두 노출 → 도트 불필요. */}
+      <div
+        data-testid="quote-kpi-scroll-dots"
+        className="flex justify-center gap-1.5 mt-1 sm:hidden"
+        aria-hidden="true"
+      >
+        {[0, 1, 2, 3, 4].map((i) => (
+          <span
+            key={i}
+            className="w-1.5 h-1.5 rounded-full bg-slate-300"
+          />
+        ))}
+      </div>
+
       {/* ── 검색 + 필터 ──
           §11.259c — 호영님 spec 견적 관리 모바일 #3 "필터 + 뷰 전환 영역 1줄 압축".
           모바일에서도 검색/상태 필터 가로 1줄 (sm:flex-row → flex-row 강제) +
@@ -2770,7 +2796,22 @@ function QuotesPageContent() {
                   </span>
                   <span className="text-[11px] text-slate-500 font-mono">#{selectedQuote.id.slice(0, 8).toUpperCase()}</span>
                 </div>
-                <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => closeQuoteContextRail("x_button")}><X className="h-4 w-4" /></Button>
+                {/* §11.264i — "✦ 운영 브리핑" 진입 버튼 (호영님 spec P0 견적 모바일 2중 겹침 fix).
+                    기존: selectedQuote set 시 §11.248e + §11.155 둘 다 자동 렌더 → 겹침.
+                    신규: §11.155 는 briefSheetOpen=true 일 때만. ✦ 클릭 = 명시적 진입. */}
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-[11px] text-violet-700 hover:bg-violet-50"
+                    aria-label="운영 브리핑 열기"
+                    onClick={() => setBriefSheetOpen(true)}
+                  >
+                    <span className="mr-0.5">✦</span>
+                    <span className="hidden sm:inline">운영 브리핑</span>
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-slate-500" onClick={() => closeQuoteContextRail("x_button")}><X className="h-4 w-4" /></Button>
+                </div>
               </div>
               <h3 className="text-sm font-semibold text-slate-900 truncate">{selectedQuote.title}</h3>
               <p className="text-[11px] text-slate-500 mt-0.5">{selectedSignals.summary}</p>
@@ -3376,11 +3417,16 @@ function QuotesPageContent() {
 
       </div>{/* end flex container */}
 
-      {/* §11.155 모바일 변종 — desktop rail (hidden lg:flex) 와 mutually exclusive */}
-      {selectedQuote && selectedSignals && (
+      {/* §11.155 모바일 변종 — desktop rail (hidden lg:flex) 와 mutually exclusive.
+          §11.264i — briefSheetOpen 분리 (호영님 spec P0 견적 모바일 2중 겹침 fix).
+          기존: selectedQuote set 시 자동 렌더 → §11.248e mobile context sheet 와
+          < 1200px viewport 에서 동시 렌더 (2층 겹침). 신규: ✦ 운영 브리핑 버튼으로
+          명시적 진입 시에만 활성. closeQuoteContextRail 시 setBriefSheetOpen(false)
+          동기 → 견적 닫힐 때 운영 브리핑도 자동 닫힘 (orphan 방지). */}
+      {briefSheetOpen && selectedQuote && selectedSignals && (
         <MobileOperationalBriefSheet
-          open={!!selectedQuote}
-          onClose={() => closeQuoteContextRail("x_button")}
+          open={briefSheetOpen}
+          onClose={() => setBriefSheetOpen(false)}
           /* §11.264d — 견적명 동적 결합 (호영님 spec #3-2 P1).
              기존 정적 "선택한 견적" → "선택한 견적 · {견적명}" 으로 변경.
              root cause: caller 정적 string. 컴포넌트 변경 0 (5 surface 영향 0).
