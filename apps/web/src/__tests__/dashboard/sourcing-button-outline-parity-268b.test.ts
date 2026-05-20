@@ -1,0 +1,97 @@
+/**
+ * §11.268b #sourcing-button-outline-parity
+ * Operating Status Bar 3 button (정렬 select / 필터 / AI 분석) 시각 통일 테스트.
+ *
+ * Fix:
+ *   (1) 정렬 select — min-h-[44px] 추가 (§11.266 family 44px 일관성).
+ *   (2) AI 분석 button — violet → slate outline (필터 button 과 동일).
+ *
+ * 호영님 spec "파란색 강조 제거" — AI 분석 button 이 필터 button 과 동일
+ * slate outline 이어야 함. §11.266e sibling invariant supersede.
+ */
+
+import { readFileSync } from "fs";
+import { join } from "path";
+
+const PAGE_PATH = join(
+  process.cwd(),
+  "src/app/_workbench/search/page.tsx"
+);
+
+function src(): string {
+  return readFileSync(PAGE_PATH, "utf-8");
+}
+
+describe("§11.268b 정렬 select min-h-[44px] (§11.266 family 44px)", () => {
+  it("§11.268b trace marker — JSDoc 존재", () => {
+    expect(src()).toContain("§11.268b");
+  });
+
+  it("정렬 select data-testid=sourcing-sort-select 에 min-h-[44px] 적용", () => {
+    const content = src();
+    // sourcing-sort-select 와 min-h-[44px] 가 근접하게 존재해야 함 (속성 4줄 공백 감안 400자)
+    expect(content).toMatch(
+      /sourcing-sort-select[\s\S]{0,400}min-h-\[44px\]/
+    );
+  });
+
+  it("정렬 select setSortBy onChange 보존", () => {
+    expect(src()).toContain("setSortBy(e.target.value");
+  });
+
+  it("정렬 select 4 option 보존 (AI 추천순 / 가격낮은순 / 가격높은순 / 배송기간순)", () => {
+    const content = src();
+    expect(content).toContain("AI 추천순");
+    expect(content).toContain("가격 낮은순");
+    expect(content).toContain("가격 높은순");
+    expect(content).toContain("배송기간순");
+  });
+});
+
+describe("§11.268b AI 분석 button violet → slate outline (필터 동일)", () => {
+  it("AI 분석 button text-slate-500 적용 (violet 제거)", () => {
+    expect(src()).toMatch(
+      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-slate-500/
+    );
+  });
+
+  it("AI 분석 button violet tone 제거 (text-violet-700 없음, setAiAnalysisSheetOpen 근처)", () => {
+    expect(src()).not.toMatch(
+      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-violet-700/
+    );
+  });
+
+  it("AI 분석 button 이 필터 button 과 동일 slate outline border-slate-200", () => {
+    expect(src()).toMatch(
+      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}border border-slate-200/
+    );
+  });
+});
+
+describe("§11.268b invariant — Sparkles / label / testid / 필터 outline 보존", () => {
+  it("Sparkles icon import 보존", () => {
+    expect(src()).toContain("Sparkles");
+  });
+
+  it("AI 분석 라벨 보존", () => {
+    expect(src()).toContain("AI 분석");
+  });
+
+  it("data-testid=sourcing-ai-analysis-trigger 보존", () => {
+    expect(src()).toContain('data-testid="sourcing-ai-analysis-trigger"');
+  });
+
+  it("필터 button §11.266a border-slate-200 outline 보존 (3 button 통일 기준)", () => {
+    const content = src();
+    expect(content).toContain("SlidersHorizontal");
+    expect(content).toMatch(
+      /SlidersHorizontal[\s\S]{0,100}필터|필터[\s\S]{0,200}border border-slate-200/
+    );
+  });
+
+  it("min-h-[44px] §11.266 family 44px — AI 분석 button 보존", () => {
+    expect(src()).toMatch(
+      /sourcing-ai-analysis-trigger[\s\S]{0,400}min-h-\[44px\]/
+    );
+  });
+});

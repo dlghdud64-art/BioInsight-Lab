@@ -751,12 +751,15 @@ export default function SearchPage() {
                     server fetch 재요청 (정합 line 174). */}
                 <label className="inline-flex items-center gap-1.5">
                   <span className="sr-only">정렬 기준</span>
+                  {/* §11.268b — 정렬 select 에 min-h-[44px] 추가 (§11.266 family
+                      44px 일관성). text-xs / px-2.5 py-1.5 / rounded-md / outline /
+                      tone 보존. setSortBy onChange + 4 option 보존. */}
                   <select
                     data-testid="sourcing-sort-select"
                     aria-label="정렬 기준"
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                    className="text-xs font-medium px-2.5 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 border border-slate-200 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    className="text-xs font-medium min-h-[44px] px-2.5 py-1.5 rounded-md text-slate-700 hover:bg-slate-100 border border-slate-200 bg-white cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                   >
                     <option value="relevance">AI 추천순</option>
                     <option value="price_low">가격 낮은순</option>
@@ -801,11 +804,12 @@ export default function SearchPage() {
                   data-testid="sourcing-ai-analysis-trigger"
                   aria-label="AI 분석 열기"
                   onClick={() => setAiAnalysisSheetOpen(true)}
-                  /* §11.266e — sourcing AI 분석 + 재고 secondary button 44x44
-                      (§11.266 P1 cluster 5/5, family final close). text-xs 뒤
-                      min-h-[44px] 추가 → 필터 button (§11.266a) 과 sibling
-                      consistency. violet tone / Sparkles / 라벨 보존. */
-                  className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-violet-700 hover:bg-violet-50 border border-violet-200 transition-colors"
+                  /* §11.266e + §11.268b — sourcing AI 분석 button. min-h-[44px]
+                      (§11.266 family 44px) 보존. violet → slate outline (호영님
+                      §11.268b spec "파란색 강조 제거") — 필터 button (§11.266a)
+                      과 동일 outline. Sparkles / 라벨 / setAiAnalysisSheetOpen
+                      onClick 보존. */
+                  className="inline-flex items-center gap-1.5 text-xs font-medium min-h-[44px] px-3 py-1.5 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200 transition-colors"
                 >
                   <Sparkles className="h-3.5 w-3.5" />
                   AI 분석
@@ -2882,15 +2886,16 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
         </form>
 
         {/* 유틸리티 — AI 라벨 스캔 + 햄버거 메뉴 (§11.254b)
-            §11.264f — 호영님 spec "FAB 통합". 모바일에서는 헤더 inline 제거 + 우하단
-            fixed FAB 으로 단일화 (행압 절약 + 핵심 기능 굵게 돌출). 데스크탑은 inline
-            보존 (헤더 공간 충분 + DropdownMenu 와 일관). */}
+            §11.268a — 호영님 P0 spec: 모바일 우하단 FAB 이 비교/견적 액션 바 위에
+            완전 겹침 → "견적 요청서 만들기" 핵심 액션 차단. FAB 제거 + 헤더 inline
+            을 모바일에서도 visible (hidden md:flex → flex). §11.264f revert.
+            §11.254b — 햄버거 메뉴 (모바일 핵심 navigation) 보존. */}
         <div className="flex items-center gap-1.5 shrink-0">
-          {/* AI 라벨 스캔 — 소싱 핵심 기능. §11.264f — 데스크탑 (md+) 한정 inline,
-              모바일은 우하단 FAB (이 컴포넌트 트리 끝 부근 신규 button). */}
+          {/* AI 라벨 스캔 — 소싱 핵심 기능. §11.268a — 모바일 + 데스크탑 모두 inline
+              표시 (FAB 제거로 액션 바 겹침 해소). */}
           <button
             onClick={() => setLabelScanOpen(true)}
-            className="hidden md:flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors shrink-0"
           >
             <Camera className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">AI 라벨 스캔</span>
@@ -2959,23 +2964,12 @@ function SearchUtilityBar({ activeFilterCount, onAuthRequired, isLoggedIn, stage
         />
       </div>
 
-      {/* §11.264f — AI 라벨 스캔 모바일 FAB (호영님 spec "FAB 통합").
-            소싱 surface 의 핵심 기능 = AI 라벨 스캔. 모바일 헤더에서 inline 제거
-            후 우하단 fixed FAB 으로 굵게 돌출. md:hidden 으로 데스크탑은 비표시
-            (헤더 inline 버튼 정상 표시). 동일 setLabelScanOpen(true) 트리거 →
-            기존 LabelScannerModal 로 연결. emerald 톤 보존 (헤더 inline 과 visual
-            연속성). 56x56 (h-14 w-14) 터치 영역 + shadow-lg 으로 강조. */}
-      <button
-        type="button"
-        data-testid="sourcing-label-scan-fab"
-        aria-label="AI 라벨 스캔 열기"
-        onClick={() => setLabelScanOpen(true)}
-        className="fixed bottom-6 right-6 z-40 md:hidden h-14 w-14 rounded-full bg-emerald-500 text-white shadow-lg hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center"
-      >
-        <Camera className="h-6 w-6" />
-      </button>
+      {/* §11.268a — §11.264f FAB block 제거 (호영님 P0 spec). 모바일 우하단 fixed
+            FAB 이 비교/견적 액션 바 위에 완전 겹침 → "견적 요청서 만들기" 핵심 액션
+            차단. 헤더 inline button (위 div line ~2891) 을 모바일에서도 visible
+            (hidden md:flex → flex) 로 swap → FAB-헤더 functional duplication 해소. */}
 
-      {/* §11.258a #3 — 모바일 한정 검색 form (2행, md:hidden).
+{/* §11.258a #3 — 모바일 한정 검색 form (2행, md:hidden).
           헤더 1행 (LabAxis + 소싱 + 스캔 + 햄버거) 직후 풀너비 검색바.
           placeholder 완전 표시 (잘림 0) + Input text-base (16px) 으로 iOS Safari
           줌인 차단. X 클리어 button + 최근 검색어 dropdown 함께. */}

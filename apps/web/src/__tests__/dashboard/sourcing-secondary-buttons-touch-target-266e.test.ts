@@ -72,9 +72,12 @@ describe("§11.266e #3 — invariant 보존 (canonical truth)", () => {
     );
   });
 
-  it("AI 분석 button violet tone (text-violet-700 + hover:bg-violet-50 + border-violet-200) 보존", () => {
+  it("AI 분석 button outline tone 보존 (§11.268b supersede: violet → slate outline)", () => {
+    // §11.268b 호영님 spec "파란색 강조 제거" → text-violet-700 + hover:bg-violet-50
+    // + border-violet-200 → text-slate-500 + hover:text-slate-700 + hover:bg-slate-100
+    // + border-slate-200 (필터 button 과 동일 outline).
     expect(page).toMatch(
-      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-violet-700 hover:bg-violet-50 border border-violet-200/,
+      /setAiAnalysisSheetOpen\(true\)[\s\S]{0,800}text-slate-500 hover:text-slate-700 hover:bg-slate-100 border border-slate-200/,
     );
   });
 
