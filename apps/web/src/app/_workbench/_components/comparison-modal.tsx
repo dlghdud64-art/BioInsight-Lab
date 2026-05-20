@@ -322,7 +322,12 @@ export function ComparisonModal({
                         <div className="flex items-start justify-between gap-3 mb-4">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <h4 className="text-sm font-semibold text-slate-900 truncate">
+                              {/* §11.269c — 비교 카드 품목명 truncate → line-clamp-2
+                                  (호영님 spec: PBS.../Pipet... 잘려서 식별 불가 →
+                                  2줄까지 표시 허용). text-sm / font-semibold /
+                                  text-slate-900 보존. 카드 너비 calc(50%-6px) 호영님
+                                  spec 48% 이미 적용. */}
+                              <h4 className="text-sm font-semibold text-slate-900 line-clamp-2">
                                 {product?.name ?? pa.productId}
                               </h4>
                               {isRecommended && (
