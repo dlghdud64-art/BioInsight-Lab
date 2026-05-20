@@ -1,6 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+// §11.273a — overlay createPortal 분리 (sticky header stacking 충돌 해소). §11.271
+// 의 DashboardHeader inline mount 직후 sticky parent + fixed child stacking context
+// 충돌로 overlay 가 헤더 h-14 안에 갇혀 cropping → 시뮬레이션 텍스트 잔여. document.body
+// 직속 mount 로 stacking context 격리.
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -37,6 +42,12 @@ export function BarcodeScanFab() {
 
   const [phase, setPhase] = useState<"idle" | "scanning" | "ready">("idle");
   const [scanned, setScanned] = useState<MockScanResult | null>(null);
+  // §11.273a — hydration safety. SSR 시 document 부재 → portal mount 차단. mount
+  // 직후 setMounted(true) 로 client-side portal 활성화.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const openScanner = () => {
     if (phase !== "idle") return;
@@ -83,7 +94,10 @@ export function BarcodeScanFab() {
         <ScanLine className="h-5 w-5" />
       </button>
 
-      {/* Scanner overlay */}
+      {/* §11.273a — Scanner overlay 를 createPortal 로 document.body 직속 mount.
+          sticky DashboardHeader 의 stacking context 격리 → fixed inset-0 z-[60]
+          이 viewport-fixed 로 정상 작동 + 닫힘 시 완전 unmount (잔류 0). */}
+      {mounted && createPortal(
       <AnimatePresence>
         {phase !== "idle" ? (
           <motion.div
@@ -211,6 +225,7 @@ export function BarcodeScanFab() {
           </motion.div>
         ) : null}
       </AnimatePresence>
+      , document.body)}
     </>
   );
 }
